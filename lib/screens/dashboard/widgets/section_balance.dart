@@ -23,11 +23,17 @@ import 'package:go_router/go_router.dart';
 class SectionBalance extends StatelessWidget {
   final BigInt balance;
   final VoidCallback onHideAmountPress;
+  final bool isFiatServiceAvailable;
+  final VoidCallback onDepositPress;
+  final VoidCallback onWithdrawPress;
 
   const SectionBalance({
     super.key,
     required this.balance,
     required this.onHideAmountPress,
+    required this.isFiatServiceAvailable,
+    required this.onDepositPress,
+    required this.onWithdrawPress,
   });
 
   @override
@@ -41,23 +47,25 @@ class SectionBalance extends StatelessWidget {
                 padding: EdgeInsets.only(left: 16, right: 16, top: 10),
                 child: Row(
                   children: [
-                    Padding(
-                      padding: EdgeInsets.only(right: 10),
-                      child: ActionButton(
-                        icon: Icons.credit_card,
-                        label: S.of(context).deposit,
+                    if (isFiatServiceAvailable) ...[
+                      Padding(
+                        padding: EdgeInsets.only(right: 10),
+                        child: ActionButton(
+                          icon: Icons.credit_card,
+                          label: S.of(context).deposit,
+                          onPressed: () =>
+                              getIt<DFXService>().launchProvider(context, true),
+                          buttonStyle: kBalanceBarActionButtonStyle,
+                        ),
+                      ),
+                      ActionButton(
+                        icon: Icons.account_balance,
+                        label: S.of(context).withdraw,
                         onPressed: () =>
-                            getIt<DFXService>().launchProvider(context, true),
+                            getIt<DFXService>().launchProvider(context, false),
                         buttonStyle: kBalanceBarActionButtonStyle,
                       ),
-                    ),
-                    ActionButton(
-                      icon: Icons.account_balance,
-                      label: S.of(context).withdraw,
-                      onPressed: () =>
-                          getIt<DFXService>().launchProvider(context, false),
-                      buttonStyle: kBalanceBarActionButtonStyle,
-                    ),
+                    ],
                     Spacer(),
                     CircleAvatar(
                       radius: 17,

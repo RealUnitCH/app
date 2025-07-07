@@ -74,7 +74,10 @@ class PortfolioPage extends StatelessWidget {
                     bloc: aggregatedDEuro,
                     builder: (context, state) => SectionBalance(
                       balance: state.balance,
+                      isFiatServiceAvailable: false,
                       onHideAmountPress: () {},
+                      onDepositPress: () {},
+                      onWithdrawPress: () {},
                     ),
                   ),
                   Expanded(

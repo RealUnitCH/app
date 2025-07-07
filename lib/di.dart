@@ -95,6 +95,7 @@ void setupBlocs() {
     getIt<WalletService>(),
     getIt<BalanceService>(),
     getIt<TransactionHistoryService>(),
+    getIt<DFXService>(),
     getIt<AppStore>(),
   ));
 

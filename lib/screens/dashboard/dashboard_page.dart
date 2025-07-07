@@ -4,6 +4,7 @@ import 'package:deuro_wallet/models/transaction.dart';
 import 'package:deuro_wallet/packages/repository/balance_repository.dart';
 import 'package:deuro_wallet/packages/repository/transaction_repository.dart';
 import 'package:deuro_wallet/packages/service/app_store.dart';
+import 'package:deuro_wallet/packages/service/dfx/dfx_service.dart';
 import 'package:deuro_wallet/packages/utils/default_assets.dart';
 import 'package:deuro_wallet/screens/dashboard/bloc/aggregated_balance_cubit.dart';
 import 'package:deuro_wallet/screens/dashboard/bloc/blance_cubit.dart';
@@ -11,6 +12,7 @@ import 'package:deuro_wallet/screens/dashboard/bloc/transaction_history_cubit.da
 import 'package:deuro_wallet/screens/dashboard/widgets/cash_holding_box.dart';
 import 'package:deuro_wallet/screens/dashboard/widgets/section_balance.dart';
 import 'package:deuro_wallet/screens/dashboard/widgets/section_transaction_history.dart';
+import 'package:deuro_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:deuro_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:deuro_wallet/styles/colors.dart';
 import 'package:deuro_wallet/styles/styles.dart';
@@ -68,13 +70,23 @@ class DashboardPage extends StatelessWidget {
                 width: double.infinity,
                 child: Column(
                   children: [
-                    BlocBuilder<AggregatedBalanceCubit, AggregatedBalance>(
-                      bloc: aggregatedDEuro,
-                      builder: (context, state) => SectionBalance(
-                        balance: state.balance,
-                        onHideAmountPress: () => context
-                            .read<SettingsBloc>()
-                            .add(ToggleHideAmountEvent()),
+                    BlocBuilder<HomeBloc, HomeState>(
+                      bloc: context.read<HomeBloc>(),
+                      builder: (context, homeState) => BlocBuilder<
+                          AggregatedBalanceCubit, AggregatedBalance>(
+                        bloc: aggregatedDEuro,
+                        builder: (context, state) => SectionBalance(
+                          balance: state.balance,
+                          isFiatServiceAvailable:
+                              homeState.isFiatServiceAvailable,
+                          onHideAmountPress: () => context
+                              .read<SettingsBloc>()
+                              .add(ToggleHideAmountEvent()),
+                          onDepositPress: () =>
+                              getIt<DFXService>().launchProvider(context, true),
+                          onWithdrawPress: () => getIt<DFXService>()
+                              .launchProvider(context, false),
+                        ),
                       ),
                     ),
                     Expanded(
