@@ -1,7 +1,13 @@
 import 'package:deuro_wallet/models/asset.dart';
 import 'package:deuro_wallet/packages/service/transaction_history_service.dart';
 
-enum TransactionTypes { transfer, genericContractCall, tokenTransfer }
+enum TransactionTypes {
+  transfer,
+  genericContractCall,
+  tokenTransfer,
+  savingsAdd,
+  savingsRemove
+}
 
 class Transaction {
   final int height;

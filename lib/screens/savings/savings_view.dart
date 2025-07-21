@@ -1,10 +1,24 @@
+import 'package:deuro_wallet/di.dart';
+import 'package:deuro_wallet/models/transaction.dart';
+import 'package:deuro_wallet/packages/repository/transaction_repository.dart';
+import 'package:deuro_wallet/packages/service/app_store.dart';
+import 'package:deuro_wallet/screens/dashboard/widgets/section_transaction_history.dart';
 import 'package:deuro_wallet/screens/savings/bloc/savings_bloc.dart';
+import 'package:deuro_wallet/screens/savings/bloc/transaction_history_cubit.dart';
 import 'package:deuro_wallet/screens/savings/widgets/section_balance.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SavingsView extends StatelessWidget {
-  const SavingsView({super.key});
+  SavingsView(this._appStore, {super.key}) {
+    transactionHistoryCubit =
+        TransactionHistoryCubit(getIt<TransactionRepository>(), walletAddress);
+  }
+
+  final AppStore _appStore;
+  late final TransactionHistoryCubit transactionHistoryCubit;
+
+  String get walletAddress => _appStore.primaryAddress;
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -19,6 +33,28 @@ class SavingsView extends StatelessWidget {
                     BigInt.parse(state.accruedInterest, radix: 16),
                 isEnabled: state.isEnabled,
               ),
+              Expanded(
+                child: CustomScrollView(slivers: [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Column(children: <Widget>[
+                      Padding(
+                        padding: EdgeInsets.all(20),
+                        child: BlocBuilder<TransactionHistoryCubit,
+                            List<Transaction>>(
+                          bloc: transactionHistoryCubit,
+                          builder: (context, state) =>
+                              SectionTransactionHistory(
+                            transactions: state,
+                            walletAddress: walletAddress,
+                            hasShowAll: state.length == 5,
+                          ),
+                        ),
+                      ),
+                    ]),
+                  )
+                ]),
+              )
             ]),
           ),
         ),

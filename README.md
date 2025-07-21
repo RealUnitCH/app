@@ -20,3 +20,11 @@ samples, guidance on mobile development, and a full API reference.
 ```shell
 dart run build_runner build --delete-conflicting-outputs
 ```
+
+# Open ToDo
+- Swap / Bridge
+- Invest
+- Multichain Tx History
+- Setup Ponder
+  - Savings History
+  - Tx History

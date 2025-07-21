@@ -1,5 +1,7 @@
+import 'package:deuro_wallet/di.dart';
 import 'package:deuro_wallet/generated/i18n.dart';
 import 'package:deuro_wallet/models/transaction.dart';
+import 'package:deuro_wallet/packages/service/transaction_history_service.dart';
 import 'package:deuro_wallet/screens/dashboard/widgets/transaction_row.dart';
 import 'package:deuro_wallet/styles/colors.dart';
 import 'package:deuro_wallet/styles/styles.dart';
@@ -40,7 +42,8 @@ class SectionTransactionHistory extends StatelessWidget {
                     radius: 17,
                     backgroundColor: Colors.white10.withAlpha(50),
                     child: IconButton(
-                      onPressed: () {},
+                      onPressed: () =>
+                          getIt<TransactionHistoryService>().ponderBasedSync(),
                       iconSize: 18,
                       color: DEuroColors.neutralGrey,
                       icon: Icon(Icons.refresh),

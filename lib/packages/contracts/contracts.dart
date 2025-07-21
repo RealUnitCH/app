@@ -1,5 +1,6 @@
 import 'package:deuro_wallet/packages/contracts/FrontendGateway.g.dart';
 import 'package:deuro_wallet/packages/contracts/SavingsGateway.g.dart';
+import 'package:deuro_wallet/packages/contracts/StablecoinBridge.g.dart';
 import 'package:web3dart/web3dart.dart';
 
 export 'FrontendGateway.g.dart';
@@ -14,4 +15,7 @@ SavingsGateway getSavingsGateway(Web3Client client) => SavingsGateway(
     address: EthereumAddress.fromHex(savingsGatewayAddress), client: client);
 
 FrontendGateway getFrontendGateway(Web3Client client) => FrontendGateway(
+    address: EthereumAddress.fromHex(frontendGatewayAddress), client: client);
+
+StablecoinBridge getStablecoinBridge(Web3Client client) => StablecoinBridge(
     address: EthereumAddress.fromHex(frontendGatewayAddress), client: client);

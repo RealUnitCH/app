@@ -4,6 +4,7 @@ import 'package:deuro_wallet/di.dart';
 import 'package:deuro_wallet/generated/i18n.dart';
 import 'package:deuro_wallet/packages/service/app_store.dart';
 import 'package:deuro_wallet/packages/service/balance_service.dart';
+import 'package:deuro_wallet/packages/utils/fuck_firebase.dart';
 import 'package:deuro_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:deuro_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:deuro_wallet/styles/themes.dart';
@@ -14,6 +15,8 @@ import 'package:go_router/go_router.dart';
 
 Future<void> main() async {
   try {
+    WidgetsFlutterBinding.ensureInitialized();
+    await fuckFirebase();
     final databaseKey = await setupEssentials();
     await finishSetup(databaseKey);
 

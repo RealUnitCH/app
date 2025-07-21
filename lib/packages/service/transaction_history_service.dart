@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:deuro_wallet/models/asset.dart';
 import 'package:deuro_wallet/models/blockchain.dart';
 import 'package:deuro_wallet/models/transaction.dart';
+import 'package:deuro_wallet/packages/ponder/ponder.dart';
 import 'package:deuro_wallet/packages/repository/asset_repository.dart';
 import 'package:deuro_wallet/packages/repository/transaction_repository.dart';
 import 'package:deuro_wallet/packages/service/app_store.dart';
@@ -100,25 +101,51 @@ class TransactionHistoryService {
             decimals: 18,
           );
 
-      _transactionRepository.insertTransaction(Transaction(
-        height: int.parse(result.blockNumber),
-        txId: result.hash,
-        chainId: chain.chainId,
-        senderAddress: result.from.asHexEip55,
-        receiverAddress: result.to.asHexEip55,
-        amount: BigInt.parse(result.value),
-        asset: asset,
-        type: TransactionTypes.tokenTransfer,
-        note: "",
-        data: result.input,
-        timestamp: DateTime.fromMillisecondsSinceEpoch(
-            int.parse(result.timeStamp) * 1000),
-      ));
+      final exists = await _transactionRepository.exitsTransaction(result.hash);
+      if (!exists) {
+        _transactionRepository.insertTransaction(Transaction(
+          height: int.parse(result.blockNumber),
+          txId: result.hash,
+          chainId: chain.chainId,
+          senderAddress: result.from.asHexEip55,
+          receiverAddress: result.to.asHexEip55,
+          amount: BigInt.parse(result.value),
+          asset: asset,
+          type: TransactionTypes.tokenTransfer,
+          note: "",
+          data: result.input,
+          timestamp: DateTime.fromMillisecondsSinceEpoch(
+              int.parse(result.timeStamp) * 1000),
+        ));
+      }
     }
 
     // Recursive call till interrupted after being fully indexed
     explorerAssistedScan(call + 1);
   }
+
+  Future<void> ponderBasedSync() async {
+    final transactions = await Ponder().getSavingsSavingsTransactions(_appStore.primaryAddress);
+
+    for (final tx in transactions) {
+      final exists = await _transactionRepository.exitsTransaction(tx.txId);
+      print(tx.txId);
+      if (exists) {
+        _transactionRepository.updateTransaction(tx);
+      } else {
+        _transactionRepository.insertTransaction(tx);
+      }
+    }
+  }
+
+// Future<Transaction> getTransactionState(String txId, int chainId) async {
+//   final txState =
+//       await _appStore.getClient(chainId).getTransactionByHash(txId);
+//
+//   if (txState != null) {
+//     txState.
+//   }
+// }
 }
 
 extension ToEpiAddress on String {

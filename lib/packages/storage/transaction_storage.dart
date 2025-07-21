@@ -30,6 +30,33 @@ extension TransactionStorage on AppDatabase {
         timeStamp: timeStamp,
       ));
 
+  Future<int> updateTransaction(
+    String txId, {
+    int? height,
+    int? chainId,
+    String? senderAddress,
+    String? receiverAddress,
+    String? amount,
+    int? asset,
+    int? type,
+    String? note,
+    String? data,
+    DateTime? timeStamp,
+  }) =>
+      (update(transactions)..where((row) => row.txId.equals(txId)))
+          .write(TransactionsCompanion(
+        height: Value.absentIfNull(height),
+        chainId: Value.absentIfNull(chainId),
+        senderAddress: Value.absentIfNull(senderAddress),
+        receiverAddress: Value.absentIfNull(receiverAddress),
+        amount: Value.absentIfNull(amount),
+        asset: Value.absentIfNull(asset),
+        type: Value.absentIfNull(type),
+        note: Value.absentIfNull(note),
+        data: Value.absentIfNull(data),
+        timeStamp: Value.absentIfNull(timeStamp),
+      ));
+
   Future<List<TransactionData>> getAllTokenTransactions(
           int chainId, String address) =>
       (select(transactions)
@@ -44,9 +71,17 @@ extension TransactionStorage on AppDatabase {
         ]))
       .watch();
 
-  Stream<List<TransactionData>> watchTransfersOfAssets(Iterable<int> assets) =>
+  Stream<List<TransactionData>> watchTransfersOfAssets(
+          Iterable<int> assets, String wallet) =>
       (select(transactions)
-            ..where((row) => row.asset.isIn(assets) & row.type.equals(2))
+            ..where((row) => Expression.and([
+                  row.asset.isIn(assets),
+                  row.type.equals(2),
+                  Expression.or([
+                    row.senderAddress.equals(wallet),
+                    row.receiverAddress.equals(wallet)
+                  ]),
+                ]))
             ..orderBy([
               (u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)
             ]))
@@ -58,6 +93,23 @@ extension TransactionStorage on AppDatabase {
             ..where((row) => Expression.and([
                   row.asset.isIn(assets),
                   row.type.equals(2),
+                  Expression.or([
+                    row.senderAddress.equals(wallet),
+                    row.receiverAddress.equals(wallet)
+                  ]),
+                ]))
+            ..orderBy([
+              (u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)
+            ])
+            ..limit(limit))
+          .watch();
+
+  Stream<List<TransactionData>> watchTransfersOfSavingsLimit(
+          Iterable<int> assets, String wallet, int limit) =>
+      (select(transactions)
+            ..where((row) => Expression.and([
+                  row.asset.isIn(assets),
+                  row.type.isIn([3, 4]),
                   Expression.or([
                     row.senderAddress.equals(wallet),
                     row.receiverAddress.equals(wallet)

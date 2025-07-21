@@ -34,6 +34,21 @@ class TransactionRepository {
         transaction.timestamp,
       );
 
+  Future<int> updateTransaction(Transaction transaction) =>
+      _appDatabase.updateTransaction(
+        transaction.txId,
+        height: transaction.height,
+        chainId: transaction.chainId,
+        senderAddress: transaction.senderAddress,
+        receiverAddress: transaction.receiverAddress,
+        amount: transaction.amount.toRadixString(16),
+        asset: transaction.asset.id,
+        type: transaction.type.index,
+        note: transaction.note ?? '',
+        data: transaction.data ?? '',
+        timeStamp: transaction.timestamp,
+      );
+
   Future<bool> exitsTransaction(String txId) =>
       _appDatabase.getTransaction(txId).then((txData) => txData != null);
 
@@ -99,7 +114,14 @@ class TransactionRepository {
           .transform<List<Transaction>>(_transformer);
     }
     return _appDatabase
-        .watchTransfersOfAssets(assets.map((e) => e.id))
+        .watchTransfersOfAssets(assets.map((e) => e.id), wallet)
+        .transform<List<Transaction>>(_transformer);
+  }
+
+  Stream<List<Transaction>> watchTransactionsSavings(
+      Iterable<Asset> assets, String wallet, int limit) {
+    return _appDatabase
+        .watchTransfersOfSavingsLimit(assets.map((e) => e.id), wallet, limit)
         .transform<List<Transaction>>(_transformer);
   }
 

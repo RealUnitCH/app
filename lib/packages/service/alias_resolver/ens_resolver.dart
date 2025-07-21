@@ -1,4 +1,4 @@
-import 'package:ens_lookup/ens_lookup.dart';
+import 'package:deuro_wallet/packages/wallet/ens_lookup.dart';
 import 'package:web3dart/web3dart.dart';
 
 import 'alias_resolver.dart';
