@@ -33,12 +33,26 @@ class SavingsBloc extends Bloc<SavingsEvent, SavingsState> {
 
     add(LoadSavingsBalance());
     add(LoadIsEnabled());
+    startSync();
   }
 
   final AppStore _appStore;
   late final Web3Client _client;
   late final SavingsGateway _savingsGateway;
   final Blockchain _blockchain = Blockchain.ethereum;
+
+  Timer? _refreshTimer;
+
+  void startSync() {
+    _refreshTimer = Timer.periodic(
+        Duration(seconds: 10), (_) => add(LoadSavingsBalance()));
+  }
+
+  @override
+  Future<void> close() async {
+    _refreshTimer?.cancel();
+    super.close();
+  }
 
   Future<void> _onLoadIsEnabled(
       LoadIsEnabled event, Emitter<SavingsState> emit) async {
