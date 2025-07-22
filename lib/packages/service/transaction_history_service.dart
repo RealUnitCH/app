@@ -125,9 +125,10 @@ class TransactionHistoryService {
   }
 
   Future<void> ponderBasedSync() async {
-    final transactions = await Ponder().getSavingsSavingsTransactions(_appStore.primaryAddress);
+    final transactions = await Ponder().getSavingsSavedTransactions(_appStore.primaryAddress);
+    final transactions2 = await Ponder().getSavingsWithdrawnTransactions(_appStore.primaryAddress);
 
-    for (final tx in transactions) {
+    for (final tx in [...transactions, ...transactions2]) {
       final exists = await _transactionRepository.exitsTransaction(tx.txId);
       print(tx.txId);
       if (exists) {

@@ -1,6 +1,8 @@
 import 'package:deuro_wallet/models/transaction.dart';
 import 'package:deuro_wallet/packages/contracts/contracts.dart';
+import 'package:deuro_wallet/packages/ponder/models/ponder_tx.dart';
 import 'package:deuro_wallet/packages/ponder/models/savings_saved.dart';
+import 'package:deuro_wallet/packages/ponder/models/savings_withdrawn.dart';
 import 'package:deuro_wallet/packages/utils/default_assets.dart';
 import 'package:graphql/client.dart';
 
@@ -12,7 +14,7 @@ class Ponder {
     ),
   );
 
-  Future<List<Transaction>> getSavingsSavingsTransactions(String address) async {
+  Future<List<Transaction>> getSavingsSavedTransactions(String address) async {
     final QueryOptions options = QueryOptions(
       document: gql(
         '''
@@ -36,10 +38,43 @@ class Ponder {
       parserFn: (data) => SavingsSaved.fromJson(data),
     );
 
+    return _queryTransaction<SavingsSaved>(options, address);
+  }
+
+  Future<List<Transaction>> getSavingsWithdrawnTransactions(
+      String address) async {
+    final QueryOptions options = QueryOptions(
+      document: gql(
+        '''
+        query SavingsWithdrawn {
+					savingsWithdrawns(
+						orderBy: "blockheight"
+						orderDirection: "desc"
+						where: { account: "${address.toLowerCase()}" }
+					) {
+            items {
+                created
+                blockheight
+                txHash
+                account
+                amount
+              }
+          }
+        }
+      ''',
+      ),
+      parserFn: (data) => SavingsWithdrawn.fromJson(data),
+    );
+
+    return _queryTransaction<SavingsWithdrawn>(options, address);
+  }
+
+  Future<List<Transaction>> _queryTransaction<T extends PonderTx>(
+      QueryOptions options, String address) async {
     final QueryResult result = await client.query(options);
 
     final txList = <Transaction>[];
-    for (final item in result.parsedData as List<SavingsSaved>) {
+    for (final item in result.parsedData as List<T>) {
       txList.add(Transaction(
         height: item.blockheight.toInt(),
         txId: item.txHash,
@@ -48,7 +83,7 @@ class Ponder {
         receiverAddress: savingsGatewayAddress,
         amount: item.amount,
         asset: dEUROAsset,
-        type: TransactionTypes.savingsAdd,
+        type: item.txType,
         timestamp:
             DateTime.fromMillisecondsSinceEpoch(item.created.toInt() * 1000),
         note: null,

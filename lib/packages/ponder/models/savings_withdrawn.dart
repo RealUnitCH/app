@@ -1,8 +1,8 @@
 import 'package:deuro_wallet/models/transaction.dart';
 import 'package:deuro_wallet/packages/ponder/models/ponder_tx.dart';
 
-class SavingsSaved extends PonderTx {
-  const SavingsSaved({
+class SavingsWithdrawn extends PonderTx {
+  const SavingsWithdrawn({
     required super.created,
     required super.blockheight,
     required super.txHash,
@@ -10,13 +10,13 @@ class SavingsSaved extends PonderTx {
     required super.amount,
   });
 
-  static List<SavingsSaved> fromJson(Map<String, dynamic> query) {
-    final result = <SavingsSaved>[];
-    final items = query['savingsSaveds']['items'] as List<dynamic>;
+  static List<SavingsWithdrawn> fromJson(Map<String, dynamic> query) {
+    final result = <SavingsWithdrawn>[];
+    final items = query['savingsWithdrawns']['items'] as List<dynamic>;
 
     for (final itemRaw in items) {
       final item = itemRaw as Map<String, dynamic>;
-      result.add(SavingsSaved(
+      result.add(SavingsWithdrawn(
         created: BigInt.parse(item['created']),
         blockheight: BigInt.parse(item['blockheight']),
         txHash: item['txHash'],
@@ -29,5 +29,5 @@ class SavingsSaved extends PonderTx {
   }
 
   @override
-  TransactionTypes get txType => TransactionTypes.savingsAdd;
+  TransactionTypes get txType => TransactionTypes.savingsRemove;
 }
