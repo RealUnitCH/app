@@ -1,5 +1,6 @@
 import 'package:deuro_wallet/di.dart';
 import 'package:deuro_wallet/models/balance.dart';
+import 'package:deuro_wallet/models/blockchain.dart';
 import 'package:deuro_wallet/models/transaction.dart';
 import 'package:deuro_wallet/packages/repository/balance_repository.dart';
 import 'package:deuro_wallet/packages/repository/transaction_repository.dart';
@@ -42,6 +43,19 @@ class DashboardPage extends StatelessWidget {
           asset: asset, walletAddress: walletAddress));
     }
 
+    for (final asset in [
+      depsAsset,
+      nDEPSAsset,
+      Blockchain.ethereum.nativeAsset,
+      Blockchain.polygon.nativeAsset,
+      Blockchain.base.nativeAsset,
+      Blockchain.optimism.nativeAsset,
+      Blockchain.arbitrum.nativeAsset,
+    ]) {
+      cryptoHoldings.add(BalanceCubit(getIt<BalanceRepository>(),
+          asset: asset, walletAddress: walletAddress));
+    }
+
     transactionHistoryCubit =
         TransactionHistoryCubit(getIt<TransactionRepository>(), walletAddress);
   }
@@ -52,6 +66,7 @@ class DashboardPage extends StatelessWidget {
 
   late final AggregatedBalanceCubit aggregatedDEuro;
   final List<BalanceCubit> singleCashHoldings = [];
+  final List<BalanceCubit> cryptoHoldings = [];
   late final TransactionHistoryCubit transactionHistoryCubit;
 
   @override
@@ -127,8 +142,8 @@ class DashboardPage extends StatelessWidget {
                                               // ActionButton(
                                               //   icon: Icons.currency_exchange,
                                               //   label: "Swap",
-                                              //   onPressed: () => context
-                                              //       .push('/swap/deuro'),
+                                              //   onPressed: () =>
+                                              //       context.push('/swap'),
                                               //   textStyle:
                                               //       kActionButtonTextStyle
                                               //           .copyWith(
@@ -155,12 +170,77 @@ class DashboardPage extends StatelessWidget {
                                                 BalanceCubit, Balance>(
                                               bloc: holding,
                                               builder: (context, state) =>
-                                                  CashHoldingBox(
-                                                asset: holding.asset,
-                                                balance: state.balance,
+                                                  Offstage(
+                                                offstage: state.balance ==
+                                                    BigInt.zero,
+                                                child: CashHoldingBox(
+                                                  asset: holding.asset,
+                                                  balance: state.balance,
+                                                ),
                                               ),
                                             ),
                                           )
+                                        ],
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: EdgeInsets.all(20),
+                                      child: Column(
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Text(
+                                                "Crypto Holdings",
+                                                style: kSubtitleTextStyle,
+                                              ),
+                                              Spacer(),
+                                              // ActionButton(
+                                              //   icon: Icons.show_chart,
+                                              //   label: "Invest",
+                                              //   onPressed: () =>
+                                              //       context.push('/invest'),
+                                              //   textStyle:
+                                              //   kActionButtonTextStyle
+                                              //       .copyWith(
+                                              //     color:
+                                              //     DEuroColors.neutralGrey,
+                                              //   ),
+                                              // ),
+                                            ],
+                                          ),
+                                          MultiBlocProvider(
+                                            providers: cryptoHoldings
+                                                .map((cubit) =>
+                                                    BlocProvider.value(
+                                                        value: cubit))
+                                                .toList(),
+                                            child: Column(
+                                              children: cryptoHoldings
+                                                  .map(
+                                                    (holding) => BlocBuilder<
+                                                        BalanceCubit, Balance>(
+                                                      bloc: holding,
+                                                      builder:
+                                                          (context, state) =>
+                                                              Offstage(
+                                                        offstage:
+                                                            state.balance ==
+                                                                BigInt.zero,
+                                                        child: CashHoldingBox(
+                                                          backgroundColor:
+                                                              DEuroColors
+                                                                  .neutralGrey93,
+                                                          asset: holding.asset,
+                                                          balance:
+                                                              state.balance,
+                                                          leadingSymbol: "",
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  )
+                                                  .toList(),
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),

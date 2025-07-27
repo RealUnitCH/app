@@ -13,6 +13,8 @@ class CashHoldingBox extends StatelessWidget {
   final Color secondRowTextColor;
   final bool showBlockchainIcon;
   final bool navigateToDetails;
+  final String leadingSymbol;
+  final String trailingSymbol;
 
   const CashHoldingBox({
     super.key,
@@ -23,6 +25,8 @@ class CashHoldingBox extends StatelessWidget {
     this.secondRowTextColor = DEuroColors.titanGray60,
     this.showBlockchainIcon = false,
     this.navigateToDetails = true,
+    this.leadingSymbol = "€",
+    this.trailingSymbol = "",
     this.borderColor,
   });
 
@@ -67,6 +71,8 @@ class CashHoldingBox extends StatelessWidget {
                   HideAmountText(
                     amount: balance, decimals: asset.decimals, fractionalDigits: 4, trimZeros: false,
                     style: _firstRowTextStyle,
+                    leadingSymbol: leadingSymbol,
+                    trailingSymbol: trailingSymbol,
                   ),
                 ],
               ),
