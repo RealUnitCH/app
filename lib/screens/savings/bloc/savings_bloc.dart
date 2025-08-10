@@ -5,6 +5,7 @@ import 'package:deuro_wallet/constants.dart';
 import 'package:deuro_wallet/generated/i18n.dart';
 import 'package:deuro_wallet/models/blockchain.dart';
 import 'package:deuro_wallet/packages/contracts/contracts.dart';
+import 'package:deuro_wallet/packages/repository/cache_repository.dart';
 import 'package:deuro_wallet/packages/service/app_store.dart';
 import 'package:deuro_wallet/packages/utils/default_assets.dart';
 import 'package:deuro_wallet/packages/utils/format_fixed.dart';
@@ -22,30 +23,39 @@ part 'savings_event.dart';
 part 'savings_state.dart';
 
 class SavingsBloc extends Bloc<SavingsEvent, SavingsState> {
-  SavingsBloc(this._appStore) : super(SavingsState()) {
-    on<LoadSavingsBalance>(_onLoadSavingsBalance);
+  SavingsBloc(this._appStore, this._cacheRepository) : super(SavingsState()) {
     on<EnableSavings>(_onEnableSavings);
     on<LoadIsEnabled>(_onLoadIsEnabled);
+    on<LoadSavingsBalance>(_onLoadSavingsBalance);
+    on<LoadFromCache>(_onLoadFromCache);
     on<CollectInterest>(_onCollectInterest);
+    on<CompoundInterest>(_onCompoundInterest);
 
     _client = _appStore.getClient(1);
     _savingsGateway = getSavingsGateway(_client);
 
+    add(LoadFromCache());
     add(LoadSavingsBalance());
     add(LoadIsEnabled());
     startSync();
   }
 
   final AppStore _appStore;
+  final CacheRepository _cacheRepository;
   late final Web3Client _client;
   late final SavingsGateway _savingsGateway;
   final Blockchain _blockchain = Blockchain.ethereum;
 
+  static const String cacheKeySavingsInterestRate = 'savings_interest_rate';
+  static const String cacheKeySavingsBalance = 'savings_balance';
+  static const String cacheKeySavingsAccruedInterest =
+      'savings_accrued_interest';
+
   Timer? _refreshTimer;
 
   void startSync() {
-    _refreshTimer = Timer.periodic(
-        Duration(seconds: 10), (_) => add(LoadSavingsBalance()));
+    _refreshTimer =
+        Timer.periodic(Duration(seconds: 10), (_) => add(LoadSavingsBalance()));
   }
 
   @override
@@ -172,6 +182,47 @@ class SavingsBloc extends Bloc<SavingsEvent, SavingsState> {
     }
   }
 
+  Future<void> _onCompoundInterest(
+      CompoundInterest event, Emitter<SavingsState> emit) async {
+    if (state.isCollectingInterest) return;
+    if (!(await _checkRequiredEth())) return;
+
+    try {
+      emit(state.copyWith(isCollectingInterest: true));
+      final savingsGateway = getSavingsGateway(_client);
+
+      final estimatedFee = await _client.estimateGas(
+        sender: _appStore.wallet.primaryAccount.primaryAddress.address,
+        to: savingsGateway.self.address,
+        data: savingsGateway.self.abi.functions[16].encodeCall([]),
+      );
+
+      final confirmed = await showModalBottomSheet<bool>(
+        context: navigatorKey.currentContext!,
+        builder: (context) => ConfirmBottomSheet(
+          onConfirm: () => context.pop(true),
+          title: S.current.savings_reinvest,
+          message: S.current
+              .savings_compound_interest_confirm_content(_blockchain.name),
+          fee: "~${formatFixed(estimatedFee, 9)}",
+          feeSymbol: _blockchain.nativeSymbol,
+        ),
+      );
+
+      if (confirmed == true) {
+        final txId = await savingsGateway.refreshMyBalance(
+            credentials: _appStore.wallet.primaryAccount.primaryAddress);
+        developer.log('Compound Interest in TX($txId)', name: 'SavingsBloc');
+        add(LoadSavingsBalance());
+      }
+      emit(state.copyWith(isCollectingInterest: false));
+    } catch (e) {
+      developer.log('Error during compounding interest',
+          error: e, name: 'SavingsBloc._onCompoundInterest');
+      emit(state.copyWith(isCollectingInterest: false));
+    }
+  }
+
   Future<void> _onLoadSavingsBalance(
       LoadSavingsBalance event, Emitter<SavingsState> emit) async {
     final interestRate = await _savingsGateway.currentRatePPM();
@@ -180,9 +231,33 @@ class SavingsBloc extends Bloc<SavingsEvent, SavingsState> {
     final intrest = await _savingsGateway.accruedInterest(
         (accountOwner: EthereumAddress.fromHex(_appStore.primaryAddress)));
     emit(state.copyWith(
-        amount: amount.saved.toRadixString(16),
-        interestRate: interestRate.toRadixString(16),
-        accruedInterest: intrest.toRadixString(16)));
+      amount: amount.saved.toRadixString(16),
+      interestRate: interestRate.toRadixString(16),
+      accruedInterest: intrest.toRadixString(16),
+      isCached: false,
+    ));
+
+    await _cacheRepository.write(
+        cacheKeySavingsInterestRate, interestRate.toRadixString(16));
+    await _cacheRepository.write(
+        cacheKeySavingsBalance, amount.saved.toRadixString(16));
+    await _cacheRepository.write(
+        cacheKeySavingsAccruedInterest, intrest.toRadixString(16));
+  }
+
+  Future<void> _onLoadFromCache(
+      LoadFromCache event, Emitter<SavingsState> emit) async {
+    final interestRate =
+        await _cacheRepository.read(cacheKeySavingsInterestRate);
+    final amount = await _cacheRepository.read(cacheKeySavingsBalance);
+
+    final intrest = await _cacheRepository.read(cacheKeySavingsAccruedInterest);
+    emit(state.copyWith(
+      amount: amount,
+      interestRate: interestRate,
+      accruedInterest: intrest,
+      isCached: true,
+    ));
   }
 
   Future<bool> _checkRequiredEth() async {

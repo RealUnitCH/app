@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class VerticalIconButton extends StatelessWidget {
   final void Function()? onPressed;
-  final Icon icon;
+  final Widget icon;
   final String label;
 
   const VerticalIconButton({
@@ -14,7 +14,7 @@ class VerticalIconButton extends StatelessWidget {
 
   static Widget extended({
     void Function()? onPressed,
-    required Icon icon,
+    required Widget icon,
     required String label,
   }) =>
       _WideVerticalIconButton(
@@ -46,7 +46,7 @@ class VerticalIconButton extends StatelessWidget {
 
 class _WideVerticalIconButton extends StatelessWidget {
   final void Function()? onPressed;
-  final Icon icon;
+  final Widget icon;
   final String label;
 
   const _WideVerticalIconButton({

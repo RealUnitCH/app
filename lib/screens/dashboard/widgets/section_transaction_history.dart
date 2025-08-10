@@ -23,10 +23,7 @@ class SectionTransactionHistory extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         width: double.infinity,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-        ),
+        decoration: kContainerCardStyle,
         child: Column(
           children: [
             Padding(

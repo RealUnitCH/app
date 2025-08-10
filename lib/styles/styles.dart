@@ -8,7 +8,8 @@ const kPageTitleTextStyle =
 
 const kTitleTextStyle = TextStyle(fontSize: 16, color: DEuroColors.anthracite);
 
-const kSubtitleTextStyle = TextStyle(fontSize: 14, color: DEuroColors.neutralGrey);
+const kSubtitleTextStyle =
+    TextStyle(fontSize: 14, color: DEuroColors.neutralGrey);
 
 const kActionButtonTextStyle = TextStyle(fontSize: 12, color: Colors.white);
 
@@ -49,3 +50,8 @@ final kFullwidthActionButtonStyle = FilledButton.styleFrom(
     backgroundColor: DEuroColors.neutralGrey.withAlpha(50),
     padding: EdgeInsets.only(top: 5, bottom: 5, left: 10, right: 10),
     iconColor: DEuroColors.neutralGrey);
+
+const kContainerCardStyle = BoxDecoration(
+  color: Colors.white,
+  borderRadius: BorderRadius.all(Radius.circular(12)),
+);

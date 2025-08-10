@@ -158,12 +158,28 @@ class SectionBalance extends StatelessWidget {
                           Spacer(),
                           ActionButton(
                             customIcon:
-                                CollectInterestIcon(color: Colors.white),
-                            label: S.of(context).collect_interest,
-                            onPressed: () => context
-                                .read<SavingsBloc>()
-                                .add(CollectInterest()),
+                                Icon(Icons.refresh, color: Colors.white),
+                            label: S.of(context).savings_reinvest,
+                            onPressed: isEnabled
+                                ? () => context
+                                    .read<SavingsBloc>()
+                                    .add(CompoundInterest())
+                                : null,
                             buttonStyle: kBalanceBarActionButtonStyle,
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(left: 5),
+                            child: ActionButton(
+                              customIcon:
+                                  CollectInterestIcon(color: Colors.white),
+                              label: S.of(context).collect_interest,
+                              onPressed: isEnabled
+                                  ? () => context
+                                      .read<SavingsBloc>()
+                                      .add(CollectInterest())
+                                  : null,
+                              buttonStyle: kBalanceBarActionButtonStyle,
+                            ),
                           ),
                         ],
                       ),

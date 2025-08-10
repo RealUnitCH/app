@@ -19,6 +19,14 @@ final class LoadSavingsBalance extends SavingsEvent {
   const LoadSavingsBalance();
 }
 
+final class LoadFromCache extends SavingsEvent {
+  const LoadFromCache();
+}
+
 final class CollectInterest extends SavingsEvent {
   const CollectInterest();
+}
+
+final class CompoundInterest extends SavingsEvent {
+  const CompoundInterest();
 }

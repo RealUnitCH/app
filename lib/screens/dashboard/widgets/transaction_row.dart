@@ -152,9 +152,9 @@ class SavingsTransactionRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   if (transaction.type == TransactionTypes.savingsRemove)
-                    CollectInterestIcon(size: 24,),
+                    CollectInterestIcon(size: 24),
                   if (transaction.type == TransactionTypes.savingsAdd)
-                    Icon(Icons.savings, size: 24,),
+                    Icon(Icons.savings, size: 24),
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.only(left: 16),

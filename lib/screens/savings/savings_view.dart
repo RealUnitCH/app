@@ -1,4 +1,5 @@
 import 'package:deuro_wallet/di.dart';
+import 'package:deuro_wallet/generated/i18n.dart';
 import 'package:deuro_wallet/models/transaction.dart';
 import 'package:deuro_wallet/packages/repository/transaction_repository.dart';
 import 'package:deuro_wallet/packages/service/app_store.dart';
@@ -6,6 +7,7 @@ import 'package:deuro_wallet/screens/dashboard/widgets/section_transaction_histo
 import 'package:deuro_wallet/screens/savings/bloc/savings_bloc.dart';
 import 'package:deuro_wallet/screens/savings/bloc/transaction_history_cubit.dart';
 import 'package:deuro_wallet/screens/savings/widgets/section_balance.dart';
+import 'package:deuro_wallet/styles/styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -37,11 +39,24 @@ class SavingsView extends StatelessWidget {
                 child: CustomScrollView(slivers: [
                   SliverFillRemaining(
                     hasScrollBody: false,
-                    child: Column(children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.all(20),
-                        child: BlocBuilder<TransactionHistoryCubit,
-                            List<Transaction>>(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(children: <Widget>[
+                        if (state.isCached)
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            margin: const EdgeInsets.only(bottom: 20),
+                            decoration: kContainerCardStyle,
+                            child:
+                                Row(mainAxisSize: MainAxisSize.max, children: [
+                              Padding(
+                                padding: const EdgeInsets.only(right: 20),
+                                child: Icon(Icons.warning, color: Colors.amber),
+                              ),
+                              Text(S.of(context).savings_data_outdated),
+                            ]),
+                          ),
+                        BlocBuilder<TransactionHistoryCubit, List<Transaction>>(
                           bloc: transactionHistoryCubit,
                           builder: (context, state) =>
                               SectionTransactionHistory(
@@ -50,8 +65,8 @@ class SavingsView extends StatelessWidget {
                             hasShowAll: state.length == 5,
                           ),
                         ),
-                      ),
-                    ]),
+                      ]),
+                    ),
                   )
                 ]),
               )

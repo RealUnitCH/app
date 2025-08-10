@@ -56,7 +56,7 @@ class ConfirmBottomSheet extends StatelessWidget {
                     currencySymbol: feeSymbol!,
                   ),
                 Padding(
-                  padding: EdgeInsets.only(top: 10),
+                  padding: EdgeInsets.only(top: 10, bottom: 10),
                   child: StandardSlideButton(
                     buttonText: S.of(context).confirm,
                     onSlideComplete: onConfirm,

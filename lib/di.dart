@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:deuro_wallet/packages/open_crypto_pay/open_crypto_pay_service.dart';
 import 'package:deuro_wallet/packages/repository/asset_repository.dart';
 import 'package:deuro_wallet/packages/repository/balance_repository.dart';
+import 'package:deuro_wallet/packages/repository/cache_repository.dart';
 import 'package:deuro_wallet/packages/repository/node_repository.dart';
 import 'package:deuro_wallet/packages/repository/settings_repository.dart';
 import 'package:deuro_wallet/packages/repository/transaction_repository.dart';
@@ -19,6 +20,7 @@ import 'package:deuro_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:deuro_wallet/screens/restore_wallet/bloc/restore_wallet_cubit.dart';
 import 'package:deuro_wallet/screens/savings/bloc/savings_bloc.dart';
 import 'package:deuro_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:deuro_wallet/screens/swap/bloc/swap_bloc.dart';
 import 'package:deuro_wallet/setup.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -67,6 +69,7 @@ Future<void> finishSetup(String encryptionKey) async {
 }
 
 void setupRepositories() {
+  getIt.registerFactory(() => CacheRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => WalletRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => BalanceRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => AssetRepository(getIt<AppDatabase>()));
@@ -101,7 +104,10 @@ void setupBlocs() {
 
   getIt.registerFactory(() => RestoreWalletCubit(getIt<WalletService>()));
 
-  getIt.registerFactory(() => SavingsBloc(getIt<AppStore>()));
+  getIt.registerFactory(() => SavingsBloc(getIt<AppStore>(), getIt<CacheRepository>()));
+
+  getIt.registerFactory(
+      () => SwapBloc(getIt<AppStore>(), getIt<BalanceService>()));
 }
 
 Future<bool> _existsDatabaseFile() async =>

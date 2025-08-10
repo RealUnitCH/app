@@ -8,6 +8,7 @@ class SavingsState extends Equatable {
     this.isEnabled = false,
     this.isActivatingSavings = false,
     this.isCollectingInterest = false,
+    this.isCached = false,
   });
 
   final String amount;
@@ -16,6 +17,7 @@ class SavingsState extends Equatable {
   final bool isEnabled;
   final bool isActivatingSavings;
   final bool isCollectingInterest;
+  final bool isCached;
 
   SavingsState copyWith({
     String? amount,
@@ -24,6 +26,7 @@ class SavingsState extends Equatable {
     bool? isEnabled,
     bool? isActivatingSavings,
     bool? isCollectingInterest,
+    bool? isCached,
   }) =>
       SavingsState(
         amount: amount ?? this.amount,
@@ -32,6 +35,7 @@ class SavingsState extends Equatable {
         isEnabled: isEnabled ?? this.isEnabled,
         isActivatingSavings: isActivatingSavings ?? this.isActivatingSavings,
         isCollectingInterest: isCollectingInterest ?? this.isCollectingInterest,
+        isCached: isCached ?? this.isCached,
       );
 
   @override
@@ -42,5 +46,6 @@ class SavingsState extends Equatable {
         isEnabled,
         isActivatingSavings,
         isCollectingInterest,
+    isCached,
       ];
 }
