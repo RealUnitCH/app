@@ -1,6 +1,6 @@
-# deuro_wallet
+# Real Unit App
 
-A Wallet to use for dEuro
+A Wallet for Real Unit Investors
 
 ## Getting Started
 
