@@ -1,7 +1,7 @@
-import 'package:deuro_wallet/generated/i18n.dart';
-import 'package:deuro_wallet/widgets/amount_info_row.dart';
-import 'package:deuro_wallet/widgets/handlebars.dart';
-import 'package:deuro_wallet/widgets/standard_slide_button_widget.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/widgets/amount_info_row.dart';
+import 'package:realunit_wallet/widgets/handlebars.dart';
+import 'package:realunit_wallet/widgets/standard_slide_button_widget.dart';
 import 'package:flutter/material.dart';
 
 class ConfirmBottomSheet extends StatelessWidget {

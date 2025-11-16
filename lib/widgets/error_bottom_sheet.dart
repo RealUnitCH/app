@@ -1,4 +1,4 @@
-import 'package:deuro_wallet/widgets/handlebars.dart';
+import 'package:realunit_wallet/widgets/handlebars.dart';
 import 'package:flutter/material.dart';
 
 class ErrorBottomSheet extends StatelessWidget {

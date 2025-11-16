@@ -1,4 +1,4 @@
-import 'package:deuro_wallet/packages/service/alias_resolver/ens_resolver.dart';
+import 'package:realunit_wallet/packages/service/alias_resolver/ens_resolver.dart';
 import 'package:web3dart/web3dart.dart';
 
 import 'openalias_resolver.dart';

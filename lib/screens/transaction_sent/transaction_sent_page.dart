@@ -1,9 +1,9 @@
-import 'package:deuro_wallet/generated/i18n.dart';
-import 'package:deuro_wallet/models/blockchain.dart';
-import 'package:deuro_wallet/packages/service/transaction_history_service.dart';
-import 'package:deuro_wallet/packages/utils/get_blockexplorer.dart';
-import 'package:deuro_wallet/styles/colors.dart';
-import 'package:deuro_wallet/styles/styles.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/models/blockchain.dart';
+import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
+import 'package:realunit_wallet/packages/utils/get_blockexplorer.dart';
+import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/styles/styles.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';

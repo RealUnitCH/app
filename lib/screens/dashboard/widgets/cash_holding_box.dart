@@ -1,7 +1,7 @@
-import 'package:deuro_wallet/models/asset.dart';
-import 'package:deuro_wallet/styles/colors.dart';
-import 'package:deuro_wallet/widgets/chain_asset_icon.dart';
-import 'package:deuro_wallet/widgets/hide_amount_text.dart';
+import 'package:realunit_wallet/models/asset.dart';
+import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/chain_asset_icon.dart';
+import 'package:realunit_wallet/widgets/hide_amount_text.dart';
 import 'package:flutter/material.dart';
 
 class CashHoldingBox extends StatelessWidget {

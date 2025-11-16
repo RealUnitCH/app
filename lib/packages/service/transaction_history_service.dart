@@ -1,12 +1,12 @@
 import 'dart:developer' as developer;
 
-import 'package:deuro_wallet/models/asset.dart';
-import 'package:deuro_wallet/models/blockchain.dart';
-import 'package:deuro_wallet/models/transaction.dart';
-import 'package:deuro_wallet/packages/ponder/ponder.dart';
-import 'package:deuro_wallet/packages/repository/asset_repository.dart';
-import 'package:deuro_wallet/packages/repository/transaction_repository.dart';
-import 'package:deuro_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/models/asset.dart';
+import 'package:realunit_wallet/models/blockchain.dart';
+import 'package:realunit_wallet/models/transaction.dart';
+import 'package:realunit_wallet/packages/ponder/ponder.dart';
+import 'package:realunit_wallet/packages/repository/asset_repository.dart';
+import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:etherscan_api/etherscan_api.dart';
 import 'package:etherscan_api/src/models/account/token_tx_model.dart';
 import 'package:etherscan_api/src/models/account/tx_list_model.dart';

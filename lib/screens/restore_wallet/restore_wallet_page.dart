@@ -1,6 +1,6 @@
-import 'package:deuro_wallet/di.dart';
-import 'package:deuro_wallet/screens/restore_wallet/bloc/restore_wallet_cubit.dart';
-import 'package:deuro_wallet/screens/restore_wallet/restore_wallet_view.dart';
+import 'package:realunit_wallet/di.dart';
+import 'package:realunit_wallet/screens/restore_wallet/bloc/restore_wallet_cubit.dart';
+import 'package:realunit_wallet/screens/restore_wallet/restore_wallet_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

@@ -1,5 +1,5 @@
-import 'package:deuro_wallet/models/transaction.dart';
-import 'package:deuro_wallet/packages/ponder/models/ponder_tx.dart';
+import 'package:realunit_wallet/models/transaction.dart';
+import 'package:realunit_wallet/packages/ponder/models/ponder_tx.dart';
 
 class SavingsWithdrawn extends PonderTx {
   const SavingsWithdrawn({

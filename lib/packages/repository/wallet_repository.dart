@@ -1,5 +1,5 @@
-import 'package:deuro_wallet/packages/storage/database.dart';
-import 'package:deuro_wallet/packages/storage/wallet_storage.dart';
+import 'package:realunit_wallet/packages/storage/database.dart';
+import 'package:realunit_wallet/packages/storage/wallet_storage.dart';
 
 class WalletRepository {
   final AppDatabase _appDatabase;

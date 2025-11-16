@@ -1,27 +1,25 @@
 import 'dart:io';
 
-import 'package:deuro_wallet/packages/open_crypto_pay/open_crypto_pay_service.dart';
-import 'package:deuro_wallet/packages/repository/asset_repository.dart';
-import 'package:deuro_wallet/packages/repository/balance_repository.dart';
-import 'package:deuro_wallet/packages/repository/cache_repository.dart';
-import 'package:deuro_wallet/packages/repository/node_repository.dart';
-import 'package:deuro_wallet/packages/repository/settings_repository.dart';
-import 'package:deuro_wallet/packages/repository/transaction_repository.dart';
-import 'package:deuro_wallet/packages/repository/wallet_repository.dart';
-import 'package:deuro_wallet/packages/service/app_store.dart';
-import 'package:deuro_wallet/packages/service/balance_service.dart';
-import 'package:deuro_wallet/packages/service/dfx/dfx_service.dart';
-import 'package:deuro_wallet/packages/service/transaction_history_service.dart';
-import 'package:deuro_wallet/packages/service/wallet_service.dart';
-import 'package:deuro_wallet/packages/storage/database.dart';
-import 'package:deuro_wallet/packages/storage/secure_storage.dart';
-import 'package:deuro_wallet/router.dart';
-import 'package:deuro_wallet/screens/home/bloc/home_bloc.dart';
-import 'package:deuro_wallet/screens/restore_wallet/bloc/restore_wallet_cubit.dart';
-import 'package:deuro_wallet/screens/savings/bloc/savings_bloc.dart';
-import 'package:deuro_wallet/screens/settings/bloc/settings_bloc.dart';
-import 'package:deuro_wallet/screens/swap/bloc/swap_bloc.dart';
-import 'package:deuro_wallet/setup.dart';
+import 'package:realunit_wallet/packages/open_crypto_pay/open_crypto_pay_service.dart';
+import 'package:realunit_wallet/packages/repository/asset_repository.dart';
+import 'package:realunit_wallet/packages/repository/balance_repository.dart';
+import 'package:realunit_wallet/packages/repository/cache_repository.dart';
+import 'package:realunit_wallet/packages/repository/node_repository.dart';
+import 'package:realunit_wallet/packages/repository/settings_repository.dart';
+import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
+import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/balance_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_service.dart';
+import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
+import 'package:realunit_wallet/packages/storage/database.dart';
+import 'package:realunit_wallet/packages/storage/secure_storage.dart';
+import 'package:realunit_wallet/router.dart';
+import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/screens/restore_wallet/bloc/restore_wallet_cubit.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/setup.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -103,11 +101,6 @@ void setupBlocs() {
   ));
 
   getIt.registerFactory(() => RestoreWalletCubit(getIt<WalletService>()));
-
-  getIt.registerFactory(() => SavingsBloc(getIt<AppStore>(), getIt<CacheRepository>()));
-
-  getIt.registerFactory(
-      () => SwapBloc(getIt<AppStore>(), getIt<BalanceService>()));
 }
 
 Future<bool> _existsDatabaseFile() async =>

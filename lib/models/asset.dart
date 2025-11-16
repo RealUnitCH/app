@@ -1,5 +1,5 @@
-import 'package:deuro_wallet/models/balance.dart';
-import 'package:deuro_wallet/packages/utils/fast_hash.dart';
+import 'package:realunit_wallet/models/balance.dart';
+import 'package:realunit_wallet/packages/utils/fast_hash.dart';
 
 class Asset {
   static int getId(int chainId, String address) =>

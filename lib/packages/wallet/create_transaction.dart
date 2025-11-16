@@ -1,5 +1,5 @@
-import 'package:deuro_wallet/packages/wallet/erc20_extension.dart';
-import 'package:deuro_wallet/packages/wallet/transaction_priority.dart';
+import 'package:realunit_wallet/packages/wallet/erc20_extension.dart';
+import 'package:realunit_wallet/packages/wallet/transaction_priority.dart';
 import 'package:erc20/erc20.dart';
 import 'package:web3dart/web3dart.dart';
 

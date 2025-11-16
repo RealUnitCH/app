@@ -45,6 +45,27 @@ class S implements WidgetsLocalizations {
 
   @override
   String get reorderItemRight => "reorderItemRight";
+
+  @override
+  String get copyButtonLabel => throw UnimplementedError();
+
+  @override
+  String get cutButtonLabel => throw UnimplementedError();
+
+  @override
+  String get lookUpButtonLabel => throw UnimplementedError();
+
+  @override
+  String get pasteButtonLabel => throw UnimplementedError();
+
+  @override
+  String get searchWebButtonLabel => throw UnimplementedError();
+
+  @override
+  String get selectAllButtonLabel => throw UnimplementedError();
+
+  @override
+  String get shareButtonLabel => throw UnimplementedError();
 """;
 
 const part2 = """

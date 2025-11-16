@@ -1,4 +1,4 @@
-import 'package:deuro_wallet/models/blockchain.dart';
+import 'package:realunit_wallet/models/blockchain.dart';
 
 String getBlockExplorerUrl(Blockchain blockchain) {
   switch (blockchain) {

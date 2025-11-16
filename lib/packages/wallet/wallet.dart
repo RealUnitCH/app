@@ -1,6 +1,6 @@
 import 'package:bip32/bip32.dart';
 import 'package:bip39/bip39.dart';
-import 'package:deuro_wallet/packages/wallet/wallet_account.dart';
+import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 
 class Wallet {
   final int id;

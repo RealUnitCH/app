@@ -1,4 +1,4 @@
-import 'package:deuro_wallet/models/transaction.dart';
+import 'package:realunit_wallet/models/transaction.dart';
 
 abstract class PonderTx {
   final BigInt created;

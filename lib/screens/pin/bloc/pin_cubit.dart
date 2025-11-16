@@ -1,4 +1,4 @@
-import 'package:deuro_wallet/packages/storage/database.dart';
+import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class PinState {

@@ -1,5 +1,5 @@
-import 'package:deuro_wallet/packages/storage/database.dart';
-import 'package:deuro_wallet/packages/storage/key_value_cache.dart';
+import 'package:realunit_wallet/packages/storage/database.dart';
+import 'package:realunit_wallet/packages/storage/key_value_cache.dart';
 
 class CacheRepository {
   final AppDatabase _appDatabase;

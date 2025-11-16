@@ -1,5 +1,5 @@
-import 'package:deuro_wallet/packages/storage/database.dart';
-import 'package:deuro_wallet/packages/utils/fast_hash.dart';
+import 'package:realunit_wallet/packages/storage/database.dart';
+import 'package:realunit_wallet/packages/utils/fast_hash.dart';
 import 'package:drift/drift.dart';
 
 extension BalanceStorage on AppDatabase {

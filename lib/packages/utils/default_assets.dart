@@ -1,4 +1,4 @@
-import 'package:deuro_wallet/models/asset.dart';
+import 'package:realunit_wallet/models/asset.dart';
 
 const dEUROAsset = Asset(chainId: 1, address: '0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea', name: 'dEuro', symbol: 'dEURO', decimals: 18);
 const dEUROBaseAsset = Asset(chainId: 8453, address: '0x1B5F7fA46ED0F487F049C42f374cA4827d65A264', name: 'dEuro (Base)', symbol: 'dEURO', decimals: 18);

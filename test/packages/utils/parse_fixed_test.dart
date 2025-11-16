@@ -1,4 +1,4 @@
-import 'package:deuro_wallet/packages/utils/parse_fixed.dart';
+import 'package:realunit_wallet/packages/utils/parse_fixed.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

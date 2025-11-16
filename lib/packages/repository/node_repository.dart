@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 
-import 'package:deuro_wallet/models/node.dart';
-import 'package:deuro_wallet/packages/storage/database.dart';
-import 'package:deuro_wallet/packages/storage/node_storage.dart';
+import 'package:realunit_wallet/models/node.dart';
+import 'package:realunit_wallet/packages/storage/database.dart';
+import 'package:realunit_wallet/packages/storage/node_storage.dart';
 
 class NodeRepository {
   final AppDatabase _appDatabase;

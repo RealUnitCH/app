@@ -1,7 +1,7 @@
-import 'package:deuro_wallet/di.dart';
-import 'package:deuro_wallet/packages/service/app_store.dart';
-import 'package:deuro_wallet/screens/settings_seed/bloc/settings_seed_cubit.dart';
-import 'package:deuro_wallet/screens/settings_seed/settings_seed_view.dart';
+import 'package:realunit_wallet/di.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/screens/settings_seed/bloc/settings_seed_cubit.dart';
+import 'package:realunit_wallet/screens/settings_seed/settings_seed_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

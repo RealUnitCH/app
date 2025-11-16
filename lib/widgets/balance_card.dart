@@ -1,8 +1,8 @@
-import 'package:deuro_wallet/models/asset.dart';
-import 'package:deuro_wallet/packages/utils/asset_logo.dart';
-import 'package:deuro_wallet/packages/utils/format_fixed.dart';
-import 'package:deuro_wallet/styles/styles.dart';
-import 'package:deuro_wallet/widgets/primary_button.dart';
+import 'package:realunit_wallet/models/asset.dart';
+import 'package:realunit_wallet/packages/utils/asset_logo.dart';
+import 'package:realunit_wallet/packages/utils/format_fixed.dart';
+import 'package:realunit_wallet/styles/styles.dart';
+import 'package:realunit_wallet/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
 
 class BalanceCard extends StatelessWidget {

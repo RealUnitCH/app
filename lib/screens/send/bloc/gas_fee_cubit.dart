@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:deuro_wallet/models/blockchain.dart';
-import 'package:deuro_wallet/packages/service/app_store.dart';
-import 'package:deuro_wallet/packages/utils/format_fixed.dart';
+import 'package:realunit_wallet/models/blockchain.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/utils/format_fixed.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class GasFeeState {

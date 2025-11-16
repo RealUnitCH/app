@@ -1,5 +1,5 @@
-import 'package:deuro_wallet/models/balance.dart';
-import 'package:deuro_wallet/packages/repository/balance_repository.dart';
+import 'package:realunit_wallet/models/balance.dart';
+import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AggregatedBalance {

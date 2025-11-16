@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:deuro_wallet/models/asset.dart';
-import 'package:deuro_wallet/models/balance.dart';
-import 'package:deuro_wallet/packages/storage/balance_storage.dart';
-import 'package:deuro_wallet/packages/storage/database.dart';
+import 'package:realunit_wallet/models/asset.dart';
+import 'package:realunit_wallet/models/balance.dart';
+import 'package:realunit_wallet/packages/storage/balance_storage.dart';
+import 'package:realunit_wallet/packages/storage/database.dart';
 
 class BalanceRepository {
   final AppDatabase _appDatabase;

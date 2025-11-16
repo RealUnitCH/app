@@ -1,4 +1,4 @@
-import 'package:deuro_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 
 enum Language {
   en("en", "assets/images/flags/gbr.png"),

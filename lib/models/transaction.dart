@@ -1,5 +1,5 @@
-import 'package:deuro_wallet/models/asset.dart';
-import 'package:deuro_wallet/packages/service/transaction_history_service.dart';
+import 'package:realunit_wallet/models/asset.dart';
+import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 
 enum TransactionTypes {
   transfer,

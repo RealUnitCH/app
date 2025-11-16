@@ -1,13 +1,13 @@
 import 'dart:developer' as developer;
 
-import 'package:deuro_wallet/di.dart';
-import 'package:deuro_wallet/generated/i18n.dart';
-import 'package:deuro_wallet/packages/service/app_store.dart';
-import 'package:deuro_wallet/packages/service/balance_service.dart';
-import 'package:deuro_wallet/packages/utils/fuck_firebase.dart';
-import 'package:deuro_wallet/screens/home/bloc/home_bloc.dart';
-import 'package:deuro_wallet/screens/settings/bloc/settings_bloc.dart';
-import 'package:deuro_wallet/styles/themes.dart';
+import 'package:realunit_wallet/di.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/balance_service.dart';
+import 'package:realunit_wallet/packages/utils/fuck_firebase.dart';
+import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/styles/themes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';

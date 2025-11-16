@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
 
-import 'package:deuro_wallet/models/asset.dart';
-import 'package:deuro_wallet/models/blockchain.dart';
-import 'package:deuro_wallet/packages/open_crypto_pay/exceptions.dart';
-import 'package:deuro_wallet/packages/open_crypto_pay/lnurl.dart';
-import 'package:deuro_wallet/packages/open_crypto_pay/models.dart';
-import 'package:deuro_wallet/packages/utils/default_assets.dart';
-import 'package:deuro_wallet/packages/wallet/payment_uri.dart';
+import 'package:realunit_wallet/models/asset.dart';
+import 'package:realunit_wallet/models/blockchain.dart';
+import 'package:realunit_wallet/packages/open_crypto_pay/exceptions.dart';
+import 'package:realunit_wallet/packages/open_crypto_pay/lnurl.dart';
+import 'package:realunit_wallet/packages/open_crypto_pay/models.dart';
+import 'package:realunit_wallet/packages/utils/default_assets.dart';
+import 'package:realunit_wallet/packages/wallet/payment_uri.dart';
 import 'package:http/http.dart';
 
 class OpenCryptoPayService {

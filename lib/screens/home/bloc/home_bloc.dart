@@ -1,11 +1,11 @@
 import 'dart:developer' as developer;
 
-import 'package:deuro_wallet/packages/service/app_store.dart';
-import 'package:deuro_wallet/packages/service/balance_service.dart';
-import 'package:deuro_wallet/packages/service/dfx/dfx_service.dart';
-import 'package:deuro_wallet/packages/service/transaction_history_service.dart';
-import 'package:deuro_wallet/packages/service/wallet_service.dart';
-import 'package:deuro_wallet/packages/wallet/wallet.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/balance_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_service.dart';
+import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

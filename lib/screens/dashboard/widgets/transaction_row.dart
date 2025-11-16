@@ -1,10 +1,10 @@
-import 'package:deuro_wallet/generated/i18n.dart';
-import 'package:deuro_wallet/models/transaction.dart';
-import 'package:deuro_wallet/packages/service/transaction_history_service.dart';
-import 'package:deuro_wallet/styles/colors.dart';
-import 'package:deuro_wallet/styles/icons.dart';
-import 'package:deuro_wallet/widgets/chain_asset_icon.dart';
-import 'package:deuro_wallet/widgets/hide_amount_text.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/models/transaction.dart';
+import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
+import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/styles/icons.dart';
+import 'package:realunit_wallet/widgets/chain_asset_icon.dart';
+import 'package:realunit_wallet/widgets/hide_amount_text.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 

@@ -1,4 +1,4 @@
-package eu.deurowallet.wallet
+package swiss.dfx.realunit
 
 import io.flutter.embedding.android.FlutterActivity
 

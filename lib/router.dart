@@ -1,24 +1,22 @@
-import 'package:deuro_wallet/di.dart';
-import 'package:deuro_wallet/models/blockchain.dart';
-import 'package:deuro_wallet/packages/open_crypto_pay/models.dart';
-import 'package:deuro_wallet/packages/service/app_store.dart';
-import 'package:deuro_wallet/screens/create_wallet/create_wallet_page.dart';
-import 'package:deuro_wallet/screens/dashboard/dashboard_page.dart';
-import 'package:deuro_wallet/screens/home/home.dart';
-import 'package:deuro_wallet/screens/receive/receive_page.dart';
-import 'package:deuro_wallet/screens/restore_wallet/restore_wallet_page.dart';
-import 'package:deuro_wallet/screens/savings/savings_page.dart';
-import 'package:deuro_wallet/screens/savings_edit/savings_edit_page.dart';
-import 'package:deuro_wallet/screens/send/send_page.dart';
-import 'package:deuro_wallet/screens/send_invoice/send_invoice_page.dart';
-import 'package:deuro_wallet/screens/settings/settings_page.dart';
-import 'package:deuro_wallet/screens/settings_edit_node/settings_edit_node_page.dart';
-import 'package:deuro_wallet/screens/settings_languages/settings_languages_page.dart';
-import 'package:deuro_wallet/screens/settings_nodes/settings_nodes_page.dart';
-import 'package:deuro_wallet/screens/settings_seed/settings_seed_page.dart';
-import 'package:deuro_wallet/screens/transaction_sent/transaction_sent_page.dart';
-import 'package:deuro_wallet/screens/web_view/web_view_page.dart';
-import 'package:deuro_wallet/screens/welcome/welcome_page.dart';
+import 'package:realunit_wallet/di.dart';
+import 'package:realunit_wallet/models/blockchain.dart';
+import 'package:realunit_wallet/packages/open_crypto_pay/models.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
+import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
+import 'package:realunit_wallet/screens/home/home.dart';
+import 'package:realunit_wallet/screens/receive/receive_page.dart';
+import 'package:realunit_wallet/screens/restore_wallet/restore_wallet_page.dart';
+import 'package:realunit_wallet/screens/send/send_page.dart';
+import 'package:realunit_wallet/screens/send_invoice/send_invoice_page.dart';
+import 'package:realunit_wallet/screens/settings/settings_page.dart';
+import 'package:realunit_wallet/screens/settings_edit_node/settings_edit_node_page.dart';
+import 'package:realunit_wallet/screens/settings_languages/settings_languages_page.dart';
+import 'package:realunit_wallet/screens/settings_nodes/settings_nodes_page.dart';
+import 'package:realunit_wallet/screens/settings_seed/settings_seed_page.dart';
+import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
+import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
+import 'package:realunit_wallet/screens/welcome/welcome_page.dart';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
@@ -90,18 +88,6 @@ void setupRouter() {
           ),
         ],
         builder: (context, state) => SettingsPage(),
-      ),
-      GoRoute(
-        path: "/savings",
-        routes: [
-          GoRoute(
-              path: '/add',
-              builder: (context, state) => SavingsEditPage(isAdding: true)),
-          GoRoute(
-              path: '/remove',
-              builder: (context, state) => SavingsEditPage(isAdding: false)),
-        ],
-        builder: (context, state) => SavingsPage(),
       ),
       GoRoute(
           path: '/webView',

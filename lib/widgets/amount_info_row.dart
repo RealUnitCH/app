@@ -1,4 +1,4 @@
-import 'package:deuro_wallet/widgets/info_row.dart';
+import 'package:realunit_wallet/widgets/info_row.dart';
 import 'package:flutter/material.dart';
 
 class AmountInfoRow extends StatelessWidget {

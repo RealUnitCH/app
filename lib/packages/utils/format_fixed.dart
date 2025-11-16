@@ -1,4 +1,4 @@
-import 'package:deuro_wallet/packages/utils/parse_fixed.dart';
+import 'package:realunit_wallet/packages/utils/parse_fixed.dart';
 
 String formatFixed(BigInt value, int? decimals,
     {int? fractionalDigits, bool trimZeros = true}) {

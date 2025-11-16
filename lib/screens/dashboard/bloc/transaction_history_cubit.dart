@@ -1,6 +1,6 @@
-import 'package:deuro_wallet/models/transaction.dart';
-import 'package:deuro_wallet/packages/repository/transaction_repository.dart';
-import 'package:deuro_wallet/packages/utils/default_assets.dart';
+import 'package:realunit_wallet/models/transaction.dart';
+import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
+import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class TransactionHistoryCubit extends Cubit<List<Transaction>> {

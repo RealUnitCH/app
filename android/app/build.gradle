@@ -12,7 +12,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "eu.deurowallet.wallet"
+    namespace = "swiss.dfx.realunit"
     compileSdk =  35 // flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -26,7 +26,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "eu.deurowallet.wallet"
+        applicationId = "swiss.dfx.realunit"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 22

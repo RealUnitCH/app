@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:deuro_wallet/models/asset.dart';
-import 'package:deuro_wallet/models/balance.dart';
-import 'package:deuro_wallet/models/blockchain.dart';
-import 'package:deuro_wallet/packages/repository/asset_repository.dart';
-import 'package:deuro_wallet/packages/repository/balance_repository.dart';
-import 'package:deuro_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/models/asset.dart';
+import 'package:realunit_wallet/models/balance.dart';
+import 'package:realunit_wallet/models/blockchain.dart';
+import 'package:realunit_wallet/packages/repository/asset_repository.dart';
+import 'package:realunit_wallet/packages/repository/balance_repository.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:erc20/erc20.dart';
 import 'package:web3dart/web3dart.dart';
 

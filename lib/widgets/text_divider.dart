@@ -1,4 +1,4 @@
-import 'package:deuro_wallet/styles/styles.dart';
+import 'package:realunit_wallet/styles/styles.dart';
 import 'package:flutter/material.dart';
 
 class TextDivider extends StatelessWidget {

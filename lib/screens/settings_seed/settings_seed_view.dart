@@ -1,9 +1,9 @@
-import 'package:deuro_wallet/generated/i18n.dart';
-import 'package:deuro_wallet/screens/settings_seed/bloc/settings_seed_cubit.dart';
-import 'package:deuro_wallet/styles/colors.dart';
-import 'package:deuro_wallet/styles/styles.dart';
-import 'package:deuro_wallet/styles/icons.dart';
-import 'package:deuro_wallet/widgets/seed_blur_card.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/screens/settings_seed/bloc/settings_seed_cubit.dart';
+import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/styles/styles.dart';
+import 'package:realunit_wallet/styles/icons.dart';
+import 'package:realunit_wallet/widgets/seed_blur_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

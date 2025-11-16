@@ -2,7 +2,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
 
     <application
-        android:label="dEuro Wallet"
+        android:label="Real Unit Wallet"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
         android:allowBackup="false">

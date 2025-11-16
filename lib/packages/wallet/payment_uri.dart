@@ -1,5 +1,5 @@
-import 'package:deuro_wallet/packages/utils/format_fixed.dart';
-import 'package:deuro_wallet/packages/utils/parse_fixed.dart';
+import 'package:realunit_wallet/packages/utils/format_fixed.dart';
+import 'package:realunit_wallet/packages/utils/parse_fixed.dart';
 
 abstract class PaymentURI {
   PaymentURI({required this.amount, required this.address});

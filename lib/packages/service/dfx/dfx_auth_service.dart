@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:deuro_wallet/packages/service/app_store.dart';
-import 'package:deuro_wallet/packages/wallet/wallet_account.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 
 abstract class DFXAuthService {
   static const walletName = 'dEuroWallet';

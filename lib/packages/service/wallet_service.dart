@@ -1,7 +1,7 @@
 import 'package:bip39/bip39.dart' as bip39;
-import 'package:deuro_wallet/packages/repository/settings_repository.dart';
-import 'package:deuro_wallet/packages/repository/wallet_repository.dart';
-import 'package:deuro_wallet/packages/wallet/wallet.dart';
+import 'package:realunit_wallet/packages/repository/settings_repository.dart';
+import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
 class WalletService{
   final WalletRepository _repository;

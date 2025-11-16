@@ -1,5 +1,5 @@
-import 'package:deuro_wallet/models/asset.dart';
-import 'package:deuro_wallet/packages/utils/asset_logo.dart';
+import 'package:realunit_wallet/models/asset.dart';
+import 'package:realunit_wallet/packages/utils/asset_logo.dart';
 import 'package:flutter/material.dart';
 
 class ChainAssetIcon extends StatelessWidget {

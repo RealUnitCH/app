@@ -1,8 +1,8 @@
 import 'package:bip39/src/wordlists/english.dart' as wordlist;
-import 'package:deuro_wallet/packages/service/wallet_service.dart';
-import 'package:deuro_wallet/packages/wallet/seedqr.dart';
-import 'package:deuro_wallet/packages/wallet/wallet.dart';
-import 'package:deuro_wallet/widgets/qr_scanner.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
+import 'package:realunit_wallet/packages/wallet/seedqr.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
+import 'package:realunit_wallet/widgets/qr_scanner.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

@@ -1,8 +1,8 @@
 import 'dart:developer' as developer;
 import 'dart:typed_data';
 
-import 'package:deuro_wallet/generated/i18n.dart';
-import 'package:deuro_wallet/widgets/handlebars.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/widgets/handlebars.dart';
 import 'package:fast_scanner/fast_scanner.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';

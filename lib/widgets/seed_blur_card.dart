@@ -1,8 +1,8 @@
 import 'dart:ui';
 
-import 'package:deuro_wallet/generated/i18n.dart';
-import 'package:deuro_wallet/styles/colors.dart';
-import 'package:deuro_wallet/styles/styles.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/styles/styles.dart';
 import 'package:flutter/material.dart';
 
 class SeedBlurCard extends StatelessWidget {

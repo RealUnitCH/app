@@ -1,9 +1,7 @@
-import 'package:deuro_wallet/models/transaction.dart';
-import 'package:deuro_wallet/packages/contracts/contracts.dart';
-import 'package:deuro_wallet/packages/ponder/models/ponder_tx.dart';
-import 'package:deuro_wallet/packages/ponder/models/savings_saved.dart';
-import 'package:deuro_wallet/packages/ponder/models/savings_withdrawn.dart';
-import 'package:deuro_wallet/packages/utils/default_assets.dart';
+import 'package:realunit_wallet/models/transaction.dart';
+import 'package:realunit_wallet/packages/ponder/models/ponder_tx.dart';
+import 'package:realunit_wallet/packages/ponder/models/savings_saved.dart';
+import 'package:realunit_wallet/packages/ponder/models/savings_withdrawn.dart';
 import 'package:graphql/client.dart';
 
 class Ponder {
@@ -73,24 +71,6 @@ class Ponder {
       QueryOptions options, String address) async {
     final QueryResult result = await client.query(options);
 
-    final txList = <Transaction>[];
-    for (final item in result.parsedData as List<T>) {
-      txList.add(Transaction(
-        height: item.blockheight.toInt(),
-        txId: item.txHash,
-        chainId: 1,
-        senderAddress: address,
-        receiverAddress: savingsGatewayAddress,
-        amount: item.amount,
-        asset: dEUROAsset,
-        type: item.txType,
-        timestamp:
-            DateTime.fromMillisecondsSinceEpoch(item.created.toInt() * 1000),
-        note: null,
-        data: null,
-      ));
-    }
-
-    return txList;
+    return [];
   }
 }

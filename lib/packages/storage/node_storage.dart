@@ -1,4 +1,4 @@
-import 'package:deuro_wallet/packages/storage/database.dart';
+import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:drift/drift.dart';
 
 extension NodeStorage on AppDatabase {

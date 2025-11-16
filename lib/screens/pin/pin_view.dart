@@ -1,6 +1,6 @@
-import 'package:deuro_wallet/screens/pin/bloc/pin_cubit.dart';
-import 'package:deuro_wallet/screens/pin/widgets/pin_indicator.dart';
-import 'package:deuro_wallet/widgets/number_pad.dart';
+import 'package:realunit_wallet/screens/pin/bloc/pin_cubit.dart';
+import 'package:realunit_wallet/screens/pin/widgets/pin_indicator.dart';
+import 'package:realunit_wallet/widgets/number_pad.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

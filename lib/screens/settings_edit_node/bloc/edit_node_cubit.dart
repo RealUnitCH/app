@@ -1,6 +1,6 @@
-import 'package:deuro_wallet/models/blockchain.dart';
-import 'package:deuro_wallet/models/node.dart';
-import 'package:deuro_wallet/packages/repository/node_repository.dart';
+import 'package:realunit_wallet/models/blockchain.dart';
+import 'package:realunit_wallet/models/node.dart';
+import 'package:realunit_wallet/packages/repository/node_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 part 'edit_node_state.dart';

@@ -1,14 +1,14 @@
 import 'dart:convert';
 
-import 'package:deuro_wallet/models/blockchain.dart';
-import 'package:deuro_wallet/packages/repository/asset_repository.dart';
-import 'package:deuro_wallet/packages/repository/settings_repository.dart';
-import 'package:deuro_wallet/packages/service/dfx/dfx_auth_service.dart';
-import 'package:deuro_wallet/packages/utils/default_assets.dart';
-import 'package:deuro_wallet/packages/utils/device_info.dart';
-import 'package:deuro_wallet/packages/wallet/wallet_account.dart';
-import 'package:deuro_wallet/screens/send/send_page.dart';
-import 'package:deuro_wallet/screens/web_view/web_view_page.dart';
+import 'package:realunit_wallet/models/blockchain.dart';
+import 'package:realunit_wallet/packages/repository/asset_repository.dart';
+import 'package:realunit_wallet/packages/repository/settings_repository.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
+import 'package:realunit_wallet/packages/utils/default_assets.dart';
+import 'package:realunit_wallet/packages/utils/device_info.dart';
+import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
+import 'package:realunit_wallet/screens/send/send_page.dart';
+import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;

@@ -1,5 +1,5 @@
-import 'package:deuro_wallet/models/asset.dart';
-import 'package:deuro_wallet/models/blockchain.dart';
+import 'package:realunit_wallet/models/asset.dart';
+import 'package:realunit_wallet/models/blockchain.dart';
 
 String getAssetImagePath(Asset asset) {
   switch ("${asset.chainId}:${asset.address.toLowerCase()}") {

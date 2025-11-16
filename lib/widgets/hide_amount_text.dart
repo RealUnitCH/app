@@ -1,5 +1,5 @@
-import 'package:deuro_wallet/packages/utils/format_fixed.dart';
-import 'package:deuro_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/packages/utils/format_fixed.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

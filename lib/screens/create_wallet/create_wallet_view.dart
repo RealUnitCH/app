@@ -1,10 +1,10 @@
-import 'package:deuro_wallet/generated/i18n.dart';
-import 'package:deuro_wallet/screens/create_wallet/bloc/create_wallet_cubit.dart';
-import 'package:deuro_wallet/screens/home/bloc/home_bloc.dart';
-import 'package:deuro_wallet/styles/colors.dart';
-import 'package:deuro_wallet/styles/styles.dart';
-import 'package:deuro_wallet/styles/icons.dart';
-import 'package:deuro_wallet/widgets/seed_blur_card.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/screens/create_wallet/bloc/create_wallet_cubit.dart';
+import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/styles/styles.dart';
+import 'package:realunit_wallet/styles/icons.dart';
+import 'package:realunit_wallet/widgets/seed_blur_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

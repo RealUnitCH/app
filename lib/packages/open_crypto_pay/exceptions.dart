@@ -1,5 +1,5 @@
 
-import 'package:deuro_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 
 class OpenCryptoPayException implements Exception {
   final String message;

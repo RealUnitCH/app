@@ -1,5 +1,5 @@
-import 'package:deuro_wallet/packages/repository/settings_repository.dart';
-import 'package:deuro_wallet/styles/language.dart';
+import 'package:realunit_wallet/packages/repository/settings_repository.dart';
+import 'package:realunit_wallet/styles/language.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

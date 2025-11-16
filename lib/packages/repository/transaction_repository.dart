@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:deuro_wallet/models/asset.dart';
-import 'package:deuro_wallet/models/blockchain.dart';
-import 'package:deuro_wallet/models/transaction.dart';
-import 'package:deuro_wallet/packages/repository/asset_repository.dart';
-import 'package:deuro_wallet/packages/storage/database.dart';
-import 'package:deuro_wallet/packages/storage/transaction_storage.dart';
+import 'package:realunit_wallet/models/asset.dart';
+import 'package:realunit_wallet/models/blockchain.dart';
+import 'package:realunit_wallet/models/transaction.dart';
+import 'package:realunit_wallet/packages/repository/asset_repository.dart';
+import 'package:realunit_wallet/packages/storage/database.dart';
+import 'package:realunit_wallet/packages/storage/transaction_storage.dart';
 
 class TransactionRepository {
   final AppDatabase _appDatabase;

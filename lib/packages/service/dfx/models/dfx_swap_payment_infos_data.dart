@@ -1,6 +1,6 @@
 
-import 'package:deuro_wallet/packages/service/dfx/models/dfx_asset_data.dart';
-import 'package:deuro_wallet/packages/service/dfx/models/dfx_fees_data.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/dfx_asset_data.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/dfx_fees_data.dart';
 
 class DFXSwapPaymentInfosData {
   final int routeId;

@@ -1,8 +1,8 @@
 import 'dart:developer' as developer;
 
-import 'package:deuro_wallet/models/node.dart';
-import 'package:deuro_wallet/packages/repository/node_repository.dart';
-import 'package:deuro_wallet/packages/wallet/wallet.dart';
+import 'package:realunit_wallet/models/node.dart';
+import 'package:realunit_wallet/packages/repository/node_repository.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:http/http.dart';
 import 'package:web3dart/web3dart.dart' as web3;
 

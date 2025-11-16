@@ -1,4 +1,4 @@
-import 'package:deuro_wallet/models/asset.dart';
+import 'package:realunit_wallet/models/asset.dart';
 
 enum Blockchain {
   ethereum(1, "Ethereum", "ETH"),
