@@ -39,7 +39,7 @@ class SectionBalance extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         width: double.infinity,
-        color: DEuroColors.dEuroBlue,
+        color: RealUnitColors.realUnitBlue,
         child: SafeArea(
           child: Column(
             children: [

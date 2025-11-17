@@ -20,11 +20,10 @@ Future<void> main() async {
     final databaseKey = await setupEssentials();
     await finishSetup(databaseKey);
 
-    runApp(const DEuroWallet());
+    runApp(const WalletApp());
   } catch (e) {
     runApp(
       MaterialApp(
-        debugShowCheckedModeBanner: true,
         home: Scaffold(
           body: Container(
             margin:
@@ -40,14 +39,14 @@ Future<void> main() async {
   }
 }
 
-class DEuroWallet extends StatefulWidget {
-  const DEuroWallet({super.key});
+class WalletApp extends StatefulWidget {
+  const WalletApp({super.key});
 
   @override
-  State<StatefulWidget> createState() => _DEuroWalletState();
+  State<StatefulWidget> createState() => _WalletAppState();
 }
 
-class _DEuroWalletState extends State<DEuroWallet> {
+class _WalletAppState extends State<WalletApp> {
   late final AppLifecycleListener _listener;
 
   @override

@@ -50,11 +50,11 @@ class SettingsNodesView extends StatelessWidget {
                           borderRadius: BorderRadius.all(Radius.circular(10)),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: DEuroColors.dEuroBlue),
+                          borderSide: BorderSide(color: RealUnitColors.realUnitBlue),
                           borderRadius: BorderRadius.all(Radius.circular(10)),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: DEuroColors.dEuroBlue),
+                          borderSide: BorderSide(color: RealUnitColors.realUnitBlue),
                           borderRadius: BorderRadius.all(Radius.circular(10)),
                         ),
                       ),

@@ -70,11 +70,11 @@ class SendView extends StatelessWidget {
                           borderRadius: BorderRadius.all(Radius.circular(10)),
                         ),
                         enabledBorder: const OutlineInputBorder(
-                          borderSide: BorderSide(color: DEuroColors.dEuroBlue),
+                          borderSide: BorderSide(color: RealUnitColors.realUnitBlue),
                           borderRadius: BorderRadius.all(Radius.circular(10)),
                         ),
                         focusedBorder: const OutlineInputBorder(
-                          borderSide: BorderSide(color: DEuroColors.dEuroBlue),
+                          borderSide: BorderSide(color: RealUnitColors.realUnitBlue),
                           borderRadius: BorderRadius.all(Radius.circular(10)),
                         ),
                       ),

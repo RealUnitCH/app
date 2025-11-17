@@ -67,7 +67,7 @@ class AssetSelector extends StatelessWidget {
                         asset: balance.asset,
                         balance: balance.balance,
                         borderColor: balance.id == selectedBalance.id
-                            ? DEuroColors.dEuroBlue
+                            ? RealUnitColors.realUnitBlue
                             : null,
                       ),
                       // child: Container(

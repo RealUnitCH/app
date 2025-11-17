@@ -13,8 +13,8 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "swiss.dfx.realunit"
-    compileSdk =  35 // flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk =  36
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -29,7 +29,7 @@ android {
         applicationId = "swiss.dfx.realunit"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 22
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

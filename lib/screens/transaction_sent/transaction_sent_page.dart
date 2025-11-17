@@ -41,7 +41,7 @@ class TransactionSentPage extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     CircleAvatar(
-                      backgroundColor: DEuroColors.dEuroBlue,
+                      backgroundColor: RealUnitColors.realUnitBlue,
                       radius: 32,
                       child: Icon(
                         Icons.check,

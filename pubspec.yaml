@@ -46,10 +46,7 @@ dependencies:
       ref: up-to-date-dependecies
   erc20: ^1.0.1
   equatable: ^2.0.0
-  fast_scanner:
-    git:
-      url: https://github.com/MrCyjaneK/fast_scanner
-      ref: 69b3276b090fa6ac01b4483ca3adca93a8e615be
+  mobile_scanner: ^7.0.1
   flutter_bloc: ^9.0.0
   flutter_inappwebview: ^6.1.5
   flutter_secure_storage: ^9.2.4

@@ -20,7 +20,37 @@ class _CustomIcon extends StatelessWidget {
 
 class LanguagesIcon extends _CustomIcon {
   const LanguagesIcon({super.size, super.color})
-      : super(iconPath: 'assets/images/icons/setting_languages.svg');
+      : super(iconPath: 'assets/images/icons/globe-alt.svg');
+}
+
+class CurrencyIcon extends _CustomIcon {
+  const CurrencyIcon({super.size, super.color})
+      : super(iconPath: 'assets/images/icons/currency-euro.svg');
+}
+
+class DocumentReportIcon extends _CustomIcon {
+  const DocumentReportIcon({super.size, super.color})
+      : super(iconPath: 'assets/images/icons/document-report.svg');
+}
+
+class IdentificationIcon extends _CustomIcon {
+  const IdentificationIcon({super.size, super.color})
+      : super(iconPath: 'assets/images/icons/identification.svg');
+}
+
+class UserCircleIcon extends _CustomIcon {
+  const UserCircleIcon({super.size, super.color})
+      : super(iconPath: 'assets/images/icons/user-circle.svg');
+}
+
+class KeySolidIcon extends _CustomIcon {
+  const KeySolidIcon({super.size, super.color})
+      : super(iconPath: 'assets/images/icons/key-solid.svg');
+}
+
+class XCircleIcon extends _CustomIcon {
+  const XCircleIcon({super.size, super.color})
+      : super(iconPath: 'assets/images/icons/x-circle.svg');
 }
 
 class NodesIcon extends _CustomIcon {

@@ -26,7 +26,7 @@ final kFullwidthGrayButtonStyle = ElevatedButton.styleFrom(
 );
 
 final kFullwidthBlueButtonStyle = FilledButton.styleFrom(
-  backgroundColor: DEuroColors.dEuroBlue,
+  backgroundColor: RealUnitColors.realUnitBlue,
   fixedSize: const Size(double.infinity, 50),
   padding: const EdgeInsets.only(left: 24, right: 24),
 );

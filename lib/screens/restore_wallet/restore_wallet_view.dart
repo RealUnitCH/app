@@ -56,12 +56,12 @@ class RestoreWalletView extends StatelessWidget {
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderSide:
-                                BorderSide(color: DEuroColors.dEuroBlue),
+                                BorderSide(color: RealUnitColors.realUnitBlue),
                             borderRadius: BorderRadius.all(Radius.circular(10)),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderSide:
-                                BorderSide(color: DEuroColors.dEuroBlue),
+                                BorderSide(color: RealUnitColors.realUnitBlue),
                             borderRadius: BorderRadius.all(Radius.circular(10)),
                           ),
                         ),

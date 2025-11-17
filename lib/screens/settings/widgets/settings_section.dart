@@ -39,10 +39,6 @@ class SettingsSections extends StatelessWidget {
               ]),
             Container(
               margin: const EdgeInsets.only(top: 8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                color: Colors.white,
-              ),
               child: ListView.separated(
                 shrinkWrap: true,
                 padding: EdgeInsets.zero,
@@ -60,8 +56,9 @@ class SettingsSections extends StatelessWidget {
                           child: Text(
                             setting.title,
                             style: TextStyle(
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w600,
                               color: DEuroColors.anthracite,
+                              fontSize: 16,
                             ),
                           ),
                         ),
@@ -75,6 +72,7 @@ class SettingsSections extends StatelessWidget {
                                 style: TextStyle(
                                   fontWeight: FontWeight.w400,
                                   color: DEuroColors.neutralGrey,
+                                  fontSize: 14,
                                 ),
                               ),
                             ),

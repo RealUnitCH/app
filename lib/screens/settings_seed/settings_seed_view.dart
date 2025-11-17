@@ -114,7 +114,7 @@ class SettingsSeedView extends StatelessWidget {
                             _copySeed(context.read<SettingsSeedCubit>().seed),
                         child: Text(
                           S.of(context).copy_seed,
-                          style: kPageTitleTextStyle.copyWith(color: DEuroColors.dEuroBlue),
+                          style: kPageTitleTextStyle.copyWith(color: RealUnitColors.realUnitBlue),
                         ),
                       ),
                     ),

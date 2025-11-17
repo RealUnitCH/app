@@ -44,7 +44,7 @@ class SettingsLanguagePage extends StatelessWidget {
                 trailing: state.language == lang ? Icon(
                   Icons.check,
                   size: 20,
-                  color: DEuroColors.dEuroBlue,
+                  color: RealUnitColors.realUnitBlue,
                 ) : null,
                 onTap: () => context
                     .read<SettingsBloc>()

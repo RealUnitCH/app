@@ -1,15 +1,15 @@
-import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/screens/create_wallet/bloc/create_wallet_cubit.dart';
-import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
-import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/styles/styles.dart';
-import 'package:realunit_wallet/styles/icons.dart';
-import 'package:realunit_wallet/widgets/seed_blur_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/screens/create_wallet/bloc/create_wallet_cubit.dart';
+import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/styles/icons.dart';
+import 'package:realunit_wallet/styles/styles.dart';
+import 'package:realunit_wallet/widgets/seed_blur_card.dart';
 
 class CreateWalletView extends StatelessWidget {
   const CreateWalletView({super.key});
@@ -57,7 +57,10 @@ class CreateWalletView extends StatelessWidget {
                             children: [
                               const Padding(
                                 padding: EdgeInsets.only(right: 10, top: 5),
-                                child: RecoveryKeyIcon(size: 20),
+                                child: RecoveryKeyIcon(
+                                  size: 20,
+                                  color: RealUnitColors.realUnitBlue,
+                                ),
                               ),
                               Expanded(
                                 child: Column(
@@ -100,22 +103,26 @@ class CreateWalletView extends StatelessWidget {
                             onPressed: () => _copySeed(state.wallet!.seed),
                             child: Text(
                               S.of(context).copy_seed,
-                              style: kPageTitleTextStyle.copyWith(color: DEuroColors.dEuroBlue),
+                              style: kPageTitleTextStyle.copyWith(
+                                  color: RealUnitColors.realUnitBlue),
                             ),
                           ),
                         ),
                         const Spacer(),
                         Padding(
                           padding: const EdgeInsets.only(top: 20, bottom: 20),
-                          child: TextButton(
-                            onPressed: () => context
-                                .read<HomeBloc>()
-                                .add(LoadWalletEvent(state.wallet!)),
-                            style: kFullwidthBlueButtonStyle,
-                            child: Text(
-                              S.of(context).create_wallet_confirm,
-                              textAlign: TextAlign.center,
-                              style: kFullwidthBlueButtonTextStyle,
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: TextButton(
+                              onPressed: () => context
+                                  .read<HomeBloc>()
+                                  .add(LoadWalletEvent(state.wallet!)),
+                              style: kFullwidthBlueButtonStyle,
+                              child: Text(
+                                S.of(context).create_wallet_confirm,
+                                textAlign: TextAlign.center,
+                                style: kFullwidthBlueButtonTextStyle,
+                              ),
                             ),
                           ),
                         ),

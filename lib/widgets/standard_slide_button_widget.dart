@@ -43,7 +43,7 @@ class _StandardSlideButtonState extends State<StandardSlideButton> {
                   widget.buttonText,
                   style: kPageTitleTextStyle.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: DEuroColors.dEuroBlue,
+                    color: RealUnitColors.realUnitBlue,
                   ),
                 ),
               ),
@@ -70,7 +70,7 @@ class _StandardSlideButtonState extends State<StandardSlideButton> {
                     height: widget.height - 8,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(40),
-                      color: DEuroColors.dEuroBlue,
+                      color: RealUnitColors.realUnitBlue,
                     ),
                     alignment: Alignment.center,
                     child: const Icon(
