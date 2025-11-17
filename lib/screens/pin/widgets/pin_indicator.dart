@@ -28,8 +28,8 @@ class PinIndicator extends StatelessWidget {
               height: _size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: wrongPin ? Colors.red : DEuroColors.anthracite),
-                color: isFilled ? DEuroColors.anthracite : Colors.transparent,
+                border: Border.all(color: wrongPin ? Colors.red : RealUnitColors.realUnitBlack),
+                color: isFilled ? RealUnitColors.realUnitBlack : Colors.transparent,
               ),
             );
           }),

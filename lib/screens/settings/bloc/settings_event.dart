@@ -19,3 +19,12 @@ final class SetLanguageEvent extends SettingsEvent {
   @override
   List<Object> get props => [language];
 }
+
+final class SetCurrencyEvent extends SettingsEvent {
+  final Currency currency;
+
+  const SetCurrencyEvent(this.currency);
+
+  @override
+  List<Object> get props => [currency];
+}

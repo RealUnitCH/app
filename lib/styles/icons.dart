@@ -77,3 +77,8 @@ class SavingsIcon extends _CustomIcon {
   const SavingsIcon({super.size, super.color})
       : super(iconPath: 'assets/images/icons/savings.svg');
 }
+
+class RealUnitIcon extends _CustomIcon {
+  const RealUnitIcon({super.size, super.color})
+      : super(iconPath: 'assets/images/icons/realunit_icon.svg');
+}

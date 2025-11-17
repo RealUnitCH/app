@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -17,26 +16,26 @@ class SettingsPage extends StatelessWidget {
   static const _forwardIcon = Icon(
     Icons.arrow_forward_ios,
     size: 20,
-    color: DEuroColors.anthracite,
+    color: RealUnitColors.realUnitBlack,
   );
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: CupertinoNavigationBar(
+        appBar: AppBar(
           backgroundColor: Colors.transparent,
           leading: IconButton(
             onPressed: () => context.pop(),
             icon: Icon(
               Icons.arrow_back_rounded,
-              color: DEuroColors.anthracite,
+              color: RealUnitColors.realUnitBlack,
               size: 24,
             ),
           ),
-          middle: Text(
+          title: Text(
             S.of(context).settings,
             style: kPageTitleTextStyle,
           ),
-          border: null,
+          centerTitle: true,
         ),
         body: SingleChildScrollView(
           child: SizedBox(
@@ -49,53 +48,41 @@ class SettingsPage extends StatelessWidget {
                     settings: [
                       SettingOption(
                         title: S.of(context).settings_languages,
-                        leading: LanguagesIcon(
-                          size: 24,
-                        ),
+                        leading: LanguagesIcon(size: 24),
                         trailing: _forwardIcon,
                         selectedOption: state.language.name,
                         onTap: () => context.push('/settings/languages'),
                       ),
                       SettingOption(
-                        title: S.of(context).settings_languages,
-                        leading: CurrencyIcon(
-                          size: 24,
-                        ),
+                        title: S.of(context).settings_currency,
+                        leading: CurrencyIcon(size: 24),
                         trailing: _forwardIcon,
-                        selectedOption: state.language.name,
-                        onTap: () => context.push('/settings/languages'),
+                        selectedOption: state.currency.code,
+                        onTap: () => context.push('/settings/currencies'),
                       ),
                       SettingOption(
-                        title: S.of(context).settings_languages,
-                        leading: DocumentReportIcon(
-                          size: 24,
-                        ),
+                        title: S.of(context).settings_tax_report,
+                        leading: DocumentReportIcon(size: 24),
                         trailing: _forwardIcon,
-                        onTap: () => context.push('/settings/languages'),
+                        onTap: () => {},
                       ),
                       SettingOption(
                         title: "KYC Status",
-                        leading: IdentificationIcon(
-                          size: 24,
-                        ),
+                        leading: IdentificationIcon(size: 24),
                         trailing: _forwardIcon,
-                        onTap: () => context.push('/settings/languages'),
+                        onTap: () => {},
                       ),
                       SettingOption(
                         title: "Nutzerdaten",
-                        leading: UserCircleIcon(
-                          size: 24,
-                        ),
+                        leading: UserCircleIcon(size: 24),
                         trailing: _forwardIcon,
-                        onTap: () => context.push('/settings/languages'),
+                        onTap: () => {},
                       ),
                       SettingOption(
-                        title: "Walletsicherung",
-                        leading: KeySolidIcon(
-                          size: 24,
-                        ),
+                        title: S.of(context).settings_wallet_backup,
+                        leading: KeySolidIcon(size: 24),
                         trailing: _forwardIcon,
-                        onTap: () => context.push('/settings/languages'),
+                        onTap: () => context.push('/settings/seed'),
                       ),
                     ],
                   ),
@@ -107,7 +94,7 @@ class SettingsPage extends StatelessWidget {
                 SettingsSections(
                   settings: [
                     SettingOption(
-                      title: "Geschäftsbeziehung beenden",
+                      title: S.of(context).settings_delete_wallet,
                       leading: XCircleIcon(size: 24),
                       onTap: () => context
                           .read<HomeBloc>()

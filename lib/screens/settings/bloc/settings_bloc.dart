@@ -1,7 +1,8 @@
-import 'package:realunit_wallet/packages/repository/settings_repository.dart';
-import 'package:realunit_wallet/styles/language.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/repository/settings_repository.dart';
+import 'package:realunit_wallet/styles/currency.dart';
+import 'package:realunit_wallet/styles/language.dart';
 
 part 'settings_event.dart';
 part 'settings_state.dart';
@@ -9,8 +10,11 @@ part 'settings_state.dart';
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   SettingsBloc(this._settingsRepository)
       : super(SettingsState(
-            language: Language.fromCode(_settingsRepository.language))) {
+          language: Language.fromCode(_settingsRepository.language),
+          currency: Currency.fromCode(_settingsRepository.currency),
+        )) {
     on<ToggleHideAmountEvent>(_onToggleHideAmountEvent);
+    on<SetCurrencyEvent>(_onSetCurrencyEvent);
     on<SetLanguageEvent>(_onSetLanguageEvent);
   }
 
@@ -25,5 +29,11 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       SetLanguageEvent event, Emitter<SettingsState> emit) {
     _settingsRepository.language = event.language.code;
     emit(state.copyWith(language: event.language));
+  }
+
+  void _onSetCurrencyEvent(
+      SetCurrencyEvent event, Emitter<SettingsState> emit) {
+    _settingsRepository.currency = event.currency.code;
+    emit(state.copyWith(currency: event.currency));
   }
 }

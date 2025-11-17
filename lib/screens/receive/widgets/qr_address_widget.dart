@@ -16,9 +16,9 @@ class QRAddressWidget extends StatelessWidget {
             data: uri,
             // errorCorrectionLevel: errorCorrectionLevel,
             size: 300,
-            eyeStyle: const QrEyeStyle(color: DEuroColors.anthracite),
+            eyeStyle: const QrEyeStyle(color: RealUnitColors.realUnitBlack),
             dataModuleStyle: const QrDataModuleStyle(
-              color: DEuroColors.anthracite,
+              color: RealUnitColors.realUnitBlack,
             ),
           ),
           Padding(

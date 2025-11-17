@@ -21,8 +21,8 @@ class SettingsSeedView extends StatelessWidget {
           leading: IconButton(
             onPressed: () => context.pop(),
             icon: Icon(
-              Icons.arrow_back_ios_new,
-              color: DEuroColors.anthracite,
+              Icons.arrow_back_rounded,
+              color: RealUnitColors.realUnitBlack,
               size: 24,
             ),
           ),
@@ -53,7 +53,7 @@ class SettingsSeedView extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
-                        color: DEuroColors.anthracite,
+                        color: RealUnitColors.realUnitBlack,
                       ),
                     ),
                     Padding(
@@ -86,7 +86,7 @@ class SettingsSeedView extends StatelessWidget {
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       fontSize: 18,
-                                      color: DEuroColors.anthracite,
+                                      color: RealUnitColors.realUnitBlack,
                                     ),
                                   ),
                                 ),

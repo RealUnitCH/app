@@ -3,15 +3,14 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_section.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/styles/language.dart';
+import 'package:realunit_wallet/styles/currency.dart';
 import 'package:realunit_wallet/styles/styles.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-class SettingsLanguagePage extends StatelessWidget {
-  const SettingsLanguagePage({super.key});
+class SettingsCurrenciesPage extends StatelessWidget {
+  const SettingsCurrenciesPage({super.key});
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -25,7 +24,7 @@ class SettingsLanguagePage extends StatelessWidget {
         ),
       ),
       title: Text(
-        S.of(context).settings_languages,
+        S.of(context).settings_currency,
         style: kPageTitleTextStyle,
       ),
       centerTitle: true,
@@ -37,18 +36,19 @@ class SettingsLanguagePage extends StatelessWidget {
         child: BlocBuilder<SettingsBloc, SettingsState>(
           bloc: getIt<SettingsBloc>(),
           builder: (context, state) => SettingsSections(
-            settings: Language.values
+            settings: Currency.values
                 .map(
-                  (lang) => SettingOption(
-                title: lang.name,
-                trailing: state.language == lang ? Icon(
+                  (currency) => SettingOption(
+                title: currency.code,
+                subtitle: currency.name,
+                trailing: state.currency == currency ? Icon(
                   Icons.check,
                   size: 20,
                   color: RealUnitColors.realUnitBlue,
                 ) : null,
                 onTap: () => context
                     .read<SettingsBloc>()
-                    .add(SetLanguageEvent(lang)),
+                    .add(SetCurrencyEvent(currency)),
               ),
             )
                 .toList(),

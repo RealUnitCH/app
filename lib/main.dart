@@ -14,29 +14,29 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 Future<void> main() async {
-  try {
+  // try {
     WidgetsFlutterBinding.ensureInitialized();
     await fuckFirebase();
     final databaseKey = await setupEssentials();
     await finishSetup(databaseKey);
 
     runApp(const WalletApp());
-  } catch (e) {
-    runApp(
-      MaterialApp(
-        home: Scaffold(
-          body: Container(
-            margin:
-                const EdgeInsets.only(top: 50, left: 20, right: 20, bottom: 20),
-            child: Text(
-              'Error:\n${e.toString()}',
-              style: const TextStyle(fontSize: 22, color: Colors.black),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // } catch (e) {
+  //   runApp(
+  //     MaterialApp(
+  //       home: Scaffold(
+  //         body: Container(
+  //           margin:
+  //               const EdgeInsets.only(top: 50, left: 20, right: 20, bottom: 20),
+  //           child: Text(
+  //             'Error:\n${e.toString()}',
+  //             style: const TextStyle(fontSize: 22, color: Colors.black),
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 }
 
 class WalletApp extends StatefulWidget {

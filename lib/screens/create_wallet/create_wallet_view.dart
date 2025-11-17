@@ -39,7 +39,7 @@ class CreateWalletView extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 26,
                             fontWeight: FontWeight.w700,
-                            color: DEuroColors.anthracite,
+                            color: RealUnitColors.realUnitBlack,
                           ),
                         ),
                         Padding(
@@ -75,7 +75,7 @@ class CreateWalletView extends StatelessWidget {
                                         textAlign: TextAlign.center,
                                         style: const TextStyle(
                                           fontSize: 18,
-                                          color: DEuroColors.anthracite,
+                                          color: RealUnitColors.realUnitBlack,
                                         ),
                                       ),
                                     ),

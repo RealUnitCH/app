@@ -17,4 +17,9 @@ class SettingsRepository {
 
   set language(String langCode) =>
       _sharedPreferences.setString("language", langCode);
+
+  String get currency => _sharedPreferences.getString("currency") ?? "CHF";
+
+  set currency(String currencyCode) =>
+      _sharedPreferences.setString("currency", currencyCode);
 }

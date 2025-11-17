@@ -21,8 +21,8 @@ class SettingsNodesView extends StatelessWidget {
           leading: IconButton(
             onPressed: () => context.pop(),
             icon: Icon(
-              Icons.arrow_back_ios_new,
-              color: DEuroColors.anthracite,
+              Icons.arrow_back_rounded,
+              color: RealUnitColors.realUnitBlack,
               size: 24,
             ),
           ),

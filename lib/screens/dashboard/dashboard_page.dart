@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
@@ -16,11 +19,9 @@ import 'package:realunit_wallet/screens/dashboard/widgets/section_transaction_hi
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/styles/icons.dart';
 import 'package:realunit_wallet/styles/styles.dart';
 import 'package:realunit_wallet/widgets/action_button.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 class DashboardPage extends StatelessWidget {
   DashboardPage(this._appStore, {super.key}) {
@@ -77,6 +78,28 @@ class DashboardPage extends StatelessWidget {
           ...singleCashHoldings.map((cubit) => BlocProvider.value(value: cubit))
         ],
         child: Scaffold(
+          appBar: AppBar(
+            leading: Padding(
+              padding: EdgeInsets.only(left: 20),
+              child: RealUnitIcon(),
+            ),
+            leadingWidth: 40,
+            toolbarHeight: 68,
+            titleSpacing: 6,
+            title: Text(
+              "Real Unit Wallet",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+            ),
+            actions: [
+              IconButton(
+                onPressed: () => context.push('/settings'),
+                icon: Icon(
+                  Icons.menu,
+                  color: RealUnitColors.realUnitBlue,
+                ),
+              )
+            ],
+          ),
           body: SafeArea(
             top: false,
             child: PopScope(

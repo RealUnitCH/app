@@ -1,9 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/styles.dart';
-import 'package:flutter/material.dart';
 
 class SettingOption {
   final String title;
+  final String? subtitle;
   final Widget? leading;
   final Widget? trailing;
   final String? selectedOption;
@@ -11,6 +12,7 @@ class SettingOption {
 
   SettingOption({
     required this.title,
+    this.subtitle,
     this.leading,
     this.trailing,
     this.selectedOption,
@@ -22,8 +24,7 @@ class SettingsSections extends StatelessWidget {
   final String? title;
   final List<SettingOption> settings;
 
-  const SettingsSections(
-      {super.key, this.title, required this.settings});
+  const SettingsSections({super.key, this.title, required this.settings});
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -35,7 +36,7 @@ class SettingsSections extends StatelessWidget {
                 Text(
                   title!,
                   style: kSubtitleTextStyle,
-                )
+                ),
               ]),
             Container(
               margin: const EdgeInsets.only(top: 8),
@@ -44,24 +45,36 @@ class SettingsSections extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 itemBuilder: (context, index) {
                   final setting = settings[index];
-                  return Container(
-                    padding: const EdgeInsets.all(12),
-                    child: InkWell(
-                      enableFeedback: false,
-                      onTap: setting.onTap,
-                      child: Row(children: [
+                  return GestureDetector(
+                    onTap: setting.onTap,
+                    child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Row(children: [
                         if (setting.leading != null) setting.leading!,
                         Padding(
-                          padding: const EdgeInsets.only(left: 12),
-                          child: Text(
-                            setting.title,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: DEuroColors.anthracite,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
+                            padding: const EdgeInsets.only(left: 12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  setting.title,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: RealUnitColors.realUnitBlack,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                if (setting.subtitle != null)
+                                  Text(
+                                    setting.subtitle!,
+                                    style: TextStyle(
+                                      color: RealUnitColors.neutral500,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  )
+                              ],
+                            )),
                         if (setting.trailing != null) ...[
                           Spacer(),
                           if (setting.selectedOption != null) ...[

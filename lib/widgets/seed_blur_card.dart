@@ -48,7 +48,7 @@ class SeedBlurCard extends StatelessWidget {
                           const Icon(
                             Icons.visibility,
                             size: 16,
-                            color: DEuroColors.anthracite,
+                            color: RealUnitColors.realUnitBlack,
                           ),
                           Text(
                             S.of(context).tap_here_to_view,

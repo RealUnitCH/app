@@ -21,8 +21,8 @@ class SettingsNodesPage extends StatelessWidget {
           leading: IconButton(
             onPressed: () => context.pop(),
             icon: Icon(
-              Icons.arrow_back_ios_new,
-              color: DEuroColors.anthracite,
+              Icons.arrow_back_rounded,
+              color: RealUnitColors.realUnitBlack,
               size: 24,
             ),
           ),
@@ -49,7 +49,7 @@ class SettingsNodesPage extends StatelessWidget {
                         trailing: Icon(
                           Icons.arrow_forward_ios,
                           size: 20,
-                          color: DEuroColors.anthracite,
+                          color: RealUnitColors.realUnitBlack,
                         ),
                         onTap: () => context
                             .push("/settings/nodes/${blockchain.chainId}"),

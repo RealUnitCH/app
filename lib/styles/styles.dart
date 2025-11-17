@@ -1,12 +1,16 @@
-import 'package:realunit_wallet/styles/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 
 const kPrimaryButtonTextStyle = TextStyle(fontSize: 16, color: Colors.white);
 
-const kPageTitleTextStyle =
-    TextStyle(fontSize: 16, fontWeight: FontWeight.w500, fontFamily: 'Satoshi');
+const kPageTitleTextStyle = TextStyle(
+  fontSize: 16,
+  fontWeight: FontWeight.w700,
+  color: RealUnitColors.realUnitBlack,
+);
 
-const kTitleTextStyle = TextStyle(fontSize: 16, color: DEuroColors.anthracite);
+const kTitleTextStyle =
+    TextStyle(fontSize: 16, color: RealUnitColors.realUnitBlack);
 
 const kSubtitleTextStyle =
     TextStyle(fontSize: 14, color: DEuroColors.neutralGrey);

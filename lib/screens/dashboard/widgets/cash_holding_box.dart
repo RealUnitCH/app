@@ -21,7 +21,7 @@ class CashHoldingBox extends StatelessWidget {
     required this.asset,
     required this.balance,
     this.backgroundColor = Colors.white,
-    this.firstRowTextColor = DEuroColors.anthracite,
+    this.firstRowTextColor = RealUnitColors.realUnitBlack,
     this.secondRowTextColor = DEuroColors.titanGray60,
     this.showBlockchainIcon = false,
     this.navigateToDetails = true,

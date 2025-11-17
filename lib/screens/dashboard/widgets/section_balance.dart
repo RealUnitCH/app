@@ -66,17 +66,6 @@ class SectionBalance extends StatelessWidget {
                         buttonStyle: kBalanceBarActionButtonStyle,
                       ),
                     ],
-                    Spacer(),
-                    CircleAvatar(
-                      radius: 17,
-                      backgroundColor: Colors.white.withAlpha(50),
-                      child: IconButton(
-                        color: Colors.white,
-                        onPressed: () => context.push('/settings'),
-                        iconSize: 18,
-                        icon: Icon(Icons.settings),
-                      ),
-                    ),
                   ],
                 ),
               ),

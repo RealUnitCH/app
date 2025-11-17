@@ -34,7 +34,7 @@ class RestoreWalletView extends StatelessWidget {
                     Text(
                       S.of(context).restore_wallet,
                       style: const TextStyle(
-                          fontSize: 20, color: DEuroColors.anthracite),
+                          fontSize: 20, color: RealUnitColors.realUnitBlack),
                     ),
                     Padding(
                       padding: const EdgeInsets.all(10),
@@ -48,7 +48,7 @@ class RestoreWalletView extends StatelessWidget {
                       padding: const EdgeInsets.all(10),
                       child: TextField(
                         controller: _controller,
-                        style: TextStyle(color: DEuroColors.anthracite),
+                        style: TextStyle(color: RealUnitColors.realUnitBlack),
                         decoration: InputDecoration(
                           hintText: "Seed",
                           border: OutlineInputBorder(
