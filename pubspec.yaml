@@ -129,13 +129,6 @@ flutter:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/icons/deuro_wallet_logo.png"
+  image_path: "assets/icons/realunit_wallet_logo.png"
   min_sdk_android: 21 # android min sdk min:16, default 21
-  image_path_ios: "assets/icons/deuro_wallet_logo_full.png"
-  windows:
-    generate: true
-    image_path: "assets/icons/deuro_wallet_logo.png"
-    icon_size: 256
-  macos:
-    generate: true
-    image_path: "assets/icons/deuro_wallet_logo.png"
+  image_path_ios: "assets/icons/realunit_wallet_logo_full.png"
