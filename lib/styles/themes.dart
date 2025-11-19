@@ -5,5 +5,5 @@ ThemeData get darkTheme => ThemeData(
   fontFamily: "Open Sans",
   colorScheme: ColorScheme.fromSeed(seedColor: RealUnitColors.realUnitBlue),
   useMaterial3: true,
-  scaffoldBackgroundColor: DEuroColors.neutralGrey98,
+  scaffoldBackgroundColor: RealUnitColors.neutral100,
 );

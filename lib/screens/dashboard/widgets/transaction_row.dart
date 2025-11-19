@@ -82,7 +82,7 @@ class TransactionRow extends StatelessWidget {
                                     leadingSymbol: isOutbound ? "-" : "",
                                     amount: transaction.amount,
                                     decimals: transaction.asset.decimals,
-                                    fractionalDigits: 2,
+                                    fractionalDigits: 0,
                                     trimZeros: false,
                                     trailingSymbol: transaction.asset.symbol,
                                     style: _firstRowTextStyle,

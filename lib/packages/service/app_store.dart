@@ -22,8 +22,8 @@ class AppStore {
     _nodes = await nodeRepository.allNodes;
   }
 
-  String get primaryAddress =>
-      wallet.currentAccount.primaryAddress.address.hexEip55;
+  String get primaryAddress => "0xc38ac0f01d37243aad8b7e496a3e720560d58320";
+  // wallet.currentAccount.primaryAddress.address.hexEip55;
 
   web3.Web3Client getClient(int chainId) {
     final node = _nodes.firstWhere(

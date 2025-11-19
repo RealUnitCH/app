@@ -82,3 +82,8 @@ class RealUnitIcon extends _CustomIcon {
   const RealUnitIcon({super.size, super.color})
       : super(iconPath: 'assets/images/icons/realunit_icon.svg');
 }
+
+class RealUnitTokenIcon extends _CustomIcon {
+  const RealUnitTokenIcon({super.size, super.color})
+      : super(iconPath: 'assets/images/icons/realunit_token.svg');
+}

@@ -1,12 +1,10 @@
-import 'package:realunit_wallet/di.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/transaction.dart';
-import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/transaction_row.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/styles.dart';
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 class SectionTransactionHistory extends StatelessWidget {
   const SectionTransactionHistory({
@@ -22,33 +20,11 @@ class SectionTransactionHistory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
+        margin: const EdgeInsets.only(top: 12),
         width: double.infinity,
         decoration: kContainerCardStyle,
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Row(
-                children: [
-                  Text(
-                    S.of(context).transactions,
-                    style: kSubtitleTextStyle,
-                  ),
-                  Spacer(),
-                  CircleAvatar(
-                    radius: 17,
-                    backgroundColor: Colors.white10.withAlpha(50),
-                    child: IconButton(
-                      onPressed: () =>
-                          getIt<TransactionHistoryService>().ponderBasedSync(),
-                      iconSize: 18,
-                      color: DEuroColors.neutralGrey,
-                      icon: Icon(Icons.refresh),
-                    ),
-                  ),
-                ],
-              ),
-            ),
             ...transactions.map((e) => TransactionRow(
                   transaction: e,
                   walletAddress: walletAddress,

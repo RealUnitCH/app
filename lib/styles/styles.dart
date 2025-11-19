@@ -15,7 +15,8 @@ const kTitleTextStyle =
 const kSubtitleTextStyle =
     TextStyle(fontSize: 14, color: DEuroColors.neutralGrey);
 
-const kActionButtonTextStyle = TextStyle(fontSize: 12, color: Colors.white);
+const kActionButtonTextStyle =
+    TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600);
 
 final kFullwidthPrimaryButtonStyle = ElevatedButton.styleFrom(
   backgroundColor: Colors.white.withAlpha(50),

@@ -51,6 +51,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
     _balanceService.updateERC20Balances(_appStore.primaryAddress);
     _balanceService.startSync(_appStore.primaryAddress);
+    _transactionHistoryService.apiBasedSync();
     _transactionHistoryService.explorerAssistedScan();
     _transactionHistoryService.ponderBasedSync();
   }
@@ -69,6 +70,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     _appStore.wallet = event.wallet;
     _balanceService.updateERC20Balances(_appStore.primaryAddress);
     _balanceService.startSync(_appStore.primaryAddress);
+    _transactionHistoryService.apiBasedSync();
     _transactionHistoryService.explorerAssistedScan();
     _transactionHistoryService.ponderBasedSync();
 

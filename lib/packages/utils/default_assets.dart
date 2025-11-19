@@ -1,24 +1,21 @@
 import 'package:realunit_wallet/models/asset.dart';
 
+const realUnitAsset = Asset(chainId: 1, address: '0x553C7f9C780316FC1D34b8e14ac2465Ab22a090B', name: 'RealUnit Aktientoken', symbol: 'REALU', decimals: 0);
 const dEUROAsset = Asset(chainId: 1, address: '0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea', name: 'dEuro', symbol: 'dEURO', decimals: 18);
 const dEUROBaseAsset = Asset(chainId: 8453, address: '0x1B5F7fA46ED0F487F049C42f374cA4827d65A264', name: 'dEuro (Base)', symbol: 'dEURO', decimals: 18);
 const dEUROOptimismAsset = Asset(chainId: 10, address: '0x1B5F7fA46ED0F487F049C42f374cA4827d65A264', name: 'dEuro (Optimism)', symbol: 'dEURO', decimals: 18);
 const dEUROArbitrumAsset = Asset(chainId: 42161, address: '0x5e85fAf503621830CA857a5f38B982E0cc57D537', name: 'dEuro (Arbitrum)', symbol: 'dEURO', decimals: 18);
 const dEUROPolygonAsset = Asset(chainId: 137, address: '0xC2ff25dD99e467d2589b2c26EDd270F220F14E47', name: 'dEuro (Polygon)', symbol: 'dEURO', decimals: 18);
-const nDEPSAsset = Asset(chainId: 1, address: '0xc71104001A3CCDA1BEf1177d765831Bd1bfE8eE6', name: 'Native dEuro Protocol Share', symbol: 'nDEPS', decimals: 18);
-const depsAsset = Asset(chainId: 1, address: '0x103747924E74708139a9400e4Ab4BEA79FFFA380', name: 'dEuro Protocol Share', symbol: 'DEPS', decimals: 18);
 
 const defaultAssets = [
+  realUnitAsset,
+
   // dEuro
   dEUROAsset,
   dEUROBaseAsset,
   dEUROOptimismAsset,
   dEUROArbitrumAsset,
   dEUROPolygonAsset,
-
-  // DEPS
-  nDEPSAsset,
-  depsAsset,
 
   // Frankencoin
   Asset(chainId: 1, address: '0xB58E61C3098d85632Df34EecfB899A1Ed80921cB', name: 'Frankencoin', symbol: 'ZCHF', decimals: 18),

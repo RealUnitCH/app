@@ -30,6 +30,8 @@
   "or": "Oder",
   "pay": "Bezahlen",
   "pay_scan": "Zahlen • Scan",
+  "portfolio": "Bestand",
+  "realunit_stockprice": "RealUnit Aktienkurs",
   "receive": "Empfangen",
   "receiver": "Empfänger",
   "restore_wallet": "Wallet wiederherstellen",

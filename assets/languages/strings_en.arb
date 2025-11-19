@@ -30,6 +30,8 @@
   "or": "Or",
   "pay": "Pay",
   "pay_scan": "Pay • Scan",
+  "portfolio": "Portfolio",
+  "realunit_stockprice": "RealUnit Stockprice",
   "receive": "Receive",
   "receiver": "Receiver",
   "restore_wallet": "Restore wallet",

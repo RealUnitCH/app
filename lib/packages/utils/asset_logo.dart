@@ -16,6 +16,8 @@ String getAssetImagePath(Asset asset) {
       return "assets/images/coins/DEPS.png";
     case "1:0xc71104001a3ccda1bef1177d765831bd1bfe8ee6":
       return "assets/images/coins/nDEPS.png";
+    case "1:0x553c7f9c780316fc1d34b8e14ac2465ab22a090b":
+      return "assets/images/coins/REALU.png";
 
 
     case "1:0xb58e61c3098d85632df34eecfb899a1ed80921cb":

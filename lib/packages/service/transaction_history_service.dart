@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer' as developer;
 
 import 'package:realunit_wallet/models/asset.dart';
@@ -10,6 +11,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:etherscan_api/etherscan_api.dart';
 import 'package:etherscan_api/src/models/account/token_tx_model.dart';
 import 'package:etherscan_api/src/models/account/tx_list_model.dart';
+import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:web3dart/credentials.dart';
 
 class TransactionHistoryService {
@@ -139,14 +141,34 @@ class TransactionHistoryService {
     }
   }
 
-// Future<Transaction> getTransactionState(String txId, int chainId) async {
-//   final txState =
-//       await _appStore.getClient(chainId).getTransactionByHash(txId);
-//
-//   if (txState != null) {
-//     txState.
-//   }
-// }
+  Future<void> apiBasedSync() async {
+    final address = _appStore.primaryAddress;
+    final apiUri = Uri.parse("https://dev.api.dfx.swiss/v1/realunit/account/${address}/history");
+
+    final response = await _appStore.httpClient.get(apiUri);
+
+    if (response.statusCode != 200) return;
+
+    final body = jsonDecode(response.body);
+
+    for (final entry in (body["history"])) {
+
+      final transferData = entry["transfer"] as Map;
+      _transactionRepository.insertTransaction(Transaction(
+        height: 0, // ToDo
+        txId: entry['txHash'],
+        chainId: 1,
+        senderAddress: transferData['from'],
+        receiverAddress: transferData['to'],
+        amount: BigInt.parse(transferData['value']),
+        asset: realUnitAsset,
+        type: TransactionTypes.tokenTransfer,
+        note: "",
+        data: null,
+        timestamp: DateTime.parse(entry['timestamp']),
+      ));
+    }
+  }
 }
 
 extension ToEpiAddress on String {

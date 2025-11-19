@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class TransactionHistoryCubit extends Cubit<List<Transaction>> {
   TransactionHistoryCubit(this._repository, this._walletAddress) : super([]) {
     _repository.watchTransactionsOfAssets(
-        [dEUROAsset], _walletAddress, 6).listen(emit);
+        [realUnitAsset], _walletAddress, 6).listen(emit);
   }
 
   final String _walletAddress;

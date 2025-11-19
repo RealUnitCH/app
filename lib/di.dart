@@ -10,6 +10,7 @@ import 'package:realunit_wallet/packages/repository/transaction_repository.dart'
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_service.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
@@ -87,6 +88,7 @@ void setupServices() {
       getIt<AssetRepository>(), getIt<TransactionRepository>()));
 
   getIt.registerFactory(() => OpenCryptoPayService());
+  getIt.registerFactory(() => DFXPriceService(getIt<AppStore>()));
   getIt.registerFactory(() => DFXService(getIt<AppStore>(),
       getIt<SettingsRepository>(), getIt<AssetRepository>()));
 }

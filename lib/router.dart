@@ -2,6 +2,7 @@ import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/packages/open_crypto_pay/models.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/home/home.dart';
@@ -41,7 +42,7 @@ void setupRouter() {
           builder: (context, state) => RestoreWalletPage()),
       GoRoute(
           path: "/dashboard",
-          builder: (context, state) => DashboardPage(getIt<AppStore>())),
+          builder: (context, state) => DashboardPage(getIt<AppStore>(), getIt<DFXPriceService>())),
       GoRoute(
           path: "/receive",
           builder: (context, state) => ReceivePage(isBottomSheet: false)),

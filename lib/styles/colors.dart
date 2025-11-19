@@ -13,5 +13,8 @@ class DEuroColors {
 class RealUnitColors {
   static const realUnitBlue = Color.fromARGB(255, 25, 136, 198);
   static const realUnitBlack = Color.fromARGB(255, 52, 50, 51);
+  static const darkBlue = Color.fromARGB(255, 3, 76, 129);
   static const neutral500 = Color.fromARGB(255, 100, 116, 139);
+  static const neutral400 = Color.fromARGB(255, 148, 163, 184);
+  static const neutral100 = Color.fromARGB(255, 242, 245, 248);
 }
