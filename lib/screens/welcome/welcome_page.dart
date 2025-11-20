@@ -1,8 +1,8 @@
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/styles.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -15,7 +15,7 @@ class WelcomePage extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage("assets/images/welcome_screen.png"),
+                image: AssetImage("assets/images/splash_screen.png"),
                 fit: BoxFit.cover,
               ),
             ),
@@ -24,53 +24,10 @@ class WelcomePage extends StatelessWidget {
                   width: double.infinity,
                   child: Column(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.only(
-                            left: 20, right: 20, top: 35, bottom: 35),
-                        width: double.infinity,
-                        child: Text(
-                          S.of(context).your_deuro_cash_and_savings_wallet,
-                          style: const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
                       const Spacer(),
                       Padding(
                         padding: const EdgeInsets.only(
-                            top: 20, bottom: 5, right: 20, left: 20),
-                        child: InkWell(
-                          onTap: () => launchUrl(
-                            Uri.parse(
-                                "https://docs.frankencoin.app/en/tou.html"),
-                            mode: LaunchMode.externalApplication,
-                          ),
-                          enableFeedback: false,
-                          child: Text.rich(
-                            TextSpan(
-                              text: S.of(context).welcome_disclaimer,
-                              children: [
-                                const TextSpan(text: "\n"),
-                                TextSpan(
-                                  text: S.of(context).terms_and_conditions,
-                                  style: const TextStyle(
-                                    decoration: TextDecoration.underline,
-                                    decorationColor: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.grey),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(
-                            top: 20, bottom: 20, left: 10, right: 10),
+                            top: 20, bottom: 10, left: 10, right: 10),
                         child: Row(
                           children: [
                             Expanded(
@@ -86,7 +43,7 @@ class WelcomePage extends StatelessWidget {
                                   ),
                                   child: Text(
                                     S.of(context).import_wallet,
-                                    style: kPrimaryButtonTextStyle,
+                                    style: kPrimaryButtonTextStyle.copyWith(color: RealUnitColors.realUnitBlue),
                                   ),
                                 ),
                               ),
@@ -97,7 +54,11 @@ class WelcomePage extends StatelessWidget {
                                 padding: const EdgeInsets.only(left: 5),
                                 child: TextButton(
                                   onPressed: () => context.go('/wallet/create'),
-                                  style: kFullwidthPrimaryButtonStyle,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: RealUnitColors.realUnitBlue,
+                                    fixedSize: Size(double.infinity, 55),
+                                    elevation: 0.0,
+                                  ),
                                   child: Text(
                                     S.of(context).create_wallet,
                                     textAlign: TextAlign.center,
