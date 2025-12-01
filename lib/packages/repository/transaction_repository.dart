@@ -49,7 +49,7 @@ class TransactionRepository {
         timeStamp: transaction.timestamp,
       );
 
-  Future<bool> exitsTransaction(String txId) =>
+  Future<bool> existsTransaction(String txId) =>
       _appDatabase.getTransaction(txId).then((txData) => txData != null);
 
   // Future<Transaction?> getTransaction(String txId) =>

@@ -11,7 +11,7 @@ class BalanceRepository {
   const BalanceRepository(this._appDatabase);
 
   Future<void> saveBalance(Balance balance) async {
-    final exists = await exitsBalance(balance);
+    final exists = await existsBalance(balance);
     return exists ? updateBalance(balance) : insertBalance(balance);
   }
 
@@ -37,7 +37,7 @@ class BalanceRepository {
             )
           : null);
 
-  Future<bool> exitsBalance(Balance balance) =>
+  Future<bool> existsBalance(Balance balance) =>
       getBalance(balance.asset, balance.walletAddress)
           .then((balance) => balance != null);
 

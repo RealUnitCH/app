@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
 
+import 'package:etherscan_api/etherscan_api.dart';
+import 'package:etherscan_api/src/models/account/token_tx_model.dart';
+import 'package:etherscan_api/src/models/account/tx_list_model.dart';
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/models/transaction.dart';
@@ -8,9 +11,6 @@ import 'package:realunit_wallet/packages/ponder/ponder.dart';
 import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:etherscan_api/etherscan_api.dart';
-import 'package:etherscan_api/src/models/account/token_tx_model.dart';
-import 'package:etherscan_api/src/models/account/tx_list_model.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:web3dart/credentials.dart';
 
@@ -91,7 +91,7 @@ class TransactionHistoryService {
     }
 
     for (EtherScanMintedTokenTxResult result in ercTx.result ?? []) {
-      if (await _transactionRepository.exitsTransaction(result.hash)) continue;
+      if (await _transactionRepository.existsTransaction(result.hash)) continue;
 
       Asset? asset = await _assetRepository.getAsset(
               chain.chainId, result.contractAddress.asHexEip55) ??
@@ -103,7 +103,8 @@ class TransactionHistoryService {
             decimals: 18,
           );
 
-      final exists = await _transactionRepository.exitsTransaction(result.hash);
+      final exists =
+          await _transactionRepository.existsTransaction(result.hash);
       if (!exists) {
         _transactionRepository.insertTransaction(Transaction(
           height: int.parse(result.blockNumber),
@@ -127,11 +128,13 @@ class TransactionHistoryService {
   }
 
   Future<void> ponderBasedSync() async {
-    final transactions = await Ponder().getSavingsSavedTransactions(_appStore.primaryAddress);
-    final transactions2 = await Ponder().getSavingsWithdrawnTransactions(_appStore.primaryAddress);
+    final transactions =
+        await Ponder().getSavingsSavedTransactions(_appStore.primaryAddress);
+    final transactions2 = await Ponder()
+        .getSavingsWithdrawnTransactions(_appStore.primaryAddress);
 
     for (final tx in [...transactions, ...transactions2]) {
-      final exists = await _transactionRepository.exitsTransaction(tx.txId);
+      final exists = await _transactionRepository.existsTransaction(tx.txId);
       print(tx.txId);
       if (exists) {
         _transactionRepository.updateTransaction(tx);
@@ -143,7 +146,8 @@ class TransactionHistoryService {
 
   Future<void> apiBasedSync() async {
     final address = _appStore.primaryAddress;
-    final apiUri = Uri.parse("https://dev.api.dfx.swiss/v1/realunit/account/${address}/history");
+    final apiUri = Uri.parse(
+        "https://dev.api.dfx.swiss/v1/realunit/account/${address}/history");
 
     final response = await _appStore.httpClient.get(apiUri);
 
@@ -152,7 +156,6 @@ class TransactionHistoryService {
     final body = jsonDecode(response.body);
 
     for (final entry in (body["history"])) {
-
       final transferData = entry["transfer"] as Map;
       _transactionRepository.insertTransaction(Transaction(
         height: 0, // ToDo
