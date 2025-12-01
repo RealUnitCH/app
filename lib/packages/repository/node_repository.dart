@@ -11,7 +11,7 @@ class NodeRepository {
   const NodeRepository(this._appDatabase);
 
   Future<void> saveNode(Node node) async {
-    final exists = await exitsNode(node);
+    final exists = await existsNode(node);
     developer.log('Node for ${node.name} exists: $exists',
         name: 'NodeRepository.saveNode');
     if (!exists) await insertNode(node);
@@ -46,6 +46,6 @@ class NodeRepository {
           ))
       .toList());
 
-  Future<bool> exitsNode(Node node) =>
+  Future<bool> existsNode(Node node) =>
       getNode(node.chainId).then((asset) => asset != null);
 }

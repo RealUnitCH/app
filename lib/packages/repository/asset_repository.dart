@@ -11,7 +11,7 @@ class AssetRepository {
   const AssetRepository(this._appDatabase);
 
   Future<void> saveAsset(Asset asset) async {
-    final exists = await exitsAsset(asset);
+    final exists = await existsAsset(asset);
     developer.log('${asset.name} $exists', name: 'AssetRepository.saveAsset');
     if (!exists) await insertAsset(asset);
   }
@@ -52,7 +52,6 @@ class AssetRepository {
               ))
           .toList());
 
-  Future<bool> exitsAsset(Asset asset) =>
-      getAsset(asset.chainId, asset.address)
-          .then((asset) => asset != null);
+  Future<bool> existsAsset(Asset asset) =>
+      getAsset(asset.chainId, asset.address).then((asset) => asset != null);
 }
