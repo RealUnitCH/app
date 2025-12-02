@@ -8,18 +8,15 @@ class SettingsRepository {
   Future<bool> saveCurrentWalletId(int walletId) =>
       _sharedPreferences.setInt("currentWalletId", walletId);
 
-  Future<bool> removeCurrentWalletId() =>
-      _sharedPreferences.remove("currentWalletId");
+  Future<bool> removeCurrentWalletId() => _sharedPreferences.remove("currentWalletId");
 
   int? get currentWalletId => _sharedPreferences.getInt("currentWalletId");
 
-  String get language => _sharedPreferences.getString("language") ?? "en";
+  String get language => _sharedPreferences.getString("language") ?? "de";
 
-  set language(String langCode) =>
-      _sharedPreferences.setString("language", langCode);
+  set language(String langCode) => _sharedPreferences.setString("language", langCode);
 
   String get currency => _sharedPreferences.getString("currency") ?? "CHF";
 
-  set currency(String currencyCode) =>
-      _sharedPreferences.setString("currency", currencyCode);
+  set currency(String currencyCode) => _sharedPreferences.setString("currency", currencyCode);
 }
