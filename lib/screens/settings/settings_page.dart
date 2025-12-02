@@ -67,13 +67,13 @@ class SettingsPage extends StatelessWidget {
                         onTap: () => {},
                       ),
                       SettingOption(
-                        title: "KYC Status",
+                        title: S.of(context).kyc_status,
                         leading: IdentificationIcon(size: 24),
                         trailing: _forwardIcon,
                         onTap: () => {},
                       ),
                       SettingOption(
-                        title: "Nutzerdaten",
+                        title: S.of(context).user_data,
                         leading: UserCircleIcon(size: 24),
                         trailing: _forwardIcon,
                         onTap: () => {},
@@ -96,9 +96,7 @@ class SettingsPage extends StatelessWidget {
                     SettingOption(
                       title: S.of(context).settings_delete_wallet,
                       leading: XCircleIcon(size: 24),
-                      onTap: () => context
-                          .read<HomeBloc>()
-                          .add(DeleteCurrentWalletEvent()),
+                      onTap: () => context.read<HomeBloc>().add(DeleteCurrentWalletEvent()),
                     ),
                   ],
                 ),
