@@ -15,12 +15,12 @@ import 'package:go_router/go_router.dart';
 
 Future<void> main() async {
   // try {
-    WidgetsFlutterBinding.ensureInitialized();
-    await fuckFirebase();
-    final databaseKey = await setupEssentials();
-    await finishSetup(databaseKey);
+  WidgetsFlutterBinding.ensureInitialized();
+  await fuckFirebase();
+  final databaseKey = await setupEssentials();
+  await finishSetup(databaseKey);
 
-    runApp(const WalletApp());
+  runApp(const WalletApp());
   // } catch (e) {
   //   runApp(
   //     MaterialApp(
@@ -80,8 +80,7 @@ class _WalletAppState extends State<WalletApp> {
   void _onDetached() => debugPrint('detached');
 
   void _onResumed() {
-    getIt<BalanceService>()
-        .updateERC20Balances(getIt<AppStore>().primaryAddress);
+    getIt<BalanceService>().updateERC20Balances(getIt<AppStore>().primaryAddress);
   }
 
   void _onInactive() => developer.log('inactive', name: 'AppLifecycleListener');
@@ -101,7 +100,7 @@ class _WalletAppState extends State<WalletApp> {
         child: BlocBuilder<SettingsBloc, SettingsState>(
           builder: (context, state) => MaterialApp.router(
             debugShowCheckedModeBanner: false,
-            theme: darkTheme,
+            theme: realUnitTheme,
             supportedLocales: S.delegate.supportedLocales,
             localizationsDelegates: const [
               S.delegate,
@@ -114,8 +113,7 @@ class _WalletAppState extends State<WalletApp> {
             builder: (context, child) => BlocListener<HomeBloc, HomeState>(
               listener: (context, state) {
                 if (!state.isLoadingWallet) {
-                  getIt<GoRouter>()
-                      .go(state.openWallet != null ? '/dashboard' : '/welcome');
+                  getIt<GoRouter>().go(state.openWallet != null ? '/dashboard' : '/welcome');
                 }
               },
               child: child,
