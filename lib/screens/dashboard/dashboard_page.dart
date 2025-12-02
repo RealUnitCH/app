@@ -87,7 +87,6 @@ class DashboardPage extends StatelessWidget {
               padding: EdgeInsets.only(left: 20),
               child: RealUnitIcon(),
             ),
-            backgroundColor: RealUnitColors.neutral100,
             leadingWidth: 40,
             toolbarHeight: 68,
             titleSpacing: 6,
@@ -117,10 +116,10 @@ class DashboardPage extends StatelessWidget {
                       BlocBuilder<SettingsBloc, SettingsState>(
                         bloc: context.read<SettingsBloc>(),
                         builder: (context, settingsBloc) => PriceWidget(
-                            currency: settingsBloc.currency,
-                            price: dashboardState.price,
-                            priceChart: dashboardState.priceChart,
-                          ),
+                          currency: settingsBloc.currency,
+                          price: dashboardState.price,
+                          priceChart: dashboardState.priceChart,
+                        ),
                       ),
                       BlocBuilder<HomeBloc, HomeState>(
                         builder: (context, homeState) => Offstage(

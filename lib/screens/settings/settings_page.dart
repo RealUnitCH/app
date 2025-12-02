@@ -20,91 +20,89 @@ class SettingsPage extends StatelessWidget {
   );
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          leading: IconButton(
-            onPressed: () => context.pop(),
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: RealUnitColors.realUnitBlack,
-              size: 24,
-            ),
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          onPressed: () => context.pop(),
+          icon: Icon(
+            Icons.arrow_back_rounded,
+            size: 24,
           ),
-          title: Text(
-            S.of(context).settings,
-            style: kPageTitleTextStyle,
-          ),
-          centerTitle: true,
         ),
-        body: SingleChildScrollView(
-          child: SizedBox(
-            width: double.infinity,
-            child: Column(
-              children: [
-                BlocBuilder<SettingsBloc, SettingsState>(
-                  bloc: getIt<SettingsBloc>(),
-                  builder: (context, state) => SettingsSections(
-                    settings: [
-                      SettingOption(
-                        title: S.of(context).settings_languages,
-                        leading: LanguagesIcon(size: 24),
-                        trailing: _forwardIcon,
-                        selectedOption: state.language.name,
-                        onTap: () => context.push('/settings/languages'),
-                      ),
-                      SettingOption(
-                        title: S.of(context).settings_currency,
-                        leading: CurrencyIcon(size: 24),
-                        trailing: _forwardIcon,
-                        selectedOption: state.currency.code,
-                        onTap: () => context.push('/settings/currencies'),
-                      ),
-                      SettingOption(
-                        title: S.of(context).settings_tax_report,
-                        leading: DocumentReportIcon(size: 24),
-                        trailing: _forwardIcon,
-                        onTap: () => {},
-                      ),
-                      SettingOption(
-                        title: "KYC Status",
-                        leading: IdentificationIcon(size: 24),
-                        trailing: _forwardIcon,
-                        onTap: () => {},
-                      ),
-                      SettingOption(
-                        title: "Nutzerdaten",
-                        leading: UserCircleIcon(size: 24),
-                        trailing: _forwardIcon,
-                        onTap: () => {},
-                      ),
-                      SettingOption(
-                        title: S.of(context).settings_wallet_backup,
-                        leading: KeySolidIcon(size: 24),
-                        trailing: _forwardIcon,
-                        onTap: () => context.push('/settings/seed'),
-                      ),
-                    ],
-                  ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                  child: Divider(),
-                ),
-                SettingsSections(
+        title: Text(
+          S.of(context).settings,
+          style: kPageTitleTextStyle,
+        ),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            children: [
+              BlocBuilder<SettingsBloc, SettingsState>(
+                bloc: getIt<SettingsBloc>(),
+                builder: (context, state) => SettingsSections(
                   settings: [
                     SettingOption(
-                      title: S.of(context).settings_delete_wallet,
-                      leading: XCircleIcon(size: 24),
-                      onTap: () => context
-                          .read<HomeBloc>()
-                          .add(DeleteCurrentWalletEvent()),
+                      title: S.of(context).settings_languages,
+                      leading: LanguagesIcon(size: 24),
+                      trailing: _forwardIcon,
+                      selectedOption: state.language.name,
+                      onTap: () => context.push('/settings/languages'),
+                    ),
+                    SettingOption(
+                      title: S.of(context).settings_currency,
+                      leading: CurrencyIcon(size: 24),
+                      trailing: _forwardIcon,
+                      selectedOption: state.currency.code,
+                      onTap: () => context.push('/settings/currencies'),
+                    ),
+                    SettingOption(
+                      title: S.of(context).settings_tax_report,
+                      leading: DocumentReportIcon(size: 24),
+                      trailing: _forwardIcon,
+                      onTap: () => {},
+                    ),
+                    SettingOption(
+                      title: "KYC Status",
+                      leading: IdentificationIcon(size: 24),
+                      trailing: _forwardIcon,
+                      onTap: () => {},
+                    ),
+                    SettingOption(
+                      title: "Nutzerdaten",
+                      leading: UserCircleIcon(size: 24),
+                      trailing: _forwardIcon,
+                      onTap: () => {},
+                    ),
+                    SettingOption(
+                      title: S.of(context).settings_wallet_backup,
+                      leading: KeySolidIcon(size: 24),
+                      trailing: _forwardIcon,
+                      onTap: () => context.push('/settings/seed'),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: Divider(),
+              ),
+              SettingsSections(
+                settings: [
+                  SettingOption(
+                    title: S.of(context).settings_delete_wallet,
+                    leading: XCircleIcon(size: 24),
+                    onTap: () => context.read<HomeBloc>().add(DeleteCurrentWalletEvent()),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    );
+  }
 }
