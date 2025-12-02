@@ -1,5 +1,9 @@
 import 'dart:developer' as developer;
 
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
@@ -8,19 +12,15 @@ import 'package:realunit_wallet/packages/utils/fuck_firebase.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/styles/themes.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:go_router/go_router.dart';
 
 Future<void> main() async {
   // try {
-    WidgetsFlutterBinding.ensureInitialized();
-    await fuckFirebase();
-    final databaseKey = await setupEssentials();
-    await finishSetup(databaseKey);
+  WidgetsFlutterBinding.ensureInitialized();
+  await fuckFirebase();
+  final databaseKey = await setupEssentials();
+  await finishSetup(databaseKey);
 
-    runApp(const WalletApp());
+  runApp(const WalletApp());
   // } catch (e) {
   //   runApp(
   //     MaterialApp(
@@ -77,11 +77,10 @@ class _WalletAppState extends State<WalletApp> {
     }
   }
 
-  void _onDetached() => debugPrint('detached');
+  void _onDetached() => developer.log('detached');
 
   void _onResumed() {
-    getIt<BalanceService>()
-        .updateERC20Balances(getIt<AppStore>().primaryAddress);
+    getIt<BalanceService>().updateERC20Balances(getIt<AppStore>().primaryAddress);
   }
 
   void _onInactive() => developer.log('inactive', name: 'AppLifecycleListener');
@@ -114,8 +113,7 @@ class _WalletAppState extends State<WalletApp> {
             builder: (context, child) => BlocListener<HomeBloc, HomeState>(
               listener: (context, state) {
                 if (!state.isLoadingWallet) {
-                  getIt<GoRouter>()
-                      .go(state.openWallet != null ? '/dashboard' : '/welcome');
+                  getIt<GoRouter>().go(state.openWallet != null ? '/dashboard' : '/welcome');
                 }
               },
               child: child,
