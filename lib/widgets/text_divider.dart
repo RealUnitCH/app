@@ -1,5 +1,5 @@
-import 'package:realunit_wallet/styles/styles.dart';
 import 'package:flutter/material.dart';
+import 'package:realunit_wallet/styles/styles.dart';
 
 class TextDivider extends StatelessWidget {
   final String text;
@@ -11,7 +11,10 @@ class TextDivider extends StatelessWidget {
         const Expanded(child: Divider()),
         Padding(
           padding: const EdgeInsets.only(left: 10, right: 10),
-          child: Text(text, style: kPrimaryButtonTextStyle),
+          child: Text(
+            text,
+            style: kPrimaryButtonTextStyle.copyWith(color: Theme.of(context).dividerColor),
+          ),
         ),
         const Expanded(child: Divider()),
       ]);

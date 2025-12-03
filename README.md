@@ -1,30 +1,29 @@
 # Real Unit App
 
-A Wallet for Real Unit Investors
+A Flutter Wallet for Real Unit Investors.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### 1. Generate translations
 
-A few resources to get you started if this is your first Flutter project:
+```shell
+dart run tool/generate_localization.dart
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-
-## Generate Drift Files
+### 2. Generate Drift Files
 
 ```shell
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-# Open ToDo
-- Swap / Bridge
-- Invest
-- Multichain Tx History
-- Setup Ponder
-  - Savings History
-  - Tx History
+### 3. Get dependencies
+
+```shell
+flutter pub get
+```
+
+### 3. Start app
+
+```shell
+flutter run
+```
