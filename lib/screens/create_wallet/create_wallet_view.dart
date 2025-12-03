@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/create_wallet/bloc/create_wallet_cubit.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
@@ -16,6 +17,16 @@ class CreateWalletView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
+        backgroundColor: RealUnitColors.brand700,
+        appBar: AppBar(
+          leading: IconButton(
+            onPressed: () => context.pop(),
+            icon: Icon(
+              Icons.arrow_back_rounded,
+              size: 24,
+            ),
+          ),
+        ),
         body: SafeArea(
           child: SizedBox(
             width: double.infinity,
@@ -31,7 +42,7 @@ class CreateWalletView extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 20, bottom: 20),
                           child: SvgPicture.asset(
                             "assets/images/backup_seed.svg",
-                            width: 155,
+                            width: 124,
                           ),
                         ),
                         Text(
@@ -69,9 +80,7 @@ class CreateWalletView extends StatelessWidget {
                                     Padding(
                                       padding: const EdgeInsets.only(bottom: 3),
                                       child: Text(
-                                        S
-                                            .of(context)
-                                            .create_wallet_recovery_key_title,
+                                        S.of(context).create_wallet_recovery_key_title,
                                         textAlign: TextAlign.center,
                                         style: const TextStyle(
                                           fontSize: 18,
@@ -80,9 +89,7 @@ class CreateWalletView extends StatelessWidget {
                                       ),
                                     ),
                                     Text(
-                                      S
-                                          .of(context)
-                                          .create_wallet_recovery_key_subtitle,
+                                      S.of(context).create_wallet_recovery_key_subtitle,
                                       style: kSubtitleTextStyle,
                                     ),
                                   ],
@@ -93,8 +100,7 @@ class CreateWalletView extends StatelessWidget {
                         ),
                         SeedBlurCard(
                           text: state.wallet!.seed,
-                          onTap:
-                              context.read<CreateWalletCubit>().toggleShowSeed,
+                          onTap: context.read<CreateWalletCubit>().toggleShowSeed,
                           blur: state.hideSeed,
                         ),
                         Padding(
@@ -103,8 +109,8 @@ class CreateWalletView extends StatelessWidget {
                             onPressed: () => _copySeed(state.wallet!.seed),
                             child: Text(
                               S.of(context).copy_seed,
-                              style: kPageTitleTextStyle.copyWith(
-                                  color: RealUnitColors.realUnitBlue),
+                              style:
+                                  kPageTitleTextStyle.copyWith(color: RealUnitColors.realUnitBlue),
                             ),
                           ),
                         ),
@@ -114,9 +120,8 @@ class CreateWalletView extends StatelessWidget {
                           child: SizedBox(
                             width: double.infinity,
                             child: TextButton(
-                              onPressed: () => context
-                                  .read<HomeBloc>()
-                                  .add(LoadWalletEvent(state.wallet!)),
+                              onPressed: () =>
+                                  context.read<HomeBloc>().add(LoadWalletEvent(state.wallet!)),
                               style: kFullwidthBlueButtonStyle,
                               child: Text(
                                 S.of(context).create_wallet_confirm,
@@ -141,6 +146,5 @@ class CreateWalletView extends StatelessWidget {
         ),
       );
 
-  Future<void> _copySeed(String seed) async =>
-      Clipboard.setData(ClipboardData(text: seed));
+  void _copySeed(String seed) => Clipboard.setData(ClipboardData(text: seed));
 }
