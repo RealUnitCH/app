@@ -32,7 +32,9 @@ void main() {
         expect(welcomeCardWidget.trailing, isA<SvgPicture>());
         expect(welcomeCardWidget.actions.length, 2);
         expect(welcomeCardWidget.actions[0].title, S.current.create_wallet);
+        expect(welcomeCardWidget.actions[0].onPressed, isA<VoidCallback>());
         expect(welcomeCardWidget.actions[1].title, S.current.restore_wallet);
+        expect(welcomeCardWidget.actions[1].onPressed, isA<VoidCallback>());
       });
 
       testWidgets('for Hardware Wallet', (tester) async {
@@ -48,6 +50,7 @@ void main() {
         expect(welcomeCardWidget.trailing, isA<SvgPicture>());
         expect(welcomeCardWidget.actions.length, 1);
         expect(welcomeCardWidget.actions[0].title, S.current.connect_with(S.current.bitbox));
+        expect(welcomeCardWidget.actions[0].onPressed, null);
       });
     });
   });
