@@ -100,7 +100,7 @@ class _WalletAppState extends State<WalletApp> {
         child: BlocBuilder<SettingsBloc, SettingsState>(
           builder: (context, state) => MaterialApp.router(
             debugShowCheckedModeBanner: false,
-            theme: darkTheme,
+            theme: realUnitTheme,
             supportedLocales: S.delegate.supportedLocales,
             localizationsDelegates: const [
               S.delegate,

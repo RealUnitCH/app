@@ -22,12 +22,10 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
           leading: IconButton(
             onPressed: () => context.pop(),
             icon: Icon(
               Icons.arrow_back_rounded,
-              color: RealUnitColors.realUnitBlack,
               size: 24,
             ),
           ),
