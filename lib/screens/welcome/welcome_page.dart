@@ -1,77 +1,101 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/styles/styles.dart';
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:realunit_wallet/styles/icons.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: Colors.black,
-        body: PopScope(
-          canPop: false,
-          child: Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage("assets/images/splash_screen.png"),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: SafeArea(
-              child: SizedBox(
-                  width: double.infinity,
+        backgroundColor: RealUnitColors.brand700,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 40),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Spacer(),
-                      Padding(
-                        padding: const EdgeInsets.only(
-                            top: 20, bottom: 10, left: 10, right: 10),
-                        child: Row(
+                      RealUnitIcon(
+                        size: 48,
+                      ),
+                      Text(
+                        'RealUnit Wallet',
+                      ),
+                      Text(
+                        'Investiere in reale Werte und behalte die volle Kontrolle — rund um die Uhr.',
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 40),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Expanded(
-                              flex: 1,
-                              child: Padding(
-                                padding: const EdgeInsets.only(right: 5),
-                                child: TextButton(
-                                  onPressed: () =>
-                                      context.go('/wallet/restore'),
-                                  style: TextButton.styleFrom(
-                                    fixedSize: Size(double.infinity, 55),
-                                    backgroundColor: Colors.transparent,
-                                  ),
-                                  child: Text(
-                                    S.of(context).import_wallet,
-                                    style: kPrimaryButtonTextStyle.copyWith(color: RealUnitColors.realUnitBlue),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 5),
-                                child: TextButton(
-                                  onPressed: () => context.go('/wallet/create'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: RealUnitColors.realUnitBlue,
-                                    fixedSize: Size(double.infinity, 55),
-                                    elevation: 0.0,
-                                  ),
-                                  child: Text(
-                                    S.of(context).create_wallet,
-                                    textAlign: TextAlign.center,
-                                    style: kPrimaryButtonTextStyle,
-                                  ),
-                                ),
-                              ),
-                            ),
+                            Text('Software Wallet'),
+                            SvgPicture.asset('assets/images/icons/software_wallet.svg'),
                           ],
                         ),
-                      )
-                    ],
-                  )),
+                        SizedBox(height: 24),
+                        FilledButton(
+                          onPressed: () => context.go('/wallet/create'),
+                          child: Text('Neue Wallet erstellen'),
+                        ),
+                        FilledButton(
+                          onPressed: () => context.go('/wallet/restore'),
+                          child: Text(S.of(context).import_wallet),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 16,
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('BitBox Hardware Wallet'),
+                            SvgPicture.asset('assets/images/icons/bitbox.svg'),
+                          ],
+                        ),
+                        SizedBox(height: 24),
+                        FilledButton(
+                          onPressed: () {},
+                          child: Text('Mit BitBox verbinden'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
