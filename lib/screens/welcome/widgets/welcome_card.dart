@@ -9,7 +9,7 @@ enum WelcomeCardActionStyle {
 class WelcomeCardAction {
   final String title;
   final VoidCallback? onPressed;
-  final WelcomeCardActionStyle? style;
+  final WelcomeCardActionStyle style;
 
   WelcomeCardAction({
     required this.title,

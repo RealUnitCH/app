@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
 
@@ -29,7 +30,7 @@ class WelcomePage extends StatelessWidget {
                       RealUnitIcon(size: 48),
                       SizedBox(height: 8),
                       Text(
-                        'RealUnit Wallet',
+                        S.of(context).realunit_wallet,
                         style: const TextStyle(
                           color: RealUnitColors.realUnitBlack,
                           fontSize: 26,
@@ -39,7 +40,7 @@ class WelcomePage extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Investiere in reale Werte und behalte die volle Kontrolle — rund um die Uhr.',
+                        S.of(context).realunit_wallet_subtitle,
                         style: const TextStyle(
                           color: RealUnitColors.neutral500,
                           fontSize: 16,
@@ -53,18 +54,18 @@ class WelcomePage extends StatelessWidget {
                 ),
                 SizedBox(height: 40.0),
                 WelcomeCard(
-                  title: 'Software Wallet',
+                  title: S.of(context).software_wallet,
                   trailing: SvgPicture.asset(
                     'assets/images/icons/software_wallet.svg',
                   ),
                   actions: [
                     WelcomeCardAction(
-                      title: 'Neue Wallet erstellen',
+                      title: S.of(context).create_wallet,
                       onPressed: () => context.push('/wallet/create'),
                       style: WelcomeCardActionStyle.primary,
                     ),
                     WelcomeCardAction(
-                      title: 'Wallet wiederherstellen',
+                      title: S.of(context).restore_wallet,
                       onPressed: () => context.push('/wallet/restore'),
                       style: WelcomeCardActionStyle.secondary,
                     ),
@@ -74,11 +75,11 @@ class WelcomePage extends StatelessWidget {
                   height: 16.0,
                 ),
                 WelcomeCard(
-                  title: 'BitBox \nHardware Wallet',
+                  title: '${S.of(context).bitbox}\n${S.of(context).hardware_wallet}',
                   trailing: SvgPicture.asset('assets/images/icons/bitbox.svg'),
                   actions: [
                     WelcomeCardAction(
-                      title: 'Mit BitBox verbinden',
+                      title: S.of(context).connect_with(S.of(context).bitbox),
                       style: WelcomeCardActionStyle.primary,
                     ),
                   ],
