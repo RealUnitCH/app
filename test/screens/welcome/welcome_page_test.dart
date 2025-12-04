@@ -17,7 +17,8 @@ void main() {
       expect(find.byType(RealUnitIcon), findsOne);
       expect(find.text(S.current.realunit_wallet), findsOne);
       expect(find.text(S.current.realunit_wallet_subtitle), findsOneWidget);
-      expect(find.byType(WelcomeCard), findsNWidgets(2));
+      final visibleCards = find.byType(WelcomeCard).hitTestable();
+      expect(visibleCards, findsNWidgets(2));
     });
 
     group('has $WelcomeCard', () {
@@ -30,28 +31,65 @@ void main() {
         final welcomeCardWidget = tester.widget(welcomeCardFinder) as WelcomeCard;
 
         expect(welcomeCardWidget.trailing, isA<SvgPicture>());
-        expect(welcomeCardWidget.actions.length, 2);
-        expect(welcomeCardWidget.actions[0].title, S.current.create_wallet);
-        expect(welcomeCardWidget.actions[0].onPressed, isA<VoidCallback>());
-        expect(welcomeCardWidget.actions[1].title, S.current.restore_wallet);
-        expect(welcomeCardWidget.actions[1].onPressed, isA<VoidCallback>());
       });
 
       testWidgets('for Hardware Wallet', (tester) async {
         await tester.pumpApp(WelcomePage());
 
         final welcomeCardFinder = find.byWidgetPredicate(
-          (Widget widget) =>
-              widget is WelcomeCard &&
-              widget.title == '${S.current.bitbox}\n${S.current.hardware_wallet}',
+          (Widget widget) => widget is WelcomeCard && widget.title == S.current.bitbox,
         );
         final welcomeCardWidget = tester.widget(welcomeCardFinder) as WelcomeCard;
 
         expect(welcomeCardWidget.trailing, isA<SvgPicture>());
-        expect(welcomeCardWidget.actions.length, 1);
-        expect(welcomeCardWidget.actions[0].title, S.current.connect_with(S.current.bitbox));
-        expect(welcomeCardWidget.actions[0].onPressed, null);
       });
+    });
+
+    testWidgets('shows new cards when Software Wallet card tapped', (tester) async {
+      await tester.pumpApp(WelcomePage());
+
+      expect(
+        find
+            .byWidgetPredicate(
+              (Widget widget) => widget is WelcomeCard && widget.title == S.current.create_wallet,
+            )
+            .hitTestable(),
+        findsNothing,
+      );
+      expect(
+        find
+            .byWidgetPredicate(
+              (Widget widget) => widget is WelcomeCard && widget.title == S.current.restore_wallet,
+            )
+            .hitTestable(),
+        findsNothing,
+      );
+
+      final welcomeCardFinder = find.byWidgetPredicate(
+        (Widget widget) => widget is WelcomeCard && widget.title == S.current.software_wallet,
+      );
+
+      await tester.tap(welcomeCardFinder);
+      await tester.pumpAndSettle();
+
+      final visibleCards = find.byType(WelcomeCard).hitTestable();
+      expect(visibleCards, findsNWidgets(2));
+      expect(
+        find
+            .byWidgetPredicate(
+              (Widget widget) => widget is WelcomeCard && widget.title == S.current.create_wallet,
+            )
+            .hitTestable(),
+        findsOne,
+      );
+      expect(
+        find
+            .byWidgetPredicate(
+              (Widget widget) => widget is WelcomeCard && widget.title == S.current.restore_wallet,
+            )
+            .hitTestable(),
+        findsOne,
+      );
     });
   });
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/screens/welcome/widgets/welcome_card.dart';
-import 'package:realunit_wallet/styles/colors.dart';
 
 import '../../../helper/helper.dart';
 
@@ -12,8 +11,9 @@ class MockFunction extends Mock {
 
 void main() {
   late String title;
+  String? description;
+  VoidCallback? onPressed;
   Widget? trailing;
-  List<WelcomeCardAction> actions = [];
   MockFunction functions = MockFunction();
 
   setUp(() {
@@ -24,8 +24,9 @@ void main() {
   Widget buildSubject() {
     return WelcomeCard(
       title: title,
+      description: description,
+      onPressed: onPressed,
       trailing: trailing,
-      actions: actions,
     );
   }
 
@@ -34,8 +35,17 @@ void main() {
       await tester.pumpApp(buildSubject());
 
       expect(find.byType(WelcomeCard), findsOne);
-      expect(find.text('Welcome'), findsOne);
-      expect(find.byType(FilledButton), findsNothing);
+      expect(find.text(title), findsOne);
+      expect(find.byType(Text), findsNWidgets(1));
+    });
+
+    testWidgets('renders with description', (tester) async {
+      description = 'Description';
+
+      await tester.pumpApp(buildSubject());
+
+      expect(find.text(description!), findsOne);
+      expect(find.byType(Text), findsNWidgets(2));
     });
 
     testWidgets('renders with trailing widget', (tester) async {
@@ -46,62 +56,12 @@ void main() {
       expect(find.byWidget(trailing!), findsOne);
     });
 
-    testWidgets('renders with action button', (tester) async {
-      actions = [
-        WelcomeCardAction(
-          title: 'Get Started',
-          style: WelcomeCardActionStyle.primary,
-        ),
-        WelcomeCardAction(
-          title: 'Learn More',
-          style: WelcomeCardActionStyle.secondary,
-        ),
-      ];
+    testWidgets('calls correct function when pressed', (tester) async {
+      onPressed = functions.onPressed;
 
       await tester.pumpApp(buildSubject());
-
-      expect(find.byType(FilledButton), findsNWidgets(actions.length));
-      expect(
-        find.byWidgetPredicate(
-          (widget) {
-            if (widget is FilledButton) {
-              final bgColor = widget.style?.backgroundColor?.resolve({});
-              final isTextMatch =
-                  widget.child is Text && (widget.child as Text).data == 'Get Started';
-              return isTextMatch && bgColor == RealUnitColors.brand600;
-            }
-            return false;
-          },
-        ),
-        findsOne,
-      );
-      expect(
-        find.byWidgetPredicate(
-          (widget) {
-            if (widget is FilledButton) {
-              final bgColor = widget.style?.backgroundColor?.resolve({});
-              final isTextMatch =
-                  widget.child is Text && (widget.child as Text).data == 'Learn More';
-              return isTextMatch && bgColor == RealUnitColors.neutral100;
-            }
-            return false;
-          },
-        ),
-        findsOne,
-      );
-    });
-
-    testWidgets('calls correct function when action button pressed', (tester) async {
-      actions = [
-        WelcomeCardAction(
-          title: 'Get Started',
-          onPressed: functions.onPressed,
-          style: WelcomeCardActionStyle.primary,
-        ),
-      ];
-
-      await tester.pumpApp(buildSubject());
-      await tester.tap(find.byType(FilledButton));
+      await tester.tap(find.byType(WelcomeCard));
+      await tester.pumpAndSettle();
 
       verify(() => functions.onPressed()).called(1);
     });

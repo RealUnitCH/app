@@ -22,7 +22,8 @@ class WelcomeCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
       ),
-      child: InkWell(
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
         onTap: onPressed,
         child: Padding(
           padding: const EdgeInsets.all(24.0),
