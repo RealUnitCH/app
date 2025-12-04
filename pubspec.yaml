@@ -140,10 +140,11 @@ flutter_launcher_icons:
 flutter_native_splash:
   web: false
   color: "#42a5f5"
+  background_image_android: "assets/images/splash/splash_background.png"
   image: assets/images/splash/splash_background.png
+  android_gravity: fill_vertical
   ios_content_mode: scaleAspectFill
   fullscreen: false
   android_12:
     color: "#ffffff"
     image: assets/images/splash/splash_logo.png
-    icon_background_color: "#111111"
