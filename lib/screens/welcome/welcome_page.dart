@@ -7,23 +7,43 @@ import 'package:realunit_wallet/styles/icons.dart';
 
 import 'widgets/welcome_card.dart';
 
-class WelcomePage extends StatelessWidget {
+class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
+
+  @override
+  State<WelcomePage> createState() => _WelcomePageState();
+}
+
+class _WelcomePageState extends State<WelcomePage> {
+  bool showSecondStep = false;
 
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: RealUnitColors.brand700,
+        appBar: AppBar(
+          leading: showSecondStep
+              ? IconButton(
+                  onPressed: () => setState(
+                    () => showSecondStep = false,
+                  ),
+                  icon: Icon(
+                    Icons.arrow_back_rounded,
+                    size: 24,
+                  ),
+                )
+              : null,
+        ),
         body: SingleChildScrollView(
           child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Column(
+                spacing: 40.0,
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(
                       left: 24.0,
                       right: 24.0,
-                      top: 40.0,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,35 +73,58 @@ class WelcomePage extends StatelessWidget {
                       ],
                     ),
                   ),
-                  SizedBox(height: 40.0),
-                  WelcomeCard(
-                    title: S.of(context).software_wallet,
-                    trailing: SvgPicture.asset(
-                      'assets/images/icons/software_wallet.svg',
-                    ),
-                    actions: [
-                      WelcomeCardAction(
-                        title: S.of(context).create_wallet,
-                        onPressed: () => context.push('/wallet/create'),
-                        style: WelcomeCardActionStyle.primary,
+                  Stack(
+                    children: [
+                      AnimatedSlide(
+                        duration: const Duration(milliseconds: 350),
+                        curve: Curves.easeInOut,
+                        offset: showSecondStep ? const Offset(-1.2, 0) : Offset.zero,
+                        child: Column(
+                          spacing: 16.0,
+                          children: [
+                            WelcomeCard(
+                              title: S.of(context).software_wallet,
+                              description: S.of(context).software_wallet_subtitle,
+                              onPressed: () => setState(() => showSecondStep = true),
+                              trailing: SvgPicture.asset(
+                                'assets/images/illustrations/software_wallet.svg',
+                              ),
+                            ),
+                            WelcomeCard(
+                              title: S.of(context).bitbox,
+                              description: S.of(context).hardware_wallet_subtitle,
+                              trailing: SvgPicture.asset(
+                                'assets/images/illustrations/bitbox.svg',
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      WelcomeCardAction(
-                        title: S.of(context).restore_wallet,
-                        onPressed: () => context.push('/wallet/restore'),
-                        style: WelcomeCardActionStyle.secondary,
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 16.0,
-                  ),
-                  WelcomeCard(
-                    title: '${S.of(context).bitbox}\n${S.of(context).hardware_wallet}',
-                    trailing: SvgPicture.asset('assets/images/icons/bitbox.svg'),
-                    actions: [
-                      WelcomeCardAction(
-                        title: S.of(context).connect_with(S.of(context).bitbox),
-                        style: WelcomeCardActionStyle.primary,
+                      AnimatedSlide(
+                        duration: const Duration(milliseconds: 350),
+                        curve: Curves.easeInOut,
+                        offset: showSecondStep ? Offset.zero : const Offset(1.2, 0),
+                        child: Column(
+                          spacing: 16.0,
+                          children: [
+                            WelcomeCard(
+                              title: S.of(context).create_wallet,
+                              description: S.of(context).software_wallet_subtitle,
+                              onPressed: () => context.push('/wallet/create'),
+                              trailing: SvgPicture.asset(
+                                'assets/images/illustrations/create_wallet.svg',
+                              ),
+                            ),
+                            WelcomeCard(
+                              title: S.of(context).restore_wallet,
+                              description: S.of(context).hardware_wallet_subtitle,
+                              onPressed: () => context.push('/wallet/restore'),
+                              trailing: SvgPicture.asset(
+                                'assets/images/illustrations/restore_wallet.svg',
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
