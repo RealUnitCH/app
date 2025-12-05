@@ -19,4 +19,8 @@ class SettingsRepository {
   String get currency => _sharedPreferences.getString("currency") ?? "CHF";
 
   set currency(String currencyCode) => _sharedPreferences.setString("currency", currencyCode);
+
+  bool get termsAccepted => _sharedPreferences.getBool("termsAccepted") ?? false;
+
+  set termsAccepted(bool accepted) => _sharedPreferences.setBool("termsAccepted", accepted);
 }

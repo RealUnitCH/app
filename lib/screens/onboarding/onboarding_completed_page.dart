@@ -24,6 +24,7 @@ class _OnboardingCompletedPageState extends State<OnboardingCompletedPage> {
     final s = S.of(context);
 
     return Scaffold(
+      backgroundColor: RealUnitColors.brand700,
       appBar: AppBar(
         leading: IconButton(
           onPressed: () => context.pop(),

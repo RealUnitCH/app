@@ -113,7 +113,7 @@ class _WalletAppState extends State<WalletApp> {
             builder: (context, child) => BlocListener<HomeBloc, HomeState>(
               listener: (context, state) {
                 if (!state.isLoadingWallet) {
-                  getIt<GoRouter>().go(state.openWallet != null ? '/dashboard' : '/welcome');
+                  getIt<GoRouter>().go(state.onboardingCompleted ? '/dashboard' : '/welcome');
                 }
               },
               child: child,
