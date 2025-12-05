@@ -37,7 +37,9 @@ void setupRouter() {
       GoRoute(path: "/welcome", builder: (context, state) => WelcomePage()),
       GoRoute(path: "/wallet/create", builder: (context, state) => CreateWalletPage()),
       GoRoute(path: "/wallet/restore", builder: (context, state) => RestoreWalletPage()),
-      GoRoute(path: "/onboardingComplete", builder: (context, state) => OnboardingCompletedPage()),
+      GoRoute(
+          path: OnboardingCompletedPage.route,
+          builder: (context, state) => OnboardingCompletedPage()),
       GoRoute(
           path: "/dashboard",
           builder: (context, state) => DashboardPage(getIt<AppStore>(), getIt<DFXPriceService>())),

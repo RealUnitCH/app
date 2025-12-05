@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/styles.dart';
 import 'package:realunit_wallet/widgets/text_link_span.dart';
 
 class OnboardingCompletedPage extends StatefulWidget {
+  static const route = '/onboardingComplete';
+
   const OnboardingCompletedPage({super.key});
 
   @override
@@ -111,7 +115,9 @@ class _OnboardingCompletedPageState extends State<OnboardingCompletedPage> {
                 child: SizedBox(
                   width: double.infinity,
                   child: TextButton(
-                    onPressed: isChecked ? () {} : null,
+                    onPressed: isChecked
+                        ? () => context.read<HomeBloc>().add((CompleteOnboardingEvent()))
+                        : null,
                     style: kFullwidthBlueButtonStyle.copyWith(
                       backgroundColor: WidgetStateProperty.resolveWith<Color?>(
                         (states) => states.contains(WidgetState.disabled)
