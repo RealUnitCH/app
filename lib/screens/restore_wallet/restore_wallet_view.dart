@@ -1,3 +1,7 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/restore_wallet/bloc/restore_wallet_cubit.dart';
@@ -5,9 +9,6 @@ import 'package:realunit_wallet/screens/restore_wallet/widgets/seed_editing_cont
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/styles.dart';
 import 'package:realunit_wallet/widgets/text_divider.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class RestoreWalletView extends StatelessWidget {
   RestoreWalletView({super.key}) : _controller = SeedEditingController();
@@ -15,14 +16,22 @@ class RestoreWalletView extends StatelessWidget {
   final TextEditingController _controller;
 
   @override
-  Widget build(BuildContext context) =>
-      BlocListener<RestoreWalletCubit, RestoreWalletState>(
+  Widget build(BuildContext context) => BlocListener<RestoreWalletCubit, RestoreWalletState>(
         listener: (context, state) {
           if (state.wallet != null) {
             context.read<HomeBloc>().add(LoadWalletEvent(state.wallet!));
           }
         },
         child: Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              onPressed: () => context.pop(),
+              icon: Icon(
+                Icons.arrow_back_rounded,
+                size: 24,
+              ),
+            ),
+          ),
           body: SafeArea(
             child: SizedBox(
               width: double.infinity,
@@ -33,15 +42,13 @@ class RestoreWalletView extends StatelessWidget {
                   children: [
                     Text(
                       S.of(context).restore_wallet,
-                      style: const TextStyle(
-                          fontSize: 20, color: RealUnitColors.realUnitBlack),
+                      style: const TextStyle(fontSize: 20, color: RealUnitColors.realUnitBlack),
                     ),
                     Padding(
                       padding: const EdgeInsets.all(10),
                       child: Text(
                         S.of(context).restore_wallet_from_seed_description,
-                        style: const TextStyle(
-                            fontSize: 15, color: DEuroColors.neutralGrey),
+                        style: const TextStyle(fontSize: 15, color: DEuroColors.neutralGrey),
                       ),
                     ),
                     Padding(
@@ -55,20 +62,17 @@ class RestoreWalletView extends StatelessWidget {
                             borderRadius: BorderRadius.all(Radius.circular(10)),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderSide:
-                                BorderSide(color: RealUnitColors.realUnitBlue),
+                            borderSide: BorderSide(color: RealUnitColors.realUnitBlue),
                             borderRadius: BorderRadius.all(Radius.circular(10)),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide:
-                                BorderSide(color: RealUnitColors.realUnitBlue),
+                            borderSide: BorderSide(color: RealUnitColors.realUnitBlue),
                             borderRadius: BorderRadius.all(Radius.circular(10)),
                           ),
                         ),
                         maxLines: null,
                         minLines: 4,
-                        onChanged:
-                            context.read<RestoreWalletCubit>().validateSeed,
+                        onChanged: context.read<RestoreWalletCubit>().validateSeed,
                       ),
                     ),
                     TextDivider(text: S.of(context).or.toUpperCase()),
@@ -77,9 +81,8 @@ class RestoreWalletView extends StatelessWidget {
                       child: SizedBox(
                         width: double.infinity,
                         child: FilledButton(
-                          onPressed: () => context
-                              .read<RestoreWalletCubit>()
-                              .restoreWalletFromSeedQR(context),
+                          onPressed: () =>
+                              context.read<RestoreWalletCubit>().restoreWalletFromSeedQR(context),
                           style: kFullwidthBlueButtonStyle,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
