@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:get_it/get_it.dart';
 import 'package:realunit_wallet/packages/open_crypto_pay/open_crypto_pay_service.dart';
 import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
@@ -12,6 +13,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_service.dart';
+import 'package:realunit_wallet/packages/service/settings_service.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/storage/database.dart';
@@ -21,7 +23,6 @@ import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/restore_wallet/bloc/restore_wallet_cubit.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup.dart';
-import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final getIt = GetIt.instance;
@@ -73,24 +74,25 @@ void setupRepositories() {
   getIt.registerFactory(() => BalanceRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => AssetRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => NodeRepository(getIt<AppDatabase>()));
-  getIt.registerFactory(() =>
-      TransactionRepository(getIt<AppDatabase>(), getIt<AssetRepository>()));
+  getIt
+      .registerFactory(() => TransactionRepository(getIt<AppDatabase>(), getIt<AssetRepository>()));
 }
 
 void setupServices() {
-  getIt.registerFactory(() =>
-      WalletService(getIt<WalletRepository>(), getIt<SettingsRepository>()));
+  getIt
+      .registerFactory(() => WalletService(getIt<WalletRepository>(), getIt<SettingsRepository>()));
 
-  getIt.registerSingleton(BalanceService(
-      getIt<BalanceRepository>(), getIt<AssetRepository>(), getIt<AppStore>()));
+  getIt.registerSingleton(
+      BalanceService(getIt<BalanceRepository>(), getIt<AssetRepository>(), getIt<AppStore>()));
 
-  getIt.registerFactory(() => TransactionHistoryService(getIt<AppStore>(),
-      getIt<AssetRepository>(), getIt<TransactionRepository>()));
+  getIt.registerFactory(() => TransactionHistoryService(
+      getIt<AppStore>(), getIt<AssetRepository>(), getIt<TransactionRepository>()));
 
   getIt.registerFactory(() => OpenCryptoPayService());
   getIt.registerFactory(() => DFXPriceService(getIt<AppStore>()));
-  getIt.registerFactory(() => DFXService(getIt<AppStore>(),
-      getIt<SettingsRepository>(), getIt<AssetRepository>()));
+  getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
+  getIt.registerFactory(
+      () => DFXService(getIt<AppStore>(), getIt<SettingsRepository>(), getIt<AssetRepository>()));
 }
 
 void setupBlocs() {
@@ -99,11 +101,11 @@ void setupBlocs() {
     getIt<BalanceService>(),
     getIt<TransactionHistoryService>(),
     getIt<DFXService>(),
+    getIt<SettingsService>(),
     getIt<AppStore>(),
   ));
 
   getIt.registerFactory(() => RestoreWalletCubit(getIt<WalletService>()));
 }
 
-Future<bool> _existsDatabaseFile() async =>
-    File(await AppDatabase.getDatabasePath()).exists();
+Future<bool> _existsDatabaseFile() async => File(await AppDatabase.getDatabasePath()).exists();

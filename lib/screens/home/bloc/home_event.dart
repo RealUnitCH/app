@@ -23,3 +23,7 @@ final class LoadWalletEvent extends HomeEvent {
   @override
   List<Object> get props => [wallet];
 }
+
+final class CompleteOnboardingEvent extends HomeEvent {
+  const CompleteOnboardingEvent();
+}

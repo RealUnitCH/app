@@ -1,9 +1,8 @@
-import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/styles/styles.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:go_router/go_router.dart';
+import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/styles/styles.dart';
 
 class WebViewRouteParams {
   final String title;
@@ -22,7 +21,7 @@ class WebViewPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: CupertinoNavigationBar(
+        appBar: AppBar(
           backgroundColor: Colors.transparent,
           leading: IconButton(
             onPressed: () => context.pop(),
@@ -32,11 +31,10 @@ class WebViewPage extends StatelessWidget {
               size: 24,
             ),
           ),
-          middle: Text(
+          title: Text(
             _title,
             style: kPageTitleTextStyle,
           ),
-          border: null,
         ),
         body: WebViewPageBody(uri: _url),
       );
