@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/packages/open_crypto_pay/models.dart';
@@ -6,6 +8,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/home/home.dart';
+import 'package:realunit_wallet/screens/onboarding/onboarding_completed_page.dart';
 import 'package:realunit_wallet/screens/receive/receive_page.dart';
 import 'package:realunit_wallet/screens/restore_wallet/restore_wallet_page.dart';
 import 'package:realunit_wallet/screens/send/send_page.dart';
@@ -19,8 +22,6 @@ import 'package:realunit_wallet/screens/settings_seed/settings_seed_page.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/screens/welcome/welcome_page.dart';
-import 'package:flutter/widgets.dart';
-import 'package:go_router/go_router.dart';
 
 import 'generated/i18n.dart';
 
@@ -34,22 +35,17 @@ void setupRouter() {
     routes: <RouteBase>[
       GoRoute(path: "/", builder: (context, state) => HomePage()),
       GoRoute(path: "/welcome", builder: (context, state) => WelcomePage()),
-      GoRoute(
-          path: "/wallet/create",
-          builder: (context, state) => CreateWalletPage()),
-      GoRoute(
-          path: "/wallet/restore",
-          builder: (context, state) => RestoreWalletPage()),
+      GoRoute(path: "/wallet/create", builder: (context, state) => CreateWalletPage()),
+      GoRoute(path: "/wallet/restore", builder: (context, state) => RestoreWalletPage()),
+      GoRoute(path: "/onboardingComplete", builder: (context, state) => OnboardingCompletedPage()),
       GoRoute(
           path: "/dashboard",
           builder: (context, state) => DashboardPage(getIt<AppStore>(), getIt<DFXPriceService>())),
-      GoRoute(
-          path: "/receive",
-          builder: (context, state) => ReceivePage(isBottomSheet: false)),
+      GoRoute(path: "/receive", builder: (context, state) => ReceivePage(isBottomSheet: false)),
       GoRoute(
         path: "/send",
-        builder: (context, state) => SendPage(
-            params: (state.extra as SendRouteParams?) ?? SendRouteParams()),
+        builder: (context, state) =>
+            SendPage(params: (state.extra as SendRouteParams?) ?? SendRouteParams()),
         routes: [
           GoRoute(
             path: "/openCryptoPay",
@@ -69,14 +65,9 @@ void setupRouter() {
       GoRoute(
         path: "/settings",
         routes: [
-          GoRoute(
-              path: '/languages',
-              builder: (context, state) => SettingsLanguagePage()),
-          GoRoute(
-              path: '/currencies',
-              builder: (context, state) => SettingsCurrenciesPage()),
-          GoRoute(
-              path: '/seed', builder: (context, state) => SettingsSeedPage()),
+          GoRoute(path: '/languages', builder: (context, state) => SettingsLanguagePage()),
+          GoRoute(path: '/currencies', builder: (context, state) => SettingsCurrenciesPage()),
+          GoRoute(path: '/seed', builder: (context, state) => SettingsSeedPage()),
           GoRoute(
             path: '/nodes',
             builder: (context, state) => SettingsNodesPage(),
@@ -96,8 +87,7 @@ void setupRouter() {
       ),
       GoRoute(
           path: '/webView',
-          builder: (context, state) =>
-              WebViewPage(state.extra as WebViewRouteParams)),
+          builder: (context, state) => WebViewPage(state.extra as WebViewRouteParams)),
     ],
   ));
 }
