@@ -42,7 +42,7 @@ class _OnboardingCompletedPageState extends State<OnboardingCompletedPage> {
             children: [
               Image.asset(
                 "assets/images/realu_tokens.png",
-                height: 300,
+                height: 280,
               ),
               const SizedBox(height: 40.0),
               Column(
