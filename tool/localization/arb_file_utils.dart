@@ -43,7 +43,6 @@ void appendStringsToArbFile(String fileName, Map<String, String> strings) {
 
 Map<String, dynamic> readArbFile(File file) {
   final inputContent = file.readAsStringSync();
-
   return json.decode(inputContent) as Map<String, dynamic>;
 }
 
@@ -57,7 +56,7 @@ List<String> getMissingKeysInArbFile(String fileName, Iterable<String> langKeys)
   final arbObj = readArbFile(file);
   final results = <String>[];
 
-  for (var langKey in langKeys) {
+  for (final langKey in langKeys) {
     if (!arbObj.containsKey(langKey)) {
       results.add(langKey);
     }
@@ -73,7 +72,7 @@ void alphabetizeArbFile(String fileName) {
   final sortedKeys = arbObj.keys.toList()
     ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
   final Map<String, dynamic> sortedArbObj = {};
-  for (var key in sortedKeys) {
+  for (final key in sortedKeys) {
     sortedArbObj[key] = arbObj[key];
   }
 
