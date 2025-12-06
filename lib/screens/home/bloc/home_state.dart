@@ -8,13 +8,13 @@ final class HomeState {
     this.onboardingCompleted = false,
   });
 
-  final Wallet? openWallet;
+  final AWallet? openWallet;
   final bool isLoadingWallet;
   final bool isFiatServiceAvailable;
   final bool onboardingCompleted;
 
   HomeState copyWith({
-    Wallet? openWallet,
+    AWallet? openWallet,
     bool? isLoadingWallet,
     bool? isFiatServiceAvailable,
     bool? onboardingCompleted,

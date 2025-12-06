@@ -18,7 +18,7 @@ final class DeleteCurrentWalletEvent extends HomeEvent {
 final class LoadWalletEvent extends HomeEvent {
   const LoadWalletEvent(this.wallet);
 
-  final Wallet wallet;
+  final AWallet wallet;
 
   @override
   List<Object> get props => [wallet];

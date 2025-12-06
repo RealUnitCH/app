@@ -6,7 +6,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/create_wallet/bloc/create_wallet_cubit.dart';
-import 'package:realunit_wallet/screens/onboarding/onboarding_completed_page.dart';
+import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
 import 'package:realunit_wallet/styles/styles.dart';
@@ -120,7 +120,9 @@ class CreateWalletView extends StatelessWidget {
                           child: SizedBox(
                             width: double.infinity,
                             child: TextButton(
-                              onPressed: () => context.push(OnboardingCompletedPage.route),
+                              onPressed: () => context
+                                  .read<HomeBloc>()
+                                  .add(LoadWalletEvent(state.wallet!)),
                               style: kFullwidthBlueButtonStyle,
                               child: Text(
                                 S.of(context).create_wallet_confirm,

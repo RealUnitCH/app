@@ -24,7 +24,7 @@ class DFXService extends DFXAuthService {
   String get title => 'DFX.swiss';
 
   @override
-  WalletAccount get wallet => appStore.wallet.currentAccount;
+  AWalletAccount get wallet => appStore.wallet.currentAccount;
 
   @override
   String get walletAddress => wallet.primaryAddress.address.hexEip55;

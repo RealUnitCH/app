@@ -4,37 +4,33 @@ import 'package:bip32/bip32.dart';
 import 'package:convert/convert.dart';
 import 'package:web3dart/web3dart.dart';
 
-class WalletAccount {
-  late final CredentialsWithKnownAddress primaryAddress;
-  final List<CredentialsWithKnownAddress> subAddresses = [];
-
+abstract class AWalletAccount {
   final int accountIndex;
-  final BIP32 root;
-  int _lastIndex = 0;
+  final CredentialsWithKnownAddress primaryAddress;
 
-  WalletAccount(this.root, this.accountIndex) {
-    primaryAddress = _getPrivateKeyAt(0);
-    subAddresses.add(primaryAddress);
-    nextAddresses(5);
-  }
+  AWalletAccount(this.accountIndex, this.primaryAddress);
 
   String getDerivationPath(int addressIndex) =>
       "m/44'/60'/$accountIndex'/0/$addressIndex";
 
-  void nextAddresses(int limit) {
-    final indexes = List<int>.generate(limit, (i) => _lastIndex + i);
-    for (final index in indexes) {
-      subAddresses.add(_getPrivateKeyAt(index));
-    }
-    _lastIndex += limit;
-  }
+  Future<String> signMessage(String message, {int addressIndex = 0});
+}
 
-  EthPrivateKey _getPrivateKeyAt(int addressIndex) {
-    final addressAtIndex = root.derivePath(getDerivationPath(addressIndex));
+class WalletAccount extends AWalletAccount {
+  final BIP32 root;
+
+  WalletAccount(this.root, int accountIndex)
+      : super(accountIndex, _getPrivateKeyAt(root, accountIndex, 0));
+
+  static EthPrivateKey _getPrivateKeyAt(
+      BIP32 root, int accountIndex, int addressIndex) {
+    final addressAtIndex =
+        root.derivePath("m/44'/60'/$accountIndex'/0/$addressIndex");
 
     return EthPrivateKey.fromHex(hex.encode(addressAtIndex.privateKey!));
   }
 
-  String signMessage(String message, {int addressIndex = 0}) =>
-      "0x${hex.encode(_getPrivateKeyAt(addressIndex).signPersonalMessageToUint8List(ascii.encode(message)))}";
+  @override
+  Future<String> signMessage(String message, {int addressIndex = 0}) async =>
+      "0x${hex.encode(_getPrivateKeyAt(root, addressIndex, addressIndex).signPersonalMessageToUint8List(ascii.encode(message)))}";
 }
