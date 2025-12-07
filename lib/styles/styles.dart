@@ -25,14 +25,21 @@ final kFullwidthPrimaryButtonStyle = ElevatedButton.styleFrom(
 );
 
 final kFullwidthGrayButtonStyle = ElevatedButton.styleFrom(
-  backgroundColor: DEuroColors.neutralGrey,
-  fixedSize: Size(double.infinity, 55),
+  backgroundColor: RealUnitColors.neutral100,
+  fixedSize: const Size(double.infinity, 20),
   elevation: 0.0,
+  textStyle: kFullwidthGrayButtonTextStyle,
+);
+
+const kFullwidthGrayButtonTextStyle = TextStyle(
+  fontSize: 16,
+  color: RealUnitColors.neutral900,
+  fontWeight: FontWeight.w600,
 );
 
 final kFullwidthBlueButtonStyle = FilledButton.styleFrom(
   backgroundColor: RealUnitColors.realUnitBlue,
-  fixedSize: const Size(double.infinity, 50),
+  fixedSize: const Size(double.infinity, 20),
   padding: const EdgeInsets.only(left: 24, right: 24),
 );
 
@@ -59,4 +66,16 @@ final kFullwidthActionButtonStyle = FilledButton.styleFrom(
 const kContainerCardStyle = BoxDecoration(
   color: Colors.white,
   borderRadius: BorderRadius.all(Radius.circular(12)),
+);
+
+const kBottonSheetTitleTextStyle = TextStyle(
+  fontSize: 22,
+  fontWeight: FontWeight.w700,
+  color: RealUnitColors.realUnitBlack,
+);
+
+const kBottonSheetContentTextStyle = TextStyle(
+  fontSize: 14,
+  fontWeight: FontWeight.w400,
+  color: RealUnitColors.neutral500,
 );

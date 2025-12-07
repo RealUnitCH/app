@@ -1,9 +1,11 @@
-import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:drift/drift.dart';
+import 'package:realunit_wallet/packages/storage/database.dart';
 
 extension WalletStorage on AppDatabase {
-  Future<int> insertWallet(String name, String seed) => into(walletInfos)
-      .insert(WalletInfosCompanion.insert(name: name, seed: seed));
+  Future<int> insertWallet(
+          String name, String seed, String address, int walletType) =>
+      into(walletInfos).insert(WalletInfosCompanion.insert(
+          name: name, seed: seed, address: address, type: walletType));
 
   Future<WalletInfo?> getWalletById(int id) =>
       (select(walletInfos)..where((row) => row.id.equals(id)))
@@ -33,6 +35,10 @@ class WalletInfos extends Table {
   TextColumn get name => text()();
 
   TextColumn get seed => text()();
+
+  TextColumn get address => text()();
+
+  IntColumn get type => integer()();
 }
 
 @DataClassName("WalletAccountInfo")

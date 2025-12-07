@@ -1,5 +1,6 @@
 import 'package:bip32/bip32.dart';
 import 'package:bip39/bip39.dart';
+import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 
 enum WalletType { software, bitbox }
@@ -39,4 +40,25 @@ class Wallet extends AWallet {
   }
 
   void selectAccount(int index) => _currentAccount = WalletAccount(_bip32, index);
+}
+
+class BitboxWallet extends AWallet {
+  @override
+  WalletType get walletType => WalletType.bitbox;
+
+  final BitboxService _bitboxService;
+
+  @override
+  late final BitboxWalletAccount primaryAccount;
+
+  late BitboxWalletAccount _currentAccount;
+
+  @override
+  BitboxWalletAccount get currentAccount => _currentAccount;
+
+  BitboxWallet(super.id, super.name, String address, this._bitboxService) {
+    primaryAccount = BitboxWalletAccount(0, _bitboxService.getCredentials(
+        address));
+    _currentAccount = primaryAccount;
+  }
 }

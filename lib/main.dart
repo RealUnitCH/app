@@ -81,7 +81,8 @@ class _WalletAppState extends State<WalletApp> {
   void _onDetached() => developer.log('detached');
 
   void _onResumed() {
-    getIt<BalanceService>().updateERC20Balances(getIt<AppStore>().primaryAddress);
+    getIt<BalanceService>()
+        .updateERC20Balances(getIt<AppStore>().primaryAddress);
   }
 
   void _onInactive() => developer.log('inactive', name: 'AppLifecycleListener');
