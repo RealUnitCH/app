@@ -1,58 +1,46 @@
 import 'package:bip39/src/wordlists/english.dart' as wordlist;
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/seedqr.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/widgets/qr_scanner.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-class RestoreWalletState {
-  final bool isSeedReady;
-  final bool isLoading;
-  final bool isRestored;
-  final Wallet? wallet;
-
-  RestoreWalletState(this.isSeedReady, this.isLoading, this.isRestored,
-      [this.wallet]);
-}
+part 'restore_wallet_state.dart';
 
 class RestoreWalletCubit extends Cubit<RestoreWalletState> {
-  RestoreWalletCubit(this._walletService)
-      : super(RestoreWalletState(false, false, false));
+  RestoreWalletCubit(this._walletService) : super(RestoreWalletState(false, false, false));
 
   final WalletService _walletService;
 
   void restoreWallet(String seed) async {
-    emit(RestoreWalletState(state.isSeedReady, true, false));
+    emit(state.copyWith(isLoading: true));
 
-    final normalizedSeed =
-        seed.split(" ").where((element) => element.isNotEmpty).join(" ");
+    final normalizedSeed = seed.split(" ").where((element) => element.isNotEmpty).join(" ");
 
-    final wallet =
-        await _walletService.restoreWallet("Obi-Wallet-Kenobi", normalizedSeed);
+    final wallet = await _walletService.restoreWallet("Obi-Wallet-Kenobi", normalizedSeed);
 
-    emit(RestoreWalletState(true, false, true, wallet));
+    emit(state.copyWith(isSeedReady: true, isLoading: false, isRestored: true, wallet: wallet));
   }
 
   void validateSeed(String seed) {
     final seedWords = seed.split(" ").where((element) => element.isNotEmpty);
 
     if (seedWords.length == 12 && _containsAll(wordlist.WORDLIST, seedWords)) {
-      emit(RestoreWalletState(true, state.isLoading, false));
+      emit(state.copyWith(isSeedReady: true));
     } else {
-      emit(RestoreWalletState(false, state.isLoading, false));
+      emit(state.copyWith(isSeedReady: false));
     }
   }
 
   Future<void> restoreWalletFromSeedQR(BuildContext context) async {
     if (context.mounted) {
-      emit(RestoreWalletState(state.isSeedReady, true, false));
+      emit(state.copyWith(isLoading: true));
 
       final data = await presentQRScanner(
         context,
         (String? code, List<int>? rawBytes) =>
-            rawBytes?.isNotEmpty == true && isSeedQr(code ?? "") ||
-            isCompactSeedQr(rawBytes ?? []),
+            rawBytes?.isNotEmpty == true && isSeedQr(code ?? "") || isCompactSeedQr(rawBytes ?? []),
       );
 
       String? seed;
@@ -63,11 +51,10 @@ class RestoreWalletCubit extends Cubit<RestoreWalletState> {
       }
 
       if (seed != null) {
-        final wallet =
-            await _walletService.restoreWallet("Obi-Wallet-Kenobi", seed);
-        emit(RestoreWalletState(true, false, true, wallet));
+        final wallet = await _walletService.restoreWallet("Obi-Wallet-Kenobi", seed);
+        emit(state.copyWith(isSeedReady: true, isLoading: false, isRestored: true, wallet: wallet));
       } else {
-        emit(RestoreWalletState(state.isSeedReady, false, false));
+        emit(state.copyWith(isLoading: false, isRestored: false));
       }
     }
   }

@@ -11,7 +11,7 @@ class WalletService{
 
   const WalletService(this._bitboxService, this._repository, this._settingsRepository);
 
-  Future<Wallet> createWallet(String name) {
+  Future<SoftwareWallet> createSeedWallet(String name) {
     final mnemonic = bip39.generateMnemonic();
     return restoreWallet(name, mnemonic);
   }
@@ -23,10 +23,10 @@ class WalletService{
     return BitboxWallet(walletId, name, address, _bitboxService);
   }
 
-  Future<Wallet> restoreWallet(String name, String seed) async {
+  Future<SoftwareWallet> restoreWallet(String name, String seed) async {
     final walletId = await _repository.createWallet(name, WalletType.software, seed);
     await _settingsRepository.saveCurrentWalletId(walletId);
-    return Wallet(walletId, name, seed);
+    return SoftwareWallet(walletId, name, seed);
   }
 
   Future<AWallet> getWalletById(int id) async {
@@ -34,7 +34,7 @@ class WalletService{
     final walletType = WalletType.values[result.type];
     switch (walletType) {
       case WalletType.software:
-        return Wallet(result.id, result.name, result.seed);
+        return SoftwareWallet(result.id, result.name, result.seed);
       case WalletType.bitbox:
         return BitboxWallet(
             result.id, result.name, result.address, _bitboxService);

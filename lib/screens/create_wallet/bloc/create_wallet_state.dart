@@ -4,11 +4,11 @@ final class CreateWalletState {
   const CreateWalletState({this.hideSeed = true, this.wallet});
 
   final bool hideSeed;
-  final Wallet? wallet;
+  final SoftwareWallet? wallet;
 
   CreateWalletState copyWith({
     bool? hideSeed,
-    Wallet? wallet,
+    SoftwareWallet? wallet,
   }) =>
       CreateWalletState(
         hideSeed: hideSeed ?? this.hideSeed,

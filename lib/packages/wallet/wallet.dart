@@ -17,7 +17,7 @@ abstract class AWallet {
   AWallet(this.id, this.name);
 }
 
-class Wallet extends AWallet {
+class SoftwareWallet extends AWallet {
   @override
   WalletType get walletType => WalletType.software;
 
@@ -32,7 +32,7 @@ class Wallet extends AWallet {
   @override
   WalletAccount get currentAccount => _currentAccount;
 
-  Wallet(super.id, super.name, this.seed) {
+  SoftwareWallet(super.id, super.name, this.seed) {
     final seedBytes = mnemonicToSeed(seed);
     _bip32 = BIP32.fromSeed(seedBytes);
     primaryAccount = WalletAccount(_bip32, 0);
