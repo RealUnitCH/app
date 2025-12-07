@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/screens/onboarding/onboarding_completed_page.dart';
+import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/restore_wallet/bloc/restore_wallet_cubit.dart';
 import 'package:realunit_wallet/screens/restore_wallet/widgets/seed_editing_controller.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -19,7 +19,7 @@ class RestoreWalletView extends StatelessWidget {
   Widget build(BuildContext context) => BlocListener<RestoreWalletCubit, RestoreWalletState>(
         listener: (context, state) {
           if (state.wallet != null) {
-            context.push(OnboardingCompletedPage.route);
+            context.read<HomeBloc>().add(LoadWalletEvent(state.wallet!));
           }
         },
         child: Scaffold(

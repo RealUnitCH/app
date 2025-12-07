@@ -9,11 +9,11 @@ import 'package:web3dart/web3dart.dart' as web3;
 class AppStore {
   List<Node> _nodes = [];
   final httpClient = Client();
-  Wallet? _wallet;
+  AWallet? _wallet;
 
-  set wallet(Wallet wallet_) => _wallet = wallet_;
+  set wallet(AWallet wallet_) => _wallet = wallet_;
 
-  Wallet get wallet {
+  AWallet get wallet {
     if (_wallet != null) return _wallet!;
     throw Exception("No Wallet set");
   }
@@ -22,8 +22,7 @@ class AppStore {
     _nodes = await nodeRepository.allNodes;
   }
 
-  String get primaryAddress => "0xc38ac0f01d37243aad8b7e496a3e720560d58320";
-  // wallet.currentAccount.primaryAddress.address.hexEip55;
+  String get primaryAddress => wallet.currentAccount.primaryAddress.address.hexEip55;
 
   web3.Web3Client getClient(int chainId) {
     final node = _nodes.firstWhere(

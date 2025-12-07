@@ -10,6 +10,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/utils/fuck_firebase.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/screens/onboarding/onboarding_completed_page.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/styles/themes.dart';
 
@@ -113,7 +114,15 @@ class _WalletAppState extends State<WalletApp> {
             builder: (context, child) => BlocListener<HomeBloc, HomeState>(
               listener: (context, state) {
                 if (!state.isLoadingWallet) {
-                  getIt<GoRouter>().go(state.onboardingCompleted ? '/dashboard' : '/welcome');
+                  var targetRoute = '/welcome';
+                  if (state.openWallet != null) {
+                    targetRoute = OnboardingCompletedPage.route;
+                    if (state.onboardingCompleted) {
+                      targetRoute = '/dashboard';
+                    }
+                  }
+
+                  getIt<GoRouter>().go(targetRoute);
                 }
               },
               child: child,

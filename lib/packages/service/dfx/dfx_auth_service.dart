@@ -14,7 +14,7 @@ abstract class DFXAuthService {
 
   String get baseUrl => 'api.dfx.swiss';
 
-  WalletAccount get wallet;
+  AWalletAccount get wallet;
 
   String get walletAddress;
 
