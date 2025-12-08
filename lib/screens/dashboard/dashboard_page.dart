@@ -12,6 +12,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_service.dart';
 import 'package:realunit_wallet/packages/service/price_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
+import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/aggregated_balance_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/blance_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/dashboard_bloc.dart';
@@ -51,8 +52,8 @@ class DashboardPage extends StatelessWidget {
       Blockchain.optimism.nativeAsset,
       Blockchain.arbitrum.nativeAsset,
     ]) {
-      cryptoHoldings.add(BalanceCubit(getIt<BalanceRepository>(),
-          asset: asset, walletAddress: walletAddress));
+      cryptoHoldings.add(
+          BalanceCubit(getIt<BalanceRepository>(), asset: asset, walletAddress: walletAddress));
     }
 
     transactionHistoryCubit =
@@ -74,12 +75,10 @@ class DashboardPage extends StatelessWidget {
         providers: [
           BlocProvider.value(value: aggregatedDEuro),
           BlocProvider.value(value: transactionHistoryCubit),
-          ...singleCashHoldings
-              .map((cubit) => BlocProvider.value(value: cubit)),
+          ...singleCashHoldings.map((cubit) => BlocProvider.value(value: cubit)),
           BlocProvider.value(
               value: DashboardBloc(_priceService,
-                  asset: realUnitAsset,
-                  currency: context.read<SettingsBloc>().state.currency)),
+                  asset: realUnitAsset, currency: context.read<SettingsBloc>().state.currency)),
         ],
         child: Scaffold(
           appBar: AppBar(
@@ -125,8 +124,7 @@ class DashboardPage extends StatelessWidget {
                         builder: (context, homeState) => Offstage(
                           offstage: !homeState.isFiatServiceAvailable,
                           child: Padding(
-                            padding:
-                                EdgeInsets.only(left: 16, right: 16, top: 24),
+                            padding: EdgeInsets.only(left: 16, right: 16, top: 24),
                             child: Row(
                               children: [
                                 Padding(
@@ -134,8 +132,9 @@ class DashboardPage extends StatelessWidget {
                                   child: ActionButton(
                                     icon: RealUnitTokenIcon(size: 20),
                                     label: S.of(context).deposit,
-                                    onPressed: () => getIt<DFXService>()
-                                        .launchProvider(context, true),
+                                    onPressed: () => context.push(BuyPage.routeName),
+                                    // onPressed: () => getIt<DFXService>()
+                                    //     .launchProvider(context, true),
                                   ),
                                 ),
                                 ActionButton(
@@ -145,8 +144,8 @@ class DashboardPage extends StatelessWidget {
                                     size: 20,
                                   ),
                                   label: S.of(context).withdraw,
-                                  onPressed: () => getIt<DFXService>()
-                                      .launchProvider(context, false),
+                                  onPressed: () =>
+                                      getIt<DFXService>().launchProvider(context, false),
                                 ),
                               ],
                             ),
@@ -166,19 +165,16 @@ class DashboardPage extends StatelessWidget {
                                       Padding(
                                         padding: EdgeInsets.all(20),
                                         child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               S.of(context).portfolio,
                                               style: kSubtitleTextStyle,
                                             ),
                                             ...singleCashHoldings.map(
-                                              (holding) => BlocBuilder<
-                                                  BalanceCubit, Balance>(
+                                              (holding) => BlocBuilder<BalanceCubit, Balance>(
                                                 bloc: holding,
-                                                builder: (context, state) =>
-                                                    CashHoldingBox(
+                                                builder: (context, state) => CashHoldingBox(
                                                   asset: holding.asset,
                                                   balance: state.balance,
                                                   trailingSymbol: context
@@ -198,24 +194,20 @@ class DashboardPage extends StatelessWidget {
                                       Padding(
                                           padding: EdgeInsets.all(20),
                                           child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                              crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 Text(
                                                   S.of(context).transactions,
                                                   style: kSubtitleTextStyle,
                                                 ),
-                                                BlocBuilder<
-                                                    TransactionHistoryCubit,
+                                                BlocBuilder<TransactionHistoryCubit,
                                                     List<Transaction>>(
                                                   bloc: transactionHistoryCubit,
                                                   builder: (context, state) =>
                                                       SectionTransactionHistory(
                                                     transactions: state,
-                                                    walletAddress:
-                                                        walletAddress,
-                                                    hasShowAll:
-                                                        state.length == 5,
+                                                    walletAddress: walletAddress,
+                                                    hasShowAll: state.length == 5,
                                                   ),
                                                 ),
                                               ])),
