@@ -19,18 +19,17 @@ Der Verkauf von REALU Tokens erfolgt in vier Schritten:
 
 | Schritt | Transaktionen | Wer zahlt Gas |
 |---------|---------------|---------------|
-| REALU approve | 1 TX (einmalig) | User |
-| Brokerbot sell | 1 TX | User |
-| ZCHF approve(Permit2) | 1 TX (einmalig) | User |
-| ZCHF → DFX | **0 TX** | DFX (gasless) |
+| REALU approve | 1 TX (einmalig) | User signiert, DFX broadcastet |
+| ZCHF approve(Permit2) | 1 TX (einmalig) | User signiert, DFX broadcastet |
+| Brokerbot sell + ZCHF → DFX | **1 API Call** | DFX broadcastet alles |
 
-> **Vorteil:** Nach den einmaligen Approvals ist nur noch **1 User-Transaktion** (Brokerbot sell) nötig. Der ZCHF-Transfer an DFX ist **gasless**.
+> **Vorteil:** Nach den einmaligen Approvals braucht der User nur noch **Signaturen** - kein Broadcasting nötig. Alles läuft über die DFX API.
 
 ### Flow-Diagramm
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  RealUnit   │     │   DFX API   │     │  Brokerbot  │     │    Bank     │
+│  RealUnit   │     │   DFX API   │     │  Blockchain │     │    Bank     │
 │    App      │     │             │     │  (On-Chain) │     │   (CHF)     │
 └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
       │                    │                    │                    │
@@ -44,21 +43,26 @@ Der Verkauf von REALU Tokens erfolgt in vier Schritten:
       │                    │───────────────────▶│                    │
       │◀───────────────────│                    │                    │
       │                    │                    │                    │
-      │  2. REALU → ZCHF   │                    │                    │
-      │  (Client signiert) │                    │                    │
-      │───────────────────────────────────────▶│                    │
-      │◀───────────────────────────────────────│                    │
-      │                    │                    │                    │
-      │  3. ZCHF → DFX (Permit2/Gasless)       │                    │
-      │  (Client signiert off-chain)           │                    │
-      │───────────────────▶│ permitTransferFrom │                    │
+      │  2. POST /realunit/sell                 │                    │
+      │  (signedTx + Permit2 Signatur)          │                    │
+      │───────────────────▶│                    │                    │
+      │                    │  2a. Brokerbot TX  │                    │
+      │                    │     broadcasten    │                    │
       │                    │───────────────────▶│                    │
+      │                    │◀───────────────────│                    │
+      │                    │                    │                    │
+      │                    │  2b. permitTransfer│                    │
+      │                    │      From()        │                    │
+      │                    │───────────────────▶│                    │
+      │                    │◀───────────────────│                    │
       │◀───────────────────│                    │                    │
       │                    │                    │                    │
-      │                    │  4. CHF Auszahlung │                    │
+      │                    │  3. CHF Auszahlung │                    │
       │                    │───────────────────────────────────────▶│
       │                    │                    │                    │
 ```
+
+> **Wichtig:** Die RealUnit App broadcastet keine Transaktionen selbst. Alle signierten Transaktionen werden an die DFX API übergeben, die das Broadcasting übernimmt.
 
 ---
 
@@ -580,6 +584,147 @@ const PERMIT2_ERRORS = {
 
 ---
 
+## Atomarer Sell-Endpoint: POST /realunit/sell
+
+Der zentrale Endpoint für den REALU-Verkauf. Die RealUnit App kann keine Transaktionen selbst broadcasten - alles läuft über diesen Endpoint.
+
+### Konzept
+
+Der User:
+1. Signiert die Brokerbot-Sell-Transaktion (off-chain)
+2. Signiert die Permit2-Message für den ZCHF-Transfer (off-chain)
+3. Sendet beides in **einem API-Call** an DFX
+
+DFX:
+1. Validiert beide Signaturen
+2. Prüft ob Permit2-Betrag mit erwartetem Brokerbot-Output übereinstimmt
+3. Broadcastet die Brokerbot-TX
+4. Führt `permitTransferFrom()` aus
+5. Initiiert CHF-Auszahlung
+
+### API Endpoint
+
+```
+POST /realunit/sell
+Authorization: Bearer {jwt_token}
+```
+
+### Request Body
+
+```typescript
+interface RealUnitSellRequest {
+  // Signierte Brokerbot Sell TX (vom User signiert, nicht broadcastet)
+  signedTransaction: string;  // Hex-encoded signed TX
+
+  // Permit2 Signatur für ZCHF Transfer
+  permit: {
+    address: string;                   // User-Wallet
+    signature: string;                 // Permit2 Signatur
+    signatureTransferContract: string; // Permit2 Contract
+    permittedAmount: string;           // Muss mit Brokerbot Output matchen!
+    executorAddress: string;           // DFX DEX-Wallet
+    nonce: number;
+    deadline: string;
+  };
+
+  // Sell-Route für CHF Auszahlung
+  sellRouteId: number;
+}
+```
+
+### DFX Validierung
+
+| Prüfung | Beschreibung |
+|---------|--------------|
+| TX Ziel-Adresse | Muss Brokerbot `0xcff32c60...` sein |
+| TX Method | Muss gültiger Brokerbot-Call sein |
+| TX Sender | Muss mit `permit.address` übereinstimmen |
+| ZCHF Output | Berechnen via `getSellPrice(shares)` |
+| Permit Amount | Muss **exakt** dem erwarteten ZCHF Output entsprechen |
+| Permit Deadline | Muss in der Zukunft liegen |
+| Permit Nonce | Muss unverbraucht sein |
+| Allowlist | User muss REALU-allowlisted sein |
+| Sell-Route | Muss existieren und zum User gehören |
+
+### Response
+
+```typescript
+interface RealUnitSellResponse {
+  id: string;                    // Transaction ID
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  brokerbotTxHash: string;       // Brokerbot TX Hash
+  permitTxHash?: string;         // Permit2 TX Hash (wenn ausgeführt)
+  realuSold: number;             // Verkaufte REALU
+  zchfReceived: string;          // Erhaltene ZCHF
+  estimatedChfPayout: string;    // Geschätzte CHF Auszahlung
+}
+```
+
+### DFX Execution Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  1. Validierung                                                  │
+│     - Decode signedTransaction                                   │
+│     - Prüfe Brokerbot-Call (Adresse, Method, Shares)            │
+│     - Berechne erwarteten ZCHF Output                           │
+│     - Prüfe Permit2: Amount == ZCHF Output?                     │
+│     - Prüfe Permit2: Signatur gültig?                           │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼ Alles OK
+┌─────────────────────────────────────────────────────────────────┐
+│  2. Broadcast Brokerbot TX                                       │
+│     - eth_sendRawTransaction(signedTransaction)                  │
+│     - Warte auf Confirmation                                     │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼ TX Confirmed
+┌─────────────────────────────────────────────────────────────────┐
+│  3. Execute Permit2 Transfer                                     │
+│     - permitTransferFrom(permit)                                 │
+│     - ZCHF → DFX Deposit Wallet                                  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  4. CHF Auszahlung initiieren                                    │
+│     - Über bestehenden Sell-Flow                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Error Codes
+
+```typescript
+type RealUnitSellError =
+  | 'INVALID_TRANSACTION'        // TX nicht decodierbar
+  | 'WRONG_CONTRACT'             // Nicht Brokerbot-Adresse
+  | 'WRONG_METHOD'               // Kein gültiger Brokerbot-Call
+  | 'ADDRESS_MISMATCH'           // TX Sender ≠ Permit Address
+  | 'AMOUNT_MISMATCH'            // Permit Amount ≠ erwarteter ZCHF Output
+  | 'PERMIT_EXPIRED'             // Deadline überschritten
+  | 'PERMIT_INVALID'             // Signatur ungültig
+  | 'NONCE_USED'                 // Permit2 Nonce bereits verbraucht
+  | 'INSUFFICIENT_REALU'         // User hat nicht genug REALU
+  | 'NOT_ALLOWLISTED'            // User nicht auf REALU-Allowlist
+  | 'SELLING_DISABLED'           // Brokerbot Verkauf deaktiviert
+  | 'INSUFFICIENT_LIQUIDITY'     // Nicht genug ZCHF im Brokerbot
+  | 'BROADCAST_FAILED'           // TX Broadcast fehlgeschlagen
+  | 'PERMIT_EXECUTION_FAILED'    // Permit2 Transfer fehlgeschlagen
+  | 'SELL_ROUTE_INVALID';        // Sell-Route existiert nicht
+```
+
+### Wichtig: Permit2-Signatur vor Brokerbot-TX
+
+Die Permit2-Signatur kann **vor** der Brokerbot-Transaktion erstellt werden, da:
+- Die Signatur nur eine off-chain Autorisierung ist
+- Die Balance-Prüfung erst bei `permitTransferFrom()` erfolgt
+- Der User den erwarteten ZCHF-Betrag via `getSellPrice()` vorab kennt
+
+Dies ermöglicht einen optimalen UX-Flow: User signiert alles in einem Schritt.
+
+---
+
 ## Vollständiger Verkaufs-Flow
 
 ```typescript
@@ -587,9 +732,9 @@ async function sellRealu(
   shares: number,
   wallet: Wallet,
   accessToken: string,
-  targetIban: string,
+  sellRouteId: number,
   executorAddress: string  // DFX DEX-Wallet
-): Promise<void> {
+): Promise<RealUnitSellResponse> {
   const API_BASE = 'https://api.dfx.swiss/v1';
   const REALUNIT_API = `${API_BASE}/realunit`;
 
@@ -604,66 +749,80 @@ async function sellRealu(
     );
   }
 
-  // 2. ETH-Balance prüfen (nur für Brokerbot-TX nötig)
-  const ethBalance = await wallet.provider!.getBalance(wallet.address);
-  if (ethBalance < parseEther('0.001')) {
-    await requestFaucet(accessToken);
-    // Warten auf TX-Bestätigung...
-  }
-
-  // 3. Prüfen ob Verkauf aktiviert
+  // 2. Prüfen ob Verkauf aktiviert
   const info = await fetch(`${REALUNIT_API}/brokerbot/info`).then(r => r.json());
   if (!info.sellingEnabled) {
     throw new Error('Verkauf ist derzeit deaktiviert');
   }
 
-  // 4. Verkaufspreis abrufen
+  // 3. Verkaufspreis abrufen (für Permit2-Betrag)
   const sellPrice = await fetch(`${REALUNIT_API}/brokerbot/sellPrice?shares=${shares}`)
     .then(r => r.json());
 
   console.log(`Verkauf: ${shares} REALU für ${sellPrice.totalPrice} ZCHF`);
 
-  // 5. REALU Approval für Brokerbot (falls nicht vorhanden)
-  const realuContract = new Contract(REALU_ADDRESS, ERC20_ABI, wallet);
-  const brokerbotAllowance = await realuContract.allowance(wallet.address, BROKERBOT_ADDRESS);
-  if (brokerbotAllowance < BigInt(shares)) {
-    const approveTx = await realuContract.approve(BROKERBOT_ADDRESS, ethers.MaxUint256);
-    await approveTx.wait();
-  }
+  // 4. Brokerbot Sell-TX vorbereiten (NICHT broadcasten!)
+  const sellTxData = await fetch(`${REALUNIT_API}/brokerbot/sell`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ shares, walletAddress: wallet.address }),
+  }).then(r => r.json());
 
-  // 6. REALU → ZCHF Swap via Brokerbot (User zahlt Gas)
-  const sellTxData = await prepareSellTx(shares, wallet.address);
-  const swapTx = await wallet.sendTransaction(sellTxData);
-  await swapTx.wait();
-
-  // 7. Permit2 Approval prüfen (einmalig)
-  const zchfContract = new Contract(ZCHF_ADDRESS, ERC20_ABI, wallet);
-  const permit2Allowance = await zchfContract.allowance(wallet.address, PERMIT2_ADDRESS);
-  if (permit2Allowance === 0n) {
-    console.log('Einmaliges Permit2-Approval erforderlich...');
-    const approveTx = await zchfContract.approve(PERMIT2_ADDRESS, ethers.MaxUint256);
-    await approveTx.wait();
-  }
-
-  // 8. Sell-Route bei DFX erstellen
-  const sellRoute = await createSellRoute(accessToken, {
-    asset: 'ZCHF',
-    blockchain: 'Ethereum',
-    currency: 'CHF',
-    iban: targetIban,
+  // 5. TX signieren (NICHT senden!)
+  const signedTransaction = await wallet.signTransaction({
+    to: sellTxData.to,
+    data: sellTxData.data,
+    value: sellTxData.value,
+    gasLimit: sellTxData.gasLimit,
+    chainId: sellTxData.chainId,
+    nonce: await wallet.getNonce(),
   });
 
-  // 9. ZCHF an DFX senden via Permit2 (GASLESS!)
-  const zchfAmount = parseFloat(sellPrice.totalPrice);
-  await sendZchfWithPermit2(
-    wallet,
-    accessToken,
-    sellRoute.routeId,
-    zchfAmount,
-    executorAddress
-  );
+  // 6. Permit2-Signatur erstellen (off-chain, kein Gas!)
+  const zchfAmountWei = parseUnits(sellPrice.totalPrice, 18);
+  const nonce = await getPermit2Nonce(wallet.provider!, wallet.address);
+  const deadline = Math.floor(Date.now() / 1000) + 1800; // 30 min
 
-  console.log('Verkauf abgeschlossen. CHF wird auf Bankkonto überwiesen.');
+  const permitSignature = await createPermit2Signature(wallet, {
+    token: ZCHF_ADDRESS,
+    amount: zchfAmountWei,
+    spender: executorAddress,
+    nonce,
+    deadline,
+  });
+
+  // 7. Alles an DFX API senden (EIN Call!)
+  const response = await fetch(`${REALUNIT_API}/sell`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      signedTransaction,
+      permit: {
+        address: wallet.address,
+        signature: permitSignature,
+        signatureTransferContract: PERMIT2_ADDRESS,
+        permittedAmount: sellPrice.totalPrice,
+        executorAddress,
+        nonce,
+        deadline: deadline.toString(),
+      },
+      sellRouteId,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Verkauf fehlgeschlagen: ${error.message}`);
+  }
+
+  const result: RealUnitSellResponse = await response.json();
+  console.log(`Verkauf initiiert. TX: ${result.brokerbotTxHash}`);
+  console.log(`CHF Auszahlung: ~${result.estimatedChfPayout} CHF`);
+
+  return result;
 }
 ```
 
@@ -677,39 +836,44 @@ async function sellRealu(
 |----------|--------------|
 | `GET /kyc` | KYC-Status und Level prüfen (authentifiziert) |
 | `POST /faucet` | ETH für Gas-Gebühren (authentifiziert, KYC 30) |
-| `GET /brokerbot/info` | Brokerbot-Status inkl. `sellingEnabled` |
-| `GET /brokerbot/price` | Aktueller Preis pro Share |
+| `GET /realunit/brokerbot/info` | Brokerbot-Status inkl. `sellingEnabled` |
+| `GET /realunit/brokerbot/price` | Aktueller Preis pro Share |
 | `POST /sell` | DFX Sell-Route erstellen |
 | `GET /sell/{routeId}` | Deposit-Adresse abrufen |
 | `PUT /sell/paymentInfos` | TransactionRequest für Permit2 erstellen |
 | `PUT /sell/paymentInfos/:id/confirm` | Permit2-Transfer ausführen (gasless) |
 
-### Geplante Endpoints (Brokerbot)
+### Geplante Endpoints (RealUnit)
 
-| Endpoint | Beschreibung |
-|----------|--------------|
-| `GET /brokerbot/sellPrice?shares=X` | Verkaufspreis für X Shares berechnen |
-| `POST /brokerbot/sell` | Sell-TX Daten vorbereiten (Client signiert) |
-| `GET /brokerbot/approval` | Prüft ob Approval für Brokerbot vorhanden |
-| `POST /brokerbot/approve` | Approval-TX Daten vorbereiten |
+| Endpoint | Priorität | Beschreibung |
+|----------|-----------|--------------|
+| `POST /realunit/sell` | **P0** | Atomarer Sell-Endpoint (signedTx + Permit2) |
+| `GET /realunit/brokerbot/sellPrice?shares=X` | P1 | Verkaufspreis für X Shares berechnen |
+| `POST /realunit/brokerbot/prepareSell` | P1 | Sell-TX Daten vorbereiten (Client signiert) |
+| `GET /realunit/brokerbot/approval` | P2 | Prüft ob Approval für Brokerbot vorhanden |
+| `POST /realunit/brokerbot/prepareApproval` | P2 | Approval-TX Daten vorbereiten |
 
 ---
 
 ## Wichtige Hinweise
 
-1. **Gas-Gebühren nur für Brokerbot** - Der User braucht ETH nur für den Brokerbot-Swap. Der Faucet ist einmalig und nur für verifizierte Accounts (KYC 30+) verfügbar.
+1. **Kein Broadcasting durch die App** - Die RealUnit App broadcastet keine Transaktionen selbst. Alle signierten Transaktionen werden an die DFX API übergeben.
 
-2. **Gasless ZCHF-Transfer** - Der ZCHF-Transfer an DFX erfolgt via Permit2 gasless. DFX übernimmt die Gas-Kosten.
+2. **Atomarer Sell-Endpoint** - Der `POST /realunit/sell` Endpoint nimmt die signierte Brokerbot-TX und die Permit2-Signatur in einem Call entgegen. DFX validiert alles und führt beide Operationen aus.
 
-3. **Einmalige Approvals** - Sowohl das REALU-Approval für den Brokerbot als auch das ZCHF-Approval für Permit2 sind einmalig. Bei folgenden Verkäufen ist nur noch die Brokerbot-Transaktion nötig.
+3. **Gas-Gebühren** - DFX zahlt alle Gas-Gebühren (Brokerbot-Broadcast + Permit2 Transfer). Der Faucet ist nur für einmalige Approvals nötig.
 
-4. **Client signiert** - Alle Transaktionen und Permit2-Signaturen werden vom Client erstellt. DFX speichert keine Private Keys.
+4. **Einmalige Approvals** - REALU-Approval für Brokerbot und ZCHF-Approval für Permit2 sind einmalig. Diese TXs werden ebenfalls über die DFX API signiert und broadcastet.
 
-5. **Preis sinkt bei Verkauf** - Der Brokerbot-Preis sinkt mit jedem Verkauf (dynamisches Preismodell).
+5. **Client signiert nur** - Der Client signiert Transaktionen und Permit2-Messages, aber sendet nie direkt an die Blockchain. DFX speichert keine Private Keys.
 
-6. **ZCHF-Liquidität** - Der Brokerbot muss genügend ZCHF haben, um den Verkauf zu bedienen.
+6. **Permit2 vor Brokerbot-TX** - Die Permit2-Signatur kann erstellt werden bevor der User die ZCHF-Balance hat. Der Betrag muss aber exakt dem erwarteten Brokerbot-Output entsprechen.
 
-7. **DFX Gebühren** - Für den ZCHF → CHF Verkauf fallen DFX-Gebühren an.
+7. **Preis sinkt bei Verkauf** - Der Brokerbot-Preis sinkt mit jedem Verkauf (dynamisches Preismodell).
+
+8. **ZCHF-Liquidität** - Der Brokerbot muss genügend ZCHF haben, um den Verkauf zu bedienen.
+
+9. **DFX Gebühren** - Für den ZCHF → CHF Verkauf fallen DFX-Gebühren an.
 
 ---
 
@@ -742,4 +906,4 @@ const SELL_ERRORS = {
 ---
 
 *Dokumentation erstellt am: 2025-12-06*
-*Aktualisiert: 2025-12-08 (Permit2/Gasless Flow hinzugefügt)*
+*Aktualisiert: 2025-12-08 (Atomarer POST /realunit/sell Endpoint hinzugefügt)*
