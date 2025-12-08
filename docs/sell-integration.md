@@ -15,6 +15,19 @@ Der Verkauf von REALU Tokens erfolgt in vier Schritten:
 3. **REALU → ZCHF tauschen** - via Brokerbot Smart Contract
 4. **ZCHF verkaufen** - via DFX Sell-Route → CHF aufs Bankkonto
 
+### Transaktions-Übersicht (mit Permit2)
+
+| Schritt | Transaktionen | Wer zahlt Gas |
+|---------|---------------|---------------|
+| REALU approve | 1 TX (einmalig) | User |
+| Brokerbot sell | 1 TX | User |
+| ZCHF approve(Permit2) | 1 TX (einmalig) | User |
+| ZCHF → DFX | **0 TX** | DFX (gasless) |
+
+> **Vorteil:** Nach den einmaligen Approvals ist nur noch **1 User-Transaktion** (Brokerbot sell) nötig. Der ZCHF-Transfer an DFX ist **gasless**.
+
+### Flow-Diagramm
+
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │  RealUnit   │     │   DFX API   │     │  Brokerbot  │     │    Bank     │
@@ -36,8 +49,12 @@ Der Verkauf von REALU Tokens erfolgt in vier Schritten:
       │───────────────────────────────────────▶│                    │
       │◀───────────────────────────────────────│                    │
       │                    │                    │                    │
-      │  3. ZCHF → DFX     │                    │                    │
-      │───────────────────▶│                    │                    │
+      │  3. ZCHF → DFX (Permit2/Gasless)       │                    │
+      │  (Client signiert off-chain)           │                    │
+      │───────────────────▶│ permitTransferFrom │                    │
+      │                    │───────────────────▶│                    │
+      │◀───────────────────│                    │                    │
+      │                    │                    │                    │
       │                    │  4. CHF Auszahlung │                    │
       │                    │───────────────────────────────────────▶│
       │                    │                    │                    │
@@ -331,51 +348,234 @@ async function executeSell(shares: number, wallet: Wallet): Promise<string> {
 
 ---
 
-## Schritt 4: ZCHF an DFX verkaufen
+## Schritt 4: ZCHF an DFX verkaufen (Permit2/Gasless)
 
-Nach dem Brokerbot-Swap hat der User ZCHF Tokens. Diese werden an DFX verkauft für CHF Auszahlung.
+Nach dem Brokerbot-Swap hat der User ZCHF Tokens. Diese werden via **Permit2** gasless an DFX transferiert.
 
-### Flow
+### Vorteile von Permit2
 
-1. Sell-Route bei DFX erstellen
-2. ZCHF an DFX Deposit-Adresse senden
-3. DFX zahlt CHF aufs Bankkonto
+- **Gasless für User:** DFX zahlt die Gas-Gebühren für den ZCHF-Transfer
+- **Einmaliges Approval:** Nach dem ersten Setup sind alle weiteren Transfers gasless
+- **Sicher:** User signiert off-chain, behält volle Kontrolle
 
 ### API Endpoints
 
 | Endpoint | Status | Beschreibung |
 |----------|--------|--------------|
 | `POST /sell` | ✅ Existiert | Erstellt Sell-Route |
-| `GET /sell/{routeId}` | ✅ Existiert | Deposit-Adresse abrufen |
+| `PUT /sell/paymentInfos` | ✅ Existiert | Erstellt TransactionRequest für Permit2 |
+| `PUT /sell/paymentInfos/:id/confirm` | ✅ Existiert | Führt Permit2-Transfer aus |
 
-### Implementierung
+---
+
+### Permit2 Implementierung
+
+Der User signiert eine Nachricht off-chain. DFX führt den Token-Transfer aus und zahlt die Gas-Gebühren.
+
+#### Voraussetzung: Einmaliges Permit2-Approval
+
+Bevor Permit2 genutzt werden kann, muss der User einmalig den Permit2-Contract genehmigen:
 
 ```typescript
-// 1. Sell-Route erstellen (via DFX Services oder API)
-interface CreateSellRouteRequest {
-  asset: string;            // "ZCHF"
-  blockchain: string;       // "Ethereum"
-  currency: string;         // "CHF"
-  iban: string;             // Ziel-IBAN für Auszahlung
-}
+const PERMIT2_ADDRESS = '0x000000000022D473030F116dDEE9F6B43aC78BA3'; // Uniswap Permit2
 
-interface CreateSellRouteResponse {
-  routeId: string;
-  depositAddress: string;   // DFX-verwaltete Adresse
-  minDeposit: string;       // Minimum ZCHF
-  fee: string;              // DFX Gebühr in %
-}
-
-// 2. ZCHF an Deposit-Adresse senden
-async function sendZchfToDfx(
-  wallet: Wallet,
-  depositAddress: string,
-  amount: string
-): Promise<string> {
+// Einmalig: ZCHF für Permit2 genehmigen
+async function approvePermit2(wallet: Wallet): Promise<string> {
   const zchfContract = new Contract(ZCHF_ADDRESS, ERC20_ABI, wallet);
-  const tx = await zchfContract.transfer(depositAddress, parseUnits(amount, 18));
+  const tx = await zchfContract.approve(PERMIT2_ADDRESS, ethers.MaxUint256);
   return tx.hash;
 }
+```
+
+#### Permit2-Flow
+
+```
+1. PUT /sell/paymentInfos        → TransactionRequest erstellen
+2. User signiert Permit2-Message  → Off-chain (kein Gas!)
+3. PUT /sell/paymentInfos/:id/confirm → DFX führt permitTransferFrom() aus
+4. DFX zahlt CHF aufs Bankkonto
+```
+
+#### PermitDto Struktur
+
+```typescript
+interface PermitDto {
+  address: string;                   // User-Wallet-Adresse
+  signature: string;                 // EIP-712 Signatur
+  signatureTransferContract: string; // Permit2 Contract Adresse
+  permittedAmount: number;           // Max. erlaubter Betrag
+  executorAddress: string;           // DFX DEX-Wallet
+  nonce: number;                     // Permit2 Nonce
+  deadline: string;                  // Gültigkeits-Timestamp (Unix)
+}
+
+interface ConfirmDto {
+  permit: PermitDto;
+}
+```
+
+#### Implementierung
+
+```typescript
+const API_BASE = 'https://api.dfx.swiss/v1';
+const PERMIT2_ADDRESS = '0x000000000022D473030F116dDEE9F6B43aC78BA3';
+const ZCHF_ADDRESS = '0xb58e61c3098d85632df34eecfb899a1ed80921cb';
+
+// 1. PaymentInfo erstellen
+interface SellPaymentInfoRequest {
+  routeId: number;
+  amount: number;          // ZCHF Betrag
+  targetAmount?: number;   // Optional: CHF Zielbetrag
+}
+
+async function createPaymentInfo(
+  accessToken: string,
+  request: SellPaymentInfoRequest
+): Promise<SellPaymentInfo> {
+  const response = await fetch(`${API_BASE}/sell/paymentInfos`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  });
+  return response.json();
+}
+
+// 2. Permit2-Signatur erstellen
+async function createPermit2Signature(
+  wallet: Wallet,
+  params: {
+    token: string;
+    amount: bigint;
+    spender: string;
+    nonce: number;
+    deadline: number;
+  }
+): Promise<string> {
+  const domain = {
+    name: 'Permit2',
+    chainId: 1, // Ethereum Mainnet
+    verifyingContract: PERMIT2_ADDRESS,
+  };
+
+  const types = {
+    PermitTransferFrom: [
+      { name: 'permitted', type: 'TokenPermissions' },
+      { name: 'spender', type: 'address' },
+      { name: 'nonce', type: 'uint256' },
+      { name: 'deadline', type: 'uint256' },
+    ],
+    TokenPermissions: [
+      { name: 'token', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+  };
+
+  const message = {
+    permitted: {
+      token: params.token,
+      amount: params.amount,
+    },
+    spender: params.spender,
+    nonce: params.nonce,
+    deadline: params.deadline,
+  };
+
+  return wallet.signTypedData(domain, types, message);
+}
+
+// 3. Nonce abrufen (vom Permit2 Contract)
+async function getPermit2Nonce(
+  provider: Provider,
+  owner: string
+): Promise<number> {
+  const permit2 = new Contract(
+    PERMIT2_ADDRESS,
+    ['function nonceBitmap(address, uint256) view returns (uint256)'],
+    provider
+  );
+  // Vereinfachte Nonce-Berechnung - für Produktion: freie Nonce finden
+  return Date.now();
+}
+
+// 4. Gasless ZCHF-Transfer via Permit2
+async function sendZchfWithPermit2(
+  wallet: Wallet,
+  accessToken: string,
+  sellRouteId: number,
+  amount: number,
+  executorAddress: string
+): Promise<void> {
+  // 4.1 PaymentInfo erstellen
+  const paymentInfo = await createPaymentInfo(accessToken, {
+    routeId: sellRouteId,
+    amount: amount,
+  });
+
+  // 4.2 Permit2 Parameter vorbereiten
+  const amountWei = parseUnits(amount.toString(), 18);
+  const nonce = await getPermit2Nonce(wallet.provider!, wallet.address);
+  const deadline = Math.floor(Date.now() / 1000) + 1800; // 30 Minuten gültig
+
+  // 4.3 Signatur erstellen (off-chain, kein Gas!)
+  const signature = await createPermit2Signature(wallet, {
+    token: ZCHF_ADDRESS,
+    amount: amountWei,
+    spender: executorAddress,
+    nonce,
+    deadline,
+  });
+
+  // 4.4 Confirm mit PermitDto senden
+  const confirmDto: ConfirmDto = {
+    permit: {
+      address: wallet.address,
+      signature,
+      signatureTransferContract: PERMIT2_ADDRESS,
+      permittedAmount: amount,
+      executorAddress,
+      nonce,
+      deadline: deadline.toString(),
+    },
+  };
+
+  const response = await fetch(
+    `${API_BASE}/sell/paymentInfos/${paymentInfo.id}/confirm`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(confirmDto),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Permit2 Transfer fehlgeschlagen');
+  }
+
+  console.log('ZCHF erfolgreich an DFX transferiert (gasless)');
+}
+```
+
+#### Executor-Adresse
+
+Die `executorAddress` ist die DFX DEX-Wallet, die den `permitTransferFrom()` Call ausführt. Diese Adresse wird in der PaymentInfo-Response zurückgegeben oder kann über die API abgefragt werden.
+
+#### Fehlerbehandlung
+
+```typescript
+const PERMIT2_ERRORS = {
+  INVALID_SIGNATURE: 'Signatur ungültig oder abgelaufen',
+  INVALID_EXECUTOR: 'Executor-Adresse stimmt nicht mit DFX-Wallet überein',
+  INVALID_CONTRACT: 'SignatureTransferContract ist kein gültiger Permit2-Contract',
+  DEADLINE_EXPIRED: 'Permit2 Deadline überschritten',
+  NONCE_USED: 'Nonce wurde bereits verwendet',
+  INSUFFICIENT_ALLOWANCE: 'Permit2 hat keine Genehmigung für ZCHF',
+};
 ```
 
 ---
@@ -387,12 +587,14 @@ async function sellRealu(
   shares: number,
   wallet: Wallet,
   accessToken: string,
-  targetIban: string
+  targetIban: string,
+  executorAddress: string  // DFX DEX-Wallet
 ): Promise<void> {
-  const API_BASE = 'https://api.dfx.swiss/v1/realunit';
+  const API_BASE = 'https://api.dfx.swiss/v1';
+  const REALUNIT_API = `${API_BASE}/realunit`;
 
   // 1. KYC-Level prüfen (MUSS zuerst erfolgen)
-  const kyc = await fetch('https://api.dfx.swiss/v1/kyc', {
+  const kyc = await fetch(`${API_BASE}/kyc`, {
     headers: { 'Authorization': `Bearer ${accessToken}` },
   }).then(r => r.json());
 
@@ -402,54 +604,64 @@ async function sellRealu(
     );
   }
 
-  // 2. ETH-Balance prüfen
-  const ethBalance = await wallet.getBalance();
-  if (ethBalance.lt(parseEther('0.001'))) {
-    // Faucet nutzen (nur möglich mit KYC Level 30+)
+  // 2. ETH-Balance prüfen (nur für Brokerbot-TX nötig)
+  const ethBalance = await wallet.provider!.getBalance(wallet.address);
+  if (ethBalance < parseEther('0.001')) {
     await requestFaucet(accessToken);
     // Warten auf TX-Bestätigung...
   }
 
   // 3. Prüfen ob Verkauf aktiviert
-  const info = await fetch(`${API_BASE}/brokerbot/info`).then(r => r.json());
+  const info = await fetch(`${REALUNIT_API}/brokerbot/info`).then(r => r.json());
   if (!info.sellingEnabled) {
     throw new Error('Verkauf ist derzeit deaktiviert');
   }
 
   // 4. Verkaufspreis abrufen
-  const sellPrice = await fetch(`${API_BASE}/brokerbot/sellPrice?shares=${shares}`)
+  const sellPrice = await fetch(`${REALUNIT_API}/brokerbot/sellPrice?shares=${shares}`)
     .then(r => r.json());
 
   console.log(`Verkauf: ${shares} REALU für ${sellPrice.totalPrice} ZCHF`);
 
   // 5. REALU Approval für Brokerbot (falls nicht vorhanden)
   const realuContract = new Contract(REALU_ADDRESS, ERC20_ABI, wallet);
-  const allowance = await realuContract.allowance(wallet.address, BROKERBOT_ADDRESS);
-  if (allowance.lt(shares)) {
-    const approveTx = await realuContract.approve(BROKERBOT_ADDRESS, shares);
+  const brokerbotAllowance = await realuContract.allowance(wallet.address, BROKERBOT_ADDRESS);
+  if (brokerbotAllowance < BigInt(shares)) {
+    const approveTx = await realuContract.approve(BROKERBOT_ADDRESS, ethers.MaxUint256);
     await approveTx.wait();
   }
 
-  // 6. REALU → ZCHF Swap via Brokerbot
-  const sellTx = await prepareSellTx(shares, wallet.address);
-  const swapTx = await wallet.sendTransaction(sellTx);
+  // 6. REALU → ZCHF Swap via Brokerbot (User zahlt Gas)
+  const sellTxData = await prepareSellTx(shares, wallet.address);
+  const swapTx = await wallet.sendTransaction(sellTxData);
   await swapTx.wait();
 
-  // 7. Sell-Route bei DFX erstellen
-  const sellRoute = await createSellRoute({
+  // 7. Permit2 Approval prüfen (einmalig)
+  const zchfContract = new Contract(ZCHF_ADDRESS, ERC20_ABI, wallet);
+  const permit2Allowance = await zchfContract.allowance(wallet.address, PERMIT2_ADDRESS);
+  if (permit2Allowance === 0n) {
+    console.log('Einmaliges Permit2-Approval erforderlich...');
+    const approveTx = await zchfContract.approve(PERMIT2_ADDRESS, ethers.MaxUint256);
+    await approveTx.wait();
+  }
+
+  // 8. Sell-Route bei DFX erstellen
+  const sellRoute = await createSellRoute(accessToken, {
     asset: 'ZCHF',
     blockchain: 'Ethereum',
     currency: 'CHF',
     iban: targetIban,
   });
 
-  // 8. ZCHF an DFX senden
-  const zchfContract = new Contract(ZCHF_ADDRESS, ERC20_ABI, wallet);
-  const transferTx = await zchfContract.transfer(
-    sellRoute.depositAddress,
-    parseUnits(sellPrice.totalPrice, 18)
+  // 9. ZCHF an DFX senden via Permit2 (GASLESS!)
+  const zchfAmount = parseFloat(sellPrice.totalPrice);
+  await sendZchfWithPermit2(
+    wallet,
+    accessToken,
+    sellRoute.routeId,
+    zchfAmount,
+    executorAddress
   );
-  await transferTx.wait();
 
   console.log('Verkauf abgeschlossen. CHF wird auf Bankkonto überwiesen.');
 }
@@ -469,8 +681,10 @@ async function sellRealu(
 | `GET /brokerbot/price` | Aktueller Preis pro Share |
 | `POST /sell` | DFX Sell-Route erstellen |
 | `GET /sell/{routeId}` | Deposit-Adresse abrufen |
+| `PUT /sell/paymentInfos` | TransactionRequest für Permit2 erstellen |
+| `PUT /sell/paymentInfos/:id/confirm` | Permit2-Transfer ausführen (gasless) |
 
-### Geplante Endpoints
+### Geplante Endpoints (Brokerbot)
 
 | Endpoint | Beschreibung |
 |----------|--------------|
@@ -483,19 +697,19 @@ async function sellRealu(
 
 ## Wichtige Hinweise
 
-1. **Gas-Gebühren erforderlich** - Der User braucht ETH für die Blockchain-Transaktionen. Der Faucet ist einmalig und nur für verifizierte Accounts verfügbar.
+1. **Gas-Gebühren nur für Brokerbot** - Der User braucht ETH nur für den Brokerbot-Swap. Der Faucet ist einmalig und nur für verifizierte Accounts (KYC 30+) verfügbar.
 
-2. **Zwei Transaktionen nötig** - Für den Verkauf sind mindestens zwei Transaktionen erforderlich:
-   - Approval (falls nicht vorhanden)
-   - Sell-Transaktion
+2. **Gasless ZCHF-Transfer** - Der ZCHF-Transfer an DFX erfolgt via Permit2 gasless. DFX übernimmt die Gas-Kosten.
 
-3. **Client signiert** - Alle Transaktionen werden vom Client signiert. DFX speichert keine Private Keys.
+3. **Einmalige Approvals** - Sowohl das REALU-Approval für den Brokerbot als auch das ZCHF-Approval für Permit2 sind einmalig. Bei folgenden Verkäufen ist nur noch die Brokerbot-Transaktion nötig.
 
-4. **Preis sinkt bei Verkauf** - Der Brokerbot-Preis sinkt mit jedem Verkauf (dynamisches Preismodell).
+4. **Client signiert** - Alle Transaktionen und Permit2-Signaturen werden vom Client erstellt. DFX speichert keine Private Keys.
 
-5. **ZCHF-Liquidität** - Der Brokerbot muss genügend ZCHF haben, um den Verkauf zu bedienen.
+5. **Preis sinkt bei Verkauf** - Der Brokerbot-Preis sinkt mit jedem Verkauf (dynamisches Preismodell).
 
-6. **DFX Gebühren** - Für den ZCHF → CHF Verkauf fallen DFX-Gebühren an.
+6. **ZCHF-Liquidität** - Der Brokerbot muss genügend ZCHF haben, um den Verkauf zu bedienen.
+
+7. **DFX Gebühren** - Für den ZCHF → CHF Verkauf fallen DFX-Gebühren an.
 
 ---
 
@@ -528,3 +742,4 @@ const SELL_ERRORS = {
 ---
 
 *Dokumentation erstellt am: 2025-12-06*
+*Aktualisiert: 2025-12-08 (Permit2/Gasless Flow hinzugefügt)*
