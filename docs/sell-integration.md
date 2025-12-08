@@ -259,10 +259,13 @@ Neuer Preis = Aktueller Preis - (Anzahl Shares × Decrement)
 |----------|--------|--------------|
 | `GET /brokerbot/info` | ✅ Existiert | Prüft ob `sellingEnabled: true` |
 | `GET /brokerbot/price` | ✅ Existiert | Aktueller Preis pro Share |
-| `GET /brokerbot/sellPrice?shares=X` | 🔜 Geplant | Verkaufspreis für X Shares |
-| `POST /brokerbot/sell` | 🔜 Geplant | Bereitet Sell-TX vor (Client signiert) |
+| `GET /brokerbot/sellPrice?shares=X` | ✅ Existiert | Verkaufspreis für X Shares |
+| `POST /brokerbot/sell` | ✅ Existiert | Bereitet Sell-TX vor (Client signiert) |
+| `POST /brokerbot/broadcast` | ✅ Existiert | Broadcastet signierte TX |
+| `GET /brokerbot/approval/:address` | ✅ Existiert | Prüft Permit2-Approval für ZCHF |
+| `POST /brokerbot/approve` | ✅ Existiert | Bereitet Permit2-Approval-TX vor |
 
-### Geplante Sell-Price Response
+### Sell-Price Response
 
 ```typescript
 interface BrokerbotSellPriceDto {
@@ -273,7 +276,7 @@ interface BrokerbotSellPriceDto {
 }
 ```
 
-### Geplante Sell-TX Vorbereitung
+### Sell-TX Vorbereitung
 
 Der Client signiert die Transaktion selbst. Die DFX API liefert nur die Transaktionsdaten:
 
@@ -843,15 +846,15 @@ async function sellRealu(
 | `PUT /sell/paymentInfos` | TransactionRequest für Permit2 erstellen |
 | `PUT /sell/paymentInfos/:id/confirm` | Permit2-Transfer ausführen (gasless) |
 
-### Geplante Endpoints (RealUnit)
+### Implementierte Endpoints (RealUnit)
 
-| Endpoint | Priorität | Beschreibung |
-|----------|-----------|--------------|
-| `POST /realunit/sell` | **P0** | Atomarer Sell-Endpoint (signedTx + Permit2) |
-| `GET /realunit/brokerbot/sellPrice?shares=X` | P1 | Verkaufspreis für X Shares berechnen |
-| `POST /realunit/brokerbot/prepareSell` | P1 | Sell-TX Daten vorbereiten (Client signiert) |
-| `GET /realunit/brokerbot/approval` | P2 | Prüft ob Approval für Brokerbot vorhanden |
-| `POST /realunit/brokerbot/prepareApproval` | P2 | Approval-TX Daten vorbereiten |
+| Endpoint | Status | Beschreibung |
+|----------|--------|--------------|
+| `GET /realunit/brokerbot/sellPrice?shares=X` | ✅ | Verkaufspreis für X Shares berechnen |
+| `POST /realunit/brokerbot/sell` | ✅ | Sell-TX Daten vorbereiten (Client signiert) |
+| `POST /realunit/brokerbot/broadcast` | ✅ | Signierte TX broadcasten |
+| `GET /realunit/brokerbot/approval/:address` | ✅ | Prüft Permit2-Approval für ZCHF |
+| `POST /realunit/brokerbot/approve` | ✅ | Permit2-Approval-TX Daten vorbereiten |
 
 ---
 
@@ -859,15 +862,17 @@ async function sellRealu(
 
 1. **Kein Broadcasting durch die App** - Die RealUnit App broadcastet keine Transaktionen selbst. Alle signierten Transaktionen werden an die DFX API übergeben.
 
-2. **Atomarer Sell-Endpoint** - Der `POST /realunit/sell` Endpoint nimmt die signierte Brokerbot-TX und die Permit2-Signatur in einem Call entgegen. DFX validiert alles und führt beide Operationen aus.
+2. **Zweistufiger Sell-Flow** - Der Verkauf erfolgt in zwei Schritten:
+   - `POST /brokerbot/sell` → TX-Daten → Client signiert → `POST /brokerbot/broadcast` (REALU → ZCHF)
+   - `PUT /sell/paymentInfos` → Permit2 signieren → `PUT /sell/paymentInfos/:id/confirm` (ZCHF → CHF)
 
-3. **Gas-Gebühren** - DFX zahlt alle Gas-Gebühren (Brokerbot-Broadcast + Permit2 Transfer). Der Faucet ist nur für einmalige Approvals nötig.
+3. **Gas-Gebühren** - User zahlt Gas für Brokerbot-TX. DFX zahlt Gas für Permit2 Transfer (gasless für User).
 
-4. **Einmalige Approvals** - REALU-Approval für Brokerbot und ZCHF-Approval für Permit2 sind einmalig. Diese TXs werden ebenfalls über die DFX API signiert und broadcastet.
+4. **Einmalige Approvals** - ZCHF-Approval für Permit2 ist einmalig. Für REALU-Verkauf via `transferAndCall` ist kein Approval nötig.
 
 5. **Client signiert nur** - Der Client signiert Transaktionen und Permit2-Messages, aber sendet nie direkt an die Blockchain. DFX speichert keine Private Keys.
 
-6. **Permit2 vor Brokerbot-TX** - Die Permit2-Signatur kann erstellt werden bevor der User die ZCHF-Balance hat. Der Betrag muss aber exakt dem erwarteten Brokerbot-Output entsprechen.
+6. **Permit2 nach Brokerbot-TX** - Die Permit2-Signatur wird erstellt nachdem der User ZCHF erhalten hat.
 
 7. **Preis sinkt bei Verkauf** - Der Brokerbot-Preis sinkt mit jedem Verkauf (dynamisches Preismodell).
 
@@ -906,4 +911,4 @@ const SELL_ERRORS = {
 ---
 
 *Dokumentation erstellt am: 2025-12-06*
-*Aktualisiert: 2025-12-08 (Atomarer POST /realunit/sell Endpoint hinzugefügt)*
+*Aktualisiert: 2025-12-08 (Brokerbot Sell-Endpoints implementiert)*

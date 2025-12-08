@@ -805,16 +805,17 @@ POST /realunit/transaction/broadcast
 | `GET /bank` | ✅ Existiert | - |
 | `POST /sell` | ✅ Existiert | - |
 | `GET /sell/:routeId` | ✅ Existiert | - |
-| **`GET /brokerbot/sellPrice`** | ❌ Fehlt | P1 |
-| **`POST /brokerbot/sell`** | ❌ Fehlt | P1 |
-| **`GET /brokerbot/approval`** | ❌ Fehlt | P1 |
-| **`POST /brokerbot/approve`** | ❌ Fehlt | P1 |
+| `GET /brokerbot/sellPrice` | ✅ Existiert | - |
+| `POST /brokerbot/sell` | ✅ Existiert | Bereitet TX-Daten vor (Client signiert) |
+| `POST /brokerbot/broadcast` | ✅ Existiert | Broadcastet signierte TX |
+| `GET /brokerbot/approval/:address` | ✅ Existiert | Prüft Permit2-Approval |
+| `POST /brokerbot/approve` | ✅ Existiert | Bereitet Approval-TX vor |
 | **`GET /balance/:address`** | ❌ Fehlt | P2 |
 | **`POST /transaction/send`** | ❌ Fehlt | P2 |
 
 ### Nächste Schritte
 
-1. **Backend-Team:** Implementierung der P1-Endpoints
+1. ~~**Backend-Team:** Implementierung der P1-Endpoints~~ ✅ Erledigt
 2. **API-Review:** OpenAPI/Swagger-Dokumentation erstellen
 3. **Testing:** Integration Tests mit Testnet
 4. **Frontend-Integration:** Client-Code implementieren
@@ -822,3 +823,4 @@ POST /realunit/transaction/broadcast
 ---
 
 *Dokumentation erstellt am: 2025-12-06*
+*Aktualisiert: 2025-12-08 (P1 Endpoints implementiert)*
