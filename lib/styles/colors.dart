@@ -14,7 +14,6 @@ class RealUnitColors {
   static const realUnitBlue = Color.fromARGB(255, 25, 136, 198);
   static const realUnitBlack = Color.fromARGB(255, 52, 50, 51);
   static const brand700 = Color.fromARGB(255, 236, 243, 249);
-  static const brand600 = Color.fromARGB(255, 25, 136, 198);
   static const darkBlue = Color.fromARGB(255, 3, 76, 129);
   static const green = Color.fromARGB(255, 76, 172, 54);
   static const neutral500 = Color.fromARGB(255, 100, 116, 139);

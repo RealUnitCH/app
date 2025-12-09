@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_allowlist_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/dfx_brokerbot_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_bank_details_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/screens/buy/cubit/buy_allowlist/buy_allowlist_cubit.dart';
-import 'package:realunit_wallet/screens/buy/cubit/buy_price/buy_price_cubit.dart';
-import 'package:realunit_wallet/screens/buy/cubit/buy_price/buy_price_state.dart';
+import 'package:realunit_wallet/screens/buy/cubit/buy_bank_details/buy_bank_details_cubit.dart';
+import 'package:realunit_wallet/screens/buy/cubit/buy_converter/buy_converter_cubit.dart';
+import 'package:realunit_wallet/screens/buy/cubit/buy_converter/buy_converter_state.dart';
+import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
+import 'package:realunit_wallet/screens/buy/widgets/payment_executed_sheet.dart';
+import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/styles/styles.dart';
 
 class BuyPage extends StatelessWidget {
   static const routeName = '/buy';
@@ -22,16 +27,24 @@ class BuyPage extends StatelessWidget {
       providers: [
         BlocProvider(
           create: (_) => BuyAllowlistCubit(
-            DfxAllowlistService(getIt<AppStore>())
-              ..checkAllowlist(
-                getIt<AppStore>().primaryAddress,
-              ),
+            DfxAllowlistService(
+              getIt<AppStore>(),
+            ),
+          )..checkAddress(),
+        ),
+        BlocProvider(
+          create: (_) => BuyConverterCubit(
+            DfxBrokerbotService(
+              getIt<AppStore>(),
+            ),
           ),
         ),
         BlocProvider(
-          create: (_) => BuyCubit(
-            DfxBrokerbotService(getIt<AppStore>()),
-          ),
+          create: (_) => BuyBankDetailsCubit(
+            DfxBankDetailsService(
+              getIt<AppStore>(),
+            ),
+          )..fetchBankDetails(),
         ),
       ],
       child: const BuyView(),
@@ -52,7 +65,7 @@ class _BuyViewState extends State<BuyView> {
 
   @override
   void initState() {
-    context.read<BuyCubit>().onChfChanged(_amountController.text);
+    context.read<BuyConverterCubit>().onChfChanged(_amountController.text);
     super.initState();
   }
 
@@ -66,10 +79,13 @@ class _BuyViewState extends State<BuyView> {
         ),
         title: const Text(
           'REALU kaufen',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
-      body: BlocConsumer<BuyCubit, BuyState>(
+      body: BlocConsumer<BuyConverterCubit, BuyConverterState>(
         listenWhen: (prev, next) =>
             prev.chfText != next.chfText || prev.sharesText != next.sharesText,
         listener: (context, state) {
@@ -81,131 +97,59 @@ class _BuyViewState extends State<BuyView> {
           }
         },
         builder: (context, state) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.0,
-                    vertical: 4.0,
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  PaymentConverter(
+                    amountController: _amountController,
+                    resultController: _resultController,
                   ),
-                  child: Text(
-                    'Du bezahlst',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  SizedBox(
+                    height: 32,
                   ),
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: RealUnitColors.neutral400),
-                    borderRadius: BorderRadius.circular(8.0),
+                  PaymentInformation(
+                    amount: _amountController.text,
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: TextField(
-                          controller: _amountController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20, bottom: 20),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: () async {
+                          await showModalBottomSheet(
+                            context: context,
+                            builder: (context) => PaymentExecutedSheet(),
+                          );
+                        },
+                        style: ButtonStyle(
+                          backgroundColor: WidgetStateProperty.all(
+                            RealUnitColors.realUnitBlue,
                           ),
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 10.0,
-                              vertical: 14.0,
+                          padding: WidgetStateProperty.all(
+                            const EdgeInsets.symmetric(
+                              vertical: 10.0,
+                              horizontal: 20.0,
                             ),
                           ),
-                          maxLines: 1,
-                          onChanged: (value) {
-                            context.read<BuyCubit>().onChfChanged(value);
-                          },
-                        ),
-                      ),
-                      Container(
-                        color: RealUnitColors.neutral400,
-                        width: 2,
-                        height: 50,
-                        margin: const EdgeInsets.symmetric(horizontal: 10.0),
-                      ),
-                      const Expanded(
-                        flex: 2,
-                        child: Text(
-                          "CHF",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                          shape: WidgetStateProperty.all(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(60.0),
+                            ),
                           ),
                         ),
+                        child: Text(
+                          'Klicken Sie hier, sobald Sie die Überweisung getätigt haben',
+                          textAlign: TextAlign.center,
+                          style: kFullwidthBlueButtonTextStyle,
+                        ),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-                const Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.0,
-                    vertical: 4.0,
-                  ),
-                  child: Text(
-                    'Du erhältst',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: RealUnitColors.neutral400),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: TextField(
-                          controller: _resultController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: false,
-                          ),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly, // only allow 0-9
-                          ],
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 14.0),
-                          ),
-                          maxLines: 1,
-                          onChanged: (value) {
-                            context.read<BuyCubit>().onSharesChanged(value);
-                          },
-                        ),
-                      ),
-                      Container(
-                        color: RealUnitColors.neutral400,
-                        width: 2,
-                        height: 50,
-                        margin: const EdgeInsets.symmetric(horizontal: 10.0),
-                      ),
-                      const Expanded(
-                        flex: 2,
-                        child: Text(
-                          "REALU",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },

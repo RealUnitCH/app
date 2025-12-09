@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/dfx_brokerbot_service.dart';
-import 'package:realunit_wallet/screens/buy/cubit/buy_price/buy_price_state.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
+import 'package:realunit_wallet/screens/buy/cubit/buy_converter/buy_converter_state.dart';
 
-class BuyCubit extends Cubit<BuyState> {
+class BuyConverterCubit extends Cubit<BuyConverterState> {
   final DfxBrokerbotService _brokerbotService;
 
-  BuyCubit(this._brokerbotService) : super(const BuyState());
+  BuyConverterCubit(this._brokerbotService) : super(const BuyConverterState());
 
   Timer? _chfDebounce;
   Timer? _sharesDebounce;
