@@ -11,10 +11,7 @@ import 'package:realunit_wallet/screens/buy/cubit/buy_bank_details/buy_bank_deta
 import 'package:realunit_wallet/screens/buy/cubit/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubit/buy_converter/buy_converter_state.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
-import 'package:realunit_wallet/screens/buy/widgets/payment_executed_sheet.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
-import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/styles/styles.dart';
 
 class BuyPage extends StatelessWidget {
   static const routeName = '/buy';
@@ -101,52 +98,15 @@ class _BuyViewState extends State<BuyView> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Column(
+                spacing: 32,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   PaymentConverter(
                     amountController: _amountController,
                     resultController: _resultController,
                   ),
-                  SizedBox(
-                    height: 32,
-                  ),
                   PaymentInformation(
                     amount: _amountController.text,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 20, bottom: 20),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: TextButton(
-                        onPressed: () async {
-                          await showModalBottomSheet(
-                            context: context,
-                            builder: (context) => PaymentExecutedSheet(),
-                          );
-                        },
-                        style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all(
-                            RealUnitColors.realUnitBlue,
-                          ),
-                          padding: WidgetStateProperty.all(
-                            const EdgeInsets.symmetric(
-                              vertical: 10.0,
-                              horizontal: 20.0,
-                            ),
-                          ),
-                          shape: WidgetStateProperty.all(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(60.0),
-                            ),
-                          ),
-                        ),
-                        child: Text(
-                          'Klicken Sie hier, sobald Sie die Überweisung getätigt haben',
-                          textAlign: TextAlign.center,
-                          style: kFullwidthBlueButtonTextStyle,
-                        ),
-                      ),
-                    ),
                   ),
                 ],
               ),

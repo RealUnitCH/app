@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/screens/buy/cubit/buy_bank_details/buy_bank_details_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubit/buy_bank_details/buy_bank_details_state.dart';
+import 'package:realunit_wallet/screens/buy/widgets/payment_executed_sheet.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/styles/styles.dart';
 
 class PaymentInformation extends StatelessWidget {
   const PaymentInformation({
@@ -18,11 +20,30 @@ class PaymentInformation extends StatelessWidget {
     return BlocBuilder<BuyBankDetailsCubit, BuyBankDetailsState>(
       builder: (context, state) {
         if (state.loading) {
-          Center(child: Text('Lade Zahlungsinformationen ...'));
+          return Center(
+            child: Text(
+              'Lade Zahlungsinformationen ...',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          );
         }
+
         if (state.bankDetails == null) {
-          Center(child: Text('Keine Zahlungsinformationen verfügbar.'));
+          return Center(
+            child: Text(
+              'Keine Zahlungsinformationen verfügbar.',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          );
         }
+
+        final bankDetails = state.bankDetails!;
         return Column(
           children: [
             Text(
@@ -54,48 +75,85 @@ class PaymentInformation extends StatelessWidget {
               ],
             ),
             SizedBox(height: 20),
-            if (state.bankDetails != null) ...[
-              Container(
-                decoration: BoxDecoration(
-                  border: BoxBorder.all(
-                    width: 1,
-                    color: RealUnitColors.neutral200,
+            Column(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    border: BoxBorder.all(
+                      width: 1,
+                      color: RealUnitColors.neutral200,
+                    ),
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
-                  borderRadius: BorderRadius.circular(8.0),
+                  child: Column(
+                    children: _withDividers(
+                      children: [
+                        _PaymentInformationDetailsRow(
+                          description: 'Betrag in ${bankDetails.currency}',
+                          value: _amount,
+                        ),
+                        _PaymentInformationDetailsRow(
+                          description: 'IBAN',
+                          value: bankDetails.iban,
+                        ),
+                        _PaymentInformationDetailsRow(
+                          description: 'BIC',
+                          value: bankDetails.bic,
+                        ),
+                        _PaymentInformationDetailsRow(
+                          description: 'Verwendungszweck',
+                          value: 'REALU-723232',
+                        ),
+                        _PaymentInformationDetailsRow(
+                          title: 'Empfänger',
+                          description: 'Name',
+                          value: bankDetails.recipient,
+                        ),
+                        _PaymentInformationDetailsRow(
+                          description: 'Adresse',
+                          value: bankDetails.address,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                child: Column(
-                  children: _withDividers(
-                    children: [
-                      _PaymentInformationDetailsRow(
-                        description: 'Betrag in ${state.bankDetails!.currency}',
-                        value: _amount,
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 20, bottom: 20),
+              child: SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () async {
+                    await showModalBottomSheet(
+                      context: context,
+                      builder: (context) => PaymentExecutedSheet(),
+                    );
+                  },
+                  style: ButtonStyle(
+                    backgroundColor: WidgetStateProperty.all(
+                      RealUnitColors.realUnitBlue,
+                    ),
+                    padding: WidgetStateProperty.all(
+                      const EdgeInsets.symmetric(
+                        vertical: 10.0,
+                        horizontal: 20.0,
                       ),
-                      _PaymentInformationDetailsRow(
-                        description: 'IBAN',
-                        value: state.bankDetails!.iban,
+                    ),
+                    shape: WidgetStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(60.0),
                       ),
-                      _PaymentInformationDetailsRow(
-                        description: 'BIC',
-                        value: state.bankDetails!.bic,
-                      ),
-                      _PaymentInformationDetailsRow(
-                        description: 'Verwendungszweck',
-                        value: 'REALU-723232',
-                      ),
-                      _PaymentInformationDetailsRow(
-                        title: 'Empfänger',
-                        description: 'Name',
-                        value: state.bankDetails!.recipient,
-                      ),
-                      _PaymentInformationDetailsRow(
-                        description: 'Adresse',
-                        value: state.bankDetails!.address,
-                      ),
-                    ],
+                    ),
+                  ),
+                  child: Text(
+                    'Klicken Sie hier, sobald Sie die Überweisung getätigt haben',
+                    textAlign: TextAlign.center,
+                    style: kFullwidthBlueButtonTextStyle,
                   ),
                 ),
               ),
-            ],
+            ),
           ],
         );
       },
