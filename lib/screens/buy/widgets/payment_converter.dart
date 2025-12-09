@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/utils/asset_logo.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
-import 'package:realunit_wallet/screens/buy/cubit/buy_converter/buy_converter_cubit.dart';
+import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
@@ -39,59 +39,68 @@ class PaymentConverter extends StatelessWidget {
         ),
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: RealUnitColors.neutral400),
             borderRadius: BorderRadius.circular(8.0),
+            border: Border.all(color: RealUnitColors.neutral300),
           ),
-          child: Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: TextField(
-                  controller: _amountController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 10.0,
-                      vertical: 14.0,
-                    ),
-                  ),
-                  maxLines: 1,
-                  onChanged: (value) => context.read<BuyConverterCubit>().onChfChanged(value),
-                ),
-              ),
-              Container(
-                color: RealUnitColors.neutral400,
-                width: 1,
-                height: 52,
-                margin: const EdgeInsets.symmetric(horizontal: 10.0),
-              ),
-              Expanded(
-                flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      Currency.chf.code,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        height: 20 / 16,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                    controller: _amountController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 10.0,
+                        vertical: 14.0,
                       ),
                     ),
-                    Text(
-                      Currency.chf.name,
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 16 / 12,
-                      ),
-                    ),
-                  ],
+                    maxLines: 1,
+                    onChanged: (value) => context.read<BuyConverterCubit>().onChfChanged(value),
+                  ),
                 ),
-              ),
-            ],
+                Container(
+                  color: RealUnitColors.neutral300,
+                  width: 1,
+                  height: 52,
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    color: RealUnitColors.neutral50,
+                    padding: const EdgeInsets.only(
+                      top: 8.0,
+                      bottom: 8.0,
+                      left: 10.0,
+                      right: 4.0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          Currency.chf.code,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            height: 20 / 16,
+                          ),
+                        ),
+                        Text(
+                          Currency.chf.name,
+                          style: TextStyle(
+                            fontSize: 12,
+                            height: 16 / 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: 32),
@@ -110,70 +119,81 @@ class PaymentConverter extends StatelessWidget {
         ),
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: RealUnitColors.neutral400),
+            border: Border.all(color: RealUnitColors.neutral300),
             borderRadius: BorderRadius.circular(8.0),
           ),
-          child: Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: TextField(
-                  controller: _resultController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: false,
-                  ),
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 10.0,
-                      vertical: 14.0,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                    controller: _resultController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: false,
                     ),
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 10.0,
+                        vertical: 14.0,
+                      ),
+                    ),
+                    maxLines: 1,
+                    onChanged: (value) => context.read<BuyConverterCubit>().onSharesChanged(value),
                   ),
-                  maxLines: 1,
-                  onChanged: (value) => context.read<BuyConverterCubit>().onSharesChanged(value),
                 ),
-              ),
-              Container(
-                color: RealUnitColors.neutral400,
-                width: 1,
-                height: 52,
-                margin: const EdgeInsets.symmetric(horizontal: 10.0),
-              ),
-              Expanded(
-                flex: 2,
-                child: Row(
-                  spacing: 8,
-                  children: [
-                    Image.asset(
-                      getAssetImagePath(realUnitAsset),
-                      height: 24,
-                      width: 24,
+                Container(
+                  color: RealUnitColors.neutral300,
+                  width: 1,
+                  height: 52,
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    color: RealUnitColors.neutral50,
+                    padding: const EdgeInsets.only(
+                      top: 8.0,
+                      bottom: 8.0,
+                      left: 10.0,
+                      right: 4.0,
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
+                      spacing: 8,
                       children: [
-                        Text(
-                          realUnitAsset.symbol,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            height: 20 / 16,
-                          ),
+                        Image.asset(
+                          getAssetImagePath(realUnitAsset),
+                          height: 24,
+                          width: 24,
                         ),
-                        Text(
-                          realUnitAsset.name,
-                          style: TextStyle(
-                            fontSize: 12,
-                            height: 16 / 12,
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              realUnitAsset.symbol,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                height: 20 / 16,
+                              ),
+                            ),
+                            Text(
+                              realUnitAsset.name,
+                              style: TextStyle(
+                                fontSize: 12,
+                                height: 16 / 12,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
