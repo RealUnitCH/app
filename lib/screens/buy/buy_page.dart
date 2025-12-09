@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_allowlist_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_bank_details_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
@@ -64,8 +65,8 @@ class _BuyViewState extends State<BuyView> {
           onPressed: () => context.pop(),
           icon: const Icon(Icons.arrow_back_rounded),
         ),
-        title: const Text(
-          'REALU kaufen',
+        title: Text(
+          S.of(context).buy_realu,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/utils/asset_logo.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/buy/cubit/buy_converter/buy_converter_cubit.dart';
@@ -23,13 +24,13 @@ class PaymentConverter extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
+        Padding(
           padding: EdgeInsets.symmetric(
             horizontal: 12.0,
             vertical: 4.0,
           ),
           child: Text(
-            'Du bezahlst',
+            S.of(context).you_pay,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
@@ -94,13 +95,13 @@ class PaymentConverter extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 32),
-        const Padding(
+        Padding(
           padding: EdgeInsets.symmetric(
             horizontal: 12.0,
             vertical: 4.0,
           ),
           child: Text(
-            'Du erhältst',
+            S.of(context).you_receive,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,

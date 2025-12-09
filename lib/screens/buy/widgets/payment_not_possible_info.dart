@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class PaymentNotPossibleInfo extends StatelessWidget {
@@ -15,10 +16,10 @@ class PaymentNotPossibleInfo extends StatelessWidget {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Color(0xFFFCE8E8),
+              color: RealUnitColors.status.red100,
               borderRadius: BorderRadius.circular(12.0),
               border: Border.all(
-                color: Color(0xFFE02523),
+                color: RealUnitColors.status.red600,
                 width: 1.0,
               ),
             ),
@@ -29,7 +30,7 @@ class PaymentNotPossibleInfo extends StatelessWidget {
                 spacing: 6,
                 children: [
                   Text(
-                    'Kauf momentan nicht möglich.',
+                    S.of(context).buy_payment_not_possible,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
@@ -38,7 +39,7 @@ class PaymentNotPossibleInfo extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Es scheint ein Berechtigungsproblem vorzuliegen. Kontaktieren Sie bitte den Support für weitere Informationen.',
+                    S.of(context).buy_payment_not_possible_description,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -60,7 +61,7 @@ class PaymentNotPossibleInfo extends StatelessWidget {
             ),
             onPressed: null,
             child: Text(
-              'Support kontaktieren',
+              S.of(context).contact_support,
               style: TextStyle(
                 color: RealUnitColors.realUnitBlack,
                 fontSize: 16,

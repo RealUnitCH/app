@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/buy/cubit/buy_bank_details/buy_bank_details_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubit/buy_bank_details/buy_bank_details_state.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_executed_sheet.dart';
@@ -22,7 +23,7 @@ class PaymentInformation extends StatelessWidget {
         if (state.loading) {
           return Center(
             child: Text(
-              'Lade Zahlungsinformationen ...',
+              '${S.of(context).buy_payment_information_loading} ...',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -34,7 +35,7 @@ class PaymentInformation extends StatelessWidget {
         if (state.bankDetails == null) {
           return Center(
             child: Text(
-              'Keine Zahlungsinformationen verfügbar.',
+              S.of(context).buy_payment_information_not_available,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -44,10 +45,11 @@ class PaymentInformation extends StatelessWidget {
         }
 
         final bankDetails = state.bankDetails!;
+        final parsedAddress = _ParsedAddress.parse(bankDetails.address);
         return Column(
           children: [
             Text(
-              'Zahlungsinformationen',
+              S.of(context).buy_payment_information,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -64,7 +66,7 @@ class PaymentInformation extends StatelessWidget {
                 ),
                 Expanded(
                   child: Text(
-                    'Bitte überweise den Kaufbetrag mit diesen Angaben über deine Bankanwendung. Der Verwendungszweck ist wichtig!',
+                    S.of(context).buy_payment_information_description,
                     style: TextStyle(
                       fontSize: 14,
                       height: 18 / 14,
@@ -83,7 +85,7 @@ class PaymentInformation extends StatelessWidget {
                       width: 1,
                       color: RealUnitColors.neutral200,
                     ),
-                    borderRadius: BorderRadius.circular(8.0),
+                    borderRadius: BorderRadius.circular(16.0),
                   ),
                   child: Column(
                     children: _withDividers(
@@ -101,17 +103,25 @@ class PaymentInformation extends StatelessWidget {
                           value: bankDetails.bic,
                         ),
                         _PaymentInformationDetailsRow(
-                          description: 'Verwendungszweck',
-                          value: 'REALU-723232',
-                        ),
-                        _PaymentInformationDetailsRow(
                           title: 'Empfänger',
                           description: 'Name',
                           value: bankDetails.recipient,
                         ),
                         _PaymentInformationDetailsRow(
                           description: 'Adresse',
-                          value: bankDetails.address,
+                          value: parsedAddress.address,
+                        ),
+                        _PaymentInformationDetailsRow(
+                          description: 'PLZ',
+                          value: parsedAddress.plz,
+                        ),
+                        _PaymentInformationDetailsRow(
+                          description: 'Ort',
+                          value: parsedAddress.city,
+                        ),
+                        _PaymentInformationDetailsRow(
+                          description: 'Land',
+                          value: parsedAddress.country,
                         ),
                       ],
                     ),
@@ -147,7 +157,7 @@ class PaymentInformation extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    'Klicken Sie hier, sobald Sie die Überweisung getätigt haben',
+                    S.of(context).buy_payment_confirm,
                     textAlign: TextAlign.center,
                     style: kFullwidthBlueButtonTextStyle,
                   ),
@@ -249,6 +259,47 @@ class _PaymentInformationDetailsRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ParsedAddress {
+  final String address;
+  final String plz;
+  final String city;
+  final String country;
+
+  _ParsedAddress({
+    required this.address,
+    required this.plz,
+    required this.city,
+    required this.country,
+  });
+
+  /// temporary solution for splitting address until backend provides structured address data
+  static _ParsedAddress parse(String input) {
+    final parts = input.split(",").map((e) => e.trim()).toList();
+
+    if (parts.length != 3) {
+      throw FormatException("Unexpected address format: $input");
+    }
+
+    final address = parts[0];
+    final plzCity = parts[1].split(" ");
+    final country = parts[2];
+
+    if (plzCity.length < 2) {
+      throw FormatException("PLZ and city missing: ${parts[1]}");
+    }
+
+    final plz = plzCity.first;
+    final city = plzCity.sublist(1).join(" ");
+
+    return _ParsedAddress(
+      address: address,
+      plz: plz,
+      city: city,
+      country: country,
     );
   }
 }
