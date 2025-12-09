@@ -14,11 +14,11 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
   Timer? _sharesDebounce;
 
   /// User changed CHF → convert to shares
-  void onChfChanged(String value) {
+  Future<void> onChfChanged(String value) async {
     emit(state.copyWith(chfText: value));
 
     _chfDebounce?.cancel();
-    _chfDebounce = Timer(const Duration(milliseconds: 500), () async {
+    _chfDebounce = Timer(const Duration(milliseconds: 100), () async {
       final amount = double.tryParse(value.replaceAll(",", "."));
       if (amount == null || amount <= 0) {
         emit(state.copyWith(sharesText: ""));
@@ -41,11 +41,11 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
   }
 
   /// User changed shares → convert to CHF
-  void onSharesChanged(String value) {
+  Future<void> onSharesChanged(String value) async {
     emit(state.copyWith(sharesText: value));
 
     _sharesDebounce?.cancel();
-    _sharesDebounce = Timer(const Duration(milliseconds: 500), () async {
+    _sharesDebounce = Timer(const Duration(milliseconds: 100), () async {
       final shares = double.tryParse(value.replaceAll(",", "."));
       if (shares == null || shares <= 0) {
         emit(state.copyWith(chfText: ""));

@@ -59,7 +59,15 @@ class PaymentExecutedSheet extends StatelessWidget {
                     onPressed: () {
                       context.pop();
                     },
-                    child: Text('Schließen'),
+                    child: Text(
+                      'Schließen',
+                      style: TextStyle(
+                        color: RealUnitColors.realUnitBlack,
+                        fontSize: 16,
+                        height: 20 / 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               ),

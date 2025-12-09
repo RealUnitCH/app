@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
-import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_allowlist_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_bank_details_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
@@ -14,6 +13,7 @@ import 'package:realunit_wallet/screens/buy/cubit/buy_converter/buy_converter_cu
 import 'package:realunit_wallet/screens/buy/cubit/buy_converter/buy_converter_state.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
+import 'package:realunit_wallet/screens/buy/widgets/payment_not_possible_info.dart';
 
 class BuyPage extends StatelessWidget {
   static const routeName = '/buy';
@@ -26,23 +26,17 @@ class BuyPage extends StatelessWidget {
       providers: [
         BlocProvider(
           create: (_) => BuyAllowlistCubit(
-            DfxAllowlistService(
-              getIt<AppStore>(),
-            ),
+            getIt<DfxAllowlistService>(),
           )..checkAddress(),
         ),
         BlocProvider(
           create: (_) => BuyConverterCubit(
-            DfxBrokerbotService(
-              getIt<AppStore>(),
-            ),
-          ),
+            getIt<DfxBrokerbotService>(),
+          )..onChfChanged('1.00'),
         ),
         BlocProvider(
           create: (_) => BuyBankDetailsCubit(
-            DfxBankDetailsService(
-              getIt<AppStore>(),
-            ),
+            getIt<DfxBankDetailsService>(),
           )..fetchBankDetails(),
         ),
       ],
@@ -59,14 +53,8 @@ class BuyView extends StatefulWidget {
 }
 
 class _BuyViewState extends State<BuyView> {
-  final TextEditingController _amountController = TextEditingController(text: '1.00');
+  final TextEditingController _amountController = TextEditingController();
   final TextEditingController _resultController = TextEditingController();
-
-  @override
-  void initState() {
-    context.read<BuyConverterCubit>().onChfChanged(_amountController.text);
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,60 +72,43 @@ class _BuyViewState extends State<BuyView> {
           ),
         ),
       ),
-      body: BlocBuilder<BuyAllowlistCubit, BuyAllowlistState>(
+      body: BlocConsumer<BuyConverterCubit, BuyConverterState>(
+        listenWhen: (prev, next) =>
+            prev.chfText != next.chfText || prev.sharesText != next.sharesText,
+        listener: (context, state) {
+          _syncController(_amountController, state.chfText);
+          _syncController(_resultController, state.sharesText);
+        },
         builder: (context, state) {
-          if (state.loading) {
-            return const Center(
-              child: CupertinoActivityIndicator(),
-            );
-          }
-
-          if (state.isForbidden) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32.0),
-                child: Text(
-                  'Du hast keine Berechtigung RealU Tokens zu kaufen.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Column(
+                spacing: 32,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  PaymentConverter(
+                    amountController: _amountController,
+                    resultController: _resultController,
                   ),
-                ),
-              ),
-            );
-          }
-
-          return BlocConsumer<BuyConverterCubit, BuyConverterState>(
-            listenWhen: (prev, next) =>
-                prev.chfText != next.chfText || prev.sharesText != next.sharesText,
-            listener: (context, state) {
-              if (_amountController.text != state.chfText) {
-                _amountController.text = state.chfText;
-              }
-              if (_resultController.text != state.sharesText) {
-                _resultController.text = state.sharesText;
-              }
-            },
-            builder: (context, state) {
-              return SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Column(
-                    spacing: 32,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      PaymentConverter(
-                        amountController: _amountController,
-                        resultController: _resultController,
-                      ),
-                      PaymentInformation(
+                  BlocBuilder<BuyAllowlistCubit, BuyAllowlistState>(
+                      builder: (context, allowlistState) {
+                    if (allowlistState.loading) {
+                      return const Center(
+                        child: CupertinoActivityIndicator(),
+                      );
+                    }
+                    if (allowlistState.isForbidden) {
+                      return PaymentNotPossibleInfo();
+                    } else {
+                      return PaymentInformation(
                         amount: _amountController.text,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
+                      );
+                    }
+                  })
+                ],
+              ),
+            ),
           );
         },
       ),
@@ -149,5 +120,15 @@ class _BuyViewState extends State<BuyView> {
     _amountController.dispose();
     _resultController.dispose();
     super.dispose();
+  }
+
+  void _syncController(TextEditingController controller, String newValue) {
+    if (controller.text == newValue) return;
+
+    controller.value = controller.value.copyWith(
+      text: newValue,
+      selection: TextSelection.collapsed(offset: newValue.length),
+      composing: TextRange.empty,
+    );
   }
 }
