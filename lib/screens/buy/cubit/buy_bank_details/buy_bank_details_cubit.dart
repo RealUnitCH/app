@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_bank_details_service.dart';
 
@@ -18,6 +20,7 @@ class BuyBankDetailsCubit extends Cubit<BuyBankDetailsState> {
         bankDetails: details,
       ));
     } catch (e) {
+      developer.log(e.toString());
       emit(state.copyWith(loading: false));
     }
   }

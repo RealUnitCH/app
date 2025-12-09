@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +8,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_allowlist_service.dart'
 import 'package:realunit_wallet/packages/service/dfx/dfx_bank_details_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/screens/buy/cubit/buy_allowlist/buy_allowlist_cubit.dart';
+import 'package:realunit_wallet/screens/buy/cubit/buy_allowlist/buy_allowlist_state.dart';
 import 'package:realunit_wallet/screens/buy/cubit/buy_bank_details/buy_bank_details_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubit/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubit/buy_converter/buy_converter_state.dart';
@@ -82,35 +84,60 @@ class _BuyViewState extends State<BuyView> {
           ),
         ),
       ),
-      body: BlocConsumer<BuyConverterCubit, BuyConverterState>(
-        listenWhen: (prev, next) =>
-            prev.chfText != next.chfText || prev.sharesText != next.sharesText,
-        listener: (context, state) {
-          if (_amountController.text != state.chfText) {
-            _amountController.text = state.chfText;
-          }
-          if (_resultController.text != state.sharesText) {
-            _resultController.text = state.sharesText;
-          }
-        },
+      body: BlocBuilder<BuyAllowlistCubit, BuyAllowlistState>(
         builder: (context, state) {
-          return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                spacing: 32,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  PaymentConverter(
-                    amountController: _amountController,
-                    resultController: _resultController,
+          if (state.loading) {
+            return const Center(
+              child: CupertinoActivityIndicator(),
+            );
+          }
+
+          if (state.isForbidden) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Text(
+                  'Du hast keine Berechtigung RealU Tokens zu kaufen.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
                   ),
-                  PaymentInformation(
-                    amount: _amountController.text,
-                  ),
-                ],
+                ),
               ),
-            ),
+            );
+          }
+
+          return BlocConsumer<BuyConverterCubit, BuyConverterState>(
+            listenWhen: (prev, next) =>
+                prev.chfText != next.chfText || prev.sharesText != next.sharesText,
+            listener: (context, state) {
+              if (_amountController.text != state.chfText) {
+                _amountController.text = state.chfText;
+              }
+              if (_resultController.text != state.sharesText) {
+                _resultController.text = state.sharesText;
+              }
+            },
+            builder: (context, state) {
+              return SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Column(
+                    spacing: 32,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      PaymentConverter(
+                        amountController: _amountController,
+                        resultController: _resultController,
+                      ),
+                      PaymentInformation(
+                        amount: _amountController.text,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           );
         },
       ),
