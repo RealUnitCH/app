@@ -9,7 +9,6 @@ import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_service.dart';
 import 'package:realunit_wallet/packages/service/price_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
@@ -131,7 +130,7 @@ class DashboardPage extends StatelessWidget {
                                   padding: EdgeInsets.only(right: 10),
                                   child: ActionButton(
                                     icon: RealUnitTokenIcon(size: 20),
-                                    label: S.of(context).deposit,
+                                    label: S.of(context).buy,
                                     onPressed: () => context.push(BuyPage.routeName),
                                   ),
                                 ),
@@ -141,9 +140,10 @@ class DashboardPage extends StatelessWidget {
                                     color: Colors.white,
                                     size: 20,
                                   ),
-                                  label: S.of(context).withdraw,
-                                  onPressed: () =>
-                                      getIt<DFXService>().launchProvider(context, false),
+                                  label: S.of(context).sell,
+                                  backgroundColor: RealUnitColors.neutral300,
+                                  // onPressed: () =>
+                                  //     getIt<DFXService>().launchProvider(context, false),
                                 ),
                               ],
                             ),

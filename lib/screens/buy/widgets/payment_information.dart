@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_bank_details/buy_bank_details_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_bank_details/buy_bank_details_state.dart';
@@ -139,6 +140,7 @@ class PaymentInformation extends StatelessWidget {
                       context: context,
                       builder: (context) => PaymentExecutedSheet(),
                     );
+                    if (context.mounted) context.pop();
                   },
                   style: ButtonStyle(
                     backgroundColor: WidgetStateProperty.all(
