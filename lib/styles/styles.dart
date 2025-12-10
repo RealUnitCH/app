@@ -68,7 +68,7 @@ const kContainerCardStyle = BoxDecoration(
   borderRadius: BorderRadius.all(Radius.circular(12)),
 );
 
-const kBottonSheetTitleTextStyle = TextStyle(
+const kBottomSheetTitleTextStyle = TextStyle(
   fontSize: 22,
   fontWeight: FontWeight.w700,
   color: RealUnitColors.realUnitBlack,
