@@ -91,36 +91,36 @@ class PaymentInformation extends StatelessWidget {
                     children: _withDividers(
                       children: [
                         _PaymentInformationDetailsRow(
-                          description: 'Betrag in ${bankDetails.currency}',
+                          description: '${S.of(context).amount_in} ${bankDetails.currency}',
                           value: _amount,
                         ),
                         _PaymentInformationDetailsRow(
-                          description: 'IBAN',
+                          description: S.of(context).iban,
                           value: bankDetails.iban,
                         ),
                         _PaymentInformationDetailsRow(
-                          description: 'BIC',
+                          description: S.of(context).bic,
                           value: bankDetails.bic,
                         ),
                         _PaymentInformationDetailsRow(
-                          title: 'Empfänger',
-                          description: 'Name',
+                          title: S.of(context).receiver,
+                          description: S.of(context).name,
                           value: bankDetails.recipient,
                         ),
                         _PaymentInformationDetailsRow(
-                          description: 'Adresse',
+                          description: S.of(context).address,
                           value: parsedAddress.address,
                         ),
                         _PaymentInformationDetailsRow(
-                          description: 'PLZ',
+                          description: S.of(context).postcode_abr,
                           value: parsedAddress.plz,
                         ),
                         _PaymentInformationDetailsRow(
-                          description: 'Ort',
+                          description: S.of(context).location,
                           value: parsedAddress.city,
                         ),
                         _PaymentInformationDetailsRow(
-                          description: 'Land',
+                          description: S.of(context).country,
                           value: parsedAddress.country,
                         ),
                       ],
