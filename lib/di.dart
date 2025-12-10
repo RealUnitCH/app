@@ -12,6 +12,9 @@ import 'package:realunit_wallet/packages/repository/transaction_repository.dart'
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_allowlist_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_bank_details_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_service.dart';
 import 'package:realunit_wallet/packages/service/settings_service.dart';
@@ -95,6 +98,10 @@ void setupServices() {
 
   getIt.registerFactory(() => OpenCryptoPayService());
   getIt.registerFactory(() => DFXPriceService(getIt<AppStore>()));
+  getIt.registerFactory(() => DfxAllowlistService(getIt<AppStore>()));
+  getIt.registerFactory(() => DfxBankDetailsService(getIt<AppStore>()));
+  getIt.registerFactory(() => DfxBrokerbotService(getIt<AppStore>()));
+
   getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
   getIt.registerFactory(() => DFXService(getIt<AppStore>(),
       getIt<SettingsRepository>(), getIt<AssetRepository>()));

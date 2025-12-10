@@ -1,0 +1,22 @@
+class BrokerbotBuyPriceDto {
+  final double totalCost;
+  final double pricePerShare;
+
+  BrokerbotBuyPriceDto({
+    required this.totalCost,
+    required this.pricePerShare,
+  });
+
+  factory BrokerbotBuyPriceDto.fromJson(Map<String, dynamic> json) {
+    double parseDouble(dynamic value) {
+      if (value == null) return 0.0;
+      final s = value.toString().replaceAll(',', '.').trim();
+      return double.tryParse(s) ?? 0.0;
+    }
+
+    return BrokerbotBuyPriceDto(
+      totalCost: parseDouble(json['totalPrice']),
+      pricePerShare: parseDouble(json['pricePerShare']),
+    );
+  }
+}
