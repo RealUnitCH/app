@@ -44,7 +44,7 @@ void setupRouter() {
       GoRoute(
           path: "/dashboard",
           builder: (context, state) => DashboardPage(getIt<AppStore>(), getIt<DFXPriceService>())),
-      GoRoute(path: "/buy", builder: (context, state) => BuyPage()),
+      GoRoute(path: BuyPage.routeName, builder: (context, state) => BuyPage()),
       GoRoute(path: "/receive", builder: (context, state) => ReceivePage(isBottomSheet: false)),
       GoRoute(
         path: "/send",
