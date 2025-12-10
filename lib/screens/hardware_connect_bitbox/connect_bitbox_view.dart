@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -26,7 +25,7 @@ class ConnectBitboxView extends StatelessWidget {
                   offset: state is BitboxNotConnected ? Offset.zero : const Offset(-1.2, 0),
                   child: ConnectContent(
                     title: S.of(context).connect_bitbox_title,
-                    content: Platform.isIOS
+                    content: defaultTargetPlatform == TargetPlatform.iOS
                         ? S.of(context).connect_bitbox_content_ios
                         : S.of(context).connect_bitbox_content,
                     imagePath: "assets/images/illustrations/bitbox_connect.svg",

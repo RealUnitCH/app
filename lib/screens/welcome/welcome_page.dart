@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
@@ -86,13 +87,14 @@ class _WelcomePageState extends State<WelcomePage> {
                                 'assets/images/illustrations/software_wallet.svg',
                               ),
                             ),
-                            WelcomeCard(
-                              title: S.of(context).bitbox,
-                              description: S.of(context).hardware_wallet_subtitle,
-                              trailing: SvgPicture.asset(
-                                'assets/images/illustrations/bitbox.svg',
+                            if (defaultTargetPlatform == TargetPlatform.android)
+                              WelcomeCard(
+                                title: S.of(context).bitbox,
+                                description: S.of(context).hardware_wallet_subtitle,
+                                trailing: SvgPicture.asset(
+                                  'assets/images/illustrations/bitbox.svg',
+                                ),
                               ),
-                            ),
                           ],
                         ),
                       ),
