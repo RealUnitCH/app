@@ -24,14 +24,14 @@ class ConnectContent extends StatelessWidget {
       Text(
         title,
         textAlign: TextAlign.center,
-        style: kBottonSheetTitleTextStyle,
+        style: kBottomSheetTitleTextStyle,
       ),
       SizedBox(
         width: 330,
         child: Text(
           content,
           textAlign: TextAlign.center,
-          style: kBottonSheetContentTextStyle,
+          style: kBottomSheetContentTextStyle,
         ),
       ),
     ],
