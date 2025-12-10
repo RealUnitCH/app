@@ -133,8 +133,6 @@ class DashboardPage extends StatelessWidget {
                                     icon: RealUnitTokenIcon(size: 20),
                                     label: S.of(context).deposit,
                                     onPressed: () => context.push(BuyPage.routeName),
-                                    // onPressed: () => getIt<DFXService>()
-                                    //     .launchProvider(context, true),
                                   ),
                                 ),
                                 ActionButton(

@@ -16,7 +16,7 @@ class DfxBrokerbotService {
     final res = await _appStore.httpClient.get(url);
 
     if (res.statusCode != 200) {
-      throw Exception("BuyPrice failed: ${res.body}");
+      throw Exception("BuyPrice request failed: ${res.body}");
     }
 
     return BrokerbotBuyPriceDto.fromJson(jsonDecode(res.body));
@@ -28,7 +28,7 @@ class DfxBrokerbotService {
     final res = await _appStore.httpClient.get(url);
 
     if (res.statusCode != 200) {
-      throw Exception("Shares failed: ${res.body}");
+      throw Exception("Shares request failed: ${res.body}");
     }
 
     return BrokerbotSharesDto.fromJson(jsonDecode(res.body));

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/utils/device_info.dart';
+import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PaymentNotPossibleInfo extends StatelessWidget {
   const PaymentNotPossibleInfo({
@@ -59,7 +63,19 @@ class PaymentNotPossibleInfo extends StatelessWidget {
                 RealUnitColors.realUnitBlack,
               ),
             ),
-            onPressed: null,
+            onPressed: () async {
+              final uri = Uri.parse('https://realunit.ch/kontakt/');
+              if (!await canLaunchUrl(uri)) return;
+              if (DeviceInfo.instance.isMobile) {
+                if (!context.mounted) return;
+                await context.push(
+                  '/webView',
+                  extra: WebViewRouteParams(title: 'Support', url: uri),
+                );
+              } else {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            },
             child: Text(
               S.of(context).contact_support,
               style: TextStyle(
