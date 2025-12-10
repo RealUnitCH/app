@@ -11,11 +11,8 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_bank_details_service.da
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_allowlist/buy_allowlist_cubit.dart';
-import 'package:realunit_wallet/screens/buy/cubits/buy_allowlist/buy_allowlist_state.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_bank_details/buy_bank_details_cubit.dart';
-import 'package:realunit_wallet/screens/buy/cubits/buy_bank_details/buy_bank_details_state.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
-import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_state.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_not_possible_info.dart';
@@ -115,9 +112,9 @@ void main() {
       whenListen(
         converterCubit,
         Stream.fromIterable([
-          const BuyConverterState(chfText: "5.00", sharesText: "0.50"),
+          const BuyConverterState(fiatText: "5.00", sharesText: "0.50"),
         ]),
-        initialState: const BuyConverterState(chfText: "1.00", sharesText: "0.10"),
+        initialState: const BuyConverterState(fiatText: "1.00", sharesText: "0.10"),
       );
 
       await tester.pumpApp(buildSubject(const BuyView()));

@@ -1,4 +1,4 @@
-import 'package:equatable/equatable.dart';
+part of 'buy_allowlist_cubit.dart';
 
 class BuyAllowlistState extends Equatable {
   final bool canReceive;

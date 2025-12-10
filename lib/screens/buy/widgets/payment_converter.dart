@@ -59,7 +59,7 @@ class PaymentConverter extends StatelessWidget {
                       ),
                     ),
                     maxLines: 1,
-                    onChanged: (value) => context.read<BuyConverterCubit>().onChfChanged(value),
+                    onChanged: (value) => context.read<BuyConverterCubit>().onFiatChanged(value),
                   ),
                 ),
                 Container(

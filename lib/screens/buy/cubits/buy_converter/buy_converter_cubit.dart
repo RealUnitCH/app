@@ -1,24 +1,27 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 
+import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
-import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_state.dart';
+import 'package:realunit_wallet/styles/currency.dart';
+
+part 'buy_converter_state.dart';
 
 class BuyConverterCubit extends Cubit<BuyConverterState> {
   final DfxBrokerbotService _brokerbotService;
 
   BuyConverterCubit(this._brokerbotService) : super(const BuyConverterState());
 
-  Timer? _chfDebounce;
+  Timer? _fiatDebounce;
   Timer? _sharesDebounce;
 
-  /// User changed CHF → convert to shares
-  Future<void> onChfChanged(String value) async {
-    emit(state.copyWith(chfText: value));
+  /// User changed fiat → convert to shares
+  Future<void> onFiatChanged(String value) async {
+    emit(state.copyWith(fiatText: value));
 
-    _chfDebounce?.cancel();
-    _chfDebounce = Timer(const Duration(milliseconds: 100), () async {
+    _fiatDebounce?.cancel();
+    _fiatDebounce = Timer(const Duration(milliseconds: 100), () async {
       final amount = double.tryParse(value.replaceAll(",", "."));
       if (amount == null || amount <= 0) {
         emit(state.copyWith(sharesText: ""));
@@ -40,15 +43,15 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
     });
   }
 
-  /// User changed shares → convert to CHF
+  /// User changed shares → convert to fiat
   Future<void> onSharesChanged(String value) async {
     emit(state.copyWith(sharesText: value));
 
     _sharesDebounce?.cancel();
     _sharesDebounce = Timer(const Duration(milliseconds: 100), () async {
-      final shares = double.tryParse(value.replaceAll(",", "."));
+      final shares = int.tryParse(value);
       if (shares == null || shares <= 0) {
-        emit(state.copyWith(chfText: ""));
+        emit(state.copyWith(fiatText: ""));
         return;
       }
 
@@ -57,7 +60,7 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
       try {
         final result = await _brokerbotService.getBuyPrice(shares);
         emit(state.copyWith(
-          chfText: result.totalCost.toStringAsFixed(_fractionDigits(value)),
+          fiatText: result.totalCost.toStringAsFixed(_fractionDigits(value)),
           loading: false,
         ));
       } catch (e) {
@@ -74,7 +77,7 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
 
   @override
   Future<void> close() {
-    _chfDebounce?.cancel();
+    _fiatDebounce?.cancel();
     _sharesDebounce?.cancel();
     return super.close();
   }

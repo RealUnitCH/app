@@ -8,10 +8,8 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_allowlist_service.dart'
 import 'package:realunit_wallet/packages/service/dfx/dfx_bank_details_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_allowlist/buy_allowlist_cubit.dart';
-import 'package:realunit_wallet/screens/buy/cubits/buy_allowlist/buy_allowlist_state.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_bank_details/buy_bank_details_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
-import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_state.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_not_possible_info.dart';
@@ -33,7 +31,7 @@ class BuyPage extends StatelessWidget {
         BlocProvider(
           create: (_) => BuyConverterCubit(
             getIt<DfxBrokerbotService>(),
-          )..onChfChanged('300'),
+          )..onFiatChanged('300'),
         ),
         BlocProvider(
           create: (_) => BuyBankDetailsCubit(
@@ -75,9 +73,9 @@ class _BuyViewState extends State<BuyView> {
       ),
       body: BlocConsumer<BuyConverterCubit, BuyConverterState>(
         listenWhen: (prev, next) =>
-            prev.chfText != next.chfText || prev.sharesText != next.sharesText,
+            prev.fiatText != next.fiatText || prev.sharesText != next.sharesText,
         listener: (context, state) {
-          _syncController(_amountController, state.chfText);
+          _syncController(_amountController, state.fiatText);
           _syncController(_resultController, state.sharesText);
         },
         builder: (context, state) {

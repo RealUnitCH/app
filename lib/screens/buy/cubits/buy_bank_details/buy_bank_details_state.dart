@@ -1,5 +1,4 @@
-import 'package:equatable/equatable.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/dfx_bank_details.dart';
+part of 'buy_bank_details_cubit.dart';
 
 class BuyBankDetailsState extends Equatable {
   final bool loading;

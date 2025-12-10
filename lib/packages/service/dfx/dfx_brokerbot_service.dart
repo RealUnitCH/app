@@ -11,7 +11,7 @@ class DfxBrokerbotService {
   DfxBrokerbotService(this._appStore);
 
   /// Convert REALU shares → CHF
-  Future<BrokerbotBuyPriceDto> getBuyPrice(double shares) async {
+  Future<BrokerbotBuyPriceDto> getBuyPrice(int shares) async {
     final url = Uri.parse("$_baseUrl/buyPrice?shares=$shares");
     final res = await _appStore.httpClient.get(url);
 
