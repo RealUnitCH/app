@@ -74,7 +74,7 @@ const kBottonSheetTitleTextStyle = TextStyle(
   color: RealUnitColors.realUnitBlack,
 );
 
-const kBottonSheetContentTextStyle = TextStyle(
+const kBottomSheetContentTextStyle = TextStyle(
   fontSize: 14,
   fontWeight: FontWeight.w400,
   color: RealUnitColors.neutral500,
