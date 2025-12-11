@@ -36,42 +36,48 @@ class MnemonicInput extends StatelessWidget {
           childAspectRatio: 3.5,
         ),
         itemBuilder: (context, index) {
-          return Align(
-            alignment: Alignment.center,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  "${index + 1}.",
-                  style: TextStyle(
-                    color: RealUnitColors.neutral400,
-                    fontSize: 14,
-                    height: 18 / 14,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
+          return GestureDetector(
+            onTap: () => FocusScope.of(context).requestFocus(focusNodes[index]),
+            child: Align(
+              alignment: Alignment.center,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      "${index + 1}.",
                       style: TextStyle(
-                        fontSize: 16,
-                        height: 20 / 16,
+                        color: RealUnitColors.neutral400,
+                        fontSize: 14,
+                        height: 18 / 14,
                       ),
-                      autocorrect: false,
-                      textCapitalization: TextCapitalization.none,
-                      controller: controllers[index],
-                      focusNode: focusNodes[index],
-                      textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      onChanged: (value) {
-                        if (onChanged != null) onChanged!();
-                        _handleSpaceJump(context, index, value);
-                      }),
-                ),
-              ],
+                    ),
+                  ),
+                  Expanded(
+                    flex: 5,
+                    child: TextField(
+                        style: TextStyle(
+                          fontSize: 16,
+                          height: 20 / 16,
+                        ),
+                        autocorrect: false,
+                        textCapitalization: TextCapitalization.none,
+                        controller: controllers[index],
+                        focusNode: focusNodes[index],
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        onChanged: (value) {
+                          if (onChanged != null) onChanged!();
+                          _handleSpaceJump(context, index, value);
+                        }),
+                  ),
+                ],
+              ),
             ),
           );
         },

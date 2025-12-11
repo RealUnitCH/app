@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -6,10 +6,12 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/restore_wallet/bloc/restore_wallet_cubit.dart';
+import 'package:realunit_wallet/screens/restore_wallet/cubit/validate_seed_cubit.dart';
 import 'package:realunit_wallet/screens/restore_wallet/widgets/mnemonic_input_field.dart';
 import 'package:realunit_wallet/screens/restore_wallet/widgets/mnemonic_input_field_controller.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/styles.dart';
+import 'package:realunit_wallet/widgets/text_substring_highlighting.dart';
 
 class RestoreWalletView extends StatelessWidget {
   RestoreWalletView({super.key});
@@ -19,6 +21,7 @@ class RestoreWalletView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocListener<RestoreWalletCubit, RestoreWalletState>(
+        listenWhen: (previous, current) => previous.wallet != current.wallet,
         listener: (context, state) {
           if (state.wallet != null) {
             context.read<HomeBloc>().add(LoadWalletEvent(state.wallet!));
@@ -50,7 +53,7 @@ class RestoreWalletView extends StatelessWidget {
                           child: Column(
                             children: <Widget>[
                               SvgPicture.asset(
-                                "assets/images/Image_restore.svg",
+                                "assets/images/restore_wallet.svg",
                                 height: 124,
                               ),
                               SizedBox(
@@ -82,14 +85,15 @@ class RestoreWalletView extends StatelessWidget {
                                     ),
                                   ),
                                   Expanded(
-                                    child: Text(
-                                      S.of(context).restore_wallet_from_seed_description,
+                                    child: TextSubstringHighlighting(
+                                      text: S.of(context).restore_wallet_from_seed_description,
                                       style: const TextStyle(
                                         fontSize: 15,
                                         color: RealUnitColors.neutral500,
                                       ),
+                                      highlightedText: '12 ${S.of(context).recovery_words}',
                                     ),
-                                  ),
+                                  )
                                 ],
                               ),
                               SizedBox(height: 16),
@@ -97,37 +101,44 @@ class RestoreWalletView extends StatelessWidget {
                                 controllers: _controllers,
                                 focusNodes: _focusNodes,
                                 onChanged: () =>
-                                    context.read<RestoreWalletCubit>().validateSeed(_getSeed),
+                                    context.read<ValidateSeedCubit>().validateSeed(_getSeed),
                               ),
                               Spacer(),
-                              BlocBuilder<RestoreWalletCubit, RestoreWalletState>(
-                                builder: (context, state) => Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 20),
-                                  child: SizedBox(
-                                    width: double.infinity,
-                                    child: TextButton(
-                                      onPressed: state.isSeedReady && !state.isLoading
-                                          ? () => context
-                                              .read<RestoreWalletCubit>()
-                                              .restoreWallet(_getSeed)
-                                          : null,
-                                      style: kFullwidthBlueButtonStyle.copyWith(
-                                        backgroundColor: WidgetStateProperty.resolveWith<Color?>(
-                                          (states) => states.contains(WidgetState.disabled)
-                                              ? RealUnitColors.neutral200
-                                              : RealUnitColors.realUnitBlue,
-                                        ),
-                                        foregroundColor: WidgetStateProperty.resolveWith<Color?>(
-                                          (states) => states.contains(WidgetState.disabled)
-                                              ? RealUnitColors.neutral400
-                                              : Colors.white,
+                              BlocBuilder<ValidateSeedCubit, ValidateSeedState>(
+                                builder: (context, valid) =>
+                                    BlocBuilder<RestoreWalletCubit, RestoreWalletState>(
+                                  builder: (context, restoreState) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 20),
+                                      child: SizedBox(
+                                        width: double.infinity,
+                                        child: TextButton(
+                                          onPressed: valid == ValidateSeedState.valid
+                                              ? () => context
+                                                  .read<RestoreWalletCubit>()
+                                                  .restoreWallet(_getSeed)
+                                              : null,
+                                          style: kFullwidthBlueButtonStyle.copyWith(
+                                            backgroundColor:
+                                                WidgetStateProperty.resolveWith<Color?>(
+                                              (states) => states.contains(WidgetState.disabled)
+                                                  ? RealUnitColors.neutral200
+                                                  : RealUnitColors.realUnitBlue,
+                                            ),
+                                            foregroundColor:
+                                                WidgetStateProperty.resolveWith<Color?>(
+                                              (states) => states.contains(WidgetState.disabled)
+                                                  ? RealUnitColors.neutral400
+                                                  : Colors.white,
+                                            ),
+                                          ),
+                                          child: restoreState.isLoading
+                                              ? CupertinoActivityIndicator()
+                                              : Text(S.of(context).next),
                                         ),
                                       ),
-                                      child: state.isLoading
-                                          ? CupertinoActivityIndicator()
-                                          : Text(S.of(context).next),
-                                    ),
-                                  ),
+                                    );
+                                  },
                                 ),
                               ),
                             ],
