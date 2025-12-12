@@ -1,3 +1,4 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
@@ -5,15 +6,7 @@ import 'package:realunit_wallet/packages/wallet/seedqr.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/widgets/qr_scanner.dart';
 
-class RestoreWalletState {
-  final bool isLoading;
-  final Wallet? wallet;
-
-  const RestoreWalletState({
-    this.isLoading = false,
-    this.wallet,
-  });
-}
+part 'restore_wallet_state.dart';
 
 class RestoreWalletCubit extends Cubit<RestoreWalletState> {
   RestoreWalletCubit(this._walletService) : super(RestoreWalletState());

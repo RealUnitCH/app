@@ -93,7 +93,6 @@ class MnemonicInputField extends StatelessWidget {
     );
   }
 
-  /// handles jump between text fields when clicking on space
   void _handleSpaceJump(BuildContext context, int index, String value) {
     if (value.endsWith(" ")) {
       controllers[index].text = value.trim(); // remove the space

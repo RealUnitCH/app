@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/screens/restore_wallet/bloc/restore_wallet_cubit.dart';
-import 'package:realunit_wallet/screens/restore_wallet/cubit/validate_seed_cubit.dart';
+import 'package:realunit_wallet/screens/restore_wallet/cubit/restore_wallet/restore_wallet_cubit.dart';
+import 'package:realunit_wallet/screens/restore_wallet/cubit/validate_seed/validate_seed_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/mnemonic_input_field.dart';
 import 'package:realunit_wallet/widgets/mnemonic_input_field_controller.dart';

@@ -3,6 +3,8 @@ import 'package:bip39/bip39.dart' as bip39;
 import 'package:bip39/src/wordlists/english.dart' as wordlist;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+part 'validate_seed_state.dart';
+
 class ValidateSeedCubit extends Cubit<ValidateSeedState> {
   ValidateSeedCubit() : super(ValidateSeedState.uncomplete);
 
@@ -31,11 +33,4 @@ class ValidateSeedCubit extends Cubit<ValidateSeedState> {
     }
     return true;
   }
-}
-
-enum ValidateSeedState {
-  valid,
-  invalid,
-  complete,
-  uncomplete,
 }
