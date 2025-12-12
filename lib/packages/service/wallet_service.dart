@@ -1,20 +1,14 @@
-import 'package:bip39/bip39.dart' as bip39;
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
-class WalletService{
+class WalletService {
   final WalletRepository _repository;
   final SettingsRepository _settingsRepository;
 
   const WalletService(this._repository, this._settingsRepository);
 
-  Future<Wallet> createWallet(String name) {
-    final mnemonic = bip39.generateMnemonic();
-    return restoreWallet(name, mnemonic);
-  }
-
-  Future<Wallet> restoreWallet(String name, String seed) async {
+  Future<Wallet> createWallet({required String name, required String seed}) async {
     final walletId = await _repository.createWallet(name, seed);
     await _settingsRepository.saveCurrentWalletId(walletId);
     return Wallet(walletId, name, seed);
