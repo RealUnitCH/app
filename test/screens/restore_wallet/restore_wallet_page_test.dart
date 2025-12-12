@@ -1,5 +1,4 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -13,6 +12,9 @@ import 'package:realunit_wallet/screens/restore_wallet/bloc/restore_wallet_cubit
 import 'package:realunit_wallet/screens/restore_wallet/cubit/validate_seed_cubit.dart';
 import 'package:realunit_wallet/screens/restore_wallet/restore_wallet_page.dart';
 import 'package:realunit_wallet/screens/restore_wallet/restore_wallet_view.dart';
+import 'package:realunit_wallet/screens/restore_wallet/widgets/restore_wallet_button.dart';
+import 'package:realunit_wallet/screens/restore_wallet/widgets/restore_wallet_input_field.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/mnemonic_input_field.dart';
 
 import '../../helper/helper.dart';
@@ -76,71 +78,187 @@ void main() {
       await tester.pumpApp(buildSubject(RestoreWalletView()));
 
       expect(find.byType(SvgPicture), findsOne);
-      expect(find.byType(MnemonicInputField), findsOne);
-      expect(find.byType(TextButton), findsOne);
+      expect(find.byType(RestoreWalletInputField), findsOne);
+      expect(find.byType(RestoreWalletButton), findsOne);
     });
 
-    testWidgets('renders button correctly when seed is uncomplete', (tester) async {
-      when(() => validateSeedCubit.state).thenReturn(ValidateSeedState.uncomplete);
+    group('$RestoreWalletButton', () {
+      testWidgets('is correctly rendered when seed is uncomplete', (tester) async {
+        when(() => validateSeedCubit.state).thenReturn(ValidateSeedState.uncomplete);
 
-      await tester.pumpApp(buildSubject(RestoreWalletView()));
+        await tester.pumpApp(buildSubject(RestoreWalletView()));
 
-      expect(
-          find.byWidgetPredicate(
-            (Widget widget) =>
-                widget is TextButton && widget.enabled == false && widget.child.runtimeType == Text,
-          ),
-          findsOneWidget);
+        expect(
+            find.byWidgetPredicate(
+              (Widget widget) =>
+                  widget is FilledButton &&
+                  widget.enabled == false &&
+                  widget.child.runtimeType == Text,
+            ),
+            findsOne);
+      });
+
+      testWidgets('is correctly rendered when seed is complete', (tester) async {
+        when(() => validateSeedCubit.state).thenReturn(ValidateSeedState.complete);
+
+        await tester.pumpApp(buildSubject(RestoreWalletView()));
+
+        expect(
+            find.byWidgetPredicate(
+              (Widget widget) =>
+                  widget is FilledButton &&
+                  widget.enabled == true &&
+                  widget.child.runtimeType == Text,
+            ),
+            findsOne);
+      });
+
+      testWidgets('is correctly rendered when seed is invalid', (tester) async {
+        when(() => validateSeedCubit.state).thenReturn(ValidateSeedState.invalid);
+
+        await tester.pumpApp(buildSubject(RestoreWalletView()));
+
+        expect(
+            find.byWidgetPredicate(
+              (Widget widget) =>
+                  widget is FilledButton &&
+                  widget.enabled == false &&
+                  widget.style?.backgroundColor?.resolve({}) == RealUnitColors.status.red600,
+            ),
+            findsOne);
+      });
+
+      testWidgets('is correctly rendered when seed is valid and restore wallet is loading',
+          (tester) async {
+        when(() => validateSeedCubit.state).thenReturn(ValidateSeedState.valid);
+        when(() => restoreWalletCubit.state).thenReturn(const RestoreWalletState(isLoading: true));
+
+        await tester.pumpApp(buildSubject(RestoreWalletView()));
+
+        expect(
+            find.byWidgetPredicate(
+              (Widget widget) =>
+                  widget is FilledButton &&
+                  widget.enabled == false &&
+                  widget.style?.backgroundColor?.resolve({}) ==
+                      RealUnitColors.realUnitBlue.withValues(alpha: 0.5),
+            ),
+            findsOne);
+        expect(find.byType(CircularProgressIndicator), findsOne);
+      });
+
+      testWidgets('is correctly rendered when seed is valid and wallet was restored',
+          (tester) async {
+        final wallet = MockWallet();
+
+        when(() => validateSeedCubit.state).thenReturn(ValidateSeedState.valid);
+        when(() => restoreWalletCubit.state).thenReturn(RestoreWalletState(wallet: wallet));
+
+        await tester.pumpApp(buildSubject(RestoreWalletView()));
+
+        expect(
+            find.byWidgetPredicate(
+              (Widget widget) =>
+                  widget is FilledButton &&
+                  widget.enabled == false &&
+                  widget.style?.backgroundColor?.resolve({}) == RealUnitColors.green,
+            ),
+            findsOne);
+      });
     });
 
-    testWidgets('renders button correctly when seed is valid', (tester) async {
-      when(() => validateSeedCubit.state).thenReturn(ValidateSeedState.valid);
+    group('$RestoreWalletInputField', () {
+      testWidgets('is initially correctly rendered', (tester) async {
+        when(() => validateSeedCubit.state).thenReturn(ValidateSeedState.uncomplete);
 
-      await tester.pumpApp(buildSubject(RestoreWalletView()));
+        await tester.pumpApp(buildSubject(RestoreWalletView()));
 
-      expect(
-          find.byWidgetPredicate(
-            (Widget widget) =>
-                widget is TextButton && widget.enabled == true && widget.child.runtimeType == Text,
-          ),
-          findsOneWidget);
+        expect(
+            find.byWidgetPredicate(
+              (Widget widget) =>
+                  widget is MnemonicInputField && widget.borderColor == RealUnitColors.okker,
+            ),
+            findsOne);
+      });
+      testWidgets('is correctly rendered when seed is invalid', (tester) async {
+        when(() => validateSeedCubit.state).thenReturn(ValidateSeedState.invalid);
+
+        await tester.pumpApp(buildSubject(RestoreWalletView()));
+
+        expect(
+            find.byWidgetPredicate(
+              (Widget widget) =>
+                  widget is MnemonicInputField &&
+                  widget.borderColor == RealUnitColors.status.red600,
+            ),
+            findsOne);
+      });
+
+      testWidgets('is correctly rendered when seed is valid and restore wallet is loading',
+          (tester) async {
+        when(() => validateSeedCubit.state).thenReturn(ValidateSeedState.valid);
+        when(() => restoreWalletCubit.state).thenReturn(const RestoreWalletState(isLoading: true));
+
+        await tester.pumpApp(buildSubject(RestoreWalletView()));
+
+        expect(
+            find.byWidgetPredicate(
+              (Widget widget) =>
+                  widget is MnemonicInputField && widget.borderColor == RealUnitColors.okker,
+            ),
+            findsOne);
+      });
+
+      testWidgets('is correctly rendered when seed is valid and wallet was restored',
+          (tester) async {
+        final wallet = MockWallet();
+
+        when(() => validateSeedCubit.state).thenReturn(ValidateSeedState.valid);
+        when(() => restoreWalletCubit.state).thenReturn(RestoreWalletState(wallet: wallet));
+
+        await tester.pumpApp(buildSubject(RestoreWalletView()));
+
+        expect(
+            find.byWidgetPredicate(
+              (Widget widget) =>
+                  widget is MnemonicInputField && widget.borderColor == RealUnitColors.green,
+            ),
+            findsOne);
+      });
     });
 
-    testWidgets('renders button correctly when restoring process is loading', (tester) async {
-      when(() => validateSeedCubit.state).thenReturn(ValidateSeedState.valid);
-      when(() => restoreWalletCubit.state).thenReturn(const RestoreWalletState(
-        isLoading: true,
-      ));
+    group('$BlocListener', () {
+      testWidgets('calls RestoreWalletCubit.restoreWallet() when seed is valid', (tester) async {
+        whenListen(
+          validateSeedCubit,
+          Stream.fromIterable([ValidateSeedState.valid]),
+          initialState: ValidateSeedState.complete,
+        );
 
-      await tester.pumpApp(buildSubject(RestoreWalletView()));
+        await tester.pumpApp(buildSubject(RestoreWalletView()));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
 
-      expect(
-          find.byWidgetPredicate(
-            (Widget widget) =>
-                widget is TextButton &&
-                widget.enabled == true &&
-                widget.child.runtimeType == CupertinoActivityIndicator,
-          ),
-          findsOneWidget);
-    });
+        verify(
+          () => restoreWalletCubit.restoreWallet(any()),
+        ).called(1);
+      });
 
-    testWidgets('sends $HomeEvent when $RestoreWalletState has a wallet', (tester) async {
-      final wallet = MockWallet();
+      testWidgets('sends $HomeEvent when $RestoreWalletState has wallet restored', (tester) async {
+        final wallet = MockWallet();
 
-      whenListen(
-        restoreWalletCubit,
-        Stream.fromIterable([
-          RestoreWalletState(
-            wallet: wallet,
-          ),
-        ]),
-        initialState: const RestoreWalletState(),
-      );
+        whenListen(
+          restoreWalletCubit,
+          Stream.fromIterable([RestoreWalletState(wallet: wallet)]),
+          initialState: const RestoreWalletState(),
+        );
 
-      await tester.pumpApp(buildSubject(RestoreWalletView()));
-      await tester.pumpAndSettle();
+        await tester.pumpApp(buildSubject(RestoreWalletView()));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 2));
 
-      verify(() => homeBloc.add(LoadWalletEvent(wallet))).called(1);
+        verify(() => homeBloc.add(LoadWalletEvent(wallet))).called(1);
+      });
     });
   });
 }
