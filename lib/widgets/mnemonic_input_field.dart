@@ -22,7 +22,7 @@ class MnemonicInputField extends StatelessWidget {
     return Container(
       height: 140,
       padding: const EdgeInsets.symmetric(
-        horizontal: 16.0,
+        horizontal: 12.0,
         vertical: 8.0,
       ),
       decoration: BoxDecoration(
@@ -36,7 +36,7 @@ class MnemonicInputField extends StatelessWidget {
         itemCount: 12,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
-          childAspectRatio: 3.5,
+          childAspectRatio: 3.6,
         ),
         itemBuilder: (context, index) {
           return GestureDetector(
@@ -58,11 +58,13 @@ class MnemonicInputField extends StatelessWidget {
                     ),
                   ),
                   Expanded(
-                    flex: 11,
+                    flex: 13,
                     child: TextField(
                       style: TextStyle(
                         fontSize: 16,
                         height: 20 / 16,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: -0.3,
                       ),
                       autocorrect: false,
                       textCapitalization: TextCapitalization.none,
