@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:realunit_wallet/screens/restore_wallet/widgets/mnemonic_input_field_controller.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/mnemonic_input_field_controller.dart';
 
-class MnemonicInput extends StatelessWidget {
+class MnemonicInputField extends StatelessWidget {
   final List<MnemonicInputFieldController> controllers;
   final List<FocusNode> focusNodes;
   final void Function()? onChanged;
+  final Color borderColor;
 
-  const MnemonicInput({
+  const MnemonicInputField({
     super.key,
     required this.controllers,
     required this.focusNodes,
-    required this.onChanged,
-  });
+    this.borderColor = RealUnitColors.okker,
+    this.onChanged,
+  })  : assert(controllers.length == 12, 'Exactly 12 controllers are required'),
+        assert(focusNodes.length == 12, 'Exactly 12 focusNodes are required');
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +27,7 @@ class MnemonicInput extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: RealUnitColors.okker, width: 2),
+        border: Border.all(color: borderColor, width: 2),
         color: RealUnitColors.basic.white,
       ),
       child: GridView.builder(
@@ -44,7 +47,7 @@ class MnemonicInput extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
-                    flex: 2,
+                    flex: 3,
                     child: Text(
                       "${index + 1}.",
                       style: TextStyle(
@@ -55,26 +58,29 @@ class MnemonicInput extends StatelessWidget {
                     ),
                   ),
                   Expanded(
-                    flex: 5,
+                    flex: 11,
                     child: TextField(
-                        style: TextStyle(
-                          fontSize: 16,
-                          height: 20 / 16,
-                        ),
-                        autocorrect: false,
-                        textCapitalization: TextCapitalization.none,
-                        controller: controllers[index],
-                        focusNode: focusNodes[index],
-                        textInputAction: TextInputAction.next,
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                        onChanged: (value) {
-                          if (onChanged != null) onChanged!();
-                          _handleSpaceJump(context, index, value);
-                        }),
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 20 / 16,
+                      ),
+                      autocorrect: false,
+                      textCapitalization: TextCapitalization.none,
+                      controller: controllers[index],
+                      focusNode: focusNodes[index],
+                      textInputAction: index == controllers.length - 1
+                          ? TextInputAction.done
+                          : TextInputAction.next,
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      onChanged: (value) {
+                        if (onChanged != null) onChanged!();
+                        _handleSpaceJump(context, index, value);
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -93,10 +99,10 @@ class MnemonicInput extends StatelessWidget {
         TextPosition(offset: controllers[index].text.length),
       );
 
-      if (index < 11) {
+      if (index < controllers.length - 1) {
         FocusScope.of(context).requestFocus(focusNodes[index + 1]);
       } else {
-        focusNodes[index].unfocus();
+        FocusManager.instance.primaryFocus?.unfocus();
       }
     }
   }

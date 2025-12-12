@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -6,11 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/restore_wallet/bloc/restore_wallet_cubit.dart';
-import 'package:realunit_wallet/screens/restore_wallet/cubit/validate_seed_cubit.dart';
-import 'package:realunit_wallet/screens/restore_wallet/widgets/mnemonic_input_field.dart';
-import 'package:realunit_wallet/screens/restore_wallet/widgets/mnemonic_input_field_controller.dart';
+import 'package:realunit_wallet/screens/restore_wallet/widgets/restore_wallet_button.dart';
+import 'package:realunit_wallet/screens/restore_wallet/widgets/restore_wallet_input_field.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/styles/styles.dart';
+import 'package:realunit_wallet/widgets/mnemonic_input_field_controller.dart';
 import 'package:realunit_wallet/widgets/text_substring_highlighting.dart';
 
 class RestoreWalletView extends StatelessWidget {
@@ -22,9 +20,10 @@ class RestoreWalletView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => BlocListener<RestoreWalletCubit, RestoreWalletState>(
         listenWhen: (previous, current) => previous.wallet != current.wallet,
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state.wallet != null) {
-            context.read<HomeBloc>().add(LoadWalletEvent(state.wallet!));
+            await Future.delayed(Duration(seconds: 2));
+            if (context.mounted) context.read<HomeBloc>().add(LoadWalletEvent(state.wallet!));
           }
         },
         child: Scaffold(
@@ -40,7 +39,7 @@ class RestoreWalletView extends StatelessWidget {
           ),
           body: SafeArea(
             child: GestureDetector(
-              onTap: () => FocusScope.of(context).unfocus(),
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
               behavior: HitTestBehavior.opaque,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -97,49 +96,13 @@ class RestoreWalletView extends StatelessWidget {
                                 ],
                               ),
                               SizedBox(height: 16),
-                              MnemonicInput(
+                              RestoreWalletInputField(
                                 controllers: _controllers,
                                 focusNodes: _focusNodes,
-                                onChanged: () =>
-                                    context.read<ValidateSeedCubit>().validateSeed(_getSeed),
                               ),
                               Spacer(),
-                              BlocBuilder<ValidateSeedCubit, ValidateSeedState>(
-                                builder: (context, valid) =>
-                                    BlocBuilder<RestoreWalletCubit, RestoreWalletState>(
-                                  builder: (context, restoreState) {
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 20),
-                                      child: SizedBox(
-                                        width: double.infinity,
-                                        child: TextButton(
-                                          onPressed: valid == ValidateSeedState.valid
-                                              ? () => context
-                                                  .read<RestoreWalletCubit>()
-                                                  .restoreWallet(_getSeed)
-                                              : null,
-                                          style: kFullwidthBlueButtonStyle.copyWith(
-                                            backgroundColor:
-                                                WidgetStateProperty.resolveWith<Color?>(
-                                              (states) => states.contains(WidgetState.disabled)
-                                                  ? RealUnitColors.neutral200
-                                                  : RealUnitColors.realUnitBlue,
-                                            ),
-                                            foregroundColor:
-                                                WidgetStateProperty.resolveWith<Color?>(
-                                              (states) => states.contains(WidgetState.disabled)
-                                                  ? RealUnitColors.neutral400
-                                                  : Colors.white,
-                                            ),
-                                          ),
-                                          child: restoreState.isLoading
-                                              ? CupertinoActivityIndicator()
-                                              : Text(S.of(context).next),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
+                              RestoreWalletButton(
+                                controllers: _controllers,
                               ),
                             ],
                           ),
@@ -153,6 +116,4 @@ class RestoreWalletView extends StatelessWidget {
           ),
         ),
       );
-
-  String get _getSeed => _controllers.map((c) => c.text.trim()).join(" ");
 }
