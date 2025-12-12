@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/restore_wallet/bloc/restore_wallet_cubit.dart';
+import 'package:realunit_wallet/screens/restore_wallet/cubit/validate_seed_cubit.dart';
 import 'package:realunit_wallet/screens/restore_wallet/widgets/restore_wallet_button.dart';
 import 'package:realunit_wallet/screens/restore_wallet/widgets/restore_wallet_input_field.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -18,14 +19,25 @@ class RestoreWalletView extends StatelessWidget {
   final _focusNodes = List.generate(12, (_) => FocusNode());
 
   @override
-  Widget build(BuildContext context) => BlocListener<RestoreWalletCubit, RestoreWalletState>(
-        listenWhen: (previous, current) => previous.wallet != current.wallet,
-        listener: (context, state) async {
-          if (state.wallet != null) {
-            await Future.delayed(Duration(seconds: 2));
-            if (context.mounted) context.read<HomeBloc>().add(LoadWalletEvent(state.wallet!));
-          }
-        },
+  Widget build(BuildContext context) => MultiBlocListener(
+        listeners: [
+          BlocListener<RestoreWalletCubit, RestoreWalletState>(
+            listenWhen: (previous, current) => previous.wallet != current.wallet,
+            listener: (context, state) async {
+              if (state.wallet != null) {
+                await Future.delayed(Duration(seconds: 2));
+                if (context.mounted) context.read<HomeBloc>().add(LoadWalletEvent(state.wallet!));
+              }
+            },
+          ),
+          BlocListener<ValidateSeedCubit, ValidateSeedState>(
+            listener: (context, seedState) {
+              if (seedState == ValidateSeedState.valid) {
+                context.read<RestoreWalletCubit>().restoreWallet(_controllers.seed);
+              }
+            },
+          ),
+        ],
         child: Scaffold(
           backgroundColor: RealUnitColors.brand700,
           appBar: AppBar(

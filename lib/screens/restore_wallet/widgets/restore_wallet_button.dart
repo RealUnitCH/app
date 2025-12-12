@@ -4,14 +4,15 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/restore_wallet/bloc/restore_wallet_cubit.dart';
 import 'package:realunit_wallet/screens/restore_wallet/cubit/validate_seed_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/mnemonic_input_field_controller.dart';
 
 class RestoreWalletButton extends StatelessWidget {
   const RestoreWalletButton({
     super.key,
-    required List<TextEditingController> controllers,
+    required List<MnemonicInputFieldController> controllers,
   }) : _controllers = controllers;
 
-  final List<TextEditingController> _controllers;
+  final List<MnemonicInputFieldController> _controllers;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +72,7 @@ class RestoreWalletButton extends StatelessWidget {
       default:
         return FilledButton(
           onPressed: seedState == ValidateSeedState.complete
-              ? () => context.read<ValidateSeedCubit>().validateSeed(_seed)
+              ? () => context.read<ValidateSeedCubit>().validateSeed(_controllers.seed)
               : null,
           child: Text(
             S.of(context).next,
@@ -79,6 +80,4 @@ class RestoreWalletButton extends StatelessWidget {
         );
     }
   }
-
-  String get _seed => _controllers.map((c) => c.text.trim()).join(' ');
 }

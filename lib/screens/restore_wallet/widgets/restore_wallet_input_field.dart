@@ -32,9 +32,7 @@ class RestoreWalletInputField extends StatelessWidget {
           : seedState == ValidateSeedState.invalid
               ? RealUnitColors.status.red600
               : RealUnitColors.okker,
-      onChanged: () => context.read<ValidateSeedCubit>().checkSeedLength(_seed),
+      onChanged: () => context.read<ValidateSeedCubit>().checkSeedLength(_controllers.seed),
     );
   }
-
-  String get _seed => _controllers.map((c) => c.text.trim()).join(" ");
 }

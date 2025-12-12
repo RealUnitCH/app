@@ -20,3 +20,7 @@ class MnemonicInputFieldController extends TextEditingController {
     );
   }
 }
+
+extension MnemonicListExtension on List<MnemonicInputFieldController> {
+  String get seed => map((c) => c.text.trim()).join(' ');
+}
