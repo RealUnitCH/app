@@ -15,19 +15,17 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.4
+          ruby-version: 3.4 
           bundler-cache: true
+          working-directory: ios
 
       - name: Install dependencies
-        run: |
-          gem install bundler -v 2.7.2
-          bundle config set path 'vendor/bundle'
-          cd ios && bundle install
-          bundle exec pod install --repo-update
+        run: bundle exec pod install --repo-update
+        working-directory: ios
 
       - name: Build & Upload
         env:
           FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APP_SPECIFIC_PASSWORD }}
         run: bundle exec fastlane ios beta
-
+        working-directory: ios
