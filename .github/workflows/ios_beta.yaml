@@ -24,8 +24,9 @@ jobs:
           bundle install
           bundle exec pod install --repo-update
 
-      - name: Build & Upload to TestFlight
+      - name: Build & Upload
         env:
           FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
-          FASTLANE_PASSWORD: ${{ secrets.FASTLANE_PASSWORD }}
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APP_SPECIFIC_PASSWORD }}
         run: bundle exec fastlane ios beta
+
