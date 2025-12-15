@@ -32,11 +32,14 @@ jobs:
       - name: 💎 Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.3'
-          bundler-cache: true
+          ruby-version: '3.4'
+          bundler-cache: false
       
-      - name: 📦 Install Fastlane Gems
-        run: bundle install
+      - name: Install Bundler
+        run: gem install bundler -v 2.7.2
+      
+      - name: Install Gems
+        run: bundle _2.7.2_ install
         working-directory: ios
 
       # ------------------------------------
