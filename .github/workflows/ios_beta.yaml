@@ -67,6 +67,7 @@ jobs:
           FASTLANE_APPLE_API_KEY_PATH: ./AuthKey.p8
           FASTLANE_APPLE_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           FASTLANE_APPLE_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
 
       - name: ✅ Deployment Complete
         run: echo "Successfully triggered Fastlane lane beta"
