@@ -25,6 +25,11 @@ jobs:
       - name: 📦 Install Flutter Dependencies
         run: flutter pub get
 
+      - name: 💊 Install iOS Pods
+        run: |
+          cd ios
+          pod install --repo-update
+
       # ------------------------------------
       # 2. Setup Fastlane
       # ------------------------------------
