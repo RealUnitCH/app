@@ -34,7 +34,7 @@ android/app/.cxx
 .pub/
 /build/
 *.g.dart
-*.lock
+pubspec.lock
 
 # Symbolication related
 app.*.symbols
