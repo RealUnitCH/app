@@ -133,7 +133,7 @@ class PaymentInformation extends StatelessWidget {
               padding: const EdgeInsets.only(top: 20, bottom: 20),
               child: SizedBox(
                 width: double.infinity,
-                child: TextButton(
+                child: FilledButton(
                   onPressed: () async {
                     await showModalBottomSheet(
                       context: context,
@@ -142,18 +142,10 @@ class PaymentInformation extends StatelessWidget {
                     if (context.mounted) context.pop();
                   },
                   style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(
-                      RealUnitColors.realUnitBlue,
-                    ),
-                    padding: WidgetStateProperty.all(
-                      const EdgeInsets.symmetric(
+                    padding: WidgetStateProperty.resolveWith(
+                      (states) => const EdgeInsets.symmetric(
                         vertical: 10.0,
                         horizontal: 20.0,
-                      ),
-                    ),
-                    shape: WidgetStateProperty.all(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(60.0),
                       ),
                     ),
                   ),

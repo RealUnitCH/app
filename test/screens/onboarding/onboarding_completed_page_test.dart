@@ -18,15 +18,15 @@ void main() {
       expect(find.text(S.current.onboarding_completed_subtitle), findsOneWidget);
 
       expect(find.byType(Checkbox), findsOne);
-      expect(find.byType(TextButton), findsOne);
+      expect(find.byType(FilledButton), findsOne);
     });
 
     testWidgets('initial state', (tester) async {
       await tester.pumpApp(OnboardingCompletedPage());
 
       expect((tester.widget(find.byType(Checkbox)) as Checkbox).value, false);
-      expect((tester.widget(find.byType(TextButton)) as TextButton).enabled, false);
-      expect((tester.widget(find.byType(TextButton)) as TextButton).onPressed, isNull);
+      expect((tester.widget(find.byType(FilledButton)) as FilledButton).enabled, false);
+      expect((tester.widget(find.byType(FilledButton)) as FilledButton).onPressed, isNull);
     });
 
     testWidgets('state when terms agreed', (tester) async {
@@ -36,8 +36,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect((tester.widget(find.byType(Checkbox)) as Checkbox).value, true);
-      expect((tester.widget(find.byType(TextButton)) as TextButton).enabled, true);
-      expect((tester.widget(find.byType(TextButton)) as TextButton).onPressed, isNotNull);
+      expect((tester.widget(find.byType(FilledButton)) as FilledButton).enabled, true);
+      expect((tester.widget(find.byType(FilledButton)) as FilledButton).onPressed, isNotNull);
     });
   });
 }
