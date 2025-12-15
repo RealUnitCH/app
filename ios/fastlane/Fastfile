@@ -30,7 +30,8 @@ platform :ios do
     match(
       type: "appstore",
       app_identifier: "swiss.dfx.realunit",
-      api_key: get_api_key
+      api_key: get_api_key,
+      git_url: "git@github.com:DFXswiss/fastlane-certificates.git"
     )
 
     increment_build_number(xcodeproj: "Runner.xcodeproj")
