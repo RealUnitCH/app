@@ -16,10 +16,14 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.4 
-          bundler-cache: true
-          working-directory: ios
+        
+      - name: Install Fastlane and Bundler Gems
+        run: |
+          gem install bundler
+          bundle install --path vendor/bundle
+        working-directory: ios
 
-      - name: Install dependencies
+      - name: Install CocoaPods dependencies
         run: bundle exec pod install --repo-update
         working-directory: ios
 
