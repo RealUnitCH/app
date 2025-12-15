@@ -1,12 +1,14 @@
-import 'package:bip39/bip39.dart' as bip39;
 // ignore: implementation_imports
 import 'package:bip39/src/wordlists/english.dart' as wordlist;
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
 
 part 'validate_seed_state.dart';
 
 class ValidateSeedCubit extends Cubit<ValidateSeedState> {
-  ValidateSeedCubit() : super(ValidateSeedState.uncomplete);
+  ValidateSeedCubit(this._service) : super(ValidateSeedState.uncomplete);
+
+  final WalletService _service;
 
   void checkSeedLength(String seed) {
     final seedWords = seed.split(" ").where((element) => element.isNotEmpty);
@@ -18,12 +20,10 @@ class ValidateSeedCubit extends Cubit<ValidateSeedState> {
   }
 
   void validateSeed(String seed) {
-    if (bip39.validateMnemonic(seed)) {
+    if (_service.validateSeed(seed)) {
       emit(ValidateSeedState.valid);
-      return;
     } else {
       emit(ValidateSeedState.invalid);
-      return;
     }
   }
 

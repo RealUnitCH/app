@@ -1,4 +1,3 @@
-import 'package:bip39/bip39.dart' as bip39;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -11,11 +10,7 @@ class CreateWalletCubit extends Cubit<CreateWalletState> {
   final WalletService _service;
 
   void createWallet() async {
-    final mnemonic = bip39.generateMnemonic();
-    final wallet = await _service.createWallet(
-      name: "Obi-Wallet-Kenobi",
-      seed: mnemonic,
-    );
+    final wallet = await _service.createWallet("Obi-Wallet-Kenobi");
 
     emit(state.copyWith(wallet: wallet));
   }

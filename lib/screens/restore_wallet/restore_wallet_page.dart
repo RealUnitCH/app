@@ -18,7 +18,9 @@ class RestoreWalletPage extends StatelessWidget {
             ),
           ),
           BlocProvider(
-            create: (_) => ValidateSeedCubit(),
+            create: (_) => ValidateSeedCubit(
+              getIt<WalletService>(),
+            ),
           ),
         ],
         child: RestoreWalletView(),

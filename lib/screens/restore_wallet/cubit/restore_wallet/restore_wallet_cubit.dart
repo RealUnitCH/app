@@ -18,10 +18,7 @@ class RestoreWalletCubit extends Cubit<RestoreWalletState> {
 
     final normalizedSeed = seed.split(" ").where((element) => element.isNotEmpty).join(" ");
 
-    final wallet = await _walletService.createWallet(
-      name: "Obi-Wallet-Kenobi",
-      seed: normalizedSeed,
-    );
+    final wallet = await _walletService.restoreWallet("Obi-Wallet-Kenobi", normalizedSeed);
 
     emit(
       RestoreWalletState(
@@ -49,10 +46,7 @@ class RestoreWalletCubit extends Cubit<RestoreWalletState> {
       }
 
       if (seed != null) {
-        final wallet = await _walletService.createWallet(
-          name: "Obi-Wallet-Kenobi",
-          seed: seed,
-        );
+        final wallet = await _walletService.restoreWallet("Obi-Wallet-Kenobi", seed);
         emit(
           RestoreWalletState(
             isLoading: false,
