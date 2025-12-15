@@ -3,6 +3,11 @@
 A Flutter Wallet for Real Unit Investors.
 
 ## Getting Started
+Before getting started, please make sure you have the latest version of Flutter, golang and gomobile installed.
+```shell
+go install golang.org/x/mobile/cmd/gomobile@latest
+gomobile init
+```
 
 ### 1. Generate translations
 
