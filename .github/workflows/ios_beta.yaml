@@ -23,17 +23,12 @@ jobs:
       - name: Install fastlane dependencies
         run: cd ios && bundle install
 
-      - name: clean pod cache
-        run: |
-          pod cache clean --all
-          npm i
-          cd ios && arch -x86_64 pod install
+      - name: install CocoaPods
+        run: cd ios && bundle exec pod install --repo-update
   
       - name: Build & Upload
         env:
           FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APP_SPECIFIC_PASSWORD }}
-        run: |
-          cd ios && pod install --repo-update 
-          bundle exec fastlane ios beta
+        run: bundle exec fastlane ios beta
         working-directory: ios
