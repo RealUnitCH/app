@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/styles/styles.dart';
 import 'package:realunit_wallet/widgets/text_link_span.dart';
 
 class OnboardingCompletedPage extends StatefulWidget {
@@ -114,22 +113,10 @@ class _OnboardingCompletedPageState extends State<OnboardingCompletedPage> {
                 padding: const EdgeInsets.only(top: 20, bottom: 20),
                 child: SizedBox(
                   width: double.infinity,
-                  child: TextButton(
+                  child: FilledButton(
                     onPressed: isChecked
                         ? () => context.read<HomeBloc>().add((CompleteOnboardingEvent()))
                         : null,
-                    style: kFullwidthBlueButtonStyle.copyWith(
-                      backgroundColor: WidgetStateProperty.resolveWith<Color?>(
-                        (states) => states.contains(WidgetState.disabled)
-                            ? RealUnitColors.neutral200
-                            : RealUnitColors.realUnitBlue,
-                      ),
-                      foregroundColor: WidgetStateProperty.resolveWith<Color?>(
-                        (states) => states.contains(WidgetState.disabled)
-                            ? RealUnitColors.neutral400
-                            : Colors.white,
-                      ),
-                    ),
                     child: Text(s.next),
                   ),
                 ),

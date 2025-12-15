@@ -4,7 +4,7 @@ import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
-class WalletService{
+class WalletService {
   final WalletRepository _repository;
   final SettingsRepository _settingsRepository;
   final BitboxService _bitboxService;
@@ -53,4 +53,6 @@ class WalletService{
   }
 
   bool hasWallet() => _settingsRepository.currentWalletId != null;
+
+  bool validateSeed(String seed) => bip39.validateMnemonic(seed);
 }

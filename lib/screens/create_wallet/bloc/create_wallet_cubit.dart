@@ -1,6 +1,6 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 part 'create_wallet_state.dart';
 

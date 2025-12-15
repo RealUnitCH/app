@@ -26,4 +26,44 @@ ThemeData get realUnitTheme => ThemeData(
           ),
         ),
       ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: ButtonStyle(
+          padding: WidgetStatePropertyAll(
+            EdgeInsetsGeometry.symmetric(vertical: 14.0, horizontal: 20.0),
+          ),
+          backgroundColor: WidgetStateProperty.resolveWith<Color?>(
+            (states) {
+              if (states.contains(WidgetState.error)) {
+                return RealUnitColors.status.red600;
+              }
+              if (states.contains(WidgetState.disabled)) {
+                return RealUnitColors.neutral200;
+              }
+              return RealUnitColors.realUnitBlue;
+            },
+          ),
+          foregroundColor: WidgetStateProperty.resolveWith<Color?>(
+            (states) {
+              if (states.contains(WidgetState.error)) {
+                return RealUnitColors.basic.white;
+              }
+              if (states.contains(WidgetState.disabled)) {
+                return RealUnitColors.neutral400;
+              }
+              return RealUnitColors.basic.white;
+            },
+          ),
+          iconColor: WidgetStateProperty.resolveWith<Color?>(
+            (states) {
+              if (states.contains(WidgetState.error)) {
+                return RealUnitColors.basic.white;
+              }
+              if (states.contains(WidgetState.disabled)) {
+                return RealUnitColors.neutral400;
+              }
+              return RealUnitColors.basic.white;
+            },
+          ),
+        ),
+      ),
     );
