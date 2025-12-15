@@ -22,7 +22,6 @@ platform :ios do
     gym(
       workspace: "Runner.xcworkspace", 
       scheme: "Runner", 
-      allow_provisioning_updates: true
     )
     upload_to_testflight(
       username: ENV["FASTLANE_USER"],
