@@ -15,17 +15,17 @@
 
 default_platform(:ios)
 
-api_key = app_store_connect_api_key(
-  key_id: "GY6D77VRAS",
-  issuer_id: "53794f02-7f14-42c7-bac1-607e51529dc6",
-  key_filepath: "AuthKey_GY6D77VRAS.p8",
-)
-
 platform :ios do
   desc "Push a new beta build to TestFlight"
   lane :beta do
     increment_build_number(xcodeproj: "Runner.xcodeproj")
     build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
-    upload_to_testflight(api_key: api_key)
+    upload_to_testflight(
+      api_key: app_store_connect_api_key(
+        key_id: ENV['FASTLANE_APPLE_API_KEY_ID'],
+        issuer_id: ENV['FASTLANE_APPLE_API_ISSUER_ID'],
+        key_filepath: ENV['FASTLANE_APPLE_API_KEY_PATH'],
+      )
+    )
   end
 end
