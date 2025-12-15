@@ -26,7 +26,7 @@ jobs:
         run: flutter pub get
 
       # ------------------------------------
-      # 2. Setup Fastlane & Signing Secrets
+      # 2. Setup Fastlane
       # ------------------------------------
       
       - name: 💎 Set up Ruby and Install Fastlane
@@ -34,15 +34,22 @@ jobs:
         with:
           ruby-version: '3.4'
           bundler-cache: true
+      
+      - name: 📦 Install Fastlane Gems
+        run: bundle install
+        working-directory: ios
+      
+      - name: 🧱 Install CocoaPods
+        run: bundle exec pod install
+        working-directory: ios
 
       # ------------------------------------
       # 3. Build & Deploy
       # ------------------------------------
 
       - name: 🚀 Run Fastlane Deployment Lane
-        run: |
-          cd ios
-          bundle exec fastlane beta
+        run: bundle exec fastlane beta
+        working-directory: ios
         env:
           FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APP_SPECIFIC_PASSWORD }}
