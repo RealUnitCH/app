@@ -15,21 +15,25 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.4 
+          ruby-version: 3.4
+          bundler-cache: true
         
-      - name: Install Fastlane and Bundler Gems
+      - name: Install bundler
+        run: gem install bundler
+      - name: Install fastlane dependencies
+        run: cd ios && bundle install
+
+      - name: clean pod cache
         run: |
-          gem install bundler
-          bundle install --path vendor/bundle
-        working-directory: ios
-
-      - name: Install CocoaPods dependencies
-        run: bundle exec pod install --repo-update
-        working-directory: ios
-
+          pod cache clean --all
+          npm i
+          cd ios && arch -x86_64 pod install
+  
       - name: Build & Upload
         env:
           FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APP_SPECIFIC_PASSWORD }}
-        run: bundle exec fastlane ios beta
+        run: |
+          cd ios && pod install --repo-update 
+          bundle exec fastlane ios beta
         working-directory: ios
