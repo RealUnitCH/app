@@ -7,39 +7,34 @@ on:
       - feat/fastlane
 
 jobs:
-  build:
+  build-and-deploy-ios-beta:
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: app
     steps:
-      - uses: actions/checkout@v3
-      - uses: subosito/flutter-action@v2
+      - name: Set up git and fetch all history for all branches and tags
+        uses: actions/checkout@v4
         with:
-          flutter-version: '3.35.3'
-
-      - name: Setup Ruby
+          fetch-depth: 0
+      - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.4
-          bundler-cache: true
-      
-
-      # Install gems using Bundler
-      - name: Install fastlane & dependencies
-        run: |
-          cd ios
-          bundle install --jobs 4 --retry 3
-        working-directory: ios
-
-      - name: Get flutter packages
-        run: flutter pub get
-
-      # Install CocoaPods via Bundler
-      - name: Install CocoaPods
-        run: bundle exec pod install --repo-update
-        working-directory: ios
-  
-      - name: Build & Upload
+          ruby-version: "3.4"
+      - name: Bundle install for iOS Gemfile
+        timeout-minutes: 5
+        run: cd ./ios && bundle install
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.3"
+          channel: "stable"
+          architecture: x64
+          cache: true
+      - name: Build and Deploy to TestFlight
         env:
           FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APP_SPECIFIC_PASSWORD }}
-        run: bundle exec fastlane ios beta
-        working-directory: ios
+        run: |
+          cd ./ios
+          bundle exec fastlane release_beta
