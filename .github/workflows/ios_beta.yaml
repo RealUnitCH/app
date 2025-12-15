@@ -7,34 +7,49 @@ on:
       - feat/fastlane
 
 jobs:
-  build-and-deploy-ios-beta:
+  build:
     runs-on: macos-latest
-    defaults:
-      run:
-        working-directory: app
     steps:
-      - name: Set up git and fetch all history for all branches and tags
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.4"
-      - name: Bundle install for iOS Gemfile
-        timeout-minutes: 5
-        run: cd ./ios && bundle install
-      - name: Set up Flutter SDK
+      - uses: actions/checkout@v4
+
+      # ------------------------------------
+      # 1. Setup Environment
+      # ------------------------------------
+      
+      - name: 🐦 Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.35.3"
-          channel: "stable"
-          architecture: x64
-          cache: true
-      - name: Build and Deploy to TestFlight
+          flutter-version: '3.35.3'
+          channel: 'stable'
+
+      - name: 📦 Install Flutter Dependencies
+        run: flutter pub get
+
+      # ------------------------------------
+      # 2. Setup Fastlane & Signing Secrets
+      # ------------------------------------
+      
+      - name: 💎 Set up Ruby and Install Fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+
+      # ------------------------------------
+      # 3. Build & Deploy
+      # ------------------------------------
+
+      - name: 🛠️ Build Flutter iOS App
+        run: flutter build ipa 
+      
+      - name: 🚀 Run Fastlane Deployment Lane
+        run: |
+          cd ios
+          bundle exec fastlane beta
         env:
           FASTLANE_USER: ${{ secrets.FASTLANE_USER }}
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APP_SPECIFIC_PASSWORD }}
-        run: |
-          cd ./ios
-          bundle exec fastlane release_beta
+
+      - name: ✅ Deployment Complete
+        run: echo "Successfully triggered Fastlane lane beta"
+
