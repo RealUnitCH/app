@@ -19,13 +19,7 @@ platform :ios do
   desc "Push a new beta build to TestFlight"
   lane :beta do
     increment_build_number(xcodeproj: "Runner.xcodeproj")
-    gym(
-      workspace: "Runner.xcworkspace", 
-      scheme: "Runner", 
-    )
-    upload_to_testflight(
-      username: ENV["FASTLANE_USER"],
-      app_specific_password: ENV["FASTLANE_PASSWORD"],
-    )
+    build_app(workspace: "Runner.xcworkspace", scheme: "Runner")
+    upload_to_testflight
   end
 end

@@ -1,4 +1,5 @@
 app_identifier("swiss.dfx.realunit") # The bundle identifier of your app
+apple_id("lam.nguyen@dfx.swiss") # Your Apple Developer Portal username
 
 itc_team_id("123197590") # App Store Connect Team ID
 team_id("Y4QBY6387T") # Developer Portal Team ID
