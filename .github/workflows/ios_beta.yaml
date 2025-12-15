@@ -11,20 +11,31 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.3'
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.4
           bundler-cache: true
-        
-      - name: Install bundler
-        run: gem install bundler
-      - name: Install fastlane dependencies
-        run: cd ios && bundle install
+      
 
-      - name: install CocoaPods
-        run: cd ios && bundle exec pod install --repo-update
+      # Install gems using Bundler
+      - name: Install fastlane & dependencies
+        run: |
+          cd ios
+          bundle install --jobs 4 --retry 3
+        working-directory: ios
+
+      - name: Get flutter packages
+        run: flutter pub get
+
+      # Install CocoaPods via Bundler
+      - name: Install CocoaPods
+        run: bundle exec pod install --repo-update
+        working-directory: ios
   
       - name: Build & Upload
         env:
