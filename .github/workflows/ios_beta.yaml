@@ -39,9 +39,6 @@ jobs:
       # 3. Build & Deploy
       # ------------------------------------
 
-      - name: 🛠️ Build Flutter iOS App
-        run: flutter build ipa 
-      
       - name: 🚀 Run Fastlane Deployment Lane
         run: |
           cd ios
