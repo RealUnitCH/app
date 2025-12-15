@@ -40,7 +40,7 @@ platform :ios do
       scheme: "Runner",
       export_method: "app-store",
       export_xcargs: '-allowProvisioningUpdates',
-      xcargs: '-allowProvisioningUpdates'
+      xcargs: '-allowProvisioningUpdates',
       export_options: {
         signingStyle: "manual"
       }
