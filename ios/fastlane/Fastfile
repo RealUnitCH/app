@@ -39,7 +39,8 @@ platform :ios do
       workspace: "Runner.xcworkspace",
       scheme: "Runner",
       export_method: "app-store",
-      allow_provisioning_updates: true,
+      export_xcargs: '-allowProvisioningUpdates',
+      xcargs: '-allowProvisioningUpdates'
       export_options: {
         signingStyle: "manual"
       }
