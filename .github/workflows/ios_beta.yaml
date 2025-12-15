@@ -57,7 +57,7 @@ jobs:
       # 3. Build & Deploy
       # ------------------------------------
 
-      - name: 🔐 Setup App Store Connect API Key (CRITICAL FIX)
+      - name: 🔐 Setup App Store Connect API Key
         run: |
           # Use an absolute path for reliability
           KEY_PATH="${{ github.workspace }}/AuthKey.p8"
@@ -77,7 +77,7 @@ jobs:
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
 
       - name: 🚀 Run Fastlane Deployment Lane
-        run: bundle exec fastlane beta
+        run: bundle exec fastlane beta --verbose
         working-directory: ios
 
       - name: ✅ Deployment Complete
