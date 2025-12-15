@@ -16,9 +16,17 @@ jobs:
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.MATCH_SSH_KEY }}
-          host-name: github.com 
+          host-name: github.com
 
+      # ------------------------------------
+      # 1. Setup Environment
+      # ------------------------------------
+      
       - name: 🐦 Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.3'
+          channel: 'stable'
 
       - name: 📦 Install Flutter Dependencies
         run: flutter pub get
@@ -28,25 +36,36 @@ jobs:
           cd ios
           pod install --repo-update
 
+      # ------------------------------------
+      # 2. Setup Fastlane
+      # ------------------------------------
       
-      - name: 💎 Set up Ruby and Install Gems
+      - name: 💎 Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.4'
           bundler-cache: false
-        
+      
       - name: Install Bundler
         run: gem install bundler -v 2.7.2
+      
       - name: Install Gems
         run: bundle _2.7.2_ install
         working-directory: ios
 
+      # ------------------------------------
+      # 3. Build & Deploy
+      # ------------------------------------
+
       - name: 🔐 Setup App Store Connect API Key (CRITICAL FIX)
         run: |
+          # Use an absolute path for reliability
           KEY_PATH="${{ github.workspace }}/AuthKey.p8"
           
+          # Create the .p8 file
           echo "${{ secrets.APP_STORE_CONNECT_KEY }}" > "$KEY_PATH"
 
+          # Export Environment Variables GLOBALLY for all subsequent steps (including match)
           echo "FASTLANE_APPLE_API_KEY_PATH=$KEY_PATH" >> $GITHUB_ENV
           echo "FASTLANE_APPLE_API_KEY_ID=${{ secrets.APP_STORE_CONNECT_KEY_ID }}" >> $GITHUB_ENV
           echo "FASTLANE_APPLE_API_ISSUER_ID=${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" >> $GITHUB_ENV
@@ -57,10 +76,10 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
 
-      
       - name: 🚀 Run Fastlane Deployment Lane
         run: bundle exec fastlane beta
         working-directory: ios
 
       - name: ✅ Deployment Complete
         run: echo "Successfully triggered Fastlane lane beta"
+
