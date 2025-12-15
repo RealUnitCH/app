@@ -1,6 +1,7 @@
 name: Build & Upload iOS Beta
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - feat/fastlane
