@@ -42,9 +42,6 @@ platform :ios do
       export_method: "app-store",
       export_xcargs: '-allowProvisioningUpdates',
       xcargs: '-allowProvisioningUpdates',
-      export_options: {
-        signingStyle: "manual"
-      }
     )
 
     upload_to_testflight(

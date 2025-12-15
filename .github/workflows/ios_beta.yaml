@@ -12,22 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup SSH for Fastlane Match
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.MATCH_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-
-      # ------------------------------------
-      # 1. Setup Environment
-      # ------------------------------------
-      
-      - name: 🐦 Set up Flutter
-        uses: subosito/flutter-action@v2
+      - name: 🔑 Setup SSH access for Fastlane Match
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          flutter-version: '3.35.3'
-          channel: 'stable'
+          ssh-private-key: ${{ secrets.MATCH_SSH_KEY }}
+          host-name: github.com 
+
+      - name: 🐦 Set up Flutter
 
       - name: 📦 Install Flutter Dependencies
         run: flutter pub get
@@ -37,38 +28,39 @@ jobs:
           cd ios
           pod install --repo-update
 
-      # ------------------------------------
-      # 2. Setup Fastlane
-      # ------------------------------------
       
-      - name: 💎 Set up Ruby
+      - name: 💎 Set up Ruby and Install Gems
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.4'
           bundler-cache: false
-      
+        
       - name: Install Bundler
         run: gem install bundler -v 2.7.2
-      
       - name: Install Gems
         run: bundle _2.7.2_ install
         working-directory: ios
 
-      # ------------------------------------
-      # 3. Build & Deploy
-      # ------------------------------------
-
-      - name: 🚀 Run Fastlane Deployment Lane
+      - name: 🔐 Setup App Store Connect API Key (CRITICAL FIX)
         run: |
-          echo "${{ secrets.APP_STORE_CONNECT_KEY }}" > ./AuthKey.p8
-          bundle exec fastlane beta
-        working-directory: ios
+          KEY_PATH="${{ github.workspace }}/AuthKey.p8"
+          
+          echo "${{ secrets.APP_STORE_CONNECT_KEY }}" > "$KEY_PATH"
+
+          echo "FASTLANE_APPLE_API_KEY_PATH=$KEY_PATH" >> $GITHUB_ENV
+          echo "FASTLANE_APPLE_API_KEY_ID=${{ secrets.APP_STORE_CONNECT_KEY_ID }}" >> $GITHUB_ENV
+          echo "FASTLANE_APPLE_API_ISSUER_ID=${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" >> $GITHUB_ENV
+          echo "MATCH_PASSWORD=${{ secrets.MATCH_PASSWORD }}" >> $GITHUB_ENV
         env:
-          FASTLANE_APPLE_API_KEY_PATH: ./AuthKey.p8
-          FASTLANE_APPLE_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          FASTLANE_APPLE_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+
+      
+      - name: 🚀 Run Fastlane Deployment Lane
+        run: bundle exec fastlane beta
+        working-directory: ios
 
       - name: ✅ Deployment Complete
         run: echo "Successfully triggered Fastlane lane beta"
-
