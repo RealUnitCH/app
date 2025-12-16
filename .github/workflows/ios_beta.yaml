@@ -7,23 +7,100 @@ on:
       - feat/fastlane
 
 jobs:
-  build-and-deploy:
+  build_ios:
+    name: iOS Build & Fastlane
     runs-on: macos-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - name: Install Fastlane
+        run: 
+          sudo gem install fastlane -NV
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build iOS App
+        run: flutter build ios --release --no-codesign
+      - name: Run Fastlane Lane for iOS
+        run: 
+          cd ios
+          fastlane beta
+
+  build_test:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
 
       - name: 🔑 Setup SSH access for Fastlane Match
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.MATCH_SSH_KEY }}
-          host-name: github.com  
+          host-name: github.com
 
-      - name: Build and deploy iOS app
-        uses: Ifoegbu1/flutter-fastlane-action@main
+      # ------------------------------------
+      # 1. Setup Environment
+      # ------------------------------------
+      
+      - name: 🐦 Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          platform: "ios"
-          bundleIdentifier: "swiss.dfx.realunit"
-          iosBuildArgs: "--dart-define=ENVIRONMENT=production"
-          iosDistributionJson: ${{ secrets.IOS_DISTRIBUTION_JSON }}
-          withCache: "true" # Enable caching for faster builds
+          flutter-version: '3.35.6'
+          channel: 'stable'
+          cache: true
+      
+      - name: 📦 Install Flutter Dependencies
+        run: flutter pub get
+      
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+          working-directory: ios
+      
+      - name: Install Bundler
+        run: gem install bundler -v 2.7.2
+      
+      - name: Install Gems
+        run: bundle _2.7.2_ install
+        working-directory: ios
+
+      - name: Setup Pod
+        run: pod install --repo-update
+        working-directory: ios
+
+      # ------------------------------------
+      # 3. Build & Deploy
+      # ------------------------------------
+
+      - name: 🔐 Setup App Store Connect API Key
+        run: |
+          # Use an absolute path for reliability
+          KEY_PATH="${{ github.workspace }}/AuthKey.p8"
+          
+          # Create the .p8 file
+          echo "${{ secrets.APP_STORE_CONNECT_KEY }}" > "$KEY_PATH"
+
+          # Export Environment Variables GLOBALLY for all subsequent steps (including match)
+          echo "FASTLANE_APPLE_API_KEY_PATH=$KEY_PATH" >> $GITHUB_ENV
+          echo "FASTLANE_APPLE_API_KEY_ID=${{ secrets.APP_STORE_CONNECT_KEY_ID }}" >> $GITHUB_ENV
+          echo "FASTLANE_APPLE_API_ISSUER_ID=${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" >> $GITHUB_ENV
+          echo "MATCH_PASSWORD=${{ secrets.MATCH_PASSWORD }}" >> $GITHUB_ENV
+        env:
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+
+      - name: Build Flutter iOS (no codesign)
+        run: flutter build ios --release --no-codesign
+
+      - name: Run Fastlane
+        run: bundle exec fastlane beta --verbose
+        working-directory: ios
+
+      - name: ✅ Deployment Complete
+        run: echo "Successfully triggered Fastlane lane beta"
+
