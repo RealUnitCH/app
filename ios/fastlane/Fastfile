@@ -41,6 +41,7 @@ platform :ios do
       workspace: "Runner.xcworkspace",
       scheme: "Runner",
       export_method: "app-store",
+      xcargs: "-verbose",
       # export_xcargs: '-allowProvisioningUpdates',
       verbose: true,
       export_options: {
