@@ -23,8 +23,6 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.MATCH_SSH_KEY }}
           host-name: github.com
-      
-      ## Flutter
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -34,16 +32,11 @@ jobs:
           cache: true
   
       - name: Install Flutter Dependencies
-        run: flutter pub get
-        working-directory: ${{ github.workspace }}
-
-      - name: Generate Files
         run: |
+          flutter pub get
           dart run tool/generate_localization.dart
           dart run build_runner build --delete-conflicting-outputs
         working-directory: ${{ github.workspace }}
-
-      ## Go
       
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -51,17 +44,12 @@ jobs:
           go-version: '1.25.5'
           cache: true
 
-      - name: Add GOPATH/bin to PATH
-        run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-
-      - name: Install gomobile
-        run: go install golang.org/x/mobile/cmd/gomobile@latest
-
-      - name: Initialize gomobile
-        run: gomobile init
+      - name: Init GoMobile
+        run: |
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
         working-directory: ${{ github.workspace }}
-
-      ## Ruby
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -76,16 +64,10 @@ jobs:
       - name: Install Gems
         run: bundle _2.7.2_ install
         working-directory: ios
-
-      ## CocoaPods
       
       - name: Setup Pods (CocoaPods)
         run: pod install --repo-update
         working-directory: ios
-
-      # -------------------
-      # Build & Deploy
-      # -------------------
 
       - name: Setup App Store Connect API Key
         run: |
@@ -105,6 +87,10 @@ jobs:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+
+      # -------------------
+      # Build & Deploy
+      # -------------------
 
       - name: Run Fastlane
         run: bundle exec fastlane beta --verbose
