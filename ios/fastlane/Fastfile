@@ -23,50 +23,19 @@ def get_api_key
   )
 end
 
-# --- Define Keychain Setup for CI ---
-def setup_ci_keychain
-  keychain_name = "ci_keychain"
-  keychain_password = ENV["KEYCHAIN_PASSWORD"]
-
-  create_keychain(
-    name: keychain_name,
-    password: keychain_password,
-    default_keychain: true,
-    unlock: true,
-    timeout: 3600 # Keep unlocked for 1 hour
-  )
-end
-
-# --- Define Keychain Cleanup ---
-def cleanup_ci_keychain
-  keychain_name = "ci_keychain"
-  delete_keychain(name: keychain_name)
-end
-
 platform :ios do
   desc "Push a new beta build to TestFlight"
   lane :beta do
+    setup_ci
 
-    setup_ci_keychain
-
-    keychain_name = "ci_keychain"
-    keychain_password = ENV["KEYCHAIN_PASSWORD"]
-
-    match(
+    sync_code_signing(
       type: "appstore",
       app_identifier: "swiss.dfx.realunit",
       api_key: get_api_key,
-      keychain_name: "ci_keychain",
-      keychain_password: ENV["KEYCHAIN_PASSWORD"],
       git_url: "git@github.com:DFXswiss/fastlane-certificates.git"
     )
 
     increment_build_number(xcodeproj: "Runner.xcodeproj")
-
-    update_code_signing_settings(
-        path: "Runner.xcodeproj", 
-        keychain_path: "/Users/runner/Library/Keychains/ci_keychain-db" 
-    )
     
     gym(
       workspace: "Runner.xcworkspace",
@@ -82,7 +51,5 @@ platform :ios do
       api_key: get_api_key,
       skip_waiting_for_build_processing: true
     )
-
-    cleanup_ci_keychain
   end
 end
