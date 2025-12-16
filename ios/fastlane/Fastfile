@@ -35,7 +35,7 @@ platform :ios do
       git_url: "git@github.com:DFXswiss/fastlane-certificates.git"
     )
 
-    latest_build = latest_testflight_build_number(api_key: api_key)
+    latest_build = latest_testflight_build_number(api_key: get_api_key)
     increment_build_number(
       build_number: latest_build + 1,  
       xcodeproj: "Runner.xcodeproj"
@@ -44,12 +44,8 @@ platform :ios do
     gym(
       workspace: "Runner.xcworkspace",
       scheme: "Runner",
-      export_method: "app-store",
       xcargs: "-verbose",
-      verbose: true,
-      export_options: {
-        signingStyle: "manual"
-      }
+      verbose: true
     )
 
     upload_to_testflight(

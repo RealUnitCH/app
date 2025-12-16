@@ -3,6 +3,8 @@ name: Deploy iOS Beta
 on:
   workflow_dispatch:
   push:
+    branches:
+      - feat/fastlane
     tags:
       - "ios/v*" # Trigger when you push a tag starting with ios/v
 
