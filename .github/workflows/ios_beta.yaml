@@ -29,6 +29,15 @@ jobs:
           channel: 'stable'
           cache: true
       
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          cache: true
+
+      - name: Init Gomobile
+        run: gomobile init
+        working-directory: ${{ github.workspace }}
+      
       - name: Install Flutter Dependencies
         run: flutter pub get
         working-directory: ${{ github.workspace }}
