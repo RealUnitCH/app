@@ -5,8 +5,6 @@ on:
   push:
     tags:
       - "ios/v*" # Trigger when you push a tag starting with ios/v
-    branches:
-      - feat/fastlane
 
 jobs:
   build_ios:
