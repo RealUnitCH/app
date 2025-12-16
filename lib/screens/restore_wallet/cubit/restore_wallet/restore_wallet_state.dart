@@ -2,7 +2,7 @@ part of 'restore_wallet_cubit.dart';
 
 class RestoreWalletState extends Equatable {
   final bool isLoading;
-  final Wallet? wallet;
+  final SoftwareWallet? wallet;
 
   const RestoreWalletState({
     this.isLoading = false,
