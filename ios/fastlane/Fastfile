@@ -62,6 +62,11 @@ platform :ios do
     )
 
     increment_build_number(xcodeproj: "Runner.xcodeproj")
+
+    update_code_signing_settings(
+        path: "Runner.xcodeproj", 
+        keychain_path: "/Users/runner/Library/Keychains/ci_keychain-db" 
+    )
     
     gym(
       workspace: "Runner.xcworkspace",
