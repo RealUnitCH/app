@@ -73,7 +73,9 @@ jobs:
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
 
       - name: 🚀 Run Fastlane Deployment Lane
-        run: bundle exec fastlane beta --verbose
+        run: |
+          flutter build ios --release --no-codesign
+          bundle exec fastlane beta --verbose
         working-directory: ./ios
 
       - name: ✅ Deployment Complete
