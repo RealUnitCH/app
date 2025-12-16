@@ -1,4 +1,5 @@
 import 'package:bip39/bip39.dart' as bip39;
+import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -6,26 +7,41 @@ import 'package:realunit_wallet/packages/wallet/wallet.dart';
 class WalletService {
   final WalletRepository _repository;
   final SettingsRepository _settingsRepository;
+  final BitboxService _bitboxService;
 
-  const WalletService(this._repository, this._settingsRepository);
+  const WalletService(this._bitboxService, this._repository, this._settingsRepository);
 
-  Future<Wallet> createWallet(String name) {
+  Future<SoftwareWallet> createSeedWallet(String name) {
     final mnemonic = bip39.generateMnemonic();
     return restoreWallet(name, mnemonic);
   }
 
-  Future<Wallet> restoreWallet(String name, String seed) async {
-    final walletId = await _repository.createWallet(name, seed);
+  Future<BitboxWallet> createBitboxWallet(String name) async {
+    final address = await _bitboxService.bitboxManager.getETHAddress(1, "m/44'/60'/0'/0/0");
+    final walletId = await _repository.createViewWallet(name, WalletType.bitbox, address);
     await _settingsRepository.saveCurrentWalletId(walletId);
-    return Wallet(walletId, name, seed);
+    return BitboxWallet(walletId, name, address, _bitboxService);
   }
 
-  Future<Wallet> getWalletById(int id) async {
+  Future<SoftwareWallet> restoreWallet(String name, String seed) async {
+    final walletId = await _repository.createWallet(name, WalletType.software, seed);
+    await _settingsRepository.saveCurrentWalletId(walletId);
+    return SoftwareWallet(walletId, name, seed);
+  }
+
+  Future<AWallet> getWalletById(int id) async {
     final result = (await _repository.getWalletById(id))!;
-    return Wallet(result.id, result.name, result.seed);
+    final walletType = WalletType.values[result.type];
+    switch (walletType) {
+      case WalletType.software:
+        return SoftwareWallet(result.id, result.name, result.seed);
+      case WalletType.bitbox:
+        return BitboxWallet(
+            result.id, result.name, result.address, _bitboxService);
+    }
   }
 
-  Future<Wallet> getCurrentWallet() async {
+  Future<AWallet> getCurrentWallet() async {
     final id = _settingsRepository.currentWalletId!;
     return getWalletById(id);
   }

@@ -11,8 +11,7 @@ class SettingsSeedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocProvider(
-        create: (_) =>
-            SettingsSeedCubit((getIt<AppStore>().wallet as Wallet).seed),
+        create: (_) => SettingsSeedCubit((getIt<AppStore>().wallet as SoftwareWallet).seed),
         child: SettingsSeedView(),
       );
 }

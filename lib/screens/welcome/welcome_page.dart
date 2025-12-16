@@ -1,11 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/router.dart';
+import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
+import 'package:realunit_wallet/screens/welcome/widgets/welcome_card.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
-
-import 'widgets/welcome_card.dart';
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
@@ -23,13 +25,8 @@ class _WelcomePageState extends State<WelcomePage> {
         appBar: AppBar(
           leading: showSecondStep
               ? IconButton(
-                  onPressed: () => setState(
-                    () => showSecondStep = false,
-                  ),
-                  icon: Icon(
-                    Icons.arrow_back_rounded,
-                    size: 24,
-                  ),
+                  onPressed: () => setState(() => showSecondStep = false),
+                  icon: Icon(Icons.arrow_back_rounded, size: 24),
                 )
               : null,
         ),
@@ -90,13 +87,14 @@ class _WelcomePageState extends State<WelcomePage> {
                                 'assets/images/illustrations/software_wallet.svg',
                               ),
                             ),
-                            WelcomeCard(
-                              title: S.of(context).bitbox,
-                              description: S.of(context).hardware_wallet_subtitle,
-                              trailing: SvgPicture.asset(
-                                'assets/images/illustrations/bitbox.svg',
+                            if (defaultTargetPlatform == TargetPlatform.android)
+                              WelcomeCard(
+                                title: S.of(context).bitbox,
+                                description: S.of(context).hardware_wallet_subtitle,
+                                trailing: SvgPicture.asset(
+                                  'assets/images/illustrations/bitbox.svg',
+                                ),
                               ),
-                            ),
                           ],
                         ),
                       ),
@@ -134,4 +132,15 @@ class _WelcomePageState extends State<WelcomePage> {
           ),
         ),
       );
+
+  void onBitboxPressed() {
+    showModalBottomSheet(
+      context: navigatorKey.currentContext!,
+      backgroundColor: Colors.white,
+      builder: (_) => BottomSheet(
+        onClosing: () {},
+        builder: (_) => ConnectBitboxPage(),
+      ),
+    );
+  }
 }

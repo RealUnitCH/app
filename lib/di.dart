@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:get_it/get_it.dart';
+import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/open_crypto_pay/open_crypto_pay_service.dart';
 import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
@@ -76,19 +77,23 @@ void setupRepositories() {
   getIt.registerFactory(() => BalanceRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => AssetRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => NodeRepository(getIt<AppDatabase>()));
-  getIt
-      .registerFactory(() => TransactionRepository(getIt<AppDatabase>(), getIt<AssetRepository>()));
+  getIt.registerFactory(() =>
+      TransactionRepository(getIt<AppDatabase>(), getIt<AssetRepository>()));
 }
 
 void setupServices() {
-  getIt
-      .registerFactory(() => WalletService(getIt<WalletRepository>(), getIt<SettingsRepository>()));
+  getIt.registerSingleton(BalanceService(
+      getIt<BalanceRepository>(), getIt<AssetRepository>(), getIt<AppStore>()));
 
-  getIt.registerSingleton(
-      BalanceService(getIt<BalanceRepository>(), getIt<AssetRepository>(), getIt<AppStore>()));
+  getIt.registerSingleton(BitboxService());
+  getIt.registerFactory(() => WalletService(
+        getIt<BitboxService>(),
+        getIt<WalletRepository>(),
+        getIt<SettingsRepository>(),
+      ));
 
-  getIt.registerFactory(() => TransactionHistoryService(
-      getIt<AppStore>(), getIt<AssetRepository>(), getIt<TransactionRepository>()));
+  getIt.registerFactory(() => TransactionHistoryService(getIt<AppStore>(),
+      getIt<AssetRepository>(), getIt<TransactionRepository>()));
 
   getIt.registerFactory(() => OpenCryptoPayService());
   getIt.registerFactory(() => DFXPriceService(getIt<AppStore>()));
@@ -97,8 +102,8 @@ void setupServices() {
   getIt.registerFactory(() => DfxBrokerbotService(getIt<AppStore>()));
 
   getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
-  getIt.registerFactory(
-      () => DFXService(getIt<AppStore>(), getIt<SettingsRepository>(), getIt<AssetRepository>()));
+  getIt.registerFactory(() => DFXService(getIt<AppStore>(),
+      getIt<SettingsRepository>(), getIt<AssetRepository>()));
 }
 
 void setupBlocs() {
@@ -112,4 +117,5 @@ void setupBlocs() {
   ));
 }
 
-Future<bool> _existsDatabaseFile() async => File(await AppDatabase.getDatabasePath()).exists();
+Future<bool> _existsDatabaseFile() async =>
+    File(await AppDatabase.getDatabasePath()).exists();

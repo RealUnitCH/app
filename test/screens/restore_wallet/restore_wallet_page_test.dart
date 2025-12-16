@@ -27,7 +27,7 @@ class MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
 
 class MockWalletService extends Mock implements WalletService {}
 
-class MockWallet extends Mock implements Wallet {}
+class MockWallet extends Mock implements SoftwareWallet {}
 
 void main() {
   late RestoreWalletCubit restoreWalletCubit;

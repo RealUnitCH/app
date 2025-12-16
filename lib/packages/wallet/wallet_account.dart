@@ -34,3 +34,11 @@ class WalletAccount extends AWalletAccount {
   Future<String> signMessage(String message, {int addressIndex = 0}) async =>
       "0x${hex.encode(_getPrivateKeyAt(root, addressIndex, addressIndex).signPersonalMessageToUint8List(ascii.encode(message)))}";
 }
+
+class BitboxWalletAccount extends AWalletAccount {
+  BitboxWalletAccount(super.accountIndex, super.primaryAddress);
+
+  @override
+  Future<String> signMessage(String message, {int addressIndex = 0}) async =>
+      "0x${hex.encode(await primaryAddress.signPersonalMessage(ascii.encode(message)))}";
+}
