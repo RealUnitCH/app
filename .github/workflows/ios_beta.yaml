@@ -16,20 +16,20 @@ jobs:
 
       # Setup Environment
 
-      - name: 🔑 Setup SSH access for Fastlane Match
+      - name: Setup SSH access for Fastlane Match
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.MATCH_SSH_KEY }}
           host-name: github.com
       
-      - name: 🐦 Set up Flutter
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.35.6'
           channel: 'stable'
           cache: true
       
-      - name: 📦 Install Flutter Dependencies
+      - name: Install Flutter Dependencies
         run: flutter pub get
         working-directory: ${{ github.workspace }}
 
@@ -52,7 +52,7 @@ jobs:
 
       # Code Generation
 
-      - name: ⚙️ Generate Files
+      - name: Generate Files
         run: |
           dart run tool/generate_localization.dart
           dart run build_runner build --delete-conflicting-outputs
@@ -60,7 +60,7 @@ jobs:
 
       # Build & Deploy
 
-      - name: 🔐 Setup App Store Connect API Key
+      - name: Setup App Store Connect API Key
         run: |
           # Use an absolute path for reliability
           KEY_PATH="${{ github.workspace }}/AuthKey.p8"
@@ -82,7 +82,4 @@ jobs:
       - name: Run Fastlane
         run: bundle exec fastlane beta --verbose
         working-directory: ios
-
-      - name: ✅ Deployment Complete
-        run: echo "Successfully deployed new version on Testflight!"
 
