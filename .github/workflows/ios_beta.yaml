@@ -22,8 +22,20 @@ jobs:
           sudo gem install fastlane -NV
       - name: Install dependencies
         run: flutter pub get
+        working-directory: ${{ github.workspace }}
+
+      - name: 🌍 Generate Localizations
+        run: dart run tool/generate_localization.dart
+        working-directory: ${{ github.workspace }}
+
+      - name: ⚙️ Generate Drift/Database Files
+        run: dart run build_runner build --delete-conflicting-outputs
+        working-directory: ${{ github.workspace }}
+
       - name: Build iOS App
         run: flutter build ios --release --no-codesign
+        working-directory: ${{ github.workspace }}
+
       - name: Run Fastlane Lane for iOS
         run: 
           cd ios
