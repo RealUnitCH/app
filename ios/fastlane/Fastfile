@@ -57,7 +57,7 @@ platform :ios do
       app_identifier: "swiss.dfx.realunit",
       api_key: get_api_key,
       keychain_name: "ci_keychain",
-      keychain_password: ENV["KEYCHAIN_PASSWORD"]
+      keychain_password: ENV["KEYCHAIN_PASSWORD"],
       git_url: "git@github.com:DFXswiss/fastlane-certificates.git"
     )
 
