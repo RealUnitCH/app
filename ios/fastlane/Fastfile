@@ -59,8 +59,6 @@ platform :ios do
       git_url: "git@github.com:DFXswiss/fastlane-certificates.git"
     )
 
-    sh "security set-key-partition-list -S apple-tool:,apple: -s -k #{keychain_password} ~/Library/Keychains/#{keychain_name}.keychain"
-
     increment_build_number(xcodeproj: "Runner.xcodeproj")
     
     gym(
