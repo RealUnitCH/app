@@ -71,12 +71,7 @@ jobs:
       - name: ✅ Deployment Complete
         run: echo "Successfully triggered Fastlane lane beta"
 
-      - name: Run Fastlane Lane for iOS
-        run: 
-          cd ios
-          fastlane beta
-
-build_test:
+  build_test:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
