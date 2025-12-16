@@ -1,8 +1,10 @@
-name: Build & Upload iOS TestFlight
+name: Deploy iOS Beta
 
 on:
   workflow_dispatch:
   push:
+    tags:
+      - "ios/v*" # Trigger when you push a tag starting with ios/v
     branches:
       - feat/fastlane
 
@@ -12,15 +14,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Setup Environment
+
       - name: 🔑 Setup SSH access for Fastlane Match
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.MATCH_SSH_KEY }}
           host-name: github.com
-
-      # ------------------------------------
-      # 1. Setup Environment
-      # ------------------------------------
       
       - name: 🐦 Set up Flutter
         uses: subosito/flutter-action@v2
@@ -50,21 +50,15 @@ jobs:
         run: pod install --repo-update
         working-directory: ios
 
-      # ------------------------------------
-      # 2. Code Generation
-      # ------------------------------------
+      # Code Generation
 
-      - name: 🌍 Generate Localizations
-        run: dart run tool/generate_localization.dart
+      - name: ⚙️ Generate Files
+        run: |
+          dart run tool/generate_localization.dart
+          dart run build_runner build --delete-conflicting-outputs
         working-directory: ${{ github.workspace }}
 
-      - name: ⚙️ Generate Drift/Database Files
-        run: dart run build_runner build --delete-conflicting-outputs
-        working-directory: ${{ github.workspace }}
-
-      # ------------------------------------
-      # 3. Build & Deploy
-      # ------------------------------------
+      # Build & Deploy
 
       - name: 🔐 Setup App Store Connect API Key
         run: |
@@ -90,5 +84,5 @@ jobs:
         working-directory: ios
 
       - name: ✅ Deployment Complete
-        run: echo "Successfully triggered Fastlane lane beta"
+        run: echo "Successfully deployed new version on Testflight!"
 
