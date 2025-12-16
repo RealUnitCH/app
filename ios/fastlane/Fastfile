@@ -23,9 +23,34 @@ def get_api_key
   )
 end
 
+# --- Define Keychain Setup for CI ---
+def setup_ci_keychain
+  keychain_name = "ci_keychain"
+  keychain_password = ENV["KEYCHAIN_PASSWORD"]
+
+  create_keychain(
+    name: keychain_name,
+    password: keychain_password,
+    default_keychain: true,
+    unlock: true,
+    timeout: 3600 # Keep unlocked for 1 hour
+  )
+end
+
+# --- Define Keychain Cleanup ---
+def cleanup_ci_keychain
+  keychain_name = "ci_keychain"
+  delete_keychain(name: keychain_name)
+end
+
 platform :ios do
   desc "Push a new beta build to TestFlight"
   lane :beta do
+
+    setup_ci_keychain
+
+    keychain_name = "ci_keychain"
+    keychain_password = ENV["KEYCHAIN_PASSWORD"]
 
     match(
       type: "appstore",
@@ -33,6 +58,8 @@ platform :ios do
       api_key: get_api_key,
       git_url: "git@github.com:DFXswiss/fastlane-certificates.git"
     )
+
+    sh "security set-key-partition-list -S apple-tool:,apple: -s -k #{keychain_password} ~/Library/Keychains/#{keychain_name}.keychain"
 
     increment_build_number(xcodeproj: "Runner.xcodeproj")
     
@@ -50,5 +77,7 @@ platform :ios do
       api_key: get_api_key,
       skip_waiting_for_build_processing: true
     )
+
+    cleanup_ci_keychain
   end
 end
