@@ -27,27 +27,13 @@ jobs:
         with:
           flutter-version: '3.35.3'
           channel: 'stable'
-
-      - name: 📦 Install Flutter Dependencies
-        run: flutter pub get
-
-      - name: 💊 Install iOS Pods
-        run: |
-          cd ios
-          pod install --repo-update
-
-      - name: Build
-        run: flutter build ios --release --no-codesign --config-only
-
-      # ------------------------------------
-      # 2. Setup Fastlane
-      # ------------------------------------
+          cache: true
       
-      - name: 💎 Set up Ruby
-        uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.4'
-          bundler-cache: false
+          bundler-cache: true
+          working-directory: ios
       
       - name: Install Bundler
         run: gem install bundler -v 2.7.2
@@ -55,6 +41,12 @@ jobs:
       - name: Install Gems
         run: bundle _2.7.2_ install
         working-directory: ios
+
+      - name: Setup Pod
+        run: pod install
+        working-directory: "./ios"
+
+
 
       # ------------------------------------
       # 3. Build & Deploy
@@ -81,7 +73,7 @@ jobs:
 
       - name: 🚀 Run Fastlane Deployment Lane
         run: bundle exec fastlane beta --verbose
-        working-directory: ios
+        working-directory: ./ios
 
       - name: ✅ Deployment Complete
         run: echo "Successfully triggered Fastlane lane beta"
