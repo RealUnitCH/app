@@ -43,7 +43,9 @@ platform :android do
        "--build-number=#{new_build_number}", 
        "--no-tree-shake-icons", 
        "--obfuscate", 
-       "--split-debug-info=build/debug_info")
+       "--split-debug-info=build/debug_info",
+       "--verbose"
+       )
 
     # Upload to the 'beta' track as a 'draft'
     # Always upload as draft first so you can review it!
