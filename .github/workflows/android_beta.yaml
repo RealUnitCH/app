@@ -63,7 +63,6 @@ jobs:
         run: bundle _2.7.2_ install
         working-directory: android
 
-      # 5. Recreate Secrets from Base64
       - name: Decode Secrets
         env:
           PLAY_STORE_JSON: ${{ secrets.PLAY_STORE_JSON_BASE64 }}
@@ -72,13 +71,15 @@ jobs:
           echo "$PLAY_STORE_JSON" | base64 --decode > android/credentials.json
           echo "$ANDROID_KEYSTORE" | base64 --decode > android/upload-keystore.jks
 
-      # 6. Run our beta lane
+      - name: Create key.properties
+        run: |
+          cat <<EOF > android/key.properties
+          storeFile=upload-keystore.jks
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+
       - name: Deploy to Play Store Beta (Android)
         run: bundle exec fastlane beta
         working-directory: ./android
-        env:
-          GRADLE_OPTS: "-Dorg.gradle.logging.level=info"
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          ANDROID_SIGNING_KEY_BASE64: ${{ secrets.ANDROID_SIGNING_KEY_BASE64 }}
