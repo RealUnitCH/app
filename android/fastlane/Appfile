@@ -1,0 +1,2 @@
+json_key_file("./credentials.json")
+package_name("swiss.dfx.realunit")
