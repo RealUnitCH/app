@@ -23,10 +23,12 @@ platform :android do
 
   def get_next_build_number
     internal_codes = google_play_track_version_codes(track: 'internal') || []
-    beta_codes = google_play_track_version_codes(track: 'beta') || []
-    production_codes = google_play_track_version_codes(track: 'production') || []
+    # beta_codes = google_play_track_version_codes(track: 'beta') || []
+    # production_codes = google_play_track_version_codes(track: 'production') || []
     
-    all_version_codes = internal_codes + beta_codes + production_codes
+    # all_version_codes = internal_codes + beta_codes + production_codes
+
+    all_version_codes = internal_codes
     
     all_version_codes.empty? ? 1 : all_version_codes.max + 1
   end
@@ -46,7 +48,7 @@ platform :android do
     # Upload to the 'beta' track as a 'draft'
     # Always upload as draft first so you can review it!
     upload_to_play_store(
-      track: 'beta',
+      track: 'internal',
       aab: built_aab_path,
       release_status: 'draft'
     )
