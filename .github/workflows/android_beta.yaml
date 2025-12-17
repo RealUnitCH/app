@@ -69,7 +69,7 @@ jobs:
           PLAY_STORE_JSON: ${{ secrets.PLAY_STORE_JSON_BASE64 }}
           ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          echo "$PLAY_STORE_JSON" | base64 --decode > android/fastlane/credentials.json
+          echo "$PLAY_STORE_JSON" | base64 --decode > android/credentials.json
           echo "$ANDROID_KEYSTORE" | base64 --decode > android/app/release-key.jks
 
       # 6. Run our beta lane
