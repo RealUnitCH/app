@@ -4,8 +4,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - "ios/v*" # Trigger when you push a tag starting with ios/v
-
+      - "ios/v*"
 jobs:
   build_ios:
     runs-on: macos-latest
@@ -25,21 +24,21 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.35.6'
-          channel: 'stable'
+          flutter-version: "3.35.6"
+          channel: "stable"
           cache: true
-  
+
       - name: Install Flutter Dependencies
         run: |
           flutter pub get
           dart run tool/generate_localization.dart
           dart run build_runner build --delete-conflicting-outputs
         working-directory: ${{ github.workspace }}
-      
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25.5'
+          go-version: "1.25.5"
           cache: true
 
       - name: Init GoMobile
@@ -52,17 +51,17 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.4'
+          ruby-version: "3.4"
           bundler-cache: true
           working-directory: ios
 
       - name: Install Bundler
         run: gem install bundler -v 2.7.2
-      
+
       - name: Install Gems
         run: bundle _2.7.2_ install
         working-directory: ios
-      
+
       - name: Setup Pods (CocoaPods)
         run: pod install --repo-update
         working-directory: ios
@@ -71,7 +70,7 @@ jobs:
         run: |
           # Use an absolute path for reliability
           KEY_PATH="${{ github.workspace }}/AuthKey.p8"
-          
+
           # Create the .p8 file
           echo "${{ secrets.APP_STORE_CONNECT_KEY }}" > "$KEY_PATH"
 
@@ -93,4 +92,3 @@ jobs:
       - name: Run Fastlane
         run: bundle exec fastlane beta --verbose
         working-directory: ios
-
