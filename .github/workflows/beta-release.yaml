@@ -220,34 +220,24 @@ jobs:
                   "labels": ["fix", "bug"]
                 },
                 {
+                  "title": "## 📦 Refactor",
+                  "labels": ["refactor"]
+                },
+                {
                   "title": "## 📦 Others",
-                  "labels": ["chore", "refactor"]
+                  "labels": ["chore"]
+                },
+                {
+                  "title": "## 🌀 Not labelled",
+                  "labels": []
                 }
               ],
               "label_extractor": [
                 {
-                  "pattern": "^(?i)(feat|feature).*:",
-                  "target": "feature",
-                  "on_property": "title",
-                  "method": "match"
-                },
-                {
-                  "pattern": "^(?i)(fix).*:",
-                  "target": "fix",
-                  "on_property": "title",
-                  "method": "match"
-                },
-                {
-                  "pattern": "^(?i)(bug|chore|refactor).*:",
-                  "target": "other",
-                  "on_property": "title",
-                  "method": "match"
-                },
-                {
-                  "pattern": "^(?i)Feature/.*",
-                  "target": "feature",
-                  "on_property": "title",
-                  "method": "match"
+                  "method": "match",
+                  "pattern": "^([\\w\\-]+)",
+                  "target": "$1",
+                  "on_property": "title"
                 }
               ]
             }
