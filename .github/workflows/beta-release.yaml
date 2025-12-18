@@ -1,6 +1,7 @@
 name: Beta Release
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*"
@@ -189,6 +190,33 @@ jobs:
       - name: Generate Changelog
         id: changelog
         uses: mikepenz/release-changelog-builder-action@v6.0.1
+        with:
+          configurationJson: |
+            {
+              "template": "#{{CHANGELOG}}",
+              "categories": [
+                {
+                  "title": "## 🚀 Features",
+                  "labels": ["feat", "feature"]
+                },
+                {
+                  "title": "## 🐛 Fixes",
+                  "labels": ["fix", "bug"]
+                },
+                {
+                  "title": "## 📦 Others",
+                  "labels": ["chore", "refactor"]
+                }
+              ],
+              "label_extractor": [
+                {
+                  "pattern": "^(feat|feature|fix|bug|refactor|chore):? .*",
+                  "target": "$1",
+                  "on_property": "title",
+                  "method": "match"
+                }
+              ]
+            }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
