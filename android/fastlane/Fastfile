@@ -17,20 +17,24 @@ default_platform(:android)
 
 platform :android do
   
-  def built_aab_path
+  def release_track
+    return "internal"
+  end
+
+  def aab_path
     return "../build/app/outputs/bundle/release/app-release.aab"
   end
 
-  def get_next_build_number
-    internal_codes = google_play_track_version_codes(track: 'internal') || []
+  def next_build_number
+    internal_codes = google_play_track_version_codes(track: release_track) || []
     version_code = internal_codes
     
-    version_code.empty? ? 1 : all_version_codes.max + 1
+    version_code.empty? ? 1 : version_code.max + 1
   end
 
   desc "Build and upload to Play Store Beta"
   lane :beta do
-    new_build_number = get_next_build_number
+    new_build_number = next_build_number
     raw_version_name = ENV["NEW_VERSION"] || "v0.0.0"
     new_version_name = raw_version_name.delete('v')
 
@@ -57,8 +61,8 @@ platform :android do
     end
 
     upload_to_play_store(
-      track: 'internal',
-      aab: built_aab_path
+      track: release_track,
+      aab: aab_path
     )
   end
 end
