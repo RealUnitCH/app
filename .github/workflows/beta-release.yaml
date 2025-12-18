@@ -180,6 +180,8 @@ jobs:
       - name: Deploy to App Store (Beta)
         run: bundle exec fastlane beta --verbose
         working-directory: ios
+        env:
+          NEW_VERSION: ${{ github.ref_name }}
 
   github-release:
     needs: [android-deploy, ios-deploy]
@@ -210,8 +212,26 @@ jobs:
               ],
               "label_extractor": [
                 {
-                  "pattern": "^(feat|feature|fix|bug|refactor|chore):? .*",
-                  "target": "$1",
+                  "pattern": "^(?i)(feat|feature).*:",
+                  "target": "feature",
+                  "on_property": "title",
+                  "method": "match"
+                },
+                {
+                  "pattern": "^(?i)(fix).*:",
+                  "target": "fix",
+                  "on_property": "title",
+                  "method": "match"
+                },
+                {
+                  "pattern": "^(?i)(bug|chore|refactor).*:",
+                  "target": "other",
+                  "on_property": "title",
+                  "method": "match"
+                },
+                {
+                  "pattern": "^(?i)Feature/.*",
+                  "target": "feature",
                   "on_property": "title",
                   "method": "match"
                 }
