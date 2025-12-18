@@ -21,6 +21,10 @@ platform :android do
     return "../build/app/outputs/bundle/release/app-release.aab"
   end
 
+  def built_apk_path
+    return "../build/app/outputs/flutter-apk/app-release.apk"
+  end
+
   def get_next_build_number
     internal_codes = google_play_track_version_codes(track: 'internal') || []
     # beta_codes = google_play_track_version_codes(track: 'beta') || []
@@ -39,18 +43,20 @@ platform :android do
 
     # Build the app bundle using Flutter CLI
     # We obfuscate and split debug info to keep the APK size down and secure
-    sh("flutter", "build", "appbundle", 
+    sh("flutter", "build", "apk", 
+       "--release",
        "--build-number=#{new_build_number}", 
        "--no-tree-shake-icons", 
        "--obfuscate", 
        "--split-debug-info=build/debug_info"
-       )
+    )
 
     # Upload to the 'beta' track as a 'draft'
     # Always upload as draft first so you can review it!
     upload_to_play_store(
       track: 'internal',
-      aab: built_aab_path,
+      apk: built_apk_path,
+      skip_upload_aab: true,
       release_status: 'draft'
     )
   end

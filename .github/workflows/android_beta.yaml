@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - "android/v*"
-    branches:
-      - "feat/fastlane-android"
 
 jobs:
   build_android:
