@@ -1,4 +1,4 @@
-name: Deploy iOS Beta
+name: iOS Beta Release
 
 on:
   workflow_dispatch:
