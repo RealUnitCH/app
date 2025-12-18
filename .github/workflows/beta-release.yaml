@@ -17,6 +17,10 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v5
 
+      # -------------------
+      # Setup Environment
+      # -------------------
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -84,6 +88,10 @@ jobs:
           dart run build_runner build --delete-conflicting-outputs
         working-directory: ${{ github.workspace }}
 
+      # -------------------
+      # Build & Deploy
+      # -------------------
+
       - name: Deploy to Play Store (Beta)
         run: bundle exec fastlane beta
         working-directory: ./android
@@ -117,13 +125,6 @@ jobs:
           channel: "stable"
           cache: true
 
-      - name: Install Flutter Dependencies
-        run: |
-          flutter pub get
-          dart run tool/generate_localization.dart
-          dart run build_runner build --delete-conflicting-outputs
-        working-directory: ${{ github.workspace }}
-
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -149,6 +150,13 @@ jobs:
       - name: Install Gems
         run: bundle _2.7.2_ install
         working-directory: ios
+
+      - name: Install Flutter Dependencies
+        run: |
+          flutter pub get
+          dart run tool/generate_localization.dart
+          dart run build_runner build --delete-conflicting-outputs
+        working-directory: ${{ github.workspace }}
 
       - name: Setup Pods (CocoaPods)
         run: pod install --repo-update
@@ -182,6 +190,12 @@ jobs:
         working-directory: ios
         env:
           NEW_VERSION: ${{ github.ref_name }}
+
+      - name: Upload ipa artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: ios/realunit-*.ipa
 
   github-release:
     needs: [android-deploy, ios-deploy]
@@ -246,12 +260,20 @@ jobs:
           name: android-apk
           path: .
 
+      - name: Download iOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-ipa
+          path: .
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           body: ${{ steps.changelog.outputs.changelog }}
-          files: realunit-*.apk
+          files: |
+            realunit-*.apk
+            realunit-*.ipa
           generate_release_notes: false
           draft: false
           prerelease: false

@@ -28,13 +28,6 @@ jobs:
           channel: "stable"
           cache: true
 
-      - name: Install Flutter Dependencies
-        run: |
-          flutter pub get
-          dart run tool/generate_localization.dart
-          dart run build_runner build --delete-conflicting-outputs
-        working-directory: ${{ github.workspace }}
-
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
@@ -61,6 +54,13 @@ jobs:
       - name: Install Gems
         run: bundle _2.7.2_ install
         working-directory: ios
+
+      - name: Install Flutter Dependencies
+        run: |
+          flutter pub get
+          dart run tool/generate_localization.dart
+          dart run build_runner build --delete-conflicting-outputs
+        working-directory: ${{ github.workspace }}
 
       - name: Setup Pods (CocoaPods)
         run: pod install --repo-update
