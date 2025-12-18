@@ -97,6 +97,6 @@ jobs:
       - name: Create GitHub Release and attach APK
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            **/*.apk
+          tag_name: ${{ github.ref_name }}
+          files: build/app/outputs/flutter-apk/app-release.apk
           generate_release_notes: true
