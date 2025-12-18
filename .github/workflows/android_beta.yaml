@@ -85,3 +85,18 @@ jobs:
       - name: Deploy to Play Store Beta (Android)
         run: bundle exec fastlane beta
         working-directory: ./android
+
+      - name: Build release APK
+        run: |
+          flutter build apk \
+            --release \
+            --no-tree-shake-icons \
+            --obfuscate \
+            --split-debug-info=build/debug_info
+
+      - name: Create GitHub Release and attach APK
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            **/*.apk
+          generate_release_notes: true

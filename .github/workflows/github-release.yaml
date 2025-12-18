@@ -1,9 +1,6 @@
-name: Create GitHub Release Android
+name: Create GitHub Release
 
 on:
-  push:
-    branches:
-      - "feat/fastlane-android"
   workflow_dispatch:
   workflow_run:
     workflows: ["Deploy Android Beta"]
@@ -15,6 +12,7 @@ permissions:
 
 jobs:
   release:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -23,20 +21,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
         with:
-          flutter-version: "3.35.6"
-          channel: "stable"
-          cache: true
-
-      - name: Build release APK
-        run: |
-          flutter build apk \
-            --release \
-            --no-tree-shake-icons \
-            --obfuscate \
-            --split-debug-info=build/debug_info
+          name: android-apk
 
       - name: Create GitHub Release and attach APK
         uses: softprops/action-gh-release@v2
