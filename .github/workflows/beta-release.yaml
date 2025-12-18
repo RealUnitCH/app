@@ -1,0 +1,209 @@
+name: Beta Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  android-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.6"
+          channel: "stable"
+          cache: true
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.5"
+
+      - name: Init GoMobile
+        run: |
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
+        working-directory: ${{ github.workspace }}
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+          working-directory: android
+
+      - name: Install Bundler
+        run: gem install bundler -v 2.7.2
+
+      - name: Install Gems
+        run: bundle _2.7.2_ install
+        working-directory: android
+
+      - name: Decode Secrets
+        env:
+          PLAY_STORE_JSON: ${{ secrets.PLAY_STORE_JSON_BASE64 }}
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$PLAY_STORE_JSON" | base64 --decode > android/credentials.json
+          echo "$ANDROID_KEYSTORE" | base64 --decode > android/app/upload-keystore.jks
+
+      - name: Create key.properties
+        env:
+          STORE_PWD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PWD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          cat <<EOF > android/key.properties
+          storeFile=upload-keystore.jks
+          storePassword=$STORE_PWD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PWD
+          EOF
+
+      - name: Install Flutter Dependencies
+        run: |
+          flutter pub get
+          dart run tool/generate_localization.dart
+          dart run build_runner build --delete-conflicting-outputs
+        working-directory: ${{ github.workspace }}
+
+      - name: Deploy to Play Store (Beta)
+        run: bundle exec fastlane beta
+        working-directory: ./android
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/app/outputs/flutter-apk/realunit-*.apk
+
+  ios-deploy:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # -------------------
+      # Setup Environment
+      # -------------------
+
+      - name: Setup SSH access for Fastlane Match
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.MATCH_SSH_KEY }}
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.35.6"
+          channel: "stable"
+          cache: true
+
+      - name: Install Flutter Dependencies
+        run: |
+          flutter pub get
+          dart run tool/generate_localization.dart
+          dart run build_runner build --delete-conflicting-outputs
+        working-directory: ${{ github.workspace }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.5"
+
+      - name: Init GoMobile
+        run: |
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
+        working-directory: ${{ github.workspace }}
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+          working-directory: ios
+
+      - name: Install Bundler
+        run: gem install bundler -v 2.7.2
+
+      - name: Install Gems
+        run: bundle _2.7.2_ install
+        working-directory: ios
+
+      - name: Setup Pods (CocoaPods)
+        run: pod install --repo-update
+        working-directory: ios
+
+      - name: Setup App Store Connect API Key
+        run: |
+          # Use an absolute path for reliability
+          KEY_PATH="${{ github.workspace }}/AuthKey.p8"
+
+          # Create the .p8 file
+          echo "${{ secrets.APP_STORE_CONNECT_KEY }}" > "$KEY_PATH"
+
+          # Export Environment Variables GLOBALLY for all subsequent steps (including match)
+          echo "FASTLANE_APPLE_API_KEY_PATH=$KEY_PATH" >> $GITHUB_ENV
+          echo "FASTLANE_APPLE_API_KEY_ID=${{ secrets.APP_STORE_CONNECT_KEY_ID }}" >> $GITHUB_ENV
+          echo "FASTLANE_APPLE_API_ISSUER_ID=${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" >> $GITHUB_ENV
+          echo "MATCH_PASSWORD=${{ secrets.MATCH_PASSWORD }}" >> $GITHUB_ENV
+        env:
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+
+      # -------------------
+      # Build & Deploy
+      # -------------------
+
+      - name: Deploy to App Store (Beta)
+        run: bundle exec fastlane beta --verbose
+        working-directory: ios
+
+  github-release:
+    needs: [android-deploy, ios-deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate Changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v6.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-apk
+          path: .
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          files: realunit-*.apk
+          generate_release_notes: false
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

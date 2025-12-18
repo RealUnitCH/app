@@ -1,0 +1,96 @@
+name: Deploy iOS Beta
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "ios/v*" # Trigger when you push a tag starting with ios/v
+
+jobs:
+  build_ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # -------------------
+      # Setup Environment
+      # -------------------
+
+      - name: Setup SSH access for Fastlane Match
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.MATCH_SSH_KEY }}
+          host-name: github.com
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.6'
+          channel: 'stable'
+          cache: true
+  
+      - name: Install Flutter Dependencies
+        run: |
+          flutter pub get
+          dart run tool/generate_localization.dart
+          dart run build_runner build --delete-conflicting-outputs
+        working-directory: ${{ github.workspace }}
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.5'
+          cache: true
+
+      - name: Init GoMobile
+        run: |
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
+        working-directory: ${{ github.workspace }}
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+          working-directory: ios
+
+      - name: Install Bundler
+        run: gem install bundler -v 2.7.2
+      
+      - name: Install Gems
+        run: bundle _2.7.2_ install
+        working-directory: ios
+      
+      - name: Setup Pods (CocoaPods)
+        run: pod install --repo-update
+        working-directory: ios
+
+      - name: Setup App Store Connect API Key
+        run: |
+          # Use an absolute path for reliability
+          KEY_PATH="${{ github.workspace }}/AuthKey.p8"
+          
+          # Create the .p8 file
+          echo "${{ secrets.APP_STORE_CONNECT_KEY }}" > "$KEY_PATH"
+
+          # Export Environment Variables GLOBALLY for all subsequent steps (including match)
+          echo "FASTLANE_APPLE_API_KEY_PATH=$KEY_PATH" >> $GITHUB_ENV
+          echo "FASTLANE_APPLE_API_KEY_ID=${{ secrets.APP_STORE_CONNECT_KEY_ID }}" >> $GITHUB_ENV
+          echo "FASTLANE_APPLE_API_ISSUER_ID=${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" >> $GITHUB_ENV
+          echo "MATCH_PASSWORD=${{ secrets.MATCH_PASSWORD }}" >> $GITHUB_ENV
+        env:
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+
+      # -------------------
+      # Build & Deploy
+      # -------------------
+
+      - name: Run Fastlane
+        run: bundle exec fastlane beta --verbose
+        working-directory: ios
+
