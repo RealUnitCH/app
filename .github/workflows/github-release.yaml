@@ -1,0 +1,33 @@
+name: Create GitHub Release Android
+
+on:
+  workflow_run:
+    workflows: ["Deploy Android Beta"]
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-apk
+
+      - name: Create GitHub Release and attach APK
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            **/*.apk
+          generate_release_notes: true
