@@ -1,7 +1,6 @@
 name: Create GitHub Release
 
 on:
-  workflow_dispatch:
   workflow_run:
     workflows: ["Deploy Android Beta"]
     types:
@@ -29,6 +28,6 @@ jobs:
       - name: Create GitHub Release and attach APK
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            **/*.apk
+          tag_name: ${{ github.ref_name }}
+          files: app-release.apk
           generate_release_notes: true
