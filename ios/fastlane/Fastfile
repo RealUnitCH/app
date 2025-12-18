@@ -52,6 +52,7 @@ platform :ios do
     gym(
       workspace: "Runner.xcworkspace",
       scheme: "Runner",
+      output_name: "realunit-#{new_version_name}.ipa",
       xcargs: "-verbose",
       verbose: true
     )
