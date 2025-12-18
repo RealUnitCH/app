@@ -41,9 +41,9 @@ platform :android do
     Dir.chdir("..") do
       sh("flutter", "build", "appbundle", 
          "--release",
+         "--build-name=#{new_version_name}", 
          "--build-number=#{new_build_number}", 
          "--no-tree-shake-icons", 
-         "--build-name=#{new_version_name}", 
          "--obfuscate", 
          "--split-debug-info=build/debug_info"
       )
