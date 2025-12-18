@@ -1,6 +1,7 @@
 name: Create GitHub Release Android
 
 on:
+  workflow_dispatch:
   workflow_run:
     workflows: ["Deploy Android Beta"]
     types:
