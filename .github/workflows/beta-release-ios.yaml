@@ -92,3 +92,5 @@ jobs:
       - name: Run Fastlane
         run: bundle exec fastlane beta --verbose
         working-directory: ios
+        env:
+          NEW_VERSION: ${{ github.ref_name }}
