@@ -79,8 +79,9 @@ class MnemonicInputField extends StatelessWidget {
                         contentPadding: EdgeInsets.zero,
                       ),
                       onChanged: (value) {
-                        if (onChanged != null) onChanged!();
                         _handleSpaceJump(context, index, value);
+                        _handleMnemonicPaste(context, value);
+                        if (onChanged != null) onChanged!();
                       },
                     ),
                   ),
@@ -105,6 +106,22 @@ class MnemonicInputField extends StatelessWidget {
       } else {
         FocusManager.instance.primaryFocus?.unfocus();
       }
+    }
+  }
+
+  void _handleMnemonicPaste(BuildContext context, String value) {
+    final words = value.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    if (words.length < 2) return;
+
+    for (int i = 0; i < controllers.length; i++) {
+      controllers[i].text = i < words.length ? words[i] : '';
+    }
+
+    final nextIndex = words.length.clamp(0, controllers.length - 1);
+    if (nextIndex < controllers.length) {
+      FocusScope.of(context).requestFocus(focusNodes[nextIndex]);
+    } else {
+      FocusManager.instance.primaryFocus?.unfocus();
     }
   }
 }
