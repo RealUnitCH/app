@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/mnemonic_input_field_controller.dart';
 
@@ -40,7 +41,7 @@ class MnemonicInputField extends StatelessWidget {
         ),
         itemBuilder: (context, index) {
           return GestureDetector(
-            onTap: () => FocusScope.of(context).requestFocus(focusNodes[index]),
+            onTap: () => FocusScope.of(context).requestFocus(focusNodes.elementAt(index)),
             child: Align(
               alignment: Alignment.center,
               child: Row(
@@ -59,30 +60,33 @@ class MnemonicInputField extends StatelessWidget {
                   ),
                   Expanded(
                     flex: 13,
-                    child: TextField(
-                      style: TextStyle(
-                        fontSize: 16,
-                        height: 20 / 16,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: -0.3,
+                    child: Focus(
+                      onKeyEvent: (_, event) => _handleBackspace(context, index, event),
+                      child: TextField(
+                        style: TextStyle(
+                          fontSize: 16,
+                          height: 20 / 16,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: -0.3,
+                        ),
+                        autocorrect: false,
+                        textCapitalization: TextCapitalization.none,
+                        controller: controllers.elementAt(index),
+                        focusNode: focusNodes.elementAt(index),
+                        textInputAction: index == controllers.length - 1
+                            ? TextInputAction.done
+                            : TextInputAction.next,
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        onChanged: (value) {
+                          _handleSpaceJump(context, index, value);
+                          if (index == 0) _handleMnemonicPaste(context, value);
+                          if (onChanged != null) onChanged!();
+                        },
                       ),
-                      autocorrect: false,
-                      textCapitalization: TextCapitalization.none,
-                      controller: controllers[index],
-                      focusNode: focusNodes[index],
-                      textInputAction: index == controllers.length - 1
-                          ? TextInputAction.done
-                          : TextInputAction.next,
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      onChanged: (value) {
-                        _handleSpaceJump(context, index, value);
-                        _handleMnemonicPaste(context, value);
-                        if (onChanged != null) onChanged!();
-                      },
                     ),
                   ),
                 ],
@@ -94,34 +98,47 @@ class MnemonicInputField extends StatelessWidget {
     );
   }
 
+  void _handleMnemonicPaste(BuildContext context, String value) {
+    final words = value.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    if (words.length < 2) return;
+
+    for (int i = 0; i < controllers.length; i++) {
+      controllers.elementAt(i).text = i < words.length ? words.elementAt(i) : '';
+    }
+
+    final nextIndex = words.length.clamp(0, controllers.length - 1);
+    if (nextIndex < controllers.length) {
+      FocusScope.of(context).requestFocus(focusNodes.elementAt(nextIndex));
+    } else {
+      FocusManager.instance.primaryFocus?.unfocus();
+    }
+  }
+
   void _handleSpaceJump(BuildContext context, int index, String value) {
     if (value.endsWith(" ")) {
-      controllers[index].text = value.trim(); // remove the space
-      controllers[index].selection = TextSelection.fromPosition(
-        TextPosition(offset: controllers[index].text.length),
+      final controller = controllers.elementAt(index);
+      controller.text = value.trim(); // remove the space
+      controller.selection = TextSelection.fromPosition(
+        TextPosition(offset: controller.text.length),
       );
 
       if (index < controllers.length - 1) {
-        FocusScope.of(context).requestFocus(focusNodes[index + 1]);
+        FocusScope.of(context).requestFocus(focusNodes.elementAt(index + 1));
       } else {
         FocusManager.instance.primaryFocus?.unfocus();
       }
     }
   }
 
-  void _handleMnemonicPaste(BuildContext context, String value) {
-    final words = value.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
-    if (words.length < 2) return;
+  KeyEventResult _handleBackspace(BuildContext context, int index, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
-    for (int i = 0; i < controllers.length; i++) {
-      controllers[i].text = i < words.length ? words[i] : '';
+    if (event.logicalKey == LogicalKeyboardKey.backspace) {
+      if (controllers.elementAt(index).text.isEmpty && index > 0) {
+        FocusScope.of(context).requestFocus(focusNodes.elementAt(index - 1));
+        return KeyEventResult.handled;
+      }
     }
-
-    final nextIndex = words.length.clamp(0, controllers.length - 1);
-    if (nextIndex < controllers.length) {
-      FocusScope.of(context).requestFocus(focusNodes[nextIndex]);
-    } else {
-      FocusManager.instance.primaryFocus?.unfocus();
-    }
+    return KeyEventResult.ignored;
   }
 }
