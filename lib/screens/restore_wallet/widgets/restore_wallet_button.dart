@@ -34,7 +34,7 @@ class RestoreWalletButton extends StatelessWidget {
         if (restoreWalletState.wallet != null) {
           return FilledButton.icon(
             onPressed: null,
-            icon: const Icon(Icons.check),
+            icon: Icon(Icons.check, color: RealUnitColors.basic.white),
             style: ButtonStyle(
               backgroundColor: WidgetStateColor.resolveWith((states) => RealUnitColors.green),
               foregroundColor: WidgetStateColor.resolveWith((states) => RealUnitColors.basic.white),
@@ -49,7 +49,7 @@ class RestoreWalletButton extends StatelessWidget {
             width: 14,
             child: CircularProgressIndicator(
               strokeWidth: 1.5,
-              color: Colors.white.withValues(alpha: 0.5),
+              color: RealUnitColors.basic.white.withValues(alpha: 0.5),
             ),
           ),
           style: ButtonStyle(
