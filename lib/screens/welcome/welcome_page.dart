@@ -136,12 +136,9 @@ class _WelcomePageState extends State<WelcomePage> {
 
   Future<void> onBitboxPressed() async {
     await showModalBottomSheet(
+      isScrollControlled: true,
       context: navigatorKey.currentContext!,
-      backgroundColor: Colors.white,
-      builder: (_) => BottomSheet(
-        onClosing: () {},
-        builder: (_) => ConnectBitboxPage(),
-      ),
+      builder: (_) => ConnectBitboxPage(),
     );
   }
 }

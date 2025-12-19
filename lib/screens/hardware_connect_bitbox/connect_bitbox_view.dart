@@ -12,46 +12,51 @@ class ConnectBitboxView extends StatelessWidget {
   const ConnectBitboxView({super.key});
 
   @override
-  Widget build(BuildContext context) => Container(
-        color: Colors.white,
-        child: Column(
-          children: [
-            Handlebars.horizontal(context, margin: EdgeInsets.only(top: 5), width: 36),
-            BlocBuilder<ConnectBitboxCubit, BitboxConnectionState>(
-              builder: (context, state) => Stack(children: [
-                AnimatedSlide(
-                  duration: const Duration(milliseconds: 350),
-                  curve: Curves.easeInOut,
-                  offset: state is BitboxNotConnected ? Offset.zero : const Offset(-1.2, 0),
-                  child: ConnectContent(
-                    title: S.of(context).connect_bitbox_title,
-                    content: defaultTargetPlatform == TargetPlatform.iOS
-                        ? S.of(context).connect_bitbox_content_ios
-                        : S.of(context).connect_bitbox_content,
-                    imagePath: "assets/images/illustrations/bitbox_connect.svg",
-                  ),
+  Widget build(BuildContext context) => SafeArea(
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Handlebars.horizontal(context, margin: EdgeInsets.only(top: 5), width: 36),
+              BlocBuilder<ConnectBitboxCubit, BitboxConnectionState>(
+                builder: (context, state) => Stack(
+                  children: [
+                    AnimatedSlide(
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeInOut,
+                      offset: state is BitboxNotConnected ? Offset.zero : const Offset(-1.2, 0),
+                      child: ConnectContent(
+                        title: S.of(context).connect_bitbox_title,
+                        content: defaultTargetPlatform == TargetPlatform.iOS
+                            ? S.of(context).connect_bitbox_content_ios
+                            : S.of(context).connect_bitbox_content,
+                        imagePath: "assets/images/illustrations/bitbox_connect.svg",
+                      ),
+                    ),
+                    AnimatedSlide(
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeInOut,
+                      offset: state is BitboxFound ? Offset.zero : const Offset(1.2, 0),
+                      child: ConnectContent(
+                        title: S.of(context).connected_bitbox_title,
+                        content: S.of(context).connected_bitbox_content,
+                        imagePath: "assets/images/illustrations/bitbox_connected.svg",
+                      ),
+                    ),
+                  ],
                 ),
-                AnimatedSlide(
-                  duration: const Duration(milliseconds: 350),
-                  curve: Curves.easeInOut,
-                  offset: state is BitboxFound ? Offset.zero : const Offset(1.2, 0),
-                  child: ConnectContent(
-                    title: S.of(context).connected_bitbox_title,
-                    content: S.of(context).connected_bitbox_content,
-                    imagePath: "assets/images/illustrations/bitbox_connected.svg",
-                  ),
-                ),
-              ]),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 28, bottom: 54),
-              child: ElevatedButton(
-                style: kFullwidthGrayButtonStyle,
-                onPressed: context.pop,
-                child: Text(S.of(context).cancel),
               ),
-            )
-          ],
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 28),
+                child: ElevatedButton(
+                  style: kFullwidthGrayButtonStyle,
+                  onPressed: context.pop,
+                  child: Text(S.of(context).cancel),
+                ),
+              )
+            ],
+          ),
         ),
       );
 }
