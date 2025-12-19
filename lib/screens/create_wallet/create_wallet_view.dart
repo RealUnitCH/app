@@ -99,7 +99,7 @@ class CreateWalletView extends StatelessWidget {
                           ),
                         ),
                         SeedBlurCard(
-                          text: state.wallet!.seed,
+                          seed: state.wallet!.seed,
                           onTap: context.read<CreateWalletCubit>().toggleShowSeed,
                           blur: state.hideSeed,
                         ),
@@ -120,9 +120,8 @@ class CreateWalletView extends StatelessWidget {
                           child: SizedBox(
                             width: double.infinity,
                             child: TextButton(
-                              onPressed: () => context
-                                  .read<HomeBloc>()
-                                  .add(LoadWalletEvent(state.wallet!)),
+                              onPressed: () =>
+                                  context.read<HomeBloc>().add(LoadWalletEvent(state.wallet!)),
                               style: kFullwidthBlueButtonStyle,
                               child: Text(
                                 S.of(context).create_wallet_confirm,
