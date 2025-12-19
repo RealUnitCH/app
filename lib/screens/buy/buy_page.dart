@@ -80,32 +80,37 @@ class _BuyViewState extends State<BuyView> {
         },
         builder: (context, state) {
           return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                spacing: 32,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  PaymentConverter(
-                    amountController: _amountController,
-                    resultController: _resultController,
+            child: SafeArea(
+              child: GestureDetector(
+                onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Column(
+                    spacing: 32,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      PaymentConverter(
+                        amountController: _amountController,
+                        resultController: _resultController,
+                      ),
+                      BlocBuilder<BuyAllowlistCubit, BuyAllowlistState>(
+                          builder: (context, allowlistState) {
+                        if (allowlistState.loading) {
+                          return const Center(
+                            child: CupertinoActivityIndicator(),
+                          );
+                        }
+                        if (allowlistState.isForbidden) {
+                          return PaymentNotPossibleInfo();
+                        } else {
+                          return PaymentInformation(
+                            amount: _amountController.text,
+                          );
+                        }
+                      })
+                    ],
                   ),
-                  BlocBuilder<BuyAllowlistCubit, BuyAllowlistState>(
-                      builder: (context, allowlistState) {
-                    if (allowlistState.loading) {
-                      return const Center(
-                        child: CupertinoActivityIndicator(),
-                      );
-                    }
-                    if (allowlistState.isForbidden) {
-                      return PaymentNotPossibleInfo();
-                    } else {
-                      return PaymentInformation(
-                        amount: _amountController.text,
-                      );
-                    }
-                  })
-                ],
+                ),
               ),
             ),
           );
