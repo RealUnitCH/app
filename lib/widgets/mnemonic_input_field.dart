@@ -45,31 +45,34 @@ class MnemonicInputField extends StatelessWidget {
             child: Align(
               alignment: Alignment.center,
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
                 children: [
                   Expanded(
-                    flex: 3,
+                    flex: 4,
                     child: Text(
                       "${index + 1}.",
                       style: TextStyle(
                         color: RealUnitColors.neutral400,
                         fontSize: 14,
-                        height: 18 / 14,
+                        height: 1.0,
                       ),
                     ),
                   ),
                   Expanded(
-                    flex: 13,
+                    flex: 14,
                     child: Focus(
                       onKeyEvent: (_, event) => _handleBackspace(context, index, event),
                       child: TextField(
                         style: TextStyle(
                           fontSize: 16,
-                          height: 20 / 16,
+                          height: 1.0,
                           fontWeight: FontWeight.w500,
                           letterSpacing: -0.3,
                         ),
                         autocorrect: false,
+                        keyboardType: TextInputType.text,
+                        enableSuggestions: false,
                         textCapitalization: TextCapitalization.none,
                         controller: controllers.elementAt(index),
                         focusNode: focusNodes.elementAt(index),
