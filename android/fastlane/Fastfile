@@ -1,0 +1,68 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:android)
+
+platform :android do
+  
+  def release_track
+    return "internal"
+  end
+
+  def aab_path
+    return "../build/app/outputs/bundle/release/app-release.aab"
+  end
+
+  def next_build_number
+    internal_codes = google_play_track_version_codes(track: release_track) || []
+    version_code = internal_codes
+    
+    version_code.empty? ? 1 : version_code.max + 1
+  end
+
+  desc "Build and upload to Play Store Beta"
+  lane :beta do
+    new_build_number = next_build_number
+    raw_version_name = ENV["NEW_VERSION"] || "v0.0.0"
+    new_version_name = raw_version_name.delete('v')
+
+    Dir.chdir("..") do
+      sh("flutter", "build", "appbundle", 
+         "--release",
+         "--build-name=#{new_version_name}", 
+         "--build-number=#{new_build_number}", 
+         "--no-tree-shake-icons", 
+         "--obfuscate", 
+         "--split-debug-info=build/debug_info"
+      )
+      sh("flutter", "build", "apk", 
+         "--release",
+         "--build-name=#{new_version_name}", 
+         "--build-number=#{new_build_number}", 
+         "--no-tree-shake-icons", 
+         "--obfuscate", 
+         "--split-debug-info=build/debug_info"
+      )
+    File.rename(
+      "../build/app/outputs/flutter-apk/app-release.apk", 
+      "../build/app/outputs/flutter-apk/realunit-#{new_version_name}.apk")
+    end
+
+    upload_to_play_store(
+      track: release_track,
+      aab: aab_path
+    )
+  end
+end

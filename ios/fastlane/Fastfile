@@ -28,6 +28,10 @@ platform :ios do
   lane :beta do
     setup_ci
 
+    raw_version_name = ENV["NEW_VERSION"] || "v0.0.0"
+    new_version_name = raw_version_name.delete('v')
+    latest_build = latest_testflight_build_number(api_key: get_api_key)
+
     sync_code_signing(
       type: "appstore",
       app_identifier: "swiss.dfx.realunit",
@@ -35,7 +39,11 @@ platform :ios do
       git_url: "git@github.com:DFXswiss/fastlane-certificates.git"
     )
 
-    latest_build = latest_testflight_build_number(api_key: get_api_key)
+    increment_version_number(
+      version_number: new_version_name,
+      xcodeproj: "Runner.xcodeproj"
+    )
+    
     increment_build_number(
       build_number: latest_build + 1,  
       xcodeproj: "Runner.xcodeproj"
@@ -44,6 +52,7 @@ platform :ios do
     gym(
       workspace: "Runner.xcworkspace",
       scheme: "Runner",
+      output_name: "realunit-#{new_version_name}.ipa",
       xcargs: "-verbose",
       verbose: true
     )
