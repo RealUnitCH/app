@@ -14,10 +14,7 @@ class PaymentExecutedSheet extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 5, bottom: 16),
-                child: Handlebars.horizontal(context),
-              ),
+              Handlebars.horizontal(context, margin: EdgeInsets.only(top: 5), width: 36),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 50.0, horizontal: 30.0),
                 child: Column(

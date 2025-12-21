@@ -94,6 +94,7 @@ class _WelcomePageState extends State<WelcomePage> {
                                 trailing: SvgPicture.asset(
                                   'assets/images/illustrations/bitbox.svg',
                                 ),
+                                onPressed: onBitboxPressed,
                               ),
                           ],
                         ),
@@ -133,14 +134,11 @@ class _WelcomePageState extends State<WelcomePage> {
         ),
       );
 
-  void onBitboxPressed() {
-    showModalBottomSheet(
+  Future<void> onBitboxPressed() async {
+    await showModalBottomSheet(
+      isScrollControlled: true,
       context: navigatorKey.currentContext!,
-      backgroundColor: Colors.white,
-      builder: (_) => BottomSheet(
-        onClosing: () {},
-        builder: (_) => ConnectBitboxPage(),
-      ),
+      builder: (_) => ConnectBitboxPage(),
     );
   }
 }

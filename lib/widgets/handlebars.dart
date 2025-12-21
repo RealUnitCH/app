@@ -13,7 +13,7 @@ class Handlebars {
         height: 5,
         width: width ?? MediaQuery.of(context).size.width * 0.25,
         decoration: BoxDecoration(
-          color: RealUnitColors.realUnitBlack,
+          color: RealUnitColors.neutral300,
           borderRadius: BorderRadius.circular(borderRadius),
         ),
       );
