@@ -26,7 +26,7 @@ class _WelcomePageState extends State<WelcomePage> {
           leading: showSecondStep
               ? IconButton(
                   onPressed: () => setState(() => showSecondStep = false),
-                  icon: Icon(Icons.arrow_back_rounded, size: 24),
+                  icon: Icon(Icons.arrow_back_rounded),
                 )
               : null,
         ),

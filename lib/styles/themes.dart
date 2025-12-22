@@ -6,8 +6,8 @@ ThemeData get realUnitTheme => ThemeData(
       fontFamily: "Open Sans",
       colorScheme: ColorScheme.fromSeed(seedColor: RealUnitColors.realUnitBlue),
       useMaterial3: true,
-      scaffoldBackgroundColor: Colors.white,
-      appBarTheme: AppBarTheme(
+      scaffoldBackgroundColor: RealUnitColors.basic.white,
+      appBarTheme: const AppBarTheme(
         scrolledUnderElevation: 0.0,
         backgroundColor: Colors.transparent,
         foregroundColor: RealUnitColors.realUnitBlack,
@@ -18,7 +18,12 @@ ThemeData get realUnitTheme => ThemeData(
           statusBarBrightness: Brightness.light, // For iOS
         ),
       ),
-      bottomSheetTheme: BottomSheetThemeData(
+      actionIconTheme: ActionIconThemeData(
+        backButtonIconBuilder: (context) => const Icon(
+          Icons.arrow_back_rounded,
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(

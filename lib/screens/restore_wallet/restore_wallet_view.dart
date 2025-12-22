@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/restore_wallet/cubit/restore_wallet/restore_wallet_cubit.dart';
@@ -41,15 +40,7 @@ class RestoreWalletView extends StatelessWidget {
         ],
         child: Scaffold(
           backgroundColor: RealUnitColors.brand700,
-          appBar: AppBar(
-            leading: IconButton(
-              onPressed: () => context.pop(),
-              icon: Icon(
-                Icons.arrow_back_rounded,
-                size: 24,
-              ),
-            ),
-          ),
+          appBar: AppBar(),
           body: SafeArea(
             child: GestureDetector(
               onTap: () => FocusManager.instance.primaryFocus?.unfocus(),

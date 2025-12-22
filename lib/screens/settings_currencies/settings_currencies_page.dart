@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
@@ -15,13 +14,6 @@ class SettingsCurrenciesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            onPressed: () => context.pop(),
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              size: 24,
-            ),
-          ),
           title: Text(
             S.of(context).settings_currency,
             style: kPageTitleTextStyle,
