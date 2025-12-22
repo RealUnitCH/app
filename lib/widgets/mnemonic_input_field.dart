@@ -1,7 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/widgets/mnemonic_input_field_controller.dart';
+part of 'mnemonic_field.dart';
 
 class MnemonicInputField extends StatelessWidget {
   final List<MnemonicInputFieldController> controllers;
@@ -20,83 +17,38 @@ class MnemonicInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 140,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12.0,
-        vertical: 8.0,
-      ),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor, width: 2),
-        color: RealUnitColors.basic.white,
-      ),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: 12,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          childAspectRatio: 3.6,
+    return _MnemonicFieldBase(
+      borderColor: borderColor,
+      borderWidth: 2,
+      onCellTap: (index) => FocusScope.of(context).requestFocus(focusNodes.elementAt(index)),
+      cellBuilder: (context, index) => Focus(
+        onKeyEvent: (_, event) => _handleBackspace(context, index, event),
+        child: TextField(
+          style: const TextStyle(
+            fontSize: 16,
+            height: 1.0,
+            fontWeight: FontWeight.w500,
+            letterSpacing: -0.3,
+          ),
+          autocorrect: false,
+          keyboardType: TextInputType.text,
+          enableSuggestions: false,
+          textCapitalization: TextCapitalization.none,
+          controller: controllers.elementAt(index),
+          focusNode: focusNodes.elementAt(index),
+          textInputAction:
+              index == controllers.length - 1 ? TextInputAction.done : TextInputAction.next,
+          decoration: const InputDecoration(
+            isDense: true,
+            border: InputBorder.none,
+            contentPadding: EdgeInsets.zero,
+          ),
+          onChanged: (value) {
+            _handleSpaceJump(context, index, value);
+            if (index == 0) _handleMnemonicPaste(context, value);
+            onChanged?.call();
+          },
         ),
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () => FocusScope.of(context).requestFocus(focusNodes.elementAt(index)),
-            child: Align(
-              alignment: Alignment.center,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Expanded(
-                    flex: 4,
-                    child: Text(
-                      "${index + 1}.",
-                      style: TextStyle(
-                        color: RealUnitColors.neutral400,
-                        fontSize: 14,
-                        height: 1.0,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 14,
-                    child: Focus(
-                      onKeyEvent: (_, event) => _handleBackspace(context, index, event),
-                      child: TextField(
-                        style: TextStyle(
-                          fontSize: 16,
-                          height: 1.0,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: -0.3,
-                        ),
-                        autocorrect: false,
-                        keyboardType: TextInputType.text,
-                        enableSuggestions: false,
-                        textCapitalization: TextCapitalization.none,
-                        controller: controllers.elementAt(index),
-                        focusNode: focusNodes.elementAt(index),
-                        textInputAction: index == controllers.length - 1
-                            ? TextInputAction.done
-                            : TextInputAction.next,
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                        onChanged: (value) {
-                          _handleSpaceJump(context, index, value);
-                          if (index == 0) _handleMnemonicPaste(context, value);
-                          if (onChanged != null) onChanged!();
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
       ),
     );
   }

@@ -4,7 +4,6 @@ import 'package:realunit_wallet/screens/restore_wallet/cubit/restore_wallet/rest
 import 'package:realunit_wallet/screens/restore_wallet/cubit/validate_seed/validate_seed_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/mnemonic_field.dart';
-import 'package:realunit_wallet/widgets/mnemonic_input_field_controller.dart';
 
 class RestoreWalletInputField extends StatelessWidget {
   const RestoreWalletInputField({

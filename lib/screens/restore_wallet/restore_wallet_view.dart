@@ -10,7 +10,7 @@ import 'package:realunit_wallet/screens/restore_wallet/widgets/restore_wallet_bu
 import 'package:realunit_wallet/screens/restore_wallet/widgets/restore_wallet_input_field.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
-import 'package:realunit_wallet/widgets/mnemonic_input_field_controller.dart';
+import 'package:realunit_wallet/widgets/mnemonic_field.dart';
 import 'package:realunit_wallet/widgets/text_substring_highlighting.dart';
 
 class RestoreWalletView extends StatelessWidget {
