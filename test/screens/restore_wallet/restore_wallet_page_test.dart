@@ -15,7 +15,7 @@ import 'package:realunit_wallet/screens/restore_wallet/restore_wallet_view.dart'
 import 'package:realunit_wallet/screens/restore_wallet/widgets/restore_wallet_button.dart';
 import 'package:realunit_wallet/screens/restore_wallet/widgets/restore_wallet_input_field.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/widgets/mnemonic_input_field.dart';
+import 'package:realunit_wallet/widgets/mnemonic_field.dart';
 
 import '../../helper/helper.dart';
 
@@ -77,7 +77,9 @@ void main() {
     testWidgets('renders initially correctly', (tester) async {
       await tester.pumpApp(buildSubject(RestoreWalletView()));
 
-      expect(find.byType(SvgPicture), findsOne);
+      expect(
+          find.byWidgetPredicate((Widget widget) => widget is SvgPicture && widget.height == 124),
+          findsOne);
       expect(find.byType(RestoreWalletInputField), findsOne);
       expect(find.byType(RestoreWalletButton), findsOne);
     });
