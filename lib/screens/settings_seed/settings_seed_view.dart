@@ -37,34 +37,37 @@ class SettingsSeedView extends StatelessWidget {
                     height: 124,
                   ),
                   SizedBox(height: 20),
-                  Text(
-                    S.of(context).settings_wallet_backup,
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
-                      height: 30 / 26,
-                      letterSpacing: -0.52,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    S.of(context).settings_wallet_backup_subtitle_1,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: RealUnitColors.neutral500,
-                      fontSize: 14,
-                      height: 18 / 14,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    S.of(context).settings_wallet_backup_subtitle_2,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: RealUnitColors.neutral500,
-                      fontSize: 14,
-                      height: 18 / 14,
-                    ),
+                  Column(
+                    spacing: 8.0,
+                    children: [
+                      Text(
+                        S.of(context).settings_wallet_backup,
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w700,
+                          height: 30 / 26,
+                          letterSpacing: -0.52,
+                        ),
+                      ),
+                      Text(
+                        S.of(context).settings_wallet_backup_subtitle_1,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: RealUnitColors.neutral500,
+                          fontSize: 14,
+                          height: 18 / 14,
+                        ),
+                      ),
+                      Text(
+                        S.of(context).settings_wallet_backup_subtitle_2,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: RealUnitColors.neutral500,
+                          fontSize: 14,
+                          height: 18 / 14,
+                        ),
+                      ),
+                    ],
                   ),
                   SizedBox(height: 40),
                   Row(
