@@ -23,13 +23,6 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-          leading: IconButton(
-            onPressed: () => context.pop(),
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              size: 24,
-            ),
-          ),
           title: Text(
             S.of(context).settings,
             style: kPageTitleTextStyle,

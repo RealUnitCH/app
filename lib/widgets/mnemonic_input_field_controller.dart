@@ -1,7 +1,4 @@
-// ignore: implementation_imports
-import 'package:bip39/src/wordlists/english.dart' as wordlist;
-import 'package:flutter/material.dart';
-import 'package:realunit_wallet/styles/colors.dart';
+part of 'mnemonic_field.dart';
 
 class MnemonicInputFieldController extends TextEditingController {
   final nonMatchStyle = TextStyle(color: RealUnitColors.status.red600);
@@ -19,8 +16,4 @@ class MnemonicInputFieldController extends TextEditingController {
       style: isMatching,
     );
   }
-}
-
-extension MnemonicListExtension on List<MnemonicInputFieldController> {
-  String get seed => map((c) => c.text.trim()).join(' ');
 }

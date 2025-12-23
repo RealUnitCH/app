@@ -1,9 +1,13 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
-class SettingsSeedCubit extends Cubit<bool> {
-  SettingsSeedCubit(this.seed) : super(true);
+part 'settings_seed_state.dart';
 
-  final String seed;
+class SettingsSeedCubit extends Cubit<SettingsSeedState> {
+  final SoftwareWallet wallet;
 
-  void toggleShowSeed() => emit(!state);
+  SettingsSeedCubit(this.wallet) : super(SettingsSeedState(wallet.seed));
+
+  void toggleShowSeed() => emit(state.copyWith(showSeed: !state.showSeed));
 }
