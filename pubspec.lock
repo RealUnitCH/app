@@ -122,6 +122,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.2"
+  buffer:
+    dependency: transitive
+    description:
+      name: buffer
+      sha256: "389da2ec2c16283c8787e0adaede82b1842102f8c8aae2f49003a766c5c6b3d1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.3"
   build:
     dependency: transitive
     description:
@@ -378,6 +386,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.1"
+  eth_sig_util_plus:
+    dependency: "direct main"
+    description:
+      name: eth_sig_util_plus
+      sha256: "0f9a72c0e3909df928c27dfda2e2d799099908d6a493319b329535139b665127"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.10"
   etherscan_api:
     dependency: "direct main"
     description:
