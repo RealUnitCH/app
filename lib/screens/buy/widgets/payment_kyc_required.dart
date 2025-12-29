@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:realunit_wallet/screens/buy/cubits/buy_allowlist/buy_allowlist_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/styles.dart';
@@ -48,7 +50,8 @@ class PaymentKycRequired extends StatelessWidget {
         ),
         TextButton(
           onPressed: () async {
-            context.push(KycPage.routeName);
+            await context.push(KycPage.routeName);
+            if (context.mounted) context.read<BuyAllowlistCubit>().checkAddress();
           },
           style: ButtonStyle(
             backgroundColor: WidgetStateProperty.all(
