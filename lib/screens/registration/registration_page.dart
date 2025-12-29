@@ -7,43 +7,43 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_registration_service.da
 import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_registration.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_user_type.dart';
-import 'package:realunit_wallet/screens/kyc/cubits/kyc_step/kyc_step_cubit.dart';
-import 'package:realunit_wallet/screens/kyc/cubits/kyc_submit/kyc_submit_cubit.dart';
-import 'package:realunit_wallet/screens/kyc/steps/kyc_address_step.dart';
-import 'package:realunit_wallet/screens/kyc/steps/kyc_completed_step.dart';
-import 'package:realunit_wallet/screens/kyc/steps/kyc_personal_step.dart';
+import 'package:realunit_wallet/screens/registration/cubits/registration_step/registration_step_cubit.dart';
+import 'package:realunit_wallet/screens/registration/cubits/registration_submit/registration_submit_cubit.dart';
+import 'package:realunit_wallet/screens/registration/steps/registration_address_step.dart';
+import 'package:realunit_wallet/screens/registration/steps/registration_completed_step.dart';
+import 'package:realunit_wallet/screens/registration/steps/registration_personal_step.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
-class KycPage extends StatelessWidget {
-  static const routeName = '/kyc';
-  const KycPage({super.key});
+class RegistrationPage extends StatelessWidget {
+  static const routeName = '/register';
+  const RegistrationPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (_) => KycSubmitCubit(
+          create: (_) => RegistrationSubmitCubit(
             getIt<DfxRegistrationService>(),
           ),
         ),
         BlocProvider(
-          create: (_) => KycStepCubit(),
+          create: (_) => RegistrationStepCubit(),
         ),
       ],
-      child: const KycView(),
+      child: const RegisterView(),
     );
   }
 }
 
-class KycView extends StatefulWidget {
-  const KycView({super.key});
+class RegisterView extends StatefulWidget {
+  const RegisterView({super.key});
 
   @override
-  State<KycView> createState() => _KycViewState();
+  State<RegisterView> createState() => _RegisterViewState();
 }
 
-class _KycViewState extends State<KycView> {
+class _RegisterViewState extends State<RegisterView> {
   final dfxService = getIt<DfxRegistrationService>();
   final _pageController = PageController();
 
@@ -62,7 +62,7 @@ class _KycViewState extends State<KycView> {
 
   @override
   void initState() {
-    context.read<KycStepCubit>().stream.listen((state) {
+    context.read<RegistrationStepCubit>().stream.listen((state) {
       _pageController.animateToPage(
         state.index,
         duration: const Duration(milliseconds: 350),
@@ -77,12 +77,13 @@ class _KycViewState extends State<KycView> {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: BlocBuilder<KycStepCubit, KycStepState>(
+        child: BlocBuilder<RegistrationStepCubit, RegistrationStepState>(
           builder: (context, state) {
             return AppBar(
               leading: IconButton(
-                onPressed:
-                    state.canGoBack ? context.read<KycStepCubit>().previous : () => context.pop(),
+                onPressed: state.canGoBack
+                    ? context.read<RegistrationStepCubit>().previous
+                    : () => context.pop(),
                 icon: const Icon(Icons.arrow_back_rounded),
               ),
               title: Text(
@@ -93,12 +94,12 @@ class _KycViewState extends State<KycView> {
           },
         ),
       ),
-      body: BlocListener<KycSubmitCubit, KycSubmitState>(
+      body: BlocListener<RegistrationSubmitCubit, RegistrationSubmitState>(
         listener: (context, state) {
-          if (state == KycSubmitState.successful) {
-            context.read<KycStepCubit>().next();
+          if (state == RegistrationSubmitState.successful) {
+            context.read<RegistrationStepCubit>().next();
           }
-          if (state == KycSubmitState.failed) {
+          if (state == RegistrationSubmitState.failed) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Registration failed!'),
@@ -112,7 +113,7 @@ class _KycViewState extends State<KycView> {
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: BlocBuilder<KycStepCubit, KycStepState>(
+              child: BlocBuilder<RegistrationStepCubit, RegistrationStepState>(
                 builder: (context, state) {
                   return LinearProgressIndicator(
                     value: state.progress,
@@ -129,7 +130,7 @@ class _KycViewState extends State<KycView> {
                     controller: _pageController,
                     physics: const NeverScrollableScrollPhysics(),
                     children: [
-                      KycPersonalStep(
+                      RegistrationPersonalStep(
                         typeCtrl: typeCtrl,
                         emailCtrl: emailCtrl,
                         firstNameCtrl: firstnameCtrl,
@@ -137,15 +138,15 @@ class _KycViewState extends State<KycView> {
                         nationalityCtrl: nationalityCtrl,
                         phoneCtrl: phoneCtrl,
                         birthdayCtrl: birthdayCtrl,
-                        onNext: context.read<KycStepCubit>().next,
+                        onNext: context.read<RegistrationStepCubit>().next,
                       ),
-                      KycAddressStep(
+                      RegisterAddressStep(
                         addressStreetCtrl: addressStreetCtrl,
                         postalCodeCtrl: postalCodeCtrl,
                         cityCtrl: cityCtrl,
                         countryCtrl: countryCtrl,
-                        onPrevious: context.read<KycStepCubit>().previous,
-                        onSubmit: () => context.read<KycSubmitCubit>().submit(
+                        onPrevious: context.read<RegistrationStepCubit>().previous,
+                        onSubmit: () => context.read<RegistrationSubmitCubit>().submit(
                               DfxRegistration(
                                 type: typeCtrl.value,
                                 email: emailCtrl.text,
@@ -163,12 +164,12 @@ class _KycViewState extends State<KycView> {
                               ),
                             ),
                       ),
-                      KycCompletedStep(),
+                      RegistrationCompletedStep(),
                     ],
                   ),
-                  BlocBuilder<KycSubmitCubit, KycSubmitState>(
+                  BlocBuilder<RegistrationSubmitCubit, RegistrationSubmitState>(
                     builder: (context, state) {
-                      if (state == KycSubmitState.loading) {
+                      if (state == RegistrationSubmitState.loading) {
                         return Container(
                           color: RealUnitColors.basic.white,
                           child: const Center(

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_user_type.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_birthday_field.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_nationality_field.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_phone_number_field.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/kyc_dropdown_field.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/kyc_text_field.dart';
+import 'package:realunit_wallet/screens/registration/widgets/fields/registration_birthday_field.dart';
+import 'package:realunit_wallet/screens/registration/widgets/fields/registration_nationality_field.dart';
+import 'package:realunit_wallet/screens/registration/widgets/fields/registration_phone_number_field.dart';
+import 'package:realunit_wallet/screens/registration/widgets/registration_dropdown_field.dart';
+import 'package:realunit_wallet/screens/registration/widgets/registration_text_field.dart';
 
-class KycPersonalStep extends StatelessWidget {
+class RegistrationPersonalStep extends StatelessWidget {
   final ValueNotifier<DfxUserType> typeCtrl;
   final TextEditingController emailCtrl;
   final TextEditingController firstNameCtrl;
@@ -17,7 +17,7 @@ class KycPersonalStep extends StatelessWidget {
   final ValueNotifier<DfxCountry?> nationalityCtrl;
   final VoidCallback onNext;
 
-  KycPersonalStep({
+  RegistrationPersonalStep({
     super.key,
     required this.typeCtrl,
     required this.emailCtrl,
@@ -41,7 +41,7 @@ class KycPersonalStep extends StatelessWidget {
           child: Column(
             spacing: 16,
             children: [
-              KycDropdownField<DfxUserType>(
+              RegistrationDropdownField<DfxUserType>(
                 label: 'Kontotyp',
                 hintText: DfxUserType.human.toString(),
                 items: DfxUserType.values
@@ -53,7 +53,7 @@ class KycPersonalStep extends StatelessWidget {
                 },
                 validator: (v) => v == null ? "Erforderlich" : null,
               ),
-              KycTextField(
+              RegistrationTextField(
                 label: 'E-Mail',
                 hintText: 'E-Mail',
                 controller: emailCtrl,
@@ -69,7 +69,7 @@ class KycPersonalStep extends StatelessWidget {
                 spacing: 10,
                 children: [
                   Expanded(
-                    child: KycTextField(
+                    child: RegistrationTextField(
                       label: 'Vorname',
                       hintText: 'Max',
                       controller: firstNameCtrl,
@@ -81,7 +81,7 @@ class KycPersonalStep extends StatelessWidget {
                     ),
                   ),
                   Expanded(
-                    child: KycTextField(
+                    child: RegistrationTextField(
                       label: 'Nachname',
                       hintText: 'Mustermann',
                       controller: lastNameCtrl,
@@ -94,13 +94,13 @@ class KycPersonalStep extends StatelessWidget {
                   ),
                 ],
               ),
-              KycBirthdayField(
+              RegistrationBirthdayField(
                 controller: birthdayCtrl,
               ),
-              KycPhoneNumberField(
+              RegistrationPhoneNumberField(
                 controller: phoneCtrl,
               ),
-              KycNationalityField(
+              RegistrationNationalityField(
                 initialCountry: nationalityCtrl.value,
                 onChanged: (country) => nationalityCtrl.value = country,
                 validator: (value) {

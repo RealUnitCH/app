@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/kyc_dropdown_field.dart';
+import 'package:realunit_wallet/screens/registration/widgets/registration_dropdown_field.dart';
 
-class KycNationalityField extends StatefulWidget {
+class RegistrationNationalityField extends StatefulWidget {
   final DfxCountry? initialCountry;
   final void Function(DfxCountry?)? onChanged;
   final String? Function(DfxCountry?)? validator;
 
-  const KycNationalityField({
+  const RegistrationNationalityField({
     super.key,
     this.initialCountry,
     this.onChanged,
@@ -17,10 +17,10 @@ class KycNationalityField extends StatefulWidget {
   });
 
   @override
-  State<KycNationalityField> createState() => _KycNationalityFieldState();
+  State<RegistrationNationalityField> createState() => _RegistrationNationalityFieldState();
 }
 
-class _KycNationalityFieldState extends State<KycNationalityField> {
+class _RegistrationNationalityFieldState extends State<RegistrationNationalityField> {
   final DfxCountryService countryService = getIt<DfxCountryService>();
   late Future<List<DfxCountry>> _countriesFuture;
 
@@ -66,7 +66,7 @@ class _KycNationalityFieldState extends State<KycNationalityField> {
 
         final countries = snapshot.data ?? [];
 
-        return KycDropdownField<DfxCountry>(
+        return RegistrationDropdownField<DfxCountry>(
           hintText: 'Schweiz',
           label: 'Nationalität',
           items: countries

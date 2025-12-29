@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/kyc_dropdown_field.dart';
+import 'package:realunit_wallet/screens/registration/widgets/registration_dropdown_field.dart';
 
-class KycBirthdayField extends StatefulWidget {
+class RegistrationBirthdayField extends StatefulWidget {
   final ValueNotifier<String?> controller;
 
-  const KycBirthdayField({super.key, required this.controller});
+  const RegistrationBirthdayField({super.key, required this.controller});
 
   @override
-  State<KycBirthdayField> createState() => _KycBirthdayFieldState();
+  State<RegistrationBirthdayField> createState() => _RegistrationBirthdayFieldState();
 }
 
-class _KycBirthdayFieldState extends State<KycBirthdayField> {
+class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
   String? selectedDay;
   String? selectedMonth;
   String? selectedYear;
@@ -60,7 +60,7 @@ class _KycBirthdayFieldState extends State<KycBirthdayField> {
           children: [
             Expanded(
               flex: 3,
-              child: KycDropdownField<String>(
+              child: RegistrationDropdownField<String>(
                 hintText: 'Tag',
                 items:
                     days.map((d) => DropdownMenuItem(value: d, child: Text(d.toString()))).toList(),
@@ -74,7 +74,7 @@ class _KycBirthdayFieldState extends State<KycBirthdayField> {
             ),
             Expanded(
               flex: 3,
-              child: KycDropdownField<String>(
+              child: RegistrationDropdownField<String>(
                 hintText: 'Monat',
                 items: months
                     .map((d) => DropdownMenuItem(value: d, child: Text(d.toString())))
@@ -89,7 +89,7 @@ class _KycBirthdayFieldState extends State<KycBirthdayField> {
             ),
             Expanded(
               flex: 3,
-              child: KycDropdownField<String>(
+              child: RegistrationDropdownField<String>(
                 hintText: 'Jahr',
                 items: years
                     .map((d) => DropdownMenuItem(value: d, child: Text(d.toString())))

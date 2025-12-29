@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
-class KycDropdownField<T> extends StatelessWidget {
+class RegistrationDropdownField<T> extends StatelessWidget {
   final String? label;
   final T? initialValue;
   final String? hintText;
@@ -9,7 +9,7 @@ class KycDropdownField<T> extends StatelessWidget {
   final void Function(T?)? onChanged;
   final String? Function(T?)? validator;
 
-  const KycDropdownField({
+  const RegistrationDropdownField({
     super.key,
     this.label,
     this.initialValue,

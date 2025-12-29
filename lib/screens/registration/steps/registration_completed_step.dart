@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class KycCompletedStep extends StatelessWidget {
-  const KycCompletedStep({super.key});
+class RegistrationCompletedStep extends StatelessWidget {
+  const RegistrationCompletedStep({super.key});
 
   @override
   Widget build(BuildContext context) {

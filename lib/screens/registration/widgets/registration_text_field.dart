@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
-class KycTextField extends StatelessWidget {
+class RegistrationTextField extends StatelessWidget {
   final String? label;
   final TextEditingController? controller;
   final String hintText;
@@ -10,7 +10,7 @@ class KycTextField extends StatelessWidget {
   final void Function(String)? onChanged;
   final String? initialValue;
 
-  const KycTextField({
+  const RegistrationTextField({
     super.key,
     this.label,
     this.controller,
