@@ -15,7 +15,9 @@ import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_allowlist_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_bank_details_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_service.dart';
 import 'package:realunit_wallet/packages/service/settings_service.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
@@ -77,13 +79,18 @@ void setupRepositories() {
   getIt.registerFactory(() => BalanceRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => AssetRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => NodeRepository(getIt<AppDatabase>()));
-  getIt.registerFactory(() =>
-      TransactionRepository(getIt<AppDatabase>(), getIt<AssetRepository>()));
+  getIt.registerFactory(() => TransactionRepository(
+        getIt<AppDatabase>(),
+        getIt<AssetRepository>(),
+      ));
 }
 
 void setupServices() {
   getIt.registerSingleton(BalanceService(
-      getIt<BalanceRepository>(), getIt<AssetRepository>(), getIt<AppStore>()));
+    getIt<BalanceRepository>(),
+    getIt<AssetRepository>(),
+    getIt<AppStore>(),
+  ));
 
   getIt.registerSingleton(BitboxService());
   getIt.registerFactory(() => WalletService(
@@ -92,18 +99,25 @@ void setupServices() {
         getIt<SettingsRepository>(),
       ));
 
-  getIt.registerFactory(() => TransactionHistoryService(getIt<AppStore>(),
-      getIt<AssetRepository>(), getIt<TransactionRepository>()));
+  getIt.registerFactory(() => TransactionHistoryService(
+        getIt<AppStore>(),
+        getIt<AssetRepository>(),
+        getIt<TransactionRepository>(),
+      ));
 
   getIt.registerFactory(() => OpenCryptoPayService());
+  getIt.registerFactory(() => DfxCountryService(getIt<AppStore>()));
   getIt.registerFactory(() => DFXPriceService(getIt<AppStore>()));
   getIt.registerFactory(() => DfxAllowlistService(getIt<AppStore>()));
   getIt.registerFactory(() => DfxBankDetailsService(getIt<AppStore>()));
   getIt.registerFactory(() => DfxBrokerbotService(getIt<AppStore>()));
-
+  getIt.registerFactory(() => DfxRegistrationService(getIt<AppStore>()));
   getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
-  getIt.registerFactory(() => DFXService(getIt<AppStore>(),
-      getIt<SettingsRepository>(), getIt<AssetRepository>()));
+  getIt.registerFactory(() => DFXService(
+        getIt<AppStore>(),
+        getIt<SettingsRepository>(),
+        getIt<AssetRepository>(),
+      ));
 }
 
 void setupBlocs() {
@@ -117,5 +131,4 @@ void setupBlocs() {
   ));
 }
 
-Future<bool> _existsDatabaseFile() async =>
-    File(await AppDatabase.getDatabasePath()).exists();
+Future<bool> _existsDatabaseFile() async => File(await AppDatabase.getDatabasePath()).exists();
