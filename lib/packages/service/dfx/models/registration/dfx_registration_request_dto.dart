@@ -1,6 +1,7 @@
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 
 class DfxRegistrationRequestDto {
+  final String type;
   final String email;
   final String name;
   final String phoneNumber;
@@ -19,6 +20,7 @@ class DfxRegistrationRequestDto {
   final List<CountryAndTin>? countryAndTINs;
 
   DfxRegistrationRequestDto({
+    required this.type,
     required this.email,
     required this.name,
     required this.phoneNumber,
@@ -40,7 +42,7 @@ class DfxRegistrationRequestDto {
   Map<String, dynamic> toJson() => {
         'email': email,
         'name': name,
-        'type': 'HUMAN',
+        'type': type,
         'phoneNumber': phoneNumber,
         'birthday': birthday,
         'nationality': nationality,

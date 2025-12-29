@@ -23,6 +23,7 @@ class DfxRegistrationService {
       registration: registration,
     );
     final requestDto = DfxRegistrationRequestDto(
+      type: registration.type.jsonName,
       email: registration.email,
       name: '${registration.firstName} ${registration.lastName}',
       phoneNumber: registration.phoneNumber,
