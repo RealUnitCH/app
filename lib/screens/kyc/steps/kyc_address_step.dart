@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
+import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_country_field.dart';
 import 'package:realunit_wallet/screens/kyc/widgets/kyc_text_field.dart';
 
 class KycAddressStep extends StatelessWidget {
   final TextEditingController addressStreetCtrl;
   final TextEditingController postalCodeCtrl;
   final TextEditingController cityCtrl;
-  final TextEditingController countryCtrl;
+  final ValueNotifier<DfxCountry?> countryCtrl;
   final VoidCallback onPrevious;
-  final VoidCallback onSubmit;
+  final Future<void> Function() onSubmit;
 
   KycAddressStep({
     super.key,
@@ -24,71 +26,72 @@ class KycAddressStep extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          spacing: 16,
-          children: [
-            KycTextField(
-              hintText: 'Musterstrasse 12',
-              controller: addressStreetCtrl,
-              label: 'Adresse',
-              keyboardType: TextInputType.streetAddress,
-              validator: (value) {
-                if (value == null || value.isEmpty) return "Erforderlich";
-                return null;
-              },
-            ),
-            Row(
-              spacing: 10,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: KycTextField(
-                    hintText: '8000',
-                    controller: postalCodeCtrl,
-                    label: 'PLZ',
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) return "Erforderlich";
-                      return null;
-                    },
+      child: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            spacing: 16,
+            children: [
+              KycTextField(
+                hintText: 'Musterstrasse 12',
+                controller: addressStreetCtrl,
+                label: 'Adresse',
+                keyboardType: TextInputType.streetAddress,
+                validator: (value) {
+                  if (value == null || value.isEmpty) return "Erforderlich";
+                  return null;
+                },
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 10,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: KycTextField(
+                      hintText: '8000',
+                      controller: postalCodeCtrl,
+                      label: 'PLZ',
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return "Erforderlich";
+                        return null;
+                      },
+                    ),
                   ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: KycTextField(
-                    hintText: 'Zürich',
-                    controller: cityCtrl,
-                    label: 'Stadt',
-                    keyboardType: TextInputType.text,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) return "Erforderlich";
-                      return null;
-                    },
+                  Expanded(
+                    flex: 3,
+                    child: KycTextField(
+                      hintText: 'Zurich',
+                      controller: cityCtrl,
+                      label: 'Stadt',
+                      keyboardType: TextInputType.text,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return "Erforderlich";
+                        return null;
+                      },
+                    ),
                   ),
-                ),
-              ],
-            ),
-            KycTextField(
-              hintText: 'Schweiz',
-              controller: countryCtrl,
-              label: 'Land',
-              keyboardType: TextInputType.text,
-              validator: (value) {
-                if (value == null || value.isEmpty) return "Erforderlich";
-                return null;
-              },
-            ),
-            FilledButton(
-              onPressed: () {
-                if (_formKey.currentState?.validate() ?? false) {
-                  onSubmit();
-                }
-              },
-              child: const Text("Abschliessen"),
-            ),
-          ],
+                ],
+              ),
+              KycCountryField(
+                initialCountry: countryCtrl.value,
+                onChanged: (country) => countryCtrl.value = country,
+                validator: (value) {
+                  if (value == null) return "Erforderlich";
+                  return null;
+                },
+              ),
+              FilledButton(
+                onPressed: () async {
+                  if (_formKey.currentState?.validate() ?? false) {
+                    await onSubmit();
+                  }
+                },
+                child: const Text("Abschliessen"),
+              ),
+            ],
+          ),
         ),
       ),
     );

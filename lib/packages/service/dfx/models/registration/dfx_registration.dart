@@ -1,18 +1,23 @@
+import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_user_type.dart';
+
 class DfxRegistration {
+  final DfxUserType type;
   final String email;
   final String firstName;
   final String lastName;
   final String phoneNumber;
   final String birthday;
-  final String nationality;
+  final DfxCountry nationality;
   final String addressStreet;
   final String addressPostalCode;
   final String addressCity;
-  final String addressCountry;
+  final DfxCountry addressCountry;
   final bool swissTaxResidence;
   final String registrationDate;
 
   DfxRegistration({
+    required this.type,
     required this.email,
     required this.firstName,
     required this.lastName,

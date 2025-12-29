@@ -105,8 +105,8 @@ void setupServices() {
         getIt<TransactionRepository>(),
       ));
 
+  getIt.registerCachedFactory(() => DfxCountryService(getIt<AppStore>()));
   getIt.registerFactory(() => OpenCryptoPayService());
-  getIt.registerFactory(() => DfxCountryService(getIt<AppStore>()));
   getIt.registerFactory(() => DFXPriceService(getIt<AppStore>()));
   getIt.registerFactory(() => DfxAllowlistService(getIt<AppStore>()));
   getIt.registerFactory(() => DfxBankDetailsService(getIt<AppStore>()));

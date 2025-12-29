@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:realunit_wallet/di.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_registration_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_registration.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_user_type.dart';
 import 'package:realunit_wallet/screens/kyc/steps/kyc_address_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/kyc_personal_step.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -22,6 +28,7 @@ class KycView extends StatefulWidget {
 }
 
 class _KycViewState extends State<KycView> {
+  final dfxService = getIt<DfxRegistrationService>();
   final pageController = PageController();
 
   int currentPage = 0;
@@ -39,58 +46,63 @@ class _KycViewState extends State<KycView> {
     });
   }
 
-  // STEP 1 controllers
+  final typeCtrl = ValueNotifier<DfxUserType>(DfxUserType.human);
   final emailCtrl = TextEditingController();
-  final surnameCtrl = TextEditingController();
+  final lastnameCtrl = TextEditingController();
   final firstnameCtrl = TextEditingController();
-  final phoneCtrl = TextEditingController();
-  String birthday = "";
+  final phoneCtrl = ValueNotifier<String?>(null);
+  final nationalityCtrl = ValueNotifier<DfxCountry?>(null);
+  final birthdayCtrl = ValueNotifier<String?>(null);
 
-  // STEP 2 controllers
   final addressStreetCtrl = TextEditingController();
   final postalCodeCtrl = TextEditingController();
   final cityCtrl = TextEditingController();
-  final countryCtrl = TextEditingController();
-
-  @override
-  void dispose() {
-    pageController.dispose();
-    emailCtrl.dispose();
-    firstnameCtrl.dispose();
-    surnameCtrl.dispose();
-    phoneCtrl.dispose();
-    addressStreetCtrl.dispose();
-    postalCodeCtrl.dispose();
-    cityCtrl.dispose();
-    countryCtrl.dispose();
-    super.dispose();
-  }
+  final countryCtrl = ValueNotifier<DfxCountry?>(null);
 
   void goNext() => pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 350),
         curve: Curves.easeOut,
       );
 
   void goPrevious() => pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 350),
         curve: Curves.easeOut,
       );
 
-  void submitKyc() {
-    final result = {
-      "email": emailCtrl.text,
-      "name": "${firstnameCtrl.text} ${surnameCtrl.text}",
-      "phoneNumber": phoneCtrl.text,
-      "birthday": birthday,
-      "addressStreet": addressStreetCtrl.text,
-      "addressPostalCode": postalCodeCtrl.text,
-      "addressCity": cityCtrl.text,
-      "addressCountry": countryCtrl.text,
-      "type": "HUMAN",
-      "lang": "EN",
-    };
+  Future<void> submitKyc() async {
+    try {
+      print('Sending registration request...');
+      final response = await dfxService.register(
+        DfxRegistration(
+          type: typeCtrl.value,
+          email: emailCtrl.text,
+          firstName: firstnameCtrl.text,
+          lastName: lastnameCtrl.text,
+          phoneNumber: phoneCtrl.value ?? '',
+          birthday: birthdayCtrl.value ?? '',
+          nationality: nationalityCtrl.value!,
+          addressStreet: addressStreetCtrl.text,
+          addressPostalCode: postalCodeCtrl.text,
+          addressCity: cityCtrl.text,
+          addressCountry: countryCtrl.value!,
+          swissTaxResidence: true,
+          registrationDate: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+        ),
+      );
 
-    debugPrint("KYC SUBMIT => $result");
+      print('Registration successful! Response: ${response.toString()}');
+      print(response.status);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration successful!'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Registration failed: $e!'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   @override
@@ -123,11 +135,13 @@ class _KycViewState extends State<KycView> {
               physics: const NeverScrollableScrollPhysics(),
               children: [
                 KycPersonalStep(
+                  typeCtrl: typeCtrl,
                   emailCtrl: emailCtrl,
-                  firstnameCtrl: firstnameCtrl,
-                  surnameCtrl: surnameCtrl,
+                  firstNameCtrl: firstnameCtrl,
+                  lastNameCtrl: lastnameCtrl,
+                  nationalityCtrl: nationalityCtrl,
                   phoneCtrl: phoneCtrl,
-                  onBirthdaySelected: (val) => birthday = val,
+                  birthdayCtrl: birthdayCtrl,
                   onNext: goNext,
                 ),
                 KycAddressStep(
@@ -144,5 +158,21 @@ class _KycViewState extends State<KycView> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    pageController.dispose();
+    typeCtrl.dispose();
+    emailCtrl.dispose();
+    firstnameCtrl.dispose();
+    lastnameCtrl.dispose();
+    phoneCtrl.dispose();
+    nationalityCtrl.dispose();
+    addressStreetCtrl.dispose();
+    postalCodeCtrl.dispose();
+    cityCtrl.dispose();
+    countryCtrl.dispose();
+    super.dispose();
   }
 }

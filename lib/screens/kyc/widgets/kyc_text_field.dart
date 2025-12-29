@@ -7,6 +7,8 @@ class KycTextField extends StatelessWidget {
   final String hintText;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
+  final void Function(String)? onChanged;
+  final String? initialValue;
 
   const KycTextField({
     super.key,
@@ -15,6 +17,8 @@ class KycTextField extends StatelessWidget {
     required this.hintText,
     this.keyboardType,
     this.validator,
+    this.onChanged,
+    this.initialValue,
   });
 
   @override
@@ -35,6 +39,8 @@ class KycTextField extends StatelessWidget {
             ),
           ),
         TextFormField(
+          initialValue: initialValue,
+          onChanged: onChanged,
           controller: controller,
           decoration: InputDecoration(
             hintText: hintText,

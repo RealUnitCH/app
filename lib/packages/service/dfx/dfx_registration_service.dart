@@ -15,7 +15,7 @@ class DfxRegistrationService {
 
   DfxRegistrationService(this.appStore);
 
-  Future<DfxRegistrationResponseDto> register(DfxRegistration registration, int countryId) async {
+  Future<DfxRegistrationResponseDto> register(DfxRegistration registration) async {
     final credentials = appStore.wallet.primaryAccount.primaryAddress;
 
     final signature = EIP712Signer.signRegistration(
@@ -27,11 +27,11 @@ class DfxRegistrationService {
       name: '${registration.firstName} ${registration.lastName}',
       phoneNumber: registration.phoneNumber,
       birthday: registration.birthday,
-      nationality: registration.nationality,
+      nationality: registration.nationality.symbol,
       addressStreet: registration.addressStreet,
       addressPostalCode: registration.addressPostalCode,
       addressCity: registration.addressCity,
-      addressCountry: registration.addressCountry,
+      addressCountry: registration.addressCountry.symbol,
       swissTaxResidence: true,
       registrationDate: registration.registrationDate,
       walletAddress: credentials.address.hexEip55,
@@ -45,7 +45,7 @@ class DfxRegistrationService {
           street: registration.addressStreet,
           zip: registration.addressPostalCode,
           city: registration.addressCity,
-          country: countryId,
+          country: registration.addressCountry.id,
         ),
       ),
     );

@@ -1,14 +1,9 @@
 enum DfxUserType {
-  human,
-  corperation;
+  human(name: 'human', jsonName: 'HUMAN'),
+  corporation(name: 'corporation', jsonName: 'CORPORATION');
 
-  @override
-  String toString() {
-    switch (this) {
-      case DfxUserType.human:
-        return 'HUMAN';
-      case DfxUserType.corperation:
-        return 'CORPORATION';
-    }
-  }
+  final String name;
+  final String jsonName;
+
+  const DfxUserType({required this.name, required this.jsonName});
 }
