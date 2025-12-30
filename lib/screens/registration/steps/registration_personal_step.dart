@@ -64,8 +64,9 @@ class RegistrationPersonalStep extends StatelessWidget {
                   keyboardType: TextInputType.emailAddress,
                   hideErrorText: false,
                   validator: (value) {
-                    if (value == null || value.isEmpty)
+                    if (value == null || value.isEmpty) {
                       return S.of(context).register_email_required;
+                    }
                     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
                       return S.of(context).register_email_invalid;
                     }

@@ -4,7 +4,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
 import 'package:realunit_wallet/screens/registration/widgets/fields/registration_country_field.dart';
 import 'package:realunit_wallet/screens/registration/widgets/registration_text_field.dart';
 
-class RegisterAddressStep extends StatelessWidget {
+class RegistrationAddressStep extends StatelessWidget {
   final TextEditingController addressStreetCtrl;
   final TextEditingController postalCodeCtrl;
   final TextEditingController cityCtrl;
@@ -12,7 +12,7 @@ class RegisterAddressStep extends StatelessWidget {
   final VoidCallback onPrevious;
   final Future<void> Function() onSubmit;
 
-  RegisterAddressStep({
+  RegistrationAddressStep({
     super.key,
     required this.addressStreetCtrl,
     required this.postalCodeCtrl,

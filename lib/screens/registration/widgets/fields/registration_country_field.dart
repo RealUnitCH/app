@@ -50,7 +50,7 @@ class _RegistrationCountryFieldState extends State<RegistrationCountryField> {
         return RegistrationDropdownField<DfxCountry>(
           hintText: 'Schweiz',
           label: widget.label,
-          items: countries.map((d) => DropdownMenuItem(value: d, child: Text(d.name))).toList(),
+          items: countries.map((c) => DropdownMenuItem(value: c, child: Text(c.name))).toList(),
           initialValue: initialCountry,
           onChanged: widget.onChanged,
           validator: widget.validator,

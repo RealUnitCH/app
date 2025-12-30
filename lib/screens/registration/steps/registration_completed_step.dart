@@ -12,7 +12,7 @@ class RegistrationCompletedStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.read<RegistrationSubmitCubit>().state;
 
-    return Container(
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: SafeArea(
         child: Column(

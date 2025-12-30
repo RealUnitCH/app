@@ -141,7 +141,7 @@ class _RegistrationViewState extends State<RegistrationView> {
                         birthdayCtrl: birthdayCtrl,
                         onNext: context.read<RegistrationStepCubit>().next,
                       ),
-                      RegisterAddressStep(
+                      RegistrationAddressStep(
                         addressStreetCtrl: addressStreetCtrl,
                         postalCodeCtrl: postalCodeCtrl,
                         cityCtrl: cityCtrl,

@@ -78,7 +78,7 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
               child: RegistrationDropdownField<String>(
                 hintText: S.of(context).month,
                 items: months
-                    .map((d) => DropdownMenuItem(value: d, child: Text(d.toString())))
+                    .map((m) => DropdownMenuItem(value: m, child: Text(m.toString())))
                     .toList(),
                 initialValue: selectedMonth,
                 onChanged: (v) {
@@ -93,7 +93,7 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
               child: RegistrationDropdownField<String>(
                 hintText: S.of(context).year,
                 items: years
-                    .map((d) => DropdownMenuItem(value: d, child: Text(d.toString())))
+                    .map((y) => DropdownMenuItem(value: y, child: Text(y.toString())))
                     .toList(),
                 initialValue: selectedYear,
                 onChanged: (v) {
