@@ -8,6 +8,7 @@ class RegistrationDropdownField<T> extends StatelessWidget {
   final void Function(T?)? onChanged;
   final String? Function(T?)? validator;
   final List<DropdownMenuItem<T>> items;
+  final bool hideErrorText;
 
   const RegistrationDropdownField({
     super.key,
@@ -17,6 +18,7 @@ class RegistrationDropdownField<T> extends StatelessWidget {
     this.onChanged,
     this.validator,
     required this.items,
+    this.hideErrorText = true,
   });
 
   @override
@@ -67,11 +69,16 @@ class RegistrationDropdownField<T> extends StatelessWidget {
                 borderSide: BorderSide(color: RealUnitColors.status.red600, width: 2),
               ),
               border: InputBorder.none,
-              hintStyle: TextStyle(color: RealUnitColors.neutral400),
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 10.0,
                 vertical: 14.0,
               ),
+              errorStyle: hideErrorText
+                  ? TextStyle(
+                      height: -1,
+                      fontSize: 0,
+                    )
+                  : null,
             ),
             hint: hintText != null
                 ? Text(

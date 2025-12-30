@@ -69,7 +69,7 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
                   setState(() => selectedDay = v);
                   updateBirthday();
                 },
-                validator: (v) => v == null ? "Erforderlich" : null,
+                validator: (v) => v == null ? '' : null,
               ),
             ),
             Expanded(
@@ -84,7 +84,7 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
                   setState(() => selectedMonth = v);
                   updateBirthday();
                 },
-                validator: (v) => v == null ? "Erforderlich" : null,
+                validator: (v) => v == null ? '' : null,
               ),
             ),
             Expanded(
@@ -99,7 +99,7 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
                   setState(() => selectedYear = v);
                   updateBirthday();
                 },
-                validator: (v) => v == null ? "Erforderlich" : null,
+                validator: (v) => v == null ? '' : null,
               ),
             ),
           ],

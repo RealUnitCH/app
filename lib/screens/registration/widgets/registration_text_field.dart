@@ -9,6 +9,7 @@ class RegistrationTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final void Function(String)? onChanged;
   final String? Function(String?)? validator;
+  final bool hideErrorText;
 
   const RegistrationTextField({
     super.key,
@@ -19,6 +20,7 @@ class RegistrationTextField extends StatelessWidget {
     this.keyboardType,
     this.onChanged,
     this.validator,
+    this.hideErrorText = true,
   });
 
   @override
@@ -62,6 +64,12 @@ class RegistrationTextField extends StatelessWidget {
             ),
             contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 14),
             hintStyle: TextStyle(color: RealUnitColors.neutral400),
+            errorStyle: hideErrorText
+                ? TextStyle(
+                    height: -1,
+                    fontSize: 0,
+                  )
+                : null,
           ),
           keyboardType: keyboardType,
           validator: validator,

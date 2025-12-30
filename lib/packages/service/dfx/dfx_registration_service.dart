@@ -64,7 +64,11 @@ class DfxRegistrationService {
     );
 
     if (response.statusCode != 200 && response.statusCode != 202) {
-      throw Exception("Registration failed: ${response.body}");
+      final messages = jsonDecode(response.body)['message'] is List
+          ? List<String>.from(jsonDecode(response.body)['message'])
+          : <String>[jsonDecode(response.body)['message']];
+
+      throw Exception(messages.join('\n'));
     }
 
     return DfxRegistrationResponseDto.fromJson(jsonDecode(response.body));

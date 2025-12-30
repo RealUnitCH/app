@@ -96,13 +96,13 @@ class _RegisterViewState extends State<RegisterView> {
       ),
       body: BlocListener<RegistrationSubmitCubit, RegistrationSubmitState>(
         listener: (context, state) {
-          if (state == RegistrationSubmitState.successful) {
+          if (state is RegistrationSubmitSuccess) {
             context.read<RegistrationStepCubit>().next();
           }
-          if (state == RegistrationSubmitState.failed) {
+          if (state is RegistrationSubmitFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Registration failed!'),
+              SnackBar(
+                content: Text('Registration failed:\n${state.message}'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -169,7 +169,7 @@ class _RegisterViewState extends State<RegisterView> {
                   ),
                   BlocBuilder<RegistrationSubmitCubit, RegistrationSubmitState>(
                     builder: (context, state) {
-                      if (state == RegistrationSubmitState.loading) {
+                      if (state is RegistrationSubmitLoading) {
                         return Container(
                           color: RealUnitColors.basic.white,
                           child: const Center(

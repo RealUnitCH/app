@@ -84,15 +84,16 @@ class _RegistrationPhoneNumberFieldState extends State<RegistrationPhoneNumberFi
                   number = v;
                   updatePhoneNumber();
                 },
+                hideErrorText: false,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return "Telefonnummer ist erforderlich";
+                    return "Nummer ist erforderlich";
                   }
                   if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
                     return "Nur Zahlen sind erlaubt";
                   }
                   if (value.length < 6) {
-                    return "Telefonnummer ist zu kurz";
+                    return "Nummer ist zu kurz";
                   }
                   return null;
                 },

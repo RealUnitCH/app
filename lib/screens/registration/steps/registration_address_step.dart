@@ -75,7 +75,7 @@ class RegisterAddressStep extends StatelessWidget {
                 ],
               ),
               RegistrationCountryField(
-                label: 'Land',
+                label: 'Staat',
                 onChanged: (country) => countryCtrl.value = country,
                 validator: (value) {
                   if (value == null) return "Erforderlich";

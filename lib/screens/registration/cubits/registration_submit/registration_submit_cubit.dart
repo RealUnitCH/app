@@ -1,27 +1,27 @@
 import 'dart:developer' as developer;
 
+import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_registration.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_registration_status.dart';
 
 part 'registration_submit_state.dart';
 
 class RegistrationSubmitCubit extends Cubit<RegistrationSubmitState> {
   final DfxRegistrationService _service;
 
-  RegistrationSubmitCubit(this._service) : super(RegistrationSubmitState.initial);
+  RegistrationSubmitCubit(this._service) : super(RegistrationSubmitInitial());
 
   Future<void> submit(DfxRegistration registration) async {
     try {
-      emit(RegistrationSubmitState.loading);
+      emit(RegistrationSubmitLoading());
       final response = await _service.register(registration);
 
-      developer.log('Registration successful! Response: ${response.toString()}');
-      developer.log(response.status.toString());
-      emit(RegistrationSubmitState.successful);
+      emit(RegistrationSubmitSuccess(response.status));
     } catch (e) {
-      emit(RegistrationSubmitState.failed);
       developer.log(e.toString());
+      emit(RegistrationSubmitFailure(e.toString()));
     }
   }
 }

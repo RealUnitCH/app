@@ -51,13 +51,14 @@ class RegistrationPersonalStep extends StatelessWidget {
                 onChanged: (v) {
                   if (v != null) typeCtrl.value = v;
                 },
-                validator: (v) => v == null ? "Erforderlich" : null,
+                validator: (v) => v == null ? '' : null,
               ),
               RegistrationTextField(
                 label: 'E-Mail',
                 hintText: 'E-Mail',
                 controller: emailCtrl,
                 keyboardType: TextInputType.emailAddress,
+                hideErrorText: false,
                 validator: (value) {
                   if (value == null || value.isEmpty) return "E-Mail ist erforderlich";
                   if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) return "E-Mail ist ungültig";
@@ -75,7 +76,7 @@ class RegistrationPersonalStep extends StatelessWidget {
                       controller: firstNameCtrl,
                       keyboardType: TextInputType.name,
                       validator: (value) {
-                        if (value == null || value.isEmpty) return "Erforderlich";
+                        if (value == null || value.isEmpty) return '';
                         return null;
                       },
                     ),
@@ -87,7 +88,7 @@ class RegistrationPersonalStep extends StatelessWidget {
                       controller: lastNameCtrl,
                       keyboardType: TextInputType.name,
                       validator: (value) {
-                        if (value == null || value.isEmpty) return "Erforderlich";
+                        if (value == null || value.isEmpty) return '';
                         return null;
                       },
                     ),
@@ -101,10 +102,10 @@ class RegistrationPersonalStep extends StatelessWidget {
                 controller: phoneCtrl,
               ),
               RegistrationCountryField(
-                label: 'Nationalität',
+                label: 'Staatsangehörigkeit',
                 onChanged: (country) => nationalityCtrl.value = country,
                 validator: (value) {
-                  if (value == null) return "Nationalität ist erforderlich";
+                  if (value == null) return '';
                   return null;
                 },
               ),
