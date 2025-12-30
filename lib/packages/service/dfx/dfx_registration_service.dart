@@ -17,7 +17,6 @@ class DfxRegistrationService {
 
   Future<DfxRegistrationResponseDto> register(DfxRegistration registration) async {
     final credentials = appStore.wallet.primaryAccount.primaryAddress;
-
     final signature = EIP712Signer.signRegistration(
       credentials: credentials,
       registration: registration,
@@ -39,6 +38,7 @@ class DfxRegistrationService {
       signature: signature,
       lang: 'DE',
       kycData: KycPersonalData(
+        accountType: KycAccountType.fromDfxAccountType(registration.type),
         firstName: registration.firstName,
         lastName: registration.lastName,
         phone: registration.phoneNumber,
@@ -50,7 +50,6 @@ class DfxRegistrationService {
         ),
       ),
     );
-
     final authToken = appStore.dfxAuthToken;
 
     final uri = Uri.https(_baseUrl, _registerPath);

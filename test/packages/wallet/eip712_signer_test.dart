@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_account_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_registration.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_user_type.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 import 'package:web3dart/web3dart.dart';
 
 void main() {
   late String privateKeyHex;
-  late DfxAccountType type;
+  late DfxUserType type;
   late String email;
   late String firstName;
   late String lastName;
@@ -25,7 +25,7 @@ void main() {
     test(('sign Registration Data works correctly'), () {
       privateKeyHex = 'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
       final credentials = EthPrivateKey.fromHex(privateKeyHex);
-      type = DfxAccountType.human;
+      type = DfxUserType.human;
       email = 'test-direct@dfx.swiss';
       firstName = 'Test';
       lastName = 'Direct';

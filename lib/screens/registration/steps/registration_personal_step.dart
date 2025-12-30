@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_account_type.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_user_type.dart';
 import 'package:realunit_wallet/screens/registration/widgets/fields/registration_birthday_field.dart';
 import 'package:realunit_wallet/screens/registration/widgets/fields/registration_country_field.dart';
 import 'package:realunit_wallet/screens/registration/widgets/fields/registration_phone_number_field.dart';
@@ -9,7 +9,7 @@ import 'package:realunit_wallet/screens/registration/widgets/registration_dropdo
 import 'package:realunit_wallet/screens/registration/widgets/registration_text_field.dart';
 
 class RegistrationPersonalStep extends StatelessWidget {
-  final ValueNotifier<DfxAccountType> typeCtrl;
+  final ValueNotifier<DfxUserType> typeCtrl;
   final TextEditingController emailCtrl;
   final TextEditingController firstNameCtrl;
   final TextEditingController lastNameCtrl;
@@ -45,13 +45,13 @@ class RegistrationPersonalStep extends StatelessWidget {
             child: Column(
               spacing: 16,
               children: [
-                RegistrationDropdownField<DfxAccountType>(
+                RegistrationDropdownField<DfxUserType>(
                   label: S.of(context).register_account_type,
-                  hintText: DfxAccountType.human.toString(),
-                  items: DfxAccountType.values
+                  hintText: DfxUserType.human.toString(),
+                  items: DfxUserType.values
                       .map((d) => DropdownMenuItem(value: d, child: Text(d.name(context))))
                       .toList(),
-                  initialValue: DfxAccountType.human,
+                  initialValue: DfxUserType.human,
                   onChanged: (v) {
                     if (v != null) typeCtrl.value = v;
                   },

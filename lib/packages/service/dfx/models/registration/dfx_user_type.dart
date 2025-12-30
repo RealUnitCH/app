@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 
-enum DfxAccountType {
+enum DfxUserType {
   human(jsonName: 'HUMAN'),
   corporation(jsonName: 'CORPORATION');
 
@@ -9,12 +9,12 @@ enum DfxAccountType {
 
   String name(BuildContext context) {
     switch (this) {
-      case DfxAccountType.human:
+      case DfxUserType.human:
         return S.of(context).account_type_human;
-      case DfxAccountType.corporation:
+      case DfxUserType.corporation:
         return S.of(context).account_type_corporation;
     }
   }
 
-  const DfxAccountType({required this.jsonName});
+  const DfxUserType({required this.jsonName});
 }

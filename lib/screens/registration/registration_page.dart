@@ -5,8 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_account_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_registration.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_user_type.dart';
 import 'package:realunit_wallet/screens/registration/cubits/registration_step/registration_step_cubit.dart';
 import 'package:realunit_wallet/screens/registration/cubits/registration_submit/registration_submit_cubit.dart';
 import 'package:realunit_wallet/screens/registration/steps/registration_address_step.dart';
@@ -46,7 +46,7 @@ class RegistrationView extends StatefulWidget {
 class _RegistrationViewState extends State<RegistrationView> {
   final _pageController = PageController();
 
-  final typeCtrl = ValueNotifier<DfxAccountType>(DfxAccountType.human);
+  final typeCtrl = ValueNotifier<DfxUserType>(DfxUserType.human);
   final emailCtrl = TextEditingController();
   final lastnameCtrl = TextEditingController();
   final firstnameCtrl = TextEditingController();

@@ -34,6 +34,7 @@ class RegistrationCompletedStep extends StatelessWidget {
                 state.status == DfxRegistrationStatus.completed
                     ? 'Sie können nun mit dem Kauf losgehen.'
                     : 'Wir werden die Daten zu prüfen. Das kann bis zu einem Werktag dauern.',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
                   height: 18 / 14,

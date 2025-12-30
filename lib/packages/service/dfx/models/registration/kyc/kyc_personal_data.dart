@@ -1,4 +1,7 @@
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_user_type.dart';
+
 class KycPersonalData {
+  final KycAccountType accountType;
   final String firstName;
   final String lastName;
   final String phone;
@@ -7,6 +10,7 @@ class KycPersonalData {
   final KycAddress? organizationAddress;
 
   KycPersonalData({
+    required this.accountType,
     required this.firstName,
     required this.lastName,
     required this.phone,
@@ -16,7 +20,7 @@ class KycPersonalData {
   });
 
   Map<String, dynamic> toJson() => {
-        'accountType': "Personal",
+        'accountType': accountType.jsonName,
         'firstName': firstName,
         'lastName': lastName,
         'phone': phone,
@@ -24,6 +28,25 @@ class KycPersonalData {
         if (organizationName != null) 'organizationName': organizationName,
         if (organizationAddress != null) 'organizationAddress': organizationAddress!.toJson(),
       };
+}
+
+enum KycAccountType {
+  personal(jsonName: 'Personal'),
+  organization(jsonName: 'Organization'),
+  soleProprietorship(jsonName: 'SoleProprietorship');
+
+  final String jsonName;
+
+  const KycAccountType({required this.jsonName});
+
+  static KycAccountType fromDfxAccountType(DfxUserType dfxType) {
+    switch (dfxType) {
+      case DfxUserType.human:
+        return KycAccountType.personal;
+      case DfxUserType.corporation:
+        return KycAccountType.organization;
+    }
+  }
 }
 
 class KycAddress {
