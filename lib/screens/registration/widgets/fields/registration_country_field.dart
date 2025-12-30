@@ -5,13 +5,13 @@ import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
 import 'package:realunit_wallet/screens/registration/widgets/registration_dropdown_field.dart';
 
 class RegistrationCountryField extends StatefulWidget {
-  final DfxCountry? initialCountry;
+  final String label;
   final void Function(DfxCountry?)? onChanged;
   final String? Function(DfxCountry?)? validator;
 
   const RegistrationCountryField({
     super.key,
-    this.initialCountry,
+    required this.label,
     this.onChanged,
     this.validator,
   });
@@ -23,17 +23,12 @@ class RegistrationCountryField extends StatefulWidget {
 class _RegistrationCountryFieldState extends State<RegistrationCountryField> {
   final DfxCountryService countryService = getIt<DfxCountryService>();
   late Future<List<DfxCountry>> _countriesFuture;
+  bool _hasPreloaded = false;
 
   @override
   void initState() {
     super.initState();
     _countriesFuture = _loadCountries();
-  }
-
-  Future<List<DfxCountry>> _loadCountries() async {
-    final countries = await countryService.getAllCountries();
-
-    return [countries.firstWhere((c) => c.symbol.toUpperCase() == 'CH')];
   }
 
   @override
@@ -49,18 +44,49 @@ class _RegistrationCountryFieldState extends State<RegistrationCountryField> {
         }
 
         final countries = snapshot.data ?? [];
+        final initialCountry = countries.isNotEmpty ? countries.first : null;
+        _preloadCountry(initialCountry);
 
         return RegistrationDropdownField<DfxCountry>(
           hintText: 'Schweiz',
-          label: 'Land',
-          items: countries
-              .map((d) => DropdownMenuItem(value: d, child: Text(d.foreignName ?? d.name)))
-              .toList(),
-          initialValue: widget.initialCountry,
+          label: widget.label,
+          items: countries.map((d) => DropdownMenuItem(value: d, child: Text(d.name))).toList(),
+          initialValue: initialCountry,
           onChanged: widget.onChanged,
           validator: widget.validator,
         );
       },
     );
+  }
+
+  Future<List<DfxCountry>> _loadCountries() async {
+    final countries = await countryService.getAllCountries();
+
+    final priority = ['CH', 'DE', 'IT', 'FR'];
+
+    countries.sort((a, b) {
+      final aIndex = priority.indexOf(a.symbol.toUpperCase());
+      final bIndex = priority.indexOf(b.symbol.toUpperCase());
+
+      if (aIndex != -1 && bIndex != -1) {
+        return aIndex.compareTo(bIndex);
+      }
+
+      if (aIndex != -1) return -1;
+      if (bIndex != -1) return 1;
+
+      return a.name.compareTo(b.name);
+    });
+
+    return countries;
+  }
+
+  void _preloadCountry(DfxCountry? initialCountry) {
+    if (!_hasPreloaded && initialCountry != null) {
+      _hasPreloaded = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onChanged?.call(initialCountry);
+      });
+    }
   }
 }

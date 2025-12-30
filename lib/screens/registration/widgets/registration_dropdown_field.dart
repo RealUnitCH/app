@@ -5,18 +5,18 @@ class RegistrationDropdownField<T> extends StatelessWidget {
   final String? label;
   final T? initialValue;
   final String? hintText;
-  final List<DropdownMenuItem<T>> items;
   final void Function(T?)? onChanged;
   final String? Function(T?)? validator;
+  final List<DropdownMenuItem<T>> items;
 
   const RegistrationDropdownField({
     super.key,
     this.label,
     this.initialValue,
     this.hintText,
-    required this.items,
     this.onChanged,
     this.validator,
+    required this.items,
   });
 
   @override
@@ -42,10 +42,14 @@ class RegistrationDropdownField<T> extends StatelessWidget {
         ButtonTheme(
           alignedDropdown: true,
           child: DropdownButtonFormField<T>(
-            isExpanded: true,
             initialValue: initialValue,
+            validator: validator,
+            onChanged: onChanged,
+            items: items,
+            isExpanded: true,
+            isDense: true,
+            menuMaxHeight: MediaQuery.sizeOf(context).height * 0.4,
             decoration: InputDecoration(
-              hintText: hintText,
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(8.0)),
                 borderSide: BorderSide(color: RealUnitColors.neutral300),
@@ -63,14 +67,24 @@ class RegistrationDropdownField<T> extends StatelessWidget {
                 borderSide: BorderSide(color: RealUnitColors.status.red600, width: 2),
               ),
               border: InputBorder.none,
+              hintStyle: TextStyle(color: RealUnitColors.neutral400),
               contentPadding: EdgeInsets.symmetric(
                 horizontal: 10.0,
                 vertical: 14.0,
               ),
             ),
-            items: items,
-            onChanged: onChanged,
-            validator: validator,
+            hint: hintText != null
+                ? Text(
+                    hintText!,
+                    style: TextStyle(
+                      color: RealUnitColors.neutral400,
+                    ),
+                  )
+                : null,
+            icon: const Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: Icon(Icons.arrow_drop_down),
+            ),
           ),
         ),
       ],

@@ -59,7 +59,7 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
           spacing: 10,
           children: [
             Expanded(
-              flex: 3,
+              flex: 1,
               child: RegistrationDropdownField<String>(
                 hintText: 'Tag',
                 items:
@@ -73,7 +73,7 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
               ),
             ),
             Expanded(
-              flex: 3,
+              flex: 1,
               child: RegistrationDropdownField<String>(
                 hintText: 'Monat',
                 items: months
@@ -88,7 +88,7 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
               ),
             ),
             Expanded(
-              flex: 3,
+              flex: 1,
               child: RegistrationDropdownField<String>(
                 hintText: 'Jahr',
                 items: years

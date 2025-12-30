@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_user_type.dart';
 import 'package:realunit_wallet/screens/registration/widgets/fields/registration_birthday_field.dart';
-import 'package:realunit_wallet/screens/registration/widgets/fields/registration_nationality_field.dart';
+import 'package:realunit_wallet/screens/registration/widgets/fields/registration_country_field.dart';
 import 'package:realunit_wallet/screens/registration/widgets/fields/registration_phone_number_field.dart';
 import 'package:realunit_wallet/screens/registration/widgets/registration_dropdown_field.dart';
 import 'package:realunit_wallet/screens/registration/widgets/registration_text_field.dart';
@@ -100,8 +100,8 @@ class RegistrationPersonalStep extends StatelessWidget {
               RegistrationPhoneNumberField(
                 controller: phoneCtrl,
               ),
-              RegistrationNationalityField(
-                initialCountry: nationalityCtrl.value,
+              RegistrationCountryField(
+                label: 'Nationalität',
                 onChanged: (country) => nationalityCtrl.value = country,
                 validator: (value) {
                   if (value == null) return "Nationalität ist erforderlich";

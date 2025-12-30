@@ -3,22 +3,22 @@ import 'package:realunit_wallet/styles/colors.dart';
 
 class RegistrationTextField extends StatelessWidget {
   final String? label;
-  final TextEditingController? controller;
-  final String hintText;
-  final TextInputType? keyboardType;
-  final String? Function(String?)? validator;
-  final void Function(String)? onChanged;
   final String? initialValue;
+  final TextEditingController? controller;
+  final String? hintText;
+  final TextInputType? keyboardType;
+  final void Function(String)? onChanged;
+  final String? Function(String?)? validator;
 
   const RegistrationTextField({
     super.key,
     this.label,
-    this.controller,
-    required this.hintText,
-    this.keyboardType,
-    this.validator,
-    this.onChanged,
     this.initialValue,
+    this.controller,
+    this.hintText,
+    this.keyboardType,
+    this.onChanged,
+    this.validator,
   });
 
   @override
@@ -46,21 +46,19 @@ class RegistrationTextField extends StatelessWidget {
             hintText: hintText,
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(8.0)),
-              borderSide: BorderSide(color: RealUnitColors.neutral300), // normal border
+              borderSide: BorderSide(color: RealUnitColors.neutral300),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(8.0)),
-              borderSide:
-                  BorderSide(color: RealUnitColors.realUnitBlue, width: 2), // focused border
+              borderSide: BorderSide(color: RealUnitColors.realUnitBlue, width: 2),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(8.0)),
-              borderSide: BorderSide(color: RealUnitColors.status.red600), // error border
+              borderSide: BorderSide(color: RealUnitColors.status.red600),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(8.0)),
-              borderSide:
-                  BorderSide(color: RealUnitColors.status.red600, width: 2), // focused + error
+              borderSide: BorderSide(color: RealUnitColors.status.red600, width: 2),
             ),
             contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 14),
             hintStyle: TextStyle(color: RealUnitColors.neutral400),
