@@ -11,6 +11,7 @@ import 'package:realunit_wallet/screens/registration/cubits/registration_step/re
 import 'package:realunit_wallet/screens/registration/cubits/registration_submit/registration_submit_cubit.dart';
 import 'package:realunit_wallet/screens/registration/registration_page.dart';
 import 'package:realunit_wallet/screens/registration/steps/registration_address_step.dart';
+import 'package:realunit_wallet/screens/registration/steps/registration_completed_step.dart';
 import 'package:realunit_wallet/screens/registration/steps/registration_personal_step.dart';
 
 import '../../helper/helper.dart';
@@ -70,29 +71,51 @@ void main() {
 
   group('$RegistrationView', () {
     testWidgets('renders initially $RegistrationPersonalStep', (tester) async {
-      when(() => registrationStepCubit.state)
-          .thenReturn(const RegistrationStepState(RegistrationStep.personal));
+      final state = const RegistrationStepState(RegistrationStep.personal);
+      when(() => registrationStepCubit.state).thenReturn(state);
 
       await tester.pumpApp(buildSubject(RegistrationView()));
 
+      (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
+      await tester.pump();
+
       expect(
         (tester.widget(find.byType(LinearProgressIndicator)) as LinearProgressIndicator).value,
-        1 / 3,
+        state.progress,
       );
-      expect(find.byType(RegistrationPersonalStep), findsOne);
+      expect(find.byType(RegistrationPersonalStep).hitTestable(), findsOne);
     });
 
     testWidgets('renders $RegistrationAddressStep', (tester) async {
-      when(() => registrationStepCubit.state)
-          .thenReturn(const RegistrationStepState(RegistrationStep.address));
+      final state = const RegistrationStepState(RegistrationStep.address);
+      when(() => registrationStepCubit.state).thenReturn(state);
 
       await tester.pumpApp(buildSubject(RegistrationView()));
 
+      (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
+      await tester.pump();
+
       expect(
         (tester.widget(find.byType(LinearProgressIndicator)) as LinearProgressIndicator).value,
-        2 / 3,
+        state.progress,
       );
-      expect(find.byType(RegistrationPersonalStep), findsOne);
+      expect(find.byType(RegistrationAddressStep), findsOne);
+    });
+
+    testWidgets('renders $RegistrationCompletedStep', (tester) async {
+      final state = const RegistrationStepState(RegistrationStep.completed);
+      when(() => registrationStepCubit.state).thenReturn(state);
+
+      await tester.pumpApp(buildSubject(RegistrationView()));
+
+      (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
+      await tester.pump();
+
+      expect(
+        (tester.widget(find.byType(LinearProgressIndicator)) as LinearProgressIndicator).value,
+        state.progress,
+      );
+      expect(find.byType(RegistrationCompletedStep), findsOne);
     });
 
     testWidgets('renders loading state above the PageView when submitting loads', (tester) async {
@@ -114,7 +137,6 @@ void main() {
 
       await tester.pumpApp(buildSubject(RegistrationView()));
       await tester.pump();
-      await tester.pump(const Duration(seconds: 1));
 
       verify(() => registrationStepCubit.next()).called(1);
     });
@@ -128,7 +150,6 @@ void main() {
 
       await tester.pumpApp(buildSubject(RegistrationView()));
       await tester.pump();
-      await tester.pump(const Duration(seconds: 1));
 
       expect(find.byType(SnackBar), findsOne);
     });
