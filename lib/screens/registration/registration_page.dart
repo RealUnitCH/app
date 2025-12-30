@@ -5,8 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_account_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_registration.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_user_type.dart';
 import 'package:realunit_wallet/screens/registration/cubits/registration_step/registration_step_cubit.dart';
 import 'package:realunit_wallet/screens/registration/cubits/registration_submit/registration_submit_cubit.dart';
 import 'package:realunit_wallet/screens/registration/steps/registration_address_step.dart';
@@ -31,23 +31,22 @@ class RegistrationPage extends StatelessWidget {
           create: (_) => RegistrationStepCubit(),
         ),
       ],
-      child: const RegisterView(),
+      child: const RegistrationView(),
     );
   }
 }
 
-class RegisterView extends StatefulWidget {
-  const RegisterView({super.key});
+class RegistrationView extends StatefulWidget {
+  const RegistrationView({super.key});
 
   @override
-  State<RegisterView> createState() => _RegisterViewState();
+  State<RegistrationView> createState() => _RegistrationViewState();
 }
 
-class _RegisterViewState extends State<RegisterView> {
-  final dfxService = getIt<DfxRegistrationService>();
+class _RegistrationViewState extends State<RegistrationView> {
   final _pageController = PageController();
 
-  final typeCtrl = ValueNotifier<DfxUserType>(DfxUserType.human);
+  final typeCtrl = ValueNotifier<DfxAccountType>(DfxAccountType.human);
   final emailCtrl = TextEditingController();
   final lastnameCtrl = TextEditingController();
   final firstnameCtrl = TextEditingController();
@@ -81,14 +80,16 @@ class _RegisterViewState extends State<RegisterView> {
           builder: (context, state) {
             return AppBar(
               leading: IconButton(
-                onPressed: state.canGoBack
-                    ? context.read<RegistrationStepCubit>().previous
-                    : () => context.pop(),
+                onPressed:
+                    state.canGoBack ? context.read<RegistrationStepCubit>().previous : context.pop,
                 icon: const Icon(Icons.arrow_back_rounded),
               ),
               title: Text(
-                state.title,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                state.title(context),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             );
           },
@@ -103,7 +104,7 @@ class _RegisterViewState extends State<RegisterView> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Registration failed:\n${state.message}'),
-                backgroundColor: Colors.red,
+                backgroundColor: RealUnitColors.status.red600,
               ),
             );
           }
@@ -146,23 +147,7 @@ class _RegisterViewState extends State<RegisterView> {
                         cityCtrl: cityCtrl,
                         countryCtrl: countryCtrl,
                         onPrevious: context.read<RegistrationStepCubit>().previous,
-                        onSubmit: () => context.read<RegistrationSubmitCubit>().submit(
-                              DfxRegistration(
-                                type: typeCtrl.value,
-                                email: emailCtrl.text,
-                                firstName: firstnameCtrl.text,
-                                lastName: lastnameCtrl.text,
-                                phoneNumber: phoneCtrl.value ?? '',
-                                birthday: birthdayCtrl.value ?? '',
-                                nationality: nationalityCtrl.value!,
-                                addressStreet: addressStreetCtrl.text,
-                                addressPostalCode: postalCodeCtrl.text,
-                                addressCity: cityCtrl.text,
-                                addressCountry: countryCtrl.value!,
-                                swissTaxResidence: true,
-                                registrationDate: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-                              ),
-                            ),
+                        onSubmit: _onSubmit,
                       ),
                       RegistrationCompletedStep(),
                     ],
@@ -188,6 +173,24 @@ class _RegisterViewState extends State<RegisterView> {
       ),
     );
   }
+
+  Future<void> _onSubmit() async => await context.read<RegistrationSubmitCubit>().submit(
+        DfxRegistration(
+          type: typeCtrl.value,
+          email: emailCtrl.text,
+          firstName: firstnameCtrl.text,
+          lastName: lastnameCtrl.text,
+          phoneNumber: phoneCtrl.value ?? '',
+          birthday: birthdayCtrl.value ?? '',
+          nationality: nationalityCtrl.value!,
+          addressStreet: addressStreetCtrl.text,
+          addressPostalCode: postalCodeCtrl.text,
+          addressCity: cityCtrl.text,
+          addressCountry: countryCtrl.value!,
+          swissTaxResidence: true,
+          registrationDate: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+        ),
+      );
 
   @override
   void dispose() {

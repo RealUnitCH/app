@@ -19,14 +19,14 @@ class RegistrationStepState {
 
   double get progress => (index + 1) / totalSteps;
 
-  String get title {
+  String title(BuildContext context) {
     switch (step) {
       case RegistrationStep.personal:
-        return 'Persönliche Daten';
+        return S.of(context).personal_data;
       case RegistrationStep.address:
-        return 'Residenz';
+        return S.of(context).residence;
       case RegistrationStep.completed:
-        return 'Abgeschlossen';
+        return S.of(context).completed;
     }
   }
 

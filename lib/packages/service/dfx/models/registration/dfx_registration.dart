@@ -1,8 +1,8 @@
 import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_user_type.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_account_type.dart';
 
 class DfxRegistration {
-  final DfxUserType type;
+  final DfxAccountType type;
   final String email;
   final String firstName;
   final String lastName;

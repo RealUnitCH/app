@@ -10,6 +10,7 @@ class RegistrationTextField extends StatelessWidget {
   final void Function(String)? onChanged;
   final String? Function(String?)? validator;
   final bool hideErrorText;
+  final TextCapitalization textCapitalization;
 
   const RegistrationTextField({
     super.key,
@@ -21,6 +22,7 @@ class RegistrationTextField extends StatelessWidget {
     this.onChanged,
     this.validator,
     this.hideErrorText = true,
+    this.textCapitalization = TextCapitalization.none,
   });
 
   @override
@@ -44,6 +46,10 @@ class RegistrationTextField extends StatelessWidget {
           initialValue: initialValue,
           onChanged: onChanged,
           controller: controller,
+          autocorrect: false,
+          enableSuggestions: false,
+          textInputAction: TextInputAction.next,
+          textCapitalization: textCapitalization,
           decoration: InputDecoration(
             hintText: hintText,
             enabledBorder: OutlineInputBorder(

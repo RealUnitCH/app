@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/registration/widgets/registration_dropdown_field.dart';
 import 'package:realunit_wallet/screens/registration/widgets/registration_text_field.dart';
 
@@ -48,7 +49,7 @@ class _RegistrationPhoneNumberFieldState extends State<RegistrationPhoneNumberFi
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           child: Text(
-            'Telefonnummer',
+            S.of(context).phone_number,
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
@@ -87,13 +88,13 @@ class _RegistrationPhoneNumberFieldState extends State<RegistrationPhoneNumberFi
                 hideErrorText: false,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return "Nummer ist erforderlich";
+                    return S.of(context).register_phone_number_invalid;
                   }
                   if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-                    return "Nur Zahlen sind erlaubt";
+                    return S.of(context).register_phone_number_only_digits;
                   }
                   if (value.length < 6) {
-                    return "Nummer ist zu kurz";
+                    return S.of(context).register_phone_number_too_short;
                   }
                   return null;
                 },

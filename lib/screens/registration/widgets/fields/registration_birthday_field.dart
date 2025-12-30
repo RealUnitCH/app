@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/registration/widgets/registration_dropdown_field.dart';
 
 class RegistrationBirthdayField extends StatefulWidget {
@@ -46,7 +47,7 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           child: Text(
-            'Geburtstag',
+            S.of(context).birthday,
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
@@ -61,7 +62,7 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
             Expanded(
               flex: 1,
               child: RegistrationDropdownField<String>(
-                hintText: 'Tag',
+                hintText: S.of(context).day,
                 items:
                     days.map((d) => DropdownMenuItem(value: d, child: Text(d.toString()))).toList(),
                 initialValue: selectedDay,
@@ -75,7 +76,7 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
             Expanded(
               flex: 1,
               child: RegistrationDropdownField<String>(
-                hintText: 'Monat',
+                hintText: S.of(context).month,
                 items: months
                     .map((d) => DropdownMenuItem(value: d, child: Text(d.toString())))
                     .toList(),
@@ -90,7 +91,7 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
             Expanded(
               flex: 1,
               child: RegistrationDropdownField<String>(
-                hintText: 'Jahr',
+                hintText: S.of(context).year,
                 items: years
                     .map((d) => DropdownMenuItem(value: d, child: Text(d.toString())))
                     .toList(),

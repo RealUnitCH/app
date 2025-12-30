@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_registration_status.dart';
 import 'package:realunit_wallet/screens/registration/cubits/registration_submit/registration_submit_cubit.dart';
 
@@ -39,9 +40,15 @@ class RegistrationCompletedStep extends StatelessWidget {
                   letterSpacing: 0.0,
                 ),
               ),
-            FilledButton(
-              onPressed: context.pop,
-              child: Text('Schließen'),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: context.pop,
+                  child: Text(S.of(context).close),
+                ),
+              ),
             ),
             Spacer(),
           ],
