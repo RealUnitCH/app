@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/screens/buy/cubits/buy_allowlist/buy_allowlist_cubit.dart';
+import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/registration/registration_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
@@ -51,7 +51,7 @@ class PaymentRegistrationRequired extends StatelessWidget {
         FilledButton(
           onPressed: () async {
             await context.push(RegistrationPage.routeName);
-            if (context.mounted) context.read<BuyAllowlistCubit>().checkAddress();
+            if (context.mounted) context.read<BuyPaymentInfoCubit>().getPaymentInfo();
           },
           child: Text(
             S.of(context).identity_confirm,
