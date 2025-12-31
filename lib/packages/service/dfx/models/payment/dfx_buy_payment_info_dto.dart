@@ -1,0 +1,113 @@
+import 'package:realunit_wallet/packages/service/dfx/models/fee/dfx_buy_fee_data.dart';
+import 'package:realunit_wallet/styles/currency.dart';
+
+class DfxBuyPaymentInfoDto {
+  final int id;
+  final int routeId;
+  final DateTime timestamp;
+  final String iban;
+  final String bic;
+  final String name;
+  final String street;
+  final String number;
+  final String zip;
+  final String city;
+  final String country;
+  final double amount;
+  final Currency currency;
+  final DfxBuyFeeData fees;
+  final double minVolume;
+  final double maxVolume;
+  final double minVolumeTarget;
+  final double maxVolumeTarget;
+  final double exchangeRate;
+  final double rate;
+  final List<PriceStep> priceSteps;
+  final double estimatedAmount;
+  final String? paymentRequest;
+  final bool isValid;
+
+  const DfxBuyPaymentInfoDto({
+    required this.id,
+    required this.routeId,
+    required this.timestamp,
+    required this.iban,
+    required this.bic,
+    required this.name,
+    required this.street,
+    required this.number,
+    required this.zip,
+    required this.city,
+    required this.country,
+    required this.amount,
+    required this.currency,
+    required this.fees,
+    required this.minVolume,
+    required this.maxVolume,
+    required this.minVolumeTarget,
+    required this.maxVolumeTarget,
+    required this.exchangeRate,
+    required this.rate,
+    required this.priceSteps,
+    required this.estimatedAmount,
+    this.paymentRequest,
+    required this.isValid,
+  });
+
+  factory DfxBuyPaymentInfoDto.fromJson(Map<String, dynamic> json) {
+    return DfxBuyPaymentInfoDto(
+      id: json['id'] as int,
+      routeId: json['routeId'] as int,
+      timestamp: DateTime.parse(json['timestamp'] as String),
+      iban: json['iban'] as String,
+      bic: json['bic'] as String,
+      name: json['name'] as String,
+      street: json['street'] as String,
+      number: json['number'] as String,
+      zip: json['zip'] as String,
+      city: json['city'] as String,
+      country: json['country'] as String,
+      amount: (json['amount'] as num).toDouble(),
+      currency: Currency.fromCode(json['currency'] as String),
+      fees: DfxBuyFeeData.fromJson(json['fees'] as Map<String, dynamic>),
+      minVolume: (json['minVolume'] as num).toDouble(),
+      maxVolume: (json['maxVolume'] as num).toDouble(),
+      minVolumeTarget: (json['minVolumeTarget'] as num).toDouble(),
+      maxVolumeTarget: (json['maxVolumeTarget'] as num).toDouble(),
+      exchangeRate: (json['exchangeRate'] as num).toDouble(),
+      rate: (json['rate'] as num).toDouble(),
+      priceSteps: (json['priceSteps'] as List<dynamic>)
+          .map((e) => PriceStep.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      estimatedAmount: (json['estimatedAmount'] as num).toDouble(),
+      paymentRequest: json['paymentRequest'] as String?,
+      isValid: json['isValid'] as bool,
+    );
+  }
+}
+
+class PriceStep {
+  final String source;
+  final String from;
+  final String to;
+  final double price;
+  final DateTime timestamp;
+
+  const PriceStep({
+    required this.source,
+    required this.from,
+    required this.to,
+    required this.price,
+    required this.timestamp,
+  });
+
+  factory PriceStep.fromJson(Map<String, dynamic> json) {
+    return PriceStep(
+      source: json['source'] as String,
+      from: json['from'] as String,
+      to: json['to'] as String,
+      price: (json['price'] as num).toDouble(),
+      timestamp: DateTime.parse(json['timestamp'] as String),
+    );
+  }
+}
