@@ -32,8 +32,8 @@ class PaymentInformation extends StatelessWidget {
           final error = paymentInfoState.error;
           if (error == BuyPaymentInfoError.registrationRequired) {
             return PaymentActionRequired(
-              title: 'Registrierung erforderlich',
-              description: S.of(context).identity_check_description,
+              title: S.of(context).registration_required,
+              description: S.of(context).registration_required_description,
               onPressed: () async {
                 await context.push(RegistrationPage.routeName);
                 if (context.mounted) {
@@ -44,16 +44,10 @@ class PaymentInformation extends StatelessWidget {
           } else if (error == BuyPaymentInfoError.kycRequired) {
             return PaymentActionRequired(
               title: S.of(context).identity_check_required,
-              description:
-                  'Der Betrag liegt über Ihrem Limit. Um dieses zu erhöhen, bestätigen Sie bitte Ihre Identität (KYC) über DFX.',
+              description: S.of(context).identity_check_description,
               onPressed: () {},
             );
           }
-          return PaymentActionRequired(
-            title: 'Unbekannter Fehler',
-            description:
-                'Es ist ein unbekannter Fehler aufgetreten. Bitte melde dich beim Support.',
-          );
         }
         return SizedBox.shrink();
       },
