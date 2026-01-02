@@ -9,7 +9,7 @@ class KycPersonalData {
   final String? organizationName;
   final KycAddress? organizationAddress;
 
-  KycPersonalData({
+  const KycPersonalData({
     required this.accountType,
     required this.firstName,
     required this.lastName,
@@ -56,7 +56,7 @@ class KycAddress {
   final String city;
   final int country;
 
-  KycAddress({
+  const KycAddress({
     required this.street,
     this.houseNumber,
     required this.zip,

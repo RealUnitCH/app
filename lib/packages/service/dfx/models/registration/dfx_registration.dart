@@ -16,7 +16,7 @@ class DfxRegistration {
   final bool swissTaxResidence;
   final String registrationDate;
 
-  DfxRegistration({
+  const DfxRegistration({
     required this.type,
     required this.email,
     required this.firstName,

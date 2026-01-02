@@ -19,7 +19,7 @@ class DfxRegistrationRequestDto {
   final KycPersonalData kycData;
   final List<CountryAndTin>? countryAndTINs;
 
-  DfxRegistrationRequestDto({
+  const DfxRegistrationRequestDto({
     required this.type,
     required this.email,
     required this.name,
@@ -65,7 +65,7 @@ class CountryAndTin {
   final String country;
   final String tin;
 
-  CountryAndTin({
+  const CountryAndTin({
     required this.country,
     required this.tin,
   });

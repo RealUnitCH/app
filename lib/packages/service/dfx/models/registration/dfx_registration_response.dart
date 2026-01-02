@@ -3,7 +3,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_reg
 class DfxRegistrationResponseDto {
   final DfxRegistrationStatus status;
 
-  DfxRegistrationResponseDto({
+  const DfxRegistrationResponseDto({
     required this.status,
   });
 

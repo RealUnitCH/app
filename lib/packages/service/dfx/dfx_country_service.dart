@@ -36,7 +36,7 @@ class DfxCountryService {
       return countries.firstWhere(
         (country) => country.symbol.toUpperCase() == symbol.toUpperCase(),
       );
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }
