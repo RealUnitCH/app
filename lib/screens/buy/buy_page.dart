@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_buy_payment_info_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
@@ -28,7 +28,7 @@ class BuyPage extends StatelessWidget {
         ),
         BlocProvider(
           create: (_) => BuyPaymentInfoCubit(
-            getIt<DfxBuyPaymentInfoService>(),
+            getIt<RealUnitBuyPaymentInfoService>(),
           )..getPaymentInfo(),
         ),
       ],

@@ -1,6 +1,6 @@
 import 'package:realunit_wallet/styles/currency.dart';
 
-class DfxBuyPaymentInfo {
+class BuyPaymentInfo {
   final String iban;
   final String bic;
   final String name;
@@ -11,7 +11,7 @@ class DfxBuyPaymentInfo {
   final String country;
   final Currency currency;
 
-  const DfxBuyPaymentInfo({
+  const BuyPaymentInfo({
     required this.iban,
     required this.bic,
     required this.name,

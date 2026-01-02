@@ -1,7 +1,7 @@
 import 'package:realunit_wallet/packages/service/dfx/models/fee/dfx_buy_fee_data.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
-class DfxBuyPaymentInfoDto {
+class RealUnitBuyPaymentInfoDto {
   final int id;
   final int routeId;
   final DateTime timestamp;
@@ -27,7 +27,7 @@ class DfxBuyPaymentInfoDto {
   final String? paymentRequest;
   final bool isValid;
 
-  const DfxBuyPaymentInfoDto({
+  const RealUnitBuyPaymentInfoDto({
     required this.id,
     required this.routeId,
     required this.timestamp,
@@ -54,8 +54,8 @@ class DfxBuyPaymentInfoDto {
     required this.isValid,
   });
 
-  factory DfxBuyPaymentInfoDto.fromJson(Map<String, dynamic> json) {
-    return DfxBuyPaymentInfoDto(
+  factory RealUnitBuyPaymentInfoDto.fromJson(Map<String, dynamic> json) {
+    return RealUnitBuyPaymentInfoDto(
       id: json['id'] as int,
       routeId: json['routeId'] as int,
       timestamp: DateTime.parse(json['timestamp'] as String),

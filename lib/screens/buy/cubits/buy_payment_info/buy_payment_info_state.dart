@@ -2,13 +2,13 @@ part of 'buy_payment_info_cubit.dart';
 
 class BuyPaymentInfoState extends Equatable {
   final BuyPaymentInfoStatus status;
-  final DfxBuyPaymentInfo? buyPaymentInfo;
+  final BuyPaymentInfo? buyPaymentInfo;
 
   const BuyPaymentInfoState({this.status = BuyPaymentInfoStatus.initial, this.buyPaymentInfo});
 
   BuyPaymentInfoState copyWith({
     BuyPaymentInfoStatus? status,
-    DfxBuyPaymentInfo? buyPaymentInfo,
+    BuyPaymentInfo? buyPaymentInfo,
   }) {
     return BuyPaymentInfoState(
       status: status ?? this.status,
