@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_user_type.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/screens/registration/widgets/fields/registration_birthday_field.dart';
 import 'package:realunit_wallet/screens/registration/widgets/fields/registration_country_field.dart';
 import 'package:realunit_wallet/screens/registration/widgets/fields/registration_phone_number_field.dart';
@@ -9,13 +9,13 @@ import 'package:realunit_wallet/screens/registration/widgets/registration_dropdo
 import 'package:realunit_wallet/screens/registration/widgets/registration_text_field.dart';
 
 class RegistrationPersonalStep extends StatelessWidget {
-  final ValueNotifier<DfxUserType> typeCtrl;
+  final ValueNotifier<RegistrationUserType> typeCtrl;
   final TextEditingController emailCtrl;
   final TextEditingController firstNameCtrl;
   final TextEditingController lastNameCtrl;
   final ValueNotifier<String?> birthdayCtrl;
   final ValueNotifier<String?> phoneCtrl;
-  final ValueNotifier<DfxCountry?> nationalityCtrl;
+  final ValueNotifier<Country?> nationalityCtrl;
   final VoidCallback onNext;
 
   RegistrationPersonalStep({
@@ -45,13 +45,13 @@ class RegistrationPersonalStep extends StatelessWidget {
             child: Column(
               spacing: 16,
               children: [
-                RegistrationDropdownField<DfxUserType>(
+                RegistrationDropdownField<RegistrationUserType>(
                   label: S.of(context).register_account_type,
-                  hintText: DfxUserType.human.toString(),
-                  items: DfxUserType.values
+                  hintText: RegistrationUserType.human.toString(),
+                  items: RegistrationUserType.values
                       .map((d) => DropdownMenuItem(value: d, child: Text(d.name(context))))
                       .toList(),
-                  initialValue: DfxUserType.human,
+                  initialValue: RegistrationUserType.human,
                   onChanged: (v) {
                     if (v != null) typeCtrl.value = v;
                   },

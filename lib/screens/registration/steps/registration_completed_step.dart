@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_registration_status.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/screens/registration/cubits/registration_submit/registration_submit_cubit.dart';
 
 class RegistrationCompletedStep extends StatelessWidget {
@@ -31,7 +31,7 @@ class RegistrationCompletedStep extends StatelessWidget {
             ),
             if (state is RegistrationSubmitSuccess)
               Text(
-                state.status == DfxRegistrationStatus.completed
+                state.status == RegistrationStatus.completed
                     ? 'Sie können nun mit dem Kauf losgehen.'
                     : 'Wir werden die Daten zu prüfen. Das kann bis zu einem Werktag dauern.',
                 textAlign: TextAlign.center,

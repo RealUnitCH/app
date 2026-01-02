@@ -17,7 +17,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_bank_details_service.da
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_registration_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_service.dart';
 import 'package:realunit_wallet/packages/service/settings_service.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
@@ -111,7 +111,7 @@ void setupServices() {
   getIt.registerFactory(() => DfxAllowlistService(getIt<AppStore>()));
   getIt.registerFactory(() => DfxBankDetailsService(getIt<AppStore>()));
   getIt.registerFactory(() => DfxBrokerbotService(getIt<AppStore>()));
-  getIt.registerFactory(() => DfxRegistrationService(getIt<AppStore>()));
+  getIt.registerFactory(() => RealUnitRegistrationService(getIt<AppStore>()));
   getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
   getIt.registerFactory(() => DFXService(
         getIt<AppStore>(),

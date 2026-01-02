@@ -1,27 +1,28 @@
 import 'dart:convert';
 
 import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_registration.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_registration_request_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_registration_response.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_response_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 
-class DfxRegistrationService {
+class RealUnitRegistrationService {
   static const _baseUrl = "dev.api.dfx.swiss";
   static const _registerPath = "/v1/realunit/register";
 
-  final AppStore appStore;
+  final AppStore _appStore;
 
-  DfxRegistrationService(this.appStore);
+  RealUnitRegistrationService(AppStore appStore) : _appStore = appStore;
 
-  Future<DfxRegistrationResponseDto> register(DfxRegistration registration) async {
-    final credentials = appStore.wallet.primaryAccount.primaryAddress;
+  Future<RegistrationStatus> register(Registration registration) async {
+    final credentials = _appStore.wallet.primaryAccount.primaryAddress;
     final signature = EIP712Signer.signRegistration(
       credentials: credentials,
       registration: registration,
     );
-    final requestDto = DfxRegistrationRequestDto(
+    final requestDto = RealUnitRegistrationRequestDto(
       type: registration.type.jsonName,
       email: registration.email,
       name: '${registration.firstName} ${registration.lastName}',
@@ -38,7 +39,7 @@ class DfxRegistrationService {
       signature: signature,
       lang: 'DE',
       kycData: KycPersonalData(
-        accountType: KycAccountType.fromDfxAccountType(registration.type),
+        accountType: KycAccountType.fromUserType(registration.type),
         firstName: registration.firstName,
         lastName: registration.lastName,
         phone: registration.phoneNumber,
@@ -50,10 +51,10 @@ class DfxRegistrationService {
         ),
       ),
     );
-    final authToken = appStore.dfxAuthToken;
+    final authToken = _appStore.dfxAuthToken;
 
     final uri = Uri.https(_baseUrl, _registerPath);
-    final response = await appStore.httpClient.post(
+    final response = await _appStore.httpClient.post(
       uri,
       headers: {
         'Content-Type': 'application/json',
@@ -70,6 +71,7 @@ class DfxRegistrationService {
       throw Exception(messages.join('\n'));
     }
 
-    return DfxRegistrationResponseDto.fromJson(jsonDecode(response.body));
+    final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
+    return responseDto.status;
   }
 }

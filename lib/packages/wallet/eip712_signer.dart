@@ -1,14 +1,14 @@
 import 'dart:convert';
 
 import 'package:eth_sig_util_plus/eth_sig_util_plus.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_registration.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
 class EIP712Signer {
   static String signRegistration({
     required CredentialsWithKnownAddress credentials,
-    required DfxRegistration registration,
+    required Registration registration,
   }) {
     if (credentials is! EthPrivateKey) {
       throw Exception('Hardware wallets not supported for registration signing');

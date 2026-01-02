@@ -1,4 +1,4 @@
-import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_user_type.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 
 class KycPersonalData {
   final KycAccountType accountType;
@@ -39,11 +39,11 @@ enum KycAccountType {
 
   const KycAccountType({required this.jsonName});
 
-  static KycAccountType fromDfxAccountType(DfxUserType dfxType) {
+  static KycAccountType fromUserType(RegistrationUserType dfxType) {
     switch (dfxType) {
-      case DfxUserType.human:
+      case RegistrationUserType.human:
         return KycAccountType.personal;
-      case DfxUserType.corporation:
+      case RegistrationUserType.corporation:
         return KycAccountType.organization;
     }
   }

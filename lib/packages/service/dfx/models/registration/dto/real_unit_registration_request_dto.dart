@@ -1,6 +1,6 @@
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 
-class DfxRegistrationRequestDto {
+class RealUnitRegistrationRequestDto {
   final String type;
   final String email;
   final String name;
@@ -19,7 +19,7 @@ class DfxRegistrationRequestDto {
   final KycPersonalData kycData;
   final List<CountryAndTin>? countryAndTINs;
 
-  const DfxRegistrationRequestDto({
+  const RealUnitRegistrationRequestDto({
     required this.type,
     required this.email,
     required this.name,

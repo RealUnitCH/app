@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/screens/registration/widgets/fields/registration_country_field.dart';
 import 'package:realunit_wallet/screens/registration/widgets/registration_text_field.dart';
 
@@ -8,7 +8,7 @@ class RegistrationAddressStep extends StatelessWidget {
   final TextEditingController addressStreetCtrl;
   final TextEditingController postalCodeCtrl;
   final TextEditingController cityCtrl;
-  final ValueNotifier<DfxCountry?> countryCtrl;
+  final ValueNotifier<Country?> countryCtrl;
   final VoidCallback onPrevious;
   final Future<void> Function() onSubmit;
 

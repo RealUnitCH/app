@@ -1,13 +1,13 @@
-enum DfxRegistrationStatus {
+enum RegistrationStatus {
   completed,
   pendingReview;
 
-  static DfxRegistrationStatus fromString(String status) {
+  static RegistrationStatus fromString(String status) {
     switch (status) {
       case 'completed':
-        return DfxRegistrationStatus.completed;
+        return RegistrationStatus.completed;
       case 'pending_review':
-        return DfxRegistrationStatus.pendingReview;
+        return RegistrationStatus.pendingReview;
       default:
         throw Exception('Unknown registration status: $status');
     }

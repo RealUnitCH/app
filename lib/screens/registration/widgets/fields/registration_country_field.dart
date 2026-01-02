@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/screens/registration/widgets/registration_dropdown_field.dart';
 
 class RegistrationCountryField extends StatefulWidget {
   final String label;
-  final void Function(DfxCountry?)? onChanged;
-  final String? Function(DfxCountry?)? validator;
+  final void Function(Country?)? onChanged;
+  final String? Function(Country?)? validator;
 
   const RegistrationCountryField({
     super.key,
@@ -22,7 +22,7 @@ class RegistrationCountryField extends StatefulWidget {
 
 class _RegistrationCountryFieldState extends State<RegistrationCountryField> {
   final DfxCountryService countryService = getIt<DfxCountryService>();
-  late Future<List<DfxCountry>> _countriesFuture;
+  late Future<List<Country>> _countriesFuture;
   bool _hasPreloaded = false;
 
   @override
@@ -33,7 +33,7 @@ class _RegistrationCountryFieldState extends State<RegistrationCountryField> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<DfxCountry>>(
+    return FutureBuilder<List<Country>>(
       future: _countriesFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -47,7 +47,7 @@ class _RegistrationCountryFieldState extends State<RegistrationCountryField> {
         final initialCountry = countries.isNotEmpty ? countries.first : null;
         _preloadCountry(initialCountry);
 
-        return RegistrationDropdownField<DfxCountry>(
+        return RegistrationDropdownField<Country>(
           hintText: 'Schweiz',
           label: widget.label,
           items: countries.map((c) => DropdownMenuItem(value: c, child: Text(c.name))).toList(),
@@ -59,7 +59,7 @@ class _RegistrationCountryFieldState extends State<RegistrationCountryField> {
     );
   }
 
-  Future<List<DfxCountry>> _loadCountries() async {
+  Future<List<Country>> _loadCountries() async {
     final countries = await countryService.getAllCountries();
 
     final priority = ['CH', 'DE', 'IT', 'FR'];
@@ -81,7 +81,7 @@ class _RegistrationCountryFieldState extends State<RegistrationCountryField> {
     return countries;
   }
 
-  void _preloadCountry(DfxCountry? initialCountry) {
+  void _preloadCountry(Country? initialCountry) {
     if (!_hasPreloaded && initialCountry != null) {
       _hasPreloaded = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {

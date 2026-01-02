@@ -1,6 +1,4 @@
-import 'package:equatable/equatable.dart';
-
-class DfxCountry extends Equatable {
+class DfxCountryDto {
   final int id;
   final String symbol;
   final String name;
@@ -14,23 +12,23 @@ class DfxCountry extends Equatable {
   final bool cardAllowed;
   final bool cryptoAllowed;
 
-  const DfxCountry({
+  const DfxCountryDto({
     required this.id,
     required this.symbol,
     required this.name,
-    this.foreignName,
-    this.locationAllowed = false,
-    this.ibanAllowed = false,
-    this.kycAllowed = false,
-    this.kycOrganizationAllowed = false,
-    this.nationalityAllowed = false,
-    this.bankAllowed = false,
-    this.cardAllowed = false,
-    this.cryptoAllowed = false,
+    required this.foreignName,
+    required this.locationAllowed,
+    required this.ibanAllowed,
+    required this.kycAllowed,
+    required this.kycOrganizationAllowed,
+    required this.nationalityAllowed,
+    required this.bankAllowed,
+    required this.cardAllowed,
+    required this.cryptoAllowed,
   });
 
-  factory DfxCountry.fromJson(Map<String, dynamic> json) {
-    return DfxCountry(
+  factory DfxCountryDto.fromJson(Map<String, dynamic> json) {
+    return DfxCountryDto(
       id: json['id'] as int,
       symbol: json['symbol'] as String,
       name: json['name'] as String,
@@ -45,7 +43,4 @@ class DfxCountry extends Equatable {
       cryptoAllowed: json['cryptoAllowed'] as bool,
     );
   }
-
-  @override
-  List<Object?> get props => [id];
 }

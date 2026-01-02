@@ -12,7 +12,7 @@ class RegistrationSubmitInitial extends RegistrationSubmitState {}
 class RegistrationSubmitLoading extends RegistrationSubmitState {}
 
 class RegistrationSubmitSuccess extends RegistrationSubmitState {
-  final DfxRegistrationStatus status;
+  final RegistrationStatus status;
 
   const RegistrationSubmitSuccess(this.status);
 

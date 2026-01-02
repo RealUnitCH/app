@@ -5,8 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_registration_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/dfx_registration_status.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/registration/cubits/registration_step/registration_step_cubit.dart';
 import 'package:realunit_wallet/screens/registration/cubits/registration_submit/registration_submit_cubit.dart';
 import 'package:realunit_wallet/screens/registration/registration_page.dart';
@@ -22,7 +22,7 @@ class MockRegistrationStepCubit extends MockCubit<RegistrationStepState>
 class MockRegistrationSubmitCubit extends MockCubit<RegistrationSubmitState>
     implements RegistrationSubmitCubit {}
 
-class MockDfxRegistrationService extends Mock implements DfxRegistrationService {}
+class MockDfxRegistrationService extends Mock implements RealUnitRegistrationService {}
 
 class MockDfxCountryService extends Mock implements DfxCountryService {}
 
@@ -41,7 +41,7 @@ void main() {
 
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
-    getIt.registerSingleton<DfxRegistrationService>(MockDfxRegistrationService());
+    getIt.registerSingleton<RealUnitRegistrationService>(MockDfxRegistrationService());
     getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
   }
 
@@ -131,7 +131,7 @@ void main() {
     testWidgets('triggers next if submitting successes', (tester) async {
       whenListen(
         registrationSubmitCubit,
-        Stream.fromIterable([RegistrationSubmitSuccess(DfxRegistrationStatus.completed)]),
+        Stream.fromIterable([RegistrationSubmitSuccess(RegistrationStatus.completed)]),
         initialState: RegistrationSubmitInitial(),
       );
 

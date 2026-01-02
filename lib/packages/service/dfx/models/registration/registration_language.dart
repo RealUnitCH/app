@@ -1,4 +1,4 @@
-enum DfxLanguage {
+enum RegistrationLanguage {
   de,
   en,
   fr,
@@ -7,13 +7,13 @@ enum DfxLanguage {
   @override
   String toString() {
     switch (this) {
-      case DfxLanguage.de:
+      case RegistrationLanguage.de:
         return 'DE';
-      case DfxLanguage.en:
+      case RegistrationLanguage.en:
         return 'EN';
-      case DfxLanguage.fr:
+      case RegistrationLanguage.fr:
         return 'FR';
-      case DfxLanguage.it:
+      case RegistrationLanguage.it:
         return 'IT';
     }
   }

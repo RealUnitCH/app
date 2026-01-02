@@ -1,27 +1,31 @@
 import 'dart:convert';
 
 import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/dfx_country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/country/dto/dfx_country_dto.dart';
 
 class DfxCountryService {
   static const _baseUrl = "api.dfx.swiss";
   static const _countryPath = "/v1/country";
 
-  List<DfxCountry>? cachedCountries;
+  List<Country>? cachedCountries;
 
-  final AppStore appStore;
+  final AppStore _appStore;
 
-  DfxCountryService(this.appStore);
+  DfxCountryService(AppStore appStore) : _appStore = appStore;
 
-  Future<List<DfxCountry>> getAllCountries() async {
+  Future<List<Country>> getAllCountries() async {
     if (cachedCountries != null) return cachedCountries!;
 
     final uri = Uri.https(_baseUrl, _countryPath);
-    final response = await appStore.httpClient.get(uri);
+    final response = await _appStore.httpClient.get(uri);
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = jsonDecode(response.body);
-      final countries = jsonList.map((json) => DfxCountry.fromJson(json)).toList();
+      final countries = jsonList
+          .map((json) => DfxCountryDto.fromJson(json))
+          .map((dto) => dto.toCountry())
+          .toList();
       cachedCountries = countries;
       return cachedCountries!;
     } else {
@@ -30,7 +34,7 @@ class DfxCountryService {
   }
 
   /// Find a country by its 2-letter symbol (e.g., 'CH')
-  Future<DfxCountry?> getCountryBySymbol(String symbol) async {
+  Future<Country?> getCountryBySymbol(String symbol) async {
     final countries = await getAllCountries();
     try {
       return countries.firstWhere(
