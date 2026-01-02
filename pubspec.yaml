@@ -65,6 +65,7 @@ dependencies:
   shared_preferences: ^2.5.2
   sqlcipher_flutter_libs: ^0.6.4
   sqlite3: 2.7.4
+  synchronized: ^3.4.0
   uuid: ^4.5.1
   url_launcher: ^6.3.1
   web3dart: ^2.7.1

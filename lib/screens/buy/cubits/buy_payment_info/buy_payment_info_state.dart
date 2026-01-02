@@ -1,23 +1,30 @@
 part of 'buy_payment_info_cubit.dart';
 
-class BuyPaymentInfoState extends Equatable {
-  final BuyPaymentInfoStatus status;
-  final BuyPaymentInfo? buyPaymentInfo;
-
-  const BuyPaymentInfoState({this.status = BuyPaymentInfoStatus.initial, this.buyPaymentInfo});
-
-  BuyPaymentInfoState copyWith({
-    BuyPaymentInfoStatus? status,
-    BuyPaymentInfo? buyPaymentInfo,
-  }) {
-    return BuyPaymentInfoState(
-      status: status ?? this.status,
-      buyPaymentInfo: buyPaymentInfo ?? this.buyPaymentInfo,
-    );
-  }
+abstract class BuyPaymentInfoState extends Equatable {
+  const BuyPaymentInfoState();
 
   @override
-  List<Object?> get props => [status, buyPaymentInfo];
+  List<Object?> get props => [];
 }
 
-enum BuyPaymentInfoStatus { initial, loading, success, failure }
+class BuyPaymentInfoInitial extends BuyPaymentInfoState {}
+
+class BuyPaymentInfoLoading extends BuyPaymentInfoState {}
+
+class BuyPaymentInfoSuccess extends BuyPaymentInfoState {
+  final BuyPaymentInfo buyPaymentInfo;
+
+  const BuyPaymentInfoSuccess(this.buyPaymentInfo);
+
+  @override
+  List<Object?> get props => [buyPaymentInfo];
+}
+
+class BuyPaymentInfoFailure extends BuyPaymentInfoState {
+  final BuyPaymentInfoError error;
+
+  const BuyPaymentInfoFailure(this.error);
+
+  @override
+  List<Object?> get props => [error];
+}

@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
-import 'package:realunit_wallet/screens/registration/registration_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
-class PaymentRegistrationRequired extends StatelessWidget {
-  const PaymentRegistrationRequired({super.key});
+class PaymentActionRequired extends StatelessWidget {
+  final String title;
+  final String description;
+  final void Function()? onPressed;
+
+  const PaymentActionRequired({
+    super.key,
+    required this.title,
+    required this.description,
+    this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +41,7 @@ class PaymentRegistrationRequired extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    S.of(context).identity_check_description,
+                    'Der Betrag liegt über Ihrem Limit. Um dieses zu erhöhen, bestätigen Sie bitte Ihre Identität (KYC) über DFX.',
                     style: TextStyle(
                       fontSize: 14,
                       height: 18 / 14,
@@ -48,16 +53,14 @@ class PaymentRegistrationRequired extends StatelessWidget {
             ),
           ],
         ),
-        FilledButton(
-          onPressed: () async {
-            await context.push(RegistrationPage.routeName);
-            if (context.mounted) context.read<BuyPaymentInfoCubit>().getPaymentInfo();
-          },
-          child: Text(
-            S.of(context).identity_confirm,
-            textAlign: TextAlign.center,
+        if (onPressed != null)
+          FilledButton(
+            onPressed: onPressed,
+            child: Text(
+              S.of(context).identity_confirm,
+              textAlign: TextAlign.center,
+            ),
           ),
-        ),
       ],
     );
   }

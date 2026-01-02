@@ -5,12 +5,14 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/buy_payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
+import 'package:realunit_wallet/screens/buy/widgets/payment_action_required.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
-import 'package:realunit_wallet/screens/buy/widgets/payment_registration_required.dart';
+import 'package:realunit_wallet/screens/registration/registration_page.dart';
 
 class BuyPage extends StatelessWidget {
   static const routeName = '/buy';
@@ -86,18 +88,53 @@ class _BuyViewState extends State<BuyView> {
                         amountController: _amountController,
                         resultController: _resultController,
                       ),
-                      BlocBuilder<BuyPaymentInfoCubit, BuyPaymentInfoState>(
-                        builder: (context, paymentInfoState) {
-                          if (paymentInfoState.status == BuyPaymentInfoStatus.success) {
-                            return PaymentInformation(amount: _amountController.text);
+                      BlocListener<BuyConverterCubit, BuyConverterState>(
+                        listenWhen: (prev, next) => prev.fiatText != next.fiatText,
+                        listener: (context, state) {
+                          final amount = int.tryParse(state.fiatText);
+                          if (amount != null) {
+                            context.read<BuyPaymentInfoCubit>().getPaymentInfo(amount: amount);
                           }
-                          if (paymentInfoState.status == BuyPaymentInfoStatus.loading) {
-                            return const Center(
-                              child: CupertinoActivityIndicator(),
-                            );
-                          }
-                          return PaymentRegistrationRequired();
                         },
+                        child: BlocBuilder<BuyPaymentInfoCubit, BuyPaymentInfoState>(
+                          builder: (context, paymentInfoState) {
+                            if (paymentInfoState is BuyPaymentInfoSuccess) {
+                              return PaymentInformation(
+                                amount: _amountController.text,
+                                buyPaymentInfo: paymentInfoState.buyPaymentInfo,
+                              );
+                            }
+                            if (paymentInfoState is BuyPaymentInfoLoading) {
+                              return const Center(
+                                child: CupertinoActivityIndicator(),
+                              );
+                            }
+                            if (paymentInfoState is BuyPaymentInfoFailure) {
+                              final error = paymentInfoState.error;
+                              if (error == BuyPaymentInfoError.registrationRequired) {
+                                return PaymentActionRequired(
+                                  title: 'Registrierung erforderlich',
+                                  description: S.of(context).identity_check_description,
+                                  onPressed: () async {
+                                    await context.push(RegistrationPage.routeName);
+                                    if (context.mounted) {
+                                      context.read<BuyPaymentInfoCubit>().getPaymentInfo();
+                                    }
+                                  },
+                                );
+                              } else if (error == BuyPaymentInfoError.kycRequired) {
+                                return PaymentActionRequired(
+                                  title: S.of(context).identity_check_required,
+                                  description:
+                                      'Der Betrag liegt über Ihrem Limit. Um dieses zu erhöhen, bestätigen Sie bitte Ihre Identität (KYC) über DFX.',
+                                  onPressed: () {},
+                                );
+                              }
+                              return PaymentActionRequired(title: 'Unbekannter Fehler', description: 'Es ist ein unbekannter Fehler aufgetreten. Bitte melde dich beim Support.',)
+                            }
+                            return SizedBox.shrink();
+                          },
+                        ),
                       ),
                     ],
                   ),
