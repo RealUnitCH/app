@@ -17,13 +17,16 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
 
   BuyPaymentInfoCubit(this._buyPaymentInfoService) : super(BuyPaymentInfoInitial());
 
-  Future<void> getPaymentInfo({int amount = 300, Currency currency = Currency.chf}) async {
+  Future<void> getPaymentInfo({String amount = '300', Currency currency = Currency.chf}) async {
     await _lock.synchronized(() async {
       try {
         if (state is! BuyPaymentInfoSuccess) {
           emit(BuyPaymentInfoLoading());
         }
-        final paymentInfo = await _buyPaymentInfoService.getPaymentInfo(amount, currency: currency);
+        final paymentInfo = await _buyPaymentInfoService.getPaymentInfo(
+          double.parse(amount).round(),
+          currency: currency,
+        );
         emit(BuyPaymentInfoSuccess(paymentInfo));
       } on KycLevelRequiredException {
         emit(BuyPaymentInfoFailure(BuyPaymentInfoError.kycRequired));

@@ -1,4 +1,4 @@
-import 'package:realunit_wallet/packages/service/dfx/exceptions/realunit_api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 
 class RegistrationRequiredException extends ApiException {
   const RegistrationRequiredException({
