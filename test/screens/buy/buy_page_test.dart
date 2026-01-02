@@ -117,7 +117,7 @@ void main() {
       expect(find.byType(CupertinoActivityIndicator), findsOne);
     });
 
-    testWidgets('renders correctly when when registration is required', (tester) async {
+    testWidgets('renders correctly when registration is required', (tester) async {
       when(() => buyPaymentInfoCubit.state).thenReturn(
         const BuyPaymentInfoFailure(BuyPaymentInfoError.registrationRequired),
       );
@@ -126,10 +126,10 @@ void main() {
 
       expect(find.byType(PaymentActionRequired), findsOne);
       expect(find.byType(PaymentInformation), findsOne);
-      expect(find.text('Registrierung erforderlich'), findsOne);
+      expect(find.text(S.current.registration_required), findsOne);
     });
 
-    testWidgets('renders correctly when when kyc is required', (tester) async {
+    testWidgets('renders correctly when kyc is required', (tester) async {
       when(() => buyPaymentInfoCubit.state).thenReturn(
         const BuyPaymentInfoFailure(BuyPaymentInfoError.kycRequired),
       );
