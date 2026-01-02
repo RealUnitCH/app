@@ -7,15 +7,11 @@ import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_allowlist_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_bank_details_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy_payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
-import 'package:realunit_wallet/screens/buy/cubits/buy_allowlist/buy_allowlist_cubit.dart';
-import 'package:realunit_wallet/screens/buy/cubits/buy_bank_details/buy_bank_details_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_action_required.dart';
@@ -26,39 +22,24 @@ import 'package:realunit_wallet/styles/currency.dart';
 
 import '../../helper/helper.dart';
 
-class MockBuyAllowlistCubit extends MockCubit<BuyAllowlistState> implements BuyAllowlistCubit {}
-
 class MockBuyConverterCubit extends MockCubit<BuyConverterState> implements BuyConverterCubit {}
-
-class MockBuyBankDetailsCubit extends MockCubit<BuyBankDetailsState>
-    implements BuyBankDetailsCubit {}
 
 class MockBuyPaymentInfoCubit extends MockCubit<BuyPaymentInfoState>
     implements BuyPaymentInfoCubit {}
 
-class MockDfxAllowlistService extends Mock implements DfxAllowlistService {}
-
 class MockDfxBrokerbotService extends Mock implements DfxBrokerbotService {}
-
-class MockDfxBankDetailsService extends Mock implements DfxBankDetailsService {}
 
 class MockRealUnitBuyPaymentInfoService extends Mock implements RealUnitBuyPaymentInfoService {}
 
 void main() {
-  late BuyAllowlistCubit allowlistCubit;
   late BuyConverterCubit converterCubit;
-  late BuyBankDetailsCubit bankDetailsCubit;
   late BuyPaymentInfoCubit buyPaymentInfoCubit;
 
   setUp(() {
-    allowlistCubit = MockBuyAllowlistCubit();
     converterCubit = MockBuyConverterCubit();
-    bankDetailsCubit = MockBuyBankDetailsCubit();
     buyPaymentInfoCubit = MockBuyPaymentInfoCubit();
 
-    when(() => allowlistCubit.state).thenReturn(const BuyAllowlistState());
     when(() => converterCubit.state).thenReturn(const BuyConverterState());
-    when(() => bankDetailsCubit.state).thenReturn(const BuyBankDetailsState());
     when(() => buyPaymentInfoCubit.state).thenReturn(const BuyPaymentInfoInitial());
     when(
       () =>
@@ -69,9 +50,7 @@ void main() {
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<AppStore>(AppStore());
-    getIt.registerSingleton<DfxAllowlistService>(MockDfxAllowlistService());
     getIt.registerSingleton<DfxBrokerbotService>(MockDfxBrokerbotService());
-    getIt.registerSingleton<DfxBankDetailsService>(MockDfxBankDetailsService());
     getIt.registerSingleton<RealUnitBuyPaymentInfoService>(MockRealUnitBuyPaymentInfoService());
   }
 
