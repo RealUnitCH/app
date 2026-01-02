@@ -7,9 +7,13 @@ abstract class BuyPaymentInfoState extends Equatable {
   List<Object?> get props => [];
 }
 
-class BuyPaymentInfoInitial extends BuyPaymentInfoState {}
+class BuyPaymentInfoInitial extends BuyPaymentInfoState {
+  const BuyPaymentInfoInitial();
+}
 
-class BuyPaymentInfoLoading extends BuyPaymentInfoState {}
+class BuyPaymentInfoLoading extends BuyPaymentInfoState {
+  const BuyPaymentInfoLoading();
+}
 
 class BuyPaymentInfoSuccess extends BuyPaymentInfoState {
   final BuyPaymentInfo buyPaymentInfo;

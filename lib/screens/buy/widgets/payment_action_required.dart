@@ -33,7 +33,7 @@ class PaymentActionRequired extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    S.of(context).identity_check_required,
+                    title,
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -41,7 +41,7 @@ class PaymentActionRequired extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Der Betrag liegt über Ihrem Limit. Um dieses zu erhöhen, bestätigen Sie bitte Ihre Identität (KYC) über DFX.',
+                    description,
                     style: TextStyle(
                       fontSize: 14,
                       height: 18 / 14,
