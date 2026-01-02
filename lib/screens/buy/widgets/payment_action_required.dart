@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class PaymentActionRequired extends StatelessWidget {
   final String title;
   final String description;
-  final void Function()? onPressed;
+  final Widget? action;
 
   const PaymentActionRequired({
     super.key,
     required this.title,
     required this.description,
-    this.onPressed,
+    this.action,
   });
 
   @override
@@ -53,14 +52,7 @@ class PaymentActionRequired extends StatelessWidget {
             ),
           ],
         ),
-        if (onPressed != null)
-          FilledButton(
-            onPressed: onPressed,
-            child: Text(
-              S.of(context).identity_confirm,
-              textAlign: TextAlign.center,
-            ),
-          ),
+        if (action != null) action!,
       ],
     );
   }

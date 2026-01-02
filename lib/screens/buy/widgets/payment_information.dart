@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -34,18 +35,30 @@ class PaymentInformation extends StatelessWidget {
             return PaymentActionRequired(
               title: S.of(context).registration_required,
               description: S.of(context).registration_required_description,
-              onPressed: () async {
-                await context.push(RegistrationPage.routeName);
-                if (context.mounted) {
-                  context.read<BuyPaymentInfoCubit>().getPaymentInfo();
-                }
-              },
+              action: FilledButton(
+                onPressed: () async {
+                  await context.push(RegistrationPage.routeName);
+                  if (context.mounted) {
+                    context.read<BuyPaymentInfoCubit>().getPaymentInfo();
+                  }
+                },
+                child: Text(
+                  S.of(context).confirm,
+                  textAlign: TextAlign.center,
+                ),
+              ),
             );
           } else if (error == BuyPaymentInfoError.kycRequired) {
             return PaymentActionRequired(
               title: S.of(context).identity_check_required,
               description: S.of(context).identity_check_description,
-              onPressed: () {},
+              action: FilledButton(
+                onPressed: null,
+                child: Text(
+                  S.of(context).identity_confirm,
+                  textAlign: TextAlign.center,
+                ),
+              ),
             );
           }
         }
