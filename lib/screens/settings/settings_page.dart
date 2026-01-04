@@ -54,7 +54,7 @@ class SettingsPage extends StatelessWidget {
                       ),
                       SettingOption(
                         title: S.of(context).settings_network,
-                        leading: NodesIcon(size: 24, color: RealUnitColors.realUnitBlue),
+                        leading: NodesIcon(size: 24),
                         trailing: _forwardIcon,
                         selectedOption: state.networkMode.localizedName(context),
                         onTap: () => context.push('/settings/network'),
