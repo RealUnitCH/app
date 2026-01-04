@@ -1,7 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 import 'package:realunit_wallet/styles/language.dart';
 
@@ -43,6 +45,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   void _onSetNetworkModeEvent(
       SetNetworkModeEvent event, Emitter<SettingsState> emit) {
     _settingsRepository.networkMode = event.networkMode;
+    // Clear cached auth token when switching networks
+    // as tokens are network-specific
+    getIt<AppStore>().dfxAuthToken = null;
     emit(state.copyWith(networkMode: event.networkMode));
   }
 }
