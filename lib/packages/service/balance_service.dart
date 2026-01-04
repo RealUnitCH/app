@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/balance.dart';
@@ -6,7 +7,7 @@ import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:erc20/erc20.dart';
+import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:web3dart/web3dart.dart';
 
 class BalanceService {
@@ -23,32 +24,42 @@ class BalanceService {
     cancelSync();
 
     _syncTimer = Timer.periodic(
-        Duration(seconds: 10), (_) => updateERC20Balances(address));
+        Duration(seconds: 10), (_) => updateBalances(address));
   }
 
   void cancelSync() => _syncTimer?.cancel();
 
-  Future<void> updateERC20Balances(String address) async {
-    final assets =
-        (await _assetRepository.allAssets).where((e) => e.symbol != "0x0");
+  Future<void> updateBalances(String address) async {
+    await _updateRealUnitBalance(address);
+    await _updateNativeBalances(address);
+  }
 
-    for (final erc20Token in assets) {
-      final erc20 = ERC20(
-        address: EthereumAddress.fromHex(erc20Token.address),
-        client: _appStore.getClient(erc20Token.chainId),
-      );
-      final balance = await erc20.balanceOf(EthereumAddress.fromHex(address));
+  Future<void> _updateRealUnitBalance(String address) async {
+    try {
+      final baseUrl = _appStore.apiConfig.dfxApiHost;
+      final uri = Uri.https(baseUrl, '/v1/realunit/account/$address');
 
-      await _balanceRepository.saveBalance(Balance(
-        chainId: erc20Token.chainId,
-        contractAddress: erc20Token.address,
-        walletAddress: address,
-        balance: balance,
-        asset: erc20Token,
-      ));
+      final response = await _appStore.httpClient.get(uri);
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        final balanceString = json['balance'] as String?;
+
+        if (balanceString != null) {
+          final balanceValue = BigInt.parse(balanceString);
+
+          await _balanceRepository.saveBalance(Balance(
+            chainId: realUnitAsset.chainId,
+            contractAddress: realUnitAsset.address,
+            walletAddress: address,
+            balance: balanceValue,
+            asset: realUnitAsset,
+          ));
+        }
+      }
+    } catch (e) {
+      // Silently fail - balance will be updated on next sync
     }
-
-    return _updateNativeBalances(address);
   }
 
   Future<Balance?> getBalance(Asset asset, String address) =>
@@ -56,16 +67,20 @@ class BalanceService {
 
   Future<void> _updateNativeBalances(String address) async {
     for (final chain in Blockchain.values) {
-      final balance = await _appStore
-          .getClient(chain.chainId)
-          .getBalance(EthereumAddress.fromHex(address));
-      await _balanceRepository.saveBalance(Balance(
-        chainId: chain.chainId,
-        contractAddress: chain.nativeAsset.address,
-        walletAddress: address,
-        balance: balance.getInWei,
-        asset: chain.nativeAsset,
-      ));
+      try {
+        final balance = await _appStore
+            .getClient(chain.chainId)
+            .getBalance(EthereumAddress.fromHex(address));
+        await _balanceRepository.saveBalance(Balance(
+          chainId: chain.chainId,
+          contractAddress: chain.nativeAsset.address,
+          walletAddress: address,
+          balance: balance.getInWei,
+          asset: chain.nativeAsset,
+        ));
+      } catch (e) {
+        // Silently fail for individual chains
+      }
     }
   }
 }

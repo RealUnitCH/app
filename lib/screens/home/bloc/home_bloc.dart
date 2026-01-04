@@ -55,7 +55,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       return;
     }
 
-    _balanceService.updateERC20Balances(_appStore.primaryAddress);
+    _balanceService.updateBalances(_appStore.primaryAddress);
     _balanceService.startSync(_appStore.primaryAddress);
     _transactionHistoryService.apiBasedSync();
     _transactionHistoryService.explorerAssistedScan();
@@ -80,7 +80,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
   Future<void> _onLoadWallet(LoadWalletEvent event, Emitter<HomeState> emit) async {
     _appStore.wallet = event.wallet;
-    _balanceService.updateERC20Balances(_appStore.primaryAddress);
+    _balanceService.updateBalances(_appStore.primaryAddress);
     _balanceService.startSync(_appStore.primaryAddress);
     _transactionHistoryService.apiBasedSync();
     _transactionHistoryService.explorerAssistedScan();

@@ -82,7 +82,7 @@ class _WalletAppState extends State<WalletApp> {
 
   void _onResumed() {
     getIt<BalanceService>()
-        .updateERC20Balances(getIt<AppStore>().primaryAddress);
+        .updateBalances(getIt<AppStore>().primaryAddress);
   }
 
   void _onInactive() => developer.log('inactive', name: 'AppLifecycleListener');
