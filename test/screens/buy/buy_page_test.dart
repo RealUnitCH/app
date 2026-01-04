@@ -16,6 +16,7 @@ import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_c
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_not_possible_info.dart';
+import 'package:realunit_wallet/screens/buy/widgets/payment_registration_required.dart';
 
 import '../../helper/helper.dart';
 
@@ -81,15 +82,6 @@ void main() {
   });
 
   group('$BuyView', () {
-    testWidgets('renders correctly when allowlist is forbidden', (tester) async {
-      when(() => allowlistCubit.state).thenReturn(const BuyAllowlistState(isForbidden: true));
-
-      await tester.pumpApp(buildSubject(const BuyView()));
-
-      expect(find.byType(PaymentConverter), findsOneWidget);
-      expect(find.byType(PaymentNotPossibleInfo), findsOneWidget);
-    });
-
     testWidgets('renders correctly when allowlist is loading', (tester) async {
       when(() => allowlistCubit.state).thenReturn(const BuyAllowlistState(loading: true));
 
@@ -98,9 +90,28 @@ void main() {
       expect(find.byType(PaymentConverter), findsOneWidget);
       expect(find.byType(CupertinoActivityIndicator), findsOneWidget);
     });
+    testWidgets('renders correctly when allowlist can not receive', (tester) async {
+      when(() => allowlistCubit.state).thenReturn(const BuyAllowlistState(canReceive: false));
+
+      await tester.pumpApp(buildSubject(const BuyView()));
+
+      expect(find.byType(PaymentConverter), findsOneWidget);
+      expect(find.byType(PaymentRegistrationRequired), findsOneWidget);
+    });
+
+    testWidgets('renders correctly when allowlist is forbidden', (tester) async {
+      when(() => allowlistCubit.state)
+          .thenReturn(const BuyAllowlistState(canReceive: true, isForbidden: true));
+
+      await tester.pumpApp(buildSubject(const BuyView()));
+
+      expect(find.byType(PaymentConverter), findsOneWidget);
+      expect(find.byType(PaymentNotPossibleInfo), findsOneWidget);
+    });
 
     testWidgets('renders correctly when allowlist is allowed', (tester) async {
-      when(() => allowlistCubit.state).thenReturn(const BuyAllowlistState(isForbidden: false));
+      when(() => allowlistCubit.state)
+          .thenReturn(const BuyAllowlistState(canReceive: true, isForbidden: false));
 
       await tester.pumpApp(buildSubject(const BuyView()));
 

@@ -12,6 +12,7 @@ import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_c
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_not_possible_info.dart';
+import 'package:realunit_wallet/screens/buy/widgets/payment_registration_required.dart';
 
 class BuyPage extends StatelessWidget {
   static const routeName = '/buy';
@@ -94,6 +95,9 @@ class _BuyViewState extends State<BuyView> {
                           return const Center(
                             child: CupertinoActivityIndicator(),
                           );
+                        }
+                        if (!allowlistState.canReceive) {
+                          return PaymentRegistrationRequired();
                         }
                         if (allowlistState.isForbidden) {
                           return PaymentNotPossibleInfo();

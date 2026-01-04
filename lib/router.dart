@@ -9,6 +9,7 @@ import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/home/home.dart';
+import 'package:realunit_wallet/screens/registration/registration_page.dart';
 import 'package:realunit_wallet/screens/onboarding/onboarding_completed_page.dart';
 import 'package:realunit_wallet/screens/receive/receive_page.dart';
 import 'package:realunit_wallet/screens/restore_wallet/restore_wallet_page.dart';
@@ -45,6 +46,7 @@ void setupRouter() {
           path: "/dashboard",
           builder: (context, state) => DashboardPage(getIt<AppStore>(), getIt<DFXPriceService>())),
       GoRoute(path: BuyPage.routeName, builder: (context, state) => BuyPage()),
+      GoRoute(path: RegistrationPage.routeName, builder: (context, state) => RegistrationPage()),
       GoRoute(path: "/receive", builder: (context, state) => ReceivePage(isBottomSheet: false)),
       GoRoute(
         path: "/send",
