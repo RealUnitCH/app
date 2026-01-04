@@ -34,16 +34,16 @@ class ApiConfig {
       ? 'dev.api.dfx.swiss'
       : 'api.dfx.swiss';
 
-  /// Base URL for DFX Services/App (without protocol)
-  String get dfxServicesHost => networkMode.isTestnet
+  /// Base URL for DFX App/Frontend (without protocol)
+  String get dfxAppHost => networkMode.isTestnet
       ? 'dev.app.dfx.swiss'
       : 'app.dfx.swiss';
 
   /// Full base URL for DFX API (with https)
   String get dfxApiBaseUrl => 'https://$dfxApiHost';
 
-  /// Full base URL for DFX Services (with https)
-  String get dfxServicesBaseUrl => 'https://$dfxServicesHost';
+  /// Full base URL for DFX App/Frontend (with https)
+  String get dfxAppBaseUrl => 'https://$dfxAppHost';
 
   // Specific endpoint URLs
   String get realUnitPriceHistoryUrl =>

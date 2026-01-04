@@ -91,7 +91,7 @@ class DFXService extends DFXAuthService {
 
       final accessToken = await getAuthToken();
 
-      final uri = Uri.https(appStore.apiConfig.dfxServicesHost, actionType, {
+      final uri = Uri.https(appStore.apiConfig.dfxAppHost, actionType, {
         'session': accessToken,
         'lang': langCode,
         'asset-out': isBuyAction ? assetOut : assetIn,
