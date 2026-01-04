@@ -61,7 +61,9 @@ Future<String> setupEssentials() async {
 
 Future<void> finishSetup(String encryptionKey) async {
   getIt.registerSingleton(AppDatabase(encryptionKey));
-  getIt.registerSingleton(AppStore());
+  final appStore = AppStore();
+  appStore.settingsRepository = getIt<SettingsRepository>();
+  getIt.registerSingleton(appStore);
 
   setupRepositories();
   setupServices();

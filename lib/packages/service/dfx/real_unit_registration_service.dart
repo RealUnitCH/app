@@ -9,12 +9,13 @@ import 'package:realunit_wallet/packages/service/dfx/models/registration/registr
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 
 class RealUnitRegistrationService {
-  static const _baseUrl = "dev.api.dfx.swiss";
   static const _registerPath = "/v1/realunit/register";
 
   final AppStore _appStore;
 
   RealUnitRegistrationService(AppStore appStore) : _appStore = appStore;
+
+  String get _baseUrl => _appStore.apiConfig.dfxApiHost;
 
   Future<RegistrationStatus> register(Registration registration) async {
     final credentials = _appStore.wallet.primaryAccount.primaryAddress;

@@ -53,6 +53,13 @@ class SettingsPage extends StatelessWidget {
                         onTap: () => context.push('/settings/currencies'),
                       ),
                       SettingOption(
+                        title: S.of(context).settings_network,
+                        leading: NodesIcon(size: 24),
+                        trailing: _forwardIcon,
+                        selectedOption: state.networkMode.localizedName(context),
+                        onTap: () => context.push('/settings/network'),
+                      ),
+                      SettingOption(
                         title: S.of(context).settings_tax_report,
                         leading: DocumentReportIcon(size: 24),
                         trailing: _forwardIcon,

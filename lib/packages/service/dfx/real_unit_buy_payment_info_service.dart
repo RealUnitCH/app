@@ -8,8 +8,9 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/dto/real_uni
 import 'package:realunit_wallet/styles/currency.dart';
 
 class RealUnitBuyPaymentInfoService {
-  static const _baseUrl = "dev.api.dfx.swiss";
   static const _buyPaymentInfoPath = "/v1/realunit/buy";
+
+  String get _baseUrl => _appStore.apiConfig.dfxApiHost;
 
   final AppStore _appStore;
 

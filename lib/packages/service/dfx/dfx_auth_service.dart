@@ -12,7 +12,7 @@ abstract class DFXAuthService {
 
   DFXAuthService(this.appStore);
 
-  String get baseUrl => 'dev.api.dfx.swiss';
+  String get baseUrl => appStore.apiConfig.dfxApiHost;
 
   AWalletAccount get wallet;
 

@@ -6,14 +6,15 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/price_service.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
-const String _pricingHistoryEndpoint =
-    "https://dev.api.dfx.swiss/v1/realunit/price/history?timeFrame=ALL";
-const String _pricingEndpoint = "https://dev.api.dfx.swiss/v1/realunit/price";
-
 class DFXPriceService extends APriceService {
   final AppStore _appStore;
 
   DFXPriceService(this._appStore);
+
+  String get _pricingHistoryEndpoint =>
+      _appStore.apiConfig.realUnitPriceHistoryUrl;
+
+  String get _pricingEndpoint => _appStore.apiConfig.realUnitPriceUrl;
 
   @override
   Future<List<PricePoint>> getPriceChart(Asset asset, Currency currency) async {

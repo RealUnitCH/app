@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 import 'package:realunit_wallet/styles/language.dart';
@@ -12,10 +13,12 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       : super(SettingsState(
           language: Language.fromCode(_settingsRepository.language),
           currency: Currency.fromCode(_settingsRepository.currency),
+          networkMode: _settingsRepository.networkMode,
         )) {
     on<ToggleHideAmountEvent>(_onToggleHideAmountEvent);
     on<SetCurrencyEvent>(_onSetCurrencyEvent);
     on<SetLanguageEvent>(_onSetLanguageEvent);
+    on<SetNetworkModeEvent>(_onSetNetworkModeEvent);
   }
 
   final SettingsRepository _settingsRepository;
@@ -35,5 +38,11 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       SetCurrencyEvent event, Emitter<SettingsState> emit) {
     _settingsRepository.currency = event.currency.code;
     emit(state.copyWith(currency: event.currency));
+  }
+
+  void _onSetNetworkModeEvent(
+      SetNetworkModeEvent event, Emitter<SettingsState> emit) {
+    _settingsRepository.networkMode = event.networkMode;
+    emit(state.copyWith(networkMode: event.networkMode));
   }
 }

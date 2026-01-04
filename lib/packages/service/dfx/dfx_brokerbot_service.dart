@@ -5,10 +5,11 @@ import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_buy_pr
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_shares_dto.dart';
 
 class DfxBrokerbotService {
-  static const _baseUrl = "https://dev.api.dfx.swiss/v1/realunit/brokerbot";
   final AppStore _appStore;
 
   DfxBrokerbotService(this._appStore);
+
+  String get _baseUrl => _appStore.apiConfig.realUnitBrokerbotBaseUrl;
 
   /// Convert REALU shares → CHF
   Future<BrokerbotBuyPriceDto> getBuyPrice(int shares) async {

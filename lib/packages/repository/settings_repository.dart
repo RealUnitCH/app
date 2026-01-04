@@ -1,3 +1,4 @@
+import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsRepository {
@@ -23,4 +24,17 @@ class SettingsRepository {
   bool get termsAccepted => _sharedPreferences.getBool("termsAccepted") ?? false;
 
   set termsAccepted(bool accepted) => _sharedPreferences.setBool("termsAccepted", accepted);
+
+  /// Network mode (testnet or mainnet) - defaults to testnet for safety
+  NetworkMode get networkMode {
+    final value = _sharedPreferences.getString("networkMode");
+    if (value == 'mainnet') return NetworkMode.mainnet;
+    return NetworkMode.testnet;
+  }
+
+  set networkMode(NetworkMode mode) =>
+      _sharedPreferences.setString("networkMode", mode.name);
+
+  /// Get the current API configuration based on network mode
+  ApiConfig get apiConfig => ApiConfig(networkMode: networkMode);
 }

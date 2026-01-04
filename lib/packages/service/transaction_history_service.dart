@@ -147,7 +147,7 @@ class TransactionHistoryService {
   Future<void> apiBasedSync() async {
     final address = _appStore.primaryAddress;
     final apiUri = Uri.parse(
-        "https://dev.api.dfx.swiss/v1/realunit/account/${address}/history");
+        _appStore.apiConfig.realUnitAccountHistoryUrl(address));
 
     final response = await _appStore.httpClient.get(apiUri);
 

@@ -19,6 +19,7 @@ import 'package:realunit_wallet/screens/settings/settings_page.dart';
 import 'package:realunit_wallet/screens/settings_currencies/settings_currencies_page.dart';
 import 'package:realunit_wallet/screens/settings_edit_node/settings_edit_node_page.dart';
 import 'package:realunit_wallet/screens/settings_languages/settings_languages_page.dart';
+import 'package:realunit_wallet/screens/settings_network/settings_network_page.dart';
 import 'package:realunit_wallet/screens/settings_nodes/settings_nodes_page.dart';
 import 'package:realunit_wallet/screens/settings_seed/settings_seed_page.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
@@ -73,6 +74,7 @@ void setupRouter() {
         routes: [
           GoRoute(path: '/languages', builder: (context, state) => SettingsLanguagePage()),
           GoRoute(path: '/currencies', builder: (context, state) => SettingsCurrenciesPage()),
+          GoRoute(path: '/network', builder: (context, state) => SettingsNetworkPage()),
           GoRoute(path: '/seed', builder: (context, state) => SettingsSeedPage()),
           GoRoute(
             path: '/nodes',
