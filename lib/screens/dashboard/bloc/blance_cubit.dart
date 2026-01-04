@@ -1,7 +1,6 @@
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
-import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class BalanceCubit extends Cubit<Balance> {
@@ -12,7 +11,7 @@ class BalanceCubit extends Cubit<Balance> {
           contractAddress: asset.address,
           walletAddress: walletAddress,
           balance: BigInt.zero,
-          asset: dEUROAsset,
+          asset: asset,
         )) {
     _repository.watchBalance(state).listen(emit);
   }
