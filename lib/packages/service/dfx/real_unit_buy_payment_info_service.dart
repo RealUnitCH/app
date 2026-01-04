@@ -35,6 +35,7 @@ class RealUnitBuyPaymentInfoService {
       final responseDto = RealUnitBuyPaymentInfoDto.fromJson(json);
 
       return BuyPaymentInfo(
+        id: responseDto.id,
         iban: responseDto.iban,
         bic: responseDto.bic,
         name: responseDto.name,
@@ -50,6 +51,22 @@ class RealUnitBuyPaymentInfoService {
       throw ApiException.fromJson(errorJson);
     } else {
       throw Exception('Unexpected status code: ${response.statusCode}');
+    }
+  }
+
+  Future<void> confirmPayment(int id) async {
+    final authToken = _appStore.dfxAuthToken;
+    final uri = Uri.https(_baseUrl, '/v1/buy/paymentInfos/$id/confirm');
+
+    final response = await _appStore.httpClient.put(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $authToken',
+      },
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to confirm payment: ${response.statusCode}');
     }
   }
 }

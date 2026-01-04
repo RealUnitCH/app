@@ -1,17 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy_payment_info.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_executed_sheet.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/styles.dart';
 
-class PaymentInformationDetails extends StatelessWidget {
+class PaymentInformationDetails extends StatefulWidget {
   final String amount;
   final BuyPaymentInfo buyPaymentInfo;
 
   const PaymentInformationDetails({super.key, required this.buyPaymentInfo, required this.amount});
+
+  @override
+  State<PaymentInformationDetails> createState() => _PaymentInformationDetailsState();
+}
+
+class _PaymentInformationDetailsState extends State<PaymentInformationDetails> {
+  bool _isConfirming = false;
+
+  Future<void> _confirmPayment() async {
+    setState(() => _isConfirming = true);
+
+    try {
+      await getIt<RealUnitBuyPaymentInfoService>().confirmPayment(widget.buyPaymentInfo.id);
+
+      if (mounted) {
+        await showModalBottomSheet(
+          context: context,
+          builder: (context) => PaymentExecutedSheet(),
+        );
+        if (context.mounted) context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isConfirming = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,37 +93,37 @@ class PaymentInformationDetails extends StatelessWidget {
                 children: _withDividers(
                   children: [
                     _PaymentInformationDetailsRow(
-                      description: '${S.of(context).amount_in} ${buyPaymentInfo.currency.code}',
-                      value: amount,
+                      description: '${S.of(context).amount_in} ${widget.buyPaymentInfo.currency.code}',
+                      value: widget.amount,
                     ),
                     _PaymentInformationDetailsRow(
                       description: S.of(context).iban,
-                      value: buyPaymentInfo.iban,
+                      value: widget.buyPaymentInfo.iban,
                     ),
                     _PaymentInformationDetailsRow(
                       description: S.of(context).bic,
-                      value: buyPaymentInfo.bic,
+                      value: widget.buyPaymentInfo.bic,
                     ),
                     _PaymentInformationDetailsRow(
                       title: S.of(context).receiver,
                       description: S.of(context).name,
-                      value: buyPaymentInfo.name,
+                      value: widget.buyPaymentInfo.name,
                     ),
                     _PaymentInformationDetailsRow(
                       description: S.of(context).address,
-                      value: '${buyPaymentInfo.street} ${buyPaymentInfo.number}',
+                      value: '${widget.buyPaymentInfo.street} ${widget.buyPaymentInfo.number}',
                     ),
                     _PaymentInformationDetailsRow(
                       description: S.of(context).postcode_abr,
-                      value: buyPaymentInfo.zip,
+                      value: widget.buyPaymentInfo.zip,
                     ),
                     _PaymentInformationDetailsRow(
                       description: S.of(context).location,
-                      value: buyPaymentInfo.city,
+                      value: widget.buyPaymentInfo.city,
                     ),
                     _PaymentInformationDetailsRow(
                       description: S.of(context).country,
-                      value: buyPaymentInfo.country,
+                      value: widget.buyPaymentInfo.country,
                     ),
                   ],
                 ),
@@ -103,13 +136,7 @@ class PaymentInformationDetails extends StatelessWidget {
           child: SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: () async {
-                await showModalBottomSheet(
-                  context: context,
-                  builder: (context) => PaymentExecutedSheet(),
-                );
-                if (context.mounted) context.pop();
-              },
+              onPressed: _isConfirming ? null : _confirmPayment,
               style: ButtonStyle(
                 padding: WidgetStateProperty.resolveWith(
                   (states) => const EdgeInsets.symmetric(
@@ -118,11 +145,20 @@ class PaymentInformationDetails extends StatelessWidget {
                   ),
                 ),
               ),
-              child: Text(
-                S.of(context).buy_payment_confirm,
-                textAlign: TextAlign.center,
-                style: kFullwidthBlueButtonTextStyle,
-              ),
+              child: _isConfirming
+                  ? SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      S.of(context).buy_payment_confirm,
+                      textAlign: TextAlign.center,
+                      style: kFullwidthBlueButtonTextStyle,
+                    ),
             ),
           ),
         ),
