@@ -36,8 +36,8 @@ class ApiConfig {
 
   /// Base URL for DFX Services/App (without protocol)
   String get dfxServicesHost => networkMode.isTestnet
-      ? 'dev.services.dfx.swiss'
-      : 'services.dfx.swiss';
+      ? 'dev.app.dfx.swiss'
+      : 'app.dfx.swiss';
 
   /// Full base URL for DFX API (with https)
   String get dfxApiBaseUrl => 'https://$dfxApiHost';
