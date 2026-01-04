@@ -90,6 +90,7 @@ void main() {
       when(() => buyPaymentInfoCubit.state).thenReturn(
         const BuyPaymentInfoSuccess(
           BuyPaymentInfo(
+              id: 1,
               iban: "iban",
               bic: "bic",
               name: "name",
