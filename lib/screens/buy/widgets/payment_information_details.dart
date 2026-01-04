@@ -31,9 +31,9 @@ class _PaymentInformationDetailsState extends State<PaymentInformationDetails> {
       if (mounted) {
         await showModalBottomSheet(
           context: context,
-          builder: (context) => PaymentExecutedSheet(),
+          builder: (_) => PaymentExecutedSheet(),
         );
-        if (context.mounted) context.pop();
+        if (mounted) context.pop();
       }
     } catch (e) {
       if (mounted) {
