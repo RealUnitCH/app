@@ -13,7 +13,7 @@ import 'package:realunit_wallet/packages/service/price_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/aggregated_balance_cubit.dart';
-import 'package:realunit_wallet/screens/dashboard/bloc/blance_cubit.dart';
+import 'package:realunit_wallet/screens/dashboard/bloc/balance_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/dashboard_bloc.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/transaction_history_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/cash_holding_box.dart';

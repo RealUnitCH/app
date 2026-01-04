@@ -135,7 +135,6 @@ class TransactionHistoryService {
 
     for (final tx in [...transactions, ...transactions2]) {
       final exists = await _transactionRepository.existsTransaction(tx.txId);
-      print(tx.txId);
       if (exists) {
         _transactionRepository.updateTransaction(tx);
       } else {
