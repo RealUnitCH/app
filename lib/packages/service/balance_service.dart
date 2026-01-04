@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
-import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
@@ -12,11 +11,9 @@ import 'package:web3dart/web3dart.dart';
 
 class BalanceService {
   final BalanceRepository _balanceRepository;
-  final AssetRepository _assetRepository;
   final AppStore _appStore;
 
-  BalanceService(
-      this._balanceRepository, this._assetRepository, this._appStore);
+  BalanceService(this._balanceRepository, this._appStore);
 
   Timer? _syncTimer;
 

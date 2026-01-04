@@ -89,7 +89,6 @@ void setupRepositories() {
 void setupServices() {
   getIt.registerSingleton(BalanceService(
     getIt<BalanceRepository>(),
-    getIt<AssetRepository>(),
     getIt<AppStore>(),
   ));
 
