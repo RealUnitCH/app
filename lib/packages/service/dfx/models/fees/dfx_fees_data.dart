@@ -1,21 +1,22 @@
-import 'package:realunit_wallet/packages/service/dfx/models/fee/dfx_base_fee_data.dart';
-
-class DfxSwapFeeData extends DfxBaseFeeData {
+class DfxFeesData {
+  final double rate;
+  final double fixed;
+  final double network;
   final double min;
   final double dfx;
   final double total;
 
-  const DfxSwapFeeData({
-    required super.rate,
-    required super.fixed,
-    required super.network,
+  const DfxFeesData({
+    required this.rate,
+    required this.fixed,
+    required this.network,
     required this.min,
     required this.dfx,
     required this.total,
   });
 
-  factory DfxSwapFeeData.fromJson(Map<String, dynamic> json) {
-    return DfxSwapFeeData(
+  factory DfxFeesData.fromJson(Map<String, dynamic> json) {
+    return DfxFeesData(
       rate: (json['rate'] as num).toDouble(),
       fixed: (json['fixed'] as num).toDouble(),
       network: (json['network'] as num).toDouble(),

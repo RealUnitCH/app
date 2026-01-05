@@ -1,4 +1,4 @@
-import 'package:realunit_wallet/packages/service/dfx/models/fee/dfx_buy_fee_data.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/fees/dfx_fees_data.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 class RealUnitBuyPaymentInfoDto {
@@ -15,7 +15,7 @@ class RealUnitBuyPaymentInfoDto {
   final String country;
   final double amount;
   final Currency currency;
-  final DfxBuyFeeData fees;
+  final DfxFeesData fees;
   final double minVolume;
   final double maxVolume;
   final double minVolumeTarget;
@@ -69,7 +69,7 @@ class RealUnitBuyPaymentInfoDto {
       country: json['country'] as String,
       amount: (json['amount'] as num).toDouble(),
       currency: Currency.fromCode(json['currency'] as String),
-      fees: DfxBuyFeeData.fromJson(json['fees'] as Map<String, dynamic>),
+      fees: DfxFeesData.fromJson(json['fees'] as Map<String, dynamic>),
       minVolume: (json['minVolume'] as num).toDouble(),
       maxVolume: (json['maxVolume'] as num).toDouble(),
       minVolumeTarget: (json['minVolumeTarget'] as num).toDouble(),
