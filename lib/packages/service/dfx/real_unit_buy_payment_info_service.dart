@@ -12,6 +12,8 @@ class RealUnitBuyPaymentInfoService {
 
   String get _baseUrl => _appStore.apiConfig.dfxApiHost;
 
+  String get _host => _appStore.apiConfig.apiHost;
+
   final AppStore _appStore;
 
   RealUnitBuyPaymentInfoService(AppStore appStore) : _appStore = appStore;
@@ -20,7 +22,7 @@ class RealUnitBuyPaymentInfoService {
     final buyDto = RealUnitBuyDto(amount: amount, currency: currency);
 
     final authToken = _appStore.dfxAuthToken;
-    final uri = Uri.https(_baseUrl, _buyPaymentInfoPath);
+    final uri = Uri.https(_host, _buyPaymentInfoPath);
     final response = await _appStore.httpClient.put(
       uri,
       headers: {
@@ -56,7 +58,7 @@ class RealUnitBuyPaymentInfoService {
 
   Future<void> confirmPayment(int id) async {
     final authToken = _appStore.dfxAuthToken;
-    final uri = Uri.https(_baseUrl, '/v1/buy/paymentInfos/$id/confirm');
+    final uri = Uri.https(_host, '/v1/buy/paymentInfos/$id/confirm');
 
     final response = await _appStore.httpClient.put(
       uri,

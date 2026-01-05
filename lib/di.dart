@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:get_it/get_it.dart';
+import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/open_crypto_pay/open_crypto_pay_service.dart';
 import 'package:realunit_wallet/packages/repository/asset_repository.dart';
@@ -38,7 +39,6 @@ Future<String> setupEssentials() async {
   getIt.registerSingleton(sharedPreferences);
 
   getIt.registerFactory(() => SettingsRepository(getIt<SharedPreferences>()));
-  getIt.registerSingleton(SettingsBloc(getIt<SettingsRepository>()));
 
   final secureStorage = const SecureStorage();
   getIt.registerSingleton(secureStorage);
@@ -61,9 +61,9 @@ Future<String> setupEssentials() async {
 
 Future<void> finishSetup(String encryptionKey) async {
   getIt.registerSingleton(AppDatabase(encryptionKey));
-  final appStore = AppStore();
-  appStore.settingsRepository = getIt<SettingsRepository>();
-  getIt.registerSingleton(appStore);
+  getIt.registerSingleton(AppStore(() => ApiConfig(
+        networkMode: getIt<SettingsRepository>().networkMode,
+      )));
 
   setupRepositories();
   setupServices();
@@ -120,6 +120,10 @@ void setupServices() {
 }
 
 void setupBlocs() {
+  getIt.registerSingleton(SettingsBloc(
+    getIt<SettingsRepository>(),
+    _getNewAuthToken,
+  ));
   getIt.registerSingleton(HomeBloc(
     getIt<WalletService>(),
     getIt<BalanceService>(),
@@ -131,3 +135,9 @@ void setupBlocs() {
 }
 
 Future<bool> _existsDatabaseFile() async => File(await AppDatabase.getDatabasePath()).exists();
+
+Future<void> _getNewAuthToken() async {
+  final authService = getIt<DFXService>();
+  authService.invalidateAuthToken();
+  await authService.getAuthToken();
+}

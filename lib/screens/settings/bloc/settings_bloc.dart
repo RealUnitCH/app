@@ -1,9 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
-import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 import 'package:realunit_wallet/styles/language.dart';
 
@@ -11,7 +9,7 @@ part 'settings_event.dart';
 part 'settings_state.dart';
 
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
-  SettingsBloc(this._settingsRepository)
+  SettingsBloc(this._settingsRepository, this.getNewAuthToken)
       : super(SettingsState(
           language: Language.fromCode(_settingsRepository.language),
           currency: Currency.fromCode(_settingsRepository.currency),
@@ -24,30 +22,26 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   }
 
   final SettingsRepository _settingsRepository;
+  final Future<void> Function() getNewAuthToken;
 
-  void _onToggleHideAmountEvent(
-      ToggleHideAmountEvent event, Emitter<SettingsState> emit) {
+  void _onToggleHideAmountEvent(ToggleHideAmountEvent event, Emitter<SettingsState> emit) {
     emit(state.copyWith(hideAmounts: !state.hideAmounts));
   }
 
-  void _onSetLanguageEvent(
-      SetLanguageEvent event, Emitter<SettingsState> emit) {
+  void _onSetLanguageEvent(SetLanguageEvent event, Emitter<SettingsState> emit) {
     _settingsRepository.language = event.language.code;
     emit(state.copyWith(language: event.language));
   }
 
-  void _onSetCurrencyEvent(
-      SetCurrencyEvent event, Emitter<SettingsState> emit) {
+  void _onSetCurrencyEvent(SetCurrencyEvent event, Emitter<SettingsState> emit) {
     _settingsRepository.currency = event.currency.code;
     emit(state.copyWith(currency: event.currency));
   }
 
-  void _onSetNetworkModeEvent(
-      SetNetworkModeEvent event, Emitter<SettingsState> emit) {
+  Future<void> _onSetNetworkModeEvent(
+      SetNetworkModeEvent event, Emitter<SettingsState> emit) async {
     _settingsRepository.networkMode = event.networkMode;
-    // Clear cached auth token when switching networks
-    // as tokens are network-specific
-    getIt<AppStore>().dfxAuthToken = null;
+    await getNewAuthToken();
     emit(state.copyWith(networkMode: event.networkMode));
   }
 }

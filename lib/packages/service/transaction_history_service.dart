@@ -15,24 +15,25 @@ import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:web3dart/credentials.dart';
 
 class TransactionHistoryService {
+  static const _accountHistoryPath = "/v1/realunit/account";
+
+  String get _host => _appStore.apiConfig.apiHost;
+
   final AppStore _appStore;
   final AssetRepository _assetRepository;
   final TransactionRepository _transactionRepository;
 
-  TransactionHistoryService(
-      this._appStore, this._assetRepository, this._transactionRepository);
+  TransactionHistoryService(this._appStore, this._assetRepository, this._transactionRepository);
 
   Future<void> explorerAssistedScan([int call = 0]) async {
     final chain = Blockchain.ethereum;
-    final api = EtherscanAPI(
-        apiKey: 'IBE36W7QPVF4M62N8AZ6YRTWK52FXWDH33', enableLogs: false);
+    final api = EtherscanAPI(apiKey: 'IBE36W7QPVF4M62N8AZ6YRTWK52FXWDH33', enableLogs: false);
     final latestHeight = (await _transactionRepository.getLatestHeight()) + 1;
 
-    developer
-        .log("[explorerAssistedScan][$call call] Trying sync at $latestHeight");
+    developer.log("[explorerAssistedScan][$call call] Trying sync at $latestHeight");
 
-    final txs = await api.txList(
-        address: _appStore.primaryAddress, offset: 0, startblock: latestHeight);
+    final txs =
+        await api.txList(address: _appStore.primaryAddress, offset: 0, startblock: latestHeight);
 
     if ((txs.result ?? []).isEmpty) {
       developer.log(
@@ -40,23 +41,19 @@ class TransactionHistoryService {
       return;
     }
 
-    final ercTx = await api.tokenTx(
-        address: _appStore.primaryAddress, startblock: latestHeight);
+    final ercTx = await api.tokenTx(address: _appStore.primaryAddress, startblock: latestHeight);
 
     for (EtherScanTxResult result in txs.result ?? []) {
       final isContractCall = result.input != "0x";
 
-      final isTokenTransfer =
-          ercTx.result?.any((e) => e.hash == result.hash) ?? false;
+      final isTokenTransfer = ercTx.result?.any((e) => e.hash == result.hash) ?? false;
 
       BigInt value = BigInt.parse(result.value);
       String receiver = result.to.asHexEip55;
-      Asset? asset =
-          await _assetRepository.getAsset(chain.chainId, result.to.asHexEip55);
+      Asset? asset = await _assetRepository.getAsset(chain.chainId, result.to.asHexEip55);
 
       if (isTokenTransfer) {
-        final tokenTransfer =
-            ercTx.result?.firstWhere((e) => e.hash == result.hash);
+        final tokenTransfer = ercTx.result?.firstWhere((e) => e.hash == result.hash);
         if (tokenTransfer != null) {
           value = BigInt.parse(tokenTransfer.value);
           receiver = tokenTransfer.to.asHexEip55;
@@ -85,26 +82,24 @@ class TransactionHistoryService {
             : TransactionTypes.transfer,
         note: "",
         data: isContractCall ? result.input : null,
-        timestamp: DateTime.fromMillisecondsSinceEpoch(
-            int.parse(result.timeStamp) * 1000),
+        timestamp: DateTime.fromMillisecondsSinceEpoch(int.parse(result.timeStamp) * 1000),
       ));
     }
 
     for (EtherScanMintedTokenTxResult result in ercTx.result ?? []) {
       if (await _transactionRepository.existsTransaction(result.hash)) continue;
 
-      Asset? asset = await _assetRepository.getAsset(
-              chain.chainId, result.contractAddress.asHexEip55) ??
-          Asset(
-            chainId: chain.chainId,
-            address: result.to.asHexEip55,
-            name: "Unknown",
-            symbol: "???",
-            decimals: 18,
-          );
+      Asset? asset =
+          await _assetRepository.getAsset(chain.chainId, result.contractAddress.asHexEip55) ??
+              Asset(
+                chainId: chain.chainId,
+                address: result.to.asHexEip55,
+                name: "Unknown",
+                symbol: "???",
+                decimals: 18,
+              );
 
-      final exists =
-          await _transactionRepository.existsTransaction(result.hash);
+      final exists = await _transactionRepository.existsTransaction(result.hash);
       if (!exists) {
         _transactionRepository.insertTransaction(Transaction(
           height: int.parse(result.blockNumber),
@@ -117,8 +112,7 @@ class TransactionHistoryService {
           type: TransactionTypes.tokenTransfer,
           note: "",
           data: result.input,
-          timestamp: DateTime.fromMillisecondsSinceEpoch(
-              int.parse(result.timeStamp) * 1000),
+          timestamp: DateTime.fromMillisecondsSinceEpoch(int.parse(result.timeStamp) * 1000),
         ));
       }
     }
@@ -128,10 +122,8 @@ class TransactionHistoryService {
   }
 
   Future<void> ponderBasedSync() async {
-    final transactions =
-        await Ponder().getSavingsSavedTransactions(_appStore.primaryAddress);
-    final transactions2 = await Ponder()
-        .getSavingsWithdrawnTransactions(_appStore.primaryAddress);
+    final transactions = await Ponder().getSavingsSavedTransactions(_appStore.primaryAddress);
+    final transactions2 = await Ponder().getSavingsWithdrawnTransactions(_appStore.primaryAddress);
 
     for (final tx in [...transactions, ...transactions2]) {
       final exists = await _transactionRepository.existsTransaction(tx.txId);
@@ -145,8 +137,7 @@ class TransactionHistoryService {
 
   Future<void> apiBasedSync() async {
     final address = _appStore.primaryAddress;
-    final apiUri = Uri.parse(
-        _appStore.apiConfig.realUnitAccountHistoryUrl(address));
+    final apiUri = Uri.https(_host, '$_accountHistoryPath/$address/history');
 
     final response = await _appStore.httpClient.get(apiUri);
 

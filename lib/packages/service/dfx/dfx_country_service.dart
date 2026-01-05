@@ -11,14 +11,14 @@ class DfxCountryService {
 
   final AppStore _appStore;
 
-  DfxCountryService(AppStore appStore) : _appStore = appStore;
+  String get _host => _appStore.apiConfig.apiHost;
 
-  String get _baseUrl => _appStore.apiConfig.dfxApiHost;
+  DfxCountryService(AppStore appStore) : _appStore = appStore;
 
   Future<List<Country>> getAllCountries() async {
     if (cachedCountries != null) return cachedCountries!;
 
-    final uri = Uri.https(_baseUrl, _countryPath);
+    final uri = Uri.https(_host, _countryPath);
     final response = await _appStore.httpClient.get(uri);
 
     if (response.statusCode == 200) {

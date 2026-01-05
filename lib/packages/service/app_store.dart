@@ -1,18 +1,19 @@
 import 'dart:developer' as developer;
 
+import 'package:http/http.dart';
 import 'package:realunit_wallet/models/node.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/repository/node_repository.dart';
-import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
-import 'package:http/http.dart';
 import 'package:web3dart/web3dart.dart' as web3;
 
 class AppStore {
-  List<Node> _nodes = [];
+  final ApiConfig Function() getApiConfig;
   final httpClient = Client();
+  List<Node> _nodes = [];
   AWallet? _wallet;
-  SettingsRepository? _settingsRepository;
+
+  AppStore(this.getApiConfig);
 
   set wallet(AWallet wallet_) => _wallet = wallet_;
 
@@ -21,16 +22,7 @@ class AppStore {
     throw Exception("No Wallet set");
   }
 
-  set settingsRepository(SettingsRepository repo) => _settingsRepository = repo;
-
-  /// Get the current API configuration based on network mode setting
-  ApiConfig get apiConfig {
-    if (_settingsRepository != null) {
-      return _settingsRepository!.apiConfig;
-    }
-    // Fallback to testnet if settings not initialized
-    return const ApiConfig(networkMode: NetworkMode.testnet);
-  }
+  ApiConfig get apiConfig => getApiConfig();
 
   Future<void> refreshNodes(NodeRepository nodeRepository) async {
     _nodes = await nodeRepository.allNodes;
@@ -46,8 +38,7 @@ class AppStore {
         return Node(
           chainId: 1,
           name: "Fallback",
-          httpsUrl:
-              "https://eth-mainnet.g.alchemy.com/v2/9qEJRkxr1gAyFfwsCU6qODRSqj3TAzjj",
+          httpsUrl: "https://eth-mainnet.g.alchemy.com/v2/9qEJRkxr1gAyFfwsCU6qODRSqj3TAzjj",
         );
       },
     );

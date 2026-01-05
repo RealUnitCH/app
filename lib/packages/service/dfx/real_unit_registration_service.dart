@@ -11,11 +11,11 @@ import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 class RealUnitRegistrationService {
   static const _registerPath = "/v1/realunit/register";
 
+  String get _host => _appStore.apiConfig.apiHost;
+
   final AppStore _appStore;
 
   RealUnitRegistrationService(AppStore appStore) : _appStore = appStore;
-
-  String get _baseUrl => _appStore.apiConfig.dfxApiHost;
 
   Future<RegistrationStatus> register(Registration registration) async {
     final credentials = _appStore.wallet.primaryAccount.primaryAddress;
@@ -54,7 +54,7 @@ class RealUnitRegistrationService {
     );
     final authToken = _appStore.dfxAuthToken;
 
-    final uri = Uri.https(_baseUrl, _registerPath);
+    final uri = Uri.https(_host, _registerPath);
     final response = await _appStore.httpClient.post(
       uri,
       headers: {

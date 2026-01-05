@@ -12,14 +12,14 @@ abstract class DFXAuthService {
 
   DFXAuthService(this.appStore);
 
-  String get baseUrl => appStore.apiConfig.dfxApiHost;
+  String get host => appStore.apiConfig.apiHost;
 
   AWalletAccount get wallet;
 
   String get walletAddress;
 
   Future<String> getSignMessage() async {
-    final uri = Uri.https(baseUrl, signMessagePath, {'address': walletAddress});
+    final uri = Uri.https(host, signMessagePath, {'address': walletAddress});
 
     final response = await appStore.httpClient.get(uri, headers: {'accept': 'application/json'});
 
@@ -48,7 +48,7 @@ abstract class DFXAuthService {
             'signature': signMessage,
           });
 
-    final uri = Uri.https(baseUrl, authPath);
+    final uri = Uri.https(host, authPath);
     final response = await appStore.httpClient.post(
       uri,
       headers: {'Content-Type': 'application/json'},
@@ -74,4 +74,6 @@ abstract class DFXAuthService {
     }
     return appStore.dfxAuthToken;
   }
+
+  void invalidateAuthToken() => appStore.dfxAuthToken = null;
 }

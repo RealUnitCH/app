@@ -10,6 +10,9 @@ import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:web3dart/web3dart.dart';
 
 class BalanceService {
+  static const _balancePath = '/v1/realunit/account';
+  String get _host => _appStore.apiConfig.appHost;
+
   final BalanceRepository _balanceRepository;
   final AppStore _appStore;
 
@@ -20,8 +23,7 @@ class BalanceService {
   void startSync(String address) {
     cancelSync();
 
-    _syncTimer = Timer.periodic(
-        Duration(seconds: 10), (_) => updateBalances(address));
+    _syncTimer = Timer.periodic(Duration(seconds: 10), (_) => updateBalances(address));
   }
 
   void cancelSync() => _syncTimer?.cancel();
@@ -33,8 +35,7 @@ class BalanceService {
 
   Future<void> _updateRealUnitBalance(String address) async {
     try {
-      final baseUrl = _appStore.apiConfig.dfxApiHost;
-      final uri = Uri.https(baseUrl, '/v1/realunit/account/$address');
+      final uri = Uri.https(_host, '$_balancePath/$address');
 
       final response = await _appStore.httpClient.get(uri);
 
@@ -65,9 +66,8 @@ class BalanceService {
   Future<void> _updateNativeBalances(String address) async {
     for (final chain in Blockchain.values) {
       try {
-        final balance = await _appStore
-            .getClient(chain.chainId)
-            .getBalance(EthereumAddress.fromHex(address));
+        final balance =
+            await _appStore.getClient(chain.chainId).getBalance(EthereumAddress.fromHex(address));
         await _balanceRepository.saveBalance(Balance(
           chainId: chain.chainId,
           contractAddress: chain.nativeAsset.address,

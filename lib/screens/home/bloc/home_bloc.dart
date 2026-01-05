@@ -66,7 +66,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       DeleteCurrentWalletEvent event, Emitter<HomeState> emit) async {
     emit(state.copyWith(isLoadingWallet: true));
 
-    _appStore.dfxAuthToken = null;
+    _dfxService.invalidateAuthToken();
     await _walletService.deleteCurrentWallet();
     _settingsService.setTermsAccepted(false);
     emit(

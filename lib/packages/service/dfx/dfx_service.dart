@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
@@ -9,9 +12,6 @@ import 'package:realunit_wallet/packages/utils/device_info.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/screens/send/send_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 class DFXService extends DFXAuthService {
@@ -91,7 +91,7 @@ class DFXService extends DFXAuthService {
 
       final accessToken = await getAuthToken();
 
-      final uri = Uri.https(appStore.apiConfig.dfxAppHost, actionType, {
+      final uri = Uri.https(host, actionType, {
         'session': accessToken,
         'lang': langCode,
         'asset-out': isBuyAction ? assetOut : assetIn,
@@ -110,11 +110,11 @@ class DFXService extends DFXAuthService {
       if (await canLaunchUrl(uri)) {
         if (DeviceInfo.instance.isMobile) {
           if (context.mounted) {
-            final response = await context.push('/webView',
-                extra: WebViewRouteParams(title: title, url: uri));
+            final response =
+                await context.push('/webView', extra: WebViewRouteParams(title: title, url: uri));
 
             if (!isBuyAction && response != null && context.mounted) {
-                completeSell(context, response as String);
+              completeSell(context, response as String);
             }
           }
         } else {
@@ -128,18 +128,15 @@ class DFXService extends DFXAuthService {
     }
   }
 
-  Future<void> completeSell(
-      BuildContext context, String callbackResponse) async {
+  Future<void> completeSell(BuildContext context, String callbackResponse) async {
     final uri = Uri.parse(callbackResponse);
     final params = uri.queryParameters;
-    final depositAddress =
-        await _getSellDepositAddress(params['routeId'] as String);
+    final depositAddress = await _getSellDepositAddress(params['routeId'] as String);
 
     final asset = (await _assetRepository.allAssets)
         .where((element) =>
             element.symbol.toUpperCase() == params['asset']!.toUpperCase() &&
-            Blockchain.getFromChainId(element.chainId).name ==
-                params['blockchain'])
+            Blockchain.getFromChainId(element.chainId).name == params['blockchain'])
         .firstOrNull;
 
     if (context.mounted) {
@@ -154,16 +151,13 @@ class DFXService extends DFXAuthService {
   }
 
   Future<String> _getSellDepositAddress(String routeId) async {
-    final uri = Uri.https(baseUrl, 'v1/sell/$routeId');
+    final uri = Uri.https(host, 'v1/sell/$routeId');
 
     final authToken = await getAuthToken();
 
     final response = await http.get(
       uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken'
-      },
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $authToken'},
     );
 
     return jsonDecode(response.body)['deposit']['address'];
