@@ -9,7 +9,7 @@ import 'package:realunit_wallet/styles/currency.dart';
 
 class RealUnitBuyPaymentInfoService {
   static const _baseUrl = "dev.api.dfx.swiss";
-  static const _buyPaymentInfoPath = "/v1/realunit/paymentInfo";
+  static const _buyPaymentInfoPath = "/v1/realunit/buy";
 
   final AppStore _appStore;
 
