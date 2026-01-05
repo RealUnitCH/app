@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/restore_wallet/cubit/restore_wallet/restore_wallet_cubit.dart';
@@ -9,7 +8,8 @@ import 'package:realunit_wallet/screens/restore_wallet/cubit/validate_seed/valid
 import 'package:realunit_wallet/screens/restore_wallet/widgets/restore_wallet_button.dart';
 import 'package:realunit_wallet/screens/restore_wallet/widgets/restore_wallet_input_field.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/widgets/mnemonic_input_field_controller.dart';
+import 'package:realunit_wallet/styles/icons.dart';
+import 'package:realunit_wallet/widgets/mnemonic_field.dart';
 import 'package:realunit_wallet/widgets/text_substring_highlighting.dart';
 
 class RestoreWalletView extends StatelessWidget {
@@ -40,15 +40,7 @@ class RestoreWalletView extends StatelessWidget {
         ],
         child: Scaffold(
           backgroundColor: RealUnitColors.brand700,
-          appBar: AppBar(
-            leading: IconButton(
-              onPressed: () => context.pop(),
-              icon: Icon(
-                Icons.arrow_back_rounded,
-                size: 24,
-              ),
-            ),
-          ),
+          appBar: AppBar(),
           body: SafeArea(
             child: GestureDetector(
               onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -87,14 +79,7 @@ class RestoreWalletView extends StatelessWidget {
                                 spacing: 8.0,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 2.0),
-                                    child: Icon(
-                                      Icons.key_rounded,
-                                      size: 20.0,
-                                      color: RealUnitColors.realUnitBlue,
-                                    ),
-                                  ),
+                                  RecoveryKeyIcon(size: 20, color: RealUnitColors.realUnitBlue),
                                   Expanded(
                                     child: TextSubstringHighlighting(
                                       text: S.of(context).restore_wallet_from_seed_description,
