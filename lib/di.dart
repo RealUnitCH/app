@@ -16,7 +16,7 @@ import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/settings_service.dart';
@@ -112,7 +112,7 @@ void setupServices() {
   getIt.registerFactory(() => DfxBrokerbotService(getIt<AppStore>()));
   getIt.registerFactory(() => RealUnitRegistrationService(getIt<AppStore>()));
   getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
-  getIt.registerFactory(() => DFXService(
+  getIt.registerFactory(() => DfxWidgetService(
         getIt<AppStore>(),
         getIt<SettingsRepository>(),
         getIt<AssetRepository>(),
@@ -128,7 +128,7 @@ void setupBlocs() {
     getIt<WalletService>(),
     getIt<BalanceService>(),
     getIt<TransactionHistoryService>(),
-    getIt<DFXService>(),
+    getIt<DfxWidgetService>(),
     getIt<SettingsService>(),
     getIt<AppStore>(),
   ));
@@ -137,7 +137,7 @@ void setupBlocs() {
 Future<bool> _existsDatabaseFile() async => File(await AppDatabase.getDatabasePath()).exists();
 
 Future<void> _getNewAuthToken() async {
-  final authService = getIt<DFXService>();
+  final authService = getIt<DfxWidgetService>();
   authService.invalidateAuthToken();
   await authService.getAuthToken();
 }

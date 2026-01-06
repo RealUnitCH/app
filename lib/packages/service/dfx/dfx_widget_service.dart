@@ -14,8 +14,8 @@ import 'package:realunit_wallet/screens/send/send_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class DFXService extends DFXAuthService {
-  DFXService(super.appStore, this._settingsRepository, this._assetRepository);
+class DfxWidgetService extends DFXAuthService {
+  DfxWidgetService(super.appStore, this._settingsRepository, this._assetRepository);
 
   final SettingsRepository _settingsRepository;
   final AssetRepository _assetRepository;
@@ -91,7 +91,7 @@ class DFXService extends DFXAuthService {
 
       final accessToken = await getAuthToken();
 
-      final uri = Uri.https(host, actionType, {
+      final uri = Uri.https('services.dfx.swiss', actionType, {
         'session': accessToken,
         'lang': langCode,
         'asset-out': isBuyAction ? assetOut : assetIn,

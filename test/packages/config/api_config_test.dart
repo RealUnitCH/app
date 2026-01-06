@@ -12,10 +12,6 @@ void main() {
       test('returns correct apiHost', () {
         expect(config.apiHost, equals('dev.api.dfx.swiss'));
       });
-
-      test('returns correct appHost', () {
-        expect(config.appHost, equals('dev.app.dfx.swiss'));
-      });
     });
 
     group('mainnet mode', () {
@@ -23,10 +19,6 @@ void main() {
 
       test('returns correct apiHost', () {
         expect(config.apiHost, equals('api.dfx.swiss'));
-      });
-
-      test('returns correct appHost', () {
-        expect(config.appHost, equals('app.dfx.swiss'));
       });
     });
   });
