@@ -14,9 +14,7 @@ class BuyConfirmCubit extends Cubit<BuyConfirmState> {
   Future<void> confirmPayment(int paymentInfoId) async {
     try {
       emit(BuyConfirmLoading());
-
       await _buyPaymentInfoService.confirmPayment(paymentInfoId);
-
       emit(BuyConfirmSuccess());
     } catch (e) {
       emit(BuyConfirmFailure(e.toString()));
