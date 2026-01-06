@@ -11,7 +11,7 @@ import 'package:web3dart/web3dart.dart';
 
 class BalanceService {
   static const _balancePath = '/v1/realunit/account';
-  String get _host => _appStore.apiConfig.appHost;
+  String get _host => _appStore.apiConfig.apiHost;
 
   final BalanceRepository _balanceRepository;
   final AppStore _appStore;
@@ -52,6 +52,7 @@ class BalanceService {
             walletAddress: address,
             balance: balanceValue,
             asset: realUnitAsset,
+            networkMode: _appStore.apiConfig.networkMode,
           ));
         }
       }
@@ -61,7 +62,7 @@ class BalanceService {
   }
 
   Future<Balance?> getBalance(Asset asset, String address) =>
-      _balanceRepository.getBalance(asset, address);
+      _balanceRepository.getBalance(asset, address, _appStore.apiConfig.networkMode);
 
   Future<void> _updateNativeBalances(String address) async {
     for (final chain in Blockchain.values) {
@@ -74,6 +75,7 @@ class BalanceService {
           walletAddress: address,
           balance: balance.getInWei,
           asset: chain.nativeAsset,
+          networkMode: _appStore.apiConfig.networkMode,
         ));
       } catch (e) {
         // Silently fail for individual chains

@@ -1,5 +1,4 @@
 import 'package:drift/drift.dart';
-import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:realunit_wallet/packages/utils/fast_hash.dart';
 
@@ -71,12 +70,12 @@ extension TransactionStorage on AppDatabase {
       .watch();
 
   Stream<List<TransactionData>> watchTransfersOfAssets(
-          Iterable<int> assets, String wallet, NetworkMode networkMode) =>
+          Iterable<int> assets, String wallet, String networkMode) =>
       (select(transactions)
             ..where((row) => Expression.and([
                   row.asset.isIn(assets),
                   row.type.equals(2),
-                  row.networkMode.equals(networkMode.name),
+                  row.networkMode.equals(networkMode),
                   Expression.or(
                       [row.senderAddress.equals(wallet), row.receiverAddress.equals(wallet)]),
                 ]))
@@ -84,12 +83,12 @@ extension TransactionStorage on AppDatabase {
           .watch();
 
   Stream<List<TransactionData>> watchTransfersOfAssetsLimit(
-          Iterable<int> assets, String wallet, NetworkMode networkMode, int limit) =>
+          Iterable<int> assets, String wallet, String networkMode, int limit) =>
       (select(transactions)
             ..where((row) => Expression.and([
                   row.asset.isIn(assets),
                   row.type.equals(2),
-                  row.networkMode.equals(networkMode.name),
+                  row.networkMode.equals(networkMode),
                   Expression.or(
                       [row.senderAddress.equals(wallet), row.receiverAddress.equals(wallet)]),
                 ]))
@@ -98,12 +97,12 @@ extension TransactionStorage on AppDatabase {
           .watch();
 
   Stream<List<TransactionData>> watchTransfersOfSavingsLimit(
-          Iterable<int> assets, String wallet, NetworkMode networkMode, int limit) =>
+          Iterable<int> assets, String wallet, String networkMode, int limit) =>
       (select(transactions)
             ..where((row) => Expression.and([
                   row.asset.isIn(assets),
                   row.type.isIn([3, 4]),
-                  row.networkMode.equals(networkMode.name),
+                  row.networkMode.equals(networkMode),
                   Expression.or(
                       [row.senderAddress.equals(wallet), row.receiverAddress.equals(wallet)]),
                 ]))

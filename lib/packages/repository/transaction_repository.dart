@@ -111,18 +111,18 @@ class TransactionRepository {
       [int? limit]) {
     if (limit != null) {
       return _appDatabase
-          .watchTransfersOfAssetsLimit(assets.map((e) => e.id), wallet, networkMode, limit)
+          .watchTransfersOfAssetsLimit(assets.map((e) => e.id), wallet, networkMode.name, limit)
           .transform<List<Transaction>>(_transformer);
     }
     return _appDatabase
-        .watchTransfersOfAssets(assets.map((e) => e.id), wallet, networkMode)
+        .watchTransfersOfAssets(assets.map((e) => e.id), wallet, networkMode.name)
         .transform<List<Transaction>>(_transformer);
   }
 
   Stream<List<Transaction>> watchTransactionsSavings(
       Iterable<Asset> assets, String wallet, NetworkMode networkMode, int limit) {
     return _appDatabase
-        .watchTransfersOfSavingsLimit(assets.map((e) => e.id), wallet, networkMode, limit)
+        .watchTransfersOfSavingsLimit(assets.map((e) => e.id), wallet, networkMode.name, limit)
         .transform<List<Transaction>>(_transformer);
   }
 

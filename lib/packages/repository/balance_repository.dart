@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/balance.dart';
+import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/storage/balance_storage.dart';
 import 'package:realunit_wallet/packages/storage/database.dart';
 
@@ -20,13 +21,14 @@ class BalanceRepository {
       balance.chainId,
       balance.contractAddress,
       balance.walletAddress,
-      balance.balance.toRadixString(16));
+      balance.balance.toRadixString(16),
+      balance.networkMode.name);
 
   Future<void> updateBalance(Balance balance) =>
       _appDatabase.updateBalance(balance.id, balance.balance.toRadixString(16));
 
-  Future<Balance?> getBalance(Asset asset, String walletAddress) => _appDatabase
-      .getBalance(asset.chainId, asset.address, walletAddress)
+  Future<Balance?> getBalance(Asset asset, String walletAddress, NetworkMode networkMode) => _appDatabase
+      .getBalance(asset.chainId, asset.address, walletAddress, networkMode.name)
       .then((balance) => balance != null
           ? Balance(
               chainId: balance.chainId,
@@ -34,11 +36,12 @@ class BalanceRepository {
               walletAddress: balance.walletAddress,
               balance: BigInt.parse(balance.balance, radix: 16),
               asset: asset,
+              networkMode: networkMode,
             )
           : null);
 
   Future<bool> existsBalance(Balance balance) =>
-      getBalance(balance.asset, balance.walletAddress)
+      getBalance(balance.asset, balance.walletAddress, balance.networkMode)
           .then((balance) => balance != null);
 
   Stream<Balance> watchBalance(Balance balance) {
@@ -51,6 +54,7 @@ class BalanceRepository {
           walletAddress: balanceData.walletAddress,
           balance: BigInt.parse(balanceData.balance, radix: 16),
           asset: balance.asset,
+          networkMode: balance.networkMode,
         ));
       }
     });
