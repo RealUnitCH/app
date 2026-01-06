@@ -9,6 +9,7 @@ import 'package:realunit_wallet/styles/currency.dart';
 
 class RealUnitBuyPaymentInfoService {
   static const _buyPaymentInfoPath = "/v1/realunit/buy";
+  static String _confirmPaymentPath(int id) => '/v1/buy/paymentInfos/$id/confirm';
 
   String get _host => _appStore.apiConfig.apiHost;
 
@@ -56,7 +57,7 @@ class RealUnitBuyPaymentInfoService {
 
   Future<void> confirmPayment(int id) async {
     final authToken = _appStore.dfxAuthToken;
-    final uri = Uri.https(_host, '/v1/buy/paymentInfos/$id/confirm');
+    final uri = Uri.https(_host, _confirmPaymentPath(id));
 
     final response = await _appStore.httpClient.put(
       uri,

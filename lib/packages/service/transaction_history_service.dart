@@ -15,7 +15,7 @@ import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:web3dart/credentials.dart';
 
 class TransactionHistoryService {
-  static const _accountHistoryPath = "/v1/realunit/account";
+  static String _accountHistoryPath(String address) => "/v1/realunit/account/$address/history";
 
   String get _host => _appStore.apiConfig.apiHost;
 
@@ -140,7 +140,7 @@ class TransactionHistoryService {
 
   Future<void> apiBasedSync() async {
     final address = _appStore.primaryAddress;
-    final apiUri = Uri.https(_host, '$_accountHistoryPath/$address/history');
+    final apiUri = Uri.https(_host, _accountHistoryPath(address));
 
     final response = await _appStore.httpClient.get(apiUri);
 
