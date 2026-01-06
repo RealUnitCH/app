@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy_payment_info.dart';
@@ -31,6 +32,8 @@ class MockDfxBrokerbotService extends Mock implements DfxBrokerbotService {}
 
 class MockRealUnitBuyPaymentInfoService extends Mock implements RealUnitBuyPaymentInfoService {}
 
+class MockApiConfig extends Mock implements ApiConfig {}
+
 void main() {
   late BuyConverterCubit converterCubit;
   late BuyPaymentInfoCubit buyPaymentInfoCubit;
@@ -49,7 +52,7 @@ void main() {
 
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
-    getIt.registerSingleton<AppStore>(AppStore());
+    getIt.registerSingleton<AppStore>(AppStore(() => MockApiConfig()));
     getIt.registerSingleton<DfxBrokerbotService>(MockDfxBrokerbotService());
     getIt.registerSingleton<RealUnitBuyPaymentInfoService>(MockRealUnitBuyPaymentInfoService());
   }
