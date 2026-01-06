@@ -58,8 +58,7 @@ class _BuyViewState extends State<BuyView> {
         ),
       ),
       body: BlocConsumer<BuyConverterCubit, BuyConverterState>(
-        listenWhen: (prev, next) =>
-            prev.fiatText != next.fiatText || prev.sharesText != next.sharesText,
+        listenWhen: (prev, next) => prev.loading && !next.loading,
         listener: (context, state) {
           _syncController(_amountController, state.fiatText);
           _syncController(_resultController, state.sharesText);
