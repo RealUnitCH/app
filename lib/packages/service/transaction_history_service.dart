@@ -83,6 +83,7 @@ class TransactionHistoryService {
         note: "",
         data: isContractCall ? result.input : null,
         timestamp: DateTime.fromMillisecondsSinceEpoch(int.parse(result.timeStamp) * 1000),
+        networkMode: _appStore.apiConfig.networkMode,
       ));
     }
 
@@ -113,6 +114,7 @@ class TransactionHistoryService {
           note: "",
           data: result.input,
           timestamp: DateTime.fromMillisecondsSinceEpoch(int.parse(result.timeStamp) * 1000),
+          networkMode: _appStore.apiConfig.networkMode,
         ));
       }
     }
@@ -160,6 +162,7 @@ class TransactionHistoryService {
         note: "",
         data: null,
         timestamp: DateTime.parse(entry['timestamp']),
+        networkMode: _appStore.apiConfig.networkMode,
       ));
     }
   }

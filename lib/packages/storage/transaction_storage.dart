@@ -1,6 +1,7 @@
+import 'package:drift/drift.dart';
+import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:realunit_wallet/packages/utils/fast_hash.dart';
-import 'package:drift/drift.dart';
 
 extension TransactionStorage on AppDatabase {
   Future<int> insertTransactions(
@@ -15,6 +16,7 @@ extension TransactionStorage on AppDatabase {
     String note,
     String data,
     DateTime timeStamp,
+    String networkMode,
   ) =>
       into(transactions).insert(TransactionsCompanion.insert(
         height: height,
@@ -28,6 +30,7 @@ extension TransactionStorage on AppDatabase {
         note: note,
         data: data,
         timeStamp: timeStamp,
+        networkMode: networkMode,
       ));
 
   Future<int> updateTransaction(
@@ -42,9 +45,9 @@ extension TransactionStorage on AppDatabase {
     String? note,
     String? data,
     DateTime? timeStamp,
+    String? networkMode,
   }) =>
-      (update(transactions)..where((row) => row.txId.equals(txId)))
-          .write(TransactionsCompanion(
+      (update(transactions)..where((row) => row.txId.equals(txId))).write(TransactionsCompanion(
         height: Value.absentIfNull(height),
         chainId: Value.absentIfNull(chainId),
         senderAddress: Value.absentIfNull(senderAddress),
@@ -55,83 +58,66 @@ extension TransactionStorage on AppDatabase {
         note: Value.absentIfNull(note),
         data: Value.absentIfNull(data),
         timeStamp: Value.absentIfNull(timeStamp),
+        networkMode: Value.absentIfNull(networkMode),
       ));
 
-  Future<List<TransactionData>> getAllTokenTransactions(
-          int chainId, String address) =>
-      (select(transactions)
-            ..where((row) => row.asset.equals(fastHash("$chainId:$address"))))
-          .get();
+  Future<List<TransactionData>> getAllTokenTransactions(int chainId, String address) =>
+      (select(transactions)..where((row) => row.asset.equals(fastHash("$chainId:$address")))).get();
 
   Future<List<TransactionData>> get allTransactions => transactions.all().get();
 
   Stream<List<TransactionData>> watchTransactions() => (select(transactions)
-        ..orderBy([
-          (u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)
-        ]))
+        ..orderBy([(u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)]))
       .watch();
 
   Stream<List<TransactionData>> watchTransfersOfAssets(
-          Iterable<int> assets, String wallet) =>
+          Iterable<int> assets, String wallet, NetworkMode networkMode) =>
       (select(transactions)
             ..where((row) => Expression.and([
                   row.asset.isIn(assets),
                   row.type.equals(2),
-                  Expression.or([
-                    row.senderAddress.equals(wallet),
-                    row.receiverAddress.equals(wallet)
-                  ]),
+                  row.networkMode.equals(networkMode.name),
+                  Expression.or(
+                      [row.senderAddress.equals(wallet), row.receiverAddress.equals(wallet)]),
                 ]))
-            ..orderBy([
-              (u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)
-            ]))
+            ..orderBy([(u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)]))
           .watch();
 
   Stream<List<TransactionData>> watchTransfersOfAssetsLimit(
-          Iterable<int> assets, String wallet, int limit) =>
+          Iterable<int> assets, String wallet, NetworkMode networkMode, int limit) =>
       (select(transactions)
             ..where((row) => Expression.and([
                   row.asset.isIn(assets),
                   row.type.equals(2),
-                  Expression.or([
-                    row.senderAddress.equals(wallet),
-                    row.receiverAddress.equals(wallet)
-                  ]),
+                  row.networkMode.equals(networkMode.name),
+                  Expression.or(
+                      [row.senderAddress.equals(wallet), row.receiverAddress.equals(wallet)]),
                 ]))
-            ..orderBy([
-              (u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)
-            ])
+            ..orderBy([(u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)])
             ..limit(limit))
           .watch();
 
   Stream<List<TransactionData>> watchTransfersOfSavingsLimit(
-          Iterable<int> assets, String wallet, int limit) =>
+          Iterable<int> assets, String wallet, NetworkMode networkMode, int limit) =>
       (select(transactions)
             ..where((row) => Expression.and([
                   row.asset.isIn(assets),
                   row.type.isIn([3, 4]),
-                  Expression.or([
-                    row.senderAddress.equals(wallet),
-                    row.receiverAddress.equals(wallet)
-                  ]),
+                  row.networkMode.equals(networkMode.name),
+                  Expression.or(
+                      [row.senderAddress.equals(wallet), row.receiverAddress.equals(wallet)]),
                 ]))
-            ..orderBy([
-              (u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)
-            ])
+            ..orderBy([(u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)])
             ..limit(limit))
           .watch();
 
-  Future<List<TransactionData>> getLatestTransactions({int limit = 1}) =>
-      (select(transactions)
-            ..orderBy([
-              (u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)
-            ])
-            ..limit(limit))
-          .get();
+  Future<List<TransactionData>> getLatestTransactions({int limit = 1}) => (select(transactions)
+        ..orderBy([(u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)])
+        ..limit(limit))
+      .get();
 
   Future<TransactionData?> getTransaction(String txId) =>
-      (select(transactions)..where((row) => row.txId.equals(txId)))
-          .getSingleOrNull();
+      (select(transactions)..where((row) => row.txId.equals(txId))).getSingleOrNull();
 }
 
 @DataClassName("TransactionData")
@@ -157,4 +143,6 @@ class Transactions extends Table {
   TextColumn get data => text()();
 
   DateTimeColumn get timeStamp => dateTime()();
+
+  TextColumn get networkMode => text()();
 }

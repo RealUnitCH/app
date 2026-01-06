@@ -56,7 +56,7 @@ class DashboardPage extends StatelessWidget {
     }
 
     transactionHistoryCubit =
-        TransactionHistoryCubit(getIt<TransactionRepository>(), walletAddress);
+        TransactionHistoryCubit(getIt<TransactionRepository>(), walletAddress, _appStore);
   }
 
   final AppStore _appStore;
