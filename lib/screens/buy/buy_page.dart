@@ -1,18 +1,13 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_allowlist_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_bank_details_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
-import 'package:realunit_wallet/screens/buy/cubits/buy_allowlist/buy_allowlist_cubit.dart';
-import 'package:realunit_wallet/screens/buy/cubits/buy_bank_details/buy_bank_details_cubit.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
+import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
-import 'package:realunit_wallet/screens/buy/widgets/payment_not_possible_info.dart';
-import 'package:realunit_wallet/screens/buy/widgets/payment_registration_required.dart';
 
 class BuyPage extends StatelessWidget {
   static const routeName = '/buy';
@@ -24,19 +19,14 @@ class BuyPage extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (_) => BuyAllowlistCubit(
-            getIt<DfxAllowlistService>(),
-          )..checkAddress(),
-        ),
-        BlocProvider(
           create: (_) => BuyConverterCubit(
             getIt<DfxBrokerbotService>(),
           )..onFiatChanged('300'),
         ),
         BlocProvider(
-          create: (_) => BuyBankDetailsCubit(
-            getIt<DfxBankDetailsService>(),
-          )..fetchBankDetails(),
+          create: (_) => BuyPaymentInfoCubit(
+            getIt<RealUnitBuyPaymentInfoService>(),
+          )..getPaymentInfo(),
         ),
       ],
       child: const BuyView(),
@@ -68,11 +58,11 @@ class _BuyViewState extends State<BuyView> {
         ),
       ),
       body: BlocConsumer<BuyConverterCubit, BuyConverterState>(
-        listenWhen: (prev, next) =>
-            prev.fiatText != next.fiatText || prev.sharesText != next.sharesText,
+        listenWhen: (prev, next) => prev.loading && !next.loading,
         listener: (context, state) {
           _syncController(_amountController, state.fiatText);
           _syncController(_resultController, state.sharesText);
+          context.read<BuyPaymentInfoCubit>().getPaymentInfo(amount: _amountController.text);
         },
         builder: (context, state) {
           return SingleChildScrollView(
@@ -89,24 +79,7 @@ class _BuyViewState extends State<BuyView> {
                         amountController: _amountController,
                         resultController: _resultController,
                       ),
-                      BlocBuilder<BuyAllowlistCubit, BuyAllowlistState>(
-                          builder: (context, allowlistState) {
-                        if (allowlistState.loading) {
-                          return const Center(
-                            child: CupertinoActivityIndicator(),
-                          );
-                        }
-                        if (!allowlistState.canReceive) {
-                          return PaymentRegistrationRequired();
-                        }
-                        if (allowlistState.isForbidden) {
-                          return PaymentNotPossibleInfo();
-                        } else {
-                          return PaymentInformation(
-                            amount: _amountController.text,
-                          );
-                        }
-                      })
+                      PaymentInformation(amount: _amountController.text),
                     ],
                   ),
                 ),

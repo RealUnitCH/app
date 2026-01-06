@@ -33,6 +33,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
+  async: ^2.13.0
   basic_utils: ^5.7.0
   bech32: ^0.2.2
   bip32: ^2.0.0

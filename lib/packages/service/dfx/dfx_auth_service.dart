@@ -12,7 +12,7 @@ abstract class DFXAuthService {
 
   DFXAuthService(this.appStore);
 
-  String get baseUrl => 'api.dfx.swiss';
+  String get baseUrl => 'dev.api.dfx.swiss';
 
   AWalletAccount get wallet;
 
@@ -21,8 +21,7 @@ abstract class DFXAuthService {
   Future<String> getSignMessage() async {
     final uri = Uri.https(baseUrl, signMessagePath, {'address': walletAddress});
 
-    final response = await appStore.httpClient
-        .get(uri, headers: {'accept': 'application/json'});
+    final response = await appStore.httpClient.get(uri, headers: {'accept': 'application/json'});
 
     if (response.statusCode == 200) {
       final responseBody = jsonDecode(response.body);
@@ -33,11 +32,9 @@ abstract class DFXAuthService {
     }
   }
 
-  Future<String> getSignature(String message) async =>
-      wallet.signMessage(message);
+  Future<String> getSignature(String message) async => wallet.signMessage(message);
 
-  Future<Map<String, dynamic>> getAuthResponse(
-      [bool sendWalletName = true]) async {
+  Future<Map<String, dynamic>> getAuthResponse([bool sendWalletName = true]) async {
     final signMessage = await getSignature(await getSignMessage());
 
     final requestBody = jsonEncode(sendWalletName
@@ -63,12 +60,10 @@ abstract class DFXAuthService {
       return responseBody as Map<String, dynamic>;
     } else if (response.statusCode == 403) {
       final responseBody = jsonDecode(response.body);
-      final message =
-          responseBody['message'] ?? 'Service unavailable in your country';
+      final message = responseBody['message'] ?? 'Service unavailable in your country';
       throw Exception(message);
     } else {
-      throw Exception(
-          'Failed to sign up. Status: ${response.statusCode} ${response.body}');
+      throw Exception('Failed to sign up. Status: ${response.statusCode} ${response.body}');
     }
   }
 

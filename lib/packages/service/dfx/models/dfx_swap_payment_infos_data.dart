@@ -1,16 +1,15 @@
-
 import 'package:realunit_wallet/packages/service/dfx/models/dfx_asset_data.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/dfx_fees_data.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/fees/dfx_fees_data.dart';
 
 class DFXSwapPaymentInfosData {
   final int routeId;
   final String depositAddress;
-  final DFXFeesData fees;
+  final DfxFeesData fees;
   final num minVolume;
   final num maxVolume;
   final num amount;
   final DFXAssetData sourceAsset;
-  final DFXFeesData feesTarget;
+  final DfxFeesData feesTarget;
   final num minVolumeTarget;
   final num maxVolumeTarget;
   final num exchangeRate;
@@ -46,12 +45,12 @@ class DFXSwapPaymentInfosData {
   DFXSwapPaymentInfosData.fromJson(Map<String, dynamic> json)
       : routeId = json['routeId'] as int,
         depositAddress = json['depositAddress'] as String,
-        fees = DFXFeesData.fromJson(json['fees']),
+        fees = DfxFeesData.fromJson(json['fees']),
         minVolume = json['minVolume'] as num,
         maxVolume = json['maxVolume'] as num,
         amount = json['amount'] as num,
         sourceAsset = DFXAssetData.fromJson(json['sourceAsset']),
-        feesTarget = DFXFeesData.fromJson(json['feesTarget']),
+        feesTarget = DfxFeesData.fromJson(json['feesTarget']),
         minVolumeTarget = json['minVolumeTarget'] as num,
         maxVolumeTarget = json['maxVolumeTarget'] as num,
         exchangeRate = json['exchangeRate'] as num,
