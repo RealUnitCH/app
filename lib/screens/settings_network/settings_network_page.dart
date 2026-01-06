@@ -9,15 +9,10 @@ import 'package:realunit_wallet/screens/settings/widgets/settings_section.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/styles.dart';
 
-class SettingsNetworkPage extends StatefulWidget {
-  const SettingsNetworkPage({super.key});
+class SettingsNetworkPage extends StatelessWidget {
+  SettingsNetworkPage({super.key});
 
-  @override
-  State<SettingsNetworkPage> createState() => _SettingsNetworkPageState();
-}
-
-class _SettingsNetworkPageState extends State<SettingsNetworkPage> {
-  NetworkMode? _pending;
+  final _loadingModel = _LoadingNetworkModeModel();
 
   @override
   Widget build(BuildContext context) {
@@ -33,45 +28,53 @@ class _SettingsNetworkPageState extends State<SettingsNetworkPage> {
         ),
       ),
       body: BlocConsumer<SettingsBloc, SettingsState>(
-        listener: (context, state) {
-          if (_pending == state.networkMode) {
-            setState(() => _pending = null);
-          }
-        },
+        listener: (context, state) => _loadingModel.loadingFinished(),
         builder: (context, state) {
-          return SettingsSections(
-            settings: NetworkMode.values.map((mode) {
-              final isSelected = state.networkMode == mode;
-              final isLoading = _pending == mode;
+          return ValueListenableBuilder(
+              valueListenable: _loadingModel,
+              builder: (context, value, child) {
+                return SettingsSections(
+                  settings: NetworkMode.values.map((mode) {
+                    final isSelected = state.networkMode == mode;
+                    final isLoading = value == mode;
 
-              return SettingOption(
-                title: mode.localizedName(context),
-                trailing: isLoading
-                    ? SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 1.5,
-                          color: RealUnitColors.realUnitBlue,
-                        ),
-                      )
-                    : isSelected
-                        ? const Icon(
-                            Icons.check,
-                            size: 20,
-                            color: RealUnitColors.realUnitBlue,
-                          )
-                        : null,
-                onTap: () {
-                  if (isSelected || _pending != null) return;
-                  setState(() => _pending = mode);
-                  getIt<SettingsBloc>().add(SetNetworkModeEvent(mode));
-                },
-              );
-            }).toList(),
-          );
+                    return SettingOption(
+                      title: mode.localizedName(context),
+                      trailing: isLoading
+                          ? SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                color: RealUnitColors.realUnitBlue,
+                              ),
+                            )
+                          : isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  size: 20,
+                                  color: RealUnitColors.realUnitBlue,
+                                )
+                              : null,
+                      onTap: () {
+                        if (isSelected || value != null) return;
+                        _loadingModel.setLoading(mode);
+                        getIt<SettingsBloc>().add(SetNetworkModeEvent(mode));
+                      },
+                    );
+                  }).toList(),
+                );
+              });
         },
       ),
     );
   }
+}
+
+class _LoadingNetworkModeModel extends ValueNotifier<NetworkMode?> {
+  _LoadingNetworkModeModel() : super(null);
+
+  void setLoading(NetworkMode mode) => value = mode;
+
+  void loadingFinished() => value = null;
 }
