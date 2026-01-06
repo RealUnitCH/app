@@ -55,8 +55,6 @@ class RealUnitBuyPaymentInfoService {
   }
 
   Future<void> confirmPayment(int id) async {
-    if (!_appStore.getApiConfig().networkMode.isTestnet) return;
-
     final authToken = _appStore.dfxAuthToken;
     final uri = Uri.https(_host, '/v1/buy/paymentInfos/$id/confirm');
 
