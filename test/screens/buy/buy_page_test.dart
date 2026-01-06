@@ -145,7 +145,8 @@ void main() {
       whenListen(
         converterCubit,
         Stream.fromIterable([
-          const BuyConverterState(fiatText: "5.00", sharesText: "0.50"),
+          const BuyConverterState(fiatText: "5.00", sharesText: "0.10", loading: true),
+          const BuyConverterState(fiatText: "5.00", sharesText: "0.50", loading: false),
         ]),
         initialState: const BuyConverterState(fiatText: "1.00", sharesText: "0.10"),
       );
