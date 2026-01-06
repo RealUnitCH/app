@@ -1,4 +1,4 @@
-import 'package:realunit_wallet/packages/config/api_config.dart';
+import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsRepository {
@@ -27,8 +27,8 @@ class SettingsRepository {
 
   NetworkMode get networkMode {
     final value = _sharedPreferences.getString("networkMode");
-    if (value == NetworkMode.mainnet.name) return NetworkMode.mainnet;
-    return NetworkMode.testnet;
+    return NetworkMode.values
+        .firstWhere((network) => network.name == value, orElse: () => NetworkMode.testnet);
   }
 
   set networkMode(NetworkMode mode) => _sharedPreferences.setString("networkMode", mode.name);
