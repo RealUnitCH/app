@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/balance.dart';
@@ -46,18 +47,20 @@ class BalanceService {
         if (balanceString != null) {
           final balanceValue = BigInt.parse(balanceString);
 
-          await _balanceRepository.saveBalance(Balance(
-            chainId: realUnitAsset.chainId,
-            contractAddress: realUnitAsset.address,
-            walletAddress: address,
-            balance: balanceValue,
-            asset: realUnitAsset,
-            networkMode: _appStore.apiConfig.networkMode,
-          ));
+          await _balanceRepository.saveBalance(
+            Balance(
+              chainId: realUnitAsset.chainId,
+              contractAddress: realUnitAsset.address,
+              walletAddress: address,
+              balance: balanceValue,
+              asset: realUnitAsset,
+              networkMode: _appStore.apiConfig.networkMode,
+            ),
+          );
         }
       }
     } catch (e) {
-      // Silently fail - balance will be updated on next sync
+      developer.log('Failed to update RealUnit balance: $e');
     }
   }
 
@@ -69,16 +72,18 @@ class BalanceService {
       try {
         final balance =
             await _appStore.getClient(chain.chainId).getBalance(EthereumAddress.fromHex(address));
-        await _balanceRepository.saveBalance(Balance(
-          chainId: chain.chainId,
-          contractAddress: chain.nativeAsset.address,
-          walletAddress: address,
-          balance: balance.getInWei,
-          asset: chain.nativeAsset,
-          networkMode: _appStore.apiConfig.networkMode,
-        ));
+        await _balanceRepository.saveBalance(
+          Balance(
+            chainId: chain.chainId,
+            contractAddress: chain.nativeAsset.address,
+            walletAddress: address,
+            balance: balance.getInWei,
+            asset: chain.nativeAsset,
+            networkMode: _appStore.apiConfig.networkMode,
+          ),
+        );
       } catch (e) {
-        // Silently fail for individual chains
+        developer.log('Failed to update ${chain.name} balance: $e');
       }
     }
   }
