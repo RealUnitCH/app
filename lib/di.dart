@@ -19,6 +19,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
 import 'package:realunit_wallet/packages/service/settings_service.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
@@ -109,6 +110,7 @@ void setupServices() {
   getIt.registerFactory(() => OpenCryptoPayService());
   getIt.registerFactory(() => DFXPriceService(getIt<AppStore>()));
   getIt.registerFactory(() => RealUnitBuyPaymentInfoService(getIt<AppStore>()));
+  getIt.registerFactory(() => RealUnitSellPaymentInfoService(getIt<AppStore>()));
   getIt.registerFactory(() => DfxBrokerbotService(getIt<AppStore>()));
   getIt.registerFactory(() => RealUnitRegistrationService(getIt<AppStore>()));
   getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));

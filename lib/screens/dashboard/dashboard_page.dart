@@ -19,6 +19,7 @@ import 'package:realunit_wallet/screens/dashboard/widgets/cash_holding_box.dart'
 import 'package:realunit_wallet/screens/dashboard/widgets/price_widget.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/section_transaction_history.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/screens/sell/sell_page.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
@@ -138,9 +139,7 @@ class DashboardPage extends StatelessWidget {
                                     size: 20,
                                   ),
                                   label: S.of(context).sell,
-                                  backgroundColor: RealUnitColors.neutral300,
-                                  // onPressed: () =>
-                                  //     getIt<DFXService>().launchProvider(context, false),
+                                  onPressed: () => context.push(SellPage.routeName),
                                 ),
                               ],
                             ),

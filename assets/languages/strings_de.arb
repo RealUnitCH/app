@@ -126,6 +126,7 @@
   "select_network": "Netzwerk auswählen",
   "select_token": "Token auswählen",
   "sell": "Verkaufen",
+  "sell_realu": "REALU verkaufen",
   "send": "Senden",
   "settings": "Einstellungen",
   "settings_currency": "Währung",
@@ -157,6 +158,7 @@
   "year": "Jahr",
   "you_pay": "Du bezahlst",
   "you_receive": "Du erhältst",
+  "you_sell": "Du verkaufst",
   "your_deuro_cash_and_savings_wallet": "Dein dEURO Cash\n& Spar Wallet",
   "your_seed": "Dein dEURO-Seed",
   "your_seed_disclaimer": "Dies ist Ihr einzigartiger und privater Seed und der einzige Weg, um Ihre Wallet im Falle eines Verlusts oder einer Fehlfunktion wiederherzustellen."
