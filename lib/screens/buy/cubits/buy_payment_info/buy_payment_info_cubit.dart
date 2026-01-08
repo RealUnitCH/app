@@ -4,8 +4,8 @@ import 'package:async/async.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/buy_payment_info.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/buy_payment_info_error.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
@@ -41,12 +41,12 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
 
       return BuyPaymentInfoSuccess(paymentInfo);
     } on KycLevelRequiredException {
-      return BuyPaymentInfoFailure(BuyPaymentInfoError.kycRequired);
+      return BuyPaymentInfoFailure(PaymentInfoError.kycRequired);
     } on RegistrationRequiredException {
-      return BuyPaymentInfoFailure(BuyPaymentInfoError.registrationRequired);
+      return BuyPaymentInfoFailure(PaymentInfoError.registrationRequired);
     } catch (e) {
       developer.log(e.toString());
-      return BuyPaymentInfoFailure(BuyPaymentInfoError.unknown);
+      return BuyPaymentInfoFailure(PaymentInfoError.unknown);
     }
   }
 

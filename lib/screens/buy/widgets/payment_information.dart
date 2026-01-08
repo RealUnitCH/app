@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/buy_payment_info_error.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_action_required.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information_details.dart';
@@ -31,7 +31,7 @@ class PaymentInformation extends StatelessWidget {
         }
         if (paymentInfoState is BuyPaymentInfoFailure) {
           final error = paymentInfoState.error;
-          if (error == BuyPaymentInfoError.registrationRequired) {
+          if (error == PaymentInfoError.registrationRequired) {
             return PaymentActionRequired(
               title: S.of(context).registration_required,
               description: S.of(context).registration_required_description,
@@ -48,7 +48,7 @@ class PaymentInformation extends StatelessWidget {
                 ),
               ),
             );
-          } else if (error == BuyPaymentInfoError.kycRequired) {
+          } else if (error == PaymentInfoError.kycRequired) {
             return PaymentActionRequired(
               title: S.of(context).identity_check_required,
               description: S.of(context).identity_check_description,

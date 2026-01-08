@@ -9,8 +9,8 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/buy_payment_info.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/buy_payment_info_error.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
@@ -123,7 +123,7 @@ void main() {
 
     testWidgets('renders correctly when registration is required', (tester) async {
       when(() => buyPaymentInfoCubit.state).thenReturn(
-        const BuyPaymentInfoFailure(BuyPaymentInfoError.registrationRequired),
+        const BuyPaymentInfoFailure(PaymentInfoError.registrationRequired),
       );
 
       await tester.pumpApp(buildSubject(const BuyView()));
@@ -135,7 +135,7 @@ void main() {
 
     testWidgets('renders correctly when kyc is required', (tester) async {
       when(() => buyPaymentInfoCubit.state).thenReturn(
-        const BuyPaymentInfoFailure(BuyPaymentInfoError.kycRequired),
+        const BuyPaymentInfoFailure(PaymentInfoError.kycRequired),
       );
 
       await tester.pumpApp(buildSubject(const BuyView()));

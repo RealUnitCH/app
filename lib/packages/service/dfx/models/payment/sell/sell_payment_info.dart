@@ -1,4 +1,4 @@
-import 'package:realunit_wallet/packages/service/dfx/models/sell/dto/real_unit_sell_payment_info_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_payment_info_dto.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 class SellPaymentInfo {

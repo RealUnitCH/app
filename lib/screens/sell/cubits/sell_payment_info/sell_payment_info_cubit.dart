@@ -2,7 +2,9 @@ import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/sell/sell_payment_info.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
@@ -28,9 +30,13 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
       );
 
       emit(SellPaymentInfoSuccess(paymentInfo));
+    } on KycLevelRequiredException {
+      emit(SellPaymentInfoFailure(PaymentInfoError.kycRequired));
+    } on RegistrationRequiredException {
+      emit(SellPaymentInfoFailure(PaymentInfoError.registrationRequired));
     } catch (e) {
       developer.log(e.toString());
-      emit(SellPaymentInfoFailure(e.toString()));
+      emit(SellPaymentInfoFailure(PaymentInfoError.unknown));
     }
   }
 }

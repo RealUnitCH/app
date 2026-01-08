@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/sell/bank_account.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/bank_account.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
-import 'package:realunit_wallet/screens/sell/widgets/sell_confirm_page.dart';
+import 'package:realunit_wallet/screens/sell/widgets/sell_confirm_sheet.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class SellButton extends StatelessWidget {
@@ -14,15 +14,19 @@ class SellButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<SellPaymentInfoCubit, SellPaymentInfoState>(
-      listenWhen: (previous, current) => current is SellPaymentInfoSuccess,
-      listener: (context, state) {
+      listener: (context, state) async {
+        if (state is SellPaymentInfoFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Error: ${state.error}'),
+            backgroundColor: RealUnitColors.status.red600,
+          ));
+        }
         if (state is SellPaymentInfoSuccess) {
-          Navigator.push(
-            context,
-            MaterialPageRoute<void>(
-              builder: (_) => SellConfirmPage(
-                paymentInfo: state.sellPaymentInfo,
-              ),
+          await showModalBottomSheet(
+            isScrollControlled: true,
+            context: context,
+            builder: (_) => SellConfirmSheet(
+              paymentInfo: state.sellPaymentInfo,
             ),
           );
         }
@@ -42,7 +46,7 @@ class SellButton extends StatelessWidget {
             label: Text('$amount REALU verkaufen'),
           );
         }
-        if (bankAccount != null) {
+        if (bankAccount != null && amount.isNotEmpty) {
           return FilledButton(
             onPressed: () => context.read<SellPaymentInfoCubit>().getPaymentInfo(
                   amount: amount,

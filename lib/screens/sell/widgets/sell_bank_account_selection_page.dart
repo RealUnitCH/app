@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/sell/bank_account.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/bank_account.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_bank_accounts/sell_bank_accounts_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_selected_bank_account/sell_selected_bank_account_cubit.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_add_bank_account_sheet.dart';

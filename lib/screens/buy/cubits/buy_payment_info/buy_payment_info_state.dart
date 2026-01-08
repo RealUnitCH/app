@@ -25,7 +25,7 @@ class BuyPaymentInfoSuccess extends BuyPaymentInfoState {
 }
 
 class BuyPaymentInfoFailure extends BuyPaymentInfoState {
-  final BuyPaymentInfoError error;
+  final PaymentInfoError error;
 
   const BuyPaymentInfoFailure(this.error);
 
