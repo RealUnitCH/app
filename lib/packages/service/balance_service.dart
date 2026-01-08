@@ -7,7 +7,6 @@ import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:web3dart/web3dart.dart';
 
 class BalanceService {
@@ -49,11 +48,11 @@ class BalanceService {
 
           await _balanceRepository.saveBalance(
             Balance(
-              chainId: realUnitAsset.chainId,
-              contractAddress: realUnitAsset.address,
+              chainId: _appStore.apiConfig.asset.chainId,
+              contractAddress: _appStore.apiConfig.asset.address,
               walletAddress: address,
               balance: balanceValue,
-              asset: realUnitAsset,
+              asset: _appStore.apiConfig.asset,
             ),
           );
         }

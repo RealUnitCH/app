@@ -27,8 +27,6 @@ import 'package:realunit_wallet/widgets/action_button.dart';
 
 class DashboardPage extends StatelessWidget {
   DashboardPage(this._appStore, this._priceService, {super.key}) {
-    final networkMode = _appStore.apiConfig.networkMode;
-
     // aggregatedDEuro = AggregatedBalanceCubit(getIt<BalanceRepository>(), [
     //   dEUROAsset.getEmptyBalance(walletAddress),
     //   dEUROBaseAsset.getEmptyBalance(walletAddress),
@@ -37,13 +35,11 @@ class DashboardPage extends StatelessWidget {
     //   dEUROPolygonAsset.getEmptyBalance(walletAddress),
     // ]);
 
-    for (final asset in [realUnitAsset]) {
-      singleCashHoldings.add(BalanceCubit(
-        getIt<BalanceRepository>(),
-        asset: asset,
-        walletAddress: walletAddress,
-      ));
-    }
+    singleCashHoldings.add(BalanceCubit(
+      getIt<BalanceRepository>(),
+      asset: _appStore.apiConfig.asset,
+      walletAddress: walletAddress,
+    ));
 
     for (final asset in [
       Blockchain.ethereum.nativeAsset,
@@ -56,8 +52,8 @@ class DashboardPage extends StatelessWidget {
           BalanceCubit(getIt<BalanceRepository>(), asset: asset, walletAddress: walletAddress));
     }
 
-    transactionHistoryCubit =
-        TransactionHistoryCubit(getIt<TransactionRepository>(), walletAddress);
+    transactionHistoryCubit = TransactionHistoryCubit(getIt<TransactionRepository>(),
+        asset: _appStore.apiConfig.asset, walletAddress: walletAddress);
   }
 
   final AppStore _appStore;

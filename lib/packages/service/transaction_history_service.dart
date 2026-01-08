@@ -11,12 +11,10 @@ import 'package:realunit_wallet/packages/ponder/ponder.dart';
 import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:web3dart/credentials.dart';
 
 class TransactionHistoryService {
   static String _accountHistoryPath(String address) => "/v1/realunit/account/$address/history";
-
   String get _host => _appStore.apiConfig.apiHost;
 
   final AppStore _appStore;
@@ -151,11 +149,11 @@ class TransactionHistoryService {
       _transactionRepository.insertTransaction(Transaction(
         height: 0, // ToDo
         txId: entry['txHash'],
-        chainId: 1,
+        chainId: _appStore.apiConfig.asset.chainId,
         senderAddress: transferData['from'],
         receiverAddress: transferData['to'],
         amount: BigInt.parse(transferData['value']),
-        asset: realUnitAsset,
+        asset: _appStore.apiConfig.asset,
         type: TransactionTypes.tokenTransfer,
         note: "",
         data: null,

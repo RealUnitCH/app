@@ -17,8 +17,8 @@ String getAssetImagePath(Asset asset) {
     case "1:0xc71104001a3ccda1bef1177d765831bd1bfe8ee6":
       return "assets/images/coins/nDEPS.png";
     case "1:0x553c7f9c780316fc1d34b8e14ac2465ab22a090b":
+    case "11155111:0x0add9824820508dd7992cbebb9f13fbe8e45a30f":
       return "assets/images/coins/REALU.png";
-
 
     case "1:0xb58e61c3098d85632df34eecfb899a1ed80921cb":
     case "137:0x02567e4b14b25549331fcee2b56c647a8bab16fd":
@@ -38,6 +38,8 @@ String getAssetImagePath(Asset asset) {
 String getChainImagePath(int chainId) {
   switch (Blockchain.getFromChainId(chainId)) {
     case Blockchain.ethereum:
+      return "assets/images/coins/ETH.png";
+    case Blockchain.sepolia:
       return "assets/images/coins/ETH.png";
     case Blockchain.polygon:
       return "assets/images/coins/polygon.png";
