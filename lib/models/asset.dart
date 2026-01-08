@@ -1,5 +1,4 @@
 import 'package:realunit_wallet/models/balance.dart';
-import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/utils/fast_hash.dart';
 
 class Asset {
@@ -21,7 +20,7 @@ class Asset {
     required this.decimals,
   });
 
-  Balance getEmptyBalance(String wallet, NetworkMode networkMode) => Balance(
+  Balance getEmptyBalance(String wallet) => Balance(
         chainId: chainId,
         contractAddress: address,
         walletAddress: wallet,
