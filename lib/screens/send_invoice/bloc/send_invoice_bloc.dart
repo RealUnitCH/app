@@ -1,6 +1,11 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 
+import 'package:equatable/equatable.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
@@ -16,18 +21,12 @@ import 'package:realunit_wallet/screens/send/bloc/gas_fee_cubit.dart';
 import 'package:realunit_wallet/screens/send_invoice/bloc/expiry_cubit.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
 import 'package:realunit_wallet/widgets/error_bottom_sheet.dart';
-import 'package:equatable/equatable.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 part 'send_invoice_event.dart';
 part 'send_invoice_state.dart';
 
 class SendInvoiceBloc extends Bloc<SendInvoiceEvent, SendInvoiceState> {
-  SendInvoiceBloc(
-      this._appStore, this._openCryptoPayService, this._balanceService,
+  SendInvoiceBloc(this._appStore, this._openCryptoPayService, this._balanceService,
       {required OpenCryptoPayRequest invoice})
       : expiryCubit = ExpiryCubit(invoice.expiration),
         gasFeeCubit = GasFeeCubit(_appStore),
@@ -59,33 +58,29 @@ class SendInvoiceBloc extends Bloc<SendInvoiceEvent, SendInvoiceState> {
     gasFeeCubit.blockchain = event.blockchain;
   }
 
-  Future<void> _onCancelInvoice(
-          CancelInvoice event, Emitter<SendInvoiceState> emit) =>
+  Future<void> _onCancelInvoice(CancelInvoice event, Emitter<SendInvoiceState> emit) =>
       _openCryptoPayService.cancelOpenCryptoPayRequest(state.invoice);
 
-  Future<void> _onSubmitted(
-      SendSubmitted event, Emitter<SendInvoiceState> emit) async {
+  Future<void> _onSubmitted(SendSubmitted event, Emitter<SendInvoiceState> emit) async {
     final client = _appStore.getClient(state.asset.chainId);
 
-    final ethBalance = await client
-        .getBalance(_appStore.wallet.currentAccount.primaryAddress.address);
+    final ethBalance =
+        await client.getBalance(_appStore.wallet.currentAccount.primaryAddress.address);
     if (ethBalance.getInWei < gasFeeCubit.state.gasFee) {
       return showModalBottomSheet(
         context: navigatorKey.currentContext!,
         builder: (_) => ErrorBottomSheet(
-          message: S.current.error_not_enough_money(
-              state.blockchain.nativeSymbol, state.blockchain.name),
+          message: S.current
+              .error_not_enough_money(state.blockchain.nativeSymbol, state.blockchain.name),
         ),
       );
     }
 
     emit(state.copyWith(status: SendStatus.inProgress));
     try {
-      final gasPrice =
-          state.invoice.methods[state.blockchain.name]!.first.gasFee;
+      final gasPrice = state.invoice.methods[state.blockchain.name]!.first.gasFee;
 
-      final uri = await _openCryptoPayService.getOpenCryptoPayAddress(
-          state.invoice, state.asset);
+      final uri = await _openCryptoPayService.getOpenCryptoPayAddress(state.invoice, state.asset);
 
       final transaction = await prepareERC20Transaction(
         client,
@@ -97,10 +92,8 @@ class SendInvoiceBloc extends Bloc<SendInvoiceEvent, SendInvoiceState> {
         gasPrice: gasPrice,
       );
 
-      final id = await _openCryptoPayService.commitOpenCryptoPayRequest(
-          '0x$transaction',
-          request: state.invoice,
-          asset: state.asset);
+      final id = await _openCryptoPayService.commitOpenCryptoPayRequest('0x$transaction',
+          request: state.invoice, asset: state.asset);
       developer.log(id, name: 'SendInvoiceBloc');
       emit(state.copyWith(status: SendStatus.success));
 
@@ -130,8 +123,7 @@ class SendInvoiceBloc extends Bloc<SendInvoiceEvent, SendInvoiceState> {
       Blockchain.ethereum
     ]) {
       final asset = _getAsset(blockchain);
-      final balance =
-          await _balanceService.getBalance(asset, _appStore.primaryAddress);
+      final balance = await _balanceService.getBalance(asset, _appStore.primaryAddress);
       if (balance == null) continue;
       if (balance.balance > state.dEuroAmount) {
         add(ChainChanged(blockchain));
@@ -144,6 +136,8 @@ class SendInvoiceBloc extends Bloc<SendInvoiceEvent, SendInvoiceState> {
     switch (blockchain) {
       case Blockchain.ethereum:
         return dEUROAsset;
+      case Blockchain.sepolia:
+        return realUnitTestAsset;
       case Blockchain.polygon:
         return dEUROPolygonAsset;
       case Blockchain.arbitrum:

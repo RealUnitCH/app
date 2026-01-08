@@ -4,7 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/service/settings_service.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
@@ -26,7 +26,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final WalletService _walletService;
   final BalanceService _balanceService;
   final TransactionHistoryService _transactionHistoryService;
-  final DFXService _dfxService;
+  final DfxWidgetService _dfxService;
   final SettingsService _settingsService;
   final AppStore _appStore;
 
@@ -55,7 +55,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       return;
     }
 
-    _balanceService.updateERC20Balances(_appStore.primaryAddress);
+    _balanceService.updateBalances(_appStore.primaryAddress);
     _balanceService.startSync(_appStore.primaryAddress);
     _transactionHistoryService.apiBasedSync();
     _transactionHistoryService.explorerAssistedScan();
@@ -66,7 +66,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       DeleteCurrentWalletEvent event, Emitter<HomeState> emit) async {
     emit(state.copyWith(isLoadingWallet: true));
 
-    _appStore.dfxAuthToken = null;
+    _dfxService.invalidateAuthToken();
     await _walletService.deleteCurrentWallet();
     _settingsService.setTermsAccepted(false);
     emit(
@@ -80,7 +80,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
   Future<void> _onLoadWallet(LoadWalletEvent event, Emitter<HomeState> emit) async {
     _appStore.wallet = event.wallet;
-    _balanceService.updateERC20Balances(_appStore.primaryAddress);
+    _balanceService.updateBalances(_appStore.primaryAddress);
     _balanceService.startSync(_appStore.primaryAddress);
     _transactionHistoryService.apiBasedSync();
     _transactionHistoryService.explorerAssistedScan();

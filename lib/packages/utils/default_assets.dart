@@ -1,6 +1,7 @@
 import 'package:realunit_wallet/models/asset.dart';
 
 const realUnitAsset = Asset(chainId: 1, address: '0x553C7f9C780316FC1D34b8e14ac2465Ab22a090B', name: 'RealUnit Token', symbol: 'REALU', decimals: 0);
+const realUnitTestAsset = Asset(chainId: 11155111, address: '0x0add9824820508dd7992cbebb9f13fbe8e45a30f', name: 'RealUnit Token (Sepolia)', symbol: 'REALU', decimals: 0);
 const dEUROAsset = Asset(chainId: 1, address: '0xbA3f535bbCcCcA2A154b573Ca6c5A49BAAE0a3ea', name: 'dEuro', symbol: 'dEURO', decimals: 18);
 const dEUROBaseAsset = Asset(chainId: 8453, address: '0x1B5F7fA46ED0F487F049C42f374cA4827d65A264', name: 'dEuro (Base)', symbol: 'dEURO', decimals: 18);
 const dEUROOptimismAsset = Asset(chainId: 10, address: '0x1B5F7fA46ED0F487F049C42f374cA4827d65A264', name: 'dEuro (Optimism)', symbol: 'dEURO', decimals: 18);
@@ -9,6 +10,7 @@ const dEUROPolygonAsset = Asset(chainId: 137, address: '0xC2ff25dD99e467d2589b2c
 
 const defaultAssets = [
   realUnitAsset,
+  realUnitTestAsset,
 
   // dEuro
   dEUROAsset,

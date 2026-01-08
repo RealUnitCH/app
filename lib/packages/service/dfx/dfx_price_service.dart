@@ -6,19 +6,20 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/price_service.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
-const String _pricingHistoryEndpoint =
-    "https://dev.api.dfx.swiss/v1/realunit/price/history?timeFrame=ALL";
-const String _pricingEndpoint = "https://dev.api.dfx.swiss/v1/realunit/price";
-
 class DFXPriceService extends APriceService {
+  static const _priceHistoryPath = "/v1/realunit/price/history";
+  static const _pricePath = "/v1/realunit/price";
+
   final AppStore _appStore;
 
   DFXPriceService(this._appStore);
 
+  String get _host => _appStore.apiConfig.apiHost;
+
   @override
   Future<List<PricePoint>> getPriceChart(Asset asset, Currency currency) async {
-    final response =
-        await _appStore.httpClient.get(Uri.parse(_pricingHistoryEndpoint));
+    final uri = Uri.https(_host, _priceHistoryPath, {'timeFrame': 'ALL'});
+    final response = await _appStore.httpClient.get(uri);
 
     if (response.statusCode != 200) throw Exception(response.body);
 
@@ -48,8 +49,8 @@ class DFXPriceService extends APriceService {
 
   @override
   Future<BigInt> getPriceOfAsset(Asset asset, Currency currency) async {
-    final response =
-        await _appStore.httpClient.get(Uri.parse(_pricingEndpoint));
+    final uri = Uri.https(_host, _pricePath);
+    final response = await _appStore.httpClient.get(uri);
 
     if (response.statusCode != 200) throw Exception(response.body);
 

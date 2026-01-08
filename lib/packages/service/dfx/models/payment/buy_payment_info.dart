@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 class BuyPaymentInfo extends Equatable {
+  final int id;
   final String iban;
   final String bic;
   final String name;
@@ -13,6 +14,7 @@ class BuyPaymentInfo extends Equatable {
   final Currency currency;
 
   const BuyPaymentInfo({
+    required this.id,
     required this.iban,
     required this.bic,
     required this.name,
@@ -25,5 +27,5 @@ class BuyPaymentInfo extends Equatable {
   });
 
   @override
-  List<Object?> get props => [iban];
+  List<Object?> get props => [id];
 }

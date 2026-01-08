@@ -1,13 +1,7 @@
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 
-enum TransactionTypes {
-  transfer,
-  genericContractCall,
-  tokenTransfer,
-  savingsAdd,
-  savingsRemove
-}
+enum TransactionTypes { transfer, genericContractCall, tokenTransfer, savingsAdd, savingsRemove }
 
 class Transaction {
   final int height;
@@ -36,6 +30,5 @@ class Transaction {
     required this.timestamp,
   });
 
-  bool isOutbound(String walletAddress) =>
-      senderAddress.asHexEip55 == walletAddress.asHexEip55;
+  bool isOutbound(String walletAddress) => senderAddress.asHexEip55 == walletAddress.asHexEip55;
 }

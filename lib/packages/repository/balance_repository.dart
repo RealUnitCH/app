@@ -38,12 +38,11 @@ class BalanceRepository {
           : null);
 
   Future<bool> existsBalance(Balance balance) =>
-      getBalance(balance.asset, balance.walletAddress)
-          .then((balance) => balance != null);
+      getBalance(balance.asset, balance.walletAddress).then((balance) => balance != null);
 
   Stream<Balance> watchBalance(Balance balance) {
-    final transformer = StreamTransformer<BalanceData?, Balance>.fromHandlers(
-        handleData: (balanceData, sink) {
+    final transformer =
+        StreamTransformer<BalanceData?, Balance>.fromHandlers(handleData: (balanceData, sink) {
       if (balanceData != null) {
         sink.add(Balance(
           chainId: balanceData.chainId,
@@ -54,8 +53,6 @@ class BalanceRepository {
         ));
       }
     });
-    return _appDatabase
-        .watchBalance(balance.id)
-        .transform<Balance>(transformer);
+    return _appDatabase.watchBalance(balance.id).transform<Balance>(transformer);
   }
 }

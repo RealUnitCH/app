@@ -12,8 +12,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/price_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
-import 'package:realunit_wallet/screens/dashboard/bloc/aggregated_balance_cubit.dart';
-import 'package:realunit_wallet/screens/dashboard/bloc/blance_cubit.dart';
+import 'package:realunit_wallet/screens/dashboard/bloc/balance_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/dashboard_bloc.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/transaction_history_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/cash_holding_box.dart';
@@ -28,21 +27,19 @@ import 'package:realunit_wallet/widgets/action_button.dart';
 
 class DashboardPage extends StatelessWidget {
   DashboardPage(this._appStore, this._priceService, {super.key}) {
-    aggregatedDEuro = AggregatedBalanceCubit(getIt<BalanceRepository>(), [
-      dEUROAsset.getEmptyBalance(walletAddress),
-      dEUROBaseAsset.getEmptyBalance(walletAddress),
-      dEUROOptimismAsset.getEmptyBalance(walletAddress),
-      dEUROArbitrumAsset.getEmptyBalance(walletAddress),
-      dEUROPolygonAsset.getEmptyBalance(walletAddress),
-    ]);
+    // aggregatedDEuro = AggregatedBalanceCubit(getIt<BalanceRepository>(), [
+    //   dEUROAsset.getEmptyBalance(walletAddress),
+    //   dEUROBaseAsset.getEmptyBalance(walletAddress),
+    //   dEUROOptimismAsset.getEmptyBalance(walletAddress),
+    //   dEUROArbitrumAsset.getEmptyBalance(walletAddress),
+    //   dEUROPolygonAsset.getEmptyBalance(walletAddress),
+    // ]);
 
-    for (final asset in [realUnitAsset]) {
-      singleCashHoldings.add(BalanceCubit(
-        getIt<BalanceRepository>(),
-        asset: asset,
-        walletAddress: walletAddress,
-      ));
-    }
+    singleCashHoldings.add(BalanceCubit(
+      getIt<BalanceRepository>(),
+      asset: _appStore.apiConfig.asset,
+      walletAddress: walletAddress,
+    ));
 
     for (final asset in [
       Blockchain.ethereum.nativeAsset,
@@ -55,8 +52,8 @@ class DashboardPage extends StatelessWidget {
           BalanceCubit(getIt<BalanceRepository>(), asset: asset, walletAddress: walletAddress));
     }
 
-    transactionHistoryCubit =
-        TransactionHistoryCubit(getIt<TransactionRepository>(), walletAddress);
+    transactionHistoryCubit = TransactionHistoryCubit(getIt<TransactionRepository>(),
+        asset: _appStore.apiConfig.asset, walletAddress: walletAddress);
   }
 
   final AppStore _appStore;
@@ -64,7 +61,7 @@ class DashboardPage extends StatelessWidget {
 
   String get walletAddress => _appStore.primaryAddress;
 
-  late final AggregatedBalanceCubit aggregatedDEuro;
+  // late final AggregatedBalanceCubit aggregatedDEuro;
   final List<BalanceCubit> singleCashHoldings = [];
   final List<BalanceCubit> cryptoHoldings = [];
   late final TransactionHistoryCubit transactionHistoryCubit;
@@ -72,7 +69,7 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MultiBlocProvider(
         providers: [
-          BlocProvider.value(value: aggregatedDEuro),
+          // BlocProvider.value(value: aggregatedDEuro),
           BlocProvider.value(value: transactionHistoryCubit),
           ...singleCashHoldings.map((cubit) => BlocProvider.value(value: cubit)),
           BlocProvider.value(

@@ -7,7 +7,7 @@ import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/open_crypto_pay/exceptions.dart';
 import 'package:realunit_wallet/packages/open_crypto_pay/open_crypto_pay_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/wallet/payment_uri.dart';
 import 'package:realunit_wallet/screens/send/send_page.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
@@ -62,9 +62,7 @@ class SectionBalance extends StatelessWidget {
                               padding: EdgeInsets.only(left: 5),
                               child: BlocBuilder<SettingsBloc, SettingsState>(
                                 builder: (context, state) => Icon(
-                                  state.hideAmounts
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
+                                  state.hideAmounts ? Icons.visibility_off : Icons.visibility,
                                   size: 14,
                                   color: Colors.white.withAlpha(153),
                                 ),
@@ -76,9 +74,7 @@ class SectionBalance extends StatelessWidget {
                       HideAmountText(
                         amount: balance,
                         style: const TextStyle(
-                            fontSize: 35,
-                            color: Colors.white,
-                            fontFamily: "Satoshi Bold"),
+                            fontSize: 35, color: Colors.white, fontFamily: "Satoshi Bold"),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -99,8 +95,7 @@ class SectionBalance extends StatelessWidget {
                   child: ActionButton(
                     icon: RealUnitTokenIcon(size: 20),
                     label: S.of(context).deposit,
-                    onPressed: () =>
-                        getIt<DFXService>().launchProvider(context, true),
+                    onPressed: () => getIt<DfxWidgetService>().launchProvider(context, true),
                   ),
                 ),
                 ActionButton(
@@ -110,8 +105,7 @@ class SectionBalance extends StatelessWidget {
                     size: 20,
                   ),
                   label: S.of(context).withdraw,
-                  onPressed: () =>
-                      getIt<DFXService>().launchProvider(context, false),
+                  onPressed: () => getIt<DfxWidgetService>().launchProvider(context, false),
                 ),
               ],
             ],
@@ -131,8 +125,7 @@ class SectionBalance extends StatelessWidget {
 
     if (OpenCryptoPayService.isOpenCryptoPayQR(result!.value!)) {
       try {
-        final res = await getIt<OpenCryptoPayService>()
-            .getOpenCryptoPayInvoice(result.value!);
+        final res = await getIt<OpenCryptoPayService>().getOpenCryptoPayInvoice(result.value!);
         if (context.mounted) {
           context.push("/send/openCryptoPay", extra: res);
         }
@@ -147,8 +140,7 @@ class SectionBalance extends StatelessWidget {
     } else {
       final uri = ERC681URI.fromString(result.value!);
       if (context.mounted) {
-        context.push("/send",
-            extra: SendRouteParams(receiver: uri.address, amount: uri.amount));
+        context.push("/send", extra: SendRouteParams(receiver: uri.address, amount: uri.amount));
       }
     }
   }

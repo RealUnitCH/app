@@ -5,19 +5,20 @@ import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart
 import 'package:realunit_wallet/packages/service/dfx/models/country/dto/dfx_country_dto.dart';
 
 class DfxCountryService {
-  static const _baseUrl = "api.dfx.swiss";
   static const _countryPath = "/v1/country";
 
   List<Country>? cachedCountries;
 
   final AppStore _appStore;
 
+  String get _host => _appStore.apiConfig.apiHost;
+
   DfxCountryService(AppStore appStore) : _appStore = appStore;
 
   Future<List<Country>> getAllCountries() async {
     if (cachedCountries != null) return cachedCountries!;
 
-    final uri = Uri.https(_baseUrl, _countryPath);
+    final uri = Uri.https(_host, _countryPath);
     final response = await _appStore.httpClient.get(uri);
 
     if (response.statusCode == 200) {

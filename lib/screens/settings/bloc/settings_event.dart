@@ -28,3 +28,12 @@ final class SetCurrencyEvent extends SettingsEvent {
   @override
   List<Object> get props => [currency];
 }
+
+final class SetNetworkModeEvent extends SettingsEvent {
+  final NetworkMode networkMode;
+
+  const SetNetworkModeEvent(this.networkMode);
+
+  @override
+  List<Object> get props => [networkMode];
+}

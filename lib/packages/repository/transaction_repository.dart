@@ -14,13 +14,9 @@ class TransactionRepository {
   const TransactionRepository(this._appDatabase, this._assetRepository);
 
   Future<int> getLatestHeight() async =>
-      (await _appDatabase.getLatestTransactions(limit: 1))
-          .firstOrNull
-          ?.height ??
-      0;
+      (await _appDatabase.getLatestTransactions(limit: 1)).firstOrNull?.height ?? 0;
 
-  Future<int> insertTransaction(Transaction transaction) =>
-      _appDatabase.insertTransactions(
+  Future<int> insertTransaction(Transaction transaction) => _appDatabase.insertTransactions(
         transaction.height,
         transaction.txId,
         transaction.chainId,
@@ -34,8 +30,7 @@ class TransactionRepository {
         transaction.timestamp,
       );
 
-  Future<int> updateTransaction(Transaction transaction) =>
-      _appDatabase.updateTransaction(
+  Future<int> updateTransaction(Transaction transaction) => _appDatabase.updateTransaction(
         transaction.txId,
         height: transaction.height,
         chainId: transaction.chainId,
@@ -74,7 +69,6 @@ class TransactionRepository {
     return _appDatabase.allTransactions.then((result) => result.map((txData) {
           final blockchain = Blockchain.getFromChainId(txData.chainId);
           final txType = TransactionTypes.values[txData.type];
-
           final asset = txType == TransactionTypes.transfer
               ? blockchain.nativeAsset
               : assets.firstWhere((e) => e.id == txData.asset,
@@ -85,6 +79,7 @@ class TransactionRepository {
                         symbol: "???",
                         decimals: 18,
                       ));
+
           return Transaction(
             height: txData.height,
             txId: txData.txId,
@@ -101,12 +96,10 @@ class TransactionRepository {
         }).toList());
   }
 
-  Stream<List<Transaction>> watchTransactions() => _appDatabase
-      .watchTransactions()
-      .transform<List<Transaction>>(_transformer);
+  Stream<List<Transaction>> watchTransactions() =>
+      _appDatabase.watchTransactions().transform<List<Transaction>>(_transformer);
 
-  Stream<List<Transaction>> watchTransactionsOfAssets(
-      Iterable<Asset> assets, String wallet,
+  Stream<List<Transaction>> watchTransactionsOfAssets(Iterable<Asset> assets, String wallet,
       [int? limit]) {
     if (limit != null) {
       return _appDatabase
@@ -125,10 +118,7 @@ class TransactionRepository {
         .transform<List<Transaction>>(_transformer);
   }
 
-  StreamTransformer<
-      List<TransactionData>,
-      List<
-          Transaction>> get _transformer =>
+  StreamTransformer<List<TransactionData>, List<Transaction>> get _transformer =>
       StreamTransformer<List<TransactionData>, List<Transaction>>.fromHandlers(
           handleData: (rawTransactions, sink) async {
         final transactions = <Transaction>[];

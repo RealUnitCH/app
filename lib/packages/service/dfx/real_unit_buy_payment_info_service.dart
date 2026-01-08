@@ -8,8 +8,10 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/dto/real_uni
 import 'package:realunit_wallet/styles/currency.dart';
 
 class RealUnitBuyPaymentInfoService {
-  static const _baseUrl = "dev.api.dfx.swiss";
   static const _buyPaymentInfoPath = "/v1/realunit/buy";
+  static String _confirmPaymentPath(int id) => '/v1/buy/paymentInfos/$id/confirm';
+
+  String get _host => _appStore.apiConfig.apiHost;
 
   final AppStore _appStore;
 
@@ -19,7 +21,7 @@ class RealUnitBuyPaymentInfoService {
     final buyDto = RealUnitBuyDto(amount: amount, currency: currency);
 
     final authToken = _appStore.dfxAuthToken;
-    final uri = Uri.https(_baseUrl, _buyPaymentInfoPath);
+    final uri = Uri.https(_host, _buyPaymentInfoPath);
     final response = await _appStore.httpClient.put(
       uri,
       headers: {
@@ -34,6 +36,7 @@ class RealUnitBuyPaymentInfoService {
       final responseDto = RealUnitBuyPaymentInfoDto.fromJson(json);
 
       return BuyPaymentInfo(
+        id: responseDto.id,
         iban: responseDto.iban,
         bic: responseDto.bic,
         name: responseDto.name,
@@ -49,6 +52,22 @@ class RealUnitBuyPaymentInfoService {
       throw ApiException.fromJson(errorJson);
     } else {
       throw Exception('Unexpected status code: ${response.statusCode}');
+    }
+  }
+
+  Future<void> confirmPayment(int id) async {
+    final authToken = _appStore.dfxAuthToken;
+    final uri = Uri.https(_host, _confirmPaymentPath(id));
+
+    final response = await _appStore.httpClient.put(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $authToken',
+      },
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to confirm payment: ${response.statusCode}');
     }
   }
 }

@@ -2,6 +2,7 @@ import 'package:realunit_wallet/models/asset.dart';
 
 enum Blockchain {
   ethereum(1, "Ethereum", "ETH"),
+  sepolia(11155111, "Sepolia", "ETH"),
   polygon(137, "Polygon", "POL"),
   base(8453, "Base", "ETH"),
   optimism(10, "Optimism", "ETH"),

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy_payment_info.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
+import 'package:realunit_wallet/screens/buy/cubits/buy_confirm/buy_confirm_cubit.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_executed_sheet.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/styles.dart';
@@ -15,118 +19,169 @@ class PaymentInformationDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          S.of(context).buy_payment_information,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+    return BlocProvider(
+      create: (context) => BuyConfirmCubit(
+        getIt<RealUnitBuyPaymentInfoService>(),
+      ),
+      child: PaymentInformationDetailsView(
+        buyPaymentInfo: buyPaymentInfo,
+        amount: amount,
+      ),
+    );
+  }
+}
+
+class PaymentInformationDetailsView extends StatelessWidget {
+  final String amount;
+  final BuyPaymentInfo buyPaymentInfo;
+
+  const PaymentInformationDetailsView(
+      {super.key, required this.buyPaymentInfo, required this.amount});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<BuyConfirmCubit, BuyConfirmState>(
+      listener: (context, state) async {
+        if (state is BuyConfirmSuccess) {
+          await showModalBottomSheet(
+            context: context,
+            builder: (_) => PaymentExecutedSheet(),
+          );
+          if (context.mounted) context.pop();
+        }
+        if (state is BuyConfirmFailure) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error: ${state.error}')),
+            );
+          }
+        }
+      },
+      child: Column(
+        children: [
+          Text(
+            S.of(context).buy_payment_information,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        SizedBox(height: 6),
-        Row(
-          spacing: 12,
-          children: [
-            Icon(
-              Icons.info,
-              size: 16,
-              color: RealUnitColors.realUnitBlue,
-            ),
-            Expanded(
-              child: Text(
-                S.of(context).buy_payment_information_description,
-                style: TextStyle(
-                  fontSize: 14,
-                  height: 18 / 14,
-                  letterSpacing: 0.0,
-                ),
+          SizedBox(height: 6),
+          Row(
+            spacing: 12,
+            children: [
+              Icon(
+                Icons.info,
+                size: 16,
+                color: RealUnitColors.realUnitBlue,
               ),
-            ),
-          ],
-        ),
-        SizedBox(height: 20),
-        Column(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                border: BoxBorder.all(
-                  width: 1,
-                  color: RealUnitColors.neutral200,
-                ),
-                borderRadius: BorderRadius.circular(16.0),
-              ),
-              child: Column(
-                children: _withDividers(
-                  children: [
-                    _PaymentInformationDetailsRow(
-                      description: '${S.of(context).amount_in} ${buyPaymentInfo.currency.code}',
-                      value: amount,
-                    ),
-                    _PaymentInformationDetailsRow(
-                      description: S.of(context).iban,
-                      value: buyPaymentInfo.iban,
-                    ),
-                    _PaymentInformationDetailsRow(
-                      description: S.of(context).bic,
-                      value: buyPaymentInfo.bic,
-                    ),
-                    _PaymentInformationDetailsRow(
-                      title: S.of(context).receiver,
-                      description: S.of(context).name,
-                      value: buyPaymentInfo.name,
-                    ),
-                    _PaymentInformationDetailsRow(
-                      description: S.of(context).address,
-                      value: '${buyPaymentInfo.street} ${buyPaymentInfo.number}',
-                    ),
-                    _PaymentInformationDetailsRow(
-                      description: S.of(context).postcode_abr,
-                      value: buyPaymentInfo.zip,
-                    ),
-                    _PaymentInformationDetailsRow(
-                      description: S.of(context).location,
-                      value: buyPaymentInfo.city,
-                    ),
-                    _PaymentInformationDetailsRow(
-                      description: S.of(context).country,
-                      value: buyPaymentInfo.country,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 20, bottom: 20),
-          child: SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: () async {
-                await showModalBottomSheet(
-                  context: context,
-                  builder: (context) => PaymentExecutedSheet(),
-                );
-                if (context.mounted) context.pop();
-              },
-              style: ButtonStyle(
-                padding: WidgetStateProperty.resolveWith(
-                  (states) => const EdgeInsets.symmetric(
-                    vertical: 10.0,
-                    horizontal: 20.0,
+              Expanded(
+                child: Text(
+                  S.of(context).buy_payment_information_description,
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 18 / 14,
+                    letterSpacing: 0.0,
                   ),
                 ),
               ),
-              child: Text(
-                S.of(context).buy_payment_confirm,
-                textAlign: TextAlign.center,
-                style: kFullwidthBlueButtonTextStyle,
+            ],
+          ),
+          SizedBox(height: 20),
+          Column(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  border: BoxBorder.all(
+                    width: 1,
+                    color: RealUnitColors.neutral200,
+                  ),
+                  borderRadius: BorderRadius.circular(16.0),
+                ),
+                child: Column(
+                  children: _withDividers(
+                    children: [
+                      _PaymentInformationDetailsRow(
+                        description: '${S.of(context).amount_in} ${buyPaymentInfo.currency.code}',
+                        value: amount,
+                      ),
+                      _PaymentInformationDetailsRow(
+                        description: S.of(context).iban,
+                        value: buyPaymentInfo.iban,
+                      ),
+                      _PaymentInformationDetailsRow(
+                        description: S.of(context).bic,
+                        value: buyPaymentInfo.bic,
+                      ),
+                      _PaymentInformationDetailsRow(
+                        title: S.of(context).receiver,
+                        description: S.of(context).name,
+                        value: buyPaymentInfo.name,
+                      ),
+                      _PaymentInformationDetailsRow(
+                        description: S.of(context).address,
+                        value: '${buyPaymentInfo.street} ${buyPaymentInfo.number}',
+                      ),
+                      _PaymentInformationDetailsRow(
+                        description: S.of(context).postcode_abr,
+                        value: buyPaymentInfo.zip,
+                      ),
+                      _PaymentInformationDetailsRow(
+                        description: S.of(context).location,
+                        value: buyPaymentInfo.city,
+                      ),
+                      _PaymentInformationDetailsRow(
+                        description: S.of(context).country,
+                        value: buyPaymentInfo.country,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 20, bottom: 20),
+            child: SizedBox(
+              width: double.infinity,
+              child: BlocBuilder<BuyConfirmCubit, BuyConfirmState>(
+                builder: (context, state) {
+                  return state is BuyConfirmLoading
+                      ? FilledButton.icon(
+                          onPressed: null,
+                          icon: SizedBox(
+                            height: 14,
+                            width: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.5,
+                              color: RealUnitColors.basic.black.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          label: SizedBox.shrink(),
+                        )
+                      : FilledButton(
+                          onPressed: () =>
+                              context.read<BuyConfirmCubit>().confirmPayment(buyPaymentInfo.id),
+                          style: ButtonStyle(
+                            padding: WidgetStateProperty.resolveWith(
+                              (states) => const EdgeInsets.symmetric(
+                                vertical: 10.0,
+                                horizontal: 20.0,
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            S.of(context).buy_payment_confirm,
+                            textAlign: TextAlign.center,
+                            style: kFullwidthBlueButtonTextStyle,
+                          ),
+                        );
+                },
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
