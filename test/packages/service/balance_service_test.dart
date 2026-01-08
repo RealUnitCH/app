@@ -36,6 +36,8 @@ void main() {
 
     when(() => apiConfig.apiHost).thenReturn('dev.api.dfx.swiss');
     when(() => apiConfig.networkMode).thenReturn(NetworkMode.testnet);
+    when(() => apiConfig.asset).thenReturn(realUnitAsset);
+
     when(() => balanceRepository.saveBalance(any())).thenAnswer((_) async {});
   });
 
