@@ -1,0 +1,61 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/sell/bank_account.dart';
+import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
+import 'package:realunit_wallet/screens/sell/widgets/sell_confirm_page.dart';
+import 'package:realunit_wallet/styles/colors.dart';
+
+class SellButton extends StatelessWidget {
+  final String amount;
+  final BankAccount? bankAccount;
+
+  const SellButton({super.key, required this.amount, required this.bankAccount});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<SellPaymentInfoCubit, SellPaymentInfoState>(
+      listenWhen: (previous, current) => current is SellPaymentInfoSuccess,
+      listener: (context, state) {
+        if (state is SellPaymentInfoSuccess) {
+          Navigator.push(
+            context,
+            MaterialPageRoute<void>(
+              builder: (_) => SellConfirmPage(
+                paymentInfo: state.sellPaymentInfo,
+              ),
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        if (state is SellPaymentInfoLoading) {
+          return FilledButton.icon(
+            onPressed: null,
+            icon: SizedBox(
+              height: 14,
+              width: 14,
+              child: CircularProgressIndicator(
+                strokeWidth: 1.5,
+                color: RealUnitColors.basic.black.withValues(alpha: 0.5),
+              ),
+            ),
+            label: Text('$amount REALU verkaufen'),
+          );
+        }
+        if (bankAccount != null) {
+          return FilledButton(
+            onPressed: () => context.read<SellPaymentInfoCubit>().getPaymentInfo(
+                  amount: amount,
+                  iban: bankAccount!.iban,
+                ),
+            child: Text('$amount REALU verkaufen'),
+          );
+        }
+        return FilledButton(
+          onPressed: null,
+          child: Text('$amount REALU verkaufen'),
+        );
+      },
+    );
+  }
+}

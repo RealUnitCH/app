@@ -6,8 +6,8 @@ import 'package:realunit_wallet/packages/service/dfx/models/sell/bank_account.da
 import 'package:realunit_wallet/screens/sell/cubits/sell_bank_accounts/sell_bank_accounts_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
-class AddBankAccountSheet extends StatelessWidget {
-  AddBankAccountSheet({super.key});
+class SellAddBankAccountSheet extends StatelessWidget {
+  SellAddBankAccountSheet({super.key});
 
   final _ibanController = TextEditingController();
   final _nameController = TextEditingController();

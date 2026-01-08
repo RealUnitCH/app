@@ -40,8 +40,16 @@ class RealUnitSellPaymentInfoService {
       final json = jsonDecode(response.body);
       final responseDto = RealUnitSellPaymentInfoDto.fromJson(json);
 
-      print('It works');
-      return SellPaymentInfo();
+      return SellPaymentInfo(
+        id: responseDto.id,
+        amount: responseDto.amount,
+        currency: responseDto.currency,
+        beneficiary: responseDto.beneficiary,
+        eip7702: responseDto.eip7702,
+        estimatedAmount: responseDto.estimatedAmount,
+        exchangeRate: responseDto.exchangeRate,
+        rate: responseDto.rate,
+      );
     } else if (response.statusCode == 403) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
       throw ApiException.fromJson(errorJson);

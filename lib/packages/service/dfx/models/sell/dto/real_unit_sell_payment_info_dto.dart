@@ -34,17 +34,17 @@ enum QuoteError {
 }
 
 class BeneficiaryDto {
-  final String name;
+  final String? name;
   final String iban;
 
   const BeneficiaryDto({
-    required this.name,
+    this.name,
     required this.iban,
   });
 
   factory BeneficiaryDto.fromJson(Map<String, dynamic> json) {
     return BeneficiaryDto(
-      name: json['name'] as String,
+      name: json['name'] as String?,
       iban: json['iban'] as String,
     );
   }

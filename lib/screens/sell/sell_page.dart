@@ -7,7 +7,8 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info
 import 'package:realunit_wallet/screens/sell/cubits/sell_converter/sell_converter_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_selected_bank_account/sell_selected_bank_account_cubit.dart';
-import 'package:realunit_wallet/screens/sell/widgets/bank_account_field.dart';
+import 'package:realunit_wallet/screens/sell/widgets/sell_bank_account_field.dart';
+import 'package:realunit_wallet/screens/sell/widgets/sell_button.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_converter.dart';
 
 class SellPage extends StatelessWidget {
@@ -56,39 +57,38 @@ class SellView extends StatelessWidget {
           ),
         ),
       ),
-      body: BlocListener<SellConverterCubit, SellConverterState>(
-        listenWhen: (prev, next) => prev.loading && !next.loading,
-        listener: (context, state) {
-          _syncController(_amountController, state.sharesText);
-          _syncController(_resultController, state.fiatText);
-        },
-        child: SingleChildScrollView(
-          child: SafeArea(
-            child: GestureDetector(
-              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
-                  spacing: 32,
-                  children: [
-                    SellConverter(
-                      amountController: _amountController,
-                      resultController: _resultController,
-                    ),
-                    BankAccountField(),
-                    FilledButton(
-                      onPressed: () => context.read<SellPaymentInfoCubit>().getPaymentInfo(
+      body: BlocConsumer<SellConverterCubit, SellConverterState>(
+          listenWhen: (prev, next) => prev.loading && !next.loading,
+          listener: (context, state) {
+            _syncController(_amountController, state.sharesText);
+            _syncController(_resultController, state.fiatText);
+          },
+          builder: (context, state) {
+            return SingleChildScrollView(
+              child: SafeArea(
+                child: GestureDetector(
+                  onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      spacing: 32,
+                      children: [
+                        SellConverter(
+                          amountController: _amountController,
+                          resultController: _resultController,
+                        ),
+                        SellBankAccountField(),
+                        SellButton(
                           amount: _amountController.text,
-                          iban: context.read<SellSelectedBankAccountCubit>().state!.iban),
-                      child: Text('${_amountController.text} REALU verkaufen'),
+                          bankAccount: context.watch<SellSelectedBankAccountCubit>().state,
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-        ),
-      ),
+            );
+          }),
     );
   }
 
