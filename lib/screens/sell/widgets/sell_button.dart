@@ -17,7 +17,7 @@ class SellButton extends StatelessWidget {
       listener: (context, state) async {
         if (state is SellPaymentInfoFailure) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Error: ${state.error}'),
+            content: Text('Error: ${state.message}'),
             backgroundColor: RealUnitColors.status.red600,
           ));
         }

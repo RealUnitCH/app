@@ -36,7 +36,7 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
       emit(SellPaymentInfoFailure(PaymentInfoError.registrationRequired));
     } catch (e) {
       developer.log(e.toString());
-      emit(SellPaymentInfoFailure(PaymentInfoError.unknown));
+      emit(SellPaymentInfoFailure(PaymentInfoError.unknown, message: e.toString()));
     }
   }
 }

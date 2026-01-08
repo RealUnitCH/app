@@ -67,6 +67,7 @@ class SellView extends StatelessWidget {
             return SingleChildScrollView(
               child: SafeArea(
                 child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),

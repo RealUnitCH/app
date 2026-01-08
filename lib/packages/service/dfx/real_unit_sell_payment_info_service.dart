@@ -21,7 +21,7 @@ class RealUnitSellPaymentInfoService {
       {Currency currency = Currency.chf}) async {
     final sellDto = RealUnitSellDto(
       amount: amount,
-      iban: 'CH7400770255854252001',
+      iban: iban,
       currency: currency,
     );
 
@@ -54,13 +54,13 @@ class RealUnitSellPaymentInfoService {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
       throw ApiException.fromJson(errorJson);
     } else {
-      throw Exception('Unexpected status code: ${response.statusCode}');
+      throw Exception('Unexpected status code: ${response.body}');
     }
   }
 
-  Future<void> confirmPayment(int id) async {
+  Future<void> confirmPayment(SellPaymentInfo paymentInfo) async {
     final authToken = _appStore.dfxAuthToken;
-    final uri = Uri.http(_host, _confirmPaymentPath(id));
+    final uri = Uri.https(_host, _confirmPaymentPath(paymentInfo.id));
 
     final response = await _appStore.httpClient.put(
       uri,

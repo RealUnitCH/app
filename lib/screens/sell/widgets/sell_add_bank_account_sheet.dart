@@ -5,10 +5,16 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/bank_account.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_bank_accounts/sell_bank_accounts_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/iban_input_formatter.dart';
 
-class SellAddBankAccountSheet extends StatelessWidget {
-  SellAddBankAccountSheet({super.key});
+class SellAddBankAccountSheet extends StatefulWidget {
+  const SellAddBankAccountSheet({super.key});
 
+  @override
+  State<SellAddBankAccountSheet> createState() => _SellAddBankAccountSheetState();
+}
+
+class _SellAddBankAccountSheetState extends State<SellAddBankAccountSheet> {
   final _ibanController = TextEditingController();
   final _nameController = TextEditingController();
 
@@ -17,157 +23,162 @@ class SellAddBankAccountSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: SizedBox(
-        width: double.infinity,
-        height: MediaQuery.of(context).size.height * 0.87,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            //Handlebars.horizontal(context, margin: EdgeInsets.only(top: 5), width: 36),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
-              child: AppBar(
-                title: Text(
-                  'Auszahlungskonto hinzufügen',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+      child: LayoutBuilder(builder: (context, constraints) {
+        return SizedBox(
+          width: double.infinity,
+          height: constraints.maxHeight * 0.87,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
+                child: AppBar(
+                  title: Text(
+                    'Auszahlungskonto hinzufügen',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20.0,
-                vertical: 12.0,
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  spacing: 16,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          child: Text(
-                            'IBAN',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              height: 18 / 13,
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20.0,
+                  vertical: 12.0,
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    spacing: 16,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            child: Text(
+                              'IBAN',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                height: 18 / 13,
+                              ),
                             ),
                           ),
-                        ),
-                        TextFormField(
-                          controller: _ibanController,
-                          // initialValue: initialValue,
-                          // onChanged: onChanged,
-                          autocorrect: false,
-                          enableSuggestions: false,
-                          textInputAction: TextInputAction.next,
-                          // textCapitalization: textCapitalization,
-                          decoration: InputDecoration(
-                            hintText: 'CHXX XXXX XXXX XXXX XXXX X',
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                              borderSide: BorderSide(color: RealUnitColors.neutral300),
+                          TextFormField(
+                            controller: _ibanController,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                            textInputAction: TextInputAction.next,
+                            textCapitalization: TextCapitalization.characters,
+                            inputFormatters: [IbanInputFormatter()],
+                            decoration: InputDecoration(
+                              hintText: 'CHXX XXXX XXXX XXXX XXXX X',
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                                borderSide: BorderSide(color: RealUnitColors.neutral300),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                                borderSide:
+                                    BorderSide(color: RealUnitColors.realUnitBlue, width: 2),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                                borderSide: BorderSide(color: RealUnitColors.status.red600),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                                borderSide:
+                                    BorderSide(color: RealUnitColors.status.red600, width: 2),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                              hintStyle: TextStyle(color: RealUnitColors.neutral400),
                             ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                              borderSide: BorderSide(color: RealUnitColors.realUnitBlue, width: 2),
-                            ),
-                            errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                              borderSide: BorderSide(color: RealUnitColors.status.red600),
-                            ),
-                            focusedErrorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                              borderSide: BorderSide(color: RealUnitColors.status.red600, width: 2),
-                            ),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-                            hintStyle: TextStyle(color: RealUnitColors.neutral400),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) return 'IBAN erforderlich';
+                              if (!_isIban(value)) return 'Ungültige IBAN';
+                              return null;
+                            },
                           ),
-                          // keyboardType: keyboardType,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) return 'IBAN erforderlich';
-                            return null;
-                          },
-                        ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          child: Text(
-                            'Bezeichnung (optional)',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              height: 18 / 13,
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            child: Text(
+                              'Bezeichnung (optional)',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                height: 18 / 13,
+                              ),
                             ),
                           ),
-                        ),
-                        TextFormField(
-                          controller: _nameController,
-                          // initialValue: initialValue,
-                          // onChanged: onChanged,
-                          autocorrect: false,
-                          enableSuggestions: false,
-                          textInputAction: TextInputAction.next,
-                          // textCapitalization: textCapitalization,
-                          decoration: InputDecoration(
-                            // hintText: hintText,
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                              borderSide: BorderSide(color: RealUnitColors.neutral300),
+                          TextFormField(
+                            controller: _nameController,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                            textInputAction: TextInputAction.next,
+                            textCapitalization: TextCapitalization.words,
+                            decoration: InputDecoration(
+                              hintText: 'Raiffeisenbank',
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                                borderSide: BorderSide(color: RealUnitColors.neutral300),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                                borderSide:
+                                    BorderSide(color: RealUnitColors.realUnitBlue, width: 2),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                                borderSide: BorderSide(color: RealUnitColors.status.red600),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                                borderSide:
+                                    BorderSide(color: RealUnitColors.status.red600, width: 2),
+                              ),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                              hintStyle: TextStyle(color: RealUnitColors.neutral400),
                             ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                              borderSide: BorderSide(color: RealUnitColors.realUnitBlue, width: 2),
-                            ),
-                            errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                              borderSide: BorderSide(color: RealUnitColors.status.red600),
-                            ),
-                            focusedErrorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                              borderSide: BorderSide(color: RealUnitColors.status.red600, width: 2),
-                            ),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-                            hintStyle: TextStyle(color: RealUnitColors.neutral400),
+                            keyboardType: TextInputType.text,
                           ),
-                          // keyboardType: keyboardType,
-                        ),
-                      ],
-                    ),
-                    FilledButton(
-                      onPressed: () {
-                        if (_formKey.currentState?.validate() ?? false) {
-                          final newBankAccount = BankAccount(
-                            iban: _ibanController.text,
-                            name: _nameController.text.isNotEmpty ? _nameController.text : null,
-                          );
-
-                          context.read<SellBankAccountsCubit>().addBankAccount(
-                                bankAccount: newBankAccount,
-                              );
-                          context.pop(newBankAccount);
-                        }
-                      },
-                      child: Text(S.of(context).next),
-                    ),
-                  ],
+                        ],
+                      ),
+                      FilledButton(
+                        onPressed: () {
+                          if (_formKey.currentState?.validate() ?? false) {
+                            final newBankAccount = BankAccount(
+                              iban: _ibanController.text,
+                              name: _nameController.text,
+                            );
+                            context
+                                .read<SellBankAccountsCubit>()
+                                .addBankAccount(bankAccount: newBankAccount);
+                            context.pop(newBankAccount);
+                          }
+                        },
+                        child: Text(S.of(context).next),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+      }),
     );
+  }
+
+  bool _isIban(String value) {
+    return RegExp(r'^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$')
+        .hasMatch(value.replaceAll(' ', '').toUpperCase());
   }
 }
