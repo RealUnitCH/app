@@ -1,0 +1,68 @@
+import 'dart:convert';
+
+import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/sell/dto/real_unit_sell_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/sell/dto/real_unit_sell_payment_info_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/sell/sell_payment_info.dart';
+import 'package:realunit_wallet/styles/currency.dart';
+
+class RealUnitSellPaymentInfoService {
+  static const _sellPaymentInfoPath = "/v1/realunit/sell";
+  static String _confirmPaymentPath(int id) => '/v1/realunit/sell/$id/confirm';
+
+  String get _host => _appStore.apiConfig.apiHost;
+
+  final AppStore _appStore;
+
+  RealUnitSellPaymentInfoService(AppStore appStore) : _appStore = appStore;
+
+  Future<SellPaymentInfo> getPaymentInfo(int amount, String iban,
+      {Currency currency = Currency.chf}) async {
+    final sellDto = RealUnitSellDto(
+      amount: amount,
+      iban: 'CH7400770255854252001',
+      currency: currency,
+    );
+
+    final authToken = _appStore.dfxAuthToken;
+    final uri = Uri.https(_host, _sellPaymentInfoPath);
+    final response = await _appStore.httpClient.put(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $authToken',
+      },
+      body: jsonEncode(sellDto.toJson()),
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      final responseDto = RealUnitSellPaymentInfoDto.fromJson(json);
+
+      print('It works');
+      return SellPaymentInfo();
+    } else if (response.statusCode == 403) {
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson);
+    } else {
+      throw Exception('Unexpected status code: ${response.statusCode}');
+    }
+  }
+
+  Future<void> confirmPayment(int id) async {
+    final authToken = _appStore.dfxAuthToken;
+    final uri = Uri.http(_host, _confirmPaymentPath(id));
+
+    final response = await _appStore.httpClient.put(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $authToken',
+      },
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to confirm payment: ${response.statusCode}');
+    }
+  }
+}
