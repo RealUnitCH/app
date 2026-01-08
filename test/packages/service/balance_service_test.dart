@@ -46,7 +46,6 @@ void main() {
       walletAddress: '0x0',
       balance: BigInt.zero,
       asset: realUnitAsset,
-      networkMode: NetworkMode.testnet,
     ));
   });
 

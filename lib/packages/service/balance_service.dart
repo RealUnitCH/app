@@ -54,7 +54,6 @@ class BalanceService {
               walletAddress: address,
               balance: balanceValue,
               asset: realUnitAsset,
-              networkMode: _appStore.apiConfig.networkMode,
             ),
           );
         }
@@ -65,7 +64,7 @@ class BalanceService {
   }
 
   Future<Balance?> getBalance(Asset asset, String address) =>
-      _balanceRepository.getBalance(asset, address, _appStore.apiConfig.networkMode);
+      _balanceRepository.getBalance(asset, address);
 
   Future<void> _updateNativeBalances(String address) async {
     for (final chain in Blockchain.values) {
@@ -79,7 +78,6 @@ class BalanceService {
             walletAddress: address,
             balance: balance.getInWei,
             asset: chain.nativeAsset,
-            networkMode: _appStore.apiConfig.networkMode,
           ),
         );
       } catch (e) {

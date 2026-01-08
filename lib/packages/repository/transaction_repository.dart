@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/models/transaction.dart';
-import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:realunit_wallet/packages/storage/transaction_storage.dart';
@@ -29,7 +28,6 @@ class TransactionRepository {
         transaction.note ?? '',
         transaction.data ?? '',
         transaction.timestamp,
-        transaction.networkMode.name,
       );
 
   Future<int> updateTransaction(Transaction transaction) => _appDatabase.updateTransaction(
@@ -44,7 +42,6 @@ class TransactionRepository {
         note: transaction.note ?? '',
         data: transaction.data ?? '',
         timeStamp: transaction.timestamp,
-        networkMode: transaction.networkMode.name,
       );
 
   Future<bool> existsTransaction(String txId) =>
@@ -82,9 +79,6 @@ class TransactionRepository {
                         symbol: "???",
                         decimals: 18,
                       ));
-          final networkMode = NetworkMode.values.firstWhere(
-              (network) => network.name == txData.networkMode,
-              orElse: () => NetworkMode.testnet);
 
           return Transaction(
             height: txData.height,
@@ -98,7 +92,6 @@ class TransactionRepository {
             note: txData.note,
             data: txData.data,
             timestamp: txData.timeStamp,
-            networkMode: networkMode,
           );
         }).toList());
   }
@@ -106,23 +99,22 @@ class TransactionRepository {
   Stream<List<Transaction>> watchTransactions() =>
       _appDatabase.watchTransactions().transform<List<Transaction>>(_transformer);
 
-  Stream<List<Transaction>> watchTransactionsOfAssets(
-      Iterable<Asset> assets, String wallet, NetworkMode networkMode,
+  Stream<List<Transaction>> watchTransactionsOfAssets(Iterable<Asset> assets, String wallet,
       [int? limit]) {
     if (limit != null) {
       return _appDatabase
-          .watchTransfersOfAssetsLimit(assets.map((e) => e.id), wallet, networkMode.name, limit)
+          .watchTransfersOfAssetsLimit(assets.map((e) => e.id), wallet, limit)
           .transform<List<Transaction>>(_transformer);
     }
     return _appDatabase
-        .watchTransfersOfAssets(assets.map((e) => e.id), wallet, networkMode.name)
+        .watchTransfersOfAssets(assets.map((e) => e.id), wallet)
         .transform<List<Transaction>>(_transformer);
   }
 
   Stream<List<Transaction>> watchTransactionsSavings(
-      Iterable<Asset> assets, String wallet, NetworkMode networkMode, int limit) {
+      Iterable<Asset> assets, String wallet, int limit) {
     return _appDatabase
-        .watchTransfersOfSavingsLimit(assets.map((e) => e.id), wallet, networkMode.name, limit)
+        .watchTransfersOfSavingsLimit(assets.map((e) => e.id), wallet, limit)
         .transform<List<Transaction>>(_transformer);
   }
 
@@ -146,9 +138,6 @@ class TransactionRepository {
                         symbol: "???",
                         decimals: 18,
                       ));
-          final networkMode = NetworkMode.values.firstWhere(
-              (network) => network.name == transactionData.networkMode,
-              orElse: () => NetworkMode.testnet);
 
           transactions.add(Transaction(
             height: transactionData.height,
@@ -162,7 +151,6 @@ class TransactionRepository {
             note: transactionData.note,
             data: transactionData.data,
             timestamp: transactionData.timeStamp,
-            networkMode: networkMode,
           ));
         }
 

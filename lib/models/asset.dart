@@ -27,6 +27,5 @@ class Asset {
         walletAddress: wallet,
         balance: BigInt.zero,
         asset: this,
-        networkMode: networkMode,
       );
 }

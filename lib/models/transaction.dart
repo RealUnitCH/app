@@ -1,5 +1,4 @@
 import 'package:realunit_wallet/models/asset.dart';
-import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 
 enum TransactionTypes { transfer, genericContractCall, tokenTransfer, savingsAdd, savingsRemove }
@@ -16,7 +15,6 @@ class Transaction {
   final String? note;
   final String? data;
   final DateTime timestamp;
-  final NetworkMode networkMode;
 
   const Transaction({
     required this.height,
@@ -30,7 +28,6 @@ class Transaction {
     required this.note,
     required this.data,
     required this.timestamp,
-    required this.networkMode,
   });
 
   bool isOutbound(String walletAddress) => senderAddress.asHexEip55 == walletAddress.asHexEip55;

@@ -42,7 +42,6 @@ class DashboardPage extends StatelessWidget {
         getIt<BalanceRepository>(),
         asset: asset,
         walletAddress: walletAddress,
-        networkMode: networkMode,
       ));
     }
 
@@ -53,12 +52,12 @@ class DashboardPage extends StatelessWidget {
       Blockchain.optimism.nativeAsset,
       Blockchain.arbitrum.nativeAsset,
     ]) {
-      cryptoHoldings.add(BalanceCubit(getIt<BalanceRepository>(),
-          asset: asset, walletAddress: walletAddress, networkMode: networkMode));
+      cryptoHoldings.add(
+          BalanceCubit(getIt<BalanceRepository>(), asset: asset, walletAddress: walletAddress));
     }
 
     transactionHistoryCubit =
-        TransactionHistoryCubit(getIt<TransactionRepository>(), walletAddress, _appStore);
+        TransactionHistoryCubit(getIt<TransactionRepository>(), walletAddress);
   }
 
   final AppStore _appStore;

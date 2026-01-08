@@ -15,7 +15,6 @@ extension TransactionStorage on AppDatabase {
     String note,
     String data,
     DateTime timeStamp,
-    String networkMode,
   ) =>
       into(transactions).insert(TransactionsCompanion.insert(
         height: height,
@@ -29,7 +28,6 @@ extension TransactionStorage on AppDatabase {
         note: note,
         data: data,
         timeStamp: timeStamp,
-        networkMode: networkMode,
       ));
 
   Future<int> updateTransaction(
@@ -44,7 +42,6 @@ extension TransactionStorage on AppDatabase {
     String? note,
     String? data,
     DateTime? timeStamp,
-    String? networkMode,
   }) =>
       (update(transactions)..where((row) => row.txId.equals(txId))).write(TransactionsCompanion(
         height: Value.absentIfNull(height),
@@ -57,7 +54,6 @@ extension TransactionStorage on AppDatabase {
         note: Value.absentIfNull(note),
         data: Value.absentIfNull(data),
         timeStamp: Value.absentIfNull(timeStamp),
-        networkMode: Value.absentIfNull(networkMode),
       ));
 
   Future<List<TransactionData>> getAllTokenTransactions(int chainId, String address) =>
@@ -69,13 +65,11 @@ extension TransactionStorage on AppDatabase {
         ..orderBy([(u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)]))
       .watch();
 
-  Stream<List<TransactionData>> watchTransfersOfAssets(
-          Iterable<int> assets, String wallet, String networkMode) =>
+  Stream<List<TransactionData>> watchTransfersOfAssets(Iterable<int> assets, String wallet) =>
       (select(transactions)
             ..where((row) => Expression.and([
                   row.asset.isIn(assets),
                   row.type.equals(2),
-                  row.networkMode.equals(networkMode),
                   Expression.or(
                       [row.senderAddress.equals(wallet), row.receiverAddress.equals(wallet)]),
                 ]))
@@ -83,12 +77,11 @@ extension TransactionStorage on AppDatabase {
           .watch();
 
   Stream<List<TransactionData>> watchTransfersOfAssetsLimit(
-          Iterable<int> assets, String wallet, String networkMode, int limit) =>
+          Iterable<int> assets, String wallet, int limit) =>
       (select(transactions)
             ..where((row) => Expression.and([
                   row.asset.isIn(assets),
                   row.type.equals(2),
-                  row.networkMode.equals(networkMode),
                   Expression.or(
                       [row.senderAddress.equals(wallet), row.receiverAddress.equals(wallet)]),
                 ]))
@@ -97,12 +90,11 @@ extension TransactionStorage on AppDatabase {
           .watch();
 
   Stream<List<TransactionData>> watchTransfersOfSavingsLimit(
-          Iterable<int> assets, String wallet, String networkMode, int limit) =>
+          Iterable<int> assets, String wallet, int limit) =>
       (select(transactions)
             ..where((row) => Expression.and([
                   row.asset.isIn(assets),
                   row.type.isIn([3, 4]),
-                  row.networkMode.equals(networkMode),
                   Expression.or(
                       [row.senderAddress.equals(wallet), row.receiverAddress.equals(wallet)]),
                 ]))
@@ -142,6 +134,4 @@ class Transactions extends Table {
   TextColumn get data => text()();
 
   DateTimeColumn get timeStamp => dateTime()();
-
-  TextColumn get networkMode => text()();
 }
