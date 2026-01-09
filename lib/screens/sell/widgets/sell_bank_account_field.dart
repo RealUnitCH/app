@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/bank_account.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_bank_accounts/sell_bank_accounts_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_selected_bank_account/sell_selected_bank_account_cubit.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_add_bank_account_sheet.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_bank_account_selection_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SellBankAccountField extends StatelessWidget {
   const SellBankAccountField({super.key});
@@ -15,7 +17,9 @@ class SellBankAccountField extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => SellBankAccountsCubit(),
+          create: (context) => SellBankAccountsCubit(
+            getIt<SharedPreferences>(),
+          ),
         ),
       ],
       child: const BankAccountFieldView(),

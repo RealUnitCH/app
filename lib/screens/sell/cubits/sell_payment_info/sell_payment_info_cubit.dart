@@ -30,13 +30,22 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
       );
 
       emit(SellPaymentInfoSuccess(paymentInfo));
-    } on KycLevelRequiredException {
-      emit(SellPaymentInfoFailure(PaymentInfoError.kycRequired));
-    } on RegistrationRequiredException {
-      emit(SellPaymentInfoFailure(PaymentInfoError.registrationRequired));
+    } on KycLevelRequiredException catch (e) {
+      emit(SellPaymentInfoFailure(
+        PaymentInfoError.kycRequired,
+        message: e.toString(),
+      ));
+    } on RegistrationRequiredException catch (e) {
+      emit(SellPaymentInfoFailure(
+        PaymentInfoError.registrationRequired,
+        message: e.toString(),
+      ));
     } catch (e) {
       developer.log(e.toString());
-      emit(SellPaymentInfoFailure(PaymentInfoError.unknown, message: e.toString()));
+      emit(SellPaymentInfoFailure(
+        PaymentInfoError.unknown,
+        message: e.toString(),
+      ));
     }
   }
 }
