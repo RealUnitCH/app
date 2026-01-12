@@ -35,7 +35,7 @@ class AppStore {
       (node) => node.chainId == chainId,
       orElse: () {
         developer.log("No node found for $chainId using fallback ETH Node");
-        return Node(
+        return const Node(
           chainId: 1,
           name: "Fallback",
           httpsUrl: "https://eth-mainnet.g.alchemy.com/v2/9qEJRkxr1gAyFfwsCU6qODRSqj3TAzjj",

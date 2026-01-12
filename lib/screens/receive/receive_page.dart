@@ -21,7 +21,7 @@ class ReceivePage extends StatelessWidget {
           : AppBar(
               leading: IconButton(
                 onPressed: () => context.pop(),
-                icon: Icon(
+                icon: const Icon(
                   Icons.arrow_back_rounded,
                 ),
               ),

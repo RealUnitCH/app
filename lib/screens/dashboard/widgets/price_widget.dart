@@ -26,14 +26,14 @@ class PriceWidget extends StatelessWidget {
           child: Column(
             children: [
               Padding(
-                padding: EdgeInsets.only(top: 12, left: 20),
+                padding: const EdgeInsets.only(top: 12, left: 20),
                 child: Column(
                   children: [
                     Row(
                       children: [
                         Text(
                           S.of(context).realunit_stockprice,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
                             color: RealUnitColors.neutral400,
                           ),
@@ -45,14 +45,14 @@ class PriceWidget extends StatelessWidget {
                       children: [
                         Text(
                           currency.code.toUpperCase(),
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: RealUnitColors.realUnitBlack),
                         ),
                         Text(
                           formatFixed(price, 2),
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.w600,
                             color: RealUnitColors.realUnitBlack,

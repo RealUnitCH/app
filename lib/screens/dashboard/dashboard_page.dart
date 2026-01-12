@@ -79,21 +79,21 @@ class DashboardPage extends StatelessWidget {
         ],
         child: Scaffold(
           appBar: AppBar(
-            leading: Padding(
+            leading: const Padding(
               padding: EdgeInsets.only(left: 20),
               child: RealUnitIcon(),
             ),
             leadingWidth: 40,
             toolbarHeight: 68,
             titleSpacing: 6,
-            title: Text(
+            title: const Text(
               "RealUnit Wallet",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
             ),
             actions: [
               IconButton(
                 onPressed: () => context.push('/settings'),
-                icon: Icon(
+                icon: const Icon(
                   Icons.menu,
                   color: RealUnitColors.realUnitBlue,
                 ),
@@ -121,19 +121,19 @@ class DashboardPage extends StatelessWidget {
                         builder: (context, homeState) => Offstage(
                           offstage: !homeState.isFiatServiceAvailable,
                           child: Padding(
-                            padding: EdgeInsets.only(left: 16, right: 16, top: 24),
+                            padding: const EdgeInsets.only(left: 16, right: 16, top: 24),
                             child: Row(
                               children: [
                                 Padding(
-                                  padding: EdgeInsets.only(right: 10),
+                                  padding: const EdgeInsets.only(right: 10),
                                   child: ActionButton(
-                                    icon: RealUnitTokenIcon(size: 20),
+                                    icon: const RealUnitTokenIcon(size: 20),
                                     label: S.of(context).buy,
                                     onPressed: () => context.push(BuyPage.routeName),
                                   ),
                                 ),
                                 ActionButton(
-                                  icon: Icon(
+                                  icon: const Icon(
                                     Icons.account_balance,
                                     color: Colors.white,
                                     size: 20,
@@ -157,7 +157,7 @@ class DashboardPage extends StatelessWidget {
                                   child: Column(
                                     children: <Widget>[
                                       Padding(
-                                        padding: EdgeInsets.all(20),
+                                        padding: const EdgeInsets.all(20),
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
@@ -186,7 +186,7 @@ class DashboardPage extends StatelessWidget {
                                         ),
                                       ),
                                       Padding(
-                                          padding: EdgeInsets.all(20),
+                                          padding: const EdgeInsets.all(20),
                                           child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [

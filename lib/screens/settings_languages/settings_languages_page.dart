@@ -31,7 +31,7 @@ class SettingsLanguagePage extends StatelessWidget {
                       (lang) => SettingOption(
                         title: lang.name,
                         trailing: state.language == lang
-                            ? Icon(
+                            ? const Icon(
                                 Icons.check,
                                 size: 20,
                                 color: RealUnitColors.realUnitBlue,

@@ -43,7 +43,7 @@ class SellConfirmSheetView extends StatelessWidget {
                 vertical: 4.0,
               ),
               child: AppBar(
-                title: Text(
+                title: const Text(
                   'Verkauf bestätigen',
                   style: TextStyle(
                     fontSize: 16,
@@ -61,39 +61,39 @@ class SellConfirmSheetView extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Amount:'),
+                      const Text('Amount:'),
                       Text('${paymentInfo.amount}'),
                     ],
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Exchange Rate:'),
-                      Spacer(),
+                      const Text('Exchange Rate:'),
+                      const Spacer(),
                       Text('${paymentInfo.exchangeRate}'),
                     ],
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Estimated Amount:'),
-                      Spacer(),
+                      const Text('Estimated Amount:'),
+                      const Spacer(),
                       Text('${paymentInfo.estimatedAmount}'),
                     ],
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Currency:'),
-                      Spacer(),
+                      const Text('Currency:'),
+                      const Spacer(),
                       Text('${paymentInfo.currency}'),
                     ],
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Beneficiary:'),
-                      Spacer(),
+                      const Text('Beneficiary:'),
+                      const Spacer(),
                       Text(paymentInfo.beneficiary.iban),
                     ],
                   ),

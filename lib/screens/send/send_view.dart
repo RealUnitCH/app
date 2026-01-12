@@ -1,3 +1,8 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/packages/wallet/is_evm_address.dart';
@@ -9,11 +14,6 @@ import 'package:realunit_wallet/widgets/amount_info_row.dart';
 import 'package:realunit_wallet/widgets/asset_selector.dart';
 import 'package:realunit_wallet/widgets/number_pad.dart';
 import 'package:realunit_wallet/widgets/standard_slide_button_widget.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 class SendView extends StatelessWidget {
   SendView({super.key, String? receiver})
@@ -31,7 +31,7 @@ class SendView extends StatelessWidget {
           backgroundColor: Colors.transparent,
           leading: IconButton(
             onPressed: () => context.pop(),
-            icon: Icon(
+            icon: const Icon(
               Icons.arrow_back_rounded,
               color: RealUnitColors.realUnitBlack,
               size: 24,
@@ -47,20 +47,17 @@ class SendView extends StatelessWidget {
               }
             },
             listenWhen: (previous, current) =>
-                !previous.receiver.isEthereumAddress &&
-                current.receiver.isEthereumAddress,
+                !previous.receiver.isEthereumAddress && current.receiver.isEthereumAddress,
             child: BlocBuilder<SendBloc, SendState>(
               builder: (context, sendState) => Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(
-                        left: 26, right: 26, top: 26, bottom: 10),
+                    padding: const EdgeInsets.only(left: 26, right: 26, top: 26, bottom: 10),
                     child: TextField(
                       controller: receiverController,
                       focusNode: receiverFocusNode,
-                      onChanged: (receiver) => context
-                          .read<SendBloc>()
-                          .add(ReceiverChanged(receiver)),
+                      onChanged: (receiver) =>
+                          context.read<SendBloc>().add(ReceiverChanged(receiver)),
                       inputFormatters: <TextInputFormatter>[
                         FilteringTextInputFormatter.deny(RegExp(r" ")),
                       ],
@@ -80,15 +77,13 @@ class SendView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (sendState.alias != null &&
-                      !sendState.receiver.isEthereumAddress) ...[
+                  if (sendState.alias != null && !sendState.receiver.isEthereumAddress) ...[
                     Padding(
-                      padding:
-                          const EdgeInsets.only(left: 26, right: 26, top: 10),
+                      padding: const EdgeInsets.only(left: 26, right: 26, top: 10),
                       child: InkWell(
                         onTap: () {
                           receiverFocusNode.unfocus();
-                          context.read<SendBloc>().add(SelectAlias());
+                          context.read<SendBloc>().add(const SelectAlias());
                         },
                         child: Row(
                           children: [
@@ -114,23 +109,20 @@ class SendView extends StatelessWidget {
                       ),
                     ),
                   ],
-                  if (sendState.receiver.isEthereumAddress &&
-                      !receiverFocusNode.hasFocus) ...[
+                  if (sendState.receiver.isEthereumAddress && !receiverFocusNode.hasFocus) ...[
                     Padding(
-                      padding:
-                          const EdgeInsets.only(left: 26, right: 26, top: 10),
+                      padding: const EdgeInsets.only(left: 26, right: 26, top: 10),
                       child: Text(
                         "${sendState.amount.toString()} €",
                         style: const TextStyle(fontSize: 60),
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    Spacer(),
+                    const Spacer(),
                     AssetSelector(
-                      onPressed: (asset) =>
-                          context.read<SendBloc>().add(AssetChanged(asset)),
-                      selectedBalance: sendState.balances.firstWhere(
-                          (e) => e.chainId == sendState.blockchain.chainId),
+                      onPressed: (asset) => context.read<SendBloc>().add(AssetChanged(asset)),
+                      selectedBalance: sendState.balances
+                          .firstWhere((e) => e.chainId == sendState.blockchain.chainId),
                       availableBalances: sendState.balances,
                       padding: _kPadding,
                     ),
@@ -147,14 +139,14 @@ class SendView extends StatelessWidget {
                       onNumberPressed: (index) =>
                           context.read<SendBloc>().add(AmountChangedAdd(index)),
                       onDeletePressed: () =>
-                          context.read<SendBloc>().add(AmountChangedDelete()),
+                          context.read<SendBloc>().add(const AmountChangedDelete()),
                       onDecimalPressed: () =>
-                          context.read<SendBloc>().add(AmountChangedDecimal()),
+                          context.read<SendBloc>().add(const AmountChangedDecimal()),
                     ),
                     Padding(
                       padding: _kPadding,
                       child: sendState.status == SendStatus.inProgress
-                          ? SizedBox(
+                          ? const SizedBox(
                               height: 55,
                               child: CupertinoActivityIndicator(
                                 color: DEuroColors.dEuroGold,
@@ -162,7 +154,7 @@ class SendView extends StatelessWidget {
                             )
                           : StandardSlideButton(
                               onSlideComplete: () =>
-                                  context.read<SendBloc>().add(SendSubmitted()),
+                                  context.read<SendBloc>().add(const SendSubmitted()),
                               buttonText: S.of(context).send,
                             ),
                     )

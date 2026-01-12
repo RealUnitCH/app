@@ -35,7 +35,7 @@ class _SellAddBankAccountSheetState extends State<SellAddBankAccountSheet> {
                 child: AppBar(
                   title: Text(
                     S.of(context).payout_account_add,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -75,26 +75,27 @@ class _SellAddBankAccountSheetState extends State<SellAddBankAccountSheet> {
                             inputFormatters: [IbanInputFormatter()],
                             decoration: InputDecoration(
                               hintText: 'CHXX XXXX XXXX XXXX XXXX X',
-                              enabledBorder: OutlineInputBorder(
+                              enabledBorder: const OutlineInputBorder(
                                 borderRadius: BorderRadius.all(Radius.circular(8.0)),
                                 borderSide: BorderSide(color: RealUnitColors.neutral300),
                               ),
-                              focusedBorder: OutlineInputBorder(
+                              focusedBorder: const OutlineInputBorder(
                                 borderRadius: BorderRadius.all(Radius.circular(8.0)),
                                 borderSide:
                                     BorderSide(color: RealUnitColors.realUnitBlue, width: 2),
                               ),
                               errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                                borderRadius: const BorderRadius.all(Radius.circular(8.0)),
                                 borderSide: BorderSide(color: RealUnitColors.status.red600),
                               ),
                               focusedErrorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                                borderRadius: const BorderRadius.all(Radius.circular(8.0)),
                                 borderSide:
                                     BorderSide(color: RealUnitColors.status.red600, width: 2),
                               ),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-                              hintStyle: TextStyle(color: RealUnitColors.neutral400),
+                              contentPadding:
+                                  const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                              hintStyle: const TextStyle(color: RealUnitColors.neutral400),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
@@ -128,26 +129,27 @@ class _SellAddBankAccountSheetState extends State<SellAddBankAccountSheet> {
                             textCapitalization: TextCapitalization.words,
                             decoration: InputDecoration(
                               hintText: 'Raiffeisenbank',
-                              enabledBorder: OutlineInputBorder(
+                              enabledBorder: const OutlineInputBorder(
                                 borderRadius: BorderRadius.all(Radius.circular(8.0)),
                                 borderSide: BorderSide(color: RealUnitColors.neutral300),
                               ),
-                              focusedBorder: OutlineInputBorder(
+                              focusedBorder: const OutlineInputBorder(
                                 borderRadius: BorderRadius.all(Radius.circular(8.0)),
                                 borderSide:
                                     BorderSide(color: RealUnitColors.realUnitBlue, width: 2),
                               ),
                               errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                                borderRadius: const BorderRadius.all(Radius.circular(8.0)),
                                 borderSide: BorderSide(color: RealUnitColors.status.red600),
                               ),
                               focusedErrorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                                borderRadius: const BorderRadius.all(Radius.circular(8.0)),
                                 borderSide:
                                     BorderSide(color: RealUnitColors.status.red600, width: 2),
                               ),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-                              hintStyle: TextStyle(color: RealUnitColors.neutral400),
+                              contentPadding:
+                                  const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                              hintStyle: const TextStyle(color: RealUnitColors.neutral400),
                             ),
                             keyboardType: TextInputType.text,
                           ),

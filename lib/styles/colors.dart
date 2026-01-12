@@ -31,11 +31,11 @@ class RealUnitColors {
 }
 
 class _Basic {
-  final white = Color(0xFFFFFFFF);
-  final black = Color(0xFF000000);
+  final white = const Color(0xFFFFFFFF);
+  final black = const Color(0xFF000000);
 }
 
 class _Status {
-  final red600 = Color(0xFFE02523);
-  final red100 = Color(0xFFFCE8E8);
+  final red600 = const Color(0xFFE02523);
+  final red100 = const Color(0xFFFCE8E8);
 }

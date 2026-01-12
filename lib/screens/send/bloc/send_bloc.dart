@@ -1,6 +1,12 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 
+import 'package:equatable/equatable.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/balance.dart';
@@ -17,12 +23,6 @@ import 'package:realunit_wallet/router.dart';
 import 'package:realunit_wallet/screens/send/bloc/gas_fee_cubit.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
 import 'package:realunit_wallet/widgets/error_bottom_sheet.dart';
-import 'package:equatable/equatable.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 part 'send_event.dart';
 part 'send_state.dart';
@@ -30,8 +30,7 @@ part 'send_state.dart';
 class SendBloc extends Bloc<SendEvent, SendState> {
   SendBloc(this._appStore, this._balanceService,
       {required Asset asset, String receiver = '', String amount = '0'})
-      : gasFeeCubit =
-            GasFeeCubit(_appStore, Blockchain.getFromChainId(asset.chainId)),
+      : gasFeeCubit = GasFeeCubit(_appStore, Blockchain.getFromChainId(asset.chainId)),
         super(SendState(asset: asset, receiver: receiver, amount: amount)) {
     on<SelectAlias>(_onSelectAlias);
     on<ReceiverChanged>(_onReceiverChanged);
@@ -43,8 +42,8 @@ class SendBloc extends Bloc<SendEvent, SendState> {
     on<SendSubmitted>(_onSubmitted);
     on<LoadBalances>(_onLoadBalances);
 
-    add(LoadBalances());
-    add(PasteReceiver());
+    add(const LoadBalances());
+    add(const PasteReceiver());
   }
 
   @override
@@ -57,8 +56,7 @@ class SendBloc extends Bloc<SendEvent, SendState> {
   final AppStore _appStore;
   final BalanceService _balanceService;
 
-  Future<void> _onReceiverChanged(
-      ReceiverChanged event, Emitter<SendState> emit) async {
+  Future<void> _onReceiverChanged(ReceiverChanged event, Emitter<SendState> emit) async {
     emit(state.copyWith(receiver: event.receiver));
     if (event.receiver.contains(".")) {
       final resolvedAlias = await AliasResolver.resolve(
@@ -73,8 +71,7 @@ class SendBloc extends Bloc<SendEvent, SendState> {
     }
   }
 
-  Future<void> _onPasteReceiver(
-      PasteReceiver event, Emitter<SendState> emit) async {
+  Future<void> _onPasteReceiver(PasteReceiver event, Emitter<SendState> emit) async {
     if (await Clipboard.hasStrings()) {
       final value = await Clipboard.getData('text/plain');
       if (value?.text?.isEthereumAddress == true) {
@@ -89,16 +86,13 @@ class SendBloc extends Bloc<SendEvent, SendState> {
     }
   }
 
-  Future<void> _onSelectAlias(
-      SelectAlias event, Emitter<SendState> emit) async {
+  Future<void> _onSelectAlias(SelectAlias event, Emitter<SendState> emit) async {
     emit(state.copyWith(receiver: state.alias?.address));
   }
 
   void _onAmountAdd(AmountChangedAdd event, Emitter<SendState> emit) {
     emit(state.copyWith(
-      amount: state.amount == '0'
-          ? event.amount.toString()
-          : '${state.amount}${event.amount}',
+      amount: state.amount == '0' ? event.amount.toString() : '${state.amount}${event.amount}',
     ));
   }
 
@@ -108,9 +102,7 @@ class SendBloc extends Bloc<SendEvent, SendState> {
 
   void _onAmountRemove(AmountChangedDelete event, Emitter<SendState> emit) {
     emit(state.copyWith(
-      amount: state.amount.length > 1
-          ? state.amount.substring(0, state.amount.length - 1)
-          : '0',
+      amount: state.amount.length > 1 ? state.amount.substring(0, state.amount.length - 1) : '0',
     ));
   }
 
@@ -119,18 +111,17 @@ class SendBloc extends Bloc<SendEvent, SendState> {
     gasFeeCubit.blockchain = Blockchain.getFromChainId(state.asset.chainId);
   }
 
-  Future<void> _onSubmitted(
-      SendSubmitted event, Emitter<SendState> emit) async {
+  Future<void> _onSubmitted(SendSubmitted event, Emitter<SendState> emit) async {
     if (state.receiver.isEthereumAddress) {
       final client = _appStore.getClient(state.blockchain.chainId);
-      final ethBalance = await client
-          .getBalance(_appStore.wallet.currentAccount.primaryAddress.address);
+      final ethBalance =
+          await client.getBalance(_appStore.wallet.currentAccount.primaryAddress.address);
       if (ethBalance.getInWei < gasFeeCubit.state.gasFee) {
         return showModalBottomSheet(
           context: navigatorKey.currentContext!,
           builder: (_) => ErrorBottomSheet(
-            message: S.current.error_not_enough_money(
-                state.blockchain.nativeSymbol, state.blockchain.name),
+            message: S.current
+                .error_not_enough_money(state.blockchain.nativeSymbol, state.blockchain.name),
           ),
         );
       }
@@ -155,7 +146,7 @@ class SendBloc extends Bloc<SendEvent, SendState> {
           navigatorKey.currentContext?.pop();
           showCupertinoSheet(
             context: navigatorKey.currentContext!,
-            pageBuilder: (_) => TransactionSentPage(
+            builder: (_) => TransactionSentPage(
               title: S.current.transaction_sent,
               transactionId: id,
               blockchain: state.blockchain,
@@ -169,11 +160,9 @@ class SendBloc extends Bloc<SendEvent, SendState> {
     }
   }
 
-  Future<void> _onLoadBalances(
-      LoadBalances event, Emitter<SendState> emit) async {
+  Future<void> _onLoadBalances(LoadBalances event, Emitter<SendState> emit) async {
     final balances = <Balance>[];
-    final owner =
-        _appStore.wallet.currentAccount.primaryAddress.address.hexEip55;
+    final owner = _appStore.wallet.currentAccount.primaryAddress.address.hexEip55;
     for (final asset in [
       dEUROAsset,
       dEUROPolygonAsset,

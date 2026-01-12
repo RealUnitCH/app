@@ -26,13 +26,13 @@ class SettingsSeedView extends StatelessWidget {
                     "assets/images/backup_seed.svg",
                     height: 124,
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Column(
                     spacing: 8.0,
                     children: [
                       Text(
                         S.of(context).settings_wallet_backup,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w700,
                           height: 30 / 26,
@@ -42,7 +42,7 @@ class SettingsSeedView extends StatelessWidget {
                       Text(
                         S.of(context).settings_wallet_backup_subtitle_1,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: RealUnitColors.neutral500,
                           fontSize: 14,
                           height: 18 / 14,
@@ -51,7 +51,7 @@ class SettingsSeedView extends StatelessWidget {
                       Text(
                         S.of(context).settings_wallet_backup_subtitle_2,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: RealUnitColors.neutral500,
                           fontSize: 14,
                           height: 18 / 14,
@@ -59,12 +59,12 @@ class SettingsSeedView extends StatelessWidget {
                       ),
                     ],
                   ),
-                  SizedBox(height: 40),
+                  const SizedBox(height: 40),
                   Row(
                     spacing: 10,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      RecoveryKeyIcon(size: 20, color: RealUnitColors.realUnitBlue),
+                      const RecoveryKeyIcon(size: 20, color: RealUnitColors.realUnitBlue),
                       Text(
                         S.of(context).create_wallet_recovery_key_title,
                         style: const TextStyle(
@@ -76,7 +76,7 @@ class SettingsSeedView extends StatelessWidget {
                       ),
                     ],
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   BlocBuilder<SettingsSeedCubit, SettingsSeedState>(
                     builder: (context, state) {
                       return Column(

@@ -17,7 +17,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           S.of(context).payout_account_select,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
@@ -36,9 +36,9 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                   builder: (context, accounts) {
                     return ListView.separated(
                       shrinkWrap: true,
-                      physics: NeverScrollableScrollPhysics(),
+                      physics: const NeverScrollableScrollPhysics(),
                       itemCount: accounts.length,
-                      separatorBuilder: (context, index) => SizedBox(height: 16.0),
+                      separatorBuilder: (context, index) => const SizedBox(height: 16.0),
                       itemBuilder: (context, index) {
                         final account = accounts[index];
                         return GestureDetector(
@@ -51,14 +51,14 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                               color: RealUnitColors.neutral100,
                               borderRadius: BorderRadius.circular(12.0),
                             ),
-                            padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                             child: Column(
                               spacing: 4.0,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   account.name ?? '${S.of(context).without} ${S.of(context).label}',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 12,
                                     height: 16 / 12,
                                     letterSpacing: 0.0,
@@ -67,7 +67,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                                 ),
                                 Text(
                                   account.iban,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     height: 18 / 14,
                                     fontWeight: FontWeight.w600,
@@ -86,7 +86,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                   onPressed: () => _onAddBankAccountPressed(context),
                   label: Text(
                     S.of(context).add_bank_account,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       height: 20 / 16,
                       fontWeight: FontWeight.bold,
@@ -94,7 +94,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                       color: RealUnitColors.realUnitBlue,
                     ),
                   ),
-                  icon: Icon(
+                  icon: const Icon(
                     Icons.add_circle_outlined,
                     color: RealUnitColors.realUnitBlue,
                   ),
@@ -115,7 +115,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
       context: context,
       builder: (_) => BlocProvider.value(
         value: sellBankAccountsCubit,
-        child: SellAddBankAccountSheet(),
+        child: const SellAddBankAccountSheet(),
       ),
     );
   }

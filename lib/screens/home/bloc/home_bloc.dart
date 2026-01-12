@@ -16,7 +16,7 @@ part 'home_state.dart';
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
   HomeBloc(this._walletService, this._balanceService, this._transactionHistoryService,
       this._dfxService, this._settingsService, this._appStore)
-      : super(HomeState()) {
+      : super(const HomeState()) {
     on<LoadCurrentWalletEvent>(_onLoadCurrentWallet);
     on<LoadWalletEvent>(_onLoadWallet);
     on<DeleteCurrentWalletEvent>(_onDeleteCurrentWallet);
@@ -70,7 +70,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     await _walletService.deleteCurrentWallet();
     _settingsService.setTermsAccepted(false);
     emit(
-      HomeState(
+      const HomeState(
         openWallet: null,
         isLoadingWallet: false,
         isFiatServiceAvailable: false,

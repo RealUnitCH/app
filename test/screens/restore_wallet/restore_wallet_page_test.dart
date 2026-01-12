@@ -67,7 +67,7 @@ void main() {
 
   group('$RestoreWalletPage', () {
     testWidgets('renders $RestoreWalletView', (tester) async {
-      await tester.pumpApp(RestoreWalletPage());
+      await tester.pumpApp(const RestoreWalletPage());
 
       expect(find.byType(RestoreWalletView), findsOne);
     });

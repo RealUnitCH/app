@@ -62,7 +62,7 @@ class PaymentInformation extends StatelessWidget {
             );
           }
         }
-        return SizedBox.shrink();
+        return const SizedBox.shrink();
       },
     );
   }

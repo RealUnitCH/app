@@ -9,18 +9,16 @@ const kPageTitleTextStyle = TextStyle(
   color: RealUnitColors.realUnitBlack,
 );
 
-const kTitleTextStyle =
-    TextStyle(fontSize: 16, color: RealUnitColors.realUnitBlack);
+const kTitleTextStyle = TextStyle(fontSize: 16, color: RealUnitColors.realUnitBlack);
 
-const kSubtitleTextStyle =
-    TextStyle(fontSize: 14, color: DEuroColors.neutralGrey);
+const kSubtitleTextStyle = TextStyle(fontSize: 14, color: DEuroColors.neutralGrey);
 
 const kActionButtonTextStyle =
     TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600);
 
 final kFullwidthPrimaryButtonStyle = ElevatedButton.styleFrom(
   backgroundColor: Colors.white.withAlpha(50),
-  fixedSize: Size(double.infinity, 55),
+  fixedSize: const Size(double.infinity, 55),
   elevation: 0.0,
 );
 
@@ -48,19 +46,19 @@ const kFullwidthBlueButtonTextStyle =
 
 final kFullwidthSecondaryButtonStyle = ElevatedButton.styleFrom(
   backgroundColor: Colors.black.withAlpha(50),
-  fixedSize: Size(double.infinity, 55),
+  fixedSize: const Size(double.infinity, 55),
   elevation: 0.0,
 );
 
 final kBalanceBarActionButtonStyle = FilledButton.styleFrom(
   backgroundColor: Colors.white.withAlpha(50),
   textStyle: kPrimaryButtonTextStyle,
-  padding: EdgeInsets.only(top: 5, bottom: 5, left: 10, right: 10),
+  padding: const EdgeInsets.only(top: 5, bottom: 5, left: 10, right: 10),
 );
 
 final kFullwidthActionButtonStyle = FilledButton.styleFrom(
     backgroundColor: DEuroColors.neutralGrey.withAlpha(50),
-    padding: EdgeInsets.only(top: 5, bottom: 5, left: 10, right: 10),
+    padding: const EdgeInsets.only(top: 5, bottom: 5, left: 10, right: 10),
     iconColor: DEuroColors.neutralGrey);
 
 const kContainerCardStyle = BoxDecoration(

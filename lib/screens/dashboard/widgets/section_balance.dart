@@ -42,7 +42,7 @@ class SectionBalance extends StatelessWidget {
             child: Column(
               children: [
                 Padding(
-                  padding: EdgeInsets.only(top: 12, bottom: 12),
+                  padding: const EdgeInsets.only(top: 12, bottom: 12),
                   child: Column(
                     children: [
                       Row(
@@ -59,7 +59,7 @@ class SectionBalance extends StatelessWidget {
                             onTap: onHideAmountPress,
                             enableFeedback: false,
                             child: Padding(
-                              padding: EdgeInsets.only(left: 5),
+                              padding: const EdgeInsets.only(left: 5),
                               child: BlocBuilder<SettingsBloc, SettingsState>(
                                 builder: (context, state) => Icon(
                                   state.hideAmounts ? Icons.visibility_off : Icons.visibility,
@@ -86,20 +86,20 @@ class SectionBalance extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: EdgeInsets.only(left: 16, right: 16, top: 10),
+          padding: const EdgeInsets.only(left: 16, right: 16, top: 10),
           child: Row(
             children: [
               if (isFiatServiceAvailable) ...[
                 Padding(
-                  padding: EdgeInsets.only(right: 10),
+                  padding: const EdgeInsets.only(right: 10),
                   child: ActionButton(
-                    icon: RealUnitTokenIcon(size: 20),
+                    icon: const RealUnitTokenIcon(size: 20),
                     label: S.of(context).deposit,
                     onPressed: () => getIt<DfxWidgetService>().launchProvider(context, true),
                   ),
                 ),
                 ActionButton(
-                  icon: Icon(
+                  icon: const Icon(
                     Icons.account_balance,
                     color: Colors.white,
                     size: 20,
@@ -113,6 +113,7 @@ class SectionBalance extends StatelessWidget {
         ),
       ]);
 
+  // ignore: unused_element
   Future<void> _presentQRReader(BuildContext context) async {
     QRData? result = await presentQRScanner(
       context,

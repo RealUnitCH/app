@@ -32,7 +32,7 @@ class SettingsCurrenciesPage extends StatelessWidget {
                         title: currency.code,
                         subtitle: currency.name,
                         trailing: state.currency == currency
-                            ? Icon(
+                            ? const Icon(
                                 Icons.check,
                                 size: 20,
                                 color: RealUnitColors.realUnitBlue,

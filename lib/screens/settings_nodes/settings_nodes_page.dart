@@ -1,3 +1,7 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
@@ -6,10 +10,6 @@ import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_section.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/styles.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 class SettingsNodesPage extends StatelessWidget {
   const SettingsNodesPage({super.key});
@@ -20,7 +20,7 @@ class SettingsNodesPage extends StatelessWidget {
           backgroundColor: Colors.transparent,
           leading: IconButton(
             onPressed: () => context.pop(),
-            icon: Icon(
+            icon: const Icon(
               Icons.arrow_back_rounded,
               color: RealUnitColors.realUnitBlack,
               size: 24,
@@ -46,13 +46,12 @@ class SettingsNodesPage extends StatelessWidget {
                           getChainImagePath(blockchain.chainId),
                           width: 24,
                         ),
-                        trailing: Icon(
+                        trailing: const Icon(
                           Icons.arrow_forward_ios,
                           size: 20,
                           color: RealUnitColors.realUnitBlack,
                         ),
-                        onTap: () => context
-                            .push("/settings/nodes/${blockchain.chainId}"),
+                        onTap: () => context.push("/settings/nodes/${blockchain.chainId}"),
                       ),
                     )
                     .toList(),

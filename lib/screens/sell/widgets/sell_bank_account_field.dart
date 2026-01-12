@@ -47,13 +47,13 @@ class BankAccountFieldView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: EdgeInsets.symmetric(
+                padding: const EdgeInsets.symmetric(
                   horizontal: 12.0,
                   vertical: 4.0,
                 ),
                 child: Text(
                   S.of(context).bank_account,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     height: 18 / 13,
@@ -75,7 +75,7 @@ class BankAccountFieldView extends StatelessWidget {
                           value: account,
                           child: Text(
                             account.iban,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 14,
                               color: RealUnitColors.neutral900,
                             ),
@@ -86,7 +86,7 @@ class BankAccountFieldView extends StatelessWidget {
                   isExpanded: true,
                   isDense: true,
                   menuMaxHeight: MediaQuery.sizeOf(context).height * 0.4,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.all(Radius.circular(8.0)),
                       borderSide: BorderSide(color: RealUnitColors.neutral300),
@@ -99,7 +99,7 @@ class BankAccountFieldView extends StatelessWidget {
                   ),
                   hint: Text(
                     '${S.of(context).please_select}...',
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: RealUnitColors.neutral400,
                     ),
                   ),
@@ -126,7 +126,7 @@ class BankAccountFieldView extends StatelessWidget {
         context: context,
         builder: (_) => BlocProvider.value(
           value: sellBankAccountsCubit,
-          child: SellAddBankAccountSheet(),
+          child: const SellAddBankAccountSheet(),
         ),
       );
     } else {
@@ -142,7 +142,7 @@ class BankAccountFieldView extends StatelessWidget {
                 value: sellSelectedBankAccountCubit,
               ),
             ],
-            child: SellBankAccountSelectionPage(),
+            child: const SellBankAccountSelectionPage(),
           ),
         ),
       );

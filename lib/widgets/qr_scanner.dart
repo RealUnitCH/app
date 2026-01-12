@@ -1,11 +1,11 @@
 import 'dart:developer' as developer;
 import 'dart:typed_data';
 
-import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/widgets/handlebars.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/widgets/handlebars.dart';
 
 typedef FuncValidateQR = bool Function(String? code, List<int>? rawBytes);
 
@@ -22,17 +22,14 @@ class QRData {
         data = barcode.rawBytes ?? Uint8List(0);
 }
 
-bool _defaultQRValidate(String? code, List<int>? rawBytes) =>
-    rawBytes?.isNotEmpty == true;
+bool _defaultQRValidate(String? code, List<int>? rawBytes) => rawBytes?.isNotEmpty == true;
 
-Future<QRData?> presentQRScanner(BuildContext context,
-    [FuncValidateQR? validateQR]) async {
+Future<QRData?> presentQRScanner(BuildContext context, [FuncValidateQR? validateQR]) async {
   isQrScannerShown = true;
   try {
     final result = await showCupertinoSheet<QRData>(
       context: context,
-      pageBuilder: (_) =>
-          QRScanner(validateQR: validateQR ?? _defaultQRValidate),
+      builder: (_) => QRScanner(validateQR: validateQR ?? _defaultQRValidate),
     );
     isQrScannerShown = false;
     return result;
@@ -71,8 +68,7 @@ class _QRScannerState extends State<QRScanner> {
       //     );
       //   },
       // );
-      developer.log("QRCode Scanner Error",
-          error: e, name: "QRScanner._handleBarcode");
+      developer.log("QRCode Scanner Error", error: e, name: "QRScanner._handleBarcode");
     }
   }
 
@@ -133,8 +129,7 @@ class _QRScannerState extends State<QRScanner> {
                       child: Center(
                           child: Text(
                         S.of(context).scan_qr_code,
-                        style:
-                            const TextStyle(fontSize: 20, color: Colors.white),
+                        style: const TextStyle(fontSize: 20, color: Colors.white),
                       )),
                     ),
                   ),

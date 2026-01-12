@@ -5,23 +5,22 @@ import 'package:realunit_wallet/packages/utils/format_fixed.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class PriceChart extends StatelessWidget {
-  const PriceChart(
-      {super.key, required this.prices, this.startDate = 1742428800});
+  const PriceChart({super.key, required this.prices, this.startDate = 1742428800});
 
   final List<PricePoint> prices;
   final int startDate;
 
   LineChartData get data => LineChartData(
-        lineTouchData: LineTouchData(handleBuiltInTouches: false),
+        lineTouchData: const LineTouchData(handleBuiltInTouches: false),
         gridData: const FlGridData(show: false),
-        titlesData: FlTitlesData(
+        titlesData: const FlTitlesData(
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(showTitles: false),
           ),
-          rightTitles: const AxisTitles(
+          rightTitles: AxisTitles(
             sideTitles: SideTitles(showTitles: false),
           ),
-          topTitles: const AxisTitles(
+          topTitles: AxisTitles(
             sideTitles: SideTitles(showTitles: false),
           ),
           leftTitles: AxisTitles(
@@ -45,11 +44,8 @@ class PriceChart extends StatelessWidget {
         color: RealUnitColors.darkBlue,
         belowBarData: BarAreaData(
           show: true,
-          gradient: LinearGradient(
-            colors: [
-              Color.fromARGB(153, 185, 221, 241),
-              Color.fromARGB(0, 185, 221, 241)
-            ],
+          gradient: const LinearGradient(
+            colors: [Color.fromARGB(153, 185, 221, 241), Color.fromARGB(0, 185, 221, 241)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),

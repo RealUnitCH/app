@@ -34,7 +34,7 @@ class SellPage extends StatelessWidget {
           create: (context) => SellSelectedBankAccountCubit(),
         ),
       ],
-      child: SellView(),
+      child: const SellView(),
     );
   }
 }
@@ -56,7 +56,7 @@ class _SellViewState extends State<SellView> {
       appBar: AppBar(
         title: Text(
           S.of(context).sell_realu,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
@@ -83,7 +83,7 @@ class _SellViewState extends State<SellView> {
                           amountController: _amountController,
                           resultController: _resultController,
                         ),
-                        SellBankAccountField(),
+                        const SellBankAccountField(),
                         SellButton(
                           amount: _amountController.text,
                           bankAccount: context.watch<SellSelectedBankAccountCubit>().state,

@@ -41,7 +41,7 @@ class SettingsNetworkPage extends StatelessWidget {
                     return SettingOption(
                       title: mode.localizedName(context),
                       trailing: isLoading
-                          ? SizedBox(
+                          ? const SizedBox(
                               width: 14,
                               height: 14,
                               child: CircularProgressIndicator(
