@@ -25,7 +25,7 @@ class RestoreWalletView extends StatelessWidget {
             listenWhen: (previous, current) => previous.wallet != current.wallet,
             listener: (context, state) async {
               if (state.wallet != null) {
-                await Future.delayed(Duration(seconds: 2));
+                await Future.delayed(const Duration(seconds: 2));
                 if (context.mounted) context.read<HomeBloc>().add(LoadWalletEvent(state.wallet!));
               }
             },
@@ -59,7 +59,7 @@ class RestoreWalletView extends StatelessWidget {
                                 "assets/images/restore_wallet.svg",
                                 height: 124,
                               ),
-                              SizedBox(
+                              const SizedBox(
                                 height: 20,
                               ),
                               Text(
@@ -72,14 +72,15 @@ class RestoreWalletView extends StatelessWidget {
                                   letterSpacing: -0.52,
                                 ),
                               ),
-                              SizedBox(
+                              const SizedBox(
                                 height: 40,
                               ),
                               Row(
                                 spacing: 8.0,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  RecoveryKeyIcon(size: 20, color: RealUnitColors.realUnitBlue),
+                                  const RecoveryKeyIcon(
+                                      size: 20, color: RealUnitColors.realUnitBlue),
                                   Expanded(
                                     child: TextSubstringHighlighting(
                                       text: S.of(context).restore_wallet_from_seed_description,
@@ -92,12 +93,12 @@ class RestoreWalletView extends StatelessWidget {
                                   )
                                 ],
                               ),
-                              SizedBox(height: 16),
+                              const SizedBox(height: 16),
                               RestoreWalletInputField(
                                 controllers: _controllers,
                                 focusNodes: _focusNodes,
                               ),
-                              Spacer(),
+                              const Spacer(),
                               RestoreWalletButton(
                                 controllers: _controllers,
                               ),

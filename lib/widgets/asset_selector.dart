@@ -1,3 +1,6 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/balance.dart';
@@ -7,9 +10,6 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/styles.dart';
 import 'package:realunit_wallet/widgets/chain_asset_icon.dart';
 import 'package:realunit_wallet/widgets/handlebars.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 class AssetSelector extends StatelessWidget {
   const AssetSelector({
@@ -28,7 +28,7 @@ class AssetSelector extends StatelessWidget {
   Future<void> _openSelector(BuildContext context) async {
     showCupertinoSheet(
       context: context,
-      pageBuilder: (context) => Scaffold(
+      builder: (context) => Scaffold(
         body: Container(
           decoration: const BoxDecoration(
             borderRadius: BorderRadius.all(Radius.circular(16)),
@@ -66,9 +66,8 @@ class AssetSelector extends StatelessWidget {
                       child: CashHoldingBox(
                         asset: balance.asset,
                         balance: balance.balance,
-                        borderColor: balance.id == selectedBalance.id
-                            ? RealUnitColors.realUnitBlue
-                            : null,
+                        borderColor:
+                            balance.id == selectedBalance.id ? RealUnitColors.realUnitBlue : null,
                       ),
                       // child: Container(
                       //   padding: const EdgeInsets.all(5),

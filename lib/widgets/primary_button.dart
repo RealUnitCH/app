@@ -1,7 +1,7 @@
-import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/styles/styles.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/styles/styles.dart';
 
 class PrimaryButton extends StatelessWidget {
   const PrimaryButton({
@@ -20,7 +20,7 @@ class PrimaryButton extends StatelessWidget {
         onPressed: isLoading ? null : onPressed,
         style: kFullwidthPrimaryButtonStyle,
         child: isLoading
-            ? CupertinoActivityIndicator(
+            ? const CupertinoActivityIndicator(
                 color: DEuroColors.dEuroGold,
               )
             : Text(

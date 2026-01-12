@@ -49,7 +49,7 @@ void main() {
     });
 
     testWidgets('renders with trailing widget', (tester) async {
-      trailing = Icon(Icons.info);
+      trailing = const Icon(Icons.info);
 
       await tester.pumpApp(buildSubject());
 

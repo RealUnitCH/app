@@ -63,7 +63,7 @@ void main() {
 
   group('$RegistrationPage', () {
     testWidgets('renders $RegistrationView', (tester) async {
-      await tester.pumpApp(RegistrationPage());
+      await tester.pumpApp(const RegistrationPage());
 
       expect(find.byType(RegistrationView), findsOne);
     });
@@ -74,7 +74,7 @@ void main() {
       final state = const RegistrationStepState(RegistrationStep.personal);
       when(() => registrationStepCubit.state).thenReturn(state);
 
-      await tester.pumpApp(buildSubject(RegistrationView()));
+      await tester.pumpApp(buildSubject(const RegistrationView()));
 
       (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
       await tester.pump();
@@ -90,7 +90,7 @@ void main() {
       final state = const RegistrationStepState(RegistrationStep.address);
       when(() => registrationStepCubit.state).thenReturn(state);
 
-      await tester.pumpApp(buildSubject(RegistrationView()));
+      await tester.pumpApp(buildSubject(const RegistrationView()));
 
       (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
       await tester.pump();
@@ -106,7 +106,7 @@ void main() {
       final state = const RegistrationStepState(RegistrationStep.completed);
       when(() => registrationStepCubit.state).thenReturn(state);
 
-      await tester.pumpApp(buildSubject(RegistrationView()));
+      await tester.pumpApp(buildSubject(const RegistrationView()));
 
       (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
       await tester.pump();
@@ -121,7 +121,7 @@ void main() {
     testWidgets('renders loading state above the PageView when submitting loads', (tester) async {
       when(() => registrationSubmitCubit.state).thenReturn(RegistrationSubmitLoading());
 
-      await tester.pumpApp(buildSubject(RegistrationView()));
+      await tester.pumpApp(buildSubject(const RegistrationView()));
 
       expect(find.byType(CircularProgressIndicator), findsOne);
     });
@@ -131,11 +131,11 @@ void main() {
     testWidgets('triggers next if submitting successes', (tester) async {
       whenListen(
         registrationSubmitCubit,
-        Stream.fromIterable([RegistrationSubmitSuccess(RegistrationStatus.completed)]),
+        Stream.fromIterable([const RegistrationSubmitSuccess(RegistrationStatus.completed)]),
         initialState: RegistrationSubmitInitial(),
       );
 
-      await tester.pumpApp(buildSubject(RegistrationView()));
+      await tester.pumpApp(buildSubject(const RegistrationView()));
       await tester.pump();
 
       verify(() => registrationStepCubit.next()).called(1);
@@ -144,11 +144,11 @@ void main() {
     testWidgets('shows SnackBar if submitting fails', (tester) async {
       whenListen(
         registrationSubmitCubit,
-        Stream.fromIterable([RegistrationSubmitFailure('fail')]),
+        Stream.fromIterable([const RegistrationSubmitFailure('fail')]),
         initialState: RegistrationSubmitInitial(),
       );
 
-      await tester.pumpApp(buildSubject(RegistrationView()));
+      await tester.pumpApp(buildSubject(const RegistrationView()));
       await tester.pump();
 
       expect(find.byType(SnackBar), findsOne);

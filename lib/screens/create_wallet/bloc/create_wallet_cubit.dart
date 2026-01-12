@@ -5,7 +5,7 @@ import 'package:realunit_wallet/packages/wallet/wallet.dart';
 part 'create_wallet_state.dart';
 
 class CreateWalletCubit extends Cubit<CreateWalletState> {
-  CreateWalletCubit(this._service) : super(CreateWalletState());
+  CreateWalletCubit(this._service) : super(const CreateWalletState());
 
   final WalletService _service;
 

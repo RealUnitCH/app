@@ -15,13 +15,13 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
   final RealUnitBuyPaymentInfoService _buyPaymentInfoService;
   CancelableOperation<BuyPaymentInfoState>? _completer;
 
-  BuyPaymentInfoCubit(this._buyPaymentInfoService) : super(BuyPaymentInfoInitial());
+  BuyPaymentInfoCubit(this._buyPaymentInfoService) : super(const BuyPaymentInfoInitial());
 
   Future<void> getPaymentInfo({String amount = '300', Currency currency = Currency.chf}) async {
     await _completer?.cancel();
 
     if (state is! BuyPaymentInfoSuccess) {
-      emit(BuyPaymentInfoLoading());
+      emit(const BuyPaymentInfoLoading());
     }
 
     _completer = CancelableOperation.fromFuture(
@@ -41,12 +41,12 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
 
       return BuyPaymentInfoSuccess(paymentInfo);
     } on KycLevelRequiredException {
-      return BuyPaymentInfoFailure(PaymentInfoError.kycRequired);
+      return const BuyPaymentInfoFailure(PaymentInfoError.kycRequired);
     } on RegistrationRequiredException {
-      return BuyPaymentInfoFailure(PaymentInfoError.registrationRequired);
+      return const BuyPaymentInfoFailure(PaymentInfoError.registrationRequired);
     } catch (e) {
       developer.log(e.toString());
-      return BuyPaymentInfoFailure(PaymentInfoError.unknown);
+      return const BuyPaymentInfoFailure(PaymentInfoError.unknown);
     }
   }
 

@@ -1,10 +1,10 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/packages/utils/asset_logo.dart';
 import 'package:realunit_wallet/styles/styles.dart';
 import 'package:realunit_wallet/widgets/handlebars.dart';
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 class BlockchainSelector extends StatelessWidget {
   const BlockchainSelector({
@@ -40,7 +40,7 @@ class BlockchainSelector extends StatelessWidget {
                 child: Text(
                   S.of(context).select_network,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                     decoration: TextDecoration.none,
@@ -80,7 +80,7 @@ class BlockchainSelector extends StatelessWidget {
                               ],
                             ),
                           ),
-                          if (blockchain == this.blockchain) Icon(Icons.check)
+                          if (blockchain == this.blockchain) const Icon(Icons.check)
                         ],
                       ),
                     ),
@@ -115,8 +115,7 @@ class BlockchainSelector extends StatelessWidget {
                       padding: const EdgeInsets.only(right: 5),
                       child: CircleAvatar(
                         radius: 12,
-                        backgroundImage:
-                            AssetImage(getChainImagePath(blockchain.chainId)),
+                        backgroundImage: AssetImage(getChainImagePath(blockchain.chainId)),
                       ),
                     ),
                     Text(

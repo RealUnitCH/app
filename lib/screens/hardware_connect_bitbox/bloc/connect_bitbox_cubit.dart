@@ -9,10 +9,8 @@ import 'package:realunit_wallet/packages/wallet/wallet.dart';
 part 'connect_bitbox_state.dart';
 
 class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
-  ConnectBitboxCubit(this._service, this._walletService)
-      : super(BitboxNotConnected()) {
-    _checkForTimer =
-        Timer.periodic(Duration(milliseconds: 500), (_) => checkForBitbox());
+  ConnectBitboxCubit(this._service, this._walletService) : super(BitboxNotConnected()) {
+    _checkForTimer = Timer.periodic(const Duration(milliseconds: 500), (_) => checkForBitbox());
   }
 
   final BitboxService _service;
@@ -37,8 +35,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
       emit(BitboxConnected(wallet));
     } catch (_) {
       emit(BitboxNotConnected());
-      _checkForTimer =
-          Timer.periodic(Duration(milliseconds: 30), (_) => checkForBitbox());
+      _checkForTimer = Timer.periodic(const Duration(milliseconds: 30), (_) => checkForBitbox());
     }
   }
 

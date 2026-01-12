@@ -25,7 +25,7 @@ class WebViewPage extends StatelessWidget {
           backgroundColor: Colors.transparent,
           leading: IconButton(
             onPressed: () => context.pop(),
-            icon: Icon(
+            icon: const Icon(
               Icons.arrow_back_rounded,
               color: RealUnitColors.realUnitBlack,
               size: 24,

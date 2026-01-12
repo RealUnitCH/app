@@ -51,7 +51,7 @@ class _BuyViewState extends State<BuyView> {
       appBar: AppBar(
         title: Text(
           S.of(context).buy_realu,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),

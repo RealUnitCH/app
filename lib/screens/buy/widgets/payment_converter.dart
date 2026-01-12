@@ -25,13 +25,13 @@ class PaymentConverter extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: 12.0,
             vertical: 4.0,
           ),
           child: Text(
             S.of(context).you_pay,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
             ),
@@ -83,7 +83,7 @@ class PaymentConverter extends StatelessWidget {
                       children: [
                         Text(
                           Currency.chf.code,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                             height: 20 / 16,
@@ -91,7 +91,7 @@ class PaymentConverter extends StatelessWidget {
                         ),
                         Text(
                           Currency.chf.name,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
                             height: 16 / 12,
                           ),
@@ -106,13 +106,13 @@ class PaymentConverter extends StatelessWidget {
         ),
         const SizedBox(height: 32),
         Padding(
-          padding: EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: 12.0,
             vertical: 4.0,
           ),
           child: Text(
             S.of(context).you_receive,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
             ),
@@ -174,7 +174,7 @@ class PaymentConverter extends StatelessWidget {
                           children: [
                             Text(
                               realUnitAsset.symbol,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                                 height: 20 / 16,
@@ -182,7 +182,7 @@ class PaymentConverter extends StatelessWidget {
                             ),
                             Text(
                               realUnitAsset.name,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 12,
                                 height: 16 / 12,
                               ),

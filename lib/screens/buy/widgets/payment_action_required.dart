@@ -22,7 +22,7 @@ class PaymentActionRequired extends StatelessWidget {
         Row(
           spacing: 12,
           children: [
-            Icon(
+            const Icon(
               Icons.info,
               size: 16,
               color: RealUnitColors.realUnitBlue,
@@ -33,7 +33,7 @@ class PaymentActionRequired extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       height: 18 / 14,
@@ -41,7 +41,7 @@ class PaymentActionRequired extends StatelessWidget {
                   ),
                   Text(
                     description,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       height: 18 / 14,
                       letterSpacing: 0.0,

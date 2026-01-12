@@ -45,7 +45,7 @@ class PaymentInformationDetailsView extends StatelessWidget {
         if (state is BuyConfirmSuccess) {
           await showModalBottomSheet(
             context: context,
-            builder: (_) => PaymentExecutedSheet(),
+            builder: (_) => const PaymentExecutedSheet(),
           );
           if (context.mounted) context.pop();
         }
@@ -61,16 +61,16 @@ class PaymentInformationDetailsView extends StatelessWidget {
         children: [
           Text(
             S.of(context).buy_payment_information,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           Row(
             spacing: 12,
             children: [
-              Icon(
+              const Icon(
                 Icons.info,
                 size: 16,
                 color: RealUnitColors.realUnitBlue,
@@ -78,7 +78,7 @@ class PaymentInformationDetailsView extends StatelessWidget {
               Expanded(
                 child: Text(
                   S.of(context).buy_payment_information_description,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
                     height: 18 / 14,
                     letterSpacing: 0.0,
@@ -87,7 +87,7 @@ class PaymentInformationDetailsView extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Column(
             children: [
               Container(
@@ -157,7 +157,7 @@ class PaymentInformationDetailsView extends StatelessWidget {
                               color: RealUnitColors.basic.black.withValues(alpha: 0.5),
                             ),
                           ),
-                          label: SizedBox.shrink(),
+                          label: const SizedBox.shrink(),
                         )
                       : FilledButton(
                           onPressed: () =>
@@ -191,7 +191,7 @@ class PaymentInformationDetailsView extends StatelessWidget {
       result.add(children[i]);
       if (i < children.length - 1) {
         result.add(
-          Divider(
+          const Divider(
             color: RealUnitColors.neutral200,
           ),
         );
@@ -226,7 +226,7 @@ class _PaymentInformationDetailsRow extends StatelessWidget {
           if (title != null)
             Text(
               title!,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 height: 18 / 14,
@@ -238,7 +238,7 @@ class _PaymentInformationDetailsRow extends StatelessWidget {
             children: [
               Text(
                 description,
-                style: TextStyle(
+                style: const TextStyle(
                   color: RealUnitColors.realUnitBlue,
                   fontSize: 14,
                   height: 18 / 14,
@@ -249,7 +249,7 @@ class _PaymentInformationDetailsRow extends StatelessWidget {
                 child: Text(
                   value,
                   textAlign: TextAlign.right,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                     height: 18 / 14,
@@ -258,7 +258,7 @@ class _PaymentInformationDetailsRow extends StatelessWidget {
                 ),
               ),
               InkWell(
-                child: Icon(
+                child: const Icon(
                   Icons.copy_outlined,
                   color: RealUnitColors.realUnitBlue,
                   fontWeight: FontWeight.bold,

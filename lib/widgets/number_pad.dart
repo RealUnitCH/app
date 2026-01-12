@@ -12,10 +12,8 @@ class NumberPad extends StatelessWidget {
     this.onDecimalPressed,
   });
 
-  static const _buttonStyle = TextStyle(
-      fontSize: 25.0,
-      fontWeight: FontWeight.w600,
-      color: Colors.black);
+  static const _buttonStyle =
+      TextStyle(fontSize: 25.0, fontWeight: FontWeight.w600, color: Colors.black);
 
   @override
   Widget build(BuildContext context) => SizedBox(
@@ -30,7 +28,7 @@ class NumberPad extends StatelessWidget {
               if (onDecimalPressed == null) return Container();
               return InkWell(
                 onTap: onDecimalPressed,
-                child: Center(
+                child: const Center(
                   child: Text(
                     '.',
                     style: _buttonStyle,
@@ -46,7 +44,7 @@ class NumberPad extends StatelessWidget {
                 child: Semantics(
                   label: "Delete",
                   button: true,
-                  child: Icon(
+                  child: const Icon(
                     Icons.arrow_back_ios,
                     color: Colors.black,
                   ),

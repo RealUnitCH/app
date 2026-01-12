@@ -19,7 +19,7 @@ class ConnectBitboxPage extends StatelessWidget {
               context.read<HomeBloc>().add(LoadWalletEvent(state.wallet));
             }
           },
-          child: ConnectBitboxView(),
+          child: const ConnectBitboxView(),
         ),
       );
 }

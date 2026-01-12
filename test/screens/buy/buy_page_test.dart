@@ -75,7 +75,7 @@ void main() {
 
   group('$BuyPage', () {
     testWidgets('renders $BuyView', (tester) async {
-      await tester.pumpApp(BuyPage());
+      await tester.pumpApp(const BuyPage());
 
       expect(find.byType(BuyView), findsOne);
     });

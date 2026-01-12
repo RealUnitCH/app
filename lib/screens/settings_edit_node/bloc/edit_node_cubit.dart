@@ -1,21 +1,19 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/models/node.dart';
 import 'package:realunit_wallet/packages/repository/node_repository.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 part 'edit_node_state.dart';
 
 class EditNodeCubit extends Cubit<EditNodeState> {
-  EditNodeCubit(this._nodeRepository, this.blockchain) : super(EditNodeState());
+  EditNodeCubit(this._nodeRepository, this.blockchain) : super(const EditNodeState());
 
   final Blockchain blockchain;
   final NodeRepository _nodeRepository;
 
   void loadNode() async {
-
     final node = (await _nodeRepository.getNode(blockchain.chainId)) ??
         Node(chainId: blockchain.chainId, name: blockchain.name, httpsUrl: '');
-    ;
 
     emit(state.copyWith(node: node));
   }
