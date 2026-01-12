@@ -1,7 +1,6 @@
 import 'package:realunit_wallet/packages/utils/parse_fixed.dart';
 
-String formatFixed(BigInt value, int? decimals,
-    {int? fractionalDigits, bool trimZeros = true}) {
+String formatFixed(BigInt value, int? decimals, {int? fractionalDigits, bool trimZeros = true}) {
   decimals ??= 0;
   fractionalDigits ??= decimals;
 
@@ -10,24 +9,22 @@ String formatFixed(BigInt value, int? decimals,
   var negative = value.isNegative;
   if (negative) value = value * BigInt.from(-1);
 
-  var fraction = value
-      .modPow(BigInt.one, BigInt.parse(multiplier))
-      .toString()
-      .padLeft(decimals, "0");
+  var fraction =
+      value.modPow(BigInt.one, BigInt.parse(multiplier)).toString().padLeft(decimals, '0');
 
   if (fractionalDigits < 0) fractionalDigits = 0;
   if (fractionalDigits > decimals) fractionalDigits = decimals;
   fraction = fraction.substring(0, fractionalDigits);
 
   if (trimZeros) {
-    fraction = removeTrailing("0", fraction);
+    fraction = removeTrailing('0', fraction);
   }
 
   final whole = (value ~/ BigInt.parse(multiplier));
 
-  final valString = fraction.isEmpty ? "$whole" : "$whole.$fraction";
+  final valString = fraction.isEmpty ? '$whole' : '$whole.$fraction';
 
-  if (negative) return "-$valString";
+  if (negative) return '-$valString';
 
   return valString;
 }

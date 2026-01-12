@@ -7,7 +7,7 @@ void appendStringToArbFile(String fileName, String name, String text, {bool forc
   final arbObj = readArbFile(file);
 
   if (arbObj.containsKey(name) && !force) {
-    developer.log("String $name already exists in $fileName!");
+    developer.log('String $name already exists in $fileName!');
     return;
   }
 
@@ -47,8 +47,8 @@ Map<String, dynamic> readArbFile(File file) {
 }
 
 String getArbFileName(String lang) {
-  final shortLang = lang.split("-").first;
-  return "./assets/languages/strings_$shortLang.arb";
+  final shortLang = lang.split('-').first;
+  return './assets/languages/strings_$shortLang.arb';
 }
 
 List<String> getMissingKeysInArbFile(String fileName, Iterable<String> langKeys) {

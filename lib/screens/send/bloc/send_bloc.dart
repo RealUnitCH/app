@@ -58,12 +58,12 @@ class SendBloc extends Bloc<SendEvent, SendState> {
 
   Future<void> _onReceiverChanged(ReceiverChanged event, Emitter<SendState> emit) async {
     emit(state.copyWith(receiver: event.receiver));
-    if (event.receiver.contains(".")) {
+    if (event.receiver.contains('.')) {
       final resolvedAlias = await AliasResolver.resolve(
         _appStore.getClient(1),
         alias: event.receiver,
         ticker: state.asset.symbol,
-        tickerFallback: "ETH",
+        tickerFallback: 'ETH',
       );
       emit(state.copyAlias(alias: resolvedAlias));
     } else {
@@ -79,7 +79,7 @@ class SendBloc extends Bloc<SendEvent, SendState> {
           alias: AliasRecord(
             address: value!.text!,
             name: S.current.from_clipboard,
-            description: "",
+            description: '',
           ),
         ));
       }

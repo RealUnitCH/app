@@ -8,10 +8,10 @@ class WalletRepository {
   const WalletRepository(this._appDatabase);
 
   Future<int> createWallet(String name, WalletType type, String seed) =>
-      _appDatabase.insertWallet(name, seed, "", type.index);
+      _appDatabase.insertWallet(name, seed, '', type.index);
 
   Future<int> createViewWallet(String name, WalletType type, String address) =>
-      _appDatabase.insertWallet(name, "", address, type.index);
+      _appDatabase.insertWallet(name, '', address, type.index);
 
   Future<WalletInfo?> getWalletById(int id) => _appDatabase.getWalletById(id);
 

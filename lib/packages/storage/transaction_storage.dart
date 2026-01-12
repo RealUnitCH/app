@@ -57,7 +57,7 @@ extension TransactionStorage on AppDatabase {
       ));
 
   Future<List<TransactionData>> getAllTokenTransactions(int chainId, String address) =>
-      (select(transactions)..where((row) => row.asset.equals(fastHash("$chainId:$address")))).get();
+      (select(transactions)..where((row) => row.asset.equals(fastHash('$chainId:$address')))).get();
 
   Future<List<TransactionData>> get allTransactions => transactions.all().get();
 
@@ -111,7 +111,7 @@ extension TransactionStorage on AppDatabase {
       (select(transactions)..where((row) => row.txId.equals(txId))).getSingleOrNull();
 }
 
-@DataClassName("TransactionData")
+@DataClassName('TransactionData')
 class Transactions extends Table {
   IntColumn get height => integer()();
 

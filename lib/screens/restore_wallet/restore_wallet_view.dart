@@ -56,7 +56,7 @@ class RestoreWalletView extends StatelessWidget {
                           child: Column(
                             children: <Widget>[
                               SvgPicture.asset(
-                                "assets/images/restore_wallet.svg",
+                                'assets/images/restore_wallet.svg',
                                 height: 124,
                               ),
                               const SizedBox(

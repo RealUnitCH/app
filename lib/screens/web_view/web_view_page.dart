@@ -49,13 +49,13 @@ class WebViewPageBody extends StatelessWidget {
   Widget build(BuildContext context) => InAppWebView(
         initialSettings: InAppWebViewSettings(
           transparentBackground: true,
-          resourceCustomSchemes: ["deuro-wallet"],
+          resourceCustomSchemes: ['deuro-wallet'],
         ),
         initialUrlRequest: URLRequest(url: WebUri.uri(uri)),
         onLoadStart: (controller, url) {
-          if (url?.scheme == "deuro-wallet") {
+          if (url?.scheme == 'deuro-wallet') {
             controller.stopLoading();
-            context.pop("$url");
+            context.pop('$url');
           }
         },
       );

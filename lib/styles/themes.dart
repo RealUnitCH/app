@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 ThemeData get realUnitTheme => ThemeData(
-      fontFamily: "Open Sans",
+      fontFamily: 'Open Sans',
       colorScheme: ColorScheme.fromSeed(seedColor: RealUnitColors.realUnitBlue),
       useMaterial3: true,
       scaffoldBackgroundColor: RealUnitColors.basic.white,

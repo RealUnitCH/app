@@ -16,7 +16,7 @@ class SecureStorage {
 
   static String getNewEncryptionKey({int keySize = 32, int iterations = 10000}) {
     final key = const Uuid().v4();
-    final salt = Uint8List(9)..setRange(0, 9, utf8.encode("dEURO key"));
+    final salt = Uint8List(9)..setRange(0, 9, utf8.encode('dEURO key'));
 
     final derivator = KeyDerivator('SHA-256/HMAC/PBKDF2');
     final params = Pbkdf2Parameters(salt, iterations, keySize);

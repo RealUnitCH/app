@@ -23,7 +23,7 @@ class SettingsSeedView extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   SvgPicture.asset(
-                    "assets/images/backup_seed.svg",
+                    'assets/images/backup_seed.svg',
                     height: 124,
                   ),
                   const SizedBox(height: 20),

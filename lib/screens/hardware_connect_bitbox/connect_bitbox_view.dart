@@ -31,7 +31,7 @@ class ConnectBitboxView extends StatelessWidget {
                         content: defaultTargetPlatform == TargetPlatform.iOS
                             ? S.of(context).connect_bitbox_content_ios
                             : S.of(context).connect_bitbox_content,
-                        imagePath: "assets/images/illustrations/bitbox_connect.svg",
+                        imagePath: 'assets/images/illustrations/bitbox_connect.svg',
                       ),
                     ),
                     AnimatedSlide(
@@ -41,7 +41,7 @@ class ConnectBitboxView extends StatelessWidget {
                       child: ConnectContent(
                         title: S.of(context).connected_bitbox_title,
                         content: S.of(context).connected_bitbox_content,
-                        imagePath: "assets/images/illustrations/bitbox_connected.svg",
+                        imagePath: 'assets/images/illustrations/bitbox_connected.svg',
                       ),
                     ),
                   ],

@@ -24,7 +24,7 @@ class TransactionSentPage extends StatelessWidget {
 
   void _onOpenExplorerPressed() {
     final baseURl = getBlockExplorerUrl(blockchain);
-    final uri = Uri.parse("$baseURl/tx/$transactionId");
+    final uri = Uri.parse('$baseURl/tx/$transactionId');
     launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 

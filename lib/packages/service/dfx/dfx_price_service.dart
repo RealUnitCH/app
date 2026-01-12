@@ -7,8 +7,8 @@ import 'package:realunit_wallet/packages/service/price_service.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 class DFXPriceService extends APriceService {
-  static const _priceHistoryPath = "/v1/realunit/price/history";
-  static const _pricePath = "/v1/realunit/price";
+  static const _priceHistoryPath = '/v1/realunit/price/history';
+  static const _pricePath = '/v1/realunit/price';
 
   final AppStore _appStore;
 
@@ -31,16 +31,16 @@ class DFXPriceService extends APriceService {
       BigInt price;
       switch (currency) {
         case Currency.eur:
-          price = BigInt.from(entry["eur"] * 100);
+          price = BigInt.from(entry['eur'] * 100);
           break;
         case Currency.chf:
-          price = BigInt.from(entry["chf"] * 100);
+          price = BigInt.from(entry['chf'] * 100);
           break;
       }
       result.add(PricePoint(
         asset: asset,
         price: price,
-        time: DateTime.parse(entry["timestamp"]),
+        time: DateTime.parse(entry['timestamp']),
       ));
     }
 
@@ -58,9 +58,9 @@ class DFXPriceService extends APriceService {
 
     switch (currency) {
       case Currency.eur:
-        return BigInt.from(body["eur"] * 100);
+        return BigInt.from(body['eur'] * 100);
       case Currency.chf:
-        return BigInt.from(body["chf"] * 100);
+        return BigInt.from(body['chf'] * 100);
     }
   }
 }

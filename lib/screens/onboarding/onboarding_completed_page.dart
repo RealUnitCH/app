@@ -30,7 +30,7 @@ class _OnboardingCompletedPageState extends State<OnboardingCompletedPage> {
           child: Column(
             children: [
               Image.asset(
-                "assets/images/realu_tokens.png",
+                'assets/images/realu_tokens.png',
                 height: 280,
               ),
               const SizedBox(height: 40.0),

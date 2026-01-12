@@ -37,44 +37,44 @@ void setupRouter() {
     initialLocation: '/',
     // observers: [GoRouterObserver()],
     routes: <RouteBase>[
-      GoRoute(path: "/", builder: (context, state) => const HomePage()),
-      GoRoute(path: "/welcome", builder: (context, state) => const WelcomePage()),
-      GoRoute(path: "/wallet/create", builder: (context, state) => const CreateWalletPage()),
-      GoRoute(path: "/wallet/restore", builder: (context, state) => const RestoreWalletPage()),
+      GoRoute(path: '/', builder: (context, state) => const HomePage()),
+      GoRoute(path: '/welcome', builder: (context, state) => const WelcomePage()),
+      GoRoute(path: '/wallet/create', builder: (context, state) => const CreateWalletPage()),
+      GoRoute(path: '/wallet/restore', builder: (context, state) => const RestoreWalletPage()),
       GoRoute(
           path: OnboardingCompletedPage.route,
           builder: (context, state) => const OnboardingCompletedPage()),
       GoRoute(
-          path: "/dashboard",
+          path: '/dashboard',
           builder: (context, state) => DashboardPage(getIt<AppStore>(), getIt<DFXPriceService>())),
       GoRoute(path: BuyPage.routeName, builder: (context, state) => const BuyPage()),
       GoRoute(path: SellPage.routeName, builder: (context, state) => const SellPage()),
       GoRoute(
           path: RegistrationPage.routeName, builder: (context, state) => const RegistrationPage()),
       GoRoute(
-          path: "/receive", builder: (context, state) => const ReceivePage(isBottomSheet: false)),
+          path: '/receive', builder: (context, state) => const ReceivePage(isBottomSheet: false)),
       GoRoute(
-        path: "/send",
+        path: '/send',
         builder: (context, state) =>
             SendPage(params: (state.extra as SendRouteParams?) ?? const SendRouteParams()),
         routes: [
           GoRoute(
-            path: "/openCryptoPay",
+            path: '/openCryptoPay',
             builder: (context, state) =>
                 SendInvoicePage(request: state.extra as OpenCryptoPayRequest),
           ),
           GoRoute(
-            path: "/success/:txId",
+            path: '/success/:txId',
             builder: (context, state) => TransactionSentPage(
               title: S.of(context).transaction_sent,
-              transactionId: state.pathParameters["txId"]!,
+              transactionId: state.pathParameters['txId']!,
               blockchain: Blockchain.ethereum,
             ),
           ),
         ],
       ),
       GoRoute(
-        path: "/settings",
+        path: '/settings',
         routes: [
           GoRoute(path: '/languages', builder: (context, state) => const SettingsLanguagePage()),
           GoRoute(path: '/currencies', builder: (context, state) => const SettingsCurrenciesPage()),
@@ -85,10 +85,10 @@ void setupRouter() {
             builder: (context, state) => const SettingsNodesPage(),
             routes: [
               GoRoute(
-                path: "/:chainId",
+                path: '/:chainId',
                 builder: (context, state) => SettingsEditNodePage(
                   blockchain: Blockchain.getFromChainId(
-                    int.parse(state.pathParameters["chainId"]!),
+                    int.parse(state.pathParameters['chainId']!),
                   ),
                 ),
               ),

@@ -11,7 +11,7 @@ class ValidateSeedCubit extends Cubit<ValidateSeedState> {
   final WalletService _service;
 
   void checkSeedLength(String seed) {
-    final seedWords = seed.split(" ").where((element) => element.isNotEmpty);
+    final seedWords = seed.split(' ').where((element) => element.isNotEmpty);
     if (seedWords.length == 12 && _containsAll(wordlist.WORDLIST, seedWords)) {
       emit(ValidateSeedState.complete);
     } else {

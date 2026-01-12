@@ -101,7 +101,7 @@ class BlockchainSelector extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                "${S.of(context).blockchain}:",
+                '${S.of(context).blockchain}:',
                 style: kPageTitleTextStyle,
               ),
             ),

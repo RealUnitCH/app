@@ -3,8 +3,8 @@ import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:realunit_wallet/packages/utils/fast_hash.dart';
 
 extension BalanceStorage on AppDatabase {
-  Future<int> insertBalance(int id, int chainId, String contractAddress,
-          String walletAddress, String balance) =>
+  Future<int> insertBalance(
+          int id, int chainId, String contractAddress, String walletAddress, String balance) =>
       into(balances).insert(BalancesCompanion.insert(
         id: id,
         chainId: chainId,
@@ -17,18 +17,16 @@ extension BalanceStorage on AppDatabase {
       (update(balances)..where((row) => row.id.equals(id)))
           .write(BalancesCompanion(balance: Value(balance)));
 
-  Future<BalanceData?> getBalance(
-          int chainId, String contractAddress, String walletAccount) =>
+  Future<BalanceData?> getBalance(int chainId, String contractAddress, String walletAccount) =>
       (select(balances)
-            ..where((row) => row.id
-                .equals(fastHash("$walletAccount:$chainId:$contractAddress"))))
+            ..where((row) => row.id.equals(fastHash('$walletAccount:$chainId:$contractAddress'))))
           .getSingleOrNull();
 
   Stream<BalanceData?> watchBalance(int id) =>
       (select(balances)..where((row) => row.id.equals(id))).watchSingleOrNull();
 }
 
-@DataClassName("BalanceData")
+@DataClassName('BalanceData')
 class Balances extends Table {
   IntColumn get id => integer().unique()();
 

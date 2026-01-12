@@ -19,7 +19,7 @@ class InfoRow extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                "$leading:",
+                '$leading:',
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,

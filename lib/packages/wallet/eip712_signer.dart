@@ -15,43 +15,43 @@ class EIP712Signer {
     }
 
     final Map<String, dynamic> typedDataMap = {
-      "types": {
-        "EIP712Domain": [
-          {"name": "name", "type": "string"},
-          {"name": "version", "type": "string"}
+      'types': {
+        'EIP712Domain': [
+          {'name': 'name', 'type': 'string'},
+          {'name': 'version', 'type': 'string'}
         ],
-        "RealUnitUser": [
-          {"name": "email", "type": "string"},
-          {"name": "name", "type": "string"},
-          {"name": "type", "type": "string"},
-          {"name": "phoneNumber", "type": 'string'},
-          {"name": "birthday", "type": "string"},
-          {"name": "nationality", "type": "string"},
-          {"name": "addressStreet", "type": "string"},
-          {"name": "addressPostalCode", "type": "string"},
-          {"name": "addressCity", "type": "string"},
-          {"name": "addressCountry", "type": "string"},
-          {"name": "swissTaxResidence", "type": "bool"},
-          {"name": "registrationDate", "type": "string"},
-          {"name": "walletAddress", "type": "address"}
+        'RealUnitUser': [
+          {'name': 'email', 'type': 'string'},
+          {'name': 'name', 'type': 'string'},
+          {'name': 'type', 'type': 'string'},
+          {'name': 'phoneNumber', 'type': 'string'},
+          {'name': 'birthday', 'type': 'string'},
+          {'name': 'nationality', 'type': 'string'},
+          {'name': 'addressStreet', 'type': 'string'},
+          {'name': 'addressPostalCode', 'type': 'string'},
+          {'name': 'addressCity', 'type': 'string'},
+          {'name': 'addressCountry', 'type': 'string'},
+          {'name': 'swissTaxResidence', 'type': 'bool'},
+          {'name': 'registrationDate', 'type': 'string'},
+          {'name': 'walletAddress', 'type': 'address'}
         ]
       },
-      "primaryType": "RealUnitUser",
-      "domain": {"name": "RealUnitUser", "version": "1"},
-      "message": {
-        "email": registration.email,
-        "name": "${registration.firstName} ${registration.lastName}",
-        "type": registration.type.jsonName,
-        "phoneNumber": registration.phoneNumber,
-        "birthday": registration.birthday,
-        "nationality": registration.nationality.symbol,
-        "addressStreet": registration.addressStreet,
-        "addressPostalCode": registration.addressPostalCode,
-        "addressCity": registration.addressCity,
-        "addressCountry": registration.addressCountry.symbol,
-        "swissTaxResidence": true,
-        "registrationDate": registration.registrationDate,
-        "walletAddress": credentials.address.hexEip55,
+      'primaryType': 'RealUnitUser',
+      'domain': {'name': 'RealUnitUser', 'version': '1'},
+      'message': {
+        'email': registration.email,
+        'name': '${registration.firstName} ${registration.lastName}',
+        'type': registration.type.jsonName,
+        'phoneNumber': registration.phoneNumber,
+        'birthday': registration.birthday,
+        'nationality': registration.nationality.symbol,
+        'addressStreet': registration.addressStreet,
+        'addressPostalCode': registration.addressPostalCode,
+        'addressCity': registration.addressCity,
+        'addressCountry': registration.addressCountry.symbol,
+        'swissTaxResidence': true,
+        'registrationDate': registration.registrationDate,
+        'walletAddress': credentials.address.hexEip55,
       }
     };
 

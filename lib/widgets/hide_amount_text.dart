@@ -1,7 +1,7 @@
-import 'package:realunit_wallet/packages/utils/format_fixed.dart';
-import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/utils/format_fixed.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 
 class HideAmountText extends StatelessWidget {
   const HideAmountText({
@@ -11,8 +11,8 @@ class HideAmountText extends StatelessWidget {
     this.decimals = 18,
     this.fractionalDigits = 2,
     this.trimZeros = false,
-    this.leadingSymbol = "€",
-    this.trailingSymbol = "",
+    this.leadingSymbol = '€',
+    this.trailingSymbol = '',
     this.textAlign,
   });
 
@@ -26,8 +26,7 @@ class HideAmountText extends StatelessWidget {
   final TextAlign? textAlign;
 
   @override
-  Widget build(BuildContext context) =>
-      BlocBuilder<SettingsBloc, SettingsState>(
+  Widget build(BuildContext context) => BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) => Text(
           state.hideAmounts
               ? "${leadingSymbol.isNotEmpty ? "$leadingSymbol " : ""}***.**"

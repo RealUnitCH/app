@@ -28,16 +28,15 @@ class CashHoldingBox extends StatelessWidget {
     this.secondRowTextColor = DEuroColors.titanGray60,
     this.showBlockchainIcon = false,
     this.navigateToDetails = true,
-    this.leadingSymbol = "€",
-    this.trailingSymbol = "",
+    this.leadingSymbol = '€',
+    this.trailingSymbol = '',
     this.borderColor,
   });
 
-  TextStyle get _firstRowTextStyle => TextStyle(
-      fontSize: 16, fontWeight: FontWeight.w700, color: firstRowTextColor);
+  TextStyle get _firstRowTextStyle =>
+      TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: firstRowTextColor);
 
-  TextStyle get _secondRowTextStyle =>
-      TextStyle(fontSize: 12, color: secondRowTextColor);
+  TextStyle get _secondRowTextStyle => TextStyle(fontSize: 12, color: secondRowTextColor);
 
   @override
   Widget build(BuildContext context) => InkWell(
@@ -45,9 +44,7 @@ class CashHoldingBox extends StatelessWidget {
           margin: const EdgeInsets.only(top: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: borderColor != null
-                ? Border.all(color: borderColor!, width: 3)
-                : null,
+            border: borderColor != null ? Border.all(color: borderColor!, width: 3) : null,
             color: backgroundColor,
           ),
           padding: const EdgeInsets.all(12),
@@ -86,7 +83,7 @@ class CashHoldingBox extends StatelessWidget {
                         trailingSymbol: trailingSymbol,
                       ),
                       Text(
-                        "$balance × ${formatFixed(price!, 2, fractionalDigits: 2, trimZeros: false)} $trailingSymbol",
+                        '$balance × ${formatFixed(price!, 2, fractionalDigits: 2, trimZeros: false)} $trailingSymbol',
                         style: _secondRowTextStyle,
                       ),
                     ],
