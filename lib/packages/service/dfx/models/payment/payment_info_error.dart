@@ -1,4 +1,4 @@
-enum BuyPaymentInfoError {
+enum PaymentInfoError {
   registrationRequired,
   kycRequired,
   unknown,

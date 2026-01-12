@@ -2,9 +2,9 @@ import 'dart:convert';
 
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/buy_payment_info.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/dto/real_unit_buy_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/dto/real_unit_buy_payment_info_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/dto/real_unit_buy_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/dto/real_unit_buy_payment_info_dto.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 class RealUnitBuyPaymentInfoService {

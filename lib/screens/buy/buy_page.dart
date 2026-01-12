@@ -52,7 +52,7 @@ class _BuyViewState extends State<BuyView> {
         title: Text(
           S.of(context).buy_realu,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
         ),
