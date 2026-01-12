@@ -51,7 +51,7 @@ class PriceWidget extends StatelessWidget {
                               color: RealUnitColors.realUnitBlack),
                         ),
                         Text(
-                          formatFixed(price, 2),
+                          formatFixed(price, 2, trimZeros: false),
                           style: const TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.w600,
