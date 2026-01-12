@@ -91,18 +91,6 @@ class BankAccountFieldView extends StatelessWidget {
                       borderRadius: BorderRadius.all(Radius.circular(8.0)),
                       borderSide: BorderSide(color: RealUnitColors.neutral300),
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                      borderSide: BorderSide(color: RealUnitColors.realUnitBlue, width: 2),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                      borderSide: BorderSide(color: RealUnitColors.status.red600),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                      borderSide: BorderSide(color: RealUnitColors.status.red600, width: 2),
-                    ),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 12.0,
