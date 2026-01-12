@@ -39,11 +39,16 @@ class SellPage extends StatelessWidget {
   }
 }
 
-class SellView extends StatelessWidget {
+class SellView extends StatefulWidget {
+  const SellView({super.key});
+
+  @override
+  State<SellView> createState() => _SellViewState();
+}
+
+class _SellViewState extends State<SellView> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _resultController = TextEditingController();
-
-  SellView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -101,5 +106,12 @@ class SellView extends StatelessWidget {
       selection: TextSelection.collapsed(offset: newValue.length),
       composing: TextRange.empty,
     );
+  }
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _resultController.dispose();
+    super.dispose();
   }
 }

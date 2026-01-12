@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/bank_account.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_bank_accounts/sell_bank_accounts_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_selected_bank_account/sell_selected_bank_account_cubit.dart';
@@ -15,7 +16,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Auszahlungskonto auswählen',
+          S.of(context).payout_account_select,
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -56,7 +57,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  account.name ?? 'Unbenanntes Konto',
+                                  account.name ?? '${S.of(context).without} ${S.of(context).label}',
                                   style: TextStyle(
                                     fontSize: 12,
                                     height: 16 / 12,
@@ -84,7 +85,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                 TextButton.icon(
                   onPressed: () => _onAddBankAccountPressed(context),
                   label: Text(
-                    'Bankkonto hinzufügen',
+                    S.of(context).add_bank_account,
                     style: TextStyle(
                       fontSize: 16,
                       height: 20 / 16,

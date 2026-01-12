@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/bank_account.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_confirm_sheet.dart';
@@ -16,10 +17,12 @@ class SellButton extends StatelessWidget {
     return BlocConsumer<SellPaymentInfoCubit, SellPaymentInfoState>(
       listener: (context, state) async {
         if (state is SellPaymentInfoFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(state.message),
-            backgroundColor: RealUnitColors.status.red600,
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: RealUnitColors.status.red600,
+            ),
+          );
         }
         if (state is SellPaymentInfoSuccess) {
           await showModalBottomSheet(
@@ -43,7 +46,7 @@ class SellButton extends StatelessWidget {
                 color: RealUnitColors.basic.black.withValues(alpha: 0.5),
               ),
             ),
-            label: Text('$amount REALU verkaufen'),
+            label: Text('$amount ${S.of(context).sell_realu}'),
           );
         }
         if (bankAccount != null && amount.isNotEmpty) {
@@ -52,12 +55,12 @@ class SellButton extends StatelessWidget {
                   amount: amount,
                   iban: bankAccount!.iban,
                 ),
-            child: Text('$amount REALU verkaufen'),
+            child: Text('$amount ${S.of(context).sell_realu}'),
           );
         }
         return FilledButton(
           onPressed: null,
-          child: Text('$amount REALU verkaufen'),
+          child: Text('$amount ${S.of(context).sell_realu}'),
         );
       },
     );

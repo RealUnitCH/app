@@ -50,9 +50,7 @@ class SellConverter extends StatelessWidget {
                   flex: 3,
                   child: TextField(
                     controller: _amountController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: false,
-                    ),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: false),
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: const InputDecoration(
                       border: InputBorder.none,

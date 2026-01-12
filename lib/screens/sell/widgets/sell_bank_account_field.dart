@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/di.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/bank_account.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_bank_accounts/sell_bank_accounts_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_selected_bank_account/sell_selected_bank_account_cubit.dart';
@@ -51,7 +52,7 @@ class BankAccountFieldView extends StatelessWidget {
                   vertical: 4.0,
                 ),
                 child: Text(
-                  'Bankkonto',
+                  S.of(context).bank_account,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -109,7 +110,7 @@ class BankAccountFieldView extends StatelessWidget {
                     ),
                   ),
                   hint: Text(
-                    'Bitte auswählen...',
+                    '${S.of(context).please_select}...',
                     style: TextStyle(
                       color: RealUnitColors.neutral400,
                     ),

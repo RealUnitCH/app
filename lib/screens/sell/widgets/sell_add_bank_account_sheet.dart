@@ -34,7 +34,7 @@ class _SellAddBankAccountSheetState extends State<SellAddBankAccountSheet> {
                 padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
                 child: AppBar(
                   title: Text(
-                    'Auszahlungskonto hinzufügen',
+                    S.of(context).payout_account_add,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -58,7 +58,7 @@ class _SellAddBankAccountSheetState extends State<SellAddBankAccountSheet> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                             child: Text(
-                              'IBAN',
+                              S.of(context).iban,
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
@@ -97,8 +97,10 @@ class _SellAddBankAccountSheetState extends State<SellAddBankAccountSheet> {
                               hintStyle: TextStyle(color: RealUnitColors.neutral400),
                             ),
                             validator: (value) {
-                              if (value == null || value.isEmpty) return 'IBAN erforderlich';
-                              if (!_isIban(value)) return 'Ungültige IBAN';
+                              if (value == null || value.isEmpty) {
+                                return S.of(context).iban_required;
+                              }
+                              if (!_isIban(value)) return S.of(context).iban_invalid;
                               return null;
                             },
                           ),
@@ -110,7 +112,7 @@ class _SellAddBankAccountSheetState extends State<SellAddBankAccountSheet> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                             child: Text(
-                              'Bezeichnung (optional)',
+                              '${S.of(context).label} (${S.of(context).optional})',
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
