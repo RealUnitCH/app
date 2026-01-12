@@ -19,7 +19,7 @@ class AppStore {
 
   AWallet get wallet {
     if (_wallet != null) return _wallet!;
-    throw Exception("No Wallet set");
+    throw Exception('No Wallet set');
   }
 
   ApiConfig get apiConfig => getApiConfig();
@@ -34,11 +34,11 @@ class AppStore {
     final node = _nodes.firstWhere(
       (node) => node.chainId == chainId,
       orElse: () {
-        developer.log("No node found for $chainId using fallback ETH Node");
+        developer.log('No node found for $chainId using fallback ETH Node');
         return const Node(
           chainId: 1,
-          name: "Fallback",
-          httpsUrl: "https://eth-mainnet.g.alchemy.com/v2/9qEJRkxr1gAyFfwsCU6qODRSqj3TAzjj",
+          name: 'Fallback',
+          httpsUrl: 'https://eth-mainnet.g.alchemy.com/v2/9qEJRkxr1gAyFfwsCU6qODRSqj3TAzjj',
         );
       },
     );

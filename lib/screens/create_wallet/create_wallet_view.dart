@@ -30,7 +30,7 @@ class CreateWalletView extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(top: 20, bottom: 20),
                         child: SvgPicture.asset(
-                          "assets/images/backup_seed.svg",
+                          'assets/images/backup_seed.svg',
                           width: 124,
                         ),
                       ),

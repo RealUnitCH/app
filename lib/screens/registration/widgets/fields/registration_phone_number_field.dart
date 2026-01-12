@@ -36,7 +36,7 @@ class _RegistrationPhoneNumberFieldState extends State<RegistrationPhoneNumberFi
 
   void updatePhoneNumber() {
     if (prefix != null && number != null) {
-      final value = "$prefix$number";
+      final value = '$prefix$number';
       widget.controller.value = value;
     }
   }

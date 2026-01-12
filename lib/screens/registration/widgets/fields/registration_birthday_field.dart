@@ -16,9 +16,9 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
   String? selectedMonth;
   String? selectedYear;
 
-  List<String> days = List.generate(31, (i) => "${i + 1}".padLeft(2, '0'));
-  List<String> months = List.generate(12, (i) => "${i + 1}".padLeft(2, '0'));
-  List<String> years = List.generate(82, (i) => "${DateTime.now().year - i - 18}");
+  List<String> days = List.generate(31, (i) => '${i + 1}'.padLeft(2, '0'));
+  List<String> months = List.generate(12, (i) => '${i + 1}'.padLeft(2, '0'));
+  List<String> years = List.generate(82, (i) => '${DateTime.now().year - i - 18}');
 
   @override
   void initState() {
@@ -34,7 +34,7 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
 
   void updateBirthday() {
     if (selectedDay != null && selectedMonth != null && selectedYear != null) {
-      final value = "$selectedYear-$selectedMonth-$selectedDay";
+      final value = '$selectedYear-$selectedMonth-$selectedDay';
       widget.controller.value = value;
     }
   }

@@ -5,7 +5,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart
 import 'package:realunit_wallet/packages/service/dfx/models/country/dto/dfx_country_dto.dart';
 
 class DfxCountryService {
-  static const _countryPath = "/v1/country";
+  static const _countryPath = '/v1/country';
 
   List<Country>? cachedCountries;
 

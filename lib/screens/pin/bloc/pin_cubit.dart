@@ -1,5 +1,5 @@
-import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/storage/database.dart';
 
 class PinState {
   final String pin;
@@ -18,25 +18,24 @@ class PinState {
 }
 
 class PinCubit extends Cubit<PinState> {
-  PinCubit(this.maxPinLength, this.onSuccess) : super(PinState(pin: "", wrongTry: false));
+  PinCubit(this.maxPinLength, this.onSuccess) : super(PinState(pin: '', wrongTry: false));
 
   final int maxPinLength;
-  final Function (String database) onSuccess;
+  final Function(String database) onSuccess;
 
   void amountAdd(int index) {
     if (state.pin.length == maxPinLength) return;
-    emit(state.copyWith(pin: "${state.pin}$index", wrongTry: false));
+    emit(state.copyWith(pin: '${state.pin}$index', wrongTry: false));
     if (state.pin.length == maxPinLength) checkPin();
   }
 
-  void amountDelete() =>
-      emit(state.copyWith(pin: state.pin.substring(0, state.pin.length - 1)));
+  void amountDelete() => emit(state.copyWith(pin: state.pin.substring(0, state.pin.length - 1)));
 
   Future<void> checkPin() async {
     final pin = state.pin;
     final isCorrectPin = await tryOpeningDatabase(pin);
-    emit(state.copyWith(pin: "", wrongTry: !isCorrectPin));
+    emit(state.copyWith(pin: '', wrongTry: !isCorrectPin));
 
-    if(isCorrectPin) onSuccess.call(pin);
+    if (isCorrectPin) onSuccess.call(pin);
   }
 }

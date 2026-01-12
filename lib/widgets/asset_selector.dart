@@ -123,11 +123,11 @@ class AssetSelector extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "${S.of(context).available}:",
+                      '${S.of(context).available}:',
                       style: kSubtitleTextStyle.copyWith(fontSize: 16),
                     ),
                     Text(
-                      "${formatFixed(selectedBalance.balance, selectedBalance.asset.decimals, fractionalDigits: 2)} ${selectedBalance.asset.symbol}",
+                      '${formatFixed(selectedBalance.balance, selectedBalance.asset.decimals, fractionalDigits: 2)} ${selectedBalance.asset.symbol}',
                       style: kPageTitleTextStyle,
                     ),
                   ],

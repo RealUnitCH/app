@@ -8,7 +8,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/dto/real
 import 'package:realunit_wallet/styles/currency.dart';
 
 class RealUnitBuyPaymentInfoService {
-  static const _buyPaymentInfoPath = "/v1/realunit/buy";
+  static const _buyPaymentInfoPath = '/v1/realunit/buy';
   static String _confirmPaymentPath(int id) => '/v1/buy/paymentInfos/$id/confirm';
 
   String get _host => _appStore.apiConfig.apiHost;

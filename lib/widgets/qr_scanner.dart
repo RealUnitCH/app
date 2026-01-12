@@ -68,14 +68,14 @@ class _QRScannerState extends State<QRScanner> {
       //     );
       //   },
       // );
-      developer.log("QRCode Scanner Error", error: e, name: "QRScanner._handleBarcode");
+      developer.log('QRCode Scanner Error', error: e, name: 'QRScanner._handleBarcode');
     }
   }
 
   void _handleBarcodeInternal(BarcodeCapture barcodes) {
     for (final barcode in barcodes.barcodes) {
-      developer.log("${barcode.rawValue} - ${barcode.rawBytes}",
-          name: "QRScanner._handleBarcodeInternal", level: 800);
+      developer.log('${barcode.rawValue} - ${barcode.rawBytes}',
+          name: 'QRScanner._handleBarcodeInternal', level: 800);
       if (!widget.validateQR(barcode.rawValue, barcode.rawBytes)) continue;
       if (mounted && !popped) {
         setState(() => popped = true);

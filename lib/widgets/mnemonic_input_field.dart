@@ -70,7 +70,7 @@ class MnemonicInputField extends StatelessWidget {
   }
 
   void _handleSpaceJump(BuildContext context, int index, String value) {
-    if (value.endsWith(" ")) {
+    if (value.endsWith(' ')) {
       final controller = controllers.elementAt(index);
       controller.text = value.trim(); // remove the space
       controller.selection = TextSelection.fromPosition(

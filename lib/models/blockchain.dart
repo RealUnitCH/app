@@ -1,12 +1,12 @@
 import 'package:realunit_wallet/models/asset.dart';
 
 enum Blockchain {
-  ethereum(1, "Ethereum", "ETH"),
-  sepolia(11155111, "Sepolia", "ETH"),
-  polygon(137, "Polygon", "POL"),
-  base(8453, "Base", "ETH"),
-  optimism(10, "Optimism", "ETH"),
-  arbitrum(42161, "Arbitrum", "ETH");
+  ethereum(1, 'Ethereum', 'ETH'),
+  sepolia(11155111, 'Sepolia', 'ETH'),
+  polygon(137, 'Polygon', 'POL'),
+  base(8453, 'Base', 'ETH'),
+  optimism(10, 'Optimism', 'ETH'),
+  arbitrum(42161, 'Arbitrum', 'ETH');
 
   const Blockchain(this.chainId, this.name, this.nativeSymbol);
 
@@ -19,7 +19,7 @@ enum Blockchain {
 
   Asset get nativeAsset => Asset(
         chainId: chainId,
-        address: "0x0",
+        address: '0x0',
         name: name,
         symbol: nativeSymbol,
         decimals: 18,

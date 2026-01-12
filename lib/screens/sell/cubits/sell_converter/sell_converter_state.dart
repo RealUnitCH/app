@@ -7,8 +7,8 @@ class SellConverterState extends Equatable {
   final bool loading;
 
   const SellConverterState({
-    this.fiatText = "",
-    this.sharesText = "",
+    this.fiatText = '',
+    this.sharesText = '',
     this.currency = Currency.chf,
     this.loading = false,
   });

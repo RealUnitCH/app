@@ -76,7 +76,7 @@ class TransactionRow extends StatelessWidget {
                                   ),
                                   const Spacer(),
                                   HideAmountText(
-                                    leadingSymbol: isOutbound ? "-" : "",
+                                    leadingSymbol: isOutbound ? '-' : '',
                                     amount: transaction.amount,
                                     decimals: transaction.asset.decimals,
                                     fractionalDigits: 0,
@@ -87,7 +87,7 @@ class TransactionRow extends StatelessWidget {
                                 ]),
                                 Row(children: [
                                   Text(
-                                    "${isOutbound ? S.of(context).to : S.of(context).from} ${isOutbound ? transaction.receiverAddress.asShortAddress : transaction.senderAddress.asShortAddress}",
+                                    '${isOutbound ? S.of(context).to : S.of(context).from} ${isOutbound ? transaction.receiverAddress.asShortAddress : transaction.senderAddress.asShortAddress}',
                                     style: _secondRowTextStyle,
                                   ),
                                   const Spacer(),
@@ -167,7 +167,7 @@ class SavingsTransactionRow extends StatelessWidget {
                             ),
                             const Spacer(),
                             HideAmountText(
-                              leadingSymbol: "",
+                              leadingSymbol: '',
                               amount: transaction.amount,
                               decimals: transaction.asset.decimals,
                               fractionalDigits: 2,

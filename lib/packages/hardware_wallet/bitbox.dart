@@ -17,10 +17,10 @@ class BitboxService {
     await bitboxManager.connect(device);
     final didInit = await bitboxManager.initBitBox();
 
-    if (!didInit) throw Exception("Failed to init");
+    if (!didInit) throw Exception('Failed to init');
 
     final didVerify = await bitboxManager.channelHashVerify();
 
-    if (!didVerify) throw Exception("Failed to verify");
+    if (!didVerify) throw Exception('Failed to verify');
   }
 }

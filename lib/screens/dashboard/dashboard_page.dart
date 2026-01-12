@@ -87,7 +87,7 @@ class DashboardPage extends StatelessWidget {
             toolbarHeight: 68,
             titleSpacing: 6,
             title: const Text(
-              "RealUnit Wallet",
+              'RealUnit Wallet',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
             ),
             actions: [
@@ -177,7 +177,7 @@ class DashboardPage extends StatelessWidget {
                                                       .currency
                                                       .code
                                                       .toUpperCase(),
-                                                  leadingSymbol: "",
+                                                  leadingSymbol: '',
                                                   price: dashboardState.price,
                                                 ),
                                               ),

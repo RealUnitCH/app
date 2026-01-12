@@ -1,10 +1,10 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/utils/device_info.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/qr_scanner.dart';
 import 'package:realunit_wallet/widgets/vertical_icon_button.dart';
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 class ActionBar extends StatelessWidget {
   const ActionBar({super.key});
@@ -33,7 +33,7 @@ class ActionBar extends StatelessWidget {
                   children: [
                     Expanded(
                       child: VerticalIconButton(
-                        onPressed: () => context.push("/receive"),
+                        onPressed: () => context.push('/receive'),
                         icon: const Icon(
                           Icons.arrow_downward,
                           color: DEuroColors.dEuroGold,
@@ -54,7 +54,7 @@ class ActionBar extends StatelessWidget {
                       ),
                     Expanded(
                       child: VerticalIconButton(
-                        onPressed: () => context.push("/send"),
+                        onPressed: () => context.push('/send'),
                         icon: const Icon(
                           Icons.arrow_upward,
                           color: DEuroColors.dEuroGold,

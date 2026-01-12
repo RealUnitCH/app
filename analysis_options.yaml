@@ -8,3 +8,4 @@ linter:
     annotate_overrides: true
     avoid_print: true
     prefer_const_constructors: true
+    prefer_single_quotes: true

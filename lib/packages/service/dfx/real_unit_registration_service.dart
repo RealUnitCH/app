@@ -9,7 +9,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/registration/registr
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 
 class RealUnitRegistrationService {
-  static const _registerPath = "/v1/realunit/register";
+  static const _registerPath = '/v1/realunit/register';
 
   String get _host => _appStore.apiConfig.apiHost;
 

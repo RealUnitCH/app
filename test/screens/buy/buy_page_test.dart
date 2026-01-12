@@ -94,14 +94,14 @@ void main() {
         const BuyPaymentInfoSuccess(
           BuyPaymentInfo(
               id: 1,
-              iban: "iban",
-              bic: "bic",
-              name: "name",
-              street: "street",
-              number: "number",
-              zip: "zip",
-              city: "city",
-              country: "country",
+              iban: 'iban',
+              bic: 'bic',
+              name: 'name',
+              street: 'street',
+              number: 'number',
+              zip: 'zip',
+              city: 'city',
+              country: 'country',
               currency: Currency.chf),
         ),
       );
@@ -149,10 +149,10 @@ void main() {
       whenListen(
         converterCubit,
         Stream.fromIterable([
-          const BuyConverterState(fiatText: "5.00", sharesText: "0.10", loading: true),
-          const BuyConverterState(fiatText: "5.00", sharesText: "0.50", loading: false),
+          const BuyConverterState(fiatText: '5.00', sharesText: '0.10', loading: true),
+          const BuyConverterState(fiatText: '5.00', sharesText: '0.50', loading: false),
         ]),
-        initialState: const BuyConverterState(fiatText: "1.00", sharesText: "0.10"),
+        initialState: const BuyConverterState(fiatText: '1.00', sharesText: '0.10'),
       );
 
       await tester.pumpApp(buildSubject(const BuyView()));
@@ -164,8 +164,8 @@ void main() {
       TextField amount = tester.widget(amountField);
       TextField result = tester.widget(resultField);
 
-      expect(amount.controller!.text, equals("5.00"));
-      expect(result.controller!.text, equals("0.50"));
+      expect(amount.controller!.text, equals('5.00'));
+      expect(result.controller!.text, equals('0.50'));
     });
   });
 }

@@ -1,17 +1,17 @@
-const textDirectionDeclaration = """
+const textDirectionDeclaration = '''
       
   @override
   TextDirection get textDirection => TextDirection.ltr;
   
-""";
+''';
 
-const classDeclaration = """
+const classDeclaration = '''
 class GeneratedLocalizationsDelegate extends LocalizationsDelegate<S> {
   const GeneratedLocalizationsDelegate();
 
   List<Locale> get supportedLocales {
     return const <Locale>[
-""";
+''';
 
 const part1 = """
 import 'dart:async';
@@ -68,7 +68,7 @@ class S implements WidgetsLocalizations {
   String get shareButtonLabel => throw UnimplementedError();
 """;
 
-const part2 = """
+const part2 = '''
     ];
   }
 
@@ -93,7 +93,7 @@ const part2 = """
     final String lang = getLang(locale);
     if (lang != null) {
       switch (lang) {
-""";
+''';
 
 const part3 = """
         default:

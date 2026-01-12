@@ -1,8 +1,8 @@
 import 'package:realunit_wallet/generated/i18n.dart';
 
 enum Currency {
-  eur("EUR"),
-  chf("CHF");
+  eur('EUR'),
+  chf('CHF');
 
   const Currency(this.code);
 

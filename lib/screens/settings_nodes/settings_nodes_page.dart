@@ -51,7 +51,7 @@ class SettingsNodesPage extends StatelessWidget {
                           size: 20,
                           color: RealUnitColors.realUnitBlack,
                         ),
-                        onTap: () => context.push("/settings/nodes/${blockchain.chainId}"),
+                        onTap: () => context.push('/settings/nodes/${blockchain.chainId}'),
                       ),
                     )
                     .toList(),

@@ -4,9 +4,7 @@ enum SendStatus { initial, inProgress, success, failure }
 
 class SendInvoiceState extends Equatable {
   const SendInvoiceState(
-      {required this.invoice,
-      this.status = SendStatus.initial,
-      this.asset = dEUROAsset});
+      {required this.invoice, this.status = SendStatus.initial, this.asset = dEUROAsset});
 
   final SendStatus status;
   final OpenCryptoPayRequest invoice;
@@ -15,9 +13,7 @@ class SendInvoiceState extends Equatable {
   Blockchain get blockchain => Blockchain.getFromChainId(asset.chainId);
 
   BigInt get dEuroAmount => parseFixed(
-      invoice.methods[blockchain.name]!
-          .firstWhere((m) => m.symbol.toUpperCase() == "DEURO")
-          .amount,
+      invoice.methods[blockchain.name]!.firstWhere((m) => m.symbol.toUpperCase() == 'DEURO').amount,
       18);
 
   SendInvoiceState copyWith({

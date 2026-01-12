@@ -42,7 +42,7 @@ class NumberPad extends StatelessWidget {
               return InkWell(
                 onTap: onDeletePressed,
                 child: Semantics(
-                  label: "Delete",
+                  label: 'Delete',
                   button: true,
                   child: const Icon(
                     Icons.arrow_back_ios,

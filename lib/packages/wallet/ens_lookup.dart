@@ -4,7 +4,7 @@ import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
 /// Address of ENSRegistryWithFallback
-const _mainnetEnsAddressContact = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e";
+const _mainnetEnsAddressContact = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e';
 
 /// The ENS namespace includes both .eth names (which are native to ENS) and DNS names imported into ENS.
 /// Because the DNS suffix namespace expands over time, a hardcoded list of name suffixes for recognizing ENS names will
@@ -47,7 +47,7 @@ class EnsLookupImpl extends EnsLookup {
     if (value.length != 66) return null;
     final result = _hexToAddress(value);
 
-    if (result == "0x0000000000000000000000000000000000000000") return null;
+    if (result == '0x0000000000000000000000000000000000000000') return null;
     return result;
   }
 
@@ -63,7 +63,7 @@ class EnsLookupImpl extends EnsLookup {
     if (value.length != 66) return null;
     final resolverAddress = _hexToAddress(value);
 
-    if (resolverAddress == "0x0000000000000000000000000000000000000000") return null;
+    if (resolverAddress == '0x0000000000000000000000000000000000000000') return null;
     return resolverAddress;
   }
 
@@ -91,7 +91,7 @@ class EnsLookupImpl extends EnsLookup {
       }
     }
 
-    return "0x${chars.join()}";
+    return '0x${chars.join()}';
   }
 
   /// Hashes the ethereum [domain] name
@@ -100,16 +100,15 @@ class EnsLookupImpl extends EnsLookup {
 
     var result = List<int>.filled(32, 0);
 
-    final terms = domain.split(".");
+    final terms = domain.split('.');
 
     for (String strTerm in terms.reversed) {
       final bytes = result + keccakUtf8(strTerm);
       final bytesHashed = keccak256(Uint8List.fromList(bytes));
       result = bytesHashed.toList();
     }
-    return "0x${bytesToHex(result)}";
+    return '0x${bytesToHex(result)}';
   }
-
 }
 
 class InvalidEnsName implements Exception {}

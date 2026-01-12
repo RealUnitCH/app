@@ -5,8 +5,8 @@ import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_buy_pr
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_shares_dto.dart';
 
 class DfxBrokerbotService {
-  static const _buyPricePath = "/v1/realunit/brokerbot/buyPrice";
-  static const _sharesPath = "/v1/realunit/brokerbot/shares";
+  static const _buyPricePath = '/v1/realunit/brokerbot/buyPrice';
+  static const _sharesPath = '/v1/realunit/brokerbot/shares';
 
   String get _host => _appStore.apiConfig.apiHost;
 
@@ -20,7 +20,7 @@ class DfxBrokerbotService {
     final res = await _appStore.httpClient.get(uri);
 
     if (res.statusCode != 200) {
-      throw Exception("BuyPrice request failed: ${res.body}");
+      throw Exception('BuyPrice request failed: ${res.body}');
     }
 
     return BrokerbotBuyPriceDto.fromJson(jsonDecode(res.body));
@@ -32,7 +32,7 @@ class DfxBrokerbotService {
     final res = await _appStore.httpClient.get(uri);
 
     if (res.statusCode != 200) {
-      throw Exception("Shares request failed: ${res.body}");
+      throw Exception('Shares request failed: ${res.body}');
     }
 
     return BrokerbotSharesDto.fromJson(jsonDecode(res.body));

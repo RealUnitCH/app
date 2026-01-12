@@ -32,7 +32,7 @@ class PinView extends StatelessWidget {
                   ),
                   Padding(
                     padding: _kPadding,
-                    child: TextButton(onPressed: () {}, child: const Text("Reset Wallet")),
+                    child: TextButton(onPressed: () {}, child: const Text('Reset Wallet')),
                   )
                 ],
               ),

@@ -43,7 +43,7 @@ class RegistrationAddressStep extends StatelessWidget {
                   keyboardType: TextInputType.streetAddress,
                   textCapitalization: TextCapitalization.words,
                   validator: (value) {
-                    if (value == null || value.isEmpty) return "";
+                    if (value == null || value.isEmpty) return '';
                     return null;
                   },
                 ),
@@ -59,7 +59,7 @@ class RegistrationAddressStep extends StatelessWidget {
                         label: S.of(context).postcode_abr,
                         keyboardType: TextInputType.number,
                         validator: (value) {
-                          if (value == null || value.isEmpty) return "";
+                          if (value == null || value.isEmpty) return '';
                           return null;
                         },
                       ),
@@ -73,7 +73,7 @@ class RegistrationAddressStep extends StatelessWidget {
                         keyboardType: TextInputType.text,
                         textCapitalization: TextCapitalization.words,
                         validator: (value) {
-                          if (value == null || value.isEmpty) return "";
+                          if (value == null || value.isEmpty) return '';
                           return null;
                         },
                       ),
@@ -84,7 +84,7 @@ class RegistrationAddressStep extends StatelessWidget {
                   label: S.of(context).country,
                   onChanged: (country) => countryCtrl.value = country,
                   validator: (value) {
-                    if (value == null) return "";
+                    if (value == null) return '';
                     return null;
                   },
                 ),
@@ -98,7 +98,7 @@ class RegistrationAddressStep extends StatelessWidget {
                           await onSubmit();
                         }
                       },
-                      child: const Text("Abschliessen"),
+                      child: const Text('Abschliessen'),
                     ),
                   ),
                 ),
