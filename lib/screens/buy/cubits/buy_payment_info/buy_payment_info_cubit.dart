@@ -4,8 +4,8 @@ import 'package:async/async.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/buy_payment_info.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/buy_payment_info_error.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
@@ -15,13 +15,13 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
   final RealUnitBuyPaymentInfoService _buyPaymentInfoService;
   CancelableOperation<BuyPaymentInfoState>? _completer;
 
-  BuyPaymentInfoCubit(this._buyPaymentInfoService) : super(BuyPaymentInfoInitial());
+  BuyPaymentInfoCubit(this._buyPaymentInfoService) : super(const BuyPaymentInfoInitial());
 
   Future<void> getPaymentInfo({String amount = '300', Currency currency = Currency.chf}) async {
     await _completer?.cancel();
 
     if (state is! BuyPaymentInfoSuccess) {
-      emit(BuyPaymentInfoLoading());
+      emit(const BuyPaymentInfoLoading());
     }
 
     _completer = CancelableOperation.fromFuture(
@@ -41,12 +41,12 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
 
       return BuyPaymentInfoSuccess(paymentInfo);
     } on KycLevelRequiredException {
-      return BuyPaymentInfoFailure(BuyPaymentInfoError.kycRequired);
+      return const BuyPaymentInfoFailure(PaymentInfoError.kycRequired);
     } on RegistrationRequiredException {
-      return BuyPaymentInfoFailure(BuyPaymentInfoError.registrationRequired);
+      return const BuyPaymentInfoFailure(PaymentInfoError.registrationRequired);
     } catch (e) {
       developer.log(e.toString());
-      return BuyPaymentInfoFailure(BuyPaymentInfoError.unknown);
+      return const BuyPaymentInfoFailure(PaymentInfoError.unknown);
     }
   }
 

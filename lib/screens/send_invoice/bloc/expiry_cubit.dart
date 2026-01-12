@@ -13,8 +13,7 @@ class ExpiryState {
 class ExpiryCubit extends Cubit<ExpiryState> {
   ExpiryCubit(this.expiryDate)
       : super(ExpiryState(expiryDate.difference(DateTime.now()).inSeconds)) {
-    _expiryTimer =
-        Timer.periodic(Duration(milliseconds: 500), _calculateTimeLeft);
+    _expiryTimer = Timer.periodic(const Duration(milliseconds: 500), _calculateTimeLeft);
   }
 
   DateTime expiryDate;
@@ -27,8 +26,7 @@ class ExpiryCubit extends Cubit<ExpiryState> {
   }
 
   void _calculateTimeLeft(Timer timer) {
-    final newState =
-        ExpiryState(expiryDate.difference(DateTime.now()).inSeconds);
+    final newState = ExpiryState(expiryDate.difference(DateTime.now()).inSeconds);
     emit(newState);
     if (newState.isExpired) timer.cancel();
   }

@@ -29,7 +29,7 @@ void main() {
   setUp(() {
     settingsSeedCubit = MockSettingsSeedCubit();
 
-    when(() => settingsSeedCubit.state).thenReturn(SettingsSeedState(
+    when(() => settingsSeedCubit.state).thenReturn(const SettingsSeedState(
         'cheese trigger cannon mention judge hire snack sustain annual predict illness celery'));
     when(() => appStore.wallet).thenReturn(wallet);
     when(() => wallet.seed).thenReturn(
@@ -54,7 +54,7 @@ void main() {
 
   group('$SettingsSeedPage', () {
     testWidgets('renders $SettingsSeedView', (tester) async {
-      await tester.pumpApp(SettingsSeedPage());
+      await tester.pumpApp(const SettingsSeedPage());
 
       expect(find.byType(SettingsSeedView), findsOne);
     });
@@ -62,7 +62,7 @@ void main() {
 
   group('$SettingsSeedView', () {
     testWidgets('renders initially correctly', (tester) async {
-      await tester.pumpApp(buildSubject(SettingsSeedView()));
+      await tester.pumpApp(buildSubject(const SettingsSeedView()));
 
       expect(
           find.byWidgetPredicate((Widget widget) => widget is SvgPicture && widget.height == 124),
@@ -73,12 +73,12 @@ void main() {
 
     group('$MnemonicReadOnlyField', () {
       testWidgets('is blurred', (tester) async {
-        when(() => settingsSeedCubit.state).thenReturn(SettingsSeedState(
+        when(() => settingsSeedCubit.state).thenReturn(const SettingsSeedState(
           'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
           showSeed: false,
         ));
 
-        await tester.pumpApp(buildSubject(SettingsSeedView()));
+        await tester.pumpApp(buildSubject(const SettingsSeedView()));
 
         expect(
             find.byWidgetPredicate(
@@ -87,12 +87,12 @@ void main() {
       });
 
       testWidgets('is unblurred', (tester) async {
-        when(() => settingsSeedCubit.state).thenReturn(SettingsSeedState(
+        when(() => settingsSeedCubit.state).thenReturn(const SettingsSeedState(
           'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
           showSeed: true,
         ));
 
-        await tester.pumpApp(buildSubject(SettingsSeedView()));
+        await tester.pumpApp(buildSubject(const SettingsSeedView()));
 
         expect(
             find.byWidgetPredicate(

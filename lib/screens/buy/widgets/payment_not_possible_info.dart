@@ -33,7 +33,7 @@ class PaymentNotPossibleInfo extends StatelessWidget {
                   Text(
                     S.of(context).buy_payment_not_possible,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       height: 20 / 16,
                       fontWeight: FontWeight.bold,
@@ -42,7 +42,7 @@ class PaymentNotPossibleInfo extends StatelessWidget {
                   Text(
                     S.of(context).buy_payment_not_possible_description,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       height: 18 / 14,
                     ),
@@ -67,7 +67,7 @@ class PaymentNotPossibleInfo extends StatelessWidget {
             },
             child: Text(
               S.of(context).contact_support,
-              style: TextStyle(
+              style: const TextStyle(
                 color: RealUnitColors.realUnitBlack,
                 fontSize: 16,
                 height: 20 / 16,

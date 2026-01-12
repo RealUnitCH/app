@@ -86,7 +86,7 @@ class _RegistrationViewState extends State<RegistrationView> {
               ),
               title: Text(
                 state.title(context),
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
@@ -119,7 +119,7 @@ class _RegistrationViewState extends State<RegistrationView> {
                   return LinearProgressIndicator(
                     value: state.progress,
                     backgroundColor: RealUnitColors.neutral200,
-                    valueColor: AlwaysStoppedAnimation<Color>(RealUnitColors.green),
+                    valueColor: const AlwaysStoppedAnimation<Color>(RealUnitColors.green),
                   );
                 },
               ),
@@ -149,7 +149,7 @@ class _RegistrationViewState extends State<RegistrationView> {
                         onPrevious: context.read<RegistrationStepCubit>().previous,
                         onSubmit: _onSubmit,
                       ),
-                      RegistrationCompletedStep(),
+                      const RegistrationCompletedStep(),
                     ],
                   ),
                   BlocBuilder<RegistrationSubmitCubit, RegistrationSubmitState>(

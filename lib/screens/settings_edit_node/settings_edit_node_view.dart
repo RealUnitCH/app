@@ -1,12 +1,12 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/screens/settings_edit_node/bloc/edit_node_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/styles.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 class SettingsNodesView extends StatelessWidget {
   SettingsNodesView({super.key, required this.blockchain});
@@ -20,7 +20,7 @@ class SettingsNodesView extends StatelessWidget {
           backgroundColor: Colors.transparent,
           leading: IconButton(
             onPressed: () => context.pop(),
-            icon: Icon(
+            icon: const Icon(
               Icons.arrow_back_rounded,
               color: RealUnitColors.realUnitBlack,
               size: 24,
@@ -40,11 +40,10 @@ class SettingsNodesView extends StatelessWidget {
                 urlFieldController.text = state.node?.httpsUrl ?? '';
                 return Column(children: [
                   Padding(
-                    padding: const EdgeInsets.only(
-                        left: 26, right: 26, top: 26, bottom: 35),
+                    padding: const EdgeInsets.only(left: 26, right: 26, top: 26, bottom: 35),
                     child: TextField(
                       controller: urlFieldController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         hintText: "RPC-URL (https)",
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(10)),
@@ -61,9 +60,10 @@ class SettingsNodesView extends StatelessWidget {
                     ),
                   ),
                   TextButton(
-                    onPressed: state.isSaving ? null : () => context
-                        .read<EditNodeCubit>()
-                        .saveHttpRPCUrl(urlFieldController.text),
+                    onPressed: state.isSaving
+                        ? null
+                        : () =>
+                            context.read<EditNodeCubit>().saveHttpRPCUrl(urlFieldController.text),
                     style: kFullwidthBlueButtonStyle,
                     child: Text(
                       S.of(context).save,

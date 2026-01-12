@@ -52,26 +52,26 @@ class RegistrationTextField extends StatelessWidget {
           textCapitalization: textCapitalization,
           decoration: InputDecoration(
             hintText: hintText,
-            enabledBorder: OutlineInputBorder(
+            enabledBorder: const OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(8.0)),
               borderSide: BorderSide(color: RealUnitColors.neutral300),
             ),
-            focusedBorder: OutlineInputBorder(
+            focusedBorder: const OutlineInputBorder(
               borderRadius: BorderRadius.all(Radius.circular(8.0)),
               borderSide: BorderSide(color: RealUnitColors.realUnitBlue, width: 2),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(8.0)),
+              borderRadius: const BorderRadius.all(Radius.circular(8.0)),
               borderSide: BorderSide(color: RealUnitColors.status.red600),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(8.0)),
+              borderRadius: const BorderRadius.all(Radius.circular(8.0)),
               borderSide: BorderSide(color: RealUnitColors.status.red600, width: 2),
             ),
-            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-            hintStyle: TextStyle(color: RealUnitColors.neutral400),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+            hintStyle: const TextStyle(color: RealUnitColors.neutral400),
             errorStyle: hideErrorText
-                ? TextStyle(
+                ? const TextStyle(
                     height: -1,
                     fontSize: 0,
                   )

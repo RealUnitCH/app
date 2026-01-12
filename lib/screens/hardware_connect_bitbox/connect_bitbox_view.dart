@@ -18,7 +18,7 @@ class ConnectBitboxView extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Handlebars.horizontal(context, margin: EdgeInsets.only(top: 5), width: 36),
+              Handlebars.horizontal(context, margin: const EdgeInsets.only(top: 5), width: 36),
               BlocBuilder<ConnectBitboxCubit, BitboxConnectionState>(
                 builder: (context, state) => Stack(
                   children: [

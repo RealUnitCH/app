@@ -9,12 +9,12 @@ import 'package:realunit_wallet/widgets/qr_scanner.dart';
 part 'restore_wallet_state.dart';
 
 class RestoreWalletCubit extends Cubit<RestoreWalletState> {
-  RestoreWalletCubit(this._walletService) : super(RestoreWalletState());
+  RestoreWalletCubit(this._walletService) : super(const RestoreWalletState());
 
   final WalletService _walletService;
 
   void restoreWallet(String seed) async {
-    emit(RestoreWalletState(isLoading: true));
+    emit(const RestoreWalletState(isLoading: true));
 
     final normalizedSeed = seed.split(" ").where((element) => element.isNotEmpty).join(" ");
 
@@ -30,7 +30,7 @@ class RestoreWalletCubit extends Cubit<RestoreWalletState> {
 
   Future<void> restoreWalletFromSeedQR(BuildContext context) async {
     if (context.mounted) {
-      emit(RestoreWalletState(isLoading: true));
+      emit(const RestoreWalletState(isLoading: true));
 
       final data = await presentQRScanner(
         context,
@@ -55,7 +55,7 @@ class RestoreWalletCubit extends Cubit<RestoreWalletState> {
         );
       } else {
         emit(
-          RestoreWalletState(isLoading: false),
+          const RestoreWalletState(isLoading: false),
         );
       }
     }

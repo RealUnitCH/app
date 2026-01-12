@@ -28,13 +28,13 @@ class RegistrationDropdownField<T> extends StatelessWidget {
       children: [
         if (label != null)
           Padding(
-            padding: EdgeInsets.symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: 12.0,
               vertical: 4.0,
             ),
             child: Text(
               label!,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 height: 18 / 13,
@@ -52,29 +52,29 @@ class RegistrationDropdownField<T> extends StatelessWidget {
             isDense: true,
             menuMaxHeight: MediaQuery.sizeOf(context).height * 0.4,
             decoration: InputDecoration(
-              enabledBorder: OutlineInputBorder(
+              enabledBorder: const OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(8.0)),
                 borderSide: BorderSide(color: RealUnitColors.neutral300),
               ),
-              focusedBorder: OutlineInputBorder(
+              focusedBorder: const OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(8.0)),
                 borderSide: BorderSide(color: RealUnitColors.realUnitBlue, width: 2),
               ),
               errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                borderRadius: const BorderRadius.all(Radius.circular(8.0)),
                 borderSide: BorderSide(color: RealUnitColors.status.red600),
               ),
               focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                borderRadius: const BorderRadius.all(Radius.circular(8.0)),
                 borderSide: BorderSide(color: RealUnitColors.status.red600, width: 2),
               ),
               border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
+              contentPadding: const EdgeInsets.symmetric(
                 horizontal: 10.0,
                 vertical: 14.0,
               ),
               errorStyle: hideErrorText
-                  ? TextStyle(
+                  ? const TextStyle(
                       height: -1,
                       fontSize: 0,
                     )
@@ -83,7 +83,7 @@ class RegistrationDropdownField<T> extends StatelessWidget {
             hint: hintText != null
                 ? Text(
                     hintText!,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: RealUnitColors.neutral400,
                     ),
                   )

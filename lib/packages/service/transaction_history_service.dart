@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 
 import 'package:etherscan_api/etherscan_api.dart';
+// ignore: implementation_imports
 import 'package:etherscan_api/src/models/account/token_tx_model.dart';
+// ignore: implementation_imports
 import 'package:etherscan_api/src/models/account/tx_list_model.dart';
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/blockchain.dart';

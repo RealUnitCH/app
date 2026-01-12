@@ -40,40 +40,40 @@ class SettingsPage extends StatelessWidget {
                     settings: [
                       SettingOption(
                         title: S.of(context).settings_languages,
-                        leading: LanguagesIcon(size: 24),
+                        leading: const LanguagesIcon(size: 24),
                         trailing: _forwardIcon,
                         selectedOption: state.language.name,
                         onTap: () => context.push('/settings/languages'),
                       ),
                       SettingOption(
                         title: S.of(context).settings_currency,
-                        leading: CurrencyIcon(size: 24),
+                        leading: const CurrencyIcon(size: 24),
                         trailing: _forwardIcon,
                         selectedOption: state.currency.code,
                         onTap: () => context.push('/settings/currencies'),
                       ),
                       SettingOption(
                         title: S.of(context).settings_network,
-                        leading: NodesIcon(size: 24),
+                        leading: const NodesIcon(size: 24),
                         trailing: _forwardIcon,
                         selectedOption: state.networkMode.localizedName(context),
                         onTap: () => context.push('/settings/network'),
                       ),
                       SettingOption(
                         title: S.of(context).settings_tax_report,
-                        leading: DocumentReportIcon(size: 24),
+                        leading: const DocumentReportIcon(size: 24),
                         trailing: _forwardIcon,
                         onTap: null,
                       ),
                       SettingOption(
                         title: S.of(context).kyc_status,
-                        leading: IdentificationIcon(size: 24),
+                        leading: const IdentificationIcon(size: 24),
                         trailing: _forwardIcon,
                         onTap: null,
                       ),
                       SettingOption(
                         title: S.of(context).user_data,
-                        leading: UserCircleIcon(size: 24),
+                        leading: const UserCircleIcon(size: 24),
                         trailing: _forwardIcon,
                         onTap: null,
                       ),
@@ -81,7 +81,7 @@ class SettingsPage extends StatelessWidget {
                           WalletType.software)
                         SettingOption(
                           title: S.of(context).settings_wallet_backup,
-                          leading: KeySolidIcon(size: 24),
+                          leading: const KeySolidIcon(size: 24),
                           trailing: _forwardIcon,
                           onTap: () => context.push('/settings/seed'),
                         ),
@@ -96,8 +96,8 @@ class SettingsPage extends StatelessWidget {
                   settings: [
                     SettingOption(
                       title: S.of(context).settings_delete_wallet,
-                      leading: XCircleIcon(size: 24),
-                      onTap: () => context.read<HomeBloc>().add(DeleteCurrentWalletEvent()),
+                      leading: const XCircleIcon(size: 24),
+                      onTap: () => context.read<HomeBloc>().add(const DeleteCurrentWalletEvent()),
                     ),
                   ],
                 ),

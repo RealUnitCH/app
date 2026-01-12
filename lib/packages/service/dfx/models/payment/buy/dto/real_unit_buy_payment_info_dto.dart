@@ -1,4 +1,5 @@
 import 'package:realunit_wallet/packages/service/dfx/models/fees/dfx_fees_data.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/price_step_dto.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 class RealUnitBuyPaymentInfoDto {
@@ -82,32 +83,6 @@ class RealUnitBuyPaymentInfoDto {
       estimatedAmount: (json['estimatedAmount'] as num).toDouble(),
       paymentRequest: json['paymentRequest'] as String?,
       isValid: json['isValid'] as bool,
-    );
-  }
-}
-
-class PriceStep {
-  final String source;
-  final String from;
-  final String to;
-  final double price;
-  final DateTime timestamp;
-
-  const PriceStep({
-    required this.source,
-    required this.from,
-    required this.to,
-    required this.price,
-    required this.timestamp,
-  });
-
-  factory PriceStep.fromJson(Map<String, dynamic> json) {
-    return PriceStep(
-      source: json['source'] as String,
-      from: json['from'] as String,
-      to: json['to'] as String,
-      price: (json['price'] as num).toDouble(),
-      timestamp: DateTime.parse(json['timestamp'] as String),
     );
   }
 }

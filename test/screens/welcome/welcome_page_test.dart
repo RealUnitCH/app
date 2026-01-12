@@ -11,7 +11,7 @@ import '../../helper/helper.dart';
 void main() {
   group('$WelcomePage', () {
     testWidgets('renders initially correctly', (tester) async {
-      await tester.pumpApp(WelcomePage());
+      await tester.pumpApp(const WelcomePage());
 
       expect(find.byType(Scaffold), findsOne);
       expect(find.byType(RealUnitIcon), findsOne);
@@ -23,7 +23,7 @@ void main() {
 
     group('has $WelcomeCard', () {
       testWidgets('for Software Wallet', (tester) async {
-        await tester.pumpApp(WelcomePage());
+        await tester.pumpApp(const WelcomePage());
 
         final welcomeCardFinder = find.byWidgetPredicate(
           (Widget widget) => widget is WelcomeCard && widget.title == S.current.software_wallet,
@@ -34,7 +34,7 @@ void main() {
       });
 
       testWidgets('for Hardware Wallet', (tester) async {
-        await tester.pumpApp(WelcomePage());
+        await tester.pumpApp(const WelcomePage());
 
         final welcomeCardFinder = find.byWidgetPredicate(
           (Widget widget) => widget is WelcomeCard && widget.title == S.current.bitbox,
@@ -46,7 +46,7 @@ void main() {
     });
 
     testWidgets('shows new cards when Software Wallet card tapped', (tester) async {
-      await tester.pumpApp(WelcomePage());
+      await tester.pumpApp(const WelcomePage());
 
       expect(
         find

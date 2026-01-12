@@ -23,7 +23,7 @@ class BalanceService {
   void startSync(String address) {
     cancelSync();
 
-    _syncTimer = Timer.periodic(Duration(seconds: 10), (_) => updateBalances(address));
+    _syncTimer = Timer.periodic(const Duration(seconds: 10), (_) => updateBalances(address));
   }
 
   void cancelSync() => _syncTimer?.cancel();

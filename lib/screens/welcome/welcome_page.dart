@@ -26,7 +26,7 @@ class _WelcomePageState extends State<WelcomePage> {
           leading: showSecondStep
               ? IconButton(
                   onPressed: () => setState(() => showSecondStep = false),
-                  icon: Icon(Icons.arrow_back_rounded),
+                  icon: const Icon(Icons.arrow_back_rounded),
                 )
               : null,
         ),
@@ -45,8 +45,8 @@ class _WelcomePageState extends State<WelcomePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        RealUnitIcon(size: 48),
-                        SizedBox(height: 8),
+                        const RealUnitIcon(size: 48),
+                        const SizedBox(height: 8),
                         Text(
                           S.of(context).realunit_wallet,
                           style: const TextStyle(
@@ -138,7 +138,7 @@ class _WelcomePageState extends State<WelcomePage> {
     await showModalBottomSheet(
       isScrollControlled: true,
       context: navigatorKey.currentContext!,
-      builder: (_) => ConnectBitboxPage(),
+      builder: (_) => const ConnectBitboxPage(),
     );
   }
 }

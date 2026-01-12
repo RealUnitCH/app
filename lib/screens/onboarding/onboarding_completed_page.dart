@@ -39,7 +39,7 @@ class _OnboardingCompletedPageState extends State<OnboardingCompletedPage> {
                 children: [
                   Text(
                     s.onboarding_completed_title,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 26,
                       letterSpacing: 26 * -0.02,
@@ -49,7 +49,7 @@ class _OnboardingCompletedPageState extends State<OnboardingCompletedPage> {
                   Text(
                     s.onboarding_completed_subtitle,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       height: 18 / 14,
                       letterSpacing: 0.0,
@@ -105,7 +105,7 @@ class _OnboardingCompletedPageState extends State<OnboardingCompletedPage> {
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: isChecked
-                        ? () => context.read<HomeBloc>().add((CompleteOnboardingEvent()))
+                        ? () => context.read<HomeBloc>().add((const CompleteOnboardingEvent()))
                         : null,
                     child: Text(s.next),
                   ),

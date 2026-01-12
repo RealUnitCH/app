@@ -101,7 +101,7 @@ class SendInvoiceBloc extends Bloc<SendInvoiceEvent, SendInvoiceState> {
         navigatorKey.currentContext?.pop();
         showCupertinoSheet(
           context: navigatorKey.currentContext!,
-          pageBuilder: (_) => TransactionSentPage(
+          builder: (_) => TransactionSentPage(
             title: S.current.transaction_sent,
             transactionId: id,
             blockchain: state.blockchain,

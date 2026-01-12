@@ -1,3 +1,7 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/utils/format_fixed.dart';
 import 'package:realunit_wallet/screens/send/bloc/gas_fee_cubit.dart';
@@ -8,10 +12,6 @@ import 'package:realunit_wallet/styles/styles.dart';
 import 'package:realunit_wallet/widgets/amount_info_row.dart';
 import 'package:realunit_wallet/widgets/blockchain_selector.dart';
 import 'package:realunit_wallet/widgets/info_row.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 class SendInvoiceView extends StatelessWidget {
   const SendInvoiceView({super.key});
@@ -19,12 +19,12 @@ class SendInvoiceView extends StatelessWidget {
   static const _kPadding = EdgeInsets.only(left: 26, right: 26, bottom: 10);
 
   void _onCancel(BuildContext context) {
-    context.read<SendInvoiceBloc>().add(CancelInvoice());
+    context.read<SendInvoiceBloc>().add(const CancelInvoice());
     context.pop();
   }
 
   void _onConfirm(BuildContext context) {
-    context.read<SendInvoiceBloc>().add(SendSubmitted());
+    context.read<SendInvoiceBloc>().add(const SendSubmitted());
     context.pop();
   }
 
@@ -34,13 +34,13 @@ class SendInvoiceView extends StatelessWidget {
           backgroundColor: Colors.transparent,
           leading: IconButton(
             onPressed: () => _onCancel(context),
-            icon: Icon(
+            icon: const Icon(
               Icons.arrow_back_rounded,
               color: RealUnitColors.realUnitBlack,
               size: 24,
             ),
           ),
-          middle: Text(
+          middle: const Text(
             "Open CryptoPay",
             style: kPageTitleTextStyle,
           ),
@@ -67,11 +67,10 @@ class SendInvoiceView extends StatelessWidget {
                   style: const TextStyle(fontSize: 20),
                   textAlign: TextAlign.center,
                 ),
-                Spacer(),
+                const Spacer(),
                 BlockchainSelector(
-                  onPressed: (blockchain) => context
-                      .read<SendInvoiceBloc>()
-                      .add(ChainChanged(blockchain)),
+                  onPressed: (blockchain) =>
+                      context.read<SendInvoiceBloc>().add(ChainChanged(blockchain)),
                   blockchain: sendState.blockchain,
                   padding: _kPadding,
                 ),
@@ -87,16 +86,14 @@ class SendInvoiceView extends StatelessWidget {
                 BlocBuilder<ExpiryCubit, ExpiryState>(
                     bloc: context.read<SendInvoiceBloc>().expiryCubit,
                     builder: (context, state) {
-                      final isActive = sendState.status == SendStatus.initial &&
-                          !state.isExpired;
+                      final isActive = sendState.status == SendStatus.initial && !state.isExpired;
 
                       return Column(
                         children: [
                           InfoRow(
                             padding: _kPadding,
                             leading: S.of(context).expires_in,
-                            trailing: S.of(context).expires_in_seconds(
-                                "${state.secondsRemaining}"),
+                            trailing: S.of(context).expires_in_seconds("${state.secondsRemaining}"),
                           ),
                           Padding(
                             padding: _kPadding,
@@ -107,12 +104,10 @@ class SendInvoiceView extends StatelessWidget {
                                   child: Padding(
                                     padding: const EdgeInsets.only(right: 10),
                                     child: FilledButton(
-                                        onPressed: isActive
-                                            ? () => _onCancel(context)
-                                            : null,
+                                        onPressed: isActive ? () => _onCancel(context) : null,
                                         style: FilledButton.styleFrom(
                                           backgroundColor: Colors.red,
-                                          fixedSize: Size(double.infinity, 55),
+                                          fixedSize: const Size(double.infinity, 55),
                                         ),
                                         child: const Icon(
                                           CupertinoIcons.xmark,
@@ -124,15 +119,12 @@ class SendInvoiceView extends StatelessWidget {
                                 Expanded(
                                   flex: 2,
                                   child: FilledButton(
-                                    onPressed: isActive
-                                        ? () => _onConfirm(context)
-                                        : null,
+                                    onPressed: isActive ? () => _onConfirm(context) : null,
                                     style: FilledButton.styleFrom(
                                       backgroundColor: Colors.green,
-                                      fixedSize: Size(double.infinity, 55),
+                                      fixedSize: const Size(double.infinity, 55),
                                     ),
-                                    child: sendState.status ==
-                                            SendStatus.inProgress
+                                    child: sendState.status == SendStatus.inProgress
                                         ? const CupertinoActivityIndicator()
                                         : Text(
                                             S.of(context).pay,

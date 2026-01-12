@@ -8,7 +8,7 @@ import '../../helper/helper.dart';
 void main() {
   group('$OnboardingCompletedPage', () {
     testWidgets('renders initially correctly', (tester) async {
-      await tester.pumpApp(OnboardingCompletedPage());
+      await tester.pumpApp(const OnboardingCompletedPage());
 
       expect(find.byType(Scaffold), findsOne);
       expect(find.byType(AppBar), findsOne);
@@ -22,7 +22,7 @@ void main() {
     });
 
     testWidgets('initial state', (tester) async {
-      await tester.pumpApp(OnboardingCompletedPage());
+      await tester.pumpApp(const OnboardingCompletedPage());
 
       expect((tester.widget(find.byType(Checkbox)) as Checkbox).value, false);
       expect((tester.widget(find.byType(FilledButton)) as FilledButton).enabled, false);
@@ -30,7 +30,7 @@ void main() {
     });
 
     testWidgets('state when terms agreed', (tester) async {
-      await tester.pumpApp(OnboardingCompletedPage());
+      await tester.pumpApp(const OnboardingCompletedPage());
 
       await tester.tap(find.byType(Checkbox));
       await tester.pumpAndSettle();

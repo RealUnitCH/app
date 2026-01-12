@@ -9,10 +9,11 @@ import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/home/home.dart';
-import 'package:realunit_wallet/screens/registration/registration_page.dart';
 import 'package:realunit_wallet/screens/onboarding/onboarding_completed_page.dart';
 import 'package:realunit_wallet/screens/receive/receive_page.dart';
+import 'package:realunit_wallet/screens/registration/registration_page.dart';
 import 'package:realunit_wallet/screens/restore_wallet/restore_wallet_page.dart';
+import 'package:realunit_wallet/screens/sell/sell_page.dart';
 import 'package:realunit_wallet/screens/send/send_page.dart';
 import 'package:realunit_wallet/screens/send_invoice/send_invoice_page.dart';
 import 'package:realunit_wallet/screens/settings/settings_page.dart';
@@ -36,23 +37,26 @@ void setupRouter() {
     initialLocation: '/',
     // observers: [GoRouterObserver()],
     routes: <RouteBase>[
-      GoRoute(path: "/", builder: (context, state) => HomePage()),
-      GoRoute(path: "/welcome", builder: (context, state) => WelcomePage()),
-      GoRoute(path: "/wallet/create", builder: (context, state) => CreateWalletPage()),
-      GoRoute(path: "/wallet/restore", builder: (context, state) => RestoreWalletPage()),
+      GoRoute(path: "/", builder: (context, state) => const HomePage()),
+      GoRoute(path: "/welcome", builder: (context, state) => const WelcomePage()),
+      GoRoute(path: "/wallet/create", builder: (context, state) => const CreateWalletPage()),
+      GoRoute(path: "/wallet/restore", builder: (context, state) => const RestoreWalletPage()),
       GoRoute(
           path: OnboardingCompletedPage.route,
-          builder: (context, state) => OnboardingCompletedPage()),
+          builder: (context, state) => const OnboardingCompletedPage()),
       GoRoute(
           path: "/dashboard",
           builder: (context, state) => DashboardPage(getIt<AppStore>(), getIt<DFXPriceService>())),
-      GoRoute(path: BuyPage.routeName, builder: (context, state) => BuyPage()),
-      GoRoute(path: RegistrationPage.routeName, builder: (context, state) => RegistrationPage()),
-      GoRoute(path: "/receive", builder: (context, state) => ReceivePage(isBottomSheet: false)),
+      GoRoute(path: BuyPage.routeName, builder: (context, state) => const BuyPage()),
+      GoRoute(path: SellPage.routeName, builder: (context, state) => const SellPage()),
+      GoRoute(
+          path: RegistrationPage.routeName, builder: (context, state) => const RegistrationPage()),
+      GoRoute(
+          path: "/receive", builder: (context, state) => const ReceivePage(isBottomSheet: false)),
       GoRoute(
         path: "/send",
         builder: (context, state) =>
-            SendPage(params: (state.extra as SendRouteParams?) ?? SendRouteParams()),
+            SendPage(params: (state.extra as SendRouteParams?) ?? const SendRouteParams()),
         routes: [
           GoRoute(
             path: "/openCryptoPay",
@@ -72,13 +76,13 @@ void setupRouter() {
       GoRoute(
         path: "/settings",
         routes: [
-          GoRoute(path: '/languages', builder: (context, state) => SettingsLanguagePage()),
-          GoRoute(path: '/currencies', builder: (context, state) => SettingsCurrenciesPage()),
+          GoRoute(path: '/languages', builder: (context, state) => const SettingsLanguagePage()),
+          GoRoute(path: '/currencies', builder: (context, state) => const SettingsCurrenciesPage()),
           GoRoute(path: '/network', builder: (context, state) => SettingsNetworkPage()),
-          GoRoute(path: '/seed', builder: (context, state) => SettingsSeedPage()),
+          GoRoute(path: '/seed', builder: (context, state) => const SettingsSeedPage()),
           GoRoute(
             path: '/nodes',
-            builder: (context, state) => SettingsNodesPage(),
+            builder: (context, state) => const SettingsNodesPage(),
             routes: [
               GoRoute(
                 path: "/:chainId",
@@ -91,7 +95,7 @@ void setupRouter() {
             ],
           ),
         ],
-        builder: (context, state) => SettingsPage(),
+        builder: (context, state) => const SettingsPage(),
       ),
       GoRoute(
           path: '/webView',

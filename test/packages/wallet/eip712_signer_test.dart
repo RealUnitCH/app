@@ -31,11 +31,11 @@ void main() {
       lastName = 'Direct';
       phoneNumber = '+41791234567';
       birthday = '1990-01-15';
-      nationality = Country(id: 41, symbol: 'CH', name: 'Switzerland');
+      nationality = const Country(id: 41, symbol: 'CH', name: 'Switzerland');
       addressStreet = 'Teststrasse 1';
       addressPostalCode = '8000';
       addressCity = 'Zurich';
-      addressCountry = Country(id: 41, symbol: 'CH', name: 'Switzerland');
+      addressCountry = const Country(id: 41, symbol: 'CH', name: 'Switzerland');
       swissTaxResidence = true;
       registrationDate = '2025-12-17';
 

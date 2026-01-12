@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
@@ -5,8 +7,6 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
 import 'package:realunit_wallet/widgets/chain_asset_icon.dart';
 import 'package:realunit_wallet/widgets/hide_amount_text.dart';
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class TransactionRow extends StatelessWidget {
   final Transaction transaction;
@@ -30,17 +30,14 @@ class TransactionRow extends StatelessWidget {
 
   bool get isOutbound => transaction.isOutbound(walletAddress);
 
-  TextStyle get _firstRowTextStyle => TextStyle(
-      fontSize: 14, fontWeight: FontWeight.w700, color: firstRowTextColor);
+  TextStyle get _firstRowTextStyle =>
+      TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: firstRowTextColor);
 
-  TextStyle get _secondRowTextStyle =>
-      TextStyle(fontSize: 12, color: secondRowTextColor);
+  TextStyle get _secondRowTextStyle => TextStyle(fontSize: 12, color: secondRowTextColor);
 
   @override
-  Widget build(BuildContext context) => [
-        TransactionTypes.savingsAdd,
-        TransactionTypes.savingsRemove
-      ].contains(transaction.type)
+  Widget build(BuildContext context) =>
+      [TransactionTypes.savingsAdd, TransactionTypes.savingsRemove].contains(transaction.type)
           ? SavingsTransactionRow(
               transaction: transaction,
               backgroundColor: backgroundColor,
@@ -77,7 +74,7 @@ class TransactionRow extends StatelessWidget {
                                     transaction.asset.name,
                                     style: _firstRowTextStyle,
                                   ),
-                                  Spacer(),
+                                  const Spacer(),
                                   HideAmountText(
                                     leadingSymbol: isOutbound ? "-" : "",
                                     amount: transaction.amount,
@@ -93,10 +90,9 @@ class TransactionRow extends StatelessWidget {
                                     "${isOutbound ? S.of(context).to : S.of(context).from} ${isOutbound ? transaction.receiverAddress.asShortAddress : transaction.senderAddress.asShortAddress}",
                                     style: _secondRowTextStyle,
                                   ),
-                                  Spacer(),
+                                  const Spacer(),
                                   Text(
-                                    DateFormat('MMM dd, yyyy')
-                                        .format(transaction.timestamp),
+                                    DateFormat('MMM dd, yyyy').format(transaction.timestamp),
                                     style: _secondRowTextStyle,
                                   )
                                 ]),
@@ -130,11 +126,10 @@ class SavingsTransactionRow extends StatelessWidget {
     this.navigateToDetails = true,
   });
 
-  TextStyle get _firstRowTextStyle => TextStyle(
-      fontSize: 14, fontWeight: FontWeight.w700, color: firstRowTextColor);
+  TextStyle get _firstRowTextStyle =>
+      TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: firstRowTextColor);
 
-  TextStyle get _secondRowTextStyle =>
-      TextStyle(fontSize: 12, color: secondRowTextColor);
+  TextStyle get _secondRowTextStyle => TextStyle(fontSize: 12, color: secondRowTextColor);
 
   @override
   Widget build(BuildContext context) => InkWell(
@@ -152,9 +147,9 @@ class SavingsTransactionRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   if (transaction.type == TransactionTypes.savingsRemove)
-                    CollectInterestIcon(size: 24),
+                    const CollectInterestIcon(size: 24),
                   if (transaction.type == TransactionTypes.savingsAdd)
-                    Icon(Icons.savings, size: 24),
+                    const Icon(Icons.savings, size: 24),
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.only(left: 16),
@@ -170,7 +165,7 @@ class SavingsTransactionRow extends StatelessWidget {
                                   : S.of(context).savings_remove,
                               style: _firstRowTextStyle,
                             ),
-                            Spacer(),
+                            const Spacer(),
                             HideAmountText(
                               leadingSymbol: "",
                               amount: transaction.amount,
@@ -183,8 +178,7 @@ class SavingsTransactionRow extends StatelessWidget {
                           ]),
                           Row(children: [
                             Text(
-                              DateFormat('MMM dd, yyyy')
-                                  .format(transaction.timestamp),
+                              DateFormat('MMM dd, yyyy').format(transaction.timestamp),
                               style: _secondRowTextStyle,
                             )
                           ]),
