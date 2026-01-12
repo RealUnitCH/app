@@ -134,7 +134,7 @@ String localizedStrings({required Map<String, dynamic> config, required bool has
   final pattern = RegExp('[\$]{(.*?)}');
 
   config.forEach((key, dynamic value) {
-    final camelKey = snakeToCamel(key);
+    final camelKey = _snakeToCamel(key);
     final matches = pattern.allMatches(value as String);
 
     if (hasOverride) {
@@ -155,17 +155,25 @@ String localizedStrings({required Map<String, dynamic> config, required bool has
           output += 'String $elem, ';
         }
       }
-      output += ") => '''$value''';\n";
+
+      output += ") => '''${_removeCurlyBraces(value)}''';\n";
     }
   });
 
   return output;
 }
 
-String snakeToCamel(String input) {
+String _snakeToCamel(String input) {
   final parts = input.split('_');
   if (parts.isEmpty) return input;
 
   return parts.first +
       parts.skip(1).map((p) => p.isNotEmpty ? p[0].toUpperCase() + p.substring(1) : '').join();
+}
+
+String _removeCurlyBraces(String value) {
+  return value.replaceAllMapped(
+    RegExp(r'\$\{([a-zA-Z_][a-zA-Z0-9_]*)\}'),
+    (match) => '\$${match.group(1)}',
+  );
 }
