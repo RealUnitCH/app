@@ -1,6 +1,6 @@
+import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
-import 'dart:convert';
 
 import 'alphabetize_localization.dart';
 import 'localization/localization_constants.dart';
@@ -16,21 +16,21 @@ const defaultLocale = 'en';
 Future<void> main(List<String> args) async {
   alphabetizeLocalization();
 
-  final extraInfo = args.isNotEmpty ?
-  args.fold(<String, dynamic>{}, (Map<String, dynamic> acc, String arg) {
-    final parts = arg.split('=');
-    var key = normalizeKeyName(parts[0]);
-    if (key.contains('--')) {
-      key = key.substring(2);
-    }
-    acc[key] = parts.length > 1
-        ? parts[1].isNotEmpty
-          ? parts[1]
-          : inputPath
-        : inputPath;
-    return acc;
-  })
-  : <String, dynamic> {srcDir : inputPath};
+  final extraInfo = args.isNotEmpty
+      ? args.fold(<String, dynamic>{}, (Map<String, dynamic> acc, String arg) {
+          final parts = arg.split('=');
+          var key = normalizeKeyName(parts[0]);
+          if (key.contains('--')) {
+            key = key.substring(2);
+          }
+          acc[key] = parts.length > 1
+              ? parts[1].isNotEmpty
+                  ? parts[1]
+                  : inputPath
+              : inputPath;
+          return acc;
+        })
+      : <String, dynamic>{srcDir: inputPath};
 
   final outputDir = Directory(outputPath);
 
@@ -55,7 +55,11 @@ Future<void> main(List<String> args) async {
     final localePath = <String, dynamic>{};
     await dir.list(recursive: false).forEach((element) {
       try {
-        final shortLocale = element.path.split('_',)[1].split('.')[0];
+        final shortLocale = element.path
+            .split(
+              '_',
+            )[1]
+            .split('.')[0];
         localePath[shortLocale] = element.path;
       } catch (e) {
         developer.log('Wrong file: ${element.path}');
@@ -74,8 +78,7 @@ Future<void> main(List<String> args) async {
       output += part1;
       output += textDirectionDeclaration;
 
-      var inputContent =
-        File(localePath[defaultLocale].toString()).readAsStringSync();
+      var inputContent = File(localePath[defaultLocale].toString()).readAsStringSync();
       var config = json.decode(inputContent) as Map<String, dynamic>;
 
       output += localizedStrings(config: config, hasOverride: false);
@@ -101,13 +104,13 @@ Future<void> main(List<String> args) async {
       output += classDeclaration;
 
       for (final key in localePath.keys) {
-        output += '      Locale("$key", ""),\n';
+        output += "      Locale('$key', ''),\n";
       }
 
       output += part2;
 
       for (final key in localePath.keys) {
-        output += '        case "$key":\n';
+        output += "        case '$key':\n";
         output += '          S.current = const \$$key();\n';
         output += '          return SynchronousFuture<S>(S.current);\n';
       }
@@ -131,6 +134,7 @@ String localizedStrings({required Map<String, dynamic> config, required bool has
   final pattern = RegExp('[\$]{(.*?)}');
 
   config.forEach((key, dynamic value) {
+    final camelKey = snakeToCamel(key);
     final matches = pattern.allMatches(value as String);
 
     if (hasOverride) {
@@ -138,11 +142,11 @@ String localizedStrings({required Map<String, dynamic> config, required bool has
     }
 
     if (matches.isEmpty) {
-      output += '  String get $key => """$value""";\n';
+      output += "  String get $camelKey => '''$value''';\n";
     } else {
       final set = matches.map((elem) => elem.group(1)).toSet().toList();
 
-      output += '  String $key(';
+      output += '  String $camelKey(';
 
       for (var elem in set) {
         if (elem == set.last) {
@@ -151,10 +155,17 @@ String localizedStrings({required Map<String, dynamic> config, required bool has
           output += 'String $elem, ';
         }
       }
-      output += ') => """$value""";\n';
+      output += ") => '''$value''';\n";
     }
   });
 
   return output;
 }
 
+String snakeToCamel(String input) {
+  final parts = input.split('_');
+  if (parts.isEmpty) return input;
+
+  return parts.first +
+      parts.skip(1).map((p) => p.isNotEmpty ? p[0].toUpperCase() + p.substring(1) : '').join();
+}
