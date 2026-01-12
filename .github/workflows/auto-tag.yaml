@@ -7,6 +7,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: auto-tag
+  cancel-in-progress: false
+
 jobs:
   create-tag:
     name: Create Release Tag
@@ -21,8 +25,8 @@ jobs:
       - name: Get latest tag
         id: get-tag
         run: |
-          # Get the latest tag matching v* pattern, sorted by version
-          LATEST_TAG=$(git tag -l "v*" --sort=-v:refname | head -n 1)
+          # Get only clean semver tags (vX.Y.Z), exclude pre-release tags
+          LATEST_TAG=$(git tag -l --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
 
           if [ -z "$LATEST_TAG" ]; then
             echo "No existing tags found, starting with v0.0.0"
@@ -50,7 +54,19 @@ jobs:
           echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
           echo "::notice::New tag: $NEW_TAG"
 
+      - name: Check if tag exists
+        id: check-tag
+        run: |
+          NEW_TAG="${{ steps.next-version.outputs.new_tag }}"
+          if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
+            echo "::error::Tag $NEW_TAG already exists!"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create and push tag
+        if: steps.check-tag.outputs.exists == 'false'
         run: |
           NEW_TAG="${{ steps.next-version.outputs.new_tag }}"
 
