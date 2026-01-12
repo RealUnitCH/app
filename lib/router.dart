@@ -66,7 +66,7 @@ void setupRouter() {
           GoRoute(
             path: '/success/:txId',
             builder: (context, state) => TransactionSentPage(
-              title: S.of(context).transaction_sent,
+              title: S.of(context).transactionSent,
               transactionId: state.pathParameters['txId']!,
               blockchain: Blockchain.ethereum,
             ),

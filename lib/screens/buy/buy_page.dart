@@ -50,7 +50,7 @@ class _BuyViewState extends State<BuyView> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          S.of(context).buy_realu,
+          S.of(context).buyRealu,
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,

@@ -10,8 +10,8 @@ enum NetworkMode {
   final String name;
 
   String localizedName(BuildContext context) => switch (this) {
-        NetworkMode.mainnet => S.of(context).network_mainnet,
-        NetworkMode.testnet => S.of(context).network_testnet,
+        NetworkMode.mainnet => S.of(context).networkMainnet,
+        NetworkMode.testnet => S.of(context).networkTestnet,
       };
 
   bool get isTestnet => this == NetworkMode.testnet;

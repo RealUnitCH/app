@@ -1,4 +1,3 @@
-
 import 'package:realunit_wallet/generated/i18n.dart';
 
 class OpenCryptoPayException implements Exception {
@@ -7,8 +6,7 @@ class OpenCryptoPayException implements Exception {
   OpenCryptoPayException([this.message = '']);
 
   @override
-  String toString() =>
-      'OpenCryptoPayException${message.isNotEmpty ? ': $message' : ''}';
+  String toString() => 'OpenCryptoPayException${message.isNotEmpty ? ': $message' : ''}';
 }
 
 class OpenCryptoPayNotSupportedException extends OpenCryptoPayException {
@@ -17,5 +15,5 @@ class OpenCryptoPayNotSupportedException extends OpenCryptoPayException {
   OpenCryptoPayNotSupportedException(this.provider);
 
   @override
-  String get message => S.current.open_crypto_pay_not_supported(provider);
+  String get message => S.current.openCryptoPayNotSupported(provider);
 }

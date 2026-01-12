@@ -30,7 +30,7 @@ class SellConverter extends StatelessWidget {
             vertical: 4.0,
           ),
           child: Text(
-            S.of(context).you_sell,
+            S.of(context).youSell,
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
@@ -121,7 +121,7 @@ class SellConverter extends StatelessWidget {
             vertical: 4.0,
           ),
           child: Text(
-            S.of(context).you_receive,
+            S.of(context).youReceive,
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,

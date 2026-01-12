@@ -161,8 +161,8 @@ class SavingsTransactionRow extends StatelessWidget {
                           Row(children: [
                             Text(
                               transaction.type == TransactionTypes.savingsAdd
-                                  ? S.of(context).savings_add
-                                  : S.of(context).savings_remove,
+                                  ? S.of(context).savingsAdd
+                                  : S.of(context).savingsRemove,
                               style: _firstRowTextStyle,
                             ),
                             const Spacer(),

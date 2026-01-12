@@ -46,7 +46,7 @@ class RegistrationPersonalStep extends StatelessWidget {
               spacing: 16,
               children: [
                 RegistrationDropdownField<RegistrationUserType>(
-                  label: S.of(context).register_account_type,
+                  label: S.of(context).registerAccountType,
                   hintText: RegistrationUserType.human.toString(),
                   items: RegistrationUserType.values
                       .map((d) => DropdownMenuItem(value: d, child: Text(d.name(context))))
@@ -58,17 +58,17 @@ class RegistrationPersonalStep extends StatelessWidget {
                   validator: (v) => v == null ? '' : null,
                 ),
                 RegistrationTextField(
-                  label: S.of(context).register_email,
+                  label: S.of(context).registerEmail,
                   hintText: 'max@mustermann.ch',
                   controller: emailCtrl,
                   keyboardType: TextInputType.emailAddress,
                   hideErrorText: false,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return S.of(context).register_email_required;
+                      return S.of(context).registerEmailRequired;
                     }
                     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                      return S.of(context).register_email_invalid;
+                      return S.of(context).registerEmailInvalid;
                     }
                     return null;
                   },
@@ -79,7 +79,7 @@ class RegistrationPersonalStep extends StatelessWidget {
                   children: [
                     Expanded(
                       child: RegistrationTextField(
-                        label: S.of(context).register_first_name,
+                        label: S.of(context).registerFirstName,
                         hintText: 'Max',
                         controller: firstNameCtrl,
                         // keyboardType: TextInputType.name, https://github.com/flutter/flutter/issues/67282
@@ -92,7 +92,7 @@ class RegistrationPersonalStep extends StatelessWidget {
                     ),
                     Expanded(
                       child: RegistrationTextField(
-                        label: S.of(context).register_last_name,
+                        label: S.of(context).registerLastName,
                         hintText: 'Mustermann',
                         controller: lastNameCtrl,
                         // keyboardType: TextInputType.name, https://github.com/flutter/flutter/issues/67282
@@ -112,7 +112,7 @@ class RegistrationPersonalStep extends StatelessWidget {
                   controller: phoneCtrl,
                 ),
                 RegistrationCountryField(
-                  label: S.of(context).register_citizenship,
+                  label: S.of(context).registerCitizenship,
                   onChanged: (country) => nationalityCtrl.value = country,
                   validator: (value) {
                     if (value == null) return '';

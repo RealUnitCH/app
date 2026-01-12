@@ -15,8 +15,8 @@ void main() {
 
       expect(find.byType(Scaffold), findsOne);
       expect(find.byType(RealUnitIcon), findsOne);
-      expect(find.text(S.current.realunit_wallet), findsOne);
-      expect(find.text(S.current.realunit_wallet_subtitle), findsOneWidget);
+      expect(find.text(S.current.realunitWallet), findsOne);
+      expect(find.text(S.current.realunitWalletSubtitle), findsOneWidget);
       final visibleCards = find.byType(WelcomeCard).hitTestable();
       expect(visibleCards, findsNWidgets(2));
     });
@@ -26,7 +26,7 @@ void main() {
         await tester.pumpApp(const WelcomePage());
 
         final welcomeCardFinder = find.byWidgetPredicate(
-          (Widget widget) => widget is WelcomeCard && widget.title == S.current.software_wallet,
+          (Widget widget) => widget is WelcomeCard && widget.title == S.current.softwareWallet,
         );
         final welcomeCardWidget = tester.widget(welcomeCardFinder) as WelcomeCard;
 
@@ -51,7 +51,7 @@ void main() {
       expect(
         find
             .byWidgetPredicate(
-              (Widget widget) => widget is WelcomeCard && widget.title == S.current.create_wallet,
+              (Widget widget) => widget is WelcomeCard && widget.title == S.current.createWallet,
             )
             .hitTestable(),
         findsNothing,
@@ -59,14 +59,14 @@ void main() {
       expect(
         find
             .byWidgetPredicate(
-              (Widget widget) => widget is WelcomeCard && widget.title == S.current.restore_wallet,
+              (Widget widget) => widget is WelcomeCard && widget.title == S.current.restoreWallet,
             )
             .hitTestable(),
         findsNothing,
       );
 
       final welcomeCardFinder = find.byWidgetPredicate(
-        (Widget widget) => widget is WelcomeCard && widget.title == S.current.software_wallet,
+        (Widget widget) => widget is WelcomeCard && widget.title == S.current.softwareWallet,
       );
 
       await tester.tap(welcomeCardFinder);
@@ -77,7 +77,7 @@ void main() {
       expect(
         find
             .byWidgetPredicate(
-              (Widget widget) => widget is WelcomeCard && widget.title == S.current.create_wallet,
+              (Widget widget) => widget is WelcomeCard && widget.title == S.current.createWallet,
             )
             .hitTestable(),
         findsOne,
@@ -85,7 +85,7 @@ void main() {
       expect(
         find
             .byWidgetPredicate(
-              (Widget widget) => widget is WelcomeCard && widget.title == S.current.restore_wallet,
+              (Widget widget) => widget is WelcomeCard && widget.title == S.current.restoreWallet,
             )
             .hitTestable(),
         findsOne,

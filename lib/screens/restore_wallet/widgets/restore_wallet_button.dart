@@ -39,7 +39,7 @@ class RestoreWalletButton extends StatelessWidget {
               backgroundColor: WidgetStateColor.resolveWith((states) => RealUnitColors.green),
               foregroundColor: WidgetStateColor.resolveWith((states) => RealUnitColors.basic.white),
             ),
-            label: Text(S.of(context).restore_wallet_successful),
+            label: Text(S.of(context).restoreWalletSuccessful),
           );
         }
         return FilledButton.icon(
@@ -67,7 +67,7 @@ class RestoreWalletButton extends StatelessWidget {
             backgroundColor: WidgetStateColor.resolveWith((states) => RealUnitColors.status.red600),
             foregroundColor: WidgetStateColor.resolveWith((states) => RealUnitColors.basic.white),
           ),
-          child: Text(S.of(context).recovery_words_invalid),
+          child: Text(S.of(context).recoveryWordsInvalid),
         );
       default:
         return FilledButton(

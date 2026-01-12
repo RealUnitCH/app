@@ -78,7 +78,7 @@ class SendBloc extends Bloc<SendEvent, SendState> {
         emit(state.copyAlias(
           alias: AliasRecord(
             address: value!.text!,
-            name: S.current.from_clipboard,
+            name: S.current.fromClipboard,
             description: '',
           ),
         ));
@@ -120,8 +120,8 @@ class SendBloc extends Bloc<SendEvent, SendState> {
         return showModalBottomSheet(
           context: navigatorKey.currentContext!,
           builder: (_) => ErrorBottomSheet(
-            message: S.current
-                .error_not_enough_money(state.blockchain.nativeSymbol, state.blockchain.name),
+            message:
+                S.current.errorNotEnoughMoney(state.blockchain.nativeSymbol, state.blockchain.name),
           ),
         );
       }
@@ -147,7 +147,7 @@ class SendBloc extends Bloc<SendEvent, SendState> {
           showCupertinoSheet(
             context: navigatorKey.currentContext!,
             builder: (_) => TransactionSentPage(
-              title: S.current.transaction_sent,
+              title: S.current.transactionSent,
               transactionId: id,
               blockchain: state.blockchain,
             ),

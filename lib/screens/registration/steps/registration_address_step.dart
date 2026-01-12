@@ -56,7 +56,7 @@ class RegistrationAddressStep extends StatelessWidget {
                       child: RegistrationTextField(
                         hintText: '8000',
                         controller: postalCodeCtrl,
-                        label: S.of(context).postcode_abr,
+                        label: S.of(context).postcodeAbr,
                         keyboardType: TextInputType.number,
                         validator: (value) {
                           if (value == null || value.isEmpty) return '';

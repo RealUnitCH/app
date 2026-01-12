@@ -31,7 +31,7 @@ class PaymentNotPossibleInfo extends StatelessWidget {
                 spacing: 6,
                 children: [
                   Text(
-                    S.of(context).buy_payment_not_possible,
+                    S.of(context).buyPaymentNotPossible,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 16,
@@ -40,7 +40,7 @@ class PaymentNotPossibleInfo extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    S.of(context).buy_payment_not_possible_description,
+                    S.of(context).buyPaymentNotPossibleDescription,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 14,
@@ -66,7 +66,7 @@ class PaymentNotPossibleInfo extends StatelessWidget {
               await launchUrl(uri, mode: LaunchMode.externalApplication);
             },
             child: Text(
-              S.of(context).contact_support,
+              S.of(context).contactSupport,
               style: const TextStyle(
                 color: RealUnitColors.realUnitBlack,
                 fontSize: 16,

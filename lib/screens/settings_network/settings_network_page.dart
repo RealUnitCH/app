@@ -23,7 +23,7 @@ class SettingsNetworkPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_rounded),
         ),
         title: Text(
-          S.of(context).settings_network,
+          S.of(context).settingsNetwork,
           style: kPageTitleTextStyle,
         ),
       ),

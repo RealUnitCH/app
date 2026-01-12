@@ -92,8 +92,8 @@ class SendInvoiceView extends StatelessWidget {
                         children: [
                           InfoRow(
                             padding: _kPadding,
-                            leading: S.of(context).expires_in,
-                            trailing: S.of(context).expires_in_seconds('${state.secondsRemaining}'),
+                            leading: S.of(context).expiresIn,
+                            trailing: S.of(context).expiresInSeconds('${state.secondsRemaining}'),
                           ),
                           Padding(
                             padding: _kPadding,
