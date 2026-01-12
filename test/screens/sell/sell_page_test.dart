@@ -82,6 +82,7 @@ void main() {
 
   group('$SellPage', () {
     testWidgets('renders $SellView', (tester) async {
+      // ignore: prefer_const_constructors
       await tester.pumpApp(SellPage());
 
       expect(find.byType(SellView), findsOne);

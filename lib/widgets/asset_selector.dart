@@ -48,7 +48,7 @@ class AssetSelector extends StatelessWidget {
                   child: Text(
                     S.of(context).select_token,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                       decoration: TextDecoration.none,
@@ -115,7 +115,7 @@ class AssetSelector extends StatelessWidget {
           child: Row(
             children: [
               Padding(
-                padding: EdgeInsets.only(right: 12),
+                padding: const EdgeInsets.only(right: 12),
                 child: ChainAssetIcon(asset: selectedBalance.asset),
               ),
               Expanded(
@@ -133,7 +133,7 @@ class AssetSelector extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
+              const Icon(
                 Icons.arrow_forward_ios,
                 size: 24,
               )

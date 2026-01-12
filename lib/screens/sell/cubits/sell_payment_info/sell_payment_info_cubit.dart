@@ -13,7 +13,7 @@ part 'sell_payment_info_state.dart';
 class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
   final RealUnitSellPaymentInfoService _sellPaymentInfoService;
 
-  SellPaymentInfoCubit(this._sellPaymentInfoService) : super(SellPaymentInfoInitial());
+  SellPaymentInfoCubit(this._sellPaymentInfoService) : super(const SellPaymentInfoInitial());
 
   Future<void> getPaymentInfo({
     String amount = '1000',
@@ -21,7 +21,7 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
     required String iban,
   }) async {
     try {
-      emit(SellPaymentInfoLoading());
+      emit(const SellPaymentInfoLoading());
 
       final paymentInfo = await _sellPaymentInfoService.getPaymentInfo(
         double.parse(amount).round(),
