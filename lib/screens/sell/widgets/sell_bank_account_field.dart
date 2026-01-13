@@ -52,7 +52,7 @@ class BankAccountFieldView extends StatelessWidget {
                   vertical: 4.0,
                 ),
                 child: Text(
-                  S.of(context).bank_account,
+                  S.of(context).bankAccount,
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
@@ -98,7 +98,7 @@ class BankAccountFieldView extends StatelessWidget {
                     ),
                   ),
                   hint: Text(
-                    '${S.of(context).please_select}...',
+                    '${S.of(context).pleaseSelect}...',
                     style: const TextStyle(
                       color: RealUnitColors.neutral400,
                     ),

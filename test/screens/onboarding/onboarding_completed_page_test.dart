@@ -14,8 +14,8 @@ void main() {
       expect(find.byType(AppBar), findsOne);
       expect(find.byType(Image), findsOne);
 
-      expect(find.text(S.current.onboarding_completed_title), findsOne);
-      expect(find.text(S.current.onboarding_completed_subtitle), findsOneWidget);
+      expect(find.text(S.current.onboardingCompletedTitle), findsOne);
+      expect(find.text(S.current.onboardingCompletedSubtitle), findsOneWidget);
 
       expect(find.byType(Checkbox), findsOne);
       expect(find.byType(FilledButton), findsOne);

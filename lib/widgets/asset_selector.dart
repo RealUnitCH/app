@@ -46,7 +46,7 @@ class AssetSelector extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
-                    S.of(context).select_token,
+                    S.of(context).selectToken,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 18,

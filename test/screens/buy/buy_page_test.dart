@@ -130,7 +130,7 @@ void main() {
 
       expect(find.byType(PaymentActionRequired), findsOne);
       expect(find.byType(PaymentInformation), findsOne);
-      expect(find.text(S.current.registration_required), findsOne);
+      expect(find.text(S.current.registrationRequired), findsOne);
     });
 
     testWidgets('renders correctly when kyc is required', (tester) async {
@@ -142,7 +142,7 @@ void main() {
 
       expect(find.byType(PaymentActionRequired), findsOne);
       expect(find.byType(PaymentInformation), findsOne);
-      expect(find.text(S.current.identity_check_required), findsOne);
+      expect(find.text(S.current.identityCheckRequired), findsOne);
     });
 
     testWidgets('updates controllers when $BuyConverterState changes', (tester) async {

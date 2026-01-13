@@ -22,7 +22,7 @@ class RegistrationStepState {
   String title(BuildContext context) {
     switch (step) {
       case RegistrationStep.personal:
-        return S.of(context).personal_data;
+        return S.of(context).personalData;
       case RegistrationStep.address:
         return S.of(context).residence;
       case RegistrationStep.completed:

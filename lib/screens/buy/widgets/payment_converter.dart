@@ -30,7 +30,7 @@ class PaymentConverter extends StatelessWidget {
             vertical: 4.0,
           ),
           child: Text(
-            S.of(context).you_pay,
+            S.of(context).youPay,
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
@@ -111,7 +111,7 @@ class PaymentConverter extends StatelessWidget {
             vertical: 4.0,
           ),
           child: Text(
-            S.of(context).you_receive,
+            S.of(context).youReceive,
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,

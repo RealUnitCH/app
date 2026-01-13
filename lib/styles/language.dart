@@ -14,9 +14,9 @@ enum Language {
   String get name {
     switch (this) {
       case Language.en:
-        return S.current.language_english;
+        return S.current.languageEnglish;
       case Language.de:
-        return S.current.language_german;
+        return S.current.languageGerman;
     }
   }
 }

@@ -46,7 +46,7 @@ class SellButton extends StatelessWidget {
                 color: RealUnitColors.basic.black.withValues(alpha: 0.5),
               ),
             ),
-            label: Text('$amount ${S.of(context).sell_realu}'),
+            label: Text('$amount ${S.of(context).sellRealu}'),
           );
         }
         if (bankAccount != null && amount.isNotEmpty) {
@@ -55,12 +55,12 @@ class SellButton extends StatelessWidget {
                   amount: amount,
                   iban: bankAccount!.iban,
                 ),
-            child: Text('$amount ${S.of(context).sell_realu}'),
+            child: Text('$amount ${S.of(context).sellRealu}'),
           );
         }
         return FilledButton(
           onPressed: null,
-          child: Text('$amount ${S.of(context).sell_realu}'),
+          child: Text('$amount ${S.of(context).sellRealu}'),
         );
       },
     );

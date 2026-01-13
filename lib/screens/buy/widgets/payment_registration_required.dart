@@ -28,7 +28,7 @@ class PaymentRegistrationRequired extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    S.of(context).identity_check_required,
+                    S.of(context).identityCheckRequired,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -36,7 +36,7 @@ class PaymentRegistrationRequired extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    S.of(context).identity_check_description,
+                    S.of(context).identityCheckDescription,
                     style: const TextStyle(
                       fontSize: 14,
                       height: 18 / 14,
@@ -54,7 +54,7 @@ class PaymentRegistrationRequired extends StatelessWidget {
             if (context.mounted) context.read<BuyPaymentInfoCubit>().getPaymentInfo();
           },
           child: Text(
-            S.of(context).identity_confirm,
+            S.of(context).identityConfirm,
             textAlign: TextAlign.center,
           ),
         ),

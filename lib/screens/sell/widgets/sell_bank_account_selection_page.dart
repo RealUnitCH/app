@@ -16,7 +16,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          S.of(context).payout_account_select,
+          S.of(context).payoutAccountSelect,
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -85,7 +85,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                 TextButton.icon(
                   onPressed: () => _onAddBankAccountPressed(context),
                   label: Text(
-                    S.of(context).add_bank_account,
+                    S.of(context).addBankAccount,
                     style: const TextStyle(
                       fontSize: 16,
                       height: 20 / 16,

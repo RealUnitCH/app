@@ -32,7 +32,7 @@ class PriceWidget extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          S.of(context).realunit_stockprice,
+                          S.of(context).realunitStockprice,
                           style: const TextStyle(
                             fontSize: 12,
                             color: RealUnitColors.neutral400,

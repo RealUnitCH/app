@@ -33,7 +33,7 @@ class SectionTransactionHistory extends StatelessWidget {
               TextButton(
                 onPressed: () => context.push('/dashboard/transactions'),
                 child: Text(
-                  S.of(context).show_all,
+                  S.of(context).showAll,
                   style: const TextStyle(
                     fontSize: 17,
                     fontFamily: 'Satoshi Bold',

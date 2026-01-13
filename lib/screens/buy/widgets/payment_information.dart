@@ -33,8 +33,8 @@ class PaymentInformation extends StatelessWidget {
           final error = paymentInfoState.error;
           if (error == PaymentInfoError.registrationRequired) {
             return PaymentActionRequired(
-              title: S.of(context).registration_required,
-              description: S.of(context).registration_required_description,
+              title: S.of(context).registrationRequired,
+              description: S.of(context).registrationRequiredDescription,
               action: FilledButton(
                 onPressed: () async {
                   await context.push(RegistrationPage.routeName);
@@ -50,12 +50,12 @@ class PaymentInformation extends StatelessWidget {
             );
           } else if (error == PaymentInfoError.kycRequired) {
             return PaymentActionRequired(
-              title: S.of(context).identity_check_required,
-              description: S.of(context).identity_check_description,
+              title: S.of(context).identityCheckRequired,
+              description: S.of(context).identityCheckDescription,
               action: FilledButton(
                 onPressed: null,
                 child: Text(
-                  S.of(context).identity_confirm,
+                  S.of(context).identityConfirm,
                   textAlign: TextAlign.center,
                 ),
               ),

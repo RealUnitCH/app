@@ -27,7 +27,7 @@ class SettingsNodesPage extends StatelessWidget {
             ),
           ),
           middle: Text(
-            S.of(context).settings_nodes,
+            S.of(context).settingsNodes,
             style: kPageTitleTextStyle,
           ),
           border: null,

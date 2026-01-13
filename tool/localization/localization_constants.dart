@@ -13,7 +13,7 @@ class GeneratedLocalizationsDelegate extends LocalizationsDelegate<S> {
     return const <Locale>[
 ''';
 
-const part1 = """
+const part1 = '''
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -29,22 +29,22 @@ class S implements WidgetsLocalizations {
   static S of(BuildContext context) => Localizations.of<S>(context, S)!;
 
   @override
-  String get reorderItemToStart => "reorderItemToStart";
+  String get reorderItemToStart => 'reorderItemToStart';
   
   @override
-  String get reorderItemToEnd => "reorderItemToEnd";
+  String get reorderItemToEnd => 'reorderItemToEnd';
 
   @override
-  String get reorderItemUp => "reorderItemUp";
+  String get reorderItemUp => 'reorderItemUp';
 
   @override
-  String get reorderItemDown => "reorderItemDown";
+  String get reorderItemDown => 'reorderItemDown';
 
   @override
-  String get reorderItemLeft => "reorderItemLeft";
+  String get reorderItemLeft => 'reorderItemLeft';
 
   @override
-  String get reorderItemRight => "reorderItemRight";
+  String get reorderItemRight => 'reorderItemRight';
 
   @override
   String get copyButtonLabel => throw UnimplementedError();
@@ -66,7 +66,7 @@ class S implements WidgetsLocalizations {
 
   @override
   String get shareButtonLabel => throw UnimplementedError();
-""";
+''';
 
 const part2 = '''
     ];
@@ -75,7 +75,7 @@ const part2 = '''
   LocaleListResolutionCallback listResolution({required Locale fallback, bool withCountry = true}) {
     return (List<Locale>? locales, Iterable<Locale> supported) {
       if (locales == null || locales.isEmpty) {
-        return fallback ?? supported.first;
+        return fallback;
       } else {
         return _resolve(locales.first, fallback, supported, withCountry);
       }
@@ -91,14 +91,12 @@ const part2 = '''
   @override
   Future<S> load(Locale locale) {
     final String lang = getLang(locale);
-    if (lang != null) {
       switch (lang) {
 ''';
 
-const part3 = """
+const part3 = '''
         default:
       }
-    }
     S.current = const S();
     return SynchronousFuture<S>(S.current);
   }
@@ -111,22 +109,21 @@ const part3 = """
 
   Locale _resolve(Locale? locale, Locale fallback, Iterable<Locale> supported, bool withCountry) {
     if (locale == null || !_isSupported(locale, withCountry)) {
-      return fallback ?? supported.first;
+      return fallback;
     }
 
-    final Locale languageLocale = Locale(locale.languageCode, "");
+    final Locale languageLocale = Locale(locale.languageCode, '');
     if (supported.contains(locale)) {
       return locale;
     } else if (supported.contains(languageLocale)) {
       return languageLocale;
     } else {
-      final Locale fallbackLocale = fallback ?? supported.first;
+      final Locale fallbackLocale = fallback;
       return fallbackLocale;
     }
   }
 
   bool _isSupported(Locale locale, bool withCountry) {
-    if (locale != null) {
       for (Locale supportedLocale in supportedLocales) {
         if (supportedLocale.languageCode != locale.languageCode) {
           continue;
@@ -138,14 +135,11 @@ const part3 = """
           return true;
         }
       }
-    }
     return false;
   }
 }
 
-String getLang(Locale l) => l == null
-  ? throw Exception('Incorrect local')
-  : l.countryCode != null && l.countryCode!.isEmpty
+String getLang(Locale l) => l.countryCode != null && l.countryCode!.isEmpty
     ? l.languageCode
     : l.toString();
-""";
+''';

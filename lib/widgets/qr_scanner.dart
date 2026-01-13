@@ -128,7 +128,7 @@ class _QRScannerState extends State<QRScanner> {
                       height: 200,
                       child: Center(
                           child: Text(
-                        S.of(context).scan_qr_code,
+                        S.of(context).scanQrCode,
                         style: const TextStyle(fontSize: 20, color: Colors.white),
                       )),
                     ),

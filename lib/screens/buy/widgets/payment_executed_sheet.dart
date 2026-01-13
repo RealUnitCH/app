@@ -27,7 +27,7 @@ class PaymentExecutedSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 28),
                     Text(
-                      S.of(context).buy_executed_title,
+                      S.of(context).buyExecutedTitle,
                       style: const TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
@@ -37,7 +37,7 @@ class PaymentExecutedSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      S.of(context).buy_executed_description,
+                      S.of(context).buyExecutedDescription,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: RealUnitColors.neutral500,
