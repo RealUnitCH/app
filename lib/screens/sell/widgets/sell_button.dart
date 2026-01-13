@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/bank_account.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_confirm_sheet.dart';
+import 'package:realunit_wallet/screens/sell/widgets/sell_executed_sheet.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class SellButton extends StatelessWidget {
@@ -25,13 +27,22 @@ class SellButton extends StatelessWidget {
           );
         }
         if (state is SellPaymentInfoSuccess) {
-          await showModalBottomSheet(
+          final bool? confirmedSuccess = await showModalBottomSheet(
             isScrollControlled: true,
             context: context,
             builder: (_) => SellConfirmSheet(
               paymentInfo: state.sellPaymentInfo,
             ),
           );
+          if (confirmedSuccess ?? false) {
+            if (context.mounted) {
+              await showModalBottomSheet(
+                context: context,
+                builder: (_) => const SellExecutedSheet(),
+              );
+            }
+            if (context.mounted) context.pop();
+          }
         }
       },
       builder: (context, state) {

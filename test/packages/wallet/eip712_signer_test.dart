@@ -21,7 +21,7 @@ void main() {
   late bool swissTaxResidence;
   late String registrationDate;
 
-  group('$EIP712Signer', () {
+  group('$Eip712Signer', () {
     test(('sign Registration Data works correctly'), () {
       privateKeyHex = 'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
       final credentials = EthPrivateKey.fromHex(privateKeyHex);
@@ -55,7 +55,7 @@ void main() {
         registrationDate: registrationDate,
       );
 
-      final signature = EIP712Signer.signRegistration(
+      final signature = Eip712Signer.signRegistration(
         credentials: credentials,
         registration: registration,
       );

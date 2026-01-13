@@ -19,7 +19,7 @@ class RealUnitRegistrationService {
 
   Future<RegistrationStatus> register(Registration registration) async {
     final credentials = _appStore.wallet.primaryAccount.primaryAddress;
-    final signature = EIP712Signer.signRegistration(
+    final signature = Eip712Signer.signRegistration(
       credentials: credentials,
       registration: registration,
     );

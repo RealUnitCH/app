@@ -82,8 +82,7 @@ void main() {
 
   group('$SellPage', () {
     testWidgets('renders $SellView', (tester) async {
-      // ignore: prefer_const_constructors
-      await tester.pumpApp(SellPage());
+      await tester.pumpApp(const SellPage());
 
       expect(find.byType(SellView), findsOne);
     });
@@ -136,7 +135,7 @@ void main() {
         );
 
         when(() => sellSelectedBankAccountCubit.state)
-            .thenReturn(BankAccount(iban: 'CH12 3456 7890 1234 5678 9'));
+            .thenReturn(const BankAccount(iban: 'CH12 3456 7890 1234 5678 9'));
 
         await tester.pumpApp(buildSubject(const SellView()));
         await tester.pumpAndSettle();

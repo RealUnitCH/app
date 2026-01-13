@@ -160,11 +160,9 @@ class _SellAddBankAccountSheetState extends State<SellAddBankAccountSheet> {
                           if (_formKey.currentState?.validate() ?? false) {
                             final newBankAccount = BankAccount(
                               iban: _ibanController.text,
-                              name: _nameController.text,
+                              name: _nameController.text.isNotEmpty ? _nameController.text : null,
                             );
-                            context
-                                .read<SellBankAccountsCubit>()
-                                .addBankAccount(bankAccount: newBankAccount);
+                            context.read<SellBankAccountsCubit>().add(bankAccount: newBankAccount);
                             context.pop(newBankAccount);
                           }
                         },
