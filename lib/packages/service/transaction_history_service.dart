@@ -147,20 +147,24 @@ class TransactionHistoryService {
     final body = jsonDecode(response.body);
 
     for (final entry in (body['history'])) {
-      final transferData = entry['transfer'] as Map;
-      _transactionRepository.insertTransaction(Transaction(
-        height: 0, // ToDo
-        txId: entry['txHash'],
-        chainId: _appStore.apiConfig.asset.chainId,
-        senderAddress: transferData['from'],
-        receiverAddress: transferData['to'],
-        amount: BigInt.parse(transferData['value']),
-        asset: _appStore.apiConfig.asset,
-        type: TransactionTypes.tokenTransfer,
-        note: '',
-        data: null,
-        timestamp: DateTime.parse(entry['timestamp']),
-      ));
+      final txId = entry['txHash'];
+      final exists = await _transactionRepository.existsTransaction(txId);
+      if (!exists) {
+        final transferData = entry['transfer'] as Map;
+        _transactionRepository.insertTransaction(Transaction(
+          height: 0, // ToDo
+          txId: txId,
+          chainId: _appStore.apiConfig.asset.chainId,
+          senderAddress: transferData['from'],
+          receiverAddress: transferData['to'],
+          amount: BigInt.parse(transferData['value']),
+          asset: _appStore.apiConfig.asset,
+          type: TransactionTypes.tokenTransfer,
+          note: '',
+          data: null,
+          timestamp: DateTime.parse(entry['timestamp']),
+        ));
+      }
     }
   }
 }
