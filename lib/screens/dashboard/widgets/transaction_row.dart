@@ -48,7 +48,6 @@ class TransactionRow extends StatelessWidget {
             )
           : InkWell(
               child: Container(
-                margin: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
                   color: backgroundColor,

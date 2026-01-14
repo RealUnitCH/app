@@ -3,8 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/packages/open_crypto_pay/models.dart';
-import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
@@ -44,9 +42,7 @@ void setupRouter() {
       GoRoute(
           path: OnboardingCompletedPage.route,
           builder: (context, state) => const OnboardingCompletedPage()),
-      GoRoute(
-          path: '/dashboard',
-          builder: (context, state) => DashboardPage(getIt<AppStore>(), getIt<DFXPriceService>())),
+      GoRoute(path: DashboardPage.routeName, builder: (context, state) => const DashboardPage()),
       GoRoute(path: BuyPage.routeName, builder: (context, state) => const BuyPage()),
       GoRoute(path: SellPage.routeName, builder: (context, state) => const SellPage()),
       GoRoute(

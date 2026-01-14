@@ -2,221 +2,106 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
-import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/models/balance.dart';
-import 'package:realunit_wallet/models/blockchain.dart';
-import 'package:realunit_wallet/models/transaction.dart';
-import 'package:realunit_wallet/packages/repository/balance_repository.dart';
-import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:realunit_wallet/packages/service/price_service.dart';
-import 'package:realunit_wallet/packages/utils/default_assets.dart';
-import 'package:realunit_wallet/screens/buy/buy_page.dart';
-import 'package:realunit_wallet/screens/dashboard/bloc/balance_cubit.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/dashboard_bloc.dart';
-import 'package:realunit_wallet/screens/dashboard/bloc/transaction_history_cubit.dart';
-import 'package:realunit_wallet/screens/dashboard/widgets/cash_holding_box.dart';
+import 'package:realunit_wallet/screens/dashboard/widgets/dashboard_actions.dart';
+import 'package:realunit_wallet/screens/dashboard/widgets/dashboard_portfolio.dart';
+import 'package:realunit_wallet/screens/dashboard/widgets/dashboard_transaction_history.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/price_widget.dart';
-import 'package:realunit_wallet/screens/dashboard/widgets/section_transaction_history.dart';
-import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
-import 'package:realunit_wallet/screens/sell/sell_page.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
-import 'package:realunit_wallet/styles/styles.dart';
-import 'package:realunit_wallet/widgets/action_button.dart';
 
 class DashboardPage extends StatelessWidget {
-  DashboardPage(this._appStore, this._priceService, {super.key}) {
-    // aggregatedDEuro = AggregatedBalanceCubit(getIt<BalanceRepository>(), [
-    //   dEUROAsset.getEmptyBalance(walletAddress),
-    //   dEUROBaseAsset.getEmptyBalance(walletAddress),
-    //   dEUROOptimismAsset.getEmptyBalance(walletAddress),
-    //   dEUROArbitrumAsset.getEmptyBalance(walletAddress),
-    //   dEUROPolygonAsset.getEmptyBalance(walletAddress),
-    // ]);
+  static const routeName = '/dashboard';
 
-    singleCashHoldings.add(BalanceCubit(
-      getIt<BalanceRepository>(),
-      asset: _appStore.apiConfig.asset,
-      walletAddress: walletAddress,
-    ));
-
-    for (final asset in [
-      Blockchain.ethereum.nativeAsset,
-      Blockchain.polygon.nativeAsset,
-      Blockchain.base.nativeAsset,
-      Blockchain.optimism.nativeAsset,
-      Blockchain.arbitrum.nativeAsset,
-    ]) {
-      cryptoHoldings.add(
-          BalanceCubit(getIt<BalanceRepository>(), asset: asset, walletAddress: walletAddress));
-    }
-
-    transactionHistoryCubit = TransactionHistoryCubit(getIt<TransactionRepository>(),
-        asset: _appStore.apiConfig.asset, walletAddress: walletAddress);
-  }
-
-  final AppStore _appStore;
-  final APriceService _priceService;
-
-  String get walletAddress => _appStore.primaryAddress;
-
-  // late final AggregatedBalanceCubit aggregatedDEuro;
-  final List<BalanceCubit> singleCashHoldings = [];
-  final List<BalanceCubit> cryptoHoldings = [];
-  late final TransactionHistoryCubit transactionHistoryCubit;
+  const DashboardPage({super.key});
 
   @override
-  Widget build(BuildContext context) => MultiBlocProvider(
-        providers: [
-          // BlocProvider.value(value: aggregatedDEuro),
-          BlocProvider.value(value: transactionHistoryCubit),
-          ...singleCashHoldings.map((cubit) => BlocProvider.value(value: cubit)),
-          BlocProvider.value(
-              value: DashboardBloc(_priceService,
-                  asset: realUnitAsset, currency: context.read<SettingsBloc>().state.currency)),
-        ],
-        child: Scaffold(
-          appBar: AppBar(
-            leading: const Padding(
-              padding: EdgeInsets.only(left: 20),
-              child: RealUnitIcon(),
-            ),
-            leadingWidth: 40,
-            toolbarHeight: 68,
-            titleSpacing: 6,
-            title: const Text(
-              'RealUnit Wallet',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-            ),
-            actions: [
-              IconButton(
-                onPressed: () => context.push('/settings'),
-                icon: const Icon(
-                  Icons.menu,
-                  color: RealUnitColors.realUnitBlue,
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => DashboardBloc(
+        getIt<DFXPriceService>(),
+        asset: getIt<AppStore>().apiConfig.asset,
+        currency: context.read<SettingsBloc>().state.currency,
+      ),
+      child: const DashboardView(),
+    );
+  }
+}
+
+class DashboardView extends StatelessWidget {
+  const DashboardView({super.key});
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: SafeArea(
+            child: Row(
+              spacing: 6.0,
+              children: [
+                const SizedBox(width: 14),
+                const RealUnitIcon(),
+                const Expanded(
+                  child: Text(
+                    'RealUnit Wallet',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      letterSpacing: -0.32,
+                    ),
+                  ),
                 ),
-              )
-            ],
+                IconButton(
+                  onPressed: () => context.push('/settings'),
+                  icon: const Icon(
+                    Icons.menu,
+                    color: RealUnitColors.realUnitBlue,
+                  ),
+                ),
+                const SizedBox(width: 4),
+              ],
+            ),
           ),
-          body: BlocBuilder<DashboardBloc, DashboardState>(
-            builder: (context, dashboardState) => SafeArea(
-              top: false,
-              child: PopScope(
-                canPop: false,
-                child: SizedBox(
-                  width: double.infinity,
-                  child: Column(
+        ),
+        body: PopScope(
+          canPop: false,
+          child: BlocBuilder<DashboardBloc, DashboardState>(
+            builder: (context, dashboardState) => Column(
+              children: [
+                PriceWidget(
+                  currency: context.read<SettingsBloc>().state.currency,
+                  price: dashboardState.price,
+                  priceChart: dashboardState.priceChart,
+                ),
+                Expanded(
+                  child: Stack(
                     children: [
-                      BlocBuilder<SettingsBloc, SettingsState>(
-                        bloc: context.read<SettingsBloc>(),
-                        builder: (context, settingsBloc) => PriceWidget(
-                          currency: settingsBloc.currency,
-                          price: dashboardState.price,
-                          priceChart: dashboardState.priceChart,
-                        ),
-                      ),
-                      BlocBuilder<HomeBloc, HomeState>(
-                        builder: (context, homeState) => Offstage(
-                          offstage: !homeState.isFiatServiceAvailable,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 16, right: 16, top: 24),
-                            child: Row(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 10),
-                                  child: ActionButton(
-                                    icon: const RealUnitTokenIcon(size: 20),
-                                    label: S.of(context).buy,
-                                    onPressed: () => context.push(BuyPage.routeName),
-                                  ),
-                                ),
-                                ActionButton(
-                                  icon: const Icon(
-                                    Icons.account_balance,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                  label: S.of(context).sell,
-                                  onPressed: () => context.push(SellPage.routeName),
-                                ),
-                              ],
-                            ),
+                      Container(color: RealUnitColors.neutral100),
+                      SingleChildScrollView(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20.0,
+                            vertical: 24.0,
                           ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Stack(
-                          alignment: AlignmentDirectional.bottomCenter,
-                          children: [
-                            CustomScrollView(
-                              slivers: [
-                                SliverFillRemaining(
-                                  hasScrollBody: false,
-                                  child: Column(
-                                    children: <Widget>[
-                                      Padding(
-                                        padding: const EdgeInsets.all(20),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              S.of(context).portfolio,
-                                              style: kSubtitleTextStyle,
-                                            ),
-                                            ...singleCashHoldings.map(
-                                              (holding) => BlocBuilder<BalanceCubit, Balance>(
-                                                bloc: holding,
-                                                builder: (context, state) => CashHoldingBox(
-                                                  asset: holding.asset,
-                                                  balance: state.balance,
-                                                  trailingSymbol: context
-                                                      .read<SettingsBloc>()
-                                                      .state
-                                                      .currency
-                                                      .code
-                                                      .toUpperCase(),
-                                                  leadingSymbol: '',
-                                                  price: dashboardState.price,
-                                                ),
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                      Padding(
-                                          padding: const EdgeInsets.all(20),
-                                          child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  S.of(context).transactions,
-                                                  style: kSubtitleTextStyle,
-                                                ),
-                                                BlocBuilder<TransactionHistoryCubit,
-                                                    List<Transaction>>(
-                                                  bloc: transactionHistoryCubit,
-                                                  builder: (context, state) =>
-                                                      SectionTransactionHistory(
-                                                    transactions: state,
-                                                    walletAddress: walletAddress,
-                                                    hasShowAll: state.length == 5,
-                                                  ),
-                                                ),
-                                              ])),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                          child: Column(
+                            spacing: 20.0,
+                            children: [
+                              const DashboardActions(),
+                              DashboardPortfolio(
+                                price: dashboardState.price,
+                              ),
+                              const DashboardTransactionHistory(),
+                            ],
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
