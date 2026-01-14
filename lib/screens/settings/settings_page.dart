@@ -6,6 +6,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/screens/settings/widgets/settings_confirm_logout_wallet_sheet.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_section.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
@@ -97,7 +98,19 @@ class SettingsPage extends StatelessWidget {
                     SettingOption(
                       title: S.of(context).settingsDeleteWallet,
                       leading: const XCircleIcon(size: 24),
-                      onTap: () => context.read<HomeBloc>().add(const DeleteCurrentWalletEvent()),
+                      onTap: () async {
+                        bool? isLogout = await showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          builder: (_) => const SettingsConfirmLogoutWalletSheet(),
+                        );
+                        if (isLogout ?? false) {
+                          await Future.delayed(const Duration(milliseconds: 300));
+                          if (context.mounted) {
+                            context.read<HomeBloc>().add(const DeleteCurrentWalletEvent());
+                          }
+                        }
+                      },
                     ),
                   ],
                 ),
