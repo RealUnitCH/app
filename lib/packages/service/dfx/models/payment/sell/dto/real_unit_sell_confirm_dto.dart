@@ -3,7 +3,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip
 class RealUnitSellConfirmDto {
   final Eip7702ConfirmDto eip7702ConfirmDto;
 
-  RealUnitSellConfirmDto({
+  const RealUnitSellConfirmDto({
     required this.eip7702ConfirmDto,
   });
 
