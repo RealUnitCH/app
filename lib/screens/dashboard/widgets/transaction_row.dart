@@ -51,7 +51,7 @@ class TransactionRow extends StatelessWidget {
                                 height: 32,
                                 width: 32,
                                 decoration: BoxDecoration(
-                                    color: RealUnitColors.brand700,
+                                    color: RealUnitColors.brand200,
                                     borderRadius: BorderRadius.circular(24.0)),
                                 child: const Icon(
                                   Icons.horizontal_rule_rounded,

@@ -10,6 +10,7 @@ import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_act
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_portfolio.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_transaction_history.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/price_widget.dart';
+import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
@@ -36,75 +37,78 @@ class DashboardView extends StatelessWidget {
   const DashboardView({super.key});
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: SafeArea(
-            child: Row(
-              spacing: 6.0,
-              children: [
-                const SizedBox(width: 14),
-                const RealUnitIcon(),
-                Expanded(
-                  child: Text(
-                    S.of(context).realunitWallet,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: -0.32,
+  Widget build(BuildContext context) {
+    final isFiatServiceAvailable = context.watch<HomeBloc>().state.isFiatServiceAvailable;
+    final dashboardState = context.watch<DashboardBloc>().state;
+
+    return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: SafeArea(
+          child: Row(
+            spacing: 6.0,
+            children: [
+              const SizedBox(width: 14),
+              const RealUnitIcon(),
+              Expanded(
+                child: Text(
+                  S.of(context).realunitWallet,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: -0.32,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () => context.push('/settings'),
+                icon: const Icon(
+                  Icons.menu,
+                  color: RealUnitColors.realUnitBlue,
+                ),
+              ),
+              const SizedBox(width: 4),
+            ],
+          ),
+        ),
+      ),
+      body: PopScope(
+        canPop: false,
+        child: Column(
+          children: [
+            PriceWidget(
+              currency: context.read<SettingsBloc>().state.currency,
+              price: dashboardState.price,
+              priceChart: dashboardState.priceChart,
+            ),
+            Expanded(
+              child: Stack(
+                children: [
+                  Container(color: RealUnitColors.neutral100),
+                  SingleChildScrollView(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20.0,
+                        vertical: 24.0,
+                      ),
+                      child: Column(
+                        spacing: 20.0,
+                        children: [
+                          if (isFiatServiceAvailable) const DashboardActions(),
+                          DashboardPortfolio(
+                            price: dashboardState.price,
+                          ),
+                          const DashboardTransactionHistory(),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                IconButton(
-                  onPressed: () => context.push('/settings'),
-                  icon: const Icon(
-                    Icons.menu,
-                    color: RealUnitColors.realUnitBlue,
-                  ),
-                ),
-                const SizedBox(width: 4),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ),
-        body: PopScope(
-          canPop: false,
-          child: BlocBuilder<DashboardBloc, DashboardState>(
-            builder: (context, dashboardState) => Column(
-              children: [
-                PriceWidget(
-                  currency: context.read<SettingsBloc>().state.currency,
-                  price: dashboardState.price,
-                  priceChart: dashboardState.priceChart,
-                ),
-                Expanded(
-                  child: Stack(
-                    children: [
-                      Container(color: RealUnitColors.neutral100),
-                      SingleChildScrollView(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20.0,
-                            vertical: 24.0,
-                          ),
-                          child: Column(
-                            spacing: 20.0,
-                            children: [
-                              const DashboardActions(),
-                              DashboardPortfolio(
-                                price: dashboardState.price,
-                              ),
-                              const DashboardTransactionHistory(),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
+      ),
+    );
+  }
 }
