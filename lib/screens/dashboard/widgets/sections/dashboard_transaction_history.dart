@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
@@ -22,18 +23,15 @@ class DashboardTransactionHistory extends StatelessWidget {
         asset: appStore.apiConfig.asset,
         walletAddress: appStore.primaryAddress,
       ),
-      child: SectionTransactionHistoryView(
+      child: DashboardTransactionHistoryView(
         walletAddress: appStore.primaryAddress,
       ),
     );
   }
 }
 
-class SectionTransactionHistoryView extends StatelessWidget {
-  const SectionTransactionHistoryView({
-    super.key,
-    required this.walletAddress,
-  });
+class DashboardTransactionHistoryView extends StatelessWidget {
+  const DashboardTransactionHistoryView({super.key, required this.walletAddress});
 
   final String walletAddress;
 
@@ -46,9 +44,9 @@ class SectionTransactionHistoryView extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             spacing: 8.0,
             children: [
-              const Text(
-                'Letzte Transaktionen',
-                style: TextStyle(
+              Text(
+                S.of(context).latestTransactions,
+                style: const TextStyle(
                   color: RealUnitColors.neutral500,
                   fontSize: 12,
                   height: 12 / 16,
@@ -63,7 +61,7 @@ class SectionTransactionHistoryView extends StatelessWidget {
                 child: Column(
                   spacing: 12.0,
                   children: [
-                    ...transactions.take(3).map((e) => TransactionRow(
+                    ...transactions.reversed.take(3).map((e) => TransactionRow(
                           transaction: e,
                           walletAddress: walletAddress,
                         )),
@@ -75,8 +73,7 @@ class SectionTransactionHistoryView extends StatelessWidget {
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           alignment: Alignment.centerLeft),
                       child: Text(
-                        //S.of(context).showAll,
-                        'Transaktionshistorie',
+                        S.of(context).transactionHistory,
                         style: const TextStyle(
                           fontSize: 14,
                         ),

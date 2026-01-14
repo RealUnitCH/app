@@ -24,20 +24,21 @@ class DashboardPortfolio extends StatelessWidget {
         asset: appStore.apiConfig.asset,
         walletAddress: appStore.primaryAddress,
       ),
-      child: SectionPortfolioView(price: price),
+      child: DashboardPortfolioView(price: price),
     );
   }
 }
 
-class SectionPortfolioView extends StatelessWidget {
+class DashboardPortfolioView extends StatelessWidget {
   final BigInt price;
 
-  const SectionPortfolioView({super.key, required this.price});
+  const DashboardPortfolioView({super.key, required this.price});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 8.0,
       children: [
         Text(
           S.of(context).portfolio,
