@@ -2,9 +2,13 @@ import 'dart:convert';
 
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_confirm_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_confirm_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_payment_info_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
+import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
+import 'package:realunit_wallet/packages/wallet/eip7702_signer.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 class RealUnitSellPaymentInfoService {
@@ -42,7 +46,7 @@ class RealUnitSellPaymentInfoService {
 
       return SellPaymentInfo(
         id: responseDto.id,
-        amount: responseDto.amount,
+        amount: responseDto.amount.toInt(),
         currency: responseDto.currency,
         beneficiary: responseDto.beneficiary,
         eip7702: responseDto.eip7702,
@@ -59,14 +63,42 @@ class RealUnitSellPaymentInfoService {
   }
 
   Future<void> confirmPayment(SellPaymentInfo paymentInfo) async {
+    final credentials = _appStore.wallet.currentAccount.primaryAddress;
+    final delegationSignature = Eip712Signer.signDelegation(
+      credentials: credentials,
+      eip7702Data: paymentInfo.eip7702,
+    );
+    final authorizationSignature = Eip7702Signer.signAuthorization(
+      credentials: credentials,
+      eip7702Data: paymentInfo.eip7702,
+    );
+    final sellConfirmDto = RealUnitSellConfirmDto(
+        eip7702ConfirmDto: Eip7702ConfirmDto(
+            delegation: Eip7702DelegationDto(
+              delegate: paymentInfo.eip7702.relayerAddress,
+              delegator: paymentInfo.eip7702.message.delegator,
+              authority: paymentInfo.eip7702.message.authority,
+              salt: '${paymentInfo.eip7702.message.salt}',
+              signature: delegationSignature,
+            ),
+            authorization: Eip7702AuthorizationDto(
+              chainId: paymentInfo.eip7702.domain.chainId,
+              address: paymentInfo.eip7702.delegatorAddress,
+              nonce: paymentInfo.eip7702.userNonce,
+              r: '0x${authorizationSignature.r.toRadixString(16)}',
+              s: '0x${authorizationSignature.s.toRadixString(16)}',
+              yParity: authorizationSignature.yParity,
+            )));
+
     final authToken = _appStore.dfxAuthToken;
     final uri = Uri.https(_host, _confirmPaymentPath(paymentInfo.id));
-
     final response = await _appStore.httpClient.put(
       uri,
       headers: {
+        'Content-Type': 'application/json',
         'Authorization': 'Bearer $authToken',
       },
+      body: jsonEncode(sellConfirmDto),
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {

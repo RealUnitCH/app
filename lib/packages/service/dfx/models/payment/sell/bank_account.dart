@@ -1,8 +1,10 @@
-class BankAccount {
+import 'package:equatable/equatable.dart';
+
+class BankAccount extends Equatable {
   final String? name;
   final String iban;
 
-  BankAccount({
+  const BankAccount({
     this.name,
     required this.iban,
   });
@@ -18,4 +20,7 @@ class BankAccount {
       iban: json['iban'] as String,
     );
   }
+
+  @override
+  List<Object?> get props => [name, iban];
 }
