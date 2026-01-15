@@ -85,7 +85,7 @@ extension TransactionStorage on AppDatabase {
                   Expression.or(
                       [row.senderAddress.equals(wallet), row.receiverAddress.equals(wallet)]),
                 ]))
-            ..orderBy([(u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)])
+            ..orderBy([(u) => OrderingTerm(expression: u.timeStamp, mode: OrderingMode.desc)])
             ..limit(limit))
           .watch();
 

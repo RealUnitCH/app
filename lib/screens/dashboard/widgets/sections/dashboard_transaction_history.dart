@@ -22,6 +22,7 @@ class DashboardTransactionHistory extends StatelessWidget {
         getIt<TransactionRepository>(),
         asset: appStore.apiConfig.asset,
         walletAddress: appStore.primaryAddress,
+        limit: 3,
       ),
       child: DashboardTransactionHistoryView(
         walletAddress: appStore.primaryAddress,
@@ -61,12 +62,12 @@ class DashboardTransactionHistoryView extends StatelessWidget {
                 child: Column(
                   spacing: 12.0,
                   children: [
-                    ...transactions.reversed.take(3).map((e) => TransactionRow(
+                    ...transactions.map((e) => TransactionRow(
                           transaction: e,
                           walletAddress: walletAddress,
                         )),
                     TextButton(
-                      onPressed: () => context.push('/dashboard/transactions'),
+                      onPressed: () => context.push('/dashboard/transactionHistory'),
                       style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
                           minimumSize: const Size(50, 22),
