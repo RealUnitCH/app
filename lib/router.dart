@@ -22,6 +22,7 @@ import 'package:realunit_wallet/screens/settings_network/settings_network_page.d
 import 'package:realunit_wallet/screens/settings_nodes/settings_nodes_page.dart';
 import 'package:realunit_wallet/screens/settings_seed/settings_seed_page.dart';
 import 'package:realunit_wallet/screens/settings_tax_report/settings_tax_report_page.dart';
+import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/screens/welcome/welcome_page.dart';
@@ -43,7 +44,16 @@ void setupRouter() {
       GoRoute(
           path: OnboardingCompletedPage.route,
           builder: (context, state) => const OnboardingCompletedPage()),
-      GoRoute(path: DashboardPage.routeName, builder: (context, state) => const DashboardPage()),
+      GoRoute(
+        path: DashboardPage.routeName,
+        builder: (context, state) => const DashboardPage(),
+        routes: [
+          GoRoute(
+            path: '/transactionHistory',
+            builder: (context, state) => const TransactionHistoryPage(),
+          ),
+        ],
+      ),
       GoRoute(path: BuyPage.routeName, builder: (context, state) => const BuyPage()),
       GoRoute(path: SellPage.routeName, builder: (context, state) => const SellPage()),
       GoRoute(
