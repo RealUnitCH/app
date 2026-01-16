@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
@@ -21,7 +22,7 @@ class RealUnitBuyPaymentInfoService {
     final buyDto = RealUnitBuyDto(amount: amount, currency: currency);
 
     final authToken = _appStore.dfxAuthToken;
-    final uri = Uri.https(_host, _buyPaymentInfoPath);
+    final uri = buildUri(_host, _buyPaymentInfoPath);
     final response = await _appStore.httpClient.put(
       uri,
       headers: {
@@ -57,7 +58,7 @@ class RealUnitBuyPaymentInfoService {
 
   Future<void> confirmPayment(int id) async {
     final authToken = _appStore.dfxAuthToken;
-    final uri = Uri.https(_host, _confirmPaymentPath(id));
+    final uri = buildUri(_host, _confirmPaymentPath(id));
 
     final response = await _appStore.httpClient.put(
       uri,

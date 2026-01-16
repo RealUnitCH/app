@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_buy_price_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_shares_dto.dart';
@@ -16,7 +17,7 @@ class DfxBrokerbotService {
 
   /// Convert REALU shares → CHF
   Future<BrokerbotBuyPriceDto> getBuyPrice(int shares) async {
-    final uri = Uri.https(_host, _buyPricePath, {'shares': shares.toString()});
+    final uri = buildUri(_host, _buyPricePath, {'shares': shares.toString()});
     final res = await _appStore.httpClient.get(uri);
 
     if (res.statusCode != 200) {
@@ -28,7 +29,7 @@ class DfxBrokerbotService {
 
   /// Convert CHF → REALU shares
   Future<BrokerbotSharesDto> getShares(double amount) async {
-    final uri = Uri.https(_host, _sharesPath, {'amount': amount.toString()});
+    final uri = buildUri(_host, _sharesPath, {'amount': amount.toString()});
     final res = await _appStore.httpClient.get(uri);
 
     if (res.statusCode != 200) {
