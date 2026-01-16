@@ -64,7 +64,7 @@ class SettingsPage extends StatelessWidget {
                         title: S.of(context).settingsTaxReport,
                         leading: const DocumentReportIcon(size: 24),
                         trailing: _forwardIcon,
-                        onTap: null,
+                        onTap: () => context.push('/settings/taxReport'),
                       ),
                       SettingOption(
                         title: S.of(context).kycStatus,

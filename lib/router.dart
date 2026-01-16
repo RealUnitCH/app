@@ -21,6 +21,7 @@ import 'package:realunit_wallet/screens/settings_languages/settings_languages_pa
 import 'package:realunit_wallet/screens/settings_network/settings_network_page.dart';
 import 'package:realunit_wallet/screens/settings_nodes/settings_nodes_page.dart';
 import 'package:realunit_wallet/screens/settings_seed/settings_seed_page.dart';
+import 'package:realunit_wallet/screens/settings_tax_report/settings_tax_report_page.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/screens/welcome/welcome_page.dart';
@@ -75,6 +76,7 @@ void setupRouter() {
           GoRoute(path: '/languages', builder: (context, state) => const SettingsLanguagePage()),
           GoRoute(path: '/currencies', builder: (context, state) => const SettingsCurrenciesPage()),
           GoRoute(path: '/network', builder: (context, state) => SettingsNetworkPage()),
+          GoRoute(path: '/taxReport', builder: (context, state) => const SettingsTaxReportPage()),
           GoRoute(path: '/seed', builder: (context, state) => const SettingsSeedPage()),
           GoRoute(
             path: '/nodes',
