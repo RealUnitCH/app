@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_response_dto.dart';
@@ -54,7 +55,7 @@ class RealUnitRegistrationService {
     );
     final authToken = _appStore.dfxAuthToken;
 
-    final uri = Uri.https(_host, _registerPath);
+    final uri = buildUri(_host, _registerPath);
     final response = await _appStore.httpClient.post(
       uri,
       headers: {

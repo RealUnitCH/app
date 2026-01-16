@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/dto/dfx_country_dto.dart';
@@ -18,7 +19,7 @@ class DfxCountryService {
   Future<List<Country>> getAllCountries() async {
     if (cachedCountries != null) return cachedCountries!;
 
-    final uri = Uri.https(_host, _countryPath);
+    final uri = buildUri(_host, _countryPath);
     final response = await _appStore.httpClient.get(uri);
 
     if (response.statusCode == 200) {

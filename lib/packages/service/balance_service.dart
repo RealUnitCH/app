@@ -5,6 +5,7 @@ import 'dart:developer' as developer;
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
+import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:web3dart/web3dart.dart';
@@ -35,7 +36,7 @@ class BalanceService {
 
   Future<void> _updateRealUnitBalance(String address) async {
     try {
-      final uri = Uri.https(_host, '$_balancePath/$address');
+      final uri = buildUri(_host, '$_balancePath/$address');
 
       final response = await _appStore.httpClient.get(uri);
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/price_point.dart';
+import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/price_service.dart';
 import 'package:realunit_wallet/styles/currency.dart';
@@ -18,7 +19,7 @@ class DFXPriceService extends APriceService {
 
   @override
   Future<List<PricePoint>> getPriceChart(Asset asset, Currency currency) async {
-    final uri = Uri.https(_host, _priceHistoryPath, {'timeFrame': 'ALL'});
+    final uri = buildUri(_host, _priceHistoryPath, {'timeFrame': 'ALL'});
     final response = await _appStore.httpClient.get(uri);
 
     if (response.statusCode != 200) throw Exception(response.body);
@@ -49,7 +50,7 @@ class DFXPriceService extends APriceService {
 
   @override
   Future<BigInt> getPriceOfAsset(Asset asset, Currency currency) async {
-    final uri = Uri.https(_host, _pricePath);
+    final uri = buildUri(_host, _pricePath);
     final response = await _appStore.httpClient.get(uri);
 
     if (response.statusCode != 200) throw Exception(response.body);
