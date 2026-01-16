@@ -34,7 +34,7 @@ class _SellAddBankAccountSheetState extends State<SellAddBankAccountSheet> {
                 padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 4.0),
                 child: AppBar(
                   title: Text(
-                    S.of(context).payout_account_add,
+                    S.of(context).payoutAccountAdd,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -99,9 +99,9 @@ class _SellAddBankAccountSheetState extends State<SellAddBankAccountSheet> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return S.of(context).iban_required;
+                                return S.of(context).ibanRequired;
                               }
-                              if (!_isIban(value)) return S.of(context).iban_invalid;
+                              if (!_isIban(value)) return S.of(context).ibanInvalid;
                               return null;
                             },
                           ),
@@ -160,11 +160,9 @@ class _SellAddBankAccountSheetState extends State<SellAddBankAccountSheet> {
                           if (_formKey.currentState?.validate() ?? false) {
                             final newBankAccount = BankAccount(
                               iban: _ibanController.text,
-                              name: _nameController.text,
+                              name: _nameController.text.isNotEmpty ? _nameController.text : null,
                             );
-                            context
-                                .read<SellBankAccountsCubit>()
-                                .addBankAccount(bankAccount: newBankAccount);
+                            context.read<SellBankAccountsCubit>().add(bankAccount: newBankAccount);
                             context.pop(newBankAccount);
                           }
                         },

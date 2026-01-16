@@ -6,8 +6,8 @@ class SendState extends Equatable {
   const SendState({
     this.status = SendStatus.initial,
     this.asset = dEUROAsset,
-    this.receiver = "",
-    this.amount = "0",
+    this.receiver = '',
+    this.amount = '0',
     this.isValid = false,
     this.alias,
     this.balances = const [],

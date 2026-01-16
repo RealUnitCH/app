@@ -58,12 +58,12 @@ class SendBloc extends Bloc<SendEvent, SendState> {
 
   Future<void> _onReceiverChanged(ReceiverChanged event, Emitter<SendState> emit) async {
     emit(state.copyWith(receiver: event.receiver));
-    if (event.receiver.contains(".")) {
+    if (event.receiver.contains('.')) {
       final resolvedAlias = await AliasResolver.resolve(
         _appStore.getClient(1),
         alias: event.receiver,
         ticker: state.asset.symbol,
-        tickerFallback: "ETH",
+        tickerFallback: 'ETH',
       );
       emit(state.copyAlias(alias: resolvedAlias));
     } else {
@@ -78,8 +78,8 @@ class SendBloc extends Bloc<SendEvent, SendState> {
         emit(state.copyAlias(
           alias: AliasRecord(
             address: value!.text!,
-            name: S.current.from_clipboard,
-            description: "",
+            name: S.current.fromClipboard,
+            description: '',
           ),
         ));
       }
@@ -120,8 +120,8 @@ class SendBloc extends Bloc<SendEvent, SendState> {
         return showModalBottomSheet(
           context: navigatorKey.currentContext!,
           builder: (_) => ErrorBottomSheet(
-            message: S.current
-                .error_not_enough_money(state.blockchain.nativeSymbol, state.blockchain.name),
+            message:
+                S.current.errorNotEnoughMoney(state.blockchain.nativeSymbol, state.blockchain.name),
           ),
         );
       }
@@ -147,7 +147,7 @@ class SendBloc extends Bloc<SendEvent, SendState> {
           showCupertinoSheet(
             context: navigatorKey.currentContext!,
             builder: (_) => TransactionSentPage(
-              title: S.current.transaction_sent,
+              title: S.current.transactionSent,
               transactionId: id,
               blockchain: state.blockchain,
             ),

@@ -31,7 +31,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     emit(BitboxConnecting(device));
     try {
       await _service.connectDevice(device);
-      final wallet = await _walletService.createBitboxWallet("Luke-Skywallet");
+      final wallet = await _walletService.createBitboxWallet('Luke-Skywallet');
       emit(BitboxConnected(wallet));
     } catch (_) {
       emit(BitboxNotConnected());

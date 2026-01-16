@@ -22,9 +22,9 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
 
     _fiatDebounce?.cancel();
     _fiatDebounce = Timer(const Duration(milliseconds: 100), () async {
-      final amount = double.tryParse(value.replaceAll(",", "."));
+      final amount = double.tryParse(value.replaceAll(',', '.'));
       if (amount == null || amount <= 0) {
-        emit(state.copyWith(sharesText: ""));
+        emit(state.copyWith(sharesText: ''));
         return;
       }
 
@@ -51,7 +51,7 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
     _sharesDebounce = Timer(const Duration(milliseconds: 100), () async {
       final shares = int.tryParse(value);
       if (shares == null || shares <= 0) {
-        emit(state.copyWith(fiatText: ""));
+        emit(state.copyWith(fiatText: ''));
         return;
       }
 
@@ -71,8 +71,8 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
   }
 
   int _fractionDigits(String input) {
-    if (!input.contains(".")) return 2;
-    return input.split(".").last.length;
+    if (!input.contains('.')) return 2;
+    return input.split('.').last.length;
   }
 
   @override

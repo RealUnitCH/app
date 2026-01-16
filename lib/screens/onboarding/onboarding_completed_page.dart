@@ -30,7 +30,7 @@ class _OnboardingCompletedPageState extends State<OnboardingCompletedPage> {
           child: Column(
             children: [
               Image.asset(
-                "assets/images/realu_tokens.png",
+                'assets/images/realu_tokens.png',
                 height: 280,
               ),
               const SizedBox(height: 40.0),
@@ -38,7 +38,7 @@ class _OnboardingCompletedPageState extends State<OnboardingCompletedPage> {
                 spacing: 8.0,
                 children: [
                   Text(
-                    s.onboarding_completed_title,
+                    s.onboardingCompletedTitle,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 26,
@@ -47,7 +47,7 @@ class _OnboardingCompletedPageState extends State<OnboardingCompletedPage> {
                     ),
                   ),
                   Text(
-                    s.onboarding_completed_subtitle,
+                    s.onboardingCompletedSubtitle,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 14,
@@ -84,15 +84,15 @@ class _OnboardingCompletedPageState extends State<OnboardingCompletedPage> {
                           height: 16 / 12,
                         ),
                         children: [
-                          TextSpan(text: '${s.terms_1} '),
+                          TextSpan(text: '${s.terms1} '),
                           TextLinkSpan.link(context,
-                              text: s.privacy_policy,
+                              text: s.privacyPolicy,
                               uri: Uri.parse('https://realunit.ch/datenschutzerklaerung/')),
-                          TextSpan(text: ' ${s.terms_2} '),
+                          TextSpan(text: ' ${s.terms2} '),
                           TextLinkSpan.link(context,
-                              text: s.terms_and_conditions,
+                              text: s.termsAndConditions,
                               uri: Uri.parse('https://realunit.ch/nutzungsbedingungen/')),
-                          TextSpan(text: ' ${s.terms_3} ${s.realunit_ag} ${s.terms_4}'),
+                          TextSpan(text: ' ${s.terms3} ${s.realunitAg} ${s.terms4}'),
                         ],
                       ),
                     ),

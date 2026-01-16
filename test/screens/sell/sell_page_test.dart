@@ -82,8 +82,7 @@ void main() {
 
   group('$SellPage', () {
     testWidgets('renders $SellView', (tester) async {
-      // ignore: prefer_const_constructors
-      await tester.pumpApp(SellPage());
+      await tester.pumpApp(const SellPage());
 
       expect(find.byType(SellView), findsOne);
     });
@@ -129,14 +128,14 @@ void main() {
         whenListen(
           converterCubit,
           Stream.fromIterable([
-            const SellConverterState(fiatText: "5.00", sharesText: "0.10", loading: true),
-            const SellConverterState(fiatText: "5.00", sharesText: "0.50", loading: false),
+            const SellConverterState(fiatText: '5.00', sharesText: '0.10', loading: true),
+            const SellConverterState(fiatText: '5.00', sharesText: '0.50', loading: false),
           ]),
-          initialState: const SellConverterState(fiatText: "1.00", sharesText: "0.10"),
+          initialState: const SellConverterState(fiatText: '1.00', sharesText: '0.10'),
         );
 
         when(() => sellSelectedBankAccountCubit.state)
-            .thenReturn(BankAccount(iban: 'CH12 3456 7890 1234 5678 9'));
+            .thenReturn(const BankAccount(iban: 'CH12 3456 7890 1234 5678 9'));
 
         await tester.pumpApp(buildSubject(const SellView()));
         await tester.pumpAndSettle();

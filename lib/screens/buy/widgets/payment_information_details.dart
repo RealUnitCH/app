@@ -60,7 +60,7 @@ class PaymentInformationDetailsView extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            S.of(context).buy_payment_information,
+            S.of(context).buyPaymentInformation,
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -77,7 +77,7 @@ class PaymentInformationDetailsView extends StatelessWidget {
               ),
               Expanded(
                 child: Text(
-                  S.of(context).buy_payment_information_description,
+                  S.of(context).buyPaymentInformationDescription,
                   style: const TextStyle(
                     fontSize: 14,
                     height: 18 / 14,
@@ -102,7 +102,7 @@ class PaymentInformationDetailsView extends StatelessWidget {
                   children: _withDividers(
                     children: [
                       _PaymentInformationDetailsRow(
-                        description: '${S.of(context).amount_in} ${buyPaymentInfo.currency.code}',
+                        description: '${S.of(context).amountIn} ${buyPaymentInfo.currency.code}',
                         value: amount,
                       ),
                       _PaymentInformationDetailsRow(
@@ -123,7 +123,7 @@ class PaymentInformationDetailsView extends StatelessWidget {
                         value: '${buyPaymentInfo.street} ${buyPaymentInfo.number}',
                       ),
                       _PaymentInformationDetailsRow(
-                        description: S.of(context).postcode_abr,
+                        description: S.of(context).postcodeAbr,
                         value: buyPaymentInfo.zip,
                       ),
                       _PaymentInformationDetailsRow(
@@ -171,7 +171,7 @@ class PaymentInformationDetailsView extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            S.of(context).buy_payment_confirm,
+                            S.of(context).buyPaymentConfirm,
                             textAlign: TextAlign.center,
                             style: kFullwidthBlueButtonTextStyle,
                           ),

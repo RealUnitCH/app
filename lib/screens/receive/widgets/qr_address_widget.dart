@@ -1,7 +1,7 @@
-import 'package:realunit_wallet/styles/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 
 class QRAddressWidget extends StatelessWidget {
   const QRAddressWidget({super.key, required this.uri, required this.subtitle});
@@ -38,15 +38,15 @@ class QRAddressWidget extends StatelessWidget {
                           text: subtitle.substring(0, 6),
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        const TextSpan(text: " "),
+                        const TextSpan(text: ' '),
                         TextSpan(
                           text: subtitle.substring(6, 21),
                         ),
-                        const TextSpan(text: "\n"),
+                        const TextSpan(text: '\n'),
                         TextSpan(
                           text: subtitle.substring(21, 36),
                         ),
-                        const TextSpan(text: " "),
+                        const TextSpan(text: ' '),
                         TextSpan(
                           text: subtitle.substring(36),
                           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -72,6 +72,5 @@ class QRAddressWidget extends StatelessWidget {
         ],
       );
 
-  Future<void> _copyToClipboard() =>
-      Clipboard.setData(ClipboardData(text: subtitle));
+  Future<void> _copyToClipboard() => Clipboard.setData(ClipboardData(text: subtitle));
 }

@@ -15,7 +15,7 @@ class SettingsLanguagePage extends StatelessWidget {
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
           title: Text(
-            S.of(context).settings_languages,
+            S.of(context).settingsLanguages,
             style: kPageTitleTextStyle,
           ),
           centerTitle: true,

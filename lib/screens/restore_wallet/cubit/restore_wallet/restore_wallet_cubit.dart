@@ -16,9 +16,9 @@ class RestoreWalletCubit extends Cubit<RestoreWalletState> {
   void restoreWallet(String seed) async {
     emit(const RestoreWalletState(isLoading: true));
 
-    final normalizedSeed = seed.split(" ").where((element) => element.isNotEmpty).join(" ");
+    final normalizedSeed = seed.split(' ').where((element) => element.isNotEmpty).join(' ');
 
-    final wallet = await _walletService.restoreWallet("Obi-Wallet-Kenobi", normalizedSeed);
+    final wallet = await _walletService.restoreWallet('Obi-Wallet-Kenobi', normalizedSeed);
 
     emit(
       RestoreWalletState(
@@ -35,18 +35,18 @@ class RestoreWalletCubit extends Cubit<RestoreWalletState> {
       final data = await presentQRScanner(
         context,
         (String? code, List<int>? rawBytes) =>
-            rawBytes?.isNotEmpty == true && isSeedQr(code ?? "") || isCompactSeedQr(rawBytes ?? []),
+            rawBytes?.isNotEmpty == true && isSeedQr(code ?? '') || isCompactSeedQr(rawBytes ?? []),
       );
 
       String? seed;
-      if (isSeedQr(data?.value ?? "")) {
+      if (isSeedQr(data?.value ?? '')) {
         seed = getSeedFromSeedQr(data!.value!);
       } else if (isCompactSeedQr(data?.data ?? [])) {
         seed = getSeedFromCompactSeedQr(data!.data);
       }
 
       if (seed != null) {
-        final wallet = await _walletService.restoreWallet("Obi-Wallet-Kenobi", seed);
+        final wallet = await _walletService.restoreWallet('Obi-Wallet-Kenobi', seed);
         emit(
           RestoreWalletState(
             isLoading: false,

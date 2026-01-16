@@ -6,7 +6,6 @@ import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/packages/utils/format_fixed.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/cash_holding_box.dart';
-import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/styles.dart';
 import 'package:realunit_wallet/widgets/chain_asset_icon.dart';
 import 'package:realunit_wallet/widgets/handlebars.dart';
@@ -46,7 +45,7 @@ class AssetSelector extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
-                    S.of(context).select_token,
+                    S.of(context).selectToken,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 18,
@@ -66,8 +65,8 @@ class AssetSelector extends StatelessWidget {
                       child: CashHoldingBox(
                         asset: balance.asset,
                         balance: balance.balance,
-                        borderColor:
-                            balance.id == selectedBalance.id ? RealUnitColors.realUnitBlue : null,
+                        // borderColor:
+                        //     balance.id == selectedBalance.id ? RealUnitColors.realUnitBlue : null,
                       ),
                       // child: Container(
                       //   padding: const EdgeInsets.all(5),
@@ -123,11 +122,11 @@ class AssetSelector extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "${S.of(context).available}:",
+                      '${S.of(context).available}:',
                       style: kSubtitleTextStyle.copyWith(fontSize: 16),
                     ),
                     Text(
-                      "${formatFixed(selectedBalance.balance, selectedBalance.asset.decimals, fractionalDigits: 2)} ${selectedBalance.asset.symbol}",
+                      '${formatFixed(selectedBalance.balance, selectedBalance.asset.decimals, fractionalDigits: 2)} ${selectedBalance.asset.symbol}',
                       style: kPageTitleTextStyle,
                     ),
                   ],

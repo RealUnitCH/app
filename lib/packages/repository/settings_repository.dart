@@ -7,29 +7,29 @@ class SettingsRepository {
   SettingsRepository(this._sharedPreferences);
 
   Future<bool> saveCurrentWalletId(int walletId) =>
-      _sharedPreferences.setInt("currentWalletId", walletId);
+      _sharedPreferences.setInt('currentWalletId', walletId);
 
-  Future<bool> removeCurrentWalletId() => _sharedPreferences.remove("currentWalletId");
+  Future<bool> removeCurrentWalletId() => _sharedPreferences.remove('currentWalletId');
 
-  int? get currentWalletId => _sharedPreferences.getInt("currentWalletId");
+  int? get currentWalletId => _sharedPreferences.getInt('currentWalletId');
 
-  String get language => _sharedPreferences.getString("language") ?? "de";
+  String get language => _sharedPreferences.getString('language') ?? 'de';
 
-  set language(String langCode) => _sharedPreferences.setString("language", langCode);
+  set language(String langCode) => _sharedPreferences.setString('language', langCode);
 
-  String get currency => _sharedPreferences.getString("currency") ?? "CHF";
+  String get currency => _sharedPreferences.getString('currency') ?? 'CHF';
 
-  set currency(String currencyCode) => _sharedPreferences.setString("currency", currencyCode);
+  set currency(String currencyCode) => _sharedPreferences.setString('currency', currencyCode);
 
-  bool get termsAccepted => _sharedPreferences.getBool("termsAccepted") ?? false;
+  bool get termsAccepted => _sharedPreferences.getBool('termsAccepted') ?? false;
 
-  set termsAccepted(bool accepted) => _sharedPreferences.setBool("termsAccepted", accepted);
+  set termsAccepted(bool accepted) => _sharedPreferences.setBool('termsAccepted', accepted);
 
   NetworkMode get networkMode {
-    final value = _sharedPreferences.getString("networkMode");
+    final value = _sharedPreferences.getString('networkMode');
     return NetworkMode.values
         .firstWhere((network) => network.name == value, orElse: () => NetworkMode.testnet);
   }
 
-  set networkMode(NetworkMode mode) => _sharedPreferences.setString("networkMode", mode.name);
+  set networkMode(NetworkMode mode) => _sharedPreferences.setString('networkMode', mode.name);
 }

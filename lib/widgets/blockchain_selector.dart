@@ -38,7 +38,7 @@ class BlockchainSelector extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: Text(
-                  S.of(context).select_network,
+                  S.of(context).selectNetwork,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 18,
@@ -101,7 +101,7 @@ class BlockchainSelector extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                "${S.of(context).blockchain}:",
+                '${S.of(context).blockchain}:',
                 style: kPageTitleTextStyle,
               ),
             ),

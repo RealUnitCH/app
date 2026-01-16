@@ -74,7 +74,7 @@ class SectionBalance extends StatelessWidget {
                       HideAmountText(
                         amount: balance,
                         style: const TextStyle(
-                            fontSize: 35, color: Colors.white, fontFamily: "Satoshi Bold"),
+                            fontSize: 35, color: Colors.white, fontFamily: 'Satoshi Bold'),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -128,20 +128,20 @@ class SectionBalance extends StatelessWidget {
       try {
         final res = await getIt<OpenCryptoPayService>().getOpenCryptoPayInvoice(result.value!);
         if (context.mounted) {
-          context.push("/send/openCryptoPay", extra: res);
+          context.push('/send/openCryptoPay', extra: res);
         }
       } on OpenCryptoPayException catch (e) {
         developer.log('Error during Open CryptoPay',
             error: e, name: 'SectionBalance._presentQRReader');
       }
-    } else if (result.value!.startsWith("0x")) {
+    } else if (result.value!.startsWith('0x')) {
       if (context.mounted) {
-        context.push("/send", extra: SendRouteParams(receiver: result.value!));
+        context.push('/send', extra: SendRouteParams(receiver: result.value!));
       }
     } else {
       final uri = ERC681URI.fromString(result.value!);
       if (context.mounted) {
-        context.push("/send", extra: SendRouteParams(receiver: uri.address, amount: uri.amount));
+        context.push('/send', extra: SendRouteParams(receiver: uri.address, amount: uri.amount));
       }
     }
   }

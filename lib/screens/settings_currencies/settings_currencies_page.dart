@@ -15,7 +15,7 @@ class SettingsCurrenciesPage extends StatelessWidget {
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
           title: Text(
-            S.of(context).settings_currency,
+            S.of(context).settingsCurrency,
             style: kPageTitleTextStyle,
           ),
           centerTitle: true,

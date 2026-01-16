@@ -48,7 +48,7 @@ Future<String> setupEssentials() async {
 
   if (encryptionKey == null) {
     if (await _existsDatabaseFile()) {
-      throw Exception("Database found, but key is missing!");
+      throw Exception('Database found, but key is missing!');
     }
     final freshEncryptionKey = SecureStorage.getNewEncryptionKey();
     await secureStorage.setEncryptionKey(freshEncryptionKey);

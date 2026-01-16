@@ -44,7 +44,7 @@ class SettingsNodesView extends StatelessWidget {
                     child: TextField(
                       controller: urlFieldController,
                       decoration: const InputDecoration(
-                        hintText: "RPC-URL (https)",
+                        hintText: 'RPC-URL (https)',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(10)),
                         ),

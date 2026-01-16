@@ -59,7 +59,7 @@ class SendView extends StatelessWidget {
                       onChanged: (receiver) =>
                           context.read<SendBloc>().add(ReceiverChanged(receiver)),
                       inputFormatters: <TextInputFormatter>[
-                        FilteringTextInputFormatter.deny(RegExp(r" ")),
+                        FilteringTextInputFormatter.deny(RegExp(r' ')),
                       ],
                       decoration: InputDecoration(
                         hintText: S.of(context).receiver,
@@ -113,7 +113,7 @@ class SendView extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(left: 26, right: 26, top: 10),
                       child: Text(
-                        "${sendState.amount.toString()} €",
+                        '${sendState.amount.toString()} €',
                         style: const TextStyle(fontSize: 60),
                         textAlign: TextAlign.center,
                       ),

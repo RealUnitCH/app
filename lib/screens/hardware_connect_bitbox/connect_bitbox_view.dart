@@ -27,11 +27,11 @@ class ConnectBitboxView extends StatelessWidget {
                       curve: Curves.easeInOut,
                       offset: state is BitboxNotConnected ? Offset.zero : const Offset(-1.2, 0),
                       child: ConnectContent(
-                        title: S.of(context).connect_bitbox_title,
+                        title: S.of(context).connectBitboxTitle,
                         content: defaultTargetPlatform == TargetPlatform.iOS
-                            ? S.of(context).connect_bitbox_content_ios
-                            : S.of(context).connect_bitbox_content,
-                        imagePath: "assets/images/illustrations/bitbox_connect.svg",
+                            ? S.of(context).connectBitboxContentIos
+                            : S.of(context).connectBitboxContent,
+                        imagePath: 'assets/images/illustrations/bitbox_connect.svg',
                       ),
                     ),
                     AnimatedSlide(
@@ -39,9 +39,9 @@ class ConnectBitboxView extends StatelessWidget {
                       curve: Curves.easeInOut,
                       offset: state is BitboxFound ? Offset.zero : const Offset(1.2, 0),
                       child: ConnectContent(
-                        title: S.of(context).connected_bitbox_title,
-                        content: S.of(context).connected_bitbox_content,
-                        imagePath: "assets/images/illustrations/bitbox_connected.svg",
+                        title: S.of(context).connectedBitboxTitle,
+                        content: S.of(context).connectedBitboxContent,
+                        imagePath: 'assets/images/illustrations/bitbox_connected.svg',
                       ),
                     ),
                   ],

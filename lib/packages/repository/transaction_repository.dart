@@ -75,8 +75,8 @@ class TransactionRepository {
                   orElse: () => Asset(
                         chainId: blockchain.chainId,
                         address: txData.receiverAddress,
-                        name: "Unknown",
-                        symbol: "???",
+                        name: 'Unknown',
+                        symbol: '???',
                         decimals: 18,
                       ));
 
@@ -134,8 +134,8 @@ class TransactionRepository {
                   orElse: () => Asset(
                         chainId: blockchain.chainId,
                         address: transactionData.receiverAddress,
-                        name: "Unknown",
-                        symbol: "???",
+                        name: 'Unknown',
+                        symbol: '???',
                         decimals: 18,
                       ));
 

@@ -10,7 +10,7 @@ class CreateWalletCubit extends Cubit<CreateWalletState> {
   final WalletService _service;
 
   void createWallet() async {
-    final wallet = await _service.createSeedWallet("Obi-Wallet-Kenobi");
+    final wallet = await _service.createSeedWallet('Obi-Wallet-Kenobi');
 
     emit(state.copyWith(wallet: wallet));
   }

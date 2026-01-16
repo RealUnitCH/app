@@ -45,7 +45,7 @@ class SeedBlurCard extends StatelessWidget {
                               color: RealUnitColors.realUnitBlack,
                             ),
                             Text(
-                              S.of(context).tap_here_to_view,
+                              S.of(context).tapHereToView,
                               style: const TextStyle(
                                 fontSize: 14,
                                 height: 18 / 14,

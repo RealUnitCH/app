@@ -3,8 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/packages/open_crypto_pay/models.dart';
-import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
@@ -37,44 +35,42 @@ void setupRouter() {
     initialLocation: '/',
     // observers: [GoRouterObserver()],
     routes: <RouteBase>[
-      GoRoute(path: "/", builder: (context, state) => const HomePage()),
-      GoRoute(path: "/welcome", builder: (context, state) => const WelcomePage()),
-      GoRoute(path: "/wallet/create", builder: (context, state) => const CreateWalletPage()),
-      GoRoute(path: "/wallet/restore", builder: (context, state) => const RestoreWalletPage()),
+      GoRoute(path: '/', builder: (context, state) => const HomePage()),
+      GoRoute(path: '/welcome', builder: (context, state) => const WelcomePage()),
+      GoRoute(path: '/wallet/create', builder: (context, state) => const CreateWalletPage()),
+      GoRoute(path: '/wallet/restore', builder: (context, state) => const RestoreWalletPage()),
       GoRoute(
           path: OnboardingCompletedPage.route,
           builder: (context, state) => const OnboardingCompletedPage()),
-      GoRoute(
-          path: "/dashboard",
-          builder: (context, state) => DashboardPage(getIt<AppStore>(), getIt<DFXPriceService>())),
+      GoRoute(path: DashboardPage.routeName, builder: (context, state) => const DashboardPage()),
       GoRoute(path: BuyPage.routeName, builder: (context, state) => const BuyPage()),
       GoRoute(path: SellPage.routeName, builder: (context, state) => const SellPage()),
       GoRoute(
           path: RegistrationPage.routeName, builder: (context, state) => const RegistrationPage()),
       GoRoute(
-          path: "/receive", builder: (context, state) => const ReceivePage(isBottomSheet: false)),
+          path: '/receive', builder: (context, state) => const ReceivePage(isBottomSheet: false)),
       GoRoute(
-        path: "/send",
+        path: '/send',
         builder: (context, state) =>
             SendPage(params: (state.extra as SendRouteParams?) ?? const SendRouteParams()),
         routes: [
           GoRoute(
-            path: "/openCryptoPay",
+            path: '/openCryptoPay',
             builder: (context, state) =>
                 SendInvoicePage(request: state.extra as OpenCryptoPayRequest),
           ),
           GoRoute(
-            path: "/success/:txId",
+            path: '/success/:txId',
             builder: (context, state) => TransactionSentPage(
-              title: S.of(context).transaction_sent,
-              transactionId: state.pathParameters["txId"]!,
+              title: S.of(context).transactionSent,
+              transactionId: state.pathParameters['txId']!,
               blockchain: Blockchain.ethereum,
             ),
           ),
         ],
       ),
       GoRoute(
-        path: "/settings",
+        path: '/settings',
         routes: [
           GoRoute(path: '/languages', builder: (context, state) => const SettingsLanguagePage()),
           GoRoute(path: '/currencies', builder: (context, state) => const SettingsCurrenciesPage()),
@@ -85,10 +81,10 @@ void setupRouter() {
             builder: (context, state) => const SettingsNodesPage(),
             routes: [
               GoRoute(
-                path: "/:chainId",
+                path: '/:chainId',
                 builder: (context, state) => SettingsEditNodePage(
                   blockchain: Blockchain.getFromChainId(
-                    int.parse(state.pathParameters["chainId"]!),
+                    int.parse(state.pathParameters['chainId']!),
                   ),
                 ),
               ),

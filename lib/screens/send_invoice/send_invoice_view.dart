@@ -41,7 +41,7 @@ class SendInvoiceView extends StatelessWidget {
             ),
           ),
           middle: const Text(
-            "Open CryptoPay",
+            'Open CryptoPay',
             style: kPageTitleTextStyle,
           ),
           border: null,
@@ -58,12 +58,12 @@ class SendInvoiceView extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  "${sendState.invoice.amount} ${sendState.invoice.amountSymbol}",
+                  '${sendState.invoice.amount} ${sendState.invoice.amountSymbol}',
                   style: const TextStyle(fontSize: 60),
                   textAlign: TextAlign.center,
                 ),
                 Text(
-                  "${formatFixed(sendState.dEuroAmount, 18, fractionalDigits: 2)} dEuro",
+                  '${formatFixed(sendState.dEuroAmount, 18, fractionalDigits: 2)} dEuro',
                   style: const TextStyle(fontSize: 20),
                   textAlign: TextAlign.center,
                 ),
@@ -92,8 +92,8 @@ class SendInvoiceView extends StatelessWidget {
                         children: [
                           InfoRow(
                             padding: _kPadding,
-                            leading: S.of(context).expires_in,
-                            trailing: S.of(context).expires_in_seconds("${state.secondsRemaining}"),
+                            leading: S.of(context).expiresIn,
+                            trailing: S.of(context).expiresInSeconds('${state.secondsRemaining}'),
                           ),
                           Padding(
                             padding: _kPadding,

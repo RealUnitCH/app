@@ -1,10 +1,11 @@
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_payment_info_dto.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 class SellPaymentInfo {
   final int id;
-  final RealUnitEip7702DataDto eip7702;
-  final double amount;
+  final Eip7702Data eip7702;
+  final int amount;
   final double exchangeRate;
   final double rate;
   final BeneficiaryDto beneficiary;

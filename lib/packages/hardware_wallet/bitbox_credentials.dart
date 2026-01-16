@@ -23,13 +23,13 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
 
   @override
   MsgSignature signToEcSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) =>
-      throw UnimplementedError("EvmLedgerCredentials.signToEcSignature");
+      throw UnimplementedError('EvmLedgerCredentials.signToEcSignature');
 
   @override
   Future<MsgSignature> signToSignature(Uint8List payload,
       {int? chainId, bool isEIP1559 = false}) async {
     if (bitboxManager == null) {
-      throw Exception("Bitbox not connected");
+      throw Exception('Bitbox not connected');
     }
 
     if (isEIP1559) payload = payload.sublist(1);
@@ -66,13 +66,13 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
 
   @override
   Future<Uint8List> signPersonalMessage(Uint8List payload, {int? chainId}) async {
-    if (isNotConnected) throw Exception("Bitbox not connected");
+    if (isNotConnected) throw Exception('Bitbox not connected');
     return await bitboxManager!.signETHMessage(chainId ?? 1, derivationPath!, payload);
   }
 
   @override
   Uint8List signPersonalMessageToUint8List(Uint8List payload, {int? chainId}) =>
-      throw UnimplementedError("EvmLedgerCredentials.signPersonalMessageToUint8List");
+      throw UnimplementedError('EvmLedgerCredentials.signPersonalMessageToUint8List');
 
   bool get isNotConnected => bitboxManager == null;
 }

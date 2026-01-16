@@ -2,7 +2,7 @@ import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/packages/utils/fast_hash.dart';
 
 class Balance {
-  int get id => fastHash("$walletAddress:$chainId:$contractAddress");
+  int get id => fastHash('$walletAddress:$chainId:$contractAddress');
 
   final int chainId;
   final String contractAddress;

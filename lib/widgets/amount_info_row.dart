@@ -1,5 +1,5 @@
-import 'package:realunit_wallet/widgets/info_row.dart';
 import 'package:flutter/material.dart';
+import 'package:realunit_wallet/widgets/info_row.dart';
 
 class AmountInfoRow extends StatelessWidget {
   const AmountInfoRow({
@@ -18,7 +18,7 @@ class AmountInfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => InfoRow(
         leading: title,
-        trailing: "$amountString $currencySymbol",
+        trailing: '$amountString $currencySymbol',
         padding: padding,
       );
 }

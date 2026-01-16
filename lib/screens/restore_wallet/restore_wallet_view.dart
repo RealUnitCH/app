@@ -56,14 +56,14 @@ class RestoreWalletView extends StatelessWidget {
                           child: Column(
                             children: <Widget>[
                               SvgPicture.asset(
-                                "assets/images/restore_wallet.svg",
+                                'assets/images/restore_wallet.svg',
                                 height: 124,
                               ),
                               const SizedBox(
                                 height: 20,
                               ),
                               Text(
-                                S.of(context).restore_wallet,
+                                S.of(context).restoreWallet,
                                 style: const TextStyle(
                                   fontSize: 26,
                                   color: RealUnitColors.realUnitBlack,
@@ -83,12 +83,12 @@ class RestoreWalletView extends StatelessWidget {
                                       size: 20, color: RealUnitColors.realUnitBlue),
                                   Expanded(
                                     child: TextSubstringHighlighting(
-                                      text: S.of(context).restore_wallet_from_seed_description,
+                                      text: S.of(context).restoreWalletFromSeedDescription,
                                       style: const TextStyle(
                                         fontSize: 15,
                                         color: RealUnitColors.neutral500,
                                       ),
-                                      highlightedText: '12 ${S.of(context).recovery_words}',
+                                      highlightedText: '12 ${S.of(context).recoveryWords}',
                                     ),
                                   )
                                 ],

@@ -70,8 +70,8 @@ class SendInvoiceBloc extends Bloc<SendInvoiceEvent, SendInvoiceState> {
       return showModalBottomSheet(
         context: navigatorKey.currentContext!,
         builder: (_) => ErrorBottomSheet(
-          message: S.current
-              .error_not_enough_money(state.blockchain.nativeSymbol, state.blockchain.name),
+          message:
+              S.current.errorNotEnoughMoney(state.blockchain.nativeSymbol, state.blockchain.name),
         ),
       );
     }
@@ -102,7 +102,7 @@ class SendInvoiceBloc extends Bloc<SendInvoiceEvent, SendInvoiceState> {
         showCupertinoSheet(
           context: navigatorKey.currentContext!,
           builder: (_) => TransactionSentPage(
-            title: S.current.transaction_sent,
+            title: S.current.transactionSent,
             transactionId: id,
             blockchain: state.blockchain,
           ),

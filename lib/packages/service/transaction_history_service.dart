@@ -16,7 +16,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:web3dart/credentials.dart';
 
 class TransactionHistoryService {
-  static String _accountHistoryPath(String address) => "/v1/realunit/account/$address/history";
+  static String _accountHistoryPath(String address) => '/v1/realunit/account/$address/history';
   String get _host => _appStore.apiConfig.apiHost;
 
   final AppStore _appStore;
@@ -30,21 +30,21 @@ class TransactionHistoryService {
     final api = EtherscanAPI(apiKey: 'IBE36W7QPVF4M62N8AZ6YRTWK52FXWDH33', enableLogs: false);
     final latestHeight = (await _transactionRepository.getLatestHeight()) + 1;
 
-    developer.log("[explorerAssistedScan][$call call] Trying sync at $latestHeight");
+    developer.log('[explorerAssistedScan][$call call] Trying sync at $latestHeight');
 
     final txs =
         await api.txList(address: _appStore.primaryAddress, offset: 0, startblock: latestHeight);
 
     if ((txs.result ?? []).isEmpty) {
       developer.log(
-          "[explorerAssistedScan][$call call] 0 Transactions at $latestHeight. Sync finished!");
+          '[explorerAssistedScan][$call call] 0 Transactions at $latestHeight. Sync finished!');
       return;
     }
 
     final ercTx = await api.tokenTx(address: _appStore.primaryAddress, startblock: latestHeight);
 
     for (EtherScanTxResult result in txs.result ?? []) {
-      final isContractCall = result.input != "0x";
+      final isContractCall = result.input != '0x';
 
       final isTokenTransfer = ercTx.result?.any((e) => e.hash == result.hash) ?? false;
 
@@ -61,8 +61,8 @@ class TransactionHistoryService {
         asset ??= Asset(
           chainId: chain.chainId,
           address: result.to.asHexEip55,
-          name: "Unknown",
-          symbol: "???",
+          name: 'Unknown',
+          symbol: '???',
           decimals: 18,
         );
       }
@@ -80,7 +80,7 @@ class TransactionHistoryService {
                 ? TransactionTypes.tokenTransfer
                 : TransactionTypes.genericContractCall
             : TransactionTypes.transfer,
-        note: "",
+        note: '',
         data: isContractCall ? result.input : null,
         timestamp: DateTime.fromMillisecondsSinceEpoch(int.parse(result.timeStamp) * 1000),
       ));
@@ -94,8 +94,8 @@ class TransactionHistoryService {
               Asset(
                 chainId: chain.chainId,
                 address: result.to.asHexEip55,
-                name: "Unknown",
-                symbol: "???",
+                name: 'Unknown',
+                symbol: '???',
                 decimals: 18,
               );
 
@@ -110,7 +110,7 @@ class TransactionHistoryService {
           amount: BigInt.parse(result.value),
           asset: asset,
           type: TransactionTypes.tokenTransfer,
-          note: "",
+          note: '',
           data: result.input,
           timestamp: DateTime.fromMillisecondsSinceEpoch(int.parse(result.timeStamp) * 1000),
         ));
@@ -146,21 +146,25 @@ class TransactionHistoryService {
 
     final body = jsonDecode(response.body);
 
-    for (final entry in (body["history"])) {
-      final transferData = entry["transfer"] as Map;
-      _transactionRepository.insertTransaction(Transaction(
-        height: 0, // ToDo
-        txId: entry['txHash'],
-        chainId: _appStore.apiConfig.asset.chainId,
-        senderAddress: transferData['from'],
-        receiverAddress: transferData['to'],
-        amount: BigInt.parse(transferData['value']),
-        asset: _appStore.apiConfig.asset,
-        type: TransactionTypes.tokenTransfer,
-        note: "",
-        data: null,
-        timestamp: DateTime.parse(entry['timestamp']),
-      ));
+    for (final entry in (body['history'])) {
+      final txId = entry['txHash'];
+      final exists = await _transactionRepository.existsTransaction(txId);
+      if (!exists) {
+        final transferData = entry['transfer'] as Map;
+        _transactionRepository.insertTransaction(Transaction(
+          height: 0, // ToDo
+          txId: txId,
+          chainId: _appStore.apiConfig.asset.chainId,
+          senderAddress: transferData['from'],
+          receiverAddress: transferData['to'],
+          amount: BigInt.parse(transferData['value']),
+          asset: _appStore.apiConfig.asset,
+          type: TransactionTypes.tokenTransfer,
+          note: '',
+          data: null,
+          timestamp: DateTime.parse(entry['timestamp']),
+        ));
+      }
     }
   }
 }
@@ -170,16 +174,16 @@ extension ToEpiAddress on String {
 
   String get asShortAddress {
     final address = asHexEip55;
-    return "${address.substring(0, 6)}...${address.substring(address.length - 5)}";
+    return '${address.substring(0, 6)}...${address.substring(address.length - 5)}';
   }
 
   String get asShortTxId {
-    return "${substring(0, 10)}...${substring(length - 10)}";
+    return '${substring(0, 10)}...${substring(length - 10)}';
   }
 
   String get asMediumAddress {
     final address = asHexEip55;
-    return "${address.substring(0, 10)}...${address.substring(address.length - 10)}";
+    return '${address.substring(0, 10)}...${address.substring(address.length - 10)}';
   }
 
   bool get isValidAddress {

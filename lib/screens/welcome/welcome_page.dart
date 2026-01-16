@@ -48,7 +48,7 @@ class _WelcomePageState extends State<WelcomePage> {
                         const RealUnitIcon(size: 48),
                         const SizedBox(height: 8),
                         Text(
-                          S.of(context).realunit_wallet,
+                          S.of(context).realunitWallet,
                           style: const TextStyle(
                             color: RealUnitColors.realUnitBlack,
                             fontSize: 26,
@@ -58,7 +58,7 @@ class _WelcomePageState extends State<WelcomePage> {
                           ),
                         ),
                         Text(
-                          S.of(context).realunit_wallet_subtitle,
+                          S.of(context).realunitWalletSubtitle,
                           style: const TextStyle(
                             color: RealUnitColors.neutral500,
                             fontSize: 16,
@@ -80,8 +80,8 @@ class _WelcomePageState extends State<WelcomePage> {
                           spacing: 16.0,
                           children: [
                             WelcomeCard(
-                              title: S.of(context).software_wallet,
-                              description: S.of(context).software_wallet_subtitle,
+                              title: S.of(context).softwareWallet,
+                              description: S.of(context).softwareWalletSubtitle,
                               onPressed: () => setState(() => showSecondStep = true),
                               trailing: SvgPicture.asset(
                                 'assets/images/illustrations/software_wallet.svg',
@@ -90,7 +90,7 @@ class _WelcomePageState extends State<WelcomePage> {
                             if (defaultTargetPlatform == TargetPlatform.android)
                               WelcomeCard(
                                 title: S.of(context).bitbox,
-                                description: S.of(context).hardware_wallet_subtitle,
+                                description: S.of(context).hardwareWalletSubtitle,
                                 trailing: SvgPicture.asset(
                                   'assets/images/illustrations/bitbox.svg',
                                 ),
@@ -107,16 +107,16 @@ class _WelcomePageState extends State<WelcomePage> {
                           spacing: 16.0,
                           children: [
                             WelcomeCard(
-                              title: S.of(context).create_wallet,
-                              description: S.of(context).software_wallet_subtitle,
+                              title: S.of(context).createWallet,
+                              description: S.of(context).softwareWalletSubtitle,
                               onPressed: () => context.push('/wallet/create'),
                               trailing: SvgPicture.asset(
                                 'assets/images/illustrations/create_wallet.svg',
                               ),
                             ),
                             WelcomeCard(
-                              title: S.of(context).restore_wallet,
-                              description: S.of(context).hardware_wallet_subtitle,
+                              title: S.of(context).restoreWallet,
+                              description: S.of(context).hardwareWalletSubtitle,
                               onPressed: () => context.push('/wallet/restore'),
                               trailing: SvgPicture.asset(
                                 'assets/images/illustrations/restore_wallet.svg',

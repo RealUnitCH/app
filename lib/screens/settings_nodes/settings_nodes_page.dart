@@ -27,7 +27,7 @@ class SettingsNodesPage extends StatelessWidget {
             ),
           ),
           middle: Text(
-            S.of(context).settings_nodes,
+            S.of(context).settingsNodes,
             style: kPageTitleTextStyle,
           ),
           border: null,
@@ -51,7 +51,7 @@ class SettingsNodesPage extends StatelessWidget {
                           size: 20,
                           color: RealUnitColors.realUnitBlack,
                         ),
-                        onTap: () => context.push("/settings/nodes/${blockchain.chainId}"),
+                        onTap: () => context.push('/settings/nodes/${blockchain.chainId}'),
                       ),
                     )
                     .toList(),

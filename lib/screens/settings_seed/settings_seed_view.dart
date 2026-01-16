@@ -23,7 +23,7 @@ class SettingsSeedView extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   SvgPicture.asset(
-                    "assets/images/backup_seed.svg",
+                    'assets/images/backup_seed.svg',
                     height: 124,
                   ),
                   const SizedBox(height: 20),
@@ -31,7 +31,7 @@ class SettingsSeedView extends StatelessWidget {
                     spacing: 8.0,
                     children: [
                       Text(
-                        S.of(context).settings_wallet_backup,
+                        S.of(context).settingsWalletBackup,
                         style: const TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w700,
@@ -40,7 +40,7 @@ class SettingsSeedView extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        S.of(context).settings_wallet_backup_subtitle_1,
+                        S.of(context).settingsWalletBackupSubtitle1,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: RealUnitColors.neutral500,
@@ -49,7 +49,7 @@ class SettingsSeedView extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        S.of(context).settings_wallet_backup_subtitle_2,
+                        S.of(context).settingsWalletBackupSubtitle2,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: RealUnitColors.neutral500,
@@ -66,7 +66,7 @@ class SettingsSeedView extends StatelessWidget {
                     children: [
                       const RecoveryKeyIcon(size: 20, color: RealUnitColors.realUnitBlue),
                       Text(
-                        S.of(context).create_wallet_recovery_key_title,
+                        S.of(context).createWalletRecoveryKeyTitle,
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -91,7 +91,7 @@ class SettingsSeedView extends StatelessWidget {
                             onPressed: () => Clipboard.setData(
                                 ClipboardData(text: context.read<SettingsSeedCubit>().state.seed)),
                             child: Text(
-                              S.of(context).copy_seed,
+                              S.of(context).copySeed,
                               style:
                                   kPageTitleTextStyle.copyWith(color: RealUnitColors.realUnitBlue),
                             ),

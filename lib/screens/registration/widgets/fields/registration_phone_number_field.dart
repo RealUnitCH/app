@@ -36,7 +36,7 @@ class _RegistrationPhoneNumberFieldState extends State<RegistrationPhoneNumberFi
 
   void updatePhoneNumber() {
     if (prefix != null && number != null) {
-      final value = "$prefix$number";
+      final value = '$prefix$number';
       widget.controller.value = value;
     }
   }
@@ -49,7 +49,7 @@ class _RegistrationPhoneNumberFieldState extends State<RegistrationPhoneNumberFi
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           child: Text(
-            S.of(context).phone_number,
+            S.of(context).phoneNumber,
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
@@ -88,13 +88,13 @@ class _RegistrationPhoneNumberFieldState extends State<RegistrationPhoneNumberFi
                 hideErrorText: false,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return S.of(context).register_phone_number_invalid;
+                    return S.of(context).registerPhoneNumberInvalid;
                   }
                   if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-                    return S.of(context).register_phone_number_only_digits;
+                    return S.of(context).registerPhoneNumberOnlyDigits;
                   }
                   if (value.length < 6) {
-                    return S.of(context).register_phone_number_too_short;
+                    return S.of(context).registerPhoneNumberTooShort;
                   }
                   return null;
                 },

@@ -16,8 +16,15 @@ class SellBankAccountsCubit extends Cubit<List<BankAccount>> {
     _loadBankAccounts();
   }
 
-  void addBankAccount({required BankAccount bankAccount}) {
+  void add({required BankAccount bankAccount}) {
     final updatedList = List<BankAccount>.from(state)..add(bankAccount);
+    _sharedPreferences.setString(
+        _storageKey, jsonEncode(updatedList.map((a) => a.toJson()).toList()));
+    emit(updatedList);
+  }
+
+  void remove({required BankAccount bankAccount}) {
+    final updatedList = List<BankAccount>.from(state)..remove(bankAccount);
     _sharedPreferences.setString(
         _storageKey, jsonEncode(updatedList.map((a) => a.toJson()).toList()));
     emit(updatedList);

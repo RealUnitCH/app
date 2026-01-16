@@ -1,8 +1,8 @@
 import 'package:realunit_wallet/generated/i18n.dart';
 
 enum Currency {
-  eur("EUR"),
-  chf("CHF");
+  eur('EUR'),
+  chf('CHF');
 
   const Currency(this.code);
 
@@ -14,9 +14,9 @@ enum Currency {
   String get name {
     switch (this) {
       case Currency.eur:
-        return S.current.currency_eur;
+        return S.current.currencyEur;
       case Currency.chf:
-        return S.current.currency_chf;
+        return S.current.currencyChf;
     }
   }
 }

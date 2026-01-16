@@ -16,7 +16,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          S.of(context).payout_account_select,
+          S.of(context).payoutAccountSelect,
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -31,7 +31,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
               spacing: 16.0,
               children: [
                 BlocConsumer<SellBankAccountsCubit, List<BankAccount>>(
-                  listenWhen: (previous, current) => previous.length != current.length,
+                  listenWhen: (previous, current) => previous.length < current.length,
                   listener: (context, state) => context.pop(),
                   builder: (context, accounts) {
                     return ListView.separated(
@@ -48,30 +48,54 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                           },
                           child: Container(
                             decoration: BoxDecoration(
-                              color: RealUnitColors.neutral100,
+                              color: RealUnitColors.brand200,
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                             padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                            child: Column(
-                              spacing: 4.0,
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  account.name ?? '${S.of(context).without} ${S.of(context).label}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    height: 16 / 12,
-                                    letterSpacing: 0.0,
-                                    color: RealUnitColors.neutral400,
-                                  ),
+                                Column(
+                                  spacing: 4.0,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      account.name ??
+                                          '${S.of(context).without} ${S.of(context).label}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        height: 16 / 12,
+                                        letterSpacing: 0.0,
+                                        color: RealUnitColors.neutral600,
+                                      ),
+                                    ),
+                                    Text(
+                                      account.iban,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        height: 18 / 14,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.0,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  account.iban,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    height: 18 / 14,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.0,
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: RealUnitColors.neutral400,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: GestureDetector(
+                                    onTap: () => context
+                                        .read<SellBankAccountsCubit>()
+                                        .remove(bankAccount: account),
+                                    child: const Icon(
+                                      Icons.delete_outline_outlined,
+                                      color: RealUnitColors.realUnitBlack,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -85,7 +109,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                 TextButton.icon(
                   onPressed: () => _onAddBankAccountPressed(context),
                   label: Text(
-                    S.of(context).add_bank_account,
+                    S.of(context).addBankAccount,
                     style: const TextStyle(
                       fontSize: 16,
                       height: 20 / 16,

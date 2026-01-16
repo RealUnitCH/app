@@ -10,9 +10,9 @@ enum RegistrationUserType {
   String name(BuildContext context) {
     switch (this) {
       case RegistrationUserType.human:
-        return S.of(context).account_type_human;
+        return S.of(context).accountTypeHuman;
       case RegistrationUserType.corporation:
-        return S.of(context).account_type_corporation;
+        return S.of(context).accountTypeCorporation;
     }
   }
 
