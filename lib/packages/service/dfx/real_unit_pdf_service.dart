@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/pdf/balance_pdf_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/pdf/pdf_dto.dart';
 import 'package:realunit_wallet/styles/currency.dart';
@@ -37,7 +38,8 @@ class RealUnitPdfService {
       body: jsonEncode(balancePdfDto.toJson()),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception();
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson);
     }
 
     return PdfDto.fromJson(jsonDecode(response.body));

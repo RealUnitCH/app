@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
 import 'package:realunit_wallet/styles/currency.dart';
@@ -30,18 +31,19 @@ class SettingsTaxReportCubit extends Cubit<SettingsTaxReportState> {
         currency: currency,
         language: language,
       );
-      final file = await _createFileFromBytes(response.pdfData);
+      final file = await _createFileFromBytes(response.pdfData, date);
 
       emit(SettingsTaxReportSuccess(file.path));
     } catch (e) {
-      emit(const SettingsTaxReportFailure());
+      emit(SettingsTaxReportFailure(e.toString()));
     }
   }
 
-  Future<File> _createFileFromBytes(String data) async {
+  Future<File> _createFileFromBytes(String data, DateTime date) async {
     final bytes = base64Decode(data);
     final tempDir = await getTemporaryDirectory();
-    final file = File('${tempDir.path}/balance_report.pdf');
+    final file =
+        File('${tempDir.path}/balance_report_${DateFormat('dd_MM_yyyy').format(date)}.pdf');
     await file.writeAsBytes(bytes, flush: true);
     return file;
   }

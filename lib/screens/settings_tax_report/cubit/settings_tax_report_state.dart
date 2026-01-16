@@ -25,5 +25,7 @@ class SettingsTaxReportSuccess extends SettingsTaxReportState {
 }
 
 class SettingsTaxReportFailure extends SettingsTaxReportState {
-  const SettingsTaxReportFailure();
+  final String message;
+
+  const SettingsTaxReportFailure(this.message);
 }

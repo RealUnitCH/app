@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:open_file/open_file.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings_tax_report/cubit/settings_tax_report_cubit.dart';
+import 'package:realunit_wallet/screens/settings_tax_report/widgets/settings_tax_report_date_picker.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 
 class SettingsTaxReportPage extends StatelessWidget {
   const SettingsTaxReportPage({super.key});
@@ -13,27 +17,103 @@ class SettingsTaxReportPage extends StatelessWidget {
       create: (context) => SettingsTaxReportCubit(
         getIt<RealUnitPdfService>(),
       ),
-      child: const SettingsTaxReportView(),
+      child: SettingsTaxReportView(),
     );
   }
 }
 
 class SettingsTaxReportView extends StatelessWidget {
-  const SettingsTaxReportView({super.key});
+  SettingsTaxReportView({super.key});
+
+  final _datePickerModel = _DatePickerModel();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Steuerbericht',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+    final settingsState = context.read<SettingsBloc>().state;
+    return BlocListener<SettingsTaxReportCubit, SettingsTaxReportState>(
+      listener: (context, state) async {
+        if (state is SettingsTaxReportFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: RealUnitColors.status.red600,
+            ),
+          );
+        }
+        if (state is SettingsTaxReportSuccess) {
+          await OpenFile.open(state.taxReportPath);
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Steuerbericht',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Column(
+            spacing: 20.0,
+            children: [
+              const Text(
+                'Hier kannst du deinen Steuerbericht für ein spezifisches Datum generieren.',
+                textAlign: TextAlign.center,
+              ),
+              ValueListenableBuilder(
+                  valueListenable: _datePickerModel,
+                  builder: (context, value, child) {
+                    return SettingsTaxReportDatePicker(
+                      initialDate: _datePickerModel.value,
+                      onPressed: () async {
+                        final newDate = await showDatePicker(
+                          context: context,
+                          firstDate: DateTime(2025),
+                          lastDate: DateTime.now(),
+                          currentDate: _datePickerModel.value,
+                        );
+                        if (newDate != null) _datePickerModel.setDate(newDate);
+                      },
+                    );
+                  }),
+              BlocBuilder<SettingsTaxReportCubit, SettingsTaxReportState>(
+                  builder: (context, state) {
+                if (state is SettingsTaxReportLoading) {
+                  return FilledButton.icon(
+                    onPressed: null,
+                    icon: SizedBox(
+                      height: 14,
+                      width: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.5,
+                        color: RealUnitColors.basic.black.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    label: const Text('PDF'),
+                  );
+                }
+                return FilledButton.icon(
+                  onPressed: () => context.read<SettingsTaxReportCubit>().generateTaxReport(
+                      date: _datePickerModel.value,
+                      currency: settingsState.currency,
+                      language: settingsState.language),
+                  label: const Text('PDF'),
+                  icon: const Icon(Icons.download),
+                );
+              }),
+            ],
           ),
         ),
       ),
-      body: Row(),
     );
   }
+}
+
+class _DatePickerModel extends ValueNotifier<DateTime> {
+  _DatePickerModel() : super(DateTime.now());
+
+  void setDate(DateTime date) => value = date;
 }
