@@ -3,13 +3,13 @@ import 'package:intl/intl.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class SettingsTaxReportDatePicker extends StatelessWidget {
-  final DateTime? initialDate;
+  final DateTime initialDate;
   final void Function()? onPressed;
 
   const SettingsTaxReportDatePicker({
     super.key,
-    this.initialDate,
-    this.onPressed,
+    required this.initialDate,
+    required this.onPressed,
   });
 
   @override
@@ -30,7 +30,7 @@ class SettingsTaxReportDatePicker extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(DateFormat('dd.MM.yyyy').format(initialDate ?? DateTime.now())),
+                  Text(DateFormat('dd.MM.yyyy').format(initialDate)),
                   const Icon(
                     Icons.calendar_today_outlined,
                     size: 20,
