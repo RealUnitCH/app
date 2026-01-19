@@ -5,7 +5,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:realunit_wallet/screens/dashboard/bloc/transaction_history_cubit.dart';
+import 'package:realunit_wallet/screens/dashboard/bloc/dashboard_transaction_history_cubit.dart';
 import 'package:realunit_wallet/screens/transaction_history/widgets/transaction_date_picker.dart';
 import 'package:realunit_wallet/screens/transaction_history/widgets/transaction_history_row.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -20,7 +20,7 @@ class TransactionHistoryPage extends StatelessWidget {
     final appStore = getIt<AppStore>();
 
     return BlocProvider(
-      create: (context) => TransactionHistoryCubit(
+      create: (context) => DashboardTransactionHistoryCubit(
         getIt<TransactionRepository>(),
         asset: appStore.apiConfig.asset,
         walletAddress: appStore.primaryAddress,
@@ -64,7 +64,7 @@ class _TransactionHistoryViewState extends State<TransactionHistoryView> {
           ),
         ),
       ),
-      body: BlocBuilder<TransactionHistoryCubit, List<Transaction>>(
+      body: BlocBuilder<DashboardTransactionHistoryCubit, List<Transaction>>(
         builder: (context, transactions) {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
