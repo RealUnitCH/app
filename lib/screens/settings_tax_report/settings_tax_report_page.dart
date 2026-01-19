@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
 import 'package:realunit_wallet/di.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings_tax_report/cubit/settings_tax_report_cubit.dart';
@@ -46,9 +47,9 @@ class SettingsTaxReportView extends StatelessWidget {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text(
-            'Steuerbericht',
-            style: TextStyle(
+          title: Text(
+            S.of(context).taxReport,
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
@@ -59,8 +60,8 @@ class SettingsTaxReportView extends StatelessWidget {
           child: Column(
             spacing: 20.0,
             children: [
-              const Text(
-                'Hier kannst du deinen Steuerbericht für ein spezifisches Datum generieren.',
+              Text(
+                S.of(context).taxReportDescription,
                 textAlign: TextAlign.center,
               ),
               ValueListenableBuilder(
@@ -92,7 +93,7 @@ class SettingsTaxReportView extends StatelessWidget {
                         color: RealUnitColors.basic.black.withValues(alpha: 0.5),
                       ),
                     ),
-                    label: const Text('PDF'),
+                    label: Text(S.of(context).pdf),
                   );
                 }
                 return FilledButton.icon(
@@ -100,7 +101,7 @@ class SettingsTaxReportView extends StatelessWidget {
                       date: _datePickerModel.value,
                       currency: settingsState.currency,
                       language: settingsState.language),
-                  label: const Text('PDF'),
+                  label: Text(S.of(context).pdf),
                   icon: const Icon(Icons.download),
                 );
               }),
