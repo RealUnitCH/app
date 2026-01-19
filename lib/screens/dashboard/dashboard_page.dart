@@ -26,7 +26,7 @@ class DashboardPage extends StatelessWidget {
       create: (context) => DashboardBloc(
         getIt<DFXPriceService>(),
         asset: getIt<AppStore>().apiConfig.asset,
-        currency: context.read<SettingsBloc>().state.currency,
+        initialCurrency: context.read<SettingsBloc>().state.currency,
       ),
       child: const DashboardView(),
     );
@@ -72,42 +72,49 @@ class DashboardView extends StatelessWidget {
           ),
         ),
       ),
-      body: PopScope(
-        canPop: false,
-        child: Column(
-          children: [
-            PriceWidget(
-              currency: context.read<SettingsBloc>().state.currency,
-              price: dashboardState.price,
-              priceChart: dashboardState.priceChart,
-            ),
-            Expanded(
-              child: Stack(
-                children: [
-                  Container(color: RealUnitColors.neutral100),
-                  SingleChildScrollView(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20.0,
-                        vertical: 24.0,
-                      ),
-                      child: Column(
-                        spacing: 20.0,
-                        children: [
-                          if (isFiatServiceAvailable) const DashboardActions(),
-                          DashboardPortfolio(
-                            price: dashboardState.price,
+      body: BlocConsumer<SettingsBloc, SettingsState>(
+        listenWhen: (previous, current) => previous.currency != current.currency,
+        listener: (context, state) {
+          context.read<DashboardBloc>().add(CurrencyChangedEvent(state.currency));
+        },
+        builder: (context, state) {
+          return PopScope(
+            canPop: false,
+            child: Column(
+              children: [
+                PriceWidget(
+                  price: dashboardState.price,
+                  priceChart: dashboardState.priceChart,
+                ),
+                Expanded(
+                  child: Stack(
+                    children: [
+                      Container(color: RealUnitColors.neutral100),
+                      SingleChildScrollView(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20.0,
+                            vertical: 24.0,
                           ),
-                          const DashboardTransactionHistory(),
-                        ],
+                          child: Column(
+                            spacing: 20.0,
+                            children: [
+                              if (isFiatServiceAvailable) const DashboardActions(),
+                              DashboardPortfolio(
+                                price: dashboardState.price,
+                              ),
+                              const DashboardTransactionHistory(),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
