@@ -10,3 +10,12 @@ sealed class DashboardEvent extends Equatable {
 final class RefreshPriceEvent extends DashboardEvent {}
 
 final class RefreshPriceChartEvent extends DashboardEvent {}
+
+final class CurrencyChangedEvent extends DashboardEvent {
+  final Currency currency;
+
+  const CurrencyChangedEvent(this.currency);
+
+  @override
+  List<Object> get props => [currency];
+}
