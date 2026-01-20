@@ -1,100 +1,141 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/transaction.dart';
+import 'package:realunit_wallet/screens/transaction_history/cubits/receipt/transaction_history_receipt_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/hide_amount_text.dart';
 
 class TransactionHistoryRow extends StatelessWidget {
-  final Transaction transaction;
-  final String walletAddress;
-
-  const TransactionHistoryRow({
+  TransactionHistoryRow({
     super.key,
     required this.transaction,
     required this.walletAddress,
   });
 
+  final Transaction transaction;
+  final String walletAddress;
+
+  final _loadingModel = _TransactionHistoryRowLoadingModel();
+
   bool get _isOutbound => transaction.isOutbound(walletAddress);
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      child: Column(
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.max,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            spacing: 10.0,
-            children: [
-              _isOutbound
-                  ? Container(
-                      height: 32,
-                      width: 32,
-                      decoration: BoxDecoration(
-                          color: RealUnitColors.brand200,
-                          borderRadius: BorderRadius.circular(24.0)),
-                      child: const Icon(
-                        Icons.horizontal_rule_rounded,
-                        color: RealUnitColors.darkBlue,
+    return BlocListener<TransactionHistoryReceiptCubit, TransactionHistoryReceiptState>(
+      listenWhen: (previous, current) => previous is TransactionHistoryReceiptLoading,
+      listener: (context, state) => _loadingModel.setLoading(false),
+      child: InkWell(
+        child: Column(
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              spacing: 10.0,
+              children: [
+                _isOutbound
+                    ? Container(
+                        height: 32,
+                        width: 32,
+                        decoration: BoxDecoration(
+                            color: RealUnitColors.brand200,
+                            borderRadius: BorderRadius.circular(24.0)),
+                        child: const Icon(
+                          Icons.horizontal_rule_rounded,
+                          color: RealUnitColors.darkBlue,
+                        ),
+                      )
+                    : Container(
+                        height: 32,
+                        width: 32,
+                        decoration: BoxDecoration(
+                            color: RealUnitColors.brand200,
+                            borderRadius: BorderRadius.circular(24.0)),
+                        child: const Icon(
+                          Icons.add,
+                          color: RealUnitColors.darkBlue,
+                        ),
                       ),
-                    )
-                  : Container(
-                      height: 32,
-                      width: 32,
-                      decoration: BoxDecoration(
-                          color: RealUnitColors.brand200,
-                          borderRadius: BorderRadius.circular(24.0)),
-                      child: const Icon(
-                        Icons.add,
-                        color: RealUnitColors.darkBlue,
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _isOutbound ? S.of(context).transactionSell : S.of(context).transactionBuy,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          height: 20 / 16,
+                        ),
                       ),
-                    ),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _isOutbound ? S.of(context).transactionSell : S.of(context).transactionBuy,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        height: 20 / 16,
+                      Text(
+                        DateFormat('MMM dd, yyyy | H:mm').format(transaction.timestamp),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          height: 16 / 12,
+                          color: RealUnitColors.neutral500,
+                        ),
                       ),
-                    ),
-                    Text(
-                      DateFormat('MMM dd, yyyy | H:mm').format(transaction.timestamp),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        height: 16 / 12,
-                        color: RealUnitColors.neutral500,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              HideAmountText(
-                leadingSymbol: _isOutbound ? '-' : '+',
-                amount: transaction.amount,
-                decimals: transaction.asset.decimals,
-                fractionalDigits: 0,
-                trimZeros: false,
-                trailingSymbol: transaction.asset.symbol,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  height: 20 / 16,
+                HideAmountText(
+                  leadingSymbol: _isOutbound ? '-' : '+',
+                  amount: transaction.amount,
+                  decimals: transaction.asset.decimals,
+                  fractionalDigits: 0,
+                  trimZeros: false,
+                  trailingSymbol: transaction.asset.symbol,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    height: 20 / 16,
+                  ),
                 ),
-              ),
-              const Icon(
-                Icons.download_outlined,
-                color: RealUnitColors.realUnitBlue,
-              ),
-            ],
-          ),
-        ],
+                ValueListenableBuilder(
+                  valueListenable: _loadingModel,
+                  builder: (context, loading, child) {
+                    if (loading) {
+                      return const Padding(
+                        padding: EdgeInsets.all(4.0),
+                        child: SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: RealUnitColors.realUnitBlue,
+                          ),
+                        ),
+                      );
+                    }
+                    return GestureDetector(
+                      onTap: () {
+                        _loadingModel.setLoading(true);
+                        context
+                            .read<TransactionHistoryReceiptCubit>()
+                            .generateReceipt(transaction.txId);
+                      },
+                      child: const Icon(
+                        size: 20,
+                        Icons.download_outlined,
+                        color: RealUnitColors.realUnitBlue,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
+}
+
+class _TransactionHistoryRowLoadingModel extends ValueNotifier<bool> {
+  _TransactionHistoryRowLoadingModel() : super(false);
+
+  void setLoading(bool loading) => value = loading;
 }
