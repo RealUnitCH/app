@@ -48,7 +48,7 @@ class SettingsSections extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             itemCount: settings.length,
             itemBuilder: (context, index) {
-              final setting = settings[index];
+              final setting = settings.elementAt(index);
               final disabled = setting.onTap == null;
               final titleColor = disabled
                   ? RealUnitColors.realUnitBlack.withValues(alpha: 0.5)
@@ -65,53 +65,48 @@ class SettingsSections extends StatelessWidget {
                   opacity: disabled ? 0.5 : 1.0,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      vertical: 12,
-                      horizontal: 14,
+                      vertical: 16,
+                      horizontal: 20,
                     ),
                     child: Row(
+                      spacing: 8.0,
                       children: [
                         if (setting.leading != null) setting.leading!,
                         Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  setting.title,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: titleColor,
-                                    fontSize: 16,
-                                  ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                setting.title,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: titleColor,
+                                  fontSize: 16,
                                 ),
-                                if (setting.subtitle != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4),
-                                    child: Text(
-                                      setting.subtitle!,
-                                      style: TextStyle(
-                                        color: subtitleColor,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w400,
-                                      ),
+                              ),
+                              if (setting.subtitle != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    setting.subtitle!,
+                                    style: TextStyle(
+                                      color: subtitleColor,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
                                     ),
                                   ),
-                              ],
-                            ),
+                                ),
+                            ],
                           ),
                         ),
                         if (setting.trailing != null) ...[
                           if (setting.selectedOption != null)
-                            Padding(
-                              padding: const EdgeInsets.only(right: 12),
-                              child: Text(
-                                setting.selectedOption!,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w400,
-                                  color: subtitleColor,
-                                  fontSize: 14,
-                                ),
+                            Text(
+                              setting.selectedOption!,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w400,
+                                color: subtitleColor,
+                                fontSize: 14,
                               ),
                             ),
                           setting.trailing!,
