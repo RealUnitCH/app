@@ -12,6 +12,12 @@ ThemeData get realUnitTheme => ThemeData(
         backgroundColor: Colors.transparent,
         foregroundColor: RealUnitColors.realUnitBlack,
         iconTheme: IconThemeData(color: RealUnitColors.realUnitBlack),
+        titleTextStyle: TextStyle(
+          color: RealUnitColors.realUnitBlack,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          height: 20 / 16,
+        ),
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.dark, // For Android
@@ -28,6 +34,15 @@ ThemeData get realUnitTheme => ThemeData(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(32.0),
+          ),
+        ),
+      ),
+      dropdownMenuTheme: DropdownMenuThemeData(
+        menuStyle: MenuStyle(
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
         ),
       ),
