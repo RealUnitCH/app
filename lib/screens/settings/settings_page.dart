@@ -56,11 +56,10 @@ class SettingsPage extends StatelessWidget {
                       onTap: () => context.push('/settings/network'),
                     ),
                     SettingOption(
-                      title: S.of(context).settingsTaxReport,
-                      leading: const DocumentReportIcon(size: 24),
-                      trailing: _forwardIcon,
-                      onTap: null,
-                    ),
+                        title: S.of(context).settingsTaxReport,
+                        leading: const DocumentReportIcon(size: 24),
+                        trailing: _forwardIcon,
+                        onTap: () => context.push('/settings/taxReport')),
                     SettingOption(
                       title: S.of(context).kycStatus,
                       leading: const IdentificationIcon(size: 24),
