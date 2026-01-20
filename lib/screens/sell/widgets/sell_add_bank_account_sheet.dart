@@ -35,10 +35,6 @@ class _SellAddBankAccountSheetState extends State<SellAddBankAccountSheet> {
                 child: AppBar(
                   title: Text(
                     S.of(context).payoutAccountAdd,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
                   ),
                 ),
               ),

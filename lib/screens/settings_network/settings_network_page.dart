@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_section.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/styles/styles.dart';
 
 class SettingsNetworkPage extends StatelessWidget {
   SettingsNetworkPage({super.key});
@@ -18,13 +16,8 @@ class SettingsNetworkPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(Icons.arrow_back_rounded),
-        ),
         title: Text(
           S.of(context).settingsNetwork,
-          style: kPageTitleTextStyle,
         ),
       ),
       body: BlocConsumer<SettingsBloc, SettingsState>(
