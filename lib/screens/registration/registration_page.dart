@@ -86,10 +86,6 @@ class _RegistrationViewState extends State<RegistrationView> {
               ),
               title: Text(
                 state.title(context),
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
               ),
             );
           },

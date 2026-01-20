@@ -50,6 +50,7 @@ class RegistrationDropdownField<T> extends StatelessWidget {
             items: items,
             isExpanded: true,
             isDense: true,
+            borderRadius: BorderRadius.circular(8.0),
             menuMaxHeight: MediaQuery.sizeOf(context).height * 0.4,
             decoration: InputDecoration(
               enabledBorder: const OutlineInputBorder(
