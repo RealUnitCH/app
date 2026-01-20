@@ -6,7 +6,6 @@ import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_section.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/currency.dart';
-import 'package:realunit_wallet/styles/styles.dart';
 
 class SettingsCurrenciesPage extends StatelessWidget {
   const SettingsCurrenciesPage({super.key});
@@ -16,9 +15,7 @@ class SettingsCurrenciesPage extends StatelessWidget {
         appBar: AppBar(
           title: Text(
             S.of(context).settingsCurrency,
-            style: kPageTitleTextStyle,
           ),
-          centerTitle: true,
         ),
         body: SingleChildScrollView(
           child: SizedBox(

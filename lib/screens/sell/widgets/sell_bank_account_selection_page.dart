@@ -17,10 +17,6 @@ class SellBankAccountSelectionPage extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           S.of(context).payoutAccountSelect,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
         ),
       ),
       body: SingleChildScrollView(
