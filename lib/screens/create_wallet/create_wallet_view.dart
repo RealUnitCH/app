@@ -24,9 +24,10 @@ class CreateWalletView extends StatelessWidget {
             child: BlocBuilder<CreateWalletCubit, CreateWalletState>(
               builder: (context, state) {
                 if (state.wallet != null) {
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
+                  return SingleChildScrollView(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
                       Padding(
                         padding: const EdgeInsets.only(top: 20, bottom: 20),
                         child: SvgPicture.asset(
@@ -102,7 +103,7 @@ class CreateWalletView extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(height: 20),
                       Padding(
                         padding: const EdgeInsets.only(top: 20, bottom: 20),
                         child: SizedBox(
@@ -119,7 +120,8 @@ class CreateWalletView extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ],
+                      ],
+                    ),
                   );
                 }
                 return const Center(

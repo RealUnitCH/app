@@ -27,8 +27,9 @@ class _OnboardingCompletedPageState extends State<OnboardingCompletedPage> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Column(
-            children: [
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
               Image.asset(
                 'assets/images/realu_tokens.png',
                 height: 280,
@@ -58,7 +59,7 @@ class _OnboardingCompletedPageState extends State<OnboardingCompletedPage> {
                   ),
                 ],
               ),
-              const Spacer(),
+              const SizedBox(height: 20),
               Row(
                 spacing: 12,
                 children: [
@@ -111,7 +112,8 @@ class _OnboardingCompletedPageState extends State<OnboardingCompletedPage> {
                   ),
                 ),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
