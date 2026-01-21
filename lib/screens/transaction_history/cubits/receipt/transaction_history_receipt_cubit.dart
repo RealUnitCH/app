@@ -15,12 +15,12 @@ class TransactionHistoryReceiptCubit extends Cubit<TransactionHistoryReceiptStat
       : _pdfService = pdfService,
         super(const TransactionHistoryReceiptInitial());
 
-  Future<void> generateReceipt(String txId) async {
+  Future<void> generateReceipt(int dfxId) async {
     try {
       emit(const TransactionHistoryReceiptLoading());
 
-      final response = await _pdfService.getTransactionReceipt(txId);
-      final file = await _createFileFromBytes(response.pdfData, txId);
+      final response = await _pdfService.getTransactionReceipt(dfxId);
+      final file = await _createFileFromBytes(response.pdfData, dfxId);
 
       emit(TransactionHistoryReceiptSuccess(file.path));
     } catch (e) {
@@ -28,10 +28,10 @@ class TransactionHistoryReceiptCubit extends Cubit<TransactionHistoryReceiptStat
     }
   }
 
-  Future<File> _createFileFromBytes(String data, String txId) async {
+  Future<File> _createFileFromBytes(String data, int dfxId) async {
     final bytes = base64Decode(data);
     final tempDir = await getTemporaryDirectory();
-    final file = File('${tempDir.path}/receipt_$txId.pdf');
+    final file = File('${tempDir.path}/receipt_$dfxId.pdf');
     await file.writeAsBytes(bytes, flush: true);
     return file;
   }

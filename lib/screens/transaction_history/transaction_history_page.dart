@@ -87,65 +87,67 @@ class _TransactionHistoryViewState extends State<TransactionHistoryView> {
         },
         child: BlocBuilder<TransactionHistoryFilterCubit, TransactionHistoryFilterState>(
           builder: (context, state) {
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                spacing: 20.0,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 8.0,
-                    children: [
-                      Expanded(
-                        child: TransactionDatePicker(
-                          label: S.of(context).startDate,
-                          initialDate: startDate,
-                          onPressed: () => _selectDate(DateType.start),
+            return SingleChildScrollView(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Column(
+                  spacing: 20.0,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 8.0,
+                      children: [
+                        Expanded(
+                          child: TransactionDatePicker(
+                            label: S.of(context).startDate,
+                            initialDate: startDate,
+                            onPressed: () => _selectDate(DateType.start),
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: TransactionDatePicker(
-                          label: S.of(context).endDate,
-                          initialDate: endDate,
-                          onPressed: () => _selectDate(DateType.end),
+                        Expanded(
+                          child: TransactionDatePicker(
+                            label: S.of(context).endDate,
+                            initialDate: endDate,
+                            onPressed: () => _selectDate(DateType.end),
+                          ),
                         ),
-                      ),
-                      Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: Text(
-                              S.of(context).pdf,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                                height: 16 / 12,
-                                color: RealUnitColors.neutral500,
+                        Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4.0),
+                              child: Text(
+                                S.of(context).pdf,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  height: 16 / 12,
+                                  color: RealUnitColors.neutral500,
+                                ),
                               ),
                             ),
-                          ),
-                          Container(
-                            height: 44,
-                            width: 44,
-                            decoration: BoxDecoration(
-                                color: RealUnitColors.realUnitBlue,
-                                borderRadius: BorderRadius.circular(12.0)),
-                            child: Icon(
-                              Icons.download_outlined,
-                              color: RealUnitColors.basic.white,
+                            Container(
+                              height: 44,
+                              width: 44,
+                              decoration: BoxDecoration(
+                                  color: RealUnitColors.realUnitBlue,
+                                  borderRadius: BorderRadius.circular(12.0)),
+                              child: Icon(
+                                Icons.download_outlined,
+                                color: RealUnitColors.basic.white,
+                              ),
                             ),
-                          ),
-                        ],
-                      )
-                    ],
-                  ),
-                  ...state.filtered.reversed.map(
-                    (transaction) => TransactionHistoryRow(
-                      transaction: transaction,
-                      walletAddress: widget.walletAddress,
+                          ],
+                        )
+                      ],
                     ),
-                  ),
-                ],
+                    ...state.filtered.reversed.map(
+                      (transaction) => TransactionHistoryRow(
+                        transaction: transaction,
+                        walletAddress: widget.walletAddress,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },

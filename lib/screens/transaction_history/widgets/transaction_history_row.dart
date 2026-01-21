@@ -94,36 +94,42 @@ class TransactionHistoryRow extends StatelessWidget {
                     height: 20 / 16,
                   ),
                 ),
-                ValueListenableBuilder(
-                  valueListenable: _loadingModel,
-                  builder: (context, loading, child) {
-                    if (loading) {
-                      return const Padding(
-                        padding: EdgeInsets.all(4.0),
-                        child: SizedBox(
-                          width: 12,
-                          height: 12,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1.5,
-                            color: RealUnitColors.realUnitBlue,
+                Visibility(
+                  maintainSize: true,
+                  maintainAnimation: true,
+                  maintainState: true,
+                  visible: transaction.supportsReceiptPdf,
+                  child: ValueListenableBuilder(
+                    valueListenable: _loadingModel,
+                    builder: (context, loading, child) {
+                      if (loading) {
+                        return const Padding(
+                          padding: EdgeInsets.all(4.0),
+                          child: SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.5,
+                              color: RealUnitColors.realUnitBlue,
+                            ),
                           ),
+                        );
+                      }
+                      return GestureDetector(
+                        onTap: () {
+                          _loadingModel.setLoading(true);
+                          context
+                              .read<TransactionHistoryReceiptCubit>()
+                              .generateReceipt(transaction.dfxId!);
+                        },
+                        child: const Icon(
+                          size: 20,
+                          Icons.download_outlined,
+                          color: RealUnitColors.realUnitBlue,
                         ),
                       );
-                    }
-                    return GestureDetector(
-                      onTap: () {
-                        _loadingModel.setLoading(true);
-                        context
-                            .read<TransactionHistoryReceiptCubit>()
-                            .generateReceipt(transaction.txId);
-                      },
-                      child: const Icon(
-                        size: 20,
-                        Icons.download_outlined,
-                        color: RealUnitColors.realUnitBlue,
-                      ),
-                    );
-                  },
+                    },
+                  ),
                 ),
               ],
             ),
