@@ -44,25 +44,16 @@ class TransactionHistoryPage extends StatelessWidget {
   }
 }
 
-class TransactionHistoryView extends StatefulWidget {
+class TransactionHistoryView extends StatelessWidget {
+  TransactionHistoryView({super.key, required this.walletAddress});
+
+  static final _todaysDate = DateTime.now();
+  final _endDateModel = _DatePickerModel(_todaysDate);
+  final _startDateModel = _DatePickerModel(
+    DateTime(_todaysDate.year, _todaysDate.month - 1, _todaysDate.day),
+  );
+
   final String walletAddress;
-
-  const TransactionHistoryView({super.key, required this.walletAddress});
-
-  @override
-  State<TransactionHistoryView> createState() => _TransactionHistoryViewState();
-}
-
-class _TransactionHistoryViewState extends State<TransactionHistoryView> {
-  late DateTime endDate;
-  late DateTime startDate;
-
-  @override
-  void initState() {
-    endDate = DateTime.now();
-    startDate = DateTime(endDate.year, endDate.month - 1, endDate.day);
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,15 +92,15 @@ class _TransactionHistoryViewState extends State<TransactionHistoryView> {
                         Expanded(
                           child: TransactionDatePicker(
                             label: S.of(context).startDate,
-                            initialDate: startDate,
-                            onPressed: () => _selectDate(DateType.start),
+                            initialDate: _startDateModel.value,
+                            onPressed: () => _selectDate(context, DateType.start),
                           ),
                         ),
                         Expanded(
                           child: TransactionDatePicker(
                             label: S.of(context).endDate,
-                            initialDate: endDate,
-                            onPressed: () => _selectDate(DateType.end),
+                            initialDate: _endDateModel.value,
+                            onPressed: () => _selectDate(context, DateType.end),
                           ),
                         ),
                         Column(
@@ -144,7 +135,7 @@ class _TransactionHistoryViewState extends State<TransactionHistoryView> {
                     ...state.filtered.reversed.map(
                       (transaction) => TransactionHistoryRow(
                         transaction: transaction,
-                        walletAddress: widget.walletAddress,
+                        walletAddress: walletAddress,
                       ),
                     ),
                   ],
@@ -157,26 +148,30 @@ class _TransactionHistoryViewState extends State<TransactionHistoryView> {
     );
   }
 
-  Future<void> _selectDate(DateType type) async {
-    final initialDate = type == DateType.start ? startDate : endDate;
+  Future<void> _selectDate(BuildContext context, DateType type) async {
+    final dateModel = type == DateType.start ? _startDateModel : _endDateModel;
+    final changeFilter = type == DateType.start
+        ? (DateTime date) =>
+            context.read<TransactionHistoryFilterCubit>().changeFilter(startDate: date)
+        : (DateTime date) =>
+            context.read<TransactionHistoryFilterCubit>().changeFilter(endDate: date);
 
     final pickedDate = await DatePicker.pickDate(
       context: context,
-      currentDate: initialDate,
+      currentDate: dateModel.value,
       firstDate: DateTime(2025),
-      lastDate: DateTime.now(),
+      lastDate: _todaysDate,
     );
 
-    if (pickedDate == null) return;
+    if (pickedDate == null || !context.mounted) return;
 
-    setState(() {
-      if (type == DateType.start) {
-        startDate = pickedDate;
-        context.read<TransactionHistoryFilterCubit>().changeFilter(startDate: pickedDate);
-      } else {
-        endDate = pickedDate;
-        context.read<TransactionHistoryFilterCubit>().changeFilter(endDate: pickedDate);
-      }
-    });
+    dateModel.setDate(pickedDate);
+    changeFilter(pickedDate);
   }
+}
+
+class _DatePickerModel extends ValueNotifier<DateTime> {
+  _DatePickerModel(super.initialDate);
+
+  void setDate(DateTime date) => value = date;
 }
