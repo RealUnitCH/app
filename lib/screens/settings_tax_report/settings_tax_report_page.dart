@@ -8,6 +8,7 @@ import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings_tax_report/cubit/settings_tax_report_cubit.dart';
 import 'package:realunit_wallet/screens/settings_tax_report/widgets/settings_tax_report_date_picker.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/date_picker.dart';
 
 class SettingsTaxReportPage extends StatelessWidget {
   const SettingsTaxReportPage({super.key});
@@ -70,7 +71,7 @@ class SettingsTaxReportView extends StatelessWidget {
                     return SettingsTaxReportDatePicker(
                       initialDate: _datePickerModel.value,
                       onPressed: () async {
-                        final newDate = await showDatePicker(
+                        final newDate = await DatePicker.pickDate(
                           context: context,
                           firstDate: DateTime(2025),
                           lastDate: DateTime.now(),

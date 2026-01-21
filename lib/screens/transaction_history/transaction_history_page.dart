@@ -11,6 +11,7 @@ import 'package:realunit_wallet/screens/transaction_history/cubits/receipt/trans
 import 'package:realunit_wallet/screens/transaction_history/widgets/transaction_date_picker.dart';
 import 'package:realunit_wallet/screens/transaction_history/widgets/transaction_history_row.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/date_picker.dart';
 
 enum DateType { start, end }
 
@@ -159,11 +160,13 @@ class _TransactionHistoryViewState extends State<TransactionHistoryView> {
   Future<void> _selectDate(DateType type) async {
     final initialDate = type == DateType.start ? startDate : endDate;
 
-    final DateTime? pickedDate = await showDatePicker(
-        context: context,
-        firstDate: DateTime(2025),
-        lastDate: DateTime.now(),
-        currentDate: initialDate);
+    final pickedDate = await DatePicker.pickDate(
+      context: context,
+      currentDate: initialDate,
+      firstDate: DateTime(2025),
+      lastDate: DateTime.now(),
+    );
+
     if (pickedDate == null) return;
 
     setState(() {
