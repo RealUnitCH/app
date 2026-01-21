@@ -9,6 +9,7 @@ import 'package:etherscan_api/src/models/account/tx_list_model.dart';
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/models/transaction.dart';
+import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/ponder/ponder.dart';
 import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
@@ -138,7 +139,7 @@ class TransactionHistoryService {
 
   Future<void> apiBasedSync() async {
     final address = _appStore.primaryAddress;
-    final apiUri = Uri.https(_host, _accountHistoryPath(address));
+    final apiUri = buildUri(_host, _accountHistoryPath(address));
 
     final response = await _appStore.httpClient.get(apiUri);
 

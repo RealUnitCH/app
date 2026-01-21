@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 
@@ -19,7 +20,7 @@ abstract class DFXAuthService {
   String get walletAddress;
 
   Future<String> getSignMessage() async {
-    final uri = Uri.https(host, signMessagePath, {'address': walletAddress});
+    final uri = buildUri(host, signMessagePath, {'address': walletAddress});
 
     final response = await appStore.httpClient.get(uri, headers: {'accept': 'application/json'});
 
@@ -48,7 +49,7 @@ abstract class DFXAuthService {
             'signature': signMessage,
           });
 
-    final uri = Uri.https(host, authPath);
+    final uri = buildUri(host, authPath);
     final response = await appStore.httpClient.post(
       uri,
       headers: {'Content-Type': 'application/json'},

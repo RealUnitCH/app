@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:realunit_wallet/models/blockchain.dart';
+import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
@@ -91,7 +92,7 @@ class DfxWidgetService extends DFXAuthService {
 
       final accessToken = await getAuthToken();
 
-      final uri = Uri.https('services.dfx.swiss', actionType, {
+      final uri = buildUri('services.dfx.swiss', actionType, {
         'session': accessToken,
         'lang': langCode,
         'asset-out': isBuyAction ? assetOut : assetIn,
@@ -151,7 +152,7 @@ class DfxWidgetService extends DFXAuthService {
   }
 
   Future<String> _getSellDepositAddress(String routeId) async {
-    final uri = Uri.https(host, 'v1/sell/$routeId');
+    final uri = buildUri(host, 'v1/sell/$routeId');
 
     final authToken = await getAuthToken();
 

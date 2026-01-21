@@ -6,7 +6,6 @@ import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_section.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/language.dart';
-import 'package:realunit_wallet/styles/styles.dart';
 
 class SettingsLanguagePage extends StatelessWidget {
   const SettingsLanguagePage({super.key});
@@ -14,11 +13,7 @@ class SettingsLanguagePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-          title: Text(
-            S.of(context).settingsLanguages,
-            style: kPageTitleTextStyle,
-          ),
-          centerTitle: true,
+          title: Text(S.of(context).settingsLanguages),
         ),
         body: SingleChildScrollView(
           child: SizedBox(

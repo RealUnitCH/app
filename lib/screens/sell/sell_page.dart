@@ -56,10 +56,6 @@ class _SellViewState extends State<SellView> {
       appBar: AppBar(
         title: Text(
           S.of(context).sellRealu,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
         ),
       ),
       body: BlocConsumer<SellConverterCubit, SellConverterState>(

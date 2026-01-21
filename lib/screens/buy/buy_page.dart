@@ -51,10 +51,6 @@ class _BuyViewState extends State<BuyView> {
       appBar: AppBar(
         title: Text(
           S.of(context).buyRealu,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
         ),
       ),
       body: BlocConsumer<BuyConverterCubit, BuyConverterState>(
