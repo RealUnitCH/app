@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/receipt/transaction_history_receipt_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -98,7 +99,7 @@ class TransactionHistoryRow extends StatelessWidget {
                   maintainSize: true,
                   maintainAnimation: true,
                   maintainState: true,
-                  visible: transaction.supportsReceiptPdf,
+                  visible: transaction is DfxTransaction,
                   child: ValueListenableBuilder(
                     valueListenable: _loadingModel,
                     builder: (context, loading, child) {
@@ -117,10 +118,9 @@ class TransactionHistoryRow extends StatelessWidget {
                       }
                       return GestureDetector(
                         onTap: () {
+                          final t = transaction as DfxTransaction;
                           _loadingModel.setLoading(true);
-                          context
-                              .read<TransactionHistoryReceiptCubit>()
-                              .generateReceipt(transaction.dfxId!);
+                          context.read<TransactionHistoryReceiptCubit>().generateReceipt(t.dfxId);
                         },
                         child: const Icon(
                           size: 20,

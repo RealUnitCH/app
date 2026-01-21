@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
+import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/storage/database.dart';
+import 'package:realunit_wallet/packages/storage/dfx_transaction_storage.dart';
 import 'package:realunit_wallet/packages/storage/transaction_storage.dart';
 
 class TransactionRepository {
@@ -17,7 +19,6 @@ class TransactionRepository {
       (await _appDatabase.getLatestTransactions(limit: 1)).firstOrNull?.height ?? 0;
 
   Future<int> insertTransaction(Transaction transaction) => _appDatabase.insertTransactions(
-        transaction.dfxId,
         transaction.height,
         transaction.txId,
         transaction.chainId,
@@ -33,7 +34,6 @@ class TransactionRepository {
 
   Future<int> updateTransaction(Transaction transaction) => _appDatabase.updateTransaction(
         transaction.txId,
-        dfxId: transaction.dfxId,
         height: transaction.height,
         chainId: transaction.chainId,
         senderAddress: transaction.senderAddress,
@@ -45,6 +45,28 @@ class TransactionRepository {
         data: transaction.data ?? '',
         timeStamp: transaction.timestamp,
       );
+
+  Future<void> insertDfxTransaction(DfxTransaction transaction) async {
+    await insertTransaction(transaction);
+    await _appDatabase.insertDfxTransactionDetails(
+      txId: transaction.txId,
+      dfxId: transaction.dfxId,
+      rate: transaction.rate.toString(),
+      inputTxId: transaction.inputTxId,
+      outputTxId: transaction.outputTxId,
+    );
+  }
+
+  Future<void> updateDfxTransaction(DfxTransaction transaction) async {
+    await updateTransaction(transaction);
+    await _appDatabase.updateDfxTransactionDetails(
+      txId: transaction.txId,
+      dfxId: transaction.dfxId,
+      rate: transaction.rate.toString(),
+      inputTxId: transaction.inputTxId,
+      outputTxId: transaction.outputTxId,
+    );
+  }
 
   Future<bool> existsTransaction(String txId) =>
       _appDatabase.getTransaction(txId).then((txData) => txData != null);
@@ -67,6 +89,8 @@ class TransactionRepository {
 
   Future<List<Transaction>> get allTransactions async {
     final assets = await _assetRepository.allAssets;
+    final dfxDetailsList = await _appDatabase.allDfxTransactionDetails;
+    final dfxDetailsMap = {for (final d in dfxDetailsList) d.txId: d};
 
     return _appDatabase.allTransactions.then((result) => result.map((txData) {
           final blockchain = Blockchain.getFromChainId(txData.chainId);
@@ -82,8 +106,28 @@ class TransactionRepository {
                         decimals: 18,
                       ));
 
+          final dfxDetails = dfxDetailsMap[txData.txId];
+          if (dfxDetails != null) {
+            return DfxTransaction(
+              dfxId: dfxDetails.dfxId,
+              rate: double.tryParse(dfxDetails.rate ?? ''),
+              inputTxId: dfxDetails.inputTxId,
+              outputTxId: dfxDetails.outputTxId,
+              height: txData.height,
+              txId: txData.txId,
+              chainId: txData.chainId,
+              senderAddress: txData.senderAddress,
+              receiverAddress: txData.receiverAddress,
+              amount: BigInt.parse(txData.amount, radix: 16),
+              asset: asset,
+              type: txType,
+              note: txData.note,
+              data: txData.data,
+              timestamp: txData.timeStamp,
+            );
+          }
+
           return Transaction(
-            dfxId: txData.dfxId,
             height: txData.height,
             txId: txData.txId,
             chainId: txData.chainId,
@@ -127,6 +171,8 @@ class TransactionRepository {
         final transactions = <Transaction>[];
 
         final assets = await _assetRepository.allAssets;
+        final dfxDetailsList = await _appDatabase.allDfxTransactionDetails;
+        final dfxDetailsMap = {for (final d in dfxDetailsList) d.txId: d};
 
         for (final transactionData in rawTransactions) {
           final txType = TransactionTypes.values[transactionData.type];
@@ -142,20 +188,40 @@ class TransactionRepository {
                         decimals: 18,
                       ));
 
-          transactions.add(Transaction(
-            dfxId: transactionData.dfxId,
-            height: transactionData.height,
-            txId: transactionData.txId,
-            chainId: transactionData.chainId,
-            senderAddress: transactionData.senderAddress,
-            receiverAddress: transactionData.receiverAddress,
-            amount: BigInt.parse(transactionData.amount, radix: 16),
-            asset: asset,
-            type: txType,
-            note: transactionData.note,
-            data: transactionData.data,
-            timestamp: transactionData.timeStamp,
-          ));
+          final dfxDetails = dfxDetailsMap[transactionData.txId];
+          if (dfxDetails != null) {
+            transactions.add(DfxTransaction(
+              dfxId: dfxDetails.dfxId,
+              rate: double.tryParse(dfxDetails.rate ?? ''),
+              inputTxId: dfxDetails.inputTxId,
+              outputTxId: dfxDetails.outputTxId,
+              height: transactionData.height,
+              txId: transactionData.txId,
+              chainId: transactionData.chainId,
+              senderAddress: transactionData.senderAddress,
+              receiverAddress: transactionData.receiverAddress,
+              amount: BigInt.parse(transactionData.amount, radix: 16),
+              asset: asset,
+              type: txType,
+              note: transactionData.note,
+              data: transactionData.data,
+              timestamp: transactionData.timeStamp,
+            ));
+          } else {
+            transactions.add(Transaction(
+              height: transactionData.height,
+              txId: transactionData.txId,
+              chainId: transactionData.chainId,
+              senderAddress: transactionData.senderAddress,
+              receiverAddress: transactionData.receiverAddress,
+              amount: BigInt.parse(transactionData.amount, radix: 16),
+              asset: asset,
+              type: txType,
+              note: transactionData.note,
+              data: transactionData.data,
+              timestamp: transactionData.timeStamp,
+            ));
+          }
         }
 
         sink.add(transactions);

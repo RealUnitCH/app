@@ -9,6 +9,7 @@ import 'package:etherscan_api/src/models/account/token_tx_model.dart';
 import 'package:etherscan_api/src/models/account/tx_list_model.dart';
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
+import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/ponder/ponder.dart';
@@ -158,29 +159,54 @@ class TransactionHistoryService {
 
       final txId = entry.txHash;
       final exists = await _transactionRepository.existsTransaction(txId);
-      final mappedTransaction = transactions.firstWhereOrNull(
+      final matchingTransaction = transactions.firstWhereOrNull(
         (t) => t.inputTxId == txId || t.outputTxId == txId,
       );
 
-      final transaction = Transaction(
-        dfxId: mappedTransaction?.id,
-        height: 0, // TODO
-        txId: txId,
-        chainId: _appStore.apiConfig.asset.chainId,
-        senderAddress: transfer.from,
-        receiverAddress: transfer.to,
-        amount: BigInt.parse(transfer.value),
-        asset: _appStore.apiConfig.asset,
-        type: TransactionTypes.tokenTransfer,
-        note: '',
-        data: null,
-        timestamp: entry.timestamp,
-      );
+      if (matchingTransaction != null) {
+        final dfxTransaction = DfxTransaction(
+          dfxId: matchingTransaction.id,
+          rate: matchingTransaction.rate,
+          inputTxId: matchingTransaction.inputTxId,
+          outputTxId: matchingTransaction.outputTxId,
+          height: 0, // TODO
+          txId: txId,
+          chainId: _appStore.apiConfig.asset.chainId,
+          senderAddress: transfer.from,
+          receiverAddress: transfer.to,
+          amount: BigInt.parse(transfer.value),
+          asset: _appStore.apiConfig.asset,
+          type: TransactionTypes.tokenTransfer,
+          note: '',
+          data: null,
+          timestamp: entry.timestamp,
+        );
 
-      if (exists) {
-        await _transactionRepository.updateTransaction(transaction);
+        if (exists) {
+          await _transactionRepository.updateDfxTransaction(dfxTransaction);
+        } else {
+          await _transactionRepository.insertDfxTransaction(dfxTransaction);
+        }
       } else {
-        await _transactionRepository.insertTransaction(transaction);
+        final transaction = Transaction(
+          height: 0, // TODO
+          txId: txId,
+          chainId: _appStore.apiConfig.asset.chainId,
+          senderAddress: transfer.from,
+          receiverAddress: transfer.to,
+          amount: BigInt.parse(transfer.value),
+          asset: _appStore.apiConfig.asset,
+          type: TransactionTypes.tokenTransfer,
+          note: '',
+          data: null,
+          timestamp: entry.timestamp,
+        );
+
+        if (exists) {
+          await _transactionRepository.updateTransaction(transaction);
+        } else {
+          await _transactionRepository.insertTransaction(transaction);
+        }
       }
     }
   }

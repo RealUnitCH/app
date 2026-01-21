@@ -1,11 +1,11 @@
 class TransactionDto {
-  final int? id;
-  final int? rate;
+  final int id;
+  final double? rate;
   final String? inputTxId;
   final String? outputTxId;
 
   const TransactionDto({
-    this.id,
+    required this.id,
     this.rate,
     this.inputTxId,
     this.outputTxId,
@@ -13,8 +13,8 @@ class TransactionDto {
 
   factory TransactionDto.fromJson(Map<String, dynamic> json) {
     return TransactionDto(
-      id: json['id'] as int?,
-      rate: json['rate'] as int?,
+      id: json['id'] as int,
+      rate: (json['rate'] as num).toDouble(),
       inputTxId: json['inputTxId'] as String?,
       outputTxId: json['outputTxId'] as String?,
     );
