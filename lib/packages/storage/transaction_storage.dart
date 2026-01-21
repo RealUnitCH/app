@@ -4,6 +4,7 @@ import 'package:realunit_wallet/packages/utils/fast_hash.dart';
 
 extension TransactionStorage on AppDatabase {
   Future<int> insertTransactions(
+    int? dfxId,
     int height,
     String txId,
     int chainId,
@@ -17,6 +18,7 @@ extension TransactionStorage on AppDatabase {
     DateTime timeStamp,
   ) =>
       into(transactions).insert(TransactionsCompanion.insert(
+        dfxId: Value(dfxId),
         height: height,
         txId: txId,
         chainId: chainId,
@@ -32,6 +34,7 @@ extension TransactionStorage on AppDatabase {
 
   Future<int> updateTransaction(
     String txId, {
+    int? dfxId,
     int? height,
     int? chainId,
     String? senderAddress,
@@ -44,6 +47,7 @@ extension TransactionStorage on AppDatabase {
     DateTime? timeStamp,
   }) =>
       (update(transactions)..where((row) => row.txId.equals(txId))).write(TransactionsCompanion(
+        dfxId: Value.absentIfNull(dfxId),
         height: Value.absentIfNull(height),
         chainId: Value.absentIfNull(chainId),
         senderAddress: Value.absentIfNull(senderAddress),
@@ -114,6 +118,8 @@ extension TransactionStorage on AppDatabase {
 @DataClassName('TransactionData')
 class Transactions extends Table {
   IntColumn get height => integer()();
+
+  IntColumn get dfxId => integer().unique().nullable()();
 
   TextColumn get txId => text().unique()();
 

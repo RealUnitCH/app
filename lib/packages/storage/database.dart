@@ -51,14 +51,18 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(String encryptionPassword) : super(_openDatabase(encryptionPassword));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (Migrator m) async {
           await m.createAll();
         },
-        onUpgrade: (Migrator m, int from, int to) async {},
+        onUpgrade: (Migrator m, int from, int to) async {
+          if (from < 2) {
+            await m.addColumn(transactions, transactions.dfxId);
+          }
+        },
       );
 
   static Future<String> getDatabasePath() async {

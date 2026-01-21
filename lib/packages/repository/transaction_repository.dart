@@ -17,6 +17,7 @@ class TransactionRepository {
       (await _appDatabase.getLatestTransactions(limit: 1)).firstOrNull?.height ?? 0;
 
   Future<int> insertTransaction(Transaction transaction) => _appDatabase.insertTransactions(
+        transaction.dfxId,
         transaction.height,
         transaction.txId,
         transaction.chainId,
@@ -32,6 +33,7 @@ class TransactionRepository {
 
   Future<int> updateTransaction(Transaction transaction) => _appDatabase.updateTransaction(
         transaction.txId,
+        dfxId: transaction.dfxId,
         height: transaction.height,
         chainId: transaction.chainId,
         senderAddress: transaction.senderAddress,
@@ -81,6 +83,7 @@ class TransactionRepository {
                       ));
 
           return Transaction(
+            dfxId: txData.dfxId,
             height: txData.height,
             txId: txData.txId,
             chainId: txData.chainId,
@@ -140,6 +143,7 @@ class TransactionRepository {
                       ));
 
           transactions.add(Transaction(
+            dfxId: transactionData.dfxId,
             height: transactionData.height,
             txId: transactionData.txId,
             chainId: transactionData.chainId,

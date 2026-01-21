@@ -4,6 +4,7 @@ import 'package:realunit_wallet/packages/service/transaction_history_service.dar
 enum TransactionTypes { transfer, genericContractCall, tokenTransfer, savingsAdd, savingsRemove }
 
 class Transaction {
+  final int? dfxId; // internal id
   final int height;
   final String txId;
   final int chainId;
@@ -17,6 +18,7 @@ class Transaction {
   final DateTime timestamp;
 
   const Transaction({
+    this.dfxId,
     required this.height,
     required this.txId,
     required this.chainId,
@@ -29,6 +31,8 @@ class Transaction {
     required this.data,
     required this.timestamp,
   });
+
+  bool get supportsReceiptPdf => dfxId != null;
 
   bool isOutbound(String walletAddress) => senderAddress.asHexEip55 == walletAddress.asHexEip55;
 }
