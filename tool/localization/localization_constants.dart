@@ -66,6 +66,12 @@ class S implements WidgetsLocalizations {
 
   @override
   String get shareButtonLabel => throw UnimplementedError();
+
+  @override
+  String get noResultsFound => 'No results found';
+
+  @override
+  String get searchResultsFound => 'Search results found';
 ''';
 
 const part2 = '''
