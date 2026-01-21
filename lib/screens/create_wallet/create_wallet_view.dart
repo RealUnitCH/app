@@ -28,98 +28,99 @@ class CreateWalletView extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 20, bottom: 20),
-                        child: SvgPicture.asset(
-                          'assets/images/backup_seed.svg',
-                          width: 124,
+                        Padding(
+                          padding: const EdgeInsets.only(top: 20, bottom: 20),
+                          child: SvgPicture.asset(
+                            'assets/images/backup_seed.svg',
+                            width: 124,
+                          ),
                         ),
-                      ),
-                      Text(
-                        S.of(context).createWalletTitle,
-                        style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w700,
-                          color: RealUnitColors.realUnitBlack,
+                        Text(
+                          S.of(context).createWalletTitle,
+                          style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w700,
+                            color: RealUnitColors.realUnitBlack,
+                          ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 3, bottom: 12),
-                        child: Text(
-                          S.of(context).createWalletSubtitle,
-                          textAlign: TextAlign.center,
-                          style: kSubtitleTextStyle,
+                        Padding(
+                          padding: const EdgeInsets.only(top: 3, bottom: 12),
+                          child: Text(
+                            S.of(context).createWalletSubtitle,
+                            textAlign: TextAlign.center,
+                            style: kSubtitleTextStyle,
+                          ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.only(right: 10, top: 5),
-                              child: RecoveryKeyIcon(
-                                size: 20,
-                                color: RealUnitColors.realUnitBlue,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(right: 10, top: 5),
+                                child: RecoveryKeyIcon(
+                                  size: 20,
+                                  color: RealUnitColors.realUnitBlue,
+                                ),
                               ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 3),
-                                    child: Text(
-                                      S.of(context).createWalletRecoveryKeyTitle,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        color: RealUnitColors.realUnitBlack,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(bottom: 3),
+                                      child: Text(
+                                        S.of(context).createWalletRecoveryKeyTitle,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          color: RealUnitColors.realUnitBlack,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  Text(
-                                    S.of(context).createWalletRecoveryKeySubtitle,
-                                    style: kSubtitleTextStyle,
-                                  ),
-                                ],
+                                    Text(
+                                      S.of(context).createWalletRecoveryKeySubtitle,
+                                      style: kSubtitleTextStyle,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SeedBlurCard(
+                          seed: state.wallet!.seed,
+                          onTap: context.read<CreateWalletCubit>().toggleShowSeed,
+                          blur: state.hideSeed,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 5),
+                          child: CupertinoButton(
+                            onPressed: () => _copySeed(state.wallet!.seed),
+                            child: Text(
+                              S.of(context).copySeed,
+                              style:
+                                  kPageTitleTextStyle.copyWith(color: RealUnitColors.realUnitBlue),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 20, bottom: 20),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: TextButton(
+                              onPressed: () =>
+                                  context.read<HomeBloc>().add(LoadWalletEvent(state.wallet!)),
+                              style: kFullwidthBlueButtonStyle,
+                              child: Text(
+                                S.of(context).createWalletConfirm,
+                                textAlign: TextAlign.center,
+                                style: kFullwidthBlueButtonTextStyle,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      SeedBlurCard(
-                        seed: state.wallet!.seed,
-                        onTap: context.read<CreateWalletCubit>().toggleShowSeed,
-                        blur: state.hideSeed,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 5),
-                        child: CupertinoButton(
-                          onPressed: () => _copySeed(state.wallet!.seed),
-                          child: Text(
-                            S.of(context).copySeed,
-                            style: kPageTitleTextStyle.copyWith(color: RealUnitColors.realUnitBlue),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 20, bottom: 20),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: TextButton(
-                            onPressed: () =>
-                                context.read<HomeBloc>().add(LoadWalletEvent(state.wallet!)),
-                            style: kFullwidthBlueButtonStyle,
-                            child: Text(
-                              S.of(context).createWalletConfirm,
-                              textAlign: TextAlign.center,
-                              style: kFullwidthBlueButtonTextStyle,
-                            ),
-                          ),
-                        ),
-                      ),
                       ],
                     ),
                   );
