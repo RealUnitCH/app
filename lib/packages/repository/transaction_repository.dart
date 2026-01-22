@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/models/dfx_transaction.dart';
@@ -90,7 +91,6 @@ class TransactionRepository {
   Future<List<Transaction>> get allTransactions async {
     final assets = await _assetRepository.allAssets;
     final dfxDetailsList = await _appDatabase.allDfxTransactionDetails;
-    final dfxDetailsMap = {for (final d in dfxDetailsList) d.txId: d};
 
     return _appDatabase.allTransactions.then((result) => result.map((txData) {
           final blockchain = Blockchain.getFromChainId(txData.chainId);
@@ -106,7 +106,8 @@ class TransactionRepository {
                         decimals: 18,
                       ));
 
-          final dfxDetails = dfxDetailsMap[txData.txId];
+          final dfxDetails =
+              dfxDetailsList.firstWhereOrNull((dfxDetail) => dfxDetail.txId == txData.txId);
           if (dfxDetails != null) {
             return DfxTransaction(
               dfxId: dfxDetails.dfxId,
@@ -172,7 +173,6 @@ class TransactionRepository {
 
         final assets = await _assetRepository.allAssets;
         final dfxDetailsList = await _appDatabase.allDfxTransactionDetails;
-        final dfxDetailsMap = {for (final d in dfxDetailsList) d.txId: d};
 
         for (final transactionData in rawTransactions) {
           final txType = TransactionTypes.values[transactionData.type];
@@ -188,7 +188,8 @@ class TransactionRepository {
                         decimals: 18,
                       ));
 
-          final dfxDetails = dfxDetailsMap[transactionData.txId];
+          final dfxDetails = dfxDetailsList
+              .firstWhereOrNull((dfxDetail) => dfxDetail.txId == transactionData.txId);
           if (dfxDetails != null) {
             transactions.add(DfxTransaction(
               dfxId: dfxDetails.dfxId,

@@ -148,8 +148,8 @@ class TransactionHistoryService {
       _fetchTransactions(),
     ]);
 
-    final accountHistory = results[0] as AccountHistoryDto?;
-    final transactions = results[1] as List<TransactionDto>;
+    final accountHistory = results.elementAt(0) as AccountHistoryDto?;
+    final transactions = results.elementAt(1) as List<TransactionDto>;
 
     if (accountHistory == null) return;
 

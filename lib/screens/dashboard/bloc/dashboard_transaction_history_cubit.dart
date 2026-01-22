@@ -8,9 +8,8 @@ class DashboardTransactionHistoryCubit extends Cubit<List<Transaction>> {
     this._repository, {
     required this.asset,
     required this.walletAddress,
-    int? limit,
   }) : super([]) {
-    _repository.watchTransactionsOfAssets([asset], walletAddress, limit).listen(emit);
+    _repository.watchTransactionsOfAssets([asset], walletAddress, 3).listen(emit);
   }
 
   final Asset asset;

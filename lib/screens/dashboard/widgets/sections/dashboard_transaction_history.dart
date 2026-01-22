@@ -22,7 +22,6 @@ class DashboardTransactionHistory extends StatelessWidget {
         getIt<TransactionRepository>(),
         asset: appStore.apiConfig.asset,
         walletAddress: appStore.primaryAddress,
-        limit: 3,
       ),
       child: DashboardTransactionHistoryView(
         walletAddress: appStore.primaryAddress,
