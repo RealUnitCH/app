@@ -8,10 +8,9 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/filter/transaction_history_filter_cubit.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/receipt/transaction_history_receipt_cubit.dart';
-import 'package:realunit_wallet/screens/transaction_history/widgets/transaction_date_picker.dart';
 import 'package:realunit_wallet/screens/transaction_history/widgets/transaction_history_row.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/widgets/date_picker.dart';
+import 'package:realunit_wallet/widgets/date_picker_field.dart';
 
 enum DateType { start, end }
 
@@ -90,17 +89,31 @@ class TransactionHistoryView extends StatelessWidget {
                       spacing: 8.0,
                       children: [
                         Expanded(
-                          child: TransactionDatePicker(
+                          child: DatePickerField(
                             label: S.of(context).startDate,
                             initialDate: _startDateModel.value,
-                            onPressed: () => _selectDate(context, DateType.start),
+                            firstDate: DateTime(2025),
+                            lastDate: _todaysDate,
+                            onDateSelected: (date) {
+                              _startDateModel.setDate(date);
+                              context
+                                  .read<TransactionHistoryFilterCubit>()
+                                  .changeFilter(startDate: date);
+                            },
                           ),
                         ),
                         Expanded(
-                          child: TransactionDatePicker(
+                          child: DatePickerField(
                             label: S.of(context).endDate,
                             initialDate: _endDateModel.value,
-                            onPressed: () => _selectDate(context, DateType.end),
+                            firstDate: DateTime(2025),
+                            lastDate: _todaysDate,
+                            onDateSelected: (date) {
+                              _endDateModel.setDate(date);
+                              context
+                                  .read<TransactionHistoryFilterCubit>()
+                                  .changeFilter(endDate: date);
+                            },
                           ),
                         ),
                         Column(
@@ -146,27 +159,6 @@ class TransactionHistoryView extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _selectDate(BuildContext context, DateType type) async {
-    final dateModel = type == DateType.start ? _startDateModel : _endDateModel;
-    final changeFilter = type == DateType.start
-        ? (DateTime date) =>
-            context.read<TransactionHistoryFilterCubit>().changeFilter(startDate: date)
-        : (DateTime date) =>
-            context.read<TransactionHistoryFilterCubit>().changeFilter(endDate: date);
-
-    final pickedDate = await DatePicker.pickDate(
-      context: context,
-      currentDate: dateModel.value,
-      firstDate: DateTime(2025),
-      lastDate: _todaysDate,
-    );
-
-    if (pickedDate == null || !context.mounted) return;
-
-    dateModel.setDate(pickedDate);
-    changeFilter(pickedDate);
   }
 }
 

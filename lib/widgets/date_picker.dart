@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class DatePicker {
+  /// Opens a DatePicker depending on the platform
   static Future<DateTime?> pickDate({
     required BuildContext context,
     required DateTime currentDate,
@@ -26,6 +27,7 @@ class DatePicker {
     );
   }
 
+  // copied from https://api.flutter.dev/flutter/cupertino/CupertinoDatePicker-class.html
   static Future<DateTime?> _showCupertinoPicker({
     required BuildContext context,
     required DateTime initialDate,
