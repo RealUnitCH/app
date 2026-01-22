@@ -98,7 +98,7 @@ void main() {
       await tester.pumpApp(buildSubject());
 
       expect(find.byType(DatePickerField), findsNWidgets(2));
-      expect(find.byIcon(Icons.download_outlined), findsOne);
+      expect(find.byIcon(Icons.file_download_outlined), findsOne);
     });
 
     testWidgets('renders $TransactionHistoryRow for each Transaction', (tester) async {
