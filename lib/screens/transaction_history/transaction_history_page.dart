@@ -137,7 +137,7 @@ class TransactionHistoryView extends StatelessWidget {
                                   color: RealUnitColors.realUnitBlue,
                                   borderRadius: BorderRadius.circular(12.0)),
                               child: Icon(
-                                Icons.download_outlined,
+                                Icons.file_download_outlined,
                                 color: RealUnitColors.basic.white,
                               ),
                             ),

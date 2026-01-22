@@ -124,7 +124,7 @@ class TransactionHistoryRow extends StatelessWidget {
                         },
                         child: const Icon(
                           size: 20,
-                          Icons.download_outlined,
+                          Icons.file_download_outlined,
                           color: RealUnitColors.realUnitBlue,
                         ),
                       );

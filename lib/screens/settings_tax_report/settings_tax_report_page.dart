@@ -96,7 +96,7 @@ class SettingsTaxReportView extends StatelessWidget {
                       currency: settingsState.currency,
                       language: settingsState.language),
                   label: Text(S.of(context).pdf),
-                  icon: const Icon(Icons.download),
+                  icon: const Icon(Icons.file_download_outlined),
                 );
               }),
             ],
