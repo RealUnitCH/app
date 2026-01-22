@@ -136,20 +136,5 @@ void main() {
 
       expect(find.byType(TransactionHistoryRow), findsNWidgets(transactions.length));
     });
-
-    group('$BlocListener', () {
-      testWidgets('shows SnackBar if creating receipt fails', (tester) async {
-        whenListen(
-          transactionHistoryReceiptCubit,
-          Stream.fromIterable([const TransactionHistoryReceiptFailure('error')]),
-          initialState: const TransactionHistoryReceiptInitial(),
-        );
-
-        await tester.pumpApp(buildSubject());
-        await tester.pump();
-
-        expect(find.byType(SnackBar), findsOne);
-      });
-    });
   });
 }

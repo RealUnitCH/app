@@ -1,33 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/receipt/transaction_history_receipt_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/hide_amount_text.dart';
 
 class TransactionHistoryRow extends StatelessWidget {
-  TransactionHistoryRow({
+  final Transaction transaction;
+  final String walletAddress;
+
+  const TransactionHistoryRow({
     super.key,
     required this.transaction,
     required this.walletAddress,
   });
 
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => TransactionHistoryReceiptCubit(
+        getIt<RealUnitPdfService>(),
+      ),
+      child: TransactionHistoryRowView(
+        transaction: transaction,
+        isOutbound: transaction.isOutbound(walletAddress),
+      ),
+    );
+  }
+}
+
+class TransactionHistoryRowView extends StatelessWidget {
+  const TransactionHistoryRowView({
+    super.key,
+    required this.transaction,
+    required this.isOutbound,
+  });
+
   final Transaction transaction;
-  final String walletAddress;
-
-  final _loadingModel = _TransactionHistoryRowLoadingModel();
-
-  bool get _isOutbound => transaction.isOutbound(walletAddress);
+  final bool isOutbound;
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<TransactionHistoryReceiptCubit, TransactionHistoryReceiptState>(
-      listenWhen: (previous, current) => previous is TransactionHistoryReceiptLoading,
-      listener: (context, state) => _loadingModel.setLoading(false),
-      child: InkWell(
+    return BlocConsumer<TransactionHistoryReceiptCubit, TransactionHistoryReceiptState>(
+        listener: (context, state) async {
+      if (state is TransactionHistoryReceiptFailure) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(state.message),
+            backgroundColor: RealUnitColors.status.red600,
+          ),
+        );
+      }
+      if (state is TransactionHistoryReceiptSuccess) {
+        await OpenFile.open(state.receiptPath);
+      }
+    }, builder: (context, state) {
+      return InkWell(
         child: Column(
           children: [
             Row(
@@ -35,7 +69,7 @@ class TransactionHistoryRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               spacing: 10.0,
               children: [
-                _isOutbound
+                isOutbound
                     ? Container(
                         height: 32,
                         width: 32,
@@ -64,7 +98,7 @@ class TransactionHistoryRow extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _isOutbound ? S.of(context).transactionSell : S.of(context).transactionBuy,
+                        isOutbound ? S.of(context).transactionSell : S.of(context).transactionBuy,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -83,7 +117,7 @@ class TransactionHistoryRow extends StatelessWidget {
                   ),
                 ),
                 HideAmountText(
-                  leadingSymbol: _isOutbound ? '-' : '+',
+                  leadingSymbol: isOutbound ? '-' : '+',
                   amount: transaction.amount,
                   decimals: transaction.asset.decimals,
                   fractionalDigits: 0,
@@ -100,11 +134,8 @@ class TransactionHistoryRow extends StatelessWidget {
                   maintainAnimation: true,
                   maintainState: true,
                   visible: transaction is DfxTransaction,
-                  child: ValueListenableBuilder(
-                    valueListenable: _loadingModel,
-                    builder: (context, loading, child) {
-                      if (loading) {
-                        return const Padding(
+                  child: state is TransactionHistoryReceiptLoading
+                      ? const Padding(
                           padding: EdgeInsets.all(4.0),
                           child: SizedBox(
                             width: 12,
@@ -114,34 +145,24 @@ class TransactionHistoryRow extends StatelessWidget {
                               color: RealUnitColors.realUnitBlue,
                             ),
                           ),
-                        );
-                      }
-                      return GestureDetector(
-                        onTap: () {
-                          final t = transaction as DfxTransaction;
-                          _loadingModel.setLoading(true);
-                          context.read<TransactionHistoryReceiptCubit>().generateReceipt(t.dfxId);
-                        },
-                        child: const Icon(
-                          size: 20,
-                          Icons.file_download_outlined,
-                          color: RealUnitColors.realUnitBlue,
+                        )
+                      : GestureDetector(
+                          onTap: () {
+                            final t = transaction as DfxTransaction;
+                            context.read<TransactionHistoryReceiptCubit>().generateReceipt(t.dfxId);
+                          },
+                          child: const Icon(
+                            size: 20,
+                            Icons.file_download_outlined,
+                            color: RealUnitColors.realUnitBlue,
+                          ),
                         ),
-                      );
-                    },
-                  ),
                 ),
               ],
             ),
           ],
         ),
-      ),
-    );
+      );
+    });
   }
-}
-
-class _TransactionHistoryRowLoadingModel extends ValueNotifier<bool> {
-  _TransactionHistoryRowLoadingModel() : super(false);
-
-  void setLoading(bool loading) => value = loading;
 }
