@@ -84,6 +84,20 @@ ThemeData get realUnitTheme => ThemeData(
               return RealUnitColors.basic.white;
             },
           ),
+          textStyle: WidgetStateTextStyle.resolveWith(
+            (states) {
+              if (states.contains(WidgetState.disabled)) {
+                return const TextStyle(
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.w600,
+                );
+              }
+              return const TextStyle(
+                fontSize: 16.0,
+                fontWeight: FontWeight.w600,
+              );
+            },
+          ),
         ),
       ),
     );
