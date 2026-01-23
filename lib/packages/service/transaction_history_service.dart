@@ -218,8 +218,7 @@ class TransactionHistoryService {
     final response = await _appStore.httpClient.get(uri);
     if (response.statusCode != 200) return null;
 
-    final Map<String, dynamic> body = jsonDecode(response.body) as Map<String, dynamic>;
-
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
     return AccountHistoryDto.fromJson(body);
   }
 
