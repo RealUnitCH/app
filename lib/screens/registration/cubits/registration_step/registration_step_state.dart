@@ -1,26 +1,28 @@
 part of 'registration_step_cubit.dart';
 
-enum RegistrationStep { personal, address, completed }
-
-final List<RegistrationStep> _stepsOrder = [
-  RegistrationStep.personal,
-  RegistrationStep.address,
-  RegistrationStep.completed,
-];
+enum RegistrationStep { email, emailVerification, personal, address, completed }
 
 class RegistrationStepState {
+  final List<RegistrationStep> steps;
   final RegistrationStep step;
 
-  const RegistrationStepState(this.step);
+  const RegistrationStepState({
+    required this.steps,
+    required this.step,
+  });
 
-  int get index => RegistrationStep.values.indexOf(step);
-
-  int get totalSteps => _stepsOrder.length;
-
+  int get index => steps.indexOf(step);
+  int get totalSteps => steps.length;
   double get progress => (index + 1) / totalSteps;
+
+  bool get canGoBack => step != RegistrationStep.email && step != RegistrationStep.completed;
 
   String title(BuildContext context) {
     switch (step) {
+      case RegistrationStep.email:
+        return 'E-Mail';
+      case RegistrationStep.emailVerification:
+        return 'E-Mail bestätigen';
       case RegistrationStep.personal:
         return S.of(context).personalData;
       case RegistrationStep.address:
@@ -29,6 +31,4 @@ class RegistrationStepState {
         return S.of(context).completed;
     }
   }
-
-  bool get canGoBack => step != RegistrationStep.personal && step != RegistrationStep.completed;
 }

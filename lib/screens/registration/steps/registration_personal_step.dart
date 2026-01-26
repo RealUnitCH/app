@@ -10,7 +10,6 @@ import 'package:realunit_wallet/screens/registration/widgets/registration_text_f
 
 class RegistrationPersonalStep extends StatelessWidget {
   final ValueNotifier<RegistrationUserType> typeCtrl;
-  final TextEditingController emailCtrl;
   final TextEditingController firstNameCtrl;
   final TextEditingController lastNameCtrl;
   final ValueNotifier<String?> birthdayCtrl;
@@ -21,7 +20,6 @@ class RegistrationPersonalStep extends StatelessWidget {
   RegistrationPersonalStep({
     super.key,
     required this.typeCtrl,
-    required this.emailCtrl,
     required this.firstNameCtrl,
     required this.lastNameCtrl,
     required this.phoneCtrl,
@@ -56,22 +54,6 @@ class RegistrationPersonalStep extends StatelessWidget {
                     if (v != null) typeCtrl.value = v;
                   },
                   validator: (v) => v == null ? '' : null,
-                ),
-                RegistrationTextField(
-                  label: S.of(context).registerEmail,
-                  hintText: 'max@mustermann.ch',
-                  controller: emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
-                  hideErrorText: false,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return S.of(context).registerEmailRequired;
-                    }
-                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                      return S.of(context).registerEmailInvalid;
-                    }
-                    return null;
-                  },
                 ),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,

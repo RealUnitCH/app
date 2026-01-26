@@ -11,6 +11,8 @@ import 'package:realunit_wallet/screens/registration/cubits/registration_step/re
 import 'package:realunit_wallet/screens/registration/cubits/registration_submit/registration_submit_cubit.dart';
 import 'package:realunit_wallet/screens/registration/steps/registration_address_step.dart';
 import 'package:realunit_wallet/screens/registration/steps/registration_completed_step.dart';
+import 'package:realunit_wallet/screens/registration/steps/registration_email_step.dart';
+import 'package:realunit_wallet/screens/registration/steps/registration_email_verification_step.dart';
 import 'package:realunit_wallet/screens/registration/steps/registration_personal_step.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
@@ -123,30 +125,14 @@ class _RegistrationViewState extends State<RegistrationView> {
             Expanded(
               child: Stack(
                 children: [
-                  PageView(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      RegistrationPersonalStep(
-                        typeCtrl: typeCtrl,
-                        emailCtrl: emailCtrl,
-                        firstNameCtrl: firstnameCtrl,
-                        lastNameCtrl: lastnameCtrl,
-                        nationalityCtrl: nationalityCtrl,
-                        phoneCtrl: phoneCtrl,
-                        birthdayCtrl: birthdayCtrl,
-                        onNext: context.read<RegistrationStepCubit>().next,
-                      ),
-                      RegistrationAddressStep(
-                        addressStreetCtrl: addressStreetCtrl,
-                        postalCodeCtrl: postalCodeCtrl,
-                        cityCtrl: cityCtrl,
-                        countryCtrl: countryCtrl,
-                        onPrevious: context.read<RegistrationStepCubit>().previous,
-                        onSubmit: _onSubmit,
-                      ),
-                      const RegistrationCompletedStep(),
-                    ],
+                  BlocBuilder<RegistrationStepCubit, RegistrationStepState>(
+                    builder: (context, state) {
+                      return PageView(
+                        controller: _pageController,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: state.steps.map(_buildStep).toList(),
+                      );
+                    },
                   ),
                   BlocBuilder<RegistrationSubmitCubit, RegistrationSubmitState>(
                     builder: (context, state) {
@@ -168,6 +154,43 @@ class _RegistrationViewState extends State<RegistrationView> {
         ),
       ),
     );
+  }
+
+  Widget _buildStep(RegistrationStep step) {
+    switch (step) {
+      case RegistrationStep.email:
+        return RegistrationEmailStep(
+          emailCtrl: emailCtrl,
+          onNext: context.read<RegistrationStepCubit>().next,
+        );
+
+      case RegistrationStep.emailVerification:
+        return const RegistrationEmailVerificationStep();
+
+      case RegistrationStep.personal:
+        return RegistrationPersonalStep(
+          typeCtrl: typeCtrl,
+          firstNameCtrl: firstnameCtrl,
+          lastNameCtrl: lastnameCtrl,
+          nationalityCtrl: nationalityCtrl,
+          phoneCtrl: phoneCtrl,
+          birthdayCtrl: birthdayCtrl,
+          onNext: context.read<RegistrationStepCubit>().next,
+        );
+
+      case RegistrationStep.address:
+        return RegistrationAddressStep(
+          addressStreetCtrl: addressStreetCtrl,
+          postalCodeCtrl: postalCodeCtrl,
+          cityCtrl: cityCtrl,
+          countryCtrl: countryCtrl,
+          onPrevious: context.read<RegistrationStepCubit>().previous,
+          onSubmit: _onSubmit,
+        );
+
+      case RegistrationStep.completed:
+        return const RegistrationCompletedStep();
+    }
   }
 
   Future<void> _onSubmit() async => await context.read<RegistrationSubmitCubit>().submit(
