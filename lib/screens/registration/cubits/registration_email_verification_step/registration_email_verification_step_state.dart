@@ -7,17 +7,18 @@ abstract class RegistrationEmailVerificationStepState extends Equatable {
   List<Object?> get props => [];
 }
 
-class RegistrationEmailVerificationStepInitial extends RegistrationEmailVerificationStepState {}
+class RegistrationEmailVerificationStepInitial extends RegistrationEmailVerificationStepState {
+  const RegistrationEmailVerificationStepInitial();
+}
 
-class RegistrationEmailVerificationStepLoading extends RegistrationEmailVerificationStepState {}
+class RegistrationEmailVerificationStepLoading extends RegistrationEmailVerificationStepState {
+  const RegistrationEmailVerificationStepLoading();
+}
 
-class RegistrationEmailVerificationStepSuccess extends RegistrationEmailVerificationStepState {}
+class RegistrationEmailVerificationStepSuccess extends RegistrationEmailVerificationStepState {
+  const RegistrationEmailVerificationStepSuccess();
+}
 
 class RegistrationEmailVerificationStepFailure extends RegistrationEmailVerificationStepState {
-  final String message;
-
-  const RegistrationEmailVerificationStepFailure(this.message);
-
-  @override
-  List<Object?> get props => [message];
+  const RegistrationEmailVerificationStepFailure();
 }
