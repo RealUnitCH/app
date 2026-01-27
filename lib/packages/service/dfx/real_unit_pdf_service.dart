@@ -10,6 +10,7 @@ import 'package:realunit_wallet/styles/language.dart';
 
 class RealUnitPdfService {
   static const _balancePath = '/v1/realunit/balance/pdf';
+  static String _transactionReceiptPath(int dfxId) => '/v1/realunit/transaction/$dfxId/receipt';
 
   String get _host => _appStore.apiConfig.apiHost;
 
@@ -17,13 +18,16 @@ class RealUnitPdfService {
 
   RealUnitPdfService(AppStore appStore) : _appStore = appStore;
 
-  Future<PdfDto> getBalanceReport(
-      {required DateTime date, required Currency currency, required Language language}) async {
+  Future<PdfDto> getBalanceReport({
+    required DateTime date,
+    required Currency currency,
+    required Language language,
+  }) async {
     final balancePdfDto = BalancePdfDto(
       language: language,
       address: _appStore.primaryAddress,
       currency: currency,
-      date: date,
+      date: DateTime(date.year, date.month, date.day),
     );
 
     final authToken = _appStore.dfxAuthToken;
@@ -37,6 +41,27 @@ class RealUnitPdfService {
       },
       body: jsonEncode(balancePdfDto.toJson()),
     );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson);
+    }
+
+    return PdfDto.fromJson(jsonDecode(response.body));
+  }
+
+  Future<PdfDto> getTransactionReceipt(int txId) async {
+    final authToken = _appStore.dfxAuthToken;
+
+    final uri = buildUri(_host, _transactionReceiptPath(txId));
+    final response = await _appStore.httpClient.put(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $authToken',
+      },
+    );
+
     if (response.statusCode != 200 && response.statusCode != 201) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
       throw ApiException.fromJson(errorJson);

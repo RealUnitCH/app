@@ -3,6 +3,7 @@ import 'package:realunit_wallet/packages/service/transaction_history_service.dar
 
 enum TransactionTypes { transfer, genericContractCall, tokenTransfer, savingsAdd, savingsRemove }
 
+/// Transaction with on-chain metadata
 class Transaction {
   final int height;
   final String txId;

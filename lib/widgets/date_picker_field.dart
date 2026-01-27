@@ -1,25 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/date_picker.dart';
 
-class SettingsTaxReportDatePicker extends StatelessWidget {
+class DatePickerField extends StatelessWidget {
   final DateTime initialDate;
-  final void Function()? onPressed;
+  final String? label;
+  final DateTime firstDate;
+  final DateTime lastDate;
+  final void Function(DateTime)? onDateSelected;
 
-  const SettingsTaxReportDatePicker({
+  const DatePickerField({
     super.key,
+    this.label,
     required this.initialDate,
-    required this.onPressed,
+    required this.firstDate,
+    required this.lastDate,
+    this.onDateSelected,
   });
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (label != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Text(
+              label!,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                height: 16 / 12,
+                color: RealUnitColors.neutral500,
+              ),
+            ),
+          ),
         GestureDetector(
-          onTap: onPressed,
+          onTap: () => _pickDate(context),
           child: Container(
             decoration: BoxDecoration(
               border: BoxBorder.all(color: RealUnitColors.neutral300),
@@ -43,5 +62,16 @@ class SettingsTaxReportDatePicker extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _pickDate(BuildContext context) async {
+    final pickedDate = await DatePicker.pickDate(
+      context: context,
+      currentDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+    );
+    if (pickedDate == null || !context.mounted) return;
+    onDateSelected?.call(pickedDate);
   }
 }

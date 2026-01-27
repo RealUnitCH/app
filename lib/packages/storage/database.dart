@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:realunit_wallet/packages/storage/asset_storage.dart';
 import 'package:realunit_wallet/packages/storage/balance_storage.dart';
+import 'package:realunit_wallet/packages/storage/dfx_transaction_storage.dart';
 import 'package:realunit_wallet/packages/storage/key_value_cache.dart';
 import 'package:realunit_wallet/packages/storage/node_storage.dart';
 import 'package:realunit_wallet/packages/storage/transaction_storage.dart';
@@ -44,6 +45,7 @@ Future<bool> tryOpeningDatabase(String encryptionPassword) async {
   KeyValueCache,
   Nodes,
   Transactions,
+  DfxTransactionDetails,
   WalletAccountInfos,
   WalletInfos,
 ])
@@ -51,14 +53,18 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(String encryptionPassword) : super(_openDatabase(encryptionPassword));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (Migrator m) async {
           await m.createAll();
         },
-        onUpgrade: (Migrator m, int from, int to) async {},
+        onUpgrade: (Migrator m, int from, int to) async {
+          if (from < 2) {
+            await m.createTable(dfxTransactionDetails);
+          }
+        },
       );
 
   static Future<String> getDatabasePath() async {
