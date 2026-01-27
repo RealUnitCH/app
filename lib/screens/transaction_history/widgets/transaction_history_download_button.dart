@@ -1,0 +1,102 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:open_file/open_file.dart';
+import 'package:realunit_wallet/di.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/models/dfx_transaction.dart';
+import 'package:realunit_wallet/models/transaction.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
+import 'package:realunit_wallet/screens/transaction_history/cubits/multi_receipt/transaction_history_multi_receipt_cubit.dart';
+import 'package:realunit_wallet/styles/colors.dart';
+
+class TransactionHistoryDownloadButton extends StatelessWidget {
+  final List<Transaction> transactions;
+
+  const TransactionHistoryDownloadButton({super.key, required this.transactions});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => TransactionHistoryMultiReceiptCubit(
+        getIt<RealUnitPdfService>(),
+      ),
+      child: TransactionHistoryDownloadButtonView(
+        transactions: transactions,
+      ),
+    );
+  }
+}
+
+class TransactionHistoryDownloadButtonView extends StatelessWidget {
+  final List<Transaction> transactions;
+
+  const TransactionHistoryDownloadButtonView({super.key, required this.transactions});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<TransactionHistoryMultiReceiptCubit, TransactionHistoryMultiReceiptState>(
+      listener: (context, state) async {
+        if (state is TransactionHistoryMultiReceiptFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: RealUnitColors.status.red600,
+            ),
+          );
+        }
+        if (state is TransactionHistoryMultiReceiptSuccess) {
+          await OpenFile.open(state.receiptPath);
+        }
+      },
+      builder: (context, state) {
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Text(
+                S.of(context).pdf,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  height: 16 / 12,
+                  color: RealUnitColors.neutral500,
+                ),
+              ),
+            ),
+            state is TransactionHistoryMultiReceiptLoading
+                ? Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: RealUnitColors.realUnitBlue,
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: CircularProgressIndicator(
+                      padding: const EdgeInsets.all(12.0),
+                      strokeWidth: 1.5,
+                      color: RealUnitColors.basic.white,
+                    ),
+                  )
+                : GestureDetector(
+                    onTap: () {
+                      context.read<TransactionHistoryMultiReceiptCubit>().generateReceipt(
+                          transactions.whereType<DfxTransaction>().map((tx) => tx.dfxId).toList());
+                    },
+                    child: Container(
+                      height: 44,
+                      width: 44,
+                      decoration: BoxDecoration(
+                          color: RealUnitColors.realUnitBlue,
+                          borderRadius: BorderRadius.circular(12.0)),
+                      child: Icon(
+                        Icons.file_download_outlined,
+                        color: RealUnitColors.basic.white,
+                      ),
+                    ),
+                  ),
+          ],
+        );
+      },
+    );
+  }
+}

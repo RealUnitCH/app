@@ -5,8 +5,8 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/filter/transaction_history_filter_cubit.dart';
+import 'package:realunit_wallet/screens/transaction_history/widgets/transaction_history_download_button.dart';
 import 'package:realunit_wallet/screens/transaction_history/widgets/transaction_history_row.dart';
-import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/date_picker_field.dart';
 
 enum DateType { start, end }
@@ -90,33 +90,9 @@ class TransactionHistoryView extends StatelessWidget {
                           },
                         ),
                       ),
-                      Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: Text(
-                              S.of(context).pdf,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                                height: 16 / 12,
-                                color: RealUnitColors.neutral500,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            height: 44,
-                            width: 44,
-                            decoration: BoxDecoration(
-                                color: RealUnitColors.realUnitBlue,
-                                borderRadius: BorderRadius.circular(12.0)),
-                            child: Icon(
-                              Icons.file_download_outlined,
-                              color: RealUnitColors.basic.white,
-                            ),
-                          ),
-                        ],
-                      )
+                      TransactionHistoryDownloadButton(
+                        transactions: state.filtered,
+                      ),
                     ],
                   ),
                   ...state.filtered.reversed.map(
