@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -43,15 +44,25 @@ class RegistrationStepCubit extends Cubit<RegistrationStepState> {
   }
 
   void syncEmailVerification({required bool required}) {
+    final steps = List<RegistrationStep>.from(state.steps);
     final hasVerification = state.steps.contains(RegistrationStep.emailVerification);
 
     if (required && !hasVerification) {
       final insertIndex = state.steps.indexOf(RegistrationStep.email) + 1;
-      state.steps.insert(insertIndex, RegistrationStep.emailVerification);
+      steps.insert(insertIndex, RegistrationStep.emailVerification);
     }
 
     if (!required && hasVerification) {
-      state.steps.remove(RegistrationStep.emailVerification);
+      steps.remove(RegistrationStep.emailVerification);
+    }
+
+    if (!listEquals(steps, state.steps)) {
+      emit(
+        RegistrationStepState(
+          step: state.step,
+          steps: steps,
+        ),
+      );
     }
   }
 }

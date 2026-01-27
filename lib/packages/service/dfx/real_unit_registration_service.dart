@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_email_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_email_response_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
@@ -38,7 +39,8 @@ class RealUnitRegistrationService {
     );
 
     if (response.statusCode != 201 && response.statusCode != 202) {
-      print('failure');
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson);
     }
     final responseDto = RealUnitRegistrationEmailResponseDto.fromJson(jsonDecode(response.body));
     return responseDto.status;
@@ -91,12 +93,9 @@ class RealUnitRegistrationService {
       body: jsonEncode(requestDto.toJson()),
     );
 
-    if (response.statusCode != 200 && response.statusCode != 202) {
-      final messages = jsonDecode(response.body)['message'] is List
-          ? List<String>.from(jsonDecode(response.body)['message'])
-          : <String>[jsonDecode(response.body)['message']];
-
-      throw Exception(messages.join('\n'));
+    if (response.statusCode != 201 && response.statusCode != 202) {
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson);
     }
 
     final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
