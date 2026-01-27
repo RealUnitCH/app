@@ -48,8 +48,9 @@ class RegistrationView extends StatefulWidget {
 class _RegistrationViewState extends State<RegistrationView> {
   final _pageController = PageController();
 
-  final typeCtrl = ValueNotifier<RegistrationUserType>(RegistrationUserType.human);
   final emailCtrl = TextEditingController();
+
+  final typeCtrl = ValueNotifier<RegistrationUserType>(RegistrationUserType.human);
   final lastnameCtrl = TextEditingController();
   final firstnameCtrl = TextEditingController();
   final phoneCtrl = ValueNotifier<String?>(null);
@@ -175,7 +176,6 @@ class _RegistrationViewState extends State<RegistrationView> {
           nationalityCtrl: nationalityCtrl,
           phoneCtrl: phoneCtrl,
           birthdayCtrl: birthdayCtrl,
-          onNext: context.read<RegistrationStepCubit>().next,
         );
 
       case RegistrationStep.address:
@@ -184,7 +184,6 @@ class _RegistrationViewState extends State<RegistrationView> {
           postalCodeCtrl: postalCodeCtrl,
           cityCtrl: cityCtrl,
           countryCtrl: countryCtrl,
-          onPrevious: context.read<RegistrationStepCubit>().previous,
           onSubmit: _onSubmit,
         );
 

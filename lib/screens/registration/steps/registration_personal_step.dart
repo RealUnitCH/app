@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
+import 'package:realunit_wallet/screens/registration/cubits/registration_step/registration_step_cubit.dart';
 import 'package:realunit_wallet/screens/registration/widgets/fields/registration_birthday_field.dart';
 import 'package:realunit_wallet/screens/registration/widgets/fields/registration_country_field.dart';
 import 'package:realunit_wallet/screens/registration/widgets/fields/registration_phone_number_field.dart';
@@ -15,7 +17,6 @@ class RegistrationPersonalStep extends StatelessWidget {
   final ValueNotifier<String?> birthdayCtrl;
   final ValueNotifier<String?> phoneCtrl;
   final ValueNotifier<Country?> nationalityCtrl;
-  final VoidCallback onNext;
 
   RegistrationPersonalStep({
     super.key,
@@ -25,7 +26,6 @@ class RegistrationPersonalStep extends StatelessWidget {
     required this.phoneCtrl,
     required this.nationalityCtrl,
     required this.birthdayCtrl,
-    required this.onNext,
   });
 
   final _formKey = GlobalKey<FormState>();
@@ -108,7 +108,7 @@ class RegistrationPersonalStep extends StatelessWidget {
                     child: FilledButton(
                       onPressed: () {
                         if (_formKey.currentState?.validate() ?? false) {
-                          onNext();
+                          context.read<RegistrationStepCubit>().next();
                         }
                       },
                       child: Text(S.of(context).next),

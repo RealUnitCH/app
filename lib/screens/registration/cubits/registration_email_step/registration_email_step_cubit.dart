@@ -12,11 +12,11 @@ class RegistrationEmailStepCubit extends Cubit<RegistrationEmailStepState> {
 
   RegistrationEmailStepCubit(RealUnitRegistrationService service)
       : _service = service,
-        super(RegistrationEmailStepInitial());
+        super(const RegistrationEmailStepInitial());
 
   Future<void> checkEmail(String email) async {
     try {
-      emit(RegistrationEmailStepLoading());
+      emit(const RegistrationEmailStepLoading());
       final status = await _service.registerEmail(email);
 
       emit(RegistrationEmailStepSuccess(status));

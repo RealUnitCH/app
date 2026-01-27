@@ -7,9 +7,13 @@ abstract class RegistrationEmailStepState extends Equatable {
   List<Object?> get props => [];
 }
 
-class RegistrationEmailStepInitial extends RegistrationEmailStepState {}
+class RegistrationEmailStepInitial extends RegistrationEmailStepState {
+  const RegistrationEmailStepInitial();
+}
 
-class RegistrationEmailStepLoading extends RegistrationEmailStepState {}
+class RegistrationEmailStepLoading extends RegistrationEmailStepState {
+  const RegistrationEmailStepLoading();
+}
 
 class RegistrationEmailStepSuccess extends RegistrationEmailStepState {
   final RegistrationEmailStatus status;

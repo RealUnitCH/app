@@ -7,6 +7,7 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_serv
 import 'package:realunit_wallet/screens/registration/cubits/registration_email_step/registration_email_step_cubit.dart';
 import 'package:realunit_wallet/screens/registration/cubits/registration_step/registration_step_cubit.dart';
 import 'package:realunit_wallet/screens/registration/widgets/registration_text_field.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 
 class RegistrationEmailStep extends StatelessWidget {
   final TextEditingController emailCtrl;
@@ -49,7 +50,12 @@ class RegistrationEmailStepView extends StatelessWidget {
     return BlocListener<RegistrationEmailStepCubit, RegistrationEmailStepState>(
       listener: (context, state) {
         if (state is RegistrationEmailStepFailure) {
-          print('fail ui');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: RealUnitColors.status.red600,
+            ),
+          );
         }
         if (state is RegistrationEmailStepSuccess) {
           if (state.status == RegistrationEmailStatus.emailRegistered) {
@@ -91,13 +97,33 @@ class RegistrationEmailStepView extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
                     child: SizedBox(
                       width: double.infinity,
-                      child: FilledButton(
-                        onPressed: () {
-                          if (_formKey.currentState?.validate() ?? false) {
-                            context.read<RegistrationEmailStepCubit>().checkEmail(emailCtrl.text);
+                      child: BlocBuilder<RegistrationEmailStepCubit, RegistrationEmailStepState>(
+                        builder: (context, state) {
+                          if (state is RegistrationEmailStepLoading) {
+                            return FilledButton.icon(
+                              onPressed: null,
+                              icon: SizedBox(
+                                height: 14,
+                                width: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 1.5,
+                                  color: RealUnitColors.basic.black.withValues(alpha: 0.5),
+                                ),
+                              ),
+                              label: Text(S.of(context).next),
+                            );
                           }
+                          return FilledButton(
+                            onPressed: () {
+                              if (_formKey.currentState?.validate() ?? false) {
+                                context
+                                    .read<RegistrationEmailStepCubit>()
+                                    .checkEmail(emailCtrl.text);
+                              }
+                            },
+                            child: Text(S.of(context).next),
+                          );
                         },
-                        child: Text(S.of(context).next),
                       ),
                     ),
                   ),

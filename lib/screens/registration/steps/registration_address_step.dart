@@ -9,7 +9,6 @@ class RegistrationAddressStep extends StatelessWidget {
   final TextEditingController postalCodeCtrl;
   final TextEditingController cityCtrl;
   final ValueNotifier<Country?> countryCtrl;
-  final VoidCallback onPrevious;
   final Future<void> Function() onSubmit;
 
   RegistrationAddressStep({
@@ -18,7 +17,6 @@ class RegistrationAddressStep extends StatelessWidget {
     required this.postalCodeCtrl,
     required this.cityCtrl,
     required this.countryCtrl,
-    required this.onPrevious,
     required this.onSubmit,
   });
   final _formKey = GlobalKey<FormState>();

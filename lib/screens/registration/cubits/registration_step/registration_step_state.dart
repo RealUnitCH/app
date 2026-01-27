@@ -20,9 +20,9 @@ class RegistrationStepState {
   String title(BuildContext context) {
     switch (step) {
       case RegistrationStep.email:
-        return 'E-Mail';
+        return S.of(context).registerEmail;
       case RegistrationStep.emailVerification:
-        return 'E-Mail bestätigen';
+        return S.of(context).registerEmailVerification;
       case RegistrationStep.personal:
         return S.of(context).personalData;
       case RegistrationStep.address:
