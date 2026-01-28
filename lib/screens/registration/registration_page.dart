@@ -127,6 +127,7 @@ class _RegistrationViewState extends State<RegistrationView> {
               child: Stack(
                 children: [
                   BlocBuilder<RegistrationStepCubit, RegistrationStepState>(
+                    buildWhen: (previous, current) => previous.steps != current.steps,
                     builder: (context, state) {
                       return PageView(
                         controller: _pageController,
