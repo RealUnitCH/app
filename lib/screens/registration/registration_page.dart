@@ -163,7 +163,6 @@ class _RegistrationViewState extends State<RegistrationView> {
       case RegistrationStep.email:
         return RegistrationEmailStep(
           emailCtrl: emailCtrl,
-          onNext: context.read<RegistrationStepCubit>().next,
         );
 
       case RegistrationStep.emailVerification:

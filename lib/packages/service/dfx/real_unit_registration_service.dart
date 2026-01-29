@@ -33,7 +33,7 @@ class RealUnitRegistrationService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $authToken',
       },
-      body: jsonEncode(RealUnitEmailRegistrationRequestDto(email: email)),
+      body: jsonEncode(RealUnitEmailRegistrationRequestDto(email: email.toLowerCase())),
     );
 
     if (response.statusCode != 201 && response.statusCode != 202) {
@@ -52,7 +52,7 @@ class RealUnitRegistrationService {
     );
     final requestDto = RealUnitRegistrationRequestDto(
       type: registration.type.jsonName,
-      email: registration.email,
+      email: registration.email.toLowerCase(),
       name: '${registration.firstName} ${registration.lastName}',
       phoneNumber: registration.phoneNumber,
       birthday: registration.birthday,

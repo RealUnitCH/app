@@ -11,12 +11,10 @@ import 'package:realunit_wallet/styles/colors.dart';
 
 class RegistrationEmailStep extends StatelessWidget {
   final TextEditingController emailCtrl;
-  final VoidCallback onNext;
 
   const RegistrationEmailStep({
     super.key,
     required this.emailCtrl,
-    required this.onNext,
   });
 
   @override
@@ -27,7 +25,6 @@ class RegistrationEmailStep extends StatelessWidget {
       ),
       child: RegistrationEmailStepView(
         emailCtrl: emailCtrl,
-        onNext: onNext,
       ),
     );
   }
@@ -35,12 +32,10 @@ class RegistrationEmailStep extends StatelessWidget {
 
 class RegistrationEmailStepView extends StatelessWidget {
   final TextEditingController emailCtrl;
-  final VoidCallback onNext;
 
   RegistrationEmailStepView({
     super.key,
     required this.emailCtrl,
-    required this.onNext,
   });
 
   final _formKey = GlobalKey<FormState>();
@@ -59,12 +54,12 @@ class RegistrationEmailStepView extends StatelessWidget {
         }
         if (state is RegistrationEmailStepSuccess) {
           if (state.status == RegistrationEmailStatus.emailRegistered) {
-            context.read<RegistrationStepCubit>().syncEmailVerification(required: false);
-            onNext();
+            context.read<RegistrationStepCubit>().checkForEmailVerification(required: false);
+            context.read<RegistrationStepCubit>().next();
           }
           if (state.status == RegistrationEmailStatus.mergeRequested) {
-            context.read<RegistrationStepCubit>().syncEmailVerification(required: true);
-            onNext();
+            context.read<RegistrationStepCubit>().checkForEmailVerification(required: true);
+            context.read<RegistrationStepCubit>().next();
           }
         }
       },

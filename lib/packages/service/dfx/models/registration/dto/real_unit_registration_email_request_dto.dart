@@ -7,7 +7,7 @@ class RealUnitEmailRegistrationRequestDto {
 
   Map<String, dynamic> toJson() {
     return {
-      'email': email.trim().toLowerCase(),
+      'email': email,
     };
   }
 }

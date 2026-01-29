@@ -15,19 +15,21 @@ class RegistrationEmailVerificationStepCubit extends Cubit<RegistrationEmailVeri
   Future<void> checkEmailVerification() async {
     emit(const RegistrationEmailVerificationStepLoading());
 
-    final currentToken = await _dfxService.getAuthToken();
-    if (currentToken == null) return;
-    final currentJwt = JwtDecoder.parseJwt(currentToken);
-
+    final currentAccountId = await getAccountId();
     _dfxService.invalidateAuthToken();
-    final newToken = await _dfxService.getAuthToken();
-    if (newToken == null) return;
-    final newJwt = JwtDecoder.parseJwt(newToken);
+    final newAccountId = await getAccountId();
 
-    if (currentJwt['account'] as int != newJwt['account'] as int) {
+    if (currentAccountId != newAccountId) {
       emit(const RegistrationEmailVerificationStepSuccess());
     } else {
       emit(const RegistrationEmailVerificationStepFailure());
     }
+  }
+
+  Future<int?> getAccountId() async {
+    final token = await _dfxService.getAuthToken();
+    if (token == null) return null;
+    final currentJwt = JwtDecoder.parseJwt(token);
+    return currentJwt['account'] as int?;
   }
 }

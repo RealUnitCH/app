@@ -50,7 +50,7 @@ class RegistrationStepCubit extends Cubit<RegistrationStepState> {
     }
   }
 
-  void syncEmailVerification({required bool required}) {
+  void checkForEmailVerification({required bool required}) {
     final steps = _steps(emailVerificationRequired: required);
 
     if (!listEquals(steps, state.steps)) {
