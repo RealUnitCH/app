@@ -22,7 +22,7 @@ class RegistrationEmailVerificationStepCubit extends Cubit<RegistrationEmailVeri
     _dfxService.invalidateAuthToken();
     final newToken = await _dfxService.getAuthToken();
     if (newToken == null) return;
-    final newJwt = JwtDecoder.parseJwt(currentToken);
+    final newJwt = JwtDecoder.parseJwt(newToken);
 
     if (currentJwt['account'] as int != newJwt['account'] as int) {
       emit(const RegistrationEmailVerificationStepSuccess());
