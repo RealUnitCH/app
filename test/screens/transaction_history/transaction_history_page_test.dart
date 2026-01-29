@@ -14,6 +14,7 @@ import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/filter/transaction_history_filter_cubit.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/receipt/transaction_history_receipt_cubit.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
+import 'package:realunit_wallet/screens/transaction_history/widgets/transaction_history_download_button.dart';
 import 'package:realunit_wallet/screens/transaction_history/widgets/transaction_history_row.dart';
 import 'package:realunit_wallet/widgets/date_picker_field.dart';
 
@@ -98,7 +99,7 @@ void main() {
       await tester.pumpApp(buildSubject());
 
       expect(find.byType(DatePickerField), findsNWidgets(2));
-      expect(find.byIcon(Icons.file_download_outlined), findsOne);
+      expect(find.byType(TransactionHistoryDownloadButton), findsOne);
     });
 
     testWidgets('renders $TransactionHistoryRow for each Transaction', (tester) async {
