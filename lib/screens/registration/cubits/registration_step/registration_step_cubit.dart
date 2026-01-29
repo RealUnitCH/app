@@ -8,16 +8,23 @@ part 'registration_step_state.dart';
 class RegistrationStepCubit extends Cubit<RegistrationStepState> {
   RegistrationStepCubit()
       : super(
-          const RegistrationStepState(
+          RegistrationStepState(
             step: RegistrationStep.email,
-            steps: [
-              RegistrationStep.email,
-              RegistrationStep.personal,
-              RegistrationStep.address,
-              RegistrationStep.completed,
-            ],
+            steps: _steps(emailVerificationRequired: false),
           ),
         );
+
+  static List<RegistrationStep> _steps({
+    required bool emailVerificationRequired,
+  }) {
+    return [
+      RegistrationStep.email,
+      if (emailVerificationRequired) RegistrationStep.emailVerification,
+      RegistrationStep.personal,
+      RegistrationStep.address,
+      RegistrationStep.completed,
+    ];
+  }
 
   void next() {
     final currentIndex = state.index;
@@ -44,17 +51,7 @@ class RegistrationStepCubit extends Cubit<RegistrationStepState> {
   }
 
   void syncEmailVerification({required bool required}) {
-    final steps = List<RegistrationStep>.from(state.steps);
-    final hasVerification = state.steps.contains(RegistrationStep.emailVerification);
-
-    if (required && !hasVerification) {
-      final insertIndex = state.steps.indexOf(RegistrationStep.email) + 1;
-      steps.insert(insertIndex, RegistrationStep.emailVerification);
-    }
-
-    if (!required && hasVerification) {
-      steps.remove(RegistrationStep.emailVerification);
-    }
+    final steps = _steps(emailVerificationRequired: required);
 
     if (!listEquals(steps, state.steps)) {
       emit(

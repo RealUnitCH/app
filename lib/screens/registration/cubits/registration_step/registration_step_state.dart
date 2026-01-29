@@ -12,7 +12,9 @@ class RegistrationStepState {
   });
 
   int get index => steps.indexOf(step);
+
   int get totalSteps => steps.length;
+
   double get progress => (index + 1) / totalSteps;
 
   bool get canGoBack => step != RegistrationStep.email && step != RegistrationStep.completed;

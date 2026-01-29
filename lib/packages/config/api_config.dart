@@ -3,7 +3,7 @@ import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 
 /// if true, requires to have a local running backend
-bool get _localTesting => true;
+bool get _localTesting => false;
 
 class ApiConfig {
   final NetworkMode networkMode;
