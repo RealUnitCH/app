@@ -1,6 +1,6 @@
 part of 'registration_step_cubit.dart';
 
-enum RegistrationStep { email, emailVerification, personal, address, completed }
+enum RegistrationStep { email, personal, address, completed }
 
 class RegistrationStepState {
   final List<RegistrationStep> steps;
@@ -23,8 +23,6 @@ class RegistrationStepState {
     switch (step) {
       case RegistrationStep.email:
         return S.of(context).registerEmail;
-      case RegistrationStep.emailVerification:
-        return S.of(context).registerEmailVerification;
       case RegistrationStep.personal:
         return S.of(context).personalData;
       case RegistrationStep.address:

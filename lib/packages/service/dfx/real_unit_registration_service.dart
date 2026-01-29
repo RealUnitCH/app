@@ -92,8 +92,11 @@ class RealUnitRegistrationService {
     );
 
     if (response.statusCode != 201 && response.statusCode != 202) {
-      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
-      throw ApiException.fromJson(errorJson);
+      final messages = jsonDecode(response.body)['message'] is List
+          ? List<String>.from(jsonDecode(response.body)['message'])
+          : <String>[jsonDecode(response.body)['message']];
+
+      throw Exception(messages.join('\n'));
     }
 
     final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));

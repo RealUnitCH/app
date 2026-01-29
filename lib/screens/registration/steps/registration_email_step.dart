@@ -6,6 +6,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/registration/registr
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/registration/cubits/registration_email_step/registration_email_step_cubit.dart';
 import 'package:realunit_wallet/screens/registration/cubits/registration_step/registration_step_cubit.dart';
+import 'package:realunit_wallet/screens/registration/subpages/registration_email_verification_page.dart';
 import 'package:realunit_wallet/screens/registration/widgets/registration_text_field.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
@@ -43,7 +44,7 @@ class RegistrationEmailStepView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocListener<RegistrationEmailStepCubit, RegistrationEmailStepState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is RegistrationEmailStepFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -54,12 +55,21 @@ class RegistrationEmailStepView extends StatelessWidget {
         }
         if (state is RegistrationEmailStepSuccess) {
           if (state.status == RegistrationEmailStatus.emailRegistered) {
-            context.read<RegistrationStepCubit>().checkForEmailVerification(required: false);
             context.read<RegistrationStepCubit>().next();
           }
           if (state.status == RegistrationEmailStatus.mergeRequested) {
-            context.read<RegistrationStepCubit>().checkForEmailVerification(required: true);
-            context.read<RegistrationStepCubit>().next();
+            bool? isConfirmed = await Navigator.push(
+              context,
+              MaterialPageRoute<bool>(
+                builder: (BuildContext context) => const RegistrationEmailVerificationPage(),
+              ),
+            );
+            if (isConfirmed ?? false) {
+              await Future.delayed(const Duration(milliseconds: 300));
+              if (context.mounted) {
+                context.read<RegistrationStepCubit>().next();
+              }
+            }
           }
         }
       },

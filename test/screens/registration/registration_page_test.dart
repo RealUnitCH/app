@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/registration/cubits/registration_step/registration_step_cubit.dart';
@@ -14,7 +13,6 @@ import 'package:realunit_wallet/screens/registration/registration_page.dart';
 import 'package:realunit_wallet/screens/registration/steps/registration_address_step.dart';
 import 'package:realunit_wallet/screens/registration/steps/registration_completed_step.dart';
 import 'package:realunit_wallet/screens/registration/steps/registration_email_step.dart';
-import 'package:realunit_wallet/screens/registration/steps/registration_email_verification_step.dart';
 import 'package:realunit_wallet/screens/registration/steps/registration_personal_step.dart';
 
 import '../../helper/helper.dart';
@@ -28,8 +26,6 @@ class MockRegistrationSubmitCubit extends MockCubit<RegistrationSubmitState>
 class MockDfxRegistrationService extends Mock implements RealUnitRegistrationService {}
 
 class MockDfxCountryService extends Mock implements DfxCountryService {}
-
-class MockDfxWidgetService extends Mock implements DfxWidgetService {}
 
 void main() {
   late RegistrationStepCubit registrationStepCubit;
@@ -57,7 +53,6 @@ void main() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<RealUnitRegistrationService>(MockDfxRegistrationService());
     getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
-    getIt.registerSingleton<DfxWidgetService>(MockDfxWidgetService());
   }
 
   setUpAll(() {
@@ -107,31 +102,6 @@ void main() {
         state.progress,
       );
       expect(find.byType(RegistrationEmailStep).hitTestable(), findsOne);
-    });
-
-    testWidgets('renders $RegistrationEmailVerificationStep', (tester) async {
-      final state = const RegistrationStepState(
-        step: RegistrationStep.emailVerification,
-        steps: [
-          RegistrationStep.email,
-          RegistrationStep.emailVerification,
-          RegistrationStep.personal,
-          RegistrationStep.address,
-          RegistrationStep.completed,
-        ],
-      );
-      when(() => registrationStepCubit.state).thenReturn(state);
-
-      await tester.pumpApp(buildSubject(const RegistrationView()));
-
-      (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
-      await tester.pump();
-
-      expect(
-        (tester.widget(find.byType(LinearProgressIndicator)) as LinearProgressIndicator).value,
-        state.progress,
-      );
-      expect(find.byType(RegistrationEmailVerificationStep).hitTestable(), findsOne);
     });
 
     testWidgets('renders $RegistrationPersonalStep', (tester) async {

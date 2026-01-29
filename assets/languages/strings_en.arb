@@ -108,6 +108,7 @@
   "recoveryWordsInvalid": "Recovery words invalid",
   "registerAccountType": "Account type",
   "registerCitizenship": "Citizenship",
+  "registerDataMismatch": "The data provided does not match the data in the system. Please contact support.",
   "registerEmail": "Email",
   "registerEmailInvalid": "Email is invalid",
   "registerEmailRequired": "Email is required",

@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:realunit_wallet/di.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/registration/cubits/registration_step/registration_step_cubit.dart';
@@ -12,7 +14,6 @@ import 'package:realunit_wallet/screens/registration/cubits/registration_submit/
 import 'package:realunit_wallet/screens/registration/steps/registration_address_step.dart';
 import 'package:realunit_wallet/screens/registration/steps/registration_completed_step.dart';
 import 'package:realunit_wallet/screens/registration/steps/registration_email_step.dart';
-import 'package:realunit_wallet/screens/registration/steps/registration_email_verification_step.dart';
 import 'package:realunit_wallet/screens/registration/steps/registration_personal_step.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
@@ -97,7 +98,17 @@ class _RegistrationViewState extends State<RegistrationView> {
       body: BlocListener<RegistrationSubmitCubit, RegistrationSubmitState>(
         listener: (context, state) {
           if (state is RegistrationSubmitSuccess) {
-            context.read<RegistrationStepCubit>().next();
+            if (state.status == RegistrationStatus.manualReviewDataMismatch) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(S.of(context).registerDataMismatch),
+                  backgroundColor: RealUnitColors.status.red600,
+                ),
+              );
+            }
+            if (state.status == RegistrationStatus.completed) {
+              context.read<RegistrationStepCubit>().next();
+            }
           }
           if (state is RegistrationSubmitFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -126,15 +137,10 @@ class _RegistrationViewState extends State<RegistrationView> {
             Expanded(
               child: Stack(
                 children: [
-                  BlocBuilder<RegistrationStepCubit, RegistrationStepState>(
-                    buildWhen: (previous, current) => previous.steps != current.steps,
-                    builder: (context, state) {
-                      return PageView(
-                        controller: _pageController,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: state.steps.map(_buildStep).toList(),
-                      );
-                    },
+                  PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: RegistrationStep.values.map(_buildStep).toList(),
                   ),
                   BlocBuilder<RegistrationSubmitCubit, RegistrationSubmitState>(
                     builder: (context, state) {
@@ -164,9 +170,6 @@ class _RegistrationViewState extends State<RegistrationView> {
         return RegistrationEmailStep(
           emailCtrl: emailCtrl,
         );
-
-      case RegistrationStep.emailVerification:
-        return const RegistrationEmailVerificationStep();
 
       case RegistrationStep.personal:
         return RegistrationPersonalStep(

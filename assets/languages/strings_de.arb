@@ -108,6 +108,7 @@
   "recoveryWordsInvalid": "Wiederherstellungs-Wörter ungültig",
   "registerAccountType": "Kontotyp",
   "registerCitizenship": "Staatsangehörigkeit",
+  "registerDataMismatch": "Die angegebenen Daten stimmen nicht mit den Daten im System überein. Bitte melde dich beim Support.",
   "registerEmail": "E-Mail",
   "registerEmailInvalid": "E-Mail ist ungültig",
   "registerEmailRequired": "E-Mail ist erforderlich",
