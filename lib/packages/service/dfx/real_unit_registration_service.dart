@@ -50,6 +50,7 @@ class RealUnitRegistrationService {
       credentials: credentials,
       registration: registration,
     );
+    final address = _splitStreetAndNumber(registration.addressStreet);
     final requestDto = RealUnitRegistrationRequestDto(
       type: registration.type.jsonName,
       email: registration.email.toLowerCase(),
@@ -72,7 +73,8 @@ class RealUnitRegistrationService {
         lastName: registration.lastName,
         phone: registration.phoneNumber,
         address: KycAddress(
-          street: registration.addressStreet,
+          street: address.street,
+          houseNumber: address.number,
           zip: registration.addressPostalCode,
           city: registration.addressCity,
           country: registration.addressCountry.id,
@@ -101,5 +103,20 @@ class RealUnitRegistrationService {
 
     final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
     return responseDto.status;
+  }
+
+  ({String street, String number}) _splitStreetAndNumber(String input) {
+    final value = input.trim();
+    if (value.isEmpty) {
+      return (street: '', number: '');
+    }
+
+    final regex = RegExp(r'^(.+?)\s+(\d+[a-zA-Z]?([\-\/]\d+[a-zA-Z]?)?)$');
+    final match = regex.firstMatch(value);
+
+    return (
+      street: match?.group(1)?.trim() ?? value,
+      number: match?.group(2)?.trim() ?? '',
+    );
   }
 }
