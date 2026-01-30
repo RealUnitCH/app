@@ -24,6 +24,7 @@ class RealUnitRegistrationService {
   String get _host => _appStore.apiConfig.apiHost;
 
   Future<RegistrationEmailStatus> registerEmail(String email) async {
+    final credentials = _appStore.wallet.primaryAccount.primaryAddress;
     final authToken = _appStore.dfxAuthToken;
 
     final uri = buildUri(_host, _registerEmailPath);
@@ -33,7 +34,10 @@ class RealUnitRegistrationService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $authToken',
       },
-      body: jsonEncode(RealUnitEmailRegistrationRequestDto(email: email.toLowerCase())),
+      body: jsonEncode(RealUnitEmailRegistrationRequestDto(
+        email: email.toLowerCase(),
+        walletAddress: credentials.address.hexEip55,
+      )),
     );
 
     if (response.statusCode != 201 && response.statusCode != 202) {
