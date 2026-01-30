@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:realunit_wallet/di.dart';
-import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
@@ -98,14 +97,6 @@ class _RegistrationViewState extends State<RegistrationView> {
       body: BlocListener<RegistrationSubmitCubit, RegistrationSubmitState>(
         listener: (context, state) {
           if (state is RegistrationSubmitSuccess) {
-            if (state.status == RegistrationStatus.manualReviewDataMismatch) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(S.of(context).registerDataMismatch),
-                  backgroundColor: RealUnitColors.status.red600,
-                ),
-              );
-            }
             if (state.status == RegistrationStatus.completed) {
               context.read<RegistrationStepCubit>().next();
             }
