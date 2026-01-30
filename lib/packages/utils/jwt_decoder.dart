@@ -29,7 +29,7 @@ class JwtDecoder {
         output += '=';
         break;
       default:
-        throw Exception('Illegal base64url string!"');
+        throw Exception('Illegal base64url string');
     }
 
     return utf8.decode(base64Url.decode(output));
