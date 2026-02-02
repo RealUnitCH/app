@@ -5,7 +5,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 
 abstract class DFXAuthService {
-  static const walletName = 'dEuroWallet';
+  static const walletName = 'RealUnit';
 
   final String signMessagePath = '/v1/auth/signMessage';
   final String authPath = '/v1/auth';

@@ -2,31 +2,60 @@ import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_email_request_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_email_response_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_response_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 
 class RealUnitRegistrationService {
-  static const _registerPath = '/v1/realunit/register';
+  RealUnitRegistrationService(AppStore appStore) : _appStore = appStore;
 
-  String get _host => _appStore.apiConfig.apiHost;
+  static const _registerEmailPath = '/v1/realunit/register/email';
+  static const _registerCompletionPath = '/v1/realunit/register/complete';
 
   final AppStore _appStore;
 
-  RealUnitRegistrationService(AppStore appStore) : _appStore = appStore;
+  String get _host => _appStore.apiConfig.apiHost;
 
-  Future<RegistrationStatus> register(Registration registration) async {
+  Future<RegistrationEmailStatus> registerEmail(String email) async {
+    final authToken = _appStore.dfxAuthToken;
+
+    final uri = buildUri(_host, _registerEmailPath);
+    final response = await _appStore.httpClient.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $authToken',
+      },
+      body: jsonEncode(RealUnitEmailRegistrationRequestDto(
+        email: email.toLowerCase(),
+      )),
+    );
+
+    if (response.statusCode != 201 && response.statusCode != 202) {
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson);
+    }
+    final responseDto = RealUnitRegistrationEmailResponseDto.fromJson(jsonDecode(response.body));
+    return responseDto.status;
+  }
+
+  Future<RegistrationStatus> completeRegistration(Registration registration) async {
     final credentials = _appStore.wallet.primaryAccount.primaryAddress;
     final signature = Eip712Signer.signRegistration(
       credentials: credentials,
       registration: registration,
     );
+    final address = _splitStreetAndNumber(registration.addressStreet);
     final requestDto = RealUnitRegistrationRequestDto(
       type: registration.type.jsonName,
-      email: registration.email,
+      email: registration.email.toLowerCase(),
       name: '${registration.firstName} ${registration.lastName}',
       phoneNumber: registration.phoneNumber,
       birthday: registration.birthday,
@@ -46,7 +75,8 @@ class RealUnitRegistrationService {
         lastName: registration.lastName,
         phone: registration.phoneNumber,
         address: KycAddress(
-          street: registration.addressStreet,
+          street: address.street,
+          houseNumber: address.number,
           zip: registration.addressPostalCode,
           city: registration.addressCity,
           country: registration.addressCountry.id,
@@ -55,17 +85,17 @@ class RealUnitRegistrationService {
     );
     final authToken = _appStore.dfxAuthToken;
 
-    final uri = buildUri(_host, _registerPath);
+    final uri = buildUri(_host, _registerCompletionPath);
     final response = await _appStore.httpClient.post(
       uri,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $authToken',
       },
-      body: jsonEncode(requestDto.toJson()),
+      body: jsonEncode(requestDto),
     );
 
-    if (response.statusCode != 200 && response.statusCode != 202) {
+    if (response.statusCode != 201 && response.statusCode != 202) {
       final messages = jsonDecode(response.body)['message'] is List
           ? List<String>.from(jsonDecode(response.body)['message'])
           : <String>[jsonDecode(response.body)['message']];
@@ -75,5 +105,20 @@ class RealUnitRegistrationService {
 
     final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
     return responseDto.status;
+  }
+
+  ({String street, String number}) _splitStreetAndNumber(String input) {
+    final value = input.trim();
+    if (value.isEmpty) {
+      return (street: '', number: '');
+    }
+
+    final regex = RegExp(r'^(.+?)\s+(\d+[a-zA-Z]?([\-\/]\d+[a-zA-Z]?)?)$');
+    final match = regex.firstMatch(value);
+
+    return (
+      street: match?.group(1)?.trim() ?? value,
+      number: match?.group(2)?.trim() ?? '',
+    );
   }
 }

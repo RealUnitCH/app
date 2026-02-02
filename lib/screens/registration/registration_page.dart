@@ -5,12 +5,14 @@ import 'package:intl/intl.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/registration/cubits/registration_step/registration_step_cubit.dart';
 import 'package:realunit_wallet/screens/registration/cubits/registration_submit/registration_submit_cubit.dart';
 import 'package:realunit_wallet/screens/registration/steps/registration_address_step.dart';
 import 'package:realunit_wallet/screens/registration/steps/registration_completed_step.dart';
+import 'package:realunit_wallet/screens/registration/steps/registration_email_step.dart';
 import 'package:realunit_wallet/screens/registration/steps/registration_personal_step.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
@@ -46,8 +48,9 @@ class RegistrationView extends StatefulWidget {
 class _RegistrationViewState extends State<RegistrationView> {
   final _pageController = PageController();
 
-  final typeCtrl = ValueNotifier<RegistrationUserType>(RegistrationUserType.human);
   final emailCtrl = TextEditingController();
+
+  final typeCtrl = ValueNotifier<RegistrationUserType>(RegistrationUserType.human);
   final lastnameCtrl = TextEditingController();
   final firstnameCtrl = TextEditingController();
   final phoneCtrl = ValueNotifier<String?>(null);
@@ -94,7 +97,9 @@ class _RegistrationViewState extends State<RegistrationView> {
       body: BlocListener<RegistrationSubmitCubit, RegistrationSubmitState>(
         listener: (context, state) {
           if (state is RegistrationSubmitSuccess) {
-            context.read<RegistrationStepCubit>().next();
+            if (state.status == RegistrationStatus.completed) {
+              context.read<RegistrationStepCubit>().next();
+            }
           }
           if (state is RegistrationSubmitFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -126,27 +131,7 @@ class _RegistrationViewState extends State<RegistrationView> {
                   PageView(
                     controller: _pageController,
                     physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      RegistrationPersonalStep(
-                        typeCtrl: typeCtrl,
-                        emailCtrl: emailCtrl,
-                        firstNameCtrl: firstnameCtrl,
-                        lastNameCtrl: lastnameCtrl,
-                        nationalityCtrl: nationalityCtrl,
-                        phoneCtrl: phoneCtrl,
-                        birthdayCtrl: birthdayCtrl,
-                        onNext: context.read<RegistrationStepCubit>().next,
-                      ),
-                      RegistrationAddressStep(
-                        addressStreetCtrl: addressStreetCtrl,
-                        postalCodeCtrl: postalCodeCtrl,
-                        cityCtrl: cityCtrl,
-                        countryCtrl: countryCtrl,
-                        onPrevious: context.read<RegistrationStepCubit>().previous,
-                        onSubmit: _onSubmit,
-                      ),
-                      const RegistrationCompletedStep(),
-                    ],
+                    children: RegistrationStep.values.map(_buildStep).toList(),
                   ),
                   BlocBuilder<RegistrationSubmitCubit, RegistrationSubmitState>(
                     builder: (context, state) {
@@ -168,6 +153,37 @@ class _RegistrationViewState extends State<RegistrationView> {
         ),
       ),
     );
+  }
+
+  Widget _buildStep(RegistrationStep step) {
+    switch (step) {
+      case RegistrationStep.email:
+        return RegistrationEmailStep(
+          emailCtrl: emailCtrl,
+        );
+
+      case RegistrationStep.personal:
+        return RegistrationPersonalStep(
+          typeCtrl: typeCtrl,
+          firstNameCtrl: firstnameCtrl,
+          lastNameCtrl: lastnameCtrl,
+          nationalityCtrl: nationalityCtrl,
+          phoneCtrl: phoneCtrl,
+          birthdayCtrl: birthdayCtrl,
+        );
+
+      case RegistrationStep.address:
+        return RegistrationAddressStep(
+          addressStreetCtrl: addressStreetCtrl,
+          postalCodeCtrl: postalCodeCtrl,
+          cityCtrl: cityCtrl,
+          countryCtrl: countryCtrl,
+          onSubmit: _onSubmit,
+        );
+
+      case RegistrationStep.completed:
+        return const RegistrationCompletedStep();
+    }
   }
 
   Future<void> _onSubmit() async => await context.read<RegistrationSubmitCubit>().submit(

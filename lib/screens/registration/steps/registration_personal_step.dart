@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
+import 'package:realunit_wallet/screens/registration/cubits/registration_step/registration_step_cubit.dart';
 import 'package:realunit_wallet/screens/registration/widgets/fields/registration_birthday_field.dart';
 import 'package:realunit_wallet/screens/registration/widgets/fields/registration_country_field.dart';
 import 'package:realunit_wallet/screens/registration/widgets/fields/registration_phone_number_field.dart';
@@ -10,24 +12,20 @@ import 'package:realunit_wallet/screens/registration/widgets/registration_text_f
 
 class RegistrationPersonalStep extends StatelessWidget {
   final ValueNotifier<RegistrationUserType> typeCtrl;
-  final TextEditingController emailCtrl;
   final TextEditingController firstNameCtrl;
   final TextEditingController lastNameCtrl;
   final ValueNotifier<String?> birthdayCtrl;
   final ValueNotifier<String?> phoneCtrl;
   final ValueNotifier<Country?> nationalityCtrl;
-  final VoidCallback onNext;
 
   RegistrationPersonalStep({
     super.key,
     required this.typeCtrl,
-    required this.emailCtrl,
     required this.firstNameCtrl,
     required this.lastNameCtrl,
     required this.phoneCtrl,
     required this.nationalityCtrl,
     required this.birthdayCtrl,
-    required this.onNext,
   });
 
   final _formKey = GlobalKey<FormState>();
@@ -56,22 +54,6 @@ class RegistrationPersonalStep extends StatelessWidget {
                     if (v != null) typeCtrl.value = v;
                   },
                   validator: (v) => v == null ? '' : null,
-                ),
-                RegistrationTextField(
-                  label: S.of(context).registerEmail,
-                  hintText: 'max@mustermann.ch',
-                  controller: emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
-                  hideErrorText: false,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return S.of(context).registerEmailRequired;
-                    }
-                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                      return S.of(context).registerEmailInvalid;
-                    }
-                    return null;
-                  },
                 ),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,7 +108,7 @@ class RegistrationPersonalStep extends StatelessWidget {
                     child: FilledButton(
                       onPressed: () {
                         if (_formKey.currentState?.validate() ?? false) {
-                          onNext();
+                          context.read<RegistrationStepCubit>().next();
                         }
                       },
                       child: Text(S.of(context).next),

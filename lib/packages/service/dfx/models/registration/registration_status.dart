@@ -1,6 +1,7 @@
 enum RegistrationStatus {
   completed,
-  pendingReview;
+  pendingReview,
+  forwardingFailed;
 
   static RegistrationStatus fromString(String status) {
     switch (status) {
@@ -8,6 +9,8 @@ enum RegistrationStatus {
         return RegistrationStatus.completed;
       case 'pending_review':
         return RegistrationStatus.pendingReview;
+      case 'forwarding_failed':
+        return RegistrationStatus.forwardingFailed;
       default:
         throw Exception('Unknown registration status: $status');
     }

@@ -18,7 +18,7 @@ class RegistrationSubmitCubit extends Cubit<RegistrationSubmitState> {
   Future<void> submit(Registration registration) async {
     try {
       emit(RegistrationSubmitLoading());
-      final status = await _service.register(registration);
+      final status = await _service.completeRegistration(registration);
 
       emit(RegistrationSubmitSuccess(status));
     } catch (e) {
