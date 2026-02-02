@@ -11,33 +11,33 @@ class PinView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: SafeArea(
-          child: BlocListener<PinCubit, PinState>(
-            listener: (_, __) {},
-            child: BlocBuilder<PinCubit, PinState>(
-              builder: (context, state) => Column(
-                children: [
-                  Expanded(
-                    child: Center(
-                      child: PinIndicator(
-                        pinLength: state.pin.length,
-                        expectedPinLength: context.read<PinCubit>().maxPinLength,
-                        wrongPin: state.wrongTry,
-                      ),
-                    ),
+    body: SafeArea(
+      child: BlocListener<PinCubit, PinState>(
+        listener: (_, _) {},
+        child: BlocBuilder<PinCubit, PinState>(
+          builder: (context, state) => Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: PinIndicator(
+                    pinLength: state.pin.length,
+                    expectedPinLength: context.read<PinCubit>().maxPinLength,
+                    wrongPin: state.wrongTry,
                   ),
-                  NumberPad(
-                    onNumberPressed: (index) => context.read<PinCubit>().amountAdd(index),
-                    onDeletePressed: () => context.read<PinCubit>().amountDelete(),
-                  ),
-                  Padding(
-                    padding: _kPadding,
-                    child: TextButton(onPressed: () {}, child: const Text('Reset Wallet')),
-                  )
-                ],
+                ),
               ),
-            ),
+              NumberPad(
+                onNumberPressed: (index) => context.read<PinCubit>().amountAdd(index),
+                onDeletePressed: () => context.read<PinCubit>().amountDelete(),
+              ),
+              Padding(
+                padding: _kPadding,
+                child: TextButton(onPressed: () {}, child: const Text('Reset Wallet')),
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    ),
+  );
 }

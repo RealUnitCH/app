@@ -30,7 +30,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.35.6"
+          flutter-version: "3.38.7"
           channel: "stable"
           cache: true
 
@@ -105,7 +105,7 @@ jobs:
           path: build/app/outputs/flutter-apk/realunit-*.apk
 
   ios-deploy:
-    runs-on: macos-latest
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
 
@@ -121,7 +121,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.35.6"
+          flutter-version: "3.38.7"
           channel: "stable"
           cache: true
 
