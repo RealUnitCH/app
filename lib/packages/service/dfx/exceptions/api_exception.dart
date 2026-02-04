@@ -6,12 +6,7 @@ class ApiException implements Exception {
   final String code;
   final String message;
 
-  const ApiException({
-    this.statusCode,
-    this.error,
-    required this.code,
-    required this.message,
-  });
+  const ApiException({this.statusCode, this.error, required this.code, required this.message});
 
   factory ApiException.fromJson(Map<String, dynamic> json) {
     final code = json['code'] as String?;
@@ -23,6 +18,7 @@ class ApiException implements Exception {
         return RegistrationRequiredException.fromJson(json);
       default:
         return ApiException(
+          statusCode: json['statusCode'] as int,
           code: code ?? 'UNKNOWN',
           message: json['message'] as String,
         );
@@ -30,5 +26,5 @@ class ApiException implements Exception {
   }
 
   @override
-  String toString() => 'RealUnitApiException: $message (code: $code)';
+  String toString() => 'RealUnitApiException: $message (code: $code, statusCode: $statusCode)';
 }
