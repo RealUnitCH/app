@@ -1,0 +1,126 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/di.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
+import 'package:realunit_wallet/screens/kyc/cubits/kyc_nationality/kyc_nationality_cubit.dart';
+import 'package:realunit_wallet/screens/registration/widgets/fields/registration_country_field.dart';
+import 'package:realunit_wallet/styles/colors.dart';
+
+class KycNationalityPage extends StatelessWidget {
+  final String url;
+
+  const KycNationalityPage({super.key, required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => KycNationalityCubit(getIt<DfxKycService>()),
+      child: KycNationalityView(url: url),
+    );
+  }
+}
+
+class KycNationalityView extends StatefulWidget {
+  final String url;
+  const KycNationalityView({super.key, required this.url});
+
+  @override
+  State<KycNationalityView> createState() => _KycNationalityViewState();
+}
+
+class _KycNationalityViewState extends State<KycNationalityView> {
+  final _formKey = GlobalKey<FormState>();
+
+  final nationalityCtrl = ValueNotifier<Country?>(null);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(S.of(context).registerCitizenship)),
+      body: BlocListener<KycNationalityCubit, KycNationalityState>(
+        listener: (context, state) {
+          if (state is KycNationalitySuccess) {
+            context.read<KycCubit>().checkKyc();
+          }
+          if (state is KycNationalityFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Set Nationality failed:\n${state.message}'),
+                backgroundColor: RealUnitColors.status.red600,
+              ),
+            );
+          }
+        },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: SafeArea(
+            child: GestureDetector(
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              behavior: HitTestBehavior.opaque,
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  spacing: 16,
+                  children: [
+                    RegistrationCountryField(
+                      label: S.of(context).registerCitizenship,
+                      onChanged: (country) => nationalityCtrl.value = country,
+                      validator: (value) {
+                        if (value == null) return '';
+                        return null;
+                      },
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: BlocBuilder<KycNationalityCubit, KycNationalityState>(
+                          builder: (context, state) {
+                            if (state is KycNationalityLoading) {
+                              return FilledButton.icon(
+                                onPressed: null,
+                                icon: SizedBox(
+                                  height: 14,
+                                  width: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 1.5,
+                                    color: RealUnitColors.basic.black.withValues(alpha: 0.5),
+                                  ),
+                                ),
+                                label: Text(S.of(context).next),
+                              );
+                            }
+                            return FilledButton(
+                              onPressed: () {
+                                if (_formKey.currentState?.validate() ?? false) {
+                                  context.read<KycNationalityCubit>().registerNationality(
+                                    widget.url,
+                                    nationalityCtrl.value!,
+                                  );
+                                }
+                              },
+                              child: Text(S.of(context).next),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    nationalityCtrl.dispose();
+    super.dispose();
+  }
+}
