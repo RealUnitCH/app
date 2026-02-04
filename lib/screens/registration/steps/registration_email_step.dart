@@ -12,32 +12,24 @@ import 'package:realunit_wallet/styles/colors.dart';
 
 class RegistrationEmailStep extends StatelessWidget {
   final TextEditingController emailCtrl;
+  final Function() onSuccess;
 
-  const RegistrationEmailStep({
-    super.key,
-    required this.emailCtrl,
-  });
+  const RegistrationEmailStep({super.key, required this.emailCtrl, required this.onSuccess});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => RegistrationEmailStepCubit(
-        getIt<RealUnitRegistrationService>(),
-      ),
-      child: RegistrationEmailStepView(
-        emailCtrl: emailCtrl,
-      ),
+      create: (context) => RegistrationEmailStepCubit(getIt<RealUnitRegistrationService>()),
+      child: RegistrationEmailStepView(emailCtrl: emailCtrl, onSuccess: onSuccess),
     );
   }
 }
 
 class RegistrationEmailStepView extends StatelessWidget {
   final TextEditingController emailCtrl;
+  final Function() onSuccess;
 
-  RegistrationEmailStepView({
-    super.key,
-    required this.emailCtrl,
-  });
+  RegistrationEmailStepView({super.key, required this.emailCtrl, required this.onSuccess});
 
   final _formKey = GlobalKey<FormState>();
 
@@ -47,15 +39,12 @@ class RegistrationEmailStepView extends StatelessWidget {
       listener: (context, state) async {
         if (state is RegistrationEmailStepFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: RealUnitColors.status.red600,
-            ),
+            SnackBar(content: Text(state.message), backgroundColor: RealUnitColors.status.red600),
           );
         }
         if (state is RegistrationEmailStepSuccess) {
           if (state.status == RegistrationEmailStatus.emailRegistered) {
-            context.read<RegistrationStepCubit>().next();
+            onSuccess();
           }
           if (state.status == RegistrationEmailStatus.mergeRequested) {
             bool? isConfirmed = await Navigator.push(
@@ -76,9 +65,9 @@ class RegistrationEmailStepView extends StatelessWidget {
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: SafeArea(
-            child: GestureDetector(
-          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-          child: Form(
+          child: GestureDetector(
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: Form(
               key: _formKey,
               child: Column(
                 children: [
@@ -121,9 +110,9 @@ class RegistrationEmailStepView extends StatelessWidget {
                           return FilledButton(
                             onPressed: () {
                               if (_formKey.currentState?.validate() ?? false) {
-                                context
-                                    .read<RegistrationEmailStepCubit>()
-                                    .checkEmail(emailCtrl.text);
+                                context.read<RegistrationEmailStepCubit>().checkEmail(
+                                  emailCtrl.text,
+                                );
                               }
                             },
                             child: Text(S.of(context).next),
@@ -133,8 +122,10 @@ class RegistrationEmailStepView extends StatelessWidget {
                     ),
                   ),
                 ],
-              )),
-        )),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

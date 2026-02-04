@@ -24,14 +24,8 @@ class RegistrationPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (_) => RegistrationSubmitCubit(
-            getIt<RealUnitRegistrationService>(),
-          ),
-        ),
-        BlocProvider(
-          create: (_) => RegistrationStepCubit(),
-        ),
+        BlocProvider(create: (_) => RegistrationSubmitCubit(getIt<RealUnitRegistrationService>())),
+        BlocProvider(create: (_) => RegistrationStepCubit()),
       ],
       child: const RegistrationView(),
     );
@@ -83,13 +77,12 @@ class _RegistrationViewState extends State<RegistrationView> {
           builder: (context, state) {
             return AppBar(
               leading: IconButton(
-                onPressed:
-                    state.canGoBack ? context.read<RegistrationStepCubit>().previous : context.pop,
+                onPressed: state.canGoBack
+                    ? context.read<RegistrationStepCubit>().previous
+                    : context.pop,
                 icon: const Icon(Icons.arrow_back_rounded),
               ),
-              title: Text(
-                state.title(context),
-              ),
+              title: Text(state.title(context)),
             );
           },
         ),
@@ -138,9 +131,7 @@ class _RegistrationViewState extends State<RegistrationView> {
                       if (state is RegistrationSubmitLoading) {
                         return Container(
                           color: RealUnitColors.basic.white,
-                          child: const Center(
-                            child: CircularProgressIndicator(),
-                          ),
+                          child: const Center(child: CircularProgressIndicator()),
                         );
                       }
                       return const SizedBox.shrink();
@@ -160,6 +151,7 @@ class _RegistrationViewState extends State<RegistrationView> {
       case RegistrationStep.email:
         return RegistrationEmailStep(
           emailCtrl: emailCtrl,
+          onSuccess: context.read<RegistrationStepCubit>().next,
         );
 
       case RegistrationStep.personal:
@@ -187,22 +179,22 @@ class _RegistrationViewState extends State<RegistrationView> {
   }
 
   Future<void> _onSubmit() async => await context.read<RegistrationSubmitCubit>().submit(
-        Registration(
-          type: typeCtrl.value,
-          email: emailCtrl.text,
-          firstName: firstnameCtrl.text,
-          lastName: lastnameCtrl.text,
-          phoneNumber: phoneCtrl.value ?? '',
-          birthday: birthdayCtrl.value ?? '',
-          nationality: nationalityCtrl.value!,
-          addressStreet: addressStreetCtrl.text,
-          addressPostalCode: postalCodeCtrl.text,
-          addressCity: cityCtrl.text,
-          addressCountry: countryCtrl.value!,
-          swissTaxResidence: true,
-          registrationDate: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-        ),
-      );
+    Registration(
+      type: typeCtrl.value,
+      email: emailCtrl.text,
+      firstName: firstnameCtrl.text,
+      lastName: lastnameCtrl.text,
+      phoneNumber: phoneCtrl.value ?? '',
+      birthday: birthdayCtrl.value ?? '',
+      nationality: nationalityCtrl.value!,
+      addressStreet: addressStreetCtrl.text,
+      addressPostalCode: postalCodeCtrl.text,
+      addressCity: cityCtrl.text,
+      addressCountry: countryCtrl.value!,
+      swissTaxResidence: true,
+      registrationDate: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+    ),
+  );
 
   @override
   void dispose() {
