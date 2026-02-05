@@ -4,10 +4,10 @@ import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/screens/registration/cubits/registration_email_step/registration_email_step_cubit.dart';
-import 'package:realunit_wallet/screens/registration/cubits/registration_step/registration_step_cubit.dart';
-import 'package:realunit_wallet/screens/registration/subpages/registration_email_verification_page.dart';
-import 'package:realunit_wallet/screens/registration/widgets/registration_text_field.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_email_step/registration_email_step_cubit.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/registration_step_cubit.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/subpages/registration_email_verification_page.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/registration_text_field.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class RegistrationEmailStep extends StatelessWidget {

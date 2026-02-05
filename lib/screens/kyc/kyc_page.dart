@@ -4,9 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
-import 'package:realunit_wallet/screens/kyc/subpages/kyc_2fa_page.dart';
-import 'package:realunit_wallet/screens/kyc/subpages/kyc_nationality_page.dart';
-import 'package:realunit_wallet/screens/registration/registration_page.dart';
+import 'package:realunit_wallet/screens/kyc/steps/2fa/kyc_2fa_page.dart';
+import 'package:realunit_wallet/screens/kyc/steps/ident/kyc_ident_page.dart';
+import 'package:realunit_wallet/screens/kyc/steps/nationality/kyc_nationality_page.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/registration_page.dart';
+import 'package:realunit_wallet/screens/kyc/subpages/kyc_level_reached_page.dart';
+import 'package:realunit_wallet/screens/kyc/subpages/kyc_pending_page.dart';
 
 class KycPage extends StatelessWidget {
   static const routeName = '/kyc';
@@ -33,27 +36,29 @@ class KycView extends StatelessWidget {
           return Scaffold(body: Center(child: Text('Failure: ${state.message}')));
         }
         if (state is KycLoading) {
-          return Scaffold(body: Center(child: CupertinoActivityIndicator()));
+          return const Scaffold(body: Center(child: CupertinoActivityIndicator()));
+        }
+        if (state is KycPending) {
+          return KycPendingPage(pendingStep: state.pendingStep);
         }
         if (state is KycSuccess) {
           if (state.currentStep == KycStep.email) {
-            return RegistrationPage();
+            return const RegistrationPage();
           }
           if (state.currentStep == KycStep.nationality) {
             return KycNationalityPage(url: state.url!);
           }
           if (state.currentStep == KycStep.twoFa) {
-            return Kyc2FaPage();
+            return const Kyc2FaPage();
           }
           if (state.currentStep == KycStep.ident) {
-            return Scaffold(appBar: AppBar(title: Text('Ident')));
+            return KycIdentPage(accessToken: state.url!);
           }
-
-          if (state.currentStep == null) {
-            return Scaffold(body: Center(child: Text('Finished 🥳')));
+          if (state.isCompleted) {
+            return const KycLevelReachedPage();
           }
         }
-        return Scaffold();
+        return const Scaffold();
       },
     );
   }

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -8,16 +9,15 @@ import 'package:realunit_wallet/packages/service/dfx/models/registration/registr
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/screens/registration/cubits/registration_step/registration_step_cubit.dart';
-import 'package:realunit_wallet/screens/registration/cubits/registration_submit/registration_submit_cubit.dart';
-import 'package:realunit_wallet/screens/registration/steps/registration_address_step.dart';
-import 'package:realunit_wallet/screens/registration/steps/registration_completed_step.dart';
-import 'package:realunit_wallet/screens/registration/steps/registration_email_step.dart';
-import 'package:realunit_wallet/screens/registration/steps/registration_personal_step.dart';
+import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/registration_step_cubit.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_submit/registration_submit_cubit.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/steps/registration_address_step.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/steps/registration_email_step.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/steps/registration_personal_step.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class RegistrationPage extends StatelessWidget {
-  static const routeName = '/register';
   const RegistrationPage({super.key});
 
   @override
@@ -91,7 +91,7 @@ class _RegistrationViewState extends State<RegistrationView> {
         listener: (context, state) {
           if (state is RegistrationSubmitSuccess) {
             if (state.status == RegistrationStatus.completed) {
-              context.read<RegistrationStepCubit>().next();
+              context.read<KycCubit>().checkKyc();
             }
           }
           if (state is RegistrationSubmitFailure) {
@@ -131,7 +131,7 @@ class _RegistrationViewState extends State<RegistrationView> {
                       if (state is RegistrationSubmitLoading) {
                         return Container(
                           color: RealUnitColors.basic.white,
-                          child: const Center(child: CircularProgressIndicator()),
+                          child: const Center(child: CupertinoActivityIndicator()),
                         );
                       }
                       return const SizedBox.shrink();
@@ -172,9 +172,6 @@ class _RegistrationViewState extends State<RegistrationView> {
           countryCtrl: countryCtrl,
           onSubmit: _onSubmit,
         );
-
-      case RegistrationStep.completed:
-        return const RegistrationCompletedStep();
     }
   }
 

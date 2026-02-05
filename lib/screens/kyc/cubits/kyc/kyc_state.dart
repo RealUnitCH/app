@@ -13,14 +13,21 @@ class KycLoading extends KycState {
   const KycLoading();
 }
 
+class KycPending extends KycState {
+  final KycStep pendingStep;
+
+  const KycPending(this.pendingStep);
+}
+
 class KycSuccess extends KycState {
   final KycStep? currentStep;
   final String? url;
+  final bool isCompleted;
 
-  const KycSuccess({this.currentStep, this.url});
+  const KycSuccess({this.currentStep, this.url, this.isCompleted = false});
 
   @override
-  List<Object?> get props => [currentStep, url];
+  List<Object?> get props => [currentStep, url, isCompleted];
 }
 
 class KycFailure extends KycState {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/screens/registration/widgets/registration_dropdown_field.dart';
-import 'package:realunit_wallet/screens/registration/widgets/registration_text_field.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/registration_dropdown_field.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/registration_text_field.dart';
 
 class RegistrationPhoneNumberField extends StatefulWidget {
   final ValueNotifier<String?> controller;
@@ -50,11 +50,7 @@ class _RegistrationPhoneNumberFieldState extends State<RegistrationPhoneNumberFi
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           child: Text(
             S.of(context).phoneNumber,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              height: 18 / 13,
-            ),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, height: 18 / 13),
           ),
         ),
         Row(
@@ -64,16 +60,17 @@ class _RegistrationPhoneNumberFieldState extends State<RegistrationPhoneNumberFi
             Expanded(
               flex: 3,
               child: RegistrationDropdownField<String>(
-                  initialValue: prefix,
-                  items: prefixes
-                      .map((d) => DropdownMenuItem(value: d, child: Text(d.toString())))
-                      .toList(),
-                  onChanged: (v) {
-                    if (v != null) {
-                      prefix = v;
-                      updatePhoneNumber();
-                    }
-                  }),
+                initialValue: prefix,
+                items: prefixes
+                    .map((d) => DropdownMenuItem(value: d, child: Text(d.toString())))
+                    .toList(),
+                onChanged: (v) {
+                  if (v != null) {
+                    prefix = v;
+                    updatePhoneNumber();
+                  }
+                },
+              ),
             ),
             Expanded(
               flex: 6,
@@ -99,7 +96,7 @@ class _RegistrationPhoneNumberFieldState extends State<RegistrationPhoneNumberFi
                   return null;
                 },
               ),
-            )
+            ),
           ],
         ),
       ],

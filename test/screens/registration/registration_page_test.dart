@@ -7,13 +7,13 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/screens/registration/cubits/registration_step/registration_step_cubit.dart';
-import 'package:realunit_wallet/screens/registration/cubits/registration_submit/registration_submit_cubit.dart';
-import 'package:realunit_wallet/screens/registration/registration_page.dart';
-import 'package:realunit_wallet/screens/registration/steps/registration_address_step.dart';
-import 'package:realunit_wallet/screens/registration/steps/registration_completed_step.dart';
-import 'package:realunit_wallet/screens/registration/steps/registration_email_step.dart';
-import 'package:realunit_wallet/screens/registration/steps/registration_personal_step.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/registration_step_cubit.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_submit/registration_submit_cubit.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/registration_page.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/steps/registration_address_step.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/steps/registration_completed_step.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/steps/registration_email_step.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/steps/registration_personal_step.dart';
 
 import '../../helper/helper.dart';
 

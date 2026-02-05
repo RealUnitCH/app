@@ -2,19 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
-import 'package:realunit_wallet/screens/registration/widgets/registration_dropdown_field.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/registration_dropdown_field.dart';
 
 class RegistrationCountryField extends StatefulWidget {
   final String label;
   final void Function(Country?)? onChanged;
   final String? Function(Country?)? validator;
 
-  const RegistrationCountryField({
-    super.key,
-    required this.label,
-    this.onChanged,
-    this.validator,
-  });
+  const RegistrationCountryField({super.key, required this.label, this.onChanged, this.validator});
 
   @override
   State<RegistrationCountryField> createState() => _RegistrationCountryFieldState();

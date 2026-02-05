@@ -10,7 +10,6 @@ import 'package:realunit_wallet/screens/home/home.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page.dart';
 import 'package:realunit_wallet/screens/onboarding/onboarding_completed_page.dart';
 import 'package:realunit_wallet/screens/receive/receive_page.dart';
-import 'package:realunit_wallet/screens/registration/registration_page.dart';
 import 'package:realunit_wallet/screens/restore_wallet/restore_wallet_page.dart';
 import 'package:realunit_wallet/screens/sell/sell_page.dart';
 import 'package:realunit_wallet/screens/send/send_page.dart';
@@ -60,11 +59,6 @@ void setupRouter() {
         GoRoute(path: BuyPage.routeName, builder: (context, state) => const BuyPage()),
         GoRoute(path: SellPage.routeName, builder: (context, state) => const SellPage()),
         GoRoute(path: KycPage.routeName, builder: (context, state) => const KycPage()),
-
-        GoRoute(
-          path: RegistrationPage.routeName,
-          builder: (context, state) => const RegistrationPage(),
-        ),
         GoRoute(
           path: '/receive',
           builder: (context, state) => const ReceivePage(isBottomSheet: false),

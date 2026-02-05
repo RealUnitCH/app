@@ -3,58 +3,52 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
-import 'package:realunit_wallet/screens/kyc/cubits/kyc_2fa/kyc_2fa_cubit.dart';
-import 'package:realunit_wallet/screens/kyc/cubits/kyc_2fa_verify/kyc_2fa_verify_cubit.dart';
-import 'package:realunit_wallet/screens/registration/widgets/registration_text_field.dart';
+import 'package:realunit_wallet/screens/kyc/steps/nationality/cubit/kyc_nationality/kyc_nationality_cubit.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/fields/registration_country_field.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
-class Kyc2FaPage extends StatelessWidget {
-  const Kyc2FaPage({super.key});
+class KycNationalityPage extends StatelessWidget {
+  final String url;
+
+  const KycNationalityPage({super.key, required this.url});
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (_) => Kyc2FaCubit(getIt<DfxKycService>())),
-        BlocProvider(create: (_) => Kyc2FaVerifyCubit(getIt<DfxKycService>())),
-      ],
-      child: const Kyc2FaView(),
+    return BlocProvider(
+      create: (_) => KycNationalityCubit(getIt<DfxKycService>()),
+      child: KycNationalityView(url: url),
     );
   }
 }
 
-class Kyc2FaView extends StatefulWidget {
-  const Kyc2FaView({super.key});
+class KycNationalityView extends StatefulWidget {
+  final String url;
+  const KycNationalityView({super.key, required this.url});
 
   @override
-  State<Kyc2FaView> createState() => _Kyc2FaViewState();
+  State<KycNationalityView> createState() => _KycNationalityViewState();
 }
 
-class _Kyc2FaViewState extends State<Kyc2FaView> {
+class _KycNationalityViewState extends State<KycNationalityView> {
   final _formKey = GlobalKey<FormState>();
 
-  final codeCtrl = TextEditingController();
-
-  @override
-  void initState() {
-    context.read<Kyc2FaCubit>().requestCode();
-    super.initState();
-  }
+  final nationalityCtrl = ValueNotifier<Country?>(null);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('2-Faktor Authentifizierung')),
-      body: BlocListener<Kyc2FaVerifyCubit, Kyc2FaVerifyState>(
+      appBar: AppBar(title: Text(S.of(context).registerCitizenship)),
+      body: BlocListener<KycNationalityCubit, KycNationalityState>(
         listener: (context, state) {
-          if (state is Kyc2FaVerifySuccess) {
+          if (state is KycNationalitySuccess) {
             context.read<KycCubit>().checkKyc();
           }
-          if (state is Kyc2FaVerifyFailure) {
+          if (state is KycNationalityFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Code was wrong'),
+                content: Text('Set Nationality failed:\n${state.message}'),
                 backgroundColor: RealUnitColors.status.red600,
               ),
             );
@@ -71,34 +65,11 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
                 child: Column(
                   spacing: 16,
                   children: [
-                    BlocBuilder<Kyc2FaCubit, Kyc2FaState>(
-                      builder: (context, state) {
-                        if (state is Kyc2FaSuccess) {
-                          return Text('We sent a code to your email for verification.');
-                        }
-                        if (state is Kyc2FaFailure) {
-                          return Text(
-                            'We had a problem sending you an email with a verification code.',
-                          );
-                        }
-                        return SizedBox.shrink();
-                      },
-                    ),
-                    RegistrationTextField(
-                      hintText: '123456',
-                      controller: codeCtrl,
-                      keyboardType: TextInputType.number,
-                      hideErrorText: false,
+                    RegistrationCountryField(
+                      label: S.of(context).registerCitizenship,
+                      onChanged: (country) => nationalityCtrl.value = country,
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Invalid';
-                        }
-                        if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-                          return S.of(context).registerPhoneNumberOnlyDigits;
-                        }
-                        if (value.length != 6) {
-                          return 'Number too short';
-                        }
+                        if (value == null) return '';
                         return null;
                       },
                     ),
@@ -106,9 +77,9 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
                       padding: const EdgeInsets.symmetric(vertical: 16.0),
                       child: SizedBox(
                         width: double.infinity,
-                        child: BlocBuilder<Kyc2FaCubit, Kyc2FaState>(
+                        child: BlocBuilder<KycNationalityCubit, KycNationalityState>(
                           builder: (context, state) {
-                            if (state is Kyc2FaLoading) {
+                            if (state is KycNationalityLoading) {
                               return FilledButton.icon(
                                 onPressed: null,
                                 icon: SizedBox(
@@ -125,7 +96,10 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
                             return FilledButton(
                               onPressed: () {
                                 if (_formKey.currentState?.validate() ?? false) {
-                                  context.read<Kyc2FaVerifyCubit>().verifyCode(codeCtrl.text);
+                                  context.read<KycNationalityCubit>().registerNationality(
+                                    widget.url,
+                                    nationalityCtrl.value!,
+                                  );
                                 }
                               },
                               child: Text(S.of(context).next),
@@ -146,7 +120,7 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
 
   @override
   void dispose() {
-    codeCtrl.dispose();
+    nationalityCtrl.dispose();
     super.dispose();
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/screens/registration/widgets/registration_dropdown_field.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/registration_dropdown_field.dart';
 
 class RegistrationBirthdayField extends StatefulWidget {
   final ValueNotifier<String?> controller;
@@ -48,11 +48,7 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           child: Text(
             S.of(context).birthday,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              height: 18 / 13,
-            ),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, height: 18 / 13),
           ),
         ),
         Row(
@@ -63,8 +59,9 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
               flex: 1,
               child: RegistrationDropdownField<String>(
                 hintText: S.of(context).day,
-                items:
-                    days.map((d) => DropdownMenuItem(value: d, child: Text(d.toString()))).toList(),
+                items: days
+                    .map((d) => DropdownMenuItem(value: d, child: Text(d.toString())))
+                    .toList(),
                 initialValue: selectedDay,
                 onChanged: (v) {
                   setState(() => selectedDay = v);
