@@ -45,7 +45,7 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('2-Faktor Authentifizierung')),
+      appBar: AppBar(title: const Text('2-Faktor Authentifizierung')),
       body: BlocListener<Kyc2FaVerifyCubit, Kyc2FaVerifyState>(
         listener: (context, state) {
           if (state is Kyc2FaVerifySuccess) {
@@ -54,7 +54,7 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
           if (state is Kyc2FaVerifyFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Code was wrong'),
+                content: Text('Code was wrong ${state.errorMessage}'),
                 backgroundColor: RealUnitColors.status.red600,
               ),
             );
@@ -74,14 +74,14 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
                     BlocBuilder<Kyc2FaCubit, Kyc2FaState>(
                       builder: (context, state) {
                         if (state is Kyc2FaSuccess) {
-                          return Text('We sent a code to your email for verification.');
+                          return const Text('We sent a code to your email for verification.');
                         }
                         if (state is Kyc2FaFailure) {
-                          return Text(
+                          return const Text(
                             'We had a problem sending you an email with a verification code.',
                           );
                         }
-                        return SizedBox.shrink();
+                        return const SizedBox.shrink();
                       },
                     ),
                     RegistrationTextField(
@@ -106,9 +106,9 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
                       padding: const EdgeInsets.symmetric(vertical: 16.0),
                       child: SizedBox(
                         width: double.infinity,
-                        child: BlocBuilder<Kyc2FaCubit, Kyc2FaState>(
+                        child: BlocBuilder<Kyc2FaVerifyCubit, Kyc2FaVerifyState>(
                           builder: (context, state) {
-                            if (state is Kyc2FaLoading) {
+                            if (state is Kyc2FaVerifyLoading) {
                               return FilledButton.icon(
                                 onPressed: null,
                                 icon: SizedBox(
@@ -133,6 +133,17 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
                           },
                         ),
                       ),
+                    ),
+                    BlocBuilder<Kyc2FaCubit, Kyc2FaState>(
+                      builder: (context, state) {
+                        final isLoading = state is Kyc2FaLoading;
+                        return TextButton(
+                          onPressed: isLoading
+                              ? null
+                              : () => context.read<Kyc2FaCubit>().requestCode(),
+                          child: Text(isLoading ? 'Sending...' : 'Resend code'),
+                        );
+                      },
                     ),
                   ],
                 ),

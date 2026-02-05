@@ -12,10 +12,10 @@ enum FailureStatus { error, finallyRejected, temporarilyDeclined, failed }
 class KycIdentCubit extends Cubit<KycIdentState> {
   KycIdentCubit() : super(KycIdentInitial());
 
-  Future startIdent(String token) async {
+  Future<void> startIdent(String token, {String localeCode = 'en'}) async {
     try {
       emit(KycIdentLoading());
-      final result = await _launchSDK(token);
+      final result = await _launchSDK(token, localeCode);
 
       switch (result.status) {
         case SNSMobileSDKStatus.Approved:
@@ -70,7 +70,7 @@ class KycIdentCubit extends Cubit<KycIdentState> {
     }
   }
 
-  Future<SNSMobileSDKResult> _launchSDK(String token) async {
+  Future<SNSMobileSDKResult> _launchSDK(String token, String locale) async {
     // From your backend get an access token for the applicant to be verified.
     // The token must be generated with `levelName` and `userId`,
     // where `levelName` is the name of a level configured in your dashboard.
@@ -80,10 +80,8 @@ class KycIdentCubit extends Cubit<KycIdentState> {
     //
 
     // The access token has a limited lifespan and when it's expired, you must provide another one.
-    // So be prepared to get a new token from your backend.
     Future<String> onTokenExpiration() async {
-      // call your backend to fetch a new access token (this is just an example)
-      return Future<String>.delayed(const Duration(seconds: 2), () => 'your new access token');
+      throw Exception('Token expired');
     }
 
     onStatusChanged(SNSMobileSDKStatus newStatus, SNSMobileSDKStatus prevStatus) {
@@ -92,9 +90,9 @@ class KycIdentCubit extends Cubit<KycIdentState> {
 
     final snsMobileSDK = SNSMobileSDK.init(token, onTokenExpiration)
         .withHandlers(onStatusChanged: onStatusChanged)
-        .withDebug(true) // set debug mode if required
+        // .withDebug(true) // set debug mode if required
         .withLocale(
-          const Locale('en'),
+          Locale(locale),
         ) // optional, for cases when you need to override the system locale
         .build();
 

@@ -27,10 +27,10 @@ class KycLevelReachedPage extends StatelessWidget {
                 ),
               ),
 
-              Text(
-                'Danke für die Verifizierung. Sie haben nun genug Rechte um die Aktionen durchzuführen.',
+              const Text(
+                'Danke für die Verifizierung. Sie haben nun genug Rechte um die Aktion durchzuführen.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, height: 18 / 14, letterSpacing: 0.0),
+                style: TextStyle(fontSize: 14, height: 18 / 14, letterSpacing: 0.0),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),

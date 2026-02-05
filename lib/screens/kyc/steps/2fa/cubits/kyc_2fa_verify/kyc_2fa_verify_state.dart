@@ -13,4 +13,11 @@ class Kyc2FaVerifyLoading extends Kyc2FaVerifyState {}
 
 class Kyc2FaVerifySuccess extends Kyc2FaVerifyState {}
 
-class Kyc2FaVerifyFailure extends Kyc2FaVerifyState {}
+class Kyc2FaVerifyFailure extends Kyc2FaVerifyState {
+  final String errorMessage;
+
+  const Kyc2FaVerifyFailure({required this.errorMessage});
+
+  @override
+  List<Object> get props => [errorMessage];
+}

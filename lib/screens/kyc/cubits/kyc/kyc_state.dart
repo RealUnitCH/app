@@ -1,12 +1,16 @@
 part of 'kyc_cubit.dart';
 
-enum KycStep { email, personal, nationality, twoFa, ident }
+enum KycStep { registration, nationality, twoFa, ident }
 
-class KycState extends Equatable {
+abstract class KycState extends Equatable {
   const KycState();
 
   @override
   List<Object?> get props => [];
+}
+
+class KycInitial extends KycState {
+  const KycInitial();
 }
 
 class KycLoading extends KycState {
@@ -17,17 +21,23 @@ class KycPending extends KycState {
   final KycStep pendingStep;
 
   const KycPending(this.pendingStep);
+
+  @override
+  List<Object?> get props => [pendingStep];
 }
 
 class KycSuccess extends KycState {
-  final KycStep? currentStep;
-  final String? url;
-  final bool isCompleted;
+  final KycStep currentStep;
+  final String? urlOrToken;
 
-  const KycSuccess({this.currentStep, this.url, this.isCompleted = false});
+  const KycSuccess({required this.currentStep, this.urlOrToken});
 
   @override
-  List<Object?> get props => [currentStep, url, isCompleted];
+  List<Object?> get props => [currentStep, urlOrToken];
+}
+
+class KycCompleted extends KycState {
+  const KycCompleted();
 }
 
 class KycFailure extends KycState {

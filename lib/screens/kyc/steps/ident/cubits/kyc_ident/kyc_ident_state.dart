@@ -20,5 +20,5 @@ class KycIdentFailure extends KycIdentState {
   const KycIdentFailure({required this.status, this.errorMessage});
 
   @override
-  List<Object?> get props => [errorMessage];
+  List<Object?> get props => [status, errorMessage];
 }

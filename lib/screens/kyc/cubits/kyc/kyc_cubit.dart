@@ -6,36 +6,43 @@ import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 
 part 'kyc_state.dart';
 
-const requiredNames = {KycStepName.contactData, KycStepName.nationalityData, KycStepName.ident};
-
 class KycCubit extends Cubit<KycState> {
+  static const _requiredStepNames = {
+    KycStepName.contactData,
+    KycStepName.nationalityData,
+    KycStepName.ident,
+  };
+
   final DfxKycService _kycService;
 
-  KycCubit(DfxKycService kycService) : _kycService = kycService, super(const KycState());
+  KycCubit(DfxKycService kycService) : _kycService = kycService, super(const KycInitial());
 
   Future<void> checkKyc() async {
     try {
       emit(const KycLoading());
-      final kycStatus = await _kycService.getKycStatus();
 
-      if (kycStatus.kycLevel.value <= 10) {
-        emit(const KycSuccess(currentStep: KycStep.email));
+      final kycStatus = await _kycService.getKycStatus();
+      if (kycStatus.kycLevel.value < 20) {
+        emit(const KycSuccess(currentStep: KycStep.registration));
       } else if (kycStatus.kycLevel.value < 30) {
         final requiredSteps = kycStatus.kycSteps
-            .where((step) => requiredNames.contains(step.name))
+            .where((step) => _requiredStepNames.contains(step.name))
             .toList();
-        if (requiredSteps.any((step) => step.status == KycStepStatus.inReview)) {
-          final pendingStep = requiredSteps.firstWhere(
-            (step) => step.status == KycStepStatus.inReview,
-          );
-          emit(KycPending(mapper(pendingStep.name)!));
+        final pendingStep = requiredSteps
+            .where((step) => step.status == KycStepStatus.inReview)
+            .firstOrNull;
+        if (pendingStep != null) {
+          final step = _mapStepName(pendingStep.name);
+          if (step != null) emit(KycPending(step));
           return;
         }
-        await continueKyc();
+
+        await _continueKyc();
       } else {
-        emit(const KycSuccess(isCompleted: true));
+        emit(const KycCompleted());
       }
     } on ApiException catch (e) {
+      // API returns 403 when 2FA verification is required before proceeding
       if (e.statusCode == 403) {
         emit(const KycSuccess(currentStep: KycStep.twoFa));
       } else {
@@ -46,28 +53,21 @@ class KycCubit extends Cubit<KycState> {
     }
   }
 
-  Future<void> continueKyc() async {
+  /// should only be called after realunit registration was completed
+  Future<void> _continueKyc() async {
     final kycStatus = await _kycService.continueKyc();
     final currentStep = kycStatus.kycSteps.firstWhere((step) => step.isCurrent);
-    emit(
-      KycSuccess(currentStep: mapper(currentStep.name), url: kycStatus.currentStep?.session.url),
-    );
+
+    final kycStep = _mapStepName(currentStep.name);
+    if (kycStep == null) throw Exception('current Step could not be found');
+
+    emit(KycSuccess(currentStep: kycStep, urlOrToken: kycStatus.currentStep?.session.url));
   }
 
-  KycStep? mapper(KycStepName name) {
-    if (name == KycStepName.contactData) {
-      return KycStep.email;
-    }
-    if (name == KycStepName.personalData) {
-      return KycStep.personal;
-    }
-
-    if (name == KycStepName.nationalityData) {
-      return KycStep.nationality;
-    }
-    if (name == KycStepName.ident) {
-      return KycStep.ident;
-    }
-    return null;
-  }
+  KycStep? _mapStepName(KycStepName name) => switch (name) {
+    KycStepName.contactData => KycStep.registration,
+    KycStepName.nationalityData => KycStep.nationality,
+    KycStepName.ident => KycStep.ident,
+    _ => null,
+  };
 }

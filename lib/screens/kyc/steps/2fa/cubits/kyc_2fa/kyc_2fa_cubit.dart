@@ -15,7 +15,7 @@ class Kyc2FaCubit extends Cubit<Kyc2FaState> {
       await _dfxKycService.request2FaCode();
       emit(Kyc2FaSuccess());
     } catch (e) {
-      emit(Kyc2FaFailure());
+      emit(Kyc2FaFailure(errorMessage: e.toString()));
     }
   }
 }

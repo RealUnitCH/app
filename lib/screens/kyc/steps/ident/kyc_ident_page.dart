@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/ident/cubits/kyc_ident/kyc_ident_cubit.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class KycIdentPage extends StatelessWidget {
@@ -35,10 +36,24 @@ class KycIdentView extends StatelessWidget {
             if (state is KycIdentSuccess) {
               context.read<KycCubit>().checkKyc();
             }
+            if (state is KycIdentFailure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Ident verification failed: ${state.status.name} ${state.errorMessage}',
+                  ),
+                  backgroundColor: RealUnitColors.status.red600,
+                ),
+              );
+            }
           },
           child: SafeArea(
             child: Column(
+              spacing: 16.0,
               children: [
+                const Text(
+                  'Als nächstes musst du deine Identität verifizieren. Halte deinen Ausweis bereit und erlaube dem Handy den Kamerazugriff.',
+                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: SizedBox(
@@ -61,7 +76,10 @@ class KycIdentView extends StatelessWidget {
                         }
                         return FilledButton(
                           onPressed: () {
-                            context.read<KycIdentCubit>().startIdent(accessToken);
+                            context.read<KycIdentCubit>().startIdent(
+                              accessToken,
+                              localeCode: context.read<SettingsBloc>().state.language.code,
+                            );
                           },
                           child: Text(S.of(context).next),
                         );

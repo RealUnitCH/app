@@ -11,13 +11,13 @@ class Kyc2FaVerifyCubit extends Cubit<Kyc2FaVerifyState> {
     : _dfxKycService = dfxKycService,
       super(Kyc2FaVerifyInitial());
 
-  Future verifyCode(String code) async {
+  Future<void> verifyCode(String code) async {
     try {
       emit(Kyc2FaVerifyLoading());
       await _dfxKycService.verify2FaCode(code);
       emit(Kyc2FaVerifySuccess());
     } catch (e) {
-      emit(Kyc2FaVerifyFailure());
+      emit(Kyc2FaVerifyFailure(errorMessage: e.toString()));
     }
   }
 }

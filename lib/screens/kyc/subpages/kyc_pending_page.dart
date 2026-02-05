@@ -7,6 +7,24 @@ class KycPendingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Text('Pending: ${pendingStep.name}')));
+    return Scaffold(
+      appBar: AppBar(title: const Text('KYC')),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: SafeArea(
+          child: Column(
+            children: [
+              const Spacer(),
+              Text(
+                'Ihr folgender Schritt ist gerade noch unter Prüfung: ${pendingStep.name}. Bitte haben Sie noch ein wenig Geduld und schauen Sie zu einem späteren Zeitpunkt nochmal rein.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14, height: 18 / 14, letterSpacing: 0.0),
+              ),
+              const Spacer(),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
