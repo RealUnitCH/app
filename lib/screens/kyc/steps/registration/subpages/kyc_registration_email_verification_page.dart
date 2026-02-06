@@ -5,31 +5,31 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
-import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_email_verification/registration_email_verification_cubit.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_email_verification/kyc_registration_email_verification_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
-class RegistrationEmailVerificationPage extends StatelessWidget {
-  const RegistrationEmailVerificationPage({super.key});
+class KycRegistrationEmailVerificationPage extends StatelessWidget {
+  const KycRegistrationEmailVerificationPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => RegistrationEmailVerificationCubit(
+      create: (context) => KycRegistrationEmailVerificationCubit(
         dfxService: getIt<DfxWidgetService>(),
       ),
-      child: const RegistrationEmailVerificationStepView(),
+      child: const KycRegistrationEmailVerificationStepView(),
     );
   }
 }
 
-class RegistrationEmailVerificationStepView extends StatelessWidget {
-  const RegistrationEmailVerificationStepView({super.key});
+class KycRegistrationEmailVerificationStepView extends StatelessWidget {
+  const KycRegistrationEmailVerificationStepView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<RegistrationEmailVerificationCubit, RegistrationEmailVerificationState>(
+    return BlocListener<KycRegistrationEmailVerificationCubit, KycRegistrationEmailVerificationState>(
       listener: (context, state) {
-        if (state is RegistrationEmailVerificationFailure) {
+        if (state is KycRegistrationEmailVerificationFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(S.of(context).registerEmailVerificationFailed),
@@ -37,7 +37,7 @@ class RegistrationEmailVerificationStepView extends StatelessWidget {
             ),
           );
         }
-        if (state is RegistrationEmailVerificationSuccess) {
+        if (state is KycRegistrationEmailVerificationSuccess) {
           context.pop(true);
         }
       },
@@ -81,11 +81,11 @@ class RegistrationEmailVerificationStepView extends StatelessWidget {
                           width: double.infinity,
                           child:
                               BlocBuilder<
-                                RegistrationEmailVerificationCubit,
-                                RegistrationEmailVerificationState
+                                KycRegistrationEmailVerificationCubit,
+                                KycRegistrationEmailVerificationState
                               >(
                                 builder: (context, state) {
-                                  if (state is RegistrationEmailVerificationLoading) {
+                                  if (state is KycRegistrationEmailVerificationLoading) {
                                     return FilledButton.icon(
                                       onPressed: null,
                                       icon: SizedBox(
@@ -103,7 +103,7 @@ class RegistrationEmailVerificationStepView extends StatelessWidget {
                                   }
                                   return FilledButton(
                                     onPressed: () => context
-                                        .read<RegistrationEmailVerificationCubit>()
+                                        .read<KycRegistrationEmailVerificationCubit>()
                                         .checkEmailVerification(),
                                     child: Text(
                                       S.of(context).registerEmailVerificationButton,

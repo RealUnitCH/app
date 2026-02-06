@@ -2,17 +2,17 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 
-part 'registration_step_state.dart';
+part 'kyc_registration_step_state.dart';
 
-class RegistrationStepCubit extends Cubit<RegistrationStepState> {
-  RegistrationStepCubit()
+class KycRegistrationStepCubit extends Cubit<KycRegistrationStepState> {
+  KycRegistrationStepCubit()
     : super(
-        const RegistrationStepState(
-          step: RegistrationStep.email,
+        const KycRegistrationStepState(
+          step: KycRegistrationStep.email,
           steps: [
-            RegistrationStep.email,
-            RegistrationStep.personal,
-            RegistrationStep.address,
+            KycRegistrationStep.email,
+            KycRegistrationStep.personal,
+            KycRegistrationStep.address,
           ],
         ),
       );
@@ -21,7 +21,7 @@ class RegistrationStepCubit extends Cubit<RegistrationStepState> {
     final currentIndex = state.index;
     if (currentIndex >= 0 && currentIndex < state.steps.length - 1) {
       emit(
-        RegistrationStepState(
+        KycRegistrationStepState(
           step: state.steps.elementAt(currentIndex + 1),
           steps: state.steps,
         ),
@@ -33,7 +33,7 @@ class RegistrationStepCubit extends Cubit<RegistrationStepState> {
     final currentIndex = state.index;
     if (currentIndex > 0 && currentIndex <= state.steps.length - 1) {
       emit(
-        RegistrationStepState(
+        KycRegistrationStepState(
           step: state.steps.elementAt(currentIndex - 1),
           steps: state.steps,
         ),

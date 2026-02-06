@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
-import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/registration_dropdown_field.dart';
+import 'package:realunit_wallet/screens/kyc/widgets/kyc_dropdown_field.dart';
 
-class RegistrationCountryField extends StatefulWidget {
+class KycCountryField extends StatefulWidget {
   final String label;
   final void Function(Country?)? onChanged;
   final String? Function(Country?)? validator;
 
-  const RegistrationCountryField({
+  const KycCountryField({
     super.key,
     required this.label,
     this.onChanged,
@@ -17,10 +17,10 @@ class RegistrationCountryField extends StatefulWidget {
   });
 
   @override
-  State<RegistrationCountryField> createState() => _RegistrationCountryFieldState();
+  State<KycCountryField> createState() => _KycCountryFieldState();
 }
 
-class _RegistrationCountryFieldState extends State<RegistrationCountryField> {
+class _KycCountryFieldState extends State<KycCountryField> {
   final DfxCountryService countryService = getIt<DfxCountryService>();
   late Future<List<Country>> _countriesFuture;
   bool _hasPreloaded = false;
@@ -47,7 +47,7 @@ class _RegistrationCountryFieldState extends State<RegistrationCountryField> {
         final initialCountry = countries.isNotEmpty ? countries.first : null;
         _preloadCountry(initialCountry);
 
-        return RegistrationDropdownField<Country>(
+        return KycDropdownField<Country>(
           hintText: 'Schweiz',
           label: widget.label,
           items: countries.map((c) => DropdownMenuItem(value: c, child: Text(c.name))).toList(),

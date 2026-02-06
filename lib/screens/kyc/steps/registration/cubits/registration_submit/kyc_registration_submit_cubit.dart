@@ -6,24 +6,24 @@ import 'package:realunit_wallet/packages/service/dfx/models/registration/registr
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 
-part 'registration_submit_state.dart';
+part 'kyc_registration_submit_state.dart';
 
-class RegistrationSubmitCubit extends Cubit<RegistrationSubmitState> {
+class KycRegistrationSubmitCubit extends Cubit<KycRegistrationSubmitState> {
   final RealUnitRegistrationService _service;
 
-  RegistrationSubmitCubit(RealUnitRegistrationService service)
+  KycRegistrationSubmitCubit(RealUnitRegistrationService service)
       : _service = service,
-        super(RegistrationSubmitInitial());
+        super(KycRegistrationSubmitInitial());
 
   Future<void> submit(Registration registration) async {
     try {
-      emit(RegistrationSubmitLoading());
+      emit(KycRegistrationSubmitLoading());
       final status = await _service.completeRegistration(registration);
 
-      emit(RegistrationSubmitSuccess(status));
+      emit(KycRegistrationSubmitSuccess(status));
     } catch (e) {
       developer.log(e.toString());
-      emit(RegistrationSubmitFailure(e.toString()));
+      emit(KycRegistrationSubmitFailure(e.toString()));
     }
   }
 }

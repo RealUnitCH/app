@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/registration_dropdown_field.dart';
+import 'package:realunit_wallet/screens/kyc/widgets/kyc_dropdown_field.dart';
 
-class RegistrationBirthdayField extends StatefulWidget {
+class KycBirthdayField extends StatefulWidget {
   final ValueNotifier<String?> controller;
 
-  const RegistrationBirthdayField({
+  const KycBirthdayField({
     super.key,
     required this.controller,
   });
 
   @override
-  State<RegistrationBirthdayField> createState() => _RegistrationBirthdayFieldState();
+  State<KycBirthdayField> createState() => _KycBirthdayFieldState();
 }
 
-class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
+class _KycBirthdayFieldState extends State<KycBirthdayField> {
   String? selectedDay;
   String? selectedMonth;
   String? selectedYear;
@@ -64,7 +64,7 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
           children: [
             Expanded(
               flex: 1,
-              child: RegistrationDropdownField<String>(
+              child: KycDropdownField<String>(
                 hintText: S.of(context).day,
                 items: days
                     .map((d) => DropdownMenuItem(value: d, child: Text(d.toString())))
@@ -79,7 +79,7 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
             ),
             Expanded(
               flex: 1,
-              child: RegistrationDropdownField<String>(
+              child: KycDropdownField<String>(
                 hintText: S.of(context).month,
                 items: months
                     .map((m) => DropdownMenuItem(value: m, child: Text(m.toString())))
@@ -94,7 +94,7 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
             ),
             Expanded(
               flex: 1,
-              child: RegistrationDropdownField<String>(
+              child: KycDropdownField<String>(
                 hintText: S.of(context).year,
                 items: years
                     .map((y) => DropdownMenuItem(value: y, child: Text(y.toString())))

@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/registration_dropdown_field.dart';
-import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/registration_text_field.dart';
+import 'package:realunit_wallet/screens/kyc/widgets/kyc_dropdown_field.dart';
+import 'package:realunit_wallet/screens/kyc/widgets/kyc_text_field.dart';
 
-class RegistrationPhoneNumberField extends StatefulWidget {
+class KycPhoneNumberField extends StatefulWidget {
   final ValueNotifier<String?> controller;
 
-  const RegistrationPhoneNumberField({super.key, required this.controller});
+  const KycPhoneNumberField({super.key, required this.controller});
 
   @override
-  State<RegistrationPhoneNumberField> createState() => _RegistrationPhoneNumberFieldState();
+  State<KycPhoneNumberField> createState() => _KycPhoneNumberFieldState();
 }
 
-class _RegistrationPhoneNumberFieldState extends State<RegistrationPhoneNumberField> {
+class _KycPhoneNumberFieldState extends State<KycPhoneNumberField> {
   final prefixes = ['+41', '+49'];
   String? prefix;
   String? number;
@@ -63,7 +63,7 @@ class _RegistrationPhoneNumberFieldState extends State<RegistrationPhoneNumberFi
           children: [
             Expanded(
               flex: 3,
-              child: RegistrationDropdownField<String>(
+              child: KycDropdownField<String>(
                 initialValue: prefix,
                 items: prefixes
                     .map((d) => DropdownMenuItem(value: d, child: Text(d.toString())))
@@ -78,7 +78,7 @@ class _RegistrationPhoneNumberFieldState extends State<RegistrationPhoneNumberFi
             ),
             Expanded(
               flex: 6,
-              child: RegistrationTextField(
+              child: KycTextField(
                 hintText: '1231234567',
                 initialValue: number,
                 keyboardType: TextInputType.phone,

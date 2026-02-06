@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
-import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/fields/registration_country_field.dart';
-import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/registration_text_field.dart';
+import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_country_field.dart';
+import 'package:realunit_wallet/screens/kyc/widgets/kyc_text_field.dart';
 
-class RegistrationAddressStep extends StatelessWidget {
+class KycRegistrationAddressStep extends StatelessWidget {
   final TextEditingController addressStreetCtrl;
   final TextEditingController postalCodeCtrl;
   final TextEditingController cityCtrl;
   final ValueNotifier<Country?> countryCtrl;
   final Future<void> Function() onSubmit;
 
-  RegistrationAddressStep({
+  KycRegistrationAddressStep({
     super.key,
     required this.addressStreetCtrl,
     required this.postalCodeCtrl,
@@ -34,7 +34,7 @@ class RegistrationAddressStep extends StatelessWidget {
             child: Column(
               spacing: 16,
               children: [
-                RegistrationTextField(
+                KycTextField(
                   hintText: 'Musterstrasse 12',
                   controller: addressStreetCtrl,
                   label: S.of(context).address,
@@ -51,7 +51,7 @@ class RegistrationAddressStep extends StatelessWidget {
                   children: [
                     Expanded(
                       flex: 2,
-                      child: RegistrationTextField(
+                      child: KycTextField(
                         hintText: '8000',
                         controller: postalCodeCtrl,
                         label: S.of(context).postcodeAbr,
@@ -64,7 +64,7 @@ class RegistrationAddressStep extends StatelessWidget {
                     ),
                     Expanded(
                       flex: 3,
-                      child: RegistrationTextField(
+                      child: KycTextField(
                         hintText: 'Zurich',
                         controller: cityCtrl,
                         label: S.of(context).city,
@@ -78,7 +78,7 @@ class RegistrationAddressStep extends StatelessWidget {
                     ),
                   ],
                 ),
-                RegistrationCountryField(
+                KycCountryField(
                   label: S.of(context).country,
                   onChanged: (country) => countryCtrl.value = country,
                   validator: (value) {

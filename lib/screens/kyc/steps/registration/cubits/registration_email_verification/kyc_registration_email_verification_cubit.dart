@@ -3,26 +3,26 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/utils/jwt_decoder.dart';
 
-part 'registration_email_verification_state.dart';
+part 'kyc_registration_email_verification_state.dart';
 
-class RegistrationEmailVerificationCubit extends Cubit<RegistrationEmailVerificationState> {
+class KycRegistrationEmailVerificationCubit extends Cubit<KycRegistrationEmailVerificationState> {
   final DFXAuthService _dfxService;
 
-  RegistrationEmailVerificationCubit({required DFXAuthService dfxService})
+  KycRegistrationEmailVerificationCubit({required DFXAuthService dfxService})
       : _dfxService = dfxService,
-        super(const RegistrationEmailVerificationInitial());
+        super(const KycRegistrationEmailVerificationInitial());
 
   Future<void> checkEmailVerification() async {
-    emit(const RegistrationEmailVerificationLoading());
+    emit(const KycRegistrationEmailVerificationLoading());
 
     final currentAccountId = await getAccountId();
     _dfxService.invalidateAuthToken();
     final newAccountId = await getAccountId();
 
     if (currentAccountId != newAccountId) {
-      emit(const RegistrationEmailVerificationSuccess());
+      emit(const KycRegistrationEmailVerificationSuccess());
     } else {
-      emit(const RegistrationEmailVerificationFailure());
+      emit(const KycRegistrationEmailVerificationFailure());
     }
   }
 

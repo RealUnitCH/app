@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
-class RegistrationDropdownField<T> extends StatelessWidget {
+class KycDropdownField<T> extends StatelessWidget {
   final String? label;
   final T? initialValue;
   final String? hintText;
@@ -10,7 +10,7 @@ class RegistrationDropdownField<T> extends StatelessWidget {
   final List<DropdownMenuItem<T>> items;
   final bool hideErrorText;
 
-  const RegistrationDropdownField({
+  const KycDropdownField({
     super.key,
     this.label,
     this.initialValue,

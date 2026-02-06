@@ -3,14 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
-import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/registration_step_cubit.dart';
-import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/fields/registration_birthday_field.dart';
-import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/fields/registration_country_field.dart';
-import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/fields/registration_phone_number_field.dart';
-import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/registration_dropdown_field.dart';
-import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/registration_text_field.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/kyc_registration_step_cubit.dart';
+import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_birthday_field.dart';
+import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_country_field.dart';
+import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_phone_number_field.dart';
+import 'package:realunit_wallet/screens/kyc/widgets/kyc_dropdown_field.dart';
+import 'package:realunit_wallet/screens/kyc/widgets/kyc_text_field.dart';
 
-class RegistrationPersonalStep extends StatelessWidget {
+class KycRegistrationPersonalStep extends StatelessWidget {
   final ValueNotifier<RegistrationUserType> typeCtrl;
   final TextEditingController firstNameCtrl;
   final TextEditingController lastNameCtrl;
@@ -18,7 +18,7 @@ class RegistrationPersonalStep extends StatelessWidget {
   final ValueNotifier<String?> phoneCtrl;
   final ValueNotifier<Country?> nationalityCtrl;
 
-  RegistrationPersonalStep({
+  KycRegistrationPersonalStep({
     super.key,
     required this.typeCtrl,
     required this.firstNameCtrl,
@@ -43,7 +43,7 @@ class RegistrationPersonalStep extends StatelessWidget {
             child: Column(
               spacing: 16,
               children: [
-                RegistrationDropdownField<RegistrationUserType>(
+                KycDropdownField<RegistrationUserType>(
                   label: S.of(context).registerAccountType,
                   hintText: RegistrationUserType.human.toString(),
                   items: RegistrationUserType.values
@@ -60,7 +60,7 @@ class RegistrationPersonalStep extends StatelessWidget {
                   spacing: 10,
                   children: [
                     Expanded(
-                      child: RegistrationTextField(
+                      child: KycTextField(
                         label: S.of(context).registerFirstName,
                         hintText: 'Max',
                         controller: firstNameCtrl,
@@ -73,7 +73,7 @@ class RegistrationPersonalStep extends StatelessWidget {
                       ),
                     ),
                     Expanded(
-                      child: RegistrationTextField(
+                      child: KycTextField(
                         label: S.of(context).registerLastName,
                         hintText: 'Mustermann',
                         controller: lastNameCtrl,
@@ -87,13 +87,13 @@ class RegistrationPersonalStep extends StatelessWidget {
                     ),
                   ],
                 ),
-                RegistrationBirthdayField(
+                KycBirthdayField(
                   controller: birthdayCtrl,
                 ),
-                RegistrationPhoneNumberField(
+                KycPhoneNumberField(
                   controller: phoneCtrl,
                 ),
-                RegistrationCountryField(
+                KycCountryField(
                   label: S.of(context).registerCitizenship,
                   onChanged: (country) => nationalityCtrl.value = country,
                   validator: (value) {
@@ -108,7 +108,7 @@ class RegistrationPersonalStep extends StatelessWidget {
                     child: FilledButton(
                       onPressed: () {
                         if (_formKey.currentState?.validate() ?? false) {
-                          context.read<RegistrationStepCubit>().next();
+                          context.read<KycRegistrationStepCubit>().next();
                         }
                       },
                       child: Text(S.of(context).next),
