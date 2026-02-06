@@ -33,7 +33,7 @@ class KycIdentView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ident')),
+      appBar: AppBar(title: const Text('Identitätsprüfung')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: BlocListener<KycIdentCubit, KycIdentState>(
@@ -56,8 +56,30 @@ class KycIdentView extends StatelessWidget {
             child: Column(
               spacing: 16.0,
               children: [
+                const SizedBox(height: 44.0),
                 const Text(
-                  'Als nächstes musst du deine Identität verifizieren. Halte deinen Ausweis bereit und erlaube dem Handy den Kamerazugriff.',
+                  'Machen Sie sich für die Identitätsprüfung bereit',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    height: 24 / 20,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+                  child: Image.asset('assets/images/illustrations/ident_verification.png'),
+                ),
+                const Text(
+                  'Als nächstes müssen Sie Ihre Identität verifizieren. Bitte halten Sie Ihren Ausweis bereit und erlauben Sie den Kamerazugriff auf dem Gerät.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: RealUnitColors.neutral900,
+                    fontSize: 14,
+                    height: 18 / 14,
+                    letterSpacing: 0.0,
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
