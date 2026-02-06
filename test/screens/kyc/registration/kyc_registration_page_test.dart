@@ -15,7 +15,7 @@ import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registr
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_email_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_personal_step.dart';
 
-import '../../helper/helper.dart';
+import '../../../helper/helper.dart';
 
 class MockRegistrationStepCubit extends MockCubit<KycRegistrationStepState>
     implements KycRegistrationStepCubit {}
