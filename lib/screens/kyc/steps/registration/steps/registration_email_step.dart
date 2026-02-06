@@ -12,15 +12,24 @@ import 'package:realunit_wallet/styles/colors.dart';
 
 class RegistrationEmailStep extends StatelessWidget {
   final TextEditingController emailCtrl;
-  final Function() onSuccess;
+  final void Function() onSuccess;
 
-  const RegistrationEmailStep({super.key, required this.emailCtrl, required this.onSuccess});
+  const RegistrationEmailStep({
+    super.key,
+    required this.emailCtrl,
+    required this.onSuccess,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => RegistrationEmailStepCubit(getIt<RealUnitRegistrationService>()),
-      child: RegistrationEmailStepView(emailCtrl: emailCtrl, onSuccess: onSuccess),
+      create: (context) => RegistrationEmailStepCubit(
+        getIt<RealUnitRegistrationService>(),
+      ),
+      child: RegistrationEmailStepView(
+        emailCtrl: emailCtrl,
+        onSuccess: onSuccess,
+      ),
     );
   }
 }
@@ -29,7 +38,11 @@ class RegistrationEmailStepView extends StatelessWidget {
   final TextEditingController emailCtrl;
   final Function() onSuccess;
 
-  RegistrationEmailStepView({super.key, required this.emailCtrl, required this.onSuccess});
+  RegistrationEmailStepView({
+    super.key,
+    required this.emailCtrl,
+    required this.onSuccess,
+  });
 
   final _formKey = GlobalKey<FormState>();
 
@@ -39,7 +52,10 @@ class RegistrationEmailStepView extends StatelessWidget {
       listener: (context, state) async {
         if (state is RegistrationEmailStepFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: RealUnitColors.status.red600),
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: RealUnitColors.status.red600,
+            ),
           );
         }
         if (state is RegistrationEmailStepSuccess) {

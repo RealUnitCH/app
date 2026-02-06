@@ -4,14 +4,18 @@ import 'package:realunit_wallet/styles/colors.dart';
 
 ThemeData get realUnitTheme => ThemeData(
   fontFamily: 'Open Sans',
-  colorScheme: ColorScheme.fromSeed(seedColor: RealUnitColors.realUnitBlue),
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: RealUnitColors.realUnitBlue,
+  ),
   useMaterial3: true,
   scaffoldBackgroundColor: RealUnitColors.basic.white,
   appBarTheme: const AppBarTheme(
     scrolledUnderElevation: 0.0,
     backgroundColor: Colors.transparent,
     foregroundColor: RealUnitColors.realUnitBlack,
-    iconTheme: IconThemeData(color: RealUnitColors.realUnitBlack),
+    iconTheme: IconThemeData(
+      color: RealUnitColors.realUnitBlack,
+    ),
     centerTitle: true,
     titleTextStyle: TextStyle(
       color: RealUnitColors.realUnitBlack,
@@ -26,16 +30,24 @@ ThemeData get realUnitTheme => ThemeData(
     ),
   ),
   actionIconTheme: ActionIconThemeData(
-    backButtonIconBuilder: (context) => const Icon(Icons.arrow_back_rounded),
+    backButtonIconBuilder: (context) => const Icon(
+      Icons.arrow_back_rounded,
+    ),
   ),
   bottomSheetTheme: const BottomSheetThemeData(
     backgroundColor: Colors.white,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32.0))),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(
+        top: Radius.circular(32.0),
+      ),
+    ),
   ),
   dropdownMenuTheme: DropdownMenuThemeData(
     menuStyle: MenuStyle(
       shape: WidgetStatePropertyAll(
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
       ),
     ),
   ),
@@ -73,9 +85,15 @@ ThemeData get realUnitTheme => ThemeData(
       }),
       textStyle: WidgetStateTextStyle.resolveWith((states) {
         if (states.contains(WidgetState.disabled)) {
-          return const TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600);
+          return const TextStyle(
+            fontSize: 16.0,
+            fontWeight: FontWeight.w600,
+          );
         }
-        return const TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600);
+        return const TextStyle(
+          fontSize: 16.0,
+          fontWeight: FontWeight.w600,
+        );
       }),
     ),
   ),

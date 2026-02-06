@@ -1,4 +1,4 @@
-import 'dart:developer' as developer;
+import 'dart:developer';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
@@ -85,7 +85,7 @@ class KycIdentCubit extends Cubit<KycIdentState> {
     }
 
     onStatusChanged(SNSMobileSDKStatus newStatus, SNSMobileSDKStatus prevStatus) {
-      developer.log('The SDK status was changed: $prevStatus -> $newStatus');
+      log('The SDK status was changed: $prevStatus -> $newStatus');
     }
 
     final snsMobileSDK = SNSMobileSDK.init(token, onTokenExpiration)
@@ -93,11 +93,11 @@ class KycIdentCubit extends Cubit<KycIdentState> {
         // .withDebug(true) // set debug mode if required
         .withLocale(
           Locale(locale),
-        ) // optional, for cases when you need to override the system locale
+        )
         .build();
 
     final SNSMobileSDKResult result = await snsMobileSDK.launch();
-    developer.log('Completed with result: $result');
+    log('Completed with result: $result');
     return result;
   }
 }

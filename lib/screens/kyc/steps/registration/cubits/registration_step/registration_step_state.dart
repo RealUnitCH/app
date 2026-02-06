@@ -6,7 +6,10 @@ class RegistrationStepState {
   final List<RegistrationStep> steps;
   final RegistrationStep step;
 
-  const RegistrationStepState({required this.steps, required this.step});
+  const RegistrationStepState({
+    required this.steps,
+    required this.step,
+  });
 
   int get index => steps.indexOf(step);
 

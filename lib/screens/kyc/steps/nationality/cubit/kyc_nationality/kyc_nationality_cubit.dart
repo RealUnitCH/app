@@ -12,11 +12,14 @@ class KycNationalityCubit extends Cubit<KycNationalityState> {
     : _kycService = kycService,
       super(const KycNationalityInitial());
 
-  Future<void> registerNationality(String url, Country country) async {
+  Future<void> registerNationality({
+    required String url,
+    required Country nationality,
+  }) async {
     try {
       emit(const KycNationalityLoading());
       await _kycService.setData(url, {
-        'nationality': {'id': country.id},
+        'nationality': {'id': nationality.id},
       });
       emit(const KycNationalitySuccess());
     } catch (e) {

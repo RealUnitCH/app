@@ -18,7 +18,11 @@ class PaymentRegistrationRequired extends StatelessWidget {
         Row(
           spacing: 12,
           children: [
-            const Icon(Icons.info, size: 16, color: RealUnitColors.realUnitBlue),
+            const Icon(
+              Icons.info,
+              size: 16,
+              color: RealUnitColors.realUnitBlue,
+            ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,7 +37,11 @@ class PaymentRegistrationRequired extends StatelessWidget {
                   ),
                   Text(
                     S.of(context).identityCheckDescription,
-                    style: const TextStyle(fontSize: 14, height: 18 / 14, letterSpacing: 0.0),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 18 / 14,
+                      letterSpacing: 0.0,
+                    ),
                   ),
                 ],
               ),
@@ -45,7 +53,10 @@ class PaymentRegistrationRequired extends StatelessWidget {
             await context.push(KycPageManager.routeName);
             if (context.mounted) context.read<BuyPaymentInfoCubit>().getPaymentInfo();
           },
-          child: Text(S.of(context).identityConfirm, textAlign: TextAlign.center),
+          child: Text(
+            S.of(context).identityConfirm,
+            textAlign: TextAlign.center,
+          ),
         ),
       ],
     );

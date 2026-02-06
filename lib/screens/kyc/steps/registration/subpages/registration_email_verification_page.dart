@@ -14,8 +14,9 @@ class RegistrationEmailVerificationPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          RegistrationEmailVerificationCubit(dfxService: getIt<DfxWidgetService>()),
+      create: (context) => RegistrationEmailVerificationCubit(
+        dfxService: getIt<DfxWidgetService>(),
+      ),
       child: const RegistrationEmailVerificationStepView(),
     );
   }
@@ -41,7 +42,9 @@ class RegistrationEmailVerificationStepView extends StatelessWidget {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: Text(S.of(context).registerEmailVerification)),
+        appBar: AppBar(
+          title: Text(S.of(context).registerEmailVerification),
+        ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: SafeArea(
@@ -93,14 +96,18 @@ class RegistrationEmailVerificationStepView extends StatelessWidget {
                                           color: RealUnitColors.basic.black.withValues(alpha: 0.5),
                                         ),
                                       ),
-                                      label: Text(S.of(context).registerEmailVerificationButton),
+                                      label: Text(
+                                        S.of(context).registerEmailVerificationButton,
+                                      ),
                                     );
                                   }
                                   return FilledButton(
                                     onPressed: () => context
                                         .read<RegistrationEmailVerificationCubit>()
                                         .checkEmailVerification(),
-                                    child: Text(S.of(context).registerEmailVerificationButton),
+                                    child: Text(
+                                      S.of(context).registerEmailVerificationButton,
+                                    ),
                                   );
                                 },
                               ),

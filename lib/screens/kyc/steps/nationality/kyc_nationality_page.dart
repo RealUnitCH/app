@@ -17,7 +17,9 @@ class KycNationalityPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => KycNationalityCubit(getIt<DfxKycService>()),
+      create: (_) => KycNationalityCubit(
+        getIt<DfxKycService>(),
+      ),
       child: KycNationalityView(url: url),
     );
   }
@@ -25,6 +27,7 @@ class KycNationalityPage extends StatelessWidget {
 
 class KycNationalityView extends StatefulWidget {
   final String url;
+
   const KycNationalityView({super.key, required this.url});
 
   @override
@@ -33,7 +36,6 @@ class KycNationalityView extends StatefulWidget {
 
 class _KycNationalityViewState extends State<KycNationalityView> {
   final _formKey = GlobalKey<FormState>();
-
   final nationalityCtrl = ValueNotifier<Country?>(null);
 
   @override
@@ -87,7 +89,9 @@ class _KycNationalityViewState extends State<KycNationalityView> {
                                   width: 14,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 1.5,
-                                    color: RealUnitColors.basic.black.withValues(alpha: 0.5),
+                                    color: RealUnitColors.basic.black.withValues(
+                                      alpha: 0.5,
+                                    ),
                                   ),
                                 ),
                                 label: Text(S.of(context).next),
@@ -97,8 +101,8 @@ class _KycNationalityViewState extends State<KycNationalityView> {
                               onPressed: () {
                                 if (_formKey.currentState?.validate() ?? false) {
                                   context.read<KycNationalityCubit>().registerNationality(
-                                    widget.url,
-                                    nationalityCtrl.value!,
+                                    url: widget.url,
+                                    nationality: nationalityCtrl.value!,
                                   );
                                 }
                               },

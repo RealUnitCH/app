@@ -9,7 +9,12 @@ class RegistrationCountryField extends StatefulWidget {
   final void Function(Country?)? onChanged;
   final String? Function(Country?)? validator;
 
-  const RegistrationCountryField({super.key, required this.label, this.onChanged, this.validator});
+  const RegistrationCountryField({
+    super.key,
+    required this.label,
+    this.onChanged,
+    this.validator,
+  });
 
   @override
   State<RegistrationCountryField> createState() => _RegistrationCountryFieldState();

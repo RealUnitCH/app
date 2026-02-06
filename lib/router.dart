@@ -38,10 +38,22 @@ void setupRouter() {
       initialLocation: '/',
       // observers: [GoRouterObserver()],
       routes: <RouteBase>[
-        GoRoute(path: '/', builder: (context, state) => const HomePage()),
-        GoRoute(path: '/welcome', builder: (context, state) => const WelcomePage()),
-        GoRoute(path: '/wallet/create', builder: (context, state) => const CreateWalletPage()),
-        GoRoute(path: '/wallet/restore', builder: (context, state) => const RestoreWalletPage()),
+        GoRoute(
+          path: '/',
+          builder: (context, state) => const HomePage(),
+        ),
+        GoRoute(
+          path: '/welcome',
+          builder: (context, state) => const WelcomePage(),
+        ),
+        GoRoute(
+          path: '/wallet/create',
+          builder: (context, state) => const CreateWalletPage(),
+        ),
+        GoRoute(
+          path: '/wallet/restore',
+          builder: (context, state) => const RestoreWalletPage(),
+        ),
         GoRoute(
           path: OnboardingCompletedPage.route,
           builder: (context, state) => const OnboardingCompletedPage(),
@@ -56,8 +68,14 @@ void setupRouter() {
             ),
           ],
         ),
-        GoRoute(path: BuyPage.routeName, builder: (context, state) => const BuyPage()),
-        GoRoute(path: SellPage.routeName, builder: (context, state) => const SellPage()),
+        GoRoute(
+          path: BuyPage.routeName,
+          builder: (context, state) => const BuyPage(),
+        ),
+        GoRoute(
+          path: SellPage.routeName,
+          builder: (context, state) => const SellPage(),
+        ),
         GoRoute(
           path: KycPageManager.routeName,
           builder: (context, state) => const KycPageManager(),
@@ -68,8 +86,9 @@ void setupRouter() {
         ),
         GoRoute(
           path: '/send',
-          builder: (context, state) =>
-              SendPage(params: (state.extra as SendRouteParams?) ?? const SendRouteParams()),
+          builder: (context, state) => SendPage(
+            params: (state.extra as SendRouteParams?) ?? const SendRouteParams(),
+          ),
           routes: [
             GoRoute(
               path: '/openCryptoPay',
@@ -89,14 +108,26 @@ void setupRouter() {
         GoRoute(
           path: '/settings',
           routes: [
-            GoRoute(path: '/languages', builder: (context, state) => const SettingsLanguagePage()),
+            GoRoute(
+              path: '/languages',
+              builder: (context, state) => const SettingsLanguagePage(),
+            ),
             GoRoute(
               path: '/currencies',
               builder: (context, state) => const SettingsCurrenciesPage(),
             ),
-            GoRoute(path: '/network', builder: (context, state) => SettingsNetworkPage()),
-            GoRoute(path: '/taxReport', builder: (context, state) => const SettingsTaxReportPage()),
-            GoRoute(path: '/seed', builder: (context, state) => const SettingsSeedPage()),
+            GoRoute(
+              path: '/network',
+              builder: (context, state) => SettingsNetworkPage(),
+            ),
+            GoRoute(
+              path: '/taxReport',
+              builder: (context, state) => const SettingsTaxReportPage(),
+            ),
+            GoRoute(
+              path: '/seed',
+              builder: (context, state) => const SettingsSeedPage(),
+            ),
             GoRoute(
               path: '/nodes',
               builder: (context, state) => const SettingsNodesPage(),

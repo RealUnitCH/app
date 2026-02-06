@@ -85,6 +85,7 @@ class DfxKycService extends DFXAuthService {
     return KycSessionDto.fromJson(json);
   }
 
+  /// is used to set data of a user by calling the provided session url from the KycSessionDto of continueKyc()
   Future<void> setData(String url, Map<String, dynamic> body) async {
     final user = await getUser();
     final authToken = appStore.dfxAuthToken;
@@ -106,7 +107,7 @@ class DfxKycService extends DFXAuthService {
     }
   }
 
-  Future request2FaCode() async {
+  Future<void> request2FaCode() async {
     final user = await getUser();
     final authToken = appStore.dfxAuthToken;
 
@@ -124,9 +125,10 @@ class DfxKycService extends DFXAuthService {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
       throw ApiException.fromJson(errorJson);
     }
+    return;
   }
 
-  Future verify2FaCode(String code) async {
+  Future<void> verify2FaCode(String code) async {
     final user = await getUser();
     final authToken = appStore.dfxAuthToken;
 
@@ -145,5 +147,6 @@ class DfxKycService extends DFXAuthService {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
       throw ApiException.fromJson(errorJson);
     }
+    return;
   }
 }

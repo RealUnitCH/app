@@ -16,8 +16,16 @@ class Kyc2FaPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => Kyc2FaCubit(getIt<DfxKycService>())),
-        BlocProvider(create: (_) => Kyc2FaVerifyCubit(getIt<DfxKycService>())),
+        BlocProvider(
+          create: (_) => Kyc2FaCubit(
+            getIt<DfxKycService>(),
+          ),
+        ),
+        BlocProvider(
+          create: (_) => Kyc2FaVerifyCubit(
+            getIt<DfxKycService>(),
+          ),
+        ),
       ],
       child: const Kyc2FaView(),
     );
@@ -116,7 +124,9 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
                                   width: 14,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 1.5,
-                                    color: RealUnitColors.basic.black.withValues(alpha: 0.5),
+                                    color: RealUnitColors.basic.black.withValues(
+                                      alpha: 0.5,
+                                    ),
                                   ),
                                 ),
                                 label: Text(S.of(context).next),

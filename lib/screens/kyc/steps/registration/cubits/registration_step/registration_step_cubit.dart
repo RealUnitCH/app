@@ -9,7 +9,11 @@ class RegistrationStepCubit extends Cubit<RegistrationStepState> {
     : super(
         const RegistrationStepState(
           step: RegistrationStep.email,
-          steps: [RegistrationStep.email, RegistrationStep.personal, RegistrationStep.address],
+          steps: [
+            RegistrationStep.email,
+            RegistrationStep.personal,
+            RegistrationStep.address,
+          ],
         ),
       );
 
@@ -17,7 +21,10 @@ class RegistrationStepCubit extends Cubit<RegistrationStepState> {
     final currentIndex = state.index;
     if (currentIndex >= 0 && currentIndex < state.steps.length - 1) {
       emit(
-        RegistrationStepState(step: state.steps.elementAt(currentIndex + 1), steps: state.steps),
+        RegistrationStepState(
+          step: state.steps.elementAt(currentIndex + 1),
+          steps: state.steps,
+        ),
       );
     }
   }
@@ -26,7 +33,10 @@ class RegistrationStepCubit extends Cubit<RegistrationStepState> {
     final currentIndex = state.index;
     if (currentIndex > 0 && currentIndex <= state.steps.length - 1) {
       emit(
-        RegistrationStepState(step: state.steps.elementAt(currentIndex - 1), steps: state.steps),
+        RegistrationStepState(
+          step: state.steps.elementAt(currentIndex - 1),
+          steps: state.steps,
+        ),
       );
     }
   }

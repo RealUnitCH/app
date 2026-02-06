@@ -24,8 +24,14 @@ class RegistrationPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => RegistrationSubmitCubit(getIt<RealUnitRegistrationService>())),
-        BlocProvider(create: (_) => RegistrationStepCubit()),
+        BlocProvider(
+          create: (_) => RegistrationSubmitCubit(
+            getIt<RealUnitRegistrationService>(),
+          ),
+        ),
+        BlocProvider(
+          create: (_) => RegistrationStepCubit(),
+        ),
       ],
       child: const RegistrationView(),
     );
@@ -82,7 +88,9 @@ class _RegistrationViewState extends State<RegistrationView> {
                     : context.pop,
                 icon: const Icon(Icons.arrow_back_rounded),
               ),
-              title: Text(state.title(context)),
+              title: Text(
+                state.title(context),
+              ),
             );
           },
         ),
@@ -131,7 +139,9 @@ class _RegistrationViewState extends State<RegistrationView> {
                       if (state is RegistrationSubmitLoading) {
                         return Container(
                           color: RealUnitColors.basic.white,
-                          child: const Center(child: CupertinoActivityIndicator()),
+                          child: const Center(
+                            child: CupertinoActivityIndicator(),
+                          ),
                         );
                       }
                       return const SizedBox.shrink();

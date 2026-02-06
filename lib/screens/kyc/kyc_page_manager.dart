@@ -36,7 +36,7 @@ class KycViewManager extends StatelessWidget {
         KycLoading() => const Scaffold(body: Center(child: CupertinoActivityIndicator())),
         KycFailure(:final message) => KycFailurePage(message: message),
         KycPending(:final pendingStep) => KycPendingPage(pendingStep: pendingStep),
-        KycCompleted() => const KycLevelReachedPage(),
+        KycCompleted() => const KycCompletedPage(),
         KycSuccess(:final currentStep, :final urlOrToken) => switch (currentStep) {
           KycStep.registration => const RegistrationPage(),
           KycStep.nationality => KycNationalityPage(url: urlOrToken ?? ''),

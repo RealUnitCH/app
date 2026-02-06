@@ -25,7 +25,9 @@ class PaymentInformation extends StatelessWidget {
           );
         }
         if (paymentInfoState is BuyPaymentInfoLoading) {
-          return const Center(child: CupertinoActivityIndicator());
+          return const Center(
+            child: CupertinoActivityIndicator(),
+          );
         }
         if (paymentInfoState is BuyPaymentInfoFailure) {
           final error = paymentInfoState.error;
@@ -40,7 +42,10 @@ class PaymentInformation extends StatelessWidget {
                     context.read<BuyPaymentInfoCubit>().getPaymentInfo();
                   }
                 },
-                child: Text(S.of(context).confirm, textAlign: TextAlign.center),
+                child: Text(
+                  S.of(context).confirm,
+                  textAlign: TextAlign.center,
+                ),
               ),
             );
           } else if (error == PaymentInfoError.kycRequired) {
@@ -48,8 +53,16 @@ class PaymentInformation extends StatelessWidget {
               title: S.of(context).identityCheckRequired,
               description: S.of(context).identityCheckDescription,
               action: FilledButton(
-                onPressed: null,
-                child: Text(S.of(context).identityConfirm, textAlign: TextAlign.center),
+                onPressed: () async {
+                  await context.push(KycPageManager.routeName);
+                  if (context.mounted) {
+                    context.read<BuyPaymentInfoCubit>().getPaymentInfo();
+                  }
+                },
+                child: Text(
+                  S.of(context).identityConfirm,
+                  textAlign: TextAlign.center,
+                ),
               ),
             );
           }

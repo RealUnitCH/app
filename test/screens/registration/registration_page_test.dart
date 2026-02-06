@@ -42,7 +42,11 @@ void main() {
     when(() => registrationStepCubit.state).thenReturn(
       const RegistrationStepState(
         step: RegistrationStep.email,
-        steps: [RegistrationStep.email, RegistrationStep.personal, RegistrationStep.address],
+        steps: [
+          RegistrationStep.email,
+          RegistrationStep.personal,
+          RegistrationStep.address,
+        ],
       ),
     );
     when(() => registrationSubmitCubit.state).thenReturn(RegistrationSubmitInitial());
@@ -85,7 +89,11 @@ void main() {
     testWidgets('renders $RegistrationEmailStep', (tester) async {
       final state = const RegistrationStepState(
         step: RegistrationStep.email,
-        steps: [RegistrationStep.email, RegistrationStep.personal, RegistrationStep.address],
+        steps: [
+          RegistrationStep.email,
+          RegistrationStep.personal,
+          RegistrationStep.address,
+        ],
       );
       when(() => registrationStepCubit.state).thenReturn(state);
 
@@ -123,7 +131,11 @@ void main() {
     testWidgets('renders $RegistrationAddressStep', (tester) async {
       final state = const RegistrationStepState(
         step: RegistrationStep.address,
-        steps: [RegistrationStep.email, RegistrationStep.personal, RegistrationStep.address],
+        steps: [
+          RegistrationStep.email,
+          RegistrationStep.personal,
+          RegistrationStep.address,
+        ],
       );
       when(() => registrationStepCubit.state).thenReturn(state);
 
@@ -144,7 +156,9 @@ void main() {
     testWidgets('triggers checkKyc if submitting successes', (tester) async {
       whenListen(
         registrationSubmitCubit,
-        Stream.fromIterable([const RegistrationSubmitSuccess(RegistrationStatus.completed)]),
+        Stream.fromIterable([
+          const RegistrationSubmitSuccess(RegistrationStatus.completed),
+        ]),
         initialState: RegistrationSubmitInitial(),
       );
 

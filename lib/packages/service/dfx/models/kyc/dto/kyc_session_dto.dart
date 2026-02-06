@@ -1,10 +1,15 @@
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_step_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 
 class KycSessionDto extends KycLevelDto {
   final KycStepSessionDto? currentStep;
 
-  const KycSessionDto({required super.kycLevel, required super.kycSteps, this.currentStep});
+  const KycSessionDto({
+    required super.kycLevel,
+    required super.kycSteps,
+    this.currentStep,
+  });
 
   factory KycSessionDto.fromJson(Map<String, dynamic> json) {
     return KycSessionDto(

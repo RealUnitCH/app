@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
@@ -22,15 +23,22 @@ class KycCubit extends Cubit<KycState> {
       emit(const KycLoading());
 
       final kycStatus = await _kycService.getKycStatus();
-      if (kycStatus.kycLevel.value < 20) {
+      final level = kycStatus.kycLevel.value;
+
+      if (level < 20) {
         emit(const KycSuccess(currentStep: KycStep.registration));
-      } else if (kycStatus.kycLevel.value < 30) {
-        final requiredSteps = kycStatus.kycSteps
-            .where((step) => _requiredStepNames.contains(step.name))
-            .toList();
-        final pendingStep = requiredSteps
-            .where((step) => step.status == KycStepStatus.inReview)
-            .firstOrNull;
+        return;
+      }
+
+      if (level < 30) {
+        final requiredSteps = kycStatus.kycSteps.where(
+          (step) => _requiredStepNames.contains(step.name),
+        );
+
+        final pendingStep = requiredSteps.firstWhereOrNull(
+          (step) => step.status == KycStepStatus.inReview,
+        );
+
         if (pendingStep != null) {
           final step = _mapStepName(pendingStep.name);
           if (step != null) emit(KycPending(step));
@@ -38,9 +46,10 @@ class KycCubit extends Cubit<KycState> {
         }
 
         await _continueKyc();
-      } else {
-        emit(const KycCompleted());
+        return;
       }
+
+      emit(const KycCompleted());
     } on ApiException catch (e) {
       // API returns 403 when 2FA verification is required before proceeding
       if (e.statusCode == 403) {

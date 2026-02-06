@@ -87,8 +87,12 @@ class RegistrationPersonalStep extends StatelessWidget {
                     ),
                   ],
                 ),
-                RegistrationBirthdayField(controller: birthdayCtrl),
-                RegistrationPhoneNumberField(controller: phoneCtrl),
+                RegistrationBirthdayField(
+                  controller: birthdayCtrl,
+                ),
+                RegistrationPhoneNumberField(
+                  controller: phoneCtrl,
+                ),
                 RegistrationCountryField(
                   label: S.of(context).registerCitizenship,
                   onChanged: (country) => nationalityCtrl.value = country,

@@ -44,13 +44,13 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>This app needs camera access to scan QR codes</string>
+	<string>This app needs camera access to verify your identity</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Please provide us with your geolocation data to prove your current location</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Time to record a video</string>
+	<string>For recording video this app needs permission on the microphone</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Let us pick a photo</string>
+	<string>This needs needs the photo library access so that you can choose a photo</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

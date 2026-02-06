@@ -6,7 +6,12 @@ class ApiException implements Exception {
   final String code;
   final String message;
 
-  const ApiException({this.statusCode, this.error, required this.code, required this.message});
+  const ApiException({
+    this.statusCode,
+    this.error,
+    required this.code,
+    required this.message,
+  });
 
   factory ApiException.fromJson(Map<String, dynamic> json) {
     final code = json['code'] as String?;

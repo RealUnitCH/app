@@ -5,7 +5,10 @@ import 'package:realunit_wallet/screens/kyc/steps/registration/widgets/registrat
 class RegistrationBirthdayField extends StatefulWidget {
   final ValueNotifier<String?> controller;
 
-  const RegistrationBirthdayField({super.key, required this.controller});
+  const RegistrationBirthdayField({
+    super.key,
+    required this.controller,
+  });
 
   @override
   State<RegistrationBirthdayField> createState() => _RegistrationBirthdayFieldState();
@@ -48,7 +51,11 @@ class _RegistrationBirthdayFieldState extends State<RegistrationBirthdayField> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           child: Text(
             S.of(context).birthday,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, height: 18 / 13),
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              height: 18 / 13,
+            ),
           ),
         ),
         Row(

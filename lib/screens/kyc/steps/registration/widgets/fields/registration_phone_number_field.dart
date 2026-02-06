@@ -50,7 +50,11 @@ class _RegistrationPhoneNumberFieldState extends State<RegistrationPhoneNumberFi
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           child: Text(
             S.of(context).phoneNumber,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, height: 18 / 13),
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              height: 18 / 13,
+            ),
           ),
         ),
         Row(

@@ -9,13 +9,18 @@ import 'package:realunit_wallet/styles/colors.dart';
 class KycIdentPage extends StatelessWidget {
   final String accessToken;
 
-  const KycIdentPage({super.key, required this.accessToken});
+  const KycIdentPage({
+    super.key,
+    required this.accessToken,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => KycIdentCubit(),
-      child: KycIdentView(accessToken: accessToken),
+      child: KycIdentView(
+        accessToken: accessToken,
+      ),
     );
   }
 }

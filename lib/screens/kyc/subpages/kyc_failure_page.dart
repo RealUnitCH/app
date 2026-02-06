@@ -18,7 +18,11 @@ class KycFailurePage extends StatelessWidget {
               Text(
                 'Es ist beim Laden ein Fehler aufgekommen. Bitte versuchen Sie es zu einem späteren Zeitpunkt',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, height: 18 / 14, letterSpacing: 0.0),
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 18 / 14,
+                  letterSpacing: 0.0,
+                ),
               ),
               Spacer(),
             ],

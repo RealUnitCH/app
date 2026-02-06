@@ -84,12 +84,20 @@ void setupRepositories() {
   getIt.registerFactory(() => AssetRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => NodeRepository(getIt<AppDatabase>()));
   getIt.registerFactory(
-    () => TransactionRepository(getIt<AppDatabase>(), getIt<AssetRepository>()),
+    () => TransactionRepository(
+      getIt<AppDatabase>(),
+      getIt<AssetRepository>(),
+    ),
   );
 }
 
 void setupServices() {
-  getIt.registerSingleton(BalanceService(getIt<BalanceRepository>(), getIt<AppStore>()));
+  getIt.registerSingleton(
+    BalanceService(
+      getIt<BalanceRepository>(),
+      getIt<AppStore>(),
+    ),
+  );
 
   getIt.registerSingleton(BitboxService());
   getIt.registerFactory(
@@ -119,13 +127,21 @@ void setupServices() {
   getIt.registerFactory(() => RealUnitRegistrationService(getIt<AppStore>()));
   getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
   getIt.registerFactory(
-    () =>
-        DfxWidgetService(getIt<AppStore>(), getIt<SettingsRepository>(), getIt<AssetRepository>()),
+    () => DfxWidgetService(
+      getIt<AppStore>(),
+      getIt<SettingsRepository>(),
+      getIt<AssetRepository>(),
+    ),
   );
 }
 
 void setupBlocs() {
-  getIt.registerSingleton(SettingsBloc(getIt<SettingsRepository>(), _getNewAuthToken));
+  getIt.registerSingleton(
+    SettingsBloc(
+      getIt<SettingsRepository>(),
+      _getNewAuthToken,
+    ),
+  );
   getIt.registerSingleton(
     HomeBloc(
       getIt<WalletService>(),

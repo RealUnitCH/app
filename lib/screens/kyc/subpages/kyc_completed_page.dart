@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 
-class KycLevelReachedPage extends StatelessWidget {
-  const KycLevelReachedPage({super.key});
+class KycCompletedPage extends StatelessWidget {
+  const KycCompletedPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(S.of(context).completed)),
+      appBar: AppBar(
+        title: Text(S.of(context).completed),
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: SafeArea(
@@ -30,13 +32,20 @@ class KycLevelReachedPage extends StatelessWidget {
               const Text(
                 'Danke für die Verifizierung. Sie haben nun genug Rechte um die Aktion durchzuführen.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, height: 18 / 14, letterSpacing: 0.0),
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 18 / 14,
+                  letterSpacing: 0.0,
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: SizedBox(
                   width: double.infinity,
-                  child: FilledButton(onPressed: context.pop, child: Text(S.of(context).close)),
+                  child: FilledButton(
+                    onPressed: context.pop,
+                    child: Text(S.of(context).close),
+                  ),
                 ),
               ),
               const Spacer(),
