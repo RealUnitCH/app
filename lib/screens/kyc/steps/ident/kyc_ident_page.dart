@@ -45,7 +45,7 @@ class KycIdentView extends StatelessWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    'Ident verification failed: ${state.status.name} ${state.errorMessage}',
+                    'Identitätsprüfung fehlgeschlagen: ${state.status.name} ${state.errorMessage}',
                   ),
                   backgroundColor: RealUnitColors.status.red600,
                 ),
