@@ -107,6 +107,7 @@ class KycRegistrationPersonalStep extends StatelessWidget {
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: () {
+                        FocusManager.instance.primaryFocus?.unfocus();
                         if (_formKey.currentState?.validate() ?? false) {
                           context.read<KycRegistrationStepCubit>().next();
                         }

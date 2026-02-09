@@ -92,6 +92,7 @@ class KycRegistrationAddressStep extends StatelessWidget {
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: () async {
+                        FocusManager.instance.primaryFocus?.unfocus();
                         if (_formKey.currentState?.validate() ?? false) {
                           await onSubmit();
                         }
