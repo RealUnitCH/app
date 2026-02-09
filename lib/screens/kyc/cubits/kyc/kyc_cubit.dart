@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 
 part 'kyc_state.dart';
 
@@ -15,17 +16,24 @@ class KycCubit extends Cubit<KycState> {
   };
 
   final DfxKycService _kycService;
+  final RealUnitRegistrationService _registrationService;
 
-  KycCubit(DfxKycService kycService) : _kycService = kycService, super(const KycInitial());
+  KycCubit(
+    DfxKycService kycService,
+    RealUnitRegistrationService registrationService,
+  ) : _kycService = kycService,
+      _registrationService = registrationService,
+      super(const KycInitial());
 
   Future<void> checkKyc() async {
     try {
       emit(const KycLoading());
 
+      final isRegistered = await _registrationService.checkRegistrationStatus();
       final kycStatus = await _kycService.getKycStatus();
       final level = kycStatus.kycLevel.value;
 
-      if (level < 20) {
+      if (!isRegistered || level < 20) {
         emit(const KycSuccess(currentStep: KycStep.registration));
         return;
       }
