@@ -106,6 +106,7 @@
   "receiver": "Receiver",
   "recoveryWords": "recovery words",
   "recoveryWordsInvalid": "Recovery words invalid",
+  "refresh": "Refresh",
   "registerAccountType": "Account type",
   "registerCitizenship": "Citizenship",
   "registerDataMismatch": "The data provided does not match the data in the system. Please contact support.",

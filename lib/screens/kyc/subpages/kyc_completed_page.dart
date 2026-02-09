@@ -28,7 +28,6 @@ class KycCompletedPage extends StatelessWidget {
                   height: 30 / 26,
                 ),
               ),
-
               const Text(
                 'Danke für die Verifizierung. Sie haben nun genug Rechte um die Aktion durchzuführen.',
                 textAlign: TextAlign.center,

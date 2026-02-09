@@ -7,11 +7,17 @@ abstract class KycIdentState extends Equatable {
   List<Object?> get props => [];
 }
 
-class KycIdentInitial extends KycIdentState {}
+class KycIdentInitial extends KycIdentState {
+  const KycIdentInitial();
+}
 
-class KycIdentLoading extends KycIdentState {}
+class KycIdentLoading extends KycIdentState {
+  const KycIdentLoading();
+}
 
-class KycIdentSuccess extends KycIdentState {}
+class KycIdentSuccess extends KycIdentState {
+  const KycIdentSuccess();
+}
 
 class KycIdentFailure extends KycIdentState {
   final FailureStatus status;

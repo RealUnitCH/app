@@ -106,6 +106,7 @@
   "receiver": "Empfänger",
   "recoveryWords": "Wiederherstellungs-Wörter",
   "recoveryWordsInvalid": "Wiederherstellungs-Wörter ungültig",
+  "refresh": "Aktualisieren",
   "registerAccountType": "Kontotyp",
   "registerCitizenship": "Staatsangehörigkeit",
   "registerDataMismatch": "Die angegebenen Daten stimmen nicht mit den Daten im System überein. Bitte melde dich beim Support.",

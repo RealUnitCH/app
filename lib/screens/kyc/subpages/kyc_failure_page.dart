@@ -10,14 +10,14 @@ class KycFailurePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('KYC')),
-      body: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20.0),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: SafeArea(
           child: Column(
             spacing: 8.0,
             children: [
-              Spacer(),
-              Text(
+              const Spacer(),
+              const Text(
                 'Fehler beim Laden',
                 style: TextStyle(
                   fontSize: 26,
@@ -27,16 +27,16 @@ class KycFailurePage extends StatelessWidget {
                 ),
               ),
               Text(
-                'Es ist ein Fehler beim Laden aufgekommen. Bitte versuchen Sie es zu einem späteren Zeitpunkt. Falls der Fehler weiterhin besteht, kontaktieren Sie unseren Support.',
+                'Es ist ein Fehler beim Laden aufgekommen: $message. Bitte versuchen Sie es zu einem späteren Zeitpunkt. Falls der Fehler weiterhin besteht, kontaktieren Sie unseren Support.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: RealUnitColors.neutral500,
                   fontSize: 14,
                   height: 18 / 14,
                   letterSpacing: 0.0,
                 ),
               ),
-              Spacer(),
+              const Spacer(),
             ],
           ),
         ),

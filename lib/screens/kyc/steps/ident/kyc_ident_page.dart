@@ -42,14 +42,35 @@ class KycIdentView extends StatelessWidget {
               context.read<KycCubit>().checkKyc();
             }
             if (state is KycIdentFailure) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Identitätsprüfung fehlgeschlagen: ${state.status.name} ${state.errorMessage}',
+              if (state.status == FailureStatus.finallyRejected) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                      'Identitätsprüfung endgültig fehlgeschlagen. Bitte kontaktieren Sie unseren Support.',
+                    ),
+                    backgroundColor: RealUnitColors.status.red600,
                   ),
-                  backgroundColor: RealUnitColors.status.red600,
-                ),
-              );
+                );
+                return;
+              } else if (state.status == FailureStatus.error) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Ein Fehler ist während der Identitätsprüfung aufgetreten: ${state.errorMessage ?? ''}. Bitte versuchen Sie es erneut.',
+                    ),
+                    backgroundColor: RealUnitColors.status.red600,
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                      'Identitätsprüfung fehlgeschlagen: Bitte versuchen Sie es erneut.',
+                    ),
+                    backgroundColor: RealUnitColors.status.red600,
+                  ),
+                );
+              }
             }
           },
           child: SafeArea(
@@ -100,6 +121,14 @@ class KycIdentView extends StatelessWidget {
                             ),
                             label: Text(S.of(context).next),
                           );
+                        }
+                        if (state is KycIdentFailure) {
+                          if (state.status == FailureStatus.finallyRejected) {
+                            return FilledButton(
+                              onPressed: null,
+                              child: Text(S.of(context).next),
+                            );
+                          }
                         }
                         return FilledButton(
                           onPressed: () {
