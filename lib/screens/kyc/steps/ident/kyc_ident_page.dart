@@ -33,7 +33,7 @@ class KycIdentView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Identitätsprüfung')),
+      appBar: AppBar(title: Text(S.of(context).identityCheck)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: BlocListener<KycIdentCubit, KycIdentState>(
