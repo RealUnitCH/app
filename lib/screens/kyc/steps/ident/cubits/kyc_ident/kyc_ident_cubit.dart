@@ -35,7 +35,6 @@ class KycIdentCubit extends Cubit<KycIdentState> {
           emit(
             const KycIdentFailure(
               status: FailureStatus.finallyRejected,
-              errorMessage: 'Verification was rejected',
             ),
           );
           break;
@@ -45,7 +44,6 @@ class KycIdentCubit extends Cubit<KycIdentState> {
           emit(
             const KycIdentFailure(
               status: FailureStatus.temporarilyDeclined,
-              errorMessage: 'Verification was temporarily declined. Please try again.',
             ),
           );
           break;
@@ -54,7 +52,6 @@ class KycIdentCubit extends Cubit<KycIdentState> {
           emit(
             const KycIdentFailure(
               status: FailureStatus.failed,
-              errorMessage: 'Verification failed',
             ),
           );
           break;
@@ -64,7 +61,12 @@ class KycIdentCubit extends Cubit<KycIdentState> {
           emit(const KycIdentInitial());
       }
     } catch (e) {
-      emit(KycIdentFailure(status: FailureStatus.error, errorMessage: e.toString()));
+      emit(
+        KycIdentFailure(
+          status: FailureStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -79,7 +81,7 @@ class KycIdentCubit extends Cubit<KycIdentState> {
 
     // The access token has a limited lifespan and when it's expired, you must provide another one.
     Future<String> onTokenExpiration() async {
-      throw Exception('Token expired');
+      throw Exception('Token expired. Please open a new ident session to get a new token.');
     }
 
     onStatusChanged(SNSMobileSDKStatus newStatus, SNSMobileSDKStatus prevStatus) {

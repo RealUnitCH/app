@@ -45,8 +45,8 @@ class KycIdentView extends StatelessWidget {
               if (state.status == FailureStatus.finallyRejected) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text(
-                      'Identitätsprüfung endgültig fehlgeschlagen. Bitte kontaktieren Sie unseren Support.',
+                    content: Text(
+                      S.of(context).identityCheckFinallyFailed,
                     ),
                     backgroundColor: RealUnitColors.status.red600,
                   ),
@@ -56,7 +56,7 @@ class KycIdentView extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      'Ein Fehler ist während der Identitätsprüfung aufgetreten: ${state.errorMessage ?? ''}. Bitte versuchen Sie es erneut.',
+                      '${S.of(context).identityCheckFailed} ${state.errorMessage}.',
                     ),
                     backgroundColor: RealUnitColors.status.red600,
                   ),
@@ -64,8 +64,8 @@ class KycIdentView extends StatelessWidget {
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text(
-                      'Identitätsprüfung fehlgeschlagen: Bitte versuchen Sie es erneut.',
+                    content: Text(
+                      S.of(context).identityCheckFailed,
                     ),
                     backgroundColor: RealUnitColors.status.red600,
                   ),
@@ -78,10 +78,10 @@ class KycIdentView extends StatelessWidget {
               spacing: 16.0,
               children: [
                 const SizedBox(height: 44.0),
-                const Text(
-                  'Machen Sie sich für die Identitätsprüfung bereit',
+                Text(
+                  S.of(context).identityCheckProcess,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     height: 24 / 20,
@@ -92,10 +92,10 @@ class KycIdentView extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
                   child: Image.asset('assets/images/illustrations/ident_verification.png'),
                 ),
-                const Text(
-                  'Als nächstes müssen Sie Ihre Identität verifizieren. Bitte halten Sie Ihren Ausweis bereit und erlauben Sie den Kamerazugriff auf dem Gerät.',
+                Text(
+                  S.of(context).identityCheckProcessDescription,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: RealUnitColors.neutral900,
                     fontSize: 14,
                     height: 18 / 14,

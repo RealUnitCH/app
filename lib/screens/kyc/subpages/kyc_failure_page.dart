@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class KycFailurePage extends StatelessWidget {
@@ -9,7 +10,7 @@ class KycFailurePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('KYC')),
+      appBar: AppBar(title: Text(S.of(context).kyc)),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: SafeArea(
@@ -17,9 +18,9 @@ class KycFailurePage extends StatelessWidget {
             spacing: 8.0,
             children: [
               const Spacer(),
-              const Text(
-                'Fehler beim Laden',
-                style: TextStyle(
+              Text(
+                S.of(context).kycFailure,
+                style: const TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
                   height: 30 / 26,
@@ -27,7 +28,7 @@ class KycFailurePage extends StatelessWidget {
                 ),
               ),
               Text(
-                'Es ist ein Fehler beim Laden aufgekommen: $message. Bitte versuchen Sie es zu einem späteren Zeitpunkt. Falls der Fehler weiterhin besteht, kontaktieren Sie unseren Support.',
+                S.of(context).kycPendingDescription(message),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: RealUnitColors.neutral500,

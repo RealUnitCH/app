@@ -53,7 +53,7 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('2-Faktor Authentifizierung')),
+      appBar: AppBar(title: Text(S.of(context).twoFa)),
       body: MultiBlocListener(
         listeners: [
           BlocListener<Kyc2FaVerifyCubit, Kyc2FaVerifyState>(
@@ -64,7 +64,7 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
               if (state is Kyc2FaVerifyFailure) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Der Code ist falsch: ${state.errorMessage}'),
+                    content: Text('${S.of(context).twoFaWrongCode}: ${state.errorMessage}'),
                     backgroundColor: RealUnitColors.status.red600,
                   ),
                 );
@@ -77,7 +77,7 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      'Es ist ein Problem beim Senden der E-mail aufgetreten: ${state.errorMessage}',
+                      '${S.of(context).twoFaSendCodeFailed}: ${state.errorMessage}',
                     ),
                     backgroundColor: RealUnitColors.status.red600,
                   ),
@@ -97,10 +97,10 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
                 child: Column(
                   spacing: 24.0,
                   children: [
-                    const Text(
-                      'Um weiter mit dem KYC Prozess fortzufahren, müssen wir Sie über die 2-Faktor Authentifizierungsmethode verifizieren. Bitte überprüfen Sie Ihre Mails.',
+                    Text(
+                      S.of(context).twoFaDescription,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: RealUnitColors.neutral500,
                         fontSize: 14,
                         height: 18 / 14,
@@ -114,13 +114,13 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
                       hideErrorText: false,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Invalid';
+                          return S.of(context).twoFaCodeRequired;
                         }
                         if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
                           return S.of(context).registerPhoneNumberOnlyDigits;
                         }
                         if (value.length != 6) {
-                          return 'Number too short';
+                          return S.of(context).twoFaCodeTooShort;
                         }
                         return null;
                       },
@@ -166,7 +166,11 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
                               onPressed: isLoading
                                   ? null
                                   : () => context.read<Kyc2FaCubit>().requestCode(),
-                              child: Text(isLoading ? 'Sending...' : 'Code erneut senden'),
+                              child: Text(
+                                isLoading
+                                    ? '${S.of(context).sending}...'
+                                    : S.of(context).twoFaResendCode,
+                              ),
                             );
                           },
                         ),

@@ -24,7 +24,7 @@ class KycPendingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('KYC')),
+      appBar: AppBar(title: Text(S.of(context).kyc)),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: SafeArea(
@@ -32,9 +32,9 @@ class KycPendingView extends StatelessWidget {
             spacing: 8.0,
             children: [
               const Spacer(),
-              const Text(
-                'Daten werden geprüft',
-                style: TextStyle(
+              Text(
+                S.of(context).kycPending,
+                style: const TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
                   height: 30 / 26,
@@ -42,8 +42,7 @@ class KycPendingView extends StatelessWidget {
                 ),
               ),
               TextSubstringHighlighting(
-                text:
-                    'Ihr folgender Schritt ist gerade noch unter Prüfung: ${pendingStep.name.toUpperCase()}. Bitte haben Sie noch ein wenig Geduld und schauen Sie zu einem späteren Zeitpunkt nochmal rein.',
+                text: S.of(context).kycPendingDescription(pendingStep.name.toUpperCase()),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: RealUnitColors.neutral500,

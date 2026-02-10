@@ -8,9 +8,7 @@ class KycCompletedPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(S.of(context).completed),
-      ),
+      appBar: AppBar(title: Text(S.of(context).kyc)),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: SafeArea(
@@ -18,20 +16,20 @@ class KycCompletedPage extends StatelessWidget {
             spacing: 24,
             children: [
               const Spacer(),
-              const Text(
-                'Verifikation abgeschlossen',
+              Text(
+                S.of(context).kycCompleted,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 26,
                   letterSpacing: 26 * -0.02,
                   height: 30 / 26,
                 ),
               ),
-              const Text(
-                'Danke für die Verifizierung. Sie haben nun genug Rechte um die Aktion durchzuführen.',
+              Text(
+                S.of(context).kycCompletedDescription,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   height: 18 / 14,
                   letterSpacing: 0.0,

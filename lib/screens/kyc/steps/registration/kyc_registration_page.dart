@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -47,6 +49,7 @@ class KycRegistrationView extends StatefulWidget {
 
 class _KycRegistrationViewState extends State<KycRegistrationView> {
   final _pageController = PageController();
+  StreamSubscription<KycRegistrationStepState>? _stepSubscription;
 
   final emailCtrl = TextEditingController();
 
@@ -64,14 +67,14 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
 
   @override
   void initState() {
-    context.read<KycRegistrationStepCubit>().stream.listen((state) {
+    super.initState();
+    _stepSubscription = context.read<KycRegistrationStepCubit>().stream.listen((state) {
       _pageController.animateToPage(
         state.index,
         duration: const Duration(milliseconds: 350),
         curve: Curves.easeOut,
       );
     });
-    super.initState();
   }
 
   @override
@@ -205,6 +208,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
 
   @override
   void dispose() {
+    _stepSubscription?.cancel();
     _pageController.dispose();
     typeCtrl.dispose();
     emailCtrl.dispose();
