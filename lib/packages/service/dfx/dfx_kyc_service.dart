@@ -28,7 +28,10 @@ class DfxKycService extends DFXAuthService {
     final uri = buildUri(_host, _userPath);
     final response = await appStore.httpClient.get(
       uri,
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $authToken'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $authToken',
+      },
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
@@ -58,6 +61,7 @@ class DfxKycService extends DFXAuthService {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
       throw ApiException.fromJson(errorJson);
     }
+
     final json = jsonDecode(response.body);
     return KycLevelDto.fromJson(json);
   }
@@ -105,6 +109,7 @@ class DfxKycService extends DFXAuthService {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
       throw ApiException.fromJson(errorJson);
     }
+    return;
   }
 
   Future<void> request2FaCode() async {

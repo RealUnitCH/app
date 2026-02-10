@@ -71,14 +71,6 @@ class KycIdentCubit extends Cubit<KycIdentState> {
   }
 
   Future<SNSMobileSDKResult> _launchSDK(String token, String locale) async {
-    // From your backend get an access token for the applicant to be verified.
-    // The token must be generated with `levelName` and `userId`,
-    // where `levelName` is the name of a level configured in your dashboard.
-    //
-    // The sdk will work in the production or in the sandbox environment
-    // depend on which one the `accessToken` has been generated on.
-    //
-
     // The access token has a limited lifespan and when it's expired, you must provide another one.
     Future<String> onTokenExpiration() async {
       throw Exception('Token expired. Please open a new ident session to get a new token.');
@@ -90,7 +82,6 @@ class KycIdentCubit extends Cubit<KycIdentState> {
 
     final snsMobileSDK = SNSMobileSDK.init(token, onTokenExpiration)
         .withHandlers(onStatusChanged: onStatusChanged)
-        // .withDebug(true) // set debug mode if required
         .withLocale(
           Locale(locale),
         )
