@@ -29,6 +29,7 @@ import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/router.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -151,6 +152,9 @@ void setupBlocs() {
       getIt<SettingsService>(),
       getIt<AppStore>(),
     ),
+  );
+  getIt.registerSingleton(
+    PinAuthCubit(getIt<SecureStorage>(), getIt<SettingsRepository>())..initialize(),
   );
 }
 

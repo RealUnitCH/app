@@ -9,6 +9,8 @@ import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/home/home.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
 import 'package:realunit_wallet/screens/onboarding/onboarding_completed_page.dart';
+import 'package:realunit_wallet/screens/pin/setup_pin_page.dart';
+import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/receive/receive_page.dart';
 import 'package:realunit_wallet/screens/restore_wallet/restore_wallet_page.dart';
 import 'package:realunit_wallet/screens/sell/sell_page.dart';
@@ -57,6 +59,14 @@ void setupRouter() {
         GoRoute(
           path: OnboardingCompletedPage.route,
           builder: (context, state) => const OnboardingCompletedPage(),
+        ),
+        GoRoute(
+          path: SetupPinPage.route,
+          builder: (context, state) => const SetupPinPage(),
+        ),
+        GoRoute(
+          path: VerifyPinPage.route,
+          builder: (context, state) => const VerifyPinPage(),
         ),
         GoRoute(
           path: DashboardPage.routeName,

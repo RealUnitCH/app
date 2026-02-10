@@ -32,4 +32,8 @@ class SettingsRepository {
   }
 
   set networkMode(NetworkMode mode) => _sharedPreferences.setString('networkMode', mode.name);
+
+  bool get isPinEnabled => _sharedPreferences.getBool('isPinEnabled') ?? false;
+
+  set isPinEnabled(bool enabled) => _sharedPreferences.setBool('isPinEnabled', enabled);
 }

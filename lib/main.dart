@@ -9,8 +9,12 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/utils/fuck_firebase.dart';
+import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/onboarding/onboarding_completed_page.dart';
+import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
+import 'package:realunit_wallet/screens/pin/setup_pin_page.dart';
+import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/styles/themes.dart';
 
@@ -81,8 +85,8 @@ class _WalletAppState extends State<WalletApp> {
   void _onDetached() => developer.log('detached');
 
   void _onResumed() {
-    getIt<BalanceService>()
-        .updateBalances(getIt<AppStore>().primaryAddress);
+    getIt<PinAuthCubit>().onAppResumed();
+    getIt<BalanceService>().updateBalances(getIt<AppStore>().primaryAddress);
   }
 
   void _onInactive() => developer.log('inactive', name: 'AppLifecycleListener');
@@ -90,45 +94,70 @@ class _WalletAppState extends State<WalletApp> {
   void _onHidden() => developer.log('hidden', name: 'AppLifecycleListener');
 
   void _onPaused() {
+    getIt<PinAuthCubit>().onAppPaused();
     getIt<BalanceService>().cancelSync();
   }
 
   @override
   Widget build(BuildContext context) => MultiBlocProvider(
-        providers: [
-          BlocProvider.value(value: getIt<HomeBloc>()),
-          BlocProvider.value(value: getIt<SettingsBloc>()),
+    providers: [
+      BlocProvider.value(value: getIt<HomeBloc>()),
+      BlocProvider.value(value: getIt<SettingsBloc>()),
+      BlocProvider.value(value: getIt<PinAuthCubit>()),
+    ],
+    child: BlocBuilder<SettingsBloc, SettingsState>(
+      builder: (context, settingsState) => MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        theme: realUnitTheme,
+        supportedLocales: S.delegate.supportedLocales,
+        localizationsDelegates: const [
+          S.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
         ],
-        child: BlocBuilder<SettingsBloc, SettingsState>(
-          builder: (context, state) => MaterialApp.router(
-            debugShowCheckedModeBanner: false,
-            theme: realUnitTheme,
-            supportedLocales: S.delegate.supportedLocales,
-            localizationsDelegates: const [
-              S.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            locale: Locale(state.language.code),
-            routerConfig: getIt<GoRouter>(),
-            builder: (context, child) => BlocListener<HomeBloc, HomeState>(
-              listener: (context, state) {
-                if (!state.isLoadingWallet) {
-                  var targetRoute = '/welcome';
-                  if (state.openWallet != null) {
-                    targetRoute = OnboardingCompletedPage.route;
-                    if (state.onboardingCompleted) {
-                      targetRoute = '/dashboard';
-                    }
-                  }
-
-                  getIt<GoRouter>().go(targetRoute);
+        locale: Locale(settingsState.language.code),
+        routerConfig: getIt<GoRouter>(),
+        builder: (context, child) => MultiBlocListener(
+          listeners: [
+            BlocListener<HomeBloc, HomeState>(
+              listener: (context, homeState) {
+                if (!homeState.isLoadingWallet) {
+                  _navigate(context);
                 }
               },
-              child: child,
             ),
-          ),
+            BlocListener<PinAuthCubit, PinAuthState>(
+              listener: (context, pinState) {
+                _navigate(context);
+              },
+            ),
+          ],
+          child: child ?? const SizedBox.shrink(),
         ),
-      );
+      ),
+    ),
+  );
+
+  void _navigate(BuildContext context) {
+    final homeState = context.read<HomeBloc>().state;
+    final pinState = context.read<PinAuthCubit>().state;
+
+    if (homeState.isLoadingWallet) return;
+
+    String targetRoute;
+    if (homeState.openWallet == null) {
+      targetRoute = '/welcome';
+    } else if (!homeState.onboardingCompleted) {
+      targetRoute = OnboardingCompletedPage.route;
+    } else if (!pinState.isPinSetup) {
+      targetRoute = SetupPinPage.route;
+    } else if (!pinState.isPinVerified) {
+      targetRoute = VerifyPinPage.route;
+    } else {
+      targetRoute = DashboardPage.routeName;
+    }
+
+    getIt<GoRouter>().go(targetRoute);
+  }
 }
