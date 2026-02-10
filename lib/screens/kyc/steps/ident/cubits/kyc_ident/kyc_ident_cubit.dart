@@ -10,26 +10,24 @@ part 'kyc_ident_state.dart';
 enum FailureStatus { error, finallyRejected, temporarilyDeclined, failed }
 
 class KycIdentCubit extends Cubit<KycIdentState> {
-  KycIdentCubit() : super(KycIdentInitial());
+  KycIdentCubit() : super(const KycIdentInitial());
 
   Future<void> startIdent(String token, {String localeCode = 'en'}) async {
     try {
-      emit(KycIdentLoading());
-      final result = await _launchSDK(token, localeCode);
-
+      emit(const KycIdentLoading());
+      var result = await _launchSDK(token, localeCode);
       switch (result.status) {
         case SNSMobileSDKStatus.Approved:
           // Equivalent to web: reviewAnswer === GREEN
-          emit(KycIdentSuccess());
+          emit(const KycIdentSuccess());
           break;
 
         case SNSMobileSDKStatus.ActionCompleted:
-          emit(KycIdentSuccess());
+          emit(const KycIdentSuccess());
           break;
 
         case SNSMobileSDKStatus.Pending:
-          // Verification is pending review
-          emit(KycIdentSuccess());
+          emit(const KycIdentSuccess());
           break;
 
         case SNSMobileSDKStatus.FinallyRejected:
@@ -37,7 +35,6 @@ class KycIdentCubit extends Cubit<KycIdentState> {
           emit(
             const KycIdentFailure(
               status: FailureStatus.finallyRejected,
-              errorMessage: 'Verification was rejected',
             ),
           );
           break;
@@ -47,7 +44,6 @@ class KycIdentCubit extends Cubit<KycIdentState> {
           emit(
             const KycIdentFailure(
               status: FailureStatus.temporarilyDeclined,
-              errorMessage: 'Verification was temporarily declined. Please try again.',
             ),
           );
           break;
@@ -56,17 +52,21 @@ class KycIdentCubit extends Cubit<KycIdentState> {
           emit(
             const KycIdentFailure(
               status: FailureStatus.failed,
-              errorMessage: 'Verification failed',
             ),
           );
           break;
 
         default:
           // Incomplete, Initial, or user cancelled
-          emit(KycIdentInitial());
+          emit(const KycIdentInitial());
       }
     } catch (e) {
-      emit(KycIdentFailure(status: FailureStatus.error, errorMessage: e.toString()));
+      emit(
+        KycIdentFailure(
+          status: FailureStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -81,7 +81,7 @@ class KycIdentCubit extends Cubit<KycIdentState> {
 
     // The access token has a limited lifespan and when it's expired, you must provide another one.
     Future<String> onTokenExpiration() async {
-      throw Exception('Token expired');
+      throw Exception('Token expired. Please open a new ident session to get a new token.');
     }
 
     onStatusChanged(SNSMobileSDKStatus newStatus, SNSMobileSDKStatus prevStatus) {

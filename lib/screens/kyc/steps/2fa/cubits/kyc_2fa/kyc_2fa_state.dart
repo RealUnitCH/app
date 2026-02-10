@@ -7,11 +7,17 @@ abstract class Kyc2FaState extends Equatable {
   List<Object?> get props => [];
 }
 
-class Kyc2FaInitial extends Kyc2FaState {}
+class Kyc2FaInitial extends Kyc2FaState {
+  const Kyc2FaInitial();
+}
 
-class Kyc2FaLoading extends Kyc2FaState {}
+class Kyc2FaLoading extends Kyc2FaState {
+  const Kyc2FaLoading();
+}
 
-class Kyc2FaSuccess extends Kyc2FaState {}
+class Kyc2FaSuccess extends Kyc2FaState {
+  const Kyc2FaSuccess();
+}
 
 class Kyc2FaFailure extends Kyc2FaState {
   final String errorMessage;

@@ -33,7 +33,7 @@ class KycIdentView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ident')),
+      appBar: AppBar(title: Text(S.of(context).identityCheck)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: BlocListener<KycIdentCubit, KycIdentState>(
@@ -42,22 +42,65 @@ class KycIdentView extends StatelessWidget {
               context.read<KycCubit>().checkKyc();
             }
             if (state is KycIdentFailure) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Ident verification failed: ${state.status.name} ${state.errorMessage}',
+              if (state.status == FailureStatus.finallyRejected) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      S.of(context).identityCheckFinallyFailed,
+                    ),
+                    backgroundColor: RealUnitColors.status.red600,
                   ),
-                  backgroundColor: RealUnitColors.status.red600,
-                ),
-              );
+                );
+                return;
+              } else if (state.status == FailureStatus.error) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      '${S.of(context).identityCheckFailed} ${state.errorMessage}.',
+                    ),
+                    backgroundColor: RealUnitColors.status.red600,
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      S.of(context).identityCheckFailed,
+                    ),
+                    backgroundColor: RealUnitColors.status.red600,
+                  ),
+                );
+              }
             }
           },
           child: SafeArea(
             child: Column(
               spacing: 16.0,
               children: [
-                const Text(
-                  'Als nächstes musst du deine Identität verifizieren. Halte deinen Ausweis bereit und erlaube dem Handy den Kamerazugriff.',
+                const SizedBox(height: 44.0),
+                Text(
+                  S.of(context).identityCheckProcess,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    height: 24 / 20,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+                  child: Image.asset('assets/images/illustrations/ident_verification.png'),
+                ),
+                Text(
+                  S.of(context).identityCheckProcessDescription,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: RealUnitColors.neutral900,
+                    fontSize: 14,
+                    height: 18 / 14,
+                    letterSpacing: 0.0,
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -78,6 +121,14 @@ class KycIdentView extends StatelessWidget {
                             ),
                             label: Text(S.of(context).next),
                           );
+                        }
+                        if (state is KycIdentFailure) {
+                          if (state.status == FailureStatus.finallyRejected) {
+                            return FilledButton(
+                              onPressed: null,
+                              child: Text(S.of(context).next),
+                            );
+                          }
                         }
                         return FilledButton(
                           onPressed: () {

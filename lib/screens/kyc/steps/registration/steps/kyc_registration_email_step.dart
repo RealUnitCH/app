@@ -126,6 +126,7 @@ class KycRegistrationEmailStepView extends StatelessWidget {
                               }
                               return FilledButton(
                                 onPressed: () {
+                                  FocusManager.instance.primaryFocus?.unfocus();
                                   if (_formKey.currentState?.validate() ?? false) {
                                     context.read<KycRegistrationEmailStepCubit>().checkEmail(
                                       emailCtrl.text,
