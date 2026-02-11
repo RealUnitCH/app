@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
+import 'package:realunit_wallet/screens/pin/constants/pin_constants.dart';
 
 part 'verify_pin_state.dart';
 
@@ -8,12 +9,11 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
   VerifyPinCubit(this._secureStorage) : super(const VerifyPinState(pin: ''));
 
   final SecureStorage _secureStorage;
-  final int maxPinLength = 4;
 
   void addDigit(int digit) {
-    if (state.pin.length == maxPinLength) return;
+    if (state.pin.length == pinLength) return;
     emit(state.copyWith(pin: '${state.pin}$digit'));
-    if (state.pin.length == maxPinLength) checkPin();
+    if (state.pin.length == pinLength) checkPin();
   }
 
   void deleteDigit() {

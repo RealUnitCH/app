@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
+import 'package:realunit_wallet/screens/pin/constants/pin_constants.dart';
 
 part 'setup_pin_state.dart';
 
@@ -13,17 +14,16 @@ class SetupPinCubit extends Cubit<SetupPinState> {
 
   final SecureStorage _secureStorage;
   final SettingsRepository _settingsRepository;
-  final int maxPinLength = 4;
 
   String? _createPin;
 
   void addDigit(int digit) {
-    if (state.currentPin.length >= maxPinLength) return;
+    if (state.currentPin.length >= pinLength) return;
 
     final newPin = '${state.currentPin}$digit';
     emit(state.copyWith(currentPin: newPin, mismatch: false));
 
-    if (newPin.length == maxPinLength) {
+    if (newPin.length == pinLength) {
       _onPinComplete(newPin);
     }
   }
@@ -71,7 +71,5 @@ class SetupPinCubit extends Cubit<SetupPinState> {
     }
   }
 
-  void reset() {
-    emit(const SetupPinState());
-  }
+  void reset() => emit(const SetupPinState());
 }

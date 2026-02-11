@@ -5,6 +5,7 @@ import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/pin/bloc/setup_pin/setup_pin_cubit.dart';
+import 'package:realunit_wallet/screens/pin/constants/pin_constants.dart';
 import 'package:realunit_wallet/screens/pin/widgets/pin_indicator.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/number_pad.dart';
@@ -31,17 +32,28 @@ class SetupPinView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: RealUnitColors.brand700,
-      body: SafeArea(
-        child: BlocConsumer<SetupPinCubit, SetupPinState>(
-          listener: (context, state) {
-            if (state.isComplete) {
-              getIt<PinAuthCubit>().onPinSetupComplete();
-            }
-          },
-          builder: (context, state) {
-            return Column(
+    return BlocConsumer<SetupPinCubit, SetupPinState>(
+      listener: (context, state) {
+        if (state.isComplete) {
+          getIt<PinAuthCubit>().onPinSetupComplete();
+        }
+      },
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            leading: state.mode == SetupPinMode.confirm
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    onPressed: switch (state.mode) {
+                      SetupPinMode.create => null,
+                      SetupPinMode.confirm => () => context.read<SetupPinCubit>().reset(),
+                    },
+                  )
+                : null,
+          ),
+          backgroundColor: RealUnitColors.brand700,
+          body: SafeArea(
+            child: Column(
               children: [
                 Expanded(
                   child: Column(
@@ -75,7 +87,7 @@ class SetupPinView extends StatelessWidget {
                       const SizedBox(height: 40),
                       PinIndicator(
                         pinLength: state.currentPin.length,
-                        expectedPinLength: context.read<SetupPinCubit>().maxPinLength,
+                        expectedPinLength: pinLength,
                         wrongPin: state.mismatch,
                       ),
                       if (state.mismatch) ...[
@@ -91,16 +103,18 @@ class SetupPinView extends StatelessWidget {
                     ],
                   ),
                 ),
-                NumberPad(
-                  onNumberPressed: (digit) => context.read<SetupPinCubit>().addDigit(digit),
-                  onDeletePressed: () => context.read<SetupPinCubit>().deleteDigit(),
+                Expanded(
+                  child: NumberPad(
+                    onNumberPressed: (digit) => context.read<SetupPinCubit>().addDigit(digit),
+                    onDeletePressed: () => context.read<SetupPinCubit>().deleteDigit(),
+                  ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 40.0),
               ],
-            );
-          },
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

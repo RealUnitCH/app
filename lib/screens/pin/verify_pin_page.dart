@@ -5,6 +5,7 @@ import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/pin/bloc/verify_pin/verify_pin_cubit.dart';
+import 'package:realunit_wallet/screens/pin/constants/pin_constants.dart';
 import 'package:realunit_wallet/screens/pin/widgets/forgot_pin_bottom_sheet.dart';
 import 'package:realunit_wallet/screens/pin/widgets/pin_indicator.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -30,6 +31,7 @@ class VerifyPinView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(),
       backgroundColor: RealUnitColors.brand700,
       body: SafeArea(
         child: BlocConsumer<VerifyPinCubit, VerifyPinState>(
@@ -67,7 +69,7 @@ class VerifyPinView extends StatelessWidget {
                       const SizedBox(height: 40),
                       PinIndicator(
                         pinLength: state.pin.length,
-                        expectedPinLength: context.read<VerifyPinCubit>().maxPinLength,
+                        expectedPinLength: pinLength,
                         wrongPin: state is VerifyPinFailure,
                       ),
                       if (state is VerifyPinFailure) ...[
@@ -83,28 +85,27 @@ class VerifyPinView extends StatelessWidget {
                     ],
                   ),
                 ),
-                NumberPad(
-                  onNumberPressed: (digit) => context.read<VerifyPinCubit>().addDigit(digit),
-                  onDeletePressed: () => context.read<VerifyPinCubit>().deleteDigit(),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 10),
-                  child: TextButton(
-                    onPressed: () async {
-                      bool? isReset = await showModalBottomSheet(
-                        context: context,
-                        builder: (_) => const ForgotPinBottomSheet(),
-                      );
-                      if (isReset ?? false) {
-                        await Future.delayed(const Duration(milliseconds: 300));
-                        if (context.mounted) {
-                          context.read<PinAuthCubit>().reset();
-                          context.read<HomeBloc>().add(const DeleteCurrentWalletEvent());
-                        }
-                      }
-                    },
-                    child: const Text('Forgot PIN? Reset Wallet'),
+                Expanded(
+                  child: NumberPad(
+                    onNumberPressed: (digit) => context.read<VerifyPinCubit>().addDigit(digit),
+                    onDeletePressed: () => context.read<VerifyPinCubit>().deleteDigit(),
                   ),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    bool? isReset = await showModalBottomSheet(
+                      context: context,
+                      builder: (_) => const ForgotPinBottomSheet(),
+                    );
+                    if (isReset ?? false) {
+                      await Future.delayed(const Duration(milliseconds: 300));
+                      if (context.mounted) {
+                        context.read<PinAuthCubit>().reset();
+                        context.read<HomeBloc>().add(const DeleteCurrentWalletEvent());
+                      }
+                    }
+                  },
+                  child: const Text('Forgot PIN? Reset Wallet'),
                 ),
               ],
             );
