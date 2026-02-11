@@ -80,21 +80,23 @@ class _WalletAppState extends State<WalletApp> {
       case AppLifecycleState.paused:
         _onPaused();
     }
+    developer.log(state.name, name: 'AppLifecycleListener');
   }
 
-  void _onDetached() => developer.log('detached');
+  void _onDetached() {}
 
   void _onResumed() {
     getIt<PinAuthCubit>().onAppResumed();
     getIt<BalanceService>().updateBalances(getIt<AppStore>().primaryAddress);
   }
 
-  void _onInactive() => developer.log('inactive', name: 'AppLifecycleListener');
+  void _onInactive() {}
 
-  void _onHidden() => developer.log('hidden', name: 'AppLifecycleListener');
+  void _onHidden() {
+    getIt<PinAuthCubit>().onAppHidden();
+  }
 
   void _onPaused() {
-    getIt<PinAuthCubit>().onAppPaused();
     getIt<BalanceService>().cancelSync();
   }
 

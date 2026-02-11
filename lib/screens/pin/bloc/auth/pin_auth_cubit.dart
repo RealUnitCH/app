@@ -34,7 +34,7 @@ class PinAuthCubit extends Cubit<PinAuthState> {
 
   void onPinVerified() => emit(state.copyWith(isPinVerified: true));
 
-  void onAppPaused() => _lastBackgroundTime = DateTime.now();
+  void onAppHidden() => _lastBackgroundTime ??= DateTime.now();
 
   void onAppResumed() {
     if (!state.isPinSetup) return;
@@ -46,6 +46,7 @@ class PinAuthCubit extends Cubit<PinAuthState> {
     if (elapsed >= _lockoutDuration) {
       emit(state.copyWith(isPinVerified: false));
     }
+    _lastBackgroundTime = null;
   }
 
   void reset() {
