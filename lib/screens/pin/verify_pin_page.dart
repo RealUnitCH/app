@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/repository/settings_repository.dart';
+import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
@@ -21,13 +23,28 @@ class VerifyPinPage extends StatelessWidget {
   Widget build(BuildContext context) => BlocProvider(
     create: (_) => VerifyPinCubit(
       getIt<SecureStorage>(),
+      getIt<SettingsRepository>(),
+      getIt<BiometricService>(),
     ),
     child: const VerifyPinView(),
   );
 }
 
-class VerifyPinView extends StatelessWidget {
+class VerifyPinView extends StatefulWidget {
   const VerifyPinView({super.key});
+
+  @override
+  State<VerifyPinView> createState() => _VerifyPinViewState();
+}
+
+class _VerifyPinViewState extends State<VerifyPinView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<VerifyPinCubit>().checkBiometricAvailability();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

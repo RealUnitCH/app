@@ -3,10 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
+import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/pin/bloc/setup_pin/setup_pin_cubit.dart';
 import 'package:realunit_wallet/screens/pin/constants/pin_constants.dart';
+import 'package:realunit_wallet/screens/pin/widgets/enable_biometric_bottom_sheet.dart';
 import 'package:realunit_wallet/screens/pin/widgets/pin_indicator.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/number_pad.dart';
@@ -34,9 +36,12 @@ class SetupPinView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<SetupPinCubit, SetupPinState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state.isComplete) {
-          getIt<PinAuthCubit>().onPinSetupComplete();
+          await _promptBiometricSetup(context);
+          if (context.mounted) {
+            getIt<PinAuthCubit>().onPinSetupComplete();
+          }
         }
       },
       builder: (context, state) {
@@ -117,5 +122,24 @@ class SetupPinView extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _promptBiometricSetup(BuildContext context) async {
+    final biometricService = getIt<BiometricService>();
+    final isAvailable = await biometricService.isAvailable();
+
+    if (!isAvailable || !context.mounted) return;
+
+    final shouldEnable = await showModalBottomSheet<bool>(
+      context: context,
+      builder: (_) => const EnableBiometricBottomSheet(),
+    );
+
+    if (shouldEnable == true) {
+      final authenticated = await biometricService.authenticate();
+      if (authenticated) {
+        getIt<SettingsRepository>().isBiometricEnabled = true;
+      }
+    }
   }
 }
