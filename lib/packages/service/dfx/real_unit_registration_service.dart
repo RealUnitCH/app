@@ -16,12 +16,32 @@ import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 class RealUnitRegistrationService {
   RealUnitRegistrationService(AppStore appStore) : _appStore = appStore;
 
+  static const _registerStatusPath = '/v1/realunit/register/status';
   static const _registerEmailPath = '/v1/realunit/register/email';
   static const _registerCompletionPath = '/v1/realunit/register/complete';
 
   final AppStore _appStore;
 
   String get _host => _appStore.apiConfig.apiHost;
+
+  Future<bool> checkRegistrationStatus() async {
+    final authToken = _appStore.dfxAuthToken;
+
+    final uri = buildUri(_host, _registerStatusPath);
+    final response = await _appStore.httpClient.get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $authToken',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson);
+    }
+    return jsonDecode(response.body) as bool;
+  }
 
   Future<RegistrationEmailStatus> registerEmail(String email) async {
     final authToken = _appStore.dfxAuthToken;
@@ -33,9 +53,11 @@ class RealUnitRegistrationService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $authToken',
       },
-      body: jsonEncode(RealUnitEmailRegistrationRequestDto(
-        email: email.toLowerCase(),
-      )),
+      body: jsonEncode(
+        RealUnitEmailRegistrationRequestDto(
+          email: email.toLowerCase(),
+        ),
+      ),
     );
 
     if (response.statusCode != 201 && response.statusCode != 202) {

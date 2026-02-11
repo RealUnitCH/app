@@ -23,6 +23,7 @@ class ApiException implements Exception {
         return RegistrationRequiredException.fromJson(json);
       default:
         return ApiException(
+          statusCode: json['statusCode'] as int,
           code: code ?? 'UNKNOWN',
           message: json['message'] as String,
         );
@@ -30,5 +31,5 @@ class ApiException implements Exception {
   }
 
   @override
-  String toString() => 'RealUnitApiException: $message (code: $code)';
+  String toString() => 'RealUnitApiException: $message (code: $code, statusCode: $statusCode)';
 }

@@ -1,0 +1,92 @@
+import 'package:flutter/material.dart';
+import 'package:realunit_wallet/di.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/screens/kyc/widgets/kyc_dropdown_field.dart';
+
+class KycCountryField extends StatefulWidget {
+  final String label;
+  final void Function(Country?)? onChanged;
+  final String? Function(Country?)? validator;
+
+  const KycCountryField({
+    super.key,
+    required this.label,
+    this.onChanged,
+    this.validator,
+  });
+
+  @override
+  State<KycCountryField> createState() => _KycCountryFieldState();
+}
+
+class _KycCountryFieldState extends State<KycCountryField> {
+  final DfxCountryService countryService = getIt<DfxCountryService>();
+  late Future<List<Country>> _countriesFuture;
+  bool _hasPreloaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _countriesFuture = _loadCountries();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<Country>>(
+      future: _countriesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+        if (snapshot.hasError) {
+          return Text('Failed to load countries: ${snapshot.error}');
+        }
+
+        final countries = snapshot.data ?? [];
+        final initialCountry = countries.isNotEmpty ? countries.first : null;
+        _preloadCountry(initialCountry);
+
+        return KycDropdownField<Country>(
+          hintText: 'Schweiz',
+          label: widget.label,
+          items: countries.map((c) => DropdownMenuItem(value: c, child: Text(c.name))).toList(),
+          initialValue: initialCountry,
+          onChanged: widget.onChanged,
+          validator: widget.validator,
+        );
+      },
+    );
+  }
+
+  Future<List<Country>> _loadCountries() async {
+    final countries = await countryService.getAllCountries();
+
+    final priority = ['CH', 'DE', 'IT', 'FR'];
+
+    countries.sort((a, b) {
+      final aIndex = priority.indexOf(a.symbol.toUpperCase());
+      final bIndex = priority.indexOf(b.symbol.toUpperCase());
+
+      if (aIndex != -1 && bIndex != -1) {
+        return aIndex.compareTo(bIndex);
+      }
+
+      if (aIndex != -1) return -1;
+      if (bIndex != -1) return 1;
+
+      return a.name.compareTo(b.name);
+    });
+
+    return countries;
+  }
+
+  void _preloadCountry(Country? initialCountry) {
+    if (!_hasPreloaded && initialCountry != null) {
+      _hasPreloaded = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onChanged?.call(initialCountry);
+      });
+    }
+  }
+}

@@ -1,0 +1,29 @@
+part of 'kyc_2fa_cubit.dart';
+
+abstract class Kyc2FaState extends Equatable {
+  const Kyc2FaState();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class Kyc2FaInitial extends Kyc2FaState {
+  const Kyc2FaInitial();
+}
+
+class Kyc2FaLoading extends Kyc2FaState {
+  const Kyc2FaLoading();
+}
+
+class Kyc2FaSuccess extends Kyc2FaState {
+  const Kyc2FaSuccess();
+}
+
+class Kyc2FaFailure extends Kyc2FaState {
+  final String errorMessage;
+
+  const Kyc2FaFailure({required this.errorMessage});
+
+  @override
+  List<Object?> get props => [errorMessage];
+}
