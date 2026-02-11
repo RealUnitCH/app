@@ -100,7 +100,11 @@ void setupServices() {
       getIt<AppStore>(),
     ),
   );
-  getIt.registerSingleton(BiometricService());
+  getIt.registerFactory(
+    () => BiometricService(
+      getIt<SettingsRepository>(),
+    ),
+  );
   getIt.registerSingleton(BitboxService());
   getIt.registerFactory(
     () => WalletService(

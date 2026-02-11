@@ -106,7 +106,7 @@
   "pinConfirmDescription": "Re-enter your PIN to confirm",
   "pinConfirmFailed": "PINs do not match. Try again.",
   "pinCreate": "Create your pin",
-  "pinCreateDescription": "Enter a 4-digit PIN to secure your wallet",
+  "pinCreateDescription": "Enter a ${pinLength}-digit PIN to secure your wallet",
   "pinForgotten": "Forgot PIN? Reset Wallet",
   "pinForgottenDescription": "This action will delete your wallet and all associated data. Make sure you have backed up your recovery phrase.",
   "pinForgottenTitle": "Wallet will be reset",

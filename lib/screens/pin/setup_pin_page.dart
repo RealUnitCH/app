@@ -24,6 +24,7 @@ class SetupPinPage extends StatelessWidget {
       create: (_) => SetupPinCubit(
         getIt<SecureStorage>(),
         getIt<SettingsRepository>(),
+        getIt<BiometricService>(),
       ),
       child: const SetupPinView(),
     );
@@ -62,51 +63,55 @@ class SetupPinView extends StatelessWidget {
             child: Column(
               children: [
                 Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        switch (state.mode) {
-                          SetupPinMode.create => S.of(context).pinCreate,
-                          SetupPinMode.confirm => S.of(context).pinConfirm,
-                        },
-                        style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w700,
-                          color: RealUnitColors.realUnitBlack,
-                          letterSpacing: -0.52,
-                          height: 30 / 26,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        switch (state.mode) {
-                          SetupPinMode.create => S.of(context).pinCreateDescription,
-                          SetupPinMode.confirm => S.of(context).pinConfirmDescription,
-                        },
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: RealUnitColors.neutral500,
-                          height: 18 / 14,
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-                      PinIndicator(
-                        pinLength: state.currentPin.length,
-                        expectedPinLength: pinLength,
-                        wrongPin: state.mismatch,
-                      ),
-                      if (state.mismatch) ...[
-                        const SizedBox(height: 16),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
                         Text(
-                          S.of(context).pinConfirmFailed,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: RealUnitColors.status.red600,
+                          switch (state.mode) {
+                            SetupPinMode.create => S.of(context).pinCreate,
+                            SetupPinMode.confirm => S.of(context).pinConfirm,
+                          },
+                          style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w700,
+                            color: RealUnitColors.realUnitBlack,
+                            letterSpacing: -0.52,
+                            height: 30 / 26,
                           ),
                         ),
+                        const SizedBox(height: 8),
+                        Text(
+                          switch (state.mode) {
+                            SetupPinMode.create => S.of(context).pinCreateDescription('$pinLength'),
+                            SetupPinMode.confirm => S.of(context).pinConfirmDescription,
+                          },
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: RealUnitColors.neutral500,
+                            height: 18 / 14,
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        PinIndicator(
+                          pinLength: state.currentPin.length,
+                          expectedPinLength: pinLength,
+                          wrongPin: state.mismatch,
+                        ),
+                        if (state.mismatch) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            S.of(context).pinConfirmFailed,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: RealUnitColors.status.red600,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
                 Expanded(
@@ -125,21 +130,16 @@ class SetupPinView extends StatelessWidget {
   }
 
   Future<void> _promptBiometricSetup(BuildContext context) async {
-    final biometricService = getIt<BiometricService>();
-    final isAvailable = await biometricService.isAvailable();
-
+    final cubit = context.read<SetupPinCubit>();
+    final isAvailable = await cubit.isBiometricAvailable();
     if (!isAvailable || !context.mounted) return;
 
     final shouldEnable = await showModalBottomSheet<bool>(
       context: context,
       builder: (_) => const EnableBiometricBottomSheet(),
     );
-
     if (shouldEnable == true) {
-      final authenticated = await biometricService.authenticate();
-      if (authenticated) {
-        getIt<SettingsRepository>().isBiometricEnabled = true;
-      }
+      await cubit.enableBiometrics();
     }
   }
 }

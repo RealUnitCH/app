@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
@@ -23,7 +22,6 @@ class VerifyPinPage extends StatelessWidget {
   Widget build(BuildContext context) => BlocProvider(
     create: (_) => VerifyPinCubit(
       getIt<SecureStorage>(),
-      getIt<SettingsRepository>(),
       getIt<BiometricService>(),
     ),
     child: const VerifyPinView(),
@@ -62,45 +60,49 @@ class _VerifyPinViewState extends State<VerifyPinView> {
             return Column(
               children: [
                 Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        S.of(context).pinVerify,
-                        style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w700,
-                          color: RealUnitColors.realUnitBlack,
-                          letterSpacing: -0.52,
-                          height: 30 / 26,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        S.of(context).pinVerifyDescription,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: RealUnitColors.neutral500,
-                          height: 18 / 14,
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-                      PinIndicator(
-                        pinLength: state.pin.length,
-                        expectedPinLength: pinLength,
-                        wrongPin: state is VerifyPinFailure,
-                      ),
-                      if (state is VerifyPinFailure) ...[
-                        const SizedBox(height: 16),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
                         Text(
-                          S.of(context).pinVerifyFailed,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: RealUnitColors.status.red600,
+                          S.of(context).pinVerify,
+                          style: const TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w700,
+                            color: RealUnitColors.realUnitBlack,
+                            letterSpacing: -0.52,
+                            height: 30 / 26,
                           ),
                         ),
+                        const SizedBox(height: 8),
+                        Text(
+                          S.of(context).pinVerifyDescription,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: RealUnitColors.neutral500,
+                            height: 18 / 14,
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        PinIndicator(
+                          pinLength: state.pin.length,
+                          expectedPinLength: pinLength,
+                          wrongPin: state is VerifyPinFailure,
+                        ),
+                        if (state is VerifyPinFailure) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            S.of(context).pinVerifyFailed,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: RealUnitColors.status.red600,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
                 Expanded(
