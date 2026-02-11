@@ -97,7 +97,6 @@ class _WalletAppState extends State<WalletApp> {
   }
 
   void _onPaused() {
-    getIt<PinAuthCubit>().onAppPaused();
     getIt<BalanceService>().cancelSync();
   }
 
