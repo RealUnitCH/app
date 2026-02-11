@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/di.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
@@ -12,9 +13,9 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/number_pad.dart';
 
 class VerifyPinPage extends StatelessWidget {
-  const VerifyPinPage({super.key});
-
   static const route = '/pin/verify';
+
+  const VerifyPinPage({super.key});
 
   @override
   Widget build(BuildContext context) => BlocProvider(
@@ -47,9 +48,9 @@ class VerifyPinView extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Enter your PIN',
-                        style: TextStyle(
+                      Text(
+                        S.of(context).pinVerify,
+                        style: const TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w700,
                           color: RealUnitColors.realUnitBlack,
@@ -58,9 +59,9 @@ class VerifyPinView extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Enter your PIN to unlock the wallet',
-                        style: TextStyle(
+                      Text(
+                        S.of(context).pinVerifyDescription,
+                        style: const TextStyle(
                           fontSize: 14,
                           color: RealUnitColors.neutral500,
                           height: 18 / 14,
@@ -75,7 +76,7 @@ class VerifyPinView extends StatelessWidget {
                       if (state is VerifyPinFailure) ...[
                         const SizedBox(height: 16),
                         Text(
-                          'Wrong PIN. Try again.',
+                          S.of(context).pinVerifyFailed,
                           style: TextStyle(
                             fontSize: 14,
                             color: RealUnitColors.status.red600,
@@ -105,7 +106,7 @@ class VerifyPinView extends StatelessWidget {
                       }
                     }
                   },
-                  child: const Text('Forgot PIN? Reset Wallet'),
+                  child: Text(S.of(context).pinForgotten),
                 ),
               ],
             );
