@@ -13,6 +13,7 @@ import 'package:realunit_wallet/packages/repository/transaction_repository.dart'
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
+import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
@@ -99,7 +100,7 @@ void setupServices() {
       getIt<AppStore>(),
     ),
   );
-
+  getIt.registerSingleton(BiometricService());
   getIt.registerSingleton(BitboxService());
   getIt.registerFactory(
     () => WalletService(
@@ -108,7 +109,6 @@ void setupServices() {
       getIt<SettingsRepository>(),
     ),
   );
-
   getIt.registerFactory(
     () => TransactionHistoryService(
       getIt<AppStore>(),
