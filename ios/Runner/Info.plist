@@ -51,6 +51,8 @@
 	<string>For recording video this app needs permission on the microphone</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This needs needs the photo library access so that you can choose a photo</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>This app uses Face ID to authenticate the user and unlock the wallet.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
