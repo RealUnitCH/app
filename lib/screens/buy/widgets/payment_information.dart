@@ -7,7 +7,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_action_required.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information_details.dart';
-import 'package:realunit_wallet/screens/registration/registration_page.dart';
+import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
 
 class PaymentInformation extends StatelessWidget {
   final String amount;
@@ -37,7 +37,7 @@ class PaymentInformation extends StatelessWidget {
               description: S.of(context).registrationRequiredDescription,
               action: FilledButton(
                 onPressed: () async {
-                  await context.push(RegistrationPage.routeName);
+                  await context.push(KycPageManager.routeName);
                   if (context.mounted) {
                     context.read<BuyPaymentInfoCubit>().getPaymentInfo();
                   }
@@ -53,7 +53,12 @@ class PaymentInformation extends StatelessWidget {
               title: S.of(context).identityCheckRequired,
               description: S.of(context).identityCheckDescription,
               action: FilledButton(
-                onPressed: null,
+                onPressed: () async {
+                  await context.push(KycPageManager.routeName);
+                  if (context.mounted) {
+                    context.read<BuyPaymentInfoCubit>().getPaymentInfo();
+                  }
+                },
                 child: Text(
                   S.of(context).identityConfirm,
                   textAlign: TextAlign.center,

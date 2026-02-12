@@ -13,8 +13,8 @@ class ApiConfig {
   String get apiHost => _localTesting
       ? 'localhost:3000'
       : networkMode.isTestnet
-          ? 'dev.api.dfx.swiss'
-          : 'api.dfx.swiss';
+      ? 'dev.api.dfx.swiss'
+      : 'api.dfx.swiss';
 
   Asset get asset => networkMode.isTestnet ? realUnitTestAsset : realUnitAsset;
 }

@@ -6,8 +6,8 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings_tax_report/cubit/settings_tax_report_cubit.dart';
-import 'package:realunit_wallet/screens/settings_tax_report/widgets/settings_tax_report_date_picker.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/date_picker_field.dart';
 
 class SettingsTaxReportPage extends StatelessWidget {
   const SettingsTaxReportPage({super.key});
@@ -67,17 +67,11 @@ class SettingsTaxReportView extends StatelessWidget {
               ValueListenableBuilder(
                   valueListenable: _datePickerModel,
                   builder: (context, value, child) {
-                    return SettingsTaxReportDatePicker(
+                    return DatePickerField(
                       initialDate: _datePickerModel.value,
-                      onPressed: () async {
-                        final newDate = await showDatePicker(
-                          context: context,
-                          firstDate: DateTime(2025),
-                          lastDate: DateTime.now(),
-                          currentDate: _datePickerModel.value,
-                        );
-                        if (newDate != null) _datePickerModel.setDate(newDate);
-                      },
+                      firstDate: DateTime(2025),
+                      lastDate: DateTime.now(),
+                      onDateSelected: (date) => _datePickerModel.setDate(date),
                     );
                   }),
               BlocBuilder<SettingsTaxReportCubit, SettingsTaxReportState>(
@@ -102,7 +96,7 @@ class SettingsTaxReportView extends StatelessWidget {
                       currency: settingsState.currency,
                       language: settingsState.language),
                   label: Text(S.of(context).pdf),
-                  icon: const Icon(Icons.download),
+                  icon: const Icon(Icons.file_download_outlined),
                 );
               }),
             ],

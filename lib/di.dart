@@ -15,6 +15,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
@@ -28,6 +29,7 @@ import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/router.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -63,9 +65,9 @@ Future<String> setupEssentials() async {
 
 Future<void> finishSetup(String encryptionKey) async {
   getIt.registerSingleton(AppDatabase(encryptionKey));
-  getIt.registerSingleton(AppStore(() => ApiConfig(
-        networkMode: getIt<SettingsRepository>().networkMode,
-      )));
+  getIt.registerSingleton(
+    AppStore(() => ApiConfig(networkMode: getIt<SettingsRepository>().networkMode)),
+  );
 
   setupRepositories();
   setupServices();
@@ -82,32 +84,41 @@ void setupRepositories() {
   getIt.registerFactory(() => BalanceRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => AssetRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => NodeRepository(getIt<AppDatabase>()));
-  getIt.registerFactory(() => TransactionRepository(
-        getIt<AppDatabase>(),
-        getIt<AssetRepository>(),
-      ));
+  getIt.registerFactory(
+    () => TransactionRepository(
+      getIt<AppDatabase>(),
+      getIt<AssetRepository>(),
+    ),
+  );
 }
 
 void setupServices() {
-  getIt.registerSingleton(BalanceService(
-    getIt<BalanceRepository>(),
-    getIt<AppStore>(),
-  ));
+  getIt.registerSingleton(
+    BalanceService(
+      getIt<BalanceRepository>(),
+      getIt<AppStore>(),
+    ),
+  );
 
   getIt.registerSingleton(BitboxService());
-  getIt.registerFactory(() => WalletService(
-        getIt<BitboxService>(),
-        getIt<WalletRepository>(),
-        getIt<SettingsRepository>(),
-      ));
+  getIt.registerFactory(
+    () => WalletService(
+      getIt<BitboxService>(),
+      getIt<WalletRepository>(),
+      getIt<SettingsRepository>(),
+    ),
+  );
 
-  getIt.registerFactory(() => TransactionHistoryService(
-        getIt<AppStore>(),
-        getIt<AssetRepository>(),
-        getIt<TransactionRepository>(),
-      ));
+  getIt.registerFactory(
+    () => TransactionHistoryService(
+      getIt<AppStore>(),
+      getIt<AssetRepository>(),
+      getIt<TransactionRepository>(),
+    ),
+  );
 
   getIt.registerCachedFactory(() => DfxCountryService(getIt<AppStore>()));
+  getIt.registerFactory(() => DfxKycService(getIt<AppStore>()));
   getIt.registerFactory(() => OpenCryptoPayService());
   getIt.registerFactory(() => DFXPriceService(getIt<AppStore>()));
   getIt.registerFactory(() => RealUnitBuyPaymentInfoService(getIt<AppStore>()));
@@ -116,26 +127,35 @@ void setupServices() {
   getIt.registerFactory(() => DfxBrokerbotService(getIt<AppStore>()));
   getIt.registerFactory(() => RealUnitRegistrationService(getIt<AppStore>()));
   getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
-  getIt.registerFactory(() => DfxWidgetService(
-        getIt<AppStore>(),
-        getIt<SettingsRepository>(),
-        getIt<AssetRepository>(),
-      ));
+  getIt.registerFactory(
+    () => DfxWidgetService(
+      getIt<AppStore>(),
+      getIt<SettingsRepository>(),
+      getIt<AssetRepository>(),
+    ),
+  );
 }
 
 void setupBlocs() {
-  getIt.registerSingleton(SettingsBloc(
-    getIt<SettingsRepository>(),
-    _getNewAuthToken,
-  ));
-  getIt.registerSingleton(HomeBloc(
-    getIt<WalletService>(),
-    getIt<BalanceService>(),
-    getIt<TransactionHistoryService>(),
-    getIt<DfxWidgetService>(),
-    getIt<SettingsService>(),
-    getIt<AppStore>(),
-  ));
+  getIt.registerSingleton(
+    SettingsBloc(
+      getIt<SettingsRepository>(),
+      _getNewAuthToken,
+    ),
+  );
+  getIt.registerSingleton(
+    HomeBloc(
+      getIt<WalletService>(),
+      getIt<BalanceService>(),
+      getIt<TransactionHistoryService>(),
+      getIt<DfxWidgetService>(),
+      getIt<SettingsService>(),
+      getIt<AppStore>(),
+    ),
+  );
+  getIt.registerSingleton(
+    PinAuthCubit(getIt<SecureStorage>(), getIt<SettingsRepository>())..initialize(),
+  );
 }
 
 Future<bool> _existsDatabaseFile() async => File(await AppDatabase.getDatabasePath()).exists();
