@@ -61,7 +61,9 @@ class _VerifyPinViewState extends State<VerifyPinView> {
               builder: (context, constraint) {
                 return SingleChildScrollView(
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraint.maxHeight),
+                    constraints: BoxConstraints(
+                      minHeight: constraint.maxHeight,
+                    ),
                     child: IntrinsicHeight(
                       child: Column(
                         spacing: 4.0,
@@ -127,18 +129,18 @@ class _VerifyPinViewState extends State<VerifyPinView> {
                           NumberPad(
                             onNumberPressed: (digit) =>
                                 context.read<VerifyPinCubit>().addDigit(digit),
-                            onDeletePressed: () => context.read<VerifyPinCubit>().deleteDigit(),
+                            onDeletePressed: context.read<VerifyPinCubit>().deleteDigit,
                           ),
                           SizedBox(
                             height: 60.0,
                             child: TextButton(
                               onPressed: () async {
-                                bool? isReset = await showModalBottomSheet(
+                                bool isReset = await showModalBottomSheet(
                                   context: context,
                                   isScrollControlled: true,
                                   builder: (_) => const ForgotPinBottomSheet(),
                                 );
-                                if (isReset ?? false) {
+                                if (isReset) {
                                   await Future.delayed(const Duration(milliseconds: 300));
                                   if (context.mounted) {
                                     context.read<PinAuthCubit>().reset();

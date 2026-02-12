@@ -48,15 +48,13 @@ class SetupPinView extends StatelessWidget {
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
-            leading: state.mode == SetupPinMode.confirm
-                ? IconButton(
-                    icon: const Icon(Icons.arrow_back_rounded),
-                    onPressed: switch (state.mode) {
-                      SetupPinMode.create => null,
-                      SetupPinMode.confirm => () => context.read<SetupPinCubit>().reset(),
-                    },
-                  )
-                : null,
+            leading: switch (state.mode) {
+              SetupPinMode.create => null,
+              SetupPinMode.confirm => IconButton(
+                icon: const Icon(Icons.arrow_back_rounded),
+                onPressed: context.read<SetupPinCubit>().reset,
+              ),
+            },
           ),
           backgroundColor: RealUnitColors.brand700,
           body: SafeArea(
@@ -70,6 +68,7 @@ class SetupPinView extends StatelessWidget {
                     ),
                     child: IntrinsicHeight(
                       child: Column(
+                        spacing: 4.0,
                         children: [
                           const Spacer(),
                           Padding(
@@ -78,6 +77,7 @@ class SetupPinView extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Column(
+                                  spacing: 8.0,
                                   children: [
                                     Text(
                                       switch (state.mode) {
@@ -92,7 +92,6 @@ class SetupPinView extends StatelessWidget {
                                         height: 30 / 26,
                                       ),
                                     ),
-                                    const SizedBox(height: 8),
                                     Text(
                                       switch (state.mode) {
                                         SetupPinMode.create =>
@@ -110,6 +109,7 @@ class SetupPinView extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 32),
                                 Column(
+                                  spacing: 16.0,
                                   children: [
                                     PinIndicator(
                                       pinLength: state.currentPin.length,
@@ -121,16 +121,13 @@ class SetupPinView extends StatelessWidget {
                                       maintainSize: true,
                                       maintainAnimation: true,
                                       maintainState: true,
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(top: 16),
-                                        child: Text(
-                                          S.of(context).pinConfirmFailed,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: RealUnitColors.status.red600,
-                                          ),
-                                          textAlign: TextAlign.center,
+                                      child: Text(
+                                        S.of(context).pinConfirmFailed,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: RealUnitColors.status.red600,
                                         ),
+                                        textAlign: TextAlign.center,
                                       ),
                                     ),
                                   ],
@@ -142,7 +139,7 @@ class SetupPinView extends StatelessWidget {
                           NumberPad(
                             onNumberPressed: (digit) =>
                                 context.read<SetupPinCubit>().addDigit(digit),
-                            onDeletePressed: () => context.read<SetupPinCubit>().deleteDigit(),
+                            onDeletePressed: context.read<SetupPinCubit>().deleteDigit,
                           ),
                           const SizedBox(height: 60.0),
                         ],
