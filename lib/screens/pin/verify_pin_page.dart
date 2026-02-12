@@ -57,77 +57,104 @@ class _VerifyPinViewState extends State<VerifyPinView> {
             }
           },
           builder: (context, state) {
-            return Column(
-              children: [
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          S.of(context).pinVerify,
-                          style: const TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w700,
-                            color: RealUnitColors.realUnitBlack,
-                            letterSpacing: -0.52,
-                            height: 30 / 26,
+            return LayoutBuilder(
+              builder: (context, constraint) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraint.maxHeight),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        spacing: 4.0,
+                        children: [
+                          const Spacer(),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Column(
+                                  spacing: 8.0,
+                                  children: [
+                                    Text(
+                                      S.of(context).pinVerify,
+                                      style: const TextStyle(
+                                        fontSize: 26,
+                                        fontWeight: FontWeight.w700,
+                                        color: RealUnitColors.realUnitBlack,
+                                        letterSpacing: -0.52,
+                                        height: 30 / 26,
+                                      ),
+                                    ),
+                                    Text(
+                                      S.of(context).pinVerifyDescription,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: RealUnitColors.neutral500,
+                                        height: 18 / 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 32),
+                                Column(
+                                  spacing: 16.0,
+                                  children: [
+                                    PinIndicator(
+                                      pinLength: state.pin.length,
+                                      expectedPinLength: pinLength,
+                                      wrongPin: state is VerifyPinFailure,
+                                    ),
+                                    Visibility(
+                                      visible: state is VerifyPinFailure,
+                                      maintainSize: true,
+                                      maintainAnimation: true,
+                                      maintainState: true,
+                                      child: Text(
+                                        S.of(context).pinVerifyFailed,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: RealUnitColors.status.red600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          S.of(context).pinVerifyDescription,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: RealUnitColors.neutral500,
-                            height: 18 / 14,
+                          const Spacer(),
+                          NumberPad(
+                            onNumberPressed: (digit) =>
+                                context.read<VerifyPinCubit>().addDigit(digit),
+                            onDeletePressed: () => context.read<VerifyPinCubit>().deleteDigit(),
                           ),
-                        ),
-                        const SizedBox(height: 40),
-                        PinIndicator(
-                          pinLength: state.pin.length,
-                          expectedPinLength: pinLength,
-                          wrongPin: state is VerifyPinFailure,
-                        ),
-                        if (state is VerifyPinFailure) ...[
-                          const SizedBox(height: 16),
-                          Text(
-                            S.of(context).pinVerifyFailed,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: RealUnitColors.status.red600,
+                          SizedBox(
+                            height: 60.0,
+                            child: TextButton(
+                              onPressed: () async {
+                                bool? isReset = await showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  builder: (_) => const ForgotPinBottomSheet(),
+                                );
+                                if (isReset ?? false) {
+                                  await Future.delayed(const Duration(milliseconds: 300));
+                                  if (context.mounted) {
+                                    context.read<PinAuthCubit>().reset();
+                                    context.read<HomeBloc>().add(const DeleteCurrentWalletEvent());
+                                  }
+                                }
+                              },
+                              child: Text(S.of(context).pinForgotten),
                             ),
                           ),
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  child: NumberPad(
-                    onNumberPressed: (digit) => context.read<VerifyPinCubit>().addDigit(digit),
-                    onDeletePressed: () => context.read<VerifyPinCubit>().deleteDigit(),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    bool isReset = await showModalBottomSheet(
-                      context: context,
-                      builder: (_) => const ForgotPinBottomSheet(),
-                    );
-                    if (isReset) {
-                      await Future.delayed(const Duration(milliseconds: 300));
-                      if (context.mounted) {
-                        context.read<PinAuthCubit>().reset();
-                        context.read<HomeBloc>().add(const DeleteCurrentWalletEvent());
-                      }
-                    }
-                  },
-                  child: Text(S.of(context).pinForgotten),
-                ),
-              ],
+                );
+              },
             );
           },
         ),

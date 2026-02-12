@@ -60,68 +60,97 @@ class SetupPinView extends StatelessWidget {
           ),
           backgroundColor: RealUnitColors.brand700,
           body: SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          switch (state.mode) {
-                            SetupPinMode.create => S.of(context).pinCreate,
-                            SetupPinMode.confirm => S.of(context).pinConfirm,
-                          },
-                          style: const TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w700,
-                            color: RealUnitColors.realUnitBlack,
-                            letterSpacing: -0.52,
-                            height: 30 / 26,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          switch (state.mode) {
-                            SetupPinMode.create => S.of(context).pinCreateDescription('$pinLength'),
-                            SetupPinMode.confirm => S.of(context).pinConfirmDescription,
-                          },
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: RealUnitColors.neutral500,
-                            height: 18 / 14,
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        PinIndicator(
-                          pinLength: state.currentPin.length,
-                          expectedPinLength: pinLength,
-                          wrongPin: state.mismatch,
-                        ),
-                        if (state.mismatch) ...[
-                          const SizedBox(height: 16),
-                          Text(
-                            S.of(context).pinConfirmFailed,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: RealUnitColors.status.red600,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        children: [
+                          const Spacer(),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Column(
+                                  children: [
+                                    Text(
+                                      switch (state.mode) {
+                                        SetupPinMode.create => S.of(context).pinCreate,
+                                        SetupPinMode.confirm => S.of(context).pinConfirm,
+                                      },
+                                      style: const TextStyle(
+                                        fontSize: 26,
+                                        fontWeight: FontWeight.w700,
+                                        color: RealUnitColors.realUnitBlack,
+                                        letterSpacing: -0.52,
+                                        height: 30 / 26,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      switch (state.mode) {
+                                        SetupPinMode.create =>
+                                          S.of(context).pinCreateDescription('$pinLength'),
+                                        SetupPinMode.confirm => S.of(context).pinConfirmDescription,
+                                      },
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: RealUnitColors.neutral500,
+                                        height: 18 / 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 32),
+                                Column(
+                                  children: [
+                                    PinIndicator(
+                                      pinLength: state.currentPin.length,
+                                      expectedPinLength: pinLength,
+                                      wrongPin: state.mismatch,
+                                    ),
+                                    Visibility(
+                                      visible: state.mismatch,
+                                      maintainSize: true,
+                                      maintainAnimation: true,
+                                      maintainState: true,
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(top: 16),
+                                        child: Text(
+                                          S.of(context).pinConfirmFailed,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: RealUnitColors.status.red600,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
+                          const Spacer(),
+                          NumberPad(
+                            onNumberPressed: (digit) =>
+                                context.read<SetupPinCubit>().addDigit(digit),
+                            onDeletePressed: () => context.read<SetupPinCubit>().deleteDigit(),
+                          ),
+                          const SizedBox(height: 60.0),
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  child: NumberPad(
-                    onNumberPressed: (digit) => context.read<SetupPinCubit>().addDigit(digit),
-                    onDeletePressed: () => context.read<SetupPinCubit>().deleteDigit(),
-                  ),
-                ),
-                const SizedBox(height: 40.0),
-              ],
+                );
+              },
             ),
           ),
         );
@@ -136,6 +165,7 @@ class SetupPinView extends StatelessWidget {
 
     final shouldEnable = await showModalBottomSheet<bool>(
       context: context,
+      isScrollControlled: true,
       builder: (_) => const EnableBiometricBottomSheet(),
     );
     if (shouldEnable == true) {
