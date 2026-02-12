@@ -8,9 +8,11 @@ part 'verify_pin_state.dart';
 
 class VerifyPinCubit extends Cubit<VerifyPinState> {
   VerifyPinCubit(
-    this._secureStorage,
-    this._biometricService,
-  ) : super(const VerifyPinState(pin: ''));
+    SecureStorage secureStorage,
+    BiometricService biometricService,
+  ) : _secureStorage = secureStorage,
+      _biometricService = biometricService,
+      super(const VerifyPinState());
 
   final SecureStorage _secureStorage;
   final BiometricService _biometricService;

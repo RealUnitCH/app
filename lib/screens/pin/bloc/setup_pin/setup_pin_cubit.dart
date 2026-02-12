@@ -9,10 +9,13 @@ part 'setup_pin_state.dart';
 
 class SetupPinCubit extends Cubit<SetupPinState> {
   SetupPinCubit(
-    this._secureStorage,
-    this._settingsRepository,
-    this._biometricService,
-  ) : super(const SetupPinState());
+    SecureStorage secureStorage,
+    SettingsRepository settingsRepository,
+    BiometricService biometricService,
+  ) : _secureStorage = secureStorage,
+      _settingsRepository = settingsRepository,
+      _biometricService = biometricService,
+      super(const SetupPinState());
 
   final SecureStorage _secureStorage;
   final SettingsRepository _settingsRepository;

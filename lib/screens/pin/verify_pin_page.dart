@@ -135,12 +135,12 @@ class _VerifyPinViewState extends State<VerifyPinView> {
                             height: 60.0,
                             child: TextButton(
                               onPressed: () async {
-                                bool isReset = await showModalBottomSheet(
+                                final isReset = await showModalBottomSheet<bool>(
                                   context: context,
                                   isScrollControlled: true,
                                   builder: (_) => const ForgotPinBottomSheet(),
                                 );
-                                if (isReset) {
+                                if (isReset == true) {
                                   await Future.delayed(const Duration(milliseconds: 300));
                                   if (context.mounted) {
                                     context.read<PinAuthCubit>().reset();

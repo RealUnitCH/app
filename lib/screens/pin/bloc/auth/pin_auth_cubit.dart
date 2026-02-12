@@ -8,9 +8,11 @@ part 'pin_auth_state.dart';
 
 class PinAuthCubit extends Cubit<PinAuthState> {
   PinAuthCubit(
-    this._secureStorage,
-    this._settingsRepository,
-  ) : super(const PinAuthState());
+    SecureStorage secureStorage,
+    SettingsRepository settingsRepository,
+  ) : _secureStorage = secureStorage,
+      _settingsRepository = settingsRepository,
+      super(const PinAuthState());
 
   final SecureStorage _secureStorage;
   final SettingsRepository _settingsRepository;

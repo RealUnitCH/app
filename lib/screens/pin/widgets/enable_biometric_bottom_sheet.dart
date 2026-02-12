@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class EnableBiometricBottomSheet extends StatelessWidget {
@@ -18,12 +19,12 @@ class EnableBiometricBottomSheet extends StatelessWidget {
               size: 64,
               color: RealUnitColors.realUnitBlue,
             ),
-            const Column(
+            Column(
               spacing: 8.0,
               children: [
                 Text(
-                  'Enable Biometric Authentication',
-                  style: TextStyle(
+                  S.of(context).biometricAuthenticationActivate,
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     color: RealUnitColors.realUnitBlack,
@@ -31,8 +32,8 @@ class EnableBiometricBottomSheet extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 Text(
-                  'Use Face ID or fingerprint to unlock your wallet quickly and securely.',
-                  style: TextStyle(
+                  S.of(context).biometricAuthenticationActivateDescription,
+                  style: const TextStyle(
                     fontSize: 14,
                     color: RealUnitColors.neutral500,
                   ),
@@ -47,16 +48,14 @@ class EnableBiometricBottomSheet extends StatelessWidget {
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: () => Navigator.of(context).pop(true),
-                    child: const Text('Enable'),
+                    child: Text(S.of(context).enable),
                   ),
                 ),
                 SizedBox(
                   width: double.infinity,
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(false),
-                    child: const Text(
-                      'Skip for now',
-                    ),
+                    child: Text(S.of(context).skip),
                   ),
                 ),
               ],

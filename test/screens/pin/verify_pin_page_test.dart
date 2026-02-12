@@ -30,7 +30,7 @@ void main() {
   setUp(() {
     verifyPinCubit = MockVerifyPinCubit();
 
-    when(() => verifyPinCubit.state).thenReturn(const VerifyPinState(pin: ''));
+    when(() => verifyPinCubit.state).thenReturn(const VerifyPinState());
     when(() => verifyPinCubit.checkBiometricAvailability()).thenAnswer((_) => Future.value());
   });
 
@@ -71,7 +71,7 @@ void main() {
 
   group('$VerifyPinView', () {
     testWidgets('is initially correctly rendered', (tester) async {
-      when(() => verifyPinCubit.state).thenReturn(const VerifyPinState(pin: ''));
+      when(() => verifyPinCubit.state).thenReturn(const VerifyPinState());
 
       await tester.pumpApp(buildSubject(const VerifyPinView()));
 
@@ -99,7 +99,7 @@ void main() {
           Stream.fromIterable([
             const VerifyPinSuccess(),
           ]),
-          initialState: const VerifyPinState(pin: ''),
+          initialState: const VerifyPinState(),
         );
 
         await tester.pumpApp(buildSubject(const VerifyPinView()));

@@ -3,13 +3,10 @@ part of 'verify_pin_cubit.dart';
 class VerifyPinState extends Equatable {
   final String pin;
 
-  const VerifyPinState({
-    required this.pin,
-  });
+  const VerifyPinState({this.pin = ''});
 
   VerifyPinState copyWith({
     String? pin,
-    bool? isBiometricAvailable,
   }) => VerifyPinState(
     pin: pin ?? this.pin,
   );

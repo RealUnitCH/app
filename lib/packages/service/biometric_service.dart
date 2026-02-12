@@ -7,7 +7,9 @@ import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 class BiometricService {
   final LocalAuthentication _auth = LocalAuthentication();
 
-  BiometricService(this._settingsRepository);
+  BiometricService(
+    SettingsRepository settingsRepository,
+  ) : _settingsRepository = settingsRepository;
 
   final SettingsRepository _settingsRepository;
 
