@@ -25,10 +25,10 @@ class ForgotPinBottomSheet extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'Reset Wallet',
+                  Text(
+                    S.of(context).pinForgottenTitle,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w700,
                       height: 30 / 26,
@@ -36,11 +36,10 @@ class ForgotPinBottomSheet extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'This will delete your wallet and all associated data. '
-                    'Make sure you have your recovery phrase backed up.',
+                  Text(
+                    S.of(context).pinForgottenDescription,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: RealUnitColors.neutral500,
                       fontSize: 14,
                       height: 18 / 14,
@@ -61,7 +60,7 @@ class ForgotPinBottomSheet extends StatelessWidget {
                               RealUnitColors.realUnitBlack,
                             ),
                           ),
-                          onPressed: () => context.pop(),
+                          onPressed: () => context.pop(false),
                           child: Text(
                             S.of(context).close,
                             style: const TextStyle(
@@ -75,12 +74,10 @@ class ForgotPinBottomSheet extends StatelessWidget {
                       ),
                       Expanded(
                         child: FilledButton(
-                          onPressed: () {
-                            Navigator.of(context).pop(true);
-                          },
-                          child: const Text(
-                            'Reset',
-                            style: TextStyle(
+                          onPressed: () => context.pop(true),
+                          child: Text(
+                            S.of(context).reset,
+                            style: const TextStyle(
                               fontSize: 16,
                               height: 20 / 16,
                               fontWeight: FontWeight.w600,

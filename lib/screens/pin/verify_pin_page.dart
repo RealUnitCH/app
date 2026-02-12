@@ -94,11 +94,11 @@ class VerifyPinView extends StatelessWidget {
                 ),
                 TextButton(
                   onPressed: () async {
-                    bool? isReset = await showModalBottomSheet(
+                    bool isReset = await showModalBottomSheet(
                       context: context,
                       builder: (_) => const ForgotPinBottomSheet(),
                     );
-                    if (isReset ?? false) {
+                    if (isReset) {
                       await Future.delayed(const Duration(milliseconds: 300));
                       if (context.mounted) {
                         context.read<PinAuthCubit>().reset();
