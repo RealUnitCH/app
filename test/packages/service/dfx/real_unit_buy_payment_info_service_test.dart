@@ -53,13 +53,14 @@ void main() {
 
         expect(capturedMethod, equals('PUT'));
         expect(capturedUrl, contains(apiConfig.apiHost));
-        expect(capturedUrl, contains('/v1/buy/paymentInfos/$paymentInfoId/confirm'));
+        expect(capturedUrl, contains('/v1/realunit/buy/$paymentInfoId/confirm'));
         expect(capturedHeaders?['Authorization'], equals('Bearer test-auth-token'));
       });
 
       test('throws exception on non-200/201 status code', () async {
-        final appStore =
-            buildAppStore((request) async => http.Response('{"error": "Not found"}', 404));
+        final appStore = buildAppStore(
+          (request) async => http.Response('{"error": "Not found"}', 404),
+        );
 
         final service = RealUnitBuyPaymentInfoService(appStore);
 
