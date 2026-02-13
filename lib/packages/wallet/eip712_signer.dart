@@ -19,7 +19,7 @@ class Eip712Signer {
       'types': {
         'EIP712Domain': [
           {'name': 'name', 'type': 'string'},
-          {'name': 'version', 'type': 'string'}
+          {'name': 'version', 'type': 'string'},
         ],
         'RealUnitUser': [
           {'name': 'email', 'type': 'string'},
@@ -34,8 +34,8 @@ class Eip712Signer {
           {'name': 'addressCountry', 'type': 'string'},
           {'name': 'swissTaxResidence', 'type': 'bool'},
           {'name': 'registrationDate', 'type': 'string'},
-          {'name': 'walletAddress', 'type': 'address'}
-        ]
+          {'name': 'walletAddress', 'type': 'address'},
+        ],
       },
       'primaryType': 'RealUnitUser',
       'domain': {'name': 'RealUnitUser', 'version': '1'},
@@ -46,14 +46,14 @@ class Eip712Signer {
         'phoneNumber': registration.phoneNumber,
         'birthday': registration.birthday,
         'nationality': registration.nationality.symbol,
-        'addressStreet': registration.addressStreet,
+        'addressStreet': '${registration.addressStreet} ${registration.addressStreetNumber}',
         'addressPostalCode': registration.addressPostalCode,
         'addressCity': registration.addressCity,
         'addressCountry': registration.addressCountry.symbol,
         'swissTaxResidence': true,
         'registrationDate': registration.registrationDate,
         'walletAddress': credentials.address.hexEip55,
-      }
+      },
     };
 
     return EthSigUtil.signTypedData(
@@ -77,7 +77,7 @@ class Eip712Signer {
           {'name': 'name', 'type': 'string'},
           {'name': 'version', 'type': 'string'},
           {'name': 'chainId', 'type': 'uint256'},
-          {'name': 'verifyingContract', 'type': 'address'}
+          {'name': 'verifyingContract', 'type': 'address'},
         ],
         'Delegation': eip7702Data.types.delegation
             .map((field) => {'name': field.name, 'type': field.type})
@@ -99,7 +99,7 @@ class Eip712Signer {
         'authority': eip7702Data.message.authority,
         'caveats': eip7702Data.message.caveats,
         'salt': eip7702Data.message.salt,
-      }
+      },
     };
 
     final signature = EthSigUtil.signTypedData(

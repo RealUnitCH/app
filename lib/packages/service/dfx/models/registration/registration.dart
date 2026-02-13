@@ -10,6 +10,7 @@ class Registration {
   final String birthday;
   final Country nationality;
   final String addressStreet;
+  final String addressStreetNumber;
   final String addressPostalCode;
   final String addressCity;
   final Country addressCountry;
@@ -25,6 +26,7 @@ class Registration {
     required this.birthday,
     required this.nationality,
     required this.addressStreet,
+    required this.addressStreetNumber,
     required this.addressPostalCode,
     required this.addressCity,
     required this.addressCountry,
