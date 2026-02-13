@@ -36,4 +36,8 @@ class SettingsRepository {
   bool get isPinEnabled => _sharedPreferences.getBool('isPinEnabled') ?? false;
 
   set isPinEnabled(bool enabled) => _sharedPreferences.setBool('isPinEnabled', enabled);
+
+  bool get isBiometricEnabled => _sharedPreferences.getBool('isBiometricEnabled') ?? false;
+
+  set isBiometricEnabled(bool enabled) => _sharedPreferences.setBool('isBiometricEnabled', enabled);
 }

@@ -1,14 +1,21 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/pin/constants/pin_constants.dart';
 
 part 'verify_pin_state.dart';
 
 class VerifyPinCubit extends Cubit<VerifyPinState> {
-  VerifyPinCubit(this._secureStorage) : super(const VerifyPinState(pin: ''));
+  VerifyPinCubit(
+    SecureStorage secureStorage,
+    BiometricService biometricService,
+  ) : _secureStorage = secureStorage,
+      _biometricService = biometricService,
+      super(const VerifyPinState());
 
   final SecureStorage _secureStorage;
+  final BiometricService _biometricService;
 
   void addDigit(int digit) {
     if (state.pin.length == pinLength) return;
@@ -30,6 +37,16 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
       emit(const VerifyPinSuccess());
     } else {
       emit(const VerifyPinFailure());
+    }
+  }
+
+  Future<void> checkBiometricAvailability() async {
+    final canUse = await _biometricService.canUse();
+    if (canUse) {
+      final success = await _biometricService.authenticate();
+      if (success) {
+        emit(const VerifyPinSuccess());
+      }
     }
   }
 }

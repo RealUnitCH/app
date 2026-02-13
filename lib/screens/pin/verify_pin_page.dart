@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
@@ -21,13 +22,27 @@ class VerifyPinPage extends StatelessWidget {
   Widget build(BuildContext context) => BlocProvider(
     create: (_) => VerifyPinCubit(
       getIt<SecureStorage>(),
+      getIt<BiometricService>(),
     ),
     child: const VerifyPinView(),
   );
 }
 
-class VerifyPinView extends StatelessWidget {
+class VerifyPinView extends StatefulWidget {
   const VerifyPinView({super.key});
+
+  @override
+  State<VerifyPinView> createState() => _VerifyPinViewState();
+}
+
+class _VerifyPinViewState extends State<VerifyPinView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<VerifyPinCubit>().checkBiometricAvailability();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,73 +57,106 @@ class VerifyPinView extends StatelessWidget {
             }
           },
           builder: (context, state) {
-            return Column(
-              children: [
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        S.of(context).pinVerify,
-                        style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w700,
-                          color: RealUnitColors.realUnitBlack,
-                          letterSpacing: -0.52,
-                          height: 30 / 26,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        S.of(context).pinVerifyDescription,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: RealUnitColors.neutral500,
-                          height: 18 / 14,
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-                      PinIndicator(
-                        pinLength: state.pin.length,
-                        expectedPinLength: pinLength,
-                        wrongPin: state is VerifyPinFailure,
-                      ),
-                      if (state is VerifyPinFailure) ...[
-                        const SizedBox(height: 16),
-                        Text(
-                          S.of(context).pinVerifyFailed,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: RealUnitColors.status.red600,
+            return LayoutBuilder(
+              builder: (context, constraint) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraint.maxHeight,
+                    ),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        spacing: 4.0,
+                        children: [
+                          const Spacer(),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Column(
+                                  spacing: 8.0,
+                                  children: [
+                                    Text(
+                                      S.of(context).pinVerify,
+                                      style: const TextStyle(
+                                        fontSize: 26,
+                                        fontWeight: FontWeight.w700,
+                                        color: RealUnitColors.realUnitBlack,
+                                        letterSpacing: -0.52,
+                                        height: 30 / 26,
+                                      ),
+                                    ),
+                                    Text(
+                                      S.of(context).pinVerifyDescription,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: RealUnitColors.neutral500,
+                                        height: 18 / 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 32),
+                                Column(
+                                  spacing: 16.0,
+                                  children: [
+                                    PinIndicator(
+                                      pinLength: state.pin.length,
+                                      expectedPinLength: pinLength,
+                                      wrongPin: state is VerifyPinFailure,
+                                    ),
+                                    Visibility(
+                                      visible: state is VerifyPinFailure,
+                                      maintainSize: true,
+                                      maintainAnimation: true,
+                                      maintainState: true,
+                                      child: Text(
+                                        S.of(context).pinVerifyFailed,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: RealUnitColors.status.red600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ],
+                          const Spacer(),
+                          NumberPad(
+                            onNumberPressed: (digit) =>
+                                context.read<VerifyPinCubit>().addDigit(digit),
+                            onDeletePressed: context.read<VerifyPinCubit>().deleteDigit,
+                          ),
+                          SizedBox(
+                            height: 60.0,
+                            child: TextButton(
+                              onPressed: () async {
+                                final isReset = await showModalBottomSheet<bool>(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  builder: (_) => const ForgotPinBottomSheet(),
+                                );
+                                if (isReset == true) {
+                                  await Future.delayed(const Duration(milliseconds: 300));
+                                  if (context.mounted) {
+                                    context.read<PinAuthCubit>().reset();
+                                    context.read<HomeBloc>().add(const DeleteCurrentWalletEvent());
+                                  }
+                                }
+                              },
+                              child: Text(S.of(context).pinForgotten),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: NumberPad(
-                    onNumberPressed: (digit) => context.read<VerifyPinCubit>().addDigit(digit),
-                    onDeletePressed: () => context.read<VerifyPinCubit>().deleteDigit(),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    bool isReset = await showModalBottomSheet(
-                      context: context,
-                      builder: (_) => const ForgotPinBottomSheet(),
-                    );
-                    if (isReset) {
-                      await Future.delayed(const Duration(milliseconds: 300));
-                      if (context.mounted) {
-                        context.read<PinAuthCubit>().reset();
-                        context.read<HomeBloc>().add(const DeleteCurrentWalletEvent());
-                      }
-                    }
-                  },
-                  child: Text(S.of(context).pinForgotten),
-                ),
-              ],
+                );
+              },
             );
           },
         ),
