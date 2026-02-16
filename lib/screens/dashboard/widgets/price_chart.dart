@@ -1,155 +1,90 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/models/price_point.dart';
 import 'package:realunit_wallet/packages/utils/format_fixed.dart';
+import 'package:realunit_wallet/screens/dashboard/bloc/price_chart/price_chart_cubit.dart';
+import 'package:realunit_wallet/screens/dashboard/bloc/price_chart/price_chart_state.dart';
 import 'package:realunit_wallet/screens/dashboard/models/time_period.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/time_period_button.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
-class PriceChart extends StatefulWidget {
-  const PriceChart({
-    super.key,
-    required this.prices,
-  });
-
+class PriceChart extends StatelessWidget {
   final List<PricePoint> prices;
 
-  @override
-  State<PriceChart> createState() => _PriceChartState();
-}
-
-class _PriceChartState extends State<PriceChart> {
-  static const int horizontalDivisions = 5;
-
-  TimePeriod selectedPeriod = TimePeriod.oneMonth;
-
-  late List<FlSpot> _visibleSpots;
-  late double _minY;
-  late double _maxY;
-  late double _minX;
-  late double _maxX;
+  const PriceChart({super.key, required this.prices});
 
   @override
   Widget build(BuildContext context) {
-    _prepareChartData();
+    return BlocProvider(
+      key: ValueKey(prices.hashCode),
+      create: (_) => PriceChartCubit(prices),
+      child: const PriceChartView(),
+    );
+  }
+}
 
-    return Column(
-      spacing: 16.0,
-      children: [
-        SizedBox(
-          height: 135,
-          child: LineChart(_buildChartData(), duration: Duration.zero),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Row(
-            children: TimePeriod.values.map((period) {
-              final isSelected = selectedPeriod == period;
-              return Expanded(
-                child: TimePeriodButton(
-                  period.name,
-                  isSelected: isSelected,
-                  onTap: () => setState(() => selectedPeriod = period),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
+class PriceChartView extends StatelessWidget {
+  const PriceChartView({super.key});
+
+  static const int _horizontalDivisions = 5;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<PriceChartCubit, PriceChartState>(
+      builder: (context, state) {
+        return Column(
+          spacing: 16.0,
+          children: [
+            SizedBox(
+              height: 135,
+              child: LineChart(
+                _buildChartData(state),
+                duration: Duration.zero,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Row(
+                children: TimePeriod.values.map((period) {
+                  return Expanded(
+                    child: TimePeriodButton(
+                      period.name,
+                      isSelected: state.selectedPeriod == period,
+                      onTap: () => context.read<PriceChartCubit>().selectPeriod(period),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  void _prepareChartData() {
-    if (widget.prices.isEmpty) {
-      _visibleSpots = [];
-      _minY = 0;
-      _maxY = 1;
-      _minX = DateTime.now().millisecondsSinceEpoch.toDouble();
-      _maxX = _minX;
-      return;
-    }
-
-    final now = DateTime.now();
-
-    // Calculate minX and maxXbased on selected period
-    _minX = switch (selectedPeriod) {
-      TimePeriod.oneWeek => DateTime(
-        now.year,
-        now.month,
-        now.day,
-      ).subtract(const Duration(days: 7)).millisecondsSinceEpoch.toDouble(),
-      TimePeriod.oneMonth => DateTime(
-        now.year,
-        now.month - 1,
-        now.day,
-      ).millisecondsSinceEpoch.toDouble(),
-      TimePeriod.threeMonths => DateTime(
-        now.year,
-        now.month - 3,
-        now.day,
-      ).millisecondsSinceEpoch.toDouble(),
-      TimePeriod.oneYear => DateTime(
-        now.year - 1,
-        now.month,
-        now.day,
-      ).millisecondsSinceEpoch.toDouble(),
-      TimePeriod.all => widget.prices.first.time.millisecondsSinceEpoch.toDouble(),
-    };
-    _maxX = widget.prices.last.time.millisecondsSinceEpoch.toDouble();
-
-    // Filter price points to those within the selected time period (between minX and maxX)
-    _visibleSpots = widget.prices
-        .where(
-          (pricePoint) =>
-              pricePoint.time.millisecondsSinceEpoch >= _minX &&
-              pricePoint.time.millisecondsSinceEpoch <= _maxX,
-        )
-        .map(
-          (pricePoint) => FlSpot(
-            pricePoint.time.millisecondsSinceEpoch.toDouble(),
-            double.parse(formatFixed(pricePoint.price, 2)),
-          ),
-        )
-        .toList();
-
-    // Calculate minY and maxY from the visible spots, with some padding (10%)
-    double min = _visibleSpots.first.y;
-    double max = _visibleSpots.first.y;
-
-    for (final spot in _visibleSpots) {
-      if (spot.y < min) min = spot.y;
-      if (spot.y > max) max = spot.y;
-    }
-
-    final padding = (max - min) * 0.1;
-
-    _minY = min - padding;
-    _maxY = max + padding;
-  }
-
-  LineChartData _buildChartData() {
+  LineChartData _buildChartData(PriceChartState state) {
     return LineChartData(
-      minX: _minX,
-      maxX: _maxX,
-      minY: _minY,
-      maxY: _maxY,
+      minX: state.minX,
+      maxX: state.maxX,
+      minY: state.minY,
+      maxY: state.maxY,
       gridData: const FlGridData(show: false),
       titlesData: const FlTitlesData(show: false),
       borderData: FlBorderData(show: false),
       extraLinesData: ExtraLinesData(
-        horizontalLines: _buildHorizontalLines(),
+        horizontalLines: _buildHorizontalLines(state.minY, state.maxY),
       ),
-      lineBarsData: [_buildLineBar()],
+      lineBarsData: [_buildLineBar(state.visibleSpots)],
       lineTouchData: _buildTouchData(),
     );
   }
 
-  List<HorizontalLine> _buildHorizontalLines() {
-    return List.generate(horizontalDivisions + 1, (index) {
-      final ratio = index / horizontalDivisions;
-      final y = _maxY - ((_maxY - _minY) * ratio);
-
-      final showLabel = index == 0 || index == horizontalDivisions;
+  List<HorizontalLine> _buildHorizontalLines(double minY, double maxY) {
+    return List.generate(_horizontalDivisions + 1, (index) {
+      final ratio = index / _horizontalDivisions;
+      final y = maxY - ((maxY - minY) * ratio);
+      final showLabel = index == 0 || index == _horizontalDivisions;
 
       return HorizontalLine(
         y: y,
@@ -160,7 +95,7 @@ class _PriceChartState extends State<PriceChart> {
             ? HorizontalLineLabel(
                 show: true,
                 alignment: Alignment.centerRight,
-                padding: const EdgeInsets.only(right: 20, top: -16),
+                padding: const EdgeInsets.only(right: 20.0, top: -16.0),
                 style: const TextStyle(
                   color: RealUnitColors.neutral400,
                   fontSize: 9,
@@ -176,9 +111,9 @@ class _PriceChartState extends State<PriceChart> {
     });
   }
 
-  LineChartBarData _buildLineBar() {
+  LineChartBarData _buildLineBar(List<FlSpot> visibleSpots) {
     return LineChartBarData(
-      spots: _visibleSpots,
+      spots: visibleSpots,
       isCurved: true,
       color: RealUnitColors.darkBlue,
       barWidth: 2,

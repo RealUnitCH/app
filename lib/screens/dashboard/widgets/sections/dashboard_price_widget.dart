@@ -69,9 +69,7 @@ class DashboardPriceWidget extends StatelessWidget {
               ],
             ),
           ),
-          PriceChart(
-            prices: priceChart,
-          ),
+          PriceChart(prices: priceChart),
         ],
       ),
     ),
