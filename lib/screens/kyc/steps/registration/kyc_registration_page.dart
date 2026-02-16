@@ -61,6 +61,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   final birthdayCtrl = ValueNotifier<String?>(null);
 
   final addressStreetCtrl = TextEditingController();
+  final addressStreetNumberCtrl = TextEditingController();
   final postalCodeCtrl = TextEditingController();
   final cityCtrl = TextEditingController();
   final countryCtrl = ValueNotifier<Country?>(null);
@@ -180,6 +181,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
       case KycRegistrationStep.address:
         return KycRegistrationAddressStep(
           addressStreetCtrl: addressStreetCtrl,
+          addressNumberCtrl: addressStreetNumberCtrl,
           postalCodeCtrl: postalCodeCtrl,
           cityCtrl: cityCtrl,
           countryCtrl: countryCtrl,
@@ -198,6 +200,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
       birthday: birthdayCtrl.value ?? '',
       nationality: nationalityCtrl.value!,
       addressStreet: addressStreetCtrl.text.trim(),
+      addressStreetNumber: addressStreetNumberCtrl.text.trim(),
       addressPostalCode: postalCodeCtrl.text.trim(),
       addressCity: cityCtrl.text.trim(),
       addressCountry: countryCtrl.value!,
@@ -217,6 +220,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
     phoneCtrl.dispose();
     nationalityCtrl.dispose();
     addressStreetCtrl.dispose();
+    addressStreetNumberCtrl.dispose();
     postalCodeCtrl.dispose();
     cityCtrl.dispose();
     countryCtrl.dispose();

@@ -74,7 +74,6 @@ class RealUnitRegistrationService {
       credentials: credentials,
       registration: registration,
     );
-    final address = _splitStreetAndNumber(registration.addressStreet);
     final requestDto = RealUnitRegistrationRequestDto(
       type: registration.type.jsonName,
       email: registration.email.toLowerCase(),
@@ -82,7 +81,7 @@ class RealUnitRegistrationService {
       phoneNumber: registration.phoneNumber,
       birthday: registration.birthday,
       nationality: registration.nationality.symbol,
-      addressStreet: registration.addressStreet,
+      addressStreet: '${registration.addressStreet} ${registration.addressStreetNumber}',
       addressPostalCode: registration.addressPostalCode,
       addressCity: registration.addressCity,
       addressCountry: registration.addressCountry.symbol,
@@ -97,8 +96,8 @@ class RealUnitRegistrationService {
         lastName: registration.lastName,
         phone: registration.phoneNumber,
         address: KycAddress(
-          street: address.street,
-          houseNumber: address.number,
+          street: registration.addressStreet,
+          houseNumber: registration.addressStreetNumber,
           zip: registration.addressPostalCode,
           city: registration.addressCity,
           country: registration.addressCountry.id,
@@ -127,20 +126,5 @@ class RealUnitRegistrationService {
 
     final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
     return responseDto.status;
-  }
-
-  ({String street, String number}) _splitStreetAndNumber(String input) {
-    final value = input.trim();
-    if (value.isEmpty) {
-      return (street: '', number: '');
-    }
-
-    final regex = RegExp(r'^(.+?)\s+(\d+[a-zA-Z]?([\-\/]\d+[a-zA-Z]?)?)$');
-    final match = regex.firstMatch(value);
-
-    return (
-      street: match?.group(1)?.trim() ?? value,
-      number: match?.group(2)?.trim() ?? '',
-    );
   }
 }

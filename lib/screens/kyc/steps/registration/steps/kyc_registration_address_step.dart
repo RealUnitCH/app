@@ -6,6 +6,7 @@ import 'package:realunit_wallet/screens/kyc/widgets/kyc_text_field.dart';
 
 class KycRegistrationAddressStep extends StatelessWidget {
   final TextEditingController addressStreetCtrl;
+  final TextEditingController addressNumberCtrl;
   final TextEditingController postalCodeCtrl;
   final TextEditingController cityCtrl;
   final ValueNotifier<Country?> countryCtrl;
@@ -14,6 +15,7 @@ class KycRegistrationAddressStep extends StatelessWidget {
   KycRegistrationAddressStep({
     super.key,
     required this.addressStreetCtrl,
+    required this.addressNumberCtrl,
     required this.postalCodeCtrl,
     required this.cityCtrl,
     required this.countryCtrl,
@@ -34,16 +36,37 @@ class KycRegistrationAddressStep extends StatelessWidget {
             child: Column(
               spacing: 16,
               children: [
-                KycTextField(
-                  hintText: 'Musterstrasse 12',
-                  controller: addressStreetCtrl,
-                  label: S.of(context).address,
-                  keyboardType: TextInputType.streetAddress,
-                  textCapitalization: TextCapitalization.words,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return '';
-                    return null;
-                  },
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 10,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: KycTextField(
+                        hintText: 'Musterstrasse',
+                        controller: addressStreetCtrl,
+                        label: S.of(context).address,
+                        keyboardType: TextInputType.streetAddress,
+                        textCapitalization: TextCapitalization.words,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return '';
+                          return null;
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: KycTextField(
+                        hintText: '13',
+                        controller: addressNumberCtrl,
+                        label: S.of(context).number,
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return '';
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
                 ),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
