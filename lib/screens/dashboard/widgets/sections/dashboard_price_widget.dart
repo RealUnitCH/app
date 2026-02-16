@@ -26,7 +26,7 @@ class DashboardPriceWidget extends StatelessWidget {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 12, left: 20),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
             child: Column(
               children: [
                 Row(
@@ -36,6 +36,7 @@ class DashboardPriceWidget extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 12,
                         color: RealUnitColors.neutral400,
+                        height: 16 / 12,
                       ),
                     ),
                   ],
