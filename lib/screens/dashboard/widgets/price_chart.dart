@@ -2,31 +2,9 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/models/price_point.dart';
 import 'package:realunit_wallet/packages/utils/format_fixed.dart';
+import 'package:realunit_wallet/screens/dashboard/models/time_period.dart';
+import 'package:realunit_wallet/screens/dashboard/widgets/time_period_button.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-
-enum TimePeriod {
-  oneWeek,
-  oneMonth,
-  threeMonths,
-  oneYear,
-  all
-  ;
-
-  String get name {
-    switch (this) {
-      case TimePeriod.oneWeek:
-        return '1W';
-      case TimePeriod.oneMonth:
-        return '1M';
-      case TimePeriod.threeMonths:
-        return '3M';
-      case TimePeriod.oneYear:
-        return '1Y';
-      case TimePeriod.all:
-        return 'ALL';
-    }
-  }
-}
 
 class PriceChart extends StatefulWidget {
   const PriceChart({
@@ -68,7 +46,7 @@ class _PriceChartState extends State<PriceChart> {
             children: TimePeriod.values.map((period) {
               final isSelected = selectedPeriod == period;
               return Expanded(
-                child: _TimePeriodButton(
+                child: TimePeriodButton(
                   period.name,
                   isSelected: isSelected,
                   onTap: () => setState(() => selectedPeriod = period),
@@ -251,49 +229,6 @@ class _PriceChartState extends State<PriceChart> {
           FlDotData(show: true),
         );
       }).toList(),
-    );
-  }
-}
-
-class _TimePeriodButton extends StatelessWidget {
-  final String label;
-  final void Function()? onTap;
-  final bool isSelected;
-
-  const _TimePeriodButton(
-    this.label, {
-    this.onTap,
-    this.isSelected = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 6,
-        ),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: isSelected ? RealUnitColors.realUnitBlue : Colors.transparent,
-              width: 2,
-            ),
-          ),
-        ),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: isSelected ? RealUnitColors.realUnitBlue : RealUnitColors.neutral400,
-            height: 18 / 14,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
     );
   }
 }
