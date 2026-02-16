@@ -20,7 +20,7 @@ class TimePeriodButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: 12,
-          vertical: 6,
+          vertical: 8,
         ),
         decoration: BoxDecoration(
           border: Border(

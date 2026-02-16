@@ -1,31 +1,13 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/models/price_point.dart';
 import 'package:realunit_wallet/packages/utils/format_fixed.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/price_chart/price_chart_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/price_chart/price_chart_state.dart';
-import 'package:realunit_wallet/screens/dashboard/models/time_period.dart';
-import 'package:realunit_wallet/screens/dashboard/widgets/time_period_button.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class PriceChart extends StatelessWidget {
-  final List<PricePoint> prices;
-
-  const PriceChart({super.key, required this.prices});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      key: ValueKey(prices.hashCode),
-      create: (_) => PriceChartCubit(prices),
-      child: const PriceChartView(),
-    );
-  }
-}
-
-class PriceChartView extends StatelessWidget {
-  const PriceChartView({super.key});
+  const PriceChart({super.key});
 
   static const int _horizontalDivisions = 5;
 
@@ -33,31 +15,12 @@ class PriceChartView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<PriceChartCubit, PriceChartState>(
       builder: (context, state) {
-        return Column(
-          spacing: 16.0,
-          children: [
-            SizedBox(
-              height: 135,
-              child: LineChart(
-                _buildChartData(state),
-                duration: Duration.zero,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Row(
-                children: TimePeriod.values.map((period) {
-                  return Expanded(
-                    child: TimePeriodButton(
-                      period.name,
-                      isSelected: state.selectedPeriod == period,
-                      onTap: () => context.read<PriceChartCubit>().selectPeriod(period),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ],
+        return SizedBox(
+          height: 126,
+          child: LineChart(
+            _buildChartData(state),
+            duration: Duration.zero,
+          ),
         );
       },
     );
