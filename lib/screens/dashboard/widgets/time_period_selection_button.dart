@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
-class TimePeriodButton extends StatelessWidget {
+class TimePeriodSelectionButton extends StatelessWidget {
   final String label;
   final void Function()? onTap;
   final bool isSelected;
 
-  const TimePeriodButton(
+  const TimePeriodSelectionButton(
     this.label, {
     super.key,
     this.onTap,
@@ -32,6 +32,8 @@ class TimePeriodButton extends StatelessWidget {
         ),
         child: Text(
           label,
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
           textAlign: TextAlign.center,
           style: TextStyle(
             color: isSelected ? RealUnitColors.realUnitBlue : RealUnitColors.neutral400,

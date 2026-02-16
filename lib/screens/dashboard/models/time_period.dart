@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
+
 enum TimePeriod {
   oneWeek,
   oneMonth,
@@ -6,18 +9,18 @@ enum TimePeriod {
   all
   ;
 
-  String get name {
+  String name(BuildContext context) {
     switch (this) {
       case TimePeriod.oneWeek:
-        return '1W';
+        return S.of(context).timePeriodOneWeekAbr;
       case TimePeriod.oneMonth:
-        return '1M';
+        return S.of(context).timePeriodOneMonthAbr;
       case TimePeriod.threeMonths:
-        return '3M';
+        return S.of(context).timePeriodThreeMonthsAbr;
       case TimePeriod.oneYear:
-        return '1Y';
+        return S.of(context).timePeriodOneYearAbr;
       case TimePeriod.all:
-        return 'ALL';
+        return S.of(context).all;
     }
   }
 }
