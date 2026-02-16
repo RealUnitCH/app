@@ -8,8 +8,8 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/dashboard_bloc.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_actions.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_portfolio.dart';
+import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_price_widget.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_transaction_history.dart';
-import 'package:realunit_wallet/screens/dashboard/widgets/sections/price_widget.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -81,7 +81,7 @@ class DashboardView extends StatelessWidget {
           canPop: false,
           child: Column(
             children: [
-              PriceWidget(
+              DashboardPriceWidget(
                 price: dashboardState.price,
                 priceChart: dashboardState.priceChart,
               ),
