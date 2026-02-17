@@ -25,14 +25,21 @@ class HideAmountText extends StatelessWidget {
   final bool trimZeros;
   final TextAlign? textAlign;
 
+  String _formatAmount() {
+    if (amount == BigInt.zero) {
+      return '--.--';
+    }
+    return formatFixed(amount, decimals, fractionalDigits: fractionalDigits, trimZeros: trimZeros);
+  }
+
   @override
   Widget build(BuildContext context) => BlocBuilder<SettingsBloc, SettingsState>(
-        builder: (context, state) => Text(
-          state.hideAmounts
-              ? "${leadingSymbol.isNotEmpty ? "$leadingSymbol " : ""}***.**"
-              : "${leadingSymbol.isNotEmpty ? "$leadingSymbol " : ""}${formatFixed(amount, decimals, fractionalDigits: fractionalDigits, trimZeros: trimZeros)} $trailingSymbol",
-          style: style,
-          textAlign: textAlign,
-        ),
-      );
+    builder: (context, state) => Text(
+      state.hideAmounts
+          ? "${leadingSymbol.isNotEmpty ? "$leadingSymbol " : ""}***.**"
+          : "${leadingSymbol.isNotEmpty ? "$leadingSymbol " : ""}${_formatAmount()} $trailingSymbol",
+      style: style,
+      textAlign: textAlign,
+    ),
+  );
 }

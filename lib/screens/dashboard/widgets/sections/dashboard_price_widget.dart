@@ -84,7 +84,7 @@ class DashboardPriceWidgetView extends StatelessWidget {
                       },
                     ),
                     Text(
-                      formatFixed(price, 2, trimZeros: false),
+                      price == BigInt.zero ? '--.--' : formatFixed(price, 2, trimZeros: false),
                       style: const TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.w600,
