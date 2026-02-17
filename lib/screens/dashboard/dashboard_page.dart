@@ -5,10 +5,11 @@ import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_account_service.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/dashboard_bloc.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_actions.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_portfolio.dart';
-import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_price_widget.dart';
+import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_portfolio_chart_widget.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_transaction_history.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
@@ -25,6 +26,7 @@ class DashboardPage extends StatelessWidget {
     return BlocProvider(
       create: (context) => DashboardBloc(
         getIt<DFXPriceService>(),
+        getIt<RealUnitAccountService>(),
         asset: getIt<AppStore>().apiConfig.asset,
         initialCurrency: context.read<SettingsBloc>().state.currency,
       ),
@@ -81,9 +83,15 @@ class DashboardView extends StatelessWidget {
           canPop: false,
           child: Column(
             children: [
-              DashboardPriceWidget(
-                price: dashboardState.price,
-                priceChart: dashboardState.priceChart,
+              // DashboardPriceWidget(
+              //   price: dashboardState.price,
+              //   priceChart: dashboardState.priceChart,
+              // ),
+              DashboardPortfolioChartWidget(
+                currentValue: dashboardState.portfolioHistory.isNotEmpty
+                    ? dashboardState.portfolioHistory.last.balance * dashboardState.price
+                    : BigInt.zero,
+                portfolioHistory: dashboardState.portfolioHistory,
               ),
               Expanded(
                 child: Stack(
