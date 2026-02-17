@@ -47,7 +47,6 @@ class DashboardPriceWidgetView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     margin: const EdgeInsets.only(top: 8),
-    width: double.infinity,
     child: SafeArea(
       bottom: false,
       child: Column(
@@ -105,7 +104,7 @@ class DashboardPriceWidgetView extends StatelessWidget {
                   children: TimePeriod.values.map((period) {
                     return Expanded(
                       child: TimePeriodSelectionButton(
-                        period.name(context).toUpperCase(),
+                        period.abr(context).toUpperCase(),
                         isSelected: state.selectedPeriod == period,
                         onTap: () => context.read<PriceChartCubit>().selectPeriod(period),
                       ),

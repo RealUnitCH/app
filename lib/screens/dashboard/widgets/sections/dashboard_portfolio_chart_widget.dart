@@ -45,7 +45,6 @@ class DashboardPortfolioChartView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     margin: const EdgeInsets.only(top: 8),
-    width: double.infinity,
     child: SafeArea(
       bottom: false,
       child: Column(
@@ -53,43 +52,81 @@ class DashboardPortfolioChartView extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
             child: Column(
+              crossAxisAlignment: .start,
               children: [
-                const Row(
-                  children: [
-                    Text(
-                      'Depotentwicklung',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: RealUnitColors.neutral400,
-                        height: 16 / 12,
-                      ),
-                    ),
-                  ],
+                const Text(
+                  'Depotentwicklung',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: RealUnitColors.neutral400,
+                    height: 16 / 12,
+                  ),
                 ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    BlocBuilder<SettingsBloc, SettingsState>(
-                      builder: (context, state) {
-                        return Text(
-                          state.currency.code.toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: RealUnitColors.realUnitBlack,
-                          ),
-                        );
-                      },
-                    ),
-                    Text(
-                      formatFixed(currentValue, 2, trimZeros: false),
-                      style: const TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w600,
-                        color: RealUnitColors.realUnitBlack,
-                      ),
-                    ),
-                  ],
+                BlocBuilder<SettingsBloc, SettingsState>(
+                  builder: (context, settingsState) {
+                    return Row(
+                      spacing: 12.0,
+                      crossAxisAlignment: .center,
+                      children: [
+                        Row(
+                          crossAxisAlignment: .start,
+                          children: [
+                            Text(
+                              settingsState.currency.code.toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: RealUnitColors.realUnitBlack,
+                              ),
+                            ),
+                            Text(
+                              formatFixed(currentValue, 2, trimZeros: false),
+                              style: const TextStyle(
+                                fontSize: 30,
+                                fontWeight: FontWeight.w600,
+                                color: RealUnitColors.realUnitBlack,
+                              ),
+                            ),
+                          ],
+                        ),
+                        BlocBuilder<PortfolioChartCubit, PortfolioChartState>(
+                          builder: (context, state) {
+                            if (state.visibleSpots.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+                            final firstValue = state.visibleSpots.first.y;
+                            final lastValue = state.visibleSpots.last.y;
+                            final difference = lastValue - firstValue;
+                            final percentChange = firstValue != 0
+                                ? (difference / firstValue) * 100
+                                : 0.0;
+                            final sign = difference >= 0 ? '+' : '';
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  state.selectedPeriod.name(context),
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    height: 16 / 10,
+                                  ),
+                                ),
+                                Text(
+                                  '$sign${difference.toStringAsFixed(2)} ${settingsState.currency.code.toUpperCase()} | $sign${percentChange.toStringAsFixed(2)} %',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    height: 16 / 10,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
@@ -103,7 +140,7 @@ class DashboardPortfolioChartView extends StatelessWidget {
                   children: TimePeriod.values.map((period) {
                     return Expanded(
                       child: TimePeriodSelectionButton(
-                        period.name(context).toUpperCase(),
+                        period.abr(context).toUpperCase(),
                         isSelected: state.selectedPeriod == period,
                         onTap: () => context.read<PortfolioChartCubit>().selectPeriod(period),
                       ),

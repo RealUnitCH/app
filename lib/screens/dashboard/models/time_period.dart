@@ -12,6 +12,21 @@ enum TimePeriod {
   String name(BuildContext context) {
     switch (this) {
       case TimePeriod.oneWeek:
+        return 'Ein Woche';
+      case TimePeriod.oneMonth:
+        return 'Ein Monat';
+      case TimePeriod.threeMonths:
+        return 'Drei Monate';
+      case TimePeriod.oneYear:
+        return 'Ein Jahr';
+      case TimePeriod.all:
+        return 'Gesamter Zeitraum';
+    }
+  }
+
+  String abr(BuildContext context) {
+    switch (this) {
+      case TimePeriod.oneWeek:
         return S.of(context).timePeriodOneWeekAbr;
       case TimePeriod.oneMonth:
         return S.of(context).timePeriodOneMonthAbr;
