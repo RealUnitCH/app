@@ -93,16 +93,29 @@ class PortfolioChartCubit extends Cubit<PortfolioChartState> {
     // Calculate minY and maxY from the visible spots
     var min = visibleSpots.first.y;
     var max = visibleSpots.first.y;
+    var sum = 0.0;
 
     for (final spot in visibleSpots) {
       if (spot.y < min) min = spot.y;
       if (spot.y > max) max = spot.y;
+      sum += spot.y;
     }
 
-    // Calculate nice rounded horizontal line values
-    final horizontalLineValues = _calculateHorizontalLines(min, max);
+    // Calculate average to center the chart
+    final average = sum / visibleSpots.length;
 
-    // Use the horizontal line values to determine minY and maxY with padding
+    // Find the maximum deviation from average
+    final maxDeviation = math.max(
+      (max - average).abs(),
+      (min - average).abs(),
+    );
+
+    // Add padding (20% extra space) and ensure minimum range for visual clarity
+    final paddedDeviation = math.max(maxDeviation * 1.2, average * 0.05);
+
+    // Calculate rounded horizontal line values centered around average
+    final horizontalLineValues = _calculateHorizontalLines(paddedDeviation, average);
+
     final minY = horizontalLineValues.first;
     final maxY = horizontalLineValues.last;
 
@@ -118,27 +131,42 @@ class PortfolioChartCubit extends Cubit<PortfolioChartState> {
     );
   }
 
-  List<double> _calculateHorizontalLines(double min, double max) {
-    if (max <= 0) return [0, 100, 200, 300, 400, 500];
+  List<double> _calculateHorizontalLines(double deviation, double average) {
+    const lineCount = 6;
+    const intervalCount = lineCount - 1;
 
-    final ceiling = _getCeiling(max);
+    if (deviation <= 0) {
+      return List.generate(lineCount, (_) => average);
+    }
 
-    final interval = ceiling / 5;
+    // Calculate an interval that spans the data range
+    final rawInterval = (2 * deviation) / intervalCount;
+    final interval = _roundToNumber(rawInterval);
 
-    return List.generate(6, (i) => i * interval);
+    // Center the lines around the average by rounding it to the nearest interval
+    final centerLine = (average / interval).round() * interval;
+
+    // Position the bottom line so the center is roughly in the middle
+    final bottomLine = math.max(0.0, centerLine - 3 * interval);
+
+    return List.generate(lineCount, (i) => bottomLine + i * interval);
   }
 
-  double _getCeiling(double value) {
-    if (value <= 500) return 500;
+  double _roundToNumber(double value) {
+    if (value <= 0) return 1;
 
-    double ceiling = 500;
-    while (ceiling < value) {
-      ceiling *= 2; // 500 → 1000
-      if (ceiling >= value) break;
-      ceiling *= 2; // 1000 → 2000
-      if (ceiling >= value) break;
-      ceiling *= 2.5; // 2000 → 5000
-    }
-    return ceiling;
+    // Get the order of magnitude (e.g., 350 -> 100, 4500 -> 1000)
+    final magnitude = math.pow(10, (math.log(value) / math.ln10).floor()).toDouble();
+
+    // Normalize to 1-10 range and snap to nearest "nice" number (1, 2, 5, or 10)
+    final normalized = value / magnitude;
+    final niceNumber = switch (normalized) {
+      <= 1 => 1,
+      <= 2 => 2,
+      <= 5 => 5,
+      _ => 10,
+    };
+
+    return niceNumber * magnitude;
   }
 }
