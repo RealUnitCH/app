@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 
 class NumberPad extends StatelessWidget {
   final VoidCallback? onDecimalPressed;
   final VoidCallback onDeletePressed;
-  final void Function(int index) onNumberPressed;
+  final void Function(int digit) onNumberPressed;
 
   const NumberPad({
     super.key,
@@ -13,63 +14,85 @@ class NumberPad extends StatelessWidget {
   });
 
   static const _buttonStyle = TextStyle(
-    fontSize: 25.0,
+    fontSize: 24,
     fontWeight: FontWeight.w600,
-    color: Colors.black,
+    color: RealUnitColors.realUnitBlack,
   );
+
+  static const _digits = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 400),
-      child: GridView.count(
-        childAspectRatio: 2,
-        shrinkWrap: true,
-        crossAxisCount: 3,
-        physics: const NeverScrollableScrollPhysics(),
-        children: List.generate(12, (index) {
-          if (index == 9) {
-            if (onDecimalPressed == null) return Container();
-            return InkWell(
-              onTap: onDecimalPressed,
-              child: const Center(
-                child: Text(
-                  '.',
-                  style: _buttonStyle,
-                  textAlign: TextAlign.center,
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 400),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Digits 1-9 buttons
+            ...List.generate(3, (rowIndex) {
+              final rowDigits = _digits.skip(rowIndex * 3).take(3).toList();
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: rowDigits.map((digit) {
+                    return _buildButton(
+                      onTap: () => onNumberPressed(digit),
+                      child: Text('$digit', style: _buttonStyle),
+                    );
+                  }).toList(),
                 ),
-              ),
-            );
-          } else if (index == 10) {
-            index = 0;
-          } else if (index == 11) {
-            return InkWell(
-              onTap: onDeletePressed,
-              child: Semantics(
-                label: 'Delete',
-                button: true,
-                child: const Icon(
-                  Icons.arrow_back_ios,
-                  color: Colors.black,
-                ),
-              ),
-            );
-          } else {
-            index++;
-          }
-
-          return InkWell(
-            onTap: () => onNumberPressed(index),
-            child: Center(
-              child: Text(
-                '$index',
-                style: _buttonStyle,
-                textAlign: TextAlign.center,
+              );
+            }),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Decimal button
+                  _buildButton(
+                    onTap: onDecimalPressed,
+                    child: onDecimalPressed != null
+                        ? const Text('.', style: _buttonStyle)
+                        : const SizedBox(width: 60, height: 60),
+                  ),
+                  // Zero button
+                  _buildButton(
+                    onTap: () => onNumberPressed(0),
+                    child: const Text('0', style: _buttonStyle),
+                  ),
+                  // Delete Button
+                  _buildButton(
+                    onTap: onDeletePressed,
+                    child: const Icon(
+                      size: 16,
+                      fontWeight: FontWeight.bold,
+                      Icons.arrow_back_ios_new,
+                      color: RealUnitColors.realUnitBlack,
+                    ),
+                  ),
+                ],
               ),
             ),
-          );
-        }),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
+
+  Widget _buildButton({
+    required Widget child,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(32),
+      onTap: onTap,
+      child: SizedBox(
+        width: 60,
+        height: 60,
+        child: Center(child: child),
+      ),
+    );
+  }
 }

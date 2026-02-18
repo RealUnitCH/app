@@ -34,8 +34,10 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
 
   Future<BuyPaymentInfoState> _runGetPaymentInfo(String amount, Currency currency) async {
     try {
+      final sanitizedAmount = amount.isEmpty ? '0' : amount.replaceAll(',', '.');
+      final parsedAmount = double.parse(sanitizedAmount);
       final paymentInfo = await _buyPaymentInfoService.getPaymentInfo(
-        double.parse(amount).round(),
+        parsedAmount.round(),
         currency: currency,
       );
 

@@ -61,6 +61,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   final birthdayCtrl = ValueNotifier<String?>(null);
 
   final addressStreetCtrl = TextEditingController();
+  final addressStreetNumberCtrl = TextEditingController();
   final postalCodeCtrl = TextEditingController();
   final cityCtrl = TextEditingController();
   final countryCtrl = ValueNotifier<Country?>(null);
@@ -180,6 +181,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
       case KycRegistrationStep.address:
         return KycRegistrationAddressStep(
           addressStreetCtrl: addressStreetCtrl,
+          addressNumberCtrl: addressStreetNumberCtrl,
           postalCodeCtrl: postalCodeCtrl,
           cityCtrl: cityCtrl,
           countryCtrl: countryCtrl,
@@ -191,15 +193,16 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   Future<void> _onSubmit() async => await context.read<KycRegistrationSubmitCubit>().submit(
     Registration(
       type: typeCtrl.value,
-      email: emailCtrl.text,
-      firstName: firstnameCtrl.text,
-      lastName: lastnameCtrl.text,
-      phoneNumber: phoneCtrl.value ?? '',
+      email: emailCtrl.text.trim(),
+      firstName: firstnameCtrl.text.trim(),
+      lastName: lastnameCtrl.text.trim(),
+      phoneNumber: phoneCtrl.value?.trim() ?? '',
       birthday: birthdayCtrl.value ?? '',
       nationality: nationalityCtrl.value!,
-      addressStreet: addressStreetCtrl.text,
-      addressPostalCode: postalCodeCtrl.text,
-      addressCity: cityCtrl.text,
+      addressStreet: addressStreetCtrl.text.trim(),
+      addressStreetNumber: addressStreetNumberCtrl.text.trim(),
+      addressPostalCode: postalCodeCtrl.text.trim(),
+      addressCity: cityCtrl.text.trim(),
       addressCountry: countryCtrl.value!,
       swissTaxResidence: true,
       registrationDate: DateFormat('yyyy-MM-dd').format(DateTime.now()),
@@ -217,6 +220,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
     phoneCtrl.dispose();
     nationalityCtrl.dispose();
     addressStreetCtrl.dispose();
+    addressStreetNumberCtrl.dispose();
     postalCodeCtrl.dispose();
     cityCtrl.dispose();
     countryCtrl.dispose();

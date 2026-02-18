@@ -10,7 +10,7 @@ import 'package:realunit_wallet/styles/currency.dart';
 
 class RealUnitBuyPaymentInfoService {
   static const _buyPaymentInfoPath = '/v1/realunit/buy';
-  static String _confirmPaymentPath(int id) => '/v1/buy/paymentInfos/$id/confirm';
+  static String _confirmPaymentPath(int id) => '/v1/realunit/buy/$id/confirm';
 
   String get _host => _appStore.apiConfig.apiHost;
 
@@ -68,7 +68,7 @@ class RealUnitBuyPaymentInfoService {
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to confirm payment: ${response.statusCode}');
+      throw Exception('Failed to confirm payment: ${response.statusCode} ${response.body}');
     }
   }
 }

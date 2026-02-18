@@ -1,5 +1,5 @@
-import 'package:realunit_wallet/styles/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 
 class PinIndicator extends StatelessWidget {
   final int expectedPinLength;
@@ -17,22 +17,24 @@ class PinIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        width: 180,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(expectedPinLength, (index) {
-            final isFilled = pinLength > index;
+    width: 180,
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: List.generate(expectedPinLength, (index) {
+        final isFilled = pinLength > index;
 
-            return Container(
-              width: _size,
-              height: _size,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: wrongPin ? Colors.red : RealUnitColors.realUnitBlack),
-                color: isFilled ? RealUnitColors.realUnitBlack : Colors.transparent,
-              ),
-            );
-          }),
-        ),
-      );
+        return Container(
+          width: _size,
+          height: _size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: wrongPin ? RealUnitColors.status.red600 : RealUnitColors.realUnitBlack,
+            ),
+            color: isFilled ? RealUnitColors.realUnitBlack : Colors.transparent,
+          ),
+        );
+      }),
+    ),
+  );
 }
