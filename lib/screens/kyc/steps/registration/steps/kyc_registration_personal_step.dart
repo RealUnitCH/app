@@ -46,9 +46,9 @@ class KycRegistrationPersonalStep extends StatelessWidget {
                 KycDropdownField<RegistrationUserType>(
                   label: S.of(context).registerAccountType,
                   hintText: RegistrationUserType.human.toString(),
-                  items: RegistrationUserType.values
-                      .map((d) => DropdownMenuItem(value: d, child: Text(d.name(context))))
-                      .toList(),
+                  items: [
+                    RegistrationUserType.values.first,
+                  ].map((d) => DropdownMenuItem(value: d, child: Text(d.name(context)))).toList(),
                   initialValue: RegistrationUserType.human,
                   onChanged: (v) {
                     if (v != null) typeCtrl.value = v;
