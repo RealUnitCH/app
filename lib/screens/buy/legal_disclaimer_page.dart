@@ -42,6 +42,12 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Column(
             children: [
+              LinearProgressIndicator(
+                value: (_step + 1) / 6,
+                backgroundColor: RealUnitColors.neutral200,
+                valueColor: const AlwaysStoppedAnimation<Color>(RealUnitColors.realUnitBlue),
+              ),
+              const SizedBox(height: 20),
               Expanded(
                 child: SingleChildScrollView(
                   key: ValueKey(_step),
