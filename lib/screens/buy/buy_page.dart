@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
+import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 
 class BuyPage extends StatelessWidget {
   static const routeName = '/buy';
@@ -21,7 +25,7 @@ class BuyPage extends StatelessWidget {
         BlocProvider(
           create: (_) => BuyConverterCubit(
             getIt<DfxBrokerbotService>(),
-          )..onFiatChanged('300'),
+          )..onFiatChanged('1000'),
         ),
         BlocProvider(
           create: (_) => BuyPaymentInfoCubit(
@@ -61,24 +65,80 @@ class _BuyViewState extends State<BuyView> {
           context.read<BuyPaymentInfoCubit>().getPaymentInfo(amount: _amountController.text);
         },
         builder: (context, state) {
-          return SingleChildScrollView(
-            child: SafeArea(
-              child: GestureDetector(
-                onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Column(
-                    spacing: 32,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      PaymentConverter(
-                        amountController: _amountController,
-                        resultController: _resultController,
+          return SafeArea(
+            child: GestureDetector(
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              child: LayoutBuilder(
+                builder: (context, constraint) {
+                  return SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: constraint.maxHeight),
+                      child: IntrinsicHeight(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              PaymentConverter(
+                                amountController: _amountController,
+                                resultController: _resultController,
+                              ),
+                              const SizedBox(height: 32),
+                              PaymentInformation(amount: _amountController.text),
+                              const Spacer(),
+                              BlocBuilder<BuyPaymentInfoCubit, BuyPaymentInfoState>(
+                                builder: (context, paymentState) {
+                                  if (paymentState is BuyPaymentInfoFailure &&
+                                      paymentState.error == PaymentInfoError.registrationRequired) {
+                                    final amount =
+                                        double.tryParse(
+                                          _amountController.text.replaceAll(',', '.'),
+                                        ) ??
+                                        0;
+                                    final isValid = amount >= 1000;
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 20),
+                                      child: Column(
+                                        spacing: 8,
+                                        children: [
+                                          if (!isValid)
+                                            Text(
+                                              S.of(context).buyMinAmount,
+                                              style: const TextStyle(
+                                                color: RealUnitColors.neutral500,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: FilledButton(
+                                              onPressed: isValid
+                                                  ? () async {
+                                                      await context.push(KycPageManager.routeName);
+                                                      if (context.mounted) {
+                                                        context
+                                                            .read<BuyPaymentInfoCubit>()
+                                                            .getPaymentInfo();
+                                                      }
+                                                    }
+                                                  : null,
+                                              child: Text(S.of(context).next),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      PaymentInformation(amount: _amountController.text),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
             ),
           );
