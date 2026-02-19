@@ -33,6 +33,11 @@ class DocumentReportIcon extends _CustomIcon {
       : super(iconPath: 'assets/images/icons/document-report.svg');
 }
 
+class DocumentTextIcon extends _CustomIcon {
+  const DocumentTextIcon({super.size, super.color})
+      : super(iconPath: 'assets/images/icons/document-text.svg');
+}
+
 class IdentificationIcon extends _CustomIcon {
   const IdentificationIcon({super.size, super.color})
       : super(iconPath: 'assets/images/icons/identification.svg');

@@ -50,6 +50,11 @@ class _LegalPageState extends State<LegalPage> {
     ),
     body: _markdownContent == null
         ? const Center(child: CircularProgressIndicator())
-        : Markdown(data: _markdownContent!),
+        : Markdown(
+            data: _markdownContent!,
+            styleSheet: MarkdownStyleSheet(
+              h2Padding: const EdgeInsets.only(top: 16),
+            ),
+          ),
   );
 }

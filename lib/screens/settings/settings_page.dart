@@ -77,13 +77,13 @@ class SettingsPage extends StatelessWidget {
                 ),
                 SettingOption(
                   title: S.of(context).termsOfUse,
-                  leading: const DocumentReportIcon(size: 24),
+                  leading: const DocumentTextIcon(size: 24),
                   trailing: _forwardIcon,
                   onTap: () => context.push(
                     LegalPage.routeName,
                     extra: LegalPageParams(
                       title: S.of(context).termsOfUse,
-                      assetPath: 'assets/legal/nutzungsbedingungen.md',
+                      assetPath: 'assets/legal/terms_of_use_${state.language.code}.md',
                     ),
                   ),
                 ),
