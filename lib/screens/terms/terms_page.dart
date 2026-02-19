@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -51,27 +50,27 @@ class TermsPage extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          RichText(
-                            textAlign: TextAlign.center,
-                            text: TextSpan(
-                              style: const TextStyle(
-                                fontSize: 14,
-                                height: 20 / 14,
-                                color: RealUnitColors.neutral500,
-                              ),
-                              children: [
-                                TextSpan(text: '${s.softwareTermsText} '),
-                                TextSpan(
-                                  text: s.termsOfUse,
-                                  style: const TextStyle(
-                                    color: RealUnitColors.realUnitBlue,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = () => context.push('/settings${LegalPage.routeName}'),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => context.push('/settings${LegalPage.routeName}'),
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                TextSpan(text: ' ${s.softwareTermsSuffix}.'),
-                              ],
+                                child: Text(
+                                  '${s.softwareTermsText} ${s.termsOfUse} ${s.softwareTermsSuffix}.',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    height: 20 / 14,
+                                    color: RealUnitColors.neutral500,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                           Padding(
