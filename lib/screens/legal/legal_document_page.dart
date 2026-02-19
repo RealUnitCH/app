@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:go_router/go_router.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 
@@ -98,13 +99,13 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
                             onPressed: () => context.push(
                               '/webView',
                               extra: WebViewRouteParams(
-                                title: 'Original PDF',
+                                title: S.of(context).originalPdf,
                                 url: Uri.parse(_pdfUrl!),
                                 showDownloadButton: true,
                               ),
                             ),
                             icon: const Icon(Icons.picture_as_pdf_outlined),
-                            label: const Text('Original PDF'),
+                            label: Text(S.of(context).originalPdf),
                           ),
                         ),
                       ),

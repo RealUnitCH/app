@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
-import 'package:realunit_wallet/screens/legal/legal_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class TermsPage extends StatelessWidget {
@@ -53,7 +52,7 @@ class TermsPage extends StatelessWidget {
                           Material(
                             color: Colors.transparent,
                             child: InkWell(
-                              onTap: () => context.push('/settings${LegalPage.routeName}'),
+                              onTap: () => context.push('/settings/termsOfUse'),
                               borderRadius: BorderRadius.circular(12),
                               child: Container(
                                 width: double.infinity,

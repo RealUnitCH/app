@@ -16,6 +16,19 @@ class LegalDisclaimerPage extends StatefulWidget {
 }
 
 class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
+  static const _titleStyle = TextStyle(
+    fontWeight: FontWeight.bold,
+    fontSize: 18,
+    height: 24 / 18,
+    color: RealUnitColors.neutral900,
+  );
+
+  static const _bodyStyle = TextStyle(
+    fontSize: 14,
+    height: 20 / 14,
+    color: RealUnitColors.neutral600,
+  );
+
   int _step = 0;
 
   @override
@@ -52,13 +65,12 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
               Expanded(
                 child: SingleChildScrollView(
                   key: ValueKey(_step),
-                  child: _step < 2
-                      ? _buildDisclaimerStep(s)
-                      : _step == 2
-                          ? _buildDocumentsStep(s)
-                          : _step == 3
-                              ? _buildAktionariatStep(s)
-                              : _buildDfxStep(s),
+                  child: switch (_step) {
+                    < 2 => _buildDisclaimerStep(s),
+                    2 => _buildDocumentsStep(s),
+                    3 => _buildAktionariatStep(s),
+                    _ => _buildDfxStep(s),
+                  },
                 ),
               ),
               Padding(
@@ -112,21 +124,12 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
         const SizedBox(height: 16),
         Text(
           title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            height: 24 / 18,
-            color: RealUnitColors.neutral900,
-          ),
+          style: _titleStyle,
         ),
         const SizedBox(height: 16),
         Text(
           text,
-          style: const TextStyle(
-            fontSize: 14,
-            height: 20 / 14,
-            color: RealUnitColors.neutral600,
-          ),
+          style: _bodyStyle,
         ),
         const SizedBox(height: 24),
       ],
@@ -140,21 +143,12 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
         const SizedBox(height: 16),
         Text(
           s.legalDisclaimerDocumentsTitle,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            height: 24 / 18,
-            color: RealUnitColors.neutral900,
-          ),
+          style: _titleStyle,
         ),
         const SizedBox(height: 16),
         Text(
           s.legalDisclaimerDocumentsText,
-          style: const TextStyle(
-            fontSize: 14,
-            height: 20 / 14,
-            color: RealUnitColors.neutral600,
-          ),
+          style: _bodyStyle,
         ),
         const SizedBox(height: 24),
         _buildDocumentButton(
@@ -279,21 +273,12 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
         const SizedBox(height: 16),
         Text(
           s.aktionariatTitle,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            height: 24 / 18,
-            color: RealUnitColors.neutral900,
-          ),
+          style: _titleStyle,
         ),
         const SizedBox(height: 16),
         Text(
           s.aktionariatText,
-          style: const TextStyle(
-            fontSize: 14,
-            height: 20 / 14,
-            color: RealUnitColors.neutral600,
-          ),
+          style: _bodyStyle,
         ),
         const SizedBox(height: 24),
         _buildDocumentButton(
@@ -357,21 +342,12 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
         const SizedBox(height: 16),
         Text(
           s.dfxTitle,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            height: 24 / 18,
-            color: RealUnitColors.neutral900,
-          ),
+          style: _titleStyle,
         ),
         const SizedBox(height: 16),
         Text(
           s.dfxText,
-          style: const TextStyle(
-            fontSize: 14,
-            height: 20 / 14,
-            color: RealUnitColors.neutral600,
-          ),
+          style: _bodyStyle,
         ),
         const SizedBox(height: 24),
         _buildDocumentButton(
