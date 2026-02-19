@@ -152,7 +152,7 @@
   "registerPhoneNumberOnlyDigits": "Nur Zahlen sind erlaubt",
   "registerPhoneNumberTooShort": "Telefonnummer ist zu kurz",
   "registrationRequired": "Registrierung erforderlich",
-  "registrationRequiredDescription": "Um REALU zu kaufen, müssen Sie Ihre Wallet registrieren. Dabei entsteht eine Geschäftsbeziehung mit RealUnit AG und DFX AG.",
+  "registrationRequiredDescription": "Um REALU zu kaufen, müssen Sie Ihre Wallet registrieren.",
   "reset": "Zurücksetzen",
   "residence": "Residenz",
   "restoreWallet": "Wallet wiederherstellen",

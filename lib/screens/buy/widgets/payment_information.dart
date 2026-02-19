@@ -35,18 +35,6 @@ class PaymentInformation extends StatelessWidget {
             return PaymentActionRequired(
               title: S.of(context).registrationRequired,
               description: S.of(context).registrationRequiredDescription,
-              action: FilledButton(
-                onPressed: () async {
-                  await context.push(KycPageManager.routeName);
-                  if (context.mounted) {
-                    context.read<BuyPaymentInfoCubit>().getPaymentInfo();
-                  }
-                },
-                child: Text(
-                  S.of(context).confirm,
-                  textAlign: TextAlign.center,
-                ),
-              ),
             );
           } else if (error == PaymentInfoError.kycRequired) {
             return PaymentActionRequired(

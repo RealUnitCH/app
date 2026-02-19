@@ -152,7 +152,7 @@
   "registerPhoneNumberOnlyDigits": "Only numbers are allowed",
   "registerPhoneNumberTooShort": "Phone number is too short",
   "registrationRequired": "Registration required",
-  "registrationRequiredDescription": "To purchase REALU, you must register your wallet. This establishes a business relationship with RealUnit AG and DFX AG.",
+  "registrationRequiredDescription": "To purchase REALU, you must register your wallet.",
   "reset": "Reset",
   "residence": "Residence",
   "restoreWallet": "Restore wallet",
