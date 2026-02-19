@@ -21,8 +21,8 @@ class RealUnitRegistrationService {
   static const _registerStatusPath = '/v1/realunit/register/status';
   static const _registerEmailPath = '/v1/realunit/register/email';
   static const _registerCompletionPath = '/v1/realunit/register/complete';
-  static const _registerPendingPath = '/v1/realunit/register/account-merge-data';
-  static const _registerCompletePendingPath = '/v1/realunit/register/complete-account-merge';
+  static const _registerAccountMergeDataPath = '/v1/realunit/register/account-merge-data';
+  static const _registerCompleteAccountMergePath = '/v1/realunit/register/complete-account-merge';
 
   final AppStore _appStore;
 
@@ -77,6 +77,7 @@ class RealUnitRegistrationService {
     final name = '${registration.firstName} ${registration.lastName}'.trim();
     final addressStreet = '${registration.addressStreet} ${registration.addressStreetNumber}'
         .trim();
+    final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final signature = Eip712Signer.signRegistration(
       credentials: credentials,
       email: registration.email.toLowerCase(),
@@ -89,8 +90,8 @@ class RealUnitRegistrationService {
       addressPostalCode: registration.addressPostalCode,
       addressCity: registration.addressCity,
       addressCountry: registration.addressCountry.symbol,
-      swissTaxResidence: true,
-      registrationDate: registration.registrationDate,
+      swissTaxResidence: registration.swissTaxResidence,
+      registrationDate: registrationDate,
     );
 
     final requestDto = RealUnitRegistrationRequestDto(
@@ -104,8 +105,8 @@ class RealUnitRegistrationService {
       addressPostalCode: registration.addressPostalCode,
       addressCity: registration.addressCity,
       addressCountry: registration.addressCountry.symbol,
-      swissTaxResidence: true,
-      registrationDate: registration.registrationDate,
+      swissTaxResidence: registration.swissTaxResidence,
+      registrationDate: registrationDate,
       walletAddress: credentials.address.hexEip55,
       signature: signature,
       lang: 'DE',
@@ -147,12 +148,11 @@ class RealUnitRegistrationService {
     return responseDto.status;
   }
 
-  /// Gets pending registration data if available (e.g., from a wallet merge).
-  /// Returns null if no pending registration exists.
+  /// Gets RealUnit registration data from user
   Future<RealUnitAccountMergeUserDataDto> getAccountMergeUserData() async {
     final authToken = _appStore.dfxAuthToken;
 
-    final uri = buildUri(_host, _registerPendingPath);
+    final uri = buildUri(_host, _registerAccountMergeDataPath);
     final response = await _appStore.httpClient.get(
       uri,
       headers: {
@@ -169,14 +169,12 @@ class RealUnitRegistrationService {
     return RealUnitAccountMergeUserDataDto.fromJson(jsonDecode(response.body));
   }
 
-  /// Completes a pending registration by signing with the current wallet.
-  /// This is used after a wallet merge to register the new wallet.
+  /// Completes RealUnit registration with data from `getAccountMergeUserData()` endpoint
   Future<RegistrationStatus> completeAccountMergeRegistration(
     RealUnitAccountMergeUserDataDto userData,
   ) async {
     final credentials = _appStore.wallet.primaryAccount.primaryAddress;
     final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-
     final signature = Eip712Signer.signRegistration(
       credentials: credentials,
       email: userData.email,
@@ -201,7 +199,7 @@ class RealUnitRegistrationService {
 
     final authToken = _appStore.dfxAuthToken;
 
-    final uri = buildUri(_host, _registerCompletePendingPath);
+    final uri = buildUri(_host, _registerCompleteAccountMergePath);
     final response = await _appStore.httpClient.post(
       uri,
       headers: {

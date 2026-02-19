@@ -69,11 +69,8 @@ class KycRegistrationEmailStepView extends StatelessWidget {
                 builder: (BuildContext context) => const KycRegistrationEmailVerificationPage(),
               ),
             );
-            if (isConfirmed ?? false) {
-              await Future.delayed(const Duration(milliseconds: 300));
-              if (context.mounted) {
-                context.read<KycCubit>().checkKyc();
-              }
+            if (isConfirmed == true) {
+              if (context.mounted) context.read<KycCubit>().checkKyc();
             }
           }
         }

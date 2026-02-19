@@ -46,7 +46,7 @@ class KycRegistrationEmailVerificationStepView extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text(
-                'Der Account Merge war erfolgreich, jedoch konnte die Wallet nicht registriert werden. Bitte melden Sie sich beim Support',
+                'Der Account Merge war erfolgreich, jedoch konnte die Wallet nicht registriert werden. Bitte melden Sie sich beim Support.',
               ),
               backgroundColor: RealUnitColors.status.red600,
             ),

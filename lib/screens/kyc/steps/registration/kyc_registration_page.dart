@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
@@ -205,7 +204,6 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
       addressCity: cityCtrl.text.trim(),
       addressCountry: countryCtrl.value!,
       swissTaxResidence: true,
-      registrationDate: DateFormat('yyyy-MM-dd').format(DateTime.now()),
     ),
   );
 
