@@ -80,7 +80,7 @@ class SettingsPage extends StatelessWidget {
                   leading: const DocumentTextIcon(size: 24),
                   trailing: _forwardIcon,
                   onTap: () => context.push(
-                    LegalPage.routeName,
+                    '/settings${LegalPage.routeName}',
                     extra: LegalPageParams(
                       title: S.of(context).termsOfUse,
                       assetPath: 'assets/legal/terms_of_use_${state.language.code}.md',

@@ -158,12 +158,12 @@ void setupRouter() {
                 ),
               ],
             ),
+            GoRoute(
+              path: LegalPage.routeName,
+              builder: (context, state) => LegalPage(params: state.extra as LegalPageParams),
+            ),
           ],
           builder: (context, state) => const SettingsPage(),
-        ),
-        GoRoute(
-          path: LegalPage.routeName,
-          builder: (context, state) => LegalPage(params: state.extra as LegalPageParams),
         ),
         GoRoute(
           path: '/webView',

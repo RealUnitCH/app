@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:go_router/go_router.dart';
 
 class LegalPageParams {
@@ -11,7 +11,7 @@ class LegalPageParams {
 }
 
 class LegalPage extends StatefulWidget {
-  static const routeName = '/legal';
+  static const routeName = '/termsOfUse';
 
   const LegalPage({super.key, required this.params});
 
