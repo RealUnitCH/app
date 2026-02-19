@@ -14,17 +14,6 @@ class DashboardPortfolio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DashboardPortfolioView(price: price);
-  }
-}
-
-class DashboardPortfolioView extends StatelessWidget {
-  final BigInt price;
-
-  const DashboardPortfolioView({super.key, required this.price});
-
-  @override
-  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 8.0,

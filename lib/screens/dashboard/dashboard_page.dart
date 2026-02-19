@@ -26,21 +26,20 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appStore = getIt<AppStore>();
     return MultiBlocProvider(
       providers: [
         BlocProvider(
           create: (context) => DashboardBloc(
             getIt<DFXPriceService>(),
-            asset: appStore.apiConfig.asset,
+            asset: getIt<AppStore>().apiConfig.asset,
             initialCurrency: context.read<SettingsBloc>().state.currency,
           ),
         ),
         BlocProvider(
           create: (context) => BalanceCubit(
             getIt<BalanceRepository>(),
-            asset: appStore.apiConfig.asset,
-            walletAddress: appStore.primaryAddress,
+            asset: getIt<AppStore>().apiConfig.asset,
+            walletAddress: getIt<AppStore>().primaryAddress,
           ),
         ),
       ],
