@@ -31,8 +31,12 @@ class _LegalPageState extends State<LegalPage> {
   }
 
   Future<void> _loadMarkdown() async {
-    final content = await rootBundle.loadString(widget.params.assetPath);
-    setState(() => _markdownContent = content);
+    try {
+      final content = await rootBundle.loadString(widget.params.assetPath);
+      if (mounted) setState(() => _markdownContent = content);
+    } catch (_) {
+      if (mounted) setState(() => _markdownContent = '');
+    }
   }
 
   @override

@@ -1,6 +1,6 @@
 # Nutzungsbedingungen der RealUnit Wallet App
 
-*Stand: Februar 2025*
+*Stand: Februar 2026*
 
 ## 1. Geltungsbereich
 
