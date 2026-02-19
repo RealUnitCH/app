@@ -14,7 +14,7 @@ class KycRegistrationStepCubit extends Cubit<KycRegistrationStepState> {
             KycRegistrationStep.personal,
             KycRegistrationStep.address,
           ],
-          stepOffset: 3,
+          stepOffset: 4,
         ),
       );
 

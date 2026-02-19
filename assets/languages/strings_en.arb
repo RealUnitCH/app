@@ -1,4 +1,10 @@
 {
+  "aktionariatDisclaimer": "Disclaimer",
+  "aktionariatImprint": "Imprint",
+  "aktionariatPrivacyPolicy": "Privacy Policy",
+  "aktionariatTermsOfService": "Terms of Service",
+  "aktionariatText": "RealUnit Schweiz AG has appointed Aktionariat AG to manage the share register. As part of this process, your personal data will be transmitted to Aktionariat AG. You will receive a separate user account there, which is used to manage your shareholder data.\n\nPlease take note of the following documents from Aktionariat AG:",
+  "aktionariatTitle": "Notice regarding Aktionariat AG",
   "accountTypeCorporation": "Corporation",
   "accountTypeHuman": "Individual person",
   "addBankAccount": "Add bank account",
