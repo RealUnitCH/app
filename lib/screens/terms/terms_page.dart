@@ -70,19 +70,7 @@ class TermsPage extends StatelessWidget {
                                     'https://realunit.ch/app/nutzungsbedingungen',
                                   ),
                               ),
-                              TextSpan(text: ' ${s.softwareTermsAnd} '),
-                              TextSpan(
-                                text: s.softwareTermsDisclaimer,
-                                style: const TextStyle(
-                                  color: RealUnitColors.realUnitBlue,
-                                  decoration: TextDecoration.underline,
-                                ),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () => _launchUrl(
-                                    'https://realunit.ch/app/haftungsausschluss',
-                                  ),
-                              ),
-                              const TextSpan(text: '.'),
+                              TextSpan(text: ' ${s.softwareTermsSuffix}.'),
                             ],
                           ),
                         ),
