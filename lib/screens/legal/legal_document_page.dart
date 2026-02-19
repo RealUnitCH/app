@@ -73,7 +73,7 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
                         h2Padding: const EdgeInsets.only(top: 16),
                       ),
                       onTapLink: (text, href, title) {
-                        if (href == null) return;
+                        if (href == null || href.startsWith('mailto:') || href.contains('@')) return;
                         context.push(
                           '/webView',
                           extra: WebViewRouteParams(
