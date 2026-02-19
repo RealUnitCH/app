@@ -61,7 +61,7 @@ class TermsPage extends StatelessWidget {
                                 TextSpan(text: '${s.softwareTermsText} '),
                                 TextLinkSpan.link(
                                   context,
-                                  text: s.termsAndConditions,
+                                  text: s.termsOfUse,
                                   style: const TextStyle(
                                     color: RealUnitColors.realUnitBlue,
                                     decoration: TextDecoration.underline,
