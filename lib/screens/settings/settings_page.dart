@@ -83,7 +83,7 @@ class SettingsPage extends StatelessWidget {
                 ),
                 SettingOption(
                   title: S.of(context).contact,
-                  leading: const Icon(Icons.info_outline, size: 24),
+                  leading: const Icon(Icons.info_outline, size: 24, color: RealUnitColors.realUnitBlue),
                   trailing: _forwardIcon,
                   onTap: () => context.push('/settings/contact'),
                 ),
