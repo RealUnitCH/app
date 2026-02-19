@@ -1,40 +1,18 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:realunit_wallet/widgets/text_link_span.dart';
 
-class TermsPage extends StatefulWidget {
+class TermsPage extends StatelessWidget {
   static const route = '/terms';
 
   const TermsPage({super.key});
 
   @override
-  State<TermsPage> createState() => _TermsPageState();
-}
-
-class _TermsPageState extends State<TermsPage> {
-  late final TapGestureRecognizer _termsRecognizer;
-
-  @override
-  void initState() {
-    super.initState();
-    _termsRecognizer = TapGestureRecognizer()
-      ..onTap = () => _launchUrl('https://realunit.ch/app/nutzungsbedingungen');
-  }
-
-  @override
-  void dispose() {
-    _termsRecognizer.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -43,70 +21,72 @@ class _TermsPageState extends State<TermsPage> {
             'assets/images/splash/splash_background.png',
             fit: BoxFit.cover,
           ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
+          Align(
+            alignment: Alignment.bottomCenter,
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   stops: [0.0, 0.4, 1.0],
                   colors: [
-                    // Transparent white instead of Colors.transparent (transparent black)
-                    // to avoid dark band artifact in gradient interpolation
-                    Color(0x00FFFFFF),
-                    Colors.white,
-                    Colors.white,
+                    RealUnitColors.basic.white.withValues(alpha: 0),
+                    RealUnitColors.basic.white,
+                    RealUnitColors.basic.white,
                   ],
                 ),
               ),
               child: SafeArea(
                 top: false,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 120.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
-                        child: RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            style: const TextStyle(
-                              fontSize: 14,
-                              height: 20 / 14,
-                              color: RealUnitColors.neutral500,
-                            ),
-                            children: [
-                              TextSpan(text: '${s.softwareTermsText} '),
-                              TextSpan(
-                                text: s.termsAndConditions,
-                                style: const TextStyle(
-                                  color: RealUnitColors.realUnitBlue,
-                                  decoration: TextDecoration.underline,
-                                ),
-                                recognizer: _termsRecognizer,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        left: 20.0,
+                        right: 20.0,
+                        top: constraints.maxHeight * 0.2,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          RichText(
+                            textAlign: TextAlign.center,
+                            text: TextSpan(
+                              style: const TextStyle(
+                                fontSize: 14,
+                                height: 20 / 14,
+                                color: RealUnitColors.neutral500,
                               ),
-                              TextSpan(text: ' ${s.softwareTermsSuffix}.'),
-                            ],
+                              children: [
+                                TextSpan(text: '${s.softwareTermsText} '),
+                                TextLinkSpan.link(
+                                  context,
+                                  text: s.termsAndConditions,
+                                  style: const TextStyle(
+                                    color: RealUnitColors.realUnitBlue,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                  uri: Uri.parse('https://realunit.ch/app/nutzungsbedingungen'),
+                                ),
+                                TextSpan(text: ' ${s.softwareTermsSuffix}.'),
+                              ],
+                            ),
                           ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 20.0),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: FilledButton(
-                            onPressed: () =>
-                                context.read<HomeBloc>().add(const AcceptSoftwareTermsEvent()),
-                            child: Text(s.next),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 20.0),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: FilledButton(
+                                onPressed: () =>
+                                    context.read<HomeBloc>().add(const AcceptSoftwareTermsEvent()),
+                                child: Text(s.next),
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -114,12 +94,5 @@ class _TermsPageState extends State<TermsPage> {
         ],
       ),
     );
-  }
-
-  Future<void> _launchUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
   }
 }

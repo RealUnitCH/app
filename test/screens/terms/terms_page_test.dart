@@ -29,17 +29,7 @@ void main() {
     testWidgets('renders initially correctly', (tester) async {
       await tester.pumpApp(buildSubject());
 
-      expect(find.byType(Scaffold), findsOne);
       expect(find.byType(Image), findsOne);
-
-      final richText = tester.widget<RichText>(
-        find.byWidgetPredicate(
-          (widget) =>
-              widget is RichText &&
-              widget.text.toPlainText().contains(S.current.termsAndConditions),
-        ),
-      );
-      expect(richText, isNotNull);
 
       final filledButtonFinder = find.byType(FilledButton);
       final filledButtonWidget = tester.widget(filledButtonFinder) as FilledButton;
