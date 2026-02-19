@@ -29,7 +29,7 @@ class SettingsRepository {
     final value = _sharedPreferences.getString('networkMode');
     return NetworkMode.values.firstWhere(
       (network) => network.name == value,
-      orElse: () => NetworkMode.testnet,
+      orElse: () => NetworkMode.mainnet,
     );
   }
 
