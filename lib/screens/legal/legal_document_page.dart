@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 
 class LegalDocumentParams {
   final String title;
@@ -71,6 +72,16 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
                       styleSheet: MarkdownStyleSheet(
                         h2Padding: const EdgeInsets.only(top: 16),
                       ),
+                      onTapLink: (text, href, title) {
+                        if (href == null) return;
+                        context.push(
+                          '/webView',
+                          extra: WebViewRouteParams(
+                            title: text,
+                            url: Uri.parse(href),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   if (_pdfUrl != null)
@@ -84,9 +95,12 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
                         child: SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(
-                            onPressed: () => launchUrl(
-                              Uri.parse(_pdfUrl!),
-                              mode: LaunchMode.externalApplication,
+                            onPressed: () => context.push(
+                              '/webView',
+                              extra: WebViewRouteParams(
+                                title: 'Original PDF',
+                                url: Uri.parse(_pdfUrl!),
+                              ),
                             ),
                             icon: const Icon(Icons.picture_as_pdf_outlined),
                             label: const Text('Original PDF'),
