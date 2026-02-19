@@ -68,7 +68,7 @@ class TermsPage extends StatelessWidget {
                                     decoration: TextDecoration.underline,
                                   ),
                                   recognizer: TapGestureRecognizer()
-                                    ..onTap = () => context.push(LegalPage.routeName),
+                                    ..onTap = () => context.push('/settings${LegalPage.routeName}'),
                                 ),
                                 TextSpan(text: ' ${s.softwareTermsSuffix}.'),
                               ],
