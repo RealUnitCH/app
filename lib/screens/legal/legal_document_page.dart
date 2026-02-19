@@ -100,6 +100,7 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
                               extra: WebViewRouteParams(
                                 title: 'Original PDF',
                                 url: Uri.parse(_pdfUrl!),
+                                showDownloadButton: true,
                               ),
                             ),
                             icon: const Icon(Icons.picture_as_pdf_outlined),
