@@ -34,7 +34,7 @@ class TermsPage extends StatelessWidget {
                   end: Alignment.bottomCenter,
                   stops: [0.0, 0.4, 1.0],
                   colors: [
-                    Colors.transparent,
+                    Color(0x00FFFFFF),
                     Colors.white,
                     Colors.white,
                   ],
