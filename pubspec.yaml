@@ -58,6 +58,7 @@ dependencies:
   flutter_bloc: ^9.0.0
   flutter_idensic_mobile_sdk_plugin: ^1.40.2
   flutter_inappwebview: ^6.1.5
+  flutter_markdown_plus: ^1.0.7
   flutter_secure_storage: ^9.2.4
   flutter_svg: ^2.1.0
   get_it: ^8.0.3
@@ -120,6 +121,7 @@ flutter:
     - assets/images/icons/
     - assets/images/illustrations/
     - assets/images/splash/
+    - assets/legal/
 
   fonts:
     - family: Satoshi
