@@ -58,7 +58,7 @@ class OnboardingCompletedPage extends StatelessWidget {
                         ),
                         const Spacer(),
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 20),
+                          padding: const EdgeInsets.symmetric(vertical: 20),
                           child: SizedBox(
                             width: double.infinity,
                             child: FilledButton(
