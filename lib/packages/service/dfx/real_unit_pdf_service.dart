@@ -30,7 +30,7 @@ class RealUnitPdfService {
       language: language,
       address: _appStore.primaryAddress,
       currency: currency,
-      date: DateTime(date.year, date.month, date.day),
+      date: date,
     );
 
     final authToken = _appStore.dfxAuthToken;
