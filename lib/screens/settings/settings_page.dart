@@ -5,9 +5,9 @@ import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/screens/legal/legal_page.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
-import 'package:realunit_wallet/screens/legal/legal_page.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_confirm_logout_wallet_sheet.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_section.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -79,13 +79,7 @@ class SettingsPage extends StatelessWidget {
                   title: S.of(context).termsOfUse,
                   leading: const DocumentTextIcon(size: 24),
                   trailing: _forwardIcon,
-                  onTap: () => context.push(
-                    '/settings${LegalPage.routeName}',
-                    extra: LegalPageParams(
-                      title: S.of(context).termsOfUse,
-                      assetPath: 'assets/legal/terms_of_use_${state.language.code}.md',
-                    ),
-                  ),
+                  onTap: () => context.push('/settings${LegalPage.routeName}'),
                 ),
                 if (context.read<HomeBloc>().state.openWallet?.walletType == WalletType.software)
                   SettingOption(

@@ -1,21 +1,15 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
-import 'package:go_router/go_router.dart';
-
-class LegalPageParams {
-  final String title;
-  final String assetPath;
-
-  const LegalPageParams({required this.title, required this.assetPath});
-}
+import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 
 class LegalPage extends StatefulWidget {
   static const routeName = '/termsOfUse';
 
-  const LegalPage({super.key, required this.params});
-
-  final LegalPageParams params;
+  const LegalPage({super.key});
 
   @override
   State<LegalPage> createState() => _LegalPageState();
@@ -31,8 +25,9 @@ class _LegalPageState extends State<LegalPage> {
   }
 
   Future<void> _loadMarkdown() async {
+    final code = context.read<SettingsBloc>().state.language.code;
     try {
-      final content = await rootBundle.loadString(widget.params.assetPath);
+      final content = await rootBundle.loadString('assets/legal/terms_of_use_$code.md');
       if (mounted) setState(() => _markdownContent = content);
     } catch (_) {
       if (mounted) setState(() => _markdownContent = '');
@@ -42,14 +37,10 @@ class _LegalPageState extends State<LegalPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      leading: IconButton(
-        onPressed: () => context.pop(),
-        icon: const Icon(Icons.arrow_back_rounded),
-      ),
-      title: Text(widget.params.title),
+      title: Text(S.of(context).termsOfUse),
     ),
     body: _markdownContent == null
-        ? const Center(child: CircularProgressIndicator())
+        ? const Center(child: CupertinoActivityIndicator())
         : Markdown(
             data: _markdownContent!,
             styleSheet: MarkdownStyleSheet(
