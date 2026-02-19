@@ -90,7 +90,7 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
   Future<void> _navigateToKyc() async {
     final navigator = GoRouter.of(context);
     final result = await navigator.push(KycPageManager.routeName);
-    if (mounted) {
+    if (mounted && result != null) {
       navigator.pop(result);
     }
   }
@@ -144,11 +144,14 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
         _buildDocumentButton(
           icon: Icons.shield_outlined,
           title: s.legalDisclaimerCheckboxPrivacyPolicy,
-          onTap: () => context.push(
-            LegalDocumentPage.routeName,
-            extra: LegalDocumentParams(
-              title: s.legalDisclaimerCheckboxPrivacyPolicy,
-              assetBaseName: 'privacy_policy',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => LegalDocumentPage(
+                params: LegalDocumentParams(
+                  title: s.legalDisclaimerCheckboxPrivacyPolicy,
+                  assetBaseName: 'privacy_policy',
+                ),
+              ),
             ),
           ),
         ),
@@ -156,17 +159,20 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
         _buildDocumentButton(
           icon: Icons.description_outlined,
           title: s.legalDisclaimerCheckboxRegistrationAgreement,
-          onTap: () => context.push(
-            LegalDocumentPage.routeName,
-            extra: LegalDocumentParams(
-              title: s.legalDisclaimerCheckboxRegistrationAgreement,
-              assetBaseName: 'registration_agreement',
-              pdfUrls: const {
-                'de':
-                    'https://realunit.de/wp-content/uploads/dlm_uploads/2025/03/250321_RegV-DE-RealUnit-Schweiz-AG_final_signed.pdf',
-                'en':
-                    'https://realunit.de/wp-content/uploads/dlm_uploads/2025/03/250321_RegV-EN-RealUnit-Schweiz-AG_final_signed.pdf',
-              },
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => LegalDocumentPage(
+                params: LegalDocumentParams(
+                  title: s.legalDisclaimerCheckboxRegistrationAgreement,
+                  assetBaseName: 'registration_agreement',
+                  pdfUrls: const {
+                    'de':
+                        'https://realunit.de/wp-content/uploads/dlm_uploads/2025/03/250321_RegV-DE-RealUnit-Schweiz-AG_final_signed.pdf',
+                    'en':
+                        'https://realunit.de/wp-content/uploads/dlm_uploads/2025/03/250321_RegV-EN-RealUnit-Schweiz-AG_final_signed.pdf',
+                  },
+                ),
+              ),
             ),
           ),
         ),
@@ -174,15 +180,18 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
         _buildDocumentButton(
           icon: Icons.article_outlined,
           title: s.legalDisclaimerCheckboxSecuritiesProspectusBearerShares,
-          onTap: () => context.push(
-            LegalDocumentPage.routeName,
-            extra: LegalDocumentParams(
-              title: s.legalDisclaimerCheckboxSecuritiesProspectusBearerShares,
-              assetBaseName: 'securities_prospectus_bearer_shares',
-              pdfUrls: const {
-                'de':
-                    'https://realunit.de/wp-content/uploads/dlm_uploads/2025/07/VO_RealUnit_Wertpapierprospekt_Inhaberaktie_30.06.2025_eIDAS-signiert.pdf',
-              },
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => LegalDocumentPage(
+                params: LegalDocumentParams(
+                  title: s.legalDisclaimerCheckboxSecuritiesProspectusBearerShares,
+                  assetBaseName: 'securities_prospectus_bearer_shares',
+                  pdfUrls: const {
+                    'de':
+                        'https://realunit.de/wp-content/uploads/dlm_uploads/2025/07/VO_RealUnit_Wertpapierprospekt_Inhaberaktie_30.06.2025_eIDAS-signiert.pdf',
+                  },
+                ),
+              ),
             ),
           ),
         ),
@@ -190,15 +199,18 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
         _buildDocumentButton(
           icon: Icons.article_outlined,
           title: s.legalDisclaimerCheckboxSecuritiesProspectusRegisteredShares,
-          onTap: () => context.push(
-            LegalDocumentPage.routeName,
-            extra: LegalDocumentParams(
-              title: s.legalDisclaimerCheckboxSecuritiesProspectusRegisteredShares,
-              assetBaseName: 'securities_prospectus_registered_shares',
-              pdfUrls: const {
-                'de':
-                    'https://realunit.de/wp-content/uploads/dlm_uploads/2025/07/VO_RealUnit_Wertpapierprospekt_Namensaktien_30.06.2025_eIDAS-signiert.pdf',
-              },
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => LegalDocumentPage(
+                params: LegalDocumentParams(
+                  title: s.legalDisclaimerCheckboxSecuritiesProspectusRegisteredShares,
+                  assetBaseName: 'securities_prospectus_registered_shares',
+                  pdfUrls: const {
+                    'de':
+                        'https://realunit.de/wp-content/uploads/dlm_uploads/2025/07/VO_RealUnit_Wertpapierprospekt_Namensaktien_30.06.2025_eIDAS-signiert.pdf',
+                  },
+                ),
+              ),
             ),
           ),
         ),
@@ -206,15 +218,18 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
         _buildDocumentButton(
           icon: Icons.account_balance_outlined,
           title: s.legalDisclaimerCheckboxArticlesOfAssociation,
-          onTap: () => context.push(
-            LegalDocumentPage.routeName,
-            extra: LegalDocumentParams(
-              title: s.legalDisclaimerCheckboxArticlesOfAssociation,
-              assetBaseName: 'articles_of_association',
-              pdfUrls: const {
-                'de':
-                    'https://realunit.de/wp-content/uploads/dlm_uploads/2025/06/250604-RUCH-Statuten-mit-Deckblatt.pdf',
-              },
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => LegalDocumentPage(
+                params: LegalDocumentParams(
+                  title: s.legalDisclaimerCheckboxArticlesOfAssociation,
+                  assetBaseName: 'articles_of_association',
+                  pdfUrls: const {
+                    'de':
+                        'https://realunit.de/wp-content/uploads/dlm_uploads/2025/06/250604-RUCH-Statuten-mit-Deckblatt.pdf',
+                  },
+                ),
+              ),
             ),
           ),
         ),
@@ -222,15 +237,18 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
         _buildDocumentButton(
           icon: Icons.policy_outlined,
           title: s.legalDisclaimerCheckboxInvestmentRegulations,
-          onTap: () => context.push(
-            LegalDocumentPage.routeName,
-            extra: LegalDocumentParams(
-              title: s.legalDisclaimerCheckboxInvestmentRegulations,
-              assetBaseName: 'investment_regulations',
-              pdfUrls: const {
-                'de':
-                    'https://realunit.de/wp-content/uploads/2025/03/250304_Anlagereglement_RealUnitSchweiz-AG.pdf',
-              },
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => LegalDocumentPage(
+                params: LegalDocumentParams(
+                  title: s.legalDisclaimerCheckboxInvestmentRegulations,
+                  assetBaseName: 'investment_regulations',
+                  pdfUrls: const {
+                    'de':
+                        'https://realunit.de/wp-content/uploads/2025/03/250304_Anlagereglement_RealUnitSchweiz-AG.pdf',
+                  },
+                ),
+              ),
             ),
           ),
         ),
