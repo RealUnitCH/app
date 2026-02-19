@@ -4,8 +4,8 @@ import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_email_step/kyc_registration_email_step_cubit.dart';
-import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/kyc_registration_step_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/subpages/kyc_registration_email_verification_page.dart';
 import 'package:realunit_wallet/screens/kyc/widgets/kyc_text_field.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -72,7 +72,7 @@ class KycRegistrationEmailStepView extends StatelessWidget {
             if (isConfirmed ?? false) {
               await Future.delayed(const Duration(milliseconds: 300));
               if (context.mounted) {
-                context.read<KycRegistrationStepCubit>().next();
+                context.read<KycCubit>().checkKyc();
               }
             }
           }

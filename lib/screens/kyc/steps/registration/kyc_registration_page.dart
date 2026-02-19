@@ -193,7 +193,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   Future<void> _onSubmit() async => await context.read<KycRegistrationSubmitCubit>().submit(
     Registration(
       type: typeCtrl.value,
-      email: emailCtrl.text.trim(),
+      email: emailCtrl.text.trim().toLowerCase(),
       firstName: firstnameCtrl.text.trim(),
       lastName: lastnameCtrl.text.trim(),
       phoneNumber: phoneCtrl.value?.trim() ?? '',

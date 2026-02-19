@@ -19,6 +19,20 @@ class KycPersonalData {
     this.organizationAddress,
   });
 
+  factory KycPersonalData.fromJson(Map<String, dynamic> json) {
+    return KycPersonalData(
+      accountType: KycAccountType.fromJsonName(json['accountType'] as String),
+      firstName: json['firstName'] as String,
+      lastName: json['lastName'] as String,
+      phone: json['phone'] as String,
+      address: KycAddress.fromJson(json['address'] as Map<String, dynamic>),
+      organizationName: json['organizationName'] as String?,
+      organizationAddress: json['organizationAddress'] != null
+          ? KycAddress.fromJson(json['organizationAddress'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'accountType': accountType.jsonName,
         'firstName': firstName,
@@ -47,6 +61,13 @@ enum KycAccountType {
         return KycAccountType.organization;
     }
   }
+
+  static KycAccountType fromJsonName(String jsonName) {
+    return KycAccountType.values.firstWhere(
+      (e) => e.jsonName == jsonName,
+      orElse: () => KycAccountType.personal,
+    );
+  }
 }
 
 class KycAddress {
@@ -63,6 +84,18 @@ class KycAddress {
     required this.city,
     required this.country,
   });
+
+  factory KycAddress.fromJson(Map<String, dynamic> json) {
+    final countryData = json['country'];
+    final countryId = countryData is Map ? countryData['id'] as int : countryData as int;
+    return KycAddress(
+      street: json['street'] as String,
+      houseNumber: json['houseNumber'] as String?,
+      zip: json['zip'] as String,
+      city: json['city'] as String,
+      country: countryId,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'street': street,

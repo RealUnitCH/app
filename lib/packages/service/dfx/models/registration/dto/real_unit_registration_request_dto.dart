@@ -70,6 +70,13 @@ class CountryAndTin {
     required this.tin,
   });
 
+  factory CountryAndTin.fromJson(Map<String, dynamic> json) {
+    return CountryAndTin(
+      country: json['country'] as String,
+      tin: json['tin'] as String,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'country': country,
         'tin': tin,
