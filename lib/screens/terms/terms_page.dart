@@ -1,9 +1,11 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/screens/legal/legal_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/widgets/text_link_span.dart';
 
 class TermsPage extends StatelessWidget {
   static const route = '/terms';
@@ -59,14 +61,14 @@ class TermsPage extends StatelessWidget {
                               ),
                               children: [
                                 TextSpan(text: '${s.softwareTermsText} '),
-                                TextLinkSpan.link(
-                                  context,
+                                TextSpan(
                                   text: s.termsOfUse,
                                   style: const TextStyle(
                                     color: RealUnitColors.realUnitBlue,
                                     decoration: TextDecoration.underline,
                                   ),
-                                  uri: Uri.parse('https://realunit.ch/app/nutzungsbedingungen'),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () => context.push(LegalPage.routeName),
                                 ),
                                 TextSpan(text: ' ${s.softwareTermsSuffix}.'),
                               ],
