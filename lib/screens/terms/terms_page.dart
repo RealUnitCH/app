@@ -80,7 +80,7 @@ class TermsPage extends StatelessWidget {
                               child: FilledButton(
                                 onPressed: () =>
                                     context.read<HomeBloc>().add(const AcceptSoftwareTermsEvent()),
-                                child: Text(s.next),
+                                child: Text(s.start),
                               ),
                             ),
                           ),
