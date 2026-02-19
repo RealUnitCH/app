@@ -27,6 +27,7 @@ import 'package:realunit_wallet/screens/settings_tax_report/settings_tax_report_
 import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
+import 'package:realunit_wallet/screens/terms/terms_page.dart';
 import 'package:realunit_wallet/screens/welcome/welcome_page.dart';
 
 import 'generated/i18n.dart';
@@ -43,6 +44,10 @@ void setupRouter() {
         GoRoute(
           path: '/',
           builder: (context, state) => const HomePage(),
+        ),
+        GoRoute(
+          path: TermsPage.route,
+          builder: (context, state) => const TermsPage(),
         ),
         GoRoute(
           path: '/welcome',
