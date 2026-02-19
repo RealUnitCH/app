@@ -6,10 +6,30 @@ import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class TermsPage extends StatelessWidget {
+class TermsPage extends StatefulWidget {
   static const route = '/terms';
 
   const TermsPage({super.key});
+
+  @override
+  State<TermsPage> createState() => _TermsPageState();
+}
+
+class _TermsPageState extends State<TermsPage> {
+  late final TapGestureRecognizer _termsRecognizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _termsRecognizer = TapGestureRecognizer()
+      ..onTap = () => _launchUrl('https://realunit.ch/app/nutzungsbedingungen');
+  }
+
+  @override
+  void dispose() {
+    _termsRecognizer.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +54,8 @@ class TermsPage extends StatelessWidget {
                   end: Alignment.bottomCenter,
                   stops: [0.0, 0.4, 1.0],
                   colors: [
+                    // Transparent white instead of Colors.transparent (transparent black)
+                    // to avoid dark band artifact in gradient interpolation
                     Color(0x00FFFFFF),
                     Colors.white,
                     Colors.white,
@@ -65,10 +87,7 @@ class TermsPage extends StatelessWidget {
                                   color: RealUnitColors.realUnitBlue,
                                   decoration: TextDecoration.underline,
                                 ),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () => _launchUrl(
-                                    'https://realunit.ch/app/nutzungsbedingungen',
-                                  ),
+                                recognizer: _termsRecognizer,
                               ),
                               TextSpan(text: ' ${s.softwareTermsSuffix}.'),
                             ],
