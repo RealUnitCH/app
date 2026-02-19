@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
+import 'package:realunit_wallet/screens/legal/legal_document_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/widgets/text_link_span.dart';
 
 class LegalDisclaimerPage extends StatefulWidget {
   static const routeName = '/legalDisclaimer';
@@ -16,7 +16,6 @@ class LegalDisclaimerPage extends StatefulWidget {
 
 class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
   int _step = 0;
-  bool _checkboxChecked = false;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +28,6 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
             if (_step > 0) {
               setState(() {
                 _step--;
-                _checkboxChecked = false;
               });
             } else {
               context.pop();
@@ -47,49 +45,48 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
               Expanded(
                 child: SingleChildScrollView(
                   key: ValueKey(_step),
-                  child: _step < 2 ? _buildDisclaimerStep(s) : _buildCheckboxStep(s),
+                  child: _step < 2 ? _buildDisclaimerStep(s) : _buildDocumentsStep(s),
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20),
-                child: _step < 2
-                    ? Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => context.pop(),
-                              child: Text(s.legalDisclaimerNo),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: FilledButton(
-                              onPressed: () => setState(() => _step++),
-                              child: Text(s.legalDisclaimerYes),
-                            ),
-                          ),
-                        ],
-                      )
-                    : SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          onPressed: _checkboxChecked
-                              ? () async {
-                                  final result = await context.push(KycPageManager.routeName);
-                                  if (context.mounted) {
-                                    context.pop(result);
-                                  }
-                                }
-                              : null,
-                          child: Text(s.next),
-                        ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => context.pop(),
+                        child: Text(s.legalDisclaimerNo),
                       ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () {
+                          if (_step < 2) {
+                            setState(() => _step++);
+                          } else {
+                            _navigateToKyc();
+                          }
+                        },
+                        child: Text(s.legalDisclaimerYes),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _navigateToKyc() async {
+    final navigator = GoRouter.of(context);
+    final result = await navigator.push(KycPageManager.routeName);
+    if (mounted) {
+      navigator.pop(result);
+    }
   }
 
   Widget _buildDisclaimerStep(S s) {
@@ -123,65 +120,88 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
     );
   }
 
-  Widget _buildCheckboxStep(S s) {
+  Widget _buildDocumentsStep(S s) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 16),
-        GestureDetector(
-          onTap: () => setState(() => _checkboxChecked = !_checkboxChecked),
+        Text(
+          s.legalDisclaimerDocumentsTitle,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            height: 24 / 18,
+            color: RealUnitColors.neutral900,
+          ),
+        ),
+        const SizedBox(height: 24),
+        _buildDocumentButton(
+          icon: Icons.shield_outlined,
+          title: s.legalDisclaimerCheckboxPrivacyPolicy,
+          onTap: () => context.push(
+            LegalDocumentPage.routeName,
+            extra: LegalDocumentParams(
+              title: s.legalDisclaimerCheckboxPrivacyPolicy,
+              assetBaseName: 'privacy_policy',
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildDocumentButton(
+          icon: Icons.description_outlined,
+          title: s.legalDisclaimerCheckboxRegistrationAgreement,
+          onTap: () => context.push(
+            LegalDocumentPage.routeName,
+            extra: LegalDocumentParams(
+              title: s.legalDisclaimerCheckboxRegistrationAgreement,
+              assetBaseName: 'registration_agreement',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDocumentButton({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(color: RealUnitColors.neutral200),
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: Checkbox(
-                  value: _checkboxChecked,
-                  onChanged: (value) => setState(() => _checkboxChecked = value ?? false),
-                ),
-              ),
+              Icon(icon, color: RealUnitColors.realUnitBlue, size: 24),
               const SizedBox(width: 12),
               Expanded(
-                child: RichText(
-                  text: TextSpan(
-                    style: const TextStyle(
-                      fontSize: 14,
-                      height: 20 / 14,
-                      color: RealUnitColors.neutral600,
-                    ),
-                    children: [
-                      TextSpan(text: '${s.legalDisclaimerCheckbox1} '),
-                      TextLinkSpan.link(
-                        context,
-                        text: s.legalDisclaimerCheckboxPrivacyPolicy,
-                        style: const TextStyle(
-                          color: RealUnitColors.realUnitBlue,
-                          decoration: TextDecoration.underline,
-                        ),
-                        uri: Uri.parse('https://realunit.ch/datenschutzerklaerung/'),
-                      ),
-                      TextSpan(text: ' ${s.legalDisclaimerCheckbox2} '),
-                      TextLinkSpan.link(
-                        context,
-                        text: s.legalDisclaimerCheckboxRegistrationAgreement,
-                        style: const TextStyle(
-                          color: RealUnitColors.realUnitBlue,
-                          decoration: TextDecoration.underline,
-                        ),
-                        uri: Uri.parse(
-                          'https://realunit.de/ueber-uns/downloads/#registrierungsvereinbarung',
-                        ),
-                      ),
-                      TextSpan(text: ' ${s.legalDisclaimerCheckbox3}'),
-                    ],
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    height: 22 / 16,
+                    fontWeight: FontWeight.w500,
+                    color: RealUnitColors.neutral900,
                   ),
                 ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: RealUnitColors.neutral400,
               ),
             ],
           ),
         ),
-      ],
+      ),
     );
   }
 }

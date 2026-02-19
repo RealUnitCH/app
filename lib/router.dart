@@ -5,6 +5,7 @@ import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/packages/open_crypto_pay/models.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/buy/legal_disclaimer_page.dart';
+import 'package:realunit_wallet/screens/legal/legal_document_page.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/home/home.dart';
@@ -92,6 +93,11 @@ void setupRouter() {
         GoRoute(
           path: LegalDisclaimerPage.routeName,
           builder: (context, state) => const LegalDisclaimerPage(),
+        ),
+        GoRoute(
+          path: LegalDocumentPage.routeName,
+          builder: (context, state) =>
+              LegalDocumentPage(params: state.extra as LegalDocumentParams),
         ),
         GoRoute(
           path: SellPage.routeName,
