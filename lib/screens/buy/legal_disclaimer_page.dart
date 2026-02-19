@@ -147,6 +147,15 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
             color: RealUnitColors.neutral900,
           ),
         ),
+        const SizedBox(height: 16),
+        Text(
+          s.legalDisclaimerDocumentsText,
+          style: const TextStyle(
+            fontSize: 14,
+            height: 20 / 14,
+            color: RealUnitColors.neutral600,
+          ),
+        ),
         const SizedBox(height: 24),
         _buildDocumentButton(
           icon: Icons.shield_outlined,
