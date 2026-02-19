@@ -155,6 +155,12 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
             extra: LegalDocumentParams(
               title: s.legalDisclaimerCheckboxRegistrationAgreement,
               assetBaseName: 'registration_agreement',
+              pdfUrls: const {
+                'de':
+                    'https://realunit.de/wp-content/uploads/dlm_uploads/2025/03/250321_RegV-DE-RealUnit-Schweiz-AG_final_signed.pdf',
+                'en':
+                    'https://realunit.de/wp-content/uploads/dlm_uploads/2025/03/250321_RegV-EN-RealUnit-Schweiz-AG_final_signed.pdf',
+              },
             ),
           ),
         ),
