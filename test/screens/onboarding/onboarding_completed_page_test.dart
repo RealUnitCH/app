@@ -17,27 +17,11 @@ void main() {
       expect(find.text(S.current.onboardingCompletedTitle), findsOne);
       expect(find.text(S.current.onboardingCompletedSubtitle), findsOneWidget);
 
-      expect(find.byType(Checkbox), findsOne);
-      expect(find.byType(FilledButton), findsOne);
-    });
-
-    testWidgets('initial state', (tester) async {
-      await tester.pumpApp(const OnboardingCompletedPage());
-
-      expect((tester.widget(find.byType(Checkbox)) as Checkbox).value, false);
-      expect((tester.widget(find.byType(FilledButton)) as FilledButton).enabled, false);
-      expect((tester.widget(find.byType(FilledButton)) as FilledButton).onPressed, isNull);
-    });
-
-    testWidgets('state when terms agreed', (tester) async {
-      await tester.pumpApp(const OnboardingCompletedPage());
-
-      await tester.tap(find.byType(Checkbox));
-      await tester.pumpAndSettle();
-
-      expect((tester.widget(find.byType(Checkbox)) as Checkbox).value, true);
-      expect((tester.widget(find.byType(FilledButton)) as FilledButton).enabled, true);
-      expect((tester.widget(find.byType(FilledButton)) as FilledButton).onPressed, isNotNull);
+      final filledButtonFinder = find.byType(FilledButton);
+      final filledButtonWidget = tester.widget(filledButtonFinder) as FilledButton;
+      expect(filledButtonFinder, findsOne);
+      expect(filledButtonWidget.enabled, isTrue);
+      expect(filledButtonWidget.onPressed, isNotNull);
     });
   });
 }

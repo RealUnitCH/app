@@ -27,3 +27,7 @@ final class LoadWalletEvent extends HomeEvent {
 final class CompleteOnboardingEvent extends HomeEvent {
   const CompleteOnboardingEvent();
 }
+
+final class AcceptSoftwareTermsEvent extends HomeEvent {
+  const AcceptSoftwareTermsEvent();
+}

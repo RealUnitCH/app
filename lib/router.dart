@@ -8,6 +8,7 @@ import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/home/home.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
+import 'package:realunit_wallet/screens/legal/legal_page.dart';
 import 'package:realunit_wallet/screens/onboarding/onboarding_completed_page.dart';
 import 'package:realunit_wallet/screens/pin/setup_pin_page.dart';
 import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
@@ -24,6 +25,7 @@ import 'package:realunit_wallet/screens/settings_network/settings_network_page.d
 import 'package:realunit_wallet/screens/settings_nodes/settings_nodes_page.dart';
 import 'package:realunit_wallet/screens/settings_seed/settings_seed_page.dart';
 import 'package:realunit_wallet/screens/settings_tax_report/settings_tax_report_page.dart';
+import 'package:realunit_wallet/screens/terms/terms_page.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
@@ -43,6 +45,10 @@ void setupRouter() {
         GoRoute(
           path: '/',
           builder: (context, state) => const HomePage(),
+        ),
+        GoRoute(
+          path: TermsPage.route,
+          builder: (context, state) => const TermsPage(),
         ),
         GoRoute(
           path: '/welcome',
@@ -151,6 +157,10 @@ void setupRouter() {
                   ),
                 ),
               ],
+            ),
+            GoRoute(
+              path: LegalPage.routeName,
+              builder: (context, state) => const LegalPage(),
             ),
           ],
           builder: (context, state) => const SettingsPage(),

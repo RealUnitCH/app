@@ -27,8 +27,10 @@ class SettingsRepository {
 
   NetworkMode get networkMode {
     final value = _sharedPreferences.getString('networkMode');
-    return NetworkMode.values
-        .firstWhere((network) => network.name == value, orElse: () => NetworkMode.testnet);
+    return NetworkMode.values.firstWhere(
+      (network) => network.name == value,
+      orElse: () => NetworkMode.mainnet,
+    );
   }
 
   set networkMode(NetworkMode mode) => _sharedPreferences.setString('networkMode', mode.name);
@@ -40,4 +42,9 @@ class SettingsRepository {
   bool get isBiometricEnabled => _sharedPreferences.getBool('isBiometricEnabled') ?? false;
 
   set isBiometricEnabled(bool enabled) => _sharedPreferences.setBool('isBiometricEnabled', enabled);
+
+  bool get softwareTermsAccepted => _sharedPreferences.getBool('softwareTermsAccepted') ?? false;
+
+  set softwareTermsAccepted(bool accepted) =>
+      _sharedPreferences.setBool('softwareTermsAccepted', accepted);
 }
