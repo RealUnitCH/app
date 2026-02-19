@@ -11,6 +11,7 @@ import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 
 class BuyPage extends StatelessWidget {
   static const routeName = '/buy';
@@ -89,19 +90,43 @@ class _BuyViewState extends State<BuyView> {
                                 builder: (context, paymentState) {
                                   if (paymentState is BuyPaymentInfoFailure &&
                                       paymentState.error == PaymentInfoError.registrationRequired) {
+                                    final amount = double.tryParse(
+                                          _amountController.text.replaceAll(',', '.'),
+                                        ) ??
+                                        0;
+                                    final isValid = amount >= 1000;
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 20),
-                                      child: SizedBox(
-                                        width: double.infinity,
-                                        child: FilledButton(
-                                          onPressed: () async {
-                                            await context.push(KycPageManager.routeName);
-                                            if (context.mounted) {
-                                              context.read<BuyPaymentInfoCubit>().getPaymentInfo();
-                                            }
-                                          },
-                                          child: Text(S.of(context).next),
-                                        ),
+                                      child: Column(
+                                        children: [
+                                          if (!isValid)
+                                            Padding(
+                                              padding: const EdgeInsets.only(bottom: 8),
+                                              child: Text(
+                                                S.of(context).buyMinAmount,
+                                                style: const TextStyle(
+                                                  color: RealUnitColors.neutral500,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: FilledButton(
+                                              onPressed: isValid
+                                                  ? () async {
+                                                      await context.push(KycPageManager.routeName);
+                                                      if (context.mounted) {
+                                                        context
+                                                            .read<BuyPaymentInfoCubit>()
+                                                            .getPaymentInfo();
+                                                      }
+                                                    }
+                                                  : null,
+                                              child: Text(S.of(context).next),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     );
                                   }

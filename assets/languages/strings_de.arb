@@ -15,6 +15,7 @@
   "bitbox": "BitBox",
   "blockchain": "Blockchain",
   "buy": "Kaufen",
+  "buyMinAmount": "Mindestbetrag: 1'000 CHF",
   "buyExecutedDescription": "Sobald Ihre Überweisung eingegangen ist, übertragen wir die REALU-Token in Ihre Wallet. Über den Fortschritt Ihrer Transaktion informieren wir Sie per E-Mail.",
   "buyExecutedTitle": "Vielen Dank.",
   "buyPaymentConfirm": "Klicken Sie hier, sobald Sie die Überweisung getätigt haben",
