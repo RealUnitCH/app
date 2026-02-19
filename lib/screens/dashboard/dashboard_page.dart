@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
+import 'package:realunit_wallet/screens/buy/buy_page.dart';
+import 'package:realunit_wallet/screens/dashboard/bloc/balance_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/dashboard_bloc.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_actions.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_portfolio.dart';
@@ -22,12 +26,24 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => DashboardBloc(
-        getIt<DFXPriceService>(),
-        asset: getIt<AppStore>().apiConfig.asset,
-        initialCurrency: context.read<SettingsBloc>().state.currency,
-      ),
+    final appStore = getIt<AppStore>();
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => DashboardBloc(
+            getIt<DFXPriceService>(),
+            asset: appStore.apiConfig.asset,
+            initialCurrency: context.read<SettingsBloc>().state.currency,
+          ),
+        ),
+        BlocProvider(
+          create: (context) => BalanceCubit(
+            getIt<BalanceRepository>(),
+            asset: appStore.apiConfig.asset,
+            walletAddress: appStore.primaryAddress,
+          ),
+        ),
+      ],
       child: const DashboardView(),
     );
   }
@@ -40,6 +56,7 @@ class DashboardView extends StatelessWidget {
   Widget build(BuildContext context) {
     final isFiatServiceAvailable = context.watch<HomeBloc>().state.isFiatServiceAvailable;
     final dashboardState = context.watch<DashboardBloc>().state;
+    final balance = context.watch<BalanceCubit>().state.balance;
 
     return Scaffold(
       appBar: PreferredSize(
@@ -89,24 +106,54 @@ class DashboardView extends StatelessWidget {
                 child: Stack(
                   children: [
                     Container(color: RealUnitColors.neutral100),
-                    SingleChildScrollView(
-                      child: Container(
+                    if (balance > BigInt.zero)
+                      SingleChildScrollView(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20.0,
+                            vertical: 24.0,
+                          ),
+                          child: Column(
+                            spacing: 20.0,
+                            children: [
+                              if (isFiatServiceAvailable) const DashboardActions(),
+                              DashboardPortfolio(
+                                price: dashboardState.price,
+                              ),
+                              const DashboardTransactionHistory(),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20.0,
                           vertical: 24.0,
                         ),
                         child: Column(
-                          spacing: 20.0,
                           children: [
-                            if (isFiatServiceAvailable) const DashboardActions(),
-                            DashboardPortfolio(
-                              price: dashboardState.price,
+                            const Spacer(),
+                            SvgPicture.asset(
+                              'assets/images/add-realu-token-visual.svg',
+                              width: 165,
+                              height: 165,
                             ),
-                            const DashboardTransactionHistory(),
+                            const Spacer(),
+                            if (isFiatServiceAvailable)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 20),
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: FilledButton(
+                                    onPressed: () => context.push(BuyPage.routeName),
+                                    child: Text(S.of(context).buy),
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
