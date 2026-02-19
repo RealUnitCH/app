@@ -8,6 +8,7 @@ import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/home/home.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
+import 'package:realunit_wallet/screens/legal/legal_page.dart';
 import 'package:realunit_wallet/screens/onboarding/onboarding_completed_page.dart';
 import 'package:realunit_wallet/screens/pin/setup_pin_page.dart';
 import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
@@ -159,6 +160,10 @@ void setupRouter() {
             ),
           ],
           builder: (context, state) => const SettingsPage(),
+        ),
+        GoRoute(
+          path: LegalPage.routeName,
+          builder: (context, state) => LegalPage(params: state.extra as LegalPageParams),
         ),
         GoRoute(
           path: '/webView',
