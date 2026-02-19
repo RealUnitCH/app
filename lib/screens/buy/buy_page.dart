@@ -90,7 +90,8 @@ class _BuyViewState extends State<BuyView> {
                                 builder: (context, paymentState) {
                                   if (paymentState is BuyPaymentInfoFailure &&
                                       paymentState.error == PaymentInfoError.registrationRequired) {
-                                    final amount = double.tryParse(
+                                    final amount =
+                                        double.tryParse(
                                           _amountController.text.replaceAll(',', '.'),
                                         ) ??
                                         0;
@@ -98,16 +99,14 @@ class _BuyViewState extends State<BuyView> {
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 20),
                                       child: Column(
+                                        spacing: 8,
                                         children: [
                                           if (!isValid)
-                                            Padding(
-                                              padding: const EdgeInsets.only(bottom: 8),
-                                              child: Text(
-                                                S.of(context).buyMinAmount,
-                                                style: const TextStyle(
-                                                  color: RealUnitColors.neutral500,
-                                                  fontSize: 14,
-                                                ),
+                                            Text(
+                                              S.of(context).buyMinAmount,
+                                              style: const TextStyle(
+                                                color: RealUnitColors.neutral500,
+                                                fontSize: 14,
                                               ),
                                             ),
                                           SizedBox(

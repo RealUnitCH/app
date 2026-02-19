@@ -1,13 +1,10 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_action_required.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information_details.dart';
-import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
 
 class PaymentInformation extends StatelessWidget {
   final String amount;
@@ -40,18 +37,6 @@ class PaymentInformation extends StatelessWidget {
             return PaymentActionRequired(
               title: S.of(context).identityCheckRequired,
               description: S.of(context).identityCheckDescription,
-              action: FilledButton(
-                onPressed: () async {
-                  await context.push(KycPageManager.routeName);
-                  if (context.mounted) {
-                    context.read<BuyPaymentInfoCubit>().getPaymentInfo();
-                  }
-                },
-                child: Text(
-                  S.of(context).identityConfirm,
-                  textAlign: TextAlign.center,
-                ),
-              ),
             );
           }
         }
