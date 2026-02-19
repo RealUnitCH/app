@@ -1,5 +1,11 @@
 {
   "aktionariatDisclaimer": "Disclaimer",
+  "dfxDisclaimer": "Disclaimer",
+  "dfxImprint": "Imprint",
+  "dfxPrivacyPolicy": "Privacy Policy",
+  "dfxTermsAndConditions": "Terms and Conditions",
+  "dfxText": "RealUnit Schweiz AG works with DFX AG to enable you to buy and sell RealUnit stock tokens. As part of this process, your personal data will be transmitted to DFX AG. This establishes a business relationship with DFX AG.\n\nPlease read and confirm the following documents from DFX AG:",
+  "dfxTitle": "Notice regarding DFX AG",
   "aktionariatImprint": "Imprint",
   "aktionariatPrivacyPolicy": "Privacy Policy",
   "aktionariatTermsOfService": "Terms of Service",

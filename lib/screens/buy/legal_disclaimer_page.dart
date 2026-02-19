@@ -44,7 +44,7 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
           child: Column(
             children: [
               LinearProgressIndicator(
-                value: (_step + 1) / 7,
+                value: (_step + 1) / 8,
                 backgroundColor: RealUnitColors.neutral200,
                 valueColor: const AlwaysStoppedAnimation<Color>(RealUnitColors.realUnitBlue),
               ),
@@ -56,7 +56,9 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
                       ? _buildDisclaimerStep(s)
                       : _step == 2
                           ? _buildDocumentsStep(s)
-                          : _buildAktionariatStep(s),
+                          : _step == 3
+                              ? _buildAktionariatStep(s)
+                              : _buildDfxStep(s),
                 ),
               ),
               Padding(
@@ -73,7 +75,7 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
                     Expanded(
                       child: FilledButton(
                         onPressed: () {
-                          if (_step < 3) {
+                          if (_step < 4) {
                             setState(() => _step++);
                           } else {
                             _navigateToKyc();
@@ -329,6 +331,84 @@ class _LegalDisclaimerPageState extends State<LegalDisclaimerPage> {
             extra: WebViewRouteParams(
               title: s.aktionariatImprint,
               url: Uri.parse('https://www.aktionariat.com/impressum'),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildDfxStep(S s) {
+    final lang = Localizations.localeOf(context).languageCode == 'de' ? 'de' : 'en';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Text(
+          s.dfxTitle,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            height: 24 / 18,
+            color: RealUnitColors.neutral900,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          s.dfxText,
+          style: const TextStyle(
+            fontSize: 14,
+            height: 20 / 14,
+            color: RealUnitColors.neutral600,
+          ),
+        ),
+        const SizedBox(height: 24),
+        _buildDocumentButton(
+          icon: Icons.description_outlined,
+          title: s.dfxTermsAndConditions,
+          onTap: () => context.push(
+            '/webView',
+            extra: WebViewRouteParams(
+              title: s.dfxTermsAndConditions,
+              url: Uri.parse('https://docs.dfx.swiss/$lang/tnc.html'),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildDocumentButton(
+          icon: Icons.shield_outlined,
+          title: s.dfxPrivacyPolicy,
+          onTap: () => context.push(
+            '/webView',
+            extra: WebViewRouteParams(
+              title: s.dfxPrivacyPolicy,
+              url: Uri.parse('https://docs.dfx.swiss/$lang/privacy.html'),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildDocumentButton(
+          icon: Icons.policy_outlined,
+          title: s.dfxDisclaimer,
+          onTap: () => context.push(
+            '/webView',
+            extra: WebViewRouteParams(
+              title: s.dfxDisclaimer,
+              url: Uri.parse('https://docs.dfx.swiss/$lang/disclaimer.html'),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildDocumentButton(
+          icon: Icons.account_balance_outlined,
+          title: s.dfxImprint,
+          onTap: () => context.push(
+            '/webView',
+            extra: WebViewRouteParams(
+              title: s.dfxImprint,
+              url: Uri.parse('https://docs.dfx.swiss/$lang/imprint.html'),
             ),
           ),
         ),

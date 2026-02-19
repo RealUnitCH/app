@@ -1,5 +1,11 @@
 {
   "aktionariatDisclaimer": "Haftungsausschluss",
+  "dfxDisclaimer": "Haftungsausschluss",
+  "dfxImprint": "Impressum",
+  "dfxPrivacyPolicy": "Datenschutzerklärung",
+  "dfxTermsAndConditions": "Allgemeine Geschäftsbedingungen",
+  "dfxText": "Die RealUnit Schweiz AG arbeitet mit der DFX AG zusammen, um Ihnen den Kauf und Verkauf von RealUnit-Aktientoken zu ermöglichen. Im Rahmen dieses Prozesses werden Ihre persönlichen Daten an die DFX AG übermittelt. Dabei entsteht eine Geschäftsbeziehung mit der DFX AG.\n\nBitte lesen und bestätigen Sie die folgenden Dokumente der DFX AG:",
+  "dfxTitle": "Hinweis zur DFX AG",
   "aktionariatImprint": "Impressum",
   "aktionariatPrivacyPolicy": "Datenschutzerklärung",
   "aktionariatTermsOfService": "Nutzungsbedingungen",
