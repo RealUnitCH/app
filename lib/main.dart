@@ -16,6 +16,7 @@ import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/pin/setup_pin_page.dart';
 import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/screens/terms/terms_page.dart';
 import 'package:realunit_wallet/styles/themes.dart';
 
 Future<void> main() async {
@@ -148,7 +149,9 @@ class _WalletAppState extends State<WalletApp> {
     if (homeState.isLoadingWallet) return;
 
     String targetRoute;
-    if (homeState.openWallet == null) {
+    if (!homeState.softwareTermsAccepted) {
+      targetRoute = TermsPage.route;
+    } else if (homeState.openWallet == null) {
       targetRoute = '/welcome';
     } else if (!homeState.onboardingCompleted) {
       targetRoute = OnboardingCompletedPage.route;
