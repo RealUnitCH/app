@@ -1,128 +1,115 @@
-# Privacy Policy
+# Privacy Policy of the RealUnit Wallet App
 
-*Legal notices regarding the collection, use and processing of personal data*
-
-
-## General Privacy Policy
-
-Based on Article 13 of the Swiss Federal Constitution and the data protection provisions of the Swiss Confederation (Data Protection Act, DSG), every person is entitled to protection of their privacy and protection against misuse of their personal data. We comply with these provisions: Personal data is treated in strict confidence and is neither sold nor disclosed to third parties.
-
-In cooperation with our hosting providers, we strive to protect our databases as well as possible from unauthorized access, loss, misuse or falsification.
+*As of: February 2026*
 
 
-## Cookies
-
-This website partially uses so-called cookies. Cookies do not cause any damage to your computer and do not contain viruses. Cookies serve to make our offering more user-friendly, effective and secure. Cookies are small text files that are stored on your computer and saved by your browser.
-
-Most of the cookies we use are so-called "session cookies". They are automatically deleted after your visit ends. Other cookies remain stored on your device until you delete them. These cookies enable us to recognize your browser on your next visit.
-
-You can set your browser so that you are informed about the setting of cookies and only allow cookies in individual cases, exclude the acceptance of cookies for certain cases or in general, and activate the automatic deletion of cookies when closing the browser. If cookies are deactivated, the functionality of this website may be limited.
-
-Cookies that are required to carry out the electronic communication process or to provide certain functions you have requested are stored on the basis of Art. 6 DSG and Art. 6 para. 1 lit. f GDPR. The website operator has a legitimate interest in storing cookies for the technically error-free and optimized provision of its services. Insofar as other cookies (e.g. cookies for analyzing your surfing behavior) are stored, these are treated separately in this privacy policy.
-
-
-## Server Log Files
-
-The provider of this website automatically collects and stores information in so-called server log files, which your browser automatically transmits to us. These are:
-
-- Browser type and browser version
-- Operating system used
-- Referrer URL (last visited website)
-- Host name of the accessing computer
-- Time of the server request
-- IP address
-
-This data is not merged with other data sources.
-
-This data is collected on the basis of Art. 6 DSG and Art. 6 para. 1 lit. f GDPR. The website operator has a legitimate interest in the technically error-free presentation and optimization of its website – the server log files must be recorded for this purpose.
-
-
-## Privacy Policy Regarding the Use of WP Statistics
-
-This website uses the WordPress analysis plugin WP Statistics. The provider of this plugin is wp-statistics.com. Simple statistics are created from the data in anonymized form. No user profiles are created and no cookies are set. All data collected by WP Statistics is stored completely anonymized on the web server. Personal identification of a visitor is therefore not possible, even retrospectively.
-
-
-## SSL or TLS Encryption
-
-This website uses SSL or TLS encryption for security reasons and to protect the transmission of confidential content, such as inquiries that you send to us as the website operator. You can typically recognize an encrypted connection by the fact that the address bar of the browser changes from "http://" to "https://" and by the lock symbol in your browser bar.
-
-When SSL or TLS encryption is activated, the data you transmit to us cannot be read by third parties.
-
-
-## Contact Form
-
-If you send us inquiries via the contact form, your details from the inquiry form, including the contact details you provided there, will be stored by us for the purpose of processing the inquiry and in case of follow-up questions. We will not share this data without your consent under any circumstances.
-
-The processing of the data entered in the contact form is therefore carried out exclusively on the basis of your consent to data processing (Art. 6 DSG; Art. 6 para. 1 lit. a GDPR). You can revoke this consent at any time. An informal message by e-mail to us (info@realunit.ch) is sufficient for this purpose. The legality of the data processing operations carried out until the revocation remains unaffected by the revocation.
-
-The data you enter in the contact form will remain with us until you request deletion, revoke your consent to storage, or the purpose for data storage no longer applies (e.g. after your inquiry has been processed). Mandatory legal provisions – in particular retention periods – remain unaffected.
-
-
-## Comment Function
-
-For the comment function on this website, in addition to your comment, information about the time the comment was created, your e-mail address and, if you do not post anonymously, the username you have chosen will be stored.
-
-The comments and the associated data (e.g. e-mail address) are stored and remain on this website until the commented content has been completely deleted or the comments must be deleted for legal reasons (e.g. offensive comments).
-
-The comments are stored on the basis of your consent (Art. 6 DSG; Art. 6 para. 1 lit. a GDPR). You can revoke any consent you have given at any time. An informal message by e-mail to us (info@realunit.ch) is sufficient for this purpose. The legality of the data processing operations already carried out remains unaffected by the revocation.
-
-
-## Newsletter
-
-If you would like to receive the newsletter offered on this website, we need an e-mail address from you as well as information that allows us to verify that you are the owner of the specified e-mail address and agree to receive the newsletter. No further data is collected, or only on a voluntary basis. We use this data exclusively for sending the requested information and do not pass it on to third parties under any circumstances.
-
-The processing of your data in connection with the newsletter is carried out exclusively for the purpose of informing you about the activities of the company (e.g. sending semi-annual reports, media coverage about the company).
-
-The processing of the data entered in the newsletter registration form is carried out exclusively on the basis of your consent (Art. 6 DSG; Art. 6 para. 1 lit. a GDPR). You can revoke the consent granted for the storage of data, the e-mail address and their use for sending the newsletter at any time, for example via the "Unsubscribe" link in the newsletter or by informal notification by e-mail to us (info@realunit.ch). The legality of the data processing operations already carried out remains unaffected by the revocation.
-
-The data you have provided for the purpose of receiving the newsletter will be stored by us until you unsubscribe from the newsletter and will be deleted after you cancel the newsletter. Data that has been stored by us for other purposes remains unaffected.
-
-
-## YouTube with Enhanced Privacy
-
-This website uses plugins from the YouTube website. The operator of the pages is YouTube, LLC, 901 Cherry Ave., San Bruno, CA 94066, USA.
-
-We use YouTube in enhanced privacy mode. According to YouTube, this mode means that YouTube does not store any information about visitors to this website before they watch the video. However, the enhanced privacy mode does not necessarily exclude the sharing of data with YouTube partners. For example, YouTube establishes a connection to the Google DoubleClick network regardless of whether you watch a video.
-
-As soon as you start a YouTube video on this website, a connection to YouTube's servers is established. The YouTube server is informed which of our pages you have visited. If you are logged into your YouTube account, you enable YouTube to assign your surfing behavior directly to your personal profile. You can prevent this by logging out of your YouTube account.
-
-Furthermore, YouTube may store various cookies on your device after starting a video. With the help of cookies, YouTube can obtain information about visitors to this website. This information is used, among other things, to collect video statistics, improve user-friendliness and prevent fraud attempts. The cookies remain on your device until you delete them.
-
-After starting a YouTube video, further data processing operations may be triggered over which we have no influence.
-
-The use of YouTube is in the interest of an appealing presentation of our online offerings. This constitutes a legitimate interest within the meaning of Art. 6 DSG or Art. 6 para. 1 lit. f GDPR.
-
-For more information about privacy at YouTube, please refer to their privacy policy at: https://policies.google.com/privacy?hl=en.
-
-
-## Google Web Fonts
-
-This site uses so-called "Web Fonts" provided by Google for the uniform display of fonts. When you access a page, your browser loads the required Web Fonts into its browser cache in order to display texts and fonts correctly.
-
-For this purpose, the browser you are using must connect to Google's servers. This gives Google knowledge that this website has been accessed via your IP address. The use of Google Web Fonts is in the interest of a uniform and appealing presentation of our online offerings. This constitutes a legitimate interest within the meaning of Art. 6 DSG or Art. 6 para. 1 lit. f GDPR.
-
-If your browser does not support Web Fonts, your computer will use a default font.
-
-For more information about Google Web Fonts, please visit https://developers.google.com/fonts/faq and Google's privacy policy: https://policies.google.com/privacy?hl=en.
-
-
-## Final Provisions
-
-### Severability Clause
-
-Should individual provisions of the terms of use or the privacy policy be deemed invalid, unlawful or unenforceable by a competent court or authority under the applicable law in each case, the respective provision shall be deemed not to be part of the disclaimer. However, the validity, legality and enforceability of the remaining provisions of these terms of use or the privacy policy under the law of the relevant country or any other country shall not be restricted thereby.
-
-### Jurisdiction and Applicable Law
-
-The courts at the registered office of the company shall have exclusive jurisdiction for all disputes in connection with the use of the company's website. Swiss law shall apply.
-
-### Further Information
-
-For further information on the privacy policy, please contact the company by telephone or e-mail.
+## 1. Responsible Entity
 
 RealUnit Schweiz AG\
 Schochenmühlestrasse 6\
 6340 Baar, Switzerland
 
 Phone: +41 41 761 00 90\
+Email: info@realunit.ch\
 Website: realunit.ch
+
+Based on Article 13 of the Swiss Federal Constitution and the data protection provisions of the Swiss Confederation (Data Protection Act, DSG), every person is entitled to protection of their privacy and protection against misuse of their personal data. We comply with these provisions: personal data is treated in strict confidence and is neither sold nor disclosed to unrelated third parties without a legal basis.
+
+
+## 2. Local Data Storage
+
+The app stores your data **locally on your device** by default:
+
+- **Wallet data** (private keys, recovery words) is stored in an encrypted local database.
+- **PIN** is stored exclusively as a cryptographic hash, not in plain text.
+- **Settings** (language, currency, network) are stored locally.
+
+RealUnit has **no access** to your private keys, your recovery words (seed phrase), or your PIN.
+
+
+## 3. Collection and Sharing of Personal Data
+
+Registration is required for the purchase and sale of RealUnit share tokens and for entry in the share register. The following personal data is collected:
+
+- First and last name
+- Email address
+- Phone number
+- Residential address
+- Date of birth
+- Citizenship
+- Account type (individual or corporation)
+
+This data is transmitted to and processed by the following companies:
+
+- **RealUnit Schweiz AG** – for maintaining the share register and fulfilling legal obligations (e.g. reporting obligations, AEOI)
+- **DFX AG** – for processing buy and sell transactions and conducting identity verification (KYC)
+- **Aktionariat AG** – for technical support of shareholder registration and tokenization
+
+Processing is based on your consent and for the fulfillment of contractual and legal obligations (Art. 6 DSG; Art. 6 para. 1 lit. a, b and c GDPR).
+
+
+## 4. Identity Verification (KYC)
+
+Identity verification (Know Your Customer, KYC) is required above certain amounts. This is carried out through DFX AG. Additional data may be collected, in particular:
+
+- Identity documents (passport, identity card)
+- Biometric data for facial recognition (as part of video identification)
+
+This data is processed by DFX AG in accordance with their own privacy policy.
+
+
+## 5. Communication with External Services
+
+The app communicates with external services for certain functions:
+
+- **DFX AG**: For exchange rate queries, balance queries, buy/sell and registration functions. Your wallet address and, where applicable, personal data are transmitted.
+- **Ethereum Blockchain Nodes**: For submitting transactions and querying blockchain data. Your wallet address and IP address may be transmitted to node operators.
+
+The respective privacy policies of these third-party services apply to their use.
+
+
+## 6. Blockchain Transparency
+
+All transactions on the Ethereum blockchain are **publicly visible**. This means that your wallet address and all associated transactions can be viewed by anyone. RealUnit has no influence over the public nature of the blockchain.
+
+
+## 7. Device Permissions
+
+The app may request the following device permissions:
+
+- **Camera**: For scanning QR codes (e.g. for wallet addresses or payment requests)
+- **Biometric sensors**: For Face ID or fingerprint unlock (optional)
+
+These permissions are optional and can be managed at any time in your device settings. Biometric data is processed exclusively on your device and is never transmitted to us or third parties.
+
+
+## 8. Data Security
+
+Communication between the app and external services is carried out via encrypted connections (TLS/SSL). We strive to protect your data through appropriate technical and organizational measures against unauthorized access, loss, or misuse.
+
+
+## 9. Your Rights
+
+You have the right at any time to:
+
+- **Request information** about the personal data we have stored
+- **Request correction** of inaccurate data
+- **Request deletion** of your data, insofar as no statutory retention obligations apply
+- **Revoke your consent** to data processing at any time
+
+To exercise these rights, please contact info@realunit.ch.
+
+
+## 10. Final Provisions
+
+### Severability Clause
+
+Should individual provisions of this privacy policy be deemed invalid by a competent court or authority, the validity of the remaining provisions shall not be affected.
+
+### Amendments
+
+RealUnit reserves the right to amend this privacy policy at any time. The current version is made available in the app.
+
+### Applicable Law and Jurisdiction
+
+Swiss law shall apply exclusively. The place of jurisdiction is Baar, Canton of Zug, Switzerland, to the extent permitted by law.
