@@ -12,7 +12,6 @@ class TermsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context);
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -49,25 +48,21 @@ class TermsPage extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () => context.push('/settings/termsOfUse'),
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  '${s.softwareTermsText} ${s.termsOfUse} ${s.softwareTermsSuffix}.',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    height: 20 / 14,
-                                    color: RealUnitColors.neutral500,
-                                  ),
+                          InkWell(
+                            onTap: () => context.push('/settings/termsOfUse'),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                S.of(context).softwareTermsText,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  height: 20 / 14,
+                                  color: RealUnitColors.neutral500,
                                 ),
                               ),
                             ),
@@ -79,7 +74,7 @@ class TermsPage extends StatelessWidget {
                               child: FilledButton(
                                 onPressed: () =>
                                     context.read<HomeBloc>().add(const AcceptSoftwareTermsEvent()),
-                                child: Text(s.start),
+                                child: Text(S.of(context).start),
                               ),
                             ),
                           ),
