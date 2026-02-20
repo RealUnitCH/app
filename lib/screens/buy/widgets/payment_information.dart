@@ -16,10 +16,6 @@ class PaymentInformation extends StatelessWidget {
     return BlocBuilder<BuyPaymentInfoCubit, BuyPaymentInfoState>(
       builder: (context, paymentInfoState) {
         if (paymentInfoState is BuyPaymentInfoSuccess) {
-          final parsedAmount = double.tryParse(amount.replaceAll(',', '.')) ?? 0;
-          if (parsedAmount < 1000) {
-            return const SizedBox.shrink();
-          }
           return PaymentInformationDetails(
             amount: amount,
             buyPaymentInfo: paymentInfoState.buyPaymentInfo,
@@ -41,6 +37,11 @@ class PaymentInformation extends StatelessWidget {
             return PaymentActionRequired(
               title: S.of(context).identityCheckRequired,
               description: S.of(context).identityCheckDescription,
+            );
+          } else if (error == PaymentInfoError.unknown) {
+            PaymentActionRequired(
+              title: S.of(context).paymentInformationFailed,
+              description: S.of(context).paymentInformationFailedDescription,
             );
           }
         }
