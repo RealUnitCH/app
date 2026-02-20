@@ -36,6 +36,7 @@
   "city": "City",
   "close": "Close",
   "collectInterest": "Collect",
+  "complete": "Complete",
   "completed": "Completed",
   "confirm": "Confirm",
   "connectBitboxContent": "Please connect your BitBox02 with your Smartphone.",
