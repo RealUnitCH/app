@@ -45,21 +45,23 @@ class KycCubit extends Cubit<KycState> {
       }
 
       if (level < 30) {
-        final requiredSteps = kycStatus.kycSteps.where(
-          (step) => _requiredStepNames.contains(step.name),
-        );
+        try {
+          await _continueKyc();
+        } catch (_) {
+          // If continue fails (e.g. no next step available), show pending for in-review steps
+          final pendingStep = kycStatus.kycSteps
+              .where((step) => _requiredStepNames.contains(step.name))
+              .firstWhereOrNull((step) => step.status == KycStepStatus.inReview);
 
-        final pendingStep = requiredSteps.firstWhereOrNull(
-          (step) => step.status == KycStepStatus.inReview,
-        );
-
-        if (pendingStep != null) {
-          final step = _mapStepName(pendingStep.name);
-          if (step != null) emit(KycPending(step));
-          return;
+          if (pendingStep != null) {
+            final step = _mapStepName(pendingStep.name);
+            if (step != null) {
+              emit(KycPending(step));
+              return;
+            }
+          }
+          rethrow;
         }
-
-        await _continueKyc();
         return;
       }
 
