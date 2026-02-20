@@ -70,7 +70,6 @@ Diese Berechtigungen sind optional und können in den Geräteeinstellungen verwa
 Die App nutzt Dienste von Drittanbietern, insbesondere:
 
 - **DFX AG**: Für Kurs- und Guthabendaten sowie Kauf-/Verkaufsfunktionen
-- **Ethereum-Blockchain-Nodes**: Für die Übermittlung von Transaktionen und Abfrage von Blockchain-Daten
 
 Für die Nutzung dieser Drittanbieterdienste gelten deren jeweilige Nutzungsbedingungen und Datenschutzrichtlinien. RealUnit übernimmt keine Haftung für die Verfügbarkeit oder Funktionsweise von Drittanbieterdiensten.
 

@@ -8,7 +8,8 @@ import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/home/home.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
-import 'package:realunit_wallet/screens/legal/legal_page.dart';
+import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
+import 'package:realunit_wallet/screens/legal/subpages/legal_document_page.dart';
 import 'package:realunit_wallet/screens/onboarding/onboarding_completed_page.dart';
 import 'package:realunit_wallet/screens/pin/setup_pin_page.dart';
 import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
@@ -18,6 +19,7 @@ import 'package:realunit_wallet/screens/sell/sell_page.dart';
 import 'package:realunit_wallet/screens/send/send_page.dart';
 import 'package:realunit_wallet/screens/send_invoice/send_invoice_page.dart';
 import 'package:realunit_wallet/screens/settings/settings_page.dart';
+import 'package:realunit_wallet/screens/settings_contact/settings_contact_page.dart';
 import 'package:realunit_wallet/screens/settings_currencies/settings_currencies_page.dart';
 import 'package:realunit_wallet/screens/settings_edit_node/settings_edit_node_page.dart';
 import 'package:realunit_wallet/screens/settings_languages/settings_languages_page.dart';
@@ -89,6 +91,10 @@ void setupRouter() {
           builder: (context, state) => const BuyPage(),
         ),
         GoRoute(
+          path: LegalDisclaimerPage.routeName,
+          builder: (context, state) => const LegalDisclaimerPage(),
+        ),
+        GoRoute(
           path: SellPage.routeName,
           builder: (context, state) => const SellPage(),
         ),
@@ -129,6 +135,10 @@ void setupRouter() {
               builder: (context, state) => const SettingsLanguagePage(),
             ),
             GoRoute(
+              path: '/contact',
+              builder: (context, state) => const SettingsContactPage(),
+            ),
+            GoRoute(
               path: '/currencies',
               builder: (context, state) => const SettingsCurrenciesPage(),
             ),
@@ -159,8 +169,13 @@ void setupRouter() {
               ],
             ),
             GoRoute(
-              path: LegalPage.routeName,
-              builder: (context, state) => const LegalPage(),
+              path: '/termsOfUse',
+              builder: (context, state) => LegalDocumentPage(
+                params: LegalDocumentParams(
+                  title: S.of(context).termsOfUse,
+                  assetBaseName: 'terms_of_use',
+                ),
+              ),
             ),
           ],
           builder: (context, state) => const SettingsPage(),

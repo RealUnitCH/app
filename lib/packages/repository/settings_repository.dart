@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,7 +15,13 @@ class SettingsRepository {
 
   int? get currentWalletId => _sharedPreferences.getInt('currentWalletId');
 
-  String get language => _sharedPreferences.getString('language') ?? 'de';
+  String get language {
+    final stored = _sharedPreferences.getString('language');
+    if (stored != null) return stored;
+
+    final systemLang = PlatformDispatcher.instance.locale.languageCode;
+    return systemLang == 'de' ? 'de' : 'en';
+  }
 
   set language(String langCode) => _sharedPreferences.setString('language', langCode);
 
