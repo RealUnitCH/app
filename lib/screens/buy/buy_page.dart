@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
+import 'package:realunit_wallet/screens/buy/widgets/payment_additional_action_needed_button.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
-import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
-import 'package:realunit_wallet/styles/colors.dart';
 
 class BuyPage extends StatelessWidget {
   static const routeName = '/buy';
@@ -86,53 +83,8 @@ class _BuyViewState extends State<BuyView> {
                               const SizedBox(height: 32),
                               PaymentInformation(amount: _amountController.text),
                               const Spacer(),
-                              BlocBuilder<BuyPaymentInfoCubit, BuyPaymentInfoState>(
-                                builder: (context, paymentState) {
-                                  if (paymentState is BuyPaymentInfoFailure &&
-                                      paymentState.error == PaymentInfoError.registrationRequired) {
-                                    final amount =
-                                        double.tryParse(
-                                          _amountController.text.replaceAll(',', '.'),
-                                        ) ??
-                                        0;
-                                    final isValid = amount >= 1000;
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 20),
-                                      child: Column(
-                                        spacing: 8,
-                                        children: [
-                                          if (!isValid)
-                                            Text(
-                                              S.of(context).buyMinAmount,
-                                              style: const TextStyle(
-                                                color: RealUnitColors.neutral500,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          SizedBox(
-                                            width: double.infinity,
-                                            child: FilledButton(
-                                              onPressed: isValid
-                                                  ? () async {
-                                                      await context.push(
-                                                        LegalDisclaimerPage.routeName,
-                                                      );
-                                                      if (context.mounted) {
-                                                        context
-                                                            .read<BuyPaymentInfoCubit>()
-                                                            .getPaymentInfo();
-                                                      }
-                                                    }
-                                                  : null,
-                                              child: Text(S.of(context).next),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  }
-                                  return const SizedBox.shrink();
-                                },
+                              PaymentAdditionalActionNeededButton(
+                                amountController: _amountController,
                               ),
                             ],
                           ),

@@ -132,6 +132,8 @@
   "or": "Or",
   "originalPdf": "Original PDF",
   "pay": "Pay",
+  "paymentInformationFailed": "An error occurred while getting the payment information.",
+  "paymentInformationFailedDescription": "Please try again later. If the error persists, contact our support team.",
   "payoutAccountAdd": "Add payout account",
   "payoutAccountSelect": "Select payout account",
   "payScan": "Pay • Scan",

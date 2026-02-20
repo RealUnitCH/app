@@ -28,7 +28,7 @@ class KycFailurePage extends StatelessWidget {
                 ),
               ),
               Text(
-                S.of(context).kycPendingDescription(message),
+                S.of(context).kycFailureDescription(message),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: RealUnitColors.neutral500,

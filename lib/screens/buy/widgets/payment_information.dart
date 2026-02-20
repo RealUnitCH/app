@@ -38,6 +38,11 @@ class PaymentInformation extends StatelessWidget {
               title: S.of(context).identityCheckRequired,
               description: S.of(context).identityCheckDescription,
             );
+          } else if (error == PaymentInfoError.unknown) {
+            PaymentActionRequired(
+              title: S.of(context).paymentInformationFailed,
+              description: S.of(context).paymentInformationFailedDescription,
+            );
           }
         }
         return const SizedBox.shrink();

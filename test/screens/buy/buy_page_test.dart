@@ -45,8 +45,10 @@ void main() {
     when(() => converterCubit.state).thenReturn(const BuyConverterState());
     when(() => buyPaymentInfoCubit.state).thenReturn(const BuyPaymentInfoInitial());
     when(
-      () =>
-          buyPaymentInfoCubit.getPaymentInfo(amount: any(named: 'amount'), currency: Currency.chf),
+      () => buyPaymentInfoCubit.getPaymentInfo(
+        amount: any(named: 'amount'),
+        currency: Currency.chf,
+      ),
     ).thenAnswer((_) => Future.value());
   });
 
@@ -93,20 +95,31 @@ void main() {
       when(() => buyPaymentInfoCubit.state).thenReturn(
         const BuyPaymentInfoSuccess(
           BuyPaymentInfo(
-              id: 1,
-              iban: 'iban',
-              bic: 'bic',
-              name: 'name',
-              street: 'street',
-              number: 'number',
-              zip: 'zip',
-              city: 'city',
-              country: 'country',
-              currency: Currency.chf),
+            id: 1,
+            iban: 'iban',
+            bic: 'bic',
+            name: 'name',
+            street: 'street',
+            number: 'number',
+            zip: 'zip',
+            city: 'city',
+            country: 'country',
+            currency: Currency.chf,
+          ),
         ),
       );
 
+      whenListen(
+        converterCubit,
+        Stream.fromIterable([
+          const BuyConverterState(fiatText: '1000', sharesText: '1.00', loading: true),
+          const BuyConverterState(fiatText: '1000', sharesText: '1.00', loading: false),
+        ]),
+        initialState: const BuyConverterState(fiatText: '1000', sharesText: '1.00'),
+      );
+
       await tester.pumpApp(buildSubject(const BuyView()));
+      await tester.pumpAndSettle();
 
       expect(find.byType(PaymentConverter), findsOne);
       expect(find.byType(PaymentInformationDetails), findsOne);
@@ -131,6 +144,12 @@ void main() {
       expect(find.byType(PaymentActionRequired), findsOne);
       expect(find.byType(PaymentInformation), findsOne);
       expect(find.text(S.current.registrationRequired), findsOne);
+      expect(
+        find.byWidgetPredicate(
+          (Widget widget) => widget is FilledButton && widget.onPressed != null,
+        ),
+        findsOne,
+      );
     });
 
     testWidgets('renders correctly when kyc is required', (tester) async {
@@ -143,6 +162,30 @@ void main() {
       expect(find.byType(PaymentActionRequired), findsOne);
       expect(find.byType(PaymentInformation), findsOne);
       expect(find.text(S.current.identityCheckRequired), findsOne);
+      expect(
+        find.byWidgetPredicate(
+          (Widget widget) => widget is FilledButton && widget.onPressed != null,
+        ),
+        findsOne,
+      );
+    });
+
+    testWidgets('renders correctly when min amount is not met', (tester) async {
+      when(() => buyPaymentInfoCubit.state).thenReturn(
+        const BuyPaymentInfoFailure(PaymentInfoError.minAmountNotMet),
+      );
+
+      await tester.pumpApp(buildSubject(const BuyView()));
+
+      expect(find.byType(PaymentActionRequired), findsNothing);
+      expect(find.byType(PaymentInformation), findsOne);
+      expect(find.text(S.current.buyMinAmount), findsOne);
+      expect(
+        find.byWidgetPredicate(
+          (Widget widget) => widget is FilledButton && widget.onPressed == null,
+        ),
+        findsOne,
+      );
     });
 
     testWidgets('updates controllers when $BuyConverterState changes', (tester) async {
