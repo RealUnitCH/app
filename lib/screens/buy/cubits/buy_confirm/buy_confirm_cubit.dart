@@ -8,8 +8,8 @@ class BuyConfirmCubit extends Cubit<BuyConfirmState> {
   final RealUnitBuyPaymentInfoService _buyPaymentInfoService;
 
   BuyConfirmCubit(RealUnitBuyPaymentInfoService buyPaymentInfoService)
-      : _buyPaymentInfoService = buyPaymentInfoService,
-        super(BuyConfirmInitial());
+    : _buyPaymentInfoService = buyPaymentInfoService,
+      super(BuyConfirmInitial());
 
   Future<void> confirmPayment(int paymentInfoId) async {
     try {

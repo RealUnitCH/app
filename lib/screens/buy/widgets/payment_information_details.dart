@@ -35,8 +35,11 @@ class PaymentInformationDetailsView extends StatelessWidget {
   final String amount;
   final BuyPaymentInfo buyPaymentInfo;
 
-  const PaymentInformationDetailsView(
-      {super.key, required this.buyPaymentInfo, required this.amount});
+  const PaymentInformationDetailsView({
+    super.key,
+    required this.buyPaymentInfo,
+    required this.amount,
+  });
 
   @override
   Widget build(BuildContext context) {
