@@ -60,57 +60,57 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(
-          title: Text(widget.params.title),
-        ),
-        body: _markdownContent == null
-            ? const Center(child: CupertinoActivityIndicator())
-            : Column(
-                children: [
-                  Expanded(
-                    child: Markdown(
-                      data: _markdownContent!,
-                      styleSheet: MarkdownStyleSheet(
-                        h2Padding: const EdgeInsets.only(top: 16),
+    appBar: AppBar(
+      title: Text(widget.params.title),
+    ),
+    body: _markdownContent == null
+        ? const Center(child: CupertinoActivityIndicator())
+        : Column(
+            children: [
+              Expanded(
+                child: Markdown(
+                  data: _markdownContent!,
+                  styleSheet: MarkdownStyleSheet(
+                    h2Padding: const EdgeInsets.only(top: 16),
+                  ),
+                  onTapLink: (text, href, title) {
+                    if (href == null || href.startsWith('mailto:') || href.contains('@')) return;
+                    context.push(
+                      '/webView',
+                      extra: WebViewRouteParams(
+                        title: text,
+                        url: Uri.parse(href),
                       ),
-                      onTapLink: (text, href, title) {
-                        if (href == null || href.startsWith('mailto:') || href.contains('@')) return;
-                        context.push(
+                    );
+                  },
+                ),
+              ),
+              if (_pdfUrl != null)
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0,
+                      vertical: 20.0,
+                    ),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.push(
                           '/webView',
                           extra: WebViewRouteParams(
-                            title: text,
-                            url: Uri.parse(href),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  if (_pdfUrl != null)
-                    SafeArea(
-                      top: false,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20.0,
-                          vertical: 20.0,
-                        ),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: () => context.push(
-                              '/webView',
-                              extra: WebViewRouteParams(
-                                title: S.of(context).originalPdf,
-                                url: Uri.parse(_pdfUrl!),
-                                showDownloadButton: true,
-                              ),
-                            ),
-                            icon: const Icon(Icons.picture_as_pdf_outlined),
-                            label: Text(S.of(context).originalPdf),
+                            title: S.of(context).originalPdf,
+                            url: Uri.parse(_pdfUrl!),
+                            showExternalBrowserButton: true,
                           ),
                         ),
+                        icon: const Icon(Icons.picture_as_pdf_outlined),
+                        label: Text(S.of(context).originalPdf),
                       ),
                     ),
-                ],
-              ),
-      );
+                  ),
+                ),
+            ],
+          ),
+  );
 }
