@@ -45,7 +45,7 @@ class PaymentInformationDetailsView extends StatelessWidget {
         if (state is BuyConfirmSuccess) {
           await showModalBottomSheet(
             context: context,
-            builder: (_) => const PaymentExecutedSheet(),
+            builder: (_) => PaymentExecutedSheet(reference: state.reference),
           );
           if (context.mounted) context.pop();
         }

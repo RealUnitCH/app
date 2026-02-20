@@ -22,6 +22,7 @@
   "blockchain": "Blockchain",
   "buy": "Kaufen",
   "buyExecutedDescription": "Sobald Ihre Überweisung eingegangen ist, übertragen wir die REALU-Token in Ihre Wallet. Über den Fortschritt Ihrer Transaktion informieren wir Sie per E-Mail.",
+  "buyExecutedReference": "Ihre Referenz:",
   "buyExecutedTitle": "Vielen Dank.",
   "buyMinAmount": "Mindestbetrag: 1'000 CHF",
   "buyPaymentConfirm": "Klicken Sie hier, sobald Sie die Überweisung getätigt haben",

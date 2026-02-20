@@ -56,7 +56,7 @@ class RealUnitBuyPaymentInfoService {
     }
   }
 
-  Future<void> confirmPayment(int id) async {
+  Future<String> confirmPayment(int id) async {
     final authToken = _appStore.dfxAuthToken;
     final uri = buildUri(_host, _confirmPaymentPath(id));
 
@@ -70,5 +70,8 @@ class RealUnitBuyPaymentInfoService {
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('Failed to confirm payment: ${response.statusCode} ${response.body}');
     }
+
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    return json['reference'] as String;
   }
 }

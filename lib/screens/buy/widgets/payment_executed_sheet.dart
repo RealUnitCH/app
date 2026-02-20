@@ -5,7 +5,9 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/handlebars.dart';
 
 class PaymentExecutedSheet extends StatelessWidget {
-  const PaymentExecutedSheet({super.key});
+  final String reference;
+
+  const PaymentExecutedSheet({super.key, required this.reference});
 
   @override
   Widget build(BuildContext context) => SafeArea(
@@ -42,6 +44,17 @@ class PaymentExecutedSheet extends StatelessWidget {
                       style: const TextStyle(
                         color: RealUnitColors.neutral500,
                         fontSize: 14,
+                        height: 18 / 14,
+                        letterSpacing: 0.0,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '${S.of(context).buyExecutedReference} $reference',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
                         height: 18 / 14,
                         letterSpacing: 0.0,
                       ),
