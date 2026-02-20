@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/widgets/text_link_span.dart';
 
 class TermsPage extends StatelessWidget {
   static const route = '/terms';
@@ -12,7 +12,6 @@ class TermsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context);
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
@@ -49,27 +48,23 @@ class TermsPage extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          RichText(
-                            textAlign: TextAlign.center,
-                            text: TextSpan(
-                              style: const TextStyle(
-                                fontSize: 14,
-                                height: 20 / 14,
-                                color: RealUnitColors.neutral500,
+                          InkWell(
+                            onTap: () => context.push('/settings/termsOfUse'),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              children: [
-                                TextSpan(text: '${s.softwareTermsText} '),
-                                TextLinkSpan.link(
-                                  context,
-                                  text: s.termsOfUse,
-                                  style: const TextStyle(
-                                    color: RealUnitColors.realUnitBlue,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                  uri: Uri.parse('https://realunit.ch/app/nutzungsbedingungen'),
+                              child: Text(
+                                S.of(context).softwareTermsText,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  height: 20 / 14,
+                                  color: RealUnitColors.neutral500,
                                 ),
-                                TextSpan(text: ' ${s.softwareTermsSuffix}.'),
-                              ],
+                              ),
                             ),
                           ),
                           Padding(
@@ -79,7 +74,7 @@ class TermsPage extends StatelessWidget {
                               child: FilledButton(
                                 onPressed: () =>
                                     context.read<HomeBloc>().add(const AcceptSoftwareTermsEvent()),
-                                child: Text(s.next),
+                                child: Text(S.of(context).start),
                               ),
                             ),
                           ),

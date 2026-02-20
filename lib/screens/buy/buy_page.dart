@@ -10,7 +10,7 @@ import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_c
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
-import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
+import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class BuyPage extends StatelessWidget {
@@ -114,7 +114,9 @@ class _BuyViewState extends State<BuyView> {
                                             child: FilledButton(
                                               onPressed: isValid
                                                   ? () async {
-                                                      await context.push(KycPageManager.routeName);
+                                                      await context.push(
+                                                        LegalDisclaimerPage.routeName,
+                                                      );
                                                       if (context.mounted) {
                                                         context
                                                             .read<BuyPaymentInfoCubit>()

@@ -35,7 +35,7 @@ void main() {
       final filledButtonWidget = tester.widget(filledButtonFinder) as FilledButton;
       expect(filledButtonFinder, findsOne);
       expect(filledButtonWidget.enabled, isTrue);
-      expect(find.text(S.current.next), findsOne);
+      expect(find.text(S.current.start), findsOne);
     });
 
     testWidgets('continue button dispatches AcceptSoftwareTermsEvent', (tester) async {
