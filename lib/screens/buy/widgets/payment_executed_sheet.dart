@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -49,15 +50,28 @@ class PaymentExecutedSheet extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Text(
-                      '${S.of(context).buyExecutedReference} $reference',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        height: 18 / 14,
-                        letterSpacing: 0.0,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${S.of(context).buyExecutedReference} $reference',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            height: 18 / 14,
+                            letterSpacing: 0.0,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () => Clipboard.setData(ClipboardData(text: reference)),
+                          child: const Icon(
+                            Icons.copy_outlined,
+                            color: RealUnitColors.realUnitBlue,
+                            size: 16,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 28),
                     FilledButton(
