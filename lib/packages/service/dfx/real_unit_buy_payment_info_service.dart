@@ -4,6 +4,7 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/dto/real_unit_buy_confirm_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/dto/real_unit_buy_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/dto/real_unit_buy_payment_info_dto.dart';
 import 'package:realunit_wallet/styles/currency.dart';
@@ -72,6 +73,7 @@ class RealUnitBuyPaymentInfoService {
     }
 
     final json = jsonDecode(response.body) as Map<String, dynamic>;
-    return json['reference'] as String;
+    final responseDto = RealUnitBuyConfirmDto.fromJson(json);
+    return responseDto.reference;
   }
 }

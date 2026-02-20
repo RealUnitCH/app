@@ -39,15 +39,17 @@ void main() {
         String? capturedUrl;
         String? capturedMethod;
         Map<String, String>? capturedHeaders;
+        final referenceText = 'REALU-123';
 
         final appStore = buildAppStore((request) async {
           capturedUrl = request.url.toString();
           capturedMethod = request.method;
           capturedHeaders = request.headers;
-          return http.Response('{"reference":"REALU-123"}', 200);
+          return http.Response('{"reference":"$referenceText"}', 200);
         });
 
         final paymentInfoId = 123;
+
         service = RealUnitBuyPaymentInfoService(appStore);
         final reference = await service.confirmPayment(paymentInfoId);
 
@@ -55,7 +57,7 @@ void main() {
         expect(capturedUrl, contains(apiConfig.apiHost));
         expect(capturedUrl, contains('/v1/realunit/buy/$paymentInfoId/confirm'));
         expect(capturedHeaders?['Authorization'], equals('Bearer test-auth-token'));
-        expect(reference, equals('REALU-123'));
+        expect(reference, equals(referenceText));
       });
 
       test('throws exception on non-200/201 status code', () async {
@@ -72,23 +74,25 @@ void main() {
       });
 
       test('succeeds on 200 status code', () async {
+        final referenceText = 'REALU-123';
         final appStore = buildAppStore(
-          (request) async => http.Response('{"reference":"REALU-1"}', 200),
+          (request) async => http.Response('{"reference":"$referenceText"}', 200),
         );
         service = RealUnitBuyPaymentInfoService(appStore);
 
         final reference = await service.confirmPayment(1);
-        expect(reference, equals('REALU-1'));
+        expect(reference, equals(referenceText));
       });
 
       test('succeeds on 201 status code', () async {
+        final referenceText = 'REALU-123';
         final appStore = buildAppStore(
-          (request) async => http.Response('{"reference":"REALU-2"}', 201),
+          (request) async => http.Response('{"reference":"$referenceText"}', 201),
         );
         service = RealUnitBuyPaymentInfoService(appStore);
 
         final reference = await service.confirmPayment(1);
-        expect(reference, equals('REALU-2'));
+        expect(reference, equals(referenceText));
       });
     });
   });

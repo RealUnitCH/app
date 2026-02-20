@@ -51,10 +51,11 @@ class PaymentExecutedSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisAlignment: .center,
+                  spacing: 8.0,
                   children: [
                     Text(
-                      '${S.of(context).buyExecutedReference} $reference',
+                      '${S.of(context).buyExecutedReference}: $reference',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -62,7 +63,6 @@ class PaymentExecutedSheet extends StatelessWidget {
                         letterSpacing: 0.0,
                       ),
                     ),
-                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () => Clipboard.setData(ClipboardData(text: reference)),
                       child: const Icon(
