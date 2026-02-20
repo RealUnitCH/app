@@ -4,25 +4,26 @@ import 'package:intl/intl.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_account_merge_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_email_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_email_response_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_register_wallet_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_response_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 
 class RealUnitRegistrationService {
   RealUnitRegistrationService(AppStore appStore) : _appStore = appStore;
 
-  static const _registerStatusPath = '/v1/realunit/register/status';
   static const _registerEmailPath = '/v1/realunit/register/email';
   static const _registerCompletionPath = '/v1/realunit/register/complete';
-  static const _registerAccountMergeDataPath = '/v1/realunit/register/account-merge-data';
-  static const _registerCompleteAccountMergePath = '/v1/realunit/register/complete-account-merge';
+  static const _walletStatusPath = '/v1/realunit/wallet/status';
+  static const _registerWalletPath = '/v1/realunit/register/wallet';
 
   final AppStore _appStore;
 
@@ -31,7 +32,7 @@ class RealUnitRegistrationService {
   Future<bool> checkRegistrationStatus() async {
     final authToken = _appStore.dfxAuthToken;
 
-    final uri = buildUri(_host, _registerStatusPath);
+    final uri = buildUri(_host, _walletStatusPath);
     final response = await _appStore.httpClient.get(
       uri,
       headers: {
@@ -44,7 +45,9 @@ class RealUnitRegistrationService {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
       throw ApiException.fromJson(errorJson);
     }
-    return jsonDecode(response.body) as bool;
+
+    final dto = RealUnitWalletStatusDto.fromJson(jsonDecode(response.body));
+    return dto.isRegistered;
   }
 
   Future<RegistrationEmailStatus> registerEmail(String email) async {
@@ -148,11 +151,11 @@ class RealUnitRegistrationService {
     return responseDto.status;
   }
 
-  /// Gets RealUnit registration data from user
-  Future<RealUnitAccountMergeUserDataDto> getAccountMergeUserData() async {
+  /// Gets user data of wallet
+  Future<RealUnitUserDataDto?> getUserData() async {
     final authToken = _appStore.dfxAuthToken;
 
-    final uri = buildUri(_host, _registerAccountMergeDataPath);
+    final uri = buildUri(_host, _walletStatusPath);
     final response = await _appStore.httpClient.get(
       uri,
       headers: {
@@ -166,12 +169,13 @@ class RealUnitRegistrationService {
       throw ApiException.fromJson(errorJson);
     }
 
-    return RealUnitAccountMergeUserDataDto.fromJson(jsonDecode(response.body));
+    final dto = RealUnitWalletStatusDto.fromJson(jsonDecode(response.body));
+    return dto.realUnitUserDataDto;
   }
 
-  /// Completes RealUnit registration with data from `getAccountMergeUserData()` endpoint
-  Future<RegistrationStatus> completeAccountMergeRegistration(
-    RealUnitAccountMergeUserDataDto userData,
+  /// registers a wallet from an existing user
+  Future<RegistrationStatus> registerWallet(
+    RealUnitUserDataDto userData,
   ) async {
     final credentials = _appStore.wallet.primaryAccount.primaryAddress;
     final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -191,7 +195,7 @@ class RealUnitRegistrationService {
       registrationDate: registrationDate,
     );
 
-    final requestDto = RealUnitCompleteAccountMergeRegistrationDto(
+    final requestDto = RealUnitRegisterWalletRequestDto(
       walletAddress: credentials.address.hexEip55,
       signature: signature,
       registrationDate: registrationDate,
@@ -199,7 +203,7 @@ class RealUnitRegistrationService {
 
     final authToken = _appStore.dfxAuthToken;
 
-    final uri = buildUri(_host, _registerCompleteAccountMergePath);
+    final uri = buildUri(_host, _registerWalletPath);
     final response = await _appStore.httpClient.post(
       uri,
       headers: {

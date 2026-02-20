@@ -36,8 +36,9 @@ class KycRegistrationEmailVerificationCubit extends Cubit<KycRegistrationEmailVe
 
   Future<void> _completeRegistration() async {
     try {
-      final pendingData = await _registrationService.getAccountMergeUserData();
-      await _registrationService.completeAccountMergeRegistration(pendingData);
+      final userData = await _registrationService.getUserData();
+      if (userData == null) throw Exception('No existing user data');
+      await _registrationService.registerWallet(userData);
     } catch (e) {
       developer.log(e.toString());
       emit(const KycRegistrationEmailVerificationRegistrationFailure());

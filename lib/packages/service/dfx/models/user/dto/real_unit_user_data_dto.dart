@@ -1,7 +1,7 @@
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 
-class RealUnitAccountMergeUserDataDto {
+class RealUnitUserDataDto {
   final String email;
   final String name;
   final String type;
@@ -17,7 +17,7 @@ class RealUnitAccountMergeUserDataDto {
   final List<CountryAndTin>? countryAndTINs;
   final KycPersonalData kycData;
 
-  const RealUnitAccountMergeUserDataDto({
+  const RealUnitUserDataDto({
     required this.email,
     required this.name,
     required this.type,
@@ -34,8 +34,8 @@ class RealUnitAccountMergeUserDataDto {
     required this.kycData,
   });
 
-  factory RealUnitAccountMergeUserDataDto.fromJson(Map<String, dynamic> json) {
-    return RealUnitAccountMergeUserDataDto(
+  factory RealUnitUserDataDto.fromJson(Map<String, dynamic> json) {
+    return RealUnitUserDataDto(
       email: json['email'] as String,
       name: json['name'] as String,
       type: json['type'] as String,
@@ -56,22 +56,4 @@ class RealUnitAccountMergeUserDataDto {
       kycData: KycPersonalData.fromJson(json['kycData'] as Map<String, dynamic>),
     );
   }
-}
-
-class RealUnitCompleteAccountMergeRegistrationDto {
-  final String walletAddress;
-  final String signature;
-  final String registrationDate;
-
-  const RealUnitCompleteAccountMergeRegistrationDto({
-    required this.walletAddress,
-    required this.signature,
-    required this.registrationDate,
-  });
-
-  Map<String, dynamic> toJson() => {
-    'walletAddress': walletAddress,
-    'signature': signature,
-    'registrationDate': registrationDate,
-  };
 }
