@@ -88,14 +88,28 @@ class _BuyViewState extends State<BuyView> {
                               const Spacer(),
                               BlocBuilder<BuyPaymentInfoCubit, BuyPaymentInfoState>(
                                 builder: (context, paymentState) {
+                                  final parsedAmount =
+                                      double.tryParse(
+                                        _amountController.text.replaceAll(',', '.'),
+                                      ) ??
+                                      0;
+                                  final isValid = parsedAmount >= 1000;
+
+                                  if (paymentState is BuyPaymentInfoSuccess && !isValid) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 20),
+                                      child: Text(
+                                        S.of(context).buyMinAmount,
+                                        style: const TextStyle(
+                                          color: RealUnitColors.neutral500,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    );
+                                  }
+
                                   if (paymentState is BuyPaymentInfoFailure &&
                                       paymentState.error == PaymentInfoError.registrationRequired) {
-                                    final amount =
-                                        double.tryParse(
-                                          _amountController.text.replaceAll(',', '.'),
-                                        ) ??
-                                        0;
-                                    final isValid = amount >= 1000;
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 20),
                                       child: Column(
