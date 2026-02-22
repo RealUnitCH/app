@@ -125,32 +125,35 @@ class DashboardView extends StatelessWidget {
                         ),
                       )
                     else
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20.0,
-                          vertical: 24.0,
-                        ),
-                        child: Column(
-                          children: [
-                            const Spacer(),
-                            SvgPicture.asset(
-                              'assets/images/add-realu-token-visual.svg',
-                              width: 165,
-                              height: 165,
-                            ),
-                            const Spacer(),
-                            if (isFiatServiceAvailable)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 20),
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: FilledButton(
-                                    onPressed: () => context.push(BuyPage.routeName),
-                                    child: Text(S.of(context).buy),
+                      Align(
+                        alignment: .topCenter,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20.0,
+                            vertical: 24.0,
+                          ),
+                          child: Column(
+                            children: [
+                              const Spacer(),
+                              SvgPicture.asset(
+                                'assets/images/add-realu-token-visual.svg',
+                                width: 165,
+                                height: 165,
+                              ),
+                              const Spacer(),
+                              if (isFiatServiceAvailable)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 20),
+                                  child: SizedBox(
+                                    width: double.infinity,
+                                    child: FilledButton(
+                                      onPressed: () => context.push(BuyPage.routeName),
+                                      child: Text(S.of(context).buy),
+                                    ),
                                   ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                   ],

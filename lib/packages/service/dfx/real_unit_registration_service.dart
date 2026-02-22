@@ -77,11 +77,11 @@ class RealUnitRegistrationService {
     final requestDto = RealUnitRegistrationRequestDto(
       type: registration.type.jsonName,
       email: registration.email.toLowerCase(),
-      name: '${registration.firstName} ${registration.lastName}',
+      name: '${registration.firstName} ${registration.lastName}'.trim(),
       phoneNumber: registration.phoneNumber,
       birthday: registration.birthday,
       nationality: registration.nationality.symbol,
-      addressStreet: '${registration.addressStreet} ${registration.addressStreetNumber}',
+      addressStreet: '${registration.addressStreet} ${registration.addressStreetNumber}'.trim(),
       addressPostalCode: registration.addressPostalCode,
       addressCity: registration.addressCity,
       addressCountry: registration.addressCountry.symbol,

@@ -60,10 +60,6 @@ class KycRegistrationAddressStep extends StatelessWidget {
                         controller: addressNumberCtrl,
                         label: S.of(context).number,
                         keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return '';
-                          return null;
-                        },
                       ),
                     ),
                   ],
@@ -120,7 +116,7 @@ class KycRegistrationAddressStep extends StatelessWidget {
                           await onSubmit();
                         }
                       },
-                      child: const Text('Abschliessen'),
+                      child: Text(S.of(context).complete),
                     ),
                   ),
                 ),
