@@ -35,8 +35,11 @@ class PaymentInformationDetailsView extends StatelessWidget {
   final String amount;
   final BuyPaymentInfo buyPaymentInfo;
 
-  const PaymentInformationDetailsView(
-      {super.key, required this.buyPaymentInfo, required this.amount});
+  const PaymentInformationDetailsView({
+    super.key,
+    required this.buyPaymentInfo,
+    required this.amount,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +48,7 @@ class PaymentInformationDetailsView extends StatelessWidget {
         if (state is BuyConfirmSuccess) {
           await showModalBottomSheet(
             context: context,
-            builder: (_) => const PaymentExecutedSheet(),
+            builder: (_) => PaymentExecutedSheet(reference: state.reference),
           );
           if (context.mounted) context.pop();
         }

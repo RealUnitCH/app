@@ -9,7 +9,14 @@ class BuyConfirmInitial extends BuyConfirmState {}
 
 class BuyConfirmLoading extends BuyConfirmState {}
 
-class BuyConfirmSuccess extends BuyConfirmState {}
+class BuyConfirmSuccess extends BuyConfirmState {
+  final String reference;
+
+  BuyConfirmSuccess(this.reference);
+
+  @override
+  List<Object?> get props => [reference];
+}
 
 class BuyConfirmFailure extends BuyConfirmState {
   final String error;
