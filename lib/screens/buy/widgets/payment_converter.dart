@@ -13,8 +13,8 @@ class PaymentConverter extends StatelessWidget {
     super.key,
     required TextEditingController amountController,
     required TextEditingController resultController,
-  })  : _amountController = amountController,
-        _resultController = resultController;
+  }) : _amountController = amountController,
+       _resultController = resultController;
 
   final TextEditingController _amountController;
   final TextEditingController _resultController;
@@ -169,25 +169,28 @@ class PaymentConverter extends StatelessWidget {
                           height: 24,
                           width: 24,
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              realUnitAsset.symbol,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                height: 20 / 16,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                realUnitAsset.symbol,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  height: 20 / 16,
+                                ),
                               ),
-                            ),
-                            Text(
-                              realUnitAsset.name,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                height: 16 / 12,
+                              Text(
+                                realUnitAsset.name,
+                                overflow: .ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  height: 16 / 12,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),
