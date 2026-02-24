@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
 import 'package:realunit_wallet/screens/legal/cubit/legal_disclaimer_cubit.dart';
 import 'package:realunit_wallet/screens/legal/steps/legal_aktionariat_step.dart';
 import 'package:realunit_wallet/screens/legal/steps/legal_dfx_step.dart';
@@ -84,7 +83,7 @@ class _LegalDisclaimerView extends StatelessWidget {
                         Expanded(
                           child: FilledButton(
                             onPressed: () => cubit.nextStep(
-                              onComplete: () => _navigateToKyc(context),
+                              onComplete: () => context.pop(true),
                             ),
                             child: Text(s.legalDisclaimerYes),
                           ),
@@ -99,13 +98,5 @@ class _LegalDisclaimerView extends StatelessWidget {
         );
       },
     );
-  }
-
-  Future<void> _navigateToKyc(BuildContext context) async {
-    final navigator = GoRouter.of(context);
-    final result = await navigator.push(KycPageManager.routeName);
-    if (context.mounted && result != null) {
-      navigator.pop(result);
-    }
   }
 }
