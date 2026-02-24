@@ -83,6 +83,7 @@ class PaymentConverter extends StatelessWidget {
                       children: [
                         Text(
                           Currency.chf.code,
+                          overflow: .ellipsis,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -91,6 +92,7 @@ class PaymentConverter extends StatelessWidget {
                         ),
                         Text(
                           Currency.chf.name,
+                          overflow: .ellipsis,
                           style: const TextStyle(
                             fontSize: 12,
                             height: 16 / 12,
@@ -175,6 +177,7 @@ class PaymentConverter extends StatelessWidget {
                             children: [
                               Text(
                                 realUnitAsset.symbol,
+                                overflow: .ellipsis,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
