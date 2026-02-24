@@ -27,7 +27,7 @@ class BuyPage extends StatelessWidget {
         BlocProvider(
           create: (_) => BuyPaymentInfoCubit(
             getIt<RealUnitBuyPaymentInfoService>(),
-          )..getPaymentInfo(),
+          ),
         ),
       ],
       child: const BuyView(),
