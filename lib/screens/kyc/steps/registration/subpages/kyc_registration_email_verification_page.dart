@@ -6,6 +6,7 @@ import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_email_verification/kyc_registration_email_verification_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
@@ -17,6 +18,7 @@ class KycRegistrationEmailVerificationPage extends StatelessWidget {
     return BlocProvider(
       create: (context) => KycRegistrationEmailVerificationCubit(
         dfxService: getIt<DfxWidgetService>(),
+        walletService: getIt<RealUnitWalletService>(),
         registrationService: getIt<RealUnitRegistrationService>(),
       ),
       child: const KycRegistrationEmailVerificationStepView(),
@@ -46,7 +48,7 @@ class KycRegistrationEmailVerificationStepView extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text(
-                'Der Account Merge war erfolgreich, jedoch konnte die Wallet nicht registriert werden. Bitte melden Sie sich beim Support.',
+                'Wir konnten Ihre neue Wallet Ihrem Account zuordnen, jedoch konnte die Wallet nicht registriert werden. Bitte melden Sie sich beim Support.',
               ),
               backgroundColor: RealUnitColors.status.red600,
             ),

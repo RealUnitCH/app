@@ -21,7 +21,7 @@ class KycPersonalData {
 
   factory KycPersonalData.fromJson(Map<String, dynamic> json) {
     return KycPersonalData(
-      accountType: KycAccountType.fromJsonName(json['accountType'] as String),
+      accountType: KycAccountType.fromString(json['accountType'] as String),
       firstName: json['firstName'] as String,
       lastName: json['lastName'] as String,
       phone: json['phone'] as String,
@@ -34,20 +34,21 @@ class KycPersonalData {
   }
 
   Map<String, dynamic> toJson() => {
-        'accountType': accountType.jsonName,
-        'firstName': firstName,
-        'lastName': lastName,
-        'phone': phone,
-        'address': address.toJson(),
-        if (organizationName != null) 'organizationName': organizationName,
-        if (organizationAddress != null) 'organizationAddress': organizationAddress!.toJson(),
-      };
+    'accountType': accountType.jsonName,
+    'firstName': firstName,
+    'lastName': lastName,
+    'phone': phone,
+    'address': address.toJson(),
+    if (organizationName != null) 'organizationName': organizationName,
+    if (organizationAddress != null) 'organizationAddress': organizationAddress!.toJson(),
+  };
 }
 
 enum KycAccountType {
   personal(jsonName: 'Personal'),
   organization(jsonName: 'Organization'),
-  soleProprietorship(jsonName: 'SoleProprietorship');
+  soleProprietorship(jsonName: 'SoleProprietorship')
+  ;
 
   final String jsonName;
 
@@ -62,11 +63,17 @@ enum KycAccountType {
     }
   }
 
-  static KycAccountType fromJsonName(String jsonName) {
-    return KycAccountType.values.firstWhere(
-      (e) => e.jsonName == jsonName,
-      orElse: () => KycAccountType.personal,
-    );
+  static KycAccountType fromString(String accountType) {
+    switch (accountType) {
+      case 'Personal':
+        return .personal;
+      case 'Organization':
+        return .organization;
+      case 'SoleProprietorship':
+        return .soleProprietorship;
+      default:
+        throw Exception('Unknown KycAccountType: $accountType');
+    }
   }
 }
 
@@ -98,10 +105,10 @@ class KycAddress {
   }
 
   Map<String, dynamic> toJson() => {
-        'street': street,
-        if (houseNumber != null) 'houseNumber': houseNumber,
-        'zip': zip,
-        'city': city,
-        'country': {'id': country},
-      };
+    'street': street,
+    if (houseNumber != null) 'houseNumber': houseNumber,
+    'zip': zip,
+    'city': city,
+    'country': {'id': country},
+  };
 }
