@@ -47,8 +47,8 @@ class KycRegistrationEmailVerificationStepView extends StatelessWidget {
         if (state is KycRegistrationEmailVerificationRegistrationFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text(
-                'Wir konnten Ihre neue Wallet Ihrem Account zuordnen, jedoch konnte die Wallet nicht registriert werden. Bitte melden Sie sich beim Support.',
+              content: Text(
+                S.of(context).registerEmailVerificationRegistrationFailed,
               ),
               backgroundColor: RealUnitColors.status.red600,
             ),
