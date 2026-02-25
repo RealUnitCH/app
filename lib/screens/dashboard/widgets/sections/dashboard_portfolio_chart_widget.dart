@@ -140,7 +140,7 @@ class DashboardPortfolioChartView extends StatelessWidget {
                   children: TimePeriod.values.map((period) {
                     return Expanded(
                       child: TimePeriodSelectionButton(
-                        period.abr(context).toUpperCase(),
+                        period.name(context).toUpperCase(),
                         isSelected: state.selectedPeriod == period,
                         onTap: () => context.read<PortfolioChartCubit>().selectPeriod(period),
                       ),
