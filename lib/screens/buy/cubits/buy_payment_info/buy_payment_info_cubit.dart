@@ -17,7 +17,7 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
 
   BuyPaymentInfoCubit(this._buyPaymentInfoService) : super(const BuyPaymentInfoInitial());
 
-  Future<void> getPaymentInfo({String amount = '300', Currency currency = Currency.chf}) async {
+  Future<void> getPaymentInfo({String amount = '1000', Currency currency = Currency.chf}) async {
     await _completer?.cancel();
 
     if (state is! BuyPaymentInfoSuccess) {
@@ -34,11 +34,15 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
 
   Future<BuyPaymentInfoState> _runGetPaymentInfo(String amount, Currency currency) async {
     try {
+      final sanitizedAmount = amount.isEmpty ? '0' : amount.replaceAll(',', '.');
+      final parsedAmount = double.parse(sanitizedAmount);
+      if (parsedAmount < 1000) {
+        return const BuyPaymentInfoFailure(PaymentInfoError.minAmountNotMet);
+      }
       final paymentInfo = await _buyPaymentInfoService.getPaymentInfo(
-        double.parse(amount).round(),
+        parsedAmount.round(),
         currency: currency,
       );
-
       return BuyPaymentInfoSuccess(paymentInfo);
     } on KycLevelRequiredException {
       return const BuyPaymentInfoFailure(PaymentInfoError.kycRequired);

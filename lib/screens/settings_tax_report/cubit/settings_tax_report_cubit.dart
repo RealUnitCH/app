@@ -15,8 +15,8 @@ class SettingsTaxReportCubit extends Cubit<SettingsTaxReportState> {
   final RealUnitPdfService _pdfService;
 
   SettingsTaxReportCubit(RealUnitPdfService pdfService)
-      : _pdfService = pdfService,
-        super(const SettingsTaxReportInitial());
+    : _pdfService = pdfService,
+      super(const SettingsTaxReportInitial());
 
   Future<void> generateTaxReport({
     required DateTime date,
@@ -26,8 +26,9 @@ class SettingsTaxReportCubit extends Cubit<SettingsTaxReportState> {
     try {
       emit(const SettingsTaxReportLoading());
 
+      final dateWithLatestTime = _getDateWithLatestTime(date);
       final response = await _pdfService.getBalanceReport(
-        date: date,
+        date: dateWithLatestTime,
         currency: currency,
         language: language,
       );
@@ -42,9 +43,23 @@ class SettingsTaxReportCubit extends Cubit<SettingsTaxReportState> {
   Future<File> _createFileFromBytes(String data, DateTime date) async {
     final bytes = base64Decode(data);
     final tempDir = await getTemporaryDirectory();
-    final file =
-        File('${tempDir.path}/balance_report_${DateFormat('dd_MM_yyyy').format(date)}.pdf');
+    final file = File(
+      '${tempDir.path}/balance_report_${DateFormat('dd_MM_yyyy').format(date)}.pdf',
+    );
     await file.writeAsBytes(bytes, flush: true);
     return file;
+  }
+
+  /// If today's date use current time minus 1 minute, for past dates use end of day
+  DateTime _getDateWithLatestTime(DateTime selectedDate) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selected = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+
+    if (selected.isAtSameMomentAs(today)) {
+      return now.subtract(const Duration(minutes: 1)).toUtc();
+    } else {
+      return DateTime(selectedDate.year, selectedDate.month, selectedDate.day, 23, 59, 59).toUtc();
+    }
   }
 }

@@ -14,7 +14,7 @@ class TransactionDto {
   factory TransactionDto.fromJson(Map<String, dynamic> json) {
     return TransactionDto(
       id: json['id'] as int,
-      rate: (json['rate'] as num).toDouble(),
+      rate: (json['rate'] as num?)?.toDouble(),
       inputTxId: json['inputTxId'] as String?,
       outputTxId: json['outputTxId'] as String?,
     );

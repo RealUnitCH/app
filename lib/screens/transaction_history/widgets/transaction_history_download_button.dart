@@ -49,6 +49,10 @@ class TransactionHistoryDownloadButtonView extends StatelessWidget {
         }
       },
       builder: (context, state) {
+        final transactionIds = transactions
+            .whereType<DfxTransaction>()
+            .map((tx) => tx.dfxId)
+            .toList();
         return Column(
           children: [
             Padding(
@@ -77,21 +81,34 @@ class TransactionHistoryDownloadButtonView extends StatelessWidget {
                       color: RealUnitColors.basic.white,
                     ),
                   )
-                : GestureDetector(
-                    onTap: () {
-                      context.read<TransactionHistoryMultiReceiptCubit>().generateReceipt(
-                          transactions.whereType<DfxTransaction>().map((tx) => tx.dfxId).toList());
-                    },
+                : transactionIds.isNotEmpty
+                ? GestureDetector(
+                    onTap: () => context
+                        .read<TransactionHistoryMultiReceiptCubit>()
+                        .generateReceipt(transactionIds),
                     child: Container(
                       height: 44,
                       width: 44,
                       decoration: BoxDecoration(
-                          color: RealUnitColors.realUnitBlue,
-                          borderRadius: BorderRadius.circular(12.0)),
+                        color: RealUnitColors.realUnitBlue,
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
                       child: Icon(
                         Icons.file_download_outlined,
                         color: RealUnitColors.basic.white,
                       ),
+                    ),
+                  )
+                : Container(
+                    height: 44,
+                    width: 44,
+                    decoration: BoxDecoration(
+                      color: RealUnitColors.neutral300,
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: Icon(
+                      Icons.file_download_outlined,
+                      color: RealUnitColors.basic.white,
                     ),
                   ),
           ],

@@ -4,6 +4,7 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/dto/real_unit_buy_confirm_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/dto/real_unit_buy_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/dto/real_unit_buy_payment_info_dto.dart';
 import 'package:realunit_wallet/styles/currency.dart';
@@ -56,7 +57,7 @@ class RealUnitBuyPaymentInfoService {
     }
   }
 
-  Future<void> confirmPayment(int id) async {
+  Future<String> confirmPayment(int id) async {
     final authToken = _appStore.dfxAuthToken;
     final uri = buildUri(_host, _confirmPaymentPath(id));
 
@@ -68,7 +69,11 @@ class RealUnitBuyPaymentInfoService {
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to confirm payment: ${response.statusCode}');
+      throw Exception('Failed to confirm payment: ${response.statusCode} ${response.body}');
     }
+
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final responseDto = RealUnitBuyConfirmDto.fromJson(json);
+    return responseDto.reference;
   }
 }

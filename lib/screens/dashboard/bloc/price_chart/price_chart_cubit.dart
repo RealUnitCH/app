@@ -46,7 +46,11 @@ class PriceChartCubit extends Cubit<PriceChartState> {
 
     // Calculate minX and maxXbased on selected period
     final minX = switch (state.selectedPeriod) {
-      TimePeriod.oneWeek => now.subtract(const Duration(days: 7)).millisecondsSinceEpoch.toDouble(),
+      TimePeriod.oneWeek => DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).subtract(const Duration(days: 7)).millisecondsSinceEpoch.toDouble(),
       TimePeriod.oneMonth => DateTime(
         now.year,
         now.month - 1,

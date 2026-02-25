@@ -125,7 +125,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
                   return LinearProgressIndicator(
                     value: state.progress,
                     backgroundColor: RealUnitColors.neutral200,
-                    valueColor: const AlwaysStoppedAnimation<Color>(RealUnitColors.green),
+                    valueColor: const AlwaysStoppedAnimation<Color>(RealUnitColors.realUnitBlue),
                   );
                 },
               ),

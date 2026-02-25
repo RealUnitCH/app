@@ -6,6 +6,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart'
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
+import 'package:realunit_wallet/screens/buy/widgets/payment_additional_action_needed_button.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
 
@@ -21,7 +22,7 @@ class BuyPage extends StatelessWidget {
         BlocProvider(
           create: (_) => BuyConverterCubit(
             getIt<DfxBrokerbotService>(),
-          )..onFiatChanged('300'),
+          )..onFiatChanged('1000'),
         ),
         BlocProvider(
           create: (_) => BuyPaymentInfoCubit(
@@ -61,24 +62,37 @@ class _BuyViewState extends State<BuyView> {
           context.read<BuyPaymentInfoCubit>().getPaymentInfo(amount: _amountController.text);
         },
         builder: (context, state) {
-          return SingleChildScrollView(
-            child: SafeArea(
-              child: GestureDetector(
-                onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Column(
-                    spacing: 32,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      PaymentConverter(
-                        amountController: _amountController,
-                        resultController: _resultController,
+          return SafeArea(
+            child: GestureDetector(
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              child: LayoutBuilder(
+                builder: (context, constraint) {
+                  return SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: constraint.maxHeight),
+                      child: IntrinsicHeight(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              PaymentConverter(
+                                amountController: _amountController,
+                                resultController: _resultController,
+                              ),
+                              const SizedBox(height: 32),
+                              PaymentInformation(amount: _amountController.text),
+                              const Spacer(),
+                              PaymentAdditionalActionNeededButton(
+                                amountController: _amountController,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      PaymentInformation(amount: _amountController.text),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
             ),
           );

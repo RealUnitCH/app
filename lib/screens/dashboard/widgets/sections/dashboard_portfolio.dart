@@ -1,10 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/balance.dart';
-import 'package:realunit_wallet/packages/repository/balance_repository.dart';
-import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/balance_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/cash_holding_box.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
@@ -14,25 +11,6 @@ class DashboardPortfolio extends StatelessWidget {
   final BigInt price;
 
   const DashboardPortfolio({super.key, required this.price});
-
-  @override
-  Widget build(BuildContext context) {
-    final appStore = getIt<AppStore>();
-    return BlocProvider(
-      create: (context) => BalanceCubit(
-        getIt<BalanceRepository>(),
-        asset: appStore.apiConfig.asset,
-        walletAddress: appStore.primaryAddress,
-      ),
-      child: DashboardPortfolioView(price: price),
-    );
-  }
-}
-
-class DashboardPortfolioView extends StatelessWidget {
-  final BigInt price;
-
-  const DashboardPortfolioView({super.key, required this.price});
 
   @override
   Widget build(BuildContext context) {

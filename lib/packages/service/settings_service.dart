@@ -10,4 +10,10 @@ class SettingsService {
   void setTermsAccepted(bool value) {
     _repository.termsAccepted = value;
   }
+
+  bool get isSoftwareTermsAccepted => _repository.softwareTermsAccepted;
+
+  void setSoftwareTermsAccepted(bool value) {
+    _repository.softwareTermsAccepted = value;
+  }
 }

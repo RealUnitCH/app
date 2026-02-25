@@ -74,6 +74,18 @@ class SettingsPage extends StatelessWidget {
                   trailing: _forwardIcon,
                   onTap: null,
                 ),
+                SettingOption(
+                  title: S.of(context).termsOfUse,
+                  leading: const DocumentTextIcon(size: 24),
+                  trailing: _forwardIcon,
+                  onTap: () => context.push('/settings/termsOfUse'),
+                ),
+                SettingOption(
+                  title: S.of(context).contact,
+                  leading: const Icon(Icons.info_outline, size: 24, color: RealUnitColors.realUnitBlue),
+                  trailing: _forwardIcon,
+                  onTap: () => context.push('/settings/contact'),
+                ),
                 if (context.read<HomeBloc>().state.openWallet?.walletType == WalletType.software)
                   SettingOption(
                     title: S.of(context).settingsWalletBackup,

@@ -47,6 +47,7 @@ class DashboardPriceWidgetView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     margin: const EdgeInsets.only(top: 8),
+    width: double.infinity,
     child: SafeArea(
       bottom: false,
       child: Column(
@@ -83,7 +84,7 @@ class DashboardPriceWidgetView extends StatelessWidget {
                       },
                     ),
                     Text(
-                      formatFixed(price, 2, trimZeros: false),
+                      price == BigInt.zero ? '--.--' : formatFixed(price, 2, trimZeros: false),
                       style: const TextStyle(
                         fontSize: 30,
                         fontWeight: FontWeight.w600,
@@ -104,7 +105,7 @@ class DashboardPriceWidgetView extends StatelessWidget {
                   children: TimePeriod.values.map((period) {
                     return Expanded(
                       child: TimePeriodSelectionButton(
-                        period.abr(context).toUpperCase(),
+                        period.name(context).toUpperCase(),
                         isSelected: state.selectedPeriod == period,
                         onTap: () => context.read<PriceChartCubit>().selectPeriod(period),
                       ),

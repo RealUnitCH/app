@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,7 +15,13 @@ class SettingsRepository {
 
   int? get currentWalletId => _sharedPreferences.getInt('currentWalletId');
 
-  String get language => _sharedPreferences.getString('language') ?? 'de';
+  String get language {
+    final stored = _sharedPreferences.getString('language');
+    if (stored != null) return stored;
+
+    final systemLang = PlatformDispatcher.instance.locale.languageCode;
+    return systemLang == 'de' ? 'de' : 'en';
+  }
 
   set language(String langCode) => _sharedPreferences.setString('language', langCode);
 
@@ -27,8 +35,10 @@ class SettingsRepository {
 
   NetworkMode get networkMode {
     final value = _sharedPreferences.getString('networkMode');
-    return NetworkMode.values
-        .firstWhere((network) => network.name == value, orElse: () => NetworkMode.testnet);
+    return NetworkMode.values.firstWhere(
+      (network) => network.name == value,
+      orElse: () => NetworkMode.mainnet,
+    );
   }
 
   set networkMode(NetworkMode mode) => _sharedPreferences.setString('networkMode', mode.name);
@@ -40,4 +50,9 @@ class SettingsRepository {
   bool get isBiometricEnabled => _sharedPreferences.getBool('isBiometricEnabled') ?? false;
 
   set isBiometricEnabled(bool enabled) => _sharedPreferences.setBool('isBiometricEnabled', enabled);
+
+  bool get softwareTermsAccepted => _sharedPreferences.getBool('softwareTermsAccepted') ?? false;
+
+  set softwareTermsAccepted(bool accepted) =>
+      _sharedPreferences.setBool('softwareTermsAccepted', accepted);
 }

@@ -1,0 +1,112 @@
+# Terms of Use for the RealUnit Wallet App
+
+*As of: February 2026*
+
+
+## 1. Scope
+
+These terms of use govern the use of the RealUnit Wallet App (hereinafter "App"), published by RealUnit Schweiz AG, Schochenmühlestrasse 6, 6340 Baar, Switzerland (hereinafter "RealUnit" or "we").
+
+By using the App, you agree to these terms of use. The General Terms and Conditions (GTC) additionally apply to the purchase and sale of RealUnit stock tokens.
+
+
+## 2. Description of the App
+
+The App is a self-custody wallet for managing RealUnit stock tokens (REALU) and other ERC-20 tokens on the Ethereum blockchain. It enables in particular:
+
+- Creating and restoring wallets using recovery words (seed phrase)
+- Receiving and sending tokens
+- Displaying balances and transaction history
+- Generating tax reports
+- Connecting hardware wallets (BitBox02)
+
+
+## 3. Self-Responsibility and Custody
+
+The App is a self-custody solution. This means:
+
+- **You alone** are responsible for the secure storage of your recovery words (seed phrase).
+- **You alone** are responsible for keeping your PIN and access credentials confidential.
+- RealUnit has **no access** to your private keys, your seed phrase, or your PIN.
+- If your recovery words are lost, access to the wallet is **irretrievably lost**. RealUnit cannot restore lost keys.
+- Transactions on the blockchain are **irreversible**. Incorrectly sent tokens cannot be reversed.
+
+
+## 4. Usage Requirements
+
+The App is intended for persons residing in a country whose legal system permits the use of this App as well as the acquisition and possession of tokenised shares. The App is specifically **not** intended for persons residing in the USA, Canada, Singapore, or China.
+
+You confirm that you have legal capacity and have reached the minimum age required in your country for the use of digital financial services.
+
+
+## 5. No Investment Advice
+
+The information, price data, and portfolio overviews displayed in the App do **not constitute investment advice, a recommendation, or a solicitation** to buy or sell securities or tokens. Every investment decision is made at your own responsibility.
+
+
+## 6. Data Storage and Privacy
+
+The App generally stores your data **locally on your device**:
+
+- Wallet data is stored encrypted in a local database.
+- Settings (language, currency, network) are stored locally.
+- The PIN is stored as a cryptographic hash, not in plain text.
+
+For certain functions (e.g., price queries, balance queries), the App communicates with external services. In doing so, your wallet address and IP address may be transmitted to third parties. All transactions on the Ethereum blockchain are publicly visible.
+
+
+## 7. Device Permissions
+
+The App may request the following device permissions:
+
+- **Camera**: For scanning QR codes
+- **Biometric sensors**: For Face ID or fingerprint unlock (optional)
+
+These permissions are optional and can be managed in the device settings.
+
+
+## 8. Third-Party Services
+
+The App uses services from third-party providers, in particular:
+
+- **DFX AG**: For price and balance data as well as buy/sell functions
+
+The respective terms of use and privacy policies of these third-party providers apply to the use of their services. RealUnit assumes no liability for the availability or functionality of third-party services.
+
+
+## 9. Disclaimer
+
+The App is provided "as is". RealUnit makes no warranty for:
+
+- The uninterrupted or error-free operation of the App
+- The accuracy, completeness, or timeliness of the displayed price data and balances
+- Damages or losses arising from technical disruptions, software errors, or security vulnerabilities
+- Damages or losses arising from improper handling, loss of recovery words, or unauthorised access by third parties
+- Damages or losses arising from disruptions or failures of the Ethereum blockchain or other networks
+
+RealUnit's liability is excluded to the extent permitted by law, in particular for indirect damages, consequential damages, and lost profits.
+
+
+## 10. Intellectual Property
+
+All rights to the App, including design, source code, trademarks, and content, belong to RealUnit or its licensors. Use of the App does not grant you any intellectual property rights beyond the intended use.
+
+
+## 11. Changes to the Terms of Use
+
+RealUnit reserves the right to change these terms of use at any time. Changed terms of use will be provided via an app update. Continued use of the App after an update constitutes acceptance of the changed terms of use.
+
+
+## 12. Applicable Law and Jurisdiction
+
+Swiss law applies exclusively. The place of jurisdiction is Baar, Canton of Zug, Switzerland, to the extent permitted by law.
+
+
+## 13. Contact
+
+RealUnit Schweiz AG\
+Schochenmühlestrasse 6\
+6340 Baar, Switzerland
+
+Phone: +41 41 761 00 90\
+Website: realunit.ch

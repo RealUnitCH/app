@@ -5,7 +5,7 @@ final class SettingsState {
     this.hideAmounts = false,
     this.language = Language.en,
     this.currency = Currency.chf,
-    this.networkMode = NetworkMode.testnet,
+    this.networkMode = NetworkMode.mainnet,
   });
 
   final bool hideAmounts;
