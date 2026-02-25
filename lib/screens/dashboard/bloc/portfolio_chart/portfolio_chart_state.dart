@@ -17,11 +17,18 @@ class PortfolioChartState extends Equatable {
   final double maxX;
   final double minY;
   final double maxY;
-  /// Rounded Y values for horizontal grid lines (e.g., [300, 400, 500] for values 300-500)
   final List<double> horizontalLineValues;
 
   @override
-  List<Object?> get props => [selectedPeriod, visibleSpots, minX, maxX, minY, maxY, horizontalLineValues];
+  List<Object?> get props => [
+    selectedPeriod,
+    visibleSpots,
+    minX,
+    maxX,
+    minY,
+    maxY,
+    horizontalLineValues,
+  ];
 
   PortfolioChartState copyWith({
     TimePeriod? selectedPeriod,

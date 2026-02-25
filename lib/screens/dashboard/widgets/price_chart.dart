@@ -32,6 +32,7 @@ class PriceChart extends StatelessWidget {
       maxX: state.maxX,
       minY: state.minY,
       maxY: state.maxY,
+      clipData: const FlClipData.none(),
       gridData: const FlGridData(show: false),
       titlesData: const FlTitlesData(show: false),
       borderData: FlBorderData(show: false),

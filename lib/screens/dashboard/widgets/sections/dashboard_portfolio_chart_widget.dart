@@ -10,7 +10,7 @@ import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class DashboardPortfolioChartWidget extends StatelessWidget {
-  final BigInt currentValue; // current balance × current price
+  final BigInt currentValue;
   final List<PortfolioValuePoint> portfolioHistory;
 
   const DashboardPortfolioChartWidget({
@@ -80,7 +80,9 @@ class DashboardPortfolioChartView extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              formatFixed(currentValue, 2, trimZeros: false),
+                              currentValue == BigInt.zero
+                                  ? '--.--'
+                                  : formatFixed(currentValue, 2, trimZeros: false),
                               style: const TextStyle(
                                 fontSize: 30,
                                 fontWeight: FontWeight.w600,

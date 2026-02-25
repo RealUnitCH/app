@@ -60,15 +60,10 @@ class PortfolioChart extends StatelessWidget {
             fontSize: 9,
             fontWeight: FontWeight.w500,
           ),
-          labelResolver: (line) => _formatRoundedValue(line.y),
+          labelResolver: (line) => line.y.toInt().toString(),
         ),
       );
     }).toList();
-  }
-
-  /// Formats the value as an integer (no decimals) for display.
-  String _formatRoundedValue(double value) {
-    return value.toInt().toString();
   }
 
   LineChartBarData _buildLineBar(List<FlSpot> visibleSpots) {

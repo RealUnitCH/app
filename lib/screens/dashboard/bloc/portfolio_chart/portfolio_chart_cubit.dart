@@ -53,7 +53,11 @@ class PortfolioChartCubit extends Cubit<PortfolioChartState> {
     // Calculate minX and maxXbased on selected period
     final firstPriceX = _prices.first.time.millisecondsSinceEpoch.toDouble();
     final startDate = switch (state.selectedPeriod) {
-      TimePeriod.oneWeek => now.subtract(const Duration(days: 7)),
+      TimePeriod.oneWeek => DateTime(
+        now.year,
+        now.month,
+        now.day - 7,
+      ),
       TimePeriod.oneMonth => DateTime(
         now.year,
         now.month - 1,
