@@ -15,20 +15,21 @@ extension TransactionStorage on AppDatabase {
     String note,
     String data,
     DateTime timeStamp,
-  ) =>
-      into(transactions).insert(TransactionsCompanion.insert(
-        height: height,
-        txId: txId,
-        chainId: chainId,
-        senderAddress: senderAddress,
-        receiverAddress: receiverAddress,
-        amount: amount,
-        asset: asset,
-        type: type,
-        note: note,
-        data: data,
-        timeStamp: timeStamp,
-      ));
+  ) => into(transactions).insert(
+    TransactionsCompanion.insert(
+      height: height,
+      txId: txId,
+      chainId: chainId,
+      senderAddress: senderAddress,
+      receiverAddress: receiverAddress,
+      amount: amount,
+      asset: asset,
+      type: type,
+      note: note,
+      data: data,
+      timeStamp: timeStamp,
+    ),
+  );
 
   Future<int> updateTransaction(
     String txId, {
@@ -42,70 +43,92 @@ extension TransactionStorage on AppDatabase {
     String? note,
     String? data,
     DateTime? timeStamp,
-  }) =>
-      (update(transactions)..where((row) => row.txId.equals(txId))).write(TransactionsCompanion(
-        height: Value.absentIfNull(height),
-        chainId: Value.absentIfNull(chainId),
-        senderAddress: Value.absentIfNull(senderAddress),
-        receiverAddress: Value.absentIfNull(receiverAddress),
-        amount: Value.absentIfNull(amount),
-        asset: Value.absentIfNull(asset),
-        type: Value.absentIfNull(type),
-        note: Value.absentIfNull(note),
-        data: Value.absentIfNull(data),
-        timeStamp: Value.absentIfNull(timeStamp),
-      ));
+  }) => (update(transactions)..where((row) => row.txId.equals(txId))).write(
+    TransactionsCompanion(
+      height: Value.absentIfNull(height),
+      chainId: Value.absentIfNull(chainId),
+      senderAddress: Value.absentIfNull(senderAddress),
+      receiverAddress: Value.absentIfNull(receiverAddress),
+      amount: Value.absentIfNull(amount),
+      asset: Value.absentIfNull(asset),
+      type: Value.absentIfNull(type),
+      note: Value.absentIfNull(note),
+      data: Value.absentIfNull(data),
+      timeStamp: Value.absentIfNull(timeStamp),
+    ),
+  );
 
   Future<List<TransactionData>> getAllTokenTransactions(int chainId, String address) =>
       (select(transactions)..where((row) => row.asset.equals(fastHash('$chainId:$address')))).get();
 
-  Future<List<TransactionData>> get allTransactions => transactions.all().get();
+  Future<List<TransactionData>> get allTransactions => (select(
+    transactions,
+  )..orderBy([(u) => OrderingTerm(expression: u.timeStamp, mode: OrderingMode.desc)])).get();
 
-  Stream<List<TransactionData>> watchTransactions() => (select(transactions)
-        ..orderBy([(u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)]))
-      .watch();
+  Stream<List<TransactionData>> watchTransactions() => (select(
+    transactions,
+  )..orderBy([(u) => OrderingTerm(expression: u.timeStamp, mode: OrderingMode.desc)])).watch();
 
   Stream<List<TransactionData>> watchTransfersOfAssets(Iterable<int> assets, String wallet) =>
       (select(transactions)
-            ..where((row) => Expression.and([
-                  row.asset.isIn(assets),
-                  row.type.equals(2),
-                  Expression.or(
-                      [row.senderAddress.equals(wallet), row.receiverAddress.equals(wallet)]),
-                ]))
-            ..orderBy([(u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)]))
+            ..where(
+              (row) => Expression.and([
+                row.asset.isIn(assets),
+                row.type.equals(2),
+                Expression.or([
+                  row.senderAddress.equals(wallet),
+                  row.receiverAddress.equals(wallet),
+                ]),
+              ]),
+            )
+            ..orderBy([(u) => OrderingTerm(expression: u.timeStamp, mode: OrderingMode.desc)]))
           .watch();
 
   Stream<List<TransactionData>> watchTransfersOfAssetsLimit(
-          Iterable<int> assets, String wallet, int limit) =>
+    Iterable<int> assets,
+    String wallet,
+    int limit,
+  ) =>
       (select(transactions)
-            ..where((row) => Expression.and([
-                  row.asset.isIn(assets),
-                  row.type.equals(2),
-                  Expression.or(
-                      [row.senderAddress.equals(wallet), row.receiverAddress.equals(wallet)]),
-                ]))
+            ..where(
+              (row) => Expression.and([
+                row.asset.isIn(assets),
+                row.type.equals(2),
+                Expression.or([
+                  row.senderAddress.equals(wallet),
+                  row.receiverAddress.equals(wallet),
+                ]),
+              ]),
+            )
             ..orderBy([(u) => OrderingTerm(expression: u.timeStamp, mode: OrderingMode.desc)])
             ..limit(limit))
           .watch();
 
   Stream<List<TransactionData>> watchTransfersOfSavingsLimit(
-          Iterable<int> assets, String wallet, int limit) =>
+    Iterable<int> assets,
+    String wallet,
+    int limit,
+  ) =>
       (select(transactions)
-            ..where((row) => Expression.and([
-                  row.asset.isIn(assets),
-                  row.type.isIn([3, 4]),
-                  Expression.or(
-                      [row.senderAddress.equals(wallet), row.receiverAddress.equals(wallet)]),
-                ]))
-            ..orderBy([(u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)])
+            ..where(
+              (row) => Expression.and([
+                row.asset.isIn(assets),
+                row.type.isIn([3, 4]),
+                Expression.or([
+                  row.senderAddress.equals(wallet),
+                  row.receiverAddress.equals(wallet),
+                ]),
+              ]),
+            )
+            ..orderBy([(u) => OrderingTerm(expression: u.timeStamp, mode: OrderingMode.desc)])
             ..limit(limit))
           .watch();
 
-  Future<List<TransactionData>> getLatestTransactions({int limit = 1}) => (select(transactions)
-        ..orderBy([(u) => OrderingTerm(expression: u.height, mode: OrderingMode.desc)])
-        ..limit(limit))
-      .get();
+  Future<List<TransactionData>> getLatestTransactions({int limit = 1}) =>
+      (select(transactions)
+            ..orderBy([(u) => OrderingTerm(expression: u.timeStamp, mode: OrderingMode.desc)])
+            ..limit(limit))
+          .get();
 
   Future<TransactionData?> getTransaction(String txId) =>
       (select(transactions)..where((row) => row.txId.equals(txId))).getSingleOrNull();
