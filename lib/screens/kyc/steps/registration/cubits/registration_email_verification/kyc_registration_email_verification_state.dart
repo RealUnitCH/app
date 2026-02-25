@@ -22,3 +22,8 @@ class KycRegistrationEmailVerificationSuccess extends KycRegistrationEmailVerifi
 class KycRegistrationEmailVerificationFailure extends KycRegistrationEmailVerificationState {
   const KycRegistrationEmailVerificationFailure();
 }
+
+class KycRegistrationEmailVerificationRegistrationFailure
+    extends KycRegistrationEmailVerificationState {
+  const KycRegistrationEmailVerificationRegistrationFailure();
+}

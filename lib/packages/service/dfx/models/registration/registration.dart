@@ -15,7 +15,6 @@ class Registration {
   final String addressCity;
   final Country addressCountry;
   final bool swissTaxResidence;
-  final String registrationDate;
 
   const Registration({
     required this.type,
@@ -31,6 +30,5 @@ class Registration {
     required this.addressCity,
     required this.addressCountry,
     required this.swissTaxResidence,
-    required this.registrationDate,
   });
 }

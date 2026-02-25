@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/2fa/kyc_2fa_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/ident/kyc_ident_page.dart';
@@ -23,7 +23,7 @@ class KycPageManager extends StatelessWidget {
     return BlocProvider(
       create: (context) => KycCubit(
         getIt<DfxKycService>(),
-        getIt<RealUnitRegistrationService>(),
+        getIt<RealUnitWalletService>(),
       )..checkKyc(),
       child: const KycViewManager(),
     );
