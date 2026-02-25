@@ -182,6 +182,7 @@
   "registerEmailVerificationButton": "Ich habe meine E-Mail bestätigt",
   "registerEmailVerificationDescription": "Wie es aussieht, hast Du bereits ein Konto. Wir haben Dir gerade eine E-Mail geschickt. Um mit Deinem bestehenden Konto fortzufahren, bestätige bitte Deine E-Mail-Adresse, indem Du auf den zugesandten Link klickst.",
   "registerEmailVerificationFailed": "Du hast deine E-Mail noch nicht bestätigt.",
+  "registerEmailVerificationRegistrationFailed": "Ihre neue Wallet konnte Ihrem Account zugeordnet, jedoch konnte die Wallet nicht registriert werden. Bitte melden Sie sich beim Support.",
   "registerEmailVerificationTitle": "Willkommen zurück!",
   "registerFirstName": "Vorname",
   "registerLastName": "Nachname",
