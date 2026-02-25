@@ -5,7 +5,7 @@ class AccountSummaryDto {
   final DateTime lastUpdated;
   final List<HistoricalBalanceDto> historicalBalances;
 
-  AccountSummaryDto({
+  const AccountSummaryDto({
     required this.address,
     required this.addressType,
     required this.balance,
@@ -32,7 +32,7 @@ class HistoricalBalanceDto {
   final double? valueChf;
   final double? valueEur;
 
-  HistoricalBalanceDto({
+  const HistoricalBalanceDto({
     required this.balance,
     required this.timestamp,
     this.valueChf,
