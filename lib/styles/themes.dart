@@ -1,29 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/styles/text_styles.dart';
 
 ThemeData get realUnitTheme => ThemeData(
-  fontFamily: 'Open Sans',
+  fontFamily: RealUnitTextStyle.fontFamily,
+  textTheme: RealUnitTextStyle.theme,
   colorScheme: ColorScheme.fromSeed(
     seedColor: RealUnitColors.realUnitBlue,
   ),
   useMaterial3: true,
   scaffoldBackgroundColor: RealUnitColors.basic.white,
-  appBarTheme: const AppBarTheme(
+  appBarTheme: AppBarTheme(
     scrolledUnderElevation: 0.0,
     backgroundColor: Colors.transparent,
     foregroundColor: RealUnitColors.realUnitBlack,
-    iconTheme: IconThemeData(
+    iconTheme: const IconThemeData(
       color: RealUnitColors.realUnitBlack,
     ),
     centerTitle: true,
-    titleTextStyle: TextStyle(
+    titleTextStyle: RealUnitTextStyle.body.sm.copyWith(
+      fontWeight: .bold,
       color: RealUnitColors.realUnitBlack,
-      fontSize: 16,
-      fontWeight: FontWeight.bold,
-      height: 20 / 16,
     ),
-    systemOverlayStyle: SystemUiOverlayStyle(
+    systemOverlayStyle: const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark, // For Android
       statusBarBrightness: Brightness.light, // For iOS
@@ -34,9 +34,9 @@ ThemeData get realUnitTheme => ThemeData(
       Icons.arrow_back_rounded,
     ),
   ),
-  bottomSheetTheme: const BottomSheetThemeData(
-    backgroundColor: Colors.white,
-    shape: RoundedRectangleBorder(
+  bottomSheetTheme: BottomSheetThemeData(
+    backgroundColor: RealUnitColors.basic.white,
+    shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(
         top: Radius.circular(32.0),
       ),
@@ -85,15 +85,9 @@ ThemeData get realUnitTheme => ThemeData(
       }),
       textStyle: WidgetStateTextStyle.resolveWith((states) {
         if (states.contains(WidgetState.disabled)) {
-          return const TextStyle(
-            fontSize: 16.0,
-            fontWeight: FontWeight.w600,
-          );
+          return RealUnitTextStyle.body.base.copyWith(fontWeight: .w600);
         }
-        return const TextStyle(
-          fontSize: 16.0,
-          fontWeight: FontWeight.w600,
-        );
+        return RealUnitTextStyle.body.base.copyWith(fontWeight: .w600);
       }),
     ),
   ),
