@@ -21,118 +21,111 @@ class _WelcomePageState extends State<WelcomePage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: RealUnitColors.brand700,
-        appBar: AppBar(
-          leading: showSecondStep
-              ? IconButton(
-                  onPressed: () => setState(() => showSecondStep = false),
-                  icon: const Icon(Icons.arrow_back_rounded),
-                )
-              : null,
-        ),
-        body: SingleChildScrollView(
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                spacing: 40.0,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      left: 24.0,
-                      right: 24.0,
+    backgroundColor: RealUnitColors.brand700,
+    appBar: AppBar(
+      leading: showSecondStep
+          ? IconButton(
+              onPressed: () => setState(() => showSecondStep = false),
+              icon: const Icon(Icons.arrow_back_rounded),
+            )
+          : null,
+    ),
+    body: SingleChildScrollView(
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Column(
+            spacing: 40.0,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: 24.0,
+                  right: 24.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const RealUnitIcon(size: 48),
+                    const SizedBox(height: 8),
+                    Text(
+                      S.of(context).realunitWallet,
+                      style: Theme.of(context).textTheme.headlineMedium,
                     ),
+                    Text(
+                      S.of(context).realunitWalletSubtitle,
+                      style:
+                          Theme.of(
+                            context,
+                          ).textTheme.bodyLarge?.copyWith(
+                            color: RealUnitColors.neutral500,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              Stack(
+                children: [
+                  AnimatedSlide(
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeInOut,
+                    offset: showSecondStep ? const Offset(-1.2, 0) : Offset.zero,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 16.0,
                       children: [
-                        const RealUnitIcon(size: 48),
-                        const SizedBox(height: 8),
-                        Text(
-                          S.of(context).realunitWallet,
-                          style: const TextStyle(
-                            color: RealUnitColors.realUnitBlack,
-                            fontSize: 26,
-                            fontWeight: FontWeight.w700,
-                            height: 30 / 26,
-                            letterSpacing: 26 * -0.02,
+                        WelcomeCard(
+                          title: S.of(context).softwareWallet,
+                          description: S.of(context).softwareWalletSubtitle,
+                          onPressed: () => setState(() => showSecondStep = true),
+                          trailing: SvgPicture.asset(
+                            'assets/images/illustrations/software_wallet.svg',
                           ),
                         ),
-                        Text(
-                          S.of(context).realunitWalletSubtitle,
-                          style: const TextStyle(
-                            color: RealUnitColors.neutral500,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            height: 22 / 16,
-                            letterSpacing: 0.0,
+                        if (defaultTargetPlatform == TargetPlatform.android)
+                          WelcomeCard(
+                            title: S.of(context).bitbox,
+                            description: S.of(context).hardwareWalletSubtitle,
+                            trailing: SvgPicture.asset(
+                              'assets/images/illustrations/bitbox.svg',
+                            ),
+                            onPressed: onBitboxPressed,
+                          ),
+                      ],
+                    ),
+                  ),
+                  AnimatedSlide(
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeInOut,
+                    offset: showSecondStep ? Offset.zero : const Offset(1.2, 0),
+                    child: Column(
+                      spacing: 16.0,
+                      children: [
+                        WelcomeCard(
+                          title: S.of(context).createWallet,
+                          description: S.of(context).softwareWalletSubtitle,
+                          onPressed: () => context.push('/wallet/create'),
+                          trailing: SvgPicture.asset(
+                            'assets/images/illustrations/create_wallet.svg',
+                          ),
+                        ),
+                        WelcomeCard(
+                          title: S.of(context).restoreWallet,
+                          description: S.of(context).hardwareWalletSubtitle,
+                          onPressed: () => context.push('/wallet/restore'),
+                          trailing: SvgPicture.asset(
+                            'assets/images/illustrations/restore_wallet.svg',
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Stack(
-                    children: [
-                      AnimatedSlide(
-                        duration: const Duration(milliseconds: 350),
-                        curve: Curves.easeInOut,
-                        offset: showSecondStep ? const Offset(-1.2, 0) : Offset.zero,
-                        child: Column(
-                          spacing: 16.0,
-                          children: [
-                            WelcomeCard(
-                              title: S.of(context).softwareWallet,
-                              description: S.of(context).softwareWalletSubtitle,
-                              onPressed: () => setState(() => showSecondStep = true),
-                              trailing: SvgPicture.asset(
-                                'assets/images/illustrations/software_wallet.svg',
-                              ),
-                            ),
-                            if (defaultTargetPlatform == TargetPlatform.android)
-                              WelcomeCard(
-                                title: S.of(context).bitbox,
-                                description: S.of(context).hardwareWalletSubtitle,
-                                trailing: SvgPicture.asset(
-                                  'assets/images/illustrations/bitbox.svg',
-                                ),
-                                onPressed: onBitboxPressed,
-                              ),
-                          ],
-                        ),
-                      ),
-                      AnimatedSlide(
-                        duration: const Duration(milliseconds: 350),
-                        curve: Curves.easeInOut,
-                        offset: showSecondStep ? Offset.zero : const Offset(1.2, 0),
-                        child: Column(
-                          spacing: 16.0,
-                          children: [
-                            WelcomeCard(
-                              title: S.of(context).createWallet,
-                              description: S.of(context).softwareWalletSubtitle,
-                              onPressed: () => context.push('/wallet/create'),
-                              trailing: SvgPicture.asset(
-                                'assets/images/illustrations/create_wallet.svg',
-                              ),
-                            ),
-                            WelcomeCard(
-                              title: S.of(context).restoreWallet,
-                              description: S.of(context).hardwareWalletSubtitle,
-                              onPressed: () => context.push('/wallet/restore'),
-                              trailing: SvgPicture.asset(
-                                'assets/images/illustrations/restore_wallet.svg',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
-            ),
+            ],
           ),
         ),
-      );
+      ),
+    ),
+  );
 
   Future<void> onBitboxPressed() async {
     await showModalBottomSheet(
