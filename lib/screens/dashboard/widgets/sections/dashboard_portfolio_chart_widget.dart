@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/portfolio_value_point.dart';
 import 'package:realunit_wallet/packages/utils/format_fixed.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/portfolio_chart/portfolio_chart_cubit.dart';
@@ -33,7 +34,7 @@ class DashboardPortfolioChartWidget extends StatelessWidget {
 }
 
 class DashboardPortfolioChartView extends StatelessWidget {
-  final BigInt currentValue; // current balance × current price
+  final BigInt currentValue;
   final List<PortfolioValuePoint> portfolioHistory;
 
   const DashboardPortfolioChartView({
@@ -54,9 +55,9 @@ class DashboardPortfolioChartView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: .start,
               children: [
-                const Text(
-                  'Depotentwicklung',
-                  style: TextStyle(
+                Text(
+                  S.of(context).portfolioDevelopment,
+                  style: const TextStyle(
                     fontSize: 12,
                     color: RealUnitColors.neutral400,
                     height: 16 / 12,
