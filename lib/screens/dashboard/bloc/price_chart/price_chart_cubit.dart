@@ -49,8 +49,8 @@ class PriceChartCubit extends Cubit<PriceChartState> {
       TimePeriod.oneWeek => DateTime(
         now.year,
         now.month,
-        now.day,
-      ).subtract(const Duration(days: 7)).millisecondsSinceEpoch.toDouble(),
+        now.day - 7,
+      ).millisecondsSinceEpoch.toDouble(),
       TimePeriod.oneMonth => DateTime(
         now.year,
         now.month - 1,
