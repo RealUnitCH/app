@@ -7,11 +7,13 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_account_service.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/balance_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/dashboard_bloc.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_actions.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_portfolio.dart';
+import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_portfolio_chart_widget.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_price_widget.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_transaction_history.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
@@ -31,6 +33,7 @@ class DashboardPage extends StatelessWidget {
         BlocProvider(
           create: (context) => DashboardBloc(
             getIt<DFXPriceService>(),
+            getIt<RealUnitAccountService>(),
             asset: getIt<AppStore>().apiConfig.asset,
             initialCurrency: context.read<SettingsBloc>().state.currency,
           ),
@@ -97,10 +100,18 @@ class DashboardView extends StatelessWidget {
           canPop: false,
           child: Column(
             children: [
-              DashboardPriceWidget(
-                price: dashboardState.price,
-                priceChart: dashboardState.priceChart,
-              ),
+              if (dashboardState.portfolioHistory.isNotEmpty)
+                DashboardPortfolioChartWidget(
+                  currentValue: dashboardState.portfolioHistory.isNotEmpty
+                      ? dashboardState.portfolioHistory.last.balance * dashboardState.price
+                      : BigInt.zero,
+                  portfolioHistory: dashboardState.portfolioHistory,
+                )
+              else
+                DashboardPriceWidget(
+                  price: dashboardState.price,
+                  priceChart: dashboardState.priceChart,
+                ),
               Expanded(
                 child: Stack(
                   children: [
@@ -125,32 +136,35 @@ class DashboardView extends StatelessWidget {
                         ),
                       )
                     else
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20.0,
-                          vertical: 24.0,
-                        ),
-                        child: Column(
-                          children: [
-                            const Spacer(),
-                            SvgPicture.asset(
-                              'assets/images/add-realu-token-visual.svg',
-                              width: 165,
-                              height: 165,
-                            ),
-                            const Spacer(),
-                            if (isFiatServiceAvailable)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 20),
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: FilledButton(
-                                    onPressed: () => context.push(BuyPage.routeName),
-                                    child: Text(S.of(context).buy),
+                      Align(
+                        alignment: .topCenter,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20.0,
+                            vertical: 24.0,
+                          ),
+                          child: Column(
+                            children: [
+                              const Spacer(),
+                              SvgPicture.asset(
+                                'assets/images/add-realu-token-visual.svg',
+                                width: 165,
+                                height: 165,
+                              ),
+                              const Spacer(),
+                              if (isFiatServiceAvailable)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 20),
+                                  child: SizedBox(
+                                    width: double.infinity,
+                                    child: FilledButton(
+                                      onPressed: () => context.push(BuyPage.routeName),
+                                      child: Text(S.of(context).buy),
+                                    ),
                                   ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                   ],

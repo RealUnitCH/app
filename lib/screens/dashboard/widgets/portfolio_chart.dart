@@ -2,18 +2,15 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/utils/format_fixed.dart';
-import 'package:realunit_wallet/screens/dashboard/bloc/price_chart/price_chart_cubit.dart';
-import 'package:realunit_wallet/screens/dashboard/bloc/price_chart/price_chart_state.dart';
+import 'package:realunit_wallet/screens/dashboard/bloc/portfolio_chart/portfolio_chart_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
-class PriceChart extends StatelessWidget {
-  const PriceChart({super.key});
-
-  static const int _horizontalDivisions = 5;
+class PortfolioChart extends StatelessWidget {
+  const PortfolioChart({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<PriceChartCubit, PriceChartState>(
+    return BlocBuilder<PortfolioChartCubit, PortfolioChartState>(
       builder: (context, state) {
         return SizedBox(
           height: 126,
@@ -26,53 +23,47 @@ class PriceChart extends StatelessWidget {
     );
   }
 
-  LineChartData _buildChartData(PriceChartState state) {
+  LineChartData _buildChartData(PortfolioChartState state) {
     return LineChartData(
       minX: state.minX,
       maxX: state.maxX,
       minY: state.minY,
       maxY: state.maxY,
-      clipData: const FlClipData.none(),
       gridData: const FlGridData(show: false),
       titlesData: const FlTitlesData(show: false),
       borderData: FlBorderData(show: false),
       extraLinesData: ExtraLinesData(
-        horizontalLines: _buildHorizontalLines(state.minY, state.maxY),
+        horizontalLines: _buildHorizontalLines(state.horizontalLineValues),
       ),
       lineBarsData: [_buildLineBar(state.visibleSpots)],
       lineTouchData: _buildTouchData(),
     );
   }
 
-  List<HorizontalLine> _buildHorizontalLines(double minY, double maxY) {
-    return List.generate(_horizontalDivisions + 1, (index) {
-      final ratio = index / _horizontalDivisions;
-      final y = maxY - ((maxY - minY) * ratio);
-      final showLabel = index == 0 || index == _horizontalDivisions;
+  List<HorizontalLine> _buildHorizontalLines(List<double> values) {
+    if (values.isEmpty) return [];
+
+    return values.asMap().entries.map((entry) {
+      final y = entry.value;
 
       return HorizontalLine(
         y: y,
         color: RealUnitColors.neutral400,
         dashArray: const [1, 3],
         strokeWidth: 1,
-        label: showLabel
-            ? HorizontalLineLabel(
-                show: true,
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.only(right: 20.0, top: -16.0),
-                style: const TextStyle(
-                  color: RealUnitColors.neutral400,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w500,
-                ),
-                labelResolver: (line) => formatFixed(
-                  BigInt.from(line.y * 100),
-                  2,
-                ),
-              )
-            : null,
+        label: HorizontalLineLabel(
+          show: true,
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20.0, top: -16.0),
+          style: const TextStyle(
+            color: RealUnitColors.neutral400,
+            fontSize: 9,
+            fontWeight: FontWeight.w500,
+          ),
+          labelResolver: (line) => line.y.toInt().toString(),
+        ),
       );
-    });
+    }).toList();
   }
 
   LineChartBarData _buildLineBar(List<FlSpot> visibleSpots) {

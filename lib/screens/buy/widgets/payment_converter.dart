@@ -13,8 +13,8 @@ class PaymentConverter extends StatelessWidget {
     super.key,
     required TextEditingController amountController,
     required TextEditingController resultController,
-  })  : _amountController = amountController,
-        _resultController = resultController;
+  }) : _amountController = amountController,
+       _resultController = resultController;
 
   final TextEditingController _amountController;
   final TextEditingController _resultController;
@@ -22,10 +22,10 @@ class PaymentConverter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: .start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(
+          padding: const .symmetric(
             horizontal: 12.0,
             vertical: 4.0,
           ),
@@ -33,28 +33,28 @@ class PaymentConverter extends StatelessWidget {
             S.of(context).youPay,
             style: const TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.bold,
+              fontWeight: .bold,
             ),
           ),
         ),
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8.0),
+            borderRadius: .circular(8.0),
             border: Border.all(color: RealUnitColors.neutral300),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(8.0),
+            borderRadius: .circular(8.0),
             child: Row(
               children: [
                 Expanded(
                   flex: 3,
                   child: TextField(
                     controller: _amountController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const .numberWithOptions(decimal: true),
                     inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
                     decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
+                      border: .none,
+                      contentPadding: .symmetric(
                         horizontal: 10.0,
                         vertical: 14.0,
                       ),
@@ -72,25 +72,27 @@ class PaymentConverter extends StatelessWidget {
                   flex: 2,
                   child: Container(
                     color: RealUnitColors.neutral50,
-                    padding: const EdgeInsets.only(
+                    padding: const .only(
                       top: 8.0,
                       bottom: 8.0,
                       left: 10.0,
                       right: 4.0,
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: .start,
                       children: [
                         Text(
                           Currency.chf.code,
+                          overflow: .ellipsis,
                           style: const TextStyle(
-                            fontWeight: FontWeight.bold,
+                            fontWeight: .bold,
                             fontSize: 16,
                             height: 20 / 16,
                           ),
                         ),
                         Text(
                           Currency.chf.name,
+                          overflow: .ellipsis,
                           style: const TextStyle(
                             fontSize: 12,
                             height: 16 / 12,
@@ -106,7 +108,7 @@ class PaymentConverter extends StatelessWidget {
         ),
         const SizedBox(height: 32),
         Padding(
-          padding: const EdgeInsets.symmetric(
+          padding: const .symmetric(
             horizontal: 12.0,
             vertical: 4.0,
           ),
@@ -114,30 +116,30 @@ class PaymentConverter extends StatelessWidget {
             S.of(context).youReceive,
             style: const TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.bold,
+              fontWeight: .bold,
             ),
           ),
         ),
         Container(
           decoration: BoxDecoration(
-            border: Border.all(color: RealUnitColors.neutral300),
-            borderRadius: BorderRadius.circular(8.0),
+            border: .all(color: RealUnitColors.neutral300),
+            borderRadius: .circular(8.0),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(8.0),
+            borderRadius: .circular(8.0),
             child: Row(
               children: [
                 Expanded(
                   flex: 3,
                   child: TextField(
                     controller: _resultController,
-                    keyboardType: const TextInputType.numberWithOptions(
+                    keyboardType: const .numberWithOptions(
                       decimal: false,
                     ),
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
+                      border: .none,
+                      contentPadding: .symmetric(
                         horizontal: 10.0,
                         vertical: 14.0,
                       ),
@@ -155,7 +157,7 @@ class PaymentConverter extends StatelessWidget {
                   flex: 2,
                   child: Container(
                     color: RealUnitColors.neutral50,
-                    padding: const EdgeInsets.only(
+                    padding: const .only(
                       top: 8.0,
                       bottom: 8.0,
                       left: 10.0,
@@ -169,25 +171,29 @@ class PaymentConverter extends StatelessWidget {
                           height: 24,
                           width: 24,
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              realUnitAsset.symbol,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                height: 20 / 16,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: .start,
+                            children: [
+                              Text(
+                                realUnitAsset.symbol,
+                                overflow: .ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: .bold,
+                                  fontSize: 16,
+                                  height: 20 / 16,
+                                ),
                               ),
-                            ),
-                            Text(
-                              realUnitAsset.name,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                height: 16 / 12,
+                              Text(
+                                realUnitAsset.name,
+                                overflow: .ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  height: 16 / 12,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),

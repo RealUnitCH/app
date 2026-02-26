@@ -5,7 +5,8 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 
 part 'kyc_state.dart';
 
@@ -17,13 +18,13 @@ class KycCubit extends Cubit<KycState> {
   };
 
   final DfxKycService _kycService;
-  final RealUnitRegistrationService _registrationService;
+  final RealUnitWalletService _walletService;
 
   KycCubit(
     DfxKycService kycService,
-    RealUnitRegistrationService registrationService,
+    RealUnitWalletService walletService,
   ) : _kycService = kycService,
-      _registrationService = registrationService,
+      _walletService = walletService,
       super(const KycInitial());
 
   Future<void> checkKyc() async {
@@ -31,15 +32,15 @@ class KycCubit extends Cubit<KycState> {
       emit(const KycLoading());
 
       final results = await Future.wait([
-        _registrationService.checkRegistrationStatus(),
+        _walletService.getWalletStatus(),
         _kycService.getKycStatus(),
       ]);
 
-      final isRegistered = results.elementAt(0) as bool;
+      final status = results.elementAt(0) as RealUnitWalletStatusDto;
       final kycStatus = results.elementAt(1) as KycLevelDto;
       final level = kycStatus.kycLevel.value;
 
-      if (!isRegistered || level < 20) {
+      if (!status.isRegistered || level < 20) {
         emit(const KycSuccess(currentStep: KycStep.registration));
         return;
       }

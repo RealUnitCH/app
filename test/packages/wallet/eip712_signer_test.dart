@@ -55,12 +55,22 @@ void main() {
         addressCity: addressCity,
         addressCountry: addressCountry,
         swissTaxResidence: swissTaxResidence,
-        registrationDate: registrationDate,
       );
 
       final signature = Eip712Signer.signRegistration(
+        type: registration.type.jsonName,
+        email: registration.email,
+        name: '${registration.firstName} ${registration.lastName}',
+        phoneNumber: registration.phoneNumber,
+        birthday: registration.birthday,
+        nationality: registration.nationality.symbol,
+        addressStreet: '${registration.addressStreet} ${registration.addressStreetNumber}',
+        addressPostalCode: registration.addressPostalCode,
+        addressCity: registration.addressCity,
+        addressCountry: registration.addressCountry.symbol,
+        swissTaxResidence: registration.swissTaxResidence,
         credentials: credentials,
-        registration: registration,
+        registrationDate: registrationDate,
       );
 
       expect(

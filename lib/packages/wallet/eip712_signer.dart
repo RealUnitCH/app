@@ -2,14 +2,24 @@ import 'dart:convert';
 
 import 'package:eth_sig_util_plus/eth_sig_util_plus.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
 class Eip712Signer {
   static String signRegistration({
     required CredentialsWithKnownAddress credentials,
-    required Registration registration,
+    required String email,
+    required String name,
+    required String type,
+    required String phoneNumber,
+    required String birthday,
+    required String nationality,
+    required String addressStreet,
+    required String addressPostalCode,
+    required String addressCity,
+    required String addressCountry,
+    required bool swissTaxResidence,
+    required String registrationDate,
   }) {
     if (credentials is! EthPrivateKey) {
       throw Exception('Hardware wallets not supported for EIP-712 registration signing');
@@ -40,18 +50,18 @@ class Eip712Signer {
       'primaryType': 'RealUnitUser',
       'domain': {'name': 'RealUnitUser', 'version': '1'},
       'message': {
-        'email': registration.email,
-        'name': '${registration.firstName} ${registration.lastName}',
-        'type': registration.type.jsonName,
-        'phoneNumber': registration.phoneNumber,
-        'birthday': registration.birthday,
-        'nationality': registration.nationality.symbol,
-        'addressStreet': '${registration.addressStreet} ${registration.addressStreetNumber}',
-        'addressPostalCode': registration.addressPostalCode,
-        'addressCity': registration.addressCity,
-        'addressCountry': registration.addressCountry.symbol,
-        'swissTaxResidence': true,
-        'registrationDate': registration.registrationDate,
+        'email': email,
+        'name': name,
+        'type': type,
+        'phoneNumber': phoneNumber,
+        'birthday': birthday,
+        'nationality': nationality,
+        'addressStreet': addressStreet,
+        'addressPostalCode': addressPostalCode,
+        'addressCity': addressCity,
+        'addressCountry': addressCountry,
+        'swissTaxResidence': swissTaxResidence,
+        'registrationDate': registrationDate,
         'walletAddress': credentials.address.hexEip55,
       },
     };

@@ -70,9 +70,9 @@ class TransactionHistoryView extends StatelessWidget {
                           lastDate: _todaysDate,
                           onDateSelected: (date) {
                             _startDateModel.setDate(date);
-                            context
-                                .read<TransactionHistoryFilterCubit>()
-                                .changeFilter(startDate: date);
+                            context.read<TransactionHistoryFilterCubit>().changeFilter(
+                              startDate: date,
+                            );
                           },
                         ),
                       ),
@@ -84,9 +84,9 @@ class TransactionHistoryView extends StatelessWidget {
                           lastDate: _todaysDate,
                           onDateSelected: (date) {
                             _endDateModel.setDate(date);
-                            context
-                                .read<TransactionHistoryFilterCubit>()
-                                .changeFilter(endDate: date);
+                            context.read<TransactionHistoryFilterCubit>().changeFilter(
+                              endDate: date,
+                            );
                           },
                         ),
                       ),
@@ -95,7 +95,7 @@ class TransactionHistoryView extends StatelessWidget {
                       ),
                     ],
                   ),
-                  ...state.filtered.reversed.map(
+                  ...state.filtered.map(
                     (transaction) => TransactionHistoryRow(
                       transaction: transaction,
                       walletAddress: walletAddress,

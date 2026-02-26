@@ -19,7 +19,7 @@ class WelcomeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: RealUnitColors.basic.white,
         borderRadius: BorderRadius.circular(24),
       ),
       child: GestureDetector(
@@ -43,24 +43,17 @@ class WelcomeCard extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(
-                            color: RealUnitColors.realUnitBlack,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            height: 24 / 20,
-                            letterSpacing: 20 * -0.01,
-                          ),
+                          style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         if (description != null)
                           Text(
                             description!,
-                            style: const TextStyle(
-                              color: RealUnitColors.neutral500,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              height: 18 / 14,
-                              letterSpacing: 0.0,
-                            ),
+                            style:
+                                Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(
+                                  color: RealUnitColors.neutral500,
+                                ),
                           ),
                       ],
                     ),
