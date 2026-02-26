@@ -10,7 +10,7 @@ import 'package:realunit_wallet/screens/dashboard/models/time_period.dart';
 part 'portfolio_chart_state.dart';
 
 class PortfolioChartCubit extends Cubit<PortfolioChartState> {
-  PortfolioChartCubit(this._prices)
+  PortfolioChartCubit(this.currentValue, this.prices)
     : super(
         const PortfolioChartState(
           selectedPeriod: TimePeriod.threeMonths,
@@ -25,7 +25,8 @@ class PortfolioChartCubit extends Cubit<PortfolioChartState> {
     _calculateChartData();
   }
 
-  final List<PortfolioValuePoint> _prices;
+  final BigInt currentValue;
+  final List<PortfolioValuePoint> prices;
 
   void selectPeriod(TimePeriod period) {
     if (period == state.selectedPeriod) return;
@@ -34,7 +35,7 @@ class PortfolioChartCubit extends Cubit<PortfolioChartState> {
   }
 
   void _calculateChartData() {
-    if (_prices.isEmpty) {
+    if (prices.isEmpty) {
       emit(
         state.copyWith(
           visibleSpots: [],
@@ -50,8 +51,15 @@ class PortfolioChartCubit extends Cubit<PortfolioChartState> {
 
     final now = DateTime.now();
 
+    // replace last point with currentValue (since last point from history is from the start of the day)
+    prices.last = PortfolioValuePoint(
+      balance: prices.last.balance,
+      value: currentValue,
+      time: now,
+    );
+
     // Calculate minX and maxXbased on selected period
-    final firstPriceX = _prices.first.time.millisecondsSinceEpoch.toDouble();
+    final firstPriceX = prices.first.time.millisecondsSinceEpoch.toDouble();
     final startDate = switch (state.selectedPeriod) {
       TimePeriod.oneWeek => DateTime(
         now.year,
@@ -73,16 +81,16 @@ class PortfolioChartCubit extends Cubit<PortfolioChartState> {
         now.month,
         now.day,
       ),
-      TimePeriod.all => _prices.first.time,
+      TimePeriod.all => prices.first.time,
     };
     final minX = math.max(
       startDate.millisecondsSinceEpoch.toDouble(),
       firstPriceX,
     );
-    final maxX = _prices.last.time.millisecondsSinceEpoch.toDouble();
+    final maxX = prices.last.time.millisecondsSinceEpoch.toDouble();
 
     // Filter price points to those within the selected time period (between minX and maxX)
-    final visibleSpots = _prices
+    final visibleSpots = prices
         .where(
           (p) => p.time.millisecondsSinceEpoch >= minX && p.time.millisecondsSinceEpoch <= maxX,
         )

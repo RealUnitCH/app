@@ -24,10 +24,12 @@ class DashboardPortfolioChartWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       key: ValueKey(portfolioHistory.hashCode),
-      create: (context) => PortfolioChartCubit(portfolioHistory),
+      create: (context) => PortfolioChartCubit(
+        currentValue,
+        portfolioHistory,
+      ),
       child: DashboardPortfolioChartView(
         currentValue: currentValue,
-        portfolioHistory: portfolioHistory,
       ),
     );
   }
@@ -35,12 +37,10 @@ class DashboardPortfolioChartWidget extends StatelessWidget {
 
 class DashboardPortfolioChartView extends StatelessWidget {
   final BigInt currentValue;
-  final List<PortfolioValuePoint> portfolioHistory;
 
   const DashboardPortfolioChartView({
     super.key,
     required this.currentValue,
-    required this.portfolioHistory,
   });
 
   @override
