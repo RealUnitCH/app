@@ -20,7 +20,7 @@ class RealUnitAccountService {
     final uri = buildUri(_host, _accountSummaryPath(address));
     final response = await _appStore.httpClient.get(uri);
 
-    if (response.statusCode != 200) throw Exception(response.body);
+    if (response.statusCode != 200) return [];
 
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     final accountSummary = AccountSummaryDto.fromJson(body);
