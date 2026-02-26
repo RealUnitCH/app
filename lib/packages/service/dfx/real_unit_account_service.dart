@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:realunit_wallet/models/portfolio_value_point.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
@@ -20,7 +21,10 @@ class RealUnitAccountService {
     final uri = buildUri(_host, _accountSummaryPath(address));
     final response = await _appStore.httpClient.get(uri);
 
-    if (response.statusCode != 200) return [];
+    if (response.statusCode != 200) {
+      developer.log('getPortfolioHistory failed: ${response.statusCode}');
+      return [];
+    }
 
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     final accountSummary = AccountSummaryDto.fromJson(body);
