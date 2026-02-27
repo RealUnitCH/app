@@ -66,7 +66,7 @@ class SettingsPage extends StatelessWidget {
                   title: S.of(context).kycStatus,
                   leading: const IdentificationIcon(size: 24),
                   trailing: _forwardIcon,
-                  onTap: null,
+                  onTap: () => context.push('/settings/kycStatus'),
                 ),
                 SettingOption(
                   title: S.of(context).userData,
@@ -82,7 +82,11 @@ class SettingsPage extends StatelessWidget {
                 ),
                 SettingOption(
                   title: S.of(context).contact,
-                  leading: const Icon(Icons.info_outline, size: 24, color: RealUnitColors.realUnitBlue),
+                  leading: const Icon(
+                    Icons.info_outline,
+                    size: 24,
+                    color: RealUnitColors.realUnitBlue,
+                  ),
                   trailing: _forwardIcon,
                   onTap: () => context.push('/settings/contact'),
                 ),
