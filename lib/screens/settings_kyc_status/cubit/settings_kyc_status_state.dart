@@ -16,12 +16,12 @@ class SettingsKycStatusLoading extends SettingsKycStatusState {
 }
 
 class SettingsKycStatusSuccess extends SettingsKycStatusState {
-  final KycLevelDto dto;
+  final KycStatus kycStatus;
 
-  const SettingsKycStatusSuccess({required this.dto});
+  const SettingsKycStatusSuccess({required this.kycStatus});
 
   @override
-  List<Object?> get props => [dto];
+  List<Object?> get props => [kycStatus];
 }
 
 class SettingsKycStatusFailure extends SettingsKycStatusState {

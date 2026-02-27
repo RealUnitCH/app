@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_status.dart';
 
 part 'settings_kyc_status_state.dart';
 
@@ -16,7 +16,7 @@ class SettingsKycStatusCubit extends Cubit<SettingsKycStatusState> {
     emit(const SettingsKycStatusLoading());
     try {
       final dto = await _kycService.getKycStatus();
-      emit(SettingsKycStatusSuccess(dto: dto));
+      emit(SettingsKycStatusSuccess(kycStatus: KycStatus.fromDto(dto)));
     } catch (e) {
       emit(SettingsKycStatusFailure(e.toString()));
     }

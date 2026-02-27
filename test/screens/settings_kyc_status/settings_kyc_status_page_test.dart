@@ -6,9 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_step_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_status.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_step.dart';
 import 'package:realunit_wallet/screens/settings_kyc_status/cubit/settings_kyc_status_cubit.dart';
 import 'package:realunit_wallet/screens/settings_kyc_status/settings_kyc_status_page.dart';
 
@@ -80,13 +80,13 @@ void main() {
 
     testWidgets('renders correctly when KycStatus loaded successfully', (tester) async {
       final kycSteps = [
-        const KycStepDto(
+        const KycStep(
           name: KycStepName.contactData,
           status: KycStepStatus.notStarted,
           sequenceNumber: 1,
           isCurrent: false,
         ),
-        const KycStepDto(
+        const KycStep(
           name: KycStepName.personalData,
           status: KycStepStatus.notStarted,
           sequenceNumber: 2,
@@ -97,7 +97,10 @@ void main() {
 
       when(() => settingsKycStatusCubit.state).thenReturn(
         SettingsKycStatusSuccess(
-          dto: KycLevelDto(kycLevel: kycLevel, kycSteps: kycSteps),
+          kycStatus: KycStatus(
+            level: kycLevel,
+            steps: kycSteps,
+          ),
         ),
       );
 
