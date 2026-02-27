@@ -58,7 +58,7 @@ class SettingsKycStatusView extends StatelessWidget {
                               Padding(
                                 padding: const EdgeInsets.all(24),
                                 child: Text(
-                                  'Dein KYC befindet sich auf Level ${level.value}.',
+                                  S.of(context).kycLevelDescription('${level.value}'),
                                   textAlign: .center,
                                   style: Theme.of(context).textTheme.headlineSmall,
                                 ),
@@ -104,20 +104,27 @@ class SettingsKycStatusView extends StatelessWidget {
                                   ),
                                   Expanded(
                                     child: Column(
+                                      spacing: 2.0,
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'Benötigtes Level',
+                                          S.of(context).kycRequiredLevel,
                                           style: Theme.of(
                                             context,
                                           ).textTheme.bodySmall?.copyWith(fontWeight: .bold),
                                         ),
                                         Text(
-                                          'Kauf: Level 30 (Alle Schritte bis einschließl. Ident)',
+                                          S
+                                              .of(context)
+                                              .kycRequiredStepsForBuy(KycStepName.ident.value),
                                           style: Theme.of(context).textTheme.bodySmall,
                                         ),
                                         Text(
-                                          'Verkauf: Level 50 (Alle Schritte bis einschließl. FinancialData)',
+                                          S
+                                              .of(context)
+                                              .kycRequiredStepsForSell(
+                                                KycStepName.financialData.value,
+                                              ),
                                           style: Theme.of(context).textTheme.bodySmall,
                                         ),
                                       ],
