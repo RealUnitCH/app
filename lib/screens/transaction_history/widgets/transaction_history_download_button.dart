@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/multi_receipt/transaction_history_multi_receipt_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
@@ -49,10 +49,7 @@ class TransactionHistoryDownloadButtonView extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        final transactionIds = transactions
-            .whereType<DfxTransaction>()
-            .map((tx) => tx.dfxId)
-            .toList();
+        final transactionsIds = transactions.map((t) => t.txId).toList();
         return Column(
           children: [
             Padding(
@@ -81,11 +78,13 @@ class TransactionHistoryDownloadButtonView extends StatelessWidget {
                       color: RealUnitColors.basic.white,
                     ),
                   )
-                : transactionIds.isNotEmpty
+                : transactionsIds.isNotEmpty
                 ? GestureDetector(
-                    onTap: () => context
-                        .read<TransactionHistoryMultiReceiptCubit>()
-                        .generateReceipt(transactionIds),
+                    onTap: () =>
+                        context.read<TransactionHistoryMultiReceiptCubit>().generateReceipt(
+                          transactionsIds,
+                          currency: context.read<SettingsBloc>().state.currency,
+                        ),
                     child: Container(
                       height: 44,
                       width: 44,

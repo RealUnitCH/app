@@ -53,55 +53,57 @@ class TransactionHistoryView extends StatelessWidget {
       body: BlocBuilder<TransactionHistoryFilterCubit, TransactionHistoryFilterState>(
         builder: (context, state) {
           return SingleChildScrollView(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                spacing: 20.0,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 8.0,
-                    children: [
-                      Expanded(
-                        child: DatePickerField(
-                          label: S.of(context).startDate,
-                          initialDate: _startDateModel.value,
-                          firstDate: DateTime(2025),
-                          lastDate: _todaysDate,
-                          onDateSelected: (date) {
-                            _startDateModel.setDate(date);
-                            context.read<TransactionHistoryFilterCubit>().changeFilter(
-                              startDate: date,
-                            );
-                          },
+            child: SafeArea(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Column(
+                  spacing: 20.0,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 8.0,
+                      children: [
+                        Expanded(
+                          child: DatePickerField(
+                            label: S.of(context).startDate,
+                            initialDate: _startDateModel.value,
+                            firstDate: DateTime(2025),
+                            lastDate: _todaysDate,
+                            onDateSelected: (date) {
+                              _startDateModel.setDate(date);
+                              context.read<TransactionHistoryFilterCubit>().changeFilter(
+                                startDate: date,
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: DatePickerField(
-                          label: S.of(context).endDate,
-                          initialDate: _endDateModel.value,
-                          firstDate: DateTime(2025),
-                          lastDate: _todaysDate,
-                          onDateSelected: (date) {
-                            _endDateModel.setDate(date);
-                            context.read<TransactionHistoryFilterCubit>().changeFilter(
-                              endDate: date,
-                            );
-                          },
+                        Expanded(
+                          child: DatePickerField(
+                            label: S.of(context).endDate,
+                            initialDate: _endDateModel.value,
+                            firstDate: DateTime(2025),
+                            lastDate: _todaysDate,
+                            onDateSelected: (date) {
+                              _endDateModel.setDate(date);
+                              context.read<TransactionHistoryFilterCubit>().changeFilter(
+                                endDate: date,
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                      TransactionHistoryDownloadButton(
-                        transactions: state.filtered,
-                      ),
-                    ],
-                  ),
-                  ...state.filtered.map(
-                    (transaction) => TransactionHistoryRow(
-                      transaction: transaction,
-                      walletAddress: walletAddress,
+                        TransactionHistoryDownloadButton(
+                          transactions: state.filtered,
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    ...state.filtered.map(
+                      (transaction) => TransactionHistoryRow(
+                        transaction: transaction,
+                        walletAddress: walletAddress,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );

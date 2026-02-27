@@ -53,7 +53,10 @@ class RealUnitPdfService {
     return PdfDto.fromJson(jsonDecode(response.body));
   }
 
-  Future<PdfDto> getTransactionsReceipt(List<int> ids) async {
+  Future<PdfDto> getTransactionsReceipt(
+    List<String> ids, {
+    Currency currency = Currency.chf,
+  }) async {
     final authToken = _appStore.dfxAuthToken;
 
     final uri = buildUri(_host, _transactionsReceiptMultiPath);
@@ -63,7 +66,7 @@ class RealUnitPdfService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $authToken',
       },
-      body: jsonEncode(MultiReceiptDto(transactionIds: ids)),
+      body: jsonEncode(MultiReceiptDto(txIds: ids, currency: currency)),
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
@@ -74,7 +77,7 @@ class RealUnitPdfService {
     return PdfDto.fromJson(jsonDecode(response.body));
   }
 
-  Future<PdfDto> getTransactionReceipt(int id) async {
+  Future<PdfDto> getTransactionReceipt(String id, {Currency currency = Currency.chf}) async {
     final authToken = _appStore.dfxAuthToken;
 
     final uri = buildUri(_host, _transactionsReceiptSinglePath);
@@ -84,7 +87,7 @@ class RealUnitPdfService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $authToken',
       },
-      body: jsonEncode(SingleReceiptDto(transactionId: id)),
+      body: jsonEncode(SingleReceiptDto(txId: id, currency: currency)),
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
