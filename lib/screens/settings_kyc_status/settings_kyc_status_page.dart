@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -40,8 +41,8 @@ class SettingsKycStatusView extends StatelessWidget {
             final steps = state.dto.kycSteps;
             final hasStarted =
                 state.dto.kycSteps
-                    .firstWhere((step) => step.name == KycStepName.contactData)
-                    .status !=
+                    .firstWhereOrNull((step) => step.name == KycStepName.contactData)
+                    ?.status !=
                 KycStepStatus.notStarted;
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -146,7 +147,7 @@ class SettingsKycStatusView extends StatelessWidget {
                                         }
                                       },
                                       child: Text(
-                                        '${hasStarted ? S.of(context).next : S.of(context).start} ${S.of(context).kyc}',
+                                        hasStarted ? S.of(context).next : S.of(context).start,
                                       ),
                                     ),
                                   ),
