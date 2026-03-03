@@ -18,7 +18,7 @@ class SettingsUserDataPage extends StatelessWidget {
       create: (context) => SettingsUserDataCubit(
         walletService: getIt<RealUnitWalletService>(),
         countryService: getIt<DfxCountryService>(),
-      )..getUserData(),
+      ),
       child: const SettingsUserDataView(),
     );
   }

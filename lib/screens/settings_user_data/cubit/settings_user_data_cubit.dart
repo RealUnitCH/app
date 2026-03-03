@@ -16,7 +16,9 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
     required DfxCountryService countryService,
   }) : _walletService = walletService,
        _countryService = countryService,
-       super(const SettingsUserDataInitial());
+       super(const SettingsUserDataInitial()) {
+    getUserData();
+  }
 
   Future<void> getUserData() async {
     try {
