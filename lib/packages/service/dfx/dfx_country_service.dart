@@ -36,14 +36,14 @@ class DfxCountryService {
   }
 
   /// Find a country by its 2-letter symbol (e.g., 'CH')
-  Future<Country?> getCountryBySymbol(String symbol) async {
+  Future<Country> getCountryBySymbol(String symbol) async {
     final countries = await getAllCountries();
     try {
       return countries.firstWhere(
         (country) => country.symbol.toUpperCase() == symbol.toUpperCase(),
       );
     } catch (_) {
-      return null;
+      throw Exception('Unknown country symbol: $symbol');
     }
   }
 }

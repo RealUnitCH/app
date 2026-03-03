@@ -3,9 +3,12 @@ import 'package:realunit_wallet/generated/i18n.dart';
 
 enum RegistrationUserType {
   human(jsonName: 'HUMAN'),
-  corporation(jsonName: 'CORPORATION');
+  corporation(jsonName: 'CORPORATION')
+  ;
 
   final String jsonName;
+
+  const RegistrationUserType({required this.jsonName});
 
   String name(BuildContext context) {
     switch (this) {
@@ -16,5 +19,10 @@ enum RegistrationUserType {
     }
   }
 
-  const RegistrationUserType({required this.jsonName});
+  factory RegistrationUserType.fromName(String name) {
+    return RegistrationUserType.values.firstWhere(
+      (e) => e.jsonName == name,
+      orElse: () => throw ArgumentError('Unknown RegistrationUserType: $name'),
+    );
+  }
 }
