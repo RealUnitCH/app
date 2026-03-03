@@ -19,8 +19,10 @@ import 'package:realunit_wallet/screens/sell/sell_page.dart';
 import 'package:realunit_wallet/screens/send/send_page.dart';
 import 'package:realunit_wallet/screens/send_invoice/send_invoice_page.dart';
 import 'package:realunit_wallet/screens/settings/settings_page.dart';
+import 'package:realunit_wallet/screens/settings_address/settings_address_page.dart';
 import 'package:realunit_wallet/screens/settings_contact/settings_contact_page.dart';
 import 'package:realunit_wallet/screens/settings_currencies/settings_currencies_page.dart';
+import 'package:realunit_wallet/screens/settings_debug/settings_debug_page.dart';
 import 'package:realunit_wallet/screens/settings_edit_node/settings_edit_node_page.dart';
 import 'package:realunit_wallet/screens/settings_kyc_status/settings_kyc_status_page.dart';
 import 'package:realunit_wallet/screens/settings_languages/settings_languages_page.dart';
@@ -147,10 +149,7 @@ void setupRouter() {
               path: '/kycStatus',
               builder: (context, state) => const SettingsKycStatusPage(),
             ),
-            GoRoute(
-              path: '/network',
-              builder: (context, state) => SettingsNetworkPage(),
-            ),
+
             GoRoute(
               path: '/taxReport',
               builder: (context, state) => const SettingsTaxReportPage(),
@@ -159,6 +158,7 @@ void setupRouter() {
               path: '/seed',
               builder: (context, state) => const SettingsSeedPage(),
             ),
+
             GoRoute(
               path: '/nodes',
               builder: (context, state) => const SettingsNodesPage(),
@@ -181,6 +181,20 @@ void setupRouter() {
                   assetBaseName: 'terms_of_use',
                 ),
               ),
+            ),
+            GoRoute(
+              path: '/debug',
+              routes: [
+                GoRoute(
+                  path: '/network',
+                  builder: (context, state) => SettingsNetworkPage(),
+                ),
+                GoRoute(
+                  path: '/address',
+                  builder: (context, state) => const SettingsAddressPage(),
+                ),
+              ],
+              builder: (context, state) => const SettingsDebugPage(),
             ),
           ],
           builder: (context, state) => const SettingsPage(),
