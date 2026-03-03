@@ -110,7 +110,7 @@ void main() {
       );
     });
 
-    testWidgets('renders correctly when user data was not founded', (tester) async {
+    testWidgets('renders correctly when user data was not found', (tester) async {
       when(() => settingsUserDataCubit.state).thenReturn(
         const SettingsUserDataSuccess(null),
       );

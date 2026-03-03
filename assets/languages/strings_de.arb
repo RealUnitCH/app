@@ -273,6 +273,7 @@
   "twoFaSendCodeFailed": "Es ist ein Problem beim Senden der Mail aufgetreten",
   "twoFaWrongCode": "Der Code ist falsch",
   "userData": "Nutzerdaten",
+  "userDataNotFound": "Zu dieser Wallet sind keine Nutzerdaten hinterlegt.",
   "walletAddress": "Wallet-Adresse",
   "walletAddressDisclaimer": "Die Adresse soll nur zum Empfangen von RealU Token verwendet werden.",
   "website": "Website",
