@@ -1,7 +1,7 @@
-app_identifier("swiss.dfx.realunit") # The bundle identifier of your app
+app_identifier("swiss.realunit.app") # The bundle identifier of your app
 
-itc_team_id("123197590") # App Store Connect Team ID
-team_id("Y4QBY6387T") # Developer Portal Team ID
+itc_team_id("128565971") # App Store Connect Team ID
+team_id("N2BP27J7N6") # Developer Portal Team ID
 
 # For more information about the Appfile, see:
 #     https://docs.fastlane.tools/advanced/#appfile
