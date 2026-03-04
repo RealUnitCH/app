@@ -39,36 +39,40 @@ class SettingsUserDataView extends StatelessWidget {
           builder: (context, state) => switch (state) {
             SettingsUserDataSuccess(:final userData) =>
               userData != null
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: 24,
-                        children: [
-                          _UserDataRow(
-                            label: S.of(context).registerAccountType,
-                            value: userData.type.name(context),
+                  ? SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        child: SafeArea(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: 24,
+                            children: [
+                              _UserDataRow(
+                                label: S.of(context).registerAccountType,
+                                value: userData.type.name(context),
+                              ),
+                              _UserDataRow(label: S.of(context).name, value: userData.name),
+                              _UserDataRow(
+                                label: S.of(context).birthday,
+                                value: DateFormat('dd.MM.yyyy').format(userData.birthday),
+                              ),
+                              _UserDataRow(
+                                label: S.of(context).registerCitizenship,
+                                value: userData.nationality.name,
+                              ),
+                              _UserDataRow(label: S.of(context).email, value: userData.email),
+                              _UserDataRow(
+                                label: S.of(context).phoneNumber,
+                                value: userData.phoneNumber,
+                              ),
+                              _UserDataRow(
+                                label: S.of(context).residence,
+                                value:
+                                    '${userData.addressStreet}\n${userData.addressPostalCode} ${userData.addressCity}\n${userData.addressCountry.name}',
+                              ),
+                            ],
                           ),
-                          _UserDataRow(label: S.of(context).name, value: userData.name),
-                          _UserDataRow(
-                            label: S.of(context).birthday,
-                            value: DateFormat('dd.MM.yyyy').format(userData.birthday),
-                          ),
-                          _UserDataRow(
-                            label: S.of(context).registerCitizenship,
-                            value: userData.nationality.name,
-                          ),
-                          _UserDataRow(label: S.of(context).email, value: userData.email),
-                          _UserDataRow(
-                            label: S.of(context).phoneNumber,
-                            value: userData.phoneNumber,
-                          ),
-                          _UserDataRow(
-                            label: S.of(context).residence,
-                            value:
-                                '${userData.addressStreet}\n${userData.addressPostalCode} ${userData.addressCity}\n${userData.addressCountry.name}',
-                          ),
-                        ],
+                        ),
                       ),
                     )
                   : Center(
