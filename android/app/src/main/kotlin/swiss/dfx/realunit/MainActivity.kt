@@ -1,4 +1,4 @@
-package swiss.dfx.realunit
+package swiss.realunit.app
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 
