@@ -50,6 +50,13 @@ class SettingsPage extends StatelessWidget {
                   onTap: () => context.push('/settings/currencies'),
                 ),
                 SettingOption(
+                  title: S.of(context).settingsNetwork,
+                  leading: const NodesIcon(size: 24),
+                  trailing: _forwardIcon,
+                  selectedOption: state.networkMode.localizedName(context),
+                  onTap: () => context.push('/settings/network'),
+                ),
+                SettingOption(
                   title: S.of(context).settingsTaxReport,
                   leading: const DocumentReportIcon(size: 24),
                   trailing: _forwardIcon,
@@ -83,7 +90,12 @@ class SettingsPage extends StatelessWidget {
                   trailing: _forwardIcon,
                   onTap: () => context.push('/settings/contact'),
                 ),
-
+                SettingOption(
+                  title: S.of(context).walletAddress,
+                  leading: const RealUnitIcon(size: 24),
+                  trailing: _forwardIcon,
+                  onTap: () => context.push('/settings/walletAddress'),
+                ),
                 if (context.read<HomeBloc>().state.openWallet?.walletType == WalletType.software)
                   SettingOption(
                     title: S.of(context).settingsWalletBackup,
@@ -91,16 +103,6 @@ class SettingsPage extends StatelessWidget {
                     trailing: _forwardIcon,
                     onTap: () => context.push('/settings/seed'),
                   ),
-                SettingOption(
-                  title: 'Debug',
-                  leading: const Icon(
-                    Icons.adb_rounded,
-                    size: 24,
-                    color: RealUnitColors.realUnitBlue,
-                  ),
-                  trailing: _forwardIcon,
-                  onTap: () => context.push('/settings/debug'),
-                ),
               ],
             ),
           ),

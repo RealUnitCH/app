@@ -19,10 +19,8 @@ import 'package:realunit_wallet/screens/sell/sell_page.dart';
 import 'package:realunit_wallet/screens/send/send_page.dart';
 import 'package:realunit_wallet/screens/send_invoice/send_invoice_page.dart';
 import 'package:realunit_wallet/screens/settings/settings_page.dart';
-import 'package:realunit_wallet/screens/settings_address/settings_address_page.dart';
 import 'package:realunit_wallet/screens/settings_contact/settings_contact_page.dart';
 import 'package:realunit_wallet/screens/settings_currencies/settings_currencies_page.dart';
-import 'package:realunit_wallet/screens/settings_debug/settings_debug_page.dart';
 import 'package:realunit_wallet/screens/settings_edit_node/settings_edit_node_page.dart';
 import 'package:realunit_wallet/screens/settings_kyc_status/settings_kyc_status_page.dart';
 import 'package:realunit_wallet/screens/settings_languages/settings_languages_page.dart';
@@ -30,6 +28,7 @@ import 'package:realunit_wallet/screens/settings_network/settings_network_page.d
 import 'package:realunit_wallet/screens/settings_nodes/settings_nodes_page.dart';
 import 'package:realunit_wallet/screens/settings_seed/settings_seed_page.dart';
 import 'package:realunit_wallet/screens/settings_tax_report/settings_tax_report_page.dart';
+import 'package:realunit_wallet/screens/settings_wallet_address/settings_wallet_address_page.dart';
 import 'package:realunit_wallet/screens/terms/terms_page.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
@@ -149,7 +148,10 @@ void setupRouter() {
               path: '/kycStatus',
               builder: (context, state) => const SettingsKycStatusPage(),
             ),
-
+            GoRoute(
+              path: '/network',
+              builder: (context, state) => SettingsNetworkPage(),
+            ),
             GoRoute(
               path: '/taxReport',
               builder: (context, state) => const SettingsTaxReportPage(),
@@ -158,7 +160,6 @@ void setupRouter() {
               path: '/seed',
               builder: (context, state) => const SettingsSeedPage(),
             ),
-
             GoRoute(
               path: '/nodes',
               builder: (context, state) => const SettingsNodesPage(),
@@ -183,18 +184,8 @@ void setupRouter() {
               ),
             ),
             GoRoute(
-              path: '/debug',
-              routes: [
-                GoRoute(
-                  path: '/network',
-                  builder: (context, state) => SettingsNetworkPage(),
-                ),
-                GoRoute(
-                  path: '/address',
-                  builder: (context, state) => const SettingsAddressPage(),
-                ),
-              ],
-              builder: (context, state) => const SettingsDebugPage(),
+              path: '/walletAddress',
+              builder: (context, state) => const SettingsWalletAddressPage(),
             ),
           ],
           builder: (context, state) => const SettingsPage(),
