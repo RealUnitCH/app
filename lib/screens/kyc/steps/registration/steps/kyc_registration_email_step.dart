@@ -12,7 +12,7 @@ import 'package:realunit_wallet/styles/colors.dart';
 
 class KycRegistrationEmailStep extends StatelessWidget {
   final TextEditingController emailCtrl;
-  final void Function() onSuccess;
+  final Future<void> Function() onSuccess;
 
   const KycRegistrationEmailStep({
     super.key,
@@ -36,7 +36,7 @@ class KycRegistrationEmailStep extends StatelessWidget {
 
 class KycRegistrationEmailStepView extends StatelessWidget {
   final TextEditingController emailCtrl;
-  final Function() onSuccess;
+  final Future<void> Function() onSuccess;
 
   KycRegistrationEmailStepView({
     super.key,
