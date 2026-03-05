@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/di.dart';
@@ -11,6 +10,7 @@ import 'package:realunit_wallet/screens/kyc/steps/nationality/kyc_nationality_pa
 import 'package:realunit_wallet/screens/kyc/steps/registration/kyc_registration_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_completed_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_failure_page.dart';
+import 'package:realunit_wallet/screens/kyc/subpages/kyc_loading_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_pending_page.dart';
 
 class KycPageManager extends StatelessWidget {
@@ -37,7 +37,7 @@ class KycViewManager extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<KycCubit, KycState>(
       builder: (context, state) => switch (state) {
-        KycLoading() => const Scaffold(body: Center(child: CupertinoActivityIndicator())),
+        KycLoading() => const KycLoadingPage(),
         KycFailure(:final message) => KycFailurePage(message: message),
         KycPending(:final pendingStep) => KycPendingPage(pendingStep: pendingStep),
         KycCompleted() => const KycCompletedPage(),

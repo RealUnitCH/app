@@ -44,7 +44,7 @@ class _LegalDisclaimerView extends StatelessWidget {
               },
               icon: const Icon(Icons.arrow_back_rounded),
             ),
-            title: Text(s.buyRealu),
+            title: Text(s.legalDisclaimer),
           ),
           body: SafeArea(
             child: Padding(
