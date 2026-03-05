@@ -72,7 +72,7 @@ class SettingsPage extends StatelessWidget {
                   title: S.of(context).userData,
                   leading: const UserCircleIcon(size: 24),
                   trailing: _forwardIcon,
-                  onTap: null,
+                  onTap: () => context.push('/settings/userData'),
                 ),
                 SettingOption(
                   title: S.of(context).termsOfUse,
@@ -83,8 +83,7 @@ class SettingsPage extends StatelessWidget {
                 SettingOption(
                   title: S.of(context).contact,
                   leading: const Icon(
-                    Icons.info_outline,
-                    size: 24,
+                    Icons.info_rounded,
                     color: RealUnitColors.realUnitBlue,
                   ),
                   trailing: _forwardIcon,
