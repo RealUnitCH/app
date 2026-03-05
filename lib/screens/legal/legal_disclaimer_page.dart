@@ -18,13 +18,13 @@ class LegalDisclaimerPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => LegalDisclaimerCubit(),
-      child: const _LegalDisclaimerView(),
+      child: const LegalDisclaimerView(),
     );
   }
 }
 
-class _LegalDisclaimerView extends StatelessWidget {
-  const _LegalDisclaimerView();
+class LegalDisclaimerView extends StatelessWidget {
+  const LegalDisclaimerView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +44,7 @@ class _LegalDisclaimerView extends StatelessWidget {
               },
               icon: const Icon(Icons.arrow_back_rounded),
             ),
-            title: Text(s.buyRealu),
+            title: Text(s.legalDisclaimer),
           ),
           body: SafeArea(
             child: Padding(
