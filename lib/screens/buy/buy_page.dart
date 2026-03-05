@@ -22,7 +22,7 @@ class BuyPage extends StatelessWidget {
         BlocProvider(
           create: (_) => BuyConverterCubit(
             getIt<DfxBrokerbotService>(),
-          )..onFiatChanged('1000'),
+          )..onFiatChanged('100'),
         ),
         BlocProvider(
           create: (_) => BuyPaymentInfoCubit(

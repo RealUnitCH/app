@@ -112,10 +112,10 @@ void main() {
       whenListen(
         converterCubit,
         Stream.fromIterable([
-          const BuyConverterState(fiatText: '1000', sharesText: '1.00', loading: true),
-          const BuyConverterState(fiatText: '1000', sharesText: '1.00', loading: false),
+          const BuyConverterState(fiatText: '100', sharesText: '1.00', loading: true),
+          const BuyConverterState(fiatText: '100', sharesText: '1.00', loading: false),
         ]),
-        initialState: const BuyConverterState(fiatText: '1000', sharesText: '1.00'),
+        initialState: const BuyConverterState(fiatText: '100', sharesText: '1.00'),
       );
 
       await tester.pumpApp(buildSubject(const BuyView()));
