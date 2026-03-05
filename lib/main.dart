@@ -1,8 +1,10 @@
 import 'dart:developer' as developer;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -20,29 +22,30 @@ import 'package:realunit_wallet/screens/terms/terms_page.dart';
 import 'package:realunit_wallet/styles/themes.dart';
 
 Future<void> main() async {
-  // try {
-  WidgetsFlutterBinding.ensureInitialized();
+  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+
+  // only preserve splash screen for 3 seconds for release version
+  if (kReleaseMode) {
+    FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+    await _initializeWithSplashDuration();
+    FlutterNativeSplash.remove();
+  } else {
+    await _initialize();
+  }
+}
+
+Future<void> _initialize() async {
   await fuckFirebase();
   final databaseKey = await setupEssentials();
   await finishSetup(databaseKey);
-
   runApp(const WalletApp());
-  // } catch (e) {
-  //   runApp(
-  //     MaterialApp(
-  //       home: Scaffold(
-  //         body: Container(
-  //           margin:
-  //               const EdgeInsets.only(top: 50, left: 20, right: 20, bottom: 20),
-  //           child: Text(
-  //             'Error:\n${e.toString()}',
-  //             style: const TextStyle(fontSize: 22, color: Colors.black),
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
+}
+
+Future<void> _initializeWithSplashDuration() async {
+  await Future.wait([
+    _initialize(),
+    Future.delayed(const Duration(seconds: 3)),
+  ]);
 }
 
 class WalletApp extends StatefulWidget {
