@@ -90,6 +90,12 @@ class SettingsPage extends StatelessWidget {
                   trailing: _forwardIcon,
                   onTap: () => context.push('/settings/contact'),
                 ),
+                SettingOption(
+                  title: S.of(context).walletAddress,
+                  leading: const RealUnitIcon(size: 24),
+                  trailing: _forwardIcon,
+                  onTap: () => context.push('/settings/walletAddress'),
+                ),
                 if (context.read<HomeBloc>().state.openWallet?.walletType == WalletType.software)
                   SettingOption(
                     title: S.of(context).settingsWalletBackup,

@@ -4,73 +4,72 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class QRAddressWidget extends StatelessWidget {
-  const QRAddressWidget({super.key, required this.uri, required this.subtitle});
+  const QRAddressWidget({
+    super.key,
+    required this.uri,
+    required this.subtitle,
+  });
 
   final String uri;
   final String subtitle;
 
   @override
   Widget build(BuildContext context) => Column(
-        children: [
-          QrImageView(
-            data: uri,
-            // errorCorrectionLevel: errorCorrectionLevel,
-            size: 300,
-            eyeStyle: const QrEyeStyle(color: RealUnitColors.realUnitBlack),
-            dataModuleStyle: const QrDataModuleStyle(
-              color: RealUnitColors.realUnitBlack,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 10, bottom: 10),
-            child: InkWell(
-              enableFeedback: false,
-              onTap: _copyToClipboard,
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+    spacing: 12.0,
+    children: [
+      QrImageView(
+        data: uri,
+        size: 250,
+        dataModuleStyle: const QrDataModuleStyle(
+          color: RealUnitColors.realUnitBlack,
+        ),
+      ),
+      InkWell(
+        borderRadius: .circular(16.0),
+        enableFeedback: false,
+        onTap: _copyToClipboard,
+        child: Container(
+          padding: const .all(8.0),
+          child: Row(
+            mainAxisSize: .min,
+            crossAxisAlignment: .center,
+            spacing: 20.0,
+            children: [
+              Text.rich(
+                TextSpan(
                   children: [
-                    Text.rich(
-                      TextSpan(children: [
-                        TextSpan(
-                          text: subtitle.substring(0, 6),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const TextSpan(text: ' '),
-                        TextSpan(
-                          text: subtitle.substring(6, 21),
-                        ),
-                        const TextSpan(text: '\n'),
-                        TextSpan(
-                          text: subtitle.substring(21, 36),
-                        ),
-                        const TextSpan(text: ' '),
-                        TextSpan(
-                          text: subtitle.substring(36),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ]),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontFamily: 'Monospace',
-                      ),
+                    TextSpan(
+                      text: subtitle.substring(0, 6),
+                      style: const TextStyle(fontWeight: .bold),
                     ),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 20),
-                      child: Icon(
-                        Icons.copy,
-                        size: 16,
-                      ),
-                    )
+                    const TextSpan(text: ' '),
+                    TextSpan(
+                      text: subtitle.substring(6, 21),
+                    ),
+                    const TextSpan(text: '\n'),
+                    TextSpan(
+                      text: subtitle.substring(21, 36),
+                    ),
+                    const TextSpan(text: ' '),
+                    TextSpan(
+                      text: subtitle.substring(36),
+                      style: const TextStyle(fontWeight: .bold),
+                    ),
                   ],
                 ),
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
-            ),
+              const Icon(
+                Icons.copy_outlined,
+                color: RealUnitColors.realUnitBlue,
+                size: 16,
+              ),
+            ],
           ),
-        ],
-      );
+        ),
+      ),
+    ],
+  );
 
   Future<void> _copyToClipboard() => Clipboard.setData(ClipboardData(text: subtitle));
 }
