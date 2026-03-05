@@ -81,6 +81,16 @@ class SettingsPage extends StatelessWidget {
                   onTap: () => context.push('/settings/termsOfUse'),
                 ),
                 SettingOption(
+                  title: S.of(context).legalDocuments,
+                  leading: const Icon(
+                    Icons.description_rounded,
+                    size: 24,
+                    color: RealUnitColors.realUnitBlue,
+                  ),
+                  trailing: _forwardIcon,
+                  onTap: () => context.push('/settings/legalDocuments'),
+                ),
+                SettingOption(
                   title: S.of(context).contact,
                   leading: const Icon(
                     Icons.info_outline,

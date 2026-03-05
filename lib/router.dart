@@ -24,6 +24,7 @@ import 'package:realunit_wallet/screens/settings_currencies/settings_currencies_
 import 'package:realunit_wallet/screens/settings_edit_node/settings_edit_node_page.dart';
 import 'package:realunit_wallet/screens/settings_kyc_status/settings_kyc_status_page.dart';
 import 'package:realunit_wallet/screens/settings_languages/settings_languages_page.dart';
+import 'package:realunit_wallet/screens/settings_legal_documents/settings_legal_documents_page.dart';
 import 'package:realunit_wallet/screens/settings_network/settings_network_page.dart';
 import 'package:realunit_wallet/screens/settings_nodes/settings_nodes_page.dart';
 import 'package:realunit_wallet/screens/settings_seed/settings_seed_page.dart';
@@ -147,6 +148,10 @@ void setupRouter() {
             GoRoute(
               path: '/kycStatus',
               builder: (context, state) => const SettingsKycStatusPage(),
+            ),
+            GoRoute(
+              path: '/legalDocuments',
+              builder: (context, state) => const SettingsLegalDocumentsPage(),
             ),
             GoRoute(
               path: '/network',
