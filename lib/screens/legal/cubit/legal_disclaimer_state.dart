@@ -13,7 +13,7 @@ class LegalDisclaimerState extends Equatable {
 
   bool get isLastStep => currentStep == totalSteps - 1;
 
-  double get progress => (currentStep + 1) / (totalSteps + 3); // + 3 because of KYC Registration
+  double get progress => (currentStep + 1) / totalSteps;
 
   LegalDisclaimerState copyWith({
     int? currentStep,
