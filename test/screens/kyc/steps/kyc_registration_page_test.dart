@@ -102,10 +102,6 @@ void main() {
       (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
       await tester.pump();
 
-      expect(
-        (tester.widget(find.byType(LinearProgressIndicator)) as LinearProgressIndicator).value,
-        state.progress,
-      );
       expect(find.byType(KycRegistrationEmailStep).hitTestable(), findsOne);
     });
 
@@ -125,10 +121,6 @@ void main() {
       (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
       await tester.pump();
 
-      expect(
-        (tester.widget(find.byType(LinearProgressIndicator)) as LinearProgressIndicator).value,
-        state.progress,
-      );
       expect(find.byType(KycRegistrationPersonalStep).hitTestable(), findsOne);
     });
 
@@ -148,10 +140,6 @@ void main() {
       (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
       await tester.pump();
 
-      expect(
-        (tester.widget(find.byType(LinearProgressIndicator)) as LinearProgressIndicator).value,
-        state.progress,
-      );
       expect(find.byType(KycRegistrationAddressStep), findsOne);
     });
   });

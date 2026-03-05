@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -27,9 +28,12 @@ class OnboardingCompletedPage extends StatelessWidget {
                   child: IntrinsicHeight(
                     child: Column(
                       children: [
-                        Image.asset(
-                          'assets/images/realu_tokens.png',
-                          height: 280,
+                        Padding(
+                          padding: const EdgeInsets.all(32.0),
+                          child: SvgPicture.asset(
+                            'assets/images/illustrations/realu_token.svg',
+                            height: 216,
+                          ),
                         ),
                         const SizedBox(height: 40.0),
                         Column(

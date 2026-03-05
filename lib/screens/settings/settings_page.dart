@@ -72,7 +72,7 @@ class SettingsPage extends StatelessWidget {
                   title: S.of(context).userData,
                   leading: const UserCircleIcon(size: 24),
                   trailing: _forwardIcon,
-                  onTap: null,
+                  onTap: () => context.push('/settings/userData'),
                 ),
                 SettingOption(
                   title: S.of(context).termsOfUse,
@@ -81,14 +81,29 @@ class SettingsPage extends StatelessWidget {
                   onTap: () => context.push('/settings/termsOfUse'),
                 ),
                 SettingOption(
-                  title: S.of(context).contact,
+                  title: S.of(context).legalDocuments,
                   leading: const Icon(
-                    Icons.info_outline,
+                    Icons.description_rounded,
                     size: 24,
                     color: RealUnitColors.realUnitBlue,
                   ),
                   trailing: _forwardIcon,
+                  onTap: () => context.push('/settings/legalDocuments'),
+                ),
+                SettingOption(
+                  title: S.of(context).contact,
+                  leading: const Icon(
+                    Icons.info_rounded,
+                    color: RealUnitColors.realUnitBlue,
+                  ),
+                  trailing: _forwardIcon,
                   onTap: () => context.push('/settings/contact'),
+                ),
+                SettingOption(
+                  title: S.of(context).walletAddress,
+                  leading: const RealUnitIcon(size: 24),
+                  trailing: _forwardIcon,
+                  onTap: () => context.push('/settings/walletAddress'),
                 ),
                 if (context.read<HomeBloc>().state.openWallet?.walletType == WalletType.software)
                   SettingOption(

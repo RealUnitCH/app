@@ -1,13 +1,18 @@
+import 'package:realunit_wallet/styles/currency.dart';
+
 class SingleReceiptDto {
-  final int transactionId;
+  final String txId;
+  final Currency currency;
 
   const SingleReceiptDto({
-    required this.transactionId,
+    required this.txId,
+    this.currency = Currency.chf,
   });
 
   Map<String, dynamic> toJson() {
     return {
-      'transactionId': transactionId,
+      'txHash': txId,
+      'currency': currency.code,
     };
   }
 }

@@ -5,19 +5,17 @@ enum KycRegistrationStep { email, personal, address }
 class KycRegistrationStepState {
   final List<KycRegistrationStep> steps;
   final KycRegistrationStep step;
-  final int stepOffset;
 
   const KycRegistrationStepState({
     required this.steps,
     required this.step,
-    this.stepOffset = 0,
   });
 
   int get index => steps.indexOf(step);
 
-  int get totalSteps => steps.length + stepOffset;
+  int get totalSteps => steps.length;
 
-  double get progress => (index + 1 + stepOffset) / totalSteps;
+  double get progress => (index + 1) / totalSteps;
 
   bool get canGoBack => step != KycRegistrationStep.email;
 

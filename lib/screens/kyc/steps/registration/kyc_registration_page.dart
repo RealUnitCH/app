@@ -16,6 +16,7 @@ import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registrati
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_address_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_email_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_personal_step.dart';
+import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class KycRegistrationPage extends StatelessWidget {
@@ -117,18 +118,6 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
         child: Column(
           spacing: 20.0,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: BlocBuilder<KycRegistrationStepCubit, KycRegistrationStepState>(
-                builder: (context, state) {
-                  return LinearProgressIndicator(
-                    value: state.progress,
-                    backgroundColor: RealUnitColors.neutral200,
-                    valueColor: const AlwaysStoppedAnimation<Color>(RealUnitColors.realUnitBlue),
-                  );
-                },
-              ),
-            ),
             Expanded(
               child: Stack(
                 children: [
@@ -164,7 +153,13 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
       case KycRegistrationStep.email:
         return KycRegistrationEmailStep(
           emailCtrl: emailCtrl,
-          onSuccess: context.read<KycRegistrationStepCubit>().next,
+          onSuccess: () async {
+            final result = await context.push<bool>(LegalDisclaimerPage.routeName);
+            if (!mounted) return;
+            if (result == true) {
+              context.read<KycRegistrationStepCubit>().next();
+            }
+          },
         );
 
       case KycRegistrationStep.personal:

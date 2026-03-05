@@ -24,10 +24,13 @@ import 'package:realunit_wallet/screens/settings_currencies/settings_currencies_
 import 'package:realunit_wallet/screens/settings_edit_node/settings_edit_node_page.dart';
 import 'package:realunit_wallet/screens/settings_kyc_status/settings_kyc_status_page.dart';
 import 'package:realunit_wallet/screens/settings_languages/settings_languages_page.dart';
+import 'package:realunit_wallet/screens/settings_legal_documents/settings_legal_documents_page.dart';
 import 'package:realunit_wallet/screens/settings_network/settings_network_page.dart';
 import 'package:realunit_wallet/screens/settings_nodes/settings_nodes_page.dart';
 import 'package:realunit_wallet/screens/settings_seed/settings_seed_page.dart';
 import 'package:realunit_wallet/screens/settings_tax_report/settings_tax_report_page.dart';
+import 'package:realunit_wallet/screens/settings_user_data/settings_user_data_page.dart';
+import 'package:realunit_wallet/screens/settings_wallet_address/settings_wallet_address_page.dart';
 import 'package:realunit_wallet/screens/terms/terms_page.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
@@ -148,6 +151,10 @@ void setupRouter() {
               builder: (context, state) => const SettingsKycStatusPage(),
             ),
             GoRoute(
+              path: '/legalDocuments',
+              builder: (context, state) => const SettingsLegalDocumentsPage(),
+            ),
+            GoRoute(
               path: '/network',
               builder: (context, state) => SettingsNetworkPage(),
             ),
@@ -181,6 +188,14 @@ void setupRouter() {
                   assetBaseName: 'terms_of_use',
                 ),
               ),
+            ),
+            GoRoute(
+              path: '/walletAddress',
+              builder: (context, state) => const SettingsWalletAddressPage(),
+            ),
+            GoRoute(
+              path: '/userData',
+              builder: (context, state) => const SettingsUserDataPage(),
             ),
           ],
           builder: (context, state) => const SettingsPage(),
