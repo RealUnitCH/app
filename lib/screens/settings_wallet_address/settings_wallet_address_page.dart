@@ -31,7 +31,7 @@ class SettingsWalletAddressPage extends StatelessWidget {
                 mainAxisAlignment: .center,
                 children: [
                   Column(
-                    spacing: 12.0,
+                    spacing: 16.0,
                     children: [
                       SvgPicture.asset(
                         'assets/images/coins/REALU.svg',

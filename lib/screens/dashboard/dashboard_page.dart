@@ -147,7 +147,7 @@ class DashboardView extends StatelessWidget {
                             children: [
                               const Spacer(),
                               SvgPicture.asset(
-                                'assets/images/add-realu-token-visual.svg',
+                                'assets/images/illustrations/realu_token.svg',
                                 width: 165,
                                 height: 165,
                               ),
