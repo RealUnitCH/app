@@ -1,13 +1,18 @@
+import 'package:realunit_wallet/styles/currency.dart';
+
 class MultiReceiptDto {
-  final List<int> transactionIds;
+  final List<String> txIds;
+  final Currency currency;
 
   const MultiReceiptDto({
-    required this.transactionIds,
+    required this.txIds,
+    this.currency = Currency.chf,
   });
 
   Map<String, dynamic> toJson() {
     return {
-      'transactionIds': transactionIds,
+      'txHashes': txIds,
+      'currency': currency.code,
     };
   }
 }
