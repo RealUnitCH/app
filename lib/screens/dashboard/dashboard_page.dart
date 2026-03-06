@@ -28,7 +28,10 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final networkMode = context.watch<SettingsBloc>().state.networkMode;
+
     return MultiBlocProvider(
+      key: ValueKey(networkMode),
       providers: [
         BlocProvider(
           create: (context) => DashboardBloc(
