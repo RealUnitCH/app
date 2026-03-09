@@ -26,6 +26,7 @@
   "buyExecutedTitle": "Thank you.",
   "buyMinAmount": "Minimum amount: 100 CHF",
   "buyPaymentConfirm": "Click here once you have made the transfer",
+  "buyPaymentConfirmFailed": "The purchase is currently not possible. Please try again later. If the error persists, please contact our support team.",
   "buyPaymentInformation": "Payment information",
   "buyPaymentInformationDescription": "Please transfer the purchase amount using your banking app with these details. The purpose of payment is important!",
   "buyPaymentInformationLoading": "Load payment information",
