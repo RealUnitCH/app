@@ -75,9 +75,15 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
   }
 
   Future<void> onCurrencyChanged(Currency currency) async {
+    final amount = double.tryParse(state.fiatText.replaceAll(',', '.'));
+    if (amount == null || amount <= 0) {
+      emit(state.copyWith(currency: currency));
+      return;
+    }
+
     emit(state.copyWith(loading: true));
     try {
-      final result = await _brokerbotService.getShares(double.parse(state.fiatText), currency);
+      final result = await _brokerbotService.getShares(amount, currency);
       emit(
         state.copyWith(
           sharesText: result.shares.round().toString(),
