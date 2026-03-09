@@ -8,7 +8,7 @@ import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_c
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
-class PaymentConverter extends StatefulWidget {
+class PaymentConverter extends StatelessWidget {
   const PaymentConverter({
     super.key,
     required this.amountController,
@@ -17,13 +17,6 @@ class PaymentConverter extends StatefulWidget {
 
   final TextEditingController amountController;
   final TextEditingController resultController;
-
-  @override
-  State<PaymentConverter> createState() => _PaymentConverterState();
-}
-
-class _PaymentConverterState extends State<PaymentConverter> {
-  Currency _selectedCurrency = Currency.chf;
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +48,7 @@ class _PaymentConverterState extends State<PaymentConverter> {
                 Expanded(
                   flex: 3,
                   child: TextField(
-                    controller: widget.amountController,
+                    controller: amountController,
                     keyboardType: const .numberWithOptions(decimal: true),
                     inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
                     decoration: const InputDecoration(
@@ -78,67 +71,33 @@ class _PaymentConverterState extends State<PaymentConverter> {
                   flex: 2,
                   child: Container(
                     color: RealUnitColors.neutral50,
-                    child: PopupMenuButton<Currency>(
-                      initialValue: _selectedCurrency,
-                      onSelected: (Currency currency) {
-                        setState(() {
-                          _selectedCurrency = currency;
-                        });
-                      },
-                      itemBuilder: (context) => Currency.values.map((currency) {
-                        return PopupMenuItem(
-                          value: currency,
-                          child: Column(
-                            mainAxisSize: .min,
-                            crossAxisAlignment: .start,
-                            children: [
-                              Text(
-                                currency.code,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  height: 20 / 16,
-                                ),
-                              ),
-                              Text(
-                                currency.name,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  height: 16 / 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                          top: 8.0,
-                          bottom: 8.0,
-                          left: 10.0,
-                          right: 4.0,
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
+                    child: BlocBuilder<BuyConverterCubit, BuyConverterState>(
+                      builder: (context, state) {
+                        return PopupMenuButton<Currency>(
+                          initialValue: state.currency,
+                          onSelected: (currency) {
+                            if (currency == state.currency) return;
+                            context.read<BuyConverterCubit>().onCurrencyChanged(currency);
+                          },
+                          itemBuilder: (context) => Currency.values.map((currency) {
+                            return PopupMenuItem(
+                              value: currency,
                               child: Column(
                                 mainAxisSize: .min,
                                 crossAxisAlignment: .start,
                                 children: [
                                   Text(
-                                    _selectedCurrency.code,
-                                    overflow: TextOverflow.ellipsis,
+                                    currency.code,
+                                    overflow: .ellipsis,
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: .bold,
                                       fontSize: 16,
                                       height: 20 / 16,
                                     ),
                                   ),
                                   Text(
-                                    _selectedCurrency.name,
-                                    overflow: TextOverflow.ellipsis,
+                                    currency.name,
+                                    overflow: .ellipsis,
                                     style: const TextStyle(
                                       fontSize: 12,
                                       height: 16 / 12,
@@ -146,11 +105,48 @@ class _PaymentConverterState extends State<PaymentConverter> {
                                   ),
                                 ],
                               ),
+                            );
+                          }).toList(),
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              top: 8.0,
+                              bottom: 8.0,
+                              left: 10.0,
+                              right: 4.0,
                             ),
-                            const Icon(Icons.arrow_drop_down),
-                          ],
-                        ),
-                      ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    mainAxisSize: .min,
+                                    crossAxisAlignment: .start,
+                                    children: [
+                                      Text(
+                                        state.currency.code,
+                                        overflow: .ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: .bold,
+                                          fontSize: 16,
+                                          height: 20 / 16,
+                                        ),
+                                      ),
+                                      Text(
+                                        state.currency.name,
+                                        overflow: .ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          height: 16 / 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(Icons.arrow_drop_down),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -184,7 +180,7 @@ class _PaymentConverterState extends State<PaymentConverter> {
                 Expanded(
                   flex: 3,
                   child: TextField(
-                    controller: widget.resultController,
+                    controller: resultController,
                     keyboardType: const .numberWithOptions(
                       decimal: false,
                     ),

@@ -17,7 +17,7 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
   Timer? _sharesDebounce;
 
   /// User changed fiat → convert to shares
-  Future<void> onFiatChanged(String value, {Currency currency = Currency.chf}) async {
+  Future<void> onFiatChanged(String value) async {
     emit(state.copyWith(fiatText: value));
 
     _fiatDebounce?.cancel();
@@ -31,7 +31,7 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
       emit(state.copyWith(loading: true));
 
       try {
-        final result = await _brokerbotService.getShares(amount, currency);
+        final result = await _brokerbotService.getShares(amount, state.currency);
         emit(
           state.copyWith(
             sharesText: result.shares.round().toString(),
@@ -46,7 +46,7 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
   }
 
   /// User changed shares → convert to fiat
-  Future<void> onSharesChanged(String value, {Currency currency = Currency.chf}) async {
+  Future<void> onSharesChanged(String value) async {
     emit(state.copyWith(sharesText: value));
 
     _sharesDebounce?.cancel();
@@ -60,7 +60,7 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
       emit(state.copyWith(loading: true));
 
       try {
-        final result = await _brokerbotService.getBuyPrice(shares, currency);
+        final result = await _brokerbotService.getBuyPrice(shares, state.currency);
         emit(
           state.copyWith(
             fiatText: result.totalCost.toStringAsFixed(_fractionDigits(value)),
@@ -72,6 +72,28 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
         emit(state.copyWith(loading: false));
       }
     });
+  }
+
+  Future<void> onCurrencyChanged(Currency currency) async {
+    emit(state.copyWith(loading: true));
+    try {
+      final result = await _brokerbotService.getShares(double.parse(state.fiatText), currency);
+      emit(
+        state.copyWith(
+          sharesText: result.shares.round().toString(),
+          loading: false,
+          currency: currency,
+        ),
+      );
+    } catch (e) {
+      developer.log(e.toString());
+      emit(
+        state.copyWith(
+          loading: false,
+          currency: currency,
+        ),
+      );
+    }
   }
 
   int _fractionDigits(String input) {

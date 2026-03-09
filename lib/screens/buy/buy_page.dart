@@ -59,7 +59,10 @@ class _BuyViewState extends State<BuyView> {
         listener: (context, state) {
           _syncController(_amountController, state.fiatText);
           _syncController(_resultController, state.sharesText);
-          context.read<BuyPaymentInfoCubit>().getPaymentInfo(amount: _amountController.text);
+          context.read<BuyPaymentInfoCubit>().getPaymentInfo(
+            amount: _amountController.text,
+            currency: state.currency,
+          );
         },
         builder: (context, state) {
           return SafeArea(
