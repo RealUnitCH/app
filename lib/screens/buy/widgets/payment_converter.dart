@@ -8,16 +8,22 @@ import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_c
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
-class PaymentConverter extends StatelessWidget {
+class PaymentConverter extends StatefulWidget {
   const PaymentConverter({
     super.key,
-    required TextEditingController amountController,
-    required TextEditingController resultController,
-  }) : _amountController = amountController,
-       _resultController = resultController;
+    required this.amountController,
+    required this.resultController,
+  });
 
-  final TextEditingController _amountController;
-  final TextEditingController _resultController;
+  final TextEditingController amountController;
+  final TextEditingController resultController;
+
+  @override
+  State<PaymentConverter> createState() => _PaymentConverterState();
+}
+
+class _PaymentConverterState extends State<PaymentConverter> {
+  Currency _selectedCurrency = Currency.chf;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +55,7 @@ class PaymentConverter extends StatelessWidget {
                 Expanded(
                   flex: 3,
                   child: TextField(
-                    controller: _amountController,
+                    controller: widget.amountController,
                     keyboardType: const .numberWithOptions(decimal: true),
                     inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
                     decoration: const InputDecoration(
@@ -72,33 +78,79 @@ class PaymentConverter extends StatelessWidget {
                   flex: 2,
                   child: Container(
                     color: RealUnitColors.neutral50,
-                    padding: const .only(
-                      top: 8.0,
-                      bottom: 8.0,
-                      left: 10.0,
-                      right: 4.0,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: .start,
-                      children: [
-                        Text(
-                          Currency.chf.code,
-                          overflow: .ellipsis,
-                          style: const TextStyle(
-                            fontWeight: .bold,
-                            fontSize: 16,
-                            height: 20 / 16,
+                    child: PopupMenuButton<Currency>(
+                      initialValue: _selectedCurrency,
+                      onSelected: (Currency currency) {
+                        setState(() {
+                          _selectedCurrency = currency;
+                        });
+                      },
+                      itemBuilder: (context) => Currency.values.map((currency) {
+                        return PopupMenuItem(
+                          value: currency,
+                          child: Column(
+                            mainAxisSize: .min,
+                            crossAxisAlignment: .start,
+                            children: [
+                              Text(
+                                currency.code,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  height: 20 / 16,
+                                ),
+                              ),
+                              Text(
+                                currency.name,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  height: 16 / 12,
+                                ),
+                              ),
+                            ],
                           ),
+                        );
+                      }).toList(),
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                          top: 8.0,
+                          bottom: 8.0,
+                          left: 10.0,
+                          right: 4.0,
                         ),
-                        Text(
-                          Currency.chf.name,
-                          overflow: .ellipsis,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            height: 16 / 12,
-                          ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                mainAxisSize: .min,
+                                crossAxisAlignment: .start,
+                                children: [
+                                  Text(
+                                    _selectedCurrency.code,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      height: 20 / 16,
+                                    ),
+                                  ),
+                                  Text(
+                                    _selectedCurrency.name,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      height: 16 / 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_drop_down),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -132,7 +184,7 @@ class PaymentConverter extends StatelessWidget {
                 Expanded(
                   flex: 3,
                   child: TextField(
-                    controller: _resultController,
+                    controller: widget.resultController,
                     keyboardType: const .numberWithOptions(
                       decimal: false,
                     ),
