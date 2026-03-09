@@ -11,12 +11,13 @@ import 'package:realunit_wallet/styles/currency.dart';
 class PaymentConverter extends StatelessWidget {
   const PaymentConverter({
     super.key,
-    required this.amountController,
-    required this.resultController,
-  });
+    required TextEditingController amountController,
+    required TextEditingController resultController,
+  }) : _amountController = amountController,
+       _resultController = resultController;
 
-  final TextEditingController amountController;
-  final TextEditingController resultController;
+  final TextEditingController _amountController;
+  final TextEditingController _resultController;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +49,7 @@ class PaymentConverter extends StatelessWidget {
                 Expanded(
                   flex: 3,
                   child: TextField(
-                    controller: amountController,
+                    controller: _amountController,
                     keyboardType: const .numberWithOptions(decimal: true),
                     inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
                     decoration: const InputDecoration(
@@ -180,7 +181,7 @@ class PaymentConverter extends StatelessWidget {
                 Expanded(
                   flex: 3,
                   child: TextField(
-                    controller: resultController,
+                    controller: _resultController,
                     keyboardType: const .numberWithOptions(
                       decimal: false,
                     ),
