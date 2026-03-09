@@ -171,15 +171,26 @@ void main() {
     });
 
     testWidgets('renders correctly when min amount is not met', (tester) async {
+      final minAmount = 100.0;
+      final currency = Currency.chf;
+
       when(() => buyPaymentInfoCubit.state).thenReturn(
-        const BuyPaymentInfoFailure(PaymentInfoError.minAmountNotMet),
+        BuyPaymentInfoMinAmountNotMetFailure(
+          PaymentInfoError.minAmountNotMet,
+          minAmount: minAmount,
+        ),
+      );
+      when(() => converterCubit.state).thenReturn(
+        BuyConverterState(
+          currency: currency,
+        ),
       );
 
       await tester.pumpApp(buildSubject(const BuyView()));
 
       expect(find.byType(PaymentActionRequired), findsNothing);
       expect(find.byType(PaymentInformation), findsOne);
-      expect(find.text(S.current.buyMinAmount), findsOne);
+      expect(find.text(S.current.buyMinAmount('${minAmount.round()}', currency.code)), findsOne);
       expect(
         find.byWidgetPredicate(
           (Widget widget) => widget is FilledButton && widget.onPressed == null,
