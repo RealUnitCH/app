@@ -90,19 +90,17 @@ class PaymentConverter extends StatelessWidget {
                                   Text(
                                     currency.code,
                                     overflow: .ellipsis,
-                                    style: const TextStyle(
-                                      fontWeight: .bold,
-                                      fontSize: 16,
-                                      height: 20 / 16,
-                                    ),
+                                    style:
+                                        Theme.of(
+                                          context,
+                                        ).textTheme.bodyLarge?.copyWith(
+                                          fontWeight: .bold,
+                                        ),
                                   ),
                                   Text(
                                     currency.name,
                                     overflow: .ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      height: 16 / 12,
-                                    ),
+                                    style: Theme.of(context).textTheme.bodySmall,
                                   ),
                                 ],
                               ),
@@ -125,19 +123,17 @@ class PaymentConverter extends StatelessWidget {
                                       Text(
                                         state.currency.code,
                                         overflow: .ellipsis,
-                                        style: const TextStyle(
-                                          fontWeight: .bold,
-                                          fontSize: 16,
-                                          height: 20 / 16,
-                                        ),
+                                        style:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.bodyLarge?.copyWith(
+                                              fontWeight: .bold,
+                                            ),
                                       ),
                                       Text(
                                         state.currency.name,
                                         overflow: .ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          height: 16 / 12,
-                                        ),
+                                        style: Theme.of(context).textTheme.bodySmall,
                                       ),
                                     ],
                                   ),
@@ -227,19 +223,17 @@ class PaymentConverter extends StatelessWidget {
                               Text(
                                 realUnitAsset.symbol,
                                 overflow: .ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: .bold,
-                                  fontSize: 16,
-                                  height: 20 / 16,
-                                ),
+                                style:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.copyWith(
+                                      fontWeight: .bold,
+                                    ),
                               ),
                               Text(
                                 realUnitAsset.name,
                                 overflow: .ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  height: 16 / 12,
-                                ),
+                                style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ],
                           ),
