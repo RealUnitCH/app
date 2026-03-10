@@ -109,19 +109,33 @@ class SettingsKycStatusView extends StatelessWidget {
                                             context,
                                           ).textTheme.bodySmall?.copyWith(fontWeight: .bold),
                                         ),
-                                        Text(
-                                          S
-                                              .of(context)
-                                              .kycRequiredStepsForBuy(KycStepName.ident.value),
-                                          style: Theme.of(context).textTheme.bodySmall,
-                                        ),
-                                        Text(
-                                          S
-                                              .of(context)
-                                              .kycRequiredStepsForSell(
-                                                KycStepName.financialData.value,
-                                              ),
-                                          style: Theme.of(context).textTheme.bodySmall,
+                                        Column(
+                                          spacing: 4.0,
+                                          crossAxisAlignment: .start,
+                                          children: [
+                                            Text(
+                                              S
+                                                  .of(context)
+                                                  .kycRequiredStepsForBuy(KycStepName.ident.value),
+                                              style: Theme.of(context).textTheme.bodySmall,
+                                            ),
+                                            Text(
+                                              S
+                                                  .of(context)
+                                                  .kycRequiredStepsForSell(
+                                                    KycStepName.ident.value,
+                                                  ),
+                                              style: Theme.of(context).textTheme.bodySmall,
+                                            ),
+                                            Text(
+                                              S
+                                                  .of(context)
+                                                  .kycRequiredStepsWithoutTradingLimit(
+                                                    KycStepName.dfxApproval.value,
+                                                  ),
+                                              style: Theme.of(context).textTheme.bodySmall,
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
