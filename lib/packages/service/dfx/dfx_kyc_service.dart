@@ -3,10 +3,12 @@ import 'dart:convert';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_financial_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_session_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
+import 'package:realunit_wallet/styles/language.dart';
 
 class DfxKycService extends DFXAuthService {
   static const _userPath = '/v2/user';
@@ -153,5 +155,54 @@ class DfxKycService extends DFXAuthService {
       throw ApiException.fromJson(errorJson);
     }
     return;
+  }
+
+  Future<KycFinancialOutData> getFinancialData(
+    String url, {
+    Language language = Language.de,
+  }) async {
+    final user = await getUser();
+    final authToken = appStore.dfxAuthToken;
+
+    final uri = Uri.parse('$url?lang=${language.code}');
+    final response = await appStore.httpClient.get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $authToken',
+        'x-kyc-code': user.kyc.hash,
+      },
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson);
+    }
+
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    return KycFinancialOutData.fromJson(json);
+  }
+
+  Future<void> setFinancialData(String url, List<KycFinancialResponse> responses) async {
+    final user = await getUser();
+    final authToken = appStore.dfxAuthToken;
+
+    final uri = Uri.parse(url);
+    final response = await appStore.httpClient.put(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $authToken',
+        'x-kyc-code': user.kyc.hash,
+      },
+      body: jsonEncode({
+        'responses': responses.map((r) => r.toJson()).toList(),
+      }),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson);
+    }
   }
 }

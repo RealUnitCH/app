@@ -15,17 +15,24 @@ class KycCubit extends Cubit<KycState> {
     KycStepName.contactData,
     KycStepName.nationalityData,
     KycStepName.ident,
+    KycStepName.financialData,
+    KycStepName.dfxApproval,
   };
+
+  static const _minLevelForActions = 30;
 
   final DfxKycService _kycService;
   final RealUnitWalletService _walletService;
+  final int _requiredLevel;
 
   KycCubit(
     DfxKycService kycService,
-    RealUnitWalletService walletService,
-  ) : _kycService = kycService,
-      _walletService = walletService,
-      super(const KycInitial());
+    RealUnitWalletService walletService, {
+    int? requiredLevel,
+  }) : _kycService = kycService,
+       _walletService = walletService,
+       _requiredLevel = requiredLevel ?? _minLevelForActions,
+       super(const KycInitial());
 
   Future<void> checkKyc() async {
     try {
@@ -45,7 +52,7 @@ class KycCubit extends Cubit<KycState> {
         return;
       }
 
-      if (level < 30) {
+      if (level < _requiredLevel) {
         final requiredSteps = kycStatus.kycSteps.where(
           (step) => _requiredStepNames.contains(step.name),
         );
@@ -82,6 +89,12 @@ class KycCubit extends Cubit<KycState> {
     final kycStatus = await _kycService.continueKyc();
     final currentStep = kycStatus.kycSteps.firstWhere((step) => step.isCurrent);
 
+    if (_isDfxApprovalStep(currentStep.name)) {
+      final kycStep = _mapStepName(currentStep.name);
+      emit(KycPending(kycStep!));
+      return;
+    }
+
     final kycStep = _mapStepName(currentStep.name);
     if (kycStep == null) throw Exception('current Step could not be found');
 
@@ -92,6 +105,9 @@ class KycCubit extends Cubit<KycState> {
     KycStepName.contactData => KycStep.registration,
     KycStepName.nationalityData => KycStep.nationality,
     KycStepName.ident => KycStep.ident,
+    KycStepName.financialData => KycStep.financialData,
     _ => null,
   };
+
+  bool _isDfxApprovalStep(KycStepName name) => name == KycStepName.dfxApproval;
 }

@@ -34,6 +34,7 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
       emit(SellPaymentInfoFailure(
         PaymentInfoError.kycRequired,
         message: e.toString(),
+        requiredLevel: e.requiredLevel,
       ));
     } on RegistrationRequiredException catch (e) {
       emit(SellPaymentInfoFailure(

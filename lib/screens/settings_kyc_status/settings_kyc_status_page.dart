@@ -136,7 +136,7 @@ class SettingsKycStatusView extends StatelessWidget {
                                     width: double.infinity,
                                     child: FilledButton(
                                       onPressed: () async {
-                                        await context.push(KycPageManager.routeName);
+                                        await context.push(KycPageManager.routeName, extra: 50);
                                         if (context.mounted) {
                                           context.read<SettingsKycStatusCubit>().getKycStatus();
                                         }

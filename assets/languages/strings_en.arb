@@ -74,6 +74,8 @@
   "expiresIn": "Expires in",
   "expiresInSeconds": "${seconds} Seconds",
   "fee": "Fee",
+  "financialData": "Financial data",
+  "financialDataQuestion": "Question ${current} of ${total}",
   "from": "from",
   "fromClipboard": "From Clipboard",
   "hardwareWallet": "Hardware Wallet",
