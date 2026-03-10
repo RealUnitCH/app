@@ -59,7 +59,7 @@ class KycRegistrationAddressStep extends StatelessWidget {
                         hintText: '13',
                         controller: addressNumberCtrl,
                         label: S.of(context).number,
-                        keyboardType: TextInputType.number,
+                        keyboardType: TextInputType.streetAddress,
                       ),
                     ),
                   ],
