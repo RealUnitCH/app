@@ -72,33 +72,78 @@ class PaymentConverter extends StatelessWidget {
                   flex: 2,
                   child: Container(
                     color: RealUnitColors.neutral50,
-                    padding: const .only(
-                      top: 8.0,
-                      bottom: 8.0,
-                      left: 10.0,
-                      right: 4.0,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: .start,
-                      children: [
-                        Text(
-                          Currency.chf.code,
-                          overflow: .ellipsis,
-                          style: const TextStyle(
-                            fontWeight: .bold,
-                            fontSize: 16,
-                            height: 20 / 16,
+                    child: BlocBuilder<BuyConverterCubit, BuyConverterState>(
+                      builder: (context, state) {
+                        return PopupMenuButton<Currency>(
+                          initialValue: state.currency,
+                          onSelected: (currency) {
+                            if (currency == state.currency) return;
+                            context.read<BuyConverterCubit>().onCurrencyChanged(currency);
+                          },
+                          itemBuilder: (context) => Currency.values.map((currency) {
+                            return PopupMenuItem(
+                              value: currency,
+                              child: Column(
+                                mainAxisSize: .min,
+                                crossAxisAlignment: .start,
+                                children: [
+                                  Text(
+                                    currency.code,
+                                    overflow: .ellipsis,
+                                    style:
+                                        Theme.of(
+                                          context,
+                                        ).textTheme.bodyLarge?.copyWith(
+                                          fontWeight: .bold,
+                                        ),
+                                  ),
+                                  Text(
+                                    currency.name,
+                                    overflow: .ellipsis,
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              top: 8.0,
+                              bottom: 8.0,
+                              left: 10.0,
+                              right: 4.0,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    mainAxisSize: .min,
+                                    crossAxisAlignment: .start,
+                                    children: [
+                                      Text(
+                                        state.currency.code,
+                                        overflow: .ellipsis,
+                                        style:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.bodyLarge?.copyWith(
+                                              fontWeight: .bold,
+                                            ),
+                                      ),
+                                      Text(
+                                        state.currency.name,
+                                        overflow: .ellipsis,
+                                        style: Theme.of(context).textTheme.bodySmall,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(Icons.arrow_drop_down),
+                              ],
+                            ),
                           ),
-                        ),
-                        Text(
-                          Currency.chf.name,
-                          overflow: .ellipsis,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            height: 16 / 12,
-                          ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -178,19 +223,17 @@ class PaymentConverter extends StatelessWidget {
                               Text(
                                 realUnitAsset.symbol,
                                 overflow: .ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: .bold,
-                                  fontSize: 16,
-                                  height: 20 / 16,
-                                ),
+                                style:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.copyWith(
+                                      fontWeight: .bold,
+                                    ),
                               ),
                               Text(
                                 realUnitAsset.name,
                                 overflow: .ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  height: 16 / 12,
-                                ),
+                                style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ],
                           ),
