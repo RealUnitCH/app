@@ -9,6 +9,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
@@ -31,6 +32,8 @@ class MockBuyPaymentInfoCubit extends MockCubit<BuyPaymentInfoState>
 class MockDfxBrokerbotService extends Mock implements DfxBrokerbotService {}
 
 class MockRealUnitBuyPaymentInfoService extends Mock implements RealUnitBuyPaymentInfoService {}
+
+class MockDfxPriceService extends Mock implements DFXPriceService {}
 
 class MockApiConfig extends Mock implements ApiConfig {}
 
@@ -57,6 +60,7 @@ void main() {
     getIt.registerSingleton<AppStore>(AppStore(() => MockApiConfig()));
     getIt.registerSingleton<DfxBrokerbotService>(MockDfxBrokerbotService());
     getIt.registerSingleton<RealUnitBuyPaymentInfoService>(MockRealUnitBuyPaymentInfoService());
+    getIt.registerSingleton<DFXPriceService>(MockDfxPriceService());
   }
 
   setUpAll(() {
