@@ -51,6 +51,7 @@ class KycViewManager extends StatelessWidget {
           KycStep.twoFa => const Kyc2FaPage(),
           KycStep.ident => KycIdentPage(accessToken: urlOrToken ?? ''),
           KycStep.financialData => KycFinancialDataPage(url: urlOrToken ?? ''),
+          (_) => const Scaffold(),
         },
         KycState() => const Scaffold(),
       },

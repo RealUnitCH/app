@@ -89,12 +89,6 @@ class KycCubit extends Cubit<KycState> {
     final kycStatus = await _kycService.continueKyc();
     final currentStep = kycStatus.kycSteps.firstWhere((step) => step.isCurrent);
 
-    if (_isDfxApprovalStep(currentStep.name)) {
-      final kycStep = _mapStepName(currentStep.name);
-      emit(KycPending(kycStep!));
-      return;
-    }
-
     final kycStep = _mapStepName(currentStep.name);
     if (kycStep == null) throw Exception('current Step could not be found');
 
@@ -106,8 +100,7 @@ class KycCubit extends Cubit<KycState> {
     KycStepName.nationalityData => KycStep.nationality,
     KycStepName.ident => KycStep.ident,
     KycStepName.financialData => KycStep.financialData,
+    KycStepName.dfxApproval => KycStep.dfxApproval,
     _ => null,
   };
-
-  bool _isDfxApprovalStep(KycStepName name) => name == KycStepName.dfxApproval;
 }
