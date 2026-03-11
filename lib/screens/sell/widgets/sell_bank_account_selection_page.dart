@@ -80,7 +80,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                                       children: [
                                         Text(
                                           account.name ??
-                                              '//${S.of(context).without} ${S.of(context).label}',
+                                              '${S.of(context).without} ${S.of(context).label}',
                                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                             color: RealUnitColors.neutral600,
                                           ),
