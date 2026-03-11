@@ -130,7 +130,7 @@ class SettingsKycStatusView extends StatelessWidget {
                                             Text(
                                               S
                                                   .of(context)
-                                                  .kycRequiredStepsWithoutTradingLimit(
+                                                  .kycRequiredStepsWithHigherTradingLimit(
                                                     KycStepName.dfxApproval.value,
                                                   ),
                                               style: Theme.of(context).textTheme.bodySmall,

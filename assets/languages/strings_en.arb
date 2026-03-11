@@ -106,7 +106,7 @@
   "kycRequiredLevel": "Required level",
   "kycRequiredStepsForBuy": "Buy: Level 30 (all steps up to and including ${step})",
   "kycRequiredStepsForSell": "Sell with a monthly trading limit (1000 CHF): Level 30 (all steps up to and including ${step})",
-  "kycRequiredStepsWithoutTradingLimit": "Without a trading limit: Level 50 (all steps up to and including ${step})",
+  "kycRequiredStepsWithHigherTradingLimit": "Higher trading limit: Level 50 (all steps up to and including ${step})",
   "kycStatus": "KYC status",
   "label": "Label",
   "languageEnglish": "English",
