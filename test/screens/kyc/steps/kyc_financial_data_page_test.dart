@@ -12,6 +12,10 @@ import 'package:realunit_wallet/screens/kyc/steps/financial_data/kyc_financial_d
 import 'package:realunit_wallet/screens/kyc/steps/financial_data/subpages/kyc_financial_data_failure_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/financial_data/subpages/kyc_financial_data_loading_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/financial_data/subpages/kyc_financial_data_questions_page.dart';
+import 'package:realunit_wallet/screens/kyc/steps/financial_data/widgets/kyc_question_checkbox_widget.dart';
+import 'package:realunit_wallet/screens/kyc/steps/financial_data/widgets/kyc_question_multiple_choice_widget.dart';
+import 'package:realunit_wallet/screens/kyc/steps/financial_data/widgets/kyc_question_single_choice_widget.dart';
+import 'package:realunit_wallet/screens/kyc/steps/financial_data/widgets/kyc_question_text_field_widget.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 
 import '../../../helper/pump_app.dart';
@@ -108,21 +112,97 @@ void main() {
       expect(find.byType(KycFinancialDataFailurePage), findsOne);
     });
 
-    testWidgets('is rendered correctly when financialData was loaded successfully', (tester) async {
-      when(() => kycFinancialDataCubit.state).thenReturn(
-        const KycFinancialDataLoadedSuccess(
-          allQuestions: [KycFinancialQuestion(key: '', type: QuestionType.text, title: '')],
-          visibleQuestions: [KycFinancialQuestion(key: '', type: QuestionType.text, title: '')],
-          responses: {},
-          currentIndex: 0,
-          url: '',
-        ),
-      );
+    testWidgets(
+      'is rendered correctly when financialData was loaded successfully for a ${QuestionType.text}',
+      (tester) async {
+        when(() => kycFinancialDataCubit.state).thenReturn(
+          const KycFinancialDataLoadedSuccess(
+            allQuestions: [KycFinancialQuestion(key: '', type: QuestionType.text, title: '')],
+            visibleQuestions: [KycFinancialQuestion(key: '', type: QuestionType.text, title: '')],
+            responses: {},
+            currentIndex: 0,
+            url: '',
+          ),
+        );
 
-      await tester.pumpApp(buildSubject(const KycFinancialDataView()));
+        await tester.pumpApp(buildSubject(const KycFinancialDataView()));
 
-      expect(find.byType(KycFinancialDataQuestionsPage), findsOne);
-    });
+        expect(find.byType(KycFinancialDataQuestionsPage), findsOne);
+        expect(find.byType(KycQuestionTextFieldWidget), findsOne);
+      },
+    );
+
+    testWidgets(
+      'is rendered correctly when financialData was loaded successfully for a ${QuestionType.singleChoice}',
+      (tester) async {
+        when(() => kycFinancialDataCubit.state).thenReturn(
+          const KycFinancialDataLoadedSuccess(
+            allQuestions: [
+              KycFinancialQuestion(key: '', type: QuestionType.singleChoice, title: ''),
+            ],
+            visibleQuestions: [
+              KycFinancialQuestion(key: '', type: QuestionType.singleChoice, title: ''),
+            ],
+            responses: {},
+            currentIndex: 0,
+            url: '',
+          ),
+        );
+
+        await tester.pumpApp(buildSubject(const KycFinancialDataView()));
+
+        expect(find.byType(KycFinancialDataQuestionsPage), findsOne);
+        expect(find.byType(KycQuestionSingleChoiceWidget), findsOne);
+      },
+    );
+
+    testWidgets(
+      'is rendered correctly when financialData was loaded successfully for a ${QuestionType.multipleChoice}',
+      (tester) async {
+        when(() => kycFinancialDataCubit.state).thenReturn(
+          const KycFinancialDataLoadedSuccess(
+            allQuestions: [
+              KycFinancialQuestion(key: '', type: QuestionType.multipleChoice, title: ''),
+            ],
+            visibleQuestions: [
+              KycFinancialQuestion(key: '', type: QuestionType.multipleChoice, title: ''),
+            ],
+            responses: {},
+            currentIndex: 0,
+            url: '',
+          ),
+        );
+
+        await tester.pumpApp(buildSubject(const KycFinancialDataView()));
+
+        expect(find.byType(KycFinancialDataQuestionsPage), findsOne);
+        expect(find.byType(KycQuestionMultipleChoiceWidget), findsOne);
+      },
+    );
+
+    testWidgets(
+      'is rendered correctly when financialData was loaded successfully for a ${QuestionType.checkbox}',
+      (tester) async {
+        when(() => kycFinancialDataCubit.state).thenReturn(
+          const KycFinancialDataLoadedSuccess(
+            allQuestions: [
+              KycFinancialQuestion(key: '', type: QuestionType.checkbox, title: ''),
+            ],
+            visibleQuestions: [
+              KycFinancialQuestion(key: '', type: QuestionType.checkbox, title: ''),
+            ],
+            responses: {},
+            currentIndex: 0,
+            url: '',
+          ),
+        );
+
+        await tester.pumpApp(buildSubject(const KycFinancialDataView()));
+
+        expect(find.byType(KycFinancialDataQuestionsPage), findsOne);
+        expect(find.byType(KycQuestionCheckboxWidget), findsOne);
+      },
+    );
   });
 
   group('$BlocListener', () {
