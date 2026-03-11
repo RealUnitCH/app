@@ -8,10 +8,10 @@ import 'package:realunit_wallet/screens/kyc/steps/2fa/kyc_2fa_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/ident/kyc_ident_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/nationality/kyc_nationality_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/kyc_registration_page.dart';
+import 'package:realunit_wallet/screens/kyc/subpages/kyc_account_merge_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_completed_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_failure_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_loading_page.dart';
-import 'package:realunit_wallet/screens/kyc/subpages/kyc_account_merge_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_pending_page.dart';
 
 class KycPageManager extends StatelessWidget {
