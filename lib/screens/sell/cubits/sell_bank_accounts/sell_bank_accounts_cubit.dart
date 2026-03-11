@@ -1,41 +1,68 @@
-import 'dart:convert';
+import 'dart:developer' as developer;
 
+import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/bank_account.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_bank_account_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/bank_account/bank_account.dart';
 
-class SellBankAccountsCubit extends Cubit<List<BankAccount>> {
-  static const String _storageKey = 'sell_bank_accounts';
+part 'sell_bank_accounts_state.dart';
 
-  final SharedPreferences _sharedPreferences;
+class SellBankAccountsCubit extends Cubit<SellBankAccountsState> {
+  final DfxBankAccountService _dfxBankAccountService;
 
   SellBankAccountsCubit(
-    SharedPreferences sharedPreferences,
-  )   : _sharedPreferences = sharedPreferences,
-        super([]) {
+    DfxBankAccountService bankAccountService,
+  ) : _dfxBankAccountService = bankAccountService,
+      super(const SellBankAccountsInitial()) {
     _loadBankAccounts();
   }
 
-  void add({required BankAccount bankAccount}) {
-    final updatedList = List<BankAccount>.from(state)..add(bankAccount);
-    _sharedPreferences.setString(
-        _storageKey, jsonEncode(updatedList.map((a) => a.toJson()).toList()));
-    emit(updatedList);
+  Future<void> add({required String iban, String? label}) async {
+    try {
+      emit(SellBankAccountsLoading(state.accounts));
+
+      await _dfxBankAccountService.createBankAccount(iban, label);
+      await _loadBankAccounts();
+    } catch (e) {
+      developer.log(e.toString());
+      emit(SellBankAccountsAddFailure(state.accounts, e.toString()));
+    }
   }
 
-  void remove({required BankAccount bankAccount}) {
-    final updatedList = List<BankAccount>.from(state)..remove(bankAccount);
-    _sharedPreferences.setString(
-        _storageKey, jsonEncode(updatedList.map((a) => a.toJson()).toList()));
-    emit(updatedList);
+  Future<void> deactivate({required BankAccount bankAccount}) async {
+    try {
+      emit(SellBankAccountsLoading(state.accounts));
+
+      await _dfxBankAccountService.updateBankAccount(
+        id: bankAccount.id,
+        isActive: false,
+      );
+      await _loadBankAccounts();
+    } catch (e) {
+      developer.log(e.toString());
+      emit(SellBankAccountsUpdateFailure(state.accounts));
+    }
   }
 
-  void _loadBankAccounts() {
-    final raw = _sharedPreferences.getString(_storageKey);
-    if (raw == null) return;
-    final accounts = (jsonDecode(raw) as List<dynamic>)
-        .map((e) => BankAccount.fromJson(e as Map<String, dynamic>))
-        .toList();
-    emit(accounts);
+  Future<void> _loadBankAccounts() async {
+    try {
+      emit(SellBankAccountsLoading(state.accounts));
+
+      final dto = await _dfxBankAccountService.getBankAccounts();
+      final bankAccounts = dto
+          .map(
+            (bankAccount) => BankAccount(
+              id: bankAccount.id,
+              iban: bankAccount.iban,
+              name: bankAccount.label,
+              isActive: bankAccount.isActive,
+            ),
+          )
+          .toList();
+      emit(SellBankAccountsSuccess(bankAccounts));
+    } catch (e) {
+      developer.log(e.toString());
+      emit(const SellBankAccountsLoadFailure());
+    }
   }
 }
