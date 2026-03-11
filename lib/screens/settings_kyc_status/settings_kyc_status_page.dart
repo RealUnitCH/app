@@ -84,7 +84,11 @@ class SettingsKycStatusView extends StatelessWidget {
                                           ],
                                         ),
                                       ),
-                                      Text(steps.elementAt(i).status.value),
+                                      Text(
+                                        steps.elementAt(i).reason == KycStepReason.accountMergeRequested
+                                            ? S.of(context).kycStepStatusAccountMerge
+                                            : steps.elementAt(i).status.value,
+                                      ),
                                     ],
                                   ),
                                 ),

@@ -11,6 +11,7 @@ import 'package:realunit_wallet/screens/kyc/steps/registration/kyc_registration_
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_completed_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_failure_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_loading_page.dart';
+import 'package:realunit_wallet/screens/kyc/subpages/kyc_account_merge_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_pending_page.dart';
 
 class KycPageManager extends StatelessWidget {
@@ -39,6 +40,7 @@ class KycViewManager extends StatelessWidget {
       builder: (context, state) => switch (state) {
         KycLoading() => const KycLoadingPage(),
         KycFailure(:final message) => KycFailurePage(message: message),
+        KycAccountMergeRequested() => const KycAccountMergePage(),
         KycPending(:final pendingStep) => KycPendingPage(pendingStep: pendingStep),
         KycCompleted() => const KycCompletedPage(),
         KycSuccess(:final currentStep, :final urlOrToken) => switch (currentStep) {

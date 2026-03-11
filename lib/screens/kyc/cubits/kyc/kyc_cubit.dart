@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
@@ -46,6 +47,14 @@ class KycCubit extends Cubit<KycState> {
       }
 
       if (level < 30) {
+        final hasMergeRequest = kycStatus.kycSteps.any(
+          (step) => step.reason == KycStepReason.accountMergeRequested,
+        );
+        if (hasMergeRequest) {
+          emit(const KycAccountMergeRequested());
+          return;
+        }
+
         final requiredSteps = kycStatus.kycSteps.where(
           (step) => _requiredStepNames.contains(step.name),
         );
@@ -83,7 +92,10 @@ class KycCubit extends Cubit<KycState> {
     final currentStep = kycStatus.kycSteps.firstWhere((step) => step.isCurrent);
 
     final kycStep = _mapStepName(currentStep.name);
-    if (kycStep == null) throw Exception('current Step could not be found');
+    if (kycStep == null) {
+      emit(KycFailure(S.current.kycUnsupportedStepDescription(currentStep.name.value)));
+      return;
+    }
 
     emit(KycSuccess(currentStep: kycStep, urlOrToken: kycStatus.currentStep?.session.url));
   }

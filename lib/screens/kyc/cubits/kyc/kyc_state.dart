@@ -40,6 +40,10 @@ class KycCompleted extends KycState {
   const KycCompleted();
 }
 
+class KycAccountMergeRequested extends KycState {
+  const KycAccountMergeRequested();
+}
+
 class KycFailure extends KycState {
   final String message;
   const KycFailure(this.message);
