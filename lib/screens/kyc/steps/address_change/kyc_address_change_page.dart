@@ -78,6 +78,7 @@ class _KycAddressChangeViewState extends State<KycAddressChangeView> {
                 child: Form(
                   key: _formKey,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     spacing: 16,
                     children: [
                       Row(
