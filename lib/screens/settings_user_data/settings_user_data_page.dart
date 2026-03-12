@@ -1,11 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
+import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
 import 'package:realunit_wallet/screens/settings_user_data/cubit/settings_user_data_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
@@ -34,7 +37,7 @@ class SettingsUserDataView extends StatelessWidget {
         title: Text(S.of(context).userData),
       ),
       body: Container(
-        padding: const .symmetric(horizontal: 20.0, vertical: 12.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
         child: BlocBuilder<SettingsUserDataCubit, SettingsUserDataState>(
           builder: (context, state) => switch (state) {
             SettingsUserDataSuccess(:final userData) =>
@@ -51,7 +54,14 @@ class SettingsUserDataView extends StatelessWidget {
                                 label: S.of(context).registerAccountType,
                                 value: userData.type.name(context),
                               ),
-                              _UserDataRow(label: S.of(context).name, value: userData.name),
+                              _UserDataRow(
+                                label: S.of(context).name,
+                                value: userData.name,
+                                onEdit: () => context.push(
+                                  KycPageManager.routeName,
+                                  extra: KycStepName.nameChange,
+                                ),
+                              ),
                               _UserDataRow(
                                 label: S.of(context).birthday,
                                 value: DateFormat('dd.MM.yyyy').format(userData.birthday),
@@ -64,11 +74,19 @@ class SettingsUserDataView extends StatelessWidget {
                               _UserDataRow(
                                 label: S.of(context).phoneNumber,
                                 value: userData.phoneNumber,
+                                onEdit: () => context.push(
+                                  KycPageManager.routeName,
+                                  extra: KycStepName.phoneChange,
+                                ),
                               ),
                               _UserDataRow(
                                 label: S.of(context).residence,
                                 value:
                                     '${userData.addressStreet}\n${userData.addressPostalCode} ${userData.addressCity}\n${userData.addressCountry.name}',
+                                onEdit: () => context.push(
+                                  KycPageManager.routeName,
+                                  extra: KycStepName.addressChange,
+                                ),
                               ),
                             ],
                           ),
@@ -97,23 +115,40 @@ class _UserDataRow extends StatelessWidget {
   const _UserDataRow({
     required this.label,
     required this.value,
+    this.onEdit,
   });
 
   final String label;
   final String value;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: .start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 4,
       children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: RealUnitColors.neutral900,
-          ),
+        Row(
+          children: [
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: RealUnitColors.neutral900,
+              ),
+            ),
+            if (onEdit != null) ...[
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: onEdit,
+                child: Icon(
+                  Icons.edit,
+                  size: 18,
+                  color: RealUnitColors.neutral500,
+                ),
+              ),
+            ],
+          ],
         ),
         Text(
           value,

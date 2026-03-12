@@ -7,6 +7,7 @@ import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/home/home.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
 import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
 import 'package:realunit_wallet/screens/legal/subpages/legal_document_page.dart';
@@ -104,7 +105,9 @@ void setupRouter() {
         ),
         GoRoute(
           path: KycPageManager.routeName,
-          builder: (context, state) => const KycPageManager(),
+          builder: (context, state) => KycPageManager(
+            initialStep: state.extra as KycStepName?,
+          ),
         ),
         GoRoute(
           path: '/receive',
