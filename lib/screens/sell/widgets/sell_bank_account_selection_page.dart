@@ -93,24 +93,23 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                                         ),
                                       ],
                                     ),
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        border: .all(
+                                    IconButton(
+                                      onPressed: () async {
+                                        await context.read<SellBankAccountsCubit>().deactivate(
+                                          bankAccount: account,
+                                        );
+                                      },
+                                      style: IconButton.styleFrom(
+                                        side: const BorderSide(
                                           color: RealUnitColors.neutral400,
                                         ),
-                                        borderRadius: .circular(8.0),
-                                      ),
-                                      padding: const .all(8.0),
-                                      child: GestureDetector(
-                                        onTap: () async {
-                                          await context.read<SellBankAccountsCubit>().deactivate(
-                                            bankAccount: account,
-                                          );
-                                        },
-                                        child: const Icon(
-                                          Icons.delete_outline_outlined,
-                                          color: RealUnitColors.realUnitBlack,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8.0),
                                         ),
+                                      ),
+                                      icon: const Icon(
+                                        Icons.delete_outline_outlined,
+                                        color: RealUnitColors.realUnitBlack,
                                       ),
                                     ),
                                   ],
@@ -132,7 +131,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                                 crossAxisAlignment: .start,
                                 children: [
                                   Text(
-                                    'deaktiviert',
+                                    S.of(context).deactivated,
                                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: RealUnitColors.neutral500,
                                     ),
