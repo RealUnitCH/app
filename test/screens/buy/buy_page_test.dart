@@ -9,6 +9,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
@@ -31,6 +32,8 @@ class MockBuyPaymentInfoCubit extends MockCubit<BuyPaymentInfoState>
 class MockDfxBrokerbotService extends Mock implements DfxBrokerbotService {}
 
 class MockRealUnitBuyPaymentInfoService extends Mock implements RealUnitBuyPaymentInfoService {}
+
+class MockDfxPriceService extends Mock implements DFXPriceService {}
 
 class MockApiConfig extends Mock implements ApiConfig {}
 
@@ -57,6 +60,7 @@ void main() {
     getIt.registerSingleton<AppStore>(AppStore(() => MockApiConfig()));
     getIt.registerSingleton<DfxBrokerbotService>(MockDfxBrokerbotService());
     getIt.registerSingleton<RealUnitBuyPaymentInfoService>(MockRealUnitBuyPaymentInfoService());
+    getIt.registerSingleton<DFXPriceService>(MockDfxPriceService());
   }
 
   setUpAll(() {
@@ -171,15 +175,26 @@ void main() {
     });
 
     testWidgets('renders correctly when min amount is not met', (tester) async {
+      final minAmount = 100.0;
+      final currency = Currency.chf;
+
       when(() => buyPaymentInfoCubit.state).thenReturn(
-        const BuyPaymentInfoFailure(PaymentInfoError.minAmountNotMet),
+        BuyPaymentInfoMinAmountNotMetFailure(
+          PaymentInfoError.minAmountNotMet,
+          minAmount: minAmount,
+        ),
+      );
+      when(() => converterCubit.state).thenReturn(
+        BuyConverterState(
+          currency: currency,
+        ),
       );
 
       await tester.pumpApp(buildSubject(const BuyView()));
 
       expect(find.byType(PaymentActionRequired), findsNothing);
       expect(find.byType(PaymentInformation), findsOne);
-      expect(find.text(S.current.buyMinAmount), findsOne);
+      expect(find.text(S.current.buyMinAmount('${minAmount.round()}', currency.code)), findsOne);
       expect(
         find.byWidgetPredicate(
           (Widget widget) => widget is FilledButton && widget.onPressed == null,

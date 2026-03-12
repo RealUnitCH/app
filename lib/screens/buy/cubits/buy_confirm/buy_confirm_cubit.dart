@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
@@ -17,6 +19,7 @@ class BuyConfirmCubit extends Cubit<BuyConfirmState> {
       final reference = await _buyPaymentInfoService.confirmPayment(paymentInfoId);
       emit(BuyConfirmSuccess(reference));
     } catch (e) {
+      developer.log(e.toString());
       emit(BuyConfirmFailure(e.toString()));
     }
   }

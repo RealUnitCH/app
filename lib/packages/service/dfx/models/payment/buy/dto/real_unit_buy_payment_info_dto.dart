@@ -17,8 +17,8 @@ class RealUnitBuyPaymentInfoDto {
   final double amount;
   final Currency currency;
   final DfxFeesData fees;
-  final double minVolume;
-  final double maxVolume;
+  final double? minVolume;
+  final double? maxVolume;
   final double minVolumeTarget;
   final double maxVolumeTarget;
   final double exchangeRate;
@@ -43,8 +43,8 @@ class RealUnitBuyPaymentInfoDto {
     required this.amount,
     required this.currency,
     required this.fees,
-    required this.minVolume,
-    required this.maxVolume,
+    this.minVolume,
+    this.maxVolume,
     required this.minVolumeTarget,
     required this.maxVolumeTarget,
     required this.exchangeRate,
@@ -71,8 +71,8 @@ class RealUnitBuyPaymentInfoDto {
       amount: (json['amount'] as num).toDouble(),
       currency: Currency.fromCode(json['currency'] as String),
       fees: DfxFeesData.fromJson(json['fees'] as Map<String, dynamic>),
-      minVolume: (json['minVolume'] as num).toDouble(),
-      maxVolume: (json['maxVolume'] as num).toDouble(),
+      minVolume: (json['minVolume'] as num?)?.toDouble(),
+      maxVolume: (json['maxVolume'] as num?)?.toDouble(),
       minVolumeTarget: (json['minVolumeTarget'] as num).toDouble(),
       maxVolumeTarget: (json['maxVolumeTarget'] as num).toDouble(),
       exchangeRate: (json['exchangeRate'] as num).toDouble(),

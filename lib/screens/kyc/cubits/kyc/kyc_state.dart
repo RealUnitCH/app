@@ -1,6 +1,6 @@
 part of 'kyc_cubit.dart';
 
-enum KycStep { registration, nationality, twoFa, ident }
+enum KycStep { registration, nationality, twoFa, ident, financialData, dfxApproval }
 
 abstract class KycState extends Equatable {
   const KycState();
@@ -38,6 +38,18 @@ class KycSuccess extends KycState {
 
 class KycCompleted extends KycState {
   const KycCompleted();
+}
+
+class KycAccountMergeRequested extends KycState {
+  const KycAccountMergeRequested();
+}
+
+class KycUnsupportedStepFailure extends KycState {
+  final KycStepName stepName;
+  const KycUnsupportedStepFailure(this.stepName);
+
+  @override
+  List<Object?> get props => [stepName];
 }
 
 class KycFailure extends KycState {

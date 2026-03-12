@@ -55,7 +55,9 @@ class PaymentInformationDetailsView extends StatelessWidget {
         if (state is BuyConfirmFailure) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error: ${state.error}')),
+              SnackBar(
+                content: Text(S.of(context).buyPaymentConfirmFailed),
+              ),
             );
           }
         }
