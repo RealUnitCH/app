@@ -70,7 +70,6 @@ class _KycNameChangeViewState extends State<KycNameChangeView> {
                 child: Form(
                   key: _formKey,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     spacing: 16,
                     children: [
                       KycTextField(
