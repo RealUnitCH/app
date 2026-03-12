@@ -9,7 +9,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/screens/kyc/steps/address_change/cubit/kyc_address_change_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_country_field.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/kyc_file_picker_field.dart';
+import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_file_picker_field.dart';
 import 'package:realunit_wallet/screens/kyc/widgets/kyc_text_field.dart';
 
 class KycAddressChangePage extends StatelessWidget {

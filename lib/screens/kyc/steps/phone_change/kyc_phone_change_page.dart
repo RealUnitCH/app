@@ -32,6 +32,12 @@ class _KycPhoneChangeViewState extends State<KycPhoneChangeView> {
   final _phoneCtrl = ValueNotifier<String?>(null);
 
   @override
+  void dispose() {
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(S.of(context).changePhoneNumber)),
