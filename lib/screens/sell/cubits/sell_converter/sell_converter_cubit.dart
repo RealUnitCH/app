@@ -17,7 +17,7 @@ class SellConverterCubit extends Cubit<SellConverterState> {
   Timer? _sharesDebounce;
 
   /// User changed fiat → convert to shares
-  Future<void> onFiatChanged(String value) async {
+  Future<void> onFiatChanged(String value, {Currency currency = Currency.chf}) async {
     emit(state.copyWith(fiatText: value));
 
     _fiatDebounce?.cancel();
@@ -31,11 +31,13 @@ class SellConverterCubit extends Cubit<SellConverterState> {
       emit(state.copyWith(loading: true));
 
       try {
-        final result = await _brokerbotService.getShares(amount);
-        emit(state.copyWith(
-          sharesText: result.shares.round().toString(),
-          loading: false,
-        ));
+        final result = await _brokerbotService.getShares(amount, currency);
+        emit(
+          state.copyWith(
+            sharesText: result.shares.round().toString(),
+            loading: false,
+          ),
+        );
       } catch (e) {
         developer.log(e.toString());
         emit(state.copyWith(loading: false));
@@ -44,7 +46,7 @@ class SellConverterCubit extends Cubit<SellConverterState> {
   }
 
   /// User changed shares → convert to fiat
-  Future<void> onSharesChanged(String value) async {
+  Future<void> onSharesChanged(String value, {Currency currency = Currency.chf}) async {
     emit(state.copyWith(sharesText: value));
 
     _sharesDebounce?.cancel();
@@ -58,11 +60,13 @@ class SellConverterCubit extends Cubit<SellConverterState> {
       emit(state.copyWith(loading: true));
 
       try {
-        final result = await _brokerbotService.getBuyPrice(shares);
-        emit(state.copyWith(
-          fiatText: result.totalCost.toStringAsFixed(_fractionDigits(value)),
-          loading: false,
-        ));
+        final result = await _brokerbotService.getBuyPrice(shares, currency);
+        emit(
+          state.copyWith(
+            fiatText: result.totalCost.toStringAsFixed(_fractionDigits(value)),
+            loading: false,
+          ),
+        );
       } catch (e) {
         developer.log(e.toString());
         emit(state.copyWith(loading: false));

@@ -33,3 +33,12 @@ class BuyPaymentInfoFailure extends BuyPaymentInfoState {
   @override
   List<Object?> get props => [error, requiredLevel];
 }
+
+class BuyPaymentInfoMinAmountNotMetFailure extends BuyPaymentInfoFailure {
+  final double minAmount;
+
+  const BuyPaymentInfoMinAmountNotMetFailure(super.error, {required this.minAmount});
+
+  @override
+  List<Object?> get props => [error, minAmount];
+}

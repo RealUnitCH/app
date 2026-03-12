@@ -53,6 +53,14 @@ class KycCubit extends Cubit<KycState> {
       }
 
       if (level < _requiredLevel) {
+        final hasMergeRequest = kycStatus.kycSteps.any(
+          (step) => step.reason == KycStepReason.accountMergeRequested,
+        );
+        if (hasMergeRequest) {
+          emit(const KycAccountMergeRequested());
+          return;
+        }
+
         final requiredSteps = kycStatus.kycSteps.where(
           (step) => _requiredStepNames.contains(step.name),
         );
@@ -90,9 +98,17 @@ class KycCubit extends Cubit<KycState> {
     final currentStep = kycStatus.kycSteps.firstWhere((step) => step.isCurrent);
 
     final kycStep = _mapStepName(currentStep.name);
-    if (kycStep == null) throw Exception('current Step could not be found');
+    if (kycStep == null) {
+      emit(KycUnsupportedStepFailure(currentStep.name));
+      return;
+    }
 
-    emit(KycSuccess(currentStep: kycStep, urlOrToken: kycStatus.currentStep?.session.url));
+    emit(
+      KycSuccess(
+        currentStep: kycStep,
+        urlOrToken: kycStatus.currentStep?.session.url,
+      ),
+    );
   }
 
   KycStep? _mapStepName(KycStepName name) => switch (name) {

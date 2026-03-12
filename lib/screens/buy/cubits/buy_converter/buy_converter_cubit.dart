@@ -31,11 +31,13 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
       emit(state.copyWith(loading: true));
 
       try {
-        final result = await _brokerbotService.getShares(amount);
-        emit(state.copyWith(
-          sharesText: result.shares.round().toString(),
-          loading: false,
-        ));
+        final result = await _brokerbotService.getShares(amount, state.currency);
+        emit(
+          state.copyWith(
+            sharesText: result.shares.round().toString(),
+            loading: false,
+          ),
+        );
       } catch (e) {
         developer.log(e.toString());
         emit(state.copyWith(loading: false));
@@ -58,16 +60,46 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
       emit(state.copyWith(loading: true));
 
       try {
-        final result = await _brokerbotService.getBuyPrice(shares);
-        emit(state.copyWith(
-          fiatText: result.totalCost.toStringAsFixed(_fractionDigits(value)),
-          loading: false,
-        ));
+        final result = await _brokerbotService.getBuyPrice(shares, state.currency);
+        emit(
+          state.copyWith(
+            fiatText: result.totalCost.toStringAsFixed(_fractionDigits(value)),
+            loading: false,
+          ),
+        );
       } catch (e) {
         developer.log(e.toString());
         emit(state.copyWith(loading: false));
       }
     });
+  }
+
+  Future<void> onCurrencyChanged(Currency currency) async {
+    final amount = double.tryParse(state.fiatText.replaceAll(',', '.'));
+    if (amount == null || amount <= 0) {
+      emit(state.copyWith(currency: currency));
+      return;
+    }
+
+    emit(state.copyWith(loading: true));
+    try {
+      final result = await _brokerbotService.getShares(amount, currency);
+      emit(
+        state.copyWith(
+          sharesText: result.shares.round().toString(),
+          loading: false,
+          currency: currency,
+        ),
+      );
+    } catch (e) {
+      developer.log(e.toString());
+      emit(
+        state.copyWith(
+          loading: false,
+          currency: currency,
+        ),
+      );
+    }
   }
 
   int _fractionDigits(String input) {

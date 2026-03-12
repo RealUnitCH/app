@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -63,15 +62,14 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
     appBar: AppBar(
       title: Text(widget.params.title),
     ),
-    body: _markdownContent == null
-        ? const Center(child: CupertinoActivityIndicator())
-        : Column(
+    body: _markdownContent != null
+        ? Column(
             children: [
               Expanded(
                 child: Markdown(
                   data: _markdownContent!,
                   styleSheet: MarkdownStyleSheet(
-                    h2Padding: const EdgeInsets.only(top: 16),
+                    h2Padding: const .only(top: 16),
                   ),
                   onTapLink: (text, href, title) {
                     if (href == null || href.startsWith('mailto:') || href.contains('@')) return;
@@ -89,10 +87,7 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
                 SafeArea(
                   top: false,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20.0,
-                      vertical: 20.0,
-                    ),
+                    padding: const .all(20.0),
                     child: SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
@@ -111,6 +106,7 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
                   ),
                 ),
             ],
-          ),
+          )
+        : const SizedBox.shrink(),
   );
 }

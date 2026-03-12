@@ -38,11 +38,13 @@ class DFXPriceService extends APriceService {
           price = BigInt.from(entry['chf'] * 100);
           break;
       }
-      result.add(PricePoint(
-        asset: asset,
-        price: price,
-        time: DateTime.parse(entry['timestamp']),
-      ));
+      result.add(
+        PricePoint(
+          asset: asset,
+          price: price,
+          time: DateTime.parse(entry['timestamp']),
+        ),
+      );
     }
 
     return result;
@@ -63,5 +65,19 @@ class DFXPriceService extends APriceService {
       case Currency.chf:
         return BigInt.from(body['chf'] * 100);
     }
+  }
+
+  /// Returns the equivalent EUR amount for 1 CHF
+  Future<double> getChfToEurRate() async {
+    final uri = buildUri(_host, _pricePath);
+    final response = await _appStore.httpClient.get(uri);
+
+    if (response.statusCode != 200) throw Exception(response.body);
+
+    final body = jsonDecode(response.body);
+    final chf = (body['chf'] as num).toDouble();
+    final eur = (body['eur'] as num).toDouble();
+
+    return chf > 0 ? eur / chf : 0.0;
   }
 }

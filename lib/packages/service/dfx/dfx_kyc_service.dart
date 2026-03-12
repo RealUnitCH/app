@@ -28,13 +28,24 @@ class DfxKycService extends DFXAuthService {
     final authToken = appStore.dfxAuthToken;
 
     final uri = buildUri(_host, _userPath);
-    final response = await appStore.httpClient.get(
+    var response = await appStore.httpClient.get(
       uri,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $authToken',
       },
     );
+
+    if (response.statusCode == 401) {
+      final newToken = await refreshAuthToken();
+      response = await appStore.httpClient.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $newToken',
+        },
+      );
+    }
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
