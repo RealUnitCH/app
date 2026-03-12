@@ -40,7 +40,7 @@ class SettingsKycStatusView extends StatelessWidget {
             final level = kycStatus.level;
             final steps = kycStatus.steps;
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: const .symmetric(horizontal: 20.0),
               child: LayoutBuilder(
                 builder: (context, constraint) {
                   return SingleChildScrollView(
@@ -52,7 +52,7 @@ class SettingsKycStatusView extends StatelessWidget {
                             spacing: 10,
                             children: [
                               Padding(
-                                padding: const EdgeInsets.all(24),
+                                padding: const .all(24),
                                 child: Text(
                                   S.of(context).kycLevelDescription('${level.value}'),
                                   textAlign: .center,
@@ -64,7 +64,7 @@ class SettingsKycStatusView extends StatelessWidget {
                                   padding: const .all(20),
                                   decoration: BoxDecoration(
                                     color: RealUnitColors.neutral100,
-                                    borderRadius: BorderRadius.circular(24),
+                                    borderRadius: .circular(16),
                                   ),
                                   child: Row(
                                     crossAxisAlignment: .start,
@@ -84,7 +84,11 @@ class SettingsKycStatusView extends StatelessWidget {
                                           ],
                                         ),
                                       ),
-                                      Text(steps.elementAt(i).status.value),
+                                      if (steps.elementAt(i).reason ==
+                                          KycStepReason.accountMergeRequested) // edge case
+                                        Text(S.of(context).kycStepStatusAccountMerge)
+                                      else
+                                        Text(steps.elementAt(i).status.localizedValue(context)),
                                     ],
                                   ),
                                 ),
@@ -131,9 +135,9 @@ class SettingsKycStatusView extends StatelessWidget {
                               const Spacer(),
                               if (kycStatus.canProceed)
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 20),
+                                  padding: const .symmetric(vertical: 20),
                                   child: SizedBox(
-                                    width: double.infinity,
+                                    width: .infinity,
                                     child: FilledButton(
                                       onPressed: () async {
                                         await context.push(KycPageManager.routeName);

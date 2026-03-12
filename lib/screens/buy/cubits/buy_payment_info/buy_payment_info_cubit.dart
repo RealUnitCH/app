@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:async/async.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
@@ -11,11 +12,19 @@ import 'package:realunit_wallet/styles/currency.dart';
 
 part 'buy_payment_info_state.dart';
 
+const double _minAmountChf = 100;
+
 class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
   final RealUnitBuyPaymentInfoService _buyPaymentInfoService;
+  final DFXPriceService _priceService;
   CancelableOperation<BuyPaymentInfoState>? _completer;
 
-  BuyPaymentInfoCubit(this._buyPaymentInfoService) : super(const BuyPaymentInfoInitial());
+  BuyPaymentInfoCubit(
+    RealUnitBuyPaymentInfoService buyPaymentInfoService,
+    DFXPriceService priceService,
+  ) : _buyPaymentInfoService = buyPaymentInfoService,
+      _priceService = priceService,
+      super(const BuyPaymentInfoInitial());
 
   Future<void> getPaymentInfo({String amount = '100', Currency currency = Currency.chf}) async {
     await _completer?.cancel();
@@ -36,8 +45,18 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
     try {
       final sanitizedAmount = amount.isEmpty ? '0' : amount.replaceAll(',', '.');
       final parsedAmount = double.parse(sanitizedAmount);
-      if (parsedAmount < 100) {
-        return const BuyPaymentInfoFailure(PaymentInfoError.minAmountNotMet);
+
+      double minAmount = _minAmountChf;
+      if (currency == Currency.eur) {
+        final chfToEurRate = await _priceService.getChfToEurRate();
+        minAmount = _minAmountChf * chfToEurRate;
+      }
+
+      if (parsedAmount < minAmount) {
+        return BuyPaymentInfoMinAmountNotMetFailure(
+          PaymentInfoError.minAmountNotMet,
+          minAmount: minAmount,
+        );
       }
       final paymentInfo = await _buyPaymentInfoService.getPaymentInfo(
         parsedAmount.round(),

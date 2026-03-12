@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
@@ -27,6 +28,7 @@ class BuyPage extends StatelessWidget {
         BlocProvider(
           create: (_) => BuyPaymentInfoCubit(
             getIt<RealUnitBuyPaymentInfoService>(),
+            getIt<DFXPriceService>(),
           ),
         ),
       ],
@@ -59,20 +61,23 @@ class _BuyViewState extends State<BuyView> {
         listener: (context, state) {
           _syncController(_amountController, state.fiatText);
           _syncController(_resultController, state.sharesText);
-          context.read<BuyPaymentInfoCubit>().getPaymentInfo(amount: _amountController.text);
+          context.read<BuyPaymentInfoCubit>().getPaymentInfo(
+            amount: _amountController.text,
+            currency: state.currency,
+          );
         },
         builder: (context, state) {
-          return SafeArea(
-            child: GestureDetector(
-              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-              child: LayoutBuilder(
-                builder: (context, constraint) {
-                  return SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(minHeight: constraint.maxHeight),
-                      child: IntrinsicHeight(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          return GestureDetector(
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: LayoutBuilder(
+              builder: (context, constraint) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraint.maxHeight),
+                    child: IntrinsicHeight(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: SafeArea(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -91,9 +96,9 @@ class _BuyViewState extends State<BuyView> {
                         ),
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
           );
         },

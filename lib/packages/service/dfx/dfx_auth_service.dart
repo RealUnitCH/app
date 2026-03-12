@@ -77,4 +77,9 @@ abstract class DFXAuthService {
   }
 
   void invalidateAuthToken() => appStore.dfxAuthToken = null;
+
+  Future<String?> refreshAuthToken() async {
+    invalidateAuthToken();
+    return getAuthToken();
+  }
 }
