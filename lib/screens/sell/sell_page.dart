@@ -23,7 +23,7 @@ class SellPage extends StatelessWidget {
         BlocProvider(
           create: (context) => SellConverterCubit(
             getIt<DfxBrokerbotService>(),
-          )..onSharesChanged('1000'),
+          )..onSharesChanged('100'),
         ),
         BlocProvider(
           create: (context) => SellPaymentInfoCubit(
@@ -59,38 +59,39 @@ class _SellViewState extends State<SellView> {
         ),
       ),
       body: BlocConsumer<SellConverterCubit, SellConverterState>(
-          listenWhen: (prev, next) => prev.loading && !next.loading,
-          listener: (context, state) {
-            _syncController(_amountController, state.sharesText);
-            _syncController(_resultController, state.fiatText);
-          },
-          builder: (context, state) {
-            return SingleChildScrollView(
-              child: SafeArea(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Column(
-                      spacing: 32,
-                      children: [
-                        SellConverter(
-                          amountController: _amountController,
-                          resultController: _resultController,
-                        ),
-                        const SellBankAccountField(),
-                        SellButton(
-                          amount: _amountController.text,
-                          bankAccount: context.watch<SellSelectedBankAccountCubit>().state,
-                        ),
-                      ],
-                    ),
+        listenWhen: (prev, next) => prev.loading && !next.loading,
+        listener: (context, state) {
+          _syncController(_amountController, state.sharesText);
+          _syncController(_resultController, state.fiatText);
+        },
+        builder: (context, state) {
+          return SingleChildScrollView(
+            child: SafeArea(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Column(
+                    spacing: 32,
+                    children: [
+                      SellConverter(
+                        amountController: _amountController,
+                        resultController: _resultController,
+                      ),
+                      const SellBankAccountField(),
+                      SellButton(
+                        amount: _amountController.text,
+                        bankAccount: context.watch<SellSelectedBankAccountCubit>().state,
+                      ),
+                    ],
                   ),
                 ),
               ),
-            );
-          }),
+            ),
+          );
+        },
+      ),
     );
   }
 

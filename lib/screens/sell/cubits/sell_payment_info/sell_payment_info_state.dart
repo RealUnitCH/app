@@ -27,9 +27,10 @@ class SellPaymentInfoSuccess extends SellPaymentInfoState {
 class SellPaymentInfoFailure extends SellPaymentInfoState {
   final PaymentInfoError error;
   final String message;
+  final int? requiredLevel;
 
-  const SellPaymentInfoFailure(this.error, {this.message = ''});
+  const SellPaymentInfoFailure(this.error, {this.message = '', this.requiredLevel});
 
   @override
-  List<Object?> get props => [error, message];
+  List<Object?> get props => [error, message, requiredLevel];
 }

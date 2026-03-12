@@ -63,8 +63,11 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
         currency: currency,
       );
       return BuyPaymentInfoSuccess(paymentInfo);
-    } on KycLevelRequiredException {
-      return const BuyPaymentInfoFailure(PaymentInfoError.kycRequired);
+    } on KycLevelRequiredException catch (e) {
+      return BuyPaymentInfoFailure(
+        PaymentInfoError.kycRequired,
+        requiredLevel: e.requiredLevel,
+      );
     } on RegistrationRequiredException {
       return const BuyPaymentInfoFailure(PaymentInfoError.registrationRequired);
     } catch (e) {
