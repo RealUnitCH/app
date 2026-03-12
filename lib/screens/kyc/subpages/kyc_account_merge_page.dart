@@ -10,9 +10,11 @@ class KycAccountMergePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(S.of(context).kyc)),
+      appBar: AppBar(
+        title: Text(S.of(context).kyc),
+      ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        padding: const .symmetric(horizontal: 20.0),
         child: SafeArea(
           child: Column(
             spacing: 8.0,
@@ -20,27 +22,20 @@ class KycAccountMergePage extends StatelessWidget {
               const Spacer(),
               Text(
                 S.of(context).kycAccountMergeTitle,
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w700,
-                  height: 30 / 26,
-                  letterSpacing: -0.52,
-                ),
+                style: Theme.of(context).textTheme.headlineMedium,
+                textAlign: .center,
               ),
               Text(
                 S.of(context).kycAccountMergeDescription,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
+                textAlign: .center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: RealUnitColors.neutral500,
-                  fontSize: 14,
-                  height: 18 / 14,
-                  letterSpacing: 0.0,
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                padding: const .symmetric(vertical: 16.0),
                 child: SizedBox(
-                  width: double.infinity,
+                  width: .infinity,
                   child: FilledButton(
                     onPressed: () => context.read<KycCubit>().checkKyc(),
                     child: Text(S.of(context).refresh),

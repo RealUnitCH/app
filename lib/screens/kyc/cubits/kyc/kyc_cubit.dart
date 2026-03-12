@@ -1,7 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
@@ -93,11 +92,16 @@ class KycCubit extends Cubit<KycState> {
 
     final kycStep = _mapStepName(currentStep.name);
     if (kycStep == null) {
-      emit(KycFailure(S.current.kycUnsupportedStepDescription(currentStep.name.value)));
+      emit(KycUnsupportedStepFailure(currentStep.name));
       return;
     }
 
-    emit(KycSuccess(currentStep: kycStep, urlOrToken: kycStatus.currentStep?.session.url));
+    emit(
+      KycSuccess(
+        currentStep: kycStep,
+        urlOrToken: kycStatus.currentStep?.session.url,
+      ),
+    );
   }
 
   KycStep? _mapStepName(KycStepName name) => switch (name) {
