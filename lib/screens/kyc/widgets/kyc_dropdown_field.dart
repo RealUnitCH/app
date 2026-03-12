@@ -72,7 +72,6 @@ class KycDropdownField<T> extends StatelessWidget {
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 10.0,
-                vertical: 14.0,
               ),
               errorStyle: hideErrorText
                   ? const TextStyle(
