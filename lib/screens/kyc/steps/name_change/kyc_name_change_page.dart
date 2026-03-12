@@ -2,10 +2,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/screens/kyc/steps/name_change/cubit/kyc_name_change_cubit.dart';
+import 'package:realunit_wallet/screens/kyc/widgets/kyc_file_picker_field.dart';
 import 'package:realunit_wallet/screens/kyc/widgets/kyc_text_field.dart';
 
 class KycNameChangePage extends StatelessWidget {
@@ -35,6 +37,8 @@ class _KycNameChangeViewState extends State<KycNameChangeView> {
   final _formKey = GlobalKey<FormState>();
   final _firstNameCtrl = TextEditingController();
   final _lastNameCtrl = TextEditingController();
+  XFile? _selectedFile;
+  bool _fileValidationTriggered = false;
 
   @override
   void dispose() {
@@ -92,6 +96,15 @@ class _KycNameChangeViewState extends State<KycNameChangeView> {
                           return null;
                         },
                       ),
+                      KycFilePickerField(
+                        label: S.of(context).proofDocument,
+                        selectedFile: _selectedFile,
+                        onFileSelected: (file) => setState(() => _selectedFile = file),
+                        validator: () {
+                          if (_fileValidationTriggered && _selectedFile == null) return '';
+                          return null;
+                        },
+                      ),
                       if (state is KycNameChangeFailure)
                         Text(
                           state.message,
@@ -102,14 +115,22 @@ class _KycNameChangeViewState extends State<KycNameChangeView> {
                         child: SizedBox(
                           width: double.infinity,
                           child: FilledButton(
-                            onPressed: () {
+                            onPressed: () async {
                               FocusManager.instance.primaryFocus?.unfocus();
-                              if (_formKey.currentState?.validate() ?? false) {
-                                context.read<KycNameChangeCubit>().submitName(
-                                      widget.url,
-                                      _firstNameCtrl.text,
-                                      _lastNameCtrl.text,
-                                    );
+                              setState(() => _fileValidationTriggered = true);
+                              if ((_formKey.currentState?.validate() ?? false) &&
+                                  _selectedFile != null) {
+                                final fileBase64 =
+                                    await KycFilePickerField.toBase64DataUri(_selectedFile);
+                                if (fileBase64 != null && mounted) {
+                                  context.read<KycNameChangeCubit>().submitName(
+                                        widget.url,
+                                        firstName: _firstNameCtrl.text,
+                                        lastName: _lastNameCtrl.text,
+                                        fileBase64: fileBase64,
+                                        fileName: _selectedFile!.name,
+                                      );
+                                }
                               }
                             },
                             child: Text(S.of(context).save),

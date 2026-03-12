@@ -11,10 +11,10 @@ class KycPhoneChangeCubit extends Cubit<KycPhoneChangeState> {
       : _kycService = kycService,
         super(const KycPhoneChangeInitial());
 
-  Future<void> submitPhone(String url, String phone) async {
+  Future<void> submitPhone(String phone) async {
     try {
       emit(const KycPhoneChangeLoading());
-      await _kycService.setData(url, {'phone': phone});
+      await _kycService.updateUser({'phone': phone});
       emit(const KycPhoneChangeSuccess());
     } catch (e) {
       emit(KycPhoneChangeFailure(e.toString()));

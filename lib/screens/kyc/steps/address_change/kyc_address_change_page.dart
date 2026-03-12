@@ -2,12 +2,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/screens/kyc/steps/address_change/cubit/kyc_address_change_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_country_field.dart';
+import 'package:realunit_wallet/screens/kyc/widgets/kyc_file_picker_field.dart';
 import 'package:realunit_wallet/screens/kyc/widgets/kyc_text_field.dart';
 
 class KycAddressChangePage extends StatelessWidget {
@@ -40,6 +42,8 @@ class _KycAddressChangeViewState extends State<KycAddressChangeView> {
   final _postalCodeCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
   final _countryCtrl = ValueNotifier<Country?>(null);
+  XFile? _selectedFile;
+  bool _fileValidationTriggered = false;
 
   @override
   void dispose() {
@@ -150,6 +154,15 @@ class _KycAddressChangeViewState extends State<KycAddressChangeView> {
                           return null;
                         },
                       ),
+                      KycFilePickerField(
+                        label: S.of(context).proofDocument,
+                        selectedFile: _selectedFile,
+                        onFileSelected: (file) => setState(() => _selectedFile = file),
+                        validator: () {
+                          if (_fileValidationTriggered && _selectedFile == null) return '';
+                          return null;
+                        },
+                      ),
                       if (state is KycAddressChangeFailure)
                         Text(
                           state.message,
@@ -160,18 +173,25 @@ class _KycAddressChangeViewState extends State<KycAddressChangeView> {
                         child: SizedBox(
                           width: double.infinity,
                           child: FilledButton(
-                            onPressed: () {
+                            onPressed: () async {
                               FocusManager.instance.primaryFocus?.unfocus();
-                              if (_formKey.currentState?.validate() ?? false) {
-                                final country = _countryCtrl.value;
-                                if (country != null) {
+                              setState(() => _fileValidationTriggered = true);
+                              final country = _countryCtrl.value;
+                              if ((_formKey.currentState?.validate() ?? false) &&
+                                  _selectedFile != null &&
+                                  country != null) {
+                                final fileBase64 =
+                                    await KycFilePickerField.toBase64DataUri(_selectedFile);
+                                if (fileBase64 != null && mounted) {
                                   context.read<KycAddressChangeCubit>().submitAddress(
                                         widget.url,
                                         street: _streetCtrl.text,
                                         houseNumber: _numberCtrl.text,
                                         zip: _postalCodeCtrl.text,
                                         city: _cityCtrl.text,
-                                        country: country.symbol,
+                                        countryId: country.id,
+                                        fileBase64: fileBase64,
+                                        fileName: _selectedFile!.name,
                                       );
                                 }
                               }

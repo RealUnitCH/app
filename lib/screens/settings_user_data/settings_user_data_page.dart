@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
@@ -21,6 +22,7 @@ class SettingsUserDataPage extends StatelessWidget {
       create: (context) => SettingsUserDataCubit(
         walletService: getIt<RealUnitWalletService>(),
         countryService: getIt<DfxCountryService>(),
+        kycService: getIt<DfxKycService>(),
       ),
       child: const SettingsUserDataView(),
     );
@@ -40,7 +42,7 @@ class SettingsUserDataView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
         child: BlocBuilder<SettingsUserDataCubit, SettingsUserDataState>(
           builder: (context, state) => switch (state) {
-            SettingsUserDataSuccess(:final userData) =>
+            SettingsUserDataSuccess(:final userData, :final pendingSteps) =>
               userData != null
                   ? SingleChildScrollView(
                       child: Padding(
@@ -57,6 +59,9 @@ class SettingsUserDataView extends StatelessWidget {
                               _UserDataRow(
                                 label: S.of(context).name,
                                 value: userData.name,
+                                pendingText: pendingSteps.contains(KycStepName.nameChange)
+                                    ? S.of(context).changeInReview
+                                    : null,
                                 onEdit: () => context.push(
                                   KycPageManager.routeName,
                                   extra: KycStepName.nameChange,
@@ -83,6 +88,9 @@ class SettingsUserDataView extends StatelessWidget {
                                 label: S.of(context).residence,
                                 value:
                                     '${userData.addressStreet}\n${userData.addressPostalCode} ${userData.addressCity}\n${userData.addressCountry.name}',
+                                pendingText: pendingSteps.contains(KycStepName.addressChange)
+                                    ? S.of(context).changeInReview
+                                    : null,
                                 onEdit: () => context.push(
                                   KycPageManager.routeName,
                                   extra: KycStepName.addressChange,
@@ -116,14 +124,18 @@ class _UserDataRow extends StatelessWidget {
     required this.label,
     required this.value,
     this.onEdit,
+    this.pendingText,
   });
 
   final String label;
   final String value;
   final VoidCallback? onEdit;
+  final String? pendingText;
 
   @override
   Widget build(BuildContext context) {
+    final isPending = pendingText != null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 4,
@@ -137,14 +149,24 @@ class _UserDataRow extends StatelessWidget {
                 color: RealUnitColors.neutral900,
               ),
             ),
-            if (onEdit != null) ...[
+            if (onEdit != null && !isPending) ...[
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: onEdit,
                 child: Icon(
                   Icons.edit,
                   size: 18,
-                  color: RealUnitColors.neutral500,
+                  color: RealUnitColors.realUnitBlue,
+                ),
+              ),
+            ],
+            if (isPending) ...[
+              const SizedBox(width: 8),
+              Text(
+                pendingText!,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: RealUnitColors.realUnitBlue,
+                  fontStyle: FontStyle.italic,
                 ),
               ),
             ],

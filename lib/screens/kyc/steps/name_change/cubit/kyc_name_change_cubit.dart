@@ -11,10 +11,21 @@ class KycNameChangeCubit extends Cubit<KycNameChangeState> {
       : _kycService = kycService,
         super(const KycNameChangeInitial());
 
-  Future<void> submitName(String url, String firstName, String lastName) async {
+  Future<void> submitName(
+    String url, {
+    required String firstName,
+    required String lastName,
+    required String fileBase64,
+    required String fileName,
+  }) async {
     try {
       emit(const KycNameChangeLoading());
-      await _kycService.setData(url, {'firstName': firstName, 'lastName': lastName});
+      await _kycService.setData(url, {
+        'firstName': firstName,
+        'lastName': lastName,
+        'file': fileBase64,
+        'fileName': fileName,
+      });
       emit(const KycNameChangeSuccess());
     } catch (e) {
       emit(KycNameChangeFailure(e.toString()));

@@ -26,9 +26,10 @@ class SettingsUserDataFailure extends SettingsUserDataState {
 
 class SettingsUserDataSuccess extends SettingsUserDataState {
   final UserData? userData;
+  final Set<KycStepName> pendingSteps;
 
-  const SettingsUserDataSuccess(this.userData);
+  const SettingsUserDataSuccess(this.userData, {this.pendingSteps = const {}});
 
   @override
-  List<Object?> get props => [userData];
+  List<Object?> get props => [userData, pendingSteps];
 }

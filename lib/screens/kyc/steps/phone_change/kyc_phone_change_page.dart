@@ -80,7 +80,7 @@ class _KycPhoneChangeViewState extends State<KycPhoneChangeView> {
                               if (_formKey.currentState?.validate() ?? false) {
                                 final phone = _phoneCtrl.value;
                                 if (phone != null) {
-                                  context.read<KycPhoneChangeCubit>().submitPhone(widget.url, phone);
+                                  context.read<KycPhoneChangeCubit>().submitPhone(phone);
                                 }
                               }
                             },

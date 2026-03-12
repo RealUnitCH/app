@@ -17,16 +17,22 @@ class KycAddressChangeCubit extends Cubit<KycAddressChangeState> {
     required String houseNumber,
     required String zip,
     required String city,
-    required String country,
+    required int countryId,
+    required String fileBase64,
+    required String fileName,
   }) async {
     try {
       emit(const KycAddressChangeLoading());
       await _kycService.setData(url, {
-        'street': street,
-        'houseNumber': houseNumber,
-        'zip': zip,
-        'city': city,
-        'country': country,
+        'file': fileBase64,
+        'fileName': fileName,
+        'address': {
+          'street': street,
+          if (houseNumber.isNotEmpty) 'houseNumber': houseNumber,
+          'zip': zip,
+          'city': city,
+          'country': {'id': countryId},
+        },
       });
       emit(const KycAddressChangeSuccess());
     } catch (e) {

@@ -113,6 +113,25 @@ class DfxKycService extends DFXAuthService {
     return KycSessionDto.fromJson(json);
   }
 
+  Future<void> updateUser(Map<String, dynamic> body) async {
+    final authToken = appStore.dfxAuthToken;
+
+    final uri = buildUri(_host, _userPath);
+    final response = await appStore.httpClient.put(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $authToken',
+      },
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson);
+    }
+  }
+
   /// is used to set data of a user by calling the provided session url from the KycSessionDto of continueKyc()
   Future<void> setData(String url, Map<String, dynamic> body) async {
     final user = await getUser();

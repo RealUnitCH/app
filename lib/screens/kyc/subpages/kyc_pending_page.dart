@@ -64,7 +64,7 @@ class KycPendingView extends StatelessWidget {
                 child: SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: () => context.read<KycCubit>().checkKyc(),
+                    onPressed: () => context.read<KycCubit>().refresh(),
                     child: Text(S.of(context).refresh),
                   ),
                 ),
