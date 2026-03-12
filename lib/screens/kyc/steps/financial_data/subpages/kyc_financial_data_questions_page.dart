@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -16,7 +15,7 @@ import 'package:realunit_wallet/styles/colors.dart';
 class KycFinancialDataQuestionsPage extends StatelessWidget {
   final KycFinancialDataLoadedSuccess state;
 
-  const KycFinancialDataQuestionsPage(this.state, {super.key, required});
+  const KycFinancialDataQuestionsPage(this.state, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -115,25 +114,21 @@ class KycFinancialDataQuestionsPage extends StatelessWidget {
         : null;
 
     if (link != null) {
-      return RichText(
-        text: TextSpan(
-          text: question.description,
-          style:
-              Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(
-                color: RealUnitColors.realUnitBlue,
-                decorationColor: RealUnitColors.realUnitBlue,
-                decoration: .underline,
-              ),
-          recognizer: TapGestureRecognizer()
-            ..onTap = () => context.push(
-              '/webView',
-              extra: WebViewRouteParams(
-                title: question.title,
-                url: Uri.parse(link),
-              ),
-            ),
+      return GestureDetector(
+        onTap: () => context.push(
+          '/webView',
+          extra: WebViewRouteParams(
+            title: question.title,
+            url: Uri.parse(link),
+          ),
+        ),
+        child: Text(
+          question.description ?? '',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: RealUnitColors.realUnitBlue,
+            decorationColor: RealUnitColors.realUnitBlue,
+            decoration: TextDecoration.underline,
+          ),
         ),
       );
     }

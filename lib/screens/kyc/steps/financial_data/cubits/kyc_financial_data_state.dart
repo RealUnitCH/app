@@ -30,7 +30,7 @@ class KycFinancialDataLoadedSuccess extends KycFinancialDataState {
     required this.url,
   });
 
-  KycFinancialQuestion get currentQuestion => visibleQuestions[currentIndex];
+  KycFinancialQuestion get currentQuestion => visibleQuestions.elementAt(currentIndex);
 
   bool get isFirstQuestion => currentIndex == 0;
 
