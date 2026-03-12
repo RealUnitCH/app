@@ -5,6 +5,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_session_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 
@@ -72,6 +73,29 @@ class DfxKycService extends DFXAuthService {
 
     final uri = buildUri(_host, _kycPath);
     final response = await appStore.httpClient.put(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $authToken',
+        'x-kyc-code': user.kyc.hash,
+      },
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson);
+    }
+
+    final json = jsonDecode(response.body);
+    return KycSessionDto.fromJson(json);
+  }
+
+  Future<KycSessionDto> startStep(KycStepName stepName) async {
+    final user = await getUser();
+    final authToken = appStore.dfxAuthToken;
+
+    final uri = buildUri(_host, '$_kycPath/${stepName.value}');
+    final response = await appStore.httpClient.get(
       uri,
       headers: {
         'Content-Type': 'application/json',

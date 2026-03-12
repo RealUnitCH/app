@@ -22,6 +22,9 @@ enum KycStepName {
   paymentAgreement,
   recallAgreement,
   realUnitRegistration,
+  phoneChange,
+  nameChange,
+  addressChange,
 }
 
 extension KycStepNameExtension on KycStepName {
@@ -69,6 +72,12 @@ extension KycStepNameExtension on KycStepName {
         return 'RecallAgreement';
       case KycStepName.realUnitRegistration:
         return 'RealUnitRegistration';
+      case KycStepName.phoneChange:
+        return 'PhoneChange';
+      case KycStepName.nameChange:
+        return 'NameChange';
+      case KycStepName.addressChange:
+        return 'AddressChange';
     }
   }
 
@@ -116,6 +125,12 @@ extension KycStepNameExtension on KycStepName {
         return KycStepName.recallAgreement;
       case 'RealUnitRegistration':
         return KycStepName.realUnitRegistration;
+      case 'PhoneChange':
+        return KycStepName.phoneChange;
+      case 'NameChange':
+        return KycStepName.nameChange;
+      case 'AddressChange':
+        return KycStepName.addressChange;
       default:
         throw ArgumentError('Unknown KycStepName value: $value');
     }

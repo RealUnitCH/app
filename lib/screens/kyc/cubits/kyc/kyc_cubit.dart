@@ -88,10 +88,25 @@ class KycCubit extends Cubit<KycState> {
     emit(KycSuccess(currentStep: kycStep, urlOrToken: kycStatus.currentStep?.session.url));
   }
 
+  Future<void> startStep(KycStepName stepName) async {
+    try {
+      emit(const KycLoading());
+      final kycSession = await _kycService.startStep(stepName);
+      final kycStep = _mapStepName(stepName);
+      if (kycStep == null) throw Exception('Unknown step: $stepName');
+      emit(KycSuccess(currentStep: kycStep, urlOrToken: kycSession.currentStep?.session.url));
+    } catch (e) {
+      emit(KycFailure(e.toString()));
+    }
+  }
+
   KycStep? _mapStepName(KycStepName name) => switch (name) {
     KycStepName.contactData => KycStep.registration,
     KycStepName.nationalityData => KycStep.nationality,
     KycStepName.ident => KycStep.ident,
+    KycStepName.phoneChange => KycStep.phoneChange,
+    KycStepName.nameChange => KycStep.nameChange,
+    KycStepName.addressChange => KycStep.addressChange,
     _ => null,
   };
 }
