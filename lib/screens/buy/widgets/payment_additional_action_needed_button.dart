@@ -77,7 +77,10 @@ class PaymentAdditionalActionNeededButton extends StatelessWidget {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () async {
-                    await context.push(KycPageManager.routeName);
+                    await context.push(
+                      KycPageManager.routeName,
+                      extra: paymentState.requiredLevel,
+                    );
                     if (context.mounted) {
                       context.read<BuyPaymentInfoCubit>().getPaymentInfo(
                         amount: amountController.text,

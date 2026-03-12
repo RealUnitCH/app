@@ -104,7 +104,7 @@ void setupRouter() {
         ),
         GoRoute(
           path: KycPageManager.routeName,
-          builder: (context, state) => const KycPageManager(),
+          builder: (context, state) => KycPageManager(requiredLevel: state.extra as int?),
         ),
         GoRoute(
           path: '/receive',

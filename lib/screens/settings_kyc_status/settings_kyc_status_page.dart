@@ -113,19 +113,33 @@ class SettingsKycStatusView extends StatelessWidget {
                                             context,
                                           ).textTheme.bodySmall?.copyWith(fontWeight: .bold),
                                         ),
-                                        Text(
-                                          S
-                                              .of(context)
-                                              .kycRequiredStepsForBuy(KycStepName.ident.value),
-                                          style: Theme.of(context).textTheme.bodySmall,
-                                        ),
-                                        Text(
-                                          S
-                                              .of(context)
-                                              .kycRequiredStepsForSell(
-                                                KycStepName.financialData.value,
-                                              ),
-                                          style: Theme.of(context).textTheme.bodySmall,
+                                        Column(
+                                          spacing: 4.0,
+                                          crossAxisAlignment: .start,
+                                          children: [
+                                            Text(
+                                              S
+                                                  .of(context)
+                                                  .kycRequiredStepsForBuy(KycStepName.ident.value),
+                                              style: Theme.of(context).textTheme.bodySmall,
+                                            ),
+                                            Text(
+                                              S
+                                                  .of(context)
+                                                  .kycRequiredStepsForSell(
+                                                    KycStepName.ident.value,
+                                                  ),
+                                              style: Theme.of(context).textTheme.bodySmall,
+                                            ),
+                                            Text(
+                                              S
+                                                  .of(context)
+                                                  .kycRequiredStepsWithHigherTradingLimit(
+                                                    KycStepName.dfxApproval.value,
+                                                  ),
+                                              style: Theme.of(context).textTheme.bodySmall,
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
@@ -140,7 +154,7 @@ class SettingsKycStatusView extends StatelessWidget {
                                     width: .infinity,
                                     child: FilledButton(
                                       onPressed: () async {
-                                        await context.push(KycPageManager.routeName);
+                                        await context.push(KycPageManager.routeName, extra: 50);
                                         if (context.mounted) {
                                           context.read<SettingsKycStatusCubit>().getKycStatus();
                                         }
