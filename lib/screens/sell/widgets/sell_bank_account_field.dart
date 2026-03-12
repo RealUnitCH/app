@@ -1,14 +1,15 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/bank_account.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_bank_account_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/bank_account/bank_account.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_bank_accounts/sell_bank_accounts_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_selected_bank_account/sell_selected_bank_account_cubit.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_add_bank_account_sheet.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_bank_account_selection_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class SellBankAccountField extends StatelessWidget {
   const SellBankAccountField({super.key});
@@ -19,7 +20,7 @@ class SellBankAccountField extends StatelessWidget {
       providers: [
         BlocProvider(
           create: (context) => SellBankAccountsCubit(
-            getIt<SharedPreferences>(),
+            getIt<DfxBankAccountService>(),
           ),
         ),
       ],
@@ -33,14 +34,16 @@ class BankAccountFieldView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<SellBankAccountsCubit, List<BankAccount>>(
-      listenWhen: (previous, current) => previous.length != current.length,
+    return BlocConsumer<SellBankAccountsCubit, SellBankAccountsState>(
+      listenWhen: (previous, current) => previous.accounts.length != current.accounts.length,
       listener: (context, state) {
-        if (state.isNotEmpty) {
-          context.read<SellSelectedBankAccountCubit>().selectBankAccount(state.last);
+        if (state.accounts.isNotEmpty) {
+          context.read<SellSelectedBankAccountCubit>().selectBankAccount(
+            state.accounts.lastWhereOrNull((account) => account.isActive),
+          );
         }
       },
-      builder: (context, accounts) => Column(
+      builder: (context, state) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Column(
@@ -69,7 +72,7 @@ class BankAccountFieldView extends StatelessWidget {
                 child: DropdownButtonFormField<BankAccount>(
                   initialValue: selected,
                   onChanged: null,
-                  items: accounts
+                  items: state.accounts
                       .map(
                         (account) => DropdownMenuItem(
                           value: account,
@@ -121,7 +124,7 @@ class BankAccountFieldView extends StatelessWidget {
     final sellBankAccountsCubit = context.read<SellBankAccountsCubit>();
     final sellSelectedBankAccountCubit = context.read<SellSelectedBankAccountCubit>();
 
-    if (sellBankAccountsCubit.state.isEmpty) {
+    if (sellBankAccountsCubit.state.accounts.isEmpty) {
       await showModalBottomSheet(
         isScrollControlled: true,
         context: context,
