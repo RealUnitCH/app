@@ -9,23 +9,19 @@ import 'package:realunit_wallet/screens/kyc/steps/phone_change/cubit/kyc_phone_c
 import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_phone_number_field.dart';
 
 class KycPhoneChangePage extends StatelessWidget {
-  final String url;
-
-  const KycPhoneChangePage({super.key, required this.url});
+  const KycPhoneChangePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => KycPhoneChangeCubit(kycService: getIt<DfxKycService>()),
-      child: KycPhoneChangeView(url: url),
+      child: const KycPhoneChangeView(),
     );
   }
 }
 
 class KycPhoneChangeView extends StatefulWidget {
-  final String url;
-
-  const KycPhoneChangeView({super.key, required this.url});
+  const KycPhoneChangeView({super.key});
 
   @override
   State<KycPhoneChangeView> createState() => _KycPhoneChangeViewState();

@@ -60,7 +60,7 @@ class KycViewManager extends StatelessWidget {
           KycStep.nationality => KycNationalityPage(url: urlOrToken ?? ''),
           KycStep.twoFa => const Kyc2FaPage(),
           KycStep.ident => KycIdentPage(accessToken: urlOrToken ?? ''),
-          KycStep.phoneChange => KycPhoneChangePage(url: urlOrToken ?? ''),
+          KycStep.phoneChange => const KycPhoneChangePage(),
           KycStep.nameChange => KycNameChangePage(url: urlOrToken ?? ''),
           KycStep.addressChange => KycAddressChangePage(url: urlOrToken ?? ''),
         },
