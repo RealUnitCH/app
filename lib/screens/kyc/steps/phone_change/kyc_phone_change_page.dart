@@ -62,7 +62,6 @@ class _KycPhoneChangeViewState extends State<KycPhoneChangeView> {
                 child: Form(
                   key: _formKey,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     spacing: 16,
                     children: [
                       KycPhoneNumberField(controller: _phoneCtrl),
