@@ -41,14 +41,14 @@ class SettingsUserDataView extends StatelessWidget {
         title: Text(S.of(context).userData),
       ),
       body: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+        padding: const .symmetric(horizontal: 20.0, vertical: 12.0),
         child: BlocBuilder<SettingsUserDataCubit, SettingsUserDataState>(
           builder: (context, state) => switch (state) {
             SettingsUserDataSuccess(:final userData, :final pendingSteps) =>
               userData != null
                   ? SingleChildScrollView(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        padding: const .symmetric(horizontal: 12.0),
                         child: SafeArea(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,7 +61,7 @@ class SettingsUserDataView extends StatelessWidget {
                               _UserDataRow(
                                 label: S.of(context).name,
                                 value: userData.name,
-                                pendingText: pendingSteps.contains(KycStepName.nameChange)
+                                statusLabel: pendingSteps.contains(KycStepName.nameChange)
                                     ? S.of(context).changeInReview
                                     : null,
                                 onEdit: () => context.push(SettingsEditNamePage.routeName),
@@ -84,7 +84,7 @@ class SettingsUserDataView extends StatelessWidget {
                                 label: S.of(context).residence,
                                 value:
                                     '${userData.addressStreet}\n${userData.addressPostalCode} ${userData.addressCity}\n${userData.addressCountry.name}',
-                                pendingText: pendingSteps.contains(KycStepName.addressChange)
+                                statusLabel: pendingSteps.contains(KycStepName.addressChange)
                                     ? S.of(context).changeInReview
                                     : null,
                                 onEdit: () => context.push(SettingsEditAddressPage.routeName),
@@ -117,60 +117,56 @@ class _UserDataRow extends StatelessWidget {
     required this.label,
     required this.value,
     this.onEdit,
-    this.pendingText,
+    this.statusLabel,
   });
 
   final String label;
   final String value;
   final VoidCallback? onEdit;
-  final String? pendingText;
+  final String? statusLabel;
 
   @override
   Widget build(BuildContext context) {
-    final isPending = pendingText != null;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 4,
+    return Row(
+      mainAxisAlignment: .spaceBetween,
       children: [
-        Row(
+        Column(
+          crossAxisAlignment: .start,
+          spacing: 4,
           children: [
+            Row(
+              spacing: 8.0,
+              children: [
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: .bold,
+                    color: RealUnitColors.neutral900,
+                  ),
+                ),
+                if (statusLabel != null)
+                  Text(
+                    statusLabel!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: RealUnitColors.realUnitBlue,
+                      fontStyle: .italic,
+                    ),
+                  ),
+              ],
+            ),
             Text(
-              label,
+              value,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: RealUnitColors.neutral900,
+                color: RealUnitColors.neutral500,
               ),
             ),
-            if (onEdit != null && !isPending) ...[
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: onEdit,
-                child: const Icon(
-                  Icons.edit,
-                  size: 18,
-                  color: RealUnitColors.realUnitBlue,
-                ),
-              ),
-            ],
-            if (isPending) ...[
-              const SizedBox(width: 8),
-              Text(
-                pendingText!,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: RealUnitColors.realUnitBlue,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
           ],
         ),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: RealUnitColors.neutral500,
+        if (onEdit != null && statusLabel == null)
+          IconButton.filledTonal(
+            onPressed: onEdit,
+            icon: const Icon(Icons.edit),
           ),
-        ),
       ],
     );
   }

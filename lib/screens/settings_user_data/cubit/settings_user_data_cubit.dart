@@ -12,6 +12,12 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.da
 part 'settings_user_data_state.dart';
 
 class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
+  static const _changeStepNames = {
+    KycStepName.nameChange,
+    KycStepName.addressChange,
+    KycStepName.phoneChange,
+  };
+
   final RealUnitWalletService _walletService;
   final DfxCountryService _countryService;
   final DfxKycService _kycService;
@@ -27,11 +33,6 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
     getUserData();
   }
 
-  static const _changeStepNames = {
-    KycStepName.nameChange,
-    KycStepName.addressChange,
-  };
-
   Future<void> getUserData() async {
     try {
       emit(const SettingsUserDataLoading());
@@ -41,8 +42,8 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
         _kycService.getKycStatus(),
       ]);
 
-      final result = results[0] as RealUnitWalletStatusDto;
-      final kycStatus = results[1] as KycLevelDto;
+      final result = results.elementAt(0) as RealUnitWalletStatusDto;
+      final kycStatus = results.elementAt(1) as KycLevelDto;
       final userDataDto = result.realUnitUserDataDto;
 
       if (userDataDto == null) {
@@ -51,14 +52,20 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
       }
 
       final pendingSteps = kycStatus.kycSteps
-          .where((step) =>
-              _changeStepNames.contains(step.name) &&
-              step.status == KycStepStatus.inReview)
+          .where(
+            (step) => _changeStepNames.contains(step.name) && step.status == KycStepStatus.inReview,
+          )
           .map<KycStepName>((step) => step.name)
           .toSet();
 
-      final nationalityCountry = await _countryService.getCountryBySymbol(userDataDto.nationality);
-      final addressCountry = await _countryService.getCountryBySymbol(userDataDto.addressCountry);
+      final countryResults = await Future.wait([
+        _countryService.getCountryBySymbol(userDataDto.nationality),
+        _countryService.getCountryBySymbol(userDataDto.addressCountry),
+      ]);
+
+      final nationalityCountry = countryResults.elementAt(0);
+      final addressCountry = countryResults.elementAt(1);
+
       emit(
         SettingsUserDataSuccess(
           UserData(
