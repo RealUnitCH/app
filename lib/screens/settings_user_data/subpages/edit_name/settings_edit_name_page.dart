@@ -152,7 +152,7 @@ class _SettingsEditNameViewState extends State<SettingsEditNameView> {
             },
           ),
         ),
-        _ => const SizedBox.shrink(),
+        _ => const Scaffold(),
       },
     );
   }

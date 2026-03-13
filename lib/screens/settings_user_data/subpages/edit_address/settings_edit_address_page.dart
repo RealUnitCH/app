@@ -207,7 +207,7 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
             },
           ),
         ),
-        _ => const SizedBox.shrink(),
+        _ => const Scaffold(),
       },
     );
   }
