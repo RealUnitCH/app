@@ -6,7 +6,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/2fa/cubits/kyc_2fa/kyc_2fa_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/2fa/cubits/kyc_2fa_verify/kyc_2fa_verify_cubit.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/kyc_text_field.dart';
+import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class Kyc2FaPage extends StatelessWidget {
@@ -107,7 +107,7 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
                         letterSpacing: 0.0,
                       ),
                     ),
-                    KycTextField(
+                    LabeledTextField(
                       hintText: '123456',
                       controller: codeCtrl,
                       keyboardType: TextInputType.number,

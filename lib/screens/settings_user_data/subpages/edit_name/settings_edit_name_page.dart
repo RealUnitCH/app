@@ -6,8 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_file_picker_field.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/kyc_text_field.dart';
+import 'package:realunit_wallet/widgets/form/file_picker_field.dart';
+import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_name/cubit/settings_edit_name_cubit.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/settings_edit_failure_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/settings_edit_pending_page.dart';
@@ -94,27 +94,27 @@ class _SettingsEditNameViewState extends State<SettingsEditNameView> {
                             child: Column(
                               spacing: 16,
                               children: [
-                                KycTextField(
+                                LabeledTextField(
                                   label: S.of(context).firstName,
                                   hintText: 'Max',
                                   controller: _firstNameCtrl,
-                                  textCapitalization: TextCapitalization.words,
+                                  textCapitalization: .words,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) return '';
                                     return null;
                                   },
                                 ),
-                                KycTextField(
+                                LabeledTextField(
                                   label: S.of(context).lastName,
                                   hintText: 'Mustermann',
                                   controller: _lastNameCtrl,
-                                  textCapitalization: TextCapitalization.words,
+                                  textCapitalization: .words,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) return '';
                                     return null;
                                   },
                                 ),
-                                KycFilePickerField(
+                                FilePickerField(
                                   label: S.of(context).proofDocument,
                                   selectedFile: _selectedFile,
                                   onFileSelected: (file) => setState(() => _selectedFile = file),
@@ -159,7 +159,7 @@ class _SettingsEditNameViewState extends State<SettingsEditNameView> {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _fileValidationTriggered = true);
     if ((_formKey.currentState?.validate() ?? false) && _selectedFile != null) {
-      final fileBase64 = await KycFilePickerField.toBase64DataUri(_selectedFile);
+      final fileBase64 = await FilePickerField.toBase64DataUri(_selectedFile);
       if (fileBase64 != null && mounted) {
         context.read<SettingsEditNameCubit>().submitName(
           firstName: _firstNameCtrl.text,

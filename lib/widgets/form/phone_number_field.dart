@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/kyc_dropdown_field.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/kyc_text_field.dart';
+import 'package:realunit_wallet/widgets/form/dropdown_field.dart';
+import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 
-class KycPhoneNumberField extends StatefulWidget {
+class PhoneNumberField extends StatefulWidget {
   final ValueNotifier<String?> controller;
 
-  const KycPhoneNumberField({super.key, required this.controller});
+  const PhoneNumberField({super.key, required this.controller});
 
   @override
-  State<KycPhoneNumberField> createState() => _KycPhoneNumberFieldState();
+  State<PhoneNumberField> createState() => _PhoneNumberFieldState();
 }
 
-class _KycPhoneNumberFieldState extends State<KycPhoneNumberField> {
+class _PhoneNumberFieldState extends State<PhoneNumberField> {
   final prefixes = ['+41', '+49'];
   String? prefix;
   String? number;
@@ -63,7 +63,7 @@ class _KycPhoneNumberFieldState extends State<KycPhoneNumberField> {
           children: [
             Expanded(
               flex: 3,
-              child: KycDropdownField<String>(
+              child: DropdownField<String>(
                 initialValue: prefix,
                 items: prefixes
                     .map((d) => DropdownMenuItem(value: d, child: Text(d.toString())))
@@ -78,7 +78,7 @@ class _KycPhoneNumberFieldState extends State<KycPhoneNumberField> {
             ),
             Expanded(
               flex: 6,
-              child: KycTextField(
+              child: LabeledTextField(
                 hintText: '1231234567',
                 initialValue: number,
                 keyboardType: TextInputType.phone,

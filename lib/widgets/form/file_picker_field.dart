@@ -6,13 +6,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
-class KycFilePickerField extends StatelessWidget {
+class FilePickerField extends StatelessWidget {
   final String label;
   final XFile? selectedFile;
   final ValueChanged<XFile?> onFileSelected;
   final String? Function()? validator;
 
-  const KycFilePickerField({
+  const FilePickerField({
     super.key,
     required this.label,
     required this.selectedFile,
@@ -104,7 +104,7 @@ class KycFilePickerField extends StatelessWidget {
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.add_a_photo, color: RealUnitColors.neutral400),
+                      const Icon(Icons.add_a_photo, color: RealUnitColors.neutral400),
                       const SizedBox(width: 8),
                       Text(
                         label,

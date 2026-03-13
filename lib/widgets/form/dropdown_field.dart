@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
-class KycDropdownField<T> extends StatelessWidget {
+class DropdownField<T> extends StatelessWidget {
   final String? label;
   final T? initialValue;
   final String? hintText;
@@ -10,7 +10,7 @@ class KycDropdownField<T> extends StatelessWidget {
   final List<DropdownMenuItem<T>> items;
   final bool hideErrorText;
 
-  const KycDropdownField({
+  const DropdownField({
     super.key,
     this.label,
     this.initialValue,
@@ -24,11 +24,11 @@ class KycDropdownField<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: .start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (label != null)
           Padding(
-            padding: const .symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: 12.0,
               vertical: 4.0,
             ),
@@ -36,7 +36,7 @@ class KycDropdownField<T> extends StatelessWidget {
               label!,
               style: const TextStyle(
                 fontSize: 13,
-                fontWeight: .bold,
+                fontWeight: FontWeight.bold,
                 height: 18 / 13,
               ),
             ),
@@ -50,26 +50,26 @@ class KycDropdownField<T> extends StatelessWidget {
             items: items,
             isExpanded: true,
             isDense: true,
-            borderRadius: .circular(8.0),
+            borderRadius: BorderRadius.circular(8.0),
             decoration: InputDecoration(
               enabledBorder: const OutlineInputBorder(
-                borderRadius: .all(.circular(8.0)),
+                borderRadius: BorderRadius.all(Radius.circular(8.0)),
                 borderSide: BorderSide(color: RealUnitColors.neutral300),
               ),
               focusedBorder: const OutlineInputBorder(
-                borderRadius: .all(.circular(8.0)),
+                borderRadius: BorderRadius.all(Radius.circular(8.0)),
                 borderSide: BorderSide(color: RealUnitColors.realUnitBlue, width: 2),
               ),
               errorBorder: OutlineInputBorder(
-                borderRadius: const .all(.circular(8.0)),
+                borderRadius: const BorderRadius.all(Radius.circular(8.0)),
                 borderSide: BorderSide(color: RealUnitColors.status.red600),
               ),
               focusedErrorBorder: OutlineInputBorder(
-                borderRadius: const .all(.circular(8.0)),
+                borderRadius: const BorderRadius.all(Radius.circular(8.0)),
                 borderSide: BorderSide(color: RealUnitColors.status.red600, width: 2),
               ),
               border: InputBorder.none,
-              contentPadding: const .symmetric(
+              contentPadding: const EdgeInsets.symmetric(
                 horizontal: 10.0,
               ),
               errorStyle: hideErrorText
@@ -88,7 +88,7 @@ class KycDropdownField<T> extends StatelessWidget {
                   )
                 : null,
             icon: const Padding(
-              padding: .only(right: 8),
+              padding: EdgeInsets.only(right: 8),
               child: Icon(Icons.arrow_drop_down),
             ),
           ),

@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_phone_number_field.dart';
+import 'package:realunit_wallet/widgets/form/phone_number_field.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_phone_number/cubit/settings_edit_phone_number_cubit.dart';
 
 class SettingsEditPhoneNumberPage extends StatelessWidget {
@@ -68,7 +68,7 @@ class _SettingsEditPhoneNumberViewState extends State<SettingsEditPhoneNumberVie
                   child: Column(
                     spacing: 16,
                     children: [
-                      KycPhoneNumberField(controller: _phoneCtrl),
+                      PhoneNumberField(controller: _phoneCtrl),
                       if (state is PhoneChangeFailure)
                         Text(
                           state.message,

@@ -7,9 +7,9 @@ import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_country_field.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_file_picker_field.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/kyc_text_field.dart';
+import 'package:realunit_wallet/widgets/form/country_field.dart';
+import 'package:realunit_wallet/widgets/form/file_picker_field.dart';
+import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_address/cubit/settings_edit_address_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/text_substring_highlighting.dart';
@@ -194,7 +194,7 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                   children: [
                     Expanded(
                       flex: 2,
-                      child: KycTextField(
+                      child: LabeledTextField(
                         hintText: 'Musterstrasse',
                         controller: _streetCtrl,
                         label: S.of(context).street,
@@ -207,7 +207,7 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                       ),
                     ),
                     Expanded(
-                      child: KycTextField(
+                      child: LabeledTextField(
                         hintText: '13',
                         controller: _numberCtrl,
                         label: S.of(context).houseNumber,
@@ -222,7 +222,7 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                   children: [
                     Expanded(
                       flex: 2,
-                      child: KycTextField(
+                      child: LabeledTextField(
                         hintText: '8000',
                         controller: _postalCodeCtrl,
                         label: S.of(context).postcodeAbr,
@@ -235,7 +235,7 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                     ),
                     Expanded(
                       flex: 3,
-                      child: KycTextField(
+                      child: LabeledTextField(
                         hintText: 'Zurich',
                         controller: _cityCtrl,
                         label: S.of(context).city,
@@ -249,7 +249,7 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                     ),
                   ],
                 ),
-                KycCountryField(
+                CountryField(
                   label: S.of(context).country,
                   onChanged: (country) => _countryCtrl.value = country,
                   validator: (value) {
@@ -257,7 +257,7 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                     return null;
                   },
                 ),
-                KycFilePickerField(
+                FilePickerField(
                   label: S.of(context).proofDocument,
                   selectedFile: _selectedFile,
                   onFileSelected: (file) => setState(() => _selectedFile = file),
@@ -291,7 +291,7 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
     setState(() => _fileValidationTriggered = true);
     final country = _countryCtrl.value;
     if ((_formKey.currentState?.validate() ?? false) && _selectedFile != null && country != null) {
-      final fileBase64 = await KycFilePickerField.toBase64DataUri(_selectedFile);
+      final fileBase64 = await FilePickerField.toBase64DataUri(_selectedFile);
       if (fileBase64 != null && mounted) {
         context.read<SettingsEditAddressCubit>().submitAddress(
           street: _streetCtrl.text,
