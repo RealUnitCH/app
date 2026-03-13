@@ -8,8 +8,6 @@ part 'settings_edit_name_state.dart';
 class SettingsEditNameCubit extends Cubit<SettingsEditNameState> {
   final DfxKycService _kycService;
 
-  String? _url;
-
   SettingsEditNameCubit({required DfxKycService kycService})
     : _kycService = kycService,
       super(const SettingsEditNameInitial()) {
@@ -26,9 +24,9 @@ class SettingsEditNameCubit extends Cubit<SettingsEditNameState> {
         return;
       }
 
-      _url = session.currentStep?.session.url;
-      if (_url == null) throw Exception('No session URL returned');
-      emit(SettingsEditNameReady(_url!));
+      final url = session.currentStep?.session.url;
+      if (url == null) throw Exception('No session URL returned');
+      emit(SettingsEditNameReady(url));
     } catch (e) {
       emit(SettingsEditNameFailure(e.toString()));
     }
@@ -42,10 +40,13 @@ class SettingsEditNameCubit extends Cubit<SettingsEditNameState> {
     required String fileBase64,
     required String fileName,
   }) async {
-    if (_url == null) return;
+    final currentState = state;
+    if (currentState is! SettingsEditNameReady) return;
+
+    final url = currentState.url;
     try {
-      emit(const SettingsEditNameSubmitting());
-      await _kycService.setData(_url!, {
+      emit(SettingsEditNameSubmitting(url));
+      await _kycService.setData(url, {
         'firstName': firstName,
         'lastName': lastName,
         'file': fileBase64,

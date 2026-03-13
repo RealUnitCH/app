@@ -29,7 +29,12 @@ class SettingsEditNamePending extends SettingsEditNameState {
 }
 
 class SettingsEditNameSubmitting extends SettingsEditNameState {
-  const SettingsEditNameSubmitting();
+  final String url;
+
+  const SettingsEditNameSubmitting(this.url);
+
+  @override
+  List<Object?> get props => [url];
 }
 
 class SettingsEditNameSuccess extends SettingsEditNameState {
