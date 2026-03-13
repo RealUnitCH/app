@@ -217,8 +217,6 @@
   "registerEmailVerificationFailed": "You have not yet confirmed your email address.",
   "registerEmailVerificationRegistrationFailed": "Your new wallet has been assigned to your account, but the wallet could not be registered. Please contact support.",
   "registerEmailVerificationTitle": "Welcome back!",
-  "registerFirstName": "First name",
-  "registerLastName": "Last name",
   "registerPhoneNumberInvalid": "Phone number is required",
   "registerPhoneNumberOnlyDigits": "Only numbers are allowed",
   "registerPhoneNumberTooShort": "Phone number is too short",

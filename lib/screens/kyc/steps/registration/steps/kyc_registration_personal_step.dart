@@ -61,7 +61,7 @@ class KycRegistrationPersonalStep extends StatelessWidget {
                   children: [
                     Expanded(
                       child: LabeledTextField(
-                        label: S.of(context).registerFirstName,
+                        label: S.of(context).firstName,
                         hintText: 'Max',
                         controller: firstNameCtrl,
                         // keyboardType: TextInputType.name, https://github.com/flutter/flutter/issues/67282
@@ -74,7 +74,7 @@ class KycRegistrationPersonalStep extends StatelessWidget {
                     ),
                     Expanded(
                       child: LabeledTextField(
-                        label: S.of(context).registerLastName,
+                        label: S.of(context).lastName,
                         hintText: 'Mustermann',
                         controller: lastNameCtrl,
                         // keyboardType: TextInputType.name, https://github.com/flutter/flutter/issues/67282

@@ -217,8 +217,6 @@
   "registerEmailVerificationFailed": "Sie haben Ihre E-Mail noch nicht bestätigt.",
   "registerEmailVerificationRegistrationFailed": "Ihre neue Wallet konnte Ihrem Account zugeordnet, jedoch konnte die Wallet nicht registriert werden. Bitte melden Sie sich beim Support.",
   "registerEmailVerificationTitle": "Willkommen zurück!",
-  "registerFirstName": "Vorname",
-  "registerLastName": "Nachname",
   "registerPhoneNumberInvalid": "Telefonnummer ist erforderlich",
   "registerPhoneNumberOnlyDigits": "Nur Zahlen sind erlaubt",
   "registerPhoneNumberTooShort": "Telefonnummer ist zu kurz",

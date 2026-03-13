@@ -45,7 +45,7 @@ class KycRegistrationAddressStep extends StatelessWidget {
                       child: LabeledTextField(
                         hintText: 'Musterstrasse',
                         controller: addressStreetCtrl,
-                        label: S.of(context).address,
+                        label: S.of(context).street,
                         keyboardType: TextInputType.streetAddress,
                         textCapitalization: TextCapitalization.words,
                         validator: (value) {
