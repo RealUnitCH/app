@@ -26,7 +26,7 @@ class ApiException implements Exception {
         return ApiException(
           statusCode: json['statusCode'] as int,
           code: code ?? 'UNKNOWN',
-          message: message is List ? (message as List).join(', ') : message?.toString() ?? 'Unknown error',
+          message: message is List ? message.join(', ') : message?.toString() ?? 'Unknown error',
         );
     }
   }

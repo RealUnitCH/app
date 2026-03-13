@@ -12,27 +12,29 @@ class SettingsEditNameCubit extends Cubit<SettingsEditNameState> {
 
   SettingsEditNameCubit({required DfxKycService kycService})
     : _kycService = kycService,
-      super(const NameChangeInitial());
+      super(const SettingsEditNameInitial()) {
+    _loadEdit();
+  }
 
-  Future<void> startStep() async {
+  Future<void> _loadEdit() async {
     try {
-      emit(const NameChangeLoading());
+      emit(const SettingsEditNameLoading());
       final session = await _kycService.startStep(KycStepName.nameChange);
 
       if (session.currentStep?.status == KycStepStatus.inReview) {
-        emit(const NameChangePending());
+        emit(const SettingsEditNamePending());
         return;
       }
 
       _url = session.currentStep?.session.url;
       if (_url == null) throw Exception('No session URL returned');
-      emit(NameChangeReady(_url!));
+      emit(SettingsEditNameReady(_url!));
     } catch (e) {
-      emit(NameChangeFailure(e.toString()));
+      emit(SettingsEditNameFailure(e.toString()));
     }
   }
 
-  void refresh() => startStep();
+  void refresh() => _loadEdit();
 
   Future<void> submitName({
     required String firstName,
@@ -42,16 +44,16 @@ class SettingsEditNameCubit extends Cubit<SettingsEditNameState> {
   }) async {
     if (_url == null) return;
     try {
-      emit(const NameChangeSubmitting());
+      emit(const SettingsEditNameSubmitting());
       await _kycService.setData(_url!, {
         'firstName': firstName,
         'lastName': lastName,
         'file': fileBase64,
         'fileName': fileName,
       });
-      emit(const NameChangeSuccess());
+      emit(const SettingsEditNameSuccess());
     } catch (e) {
-      emit(NameChangeFailure(e.toString()));
+      emit(SettingsEditNameFailure(e.toString()));
     }
   }
 }

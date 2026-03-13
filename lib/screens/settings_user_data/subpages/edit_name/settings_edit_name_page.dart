@@ -9,8 +9,8 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_file_picker_field.dart';
 import 'package:realunit_wallet/screens/kyc/widgets/kyc_text_field.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_name/cubit/settings_edit_name_cubit.dart';
-import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/widgets/text_substring_highlighting.dart';
+import 'package:realunit_wallet/screens/settings_user_data/subpages/settings_edit_failure_page.dart';
+import 'package:realunit_wallet/screens/settings_user_data/subpages/settings_edit_pending_page.dart';
 
 class SettingsEditNamePage extends StatelessWidget {
   static const routeName = '/settings/userData/editName';
@@ -20,7 +20,9 @@ class SettingsEditNamePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => SettingsEditNameCubit(kycService: getIt<DfxKycService>())..startStep(),
+      create: (context) => SettingsEditNameCubit(
+        kycService: getIt<DfxKycService>(),
+      ),
       child: const SettingsEditNameView(),
     );
   }
@@ -49,181 +51,107 @@ class _SettingsEditNameViewState extends State<SettingsEditNameView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(S.of(context).changeName)),
-      body: BlocConsumer<SettingsEditNameCubit, SettingsEditNameState>(
-        listener: (context, state) {
-          if (state is NameChangeSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(S.of(context).changeSuccess)),
-            );
-            context.pop();
-          }
-        },
-        builder: (context, state) => switch (state) {
-          NameChangeLoading() => const Center(child: CupertinoActivityIndicator()),
-          NameChangePending() => _buildPendingView(context),
-          NameChangeFailure(:final message) => _buildFailureView(context, message),
-          NameChangeReady() || NameChangeSubmitting() => _buildFormView(context, state),
-          _ => const SizedBox.shrink(),
-        },
-      ),
-    );
-  }
-
-  Widget _buildPendingView(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: SafeArea(
-        child: Column(
-          spacing: 8.0,
-          children: [
-            const Spacer(),
-            Text(
-              S.of(context).kycPending,
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
-                height: 30 / 26,
-                letterSpacing: -0.52,
-              ),
-            ),
-            TextSubstringHighlighting(
-              text: S.of(context).kycPendingDescription('NAMECHANGE'),
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: RealUnitColors.neutral500,
-                fontSize: 14,
-                height: 18 / 14,
-              ),
-              highlightedText: 'NAMECHANGE',
-              highlightedStyle: const TextStyle(
-                color: RealUnitColors.neutral500,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-                height: 18 / 14,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => context.read<SettingsEditNameCubit>().refresh(),
-                  child: Text(S.of(context).refresh),
-                ),
-              ),
-            ),
-            const Spacer(),
-          ],
+    return BlocConsumer<SettingsEditNameCubit, SettingsEditNameState>(
+      listener: (context, state) {
+        if (state is SettingsEditNameSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(S.of(context).changeSuccess)),
+          );
+          context.pop();
+        }
+      },
+      builder: (context, state) => switch (state) {
+        SettingsEditNameLoading() => Scaffold(
+          appBar: AppBar(title: Text(S.of(context).changeName)),
+          body: const Center(child: CupertinoActivityIndicator()),
         ),
-      ),
-    );
-  }
-
-  Widget _buildFailureView(BuildContext context, String message) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: SafeArea(
-        child: Column(
-          spacing: 8.0,
-          children: [
-            const Spacer(),
-            Text(
-              S.of(context).kycFailure,
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
-                height: 30 / 26,
-                letterSpacing: -0.52,
-              ),
-            ),
-            Text(
-              S.of(context).kycFailureDescription(message),
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: RealUnitColors.neutral500,
-                fontSize: 14,
-                height: 18 / 14,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => context.read<SettingsEditNameCubit>().refresh(),
-                  child: Text(S.of(context).refresh),
-                ),
-              ),
-            ),
-            const Spacer(),
-          ],
+        SettingsEditNamePending() => SettingsEditPendingPage(
+          title: S.of(context).changeName,
+          onRefresh: context.read<SettingsEditNameCubit>().refresh,
         ),
-      ),
-    );
-  }
-
-  Widget _buildFormView(BuildContext context, SettingsEditNameState state) {
-    final isSubmitting = state is NameChangeSubmitting;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: SafeArea(
-        child: GestureDetector(
-          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-          behavior: HitTestBehavior.opaque,
-          child: Form(
-            key: _formKey,
-            child: Column(
-              spacing: 16,
-              children: [
-                KycTextField(
-                  label: S.of(context).firstName,
-                  hintText: 'Max',
-                  controller: _firstNameCtrl,
-                  textCapitalization: TextCapitalization.words,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return '';
-                    return null;
-                  },
-                ),
-                KycTextField(
-                  label: S.of(context).lastName,
-                  hintText: 'Mustermann',
-                  controller: _lastNameCtrl,
-                  textCapitalization: TextCapitalization.words,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return '';
-                    return null;
-                  },
-                ),
-                KycFilePickerField(
-                  label: S.of(context).proofDocument,
-                  selectedFile: _selectedFile,
-                  onFileSelected: (file) => setState(() => _selectedFile = file),
-                  validator: () {
-                    if (_fileValidationTriggered && _selectedFile == null) return '';
-                    return null;
-                  },
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: isSubmitting ? null : _onSubmit,
-                      child: isSubmitting
-                          ? const CupertinoActivityIndicator()
-                          : Text(S.of(context).save),
+        SettingsEditNameFailure(:final message) => SettingsEditFailurePage(
+          message,
+          title: S.of(context).changeName,
+          onRefresh: context.read<SettingsEditNameCubit>().refresh,
+        ),
+        SettingsEditNameReady() || SettingsEditNameSubmitting() => Scaffold(
+          appBar: AppBar(title: Text(S.of(context).changeName)),
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              final isSubmitting = state is SettingsEditNameSubmitting;
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: SafeArea(
+                      child: Padding(
+                        padding: const .symmetric(horizontal: 20),
+                        child: GestureDetector(
+                          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+                          behavior: .opaque,
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              spacing: 16,
+                              children: [
+                                KycTextField(
+                                  label: S.of(context).firstName,
+                                  hintText: 'Max',
+                                  controller: _firstNameCtrl,
+                                  textCapitalization: TextCapitalization.words,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) return '';
+                                    return null;
+                                  },
+                                ),
+                                KycTextField(
+                                  label: S.of(context).lastName,
+                                  hintText: 'Mustermann',
+                                  controller: _lastNameCtrl,
+                                  textCapitalization: TextCapitalization.words,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) return '';
+                                    return null;
+                                  },
+                                ),
+                                KycFilePickerField(
+                                  label: S.of(context).proofDocument,
+                                  selectedFile: _selectedFile,
+                                  onFileSelected: (file) => setState(() => _selectedFile = file),
+                                  validator: () {
+                                    if (_fileValidationTriggered && _selectedFile == null) {
+                                      return '';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const Spacer(),
+                                Padding(
+                                  padding: const .symmetric(vertical: 16.0),
+                                  child: SizedBox(
+                                    width: .infinity,
+                                    child: FilledButton(
+                                      onPressed: isSubmitting ? null : _onSubmit,
+                                      child: isSubmitting
+                                          ? const CupertinoActivityIndicator()
+                                          : Text(S.of(context).save),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ],
-            ),
+              );
+            },
           ),
         ),
-      ),
+        _ => const SizedBox.shrink(),
+      },
     );
   }
 

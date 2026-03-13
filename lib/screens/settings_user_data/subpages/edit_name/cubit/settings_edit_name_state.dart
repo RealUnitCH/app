@@ -7,39 +7,39 @@ abstract class SettingsEditNameState extends Equatable {
   List<Object?> get props => [];
 }
 
-class NameChangeInitial extends SettingsEditNameState {
-  const NameChangeInitial();
+class SettingsEditNameInitial extends SettingsEditNameState {
+  const SettingsEditNameInitial();
 }
 
-class NameChangeLoading extends SettingsEditNameState {
-  const NameChangeLoading();
+class SettingsEditNameLoading extends SettingsEditNameState {
+  const SettingsEditNameLoading();
 }
 
-class NameChangeReady extends SettingsEditNameState {
+class SettingsEditNameReady extends SettingsEditNameState {
   final String url;
 
-  const NameChangeReady(this.url);
+  const SettingsEditNameReady(this.url);
 
   @override
   List<Object?> get props => [url];
 }
 
-class NameChangePending extends SettingsEditNameState {
-  const NameChangePending();
+class SettingsEditNamePending extends SettingsEditNameState {
+  const SettingsEditNamePending();
 }
 
-class NameChangeSubmitting extends SettingsEditNameState {
-  const NameChangeSubmitting();
+class SettingsEditNameSubmitting extends SettingsEditNameState {
+  const SettingsEditNameSubmitting();
 }
 
-class NameChangeSuccess extends SettingsEditNameState {
-  const NameChangeSuccess();
+class SettingsEditNameSuccess extends SettingsEditNameState {
+  const SettingsEditNameSuccess();
 }
 
-class NameChangeFailure extends SettingsEditNameState {
+class SettingsEditNameFailure extends SettingsEditNameState {
   final String message;
 
-  const NameChangeFailure(this.message);
+  const SettingsEditNameFailure(this.message);
 
   @override
   List<Object?> get props => [message];

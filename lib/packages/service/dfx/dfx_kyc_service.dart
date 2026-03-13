@@ -103,6 +103,7 @@ class DfxKycService extends DFXAuthService {
     return KycSessionDto.fromJson(json);
   }
 
+  /// sets the given KycStep in progress as the currentStep
   Future<KycSessionDto> startStep(KycStepName stepName) async {
     final user = await getUser();
     final authToken = appStore.dfxAuthToken;
