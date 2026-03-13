@@ -39,7 +39,7 @@ class SettingsUserDataView extends StatelessWidget {
         title: Text(S.of(context).userData),
       ),
       body: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+        padding: const .symmetric(horizontal: 20.0, vertical: 12.0),
         child: BlocBuilder<SettingsUserDataCubit, SettingsUserDataState>(
           builder: (context, state) => switch (state) {
             SettingsUserDataSuccess(:final userData, :final pendingSteps) =>
@@ -137,7 +137,7 @@ class _UserDataRow extends StatelessWidget {
     final isPending = pendingText != null;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: .start,
       spacing: 4,
       children: [
         Row(
