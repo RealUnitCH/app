@@ -6,11 +6,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/utils/xfile_extension.dart';
+import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_name/cubit/settings_edit_name_cubit.dart';
+import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_failure_page.dart';
+import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_loading_page.dart';
+import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_pending_page.dart';
 import 'package:realunit_wallet/widgets/form/file_picker_field.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
-import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_name/cubit/settings_edit_name_cubit.dart';
-import 'package:realunit_wallet/screens/settings_user_data/subpages/settings_edit_failure_page.dart';
-import 'package:realunit_wallet/screens/settings_user_data/subpages/settings_edit_pending_page.dart';
 
 class SettingsEditNamePage extends StatelessWidget {
   static const routeName = '/settings/userData/editName';
@@ -43,13 +45,6 @@ class _SettingsEditNameViewState extends State<SettingsEditNameView> {
   bool _fileValidationTriggered = false;
 
   @override
-  void dispose() {
-    _firstNameCtrl.dispose();
-    _lastNameCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return BlocConsumer<SettingsEditNameCubit, SettingsEditNameState>(
       listener: (context, state) {
@@ -61,9 +56,8 @@ class _SettingsEditNameViewState extends State<SettingsEditNameView> {
         }
       },
       builder: (context, state) => switch (state) {
-        SettingsEditNameLoading() => Scaffold(
-          appBar: AppBar(title: Text(S.of(context).changeName)),
-          body: const Center(child: CupertinoActivityIndicator()),
+        SettingsEditNameLoading() => SettingsEditLoadingPage(
+          title: S.of(context).changeName,
         ),
         SettingsEditNamePending() => SettingsEditPendingPage(
           title: S.of(context).changeName,
@@ -159,8 +153,8 @@ class _SettingsEditNameViewState extends State<SettingsEditNameView> {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _fileValidationTriggered = true);
     if ((_formKey.currentState?.validate() ?? false) && _selectedFile != null) {
-      final fileBase64 = await FilePickerField.toBase64DataUri(_selectedFile);
-      if (fileBase64 != null && mounted) {
+      final fileBase64 = await _selectedFile!.toBase64DataUri();
+      if (mounted) {
         context.read<SettingsEditNameCubit>().submitName(
           firstName: _firstNameCtrl.text,
           lastName: _lastNameCtrl.text,
@@ -169,5 +163,12 @@ class _SettingsEditNameViewState extends State<SettingsEditNameView> {
         );
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _firstNameCtrl.dispose();
+    _lastNameCtrl.dispose();
+    super.dispose();
   }
 }

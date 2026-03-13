@@ -7,39 +7,39 @@ abstract class SettingsEditAddressState extends Equatable {
   List<Object?> get props => [];
 }
 
-class AddressChangeInitial extends SettingsEditAddressState {
-  const AddressChangeInitial();
+class SettingsEditAddressInitial extends SettingsEditAddressState {
+  const SettingsEditAddressInitial();
 }
 
-class AddressChangeLoading extends SettingsEditAddressState {
-  const AddressChangeLoading();
+class SettingsEditAddressLoading extends SettingsEditAddressState {
+  const SettingsEditAddressLoading();
 }
 
-class AddressChangeReady extends SettingsEditAddressState {
+class SettingsEditAddressReady extends SettingsEditAddressState {
   final String url;
 
-  const AddressChangeReady(this.url);
+  const SettingsEditAddressReady(this.url);
 
   @override
   List<Object?> get props => [url];
 }
 
-class AddressChangePending extends SettingsEditAddressState {
-  const AddressChangePending();
+class SettingsEditAddressPending extends SettingsEditAddressState {
+  const SettingsEditAddressPending();
 }
 
-class AddressChangeSubmitting extends SettingsEditAddressState {
-  const AddressChangeSubmitting();
+class SettingsEditAddressSubmitting extends SettingsEditAddressState {
+  const SettingsEditAddressSubmitting();
 }
 
-class AddressChangeSuccess extends SettingsEditAddressState {
-  const AddressChangeSuccess();
+class SettingsEditAddressSuccess extends SettingsEditAddressState {
+  const SettingsEditAddressSuccess();
 }
 
-class AddressChangeFailure extends SettingsEditAddressState {
+class SettingsEditAddressFailure extends SettingsEditAddressState {
   final String message;
 
-  const AddressChangeFailure(this.message);
+  const SettingsEditAddressFailure(this.message);
 
   @override
   List<Object?> get props => [message];

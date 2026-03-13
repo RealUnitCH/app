@@ -90,7 +90,6 @@
   "fromClipboard": "From Clipboard",
   "hardwareWallet": "Hardware Wallet",
   "hardwareWalletSubtitle": "Store your RealUnit stock tokens on this separate, physical device (a \"hardware wallet\") from Switzerland.",
-  "houseNumber": "House number",
   "iban": "IBAN",
   "ibanInvalid": "IBAN is invalid",
   "ibanRequired": "IBAN is required",

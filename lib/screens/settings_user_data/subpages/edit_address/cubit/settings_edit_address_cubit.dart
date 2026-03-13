@@ -12,27 +12,29 @@ class SettingsEditAddressCubit extends Cubit<SettingsEditAddressState> {
 
   SettingsEditAddressCubit({required DfxKycService kycService})
     : _kycService = kycService,
-      super(const AddressChangeInitial());
+      super(const SettingsEditAddressInitial()) {
+    _loadEdit();
+  }
 
-  Future<void> startStep() async {
+  Future<void> _loadEdit() async {
     try {
-      emit(const AddressChangeLoading());
+      emit(const SettingsEditAddressLoading());
       final session = await _kycService.startStep(KycStepName.addressChange);
 
       if (session.currentStep?.status == KycStepStatus.inReview) {
-        emit(const AddressChangePending());
+        emit(const SettingsEditAddressPending());
         return;
       }
 
       _url = session.currentStep?.session.url;
       if (_url == null) throw Exception('No session URL returned');
-      emit(AddressChangeReady(_url!));
+      emit(SettingsEditAddressReady(_url!));
     } catch (e) {
-      emit(AddressChangeFailure(e.toString()));
+      emit(SettingsEditAddressFailure(e.toString()));
     }
   }
 
-  void refresh() => startStep();
+  void refresh() => _loadEdit();
 
   Future<void> submitAddress({
     required String street,
@@ -45,7 +47,7 @@ class SettingsEditAddressCubit extends Cubit<SettingsEditAddressState> {
   }) async {
     if (_url == null) return;
     try {
-      emit(const AddressChangeSubmitting());
+      emit(const SettingsEditAddressSubmitting());
       await _kycService.setData(_url!, {
         'file': fileBase64,
         'fileName': fileName,
@@ -57,9 +59,9 @@ class SettingsEditAddressCubit extends Cubit<SettingsEditAddressState> {
           'country': {'id': countryId},
         },
       });
-      emit(const AddressChangeSuccess());
+      emit(const SettingsEditAddressSuccess());
     } catch (e) {
-      emit(AddressChangeFailure(e.toString()));
+      emit(SettingsEditAddressFailure(e.toString()));
     }
   }
 }

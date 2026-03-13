@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -116,28 +115,5 @@ class FilePickerField extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  /// Converts the selected file to a base64 data URI string.
-  static Future<String?> toBase64DataUri(XFile? file) async {
-    if (file == null) return null;
-    final bytes = await file.readAsBytes();
-    final mimeType = file.mimeType ?? _guessMimeType(file.name);
-    return 'data:$mimeType;base64,${base64Encode(bytes)}';
-  }
-
-  static String _guessMimeType(String name) {
-    final ext = name.split('.').last.toLowerCase();
-    switch (ext) {
-      case 'png':
-        return 'image/png';
-      case 'jpg':
-      case 'jpeg':
-        return 'image/jpeg';
-      case 'pdf':
-        return 'application/pdf';
-      default:
-        return 'application/octet-stream';
-    }
   }
 }
