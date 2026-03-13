@@ -24,11 +24,11 @@ class DropdownField<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: .start,
       children: [
         if (label != null)
           Padding(
-            padding: const EdgeInsets.symmetric(
+            padding: const .symmetric(
               horizontal: 12.0,
               vertical: 4.0,
             ),
@@ -36,7 +36,7 @@ class DropdownField<T> extends StatelessWidget {
               label!,
               style: const TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.bold,
+                fontWeight: .bold,
                 height: 18 / 13,
               ),
             ),
@@ -50,26 +50,26 @@ class DropdownField<T> extends StatelessWidget {
             items: items,
             isExpanded: true,
             isDense: true,
-            borderRadius: BorderRadius.circular(8.0),
+            borderRadius: .circular(8.0),
             decoration: InputDecoration(
               enabledBorder: const OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                borderRadius: .all(.circular(8.0)),
                 borderSide: BorderSide(color: RealUnitColors.neutral300),
               ),
               focusedBorder: const OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                borderRadius: .all(.circular(8.0)),
                 borderSide: BorderSide(color: RealUnitColors.realUnitBlue, width: 2),
               ),
               errorBorder: OutlineInputBorder(
-                borderRadius: const BorderRadius.all(Radius.circular(8.0)),
+                borderRadius: const .all(.circular(8.0)),
                 borderSide: BorderSide(color: RealUnitColors.status.red600),
               ),
               focusedErrorBorder: OutlineInputBorder(
-                borderRadius: const BorderRadius.all(Radius.circular(8.0)),
+                borderRadius: const .all(.circular(8.0)),
                 borderSide: BorderSide(color: RealUnitColors.status.red600, width: 2),
               ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
+              border: .none,
+              contentPadding: const .symmetric(
                 horizontal: 10.0,
               ),
               errorStyle: hideErrorText
@@ -88,7 +88,7 @@ class DropdownField<T> extends StatelessWidget {
                   )
                 : null,
             icon: const Padding(
-              padding: EdgeInsets.only(right: 8),
+              padding: .only(right: 8),
               child: Icon(Icons.arrow_drop_down),
             ),
           ),

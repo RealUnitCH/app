@@ -13,6 +13,7 @@ import 'package:realunit_wallet/screens/settings_user_data/subpages/others/setti
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_pending_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/form/file_picker_field.dart';
+import 'package:realunit_wallet/widgets/image_picker_sheet.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 
 class SettingsEditNamePage extends StatelessWidget {
@@ -115,7 +116,10 @@ class _SettingsEditNameViewState extends State<SettingsEditNameView> {
                                 FilePickerField(
                                   label: S.of(context).proofDocument,
                                   selectedFile: _selectedFile,
-                                  onFileSelected: (file) => setState(() => _selectedFile = file),
+                                  onTap: () async {
+                                    final file = await ImagePickerSheet.show(context);
+                                    if (file != null) setState(() => _selectedFile = file);
+                                  },
                                   validator: () {
                                     if (_fileValidationTriggered && _selectedFile == null) {
                                       return '';

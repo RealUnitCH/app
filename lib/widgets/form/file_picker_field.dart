@@ -2,86 +2,58 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class FilePickerField extends StatelessWidget {
   final String label;
   final XFile? selectedFile;
-  final ValueChanged<XFile?> onFileSelected;
+  final VoidCallback onTap;
   final String? Function()? validator;
 
   const FilePickerField({
     super.key,
     required this.label,
     required this.selectedFile,
-    required this.onFileSelected,
+    required this.onTap,
     this.validator,
   });
-
-  Future<void> _pickFile(BuildContext context) async {
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: Text(S.of(context).choosePhoto),
-              onTap: () => Navigator.pop(context, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: Text(S.of(context).choosePhotoLibrary),
-              onTap: () => Navigator.pop(context, ImageSource.gallery),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (source == null) return;
-
-    final picker = ImagePicker();
-    final file = await picker.pickImage(source: source, imageQuality: 80);
-    onFileSelected(file);
-  }
 
   @override
   Widget build(BuildContext context) {
     final error = validator?.call();
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: .start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: const .symmetric(horizontal: 12, vertical: 4),
           child: Text(
             label,
             style: const TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.bold,
+              fontWeight: .bold,
               height: 18 / 13,
             ),
           ),
         ),
         GestureDetector(
-          onTap: () => _pickFile(context),
+          onTap: onTap,
           child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+            width: .infinity,
+            height: 76,
+            padding: const .symmetric(horizontal: 10),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: .circular(8),
               border: Border.all(
                 color: error != null ? RealUnitColors.status.red600 : RealUnitColors.neutral300,
               ),
             ),
             child: selectedFile != null
                 ? Row(
+                    spacing: 12.0,
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: .circular(4),
                         child: Image.file(
                           File(selectedFile!.path),
                           width: 48,
@@ -89,25 +61,32 @@ class FilePickerField extends StatelessWidget {
                           fit: BoxFit.cover,
                         ),
                       ),
-                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           selectedFile!.name,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 14),
+                          overflow: .ellipsis,
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ),
-                      const Icon(Icons.edit, size: 18, color: RealUnitColors.realUnitBlue),
+                      const Icon(
+                        Icons.edit_rounded,
+                        color: RealUnitColors.realUnitBlue,
+                      ),
                     ],
                   )
                 : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    spacing: 8.0,
+                    mainAxisAlignment: .center,
                     children: [
-                      const Icon(Icons.add_a_photo, color: RealUnitColors.neutral400),
-                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.add_a_photo_rounded,
+                        color: RealUnitColors.neutral400,
+                      ),
                       Text(
                         label,
-                        style: const TextStyle(color: RealUnitColors.neutral400),
+                        style: const TextStyle(
+                          color: RealUnitColors.neutral400,
+                        ),
                       ),
                     ],
                   ),

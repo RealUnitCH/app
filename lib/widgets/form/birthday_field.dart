@@ -45,21 +45,21 @@ class _BirthdayFieldState extends State<BirthdayField> {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: .start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: const .symmetric(horizontal: 12, vertical: 4),
           child: Text(
             S.of(context).birthday,
             style: const TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.bold,
+              fontWeight: .bold,
               height: 18 / 13,
             ),
           ),
         ),
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: .start,
           spacing: 10,
           children: [
             Expanded(

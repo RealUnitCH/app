@@ -28,16 +28,16 @@ class LabeledTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: .start,
       children: [
         if (label != null)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: const .symmetric(horizontal: 12, vertical: 4),
             child: Text(
               label!,
               style: const TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.bold,
+                fontWeight: .bold,
                 height: 18 / 13,
               ),
             ),
@@ -48,27 +48,27 @@ class LabeledTextField extends StatelessWidget {
           controller: controller,
           autocorrect: false,
           enableSuggestions: false,
-          textInputAction: TextInputAction.next,
+          textInputAction: .next,
           textCapitalization: textCapitalization,
           decoration: InputDecoration(
             hintText: hintText,
             enabledBorder: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(8.0)),
+              borderRadius: .all(.circular(8.0)),
               borderSide: BorderSide(color: RealUnitColors.neutral300),
             ),
             focusedBorder: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(8.0)),
+              borderRadius: .all(.circular(8.0)),
               borderSide: BorderSide(color: RealUnitColors.realUnitBlue, width: 2),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: const BorderRadius.all(Radius.circular(8.0)),
+              borderRadius: const .all(.circular(8.0)),
               borderSide: BorderSide(color: RealUnitColors.status.red600),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: const BorderRadius.all(Radius.circular(8.0)),
+              borderRadius: const .all(.circular(8.0)),
               borderSide: BorderSide(color: RealUnitColors.status.red600, width: 2),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+            contentPadding: const .symmetric(horizontal: 10, vertical: 14),
             hintStyle: const TextStyle(color: RealUnitColors.neutral400),
             errorStyle: hideErrorText
                 ? const TextStyle(

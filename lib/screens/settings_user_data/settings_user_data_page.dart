@@ -165,7 +165,7 @@ class _UserDataRow extends StatelessWidget {
         if (onEdit != null && statusLabel == null)
           IconButton.filledTonal(
             onPressed: onEdit,
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit_outlined),
           ),
       ],
     );
