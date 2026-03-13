@@ -33,13 +33,13 @@ lib/
 
 ## Styling — CRITICAL
 
-- **Colors**: Always use `RealUnitColors.*` or `RealUnitColors.basic.white` / `.black`. NEVER use `Colors.white`, `Colors.black`, or raw `Color(0x...)` values.
-- **Transparent colors**: `RealUnitColors.basic.white.withValues(alpha: 0)` — NEVER `Color(0x00FFFFFF)` or `Colors.transparent`.
+- **Colors**: Always use `RealUnitColors.*` or `RealUnitColors.basic.white` / `.black`. Avoid using colors from `material.dart` (`Colors.white`, `Colors.black`, `Colors.transparent`, etc.) if possible. NEVER use raw `Color(0x...)` values.
+- **Transparent colors**: `RealUnitColors.basic.white.withValues(alpha: 0)` — NEVER `Color(0x00FFFFFF)`.
 - **TextStyles**: Always use `Theme.of(context).textTheme.*` (headlineLarge/Medium/Small, bodyLarge/Medium/Small). NEVER hardcode `TextStyle(fontSize: 26, fontWeight: ...)`.
   - Mapping: `headlineLarge` = h1 (30/600), `headlineMedium` = h2 (26/bold), `headlineSmall` = h4 (20/bold), `bodyLarge` = base (16), `bodyMedium` = sm (14), `bodySmall` = xs (12)
-  - Add color via `.copyWith(color: RealUnitColors.neutral500)`.
+  - Any changes to TextStyles should happen via `.copyWith(...)` (e.g., color, fontWeight).
 - **Loading indicators**: `CupertinoActivityIndicator` — NEVER `CircularProgressIndicator`.
-- **Formatter**: Page width 100, trailing commas preserved. Single quotes required.
+- **Linter**: Use `analysis_options.yaml` as the linter rule reference.
 
 ## Localization (i18n)
 
@@ -49,14 +49,13 @@ lib/
 - Always update BOTH de and en ARB files.
 - Punctuation belongs in the template (`'${s.label}: $value'`), NOT in the ARB value.
 - Before adding a new key: search existing keys first — reuse where possible.
-- NEVER use `S.current` (no context) in cubits/blocs. Instead, emit a typed state and let the UI resolve localization via `S.of(context)`.
+- Avoid using `S.current` (no context) in cubits/blocs. Prefer emitting typed states and resolving localization in the UI via `S.of(context)`. When localization is needed in functions, pass `BuildContext` rather than `S`.
 
 ## State Management
 
-- **Bloc**: For complex event-driven flows. Events are `sealed class` extending `Equatable`. States use `final class` with `copyWith`.
-- **Cubit**: For simpler state. States extend `Equatable` with `copyWith`.
+- **Bloc**: For complex event-driven flows. Events are `sealed class` extending `Equatable`. States use `final class` — use `copyWith` or distinct state classes (Initial, Loading, Success, Failure) depending on the use case.
+- **Cubit**: For simpler state. States extend `Equatable` — use `copyWith` or distinct state classes depending on the use case.
 - State files are separate from bloc/cubit files.
-- Validation logic belongs in the cubit/bloc, NOT in the widget tree.
 
 ## DTOs & Models
 
@@ -85,9 +84,9 @@ lib/
 ## Widget Guidelines
 
 - Prefer `StatelessWidget` unless lifecycle management is truly needed.
-- Extract widgets into own files when they exceed ~30 lines of build logic.
+- Extract widgets into own files if they can be graphically as well as semantically separated.
 - Don't create wrapper widgets that only delegate to a child.
-- Use `Align` instead of `Positioned` when only alignment is needed.
+- Prefer `Align` instead of `Positioned`.
 
 ## Dependencies
 
