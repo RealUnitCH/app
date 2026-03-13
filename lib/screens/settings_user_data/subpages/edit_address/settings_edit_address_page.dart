@@ -12,6 +12,7 @@ import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_address
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_failure_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_loading_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_pending_page.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/form/country_field.dart';
 import 'package:realunit_wallet/widgets/form/file_picker_field.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
@@ -55,7 +56,10 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
       listener: (context, state) {
         if (state is SettingsEditAddressSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(S.of(context).changeSuccess)),
+            SnackBar(
+              content: Text(S.of(context).changeSuccess),
+              backgroundColor: RealUnitColors.green,
+            ),
           );
           context.pop();
         }
@@ -174,6 +178,7 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                                     return null;
                                   },
                                 ),
+                                const Spacer(),
                                 Padding(
                                   padding: const .symmetric(vertical: 16.0),
                                   child: SizedBox(

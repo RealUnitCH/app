@@ -7,22 +7,22 @@ abstract class SettingsEditPhoneNumberState extends Equatable {
   List<Object?> get props => [];
 }
 
-class PhoneChangeInitial extends SettingsEditPhoneNumberState {
-  const PhoneChangeInitial();
+class SettingsEditPhoneNumberInitial extends SettingsEditPhoneNumberState {
+  const SettingsEditPhoneNumberInitial();
 }
 
-class PhoneChangeSubmitting extends SettingsEditPhoneNumberState {
-  const PhoneChangeSubmitting();
+class SettingsEditPhoneNumberSubmitting extends SettingsEditPhoneNumberState {
+  const SettingsEditPhoneNumberSubmitting();
 }
 
-class PhoneChangeSuccess extends SettingsEditPhoneNumberState {
-  const PhoneChangeSuccess();
+class SettingsEditPhoneNumberSuccess extends SettingsEditPhoneNumberState {
+  const SettingsEditPhoneNumberSuccess();
 }
 
-class PhoneChangeFailure extends SettingsEditPhoneNumberState {
+class SettingsEditPhoneNumberFailure extends SettingsEditPhoneNumberState {
   final String message;
 
-  const PhoneChangeFailure(this.message);
+  const SettingsEditPhoneNumberFailure(this.message);
 
   @override
   List<Object?> get props => [message];

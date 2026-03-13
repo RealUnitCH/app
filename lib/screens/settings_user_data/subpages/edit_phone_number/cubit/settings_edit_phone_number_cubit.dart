@@ -9,15 +9,15 @@ class SettingsEditPhoneNumberCubit extends Cubit<SettingsEditPhoneNumberState> {
 
   SettingsEditPhoneNumberCubit({required DfxKycService kycService})
     : _kycService = kycService,
-      super(const PhoneChangeInitial());
+      super(const SettingsEditPhoneNumberInitial());
 
-  Future<void> submitPhone(String phone) async {
+  Future<void> editPhoneNumber(String phone) async {
     try {
-      emit(const PhoneChangeSubmitting());
+      emit(const SettingsEditPhoneNumberSubmitting());
       await _kycService.updateUser({'phone': phone});
-      emit(const PhoneChangeSuccess());
+      emit(const SettingsEditPhoneNumberSuccess());
     } catch (e) {
-      emit(PhoneChangeFailure(e.toString()));
+      emit(SettingsEditPhoneNumberFailure(e.toString()));
     }
   }
 }
