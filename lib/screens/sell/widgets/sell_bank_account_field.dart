@@ -97,8 +97,7 @@ class BankAccountFieldView extends StatelessWidget {
                     ),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12.0,
-                      vertical: 14.0,
+                      horizontal: 10.0,
                     ),
                   ),
                   hint: Text(
