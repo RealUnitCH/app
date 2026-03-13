@@ -5,29 +5,33 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
-import 'package:realunit_wallet/screens/kyc/steps/phone_change/cubit/kyc_phone_change_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_phone_number_field.dart';
+import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_phone_number/cubit/settings_edit_phone_number_cubit.dart';
 
-class KycPhoneChangePage extends StatelessWidget {
-  const KycPhoneChangePage({super.key});
+class SettingsEditPhoneNumberPage extends StatelessWidget {
+  static const routeName = '/settings/userData/editPhoneNumber';
+
+  const SettingsEditPhoneNumberPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => KycPhoneChangeCubit(kycService: getIt<DfxKycService>()),
-      child: const KycPhoneChangeView(),
+      create: (context) => SettingsEditPhoneNumberCubit(
+        kycService: getIt<DfxKycService>(),
+      ),
+      child: const SettingsEditPhoneNumberView(),
     );
   }
 }
 
-class KycPhoneChangeView extends StatefulWidget {
-  const KycPhoneChangeView({super.key});
+class SettingsEditPhoneNumberView extends StatefulWidget {
+  const SettingsEditPhoneNumberView({super.key});
 
   @override
-  State<KycPhoneChangeView> createState() => _KycPhoneChangeViewState();
+  State<SettingsEditPhoneNumberView> createState() => _SettingsEditPhoneNumberViewState();
 }
 
-class _KycPhoneChangeViewState extends State<KycPhoneChangeView> {
+class _SettingsEditPhoneNumberViewState extends State<SettingsEditPhoneNumberView> {
   final _formKey = GlobalKey<FormState>();
   final _phoneCtrl = ValueNotifier<String?>(null);
 
@@ -41,9 +45,9 @@ class _KycPhoneChangeViewState extends State<KycPhoneChangeView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(S.of(context).changePhoneNumber)),
-      body: BlocConsumer<KycPhoneChangeCubit, KycPhoneChangeState>(
+      body: BlocConsumer<SettingsEditPhoneNumberCubit, SettingsEditPhoneNumberState>(
         listener: (context, state) {
-          if (state is KycPhoneChangeSuccess) {
+          if (state is PhoneChangeSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(S.of(context).changeSuccess)),
             );
@@ -51,9 +55,7 @@ class _KycPhoneChangeViewState extends State<KycPhoneChangeView> {
           }
         },
         builder: (context, state) {
-          if (state is KycPhoneChangeLoading) {
-            return const Center(child: CupertinoActivityIndicator());
-          }
+          final isSubmitting = state is PhoneChangeSubmitting;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -67,7 +69,7 @@ class _KycPhoneChangeViewState extends State<KycPhoneChangeView> {
                     spacing: 16,
                     children: [
                       KycPhoneNumberField(controller: _phoneCtrl),
-                      if (state is KycPhoneChangeFailure)
+                      if (state is PhoneChangeFailure)
                         Text(
                           state.message,
                           style: TextStyle(color: Theme.of(context).colorScheme.error),
@@ -77,16 +79,10 @@ class _KycPhoneChangeViewState extends State<KycPhoneChangeView> {
                         child: SizedBox(
                           width: double.infinity,
                           child: FilledButton(
-                            onPressed: () {
-                              FocusManager.instance.primaryFocus?.unfocus();
-                              if (_formKey.currentState?.validate() ?? false) {
-                                final phone = _phoneCtrl.value;
-                                if (phone != null) {
-                                  context.read<KycPhoneChangeCubit>().submitPhone(phone);
-                                }
-                              }
-                            },
-                            child: Text(S.of(context).save),
+                            onPressed: isSubmitting ? null : _onSubmit,
+                            child: isSubmitting
+                                ? const CupertinoActivityIndicator()
+                                : Text(S.of(context).save),
                           ),
                         ),
                       ),
@@ -99,5 +95,15 @@ class _KycPhoneChangeViewState extends State<KycPhoneChangeView> {
         },
       ),
     );
+  }
+
+  void _onSubmit() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (_formKey.currentState?.validate() ?? false) {
+      final phone = _phoneCtrl.value;
+      if (phone != null) {
+        context.read<SettingsEditPhoneNumberCubit>().submitPhone(phone);
+      }
+    }
   }
 }

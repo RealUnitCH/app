@@ -145,7 +145,7 @@ class DfxKycService extends DFXAuthService {
     }
   }
 
-  /// is used to set data of a user by calling the provided session url from the KycSessionDto of continueKyc()
+  /// similar to `updateUser()` but is used to set/update data of a user by using the provided session url from `startStep()` or `continueKyc()`
   Future<void> setData(String url, Map<String, dynamic> body) async {
     final user = await getUser();
     final authToken = appStore.dfxAuthToken;

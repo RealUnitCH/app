@@ -9,8 +9,10 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
-import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
 import 'package:realunit_wallet/screens/settings_user_data/cubit/settings_user_data_cubit.dart';
+import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_address/settings_edit_address_page.dart';
+import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_name/settings_edit_name_page.dart';
+import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_phone_number/settings_edit_phone_number_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class SettingsUserDataPage extends StatelessWidget {
@@ -39,7 +41,7 @@ class SettingsUserDataView extends StatelessWidget {
         title: Text(S.of(context).userData),
       ),
       body: Container(
-        padding: const .symmetric(horizontal: 20.0, vertical: 12.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
         child: BlocBuilder<SettingsUserDataCubit, SettingsUserDataState>(
           builder: (context, state) => switch (state) {
             SettingsUserDataSuccess(:final userData, :final pendingSteps) =>
@@ -62,10 +64,7 @@ class SettingsUserDataView extends StatelessWidget {
                                 pendingText: pendingSteps.contains(KycStepName.nameChange)
                                     ? S.of(context).changeInReview
                                     : null,
-                                onEdit: () => context.push(
-                                  KycPageManager.routeName,
-                                  extra: KycStepName.nameChange,
-                                ),
+                                onEdit: () => context.push(SettingsEditNamePage.routeName),
                               ),
                               _UserDataRow(
                                 label: S.of(context).birthday,
@@ -79,10 +78,7 @@ class SettingsUserDataView extends StatelessWidget {
                               _UserDataRow(
                                 label: S.of(context).phoneNumber,
                                 value: userData.phoneNumber,
-                                onEdit: () => context.push(
-                                  KycPageManager.routeName,
-                                  extra: KycStepName.phoneChange,
-                                ),
+                                onEdit: () => context.push(SettingsEditPhoneNumberPage.routeName),
                               ),
                               _UserDataRow(
                                 label: S.of(context).residence,
@@ -91,10 +87,7 @@ class SettingsUserDataView extends StatelessWidget {
                                 pendingText: pendingSteps.contains(KycStepName.addressChange)
                                     ? S.of(context).changeInReview
                                     : null,
-                                onEdit: () => context.push(
-                                  KycPageManager.routeName,
-                                  extra: KycStepName.addressChange,
-                                ),
+                                onEdit: () => context.push(SettingsEditAddressPage.routeName),
                               ),
                             ],
                           ),
@@ -137,7 +130,7 @@ class _UserDataRow extends StatelessWidget {
     final isPending = pendingText != null;
 
     return Column(
-      crossAxisAlignment: .start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 4,
       children: [
         Row(
@@ -153,7 +146,7 @@ class _UserDataRow extends StatelessWidget {
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: onEdit,
-                child: Icon(
+                child: const Icon(
                   Icons.edit,
                   size: 18,
                   color: RealUnitColors.realUnitBlue,

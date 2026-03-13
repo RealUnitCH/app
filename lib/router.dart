@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/packages/open_crypto_pay/models.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
@@ -31,6 +30,9 @@ import 'package:realunit_wallet/screens/settings_nodes/settings_nodes_page.dart'
 import 'package:realunit_wallet/screens/settings_seed/settings_seed_page.dart';
 import 'package:realunit_wallet/screens/settings_tax_report/settings_tax_report_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/settings_user_data_page.dart';
+import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_address/settings_edit_address_page.dart';
+import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_name/settings_edit_name_page.dart';
+import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_phone_number/settings_edit_phone_number_page.dart';
 import 'package:realunit_wallet/screens/settings_wallet_address/settings_wallet_address_page.dart';
 import 'package:realunit_wallet/screens/terms/terms_page.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
@@ -108,7 +110,6 @@ void setupRouter() {
           builder: (context, state) {
             final extra = state.extra;
             return KycPageManager(
-              initialStep: extra is KycStepName ? extra : null,
               requiredLevel: extra is int ? extra : null,
             );
           },
@@ -203,6 +204,20 @@ void setupRouter() {
             GoRoute(
               path: '/userData',
               builder: (context, state) => const SettingsUserDataPage(),
+              routes: [
+                GoRoute(
+                  path: '/editName',
+                  builder: (context, state) => const SettingsEditNamePage(),
+                ),
+                GoRoute(
+                  path: '/editAddress',
+                  builder: (context, state) => const SettingsEditAddressPage(),
+                ),
+                GoRoute(
+                  path: '/editPhoneNumber',
+                  builder: (context, state) => const SettingsEditPhoneNumberPage(),
+                ),
+              ],
             ),
           ],
           builder: (context, state) => const SettingsPage(),
