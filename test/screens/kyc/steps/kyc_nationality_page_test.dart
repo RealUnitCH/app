@@ -9,7 +9,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/nationality/cubit/kyc_nationality/kyc_nationality_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/nationality/kyc_nationality_page.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_country_field.dart';
+import 'package:realunit_wallet/widgets/form/country_field.dart';
 
 import '../../../helper/pump_app.dart';
 
@@ -70,7 +70,7 @@ void main() {
     testWidgets('is initially rendered correctly', (tester) async {
       await tester.pumpApp(buildSubject(KycNationalityView(url: url)));
 
-      expect(find.byType(KycCountryField), findsOne);
+      expect(find.byType(CountryField), findsOne);
       expect(find.byType(FilledButton), findsOne);
     });
   });
