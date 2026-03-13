@@ -44,7 +44,7 @@ class FilePickerField extends StatelessWidget {
             padding: const .symmetric(horizontal: 10),
             decoration: BoxDecoration(
               borderRadius: .circular(8),
-              border: Border.all(
+              border: .all(
                 color: error != null ? RealUnitColors.status.red600 : RealUnitColors.neutral300,
               ),
             ),

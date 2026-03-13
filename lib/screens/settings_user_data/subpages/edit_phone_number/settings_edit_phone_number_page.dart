@@ -49,7 +49,7 @@ class _SettingsEditPhoneNumberViewState extends State<SettingsEditPhoneNumberVie
                 backgroundColor: RealUnitColors.green,
               ),
             );
-            context.pop();
+            context.pop(true);
           }
         },
         builder: (context, state) {
@@ -84,7 +84,7 @@ class _SettingsEditPhoneNumberViewState extends State<SettingsEditPhoneNumberVie
                                 Padding(
                                   padding: const .symmetric(vertical: 16.0),
                                   child: SizedBox(
-                                    width: double.infinity,
+                                    width: .infinity,
                                     child: FilledButton(
                                       onPressed: isSubmitting ? null : _onSubmit,
                                       child: isSubmitting

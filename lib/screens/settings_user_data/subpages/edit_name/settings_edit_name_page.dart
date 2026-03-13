@@ -13,8 +13,8 @@ import 'package:realunit_wallet/screens/settings_user_data/subpages/others/setti
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_pending_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/form/file_picker_field.dart';
-import 'package:realunit_wallet/widgets/image_picker_sheet.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
+import 'package:realunit_wallet/widgets/image_picker_sheet.dart';
 
 class SettingsEditNamePage extends StatelessWidget {
   static const routeName = '/settings/userData/editName';
@@ -57,7 +57,7 @@ class _SettingsEditNameViewState extends State<SettingsEditNameView> {
               backgroundColor: RealUnitColors.green,
             ),
           );
-          context.pop();
+          context.pop(true);
         }
       },
       builder: (context, state) => switch (state) {

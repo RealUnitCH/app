@@ -64,7 +64,14 @@ class SettingsUserDataView extends StatelessWidget {
                                 statusLabel: pendingSteps.contains(KycStepName.nameChange)
                                     ? S.of(context).changeInReview
                                     : null,
-                                onEdit: () => context.push(SettingsEditNamePage.routeName),
+                                onEdit: () async {
+                                  final isEdited = await context.push<bool>(
+                                    SettingsEditNamePage.routeName,
+                                  );
+                                  if (isEdited == true && context.mounted) {
+                                    context.read<SettingsUserDataCubit>().getUserData();
+                                  }
+                                },
                               ),
                               _UserDataRow(
                                 label: S.of(context).birthday,
@@ -78,7 +85,14 @@ class SettingsUserDataView extends StatelessWidget {
                               _UserDataRow(
                                 label: S.of(context).phoneNumber,
                                 value: userData.phoneNumber,
-                                onEdit: () => context.push(SettingsEditPhoneNumberPage.routeName),
+                                onEdit: () async {
+                                  final isEdited = await context.push<bool>(
+                                    SettingsEditPhoneNumberPage.routeName,
+                                  );
+                                  if (isEdited == true && context.mounted) {
+                                    context.read<SettingsUserDataCubit>().getUserData();
+                                  }
+                                },
                               ),
                               _UserDataRow(
                                 label: S.of(context).residence,
@@ -87,7 +101,14 @@ class SettingsUserDataView extends StatelessWidget {
                                 statusLabel: pendingSteps.contains(KycStepName.addressChange)
                                     ? S.of(context).changeInReview
                                     : null,
-                                onEdit: () => context.push(SettingsEditAddressPage.routeName),
+                                onEdit: () async {
+                                  final isEdited = await context.push<bool>(
+                                    SettingsEditAddressPage.routeName,
+                                  );
+                                  if (isEdited == true && context.mounted) {
+                                    context.read<SettingsUserDataCubit>().getUserData();
+                                  }
+                                },
                               ),
                             ],
                           ),

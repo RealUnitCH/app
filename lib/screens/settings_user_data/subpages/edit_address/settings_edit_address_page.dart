@@ -15,8 +15,8 @@ import 'package:realunit_wallet/screens/settings_user_data/subpages/others/setti
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/form/country_field.dart';
 import 'package:realunit_wallet/widgets/form/file_picker_field.dart';
-import 'package:realunit_wallet/widgets/image_picker_sheet.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
+import 'package:realunit_wallet/widgets/image_picker_sheet.dart';
 
 class SettingsEditAddressPage extends StatelessWidget {
   static const routeName = '/settings/userData/editAddress';
@@ -62,7 +62,7 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
               backgroundColor: RealUnitColors.green,
             ),
           );
-          context.pop();
+          context.pop(true);
         }
       },
       builder: (context, state) => switch (state) {

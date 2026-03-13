@@ -32,7 +32,7 @@ class SettingsEditPendingPage extends StatelessWidget {
               ),
               TextSubstringHighlighting(
                 text: S.of(context).kycPendingDescription(title),
-                textAlign: TextAlign.center,
+                textAlign: .center,
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: RealUnitColors.neutral500),
