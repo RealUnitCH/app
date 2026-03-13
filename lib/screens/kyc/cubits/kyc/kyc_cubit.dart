@@ -15,17 +15,24 @@ class KycCubit extends Cubit<KycState> {
     KycStepName.contactData,
     KycStepName.nationalityData,
     KycStepName.ident,
+    KycStepName.financialData,
+    KycStepName.dfxApproval,
   };
+
+  static const _minLevelForActions = 30;
 
   final DfxKycService _kycService;
   final RealUnitWalletService _walletService;
+  final int _requiredLevel;
 
   KycCubit(
     DfxKycService kycService,
-    RealUnitWalletService walletService,
-  ) : _kycService = kycService,
-      _walletService = walletService,
-      super(const KycInitial());
+    RealUnitWalletService walletService, {
+    int? requiredLevel,
+  }) : _kycService = kycService,
+       _walletService = walletService,
+       _requiredLevel = requiredLevel ?? _minLevelForActions,
+       super(const KycInitial());
 
   Future<void> checkKyc() async {
     try {
@@ -45,7 +52,15 @@ class KycCubit extends Cubit<KycState> {
         return;
       }
 
-      if (level < 30) {
+      if (level < _requiredLevel) {
+        final hasMergeRequest = kycStatus.kycSteps.any(
+          (step) => step.reason == KycStepReason.accountMergeRequested,
+        );
+        if (hasMergeRequest) {
+          emit(const KycAccountMergeRequested());
+          return;
+        }
+
         final requiredSteps = kycStatus.kycSteps.where(
           (step) => _requiredStepNames.contains(step.name),
         );
@@ -83,9 +98,17 @@ class KycCubit extends Cubit<KycState> {
     final currentStep = kycStatus.kycSteps.firstWhere((step) => step.isCurrent);
 
     final kycStep = _mapStepName(currentStep.name);
-    if (kycStep == null) throw Exception('current Step could not be found');
+    if (kycStep == null) {
+      emit(KycUnsupportedStepFailure(currentStep.name));
+      return;
+    }
 
-    emit(KycSuccess(currentStep: kycStep, urlOrToken: kycStatus.currentStep?.session.url));
+    emit(
+      KycSuccess(
+        currentStep: kycStep,
+        urlOrToken: kycStatus.currentStep?.session.url,
+      ),
+    );
   }
 
   KycStepName? _activeChangeStep;
@@ -121,6 +144,8 @@ class KycCubit extends Cubit<KycState> {
     KycStepName.contactData => KycStep.registration,
     KycStepName.nationalityData => KycStep.nationality,
     KycStepName.ident => KycStep.ident,
+    KycStepName.financialData => KycStep.financialData,
+    KycStepName.dfxApproval => KycStep.dfxApproval,
     KycStepName.phoneChange => KycStep.phoneChange,
     KycStepName.nameChange => KycStep.nameChange,
     KycStepName.addressChange => KycStep.addressChange,

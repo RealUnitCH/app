@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/di.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/2fa/kyc_2fa_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/address_change/kyc_address_change_page.dart';
+import 'package:realunit_wallet/screens/kyc/steps/financial_data/kyc_financial_data_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/ident/kyc_ident_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/name_change/kyc_name_change_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/nationality/kyc_nationality_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/phone_change/kyc_phone_change_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/kyc_registration_page.dart';
+import 'package:realunit_wallet/screens/kyc/subpages/kyc_account_merge_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_completed_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_failure_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_loading_page.dart';
@@ -21,8 +24,9 @@ class KycPageManager extends StatelessWidget {
   static const routeName = '/kyc';
 
   final KycStepName? initialStep;
+  final int? requiredLevel;
 
-  const KycPageManager({super.key, this.initialStep});
+  const KycPageManager({super.key, this.initialStep, this.requiredLevel});
 
   @override
   Widget build(BuildContext context) {
@@ -31,6 +35,7 @@ class KycPageManager extends StatelessWidget {
         final cubit = KycCubit(
           getIt<DfxKycService>(),
           getIt<RealUnitWalletService>(),
+          requiredLevel: requiredLevel,
         );
         if (initialStep != null) {
           cubit.startStep(initialStep!);
@@ -53,6 +58,10 @@ class KycViewManager extends StatelessWidget {
       builder: (context, state) => switch (state) {
         KycLoading() => const KycLoadingPage(),
         KycFailure(:final message) => KycFailurePage(message: message),
+        KycUnsupportedStepFailure(:final stepName) => KycFailurePage(
+          message: S.of(context).kycUnsupportedStepDescription(stepName.value),
+        ),
+        KycAccountMergeRequested() => const KycAccountMergePage(),
         KycPending(:final pendingStep) => KycPendingPage(pendingStep: pendingStep),
         KycCompleted() => const KycCompletedPage(),
         KycSuccess(:final currentStep, :final urlOrToken) => switch (currentStep) {
@@ -60,9 +69,11 @@ class KycViewManager extends StatelessWidget {
           KycStep.nationality => KycNationalityPage(url: urlOrToken ?? ''),
           KycStep.twoFa => const Kyc2FaPage(),
           KycStep.ident => KycIdentPage(accessToken: urlOrToken ?? ''),
+          KycStep.financialData => KycFinancialDataPage(url: urlOrToken ?? ''),
           KycStep.phoneChange => const KycPhoneChangePage(),
           KycStep.nameChange => KycNameChangePage(url: urlOrToken ?? ''),
           KycStep.addressChange => KycAddressChangePage(url: urlOrToken ?? ''),
+          (_) => const Scaffold(),
         },
         KycState() => const Scaffold(),
       },

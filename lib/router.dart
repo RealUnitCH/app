@@ -105,9 +105,13 @@ void setupRouter() {
         ),
         GoRoute(
           path: KycPageManager.routeName,
-          builder: (context, state) => KycPageManager(
-            initialStep: state.extra as KycStepName?,
-          ),
+          builder: (context, state) {
+            final extra = state.extra;
+            return KycPageManager(
+              initialStep: extra is KycStepName ? extra : null,
+              requiredLevel: extra is int ? extra : null,
+            );
+          },
         ),
         GoRoute(
           path: '/receive',

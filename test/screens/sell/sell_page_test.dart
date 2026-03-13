@@ -6,8 +6,9 @@ import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_bank_account_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/bank_account.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/bank_account/bank_account.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_converter/sell_converter_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
@@ -32,6 +33,8 @@ class MockSellSelectedBankAccountCubit extends MockCubit<BankAccount?>
 
 class MockDfxBrokerbotService extends Mock implements DfxBrokerbotService {}
 
+class MockDfxBankAccountService extends Mock implements DfxBankAccountService {}
+
 class MockRealUnitSellPaymentInfoService extends Mock implements RealUnitSellPaymentInfoService {}
 
 class MockApiConfig extends Mock implements ApiConfig {}
@@ -48,11 +51,13 @@ void main() {
 
     when(() => converterCubit.state).thenReturn(const SellConverterState());
     when(() => sellPaymentInfoCubit.state).thenReturn(const SellPaymentInfoInitial());
-    when(() => sellPaymentInfoCubit.getPaymentInfo(
-          amount: any(named: 'amount'),
-          iban: any(named: 'iban'),
-          currency: Currency.chf,
-        )).thenAnswer((_) => Future.value());
+    when(
+      () => sellPaymentInfoCubit.getPaymentInfo(
+        amount: any(named: 'amount'),
+        iban: any(named: 'iban'),
+        currency: Currency.chf,
+      ),
+    ).thenAnswer((_) => Future.value());
     when(() => sellSelectedBankAccountCubit.state).thenReturn(null);
   });
 
@@ -61,6 +66,7 @@ void main() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<AppStore>(AppStore(() => MockApiConfig()));
     getIt.registerSingleton<DfxBrokerbotService>(MockDfxBrokerbotService());
+    getIt.registerSingleton<DfxBankAccountService>(MockDfxBankAccountService());
     getIt.registerSingleton<RealUnitSellPaymentInfoService>(MockRealUnitSellPaymentInfoService());
     getIt.registerSingleton<SharedPreferences>(await SharedPreferences.getInstance());
   }
@@ -112,9 +118,11 @@ void main() {
         await tester.pumpApp(buildSubject(const SellView()));
 
         expect(
-            find.byWidgetPredicate(
-                (Widget widget) => widget is FilledButton && widget.onPressed == null),
-            findsOne);
+          find.byWidgetPredicate(
+            (Widget widget) => widget is FilledButton && widget.onPressed == null,
+          ),
+          findsOne,
+        );
       });
 
       testWidgets('shows loading state if SellPaymentInfoState is loading', (tester) async {
@@ -134,16 +142,19 @@ void main() {
           initialState: const SellConverterState(fiatText: '1.00', sharesText: '0.10'),
         );
 
-        when(() => sellSelectedBankAccountCubit.state)
-            .thenReturn(const BankAccount(iban: 'CH12 3456 7890 1234 5678 9'));
+        when(
+          () => sellSelectedBankAccountCubit.state,
+        ).thenReturn(const BankAccount(id: 1, iban: 'CH12 3456 7890 1234 5678 9'));
 
         await tester.pumpApp(buildSubject(const SellView()));
         await tester.pumpAndSettle();
 
         expect(
-            find.byWidgetPredicate(
-                (Widget widget) => widget is FilledButton && widget.onPressed != null),
-            findsOne);
+          find.byWidgetPredicate(
+            (Widget widget) => widget is FilledButton && widget.onPressed != null,
+          ),
+          findsOne,
+        );
       });
     });
   });
