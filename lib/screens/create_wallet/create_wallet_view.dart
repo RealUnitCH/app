@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -8,7 +7,6 @@ import 'package:realunit_wallet/screens/create_wallet/bloc/create_wallet_cubit.d
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
-import 'package:realunit_wallet/styles/styles.dart';
 import 'package:realunit_wallet/widgets/seed_blur_card.dart';
 
 class CreateWalletView extends StatelessWidget {
@@ -103,23 +101,10 @@ class CreateWalletView extends StatelessWidget {
                             const SizedBox(
                               height: 16,
                             ),
-                            Column(
-                              children: [
-                                SeedBlurCard(
-                                  seed: state.wallet!.seed,
-                                  onTap: context.read<CreateWalletCubit>().toggleShowSeed,
-                                  blur: state.hideSeed,
-                                ),
-                                CupertinoButton(
-                                  onPressed: () => _copySeed(state.wallet!.seed),
-                                  child: Text(
-                                    S.of(context).copySeed,
-                                    style: kPageTitleTextStyle.copyWith(
-                                      color: RealUnitColors.realUnitBlue,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            SeedBlurCard(
+                              seed: state.wallet!.seed,
+                              onTap: context.read<CreateWalletCubit>().toggleShowSeed,
+                              blur: state.hideSeed,
                             ),
                             const Spacer(),
                             Padding(
@@ -152,6 +137,4 @@ class CreateWalletView extends StatelessWidget {
       ),
     ),
   );
-
-  void _copySeed(String seed) => Clipboard.setData(ClipboardData(text: seed));
 }
