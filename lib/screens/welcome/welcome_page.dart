@@ -33,17 +33,18 @@ class _WelcomePageState extends State<WelcomePage> {
     body: SingleChildScrollView(
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          padding: const .symmetric(
+            horizontal: 20.0,
+          ),
           child: Column(
             spacing: 40.0,
             children: [
               Padding(
-                padding: const EdgeInsets.only(
-                  left: 24.0,
-                  right: 24.0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: .start,
                   children: [
                     const RealUnitIcon(size: 48),
                     const SizedBox(height: 8),
@@ -68,7 +69,7 @@ class _WelcomePageState extends State<WelcomePage> {
                   AnimatedSlide(
                     duration: const Duration(milliseconds: 350),
                     curve: Curves.easeInOut,
-                    offset: showSecondStep ? const Offset(-1.2, 0) : Offset.zero,
+                    offset: showSecondStep ? const Offset(-1.2, 0) : .zero,
                     child: Column(
                       spacing: 16.0,
                       children: [
@@ -95,7 +96,7 @@ class _WelcomePageState extends State<WelcomePage> {
                   AnimatedSlide(
                     duration: const Duration(milliseconds: 350),
                     curve: Curves.easeInOut,
-                    offset: showSecondStep ? Offset.zero : const Offset(1.2, 0),
+                    offset: showSecondStep ? .zero : const Offset(1.2, 0),
                     child: Column(
                       spacing: 16.0,
                       children: [

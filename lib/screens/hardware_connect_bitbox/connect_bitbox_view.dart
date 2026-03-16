@@ -14,18 +14,18 @@ class ConnectBitboxView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SafeArea(
     child: SizedBox(
-      width: double.infinity,
+      width: .infinity,
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: .min,
         children: [
-          Handlebars.horizontal(context, margin: const EdgeInsets.only(top: 5), width: 36),
+          Handlebars.horizontal(context, margin: const .only(top: 5), width: 36),
           BlocBuilder<ConnectBitboxCubit, BitboxConnectionState>(
             builder: (context, state) => Stack(
               children: [
                 AnimatedSlide(
                   duration: const Duration(milliseconds: 350),
                   curve: Curves.easeInOut,
-                  offset: state is BitboxNotConnected ? Offset.zero : const Offset(-1.2, 0),
+                  offset: state is BitboxNotConnected ? .zero : const Offset(-1.2, 0),
                   child: ConnectContent(
                     title: S.of(context).connectBitboxTitle,
                     content: DeviceInfo.instance.isIOS
@@ -37,7 +37,7 @@ class ConnectBitboxView extends StatelessWidget {
                 AnimatedSlide(
                   duration: const Duration(milliseconds: 350),
                   curve: Curves.easeInOut,
-                  offset: state is BitboxFound ? Offset.zero : const Offset(1.2, 0),
+                  offset: state is BitboxFound ? .zero : const Offset(1.2, 0),
                   child: ConnectContent(
                     title: S.of(context).connectedBitboxTitle,
                     content: S.of(context).connectedBitboxContent,
@@ -48,7 +48,7 @@ class ConnectBitboxView extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 28),
+            padding: const .symmetric(vertical: 28),
             child: ElevatedButton(
               style: kFullwidthGrayButtonStyle,
               onPressed: context.pop,
