@@ -109,7 +109,7 @@ class _WelcomePageState extends State<WelcomePage> {
                         ),
                         WelcomeCard(
                           title: S.of(context).restoreWallet,
-                          description: S.of(context).hardwareWalletSubtitle,
+                          description: S.of(context).restoreWalletSubtitle,
                           onPressed: () => context.push('/wallet/restore'),
                           trailing: SvgPicture.asset(
                             'assets/images/illustrations/restore_wallet.svg',
