@@ -43,12 +43,8 @@ class CreateWalletView extends StatelessWidget {
                               children: [
                                 Text(
                                   S.of(context).createWalletTitle,
-                                  style: const TextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w700,
-                                    color: RealUnitColors.realUnitBlack,
-                                    letterSpacing: -0.52,
-                                    height: 30 / 26,
+                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                    fontWeight: .bold,
                                   ),
                                 ),
                                 Text(
@@ -79,13 +75,10 @@ class CreateWalletView extends StatelessWidget {
                                         child: Text(
                                           S.of(context).createWalletRecoveryKeyTitle,
                                           textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                            fontSize: 20,
-                                            color: RealUnitColors.realUnitBlack,
-                                            fontWeight: FontWeight.bold,
-                                            height: 24 / 20,
-                                            letterSpacing: -0.2,
-                                          ),
+                                          style: Theme.of(context).textTheme.headlineSmall
+                                              ?.copyWith(
+                                                fontWeight: .bold,
+                                              ),
                                         ),
                                       ),
                                       Text(
