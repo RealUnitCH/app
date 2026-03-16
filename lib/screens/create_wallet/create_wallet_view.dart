@@ -50,9 +50,8 @@ class CreateWalletView extends StatelessWidget {
                                 Text(
                                   S.of(context).createWalletSubtitle,
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: RealUnitColors.neutral500,
-                                    height: 18 / 14,
                                   ),
                                 ),
                               ],
@@ -74,7 +73,6 @@ class CreateWalletView extends StatelessWidget {
                                         padding: const EdgeInsets.only(bottom: 3),
                                         child: Text(
                                           S.of(context).createWalletRecoveryKeyTitle,
-                                          textAlign: TextAlign.center,
                                           style: Theme.of(context).textTheme.headlineSmall
                                               ?.copyWith(
                                                 fontWeight: .bold,
@@ -83,9 +81,8 @@ class CreateWalletView extends StatelessWidget {
                                       ),
                                       Text(
                                         S.of(context).createWalletRecoveryKeySubtitle,
-                                        style: const TextStyle(
+                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                           color: RealUnitColors.neutral500,
-                                          height: 18 / 14,
                                         ),
                                       ),
                                     ],
