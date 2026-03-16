@@ -43,7 +43,7 @@ class WelcomeCard extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: Theme.of(context).textTheme.headlineSmall,
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 19),
                         ),
                         if (description != null)
                           Text(
