@@ -16,9 +16,9 @@ class SettingsSeedView extends StatelessWidget {
     body: SafeArea(
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const .symmetric(horizontal: 20),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
+            mainAxisAlignment: .start,
             children: [
               SvgPicture.asset(
                 'assets/images/illustrations/backup_wallet.svg',
@@ -30,46 +30,44 @@ class SettingsSeedView extends StatelessWidget {
                 children: [
                   Text(
                     S.of(context).settingsWalletBackup,
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
-                      height: 30 / 26,
-                      letterSpacing: -0.52,
-                    ),
+                    textAlign: .center,
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   Text(
                     S.of(context).settingsWalletBackupSubtitle1,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: RealUnitColors.neutral500,
-                      fontSize: 14,
-                      height: 18 / 14,
-                    ),
+                    textAlign: .center,
+                    style:
+                        Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(
+                          color: RealUnitColors.neutral500,
+                        ),
                   ),
                   Text(
                     S.of(context).settingsWalletBackupSubtitle2,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: RealUnitColors.neutral500,
-                      fontSize: 14,
-                      height: 18 / 14,
-                    ),
+                    textAlign: .center,
+                    style:
+                        Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(
+                          color: RealUnitColors.neutral500,
+                        ),
                   ),
                 ],
               ),
               const SizedBox(height: 40),
               Row(
                 spacing: 10,
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: .center,
                 children: [
-                  const RecoveryKeyIcon(size: 20, color: RealUnitColors.realUnitBlue),
-                  Text(
-                    S.of(context).createWalletRecoveryKeyTitle,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.2,
-                      height: 24 / 20,
+                  const RecoveryKeyIcon(
+                    size: 20,
+                    color: RealUnitColors.realUnitBlue,
+                  ),
+                  Expanded(
+                    child: Text(
+                      S.of(context).createWalletRecoveryKeyTitle,
+                      style: Theme.of(context).textTheme.headlineSmall,
                     ),
                   ),
                 ],
