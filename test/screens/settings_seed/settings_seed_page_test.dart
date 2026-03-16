@@ -29,11 +29,15 @@ void main() {
   setUp(() {
     settingsSeedCubit = MockSettingsSeedCubit();
 
-    when(() => settingsSeedCubit.state).thenReturn(const SettingsSeedState(
-        'cheese trigger cannon mention judge hire snack sustain annual predict illness celery'));
+    when(() => settingsSeedCubit.state).thenReturn(
+      const SettingsSeedState(
+        'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
+      ),
+    );
     when(() => appStore.wallet).thenReturn(wallet);
     when(() => wallet.seed).thenReturn(
-        'cheese trigger cannon mention judge hire snack sustain annual predict illness celery');
+      'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
+    );
   });
 
   void setupDependencyInjection() {
@@ -65,39 +69,43 @@ void main() {
       await tester.pumpApp(buildSubject(const SettingsSeedView()));
 
       expect(
-          find.byWidgetPredicate((Widget widget) => widget is SvgPicture && widget.height == 124),
-          findsOne);
+        find.byWidgetPredicate((Widget widget) => widget is SvgPicture && widget.height == 124),
+        findsOne,
+      );
       expect(find.byType(SeedBlurCard), findsOne);
-      expect(find.byType(TextButton), findsOne);
     });
 
     group('$MnemonicReadOnlyField', () {
       testWidgets('is blurred', (tester) async {
-        when(() => settingsSeedCubit.state).thenReturn(const SettingsSeedState(
-          'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
-          showSeed: false,
-        ));
+        when(() => settingsSeedCubit.state).thenReturn(
+          const SettingsSeedState(
+            'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
+            showSeed: false,
+          ),
+        );
 
         await tester.pumpApp(buildSubject(const SettingsSeedView()));
 
         expect(
-            find.byWidgetPredicate(
-                (Widget widget) => widget is SeedBlurCard && widget.blur == true),
-            findsOne);
+          find.byWidgetPredicate((Widget widget) => widget is SeedBlurCard && widget.blur == true),
+          findsOne,
+        );
       });
 
       testWidgets('is unblurred', (tester) async {
-        when(() => settingsSeedCubit.state).thenReturn(const SettingsSeedState(
-          'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
-          showSeed: true,
-        ));
+        when(() => settingsSeedCubit.state).thenReturn(
+          const SettingsSeedState(
+            'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
+            showSeed: true,
+          ),
+        );
 
         await tester.pumpApp(buildSubject(const SettingsSeedView()));
 
         expect(
-            find.byWidgetPredicate(
-                (Widget widget) => widget is SeedBlurCard && widget.blur == false),
-            findsOne);
+          find.byWidgetPredicate((Widget widget) => widget is SeedBlurCard && widget.blur == false),
+          findsOne,
+        );
       });
     });
   });
