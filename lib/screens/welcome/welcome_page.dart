@@ -1,8 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/utils/device_info.dart';
 import 'package:realunit_wallet/router.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
 import 'package:realunit_wallet/screens/welcome/widgets/welcome_card.dart';
@@ -17,13 +17,13 @@ class WelcomePage extends StatefulWidget {
 }
 
 class _WelcomePageState extends State<WelcomePage> {
-  bool showSecondStep = false;
+  bool showSecondStep = !DeviceInfo.instance.isAndroid;
 
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: RealUnitColors.brand700,
     appBar: AppBar(
-      leading: showSecondStep
+      leading: showSecondStep && DeviceInfo.instance.isAndroid
           ? IconButton(
               onPressed: () => setState(() => showSecondStep = false),
               icon: const Icon(Icons.arrow_back_rounded),
@@ -80,7 +80,7 @@ class _WelcomePageState extends State<WelcomePage> {
                             'assets/images/illustrations/software_wallet.svg',
                           ),
                         ),
-                        if (defaultTargetPlatform == TargetPlatform.android)
+                        if (DeviceInfo.instance.isAndroid)
                           WelcomeCard(
                             title: S.of(context).bitbox,
                             description: S.of(context).hardwareWalletSubtitle,
