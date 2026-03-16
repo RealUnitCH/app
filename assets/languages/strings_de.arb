@@ -150,7 +150,7 @@
   "networkTestnet": "Testnet",
   "next": "Weiter",
   "number": "Nummer",
-  "onboardingCompletedSubtitle": "Investieren Sie in reale Werte und behalten Sie die volle Kontrolle — rund um die Uhr.",
+  "onboardingCompletedSubtitle": "Gratulation, Sie haben erfolgreich eine Wallet eröffnet. Sichern Sie im nächsten Schritt den Zugriff auf diese Mobile-App.",
   "onboardingCompletedTitle": "Ihre Wallet ist bereit",
   "openCryptoPayNotSupported": "Dieser Anbieter unterstützt Open CryptoPay nicht: ${provider}",
   "optional": "optional",
