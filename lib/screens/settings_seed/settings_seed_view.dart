@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/settings_seed/bloc/settings_seed_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
-import 'package:realunit_wallet/styles/styles.dart';
 import 'package:realunit_wallet/widgets/seed_blur_card.dart';
 
 class SettingsSeedView extends StatelessWidget {
@@ -79,24 +77,10 @@ class SettingsSeedView extends StatelessWidget {
               const SizedBox(height: 16),
               BlocBuilder<SettingsSeedCubit, SettingsSeedState>(
                 builder: (context, state) {
-                  return Column(
-                    spacing: 4,
-                    children: [
-                      SeedBlurCard(
-                        seed: context.read<SettingsSeedCubit>().state.seed,
-                        onTap: () => context.read<SettingsSeedCubit>().toggleShowSeed(),
-                        blur: !context.read<SettingsSeedCubit>().state.showSeed,
-                      ),
-                      TextButton(
-                        onPressed: () => Clipboard.setData(
-                          ClipboardData(text: context.read<SettingsSeedCubit>().state.seed),
-                        ),
-                        child: Text(
-                          S.of(context).copySeed,
-                          style: kPageTitleTextStyle.copyWith(color: RealUnitColors.realUnitBlue),
-                        ),
-                      ),
-                    ],
+                  return SeedBlurCard(
+                    seed: context.read<SettingsSeedCubit>().state.seed,
+                    onTap: () => context.read<SettingsSeedCubit>().toggleShowSeed(),
+                    blur: !context.read<SettingsSeedCubit>().state.showSeed,
                   );
                 },
               ),
