@@ -19,7 +19,7 @@ class OnboardingCompletedPage extends StatelessWidget {
       appBar: AppBar(),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          padding: const .symmetric(horizontal: 20.0),
           child: LayoutBuilder(
             builder: (context, constraint) {
               return SingleChildScrollView(
@@ -29,7 +29,7 @@ class OnboardingCompletedPage extends StatelessWidget {
                     child: Column(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.all(32.0),
+                          padding: const .all(32.0),
                           child: SvgPicture.asset(
                             'assets/images/illustrations/realu_token.svg',
                             height: 216,
@@ -41,30 +41,26 @@ class OnboardingCompletedPage extends StatelessWidget {
                           children: [
                             Text(
                               s.onboardingCompletedTitle,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 26,
-                                letterSpacing: 26 * -0.02,
-                                height: 30 / 26,
-                              ),
+                              textAlign: .center,
+                              style: Theme.of(context).textTheme.headlineMedium,
                             ),
                             Text(
                               s.onboardingCompletedSubtitle,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                height: 18 / 14,
-                                letterSpacing: 0.0,
-                                color: RealUnitColors.neutral500,
-                              ),
+                              textAlign: .center,
+                              style:
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.copyWith(
+                                    color: RealUnitColors.neutral500,
+                                  ),
                             ),
                           ],
                         ),
                         const Spacer(),
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          padding: const .symmetric(vertical: 20),
                           child: SizedBox(
-                            width: double.infinity,
+                            width: .infinity,
                             child: FilledButton(
                               onPressed: () =>
                                   context.read<HomeBloc>().add(const CompleteOnboardingEvent()),
