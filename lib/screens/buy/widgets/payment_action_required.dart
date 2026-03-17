@@ -17,7 +17,7 @@ class PaymentActionRequired extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       spacing: 20,
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: .center,
       children: [
         Row(
           spacing: 12,
@@ -29,23 +29,17 @@ class PaymentActionRequired extends StatelessWidget {
             ),
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: .start,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      height: 18 / 14,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: .w600,
                     ),
                   ),
                   Text(
                     description,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      height: 18 / 14,
-                      letterSpacing: 0.0,
-                    ),
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
               ),
