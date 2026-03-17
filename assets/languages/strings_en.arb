@@ -34,6 +34,7 @@
   "buyPaymentNotPossible": "Purchase currently not possible.",
   "buyPaymentNotPossibleDescription": "There appears to be a permission issue. Please contact support for further information.",
   "buyRealu": "Buy REALU",
+  "buyRealUnit": "Buy RealUnit",
   "cancel": "Cancel",
   "city": "City",
   "close": "Close",

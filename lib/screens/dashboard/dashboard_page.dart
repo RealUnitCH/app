@@ -162,7 +162,7 @@ class DashboardView extends StatelessWidget {
                                     width: double.infinity,
                                     child: FilledButton(
                                       onPressed: () => context.push(BuyPage.routeName),
-                                      child: Text(S.of(context).buy),
+                                      child: Text(S.of(context).buyRealUnit),
                                     ),
                                   ),
                                 ),
