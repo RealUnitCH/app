@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:realunit_wallet/packages/utils/device_info.dart';
 
 class DatePicker {
   /// Opens a DatePicker depending on the platform
@@ -10,7 +10,7 @@ class DatePicker {
     required DateTime firstDate,
     required DateTime lastDate,
   }) async {
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
+    if (DeviceInfo.instance.isIOS) {
       return _showCupertinoPicker(
         context: context,
         initialDate: currentDate,

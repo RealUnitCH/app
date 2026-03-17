@@ -15,6 +15,10 @@ class _MnemonicFieldBase extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textScaler = MediaQuery.textScalerOf(context);
+    final columns = textScaler.scale(1) > 1.2 ? 2 : 3;
+    final rows = 12 ~/ columns;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
       decoration: BoxDecoration(
@@ -24,12 +28,12 @@ class _MnemonicFieldBase extends StatelessWidget {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: List.generate(4, (rowIndex) {
+        children: List.generate(rows, (rowIndex) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Row(
-              children: List.generate(3, (colIndex) {
-                final index = rowIndex * 3 + colIndex;
+              children: List.generate(columns, (colIndex) {
+                final index = rowIndex * columns + colIndex;
                 return Expanded(
                   child: GestureDetector(
                     onTap: onCellTap != null ? () => onCellTap!(index) : null,

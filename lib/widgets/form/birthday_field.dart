@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/kyc_dropdown_field.dart';
+import 'package:realunit_wallet/widgets/form/dropdown_field.dart';
 
-class KycBirthdayField extends StatefulWidget {
+class BirthdayField extends StatefulWidget {
   final ValueNotifier<String?> controller;
 
-  const KycBirthdayField({
+  const BirthdayField({
     super.key,
     required this.controller,
   });
 
   @override
-  State<KycBirthdayField> createState() => _KycBirthdayFieldState();
+  State<BirthdayField> createState() => _BirthdayFieldState();
 }
 
-class _KycBirthdayFieldState extends State<KycBirthdayField> {
+class _BirthdayFieldState extends State<BirthdayField> {
   String? selectedDay;
   String? selectedMonth;
   String? selectedYear;
@@ -45,26 +45,26 @@ class _KycBirthdayFieldState extends State<KycBirthdayField> {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: .start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: const .symmetric(horizontal: 12, vertical: 4),
           child: Text(
             S.of(context).birthday,
             style: const TextStyle(
               fontSize: 13,
-              fontWeight: FontWeight.bold,
+              fontWeight: .bold,
               height: 18 / 13,
             ),
           ),
         ),
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: .start,
           spacing: 10,
           children: [
             Expanded(
               flex: 1,
-              child: KycDropdownField<String>(
+              child: DropdownField<String>(
                 hintText: S.of(context).day,
                 items: days
                     .map((d) => DropdownMenuItem(value: d, child: Text(d.toString())))
@@ -79,7 +79,7 @@ class _KycBirthdayFieldState extends State<KycBirthdayField> {
             ),
             Expanded(
               flex: 1,
-              child: KycDropdownField<String>(
+              child: DropdownField<String>(
                 hintText: S.of(context).month,
                 items: months
                     .map((m) => DropdownMenuItem(value: m, child: Text(m.toString())))
@@ -94,7 +94,7 @@ class _KycBirthdayFieldState extends State<KycBirthdayField> {
             ),
             Expanded(
               flex: 1,
-              child: KycDropdownField<String>(
+              child: DropdownField<String>(
                 hintText: S.of(context).year,
                 items: years
                     .map((y) => DropdownMenuItem(value: y, child: Text(y.toString())))

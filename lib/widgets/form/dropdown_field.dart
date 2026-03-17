@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
-class KycDropdownField<T> extends StatelessWidget {
+class DropdownField<T> extends StatelessWidget {
   final String? label;
   final T? initialValue;
   final String? hintText;
@@ -10,7 +10,7 @@ class KycDropdownField<T> extends StatelessWidget {
   final List<DropdownMenuItem<T>> items;
   final bool hideErrorText;
 
-  const KycDropdownField({
+  const DropdownField({
     super.key,
     this.label,
     this.initialValue,
@@ -68,7 +68,7 @@ class KycDropdownField<T> extends StatelessWidget {
                 borderRadius: const .all(.circular(8.0)),
                 borderSide: BorderSide(color: RealUnitColors.status.red600, width: 2),
               ),
-              border: InputBorder.none,
+              border: .none,
               contentPadding: const .symmetric(
                 horizontal: 10.0,
               ),
