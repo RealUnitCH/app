@@ -4,13 +4,11 @@ import 'package:realunit_wallet/styles/colors.dart';
 class PaymentActionRequired extends StatelessWidget {
   final String title;
   final String description;
-  final Widget? action;
 
   const PaymentActionRequired({
     super.key,
     required this.title,
     required this.description,
-    this.action,
   });
 
   @override
@@ -46,7 +44,6 @@ class PaymentActionRequired extends StatelessWidget {
             ),
           ],
         ),
-        if (action != null) action!,
       ],
     );
   }
