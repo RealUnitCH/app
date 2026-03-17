@@ -4,11 +4,11 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/kyc_registration_step_cubit.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_birthday_field.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_country_field.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_phone_number_field.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/kyc_dropdown_field.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/kyc_text_field.dart';
+import 'package:realunit_wallet/widgets/form/birthday_field.dart';
+import 'package:realunit_wallet/widgets/form/country_field.dart';
+import 'package:realunit_wallet/widgets/form/dropdown_field.dart';
+import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
+import 'package:realunit_wallet/widgets/form/phone_number_field.dart';
 
 class KycRegistrationPersonalStep extends StatelessWidget {
   final ValueNotifier<RegistrationUserType> typeCtrl;
@@ -43,7 +43,7 @@ class KycRegistrationPersonalStep extends StatelessWidget {
             child: Column(
               spacing: 16,
               children: [
-                KycDropdownField<RegistrationUserType>(
+                DropdownField<RegistrationUserType>(
                   label: S.of(context).registerAccountType,
                   hintText: RegistrationUserType.human.toString(),
                   items: [
@@ -60,8 +60,8 @@ class KycRegistrationPersonalStep extends StatelessWidget {
                   spacing: 10,
                   children: [
                     Expanded(
-                      child: KycTextField(
-                        label: S.of(context).registerFirstName,
+                      child: LabeledTextField(
+                        label: S.of(context).firstName,
                         hintText: 'Max',
                         controller: firstNameCtrl,
                         // keyboardType: TextInputType.name, https://github.com/flutter/flutter/issues/67282
@@ -73,8 +73,8 @@ class KycRegistrationPersonalStep extends StatelessWidget {
                       ),
                     ),
                     Expanded(
-                      child: KycTextField(
-                        label: S.of(context).registerLastName,
+                      child: LabeledTextField(
+                        label: S.of(context).lastName,
                         hintText: 'Mustermann',
                         controller: lastNameCtrl,
                         // keyboardType: TextInputType.name, https://github.com/flutter/flutter/issues/67282
@@ -87,13 +87,13 @@ class KycRegistrationPersonalStep extends StatelessWidget {
                     ),
                   ],
                 ),
-                KycBirthdayField(
+                BirthdayField(
                   controller: birthdayCtrl,
                 ),
-                KycPhoneNumberField(
+                PhoneNumberField(
                   controller: phoneCtrl,
                 ),
-                KycCountryField(
+                CountryField(
                   label: S.of(context).registerCitizenship,
                   onChanged: (country) => nationalityCtrl.value = country,
                   validator: (value) {
