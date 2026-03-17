@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/packages/open_crypto_pay/models.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
@@ -34,6 +35,7 @@ import 'package:realunit_wallet/screens/settings_wallet_address/settings_wallet_
 import 'package:realunit_wallet/screens/terms/terms_page.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
+import 'package:realunit_wallet/screens/verify_seed/verify_seed_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/screens/welcome/welcome_page.dart';
 
@@ -63,6 +65,10 @@ void setupRouter() {
         GoRoute(
           path: '/wallet/create',
           builder: (context, state) => const CreateWalletPage(),
+        ),
+        GoRoute(
+          path: '/wallet/verifySeed',
+          builder: (context, state) => VerifySeedPage(wallet: state.extra as SoftwareWallet),
         ),
         GoRoute(
           path: '/wallet/restore',
