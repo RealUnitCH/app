@@ -45,23 +45,24 @@ class DashboardPortfolioChartView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    margin: const EdgeInsets.only(top: 8),
+    margin: const .only(top: 8),
     child: SafeArea(
       bottom: false,
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+            padding: const .symmetric(vertical: 12, horizontal: 20),
             child: Column(
               crossAxisAlignment: .start,
               children: [
                 Text(
                   S.of(context).portfolioDevelopment,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: RealUnitColors.neutral400,
-                    height: 16 / 12,
-                  ),
+                  style:
+                      Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(
+                        color: RealUnitColors.neutral400,
+                      ),
                 ),
                 BlocBuilder<SettingsBloc, SettingsState>(
                   builder: (context, settingsState) {
@@ -74,21 +75,17 @@ class DashboardPortfolioChartView extends StatelessWidget {
                           children: [
                             Text(
                               settingsState.currency.code.toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: RealUnitColors.realUnitBlack,
-                              ),
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodyLarge?.copyWith(fontWeight: .w600),
                             ),
                             Text(
                               currentValue == BigInt.zero
                                   ? '--.--'
                                   : formatFixed(currentValue, 2, trimZeros: false),
-                              style: const TextStyle(
-                                fontSize: 30,
-                                fontWeight: FontWeight.w600,
-                                color: RealUnitColors.realUnitBlack,
-                              ),
+                              style: Theme.of(
+                                context,
+                              ).textTheme.headlineLarge?.copyWith(fontWeight: .w600),
                             ),
                           ],
                         ),
@@ -106,22 +103,28 @@ class DashboardPortfolioChartView extends StatelessWidget {
                             final sign = difference >= 0 ? '+' : '';
 
                             return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment: .start,
                               children: [
                                 Text(
                                   state.selectedPeriod.name(context),
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    height: 16 / 10,
-                                  ),
+                                  style:
+                                      Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall?.copyWith(
+                                        fontSize: 10,
+                                        height: 16 / 10,
+                                      ),
                                 ),
                                 Text(
                                   '$sign${difference.toStringAsFixed(2)} ${settingsState.currency.code.toUpperCase()} | $sign${percentChange.toStringAsFixed(2)} %',
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    height: 16 / 10,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                  style:
+                                      Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall?.copyWith(
+                                        fontSize: 10,
+                                        height: 16 / 10,
+                                        fontWeight: .w600,
+                                      ),
                                 ),
                               ],
                             );
@@ -138,7 +141,7 @@ class DashboardPortfolioChartView extends StatelessWidget {
           BlocBuilder<PortfolioChartCubit, PortfolioChartState>(
             builder: (context, state) {
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                padding: const .symmetric(horizontal: 20.0),
                 child: Row(
                   children: TimePeriod.values.map((period) {
                     return Expanded(
