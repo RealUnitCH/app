@@ -10,85 +10,152 @@ import '../../helper/helper.dart';
 
 void main() {
   group('$WelcomePage', () {
-    testWidgets('renders initially correctly', (tester) async {
-      await tester.pumpApp(const WelcomePage());
+    group('on iOS', () {
+      testWidgets(
+        'renders initially correctly',
+        variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+        (tester) async {
+          await tester.pumpApp(const WelcomePage());
 
-      expect(find.byType(Scaffold), findsOne);
-      expect(find.byType(RealUnitIcon), findsOne);
-      expect(find.text(S.current.realunitWallet), findsOne);
-      expect(find.text(S.current.realunitWalletSubtitle), findsOneWidget);
-      final visibleCards = find.byType(WelcomeCard).hitTestable();
-      expect(visibleCards, findsNWidgets(2));
+          expect(find.byType(Scaffold), findsOne);
+          expect(find.byType(RealUnitIcon), findsOne);
+          expect(find.text(S.current.realunitWallet), findsOne);
+          expect(find.text(S.current.realunitWalletSubtitle), findsOneWidget);
+          final visibleCards = find.byType(WelcomeCard).hitTestable();
+          expect(visibleCards, findsNWidgets(2));
+        },
+      );
+
+      group('has $WelcomeCard', () {
+        testWidgets(
+          'for Create Wallet',
+          variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+          (tester) async {
+            await tester.pumpApp(const WelcomePage());
+
+            final welcomeCardFinder = find.byWidgetPredicate(
+              (Widget widget) => widget is WelcomeCard && widget.title == S.current.createWallet,
+            );
+            final welcomeCardWidget = tester.widget(welcomeCardFinder) as WelcomeCard;
+
+            expect(welcomeCardWidget.trailing, isA<SvgPicture>());
+          },
+        );
+
+        testWidgets(
+          'for Restore Wallet',
+          variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+          (tester) async {
+            await tester.pumpApp(const WelcomePage());
+
+            final welcomeCardFinder = find.byWidgetPredicate(
+              (Widget widget) => widget is WelcomeCard && widget.title == S.current.restoreWallet,
+            );
+            final welcomeCardWidget = tester.widget(welcomeCardFinder) as WelcomeCard;
+
+            expect(welcomeCardWidget.trailing, isA<SvgPicture>());
+          },
+        );
+      });
     });
 
-    group('has $WelcomeCard', () {
-      testWidgets('for Software Wallet', (tester) async {
-        await tester.pumpApp(const WelcomePage());
+    group('on Android', () {
+      testWidgets(
+        'renders initially correctly',
+        variant: TargetPlatformVariant.only(TargetPlatform.android),
+        (tester) async {
+          await tester.pumpApp(const WelcomePage());
 
-        final welcomeCardFinder = find.byWidgetPredicate(
-          (Widget widget) => widget is WelcomeCard && widget.title == S.current.softwareWallet,
+          expect(find.byType(Scaffold), findsOne);
+          expect(find.byType(RealUnitIcon), findsOne);
+          expect(find.text(S.current.realunitWallet), findsOne);
+          expect(find.text(S.current.realunitWalletSubtitle), findsOneWidget);
+          final visibleCards = find.byType(WelcomeCard).hitTestable();
+          expect(visibleCards, findsNWidgets(2));
+        },
+      );
+
+      group('has $WelcomeCard', () {
+        testWidgets(
+          'for Software Wallet',
+          variant: TargetPlatformVariant.only(TargetPlatform.android),
+          (tester) async {
+            await tester.pumpApp(const WelcomePage());
+
+            final welcomeCardFinder = find.byWidgetPredicate(
+              (Widget widget) => widget is WelcomeCard && widget.title == S.current.softwareWallet,
+            );
+            final welcomeCardWidget = tester.widget(welcomeCardFinder) as WelcomeCard;
+
+            expect(welcomeCardWidget.trailing, isA<SvgPicture>());
+          },
         );
-        final welcomeCardWidget = tester.widget(welcomeCardFinder) as WelcomeCard;
 
-        expect(welcomeCardWidget.trailing, isA<SvgPicture>());
+        testWidgets(
+          'for Hardware Wallet',
+          variant: TargetPlatformVariant.only(TargetPlatform.android),
+          (tester) async {
+            await tester.pumpApp(const WelcomePage());
+
+            final welcomeCardFinder = find.byWidgetPredicate(
+              (Widget widget) => widget is WelcomeCard && widget.title == S.current.bitbox,
+            );
+            final welcomeCardWidget = tester.widget(welcomeCardFinder) as WelcomeCard;
+
+            expect(welcomeCardWidget.trailing, isA<SvgPicture>());
+          },
+        );
       });
 
-      testWidgets('for Hardware Wallet', (tester) async {
-        await tester.pumpApp(const WelcomePage());
+      testWidgets(
+        'shows new cards when Software Wallet card tapped',
+        variant: TargetPlatformVariant.only(TargetPlatform.android),
+        (tester) async {
+          await tester.pumpApp(const WelcomePage());
 
-        final welcomeCardFinder = find.byWidgetPredicate(
-          (Widget widget) => widget is WelcomeCard && widget.title == S.current.bitbox,
-        );
-        final welcomeCardWidget = tester.widget(welcomeCardFinder) as WelcomeCard;
+          expect(
+            find
+                .byWidgetPredicate(
+                  (Widget widget) => widget is WelcomeCard && widget.title == S.current.createWallet,
+                )
+                .hitTestable(),
+            findsNothing,
+          );
+          expect(
+            find
+                .byWidgetPredicate(
+                  (Widget widget) => widget is WelcomeCard && widget.title == S.current.restoreWallet,
+                )
+                .hitTestable(),
+            findsNothing,
+          );
 
-        expect(welcomeCardWidget.trailing, isA<SvgPicture>());
-      });
-    });
+          final welcomeCardFinder = find.byWidgetPredicate(
+            (Widget widget) => widget is WelcomeCard && widget.title == S.current.softwareWallet,
+          );
 
-    testWidgets('shows new cards when Software Wallet card tapped', (tester) async {
-      await tester.pumpApp(const WelcomePage());
+          await tester.tap(welcomeCardFinder);
+          await tester.pumpAndSettle();
 
-      expect(
-        find
-            .byWidgetPredicate(
-              (Widget widget) => widget is WelcomeCard && widget.title == S.current.createWallet,
-            )
-            .hitTestable(),
-        findsNothing,
-      );
-      expect(
-        find
-            .byWidgetPredicate(
-              (Widget widget) => widget is WelcomeCard && widget.title == S.current.restoreWallet,
-            )
-            .hitTestable(),
-        findsNothing,
-      );
-
-      final welcomeCardFinder = find.byWidgetPredicate(
-        (Widget widget) => widget is WelcomeCard && widget.title == S.current.softwareWallet,
-      );
-
-      await tester.tap(welcomeCardFinder);
-      await tester.pumpAndSettle();
-
-      final visibleCards = find.byType(WelcomeCard).hitTestable();
-      expect(visibleCards, findsNWidgets(2));
-      expect(
-        find
-            .byWidgetPredicate(
-              (Widget widget) => widget is WelcomeCard && widget.title == S.current.createWallet,
-            )
-            .hitTestable(),
-        findsOne,
-      );
-      expect(
-        find
-            .byWidgetPredicate(
-              (Widget widget) => widget is WelcomeCard && widget.title == S.current.restoreWallet,
-            )
-            .hitTestable(),
-        findsOne,
+          final visibleCards = find.byType(WelcomeCard).hitTestable();
+          expect(visibleCards, findsNWidgets(2));
+          expect(
+            find
+                .byWidgetPredicate(
+                  (Widget widget) => widget is WelcomeCard && widget.title == S.current.createWallet,
+                )
+                .hitTestable(),
+            findsOne,
+          );
+          expect(
+            find
+                .byWidgetPredicate(
+                  (Widget widget) => widget is WelcomeCard && widget.title == S.current.restoreWallet,
+                )
+                .hitTestable(),
+            findsOne,
+          );
+        },
       );
     });
   });

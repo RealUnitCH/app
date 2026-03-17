@@ -1,8 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/utils/device_info.dart';
 import 'package:realunit_wallet/router.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
 import 'package:realunit_wallet/screens/welcome/widgets/welcome_card.dart';
@@ -17,13 +17,13 @@ class WelcomePage extends StatefulWidget {
 }
 
 class _WelcomePageState extends State<WelcomePage> {
-  bool showSecondStep = false;
+  bool showSecondStep = !DeviceInfo.instance.isAndroid;
 
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: RealUnitColors.brand700,
     appBar: AppBar(
-      leading: showSecondStep
+      leading: showSecondStep && DeviceInfo.instance.isAndroid
           ? IconButton(
               onPressed: () => setState(() => showSecondStep = false),
               icon: const Icon(Icons.arrow_back_rounded),
@@ -33,17 +33,18 @@ class _WelcomePageState extends State<WelcomePage> {
     body: SingleChildScrollView(
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          padding: const .symmetric(
+            horizontal: 20.0,
+          ),
           child: Column(
             spacing: 40.0,
             children: [
               Padding(
-                padding: const EdgeInsets.only(
-                  left: 24.0,
-                  right: 24.0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: .start,
                   children: [
                     const RealUnitIcon(size: 48),
                     const SizedBox(height: 8),
@@ -68,7 +69,7 @@ class _WelcomePageState extends State<WelcomePage> {
                   AnimatedSlide(
                     duration: const Duration(milliseconds: 350),
                     curve: Curves.easeInOut,
-                    offset: showSecondStep ? const Offset(-1.2, 0) : Offset.zero,
+                    offset: showSecondStep ? const Offset(-1.2, 0) : .zero,
                     child: Column(
                       spacing: 16.0,
                       children: [
@@ -80,7 +81,7 @@ class _WelcomePageState extends State<WelcomePage> {
                             'assets/images/illustrations/software_wallet.svg',
                           ),
                         ),
-                        if (defaultTargetPlatform == TargetPlatform.android)
+                        if (DeviceInfo.instance.isAndroid)
                           WelcomeCard(
                             title: S.of(context).bitbox,
                             description: S.of(context).hardwareWalletSubtitle,
@@ -95,7 +96,7 @@ class _WelcomePageState extends State<WelcomePage> {
                   AnimatedSlide(
                     duration: const Duration(milliseconds: 350),
                     curve: Curves.easeInOut,
-                    offset: showSecondStep ? Offset.zero : const Offset(1.2, 0),
+                    offset: showSecondStep ? .zero : const Offset(1.2, 0),
                     child: Column(
                       spacing: 16.0,
                       children: [
