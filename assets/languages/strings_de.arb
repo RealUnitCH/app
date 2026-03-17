@@ -56,7 +56,7 @@
   "createWalletConfirm": "Ich habe es gesichert",
   "createWalletRecoveryKeySubtitle": "Bitte schreiben Sie die Wörter in der angezeigten Reihenfolge auf.",
   "createWalletRecoveryKeyTitle": "Wiederherstellungs-Wörter",
-  "createWalletSubtitle": "Bitte notieren Sie Ihre Wiederherstellungs-Wörter und bewahren Sie diese sicher und vertraulich auf. Sie sind erforderlich, um den Zugang zu Ihrer Wallet wiederherzustellen.",
+  "createWalletSubtitle": "Notieren Sie Ihre Wiederherstellungs-Wörter auf einem Blatt Papier auf und verwahren Sie dieses sicher und vertraulich. Jede Person, die im Besitz dieser 12 Wörter ist, kann auf Ihr Wallet zugreifen! Daher raten wir von einer Speicherung auf ihrem Mobile oder Laptop dringend ab.",
   "createWalletTitle": "Wallet-Sicherung",
   "currencyChf": "Schweizer Franken",
   "currencyEur": "Euro",

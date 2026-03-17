@@ -18,7 +18,7 @@ class CreateWalletView extends StatelessWidget {
     appBar: AppBar(),
     body: SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const .symmetric(horizontal: 20),
         child: BlocBuilder<CreateWalletCubit, CreateWalletState>(
           builder: (context, state) {
             if (state.wallet != null) {
@@ -29,7 +29,7 @@ class CreateWalletView extends StatelessWidget {
                       constraints: BoxConstraints(minHeight: constraint.maxHeight),
                       child: IntrinsicHeight(
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
+                          mainAxisAlignment: .start,
                           children: [
                             SvgPicture.asset(
                               'assets/images/illustrations/backup_wallet.svg',
@@ -41,20 +41,15 @@ class CreateWalletView extends StatelessWidget {
                               children: [
                                 Text(
                                   S.of(context).createWalletTitle,
-                                  style: const TextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w700,
-                                    color: RealUnitColors.realUnitBlack,
-                                    letterSpacing: -0.52,
-                                    height: 30 / 26,
+                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                    fontWeight: .bold,
                                   ),
                                 ),
                                 Text(
                                   S.of(context).createWalletSubtitle,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
+                                  textAlign: .center,
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: RealUnitColors.neutral500,
-                                    height: 18 / 14,
                                   ),
                                 ),
                               ],
@@ -62,7 +57,7 @@ class CreateWalletView extends StatelessWidget {
                             const SizedBox(height: 40.0),
                             Row(
                               spacing: 8.0,
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment: .start,
                               children: [
                                 const RecoveryKeyIcon(
                                   size: 20,
@@ -70,27 +65,22 @@ class CreateWalletView extends StatelessWidget {
                                 ),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment: .start,
                                     children: [
                                       Padding(
-                                        padding: const EdgeInsets.only(bottom: 3),
+                                        padding: const .only(bottom: 3),
                                         child: Text(
                                           S.of(context).createWalletRecoveryKeyTitle,
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                            fontSize: 20,
-                                            color: RealUnitColors.realUnitBlack,
-                                            fontWeight: FontWeight.bold,
-                                            height: 24 / 20,
-                                            letterSpacing: -0.2,
-                                          ),
+                                          style: Theme.of(context).textTheme.headlineSmall
+                                              ?.copyWith(
+                                                fontWeight: .bold,
+                                              ),
                                         ),
                                       ),
                                       Text(
                                         S.of(context).createWalletRecoveryKeySubtitle,
-                                        style: const TextStyle(
+                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                           color: RealUnitColors.neutral500,
-                                          height: 18 / 14,
                                         ),
                                       ),
                                     ],
@@ -108,15 +98,15 @@ class CreateWalletView extends StatelessWidget {
                             ),
                             const Spacer(),
                             Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              padding: const .symmetric(vertical: 20),
                               child: SizedBox(
-                                width: double.infinity,
+                                width: .infinity,
                                 child: FilledButton(
                                   onPressed: () =>
                                       context.read<HomeBloc>().add(LoadWalletEvent(state.wallet!)),
                                   child: Text(
                                     S.of(context).createWalletConfirm,
-                                    textAlign: TextAlign.center,
+                                    textAlign: .center,
                                   ),
                                 ),
                               ),
