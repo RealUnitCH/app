@@ -9,7 +9,7 @@ class PriceChartCubit extends Cubit<PriceChartState> {
   PriceChartCubit(this._prices)
     : super(
         const PriceChartState(
-          selectedPeriod: TimePeriod.threeMonths,
+          selectedPeriod: TimePeriod.all,
           visibleSpots: [],
           minX: 0,
           maxX: 0,

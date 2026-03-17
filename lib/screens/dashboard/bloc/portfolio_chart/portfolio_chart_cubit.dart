@@ -13,7 +13,7 @@ class PortfolioChartCubit extends Cubit<PortfolioChartState> {
   PortfolioChartCubit(this._prices)
     : super(
         const PortfolioChartState(
-          selectedPeriod: TimePeriod.threeMonths,
+          selectedPeriod: TimePeriod.all,
           visibleSpots: [],
           minX: 0,
           maxX: 0,
