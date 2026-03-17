@@ -11,18 +11,18 @@ class RestoreWalletPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MultiBlocProvider(
-        providers: [
-          BlocProvider(
-            create: (_) => RestoreWalletCubit(
-              getIt<WalletService>(),
-            ),
-          ),
-          BlocProvider(
-            create: (_) => ValidateSeedCubit(
-              getIt<WalletService>(),
-            ),
-          ),
-        ],
-        child: RestoreWalletView(),
-      );
+    providers: [
+      BlocProvider(
+        create: (_) => RestoreWalletCubit(
+          getIt<WalletService>(),
+        ),
+      ),
+      BlocProvider(
+        create: (_) => ValidateSeedCubit(
+          getIt<WalletService>(),
+        ),
+      ),
+    ],
+    child: const RestoreWalletView(),
+  );
 }

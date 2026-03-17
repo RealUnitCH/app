@@ -295,7 +295,7 @@
   "verifySeedInvalid": "Die Wörter stimmen nicht überein",
   "verifySeedSubtitle": "Bitte geben Sie die folgenden Wörter aus Ihrer Wiederherstellungsphrase ein, um zu bestätigen, dass Sie sie korrekt notiert haben.",
   "verifySeedSuccessful": "Seed erfolgreich überprüft",
-  "verifySeedTitle": "Seed überprüfen",
+  "verifySeedTitle": "Sicherung überprüfen",
   "verifySeedWordLabel": "Wort ${position}",
   "walletAddress": "Wallet-Adresse",
   "walletAddressDisclaimer": "Die Adresse soll nur zum Empfangen von RealU Token verwendet werden.",
