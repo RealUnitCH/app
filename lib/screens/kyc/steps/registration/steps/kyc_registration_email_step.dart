@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_email_step/kyc_registration_email_step_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/subpages/kyc_registration_email_verification_page.dart';
-import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 
 class KycRegistrationEmailStep extends StatelessWidget {
   final TextEditingController emailCtrl;
@@ -59,10 +58,10 @@ class KycRegistrationEmailStepView extends StatelessWidget {
           );
         }
         if (state is KycRegistrationEmailStepSuccess) {
-          if (state.status == RegistrationEmailStatus.emailRegistered) {
+          if (state.status == .emailRegistered) {
             onSuccess();
           }
-          if (state.status == RegistrationEmailStatus.mergeRequested) {
+          if (state.status == .mergeRequested) {
             bool? isConfirmed = await Navigator.push(
               context,
               MaterialPageRoute<bool>(
@@ -76,7 +75,7 @@ class KycRegistrationEmailStepView extends StatelessWidget {
         }
       },
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const .symmetric(horizontal: 20),
         child: SafeArea(
           child: GestureDetector(
             onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -85,10 +84,10 @@ class KycRegistrationEmailStepView extends StatelessWidget {
               child: Column(
                 children: [
                   LabeledTextField(
-                    label: S.of(context).registerEmail,
+                    label: S.of(context).email,
                     hintText: 'max@mustermann.ch',
                     controller: emailCtrl,
-                    keyboardType: TextInputType.emailAddress,
+                    keyboardType: .emailAddress,
                     hideErrorText: false,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -101,9 +100,9 @@ class KycRegistrationEmailStepView extends StatelessWidget {
                     },
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    padding: const .symmetric(vertical: 16.0),
                     child: SizedBox(
-                      width: double.infinity,
+                      width: .infinity,
                       child:
                           BlocBuilder<KycRegistrationEmailStepCubit, KycRegistrationEmailStepState>(
                             builder: (context, state) {
