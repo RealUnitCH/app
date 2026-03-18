@@ -6,6 +6,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/bank_account/bank_ac
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
 import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
+import 'package:realunit_wallet/screens/sell/cubits/sell_converter/sell_converter_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_confirm_sheet.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_executed_sheet.dart';
@@ -84,6 +85,7 @@ class SellButton extends StatelessWidget {
             onPressed: () => context.read<SellPaymentInfoCubit>().getPaymentInfo(
               amount: amount,
               iban: bankAccount!.iban,
+              currency: context.read<SellConverterCubit>().state.currency,
             ),
             child: Text('$amount ${S.of(context).sellRealu}'),
           );

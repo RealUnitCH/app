@@ -74,6 +74,34 @@ class SellConverterCubit extends Cubit<SellConverterState> {
     });
   }
 
+  Future<void> onCurrencyChanged(Currency currency) async {
+    final amount = int.tryParse(state.sharesText.replaceAll(',', '.'));
+    if (amount == null || amount <= 0) {
+      emit(state.copyWith(currency: currency));
+      return;
+    }
+
+    emit(state.copyWith(loading: true));
+    try {
+      final result = await _brokerbotService.getBuyPrice(amount, currency);
+      emit(
+        state.copyWith(
+          fiatText: result.totalCost.toStringAsFixed(_fractionDigits(state.sharesText)),
+          loading: false,
+          currency: currency,
+        ),
+      );
+    } catch (e) {
+      developer.log(e.toString());
+      emit(
+        state.copyWith(
+          loading: false,
+          currency: currency,
+        ),
+      );
+    }
+  }
+
   int _fractionDigits(String input) {
     if (!input.contains('.')) return 2;
     return input.split('.').last.length;

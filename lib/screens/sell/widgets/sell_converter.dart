@@ -13,8 +13,8 @@ class SellConverter extends StatelessWidget {
     super.key,
     required TextEditingController amountController,
     required TextEditingController resultController,
-  })  : _amountController = amountController,
-        _resultController = resultController;
+  }) : _amountController = amountController,
+       _resultController = resultController;
 
   final TextEditingController _amountController;
   final TextEditingController _resultController;
@@ -163,31 +163,78 @@ class SellConverter extends StatelessWidget {
                   flex: 2,
                   child: Container(
                     color: RealUnitColors.neutral50,
-                    padding: const EdgeInsets.only(
-                      top: 8.0,
-                      bottom: 8.0,
-                      left: 10.0,
-                      right: 4.0,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          Currency.chf.code,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            height: 20 / 16,
+                    child: BlocBuilder<SellConverterCubit, SellConverterState>(
+                      builder: (context, state) {
+                        return PopupMenuButton<Currency>(
+                          initialValue: state.currency,
+                          onSelected: (currency) {
+                            if (currency == state.currency) return;
+                            context.read<SellConverterCubit>().onCurrencyChanged(currency);
+                          },
+                          itemBuilder: (context) => Currency.values.map((currency) {
+                            return PopupMenuItem(
+                              value: currency,
+                              child: Column(
+                                mainAxisSize: .min,
+                                crossAxisAlignment: .start,
+                                children: [
+                                  Text(
+                                    currency.code,
+                                    overflow: .ellipsis,
+                                    style:
+                                        Theme.of(
+                                          context,
+                                        ).textTheme.bodyLarge?.copyWith(
+                                          fontWeight: .bold,
+                                        ),
+                                  ),
+                                  Text(
+                                    currency.name,
+                                    overflow: .ellipsis,
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              top: 8.0,
+                              bottom: 8.0,
+                              left: 10.0,
+                              right: 4.0,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    mainAxisSize: .min,
+                                    crossAxisAlignment: .start,
+                                    children: [
+                                      Text(
+                                        state.currency.code,
+                                        overflow: .ellipsis,
+                                        style:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.bodyLarge?.copyWith(
+                                              fontWeight: .bold,
+                                            ),
+                                      ),
+                                      Text(
+                                        state.currency.name,
+                                        overflow: .ellipsis,
+                                        style: Theme.of(context).textTheme.bodySmall,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(Icons.arrow_drop_down),
+                              ],
+                            ),
                           ),
-                        ),
-                        Text(
-                          Currency.chf.name,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            height: 16 / 12,
-                          ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
                   ),
                 ),
