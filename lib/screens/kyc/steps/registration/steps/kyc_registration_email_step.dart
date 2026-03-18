@@ -7,8 +7,8 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_serv
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_email_step/kyc_registration_email_step_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/subpages/kyc_registration_email_verification_page.dart';
-import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 
 class KycRegistrationEmailStep extends StatelessWidget {
   final TextEditingController emailCtrl;
@@ -85,7 +85,7 @@ class KycRegistrationEmailStepView extends StatelessWidget {
               child: Column(
                 children: [
                   LabeledTextField(
-                    label: S.of(context).registerEmail,
+                    label: S.of(context).email,
                     hintText: 'max@mustermann.ch',
                     controller: emailCtrl,
                     keyboardType: TextInputType.emailAddress,
