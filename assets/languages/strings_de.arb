@@ -137,6 +137,7 @@
   "lastName": "Nachname",
   "latestTransactions": "Letzte Transaktionen",
   "legalDisclaimer": "Rechtlicher Hinweis",
+  "legalDisclaimerAdditionalDocuments": "Weitere Dokumente zur Information",
   "legalDisclaimerCheckboxArticlesOfAssociation": "RealUnit Statuten",
   "legalDisclaimerCheckboxInvestmentRegulations": "Anlagereglement",
   "legalDisclaimerCheckboxPrivacyPolicy": "Datenschutzbestimmungen",
