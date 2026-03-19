@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -29,7 +30,10 @@ class VerifySeedCubit extends Cubit<VerifySeedState> {
     emit(
       state.copyWith(
         wordIndices: sortedIndices,
-        enteredWords: List.filled(4, ''),
+        enteredWords:
+            kDebugMode // Pre-fill words in debug mode
+            ? sortedIndices.map((i) => _wallet.seed.seedWords[i]).toList()
+            : List.filled(4, ''),
       ),
     );
   }

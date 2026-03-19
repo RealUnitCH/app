@@ -7,20 +7,31 @@ import 'package:realunit_wallet/styles/colors.dart';
 class VerifySeedInputField extends StatefulWidget {
   final bool hasError;
   final List<int> wordIndices;
+  final List<String> enteredWords;
 
   const VerifySeedInputField({
     super.key,
     required this.wordIndices,
+    required this.enteredWords,
     this.hasError = false,
-  });
+  }) : assert(enteredWords.length == 4);
 
   @override
   State<VerifySeedInputField> createState() => _VerifySeedInputFieldState();
 }
 
 class _VerifySeedInputFieldState extends State<VerifySeedInputField> {
-  final List<TextEditingController> _controllers = List.generate(4, (_) => TextEditingController());
+  late final List<TextEditingController> _controllers;
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = List.generate(
+      4,
+      (i) => TextEditingController(text: widget.enteredWords.elementAt(i)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

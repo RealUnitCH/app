@@ -84,6 +84,7 @@ class VerifySeedView extends StatelessWidget {
                               const SizedBox(height: 40),
                               VerifySeedInputField(
                                 wordIndices: state.wordIndices,
+                                enteredWords: state.enteredWords,
                                 hasError: state.hasError,
                               ),
                               const Spacer(),
