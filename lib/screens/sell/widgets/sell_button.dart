@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/bank_account/bank_account.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
 import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_converter/sell_converter_cubit.dart';
@@ -23,14 +22,14 @@ class SellButton extends StatelessWidget {
     return BlocConsumer<SellPaymentInfoCubit, SellPaymentInfoState>(
       listener: (context, state) async {
         if (state is SellPaymentInfoFailure) {
-          if (state.error == PaymentInfoError.kycRequired) {
+          if (state.error == .kycRequired) {
             await context.push(
               KycPageManager.routeName,
               extra: state.requiredLevel,
             );
             return;
           }
-          if (state.error == PaymentInfoError.registrationRequired) {
+          if (state.error == .registrationRequired) {
             final result = await context.push<bool>(LegalDisclaimerPage.routeName);
             if (result == true && context.mounted) {
               await context.push(KycPageManager.routeName);
