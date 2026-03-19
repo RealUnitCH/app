@@ -1,21 +1,34 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/user_data.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 
 part 'settings_user_data_state.dart';
 
 class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
+  static const _changeStepNames = {
+    KycStepName.nameChange,
+    KycStepName.addressChange,
+    KycStepName.phoneChange,
+  };
+
   final RealUnitWalletService _walletService;
   final DfxCountryService _countryService;
+  final DfxKycService _kycService;
 
   SettingsUserDataCubit({
     required RealUnitWalletService walletService,
     required DfxCountryService countryService,
+    required DfxKycService kycService,
   }) : _walletService = walletService,
        _countryService = countryService,
+       _kycService = kycService,
        super(const SettingsUserDataInitial()) {
     getUserData();
   }
@@ -24,7 +37,13 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
     try {
       emit(const SettingsUserDataLoading());
 
-      final result = await _walletService.getWalletStatus();
+      final results = await Future.wait([
+        _walletService.getWalletStatus(),
+        _kycService.getKycStatus(),
+      ]);
+
+      final result = results.elementAt(0) as RealUnitWalletStatusDto;
+      final kycStatus = results.elementAt(1) as KycLevelDto;
       final userDataDto = result.realUnitUserDataDto;
 
       if (userDataDto == null) {
@@ -32,8 +51,21 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
         return;
       }
 
-      final nationalityCountry = await _countryService.getCountryBySymbol(userDataDto.nationality);
-      final addressCountry = await _countryService.getCountryBySymbol(userDataDto.addressCountry);
+      final pendingSteps = kycStatus.kycSteps
+          .where(
+            (step) => _changeStepNames.contains(step.name) && step.status == KycStepStatus.inReview,
+          )
+          .map<KycStepName>((step) => step.name)
+          .toSet();
+
+      final countryResults = await Future.wait([
+        _countryService.getCountryBySymbol(userDataDto.nationality),
+        _countryService.getCountryBySymbol(userDataDto.addressCountry),
+      ]);
+
+      final nationalityCountry = countryResults.elementAt(0);
+      final addressCountry = countryResults.elementAt(1);
+
       emit(
         SettingsUserDataSuccess(
           UserData(
@@ -50,6 +82,7 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
             swissTaxResidence: userDataDto.swissTaxResidence,
             lang: userDataDto.lang,
           ),
+          pendingSteps: pendingSteps,
         ),
       );
     } catch (e) {

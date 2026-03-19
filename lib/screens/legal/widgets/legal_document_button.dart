@@ -19,24 +19,22 @@ class LegalDocumentButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: .circular(12),
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        width: .infinity,
+        padding: const .all(16),
         decoration: BoxDecoration(
           border: Border.all(color: RealUnitColors.neutral200),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: .circular(12),
         ),
         child: Row(
+          spacing: 12.0,
           children: [
             Icon(leadingIcon, color: RealUnitColors.realUnitBlue, size: 24),
-            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  height: 22 / 16,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.w500,
                   color: RealUnitColors.neutral900,
                 ),

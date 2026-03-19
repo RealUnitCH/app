@@ -20,30 +20,30 @@ class WelcomeCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: RealUnitColors.basic.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: .circular(24),
       ),
       child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
+        behavior: .translucent,
         onTap: onPressed,
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const .all(24.0),
           child: Column(
             spacing: 24,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: .stretch,
             children: [
               Row(
                 spacing: 20,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: .center,
+                mainAxisAlignment: .spaceBetween,
                 children: [
                   Expanded(
                     child: Column(
                       spacing: 8.0,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: .start,
                       children: [
                         Text(
                           title,
-                          style: Theme.of(context).textTheme.headlineSmall,
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 19),
                         ),
                         if (description != null)
                           Text(

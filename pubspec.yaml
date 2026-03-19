@@ -57,6 +57,7 @@ dependencies:
   fl_chart: 1.0.0
   flutter_bloc: ^9.0.0
   flutter_idensic_mobile_sdk_plugin: ^1.40.2
+  image_picker: ^1.1.2
   flutter_inappwebview: ^6.1.5
   flutter_markdown_plus: ^1.0.7
   flutter_native_splash: ^2.4.7

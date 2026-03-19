@@ -1,2 +1,2 @@
-const lockoutDuration = Duration(minutes: 1);
+const lockoutDuration = Duration(minutes: 5);
 const pinLength = 6;
