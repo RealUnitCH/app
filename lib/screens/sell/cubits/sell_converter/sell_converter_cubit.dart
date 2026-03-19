@@ -31,10 +31,10 @@ class SellConverterCubit extends Cubit<SellConverterState> {
       emit(state.copyWith(loading: true));
 
       try {
-        final result = await _brokerbotService.getShares(amount, currency);
+        final result = await _brokerbotService.getSellShares(amount, currency);
         emit(
           state.copyWith(
-            sharesText: result.shares.round().toString(),
+            sharesText: result.shares.toString(),
             loading: false,
           ),
         );
@@ -60,10 +60,10 @@ class SellConverterCubit extends Cubit<SellConverterState> {
       emit(state.copyWith(loading: true));
 
       try {
-        final result = await _brokerbotService.getBuyPrice(shares, currency);
+        final result = await _brokerbotService.getSellPrice(shares, currency);
         emit(
           state.copyWith(
-            fiatText: result.totalCost.toStringAsFixed(_fractionDigits(value)),
+            fiatText: result.estimatedAmount.toStringAsFixed(_fractionDigits(value)),
             loading: false,
           ),
         );
