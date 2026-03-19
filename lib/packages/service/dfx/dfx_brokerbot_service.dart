@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_buy_price_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_buy_shares_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_sell_price_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_sell_shares_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_buy_shares_dto.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 class DfxBrokerbotService {
@@ -21,7 +21,12 @@ class DfxBrokerbotService {
   DfxBrokerbotService(this._appStore);
 
   /// Convert REALU shares → CHF
-  Future<BrokerbotBuyPriceDto> getBuyPrice(int shares, Currency currency) async {
+  Future<BrokerbotBuyPriceDto> getBuyPrice(String sharesInput, Currency currency) async {
+    final shares = int.tryParse(sharesInput);
+    if (shares == null || shares <= 0) {
+      throw Exception('BuyPrice request failed: sharesInput is not valid');
+    }
+
     final uri = buildUri(_host, _buyPricePath, {
       'shares': shares.toString(),
       'currency': currency.code,
@@ -36,7 +41,12 @@ class DfxBrokerbotService {
   }
 
   /// Convert CHF → REALU shares
-  Future<BrokerbotBuySharesDto> getBuyShares(double amount, Currency currency) async {
+  Future<BrokerbotBuySharesDto> getBuyShares(String amountInput, Currency currency) async {
+    final amount = double.tryParse(amountInput);
+    if (amount == null || amount <= 0) {
+      throw Exception('Shares request failed: amountInput is not valid');
+    }
+
     final uri = buildUri(_host, _buySharesPath, {
       'amount': amount.toString(),
       'currency': currency.code,
@@ -51,7 +61,12 @@ class DfxBrokerbotService {
   }
 
   /// Convert REALU shares → CHF (with fees)
-  Future<BrokerbotSellPriceDto> getSellPrice(int shares, Currency currency) async {
+  Future<BrokerbotSellPriceDto> getSellPrice(String sharesInput, Currency currency) async {
+    final shares = int.tryParse(sharesInput);
+    if (shares == null || shares <= 0) {
+      throw Exception('SellPrice request failed: sharesInput is invalid');
+    }
+
     final authToken = _appStore.dfxAuthToken;
     final uri = buildUri(_host, _sellPricePath, {
       'shares': shares.toString(),
@@ -69,8 +84,13 @@ class DfxBrokerbotService {
     return BrokerbotSellPriceDto.fromJson(jsonDecode(res.body));
   }
 
-  /// Convert target CHF → REALU shares needed (with fees)
-  Future<BrokerbotSellSharesDto> getSellShares(double amount, Currency currency) async {
+  /// Convert CHF → REALU shares (with fees)
+  Future<BrokerbotSellSharesDto> getSellShares(String amountInput, Currency currency) async {
+    final amount = double.tryParse(amountInput);
+    if (amount == null || amount <= 0) {
+      throw Exception('SellShares request failed: amountInput is invalid');
+    }
+
     final authToken = _appStore.dfxAuthToken;
     final uri = buildUri(_host, _sellSharesPath, {
       'amount': amount.toString(),

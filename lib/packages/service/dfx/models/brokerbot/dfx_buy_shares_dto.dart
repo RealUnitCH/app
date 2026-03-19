@@ -11,9 +11,9 @@ class BrokerbotBuySharesDto {
 
   factory BrokerbotBuySharesDto.fromJson(Map<String, dynamic> json) {
     return BrokerbotBuySharesDto(
-      shares: int.parse(json['shares'].toString()),
-      pricePerShare: double.parse(json['pricePerShare'].toString()),
-      availableShares: int.parse(json['availableShares'].toString()),
+      shares: (json['shares'] as num).toInt(),
+      pricePerShare: (json['pricePerShare'] as num).toDouble(),
+      availableShares: (json['availableShares'] as num).toInt(),
     );
   }
 }

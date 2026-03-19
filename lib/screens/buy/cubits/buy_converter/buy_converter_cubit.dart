@@ -22,19 +22,13 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
 
     _fiatDebounce?.cancel();
     _fiatDebounce = Timer(const Duration(milliseconds: 100), () async {
-      final amount = double.tryParse(value.replaceAll(',', '.'));
-      if (amount == null || amount <= 0) {
-        emit(state.copyWith(sharesText: ''));
-        return;
-      }
-
       emit(state.copyWith(loading: true));
 
       try {
-        final result = await _brokerbotService.getBuyShares(amount, state.currency);
+        final result = await _brokerbotService.getBuyShares(value, state.currency);
         emit(
           state.copyWith(
-            sharesText: result.shares.round().toString(),
+            sharesText: result.shares.toString(),
             loading: false,
           ),
         );
@@ -51,16 +45,10 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
 
     _sharesDebounce?.cancel();
     _sharesDebounce = Timer(const Duration(milliseconds: 100), () async {
-      final shares = int.tryParse(value);
-      if (shares == null || shares <= 0) {
-        emit(state.copyWith(fiatText: ''));
-        return;
-      }
-
       emit(state.copyWith(loading: true));
 
       try {
-        final result = await _brokerbotService.getBuyPrice(shares, state.currency);
+        final result = await _brokerbotService.getBuyPrice(value, state.currency);
         emit(
           state.copyWith(
             fiatText: result.totalCost.toStringAsFixed(_fractionDigits(value)),
@@ -75,18 +63,13 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
   }
 
   Future<void> onCurrencyChanged(Currency currency) async {
-    final amount = double.tryParse(state.fiatText.replaceAll(',', '.'));
-    if (amount == null || amount <= 0) {
-      emit(state.copyWith(currency: currency));
-      return;
-    }
-
     emit(state.copyWith(loading: true));
+
     try {
-      final result = await _brokerbotService.getBuyShares(amount, currency);
+      final result = await _brokerbotService.getBuyShares(state.fiatText, currency);
       emit(
         state.copyWith(
-          sharesText: result.shares.round().toString(),
+          sharesText: result.shares.toString(),
           loading: false,
           currency: currency,
         ),

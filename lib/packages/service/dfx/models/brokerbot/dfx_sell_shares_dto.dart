@@ -12,16 +12,10 @@ class BrokerbotSellSharesDto {
   });
 
   factory BrokerbotSellSharesDto.fromJson(Map<String, dynamic> json) {
-    double parseDouble(dynamic value) {
-      if (value == null) return 0.0;
-      final s = value.toString().replaceAll(',', '.').trim();
-      return double.tryParse(s) ?? 0.0;
-    }
-
     return BrokerbotSellSharesDto(
-      targetAmount: parseDouble(json['targetAmount']),
-      shares: int.parse(json['shares'].toString()),
-      pricePerShare: parseDouble(json['pricePerShare']),
+      targetAmount: (json['targetAmount'] as num).toDouble(),
+      shares: (json['shares'] as num).toInt(),
+      pricePerShare: (json['pricePerShare'] as num).toDouble(),
       currency: json['currency'] as String,
     );
   }
