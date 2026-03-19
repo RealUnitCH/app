@@ -22,8 +22,9 @@ class VerifySeedCubit extends Cubit<VerifySeedState> {
 
   void _initVerification() {
     final indices = <int>{};
+    final seedLength = _wallet.seed.seedWords.length;
     while (indices.length < 4) {
-      indices.add(Random().nextInt(12));
+      indices.add(Random().nextInt(seedLength));
     }
     final sortedIndices = indices.toList()..sort();
 
