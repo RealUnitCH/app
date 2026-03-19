@@ -52,11 +52,15 @@ class DfxBrokerbotService {
 
   /// Convert REALU shares → CHF (with fees)
   Future<BrokerbotSellPriceDto> getSellPrice(int shares, Currency currency) async {
+    final authToken = _appStore.dfxAuthToken;
     final uri = buildUri(_host, _sellPricePath, {
       'shares': shares.toString(),
       'currency': currency.code,
     });
-    final res = await _appStore.httpClient.get(uri);
+    final res = await _appStore.httpClient.get(
+      uri,
+      headers: {'Authorization': 'Bearer $authToken'},
+    );
 
     if (res.statusCode != 200) {
       throw Exception('SellPrice request failed: ${res.body}');
@@ -67,11 +71,15 @@ class DfxBrokerbotService {
 
   /// Convert target CHF → REALU shares needed (with fees)
   Future<BrokerbotSellSharesDto> getSellShares(double amount, Currency currency) async {
+    final authToken = _appStore.dfxAuthToken;
     final uri = buildUri(_host, _sellSharesPath, {
       'amount': amount.toString(),
       'currency': currency.code,
     });
-    final res = await _appStore.httpClient.get(uri);
+    final res = await _appStore.httpClient.get(
+      uri,
+      headers: {'Authorization': 'Bearer $authToken'},
+    );
 
     if (res.statusCode != 200) {
       throw Exception('SellShares request failed: ${res.body}');
