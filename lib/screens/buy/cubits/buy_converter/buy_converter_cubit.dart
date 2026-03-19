@@ -31,7 +31,7 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
       emit(state.copyWith(loading: true));
 
       try {
-        final result = await _brokerbotService.getShares(amount, state.currency);
+        final result = await _brokerbotService.getBuyShares(amount, state.currency);
         emit(
           state.copyWith(
             sharesText: result.shares.round().toString(),
@@ -83,7 +83,7 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
 
     emit(state.copyWith(loading: true));
     try {
-      final result = await _brokerbotService.getShares(amount, currency);
+      final result = await _brokerbotService.getBuyShares(amount, currency);
       emit(
         state.copyWith(
           sharesText: result.shares.round().toString(),

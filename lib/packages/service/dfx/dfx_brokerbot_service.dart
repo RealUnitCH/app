@@ -5,12 +5,12 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_buy_price_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_sell_price_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_sell_shares_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_shares_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_buy_shares_dto.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 class DfxBrokerbotService {
   static const _buyPricePath = '/v1/realunit/brokerbot/buyPrice';
-  static const _sharesPath = '/v1/realunit/brokerbot/shares';
+  static const _buySharesPath = '/v1/realunit/brokerbot/buyShares';
   static const _sellPricePath = '/v1/realunit/brokerbot/sellPrice';
   static const _sellSharesPath = '/v1/realunit/brokerbot/sellShares';
 
@@ -36,8 +36,8 @@ class DfxBrokerbotService {
   }
 
   /// Convert CHF → REALU shares
-  Future<BrokerbotSharesDto> getShares(double amount, Currency currency) async {
-    final uri = buildUri(_host, _sharesPath, {
+  Future<BrokerbotBuySharesDto> getBuyShares(double amount, Currency currency) async {
+    final uri = buildUri(_host, _buySharesPath, {
       'amount': amount.toString(),
       'currency': currency.code,
     });
@@ -47,7 +47,7 @@ class DfxBrokerbotService {
       throw Exception('Shares request failed: ${res.body}');
     }
 
-    return BrokerbotSharesDto.fromJson(jsonDecode(res.body));
+    return BrokerbotBuySharesDto.fromJson(jsonDecode(res.body));
   }
 
   /// Convert REALU shares → CHF (with fees)
