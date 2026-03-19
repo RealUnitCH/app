@@ -58,8 +58,13 @@ void main() {
 
   group('$VerifySeedPage', () {
     testWidgets('renders $VerifySeedView', (tester) async {
+      final wallet = MockWallet();
+      when(() => wallet.seed).thenReturn(
+        'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
+      );
+
       await tester.pumpApp(
-        VerifySeedPage(wallet: MockWallet()),
+        VerifySeedPage(wallet: wallet),
       );
 
       expect(find.byType(VerifySeedView), findsOne);
@@ -70,7 +75,12 @@ void main() {
     testWidgets('renders initially correctly', (tester) async {
       when(
         () => verifySeedCubit.state,
-      ).thenReturn(const VerifySeedState(wordIndices: [1, 3, 5, 7]));
+      ).thenReturn(
+        const VerifySeedState(
+          wordIndices: [1, 3, 5, 7],
+          enteredWords: ['', '', '', ''],
+        ),
+      );
 
       await tester.pumpApp(buildSubject(VerifySeedView(wallet: MockWallet())));
 
@@ -86,7 +96,12 @@ void main() {
       testWidgets('is correctly rendered when entered words are incomplete', (tester) async {
         when(
           () => verifySeedCubit.state,
-        ).thenReturn(const VerifySeedState(wordIndices: [1, 3, 5, 7], enteredWords: []));
+        ).thenReturn(
+          const VerifySeedState(
+            wordIndices: [1, 3, 5, 7],
+            enteredWords: ['ah', '', '', ''],
+          ),
+        );
 
         await tester.pumpApp(buildSubject(VerifySeedView(wallet: MockWallet())));
 

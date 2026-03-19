@@ -70,6 +70,7 @@ class _VerifySeedInputFieldState extends State<VerifySeedInputField> {
                   autocorrect: false,
                   enableSuggestions: false,
                   textCapitalization: .none,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: .w500),
                   textInputAction: index < widget.wordIndices.length - 1 ? .next : .done,
                   decoration: InputDecoration(
                     isDense: true,
