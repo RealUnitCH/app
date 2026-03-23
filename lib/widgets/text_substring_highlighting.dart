@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 /// Enables a part of the String `text` to be differently styled.
@@ -9,6 +10,7 @@ class TextSubstringHighlighting extends StatelessWidget {
   final TextAlign textAlign;
   final int? maxLines;
   final TextOverflow overflow;
+  final VoidCallback? onHighlightedTap;
 
   const TextSubstringHighlighting({
     super.key,
@@ -19,6 +21,7 @@ class TextSubstringHighlighting extends StatelessWidget {
     this.textAlign = TextAlign.start,
     this.maxLines,
     this.overflow = TextOverflow.visible,
+    this.onHighlightedTap,
   });
 
   @override
@@ -54,6 +57,9 @@ class TextSubstringHighlighting extends StatelessWidget {
           TextSpan(
             text: highlightedText,
             style: effectiveHighlightedStyle,
+            recognizer: onHighlightedTap != null
+                ? (TapGestureRecognizer()..onTap = onHighlightedTap)
+                : null,
           ),
           TextSpan(text: after),
         ],

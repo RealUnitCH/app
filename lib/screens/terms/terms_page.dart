@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/text_substring_highlighting.dart';
 
 class TermsPage extends StatelessWidget {
   static const route = '/terms';
@@ -48,24 +49,25 @@ class TermsPage extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          InkWell(
-                            onTap: () => context.push('/settings/termsOfUse'),
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                S.of(context).softwareTermsText,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  height: 20 / 14,
+                          TextSubstringHighlighting(
+                            highlightedText: S.of(context).softwareTermsTextHighlighted,
+                            highlightedStyle:
+                                Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(
+                                  color: RealUnitColors.realUnitBlue,
+                                  decorationColor: RealUnitColors.realUnitBlue,
+                                  decoration: .underline,
+                                ),
+                            text: S.of(context).softwareTermsText,
+                            style:
+                                Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(
                                   color: RealUnitColors.neutral500,
                                 ),
-                              ),
-                            ),
+                            textAlign: .center,
+                            onHighlightedTap: () => context.push('/settings/termsOfUse'),
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 20.0),
