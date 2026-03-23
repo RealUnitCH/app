@@ -57,6 +57,7 @@ class TermsPage extends StatelessWidget {
                                 ).textTheme.bodyMedium?.copyWith(
                                   color: RealUnitColors.realUnitBlue,
                                   decorationColor: RealUnitColors.realUnitBlue,
+                                  fontWeight: .bold,
                                   decoration: .underline,
                                 ),
                             text: S.of(context).softwareTermsText,
