@@ -12,6 +12,7 @@ class BuyPaymentInfo extends Equatable {
   final String city;
   final String country;
   final Currency currency;
+  final String? remittanceInfo;
 
   const BuyPaymentInfo({
     required this.id,
@@ -24,6 +25,7 @@ class BuyPaymentInfo extends Equatable {
     required this.city,
     required this.country,
     required this.currency,
+    this.remittanceInfo,
   });
 
   @override

@@ -110,6 +110,11 @@ class PaymentInformationDetailsView extends StatelessWidget {
                         description: '${S.of(context).amountIn} ${buyPaymentInfo.currency.code}',
                         value: amount,
                       ),
+                      if (buyPaymentInfo.remittanceInfo != null)
+                        _PaymentInformationDetailsRow(
+                          description: S.of(context).purposeOfPayment,
+                          value: buyPaymentInfo.remittanceInfo!,
+                        ),
                       _PaymentInformationDetailsRow(
                         description: S.of(context).iban,
                         value: buyPaymentInfo.iban,

@@ -194,6 +194,7 @@
   "postcodeAbr": "PLZ",
   "privacyPolicy": "Datenschutzerklärung",
   "proofDocument": "Nachweis-Dokument",
+  "purposeOfPayment": "Verwendungszweck",
   "realunitAg": "RealUnit AG",
   "realunitStockprice": "RealUnit Aktienkurs",
   "realunitStockToken": "RealUnit Aktientoken",
