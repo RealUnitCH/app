@@ -22,19 +22,13 @@ class SellConverterCubit extends Cubit<SellConverterState> {
 
     _fiatDebounce?.cancel();
     _fiatDebounce = Timer(const Duration(milliseconds: 100), () async {
-      final amount = double.tryParse(value.replaceAll(',', '.'));
-      if (amount == null || amount <= 0) {
-        emit(state.copyWith(sharesText: ''));
-        return;
-      }
-
       emit(state.copyWith(loading: true));
 
       try {
-        final result = await _brokerbotService.getShares(amount, currency);
+        final result = await _brokerbotService.getSellShares(value, currency);
         emit(
           state.copyWith(
-            sharesText: result.shares.round().toString(),
+            sharesText: result.shares.toString(),
             loading: false,
           ),
         );
@@ -51,19 +45,13 @@ class SellConverterCubit extends Cubit<SellConverterState> {
 
     _sharesDebounce?.cancel();
     _sharesDebounce = Timer(const Duration(milliseconds: 100), () async {
-      final shares = int.tryParse(value);
-      if (shares == null || shares <= 0) {
-        emit(state.copyWith(fiatText: ''));
-        return;
-      }
-
       emit(state.copyWith(loading: true));
 
       try {
-        final result = await _brokerbotService.getBuyPrice(shares, currency);
+        final result = await _brokerbotService.getSellPrice(value, currency);
         emit(
           state.copyWith(
-            fiatText: result.totalCost.toStringAsFixed(_fractionDigits(value)),
+            fiatText: result.estimatedAmount.toStringAsFixed(_fractionDigits(value)),
             loading: false,
           ),
         );
@@ -72,6 +60,28 @@ class SellConverterCubit extends Cubit<SellConverterState> {
         emit(state.copyWith(loading: false));
       }
     });
+  }
+
+  Future<void> onCurrencyChanged(Currency currency) async {
+    emit(state.copyWith(loading: true));
+    try {
+      final result = await _brokerbotService.getBuyPrice(state.sharesText, currency);
+      emit(
+        state.copyWith(
+          fiatText: result.totalCost.toStringAsFixed(_fractionDigits(state.sharesText)),
+          loading: false,
+          currency: currency,
+        ),
+      );
+    } catch (e) {
+      developer.log(e.toString());
+      emit(
+        state.copyWith(
+          loading: false,
+          currency: currency,
+        ),
+      );
+    }
   }
 
   int _fractionDigits(String input) {

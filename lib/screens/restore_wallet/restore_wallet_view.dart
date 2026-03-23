@@ -12,9 +12,14 @@ import 'package:realunit_wallet/styles/icons.dart';
 import 'package:realunit_wallet/widgets/mnemonic_field.dart';
 import 'package:realunit_wallet/widgets/text_substring_highlighting.dart';
 
-class RestoreWalletView extends StatelessWidget {
-  RestoreWalletView({super.key});
+class RestoreWalletView extends StatefulWidget {
+  const RestoreWalletView({super.key});
 
+  @override
+  State<RestoreWalletView> createState() => _RestoreWalletViewState();
+}
+
+class _RestoreWalletViewState extends State<RestoreWalletView> {
   final _controllers = List.generate(12, (_) => MnemonicInputFieldController());
   final _focusNodes = List.generate(12, (_) => FocusNode());
 
@@ -113,4 +118,15 @@ class RestoreWalletView extends StatelessWidget {
       ),
     ),
   );
+
+  @override
+  void dispose() {
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
+    for (final node in _focusNodes) {
+      node.dispose();
+    }
+    super.dispose();
+  }
 }
