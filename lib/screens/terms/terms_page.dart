@@ -19,15 +19,15 @@ class TermsPage extends StatelessWidget {
         children: [
           Image.asset(
             'assets/images/splash/splash_background.png',
-            fit: BoxFit.cover,
+            fit: .cover,
           ),
           Align(
-            alignment: Alignment.bottomCenter,
+            alignment: .bottomCenter,
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+                  begin: .topCenter,
+                  end: .bottomCenter,
                   stops: [0.0, 0.4, 1.0],
                   colors: [
                     RealUnitColors.basic.white.withValues(alpha: 0),
@@ -41,13 +41,13 @@ class TermsPage extends StatelessWidget {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     return Padding(
-                      padding: EdgeInsets.only(
+                      padding: .only(
                         left: 20.0,
                         right: 20.0,
                         top: constraints.maxHeight * 0.2,
                       ),
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisSize: .min,
                         children: [
                           TextSubstringHighlighting(
                             highlightedText: S.of(context).softwareTermsTextHighlighted,
@@ -70,12 +70,13 @@ class TermsPage extends StatelessWidget {
                             onHighlightedTap: () => context.push('/settings/termsOfUse'),
                           ),
                           Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 20.0),
+                            padding: const .symmetric(vertical: 20.0),
                             child: SizedBox(
-                              width: double.infinity,
+                              width: .infinity,
                               child: FilledButton(
-                                onPressed: () =>
-                                    context.read<HomeBloc>().add(const AcceptSoftwareTermsEvent()),
+                                onPressed: () => context.read<HomeBloc>().add(
+                                  const AcceptSoftwareTermsEvent(),
+                                ),
                                 child: Text(S.of(context).start),
                               ),
                             ),

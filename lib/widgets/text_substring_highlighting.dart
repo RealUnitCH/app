@@ -18,9 +18,9 @@ class TextSubstringHighlighting extends StatelessWidget {
     required this.highlightedText,
     this.style,
     this.highlightedStyle,
-    this.textAlign = TextAlign.start,
+    this.textAlign = .start,
     this.maxLines,
-    this.overflow = TextOverflow.visible,
+    this.overflow = .visible,
     this.onHighlightedTap,
   });
 
@@ -28,7 +28,7 @@ class TextSubstringHighlighting extends StatelessWidget {
   Widget build(BuildContext context) {
     final effectiveStyle = style ?? DefaultTextStyle.of(context).style;
     final effectiveHighlightedStyle =
-        highlightedStyle ?? effectiveStyle.copyWith(fontWeight: FontWeight.bold);
+        highlightedStyle ?? effectiveStyle.copyWith(fontWeight: .bold);
 
     final startIndex = text.indexOf(highlightedText);
 
