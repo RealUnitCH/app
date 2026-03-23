@@ -48,6 +48,7 @@ class RealUnitBuyPaymentInfoService {
         city: responseDto.city,
         country: responseDto.country,
         currency: responseDto.currency,
+        remittanceInfo: responseDto.remittanceInfo,
       );
     } else if (response.statusCode == 403) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
