@@ -30,8 +30,16 @@ class LegalDocumentConfig {
 
 class LegalDocumentsConfig {
   static final allDocuments = [
+    ...primaryDocuments,
+    ...informationalDocuments,
+  ];
+
+  static final primaryDocuments = [
     _privacyPolicy,
     _registrationAgreement,
+  ];
+
+  static final informationalDocuments = [
     _securitiesProspectusBearerShares,
     _securitiesProspectusRegisteredShares,
     _articlesOfAssociation,

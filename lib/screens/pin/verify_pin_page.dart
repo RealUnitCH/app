@@ -70,30 +70,23 @@ class _VerifyPinViewState extends State<VerifyPinView> {
                         children: [
                           const Spacer(),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                            padding: const .symmetric(horizontal: 20.0),
                             child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisAlignment: .center,
                               children: [
                                 Column(
                                   spacing: 8.0,
                                   children: [
                                     Text(
                                       S.of(context).pinVerify,
-                                      style: const TextStyle(
-                                        fontSize: 26,
-                                        fontWeight: FontWeight.w700,
-                                        color: RealUnitColors.realUnitBlack,
-                                        letterSpacing: -0.52,
-                                        height: 30 / 26,
-                                      ),
+                                      textAlign: .center,
+                                      style: Theme.of(context).textTheme.headlineMedium,
                                     ),
                                     Text(
                                       S.of(context).pinVerifyDescription,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontSize: 14,
+                                      textAlign: .center,
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                         color: RealUnitColors.neutral500,
-                                        height: 18 / 14,
                                       ),
                                     ),
                                   ],
@@ -114,10 +107,10 @@ class _VerifyPinViewState extends State<VerifyPinView> {
                                       maintainState: true,
                                       child: Text(
                                         S.of(context).pinVerifyFailed,
-                                        style: TextStyle(
-                                          fontSize: 14,
+                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                           color: RealUnitColors.status.red600,
                                         ),
+                                        textAlign: .center,
                                       ),
                                     ),
                                   ],
@@ -131,24 +124,29 @@ class _VerifyPinViewState extends State<VerifyPinView> {
                                 context.read<VerifyPinCubit>().addDigit(digit),
                             onDeletePressed: context.read<VerifyPinCubit>().deleteDigit,
                           ),
-                          SizedBox(
-                            height: 60.0,
-                            child: TextButton(
-                              onPressed: () async {
-                                final isReset = await showModalBottomSheet<bool>(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  builder: (_) => const ForgotPinBottomSheet(),
-                                );
-                                if (isReset == true) {
-                                  await Future.delayed(const Duration(milliseconds: 300));
-                                  if (context.mounted) {
-                                    context.read<PinAuthCubit>().reset();
-                                    context.read<HomeBloc>().add(const DeleteCurrentWalletEvent());
+                          Padding(
+                            padding: const .only(bottom: 8.0),
+                            child: SizedBox(
+                              height: 52.0,
+                              child: TextButton(
+                                onPressed: () async {
+                                  final isReset = await showModalBottomSheet<bool>(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    builder: (_) => const ForgotPinBottomSheet(),
+                                  );
+                                  if (isReset == true) {
+                                    await Future.delayed(const Duration(milliseconds: 300));
+                                    if (context.mounted) {
+                                      context.read<PinAuthCubit>().reset();
+                                      context.read<HomeBloc>().add(
+                                        const DeleteCurrentWalletEvent(),
+                                      );
+                                    }
                                   }
-                                }
-                              },
-                              child: Text(S.of(context).pinForgotten),
+                                },
+                                child: Text(S.of(context).pinForgotten),
+                              ),
                             ),
                           ),
                         ],

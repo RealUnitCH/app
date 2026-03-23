@@ -22,10 +22,11 @@ class ApiException implements Exception {
       case 'REGISTRATION_REQUIRED':
         return RegistrationRequiredException.fromJson(json);
       default:
+        final message = json['message'];
         return ApiException(
           statusCode: json['statusCode'] as int,
           code: code ?? 'UNKNOWN',
-          message: json['message'] as String,
+          message: message is List ? message.join(', ') : message?.toString() ?? 'Unknown error',
         );
     }
   }

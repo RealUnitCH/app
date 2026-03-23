@@ -46,50 +46,43 @@ class DashboardPriceWidgetView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    margin: const EdgeInsets.only(top: 8),
-    width: double.infinity,
+    margin: const .only(top: 8),
+    width: .infinity,
     child: SafeArea(
       bottom: false,
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+            padding: const .symmetric(vertical: 12, horizontal: 20),
             child: Column(
               children: [
                 Row(
                   children: [
                     Text(
                       S.of(context).realunitStockprice,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: RealUnitColors.neutral400,
-                        height: 16 / 12,
-                      ),
+                      style:
+                          Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.copyWith(
+                            color: RealUnitColors.neutral400,
+                          ),
                     ),
                   ],
                 ),
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: .start,
                   children: [
                     BlocBuilder<SettingsBloc, SettingsState>(
                       builder: (context, state) {
                         return Text(
                           state.currency.code.toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: RealUnitColors.realUnitBlack,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: .w600),
                         );
                       },
                     ),
                     Text(
                       price == BigInt.zero ? '--.--' : formatFixed(price, 2, trimZeros: false),
-                      style: const TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w600,
-                        color: RealUnitColors.realUnitBlack,
-                      ),
+                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: .w600),
                     ),
                   ],
                 ),
@@ -100,7 +93,7 @@ class DashboardPriceWidgetView extends StatelessWidget {
           BlocBuilder<PriceChartCubit, PriceChartState>(
             builder: (context, state) {
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                padding: const .symmetric(horizontal: 20.0),
                 child: Row(
                   children: TimePeriod.values.map((period) {
                     return Expanded(

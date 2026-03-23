@@ -6,7 +6,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/nationality/cubit/kyc_nationality/kyc_nationality_cubit.dart';
-import 'package:realunit_wallet/screens/kyc/widgets/fields/kyc_country_field.dart';
+import 'package:realunit_wallet/widgets/form/country_field.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class KycNationalityPage extends StatelessWidget {
@@ -67,7 +67,7 @@ class _KycNationalityViewState extends State<KycNationalityView> {
                 child: Column(
                   spacing: 16,
                   children: [
-                    KycCountryField(
+                    CountryField(
                       label: S.of(context).registerCitizenship,
                       onChanged: (country) => nationalityCtrl.value = country,
                       validator: (value) {

@@ -49,8 +49,8 @@ class SetupPinView extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             leading: switch (state.mode) {
-              SetupPinMode.create => null,
-              SetupPinMode.confirm => IconButton(
+              .create => null,
+              .confirm => IconButton(
                 icon: const Icon(Icons.arrow_back_rounded),
                 onPressed: context.read<SetupPinCubit>().reset,
               ),
@@ -72,37 +72,29 @@ class SetupPinView extends StatelessWidget {
                         children: [
                           const Spacer(),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                            padding: const .symmetric(horizontal: 20.0),
                             child: Column(
-                              mainAxisSize: MainAxisSize.min,
+                              mainAxisSize: .min,
                               children: [
                                 Column(
                                   spacing: 8.0,
                                   children: [
                                     Text(
                                       switch (state.mode) {
-                                        SetupPinMode.create => S.of(context).pinCreate,
-                                        SetupPinMode.confirm => S.of(context).pinConfirm,
+                                        .create => S.of(context).pinCreate,
+                                        .confirm => S.of(context).pinConfirm,
                                       },
-                                      style: const TextStyle(
-                                        fontSize: 26,
-                                        fontWeight: FontWeight.w700,
-                                        color: RealUnitColors.realUnitBlack,
-                                        letterSpacing: -0.52,
-                                        height: 30 / 26,
-                                      ),
+                                      textAlign: .center,
+                                      style: Theme.of(context).textTheme.headlineMedium,
                                     ),
                                     Text(
                                       switch (state.mode) {
-                                        SetupPinMode.create =>
-                                          S.of(context).pinCreateDescription('$pinLength'),
-                                        SetupPinMode.confirm => S.of(context).pinConfirmDescription,
+                                        .create => S.of(context).pinCreateDescription('$pinLength'),
+                                        .confirm => S.of(context).pinConfirmDescription,
                                       },
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        fontSize: 14,
+                                      textAlign: .center,
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                         color: RealUnitColors.neutral500,
-                                        height: 18 / 14,
                                       ),
                                     ),
                                   ],
@@ -123,11 +115,10 @@ class SetupPinView extends StatelessWidget {
                                       maintainState: true,
                                       child: Text(
                                         S.of(context).pinConfirmFailed,
-                                        style: TextStyle(
-                                          fontSize: 14,
+                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                           color: RealUnitColors.status.red600,
                                         ),
-                                        textAlign: TextAlign.center,
+                                        textAlign: .center,
                                       ),
                                     ),
                                   ],

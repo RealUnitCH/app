@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/screens/legal/widgets/legal_step_styles.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 
 class LegalDisclaimerStep extends StatelessWidget {
   final int step;
@@ -18,15 +18,20 @@ class LegalDisclaimerStep extends StatelessWidget {
 
     return Column(
       spacing: 16.0,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: .start,
       children: [
         Text(
           title,
-          style: LegalStepStyles.titleStyle,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontSize: 18,
+            height: 24 / 18,
+          ),
         ),
         Text(
           text,
-          style: LegalStepStyles.bodyStyle,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: RealUnitColors.neutral500,
+          ),
         ),
       ],
     );
