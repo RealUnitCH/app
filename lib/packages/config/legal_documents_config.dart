@@ -40,8 +40,9 @@ class LegalDocumentsConfig {
   ];
 
   static final informationalDocuments = [
-    _securitiesProspectusBearerShares,
-    _securitiesProspectusRegisteredShares,
+    _euSecuritiesProspectusBearerShares,
+    _euSecuritiesProspectusRegisteredShares,
+    _chStockExchangeProspectus,
     _articlesOfAssociation,
     _investmentRegulations,
   ];
@@ -53,14 +54,19 @@ class LegalDocumentsConfig {
         'https://realunit.de/wp-content/uploads/dlm_uploads/2025/03/250321_RegV-EN-RealUnit-Schweiz-AG_final_signed.pdf',
   };
 
-  static const _securitiesProspectusBearerSharesPdfUrls = {
+  static const _euSecuritiesProspectusBearerSharesPdfUrls = {
     'de':
         'https://realunit.de/wp-content/uploads/dlm_uploads/2025/07/VO_RealUnit_Wertpapierprospekt_Inhaberaktie_30.06.2025_eIDAS-signiert.pdf',
   };
 
-  static const _securitiesProspectusRegisteredSharesPdfUrls = {
+  static const _euSecuritiesProspectusRegisteredSharesPdfUrls = {
     'de':
         'https://realunit.de/wp-content/uploads/dlm_uploads/2025/07/VO_RealUnit_Wertpapierprospekt_Namensaktien_30.06.2025_eIDAS-signiert.pdf',
+  };
+
+  static const _chStockExchangeProspectusPDfUrls = {
+    'de':
+        'https://realunit.ch/wp-content/uploads/dlm_uploads/2025/04/2025-04-23-REALUNIT-PROSPECTUS-2025-Update_Final-Version_signiert.pdf',
   };
 
   static const _articlesOfAssociationPdfUrls = {
@@ -86,18 +92,25 @@ class LegalDocumentsConfig {
     pdfUrls: _registrationAgreementPdfUrls,
   );
 
-  static final _securitiesProspectusBearerShares = LegalDocumentConfig(
+  static final _euSecuritiesProspectusBearerShares = LegalDocumentConfig(
     icon: Icons.article_outlined,
     title: (context) => S.of(context).legalDisclaimerCheckboxSecuritiesProspectusBearerShares,
     assetBaseName: 'securities_prospectus_bearer_shares',
-    pdfUrls: _securitiesProspectusBearerSharesPdfUrls,
+    pdfUrls: _euSecuritiesProspectusBearerSharesPdfUrls,
   );
 
-  static final _securitiesProspectusRegisteredShares = LegalDocumentConfig(
+  static final _euSecuritiesProspectusRegisteredShares = LegalDocumentConfig(
     icon: Icons.article_outlined,
     title: (context) => S.of(context).legalDisclaimerCheckboxSecuritiesProspectusRegisteredShares,
     assetBaseName: 'securities_prospectus_registered_shares',
-    pdfUrls: _securitiesProspectusRegisteredSharesPdfUrls,
+    pdfUrls: _euSecuritiesProspectusRegisteredSharesPdfUrls,
+  );
+
+  static final _chStockExchangeProspectus = LegalDocumentConfig(
+    icon: Icons.article_outlined,
+    title: (context) => S.of(context).legalDisclaimerCheckboxStockExchangeProspectus,
+    assetBaseName: 'ch_stock_exchange_prospectus',
+    pdfUrls: _chStockExchangeProspectusPDfUrls,
   );
 
   static final _articlesOfAssociation = LegalDocumentConfig(
