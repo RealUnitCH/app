@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/text_substring_highlighting.dart';
 
 class TermsPage extends StatelessWidget {
   static const route = '/terms';
@@ -18,15 +19,15 @@ class TermsPage extends StatelessWidget {
         children: [
           Image.asset(
             'assets/images/splash/splash_background.png',
-            fit: BoxFit.cover,
+            fit: .cover,
           ),
           Align(
-            alignment: Alignment.bottomCenter,
+            alignment: .bottomCenter,
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+                  begin: .topCenter,
+                  end: .bottomCenter,
                   stops: [0.0, 0.4, 1.0],
                   colors: [
                     RealUnitColors.basic.white.withValues(alpha: 0),
@@ -40,40 +41,43 @@ class TermsPage extends StatelessWidget {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     return Padding(
-                      padding: EdgeInsets.only(
+                      padding: .only(
                         left: 20.0,
                         right: 20.0,
                         top: constraints.maxHeight * 0.2,
                       ),
                       child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisSize: .min,
                         children: [
-                          InkWell(
-                            onTap: () => context.push('/settings/termsOfUse'),
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                S.of(context).softwareTermsText,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  height: 20 / 14,
+                          TextSubstringHighlighting(
+                            highlightedText: S.of(context).softwareTermsTextHighlighted,
+                            highlightedStyle:
+                                Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(
+                                  color: RealUnitColors.realUnitBlue,
+                                  decorationColor: RealUnitColors.realUnitBlue,
+                                  fontWeight: .bold,
+                                  decoration: .underline,
+                                ),
+                            text: S.of(context).softwareTermsText,
+                            style:
+                                Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.copyWith(
                                   color: RealUnitColors.neutral500,
                                 ),
-                              ),
-                            ),
+                            textAlign: .center,
+                            onHighlightedTap: () => context.push('/settings/termsOfUse'),
                           ),
                           Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 20.0),
+                            padding: const .symmetric(vertical: 20.0),
                             child: SizedBox(
-                              width: double.infinity,
+                              width: .infinity,
                               child: FilledButton(
-                                onPressed: () =>
-                                    context.read<HomeBloc>().add(const AcceptSoftwareTermsEvent()),
+                                onPressed: () => context.read<HomeBloc>().add(
+                                  const AcceptSoftwareTermsEvent(),
+                                ),
                                 child: Text(S.of(context).start),
                               ),
                             ),

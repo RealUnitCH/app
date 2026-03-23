@@ -273,6 +273,7 @@
   "signOut": "Sign out",
   "skip": "Skip",
   "softwareTermsText": "By using this app, you accept the terms of use of this software.",
+  "softwareTermsTextHighlighted": "terms of use",
   "softwareWallet": "Software Wallet",
   "softwareWalletSubtitle": "I would like to create a new wallet for trading and storing RealUnit tokens.",
   "start": "Start",
