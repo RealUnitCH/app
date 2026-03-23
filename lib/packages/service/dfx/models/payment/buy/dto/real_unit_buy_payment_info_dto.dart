@@ -26,6 +26,7 @@ class RealUnitBuyPaymentInfoDto {
   final List<PriceStep> priceSteps;
   final double estimatedAmount;
   final String? paymentRequest;
+  final String? remittanceInfo;
   final bool isValid;
 
   const RealUnitBuyPaymentInfoDto({
@@ -52,6 +53,7 @@ class RealUnitBuyPaymentInfoDto {
     required this.priceSteps,
     required this.estimatedAmount,
     this.paymentRequest,
+    this.remittanceInfo,
     required this.isValid,
   });
 
@@ -82,6 +84,7 @@ class RealUnitBuyPaymentInfoDto {
           .toList(),
       estimatedAmount: (json['estimatedAmount'] as num).toDouble(),
       paymentRequest: json['paymentRequest'] as String?,
+      remittanceInfo: json['remittanceInfo'] as String?,
       isValid: json['isValid'] as bool,
     );
   }
