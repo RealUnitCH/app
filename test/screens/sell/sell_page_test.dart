@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
@@ -24,6 +25,7 @@ import 'package:realunit_wallet/screens/sell/widgets/sell_add_bank_account_sheet
 import 'package:realunit_wallet/screens/sell/widgets/sell_bank_account_field.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_button.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_converter.dart';
+import 'package:realunit_wallet/screens/sell/widgets/sell_max_amount_button.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -176,6 +178,40 @@ void main() {
       expect(find.byType(SellAddBankAccountSheet), findsOne);
     });
 
+    group('$SellMaxAmountButton', () {
+      testWidgets(('is shown when balance is bigger than 0'), (tester) async {
+        when(() => sellBalanceCubit.state).thenReturn(
+          Balance(
+            chainId: 1,
+            contractAddress: '0x0',
+            walletAddress: '0x0',
+            balance: BigInt.one,
+            asset: realUnitAsset,
+          ),
+        );
+
+        await tester.pumpApp(buildSubject(const SellView()));
+
+        expect(find.byType(SellMaxAmountButton), findsOne);
+      });
+
+      testWidgets(('is not shown when balance is 0'), (tester) async {
+        when(() => sellBalanceCubit.state).thenReturn(
+          Balance(
+            chainId: 1,
+            contractAddress: '0x0',
+            walletAddress: '0x0',
+            balance: BigInt.zero,
+            asset: realUnitAsset,
+          ),
+        );
+
+        await tester.pumpApp(buildSubject(const SellView()));
+
+        expect(find.byType(SellMaxAmountButton), findsNothing);
+      });
+    });
+
     group('$SellButton', () {
       testWidgets('is initially disabled button', (tester) async {
         when(() => sellPaymentInfoCubit.state).thenReturn(const SellPaymentInfoInitial());
@@ -194,6 +230,33 @@ void main() {
         await tester.pumpApp(buildSubject(const SellView()));
 
         expect(find.byType(CircularProgressIndicator), findsOne);
+      });
+
+      testWidgets('is disabled button when minimum amount is not met', (tester) async {
+        final amount = 10.0;
+        final currency = Currency.chf;
+
+        when(
+          () => sellPaymentInfoCubit.state,
+        ).thenReturn(
+          SellPaymentInfoMinAmountNotMet(
+            minAmount: amount,
+            currency: currency,
+          ),
+        );
+
+        await tester.pumpApp(buildSubject(const SellView()));
+
+        expect(
+          find.text(S.current.sellMinAmount(amount.round().toString(), currency.code)),
+          findsOne,
+        );
+        expect(
+          find.byWidgetPredicate(
+            (Widget widget) => widget is FilledButton && widget.onPressed == null,
+          ),
+          findsOne,
+        );
       });
 
       testWidgets('is enabled button when amount and bankaccount are given', (tester) async {
