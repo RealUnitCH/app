@@ -9,7 +9,7 @@ class SellMaxAmountButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const .all(8.0),
+      padding: const .symmetric(horizontal: 8.0),
       child: InkWell(
         borderRadius: .circular(8.0),
         onTap: onTap,

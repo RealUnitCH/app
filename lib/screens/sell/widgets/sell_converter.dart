@@ -51,38 +51,41 @@ class SellConverter extends StatelessWidget {
               children: [
                 Expanded(
                   flex: 3,
-                  child: Row(
+                  child: Stack(
                     children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _amountController,
-                          keyboardType: const .numberWithOptions(decimal: false),
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          decoration: const InputDecoration(
-                            border: .none,
-                            contentPadding: .symmetric(
-                              horizontal: 10.0,
-                              vertical: 14.0,
-                            ),
+                      TextField(
+                        controller: _amountController,
+                        keyboardType: const .numberWithOptions(decimal: false),
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        decoration: const InputDecoration(
+                          border: .none,
+                          contentPadding: .symmetric(
+                            horizontal: 10.0,
+                            vertical: 14.0,
                           ),
-                          maxLines: 1,
-                          onChanged: (value) =>
-                              context.read<SellConverterCubit>().onSharesChanged(value),
                         ),
+                        maxLines: 1,
+                        onChanged: (value) =>
+                            context.read<SellConverterCubit>().onSharesChanged(value),
                       ),
-                      BlocBuilder<SellBalanceCubit, Balance>(
-                        builder: (context, state) {
-                          if (state.balance <= BigInt.zero) {
-                            return const SizedBox.shrink();
-                          }
-                          return SellMaxAmountButton(
-                            onTap: () {
-                              final maxStr = state.balance.toString();
-                              _amountController.text = maxStr;
-                              context.read<SellConverterCubit>().onSharesChanged(maxStr);
+                      Positioned.fill(
+                        child: Align(
+                          alignment: .centerRight,
+                          child: BlocBuilder<SellBalanceCubit, Balance>(
+                            builder: (context, state) {
+                              if (state.balance <= BigInt.zero) {
+                                return const SizedBox.shrink();
+                              }
+                              return SellMaxAmountButton(
+                                onTap: () {
+                                  final maxStr = state.balance.toString();
+                                  _amountController.text = maxStr;
+                                  context.read<SellConverterCubit>().onSharesChanged(maxStr);
+                                },
+                              );
                             },
-                          );
-                        },
+                          ),
+                        ),
                       ),
                     ],
                   ),

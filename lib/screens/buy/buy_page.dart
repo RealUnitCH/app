@@ -77,9 +77,9 @@ class _BuyViewState extends State<BuyView> {
                       constraints: BoxConstraints(minHeight: constraint.maxHeight),
                       child: IntrinsicHeight(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          padding: const .symmetric(horizontal: 20.0),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: .start,
                             children: [
                               PaymentConverter(
                                 amountController: _amountController,
@@ -118,8 +118,8 @@ class _BuyViewState extends State<BuyView> {
 
     controller.value = controller.value.copyWith(
       text: newValue,
-      selection: TextSelection.collapsed(offset: newValue.length),
-      composing: TextRange.empty,
+      selection: .collapsed(offset: newValue.length),
+      composing: .empty,
     );
   }
 }
