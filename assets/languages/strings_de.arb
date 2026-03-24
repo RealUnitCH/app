@@ -252,6 +252,7 @@
   "selectNetwork": "Netzwerk auswählen",
   "selectToken": "Token auswählen",
   "sell": "Verkaufen",
+  "sellMinAmount": "Mindestbetrag: ${amount} ${currency}",
   "sellRealu": "REALU verkaufen",
   "sellReviewAndConfirm": "Verkauf prüfen & bestätigen",
   "sellSuccess": "Verkauf erfolgreich",

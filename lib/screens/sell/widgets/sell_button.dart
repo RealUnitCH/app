@@ -65,6 +65,8 @@ class SellButton extends StatelessWidget {
         }
       },
       builder: (context, state) {
+        final converterState = context.watch<SellConverterCubit>().state;
+
         if (state is SellPaymentInfoLoading) {
           return Padding(
             padding: const .symmetric(vertical: 20),
@@ -85,6 +87,34 @@ class SellButton extends StatelessWidget {
             ),
           );
         }
+        if (state is SellPaymentInfoMinAmountNotMet) {
+          return Padding(
+            padding: const .symmetric(vertical: 20),
+            child: Column(
+              spacing: 8.0,
+              children: [
+                Text(
+                  S
+                      .of(context)
+                      .sellMinAmount(
+                        '${state.minAmount.round()}',
+                        state.currency.code,
+                      ),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: RealUnitColors.neutral500,
+                  ),
+                ),
+                SizedBox(
+                  width: .infinity,
+                  child: FilledButton(
+                    onPressed: null,
+                    child: Text('$amount ${S.of(context).sellRealu}'),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
         if (bankAccount != null && amount.isNotEmpty) {
           return Padding(
             padding: const .symmetric(vertical: 20),
@@ -94,7 +124,7 @@ class SellButton extends StatelessWidget {
                 onPressed: () => context.read<SellPaymentInfoCubit>().getPaymentInfo(
                   amount: amount,
                   iban: bankAccount!.iban,
-                  currency: context.read<SellConverterCubit>().state.currency,
+                  currency: converterState.currency,
                 ),
                 child: Text('$amount ${S.of(context).sellRealu}'),
               ),

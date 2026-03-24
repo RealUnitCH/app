@@ -252,6 +252,7 @@
   "selectNetwork": "Select network",
   "selectToken": "Select Token",
   "sell": "Sell",
+  "sellMinAmount": "Minimum amount: ${amount} ${currency}",
   "sellRealu": "Sell REALU",
   "sellReviewAndConfirm": "Review & confirm sale",
   "sellSuccess": "Sell successful",

@@ -5,6 +5,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_balance/sell_balance_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_converter/sell_converter_cubit.dart';
@@ -37,6 +38,7 @@ class SellPage extends StatelessWidget {
         BlocProvider(
           create: (context) => SellPaymentInfoCubit(
             getIt<RealUnitSellPaymentInfoService>(),
+            getIt<DFXPriceService>(),
           ),
         ),
         BlocProvider(
@@ -72,6 +74,10 @@ class _SellViewState extends State<SellView> {
         listener: (context, state) {
           _syncController(_amountController, state.sharesText);
           _syncController(_resultController, state.fiatText);
+          context.read<SellPaymentInfoCubit>().validateMinAmount(
+            fiatAmount: state.fiatText,
+            currency: state.currency,
+          );
         },
         builder: (context, state) {
           return SafeArea(
