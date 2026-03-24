@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/packages/utils/asset_logo.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
+import 'package:realunit_wallet/screens/sell/cubits/sell_balance/sell_balance_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_converter/sell_converter_cubit.dart';
+import 'package:realunit_wallet/screens/sell/widgets/sell_max_amount_button.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
@@ -48,19 +51,40 @@ class SellConverter extends StatelessWidget {
               children: [
                 Expanded(
                   flex: 3,
-                  child: TextField(
-                    controller: _amountController,
-                    keyboardType: const .numberWithOptions(decimal: false),
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: const InputDecoration(
-                      border: .none,
-                      contentPadding: .symmetric(
-                        horizontal: 10.0,
-                        vertical: 14.0,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _amountController,
+                          keyboardType: const .numberWithOptions(decimal: false),
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          decoration: const InputDecoration(
+                            border: .none,
+                            contentPadding: .symmetric(
+                              horizontal: 10.0,
+                              vertical: 14.0,
+                            ),
+                          ),
+                          maxLines: 1,
+                          onChanged: (value) =>
+                              context.read<SellConverterCubit>().onSharesChanged(value),
+                        ),
                       ),
-                    ),
-                    maxLines: 1,
-                    onChanged: (value) => context.read<SellConverterCubit>().onSharesChanged(value),
+                      BlocBuilder<SellBalanceCubit, Balance>(
+                        builder: (context, state) {
+                          if (state.balance <= BigInt.zero) {
+                            return const SizedBox.shrink();
+                          }
+                          return SellMaxAmountButton(
+                            onTap: () {
+                              final maxStr = state.balance.toString();
+                              _amountController.text = maxStr;
+                              context.read<SellConverterCubit>().onSharesChanged(maxStr);
+                            },
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
                 Container(
