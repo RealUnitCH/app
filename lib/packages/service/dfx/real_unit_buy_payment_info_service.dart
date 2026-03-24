@@ -48,6 +48,7 @@ class RealUnitBuyPaymentInfoService {
         city: responseDto.city,
         country: responseDto.country,
         currency: responseDto.currency,
+        paymentRequest: responseDto.paymentRequest,
         remittanceInfo: responseDto.remittanceInfo,
       );
     } else if (response.statusCode == 403) {
