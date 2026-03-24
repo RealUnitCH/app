@@ -25,7 +25,7 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
       super(const SellPaymentInfoInitial());
 
   Future<void> getPaymentInfo({
-    String amount = '1000',
+    String amount = '100',
     Currency currency = Currency.chf,
     required String iban,
   }) async {
