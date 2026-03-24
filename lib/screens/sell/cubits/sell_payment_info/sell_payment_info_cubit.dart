@@ -80,7 +80,14 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
       }
 
       if (parsedAmount < minAmount) {
-        emit(SellPaymentInfoMinAmountNotMet(minAmount: minAmount, currency: currency));
+        emit(
+          SellPaymentInfoMinAmountNotMet(
+            minAmount: minAmount,
+            currency: currency,
+          ),
+        );
+      } else if (state is SellPaymentInfoMinAmountNotMet) {
+        emit(const SellPaymentInfoInitial());
       }
     } catch (e) {
       developer.log(
