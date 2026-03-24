@@ -14,6 +14,11 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/styles.dart';
 import 'package:realunit_wallet/widgets/tab_selector.dart';
 
+enum PaymentInfoOptions {
+  text,
+  qrCode,
+}
+
 class PaymentInformationDetails extends StatelessWidget {
   final String amount;
   final BuyPaymentInfo buyPaymentInfo;
@@ -46,7 +51,7 @@ class PaymentInformationDetailsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedTabIndex = ValueNotifier(0);
+    final selectedTab = ValueNotifier(PaymentInfoOptions.text);
     final hasQrCode = buyPaymentInfo.paymentRequest != null;
 
     return BlocListener<BuyConfirmCubit, BuyConfirmState>(
@@ -68,8 +73,8 @@ class PaymentInformationDetailsView extends StatelessWidget {
           }
         }
       },
-      child: ValueListenableBuilder<int>(
-        valueListenable: selectedTabIndex,
+      child: ValueListenableBuilder<PaymentInfoOptions>(
+        valueListenable: selectedTab,
         builder: (context, tabIndex, _) {
           return Column(
             children: [
@@ -103,10 +108,22 @@ class PaymentInformationDetailsView extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               if (hasQrCode) ...[
-                TabSelector(
-                  tabs: const ['Details', 'QR Code'],
-                  selectedIndex: tabIndex,
-                  onTabSelected: (index) => selectedTabIndex.value = index,
+                TabSelector<PaymentInfoOptions>(
+                  tabs: PaymentInfoOptions.values,
+                  selectedTab: selectedTab.value,
+                  onTabSelected: (index) => selectedTab.value = index,
+                  labelBuilder: (context, tab, isSelected) {
+                    return Text(
+                      switch (tab) {
+                        PaymentInfoOptions.text => 'Details',
+                        PaymentInfoOptions.qrCode => 'Qr Code',
+                      },
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        color: isSelected ? RealUnitColors.realUnitBlue : RealUnitColors.neutral500,
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
               ],
@@ -116,72 +133,70 @@ class PaymentInformationDetailsView extends StatelessWidget {
                     width: 1,
                     color: RealUnitColors.neutral200,
                   ),
-                  borderRadius: BorderRadius.circular(16.0),
+                  borderRadius: .circular(16.0),
                 ),
-                child: tabIndex == 0
-                    ? Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: _withDividers(
-                          children: [
-                            _PaymentInformationDetailsRow(
-                              description:
-                                  '${S.of(context).amountIn} ${buyPaymentInfo.currency.code}',
-                              value: amount,
-                            ),
-                            if (buyPaymentInfo.remittanceInfo != null)
-                              _PaymentInformationDetailsRow(
-                                description: S.of(context).purposeOfPayment,
-                                value: buyPaymentInfo.remittanceInfo!,
-                              ),
-                            _PaymentInformationDetailsRow(
-                              description: S.of(context).iban,
-                              value: buyPaymentInfo.iban,
-                            ),
-                            _PaymentInformationDetailsRow(
-                              description: S.of(context).bic,
-                              value: buyPaymentInfo.bic,
-                            ),
-                            _PaymentInformationDetailsRow(
-                              title: S.of(context).receiver,
-                              description: S.of(context).name,
-                              value: buyPaymentInfo.name,
-                            ),
-                            _PaymentInformationDetailsRow(
-                              description: S.of(context).address,
-                              value: '${buyPaymentInfo.street} ${buyPaymentInfo.number}',
-                            ),
-                            _PaymentInformationDetailsRow(
-                              description: S.of(context).postcodeAbr,
-                              value: buyPaymentInfo.zip,
-                            ),
-                            _PaymentInformationDetailsRow(
-                              description: S.of(context).location,
-                              value: buyPaymentInfo.city,
-                            ),
-                            _PaymentInformationDetailsRow(
-                              description: S.of(context).country,
-                              value: buyPaymentInfo.country,
-                            ),
-                          ],
+                child: switch (tabIndex) {
+                  PaymentInfoOptions.text => Column(
+                    mainAxisSize: .min,
+                    children: _withDividers(
+                      children: [
+                        _PaymentInformationDetailsRow(
+                          description: '${S.of(context).amountIn} ${buyPaymentInfo.currency.code}',
+                          value: amount,
                         ),
-                      )
-                    : tabIndex == 1
-                    ? Container(
-                        padding: const .all(16.0),
-                        child: Center(
-                          child: SvgPicture.string(
-                            SvgParser.normalize(buyPaymentInfo.paymentRequest!),
-                            width: MediaQuery.widthOf(context) * 0.6,
-                            fit: BoxFit.contain,
+                        if (buyPaymentInfo.remittanceInfo != null)
+                          _PaymentInformationDetailsRow(
+                            description: S.of(context).purposeOfPayment,
+                            value: buyPaymentInfo.remittanceInfo!,
                           ),
+                        _PaymentInformationDetailsRow(
+                          description: S.of(context).iban,
+                          value: buyPaymentInfo.iban,
                         ),
-                      )
-                    : const SizedBox.shrink(),
+                        _PaymentInformationDetailsRow(
+                          description: S.of(context).bic,
+                          value: buyPaymentInfo.bic,
+                        ),
+                        _PaymentInformationDetailsRow(
+                          title: S.of(context).receiver,
+                          description: S.of(context).name,
+                          value: buyPaymentInfo.name,
+                        ),
+                        _PaymentInformationDetailsRow(
+                          description: S.of(context).address,
+                          value: '${buyPaymentInfo.street} ${buyPaymentInfo.number}',
+                        ),
+                        _PaymentInformationDetailsRow(
+                          description: S.of(context).postcodeAbr,
+                          value: buyPaymentInfo.zip,
+                        ),
+                        _PaymentInformationDetailsRow(
+                          description: S.of(context).location,
+                          value: buyPaymentInfo.city,
+                        ),
+                        _PaymentInformationDetailsRow(
+                          description: S.of(context).country,
+                          value: buyPaymentInfo.country,
+                        ),
+                      ],
+                    ),
+                  ),
+                  PaymentInfoOptions.qrCode => Container(
+                    padding: const .all(16.0),
+                    child: Center(
+                      child: SvgPicture.string(
+                        SvgParser.normalize(buyPaymentInfo.paymentRequest!),
+                        width: MediaQuery.widthOf(context) * 0.6,
+                        fit: .contain,
+                      ),
+                    ),
+                  ),
+                },
               ),
               Padding(
-                padding: const EdgeInsets.only(top: 20, bottom: 20),
+                padding: const .symmetric(vertical: 20),
                 child: SizedBox(
-                  width: double.infinity,
+                  width: .infinity,
                   child: BlocBuilder<BuyConfirmCubit, BuyConfirmState>(
                     builder: (context, state) {
                       return state is BuyConfirmLoading
@@ -203,7 +218,7 @@ class PaymentInformationDetailsView extends StatelessWidget {
                               ),
                               style: ButtonStyle(
                                 padding: WidgetStateProperty.resolveWith(
-                                  (states) => const EdgeInsets.symmetric(
+                                  (states) => const .symmetric(
                                     vertical: 10.0,
                                     horizontal: 20.0,
                                   ),
