@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class SellMaxAmountButton extends StatelessWidget {
@@ -22,7 +23,7 @@ class SellMaxAmountButton extends StatelessWidget {
               borderRadius: .circular(8),
             ),
             child: Text(
-              'MAX',
+              S.of(context).max.toUpperCase(),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: RealUnitColors.darkBlue,
                 fontWeight: .bold,
