@@ -74,28 +74,38 @@ class _SellViewState extends State<SellView> {
           _syncController(_resultController, state.fiatText);
         },
         builder: (context, state) {
-          return SingleChildScrollView(
-            child: SafeArea(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Column(
-                    spacing: 32,
-                    children: [
-                      SellConverter(
-                        amountController: _amountController,
-                        resultController: _resultController,
+          return SafeArea(
+            child: GestureDetector(
+              behavior: .opaque,
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                      child: IntrinsicHeight(
+                        child: Padding(
+                          padding: const .symmetric(horizontal: 20.0),
+                          child: Column(
+                            spacing: 32,
+                            children: [
+                              SellConverter(
+                                amountController: _amountController,
+                                resultController: _resultController,
+                              ),
+                              const SellBankAccountField(),
+                              const Spacer(),
+                              SellButton(
+                                amount: _amountController.text,
+                                bankAccount: context.watch<SellSelectedBankAccountCubit>().state,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      const SellBankAccountField(),
-                      SellButton(
-                        amount: _amountController.text,
-                        bankAccount: context.watch<SellSelectedBankAccountCubit>().state,
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
             ),
           );
