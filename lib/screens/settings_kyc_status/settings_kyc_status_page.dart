@@ -99,7 +99,7 @@ class SettingsKycStatusView extends StatelessWidget {
                                 children: [
                                   const Icon(
                                     Icons.info,
-                                    size: 16,
+                                    size: 24,
                                     color: RealUnitColors.realUnitBlue,
                                   ),
                                   Expanded(
