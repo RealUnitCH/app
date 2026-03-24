@@ -119,8 +119,8 @@ class PaymentInformationDetailsView extends StatelessWidget {
                       labelBuilder: (context, tab, isSelected) {
                         return Text(
                           switch (tab) {
-                            PaymentInfoOptions.text => 'Details',
-                            PaymentInfoOptions.qrCode => 'Qr Code',
+                            PaymentInfoOptions.text => S.of(context).details,
+                            PaymentInfoOptions.qrCode => S.of(context).qrCode,
                           },
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             fontWeight: isSelected ? .w600 : .normal,
