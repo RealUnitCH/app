@@ -76,6 +76,12 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
     if (widget.email != null) {
       emailCtrl.text = widget.email!;
       getIt<RealUnitRegistrationService>().registerEmail(widget.email!);
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final accepted = await context.push<bool>(LegalDisclaimerPage.routeName);
+        if (accepted != true && mounted) {
+          context.pop();
+        }
+      });
     }
     _stepSubscription = context.read<KycRegistrationStepCubit>().stream.listen((state) {
       _pageController.animateToPage(
