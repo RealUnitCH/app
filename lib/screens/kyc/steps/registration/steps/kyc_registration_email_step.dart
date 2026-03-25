@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -83,37 +84,42 @@ class KycRegistrationEmailStepView extends StatelessWidget {
           }
         }
       },
-      child: SingleChildScrollView(
-        padding: const .symmetric(horizontal: 20),
-        child: SafeArea(
-          child: GestureDetector(
-            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  LabeledTextField(
-                    label: S.of(context).email,
-                    hintText: 'max@mustermann.ch',
-                    controller: emailCtrl,
-                    keyboardType: .emailAddress,
-                    hideErrorText: false,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return S.of(context).registerEmailRequired;
-                      }
-                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                        return S.of(context).registerEmailInvalid;
-                      }
-                      return null;
-                    },
-                  ),
-                  Padding(
-                    padding: const .symmetric(vertical: 16.0),
-                    child: SizedBox(
-                      width: .infinity,
-                      child:
-                          BlocBuilder<KycRegistrationEmailStepCubit, KycRegistrationEmailStepState>(
+      child: BlocBuilder<KycRegistrationEmailStepCubit, KycRegistrationEmailStepState>(
+        builder: (context, builderState) {
+          if (builderState is KycRegistrationEmailStepLoading && emailCtrl.text.isNotEmpty) {
+            return const Center(child: CupertinoActivityIndicator());
+          }
+          return SingleChildScrollView(
+            padding: const .symmetric(horizontal: 20),
+            child: SafeArea(
+              child: GestureDetector(
+                onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      LabeledTextField(
+                        label: S.of(context).email,
+                        hintText: 'max@mustermann.ch',
+                        controller: emailCtrl,
+                        keyboardType: .emailAddress,
+                        hideErrorText: false,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return S.of(context).registerEmailRequired;
+                          }
+                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                            return S.of(context).registerEmailInvalid;
+                          }
+                          return null;
+                        },
+                      ),
+                      Padding(
+                        padding: const .symmetric(vertical: 16.0),
+                        child: SizedBox(
+                          width: .infinity,
+                          child: BlocBuilder<KycRegistrationEmailStepCubit,
+                              KycRegistrationEmailStepState>(
                             builder: (context, state) {
                               if (state is KycRegistrationEmailStepLoading) {
                                 return FilledButton.icon(
@@ -142,13 +148,15 @@ class KycRegistrationEmailStepView extends StatelessWidget {
                               );
                             },
                           ),
-                    ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
