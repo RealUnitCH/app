@@ -34,7 +34,7 @@ class KycRegistrationPage extends StatelessWidget {
           ),
         ),
         BlocProvider(
-          create: (_) => KycRegistrationStepCubit(),
+          create: (_) => KycRegistrationStepCubit(skipEmail: email != null),
         ),
       ],
       child: KycRegistrationView(email: email),
@@ -128,10 +128,15 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
             Expanded(
               child: Stack(
                 children: [
-                  PageView(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: KycRegistrationStep.values.map(_buildStep).toList(),
+                  BlocBuilder<KycRegistrationStepCubit, KycRegistrationStepState>(
+                    buildWhen: (prev, next) => false,
+                    builder: (context, stepState) {
+                      return PageView(
+                        controller: _pageController,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: stepState.steps.map(_buildStep).toList(),
+                      );
+                    },
                   ),
                   BlocBuilder<KycRegistrationSubmitCubit, KycRegistrationSubmitState>(
                     builder: (context, state) {

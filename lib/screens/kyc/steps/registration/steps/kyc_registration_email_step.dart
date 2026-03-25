@@ -86,7 +86,7 @@ class KycRegistrationEmailStepView extends StatelessWidget {
       },
       child: BlocBuilder<KycRegistrationEmailStepCubit, KycRegistrationEmailStepState>(
         builder: (context, builderState) {
-          if (builderState is KycRegistrationEmailStepLoading && emailCtrl.text.isNotEmpty) {
+          if (builderState is! KycRegistrationEmailStepFailure && emailCtrl.text.isNotEmpty) {
             return const Center(child: CupertinoActivityIndicator());
           }
           return SingleChildScrollView(

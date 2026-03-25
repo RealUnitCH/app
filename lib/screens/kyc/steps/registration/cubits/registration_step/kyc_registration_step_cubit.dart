@@ -5,12 +5,12 @@ import 'package:realunit_wallet/generated/i18n.dart';
 part 'kyc_registration_step_state.dart';
 
 class KycRegistrationStepCubit extends Cubit<KycRegistrationStepState> {
-  KycRegistrationStepCubit()
+  KycRegistrationStepCubit({bool skipEmail = false})
     : super(
-        const KycRegistrationStepState(
-          step: KycRegistrationStep.email,
+        KycRegistrationStepState(
+          step: skipEmail ? KycRegistrationStep.personal : KycRegistrationStep.email,
           steps: [
-            KycRegistrationStep.email,
+            if (!skipEmail) KycRegistrationStep.email,
             KycRegistrationStep.personal,
             KycRegistrationStep.address,
           ],
