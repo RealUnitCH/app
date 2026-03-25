@@ -15,9 +15,8 @@ class _MnemonicFieldBase extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textScaler = MediaQuery.textScalerOf(context);
-    final columns = textScaler.scale(1) > 1.2 ? 2 : 3;
-    final rows = 12 ~/ columns;
+    const columns = 2;
+    const rows = 6;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
