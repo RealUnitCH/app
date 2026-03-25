@@ -51,7 +51,7 @@ class KycCubit extends Cubit<KycState> {
         final user = await _kycService.getUser();
         emit(KycSuccess(
           currentStep: KycStep.registration,
-          email: user.mail,
+          email: user.mail?.isNotEmpty == true ? user.mail : null,
         ));
         return;
       }

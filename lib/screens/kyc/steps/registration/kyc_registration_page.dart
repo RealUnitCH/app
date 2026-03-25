@@ -55,6 +55,8 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   final _pageController = PageController();
   StreamSubscription<KycRegistrationStepState>? _stepSubscription;
 
+  bool get _hasEmail => widget.email != null && widget.email!.isNotEmpty;
+
   final emailCtrl = TextEditingController();
 
   final typeCtrl = ValueNotifier<RegistrationUserType>(RegistrationUserType.human);
@@ -73,7 +75,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   @override
   void initState() {
     super.initState();
-    if (widget.email != null) {
+    if (_hasEmail) {
       emailCtrl.text = widget.email!;
     }
     _stepSubscription = context.read<KycRegistrationStepCubit>().stream.listen((state) {
@@ -102,7 +104,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
                 icon: const Icon(Icons.arrow_back_rounded),
               ),
               title: Text(
-                state.title(context, emailAutoSubmitted: widget.email != null),
+                state.title(context, emailAutoSubmitted: _hasEmail),
               ),
             );
           },
@@ -163,7 +165,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
         return KycRegistrationEmailStep(
           emailCtrl: emailCtrl,
           onSuccess: () async {
-            if (widget.email != null) {
+            if (_hasEmail) {
               context.read<KycRegistrationStepCubit>().next();
             } else {
               final result = await context.push<bool>(LegalDisclaimerPage.routeName);
