@@ -25,44 +25,50 @@ class _MnemonicFieldBase extends StatelessWidget {
         border: Border.all(color: borderColor, width: borderWidth),
         color: RealUnitColors.basic.white,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: List.generate(rows, (rowIndex) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Row(
-              children: List.generate(columns, (colIndex) {
-                final index = rowIndex + colIndex * rows;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: onCellTap != null ? () => onCellTap!(index) : null,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Expanded(
-                          flex: 4,
-                          child: Text(
-                            '${index + 1}.',
-                            style: const TextStyle(
-                              color: RealUnitColors.neutral400,
-                              fontSize: 14,
-                              height: 1.0,
+      child: FocusTraversalGroup(
+        policy: OrderedTraversalPolicy(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(rows, (rowIndex) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
+                children: List.generate(columns, (colIndex) {
+                  final index = rowIndex + colIndex * rows;
+                  return Expanded(
+                    child: FocusTraversalOrder(
+                      order: NumericFocusOrder(index.toDouble()),
+                          child: GestureDetector(
+                        onTap: onCellTap != null ? () => onCellTap!(index) : null,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Expanded(
+                              flex: 4,
+                              child: Text(
+                                '${index + 1}.',
+                                style: const TextStyle(
+                                  color: RealUnitColors.neutral400,
+                                  fontSize: 14,
+                                  height: 1.0,
+                                ),
+                              ),
                             ),
-                          ),
+                            Expanded(
+                              flex: 14,
+                              child: cellBuilder(context, index),
+                            ),
+                          ],
                         ),
-                        Expanded(
-                          flex: 14,
-                          child: cellBuilder(context, index),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                );
-              }),
-            ),
-          );
-        }),
+                  );
+                }),
+              ),
+            );
+          }),
+        ),
       ),
     );
   }
