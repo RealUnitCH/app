@@ -1,12 +1,14 @@
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 
 class UserDto {
+  final String? mail;
   final UserKycDto kyc;
 
-  const UserDto({required this.kyc});
+  const UserDto({this.mail, required this.kyc});
 
   factory UserDto.fromJson(Map<String, dynamic> json) {
     return UserDto(
+      mail: json['mail'] as String?,
       kyc: UserKycDto.fromJson(json['kyc'] as Map<String, dynamic>),
     );
   }

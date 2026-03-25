@@ -47,7 +47,12 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
       final userDataDto = result.realUnitUserDataDto;
 
       if (userDataDto == null) {
-        emit(const SettingsUserDataSuccess(null));
+        try {
+          final user = await _kycService.getUser();
+          emit(SettingsUserDataSuccess(null, email: user.mail));
+        } catch (_) {
+          emit(const SettingsUserDataSuccess(null));
+        }
         return;
       }
 

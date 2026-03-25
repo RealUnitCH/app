@@ -44,7 +44,7 @@ class SettingsUserDataView extends StatelessWidget {
         padding: const .symmetric(horizontal: 20.0, vertical: 12.0),
         child: BlocBuilder<SettingsUserDataCubit, SettingsUserDataState>(
           builder: (context, state) => switch (state) {
-            SettingsUserDataSuccess(:final userData, :final pendingSteps) =>
+            SettingsUserDataSuccess(:final userData, :final email, :final pendingSteps) =>
               userData != null
                   ? SingleChildScrollView(
                       child: Padding(
@@ -115,9 +115,19 @@ class SettingsUserDataView extends StatelessWidget {
                         ),
                       ),
                     )
-                  : Center(
-                      child: Text(S.of(context).userDataNotFound),
-                    ),
+                  : email != null
+                      ? SafeArea(
+                          child: Padding(
+                            padding: const .symmetric(horizontal: 12.0),
+                            child: _UserDataRow(
+                              label: S.of(context).email,
+                              value: email,
+                            ),
+                          ),
+                        )
+                      : Center(
+                          child: Text(S.of(context).userDataNotFound),
+                        ),
             SettingsUserDataLoading() => const Center(
               child: CupertinoActivityIndicator(),
             ),
