@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/dashboard_transaction_history_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/transaction_row.dart';
+import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class DashboardTransactionHistory extends StatelessWidget {
@@ -61,17 +61,20 @@ class DashboardTransactionHistoryView extends StatelessWidget {
                 child: Column(
                   spacing: 12.0,
                   children: [
-                    ...transactions.map((e) => TransactionRow(
-                          transaction: e,
-                          walletAddress: walletAddress,
-                        )),
+                    ...transactions.map(
+                      (e) => TransactionRow(
+                        transaction: e,
+                        walletAddress: walletAddress,
+                      ),
+                    ),
                     TextButton(
                       onPressed: () => context.push('/dashboard/transactionHistory'),
                       style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: const Size(50, 22),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          alignment: Alignment.centerLeft),
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(50, 22),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        alignment: Alignment.centerLeft,
+                      ),
                       child: Text(
                         S.of(context).transactionHistory,
                         style: const TextStyle(

@@ -1,15 +1,10 @@
-import 'dart:developer' as developer;
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:go_router/go_router.dart';
-import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/utils/fuck_firebase.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
@@ -19,6 +14,8 @@ import 'package:realunit_wallet/screens/pin/setup_pin_page.dart';
 import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/terms/terms_page.dart';
+import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/lifecycle_initializer.dart';
 import 'package:realunit_wallet/styles/themes.dart';
 
 Future<void> main() async {
@@ -38,7 +35,9 @@ Future<void> _initialize() async {
   await fuckFirebase();
   final databaseKey = await setupEssentials();
   await finishSetup(databaseKey);
-  runApp(const WalletApp());
+  runApp(
+    const LifecycleInitializer(child: WalletApp()),
+  );
 }
 
 Future<void> _initializeWithSplashDuration() async {
@@ -48,61 +47,8 @@ Future<void> _initializeWithSplashDuration() async {
   ]);
 }
 
-class WalletApp extends StatefulWidget {
+class WalletApp extends StatelessWidget {
   const WalletApp({super.key});
-
-  @override
-  State<StatefulWidget> createState() => _WalletAppState();
-}
-
-class _WalletAppState extends State<WalletApp> {
-  late final AppLifecycleListener _listener;
-
-  @override
-  void initState() {
-    super.initState();
-    _listener = AppLifecycleListener(onStateChange: _onStateChanged);
-  }
-
-  @override
-  void dispose() {
-    _listener.dispose();
-
-    super.dispose();
-  }
-
-  void _onStateChanged(AppLifecycleState state) {
-    switch (state) {
-      case AppLifecycleState.detached:
-        _onDetached();
-      case AppLifecycleState.resumed:
-        _onResumed();
-      case AppLifecycleState.inactive:
-        _onInactive();
-      case AppLifecycleState.hidden:
-        _onHidden();
-      case AppLifecycleState.paused:
-        _onPaused();
-    }
-    developer.log(state.name, name: 'AppLifecycleListener');
-  }
-
-  void _onDetached() {}
-
-  void _onResumed() {
-    getIt<PinAuthCubit>().onAppResumed();
-    getIt<BalanceService>().updateBalances(getIt<AppStore>().primaryAddress);
-  }
-
-  void _onInactive() {}
-
-  void _onHidden() {
-    getIt<PinAuthCubit>().onAppHidden();
-  }
-
-  void _onPaused() {
-    getIt<BalanceService>().cancelSync();
-  }
 
   @override
   Widget build(BuildContext context) => MultiBlocProvider(

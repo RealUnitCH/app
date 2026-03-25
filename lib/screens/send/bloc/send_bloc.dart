@@ -19,9 +19,9 @@ import 'package:realunit_wallet/packages/utils/parse_fixed.dart';
 import 'package:realunit_wallet/packages/wallet/create_transaction.dart';
 import 'package:realunit_wallet/packages/wallet/is_evm_address.dart';
 import 'package:realunit_wallet/packages/wallet/transaction_priority.dart';
-import 'package:realunit_wallet/router.dart';
 import 'package:realunit_wallet/screens/send/bloc/gas_fee_cubit.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
+import 'package:realunit_wallet/setup/router.dart';
 import 'package:realunit_wallet/widgets/error_bottom_sheet.dart';
 
 part 'send_event.dart';

@@ -16,21 +16,24 @@ import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/packages/utils/parse_fixed.dart';
 import 'package:realunit_wallet/packages/wallet/create_transaction.dart';
-import 'package:realunit_wallet/router.dart';
 import 'package:realunit_wallet/screens/send/bloc/gas_fee_cubit.dart';
 import 'package:realunit_wallet/screens/send_invoice/bloc/expiry_cubit.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
+import 'package:realunit_wallet/setup/router.dart';
 import 'package:realunit_wallet/widgets/error_bottom_sheet.dart';
 
 part 'send_invoice_event.dart';
 part 'send_invoice_state.dart';
 
 class SendInvoiceBloc extends Bloc<SendInvoiceEvent, SendInvoiceState> {
-  SendInvoiceBloc(this._appStore, this._openCryptoPayService, this._balanceService,
-      {required OpenCryptoPayRequest invoice})
-      : expiryCubit = ExpiryCubit(invoice.expiration),
-        gasFeeCubit = GasFeeCubit(_appStore),
-        super(SendInvoiceState(invoice: invoice)) {
+  SendInvoiceBloc(
+    this._appStore,
+    this._openCryptoPayService,
+    this._balanceService, {
+    required OpenCryptoPayRequest invoice,
+  }) : expiryCubit = ExpiryCubit(invoice.expiration),
+       gasFeeCubit = GasFeeCubit(_appStore),
+       super(SendInvoiceState(invoice: invoice)) {
     on<ChainChanged>(_onChainChanged);
     on<CancelInvoice>(_onCancelInvoice);
     on<SendSubmitted>(_onSubmitted);
@@ -64,14 +67,17 @@ class SendInvoiceBloc extends Bloc<SendInvoiceEvent, SendInvoiceState> {
   Future<void> _onSubmitted(SendSubmitted event, Emitter<SendInvoiceState> emit) async {
     final client = _appStore.getClient(state.asset.chainId);
 
-    final ethBalance =
-        await client.getBalance(_appStore.wallet.currentAccount.primaryAddress.address);
+    final ethBalance = await client.getBalance(
+      _appStore.wallet.currentAccount.primaryAddress.address,
+    );
     if (ethBalance.getInWei < gasFeeCubit.state.gasFee) {
       return showModalBottomSheet(
         context: navigatorKey.currentContext!,
         builder: (_) => ErrorBottomSheet(
-          message:
-              S.current.errorNotEnoughMoney(state.blockchain.nativeSymbol, state.blockchain.name),
+          message: S.current.errorNotEnoughMoney(
+            state.blockchain.nativeSymbol,
+            state.blockchain.name,
+          ),
         ),
       );
     }
@@ -92,8 +98,11 @@ class SendInvoiceBloc extends Bloc<SendInvoiceEvent, SendInvoiceState> {
         gasPrice: gasPrice,
       );
 
-      final id = await _openCryptoPayService.commitOpenCryptoPayRequest('0x$transaction',
-          request: state.invoice, asset: state.asset);
+      final id = await _openCryptoPayService.commitOpenCryptoPayRequest(
+        '0x$transaction',
+        request: state.invoice,
+        asset: state.asset,
+      );
       developer.log(id, name: 'SendInvoiceBloc');
       emit(state.copyWith(status: SendStatus.success));
 
@@ -120,7 +129,7 @@ class SendInvoiceBloc extends Bloc<SendInvoiceEvent, SendInvoiceState> {
       Blockchain.arbitrum,
       Blockchain.optimism,
       Blockchain.polygon,
-      Blockchain.ethereum
+      Blockchain.ethereum,
     ]) {
       final asset = _getAsset(blockchain);
       final balance = await _balanceService.getBalance(asset, _appStore.primaryAddress);

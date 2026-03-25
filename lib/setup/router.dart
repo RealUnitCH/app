@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
-import 'package:realunit_wallet/di.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/packages/open_crypto_pay/models.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -41,8 +41,7 @@ import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.d
 import 'package:realunit_wallet/screens/verify_seed/verify_seed_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/screens/welcome/welcome_page.dart';
-
-import 'generated/i18n.dart';
+import 'package:realunit_wallet/setup/di.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
