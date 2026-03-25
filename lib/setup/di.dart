@@ -31,11 +31,10 @@ import 'package:realunit_wallet/packages/service/transaction_history_service.dar
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
-import 'package:realunit_wallet/packages/utils/default_assets.dart';
-import 'package:realunit_wallet/packages/utils/default_nodes.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/setup/database.dart';
 import 'package:realunit_wallet/setup/router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -167,18 +166,6 @@ void setupBlocs() {
   getIt.registerSingleton(
     PinAuthCubit(getIt<SecureStorage>(), getIt<SettingsRepository>())..initialize(),
   );
-}
-
-Future<void> setupDefaultAssets() async {
-  for (final asset in defaultAssets) {
-    await getIt<AssetRepository>().saveAsset(asset);
-  }
-}
-
-Future<void> setupDefaultNodes() async {
-  for (final node in defaultNodes) {
-    await getIt<NodeRepository>().saveNode(node);
-  }
 }
 
 Future<bool> _existsDatabaseFile() async => File(await AppDatabase.getDatabasePath()).exists();

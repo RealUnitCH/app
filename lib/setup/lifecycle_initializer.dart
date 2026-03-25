@@ -3,9 +3,8 @@ import 'dart:developer' as developer;
 import 'package:flutter/widgets.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
+import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
-
-import '../screens/pin/bloc/auth/pin_auth_cubit.dart';
 
 class LifecycleInitializer extends StatefulWidget {
   final Widget child;
