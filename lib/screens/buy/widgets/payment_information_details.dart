@@ -187,9 +187,23 @@ class PaymentInformationDetailsView extends StatelessWidget {
                           ],
                         ),
                       ),
-                      PaymentInfoOptions.qrCode => _buildQrCodeDisplay(
-                        context,
-                        buyPaymentInfo.paymentRequest!,
+                      PaymentInfoOptions.qrCode => Container(
+                        padding: const .all(16.0),
+                        child: Center(
+                          child: buyPaymentInfo.paymentRequest!.contains('<svg')
+                              ? SvgPicture.string(
+                                  SvgParser.normalize(buyPaymentInfo.paymentRequest!),
+                                  width: MediaQuery.widthOf(context) * 0.6,
+                                  fit: .contain,
+                                )
+                              : SizedBox(
+                                  height: MediaQuery.widthOf(context) * 0.6,
+                                  width: MediaQuery.widthOf(context) * 0.6,
+                                  child: QrImageView(
+                                    data: buyPaymentInfo.paymentRequest!,
+                                  ),
+                                ),
+                        ),
                       ),
                     },
                   ),
@@ -256,29 +270,6 @@ class PaymentInformationDetailsView extends StatelessWidget {
       }
     }
     return result;
-  }
-
-  Widget _buildQrCodeDisplay(BuildContext context, String paymentRequest) {
-    final isSvg = paymentRequest.contains('<svg');
-
-    return Container(
-      padding: const .all(16.0),
-      child: Center(
-        child: isSvg
-            ? SvgPicture.string(
-                SvgParser.normalize(paymentRequest),
-                width: MediaQuery.widthOf(context) * 0.6,
-                fit: .contain,
-              )
-            : SizedBox(
-                height: MediaQuery.widthOf(context) * 0.6,
-                width: MediaQuery.widthOf(context) * 0.6,
-                child: QrImageView(
-                  data: paymentRequest,
-                ),
-              ),
-      ),
-    );
   }
 }
 
