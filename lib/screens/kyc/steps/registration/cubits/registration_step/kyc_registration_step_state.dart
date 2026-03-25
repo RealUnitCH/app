@@ -17,7 +17,7 @@ class KycRegistrationStepState {
 
   double get progress => (index + 1) / totalSteps;
 
-  bool get canGoBack => step != steps.first;
+  bool get canGoBack => step != KycRegistrationStep.email;
 
   String title(BuildContext context) {
     switch (step) {

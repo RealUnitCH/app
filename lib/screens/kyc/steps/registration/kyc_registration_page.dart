@@ -34,7 +34,7 @@ class KycRegistrationPage extends StatelessWidget {
           ),
         ),
         BlocProvider(
-          create: (_) => KycRegistrationStepCubit(skipEmail: email != null),
+          create: (_) => KycRegistrationStepCubit(),
         ),
       ],
       child: KycRegistrationView(email: email),
@@ -75,13 +75,6 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
     super.initState();
     if (widget.email != null) {
       emailCtrl.text = widget.email!;
-      getIt<RealUnitRegistrationService>().registerEmail(widget.email!);
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        final accepted = await context.push<bool>(LegalDisclaimerPage.routeName);
-        if (accepted != true && mounted) {
-          context.pop();
-        }
-      });
     }
     _stepSubscription = context.read<KycRegistrationStepCubit>().stream.listen((state) {
       _pageController.animateToPage(
@@ -135,15 +128,10 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
             Expanded(
               child: Stack(
                 children: [
-                  BlocBuilder<KycRegistrationStepCubit, KycRegistrationStepState>(
-                    buildWhen: (prev, next) => false,
-                    builder: (context, stepState) {
-                      return PageView(
-                        controller: _pageController,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: stepState.steps.map(_buildStep).toList(),
-                      );
-                    },
+                  PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: KycRegistrationStep.values.map(_buildStep).toList(),
                   ),
                   BlocBuilder<KycRegistrationSubmitCubit, KycRegistrationSubmitState>(
                     builder: (context, state) {
