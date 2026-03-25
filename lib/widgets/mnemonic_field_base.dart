@@ -38,7 +38,7 @@ class _MnemonicFieldBase extends StatelessWidget {
                   return Expanded(
                     child: FocusTraversalOrder(
                       order: NumericFocusOrder(index.toDouble()),
-                          child: GestureDetector(
+                      child: GestureDetector(
                         onTap: onCellTap != null ? () => onCellTap!(index) : null,
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.baseline,
