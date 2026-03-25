@@ -22,9 +22,15 @@ class KycRegistrationEmailStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => KycRegistrationEmailStepCubit(
-        getIt<RealUnitRegistrationService>(),
-      ),
+      create: (context) {
+        final cubit = KycRegistrationEmailStepCubit(
+          getIt<RealUnitRegistrationService>(),
+        );
+        if (emailCtrl.text.isNotEmpty) {
+          cubit.checkEmail(emailCtrl.text);
+        }
+        return cubit;
+      },
       child: KycRegistrationEmailStepView(
         emailCtrl: emailCtrl,
         onSuccess: onSuccess,
