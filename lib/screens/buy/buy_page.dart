@@ -67,17 +67,17 @@ class _BuyViewState extends State<BuyView> {
           );
         },
         builder: (context, state) {
-          return SafeArea(
-            child: GestureDetector(
-              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-              child: LayoutBuilder(
-                builder: (context, constraint) {
-                  return SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(minHeight: constraint.maxHeight),
-                      child: IntrinsicHeight(
-                        child: Padding(
-                          padding: const .symmetric(horizontal: 20.0),
+          return GestureDetector(
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: LayoutBuilder(
+              builder: (context, constraint) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraint.maxHeight),
+                    child: IntrinsicHeight(
+                      child: Padding(
+                        padding: const .symmetric(horizontal: 20.0),
+                        child: SafeArea(
                           child: Column(
                             crossAxisAlignment: .start,
                             children: [
@@ -96,9 +96,9 @@ class _BuyViewState extends State<BuyView> {
                         ),
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
           );
         },
