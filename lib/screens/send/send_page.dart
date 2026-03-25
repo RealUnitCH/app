@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/send/bloc/send_bloc.dart';
 import 'package:realunit_wallet/screens/send/send_view.dart';
+import 'package:realunit_wallet/setup/di.dart';
 
 class SendRouteParams {
   final String receiver;

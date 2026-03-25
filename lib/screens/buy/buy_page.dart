@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
@@ -10,6 +9,7 @@ import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_
 import 'package:realunit_wallet/screens/buy/widgets/payment_additional_action_needed_button.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
+import 'package:realunit_wallet/setup/di.dart';
 
 class BuyPage extends StatelessWidget {
   static const routeName = '/buy';
@@ -76,10 +76,10 @@ class _BuyViewState extends State<BuyView> {
                     constraints: BoxConstraints(minHeight: constraint.maxHeight),
                     child: IntrinsicHeight(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        padding: const .symmetric(horizontal: 20.0),
                         child: SafeArea(
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: .start,
                             children: [
                               PaymentConverter(
                                 amountController: _amountController,
@@ -118,8 +118,8 @@ class _BuyViewState extends State<BuyView> {
 
     controller.value = controller.value.copyWith(
       text: newValue,
-      selection: TextSelection.collapsed(offset: newValue.length),
-      composing: TextRange.empty,
+      selection: .collapsed(offset: newValue.length),
+      composing: .empty,
     );
   }
 }

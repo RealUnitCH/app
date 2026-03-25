@@ -4,12 +4,19 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
+import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_bank_account_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/bank_account/bank_account.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
+import 'package:realunit_wallet/packages/utils/default_assets.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
+import 'package:realunit_wallet/screens/sell/cubits/sell_balance/sell_balance_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_converter/sell_converter_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_selected_bank_account/sell_selected_bank_account_cubit.dart';
@@ -18,6 +25,7 @@ import 'package:realunit_wallet/screens/sell/widgets/sell_add_bank_account_sheet
 import 'package:realunit_wallet/screens/sell/widgets/sell_bank_account_field.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_button.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_converter.dart';
+import 'package:realunit_wallet/screens/sell/widgets/sell_max_amount_button.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -31,23 +39,47 @@ class MockSellPaymentInfoCubit extends MockCubit<SellPaymentInfoState>
 class MockSellSelectedBankAccountCubit extends MockCubit<BankAccount?>
     implements SellSelectedBankAccountCubit {}
 
+class MockSellBalanceCubit extends MockCubit<Balance> implements SellBalanceCubit {}
+
 class MockDfxBrokerbotService extends Mock implements DfxBrokerbotService {}
 
 class MockDfxBankAccountService extends Mock implements DfxBankAccountService {}
 
+class MockDfxPriceService extends Mock implements DFXPriceService {}
+
 class MockRealUnitSellPaymentInfoService extends Mock implements RealUnitSellPaymentInfoService {}
 
+class MockBalanceRepository extends Mock implements BalanceRepository {}
+
 class MockApiConfig extends Mock implements ApiConfig {}
+
+class MockAppStore extends Mock implements AppStore {}
+
+class MockWallet extends Mock implements SoftwareWallet {}
 
 void main() {
   late SellConverterCubit converterCubit;
   late SellPaymentInfoCubit sellPaymentInfoCubit;
   late SellSelectedBankAccountCubit sellSelectedBankAccountCubit;
+  late SellBalanceCubit sellBalanceCubit;
+
+  setUpAll(() {
+    registerFallbackValue(
+      Balance(
+        chainId: 1,
+        contractAddress: '0x0',
+        walletAddress: '0x0',
+        balance: BigInt.zero,
+        asset: realUnitAsset,
+      ),
+    );
+  });
 
   setUp(() {
     converterCubit = MockSellConverterCubit();
     sellPaymentInfoCubit = MockSellPaymentInfoCubit();
     sellSelectedBankAccountCubit = MockSellSelectedBankAccountCubit();
+    sellBalanceCubit = MockSellBalanceCubit();
 
     when(() => converterCubit.state).thenReturn(const SellConverterState());
     when(() => sellPaymentInfoCubit.state).thenReturn(const SellPaymentInfoInitial());
@@ -58,17 +90,50 @@ void main() {
         currency: Currency.chf,
       ),
     ).thenAnswer((_) => Future.value());
+    when(
+      () => sellPaymentInfoCubit.validateMinAmount(fiatAmount: any(named: 'fiatAmount')),
+    ).thenAnswer((_) => Future.value());
     when(() => sellSelectedBankAccountCubit.state).thenReturn(null);
+    when(() => sellBalanceCubit.state).thenReturn(
+      Balance(
+        chainId: 1,
+        contractAddress: '0x0',
+        walletAddress: '0x0',
+        balance: BigInt.zero,
+        asset: realUnitAsset,
+      ),
+    );
   });
 
   Future<void> setupDependencyInjection() async {
     SharedPreferences.setMockInitialValues({});
     final getIt = GetIt.instance;
-    getIt.registerSingleton<AppStore>(AppStore(() => MockApiConfig()));
+    final apiConfig = MockApiConfig();
+    when(() => apiConfig.asset).thenReturn(realUnitAsset);
+    final appStore = MockAppStore();
+    when(() => appStore.apiConfig).thenReturn(apiConfig);
+    when(() => appStore.wallet).thenReturn(MockWallet());
+    when(() => appStore.primaryAddress).thenReturn('0x0000000000000000000000000000000000000000');
+    getIt.registerSingleton<AppStore>(appStore);
     getIt.registerSingleton<DfxBrokerbotService>(MockDfxBrokerbotService());
     getIt.registerSingleton<DfxBankAccountService>(MockDfxBankAccountService());
+    getIt.registerSingleton<DFXPriceService>(MockDfxPriceService());
     getIt.registerSingleton<RealUnitSellPaymentInfoService>(MockRealUnitSellPaymentInfoService());
     getIt.registerSingleton<SharedPreferences>(await SharedPreferences.getInstance());
+    final balanceRepository = MockBalanceRepository();
+    when(() => balanceRepository.watchBalance(any())).thenAnswer(
+      (_) => Stream.value(
+        Balance(
+          chainId: 1,
+          contractAddress: '0x0',
+          walletAddress: '0x0',
+          balance: BigInt.zero,
+          asset: realUnitAsset,
+        ),
+      ),
+    );
+    when(() => balanceRepository.saveBalance(any())).thenAnswer((_) async {});
+    getIt.registerSingleton<BalanceRepository>(balanceRepository);
   }
 
   setUpAll(() async => await setupDependencyInjection());
@@ -81,6 +146,7 @@ void main() {
         BlocProvider.value(value: converterCubit),
         BlocProvider.value(value: sellPaymentInfoCubit),
         BlocProvider.value(value: sellSelectedBankAccountCubit),
+        BlocProvider.value(value: sellBalanceCubit),
       ],
       child: const SellView(),
     );
@@ -112,6 +178,40 @@ void main() {
       expect(find.byType(SellAddBankAccountSheet), findsOne);
     });
 
+    group('$SellMaxAmountButton', () {
+      testWidgets(('is shown when balance is bigger than 0'), (tester) async {
+        when(() => sellBalanceCubit.state).thenReturn(
+          Balance(
+            chainId: 1,
+            contractAddress: '0x0',
+            walletAddress: '0x0',
+            balance: BigInt.one,
+            asset: realUnitAsset,
+          ),
+        );
+
+        await tester.pumpApp(buildSubject(const SellView()));
+
+        expect(find.byType(SellMaxAmountButton), findsOne);
+      });
+
+      testWidgets(('is not shown when balance is 0'), (tester) async {
+        when(() => sellBalanceCubit.state).thenReturn(
+          Balance(
+            chainId: 1,
+            contractAddress: '0x0',
+            walletAddress: '0x0',
+            balance: BigInt.zero,
+            asset: realUnitAsset,
+          ),
+        );
+
+        await tester.pumpApp(buildSubject(const SellView()));
+
+        expect(find.byType(SellMaxAmountButton), findsNothing);
+      });
+    });
+
     group('$SellButton', () {
       testWidgets('is initially disabled button', (tester) async {
         when(() => sellPaymentInfoCubit.state).thenReturn(const SellPaymentInfoInitial());
@@ -130,6 +230,33 @@ void main() {
         await tester.pumpApp(buildSubject(const SellView()));
 
         expect(find.byType(CircularProgressIndicator), findsOne);
+      });
+
+      testWidgets('is disabled button when minimum amount is not met', (tester) async {
+        final amount = 10.0;
+        final currency = Currency.chf;
+
+        when(
+          () => sellPaymentInfoCubit.state,
+        ).thenReturn(
+          SellPaymentInfoMinAmountNotMet(
+            minAmount: amount,
+            currency: currency,
+          ),
+        );
+
+        await tester.pumpApp(buildSubject(const SellView()));
+
+        expect(
+          find.text(S.current.sellMinAmount(amount.round().toString(), currency.code)),
+          findsOne,
+        );
+        expect(
+          find.byWidgetPredicate(
+            (Widget widget) => widget is FilledButton && widget.onPressed == null,
+          ),
+          findsOne,
+        );
       });
 
       testWidgets('is enabled button when amount and bankaccount are given', (tester) async {
