@@ -87,20 +87,7 @@ class LegalDisclaimerView extends StatelessWidget {
           ),
         );
 
-        if (_isInline) {
-          return Column(
-            children: [
-              Text(
-                s.legalDisclaimer,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Expanded(child: body),
-            ],
-          );
-        }
+        if (_isInline) return body;
 
         return Scaffold(
           appBar: AppBar(

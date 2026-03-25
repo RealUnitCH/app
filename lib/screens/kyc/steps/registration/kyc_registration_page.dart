@@ -102,7 +102,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
                 icon: const Icon(Icons.arrow_back_rounded),
               ),
               title: Text(
-                state.title(context),
+                state.title(context, emailAutoSubmitted: widget.email != null),
               ),
             );
           },
