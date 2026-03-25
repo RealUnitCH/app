@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
@@ -186,15 +187,9 @@ class PaymentInformationDetailsView extends StatelessWidget {
                           ],
                         ),
                       ),
-                      PaymentInfoOptions.qrCode => Container(
-                        padding: const .all(16.0),
-                        child: Center(
-                          child: SvgPicture.string(
-                            SvgParser.normalize(buyPaymentInfo.paymentRequest!),
-                            width: MediaQuery.widthOf(context) * 0.6,
-                            fit: .contain,
-                          ),
-                        ),
+                      PaymentInfoOptions.qrCode => _buildQrCodeDisplay(
+                        context,
+                        buyPaymentInfo.paymentRequest!,
                       ),
                     },
                   ),
@@ -261,6 +256,29 @@ class PaymentInformationDetailsView extends StatelessWidget {
       }
     }
     return result;
+  }
+
+  Widget _buildQrCodeDisplay(BuildContext context, String paymentRequest) {
+    final isSvg = paymentRequest.contains('<svg');
+
+    return Container(
+      padding: const .all(16.0),
+      child: Center(
+        child: isSvg
+            ? SvgPicture.string(
+                SvgParser.normalize(paymentRequest),
+                width: MediaQuery.widthOf(context) * 0.6,
+                fit: .contain,
+              )
+            : SizedBox(
+                height: MediaQuery.widthOf(context) * 0.6,
+                width: MediaQuery.widthOf(context) * 0.6,
+                child: QrImageView(
+                  data: paymentRequest,
+                ),
+              ),
+      ),
+    );
   }
 }
 
