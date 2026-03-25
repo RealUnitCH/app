@@ -77,11 +77,13 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
       emailCtrl.text = widget.email!;
     }
     _stepSubscription = context.read<KycRegistrationStepCubit>().stream.listen((state) {
-      _pageController.animateToPage(
-        state.index,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOut,
-      );
+      if (_pageController.page?.round() != state.index) {
+        _pageController.animateToPage(
+          state.index,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOut,
+        );
+      }
     });
   }
 
@@ -164,6 +166,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
             final result = await context.push<bool>(LegalDisclaimerPage.routeName);
             if (!mounted) return;
             if (result == true) {
+              _pageController.jumpToPage(1);
               context.read<KycRegistrationStepCubit>().next();
             }
           },
