@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
+import 'package:realunit_wallet/screens/legal/cubit/legal_disclaimer_cubit.dart';
+import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_email_step/kyc_registration_email_step_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/subpages/kyc_registration_email_verification_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
@@ -86,8 +89,20 @@ class KycRegistrationEmailStepView extends StatelessWidget {
       },
       child: BlocBuilder<KycRegistrationEmailStepCubit, KycRegistrationEmailStepState>(
         builder: (context, builderState) {
-          if (builderState is! KycRegistrationEmailStepFailure && emailCtrl.text.isNotEmpty) {
-            return const Center(child: CupertinoActivityIndicator());
+          if (emailCtrl.text.isNotEmpty) {
+            if (builderState is KycRegistrationEmailStepSuccess &&
+                builderState.status == RegistrationEmailStatus.emailRegistered) {
+              return BlocProvider(
+                create: (_) => LegalDisclaimerCubit(),
+                child: LegalDisclaimerView(
+                  onAccepted: onSuccess,
+                  onDeclined: () => Navigator.of(context).maybePop(),
+                ),
+              );
+            }
+            if (builderState is! KycRegistrationEmailStepFailure) {
+              return const Center(child: CupertinoActivityIndicator());
+            }
           }
           return SingleChildScrollView(
             padding: const .symmetric(horizontal: 20),

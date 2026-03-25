@@ -24,7 +24,10 @@ class LegalDisclaimerPage extends StatelessWidget {
 }
 
 class LegalDisclaimerView extends StatelessWidget {
-  const LegalDisclaimerView({super.key});
+  final VoidCallback? onAccepted;
+  final VoidCallback? onDeclined;
+
+  const LegalDisclaimerView({super.key, this.onAccepted, this.onDeclined});
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +42,7 @@ class LegalDisclaimerView extends StatelessWidget {
                 if (state.canGoBack) {
                   cubit.previousStep();
                 } else {
-                  context.pop();
+                  (onDeclined ?? () => context.pop())();
                 }
               },
               icon: const Icon(Icons.arrow_back_rounded),
@@ -76,14 +79,14 @@ class LegalDisclaimerView extends StatelessWidget {
                       children: [
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () => context.pop(),
+                            onPressed: onDeclined ?? () => context.pop(),
                             child: Text(s.legalDisclaimerNo),
                           ),
                         ),
                         Expanded(
                           child: FilledButton(
                             onPressed: () => cubit.nextStep(
-                              onComplete: () => context.pop(true),
+                              onComplete: onAccepted ?? () => context.pop(true),
                             ),
                             child: Text(s.legalDisclaimerYes),
                           ),

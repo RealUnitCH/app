@@ -163,11 +163,14 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
         return KycRegistrationEmailStep(
           emailCtrl: emailCtrl,
           onSuccess: () async {
-            final result = await context.push<bool>(LegalDisclaimerPage.routeName);
-            if (!mounted) return;
-            if (result == true) {
-              _pageController.jumpToPage(1);
+            if (widget.email != null) {
               context.read<KycRegistrationStepCubit>().next();
+            } else {
+              final result = await context.push<bool>(LegalDisclaimerPage.routeName);
+              if (!mounted) return;
+              if (result == true) {
+                context.read<KycRegistrationStepCubit>().next();
+              }
             }
           },
         );
