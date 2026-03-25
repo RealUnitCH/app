@@ -20,7 +20,7 @@ enum TimePeriod {
       case TimePeriod.oneYear:
         return S.of(context).timePeriodOneYearAbr;
       case TimePeriod.all:
-        return S.of(context).all;
+        return S.of(context).max;
     }
   }
 }

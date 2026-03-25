@@ -34,3 +34,13 @@ class SellPaymentInfoFailure extends SellPaymentInfoState {
   @override
   List<Object?> get props => [error, message, requiredLevel];
 }
+
+class SellPaymentInfoMinAmountNotMet extends SellPaymentInfoState {
+  final double minAmount;
+  final Currency currency;
+
+  const SellPaymentInfoMinAmountNotMet({required this.minAmount, required this.currency});
+
+  @override
+  List<Object?> get props => [minAmount, currency];
+}

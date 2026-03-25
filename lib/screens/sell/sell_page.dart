@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/repository/balance_repository.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
+import 'package:realunit_wallet/screens/sell/cubits/sell_balance/sell_balance_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_converter/sell_converter_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_selected_bank_account/sell_selected_bank_account_cubit.dart';
@@ -21,6 +25,12 @@ class SellPage extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
+          create: (context) => SellBalanceCubit(
+            getIt<BalanceRepository>(),
+            getIt<AppStore>(),
+          ),
+        ),
+        BlocProvider(
           create: (context) => SellConverterCubit(
             getIt<DfxBrokerbotService>(),
           )..onSharesChanged('100'),
@@ -28,6 +38,7 @@ class SellPage extends StatelessWidget {
         BlocProvider(
           create: (context) => SellPaymentInfoCubit(
             getIt<RealUnitSellPaymentInfoService>(),
+            getIt<DFXPriceService>(),
           ),
         ),
         BlocProvider(
@@ -63,30 +74,44 @@ class _SellViewState extends State<SellView> {
         listener: (context, state) {
           _syncController(_amountController, state.sharesText);
           _syncController(_resultController, state.fiatText);
+          context.read<SellPaymentInfoCubit>().validateMinAmount(
+            fiatAmount: state.fiatText,
+            currency: state.currency,
+          );
         },
         builder: (context, state) {
-          return SingleChildScrollView(
-            child: SafeArea(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Column(
-                    spacing: 32,
-                    children: [
-                      SellConverter(
-                        amountController: _amountController,
-                        resultController: _resultController,
+          return SafeArea(
+            child: GestureDetector(
+              behavior: .opaque,
+              onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                      child: IntrinsicHeight(
+                        child: Padding(
+                          padding: const .symmetric(horizontal: 20.0),
+                          child: Column(
+                            spacing: 32,
+                            children: [
+                              SellConverter(
+                                amountController: _amountController,
+                                resultController: _resultController,
+                              ),
+                              const SellBankAccountField(),
+                              const Spacer(),
+                              SellButton(
+                                amount: _amountController.text,
+                                bankAccount: context.watch<SellSelectedBankAccountCubit>().state,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      const SellBankAccountField(),
-                      SellButton(
-                        amount: _amountController.text,
-                        bankAccount: context.watch<SellSelectedBankAccountCubit>().state,
-                      ),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
             ),
           );
