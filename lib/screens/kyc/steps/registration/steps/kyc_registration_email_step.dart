@@ -38,6 +38,7 @@ class KycRegistrationEmailStep extends StatelessWidget {
       child: KycRegistrationEmailStepView(
         emailCtrl: emailCtrl,
         onSuccess: onSuccess,
+        autoSubmit: emailCtrl.text.isNotEmpty,
       ),
     );
   }
@@ -46,11 +47,13 @@ class KycRegistrationEmailStep extends StatelessWidget {
 class KycRegistrationEmailStepView extends StatelessWidget {
   final TextEditingController emailCtrl;
   final Future<void> Function() onSuccess;
+  final bool autoSubmit;
 
   KycRegistrationEmailStepView({
     super.key,
     required this.emailCtrl,
     required this.onSuccess,
+    this.autoSubmit = false,
   });
 
   final _formKey = GlobalKey<FormState>();
@@ -71,7 +74,7 @@ class KycRegistrationEmailStepView extends StatelessWidget {
           );
         }
         if (state is KycRegistrationEmailStepSuccess) {
-          if (state.status == .emailRegistered) {
+          if (state.status == .emailRegistered && !autoSubmit) {
             onSuccess();
           }
           if (state.status == .mergeRequested) {
@@ -89,7 +92,7 @@ class KycRegistrationEmailStepView extends StatelessWidget {
       },
       child: BlocBuilder<KycRegistrationEmailStepCubit, KycRegistrationEmailStepState>(
         builder: (context, builderState) {
-          if (emailCtrl.text.isNotEmpty) {
+          if (autoSubmit) {
             if (builderState is KycRegistrationEmailStepSuccess &&
                 builderState.status == RegistrationEmailStatus.emailRegistered) {
               return BlocProvider(
