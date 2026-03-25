@@ -116,11 +116,13 @@ class SettingsUserDataView extends StatelessWidget {
                       ),
                     )
                   : email != null
-                      ? Padding(
-                          padding: const .symmetric(horizontal: 12.0),
-                          child: _UserDataRow(
-                            label: S.of(context).email,
-                            value: email,
+                      ? SafeArea(
+                          child: Padding(
+                            padding: const .symmetric(horizontal: 12.0),
+                            child: _UserDataRow(
+                              label: S.of(context).email,
+                              value: email,
+                            ),
                           ),
                         )
                       : Center(
