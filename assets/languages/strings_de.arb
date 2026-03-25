@@ -215,6 +215,7 @@
   "registerCitizenship": "Staatsangehörigkeit",
   "registerDataMismatch": "Die angegebenen Daten stimmen nicht mit den Daten im System überein. Bitte melde dich beim Support.",
   "registerEmail": "E-Mail registrieren",
+  "registerEmailDoesNotMatch": "Die eingegebene E-Mail stimmt nicht mit der bereits verifizierten E-Mail überein. Bitte verwenden Sie die E-Mail, mit der Sie sich ursprünglich registriert haben.",
   "registerEmailInvalid": "E-Mail ist ungültig",
   "registerEmailRequired": "E-Mail ist erforderlich",
   "registerEmailVerification": "E-Mail Bestätigung",

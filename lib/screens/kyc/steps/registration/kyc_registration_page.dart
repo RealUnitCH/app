@@ -20,7 +20,9 @@ import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class KycRegistrationPage extends StatelessWidget {
-  const KycRegistrationPage({super.key});
+  final String? email;
+
+  const KycRegistrationPage({super.key, this.email});
 
   @override
   Widget build(BuildContext context) {
@@ -35,13 +37,15 @@ class KycRegistrationPage extends StatelessWidget {
           create: (_) => KycRegistrationStepCubit(),
         ),
       ],
-      child: const KycRegistrationView(),
+      child: KycRegistrationView(email: email),
     );
   }
 }
 
 class KycRegistrationView extends StatefulWidget {
-  const KycRegistrationView({super.key});
+  final String? email;
+
+  const KycRegistrationView({super.key, this.email});
 
   @override
   State<KycRegistrationView> createState() => _KycRegistrationViewState();
@@ -69,6 +73,9 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   @override
   void initState() {
     super.initState();
+    if (widget.email != null) {
+      emailCtrl.text = widget.email!;
+    }
     _stepSubscription = context.read<KycRegistrationStepCubit>().stream.listen((state) {
       _pageController.animateToPage(
         state.index,

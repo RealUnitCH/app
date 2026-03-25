@@ -50,9 +50,12 @@ class KycRegistrationEmailStepView extends StatelessWidget {
     return BlocListener<KycRegistrationEmailStepCubit, KycRegistrationEmailStepState>(
       listener: (context, state) async {
         if (state is KycRegistrationEmailStepFailure) {
+          final message = state.error == KycRegistrationEmailStepError.emailDoesNotMatch
+              ? S.of(context).registerEmailDoesNotMatch
+              : state.message;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.message),
+              content: Text(message),
               backgroundColor: RealUnitColors.status.red600,
             ),
           );

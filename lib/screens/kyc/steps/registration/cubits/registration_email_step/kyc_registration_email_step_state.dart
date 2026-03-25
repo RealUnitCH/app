@@ -24,11 +24,14 @@ class KycRegistrationEmailStepSuccess extends KycRegistrationEmailStepState {
   List<Object?> get props => [status];
 }
 
+enum KycRegistrationEmailStepError { emailDoesNotMatch, unknown }
+
 class KycRegistrationEmailStepFailure extends KycRegistrationEmailStepState {
+  final KycRegistrationEmailStepError error;
   final String message;
 
-  const KycRegistrationEmailStepFailure(this.message);
+  const KycRegistrationEmailStepFailure(this.error, this.message);
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [error, message];
 }

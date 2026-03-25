@@ -215,6 +215,7 @@
   "registerCitizenship": "Citizenship",
   "registerDataMismatch": "The data provided does not match the data in the system. Please contact support.",
   "registerEmail": "Register Email",
+  "registerEmailDoesNotMatch": "The email you entered does not match the previously verified email. Please use the email you originally registered with.",
   "registerEmailInvalid": "Email is invalid",
   "registerEmailRequired": "Email is required",
   "registerEmailVerification": "Email verification",
