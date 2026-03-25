@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
-import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings_tax_report/cubit/settings_tax_report_cubit.dart';
+import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/date_picker_field.dart';
 
@@ -65,40 +65,43 @@ class SettingsTaxReportView extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               ValueListenableBuilder(
-                  valueListenable: _datePickerModel,
-                  builder: (context, value, child) {
-                    return DatePickerField(
-                      initialDate: _datePickerModel.value,
-                      firstDate: DateTime(2025),
-                      lastDate: DateTime.now(),
-                      onDateSelected: (date) => _datePickerModel.setDate(date),
-                    );
-                  }),
-              BlocBuilder<SettingsTaxReportCubit, SettingsTaxReportState>(
-                  builder: (context, state) {
-                if (state is SettingsTaxReportLoading) {
-                  return FilledButton.icon(
-                    onPressed: null,
-                    icon: SizedBox(
-                      height: 14,
-                      width: 14,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 1.5,
-                        color: RealUnitColors.basic.black.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    label: Text(S.of(context).pdf),
+                valueListenable: _datePickerModel,
+                builder: (context, value, child) {
+                  return DatePickerField(
+                    initialDate: _datePickerModel.value,
+                    firstDate: DateTime(2025),
+                    lastDate: DateTime.now(),
+                    onDateSelected: (date) => _datePickerModel.setDate(date),
                   );
-                }
-                return FilledButton.icon(
-                  onPressed: () => context.read<SettingsTaxReportCubit>().generateTaxReport(
+                },
+              ),
+              BlocBuilder<SettingsTaxReportCubit, SettingsTaxReportState>(
+                builder: (context, state) {
+                  if (state is SettingsTaxReportLoading) {
+                    return FilledButton.icon(
+                      onPressed: null,
+                      icon: SizedBox(
+                        height: 14,
+                        width: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1.5,
+                          color: RealUnitColors.basic.black.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      label: Text(S.of(context).pdf),
+                    );
+                  }
+                  return FilledButton.icon(
+                    onPressed: () => context.read<SettingsTaxReportCubit>().generateTaxReport(
                       date: _datePickerModel.value,
                       currency: settingsState.currency,
-                      language: settingsState.language),
-                  label: Text(S.of(context).pdf),
-                  icon: const Icon(Icons.file_download_outlined),
-                );
-              }),
+                      language: settingsState.language,
+                    ),
+                    label: Text(S.of(context).pdf),
+                    icon: const Icon(Icons.file_download_outlined),
+                  );
+                },
+              ),
             ],
           ),
         ),

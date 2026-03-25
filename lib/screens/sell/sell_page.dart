@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/di.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
@@ -14,6 +13,7 @@ import 'package:realunit_wallet/screens/sell/cubits/sell_selected_bank_account/s
 import 'package:realunit_wallet/screens/sell/widgets/sell_bank_account_field.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_button.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_converter.dart';
+import 'package:realunit_wallet/setup/di.dart';
 
 class SellPage extends StatelessWidget {
   static const routeName = '/sell';
