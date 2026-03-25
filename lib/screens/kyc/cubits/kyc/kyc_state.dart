@@ -29,11 +29,12 @@ class KycPending extends KycState {
 class KycSuccess extends KycState {
   final KycStep currentStep;
   final String? urlOrToken;
+  final String? email;
 
-  const KycSuccess({required this.currentStep, this.urlOrToken});
+  const KycSuccess({required this.currentStep, this.urlOrToken, this.email});
 
   @override
-  List<Object?> get props => [currentStep, urlOrToken];
+  List<Object?> get props => [currentStep, urlOrToken, email];
 }
 
 class KycCompleted extends KycState {

@@ -19,10 +19,10 @@ class KycRegistrationStepState {
 
   bool get canGoBack => step != KycRegistrationStep.email;
 
-  String title(BuildContext context) {
+  String title(BuildContext context, {bool emailAutoSubmitted = false}) {
     switch (step) {
       case KycRegistrationStep.email:
-        return S.of(context).registerEmail;
+        return emailAutoSubmitted ? S.of(context).legalDisclaimer : S.of(context).registerEmail;
       case KycRegistrationStep.personal:
         return S.of(context).personalData;
       case KycRegistrationStep.address:
