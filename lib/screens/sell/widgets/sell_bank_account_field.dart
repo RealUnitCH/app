@@ -45,13 +45,13 @@ class BankAccountFieldView extends StatelessWidget {
         }
       },
       builder: (context, state) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: .start,
         children: [
           Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: .start,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(
+                padding: const .symmetric(
                   horizontal: 12.0,
                   vertical: 4.0,
                 ),
@@ -59,7 +59,7 @@ class BankAccountFieldView extends StatelessWidget {
                   S.of(context).bankAccount,
                   style: const TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: .bold,
                     height: 18 / 13,
                   ),
                 ),
@@ -79,8 +79,7 @@ class BankAccountFieldView extends StatelessWidget {
                           value: account,
                           child: Text(
                             IbanTextFormatter.formatIban(account.iban),
-                            style: const TextStyle(
-                              fontSize: 14,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: RealUnitColors.neutral900,
                             ),
                           ),
@@ -89,26 +88,26 @@ class BankAccountFieldView extends StatelessWidget {
                       .toList(),
                   isExpanded: true,
                   isDense: true,
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: .circular(8.0),
                   menuMaxHeight: MediaQuery.sizeOf(context).height * 0.4,
                   decoration: const InputDecoration(
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(8.0)),
+                      borderRadius: .all(.circular(8.0)),
                       borderSide: BorderSide(color: RealUnitColors.neutral300),
                     ),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
+                    border: .none,
+                    contentPadding: .symmetric(
                       horizontal: 10.0,
                     ),
                   ),
                   hint: Text(
                     '${S.of(context).pleaseSelect}...',
-                    style: const TextStyle(
-                      color: RealUnitColors.neutral400,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: RealUnitColors.neutral400),
                   ),
                   icon: const Padding(
-                    padding: EdgeInsets.only(right: 8),
+                    padding: .symmetric(horizontal: 8),
                     child: Icon(Icons.arrow_drop_down),
                   ),
                 ),

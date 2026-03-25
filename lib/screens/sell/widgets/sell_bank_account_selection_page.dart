@@ -6,8 +6,8 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_bank_accounts/sell_bank_accounts_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_selected_bank_account/sell_selected_bank_account_cubit.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_add_bank_account_sheet.dart';
+import 'package:realunit_wallet/screens/sell/widgets/sell_bank_account_list_item.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/widgets/iban_text_formatter.dart';
 
 class SellBankAccountSelectionPage extends StatelessWidget {
   const SellBankAccountSelectionPage({super.key});
@@ -54,100 +54,21 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                         itemCount: state.accounts.length,
                         separatorBuilder: (context, index) => const SizedBox(height: 16.0),
                         itemBuilder: (context, index) {
-                          final account = state.accounts[index];
-                          if (account.isActive) {
-                            return GestureDetector(
-                              onTap: () {
-                                context.read<SellSelectedBankAccountCubit>().selectBankAccount(
-                                  account,
-                                );
-                                Navigator.pop(context);
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: RealUnitColors.brand200,
-                                  borderRadius: .circular(12.0),
-                                ),
-                                padding: const .symmetric(
-                                  horizontal: 12.0,
-                                  vertical: 8.0,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: .spaceBetween,
-                                  children: [
-                                    Column(
-                                      spacing: 4.0,
-                                      crossAxisAlignment: .start,
-                                      children: [
-                                        Text(
-                                          account.name ??
-                                              '${S.of(context).without} ${S.of(context).label}',
-                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                            color: RealUnitColors.neutral600,
-                                          ),
-                                        ),
-                                        Text(
-                                          IbanTextFormatter.formatIban(account.iban),
-                                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                            fontWeight: .w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    IconButton(
-                                      onPressed: () async {
-                                        await context.read<SellBankAccountsCubit>().deactivate(
-                                          bankAccount: account,
-                                        );
-                                      },
-                                      style: IconButton.styleFrom(
-                                        side: const BorderSide(
-                                          color: RealUnitColors.neutral400,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8.0),
-                                        ),
-                                      ),
-                                      icon: const Icon(
-                                        Icons.delete_outline_outlined,
-                                        color: RealUnitColors.realUnitBlack,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          } else {
-                            return Container(
-                              decoration: BoxDecoration(
-                                color: RealUnitColors.neutral300,
-                                borderRadius: .circular(12.0),
-                              ),
-                              padding: const .symmetric(
-                                horizontal: 12.0,
-                                vertical: 10.0,
-                              ),
-                              child: Column(
-                                spacing: 4.0,
-                                crossAxisAlignment: .start,
-                                children: [
-                                  Text(
-                                    S.of(context).deactivated,
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: RealUnitColors.neutral500,
-                                    ),
-                                  ),
-                                  Text(
-                                    IbanTextFormatter.formatIban(account.iban),
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      fontWeight: .w600,
-                                      color: RealUnitColors.realUnitBlack.withValues(alpha: 0.7),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
+                          final account = state.accounts.elementAt(index);
+                          return SellBankAccountListItem(
+                            account: account,
+                            onTap: () {
+                              context.read<SellSelectedBankAccountCubit>().selectBankAccount(
+                                account,
+                              );
+                              context.pop();
+                            },
+                            onDelete: () async {
+                              await context.read<SellBankAccountsCubit>().deactivate(
+                                bankAccount: account,
+                              );
+                            },
+                          );
                         },
                       );
                     },
@@ -157,8 +78,8 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                   onPressed: () => _onAddBankAccountPressed(context),
                   label: Text(
                     S.of(context).addBankAccount,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: .bold,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: .w600,
                       color: RealUnitColors.realUnitBlue,
                     ),
                   ),
