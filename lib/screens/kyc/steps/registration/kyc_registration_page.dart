@@ -54,7 +54,6 @@ class KycRegistrationView extends StatefulWidget {
 class _KycRegistrationViewState extends State<KycRegistrationView> {
   final _pageController = PageController();
   StreamSubscription<KycRegistrationStepState>? _stepSubscription;
-  bool _ready = true;
 
   final emailCtrl = TextEditingController();
 
@@ -76,16 +75,11 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
     super.initState();
     if (widget.email != null) {
       emailCtrl.text = widget.email!;
-      _ready = false;
       getIt<RealUnitRegistrationService>().registerEmail(widget.email!);
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         final accepted = await context.push<bool>(LegalDisclaimerPage.routeName);
-        if (mounted) {
-          if (accepted == true) {
-            setState(() => _ready = true);
-          } else {
-            context.pop();
-          }
+        if (accepted != true && mounted) {
+          context.pop();
         }
       });
     }
@@ -100,11 +94,6 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_ready) {
-      return const Scaffold(
-        body: Center(child: CupertinoActivityIndicator()),
-      );
-    }
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
