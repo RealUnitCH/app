@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
@@ -99,7 +100,7 @@ class KycRegistrationEmailStepView extends StatelessWidget {
                 create: (_) => LegalDisclaimerCubit(),
                 child: LegalDisclaimerView(
                   onAccepted: onSuccess,
-                  onDeclined: () => Navigator.of(context).maybePop(),
+                  onDeclined: () => context.pop(),
                 ),
               );
             }
