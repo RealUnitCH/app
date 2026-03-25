@@ -32,7 +32,7 @@ class _MnemonicFieldBase extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Row(
               children: List.generate(columns, (colIndex) {
-                final index = rowIndex * columns + colIndex;
+                final index = rowIndex + colIndex * rows;
                 return Expanded(
                   child: GestureDetector(
                     onTap: onCellTap != null ? () => onCellTap!(index) : null,
