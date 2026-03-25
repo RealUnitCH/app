@@ -184,7 +184,7 @@
   "pinConfirmFailed": "Die PINs stimmen nicht überein. Versuchen Sie es erneut.",
   "pinCreate": "Erstellen Sie Ihre PIN",
   "pinCreateDescription": "Geben Sie eine ${pinLength}-stellige PIN ein, um Ihre Wallet zu sichern",
-  "pinForgotten": "PIN vergessen? Wallet zurücksetzen",
+  "pinForgotten": "PIN vergessen?",
   "pinForgottenDescription": "Durch diese Aktion werden Ihre Wallet und alle zugehörigen Daten gelöscht. Stellen Sie sicher, dass Sie Ihre Wiederherstellungsphrase gesichert haben.",
   "pinForgottenTitle": "Wallet wird zurückgesetzt",
   "pinVerify": "Geben Sie Ihre PIN ein",
