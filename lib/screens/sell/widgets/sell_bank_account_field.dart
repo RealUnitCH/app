@@ -10,6 +10,7 @@ import 'package:realunit_wallet/screens/sell/cubits/sell_selected_bank_account/s
 import 'package:realunit_wallet/screens/sell/widgets/sell_add_bank_account_sheet.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_bank_account_selection_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/iban_text_formatter.dart';
 
 class SellBankAccountField extends StatelessWidget {
   const SellBankAccountField({super.key});
@@ -77,7 +78,7 @@ class BankAccountFieldView extends StatelessWidget {
                         (account) => DropdownMenuItem(
                           value: account,
                           child: Text(
-                            account.iban,
+                            IbanTextFormatter.formatIban(account.iban),
                             style: const TextStyle(
                               fontSize: 14,
                               color: RealUnitColors.neutral900,

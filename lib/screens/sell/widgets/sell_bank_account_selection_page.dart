@@ -7,6 +7,7 @@ import 'package:realunit_wallet/screens/sell/cubits/sell_bank_accounts/sell_bank
 import 'package:realunit_wallet/screens/sell/cubits/sell_selected_bank_account/sell_selected_bank_account_cubit.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_add_bank_account_sheet.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/iban_text_formatter.dart';
 
 class SellBankAccountSelectionPage extends StatelessWidget {
   const SellBankAccountSelectionPage({super.key});
@@ -86,7 +87,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                                           ),
                                         ),
                                         Text(
-                                          account.iban,
+                                          IbanTextFormatter.formatIban(account.iban),
                                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                             fontWeight: .w600,
                                           ),
@@ -137,7 +138,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                                     ),
                                   ),
                                   Text(
-                                    account.iban,
+                                    IbanTextFormatter.formatIban(account.iban),
                                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                       fontWeight: .w600,
                                       color: RealUnitColors.realUnitBlack.withValues(alpha: 0.7),
