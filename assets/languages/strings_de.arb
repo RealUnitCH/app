@@ -60,7 +60,6 @@
   "country": "Land",
   "createWallet": "Neue Wallet erstellen",
   "createWalletConfirm": "Ich habe es gesichert",
-  "createWalletRecoveryKeySubtitle": "Bitte schreiben Sie die Wörter in der angezeigten Reihenfolge auf.",
   "createWalletRecoveryKeyTitle": "Wiederherstellungs-Wörter",
   "createWalletSubtitle": "Notieren Sie Ihre Wiederherstellungs-Wörter auf einem Blatt Papier auf und verwahren Sie dieses sicher und vertraulich. Jede Person, die im Besitz dieser 12 Wörter ist, kann auf Ihr Wallet zugreifen! Daher raten wir von einer Speicherung auf Ihrem Mobiltelefon oder Laptop dringend ab.",
   "createWalletTitle": "Wallet-Sicherung",

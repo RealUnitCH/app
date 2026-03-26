@@ -29,12 +29,12 @@ class CreateWalletView extends StatelessWidget {
                       child: IntrinsicHeight(
                         child: Column(
                           mainAxisAlignment: .start,
+                          spacing: 28.0,
                           children: [
                             SvgPicture.asset(
                               'assets/images/illustrations/backup_wallet.svg',
                               width: 124,
                             ),
-                            const SizedBox(height: 28),
                             Column(
                               spacing: 8.0,
                               children: [
@@ -53,7 +53,6 @@ class CreateWalletView extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 24.0),
                             SeedBlurCard(
                               seed: state.wallet!.seed,
                               onTap: context.read<CreateWalletCubit>().toggleShowSeed,
