@@ -143,6 +143,17 @@ final GoRouter routerConfig = GoRouter(
     ),
 
     GoRoute(
+      name: LegalRoutes.terms,
+      path: '/termsOfUse',
+      builder: (context, state) => LegalDocumentPage(
+        params: LegalDocumentParams(
+          title: S.of(context).termsOfUse,
+          assetBaseName: 'terms_of_use',
+        ),
+      ),
+    ),
+
+    GoRoute(
       name: AppRoutes.kyc,
       path: '/kyc',
       builder: (_, state) {
@@ -168,12 +179,12 @@ final GoRouter routerConfig = GoRouter(
       routes: [
         GoRoute(
           name: AppRoutes.sendInvoice,
-          path: '/openCryptoPay',
+          path: 'openCryptoPay',
           builder: (_, state) => SendInvoicePage(request: state.extra as OpenCryptoPayRequest),
         ),
         GoRoute(
           name: AppRoutes.sendSuccess,
-          path: '/success/:txId',
+          path: 'success/:txId',
           builder: (context, state) => TransactionSentPage(
             title: S.of(context).transactionSent,
             transactionId: state.pathParameters['txId']!,
@@ -243,16 +254,6 @@ final GoRouter routerConfig = GoRouter(
               ),
             ),
           ],
-        ),
-        GoRoute(
-          name: SettingsRoutes.terms,
-          path: 'termsOfUse',
-          builder: (context, state) => LegalDocumentPage(
-            params: LegalDocumentParams(
-              title: S.of(context).termsOfUse,
-              assetBaseName: 'terms_of_use',
-            ),
-          ),
         ),
         GoRoute(
           name: SettingsRoutes.walletAddress,

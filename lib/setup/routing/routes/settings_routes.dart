@@ -10,7 +10,7 @@ abstract final class SettingsRoutes {
   static const seed = 'settingsSeed';
   static const nodes = 'settingsNodes';
   static const editNode = 'settingsEditNode';
-  static const terms = 'settingsTerms';
+
   static const walletAddress = 'settingsWalletAddress';
   static const userData = 'settingsUserData';
   static const editName = 'settingsEditName';
