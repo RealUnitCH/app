@@ -21,8 +21,6 @@ class LegalDocumentParams {
 }
 
 class LegalDocumentPage extends StatefulWidget {
-  static const routeName = '/legalDocument';
-
   final LegalDocumentParams params;
 
   const LegalDocumentPage({super.key, required this.params});

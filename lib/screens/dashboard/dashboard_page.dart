@@ -23,8 +23,6 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
 
 class DashboardPage extends StatelessWidget {
-  static const routeName = '/dashboard';
-
   const DashboardPage({super.key});
 
   @override

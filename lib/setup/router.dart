@@ -50,11 +50,11 @@ final navigatorKey = GlobalKey<NavigatorState>();
 
 final GoRouter routerConfig = GoRouter(
   navigatorKey: navigatorKey,
-  initialLocation: '/',
+  initialLocation: '/home',
   routes: <RouteBase>[
     GoRoute(
       name: AppRoutes.home,
-      path: '/',
+      path: '/home',
       builder: (_, _) => const HomePage(),
     ),
 

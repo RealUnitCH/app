@@ -16,8 +16,6 @@ import 'package:realunit_wallet/screens/sell/widgets/sell_converter.dart';
 import 'package:realunit_wallet/setup/di.dart';
 
 class SellPage extends StatelessWidget {
-  static const routeName = '/sell';
-
   const SellPage({super.key});
 
   @override

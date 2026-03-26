@@ -10,8 +10,6 @@ import 'package:realunit_wallet/screens/legal/steps/legal_documents_step.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class LegalDisclaimerPage extends StatelessWidget {
-  static const routeName = '/legalDisclaimer';
-
   const LegalDisclaimerPage({super.key});
 
   @override

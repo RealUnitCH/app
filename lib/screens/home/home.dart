@@ -8,8 +8,6 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/text_substring_highlighting.dart';
 
 class HomePage extends StatelessWidget {
-  static const route = '/';
-
   const HomePage({super.key});
 
   @override

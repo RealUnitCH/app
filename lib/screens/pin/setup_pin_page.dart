@@ -14,8 +14,6 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/number_pad.dart';
 
 class SetupPinPage extends StatelessWidget {
-  static const route = '/pin/setup';
-
   const SetupPinPage({super.key});
 
   @override

@@ -12,8 +12,6 @@ import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
 import 'package:realunit_wallet/setup/di.dart';
 
 class BuyPage extends StatelessWidget {
-  static const routeName = '/buy';
-
   const BuyPage({super.key});
 
   @override
