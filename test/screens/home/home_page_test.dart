@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
-import 'package:realunit_wallet/screens/terms/terms_page.dart';
+import 'package:realunit_wallet/screens/home/home_page.dart';
 
 import '../../helper/helper.dart';
 
@@ -21,11 +21,11 @@ void main() {
   Widget buildSubject() {
     return BlocProvider.value(
       value: homeBloc,
-      child: const TermsPage(),
+      child: const HomePage(),
     );
   }
 
-  group('$TermsPage', () {
+  group('$HomePage', () {
     testWidgets('renders initially correctly', (tester) async {
       await tester.pumpApp(buildSubject());
 
