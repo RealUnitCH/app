@@ -26,7 +26,7 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
       _priceService = priceService,
       super(const BuyPaymentInfoInitial());
 
-  Future<void> getPaymentInfo({String amount = '100', Currency currency = Currency.chf}) async {
+  Future<void> getPaymentInfo({String amount = '300', Currency currency = Currency.chf}) async {
     await _completer?.cancel();
 
     if (state is! BuyPaymentInfoSuccess) {
