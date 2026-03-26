@@ -40,7 +40,11 @@ import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.d
 import 'package:realunit_wallet/screens/verify_seed/verify_seed_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/screens/welcome/welcome_page.dart';
-import 'package:realunit_wallet/setup/routing/route_names.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
+import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
+import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
+import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
+import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -49,60 +53,60 @@ final GoRouter routerConfig = GoRouter(
   initialLocation: '/',
   routes: <RouteBase>[
     GoRoute(
-      name: RouteNames.home,
+      name: AppRoutes.home,
       path: '/',
       builder: (_, _) => const HomePage(),
     ),
 
     GoRoute(
-      name: RouteNames.welcome,
+      name: OnboardingRoutes.welcome,
       path: '/welcome',
       builder: (_, _) => const WelcomePage(),
     ),
 
     GoRoute(
-      name: RouteNames.createWallet,
+      name: OnboardingRoutes.createWallet,
       path: '/wallet/create',
       builder: (_, _) => const CreateWalletPage(),
     ),
 
     GoRoute(
-      name: RouteNames.verifySeed,
+      name: OnboardingRoutes.verifySeed,
       path: '/wallet/verifySeed',
       builder: (_, state) => VerifySeedPage(wallet: state.extra as SoftwareWallet),
     ),
 
     GoRoute(
-      name: RouteNames.restoreWallet,
+      name: OnboardingRoutes.restoreWallet,
       path: '/wallet/restore',
       builder: (_, _) => const RestoreWalletPage(),
     ),
 
     GoRoute(
-      name: RouteNames.onboardingCompleted,
+      name: OnboardingRoutes.completed,
       path: '/onboardingComplete',
       builder: (_, _) => const OnboardingCompletedPage(),
     ),
 
     GoRoute(
-      name: RouteNames.setupPin,
+      name: PinRoutes.setup,
       path: '/pin/setup',
       builder: (_, _) => const SetupPinPage(),
     ),
 
     GoRoute(
-      name: RouteNames.verifyPin,
+      name: PinRoutes.verify,
       path: '/pin/verify',
       builder: (_, _) => const VerifyPinPage(),
     ),
 
     GoRoute(
-      name: RouteNames.dashboard,
+      name: AppRoutes.dashboard,
       path: '/dashboard',
       builder: (_, _) => const DashboardPage(),
       routes: [
         GoRoute(
-          name: RouteNames.transactionHistory,
+          name: AppRoutes.transactionHistory,
           path: 'transactionHistory',
           builder: (_, _) => const TransactionHistoryPage(),
         ),
@@ -110,23 +114,36 @@ final GoRouter routerConfig = GoRouter(
     ),
 
     GoRoute(
-      name: RouteNames.buy,
+      name: AppRoutes.buy,
       path: '/buy',
       builder: (_, _) => const BuyPage(),
     ),
+
     GoRoute(
-      name: RouteNames.legalDisclaimer,
-      path: '/legalDisclaimer',
-      builder: (_, _) => const LegalDisclaimerPage(),
-    ),
-    GoRoute(
-      name: RouteNames.sell,
+      name: AppRoutes.sell,
       path: '/sell',
       builder: (_, _) => const SellPage(),
     ),
 
     GoRoute(
-      name: RouteNames.kyc,
+      name: LegalRoutes.disclaimer,
+      path: '/legalDisclaimer',
+      builder: (_, _) => const LegalDisclaimerPage(),
+    ),
+
+    GoRoute(
+      name: LegalRoutes.document,
+      path: '/legalDocument',
+      builder: (_, state) {
+        final extra = state.extra;
+        return LegalDocumentPage(
+          params: extra as LegalDocumentParams,
+        );
+      },
+    ),
+
+    GoRoute(
+      name: AppRoutes.kyc,
       path: '/kyc',
       builder: (_, state) {
         final extra = state.extra;
@@ -137,25 +154,25 @@ final GoRouter routerConfig = GoRouter(
     ),
 
     GoRoute(
-      name: RouteNames.receive,
+      name: AppRoutes.receive,
       path: '/receive',
       builder: (_, _) => const ReceivePage(isBottomSheet: false),
     ),
 
     GoRoute(
-      name: RouteNames.send,
+      name: AppRoutes.send,
       path: '/send',
       builder: (_, state) => SendPage(
         params: (state.extra as SendRouteParams?) ?? const SendRouteParams(),
       ),
       routes: [
         GoRoute(
-          name: RouteNames.sendInvoice,
+          name: AppRoutes.sendInvoice,
           path: '/openCryptoPay',
           builder: (_, state) => SendInvoicePage(request: state.extra as OpenCryptoPayRequest),
         ),
         GoRoute(
-          name: RouteNames.sendSuccess,
+          name: AppRoutes.sendSuccess,
           path: '/success/:txId',
           builder: (context, state) => TransactionSentPage(
             title: S.of(context).transactionSent,
@@ -167,57 +184,57 @@ final GoRouter routerConfig = GoRouter(
     ),
 
     GoRoute(
-      name: RouteNames.settings,
+      name: SettingsRoutes.settings,
       path: '/settings',
       builder: (_, _) => const SettingsPage(),
       routes: [
         GoRoute(
-          name: RouteNames.settingsLanguages,
+          name: SettingsRoutes.languages,
           path: 'languages',
           builder: (_, _) => const SettingsLanguagePage(),
         ),
         GoRoute(
-          name: RouteNames.settingsContact,
+          name: SettingsRoutes.contact,
           path: 'contact',
           builder: (_, _) => const SettingsContactPage(),
         ),
         GoRoute(
-          name: RouteNames.settingsCurrencies,
+          name: SettingsRoutes.currencies,
           path: 'currencies',
           builder: (_, _) => const SettingsCurrenciesPage(),
         ),
         GoRoute(
-          name: RouteNames.settingsKycStatus,
+          name: SettingsRoutes.kycStatus,
           path: 'kycStatus',
           builder: (_, _) => const SettingsKycStatusPage(),
         ),
         GoRoute(
-          name: RouteNames.settingsLegalDocuments,
+          name: SettingsRoutes.legalDocuments,
           path: 'legalDocuments',
           builder: (_, _) => const SettingsLegalDocumentsPage(),
         ),
         GoRoute(
-          name: RouteNames.settingsNetwork,
+          name: SettingsRoutes.network,
           path: 'network',
           builder: (_, _) => SettingsNetworkPage(),
         ),
         GoRoute(
-          name: RouteNames.settingsTaxReport,
+          name: SettingsRoutes.taxReport,
           path: 'taxReport',
           builder: (_, _) => const SettingsTaxReportPage(),
         ),
         GoRoute(
-          name: RouteNames.settingsSeed,
+          name: SettingsRoutes.seed,
           path: 'seed',
           builder: (_, _) => const SettingsSeedPage(),
         ),
         GoRoute(
-          name: RouteNames.settingsNodes,
+          name: SettingsRoutes.nodes,
           path: 'nodes',
           builder: (_, _) => const SettingsNodesPage(),
           routes: [
             GoRoute(
-              name: RouteNames.settingsEditNode,
+              name: SettingsRoutes.editNode,
               path: ':chainId',
               builder: (_, state) => SettingsEditNodePage(
                 blockchain: Blockchain.getFromChainId(
@@ -228,7 +245,7 @@ final GoRouter routerConfig = GoRouter(
           ],
         ),
         GoRoute(
-          name: RouteNames.settingsTerms,
+          name: SettingsRoutes.terms,
           path: 'termsOfUse',
           builder: (context, state) => LegalDocumentPage(
             params: LegalDocumentParams(
@@ -238,27 +255,27 @@ final GoRouter routerConfig = GoRouter(
           ),
         ),
         GoRoute(
-          name: RouteNames.settingsWalletAddress,
+          name: SettingsRoutes.walletAddress,
           path: 'walletAddress',
           builder: (_, _) => const SettingsWalletAddressPage(),
         ),
         GoRoute(
-          name: RouteNames.settingsUserData,
+          name: SettingsRoutes.userData,
           path: 'userData',
           builder: (_, _) => const SettingsUserDataPage(),
           routes: [
             GoRoute(
-              name: RouteNames.settingsEditName,
+              name: SettingsRoutes.editName,
               path: 'editName',
               builder: (_, _) => const SettingsEditNamePage(),
             ),
             GoRoute(
-              name: RouteNames.settingsEditAddress,
+              name: SettingsRoutes.editAddress,
               path: 'editAddress',
               builder: (_, _) => const SettingsEditAddressPage(),
             ),
             GoRoute(
-              name: RouteNames.settingsEditPhone,
+              name: SettingsRoutes.editPhone,
               path: 'editPhoneNumber',
               builder: (_, _) => const SettingsEditPhoneNumberPage(),
             ),
@@ -268,7 +285,7 @@ final GoRouter routerConfig = GoRouter(
     ),
 
     GoRoute(
-      name: RouteNames.webView,
+      name: AppRoutes.webView,
       path: '/webView',
       builder: (_, state) => WebViewPage(state.extra as WebViewRouteParams),
     ),

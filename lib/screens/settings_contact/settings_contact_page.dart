@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_tile.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -44,8 +45,8 @@ class SettingsContactPage extends StatelessWidget {
                     icon: Icons.language_outlined,
                     title: S.of(context).website,
                     subtitle: 'realunit.ch',
-                    onTap: () => context.push(
-                      '/webView',
+                    onTap: () => context.pushNamed(
+                      AppRoutes.webView,
                       extra: WebViewRouteParams(
                         title: S.of(context).website,
                         url: Uri.parse('https://realunit.ch'),

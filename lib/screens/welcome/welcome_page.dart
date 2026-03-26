@@ -6,6 +6,7 @@ import 'package:realunit_wallet/packages/utils/device_info.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
 import 'package:realunit_wallet/screens/welcome/widgets/welcome_card.dart';
 import 'package:realunit_wallet/setup/router.dart';
+import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
 
@@ -103,7 +104,7 @@ class _WelcomePageState extends State<WelcomePage> {
                         WelcomeCard(
                           title: S.of(context).createWallet,
                           description: S.of(context).softwareWalletSubtitle,
-                          onPressed: () => context.push('/wallet/create'),
+                          onPressed: () => context.pushNamed(OnboardingRoutes.createWallet),
                           trailing: SvgPicture.asset(
                             'assets/images/illustrations/create_wallet.svg',
                           ),
@@ -111,7 +112,7 @@ class _WelcomePageState extends State<WelcomePage> {
                         WelcomeCard(
                           title: S.of(context).restoreWallet,
                           description: S.of(context).restoreWalletSubtitle,
-                          onPressed: () => context.push('/wallet/restore'),
+                          onPressed: () => context.pushNamed(OnboardingRoutes.restoreWallet),
                           trailing: SvgPicture.asset(
                             'assets/images/illustrations/restore_wallet.svg',
                           ),

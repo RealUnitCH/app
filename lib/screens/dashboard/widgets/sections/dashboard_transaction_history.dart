@@ -8,6 +8,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/dashboard_transaction_history_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/transaction_row.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class DashboardTransactionHistory extends StatelessWidget {
@@ -68,7 +69,7 @@ class DashboardTransactionHistoryView extends StatelessWidget {
                       ),
                     ),
                     TextButton(
-                      onPressed: () => context.push('/dashboard/transactionHistory'),
+                      onPressed: () => context.pushNamed(AppRoutes.transactionHistory),
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
                         minimumSize: const Size(50, 22),

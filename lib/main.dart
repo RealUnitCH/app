@@ -11,7 +11,9 @@ import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/lifecycle_initializer.dart';
 import 'package:realunit_wallet/setup/router.dart';
-import 'package:realunit_wallet/setup/routing/route_names.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
+import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
+import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 import 'package:realunit_wallet/styles/themes.dart';
 
 Future<void> main() async {
@@ -106,17 +108,17 @@ class _WalletAppState extends State<WalletApp> {
 
     String targetRoute;
     if (!homeState.softwareTermsAccepted) {
-      targetRoute = RouteNames.home;
+      targetRoute = AppRoutes.home;
     } else if (homeState.openWallet == null) {
-      targetRoute = RouteNames.welcome;
+      targetRoute = OnboardingRoutes.welcome;
     } else if (!homeState.onboardingCompleted) {
-      targetRoute = RouteNames.onboardingCompleted;
+      targetRoute = OnboardingRoutes.completed;
     } else if (!pinState.isPinSetup) {
-      targetRoute = RouteNames.setupPin;
+      targetRoute = PinRoutes.setup;
     } else if (!pinState.isPinVerified) {
-      targetRoute = RouteNames.verifyPin;
+      targetRoute = PinRoutes.verify;
     } else {
-      targetRoute = RouteNames.dashboard;
+      targetRoute = AppRoutes.dashboard;
     }
 
     routerConfig.goNamed(targetRoute);

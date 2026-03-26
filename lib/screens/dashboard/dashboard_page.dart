@@ -7,7 +7,6 @@ import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_account_service.dart';
-import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/balance_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/dashboard_bloc.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_actions.dart';
@@ -18,6 +17,8 @@ import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_tra
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
+import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
 
@@ -83,7 +84,7 @@ class DashboardView extends StatelessWidget {
                 ),
               ),
               IconButton(
-                onPressed: () => context.push('/settings'),
+                onPressed: () => context.pushNamed(SettingsRoutes.settings),
                 icon: const Icon(
                   Icons.menu,
                   color: RealUnitColors.realUnitBlue,
@@ -161,7 +162,7 @@ class DashboardView extends StatelessWidget {
                                   child: SizedBox(
                                     width: double.infinity,
                                     child: FilledButton(
-                                      onPressed: () => context.push(BuyPage.routeName),
+                                      onPressed: () => context.pushNamed(AppRoutes.buy),
                                       child: Text(S.of(context).buyRealUnit),
                                     ),
                                   ),

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/text_substring_highlighting.dart';
 
@@ -68,7 +69,7 @@ class HomePage extends StatelessWidget {
                                   color: RealUnitColors.neutral500,
                                 ),
                             textAlign: .center,
-                            onHighlightedTap: () => context.push('/settings/termsOfUse'),
+                            onHighlightedTap: () => context.pushNamed(SettingsRoutes.terms),
                           ),
                           Padding(
                             padding: const .symmetric(vertical: 20.0),

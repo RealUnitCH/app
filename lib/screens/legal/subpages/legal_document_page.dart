@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 
 class LegalDocumentParams {
   final String title;
@@ -73,8 +74,8 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
                   ),
                   onTapLink: (text, href, title) {
                     if (href == null || href.startsWith('mailto:') || href.contains('@')) return;
-                    context.push(
-                      '/webView',
+                    context.pushNamed(
+                      AppRoutes.webView,
                       extra: WebViewRouteParams(
                         title: text,
                         url: Uri.parse(href),
@@ -91,8 +92,8 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
                     child: SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: () => context.push(
-                          '/webView',
+                        onPressed: () => context.pushNamed(
+                          AppRoutes.webView,
                           extra: WebViewRouteParams(
                             title: S.of(context).originalPdf,
                             url: Uri.parse(_pdfUrl!),
