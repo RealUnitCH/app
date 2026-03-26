@@ -35,203 +35,242 @@ import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_address
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_name/settings_edit_name_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_phone_number/settings_edit_phone_number_page.dart';
 import 'package:realunit_wallet/screens/settings_wallet_address/settings_wallet_address_page.dart';
-import 'package:realunit_wallet/screens/terms/terms_page.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
 import 'package:realunit_wallet/screens/verify_seed/verify_seed_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/screens/welcome/welcome_page.dart';
-import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/route_names.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
-void setupRouter() {
-  getIt.registerSingleton(
-    GoRouter(
-      navigatorKey: navigatorKey,
-      initialLocation: '/',
-      // observers: [GoRouterObserver()],
-      routes: <RouteBase>[
+final GoRouter routerConfig = GoRouter(
+  navigatorKey: navigatorKey,
+  initialLocation: '/',
+  routes: <RouteBase>[
+    GoRoute(
+      name: RouteNames.home,
+      path: '/',
+      builder: (_, _) => const HomePage(),
+    ),
+
+    GoRoute(
+      name: RouteNames.welcome,
+      path: '/welcome',
+      builder: (_, _) => const WelcomePage(),
+    ),
+
+    GoRoute(
+      name: RouteNames.createWallet,
+      path: '/wallet/create',
+      builder: (_, _) => const CreateWalletPage(),
+    ),
+
+    GoRoute(
+      name: RouteNames.verifySeed,
+      path: '/wallet/verifySeed',
+      builder: (_, state) => VerifySeedPage(wallet: state.extra as SoftwareWallet),
+    ),
+
+    GoRoute(
+      name: RouteNames.restoreWallet,
+      path: '/wallet/restore',
+      builder: (_, _) => const RestoreWalletPage(),
+    ),
+
+    GoRoute(
+      name: RouteNames.onboardingCompleted,
+      path: '/onboardingComplete',
+      builder: (_, _) => const OnboardingCompletedPage(),
+    ),
+
+    GoRoute(
+      name: RouteNames.setupPin,
+      path: '/pin/setup',
+      builder: (_, _) => const SetupPinPage(),
+    ),
+
+    GoRoute(
+      name: RouteNames.verifyPin,
+      path: '/pin/verify',
+      builder: (_, _) => const VerifyPinPage(),
+    ),
+
+    GoRoute(
+      name: RouteNames.dashboard,
+      path: '/dashboard',
+      builder: (_, _) => const DashboardPage(),
+      routes: [
         GoRoute(
-          path: '/',
-          builder: (context, state) => const HomePage(),
-        ),
-        GoRoute(
-          path: TermsPage.route,
-          builder: (context, state) => const TermsPage(),
-        ),
-        GoRoute(
-          path: '/welcome',
-          builder: (context, state) => const WelcomePage(),
-        ),
-        GoRoute(
-          path: '/wallet/create',
-          builder: (context, state) => const CreateWalletPage(),
-        ),
-        GoRoute(
-          path: '/wallet/verifySeed',
-          builder: (context, state) => VerifySeedPage(wallet: state.extra as SoftwareWallet),
-        ),
-        GoRoute(
-          path: '/wallet/restore',
-          builder: (context, state) => const RestoreWalletPage(),
-        ),
-        GoRoute(
-          path: OnboardingCompletedPage.route,
-          builder: (context, state) => const OnboardingCompletedPage(),
-        ),
-        GoRoute(
-          path: SetupPinPage.route,
-          builder: (context, state) => const SetupPinPage(),
-        ),
-        GoRoute(
-          path: VerifyPinPage.route,
-          builder: (context, state) => const VerifyPinPage(),
-        ),
-        GoRoute(
-          path: DashboardPage.routeName,
-          builder: (context, state) => const DashboardPage(),
-          routes: [
-            GoRoute(
-              path: '/transactionHistory',
-              builder: (context, state) => const TransactionHistoryPage(),
-            ),
-          ],
-        ),
-        GoRoute(
-          path: BuyPage.routeName,
-          builder: (context, state) => const BuyPage(),
-        ),
-        GoRoute(
-          path: LegalDisclaimerPage.routeName,
-          builder: (context, state) => const LegalDisclaimerPage(),
-        ),
-        GoRoute(
-          path: SellPage.routeName,
-          builder: (context, state) => const SellPage(),
-        ),
-        GoRoute(
-          path: KycPageManager.routeName,
-          builder: (context, state) {
-            final extra = state.extra;
-            return KycPageManager(
-              requiredLevel: extra is int ? extra : null,
-            );
-          },
-        ),
-        GoRoute(
-          path: '/receive',
-          builder: (context, state) => const ReceivePage(isBottomSheet: false),
-        ),
-        GoRoute(
-          path: '/send',
-          builder: (context, state) => SendPage(
-            params: (state.extra as SendRouteParams?) ?? const SendRouteParams(),
-          ),
-          routes: [
-            GoRoute(
-              path: '/openCryptoPay',
-              builder: (context, state) =>
-                  SendInvoicePage(request: state.extra as OpenCryptoPayRequest),
-            ),
-            GoRoute(
-              path: '/success/:txId',
-              builder: (context, state) => TransactionSentPage(
-                title: S.of(context).transactionSent,
-                transactionId: state.pathParameters['txId']!,
-                blockchain: Blockchain.ethereum,
-              ),
-            ),
-          ],
-        ),
-        GoRoute(
-          path: '/settings',
-          routes: [
-            GoRoute(
-              path: '/languages',
-              builder: (context, state) => const SettingsLanguagePage(),
-            ),
-            GoRoute(
-              path: '/contact',
-              builder: (context, state) => const SettingsContactPage(),
-            ),
-            GoRoute(
-              path: '/currencies',
-              builder: (context, state) => const SettingsCurrenciesPage(),
-            ),
-            GoRoute(
-              path: '/kycStatus',
-              builder: (context, state) => const SettingsKycStatusPage(),
-            ),
-            GoRoute(
-              path: '/legalDocuments',
-              builder: (context, state) => const SettingsLegalDocumentsPage(),
-            ),
-            GoRoute(
-              path: '/network',
-              builder: (context, state) => SettingsNetworkPage(),
-            ),
-            GoRoute(
-              path: '/taxReport',
-              builder: (context, state) => const SettingsTaxReportPage(),
-            ),
-            GoRoute(
-              path: '/seed',
-              builder: (context, state) => const SettingsSeedPage(),
-            ),
-            GoRoute(
-              path: '/nodes',
-              builder: (context, state) => const SettingsNodesPage(),
-              routes: [
-                GoRoute(
-                  path: '/:chainId',
-                  builder: (context, state) => SettingsEditNodePage(
-                    blockchain: Blockchain.getFromChainId(
-                      int.parse(state.pathParameters['chainId']!),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            GoRoute(
-              path: '/termsOfUse',
-              builder: (context, state) => LegalDocumentPage(
-                params: LegalDocumentParams(
-                  title: S.of(context).termsOfUse,
-                  assetBaseName: 'terms_of_use',
-                ),
-              ),
-            ),
-            GoRoute(
-              path: '/walletAddress',
-              builder: (context, state) => const SettingsWalletAddressPage(),
-            ),
-            GoRoute(
-              path: '/userData',
-              builder: (context, state) => const SettingsUserDataPage(),
-              routes: [
-                GoRoute(
-                  path: '/editName',
-                  builder: (context, state) => const SettingsEditNamePage(),
-                ),
-                GoRoute(
-                  path: '/editAddress',
-                  builder: (context, state) => const SettingsEditAddressPage(),
-                ),
-                GoRoute(
-                  path: '/editPhoneNumber',
-                  builder: (context, state) => const SettingsEditPhoneNumberPage(),
-                ),
-              ],
-            ),
-          ],
-          builder: (context, state) => const SettingsPage(),
-        ),
-        GoRoute(
-          path: '/webView',
-          builder: (context, state) => WebViewPage(state.extra as WebViewRouteParams),
+          name: RouteNames.transactionHistory,
+          path: 'transactionHistory',
+          builder: (_, _) => const TransactionHistoryPage(),
         ),
       ],
     ),
-  );
-}
+
+    GoRoute(
+      name: RouteNames.buy,
+      path: '/buy',
+      builder: (_, _) => const BuyPage(),
+    ),
+    GoRoute(
+      name: RouteNames.legalDisclaimer,
+      path: '/legalDisclaimer',
+      builder: (_, _) => const LegalDisclaimerPage(),
+    ),
+    GoRoute(
+      name: RouteNames.sell,
+      path: '/sell',
+      builder: (_, _) => const SellPage(),
+    ),
+
+    GoRoute(
+      name: RouteNames.kyc,
+      path: '/kyc',
+      builder: (_, state) {
+        final extra = state.extra;
+        return KycPageManager(
+          requiredLevel: extra is int ? extra : null,
+        );
+      },
+    ),
+
+    GoRoute(
+      name: RouteNames.receive,
+      path: '/receive',
+      builder: (_, _) => const ReceivePage(isBottomSheet: false),
+    ),
+
+    GoRoute(
+      name: RouteNames.send,
+      path: '/send',
+      builder: (_, state) => SendPage(
+        params: (state.extra as SendRouteParams?) ?? const SendRouteParams(),
+      ),
+      routes: [
+        GoRoute(
+          name: RouteNames.sendInvoice,
+          path: '/openCryptoPay',
+          builder: (_, state) => SendInvoicePage(request: state.extra as OpenCryptoPayRequest),
+        ),
+        GoRoute(
+          name: RouteNames.sendSuccess,
+          path: '/success/:txId',
+          builder: (context, state) => TransactionSentPage(
+            title: S.of(context).transactionSent,
+            transactionId: state.pathParameters['txId']!,
+            blockchain: Blockchain.ethereum,
+          ),
+        ),
+      ],
+    ),
+
+    GoRoute(
+      name: RouteNames.settings,
+      path: '/settings',
+      builder: (_, _) => const SettingsPage(),
+      routes: [
+        GoRoute(
+          name: RouteNames.settingsLanguages,
+          path: 'languages',
+          builder: (_, _) => const SettingsLanguagePage(),
+        ),
+        GoRoute(
+          name: RouteNames.settingsContact,
+          path: 'contact',
+          builder: (_, _) => const SettingsContactPage(),
+        ),
+        GoRoute(
+          name: RouteNames.settingsCurrencies,
+          path: 'currencies',
+          builder: (_, _) => const SettingsCurrenciesPage(),
+        ),
+        GoRoute(
+          name: RouteNames.settingsKycStatus,
+          path: 'kycStatus',
+          builder: (_, _) => const SettingsKycStatusPage(),
+        ),
+        GoRoute(
+          name: RouteNames.settingsLegalDocuments,
+          path: 'legalDocuments',
+          builder: (_, _) => const SettingsLegalDocumentsPage(),
+        ),
+        GoRoute(
+          name: RouteNames.settingsNetwork,
+          path: 'network',
+          builder: (_, _) => SettingsNetworkPage(),
+        ),
+        GoRoute(
+          name: RouteNames.settingsTaxReport,
+          path: 'taxReport',
+          builder: (_, _) => const SettingsTaxReportPage(),
+        ),
+        GoRoute(
+          name: RouteNames.settingsSeed,
+          path: 'seed',
+          builder: (_, _) => const SettingsSeedPage(),
+        ),
+        GoRoute(
+          name: RouteNames.settingsNodes,
+          path: 'nodes',
+          builder: (_, _) => const SettingsNodesPage(),
+          routes: [
+            GoRoute(
+              name: RouteNames.settingsEditNode,
+              path: ':chainId',
+              builder: (_, state) => SettingsEditNodePage(
+                blockchain: Blockchain.getFromChainId(
+                  int.parse(state.pathParameters['chainId']!),
+                ),
+              ),
+            ),
+          ],
+        ),
+        GoRoute(
+          name: RouteNames.settingsTerms,
+          path: 'termsOfUse',
+          builder: (context, state) => LegalDocumentPage(
+            params: LegalDocumentParams(
+              title: S.of(context).termsOfUse,
+              assetBaseName: 'terms_of_use',
+            ),
+          ),
+        ),
+        GoRoute(
+          name: RouteNames.settingsWalletAddress,
+          path: 'walletAddress',
+          builder: (_, _) => const SettingsWalletAddressPage(),
+        ),
+        GoRoute(
+          name: RouteNames.settingsUserData,
+          path: 'userData',
+          builder: (_, _) => const SettingsUserDataPage(),
+          routes: [
+            GoRoute(
+              name: RouteNames.settingsEditName,
+              path: 'editName',
+              builder: (_, _) => const SettingsEditNamePage(),
+            ),
+            GoRoute(
+              name: RouteNames.settingsEditAddress,
+              path: 'editAddress',
+              builder: (_, _) => const SettingsEditAddressPage(),
+            ),
+            GoRoute(
+              name: RouteNames.settingsEditPhone,
+              path: 'editPhoneNumber',
+              builder: (_, _) => const SettingsEditPhoneNumberPage(),
+            ),
+          ],
+        ),
+      ],
+    ),
+
+    GoRoute(
+      name: RouteNames.webView,
+      path: '/webView',
+      builder: (_, state) => WebViewPage(state.extra as WebViewRouteParams),
+    ),
+  ],
+);

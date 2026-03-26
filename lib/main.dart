@@ -3,19 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/utils/fuck_firebase.dart';
-import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
-import 'package:realunit_wallet/screens/onboarding/onboarding_completed_page.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
-import 'package:realunit_wallet/screens/pin/setup_pin_page.dart';
-import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
-import 'package:realunit_wallet/screens/terms/terms_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/lifecycle_initializer.dart';
+import 'package:realunit_wallet/setup/router.dart';
+import 'package:realunit_wallet/setup/routing/route_names.dart';
 import 'package:realunit_wallet/styles/themes.dart';
 
 Future<void> main() async {
@@ -47,8 +43,19 @@ Future<void> _initializeWithSplashDuration() async {
   ]);
 }
 
-class WalletApp extends StatelessWidget {
+class WalletApp extends StatefulWidget {
   const WalletApp({super.key});
+
+  @override
+  State<WalletApp> createState() => _WalletAppState();
+}
+
+class _WalletAppState extends State<WalletApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _navigate());
+  }
 
   @override
   Widget build(BuildContext context) => MultiBlocProvider(
@@ -69,19 +76,19 @@ class WalletApp extends StatelessWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         locale: Locale(settingsState.language.code),
-        routerConfig: getIt<GoRouter>(),
+        routerConfig: routerConfig,
         builder: (context, child) => MultiBlocListener(
           listeners: [
             BlocListener<HomeBloc, HomeState>(
               listener: (context, homeState) {
                 if (!homeState.isLoadingWallet) {
-                  _navigate(context);
+                  _navigate();
                 }
               },
             ),
             BlocListener<PinAuthCubit, PinAuthState>(
               listener: (context, pinState) {
-                _navigate(context);
+                _navigate();
               },
             ),
           ],
@@ -91,27 +98,27 @@ class WalletApp extends StatelessWidget {
     ),
   );
 
-  void _navigate(BuildContext context) {
-    final homeState = context.read<HomeBloc>().state;
-    final pinState = context.read<PinAuthCubit>().state;
+  void _navigate() {
+    final homeState = getIt<HomeBloc>().state;
+    final pinState = getIt<PinAuthCubit>().state;
 
     if (homeState.isLoadingWallet) return;
 
     String targetRoute;
     if (!homeState.softwareTermsAccepted) {
-      targetRoute = TermsPage.route;
+      targetRoute = RouteNames.home;
     } else if (homeState.openWallet == null) {
-      targetRoute = '/welcome';
+      targetRoute = RouteNames.welcome;
     } else if (!homeState.onboardingCompleted) {
-      targetRoute = OnboardingCompletedPage.route;
+      targetRoute = RouteNames.onboardingCompleted;
     } else if (!pinState.isPinSetup) {
-      targetRoute = SetupPinPage.route;
+      targetRoute = RouteNames.setupPin;
     } else if (!pinState.isPinVerified) {
-      targetRoute = VerifyPinPage.route;
+      targetRoute = RouteNames.verifyPin;
     } else {
-      targetRoute = DashboardPage.routeName;
+      targetRoute = RouteNames.dashboard;
     }
 
-    getIt<GoRouter>().go(targetRoute);
+    routerConfig.goNamed(targetRoute);
   }
 }

@@ -27,6 +27,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<DeleteCurrentWalletEvent>(_onDeleteCurrentWallet);
     on<CompleteOnboardingEvent>(_onCompleteOnboarding);
     on<AcceptSoftwareTermsEvent>(_onAcceptSoftwareTerms);
+
+    add(const LoadCurrentWalletEvent());
   }
 
   final WalletService _walletService;
