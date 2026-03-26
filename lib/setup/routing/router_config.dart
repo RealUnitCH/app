@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
@@ -46,10 +45,7 @@ import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 
-final navigatorKey = GlobalKey<NavigatorState>();
-
 final GoRouter routerConfig = GoRouter(
-  navigatorKey: navigatorKey,
   initialLocation: '/home',
   routes: <RouteBase>[
     GoRoute(
@@ -66,20 +62,20 @@ final GoRouter routerConfig = GoRouter(
 
     GoRoute(
       name: OnboardingRoutes.createWallet,
-      path: '/wallet/create',
+      path: '/createWallet',
       builder: (_, _) => const CreateWalletPage(),
     ),
 
     GoRoute(
-      name: OnboardingRoutes.verifySeed,
-      path: '/wallet/verifySeed',
-      builder: (_, state) => VerifySeedPage(wallet: state.extra as SoftwareWallet),
+      name: OnboardingRoutes.restoreWallet,
+      path: '/restoreWallet',
+      builder: (_, _) => const RestoreWalletPage(),
     ),
 
     GoRoute(
-      name: OnboardingRoutes.restoreWallet,
-      path: '/wallet/restore',
-      builder: (_, _) => const RestoreWalletPage(),
+      name: OnboardingRoutes.verifySeed,
+      path: '/verifySeed',
+      builder: (_, state) => VerifySeedPage(wallet: state.extra as SoftwareWallet),
     ),
 
     GoRoute(
@@ -90,13 +86,13 @@ final GoRouter routerConfig = GoRouter(
 
     GoRoute(
       name: PinRoutes.setup,
-      path: '/pin/setup',
+      path: '/setupPin',
       builder: (_, _) => const SetupPinPage(),
     ),
 
     GoRoute(
       name: PinRoutes.verify,
-      path: '/pin/verify',
+      path: '/verifyPin',
       builder: (_, _) => const VerifyPinPage(),
     ),
 

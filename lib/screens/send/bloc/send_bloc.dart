@@ -21,17 +21,21 @@ import 'package:realunit_wallet/packages/wallet/is_evm_address.dart';
 import 'package:realunit_wallet/packages/wallet/transaction_priority.dart';
 import 'package:realunit_wallet/screens/send/bloc/gas_fee_cubit.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
-import 'package:realunit_wallet/setup/router.dart';
+import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/widgets/error_bottom_sheet.dart';
 
 part 'send_event.dart';
 part 'send_state.dart';
 
 class SendBloc extends Bloc<SendEvent, SendState> {
-  SendBloc(this._appStore, this._balanceService,
-      {required Asset asset, String receiver = '', String amount = '0'})
-      : gasFeeCubit = GasFeeCubit(_appStore, Blockchain.getFromChainId(asset.chainId)),
-        super(SendState(asset: asset, receiver: receiver, amount: amount)) {
+  SendBloc(
+    this._appStore,
+    this._balanceService, {
+    required Asset asset,
+    String receiver = '',
+    String amount = '0',
+  }) : gasFeeCubit = GasFeeCubit(_appStore, Blockchain.getFromChainId(asset.chainId)),
+       super(SendState(asset: asset, receiver: receiver, amount: amount)) {
     on<SelectAlias>(_onSelectAlias);
     on<ReceiverChanged>(_onReceiverChanged);
     on<PasteReceiver>(_onPasteReceiver);
@@ -75,13 +79,15 @@ class SendBloc extends Bloc<SendEvent, SendState> {
     if (await Clipboard.hasStrings()) {
       final value = await Clipboard.getData('text/plain');
       if (value?.text?.isEthereumAddress == true) {
-        emit(state.copyAlias(
-          alias: AliasRecord(
-            address: value!.text!,
-            name: S.current.fromClipboard,
-            description: '',
+        emit(
+          state.copyAlias(
+            alias: AliasRecord(
+              address: value!.text!,
+              name: S.current.fromClipboard,
+              description: '',
+            ),
           ),
-        ));
+        );
       }
     }
   }
@@ -91,9 +97,11 @@ class SendBloc extends Bloc<SendEvent, SendState> {
   }
 
   void _onAmountAdd(AmountChangedAdd event, Emitter<SendState> emit) {
-    emit(state.copyWith(
-      amount: state.amount == '0' ? event.amount.toString() : '${state.amount}${event.amount}',
-    ));
+    emit(
+      state.copyWith(
+        amount: state.amount == '0' ? event.amount.toString() : '${state.amount}${event.amount}',
+      ),
+    );
   }
 
   void _onAmountDecimal(AmountChangedDecimal event, Emitter<SendState> emit) {
@@ -101,9 +109,11 @@ class SendBloc extends Bloc<SendEvent, SendState> {
   }
 
   void _onAmountRemove(AmountChangedDelete event, Emitter<SendState> emit) {
-    emit(state.copyWith(
-      amount: state.amount.length > 1 ? state.amount.substring(0, state.amount.length - 1) : '0',
-    ));
+    emit(
+      state.copyWith(
+        amount: state.amount.length > 1 ? state.amount.substring(0, state.amount.length - 1) : '0',
+      ),
+    );
   }
 
   void _onAssetChanged(AssetChanged event, Emitter<SendState> emit) {
@@ -114,14 +124,17 @@ class SendBloc extends Bloc<SendEvent, SendState> {
   Future<void> _onSubmitted(SendSubmitted event, Emitter<SendState> emit) async {
     if (state.receiver.isEthereumAddress) {
       final client = _appStore.getClient(state.blockchain.chainId);
-      final ethBalance =
-          await client.getBalance(_appStore.wallet.currentAccount.primaryAddress.address);
+      final ethBalance = await client.getBalance(
+        _appStore.wallet.currentAccount.primaryAddress.address,
+      );
       if (ethBalance.getInWei < gasFeeCubit.state.gasFee) {
         return showModalBottomSheet(
           context: navigatorKey.currentContext!,
           builder: (_) => ErrorBottomSheet(
-            message:
-                S.current.errorNotEnoughMoney(state.blockchain.nativeSymbol, state.blockchain.name),
+            message: S.current.errorNotEnoughMoney(
+              state.blockchain.nativeSymbol,
+              state.blockchain.name,
+            ),
           ),
         );
       }
@@ -168,7 +181,7 @@ class SendBloc extends Bloc<SendEvent, SendState> {
       dEUROPolygonAsset,
       dEUROArbitrumAsset,
       dEUROBaseAsset,
-      dEUROOptimismAsset
+      dEUROOptimismAsset,
     ]) {
       final balance = await _balanceService.getBalance(asset, owner);
       if (balance != null && balance.balance > BigInt.zero) {
