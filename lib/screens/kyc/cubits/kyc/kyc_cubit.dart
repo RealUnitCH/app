@@ -48,7 +48,11 @@ class KycCubit extends Cubit<KycState> {
       final level = kycStatus.kycLevel.value;
 
       if (!status.isRegistered || level < 20) {
-        emit(const KycSuccess(currentStep: KycStep.registration));
+        final user = await _kycService.getUser();
+        emit(KycSuccess(
+          currentStep: KycStep.registration,
+          email: user.mail?.isNotEmpty == true ? user.mail : null,
+        ));
         return;
       }
 

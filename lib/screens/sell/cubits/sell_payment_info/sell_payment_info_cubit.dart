@@ -76,7 +76,7 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
       double minAmount = _minAmountChf;
       if (currency == Currency.eur) {
         final chfToEurRate = await _priceService.getChfToEurRate();
-        minAmount = _minAmountChf * chfToEurRate;
+        minAmount = (_minAmountChf * chfToEurRate).ceilToDouble();
       }
 
       if (parsedAmount < minAmount) {

@@ -53,7 +53,7 @@ class DfxKycService extends DFXAuthService {
       throw ApiException.fromJson(errorJson);
     }
 
-    final json = jsonDecode(response.body);
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
     return UserDto.fromJson(json);
   }
 

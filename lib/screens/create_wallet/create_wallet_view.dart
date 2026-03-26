@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/create_wallet/bloc/create_wallet_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/styles/icons.dart';
 import 'package:realunit_wallet/widgets/seed_blur_card.dart';
 
 class CreateWalletView extends StatelessWidget {
@@ -54,43 +53,7 @@ class CreateWalletView extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 40.0),
-                            Row(
-                              spacing: 8.0,
-                              crossAxisAlignment: .start,
-                              children: [
-                                const RecoveryKeyIcon(
-                                  size: 20,
-                                  color: RealUnitColors.realUnitBlue,
-                                ),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: .start,
-                                    children: [
-                                      Padding(
-                                        padding: const .only(bottom: 3),
-                                        child: Text(
-                                          S.of(context).createWalletRecoveryKeyTitle,
-                                          style: Theme.of(context).textTheme.headlineSmall
-                                              ?.copyWith(
-                                                fontWeight: .bold,
-                                              ),
-                                        ),
-                                      ),
-                                      Text(
-                                        S.of(context).createWalletRecoveryKeySubtitle,
-                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                          color: RealUnitColors.neutral500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(
-                              height: 16,
-                            ),
+                            const SizedBox(height: 24.0),
                             SeedBlurCard(
                               seed: state.wallet!.seed,
                               onTap: context.read<CreateWalletCubit>().toggleShowSeed,

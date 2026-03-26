@@ -52,8 +52,8 @@ class KycViewManager extends StatelessWidget {
         KycAccountMergeRequested() => const KycAccountMergePage(),
         KycPending(:final pendingStep) => KycPendingPage(pendingStep: pendingStep),
         KycCompleted() => const KycCompletedPage(),
-        KycSuccess(:final currentStep, :final urlOrToken) => switch (currentStep) {
-          KycStep.registration => const KycRegistrationPage(),
+        KycSuccess(:final currentStep, :final urlOrToken, :final email) => switch (currentStep) {
+          KycStep.registration => KycRegistrationPage(email: email),
           KycStep.nationality => KycNationalityPage(url: urlOrToken ?? ''),
           KycStep.twoFa => const Kyc2FaPage(),
           KycStep.ident => KycIdentPage(accessToken: urlOrToken ?? ''),

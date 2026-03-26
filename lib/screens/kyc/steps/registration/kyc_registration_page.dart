@@ -20,7 +20,9 @@ import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class KycRegistrationPage extends StatelessWidget {
-  const KycRegistrationPage({super.key});
+  final String? email;
+
+  const KycRegistrationPage({super.key, this.email});
 
   @override
   Widget build(BuildContext context) {
@@ -35,13 +37,15 @@ class KycRegistrationPage extends StatelessWidget {
           create: (_) => KycRegistrationStepCubit(),
         ),
       ],
-      child: const KycRegistrationView(),
+      child: KycRegistrationView(email: email),
     );
   }
 }
 
 class KycRegistrationView extends StatefulWidget {
-  const KycRegistrationView({super.key});
+  final String? email;
+
+  const KycRegistrationView({super.key, this.email});
 
   @override
   State<KycRegistrationView> createState() => _KycRegistrationViewState();
@@ -50,6 +54,8 @@ class KycRegistrationView extends StatefulWidget {
 class _KycRegistrationViewState extends State<KycRegistrationView> {
   final _pageController = PageController();
   StreamSubscription<KycRegistrationStepState>? _stepSubscription;
+
+  bool get _hasEmail => widget.email != null && widget.email!.isNotEmpty;
 
   final emailCtrl = TextEditingController();
 
@@ -69,12 +75,17 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   @override
   void initState() {
     super.initState();
+    if (_hasEmail) {
+      emailCtrl.text = widget.email!;
+    }
     _stepSubscription = context.read<KycRegistrationStepCubit>().stream.listen((state) {
-      _pageController.animateToPage(
-        state.index,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOut,
-      );
+      if (_pageController.page?.round() != state.index) {
+        _pageController.animateToPage(
+          state.index,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOut,
+        );
+      }
     });
   }
 
@@ -93,7 +104,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
                 icon: const Icon(Icons.arrow_back_rounded),
               ),
               title: Text(
-                state.title(context),
+                state.title(context, emailAutoSubmitted: _hasEmail),
               ),
             );
           },
@@ -154,10 +165,14 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
         return KycRegistrationEmailStep(
           emailCtrl: emailCtrl,
           onSuccess: () async {
-            final result = await context.push<bool>(LegalDisclaimerPage.routeName);
-            if (!mounted) return;
-            if (result == true) {
+            if (_hasEmail) {
               context.read<KycRegistrationStepCubit>().next();
+            } else {
+              final result = await context.push<bool>(LegalDisclaimerPage.routeName);
+              if (!mounted) return;
+              if (result == true) {
+                context.read<KycRegistrationStepCubit>().next();
+              }
             }
           },
         );
