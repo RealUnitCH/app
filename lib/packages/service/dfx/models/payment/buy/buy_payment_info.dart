@@ -31,5 +31,5 @@ class BuyPaymentInfo extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, iban, bic, currency];
+  List<Object?> get props => [id, iban, bic, name, street, number, zip, city, country, currency, paymentRequest, remittanceInfo];
 }
