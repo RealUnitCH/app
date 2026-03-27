@@ -232,6 +232,11 @@ class TransactionHistoryService {
     final List<dynamic> json = jsonDecode(response.body);
     return json.map((e) => TransactionDto.fromJson(e as Map<String, dynamic>)).toList();
   }
+
+  Future<List<TransactionDto>> fetchPendingTransactions() async {
+    final transactions = await _fetchTransactions();
+    return transactions.where((t) => t.isPending).toList();
+  }
 }
 
 extension ToEpiAddress on String {
