@@ -90,46 +90,48 @@ class DashboardPortfolioChartView extends StatelessWidget {
                         ),
                       ],
                     ),
-                    BlocBuilder<PortfolioChartCubit, PortfolioChartState>(
-                      builder: (context, state) {
-                        if (state.visibleSpots.isEmpty) {
-                          return const SizedBox.shrink();
-                        }
-                        final firstValue = state.visibleSpots.first.y;
-                        final lastValue = state.visibleSpots.last.y;
-                        final difference = lastValue - firstValue;
-                        final percentChange = firstValue != 0
-                            ? (difference / firstValue) * 100
-                            : 0.0;
-                        final sign = difference >= 0 ? '+' : '';
+                    Flexible(
+                      child: BlocBuilder<PortfolioChartCubit, PortfolioChartState>(
+                        builder: (context, state) {
+                          if (state.visibleSpots.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+                          final firstValue = state.visibleSpots.first.y;
+                          final lastValue = state.visibleSpots.last.y;
+                          final difference = lastValue - firstValue;
+                          final percentChange = firstValue != 0
+                              ? (difference / firstValue) * 100
+                              : 0.0;
+                          final sign = difference >= 0 ? '+' : '';
 
-                        return Column(
-                          crossAxisAlignment: .start,
-                          children: [
-                            Text(
-                              state.selectedPeriod.name(context),
-                              style:
-                                  Theme.of(
-                                    context,
-                                  ).textTheme.bodySmall?.copyWith(
-                                    fontSize: 10,
-                                    height: 16 / 10,
-                                  ),
-                            ),
-                            Text(
-                              '$sign${difference.toStringAsFixed(2)} ${settingsState.currency.code.toUpperCase()} | $sign${percentChange.toStringAsFixed(2)} %',
-                              style:
-                                  Theme.of(
-                                    context,
-                                  ).textTheme.bodySmall?.copyWith(
-                                    fontSize: 10,
-                                    height: 16 / 10,
-                                    fontWeight: .w600,
-                                  ),
-                            ),
-                          ],
-                        );
-                      },
+                          return Column(
+                            crossAxisAlignment: .start,
+                            children: [
+                              Text(
+                                state.selectedPeriod.name(context),
+                                style:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall?.copyWith(
+                                      fontSize: 10,
+                                      height: 16 / 10,
+                                    ),
+                              ),
+                              Text(
+                                '$sign${difference.toStringAsFixed(2)} ${settingsState.currency.code.toUpperCase()} | $sign${percentChange.toStringAsFixed(2)}%',
+                                style:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall?.copyWith(
+                                      fontSize: 10,
+                                      height: 16 / 10,
+                                      fontWeight: .w600,
+                                    ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                     ),
                   ],
                 );
