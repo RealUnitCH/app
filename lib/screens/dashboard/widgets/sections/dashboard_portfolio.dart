@@ -21,7 +21,7 @@ class DashboardPortfolio extends StatelessWidget {
         Text(
           S.of(context).portfolio,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w600,
+            fontWeight: .w600,
             color: RealUnitColors.basic.black,
           ),
         ),

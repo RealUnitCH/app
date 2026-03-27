@@ -8,7 +8,6 @@ import 'package:realunit_wallet/screens/dashboard/models/time_period.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/portfolio_chart.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/time_period_selection_button.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
-import 'package:realunit_wallet/styles/colors.dart';
 
 class DashboardPortfolioChartWidget extends StatelessWidget {
   final BigInt currentValue;
@@ -52,89 +51,89 @@ class DashboardPortfolioChartView extends StatelessWidget {
         children: [
           Padding(
             padding: const .symmetric(vertical: 12, horizontal: 20),
-            child: Column(
-              crossAxisAlignment: .start,
-              children: [
-                Text(
-                  S.of(context).portfolioDevelopment,
-                  style:
-                      Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(
-                        color: RealUnitColors.neutral400,
-                      ),
-                ),
-                BlocBuilder<SettingsBloc, SettingsState>(
-                  builder: (context, settingsState) {
-                    return Row(
-                      spacing: 12.0,
-                      crossAxisAlignment: .center,
+            child: BlocBuilder<SettingsBloc, SettingsState>(
+              builder: (context, settingsState) {
+                return Row(
+                  spacing: 12.0,
+                  children: [
+                    Column(
+                      crossAxisAlignment: .start,
                       children: [
-                        Row(
-                          crossAxisAlignment: .start,
-                          children: [
-                            Text(
-                              settingsState.currency.code.toUpperCase(),
-                              style: Theme.of(
-                                context,
-                              ).textTheme.bodyLarge?.copyWith(fontWeight: .w600),
-                            ),
-                            Text(
-                              currentValue == BigInt.zero
-                                  ? '--.--'
-                                  : formatFixed(currentValue, 2, trimZeros: false),
-                              style: Theme.of(
-                                context,
-                              ).textTheme.headlineLarge?.copyWith(fontWeight: .w600),
-                            ),
-                          ],
+                        Text(
+                          S.of(context).portfolioDevelopment,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: .w600),
                         ),
-                        BlocBuilder<PortfolioChartCubit, PortfolioChartState>(
-                          builder: (context, state) {
-                            if (state.visibleSpots.isEmpty) {
-                              return const SizedBox.shrink();
-                            }
-                            final firstValue = state.visibleSpots.first.y;
-                            final lastValue = state.visibleSpots.last.y;
-                            final difference = lastValue - firstValue;
-                            final percentChange = firstValue != 0
-                                ? (difference / firstValue) * 100
-                                : 0.0;
-                            final sign = difference >= 0 ? '+' : '';
-
-                            return Column(
+                        Row(
+                          spacing: 12.0,
+                          crossAxisAlignment: .center,
+                          children: [
+                            Row(
                               crossAxisAlignment: .start,
                               children: [
                                 Text(
-                                  state.selectedPeriod.name(context),
-                                  style:
-                                      Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall?.copyWith(
-                                        fontSize: 10,
-                                        height: 16 / 10,
-                                      ),
+                                  settingsState.currency.code.toUpperCase(),
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.copyWith(fontWeight: .w600),
                                 ),
                                 Text(
-                                  '$sign${difference.toStringAsFixed(2)} ${settingsState.currency.code.toUpperCase()} | $sign${percentChange.toStringAsFixed(2)} %',
-                                  style:
-                                      Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall?.copyWith(
-                                        fontSize: 10,
-                                        height: 16 / 10,
-                                        fontWeight: .w600,
-                                      ),
+                                  currentValue == BigInt.zero
+                                      ? '--.--'
+                                      : formatFixed(currentValue, 2, trimZeros: false),
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.bodyLarge?.copyWith(fontWeight: .w600),
                                 ),
                               ],
-                            );
-                          },
+                            ),
+                          ],
                         ),
                       ],
-                    );
-                  },
-                ),
-              ],
+                    ),
+                    BlocBuilder<PortfolioChartCubit, PortfolioChartState>(
+                      builder: (context, state) {
+                        if (state.visibleSpots.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        final firstValue = state.visibleSpots.first.y;
+                        final lastValue = state.visibleSpots.last.y;
+                        final difference = lastValue - firstValue;
+                        final percentChange = firstValue != 0
+                            ? (difference / firstValue) * 100
+                            : 0.0;
+                        final sign = difference >= 0 ? '+' : '';
+
+                        return Column(
+                          crossAxisAlignment: .start,
+                          children: [
+                            Text(
+                              state.selectedPeriod.name(context),
+                              style:
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.bodySmall?.copyWith(
+                                    fontSize: 10,
+                                    height: 16 / 10,
+                                  ),
+                            ),
+                            Text(
+                              '$sign${difference.toStringAsFixed(2)} ${settingsState.currency.code.toUpperCase()} | $sign${percentChange.toStringAsFixed(2)} %',
+                              style:
+                                  Theme.of(
+                                    context,
+                                  ).textTheme.bodySmall?.copyWith(
+                                    fontSize: 10,
+                                    height: 16 / 10,
+                                    fontWeight: .w600,
+                                  ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                );
+              },
             ),
           ),
           const PortfolioChart(),
