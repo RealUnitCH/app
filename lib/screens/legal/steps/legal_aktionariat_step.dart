@@ -12,22 +12,29 @@ class LegalAktionariatStep extends StatelessWidget {
     final s = S.of(context);
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: .start,
       spacing: 20.0,
       children: [
-        Text(
-          s.aktionariatTitle,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontSize: 18,
-            height: 24 / 18,
-          ),
+        Column(
+          crossAxisAlignment: .start,
+          spacing: 16.0,
+          children: [
+            Text(
+              s.aktionariatTitle,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontSize: 18,
+                height: 24 / 18,
+              ),
+            ),
+            Text(
+              s.aktionariatText,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: RealUnitColors.neutral500,
+              ),
+            ),
+          ],
         ),
-        Text(
-          s.aktionariatText,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: RealUnitColors.neutral500,
-          ),
-        ),
+
         Column(
           spacing: 12.0,
           children: [

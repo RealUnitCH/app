@@ -11,11 +11,9 @@ class SettingsLegalDocumentsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context);
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(s.legalDocuments),
+        title: Text(S.of(context).legalDocuments),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -28,7 +26,7 @@ class SettingsLegalDocumentsPage extends StatelessWidget {
             children: [
               LegalDocumentButton(
                 leadingIcon: Icons.description_outlined,
-                title: s.termsOfUse,
+                title: S.of(context).termsOfUse,
                 onTap: () => context.pushNamed(LegalRoutes.terms),
               ),
               ...LegalDocumentsConfig.allDocuments.map(
@@ -40,12 +38,12 @@ class SettingsLegalDocumentsPage extends StatelessWidget {
               ),
               LegalDocumentButton(
                 leadingIcon: Icons.business_outlined,
-                title: s.aktionariatTitle,
+                title: S.of(context).aktionariatTitle,
                 onTap: () => context.pushNamed(SettingsRoutes.aktionariatDocuments),
               ),
               LegalDocumentButton(
                 leadingIcon: Icons.business_outlined,
-                title: s.dfxTitle,
+                title: S.of(context).dfxTitle,
                 onTap: () => context.pushNamed(SettingsRoutes.dfxDocuments),
               ),
             ],
