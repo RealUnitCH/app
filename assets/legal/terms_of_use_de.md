@@ -28,7 +28,7 @@ Die App ist eine Self-Custody-Lösung. Das bedeutet:
 - **Sie allein** sind für die sichere Aufbewahrung Ihrer Wiederherstellungs-Wörter (Seed Phrase) verantwortlich.
 - **Sie allein** sind für die Geheimhaltung Ihrer PIN und Zugangsdaten verantwortlich.
 - RealUnit hat **keinen Zugriff** auf Ihre privaten Schlüssel, Ihre Seed Phrase oder Ihre PIN.
-- Bei Verlust der Wiederherstellungs-Wörter ist ein Zugang zur Wallet **unwiederbringlich verloren**. RealUnit kann verlorene Schlüssel nicht wiederherstellen.
+- Bei Verlust der Wiederherstellungs-Wörter ist ein Zugang zur Wallet **unwiederbringlich verloren**. RealUnit kann verlorene Schlüssel nicht wiederherstellen. Für die RealUnit-Token besteht ein Recovery-Mechanismus auf der Blockchain, über den Token bei nachgewiesenem Verlust des Private Keys wiederhergestellt werden können. Dieser Prozess ist aufwändig und beinhaltet eine Wartefrist von 180 Tagen.
 - Transaktionen auf der Blockchain sind **unwiderruflich**. Fehlerhaft gesendete Token können nicht zurückgebucht werden.
 
 
