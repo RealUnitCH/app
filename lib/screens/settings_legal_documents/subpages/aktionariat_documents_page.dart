@@ -4,6 +4,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/legal/widgets/legal_document_button.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 
 class AktionariatDocumentsPage extends StatelessWidget {
   const AktionariatDocumentsPage({super.key});
@@ -23,47 +24,59 @@ class AktionariatDocumentsPage extends StatelessWidget {
             vertical: 12.0,
           ),
           child: Column(
-            spacing: 12.0,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 20.0,
             children: [
-              LegalDocumentButton(
-                leadingIcon: Icons.description_outlined,
-                trailingIcon: Icons.open_in_new_outlined,
-                title: s.aktionariatTermsOfService,
-                onTap: () => _openWebView(
-                  context,
-                  s.aktionariatTermsOfService,
-                  'https://www.aktionariat.com/terms-of-service',
+              Text(
+                s.aktionariatText,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: RealUnitColors.neutral500,
                 ),
               ),
-              LegalDocumentButton(
-                leadingIcon: Icons.shield_outlined,
-                trailingIcon: Icons.open_in_new_outlined,
-                title: s.aktionariatPrivacyPolicy,
-                onTap: () => _openWebView(
-                  context,
-                  s.aktionariatPrivacyPolicy,
-                  'https://www.aktionariat.com/privacy-policy',
-                ),
-              ),
-              LegalDocumentButton(
-                leadingIcon: Icons.policy_outlined,
-                trailingIcon: Icons.open_in_new_outlined,
-                title: s.aktionariatDisclaimer,
-                onTap: () => _openWebView(
-                  context,
-                  s.aktionariatDisclaimer,
-                  'https://www.aktionariat.com/disclaimer',
-                ),
-              ),
-              LegalDocumentButton(
-                leadingIcon: Icons.account_balance_outlined,
-                trailingIcon: Icons.open_in_new_outlined,
-                title: s.aktionariatImprint,
-                onTap: () => _openWebView(
-                  context,
-                  s.aktionariatImprint,
-                  'https://www.aktionariat.com/impressum',
-                ),
+              Column(
+                spacing: 12.0,
+                children: [
+                  LegalDocumentButton(
+                    leadingIcon: Icons.description_outlined,
+                    trailingIcon: Icons.open_in_new_outlined,
+                    title: s.aktionariatTermsOfService,
+                    onTap: () => _openWebView(
+                      context,
+                      s.aktionariatTermsOfService,
+                      'https://www.aktionariat.com/terms-of-service',
+                    ),
+                  ),
+                  LegalDocumentButton(
+                    leadingIcon: Icons.shield_outlined,
+                    trailingIcon: Icons.open_in_new_outlined,
+                    title: s.aktionariatPrivacyPolicy,
+                    onTap: () => _openWebView(
+                      context,
+                      s.aktionariatPrivacyPolicy,
+                      'https://www.aktionariat.com/privacy-policy',
+                    ),
+                  ),
+                  LegalDocumentButton(
+                    leadingIcon: Icons.policy_outlined,
+                    trailingIcon: Icons.open_in_new_outlined,
+                    title: s.aktionariatDisclaimer,
+                    onTap: () => _openWebView(
+                      context,
+                      s.aktionariatDisclaimer,
+                      'https://www.aktionariat.com/disclaimer',
+                    ),
+                  ),
+                  LegalDocumentButton(
+                    leadingIcon: Icons.account_balance_outlined,
+                    trailingIcon: Icons.open_in_new_outlined,
+                    title: s.aktionariatImprint,
+                    onTap: () => _openWebView(
+                      context,
+                      s.aktionariatImprint,
+                      'https://www.aktionariat.com/impressum',
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
