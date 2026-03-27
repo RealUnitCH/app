@@ -15,8 +15,8 @@ import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registrati
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_address_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_email_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_personal_step.dart';
-import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class KycRegistrationPage extends StatelessWidget {
@@ -168,7 +168,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
             if (_hasEmail) {
               context.read<KycRegistrationStepCubit>().next();
             } else {
-              final result = await context.push<bool>(LegalDisclaimerPage.routeName);
+              final result = await context.pushNamed<bool>(LegalRoutes.disclaimer);
               if (!mounted) return;
               if (result == true) {
                 context.read<KycRegistrationStepCubit>().next();

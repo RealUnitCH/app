@@ -67,7 +67,9 @@ lib/
 
 ## Navigation
 
-- Uses GoRouter. Routes defined in `lib/router.dart`.
+- Uses GoRouter. Routes defined in `lib/setup/routing/router_config.dart`.
+- Route names are defined in typed classes: `AppRoutes`, `SettingsRoutes`, `PinRoutes`, `OnboardingRoutes`, `LegalRoutes`.
+- Always use `pushNamed`/`goNamed` with route constants — NEVER hardcode route strings.
 - Pages should read their own dependencies from Bloc/DI — avoid passing data via route `extra` when the page can obtain it from context.
 
 ## Dependency Injection
@@ -98,3 +100,26 @@ lib/
 - Don't leave unused imports after refactoring.
 - Don't use default parameter values that contradict business rules (e.g., `amount = '300'` when minimum is 1000).
 - Don't add explanatory comments for workarounds — fix the root cause instead.
+- Don't add i18n keys without using them — remove unused keys when deleting features.
+- Avoid using `SizedBox` for spacing in Column/Row — use the `spacing` property instead:
+
+  ```dart
+  // Bad
+  Column(children: [Widget1(), SizedBox(height: 16), Widget2()])
+
+  // Good
+  Column(spacing: 16, children: [Widget1(), Widget2()])
+  ```
+
+- Don't use positional parameters for optional values in state classes — use named parameters:
+
+  ```dart
+  // Bad
+  const MyState(this.optionalData, {this.otherField});
+
+  // Good
+  const MyState({this.optionalData, this.otherField});
+  ```
+
+- Follow existing patterns. For multi-step flows (e.g., KYC), each step should have its own Page + Cubit. Don't combine multiple steps into one, pass data through state, or use inline widgets with callbacks when a separate page is the established pattern.
+- Follow the separation of concerns principle.

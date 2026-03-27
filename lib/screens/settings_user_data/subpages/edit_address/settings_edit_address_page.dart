@@ -19,8 +19,6 @@ import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 import 'package:realunit_wallet/widgets/image_picker_sheet.dart';
 
 class SettingsEditAddressPage extends StatelessWidget {
-  static const routeName = '/settings/userData/editAddress';
-
   const SettingsEditAddressPage({super.key});
 
   @override

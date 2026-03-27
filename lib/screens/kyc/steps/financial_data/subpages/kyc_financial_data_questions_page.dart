@@ -10,6 +10,7 @@ import 'package:realunit_wallet/screens/kyc/steps/financial_data/widgets/kyc_que
 import 'package:realunit_wallet/screens/kyc/steps/financial_data/widgets/kyc_question_single_choice_widget.dart';
 import 'package:realunit_wallet/screens/kyc/steps/financial_data/widgets/kyc_question_text_field_widget.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class KycFinancialDataQuestionsPage extends StatelessWidget {
@@ -115,8 +116,8 @@ class KycFinancialDataQuestionsPage extends StatelessWidget {
 
     if (link != null) {
       return GestureDetector(
-        onTap: () => context.push(
-          '/webView',
+        onTap: () => context.pushNamed(
+          AppRoutes.webView,
           extra: WebViewRouteParams(
             title: question.title,
             url: Uri.parse(link),

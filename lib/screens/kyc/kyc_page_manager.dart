@@ -18,8 +18,6 @@ import 'package:realunit_wallet/screens/kyc/subpages/kyc_pending_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
 
 class KycPageManager extends StatelessWidget {
-  static const routeName = '/kyc';
-
   final int? requiredLevel;
 
   const KycPageManager({super.key, this.requiredLevel});

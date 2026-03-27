@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/screens/buy/buy_page.dart';
-import 'package:realunit_wallet/screens/sell/sell_page.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/action_button.dart';
 
@@ -21,7 +20,7 @@ class DashboardActions extends StatelessWidget {
             size: 20,
           ),
           label: S.of(context).buy,
-          onPressed: () => context.push(BuyPage.routeName),
+          onPressed: () => context.pushNamed(AppRoutes.buy),
         ),
         ActionButton(
           icon: Icon(
@@ -30,7 +29,7 @@ class DashboardActions extends StatelessWidget {
             size: 20,
           ),
           label: S.of(context).sell,
-          onPressed: () => context.push(SellPage.routeName),
+          onPressed: () => context.pushNamed(AppRoutes.sell),
         ),
       ],
     );

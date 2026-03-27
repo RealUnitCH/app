@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/legal/subpages/legal_document_page.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
+import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
 
 class LegalDocumentConfig {
   final IconData icon;
@@ -15,15 +21,12 @@ class LegalDocumentConfig {
     this.pdfUrls,
   });
 
-  void onTap(BuildContext context) => Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => LegalDocumentPage(
-        params: LegalDocumentParams(
-          title: title(context),
-          assetBaseName: assetBaseName,
-          pdfUrls: pdfUrls,
-        ),
-      ),
+  void onTap(BuildContext context) => context.pushNamed(
+    LegalRoutes.document,
+    extra: LegalDocumentParams(
+      title: title(context),
+      assetBaseName: assetBaseName,
+      pdfUrls: pdfUrls,
     ),
   );
 }
@@ -125,5 +128,103 @@ class LegalDocumentsConfig {
     title: (context) => S.of(context).legalDisclaimerCheckboxInvestmentRegulations,
     assetBaseName: 'investment_regulations',
     pdfUrls: _investmentRegulationsPdfUrls,
+  );
+}
+
+class WebDocumentConfig {
+  final IconData icon;
+  final String Function(BuildContext context) title;
+  final String Function(BuildContext context) url;
+
+  const WebDocumentConfig({
+    required this.icon,
+    required this.title,
+    required this.url,
+  });
+
+  void onTap(BuildContext context) => context.pushNamed(
+    AppRoutes.webView,
+    extra: WebViewRouteParams(
+      title: title(context),
+      url: Uri.parse(url(context)),
+    ),
+  );
+}
+
+class AktionariatDocumentsConfig {
+  static final allDocuments = [
+    _termsOfService,
+    _privacyPolicy,
+    _disclaimer,
+    _imprint,
+  ];
+
+  static final _termsOfService = WebDocumentConfig(
+    icon: Icons.description_outlined,
+    title: (context) => S.of(context).aktionariatTermsOfService,
+    url: (_) => 'https://www.aktionariat.com/terms-of-service',
+  );
+
+  static final _privacyPolicy = WebDocumentConfig(
+    icon: Icons.shield_outlined,
+    title: (context) => S.of(context).aktionariatPrivacyPolicy,
+    url: (_) => 'https://www.aktionariat.com/privacy-policy',
+  );
+
+  static final _disclaimer = WebDocumentConfig(
+    icon: Icons.policy_outlined,
+    title: (context) => S.of(context).aktionariatDisclaimer,
+    url: (_) => 'https://www.aktionariat.com/disclaimer',
+  );
+
+  static final _imprint = WebDocumentConfig(
+    icon: Icons.account_balance_outlined,
+    title: (context) => S.of(context).aktionariatImprint,
+    url: (_) => 'https://www.aktionariat.com/impressum',
+  );
+}
+
+class DfxDocumentsConfig {
+  static final allDocuments = [
+    _termsAndConditions,
+    _privacyPolicy,
+    _disclaimer,
+    _imprint,
+  ];
+
+  static final _termsAndConditions = WebDocumentConfig(
+    icon: Icons.description_outlined,
+    title: (context) => S.of(context).dfxTermsAndConditions,
+    url: (context) {
+      final language = context.read<SettingsBloc>().state.language.code;
+      return 'https://docs.dfx.swiss/$language/tnc.html';
+    },
+  );
+
+  static final _privacyPolicy = WebDocumentConfig(
+    icon: Icons.shield_outlined,
+    title: (context) => S.of(context).dfxPrivacyPolicy,
+    url: (context) {
+      final language = context.read<SettingsBloc>().state.language.code;
+      return 'https://docs.dfx.swiss/$language/privacy.html';
+    },
+  );
+
+  static final _disclaimer = WebDocumentConfig(
+    icon: Icons.policy_outlined,
+    title: (context) => S.of(context).dfxDisclaimer,
+    url: (context) {
+      final language = context.read<SettingsBloc>().state.language.code;
+      return 'https://docs.dfx.swiss/$language/disclaimer.html';
+    },
+  );
+
+  static final _imprint = WebDocumentConfig(
+    icon: Icons.account_balance_outlined,
+    title: (context) => S.of(context).dfxImprint,
+    url: (context) {
+      final language = context.read<SettingsBloc>().state.language.code;
+      return 'https://docs.dfx.swiss/$language/imprint.html';
+    },
   );
 }

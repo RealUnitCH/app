@@ -60,12 +60,10 @@ class DashboardPriceWidgetView extends StatelessWidget {
                   children: [
                     Text(
                       S.of(context).realunitStockprice,
-                      style:
-                          Theme.of(
-                            context,
-                          ).textTheme.bodySmall?.copyWith(
-                            color: RealUnitColors.neutral400,
-                          ),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: .w600,
+                        color: RealUnitColors.basic.black,
+                      ),
                     ),
                   ],
                 ),
@@ -75,14 +73,14 @@ class DashboardPriceWidgetView extends StatelessWidget {
                     BlocBuilder<SettingsBloc, SettingsState>(
                       builder: (context, state) {
                         return Text(
-                          state.currency.code.toUpperCase(),
+                          '${state.currency.code.toUpperCase()} ',
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: .w600),
                         );
                       },
                     ),
                     Text(
                       price == BigInt.zero ? '--.--' : formatFixed(price, 2, trimZeros: false),
-                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: .w600),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: .w600),
                     ),
                   ],
                 ),

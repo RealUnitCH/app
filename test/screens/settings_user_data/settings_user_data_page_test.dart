@@ -103,7 +103,7 @@ void main() {
       );
 
       when(() => settingsUserDataCubit.state).thenReturn(
-        SettingsUserDataSuccess(userData),
+        SettingsUserDataSuccess(userData: userData),
       );
 
       await tester.pumpApp(buildSubject(const SettingsUserDataView()));
@@ -116,7 +116,7 @@ void main() {
 
     testWidgets('renders correctly when user data was not found', (tester) async {
       when(() => settingsUserDataCubit.state).thenReturn(
-        const SettingsUserDataSuccess(null),
+        const SettingsUserDataSuccess(),
       );
 
       await tester.pumpApp(buildSubject(const SettingsUserDataView()));
