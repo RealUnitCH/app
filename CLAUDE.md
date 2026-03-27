@@ -101,7 +101,8 @@ lib/
 - Don't use default parameter values that contradict business rules (e.g., `amount = '300'` when minimum is 1000).
 - Don't add explanatory comments for workarounds — fix the root cause instead.
 - Don't add i18n keys without using them — remove unused keys when deleting features.
-- Don't use `SizedBox` for spacing in Column/Row — use the `spacing` property instead:
+- Avoid using `SizedBox` for spacing in Column/Row — use the `spacing` property instead:
+
   ```dart
   // Bad
   Column(children: [Widget1(), SizedBox(height: 16), Widget2()])
@@ -109,7 +110,9 @@ lib/
   // Good
   Column(spacing: 16, children: [Widget1(), Widget2()])
   ```
+
 - Don't use positional parameters for optional values in state classes — use named parameters:
+
   ```dart
   // Bad
   const MyState(this.optionalData, {this.otherField});
@@ -117,4 +120,6 @@ lib/
   // Good
   const MyState({this.optionalData, this.otherField});
   ```
-- Don't be "clever" — follow existing patterns. For multi-step flows (e.g., KYC), each step should have its own Page + Cubit. Don't combine multiple steps into one, pass data through state, or use inline widgets with callbacks when a separate page is the established pattern.
+
+- Follow existing patterns. For multi-step flows (e.g., KYC), each step should have its own Page + Cubit. Don't combine multiple steps into one, pass data through state, or use inline widgets with callbacks when a separate page is the established pattern.
+- Follow the separation of concerns principle.
