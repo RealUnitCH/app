@@ -22,7 +22,7 @@ class DfxDocumentsPage extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.symmetric(
+          padding: const .symmetric(
             horizontal: 20.0,
             vertical: 12.0,
           ),
