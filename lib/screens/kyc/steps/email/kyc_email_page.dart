@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_step/kyc_email_step_cubit.dart';
@@ -31,13 +29,7 @@ class KycEmailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: context.pop,
-          icon: const Icon(Icons.arrow_back_rounded),
-        ),
-        title: Text(S.of(context).registerEmail),
-      ),
+      appBar: AppBar(title: Text(S.of(context).registerEmail)),
       body: const KycEmailForm(),
     );
   }
@@ -65,7 +57,7 @@ class _KycEmailFormState extends State<KycEmailForm> {
     return BlocListener<KycEmailStepCubit, KycEmailStepState>(
       listener: (context, state) async {
         if (state is KycEmailStepFailure) {
-          final message = state.error == KycEmailStepError.emailDoesNotMatch
+          final message = state.error == .emailDoesNotMatch
               ? S.of(context).registerEmailDoesNotMatch
               : state.message;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -76,10 +68,10 @@ class _KycEmailFormState extends State<KycEmailForm> {
           );
         }
         if (state is KycEmailStepSuccess) {
-          if (state.status == RegistrationEmailStatus.emailRegistered) {
+          if (state.status == .emailRegistered) {
             context.read<KycCubit>().checkKyc();
           }
-          if (state.status == RegistrationEmailStatus.mergeRequested) {
+          if (state.status == .mergeRequested) {
             final isConfirmed = await Navigator.push<bool>(
               context,
               MaterialPageRoute<bool>(
@@ -93,7 +85,7 @@ class _KycEmailFormState extends State<KycEmailForm> {
         }
       },
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const .symmetric(horizontal: 20),
         child: SafeArea(
           child: GestureDetector(
             onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
