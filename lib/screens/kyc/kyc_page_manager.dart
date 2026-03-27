@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/2fa/kyc_2fa_page.dart';
@@ -30,6 +31,7 @@ class KycPageManager extends StatelessWidget {
       create: (context) => KycCubit(
         getIt<DfxKycService>(),
         getIt<RealUnitWalletService>(),
+        getIt<RealUnitRegistrationService>(),
         requiredLevel: requiredLevel,
       )..checkKyc(),
       child: const KycViewManager(),
