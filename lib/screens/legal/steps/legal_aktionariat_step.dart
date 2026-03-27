@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/legal/widgets/legal_document_button.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class LegalAktionariatStep extends StatelessWidget {
@@ -41,8 +42,8 @@ class LegalAktionariatStep extends StatelessWidget {
               leadingIcon: Icons.description_outlined,
               trailingIcon: Icons.open_in_new_outlined,
               title: s.aktionariatTermsOfService,
-              onTap: () => context.push(
-                '/webView',
+              onTap: () => context.pushNamed(
+                AppRoutes.webView,
                 extra: WebViewRouteParams(
                   title: s.aktionariatTermsOfService,
                   url: Uri.parse('https://www.aktionariat.com/terms-of-service'),
@@ -53,8 +54,8 @@ class LegalAktionariatStep extends StatelessWidget {
               leadingIcon: Icons.shield_outlined,
               trailingIcon: Icons.open_in_new_outlined,
               title: s.aktionariatPrivacyPolicy,
-              onTap: () => context.push(
-                '/webView',
+              onTap: () => context.pushNamed(
+                AppRoutes.webView,
                 extra: WebViewRouteParams(
                   title: s.aktionariatPrivacyPolicy,
                   url: Uri.parse('https://www.aktionariat.com/privacy-policy'),
@@ -65,8 +66,8 @@ class LegalAktionariatStep extends StatelessWidget {
               leadingIcon: Icons.policy_outlined,
               trailingIcon: Icons.open_in_new_outlined,
               title: s.aktionariatDisclaimer,
-              onTap: () => context.push(
-                '/webView',
+              onTap: () => context.pushNamed(
+                AppRoutes.webView,
                 extra: WebViewRouteParams(
                   title: s.aktionariatDisclaimer,
                   url: Uri.parse('https://www.aktionariat.com/disclaimer'),
@@ -77,8 +78,8 @@ class LegalAktionariatStep extends StatelessWidget {
               leadingIcon: Icons.account_balance_outlined,
               trailingIcon: Icons.open_in_new_outlined,
               title: s.aktionariatImprint,
-              onTap: () => context.push(
-                '/webView',
+              onTap: () => context.pushNamed(
+                AppRoutes.webView,
                 extra: WebViewRouteParams(
                   title: s.aktionariatImprint,
                   url: Uri.parse('https://www.aktionariat.com/impressum'),

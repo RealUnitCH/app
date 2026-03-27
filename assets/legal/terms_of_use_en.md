@@ -28,7 +28,7 @@ The App is a self-custody solution. This means:
 - **You alone** are responsible for the secure storage of your recovery words (seed phrase).
 - **You alone** are responsible for keeping your PIN and access credentials confidential.
 - RealUnit has **no access** to your private keys, your seed phrase, or your PIN.
-- If your recovery words are lost, access to the wallet is **irretrievably lost**. RealUnit cannot restore lost keys.
+- If your recovery words are lost, access to the wallet is **irretrievably lost**. RealUnit cannot restore lost keys. For RealUnit tokens, a blockchain-based recovery mechanism exists that allows tokens to be recovered upon verified loss of the private key. This process is cumbersome and involves a 180-day waiting period.
 - Transactions on the blockchain are **irreversible**. Incorrectly sent tokens cannot be reversed.
 
 
@@ -70,6 +70,7 @@ These permissions are optional and can be managed in the device settings.
 The App uses services from third-party providers, in particular:
 
 - **DFX AG**: For price and balance data as well as buy/sell functions
+- **Sumsub**: For the technical execution of identity verification (KYC)
 
 The respective terms of use and privacy policies of these third-party providers apply to the use of their services. RealUnit assumes no liability for the availability or functionality of third-party services.
 

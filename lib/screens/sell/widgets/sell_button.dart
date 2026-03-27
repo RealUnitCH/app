@@ -3,11 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/bank_account/bank_account.dart';
-import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_converter/sell_converter_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_confirm_sheet.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_executed_sheet.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class SellButton extends StatelessWidget {
@@ -22,14 +22,14 @@ class SellButton extends StatelessWidget {
       listener: (context, state) async {
         if (state is SellPaymentInfoFailure) {
           if (state.error == .kycRequired) {
-            await context.push(
-              KycPageManager.routeName,
+            await context.pushNamed(
+              AppRoutes.kyc,
               extra: state.requiredLevel,
             );
             return;
           }
           if (state.error == .registrationRequired) {
-            await context.push(KycPageManager.routeName);
+            await context.pushNamed(AppRoutes.kyc);
             return;
           }
           if (context.mounted) {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/packages/utils/device_info.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class TextLinkSpan {
@@ -31,8 +32,8 @@ class TextLinkSpan {
 
     if (DeviceInfo.instance.isMobile) {
       if (!context.mounted) return;
-      await context.push(
-        '/webView',
+      await context.pushNamed(
+        AppRoutes.webView,
         extra: WebViewRouteParams(title: title, url: uri),
       );
     } else {

@@ -50,7 +50,7 @@ Processing is based on your consent and for the fulfillment of contractual and l
 
 ## 4. Identity Verification (KYC)
 
-Identity verification (Know Your Customer, KYC) is required above certain amounts. This is carried out through DFX AG. Additional data may be collected, in particular:
+Identity verification (Know Your Customer, KYC) is required above certain amounts. This is carried out through DFX AG, with Sumsub being used as the technical service provider for identity verification. Additional data may be collected, in particular:
 
 - Identity documents (passport, identity card)
 - Biometric data for facial recognition (as part of video identification)

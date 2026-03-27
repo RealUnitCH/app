@@ -50,7 +50,7 @@ Die Verarbeitung erfolgt auf Grundlage Ihrer Einwilligung sowie zur Erfüllung v
 
 ## 4. Identitätsprüfung (KYC)
 
-Ab bestimmten Beträgen ist eine Identitätsprüfung (Know Your Customer, KYC) erforderlich. Diese wird über DFX AG durchgeführt. Dabei können zusätzliche Daten erhoben werden, insbesondere:
+Ab bestimmten Beträgen ist eine Identitätsprüfung (Know Your Customer, KYC) erforderlich. Diese wird über DFX AG durchgeführt, wobei Sumsub als technischer Dienstleister für die Identitätsprüfung eingesetzt wird. Dabei können zusätzliche Daten erhoben werden, insbesondere:
 
 - Ausweisdokumente (Reisepass, Identitätskarte)
 - Biometrische Daten zur Gesichtserkennung (im Rahmen der Video-Identifikation)

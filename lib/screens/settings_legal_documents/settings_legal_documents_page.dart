@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/config/legal_documents_config.dart';
 import 'package:realunit_wallet/screens/legal/widgets/legal_document_button.dart';
+import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
 
 class SettingsLegalDocumentsPage extends StatelessWidget {
   const SettingsLegalDocumentsPage({super.key});
@@ -25,7 +26,7 @@ class SettingsLegalDocumentsPage extends StatelessWidget {
               LegalDocumentButton(
                 leadingIcon: Icons.description_outlined,
                 title: S.of(context).termsOfUse,
-                onTap: () => context.push('/settings/termsOfUse'),
+                onTap: () => context.pushNamed(LegalRoutes.terms),
               ),
               ...LegalDocumentsConfig.allDocuments.map(
                 (config) => LegalDocumentButton(

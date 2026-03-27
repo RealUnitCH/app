@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/legal/subpages/legal_document_page.dart';
+import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
 
 class LegalDocumentConfig {
   final IconData icon;
@@ -15,15 +17,12 @@ class LegalDocumentConfig {
     this.pdfUrls,
   });
 
-  void onTap(BuildContext context) => Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => LegalDocumentPage(
-        params: LegalDocumentParams(
-          title: title(context),
-          assetBaseName: assetBaseName,
-          pdfUrls: pdfUrls,
-        ),
-      ),
+  void onTap(BuildContext context) => context.pushNamed(
+    LegalRoutes.document,
+    extra: LegalDocumentParams(
+      title: title(context),
+      assetBaseName: assetBaseName,
+      pdfUrls: pdfUrls,
     ),
   );
 }

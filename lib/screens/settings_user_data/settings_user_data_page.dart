@@ -9,10 +9,8 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/settings_user_data/cubit/settings_user_data_cubit.dart';
-import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_address/settings_edit_address_page.dart';
-import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_name/settings_edit_name_page.dart';
-import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_phone_number/settings_edit_phone_number_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class SettingsUserDataPage extends StatelessWidget {
@@ -65,8 +63,8 @@ class SettingsUserDataView extends StatelessWidget {
                                     ? S.of(context).changeInReview
                                     : null,
                                 onEdit: () async {
-                                  final isEdited = await context.push<bool>(
-                                    SettingsEditNamePage.routeName,
+                                  final isEdited = await context.pushNamed<bool>(
+                                    SettingsRoutes.editName,
                                   );
                                   if (isEdited == true && context.mounted) {
                                     context.read<SettingsUserDataCubit>().getUserData();
@@ -86,8 +84,8 @@ class SettingsUserDataView extends StatelessWidget {
                                 label: S.of(context).phoneNumber,
                                 value: userData.phoneNumber,
                                 onEdit: () async {
-                                  final isEdited = await context.push<bool>(
-                                    SettingsEditPhoneNumberPage.routeName,
+                                  final isEdited = await context.pushNamed<bool>(
+                                    SettingsRoutes.editPhone,
                                   );
                                   if (isEdited == true && context.mounted) {
                                     context.read<SettingsUserDataCubit>().getUserData();
@@ -102,8 +100,8 @@ class SettingsUserDataView extends StatelessWidget {
                                     ? S.of(context).changeInReview
                                     : null,
                                 onEdit: () async {
-                                  final isEdited = await context.push<bool>(
-                                    SettingsEditAddressPage.routeName,
+                                  final isEdited = await context.pushNamed<bool>(
+                                    SettingsRoutes.editAddress,
                                   );
                                   if (isEdited == true && context.mounted) {
                                     context.read<SettingsUserDataCubit>().getUserData();
@@ -116,18 +114,18 @@ class SettingsUserDataView extends StatelessWidget {
                       ),
                     )
                   : email != null
-                      ? SafeArea(
-                          child: Padding(
-                            padding: const .symmetric(horizontal: 12.0),
-                            child: _UserDataRow(
-                              label: S.of(context).email,
-                              value: email,
-                            ),
-                          ),
-                        )
-                      : Center(
-                          child: Text(S.of(context).userDataNotFound),
+                  ? SafeArea(
+                      child: Padding(
+                        padding: const .symmetric(horizontal: 12.0),
+                        child: _UserDataRow(
+                          label: S.of(context).email,
+                          value: email,
                         ),
+                      ),
+                    )
+                  : Center(
+                      child: Text(S.of(context).userDataNotFound),
+                    ),
             SettingsUserDataLoading() => const Center(
               child: CupertinoActivityIndicator(),
             ),

@@ -8,6 +8,7 @@ import 'package:realunit_wallet/packages/utils/asset_logo.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_section.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/styles.dart';
 
@@ -51,7 +52,12 @@ class SettingsNodesPage extends StatelessWidget {
                       size: 20,
                       color: RealUnitColors.realUnitBlack,
                     ),
-                    onTap: () => context.push('/settings/nodes/${blockchain.chainId}'),
+                    onTap: () => context.pushNamed(
+                      SettingsRoutes.editNode,
+                      pathParameters: {
+                        'chainId': blockchain.chainId.toString(),
+                      },
+                    ),
                   ),
                 )
                 .toList(),

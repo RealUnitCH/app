@@ -10,8 +10,6 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/form/phone_number_field.dart';
 
 class SettingsEditPhoneNumberPage extends StatelessWidget {
-  static const routeName = '/settings/userData/editPhoneNumber';
-
   const SettingsEditPhoneNumberPage({super.key});
 
   @override

@@ -14,8 +14,6 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/number_pad.dart';
 
 class VerifyPinPage extends StatelessWidget {
-  static const route = '/pin/verify';
-
   const VerifyPinPage({super.key});
 
   @override
