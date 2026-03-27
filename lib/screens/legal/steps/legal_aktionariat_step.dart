@@ -7,9 +7,7 @@ import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class LegalAktionariatStep extends StatelessWidget {
-  final bool showTitle;
-
-  const LegalAktionariatStep({super.key, this.showTitle = true});
+  const LegalAktionariatStep({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,14 +17,13 @@ class LegalAktionariatStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 20.0,
       children: [
-        if (showTitle)
-          Text(
-            s.aktionariatTitle,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontSize: 18,
-              height: 24 / 18,
-            ),
+        Text(
+          s.aktionariatTitle,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontSize: 18,
+            height: 24 / 18,
           ),
+        ),
         Text(
           s.aktionariatText,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
