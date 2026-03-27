@@ -11,6 +11,7 @@ import 'package:realunit_wallet/packages/wallet/payment_uri.dart';
 import 'package:realunit_wallet/screens/send/send_page.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
 import 'package:realunit_wallet/widgets/action_button.dart';
@@ -133,7 +134,7 @@ class SectionBalance extends StatelessWidget {
       try {
         final res = await getIt<OpenCryptoPayService>().getOpenCryptoPayInvoice(result.value!);
         if (context.mounted) {
-          context.push('/send/openCryptoPay', extra: res);
+          context.pushNamed(AppRoutes.sendInvoice, extra: res);
         }
       } on OpenCryptoPayException catch (e) {
         developer.log(
@@ -144,13 +145,13 @@ class SectionBalance extends StatelessWidget {
       }
     } else if (result.value!.startsWith('0x')) {
       if (context.mounted) {
-        context.push('/send', extra: SendRouteParams(receiver: result.value!));
+        context.pushNamed(AppRoutes.send, extra: SendRouteParams(receiver: result.value!));
       }
     } else {
       final uri = ERC681URI.fromString(result.value!);
       if (context.mounted) {
-        context.push(
-          '/send',
+        context.pushNamed(
+          AppRoutes.send,
           extra: SendRouteParams(receiver: uri.address, amount: uri.amount),
         );
       }

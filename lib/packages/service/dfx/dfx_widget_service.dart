@@ -13,6 +13,7 @@ import 'package:realunit_wallet/packages/utils/device_info.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/screens/send/send_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DfxWidgetService extends DFXAuthService {
@@ -50,7 +51,6 @@ class DfxWidgetService extends DFXAuthService {
     // 'Base/ZCHF',
     // 'Optimism/ZCHF',
     // 'Arbitrum/ZCHF',
-
     'Ethereum/ETH',
     'Base/ETH',
     'Optimism/ETH',
@@ -82,8 +82,13 @@ class DfxWidgetService extends DFXAuthService {
 
   String get blockchain => 'Ethereum';
 
-  Future<void> launchProvider(BuildContext context, bool isBuyAction,
-      {String? paymentMethod, Blockchain? blockchain, String? amount}) async {
+  Future<void> launchProvider(
+    BuildContext context,
+    bool isBuyAction, {
+    String? paymentMethod,
+    Blockchain? blockchain,
+    String? amount,
+  }) async {
     if (_isLoading) return;
 
     _isLoading = true;
@@ -104,15 +109,17 @@ class DfxWidgetService extends DFXAuthService {
         // if (amount != null) 'amount-out': amount,
         if (paymentMethod != null) 'payment-method': paymentMethod,
         if (DeviceInfo.instance.isMobile) 'headless': 'true',
-        'redirect-uri': 'deuro-wallet://dfx/callback'
+        'redirect-uri': 'deuro-wallet://dfx/callback',
       });
 
       _isLoading = false;
       if (await canLaunchUrl(uri)) {
         if (DeviceInfo.instance.isMobile) {
           if (context.mounted) {
-            final response =
-                await context.push('/webView', extra: WebViewRouteParams(title: title, url: uri));
+            final response = await context.pushNamed(
+              AppRoutes.webView,
+              extra: WebViewRouteParams(title: title, url: uri),
+            );
 
             if (!isBuyAction && response != null && context.mounted) {
               completeSell(context, response as String);
@@ -135,18 +142,22 @@ class DfxWidgetService extends DFXAuthService {
     final depositAddress = await _getSellDepositAddress(params['routeId'] as String);
 
     final asset = (await _assetRepository.allAssets)
-        .where((element) =>
-            element.symbol.toUpperCase() == params['asset']!.toUpperCase() &&
-            Blockchain.getFromChainId(element.chainId).name == params['blockchain'])
+        .where(
+          (element) =>
+              element.symbol.toUpperCase() == params['asset']!.toUpperCase() &&
+              Blockchain.getFromChainId(element.chainId).name == params['blockchain'],
+        )
         .firstOrNull;
 
     if (context.mounted) {
-      context.push('/send',
-          extra: SendRouteParams(
-            asset: asset ?? dEUROAsset,
-            receiver: depositAddress,
-            amount: params['amount'] as String,
-          ));
+      context.pushNamed(
+        AppRoutes.send,
+        extra: SendRouteParams(
+          asset: asset ?? dEUROAsset,
+          receiver: depositAddress,
+          amount: params['amount'] as String,
+        ),
+      );
       // arguments: [depositAddress, params['amount'] as String, asset]
     }
   }

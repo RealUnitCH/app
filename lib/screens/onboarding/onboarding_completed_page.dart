@@ -6,8 +6,6 @@ import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class OnboardingCompletedPage extends StatelessWidget {
-  static const route = '/onboardingComplete';
-
   const OnboardingCompletedPage({super.key});
 
   @override

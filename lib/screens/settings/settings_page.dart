@@ -9,6 +9,7 @@ import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_confirm_logout_wallet_sheet.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_section.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
 
@@ -40,39 +41,39 @@ class SettingsPage extends StatelessWidget {
                   leading: const LanguagesIcon(size: 24),
                   trailing: _forwardIcon,
                   selectedOption: state.language.name,
-                  onTap: () => context.push('/settings/languages'),
+                  onTap: () => context.pushNamed(SettingsRoutes.languages),
                 ),
                 SettingOption(
                   title: S.of(context).settingsCurrency,
                   leading: const CurrencyIcon(size: 24),
                   trailing: _forwardIcon,
                   selectedOption: state.currency.code,
-                  onTap: () => context.push('/settings/currencies'),
+                  onTap: () => context.pushNamed(SettingsRoutes.currencies),
                 ),
                 SettingOption(
                   title: S.of(context).settingsNetwork,
                   leading: const NodesIcon(size: 24),
                   trailing: _forwardIcon,
                   selectedOption: state.networkMode.localizedName(context),
-                  onTap: () => context.push('/settings/network'),
+                  onTap: () => context.pushNamed(SettingsRoutes.network),
                 ),
                 SettingOption(
                   title: S.of(context).settingsTaxReport,
                   leading: const DocumentReportIcon(size: 24),
                   trailing: _forwardIcon,
-                  onTap: () => context.push('/settings/taxReport'),
+                  onTap: () => context.pushNamed(SettingsRoutes.taxReport),
                 ),
                 SettingOption(
                   title: S.of(context).kycStatus,
                   leading: const IdentificationIcon(size: 24),
                   trailing: _forwardIcon,
-                  onTap: () => context.push('/settings/kycStatus'),
+                  onTap: () => context.pushNamed(SettingsRoutes.kycStatus),
                 ),
                 SettingOption(
                   title: S.of(context).userData,
                   leading: const UserCircleIcon(size: 24),
                   trailing: _forwardIcon,
-                  onTap: () => context.push('/settings/userData'),
+                  onTap: () => context.pushNamed(SettingsRoutes.userData),
                 ),
                 SettingOption(
                   title: S.of(context).legalDocuments,
@@ -82,7 +83,7 @@ class SettingsPage extends StatelessWidget {
                     color: RealUnitColors.realUnitBlue,
                   ),
                   trailing: _forwardIcon,
-                  onTap: () => context.push('/settings/legalDocuments'),
+                  onTap: () => context.pushNamed(SettingsRoutes.legalDocuments),
                 ),
                 SettingOption(
                   title: S.of(context).contact,
@@ -91,20 +92,20 @@ class SettingsPage extends StatelessWidget {
                     color: RealUnitColors.realUnitBlue,
                   ),
                   trailing: _forwardIcon,
-                  onTap: () => context.push('/settings/contact'),
+                  onTap: () => context.pushNamed(SettingsRoutes.contact),
                 ),
                 SettingOption(
                   title: S.of(context).walletAddress,
                   leading: const RealUnitIcon(size: 24),
                   trailing: _forwardIcon,
-                  onTap: () => context.push('/settings/walletAddress'),
+                  onTap: () => context.pushNamed(SettingsRoutes.walletAddress),
                 ),
                 if (context.read<HomeBloc>().state.openWallet?.walletType == WalletType.software)
                   SettingOption(
                     title: S.of(context).settingsWalletBackup,
                     leading: const KeySolidIcon(size: 24),
                     trailing: _forwardIcon,
-                    onTap: () => context.push('/settings/seed'),
+                    onTap: () => context.pushNamed(SettingsRoutes.seed),
                   ),
               ],
             ),

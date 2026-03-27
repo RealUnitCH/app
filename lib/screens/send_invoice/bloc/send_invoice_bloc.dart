@@ -19,7 +19,7 @@ import 'package:realunit_wallet/packages/wallet/create_transaction.dart';
 import 'package:realunit_wallet/screens/send/bloc/gas_fee_cubit.dart';
 import 'package:realunit_wallet/screens/send_invoice/bloc/expiry_cubit.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
-import 'package:realunit_wallet/setup/router.dart';
+import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/widgets/error_bottom_sheet.dart';
 
 part 'send_invoice_event.dart';

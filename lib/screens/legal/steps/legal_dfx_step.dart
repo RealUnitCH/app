@@ -5,6 +5,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/legal/widgets/legal_document_button.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class LegalDfxStep extends StatelessWidget {
@@ -44,8 +45,8 @@ class LegalDfxStep extends StatelessWidget {
               leadingIcon: Icons.description_outlined,
               trailingIcon: Icons.open_in_new_outlined,
               title: s.dfxTermsAndConditions,
-              onTap: () => context.push(
-                '/webView',
+              onTap: () => context.pushNamed(
+                AppRoutes.webView,
                 extra: WebViewRouteParams(
                   title: s.dfxTermsAndConditions,
                   url: Uri.parse('https://docs.dfx.swiss/$language/tnc.html'),
@@ -56,8 +57,8 @@ class LegalDfxStep extends StatelessWidget {
               leadingIcon: Icons.shield_outlined,
               trailingIcon: Icons.open_in_new_outlined,
               title: s.dfxPrivacyPolicy,
-              onTap: () => context.push(
-                '/webView',
+              onTap: () => context.pushNamed(
+                AppRoutes.webView,
                 extra: WebViewRouteParams(
                   title: s.dfxPrivacyPolicy,
                   url: Uri.parse('https://docs.dfx.swiss/$language/privacy.html'),
@@ -68,8 +69,8 @@ class LegalDfxStep extends StatelessWidget {
               leadingIcon: Icons.policy_outlined,
               trailingIcon: Icons.open_in_new_outlined,
               title: s.dfxDisclaimer,
-              onTap: () => context.push(
-                '/webView',
+              onTap: () => context.pushNamed(
+                AppRoutes.webView,
                 extra: WebViewRouteParams(
                   title: s.dfxDisclaimer,
                   url: Uri.parse('https://docs.dfx.swiss/$language/disclaimer.html'),
@@ -80,8 +81,8 @@ class LegalDfxStep extends StatelessWidget {
               leadingIcon: Icons.account_balance_outlined,
               trailingIcon: Icons.open_in_new_outlined,
               title: s.dfxImprint,
-              onTap: () => context.push(
-                '/webView',
+              onTap: () => context.pushNamed(
+                AppRoutes.webView,
                 extra: WebViewRouteParams(
                   title: s.dfxImprint,
                   url: Uri.parse('https://docs.dfx.swiss/$language/imprint.html'),

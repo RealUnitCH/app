@@ -3,13 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/text_substring_highlighting.dart';
 
-class TermsPage extends StatelessWidget {
-  static const route = '/terms';
-
-  const TermsPage({super.key});
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +67,7 @@ class TermsPage extends StatelessWidget {
                                   color: RealUnitColors.neutral500,
                                 ),
                             textAlign: .center,
-                            onHighlightedTap: () => context.push('/settings/termsOfUse'),
+                            onHighlightedTap: () => context.pushNamed(LegalRoutes.terms),
                           ),
                           Padding(
                             padding: const .symmetric(vertical: 20.0),

@@ -5,7 +5,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
-import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class PaymentAdditionalActionNeededButton extends StatelessWidget {
@@ -58,7 +58,7 @@ class PaymentAdditionalActionNeededButton extends StatelessWidget {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () async {
-                    await context.push(KycPageManager.routeName);
+                    await context.pushNamed(AppRoutes.kyc);
                     if (context.mounted) {
                       context.read<BuyPaymentInfoCubit>().getPaymentInfo(
                         amount: amountController.text,
@@ -77,8 +77,8 @@ class PaymentAdditionalActionNeededButton extends StatelessWidget {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () async {
-                    await context.push(
-                      KycPageManager.routeName,
+                    await context.pushNamed(
+                      AppRoutes.kyc,
                       extra: paymentState.requiredLevel,
                     );
                     if (context.mounted) {

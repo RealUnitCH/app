@@ -5,9 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
-import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
 import 'package:realunit_wallet/screens/settings_kyc_status/cubit/settings_kyc_status_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class SettingsKycStatusPage extends StatelessWidget {
@@ -154,7 +154,7 @@ class SettingsKycStatusView extends StatelessWidget {
                                     width: .infinity,
                                     child: FilledButton(
                                       onPressed: () async {
-                                        await context.push(KycPageManager.routeName, extra: 50);
+                                        await context.pushNamed(AppRoutes.kyc, extra: 50);
                                         if (context.mounted) {
                                           context.read<SettingsKycStatusCubit>().getKycStatus();
                                         }
