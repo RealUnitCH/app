@@ -56,7 +56,9 @@ class LegalDisclaimerView extends StatelessWidget {
                   LinearProgressIndicator(
                     value: state.progress,
                     backgroundColor: RealUnitColors.neutral200,
-                    valueColor: const AlwaysStoppedAnimation<Color>(RealUnitColors.realUnitBlue),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      RealUnitColors.realUnitBlue,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   Expanded(
@@ -85,7 +87,7 @@ class LegalDisclaimerView extends StatelessWidget {
                         Expanded(
                           child: FilledButton(
                             onPressed: () => cubit.nextStep(
-                              onComplete: onCompleted,
+                              onComplete: onCompleted ?? context.pop,
                             ),
                             child: Text(s.legalDisclaimerYes),
                           ),
