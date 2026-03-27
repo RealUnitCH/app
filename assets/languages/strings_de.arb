@@ -95,7 +95,7 @@
   "ibanInvalid": "IBAN ist ungültig",
   "ibanRequired": "IBAN ist erforderlich",
   "identityCheck": "Identitätsprüfung",
-  "identityCheckDescription": "Der Betrag liegt über Ihrem Limit. Um diesen zu erhöhen, bestätigen Sie bitte Ihre Identität (KYC) über DFX. Dabei entsteht eine Geschäftsbeziehung mit RealUnit AG und DFX AG. Die Identitätsprüfung gilt für beide.",
+  "identityCheckDescription": "Bitte bestätigen Sie Ihre Identität (KYC) über DFX. Dabei entsteht eine Geschäftsbeziehung mit RealUnit AG und DFX AG. Die Identitätsprüfung gilt für beide.",
   "identityCheckFailed": "Ein Fehler ist während der Identitätsprüfung aufgetreten. Bitte versuchen Sie es erneut.",
   "identityCheckFinallyFailed": "Identitätsprüfung endgültig fehlgeschlagen. Bitte kontaktieren Sie unseren Support.",
   "identityCheckProcess": "Machen Sie sich für die Identitätsprüfung bereit",

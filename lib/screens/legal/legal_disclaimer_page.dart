@@ -52,7 +52,7 @@ class LegalDisclaimerView extends StatelessWidget {
           ),
           body: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: const .symmetric(horizontal: 20.0),
               child: Column(
                 children: [
                   LinearProgressIndicator(
@@ -74,7 +74,7 @@ class LegalDisclaimerView extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    padding: const .symmetric(vertical: 20),
                     child: Row(
                       spacing: 20.0,
                       children: [

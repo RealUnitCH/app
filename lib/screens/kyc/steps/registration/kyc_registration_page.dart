@@ -169,22 +169,20 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
     }
   }
 
-  Future<void> _onSubmit() async {
-    await context.read<KycRegistrationSubmitCubit>().submit(
-      type: typeCtrl.value,
-      firstName: firstnameCtrl.text.trim(),
-      lastName: lastnameCtrl.text.trim(),
-      phoneNumber: phoneCtrl.value?.trim() ?? '',
-      birthday: birthdayCtrl.value ?? '',
-      nationality: nationalityCtrl.value!,
-      addressStreet: addressStreetCtrl.text.trim(),
-      addressStreetNumber: addressStreetNumberCtrl.text.trim(),
-      addressPostalCode: postalCodeCtrl.text.trim(),
-      addressCity: cityCtrl.text.trim(),
-      addressCountry: countryCtrl.value!,
-      swissTaxResidence: true,
-    );
-  }
+  Future<void> _onSubmit() async => await context.read<KycRegistrationSubmitCubit>().submit(
+    type: typeCtrl.value,
+    firstName: firstnameCtrl.text.trim(),
+    lastName: lastnameCtrl.text.trim(),
+    phoneNumber: phoneCtrl.value?.trim() ?? '',
+    birthday: birthdayCtrl.value ?? '',
+    nationality: nationalityCtrl.value!,
+    addressStreet: addressStreetCtrl.text.trim(),
+    addressStreetNumber: addressStreetNumberCtrl.text.trim(),
+    addressPostalCode: postalCodeCtrl.text.trim(),
+    addressCity: cityCtrl.text.trim(),
+    addressCountry: countryCtrl.value!,
+    swissTaxResidence: true,
+  );
 
   @override
   void dispose() {
