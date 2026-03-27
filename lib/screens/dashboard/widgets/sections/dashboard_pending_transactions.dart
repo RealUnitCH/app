@@ -39,11 +39,9 @@ class DashboardPendingTransactionsView extends StatelessWidget {
           children: [
             Text(
               S.of(context).pendingTransactions,
-              style: const TextStyle(
-                color: RealUnitColors.neutral500,
-                fontSize: 12,
-                height: 12 / 16,
-              ),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: RealUnitColors.neutral500,
+                  ),
             ),
             Container(
               padding: const EdgeInsets.all(12),

@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/transactions/dto/transactions_dto.dart';
@@ -49,19 +50,15 @@ class PendingTransactionRow extends StatelessWidget {
                   _isBuy
                       ? S.of(context).transactionBuy
                       : S.of(context).transactionSell,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    height: 20 / 16,
-                  ),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
                 Text(
                   _getStatusText(context),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    height: 16 / 12,
-                    color: RealUnitColors.neutral500,
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: RealUnitColors.neutral500,
+                      ),
                 ),
               ],
             ),
@@ -72,20 +69,16 @@ class PendingTransactionRow extends StatelessWidget {
               if (transaction.inputAmount != null && transaction.inputAsset != null)
                 Text(
                   '${_formatAmount(transaction.inputAmount!)} ${transaction.inputAsset}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    height: 20 / 16,
-                  ),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
               if (transaction.date != null)
                 Text(
                   DateFormat('MMM dd, yyyy').format(transaction.date!),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    height: 16 / 12,
-                    color: RealUnitColors.neutral500,
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: RealUnitColors.neutral500,
+                      ),
                 ),
             ],
           ),
