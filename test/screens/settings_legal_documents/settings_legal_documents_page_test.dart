@@ -31,13 +31,13 @@ void main() {
       );
 
       expect(find.byType(SingleChildScrollView), findsOne);
-      // RealUnit: 1 (Terms) + allDocuments (8) = 9
-      // Aktionariat: 4
-      // DFX: 4
-      // Total: 17
+      // Terms of Use: 1
+      // allDocuments (RealUnit docs): 7
+      // Navigation buttons (Aktionariat, DFX): 2
+      // Total: 10
       expect(
         find.byType(LegalDocumentButton),
-        findsNWidgets(LegalDocumentsConfig.allDocuments.length + 1 + 4 + 4),
+        findsNWidgets(LegalDocumentsConfig.allDocuments.length + 1 + 2),
       );
     });
   });

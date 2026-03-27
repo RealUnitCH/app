@@ -1,8 +1,10 @@
 abstract final class SettingsRoutes {
   static const settings = 'settings';
-  static const languages = 'settingsLanguages';
+  static const aktionariatDocuments = 'settingsAktionariatDocuments';
   static const contact = 'settingsContact';
   static const currencies = 'settingsCurrencies';
+  static const dfxDocuments = 'settingsDfxDocuments';
+  static const languages = 'settingsLanguages';
   static const legalDocuments = 'settingsLegalDocuments';
   static const network = 'settingsNetwork';
   static const taxReport = 'settingsTaxReport';
