@@ -51,8 +51,7 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
 
   Future<BuyPaymentInfoState> _runGetPaymentInfo(String amount, Currency currency) async {
     try {
-      final sanitizedAmount = amount.isEmpty ? '0' : amount.replaceAll(',', '.');
-      final parsedAmount = double.parse(sanitizedAmount);
+      final parsedAmount = _parseAmount(amount);
 
       double minAmount = _minAmountChf;
       if (currency == Currency.eur) {
@@ -66,11 +65,8 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
           minAmount: minAmount,
         );
       }
-      final paymentInfo = await _buyPaymentInfoService.getPaymentInfo(
-        parsedAmount.round(),
-        currency: currency,
-      );
-      return BuyPaymentInfoSuccess(paymentInfo);
+
+      return await _fetchPaymentInfo(parsedAmount, currency);
     } on KycLevelRequiredException catch (e) {
       return BuyPaymentInfoFailure(
         PaymentInfoError.kycRequired,
@@ -95,17 +91,24 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
 
       await _registrationService.registerWallet(userData);
 
-      final sanitizedAmount = amount.isEmpty ? '0' : amount.replaceAll(',', '.');
-      final parsedAmount = double.parse(sanitizedAmount);
-      final paymentInfo = await _buyPaymentInfoService.getPaymentInfo(
-        parsedAmount.round(),
-        currency: currency,
-      );
-      return BuyPaymentInfoSuccess(paymentInfo);
+      return await _fetchPaymentInfo(_parseAmount(amount), currency);
     } catch (e) {
       developer.log('Auto wallet registration failed: $e');
       return const BuyPaymentInfoFailure(PaymentInfoError.registrationRequired);
     }
+  }
+
+  double _parseAmount(String amount) {
+    final sanitized = amount.isEmpty ? '0' : amount.replaceAll(',', '.');
+    return double.parse(sanitized);
+  }
+
+  Future<BuyPaymentInfoSuccess> _fetchPaymentInfo(double amount, Currency currency) async {
+    final paymentInfo = await _buyPaymentInfoService.getPaymentInfo(
+      amount.round(),
+      currency: currency,
+    );
+    return BuyPaymentInfoSuccess(paymentInfo);
   }
 
   @override
