@@ -106,7 +106,7 @@
   "imprint": "Imprint",
   "interestToBeCollected": "Interest to be collected",
   "invest": "Invest",
-  "kyc": "KYC",
+  "kyc": "Onboarding process",
   "kycAccountMergeDescription": "Your identity was found in another account. A merge request has been created. Please confirm it via the email you received.",
   "kycAccountMergeTitle": "Account merge required",
   "kycCompleted": "Verification completed",
