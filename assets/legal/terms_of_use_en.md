@@ -70,6 +70,7 @@ These permissions are optional and can be managed in the device settings.
 The App uses services from third-party providers, in particular:
 
 - **DFX AG**: For price and balance data as well as buy/sell functions
+- **Sumsub**: For the technical execution of identity verification (KYC)
 
 The respective terms of use and privacy policies of these third-party providers apply to the use of their services. RealUnit assumes no liability for the availability or functionality of third-party services.
 

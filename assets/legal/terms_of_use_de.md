@@ -70,6 +70,7 @@ Diese Berechtigungen sind optional und können in den Geräteeinstellungen verwa
 Die App nutzt Dienste von Drittanbietern, insbesondere:
 
 - **DFX AG**: Für Kurs- und Guthabendaten sowie Kauf-/Verkaufsfunktionen
+- **Sumsub**: Für die technische Durchführung der Identitätsprüfung (KYC)
 
 Für die Nutzung dieser Drittanbieterdienste gelten deren jeweilige Nutzungsbedingungen und Datenschutzrichtlinien. RealUnit übernimmt keine Haftung für die Verfügbarkeit oder Funktionsweise von Drittanbieterdiensten.
 
