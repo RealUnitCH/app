@@ -13,6 +13,8 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
@@ -35,6 +37,10 @@ class MockDfxBrokerbotService extends Mock implements DfxBrokerbotService {}
 class MockRealUnitBuyPaymentInfoService extends Mock implements RealUnitBuyPaymentInfoService {}
 
 class MockDfxPriceService extends Mock implements DFXPriceService {}
+
+class MockRealUnitWalletService extends Mock implements RealUnitWalletService {}
+
+class MockRealUnitRegistrationService extends Mock implements RealUnitRegistrationService {}
 
 class MockApiConfig extends Mock implements ApiConfig {}
 
@@ -62,6 +68,8 @@ void main() {
     getIt.registerSingleton<DfxBrokerbotService>(MockDfxBrokerbotService());
     getIt.registerSingleton<RealUnitBuyPaymentInfoService>(MockRealUnitBuyPaymentInfoService());
     getIt.registerSingleton<DFXPriceService>(MockDfxPriceService());
+    getIt.registerSingleton<RealUnitWalletService>(MockRealUnitWalletService());
+    getIt.registerSingleton<RealUnitRegistrationService>(MockRealUnitRegistrationService());
   }
 
   setUpAll(() {

@@ -8,6 +8,8 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exce
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 part 'buy_payment_info_state.dart';
@@ -17,13 +19,19 @@ const double _minAmountChf = 100;
 class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
   final RealUnitBuyPaymentInfoService _buyPaymentInfoService;
   final DFXPriceService _priceService;
+  final RealUnitWalletService _walletService;
+  final RealUnitRegistrationService _registrationService;
   CancelableOperation<BuyPaymentInfoState>? _completer;
 
   BuyPaymentInfoCubit(
     RealUnitBuyPaymentInfoService buyPaymentInfoService,
     DFXPriceService priceService,
+    RealUnitWalletService walletService,
+    RealUnitRegistrationService registrationService,
   ) : _buyPaymentInfoService = buyPaymentInfoService,
       _priceService = priceService,
+      _walletService = walletService,
+      _registrationService = registrationService,
       super(const BuyPaymentInfoInitial());
 
   Future<void> getPaymentInfo({String amount = '300', Currency currency = Currency.chf}) async {
@@ -69,10 +77,34 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
         requiredLevel: e.requiredLevel,
       );
     } on RegistrationRequiredException {
-      return const BuyPaymentInfoFailure(PaymentInfoError.registrationRequired);
+      return await _tryAutoRegisterWallet(amount, currency);
     } catch (e) {
       developer.log(e.toString());
       return const BuyPaymentInfoFailure(PaymentInfoError.unknown);
+    }
+  }
+
+  Future<BuyPaymentInfoState> _tryAutoRegisterWallet(String amount, Currency currency) async {
+    try {
+      final walletStatus = await _walletService.getWalletStatus();
+      final userData = walletStatus.realUnitUserDataDto;
+
+      if (userData == null) {
+        return const BuyPaymentInfoFailure(PaymentInfoError.registrationRequired);
+      }
+
+      await _registrationService.registerWallet(userData);
+
+      final sanitizedAmount = amount.isEmpty ? '0' : amount.replaceAll(',', '.');
+      final parsedAmount = double.parse(sanitizedAmount);
+      final paymentInfo = await _buyPaymentInfoService.getPaymentInfo(
+        parsedAmount.round(),
+        currency: currency,
+      );
+      return BuyPaymentInfoSuccess(paymentInfo);
+    } catch (e) {
+      developer.log('Auto wallet registration failed: $e');
+      return const BuyPaymentInfoFailure(PaymentInfoError.registrationRequired);
     }
   }
 
