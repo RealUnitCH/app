@@ -117,3 +117,4 @@ lib/
   // Good
   const MyState({this.optionalData, this.otherField});
   ```
+- Don't be "clever" — follow existing patterns. For multi-step flows (e.g., KYC), each step should have its own Page + Cubit. Don't combine multiple steps into one, pass data through state, or use inline widgets with callbacks when a separate page is the established pattern.
