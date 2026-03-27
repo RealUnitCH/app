@@ -64,12 +64,6 @@ class SettingsPage extends StatelessWidget {
                   onTap: () => context.pushNamed(SettingsRoutes.taxReport),
                 ),
                 SettingOption(
-                  title: S.of(context).kycStatus,
-                  leading: const IdentificationIcon(size: 24),
-                  trailing: _forwardIcon,
-                  onTap: () => context.pushNamed(SettingsRoutes.kycStatus),
-                ),
-                SettingOption(
                   title: S.of(context).userData,
                   leading: const UserCircleIcon(size: 24),
                   trailing: _forwardIcon,
