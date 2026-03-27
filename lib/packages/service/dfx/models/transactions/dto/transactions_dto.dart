@@ -59,6 +59,8 @@ class TransactionDto {
   final String? outputAsset;
   final String? outputTxId;
   final DateTime? date;
+  final String? sourceAccount;
+  final String? targetAccount;
 
   const TransactionDto({
     this.id,
@@ -72,6 +74,8 @@ class TransactionDto {
     this.outputAsset,
     this.outputTxId,
     this.date,
+    this.sourceAccount,
+    this.targetAccount,
   });
 
   factory TransactionDto.fromJson(Map<String, dynamic> json) {
@@ -87,8 +91,16 @@ class TransactionDto {
       outputAsset: json['outputAsset'] as String?,
       outputTxId: json['outputTxId'] as String?,
       date: json['date'] != null ? DateTime.parse(json['date'] as String) : null,
+      sourceAccount: json['sourceAccount'] as String?,
+      targetAccount: json['targetAccount'] as String?,
     );
   }
 
   bool get isPending => state?.isPending ?? false;
+
+  bool belongsToWallet(String walletAddress) {
+    final address = walletAddress.toLowerCase();
+    return sourceAccount?.toLowerCase() == address ||
+        targetAccount?.toLowerCase() == address;
+  }
 }

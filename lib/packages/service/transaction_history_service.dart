@@ -249,7 +249,10 @@ class TransactionHistoryService {
     final transactions =
         json.map((e) => TransactionDto.fromJson(e as Map<String, dynamic>)).toList();
 
-    return transactions.where((t) => t.isPending).toList();
+    final walletAddress = _appStore.primaryAddress;
+    return transactions
+        .where((t) => t.isPending && t.belongsToWallet(walletAddress))
+        .toList();
   }
 }
 
