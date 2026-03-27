@@ -54,18 +54,14 @@ class CashHoldingBox extends StatelessWidget {
                   children: [
                     Text(
                       asset.symbol,
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w600,
-                        height: 20 / 16,
                       ),
                     ),
                     Text(
                       S.of(context).realunitStockToken,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        height: 16 / 12,
-                        color: RealUnitColors.neutral500,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: RealUnitColors.basic.black,
                       ),
                     ),
                   ],
@@ -79,20 +75,16 @@ class CashHoldingBox extends StatelessWidget {
                     decimals: price != null ? 2 : asset.decimals,
                     fractionalDigits: 2,
                     trimZeros: false,
-                    style: const TextStyle(
-                      fontSize: 16,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w600,
-                      height: 20 / 16,
                     ),
                     leadingSymbol: leadingSymbol,
                     trailingSymbol: trailingSymbol,
                   ),
                   Text(
                     _formatBalanceCalculation(),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      height: 16 / 12,
-                      color: RealUnitColors.neutral500,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: RealUnitColors.basic.black,
                     ),
                   ),
                 ],
