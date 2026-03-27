@@ -4,6 +4,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_tile.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
+import 'package:realunit_wallet/setup/routing/routes/support_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -29,6 +30,12 @@ class SettingsContactPage extends StatelessWidget {
               Column(
                 spacing: 12.0,
                 children: [
+                  SettingsTile(
+                    icon: Icons.support_agent_outlined,
+                    title: S.of(context).contactSupport,
+                    subtitle: S.of(context).contactSupportDescription,
+                    onTap: () => context.pushNamed(SupportRoutes.support),
+                  ),
                   SettingsTile(
                     icon: Icons.phone_outlined,
                     title: S.of(context).phone,
