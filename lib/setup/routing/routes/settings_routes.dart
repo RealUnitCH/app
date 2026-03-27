@@ -3,7 +3,6 @@ abstract final class SettingsRoutes {
   static const languages = 'settingsLanguages';
   static const contact = 'settingsContact';
   static const currencies = 'settingsCurrencies';
-  static const kycStatus = 'settingsKycStatus';
   static const legalDocuments = 'settingsLegalDocuments';
   static const network = 'settingsNetwork';
   static const taxReport = 'settingsTaxReport';

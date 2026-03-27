@@ -22,7 +22,6 @@ import 'package:realunit_wallet/screens/settings/settings_page.dart';
 import 'package:realunit_wallet/screens/settings_contact/settings_contact_page.dart';
 import 'package:realunit_wallet/screens/settings_currencies/settings_currencies_page.dart';
 import 'package:realunit_wallet/screens/settings_edit_node/settings_edit_node_page.dart';
-import 'package:realunit_wallet/screens/settings_kyc_status/settings_kyc_status_page.dart';
 import 'package:realunit_wallet/screens/settings_languages/settings_languages_page.dart';
 import 'package:realunit_wallet/screens/settings_legal_documents/settings_legal_documents_page.dart';
 import 'package:realunit_wallet/screens/settings_network/settings_network_page.dart';
@@ -209,11 +208,6 @@ final GoRouter routerConfig = GoRouter(
           name: SettingsRoutes.currencies,
           path: 'currencies',
           builder: (_, _) => const SettingsCurrenciesPage(),
-        ),
-        GoRoute(
-          name: SettingsRoutes.kycStatus,
-          path: 'kycStatus',
-          builder: (_, _) => const SettingsKycStatusPage(),
         ),
         GoRoute(
           name: SettingsRoutes.legalDocuments,
