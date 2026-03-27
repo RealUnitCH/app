@@ -48,7 +48,7 @@ enum TransactionState {
 }
 
 class TransactionDto {
-  final int id;
+  final int? id;
   final TransactionType? type;
   final TransactionState? state;
   final double? rate;
@@ -61,7 +61,7 @@ class TransactionDto {
   final DateTime? date;
 
   const TransactionDto({
-    required this.id,
+    this.id,
     this.type,
     this.state,
     this.rate,
@@ -76,7 +76,7 @@ class TransactionDto {
 
   factory TransactionDto.fromJson(Map<String, dynamic> json) {
     return TransactionDto(
-      id: json['id'] as int,
+      id: json['id'] as int?,
       type: TransactionType.fromString(json['type'] as String?),
       state: TransactionState.fromString(json['state'] as String?),
       rate: (json['rate'] as num?)?.toDouble(),

@@ -163,9 +163,9 @@ class TransactionHistoryService {
         (t) => t.inputTxId == txId || t.outputTxId == txId,
       );
 
-      if (matchingTransaction != null) {
+      if (matchingTransaction != null && matchingTransaction.id != null) {
         final dfxTransaction = DfxTransaction(
-          dfxId: matchingTransaction.id,
+          dfxId: matchingTransaction.id!,
           rate: matchingTransaction.rate,
           inputTxId: matchingTransaction.inputTxId,
           outputTxId: matchingTransaction.outputTxId,
@@ -234,7 +234,21 @@ class TransactionHistoryService {
   }
 
   Future<List<TransactionDto>> fetchPendingTransactions() async {
-    final transactions = await _fetchTransactions();
+    final authToken = _appStore.dfxAuthToken;
+    if (authToken == null) return [];
+
+    final uri = buildUri(_host, 'v1/transaction/detail');
+    final response = await _appStore.httpClient.get(
+      uri,
+      headers: {'Authorization': 'Bearer $authToken'},
+    );
+
+    if (response.statusCode != 200) return [];
+
+    final List<dynamic> json = jsonDecode(response.body);
+    final transactions =
+        json.map((e) => TransactionDto.fromJson(e as Map<String, dynamic>)).toList();
+
     return transactions.where((t) => t.isPending).toList();
   }
 }
