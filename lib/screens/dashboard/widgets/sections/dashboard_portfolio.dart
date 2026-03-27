@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/balance.dart';
@@ -20,10 +20,9 @@ class DashboardPortfolio extends StatelessWidget {
       children: [
         Text(
           S.of(context).portfolio,
-          style: const TextStyle(
-            color: RealUnitColors.neutral500,
-            fontSize: 12,
-            height: 12 / 16,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: RealUnitColors.basic.black,
           ),
         ),
         BlocBuilder<BalanceCubit, Balance>(
