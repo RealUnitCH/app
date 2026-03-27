@@ -24,6 +24,8 @@ import 'package:realunit_wallet/screens/settings_currencies/settings_currencies_
 import 'package:realunit_wallet/screens/settings_edit_node/settings_edit_node_page.dart';
 import 'package:realunit_wallet/screens/settings_languages/settings_languages_page.dart';
 import 'package:realunit_wallet/screens/settings_legal_documents/settings_legal_documents_page.dart';
+import 'package:realunit_wallet/screens/settings_legal_documents/subpages/settings_aktionariat_documents_page.dart';
+import 'package:realunit_wallet/screens/settings_legal_documents/subpages/settings_dfx_documents_page.dart';
 import 'package:realunit_wallet/screens/settings_network/settings_network_page.dart';
 import 'package:realunit_wallet/screens/settings_nodes/settings_nodes_page.dart';
 import 'package:realunit_wallet/screens/settings_seed/settings_seed_page.dart';
@@ -195,9 +197,9 @@ final GoRouter routerConfig = GoRouter(
       builder: (_, _) => const SettingsPage(),
       routes: [
         GoRoute(
-          name: SettingsRoutes.languages,
-          path: 'languages',
-          builder: (_, _) => const SettingsLanguagePage(),
+          name: SettingsRoutes.aktionariatDocuments,
+          path: 'aktionariatDocuments',
+          builder: (_, _) => const SettingsAktionariatDocumentsPage(),
         ),
         GoRoute(
           name: SettingsRoutes.contact,
@@ -208,6 +210,16 @@ final GoRouter routerConfig = GoRouter(
           name: SettingsRoutes.currencies,
           path: 'currencies',
           builder: (_, _) => const SettingsCurrenciesPage(),
+        ),
+        GoRoute(
+          name: SettingsRoutes.dfxDocuments,
+          path: 'dfxDocuments',
+          builder: (_, _) => const SettingsDfxDocumentsPage(),
+        ),
+        GoRoute(
+          name: SettingsRoutes.languages,
+          path: 'languages',
+          builder: (_, _) => const SettingsLanguagePage(),
         ),
         GoRoute(
           name: SettingsRoutes.legalDocuments,

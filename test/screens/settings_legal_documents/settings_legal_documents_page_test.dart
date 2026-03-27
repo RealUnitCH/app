@@ -9,12 +9,15 @@ import '../../helper/pump_app.dart';
 void main() {
   group('$SettingsLegalDocumentsPage', () {
     testWidgets('renders initially correctly', (tester) async {
-      await tester.pumpApp(const SettingsLegalDocumentsPage());
+      await tester.pumpApp(
+        const SettingsLegalDocumentsPage(),
+      );
 
       expect(find.byType(SingleChildScrollView), findsOne);
+      // terms of use (1), legal documents, aktionariat & dfx (2)
       expect(
         find.byType(LegalDocumentButton),
-        findsNWidgets(LegalDocumentsConfig.allDocuments.length + 1),
+        findsNWidgets(LegalDocumentsConfig.allDocuments.length + 1 + 2),
       );
     });
   });

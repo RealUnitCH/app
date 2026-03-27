@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/config/legal_documents_config.dart';
 import 'package:realunit_wallet/screens/legal/widgets/legal_document_button.dart';
-import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
-import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
-import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class LegalDfxStep extends StatelessWidget {
@@ -13,11 +9,11 @@ class LegalDfxStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final language = context.read<SettingsBloc>().state.language.code;
     final s = S.of(context);
 
     return Column(
-      spacing: 20,
+      crossAxisAlignment: .start,
+      spacing: 20.0,
       children: [
         Column(
           crossAxisAlignment: .start,
@@ -38,57 +34,17 @@ class LegalDfxStep extends StatelessWidget {
             ),
           ],
         ),
+
         Column(
           spacing: 12.0,
           children: [
-            LegalDocumentButton(
-              leadingIcon: Icons.description_outlined,
-              trailingIcon: Icons.open_in_new_outlined,
-              title: s.dfxTermsAndConditions,
-              onTap: () => context.pushNamed(
-                AppRoutes.webView,
-                extra: WebViewRouteParams(
-                  title: s.dfxTermsAndConditions,
-                  url: Uri.parse('https://docs.dfx.swiss/$language/tnc.html'),
-                ),
+            for (final document in DfxDocumentsConfig.allDocuments)
+              LegalDocumentButton(
+                leadingIcon: document.icon,
+                trailingIcon: Icons.open_in_new_outlined,
+                title: document.title(context),
+                onTap: () => document.onTap(context),
               ),
-            ),
-            LegalDocumentButton(
-              leadingIcon: Icons.shield_outlined,
-              trailingIcon: Icons.open_in_new_outlined,
-              title: s.dfxPrivacyPolicy,
-              onTap: () => context.pushNamed(
-                AppRoutes.webView,
-                extra: WebViewRouteParams(
-                  title: s.dfxPrivacyPolicy,
-                  url: Uri.parse('https://docs.dfx.swiss/$language/privacy.html'),
-                ),
-              ),
-            ),
-            LegalDocumentButton(
-              leadingIcon: Icons.policy_outlined,
-              trailingIcon: Icons.open_in_new_outlined,
-              title: s.dfxDisclaimer,
-              onTap: () => context.pushNamed(
-                AppRoutes.webView,
-                extra: WebViewRouteParams(
-                  title: s.dfxDisclaimer,
-                  url: Uri.parse('https://docs.dfx.swiss/$language/disclaimer.html'),
-                ),
-              ),
-            ),
-            LegalDocumentButton(
-              leadingIcon: Icons.account_balance_outlined,
-              trailingIcon: Icons.open_in_new_outlined,
-              title: s.dfxImprint,
-              onTap: () => context.pushNamed(
-                AppRoutes.webView,
-                extra: WebViewRouteParams(
-                  title: s.dfxImprint,
-                  url: Uri.parse('https://docs.dfx.swiss/$language/imprint.html'),
-                ),
-              ),
-            ),
           ],
         ),
       ],
