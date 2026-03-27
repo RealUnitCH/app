@@ -25,6 +25,8 @@ class KycCubit extends Cubit<KycState> {
   final RealUnitWalletService _walletService;
   final int _requiredLevel;
 
+  bool _legalDisclaimerAccepted = false;
+
   KycCubit(
     DfxKycService kycService,
     RealUnitWalletService walletService, {
@@ -47,9 +49,20 @@ class KycCubit extends Cubit<KycState> {
       final kycStatus = results.elementAt(1) as KycLevelDto;
       final level = kycStatus.kycLevel.value;
 
-      if (!status.isRegistered || level < 20) {
-        emit(const KycSuccess(currentStep: KycStep.registration));
+      if (level < 10) {
+        emit(const KycSuccess(currentStep: KycStep.email));
         return;
+      }
+
+      if (!status.isRegistered) {
+        if (!_legalDisclaimerAccepted) {
+          emit(const KycSuccess(currentStep: KycStep.legalDisclaimer));
+          return;
+        }
+        if (level < 20) {
+          emit(const KycSuccess(currentStep: KycStep.registration));
+          return;
+        }
       }
 
       if (level < _requiredLevel) {
@@ -90,6 +103,10 @@ class KycCubit extends Cubit<KycState> {
     } catch (e) {
       emit(KycFailure(e.toString()));
     }
+  }
+
+  void markLegalDisclaimerAccepted() {
+    _legalDisclaimerAccepted = true;
   }
 
   /// should only be called after realunit registration was completed

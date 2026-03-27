@@ -12,19 +12,23 @@ import 'package:realunit_wallet/styles/colors.dart';
 class LegalDisclaimerPage extends StatelessWidget {
   static const routeName = '/legalDisclaimer';
 
-  const LegalDisclaimerPage({super.key});
+  const LegalDisclaimerPage({super.key, this.onCompleted});
+
+  final VoidCallback? onCompleted;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => LegalDisclaimerCubit(),
-      child: const LegalDisclaimerView(),
+      child: LegalDisclaimerView(onCompleted: onCompleted),
     );
   }
 }
 
 class LegalDisclaimerView extends StatelessWidget {
-  const LegalDisclaimerView({super.key});
+  final VoidCallback? onCompleted;
+
+  const LegalDisclaimerView({super.key, this.onCompleted});
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +87,7 @@ class LegalDisclaimerView extends StatelessWidget {
                         Expanded(
                           child: FilledButton(
                             onPressed: () => cubit.nextStep(
-                              onComplete: () => context.pop(true),
+                              onComplete: onCompleted,
                             ),
                             child: Text(s.legalDisclaimerYes),
                           ),

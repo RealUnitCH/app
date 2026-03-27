@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/bank_account/bank_account.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
-import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_converter/sell_converter_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_confirm_sheet.dart';
@@ -30,10 +29,7 @@ class SellButton extends StatelessWidget {
             return;
           }
           if (state.error == .registrationRequired) {
-            final result = await context.push<bool>(LegalDisclaimerPage.routeName);
-            if (result == true && context.mounted) {
-              await context.push(KycPageManager.routeName);
-            }
+            await context.push(KycPageManager.routeName);
             return;
           }
           if (context.mounted) {

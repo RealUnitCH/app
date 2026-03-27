@@ -4,8 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
@@ -13,9 +13,7 @@ import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/kyc_registration_step_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_submit/kyc_registration_submit_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_address_step.dart';
-import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_email_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_personal_step.dart';
-import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
@@ -29,6 +27,7 @@ class KycRegistrationPage extends StatelessWidget {
         BlocProvider(
           create: (_) => KycRegistrationSubmitCubit(
             getIt<RealUnitRegistrationService>(),
+            getIt<DfxKycService>(),
           ),
         ),
         BlocProvider(
@@ -50,8 +49,6 @@ class KycRegistrationView extends StatefulWidget {
 class _KycRegistrationViewState extends State<KycRegistrationView> {
   final _pageController = PageController();
   StreamSubscription<KycRegistrationStepState>? _stepSubscription;
-
-  final emailCtrl = TextEditingController();
 
   final typeCtrl = ValueNotifier<RegistrationUserType>(RegistrationUserType.human);
   final lastnameCtrl = TextEditingController();
@@ -150,18 +147,6 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
 
   Widget _buildStep(KycRegistrationStep step) {
     switch (step) {
-      case KycRegistrationStep.email:
-        return KycRegistrationEmailStep(
-          emailCtrl: emailCtrl,
-          onSuccess: () async {
-            final result = await context.push<bool>(LegalDisclaimerPage.routeName);
-            if (!mounted) return;
-            if (result == true) {
-              context.read<KycRegistrationStepCubit>().next();
-            }
-          },
-        );
-
       case KycRegistrationStep.personal:
         return KycRegistrationPersonalStep(
           typeCtrl: typeCtrl,
@@ -184,10 +169,9 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
     }
   }
 
-  Future<void> _onSubmit() async => await context.read<KycRegistrationSubmitCubit>().submit(
-    Registration(
+  Future<void> _onSubmit() async {
+    await context.read<KycRegistrationSubmitCubit>().submit(
       type: typeCtrl.value,
-      email: emailCtrl.text.trim(),
       firstName: firstnameCtrl.text.trim(),
       lastName: lastnameCtrl.text.trim(),
       phoneNumber: phoneCtrl.value?.trim() ?? '',
@@ -199,15 +183,14 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
       addressCity: cityCtrl.text.trim(),
       addressCountry: countryCtrl.value!,
       swissTaxResidence: true,
-    ),
-  );
+    );
+  }
 
   @override
   void dispose() {
     _stepSubscription?.cancel();
     _pageController.dispose();
     typeCtrl.dispose();
-    emailCtrl.dispose();
     firstnameCtrl.dispose();
     lastnameCtrl.dispose();
     phoneCtrl.dispose();

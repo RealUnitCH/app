@@ -1,6 +1,15 @@
 part of 'kyc_cubit.dart';
 
-enum KycStep { registration, nationality, twoFa, ident, financialData, dfxApproval }
+enum KycStep {
+  email,
+  registration,
+  legalDisclaimer,
+  nationality,
+  twoFa,
+  ident,
+  financialData,
+  dfxApproval,
+}
 
 abstract class KycState extends Equatable {
   const KycState();

@@ -6,6 +6,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/2fa/kyc_2fa_page.dart';
+import 'package:realunit_wallet/screens/kyc/steps/email/kyc_email_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/financial_data/kyc_financial_data_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/ident/kyc_ident_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/nationality/kyc_nationality_page.dart';
@@ -15,6 +16,7 @@ import 'package:realunit_wallet/screens/kyc/subpages/kyc_completed_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_failure_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_loading_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_pending_page.dart';
+import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
 
 class KycPageManager extends StatelessWidget {
@@ -53,6 +55,13 @@ class KycViewManager extends StatelessWidget {
         KycPending(:final pendingStep) => KycPendingPage(pendingStep: pendingStep),
         KycCompleted() => const KycCompletedPage(),
         KycSuccess(:final currentStep, :final urlOrToken) => switch (currentStep) {
+          KycStep.email => const KycEmailPage(),
+          KycStep.legalDisclaimer => LegalDisclaimerPage(
+            onCompleted: () {
+              context.read<KycCubit>().markLegalDisclaimerAccepted();
+              context.read<KycCubit>().checkKyc();
+            },
+          ),
           KycStep.registration => const KycRegistrationPage(),
           KycStep.nationality => KycNationalityPage(url: urlOrToken ?? ''),
           KycStep.twoFa => const Kyc2FaPage(),
