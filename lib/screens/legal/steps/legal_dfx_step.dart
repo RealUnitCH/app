@@ -9,7 +9,9 @@ import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class LegalDfxStep extends StatelessWidget {
-  const LegalDfxStep({super.key});
+  final bool showTitle;
+
+  const LegalDfxStep({super.key, this.showTitle = true});
 
   @override
   Widget build(BuildContext context) {
@@ -17,26 +19,22 @@ class LegalDfxStep extends StatelessWidget {
     final s = S.of(context);
 
     return Column(
-      spacing: 20,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 20.0,
       children: [
-        Column(
-          crossAxisAlignment: .start,
-          spacing: 16.0,
-          children: [
-            Text(
-              s.dfxTitle,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontSize: 18,
-                height: 24 / 18,
-              ),
+        if (showTitle)
+          Text(
+            s.dfxTitle,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontSize: 18,
+              height: 24 / 18,
             ),
-            Text(
-              s.dfxText,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: RealUnitColors.neutral500,
-              ),
-            ),
-          ],
+          ),
+        Text(
+          s.dfxText,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: RealUnitColors.neutral500,
+          ),
         ),
         Column(
           spacing: 12.0,
