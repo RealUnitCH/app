@@ -29,7 +29,7 @@ class SettingsUserDataSuccess extends SettingsUserDataState {
   final String? email;
   final Set<KycStepName> pendingSteps;
 
-  const SettingsUserDataSuccess(this.userData, {this.email, this.pendingSteps = const {}});
+  const SettingsUserDataSuccess({this.userData, this.email, this.pendingSteps = const {}});
 
   @override
   List<Object?> get props => [userData, email, pendingSteps];
