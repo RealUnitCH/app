@@ -10,6 +10,11 @@ part 'connect_bitbox_state.dart';
 
 class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
   ConnectBitboxCubit(this._service, this._walletService) : super(BitboxNotConnected()) {
+    _startScanning();
+  }
+
+  Future<void> _startScanning() async {
+    await _service.startScan();
     _checkForTimer = Timer.periodic(const Duration(milliseconds: 500), (_) => checkForBitbox());
   }
 
@@ -30,12 +35,30 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     if (state is BitboxConnecting) return;
     emit(BitboxConnecting(device));
     try {
-      await _service.connectDevice(device);
+      // Step 1: Connect and get channel hash for pairing
+      final channelHash = await _service.connectAndInit(device);
+      emit(BitboxPairing(device, channelHash));
+      // User must now confirm on BitBox device and tap confirm in app
+    } catch (e) {
+      // TODO: show error to user
+      emit(BitboxNotConnected());
+      _checkForTimer = Timer.periodic(const Duration(seconds: 2), (_) => checkForBitbox());
+    }
+  }
+
+  /// Called when user confirms pairing in the app (after confirming on BitBox device)
+  Future<void> confirmPairing() async {
+    final currentState = state;
+    if (currentState is! BitboxPairing) return;
+
+    try {
+      await _service.confirmPairing();
       final wallet = await _walletService.createBitboxWallet('Luke-Skywallet');
       emit(BitboxConnected(wallet));
-    } catch (_) {
+    } catch (e) {
+      // TODO: show error to user
       emit(BitboxNotConnected());
-      _checkForTimer = Timer.periodic(const Duration(milliseconds: 30), (_) => checkForBitbox());
+      _checkForTimer = Timer.periodic(const Duration(seconds: 2), (_) => checkForBitbox());
     }
   }
 

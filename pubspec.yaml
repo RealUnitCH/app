@@ -84,9 +84,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   bitbox_flutter:
-    git:
-      url: https://github.com/konstantinullrich/bitbox_flutter
-      ref: e33e3888a5f384d960b11ad406b906b5770aede7
+    path: /Users/me/Documents/GitHub/konstantinullrich/bitbox_flutter
 
 dev_dependencies:
   flutter_test:

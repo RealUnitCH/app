@@ -10,17 +10,33 @@ class BitboxService {
 
   Future<List<sdk.BitboxDevice>> getAllUsbDevices() => bitboxManager.devices;
 
+  Future<bool> startScan() => bitboxManager.startScan();
+
   BitboxCredentials getCredentials(String address) =>
       BitboxCredentials(address)..setBitbox(bitboxManager);
 
-  Future<void> connectDevice(sdk.BitboxDevice device) async {
+  /// Step 1: Connect and initialize - returns channel hash for pairing
+  Future<String> connectAndInit(sdk.BitboxDevice device) async {
     await bitboxManager.connect(device);
     final didInit = await bitboxManager.initBitBox();
 
     if (!didInit) throw Exception('Failed to init');
 
-    final didVerify = await bitboxManager.channelHashVerify();
+    // Get the channel hash - this is shown on the BitBox device
+    // The user must verify it matches before confirming
+    final hash = await bitboxManager.getChannelHash();
+    return hash;
+  }
 
+  /// Step 2: Confirm pairing after user verified on BitBox device
+  Future<void> confirmPairing() async {
+    final didVerify = await bitboxManager.channelHashVerify();
     if (!didVerify) throw Exception('Failed to verify');
+  }
+
+  /// Legacy method - connects and immediately verifies (requires user to confirm on device first)
+  Future<void> connectDevice(sdk.BitboxDevice device) async {
+    await connectAndInit(device);
+    await confirmPairing();
   }
 }

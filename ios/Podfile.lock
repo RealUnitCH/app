@@ -103,7 +103,7 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
 
 SPEC CHECKSUMS:
-  bitbox_flutter: 9505732798041c413152669751beeaecc5fe400f
+  bitbox_flutter: fdc8a31424da25cdb5004a33e593aaf77edb2d0b
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_idensic_mobile_sdk_plugin: 633a89f8ae7ee028863d2df1da959847b426f0c3
   flutter_inappwebview_ios: b89ba3482b96fb25e00c967aae065701b66e9b99
