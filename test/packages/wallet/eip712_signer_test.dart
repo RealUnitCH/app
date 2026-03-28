@@ -23,7 +23,7 @@ void main() {
   late String registrationDate;
 
   group('$Eip712Signer', () {
-    test(('sign Registration Data works correctly'), () {
+    test(('sign Registration Data works correctly'), () async {
       privateKeyHex = 'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
       final credentials = EthPrivateKey.fromHex(privateKeyHex);
       type = RegistrationUserType.human;
@@ -57,7 +57,7 @@ void main() {
         swissTaxResidence: swissTaxResidence,
       );
 
-      final signature = Eip712Signer.signRegistration(
+      final signature = await Eip712Signer.signRegistration(
         type: registration.type.jsonName,
         email: registration.email,
         name: '${registration.firstName} ${registration.lastName}',

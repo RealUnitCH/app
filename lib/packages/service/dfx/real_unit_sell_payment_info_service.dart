@@ -65,7 +65,7 @@ class RealUnitSellPaymentInfoService {
 
   Future<void> confirmPayment(SellPaymentInfo paymentInfo) async {
     final credentials = _appStore.wallet.currentAccount.primaryAddress;
-    final delegationSignature = Eip712Signer.signDelegation(
+    final delegationSignature = await Eip712Signer.signDelegation(
       credentials: credentials,
       eip7702Data: paymentInfo.eip7702,
     );

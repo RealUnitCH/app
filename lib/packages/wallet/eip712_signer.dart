@@ -1,12 +1,13 @@
 import 'dart:convert';
 
 import 'package:eth_sig_util_plus/eth_sig_util_plus.dart';
+import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
 class Eip712Signer {
-  static String signRegistration({
+  static Future<String> signRegistration({
     required CredentialsWithKnownAddress credentials,
     required String email,
     required String name,
@@ -20,11 +21,7 @@ class Eip712Signer {
     required String addressCountry,
     required bool swissTaxResidence,
     required String registrationDate,
-  }) {
-    if (credentials is! EthPrivateKey) {
-      throw Exception('Hardware wallets not supported for EIP-712 registration signing');
-    }
-
+  }) async {
     final Map<String, dynamic> typedDataMap = {
       'types': {
         'EIP712Domain': [
@@ -66,21 +63,23 @@ class Eip712Signer {
       },
     };
 
+    final jsonData = jsonEncode(typedDataMap);
+
+    if (credentials is BitboxCredentials) {
+      return credentials.signTypedDataV4(1, jsonData);
+    }
+
     return EthSigUtil.signTypedData(
-      privateKey: bytesToHex(credentials.privateKey, include0x: true),
-      jsonData: jsonEncode(typedDataMap),
+      privateKey: bytesToHex((credentials as EthPrivateKey).privateKey, include0x: true),
+      jsonData: jsonData,
       version: TypedDataVersion.V4,
     );
   }
 
-  static String signDelegation({
+  static Future<String> signDelegation({
     required CredentialsWithKnownAddress credentials,
     required Eip7702Data eip7702Data,
-  }) {
-    if (credentials is! EthPrivateKey) {
-      throw Exception('Hardware wallets not supported for EIP-712 delegation signing');
-    }
-
+  }) async {
     final Map<String, dynamic> typedDataMap = {
       'types': {
         'EIP712Domain': [
@@ -112,11 +111,16 @@ class Eip712Signer {
       },
     };
 
-    final signature = EthSigUtil.signTypedData(
-      privateKey: bytesToHex(credentials.privateKey, include0x: true),
-      jsonData: jsonEncode(typedDataMap),
+    final jsonData = jsonEncode(typedDataMap);
+
+    if (credentials is BitboxCredentials) {
+      return credentials.signTypedDataV4(eip7702Data.domain.chainId, jsonData);
+    }
+
+    return EthSigUtil.signTypedData(
+      privateKey: bytesToHex((credentials as EthPrivateKey).privateKey, include0x: true),
+      jsonData: jsonData,
       version: TypedDataVersion.V4,
     );
-    return signature;
   }
 }

@@ -60,7 +60,7 @@ class RealUnitRegistrationService {
     final addressStreet = '${registration.addressStreet} ${registration.addressStreetNumber}'
         .trim();
     final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final signature = Eip712Signer.signRegistration(
+    final signature = await Eip712Signer.signRegistration(
       credentials: credentials,
       email: registration.email.toLowerCase(),
       name: name,
@@ -136,7 +136,7 @@ class RealUnitRegistrationService {
   ) async {
     final credentials = _appStore.wallet.primaryAccount.primaryAddress;
     final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final signature = Eip712Signer.signRegistration(
+    final signature = await Eip712Signer.signRegistration(
       credentials: credentials,
       email: userData.email,
       name: userData.name,
