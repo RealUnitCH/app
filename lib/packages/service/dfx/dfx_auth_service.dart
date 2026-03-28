@@ -33,20 +33,35 @@ abstract class DFXAuthService {
     }
   }
 
-  Future<String> getSignature(String message) async => wallet.signMessage(message);
+  Future<String> getSignature(String message) async {
+    // Use cached signature if available for this address
+    final cached = appStore.cachedDfxSignature;
+    final cachedAddress = appStore.cachedDfxSignatureAddress;
+    if (cached != null && cachedAddress == walletAddress) {
+      return cached;
+    }
+
+    // Sign with wallet (requires hardware wallet connection for BitBox)
+    final signature = await wallet.signMessage(message);
+
+    // Persist signature for future use without hardware wallet
+    await appStore.saveDfxSignature(walletAddress, signature);
+
+    return signature;
+  }
 
   Future<Map<String, dynamic>> getAuthResponse([bool sendWalletName = true]) async {
-    final signMessage = await getSignature(await getSignMessage());
+    final signature = await getSignature(await getSignMessage());
 
     final requestBody = jsonEncode(sendWalletName
         ? {
             'wallet': walletName,
             'address': walletAddress,
-            'signature': signMessage,
+            'signature': signature,
           }
         : {
             'address': walletAddress,
-            'signature': signMessage,
+            'signature': signature,
           });
 
     final uri = buildUri(host, authPath);
@@ -70,6 +85,7 @@ abstract class DFXAuthService {
 
   Future<String?> getAuthToken() async {
     if (appStore.dfxAuthToken == null) {
+      await appStore.loadCachedDfxSignature();
       final response = await getAuthResponse();
       appStore.dfxAuthToken = response['accessToken'] as String;
     }

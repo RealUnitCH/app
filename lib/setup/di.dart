@@ -68,11 +68,14 @@ Future<String> setupEssentials() async {
 
 Future<void> finishSetup(String encryptionKey) async {
   getIt.registerSingleton(AppDatabase(encryptionKey));
-  getIt.registerSingleton(
-    AppStore(() => ApiConfig(networkMode: getIt<SettingsRepository>().networkMode)),
-  );
-
   setupRepositories();
+
+  getIt.registerSingleton(
+    AppStore(
+      () => ApiConfig(networkMode: getIt<SettingsRepository>().networkMode),
+      getIt<CacheRepository>(),
+    ),
+  );
   setupServices();
   setupBlocs();
 
@@ -82,7 +85,7 @@ Future<void> finishSetup(String encryptionKey) async {
 }
 
 void setupRepositories() {
-  getIt.registerFactory(() => CacheRepository(getIt<AppDatabase>()));
+  getIt.registerSingleton(CacheRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => WalletRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => BalanceRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => AssetRepository(getIt<AppDatabase>()));
