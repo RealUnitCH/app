@@ -8,6 +8,7 @@ import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
+import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
@@ -16,10 +17,12 @@ class MockApiConfig extends Mock implements ApiConfig {}
 
 class MockBalanceRepository extends Mock implements BalanceRepository {}
 
+class MockCacheRepository extends Mock implements CacheRepository {}
+
 class TestAppStore extends AppStore {
   final http.Client client;
 
-  TestAppStore(this.client, ApiConfig Function() apiConfig) : super(apiConfig);
+  TestAppStore(this.client, ApiConfig Function() apiConfig, CacheRepository cacheRepository) : super(apiConfig, cacheRepository);
 
   @override
   http.Client get httpClient => client;
@@ -53,7 +56,7 @@ void main() {
 
   AppStore buildAppStore(Future<http.Response> Function(http.Request) handler) {
     final client = MockClient(handler);
-    return TestAppStore(client, () => apiConfig)..dfxAuthToken = 'test-auth-token';
+    return TestAppStore(client, () => apiConfig, MockCacheRepository())..dfxAuthToken = 'test-auth-token';
   }
 
   group('$BalanceService', () {
