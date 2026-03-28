@@ -84,9 +84,11 @@ packages:
   bitbox_flutter:
     dependency: "direct main"
     description:
-      path: "/Users/me/Documents/GitHub/konstantinullrich/bitbox_flutter"
-      relative: false
-    source: path
+      path: "."
+      ref: "feature/ios-ble-pairing"
+      resolved-ref: f53c4b0b70ec725449358011a7ab3e5c2df8f4b1
+      url: "https://github.com/DFXswiss/bitbox_flutter.git"
+    source: git
     version: "0.0.1"
   bloc:
     dependency: transitive
