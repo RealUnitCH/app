@@ -4,8 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
@@ -13,16 +13,12 @@ import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/kyc_registration_step_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_submit/kyc_registration_submit_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_address_step.dart';
-import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_email_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_personal_step.dart';
 import 'package:realunit_wallet/setup/di.dart';
-import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class KycRegistrationPage extends StatelessWidget {
-  final String? email;
-
-  const KycRegistrationPage({super.key, this.email});
+  const KycRegistrationPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -31,21 +27,20 @@ class KycRegistrationPage extends StatelessWidget {
         BlocProvider(
           create: (_) => KycRegistrationSubmitCubit(
             getIt<RealUnitRegistrationService>(),
+            getIt<DfxKycService>(),
           ),
         ),
         BlocProvider(
           create: (_) => KycRegistrationStepCubit(),
         ),
       ],
-      child: KycRegistrationView(email: email),
+      child: const KycRegistrationView(),
     );
   }
 }
 
 class KycRegistrationView extends StatefulWidget {
-  final String? email;
-
-  const KycRegistrationView({super.key, this.email});
+  const KycRegistrationView({super.key});
 
   @override
   State<KycRegistrationView> createState() => _KycRegistrationViewState();
@@ -54,10 +49,6 @@ class KycRegistrationView extends StatefulWidget {
 class _KycRegistrationViewState extends State<KycRegistrationView> {
   final _pageController = PageController();
   StreamSubscription<KycRegistrationStepState>? _stepSubscription;
-
-  bool get _hasEmail => widget.email != null && widget.email!.isNotEmpty;
-
-  final emailCtrl = TextEditingController();
 
   final typeCtrl = ValueNotifier<RegistrationUserType>(RegistrationUserType.human);
   final lastnameCtrl = TextEditingController();
@@ -75,17 +66,12 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   @override
   void initState() {
     super.initState();
-    if (_hasEmail) {
-      emailCtrl.text = widget.email!;
-    }
     _stepSubscription = context.read<KycRegistrationStepCubit>().stream.listen((state) {
-      if (_pageController.page?.round() != state.index) {
-        _pageController.animateToPage(
-          state.index,
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeOut,
-        );
-      }
+      _pageController.animateToPage(
+        state.index,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOut,
+      );
     });
   }
 
@@ -104,7 +90,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
                 icon: const Icon(Icons.arrow_back_rounded),
               ),
               title: Text(
-                state.title(context, emailAutoSubmitted: _hasEmail),
+                state.title(context),
               ),
             );
           },
@@ -161,22 +147,6 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
 
   Widget _buildStep(KycRegistrationStep step) {
     switch (step) {
-      case KycRegistrationStep.email:
-        return KycRegistrationEmailStep(
-          emailCtrl: emailCtrl,
-          onSuccess: () async {
-            if (_hasEmail) {
-              context.read<KycRegistrationStepCubit>().next();
-            } else {
-              final result = await context.pushNamed<bool>(LegalRoutes.disclaimer);
-              if (!mounted) return;
-              if (result == true) {
-                context.read<KycRegistrationStepCubit>().next();
-              }
-            }
-          },
-        );
-
       case KycRegistrationStep.personal:
         return KycRegistrationPersonalStep(
           typeCtrl: typeCtrl,
@@ -200,21 +170,18 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   }
 
   Future<void> _onSubmit() async => await context.read<KycRegistrationSubmitCubit>().submit(
-    Registration(
-      type: typeCtrl.value,
-      email: emailCtrl.text.trim(),
-      firstName: firstnameCtrl.text.trim(),
-      lastName: lastnameCtrl.text.trim(),
-      phoneNumber: phoneCtrl.value?.trim() ?? '',
-      birthday: birthdayCtrl.value ?? '',
-      nationality: nationalityCtrl.value!,
-      addressStreet: addressStreetCtrl.text.trim(),
-      addressStreetNumber: addressStreetNumberCtrl.text.trim(),
-      addressPostalCode: postalCodeCtrl.text.trim(),
-      addressCity: cityCtrl.text.trim(),
-      addressCountry: countryCtrl.value!,
-      swissTaxResidence: true,
-    ),
+    type: typeCtrl.value,
+    firstName: firstnameCtrl.text.trim(),
+    lastName: lastnameCtrl.text.trim(),
+    phoneNumber: phoneCtrl.value?.trim() ?? '',
+    birthday: birthdayCtrl.value ?? '',
+    nationality: nationalityCtrl.value!,
+    addressStreet: addressStreetCtrl.text.trim(),
+    addressStreetNumber: addressStreetNumberCtrl.text.trim(),
+    addressPostalCode: postalCodeCtrl.text.trim(),
+    addressCity: cityCtrl.text.trim(),
+    addressCountry: countryCtrl.value!,
+    swissTaxResidence: true,
   );
 
   @override
@@ -222,7 +189,6 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
     _stepSubscription?.cancel();
     _pageController.dispose();
     typeCtrl.dispose();
-    emailCtrl.dispose();
     firstnameCtrl.dispose();
     lastnameCtrl.dispose();
     phoneCtrl.dispose();
