@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/config/legal_documents_config.dart';
-import 'package:realunit_wallet/screens/legal/widgets/legal_document_button.dart';
 import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
+import 'package:realunit_wallet/widgets/outlined_tile.dart';
 
 class SettingsLegalDocumentsPage extends StatelessWidget {
   const SettingsLegalDocumentsPage({super.key});
@@ -23,16 +23,18 @@ class SettingsLegalDocumentsPage extends StatelessWidget {
           child: Column(
             spacing: 12.0,
             children: [
-              LegalDocumentButton(
+              OutlinedTile(
                 leadingIcon: Icons.description_outlined,
                 title: S.of(context).termsOfUse,
                 onTap: () => context.pushNamed(LegalRoutes.terms),
+                trailingIcon: Icons.chevron_right_rounded,
               ),
               ...LegalDocumentsConfig.allDocuments.map(
-                (config) => LegalDocumentButton(
+                (config) => OutlinedTile(
                   leadingIcon: config.icon,
                   title: config.title(context),
                   onTap: () => config.onTap(context),
+                  trailingIcon: Icons.chevron_right_rounded,
                 ),
               ),
             ],

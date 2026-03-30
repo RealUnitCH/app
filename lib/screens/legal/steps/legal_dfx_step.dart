@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/screens/legal/widgets/legal_document_button.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/outlined_tile.dart';
 
 class LegalDfxStep extends StatelessWidget {
   const LegalDfxStep({super.key});
@@ -41,7 +41,7 @@ class LegalDfxStep extends StatelessWidget {
         Column(
           spacing: 12.0,
           children: [
-            LegalDocumentButton(
+            OutlinedTile(
               leadingIcon: Icons.description_outlined,
               trailingIcon: Icons.open_in_new_outlined,
               title: s.dfxTermsAndConditions,
@@ -53,7 +53,7 @@ class LegalDfxStep extends StatelessWidget {
                 ),
               ),
             ),
-            LegalDocumentButton(
+            OutlinedTile(
               leadingIcon: Icons.shield_outlined,
               trailingIcon: Icons.open_in_new_outlined,
               title: s.dfxPrivacyPolicy,
@@ -65,7 +65,7 @@ class LegalDfxStep extends StatelessWidget {
                 ),
               ),
             ),
-            LegalDocumentButton(
+            OutlinedTile(
               leadingIcon: Icons.policy_outlined,
               trailingIcon: Icons.open_in_new_outlined,
               title: s.dfxDisclaimer,
@@ -77,7 +77,7 @@ class LegalDfxStep extends StatelessWidget {
                 ),
               ),
             ),
-            LegalDocumentButton(
+            OutlinedTile(
               leadingIcon: Icons.account_balance_outlined,
               trailingIcon: Icons.open_in_new_outlined,
               title: s.dfxImprint,

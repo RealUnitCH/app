@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/screens/settings/widgets/settings_tile.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/support_routes.dart';
-import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/outlined_tile.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SettingsContactPage extends StatelessWidget {
@@ -19,37 +18,40 @@ class SettingsContactPage extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.symmetric(
+          padding: const .symmetric(
             horizontal: 20.0,
             vertical: 16.0,
           ),
           child: Column(
             spacing: 20.0,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: .start,
             children: [
               Column(
                 spacing: 12.0,
                 children: [
-                  SettingsTile(
-                    icon: Icons.support_agent_outlined,
+                  OutlinedTile(
+                    leadingIcon: Icons.support_agent_outlined,
                     title: S.of(context).contactSupport,
                     subtitle: S.of(context).contactSupportDescription,
                     onTap: () => context.pushNamed(SupportRoutes.support),
+                    trailingIcon: Icons.chevron_right_rounded,
                   ),
-                  SettingsTile(
-                    icon: Icons.phone_outlined,
+                  OutlinedTile(
+                    leadingIcon: Icons.phone_outlined,
                     title: S.of(context).phone,
                     subtitle: '+41 41 761 00 90',
                     onTap: () => launchUrl(Uri.parse('tel:+41417610090')),
+                    trailingIcon: Icons.open_in_new_outlined,
                   ),
-                  SettingsTile(
-                    icon: Icons.email_outlined,
+                  OutlinedTile(
+                    leadingIcon: Icons.email_outlined,
                     title: S.of(context).email,
                     subtitle: 'info@realunit.ch',
                     onTap: () => launchUrl(Uri.parse('mailto:info@realunit.ch')),
+                    trailingIcon: Icons.open_in_new_outlined,
                   ),
-                  SettingsTile(
-                    icon: Icons.language_outlined,
+                  OutlinedTile(
+                    leadingIcon: Icons.language_outlined,
                     title: S.of(context).website,
                     subtitle: 'realunit.ch',
                     onTap: () => context.pushNamed(
@@ -59,6 +61,7 @@ class SettingsContactPage extends StatelessWidget {
                         url: Uri.parse('https://realunit.ch'),
                       ),
                     ),
+                    trailingIcon: Icons.open_in_new_outlined,
                   ),
                 ],
               ),
@@ -68,15 +71,13 @@ class SettingsContactPage extends StatelessWidget {
                 children: [
                   Text(
                     S.of(context).imprint,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontSize: 18,
                       height: 24 / 18,
-                      color: RealUnitColors.neutral900,
                     ),
                   ),
-                  const SettingsTile(
-                    icon: Icons.business_outlined,
+                  const OutlinedTile(
+                    leadingIcon: Icons.business_outlined,
                     title: 'RealUnit Schweiz AG',
                     subtitle: 'Schochenmühlestrasse 6\n6340 Baar, Schweiz',
                   ),
