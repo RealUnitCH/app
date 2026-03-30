@@ -52,34 +52,29 @@ class LegalDocumentsConfig {
 
   static const _registrationAgreementPdfUrls = {
     'de':
-        'https://realunit.de/wp-content/uploads/dlm_uploads/2025/03/250321_RegV-DE-RealUnit-Schweiz-AG_final_signed.pdf',
+        'https://realunit.ch/wp-content/uploads/2026/03/260303_RegV_DE_RealUnit_Schweiz_AG_signiert.pdf',
     'en':
-        'https://realunit.de/wp-content/uploads/dlm_uploads/2025/03/250321_RegV-EN-RealUnit-Schweiz-AG_final_signed.pdf',
+        'https://realunit.ch/wp-content/uploads/2026/03/260303_RegV_EN_RealUnit_Schweiz_AG_signiert.pdf',
   };
 
   static const _euSecuritiesProspectusBearerSharesPdfUrls = {
-    'de':
-        'https://realunit.de/wp-content/uploads/dlm_uploads/2025/07/VO_RealUnit_Wertpapierprospekt_Inhaberaktie_30.06.2025_eIDAS-signiert.pdf',
+    'de': 'https://realunit.de/ueber-uns/downloads/#eu_prospekte',
   };
 
   static const _euSecuritiesProspectusRegisteredSharesPdfUrls = {
-    'de':
-        'https://realunit.de/wp-content/uploads/dlm_uploads/2025/07/VO_RealUnit_Wertpapierprospekt_Namensaktien_30.06.2025_eIDAS-signiert.pdf',
+    'de': 'https://realunit.de/ueber-uns/downloads/#eu_prospekte',
   };
 
   static const _chStockExchangeProspectusPDfUrls = {
-    'de':
-        'https://realunit.ch/wp-content/uploads/dlm_uploads/2025/04/2025-04-23-REALUNIT-PROSPECTUS-2025-Update_Final-Version_signiert.pdf',
+    'de': 'https://realunit.ch/ueber-uns/downloads/#prospekt',
   };
 
   static const _articlesOfAssociationPdfUrls = {
-    'de':
-        'https://realunit.de/wp-content/uploads/dlm_uploads/2025/06/250604-RUCH-Statuten-mit-Deckblatt.pdf',
+    'de': 'https://realunit.ch/ueber-uns/downloads/#statuten',
   };
 
   static const _investmentRegulationsPdfUrls = {
-    'de':
-        'https://realunit.de/wp-content/uploads/2025/03/250304_Anlagereglement_RealUnitSchweiz-AG.pdf',
+    'de': 'https://realunit.ch/ueber-uns/downloads/#anlagereglement',
   };
 
   static final _privacyPolicy = LegalDocumentConfig(
