@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/support/dto/support_issue_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/support/support_issue.dart';
 
 sealed class SupportTicketsState extends Equatable {
   const SupportTicketsState();
@@ -17,7 +17,7 @@ final class SupportTicketsLoading extends SupportTicketsState {
 }
 
 final class SupportTicketsLoaded extends SupportTicketsState {
-  final List<SupportIssueDto> tickets;
+  final List<SupportIssue> tickets;
 
   const SupportTicketsLoaded(this.tickets);
 

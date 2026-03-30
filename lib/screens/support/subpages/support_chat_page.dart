@@ -2,8 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/support/support_message.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/support/dto/support_message_dto.dart';
 import 'package:realunit_wallet/screens/support/cubits/support_chat/support_chat_cubit.dart';
 import 'package:realunit_wallet/screens/support/cubits/support_chat/support_chat_state.dart';
 import 'package:realunit_wallet/setup/di.dart';
@@ -107,7 +107,7 @@ class _SupportChatViewState extends State<_SupportChatView> {
 }
 
 class _MessageBubble extends StatelessWidget {
-  final SupportMessageDto message;
+  final SupportMessage message;
 
   const _MessageBubble({required this.message});
 

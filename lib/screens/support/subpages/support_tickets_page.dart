@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/support/dto/support_issue_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/support/support_issue.dart';
 import 'package:realunit_wallet/screens/support/cubits/support_tickets/support_tickets_cubit.dart';
 import 'package:realunit_wallet/screens/support/cubits/support_tickets/support_tickets_state.dart';
 import 'package:realunit_wallet/setup/di.dart';
@@ -17,7 +17,9 @@ class SupportTicketsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => SupportTicketsCubit(getIt<DfxSupportService>())..loadTickets(),
+      create: (_) => SupportTicketsCubit(
+        getIt<DfxSupportService>(),
+      ),
       child: const _SupportTicketsView(),
     );
   }
@@ -62,7 +64,7 @@ class _SupportTicketsView extends StatelessWidget {
 }
 
 class _TicketCard extends StatelessWidget {
-  final SupportIssueDto ticket;
+  final SupportIssue ticket;
 
   const _TicketCard({required this.ticket});
 

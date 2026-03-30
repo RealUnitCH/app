@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/support/support_issue.dart';
 import 'package:realunit_wallet/screens/support/cubits/support_chat/support_chat_state.dart';
 
 class SupportChatCubit extends Cubit<SupportChatState> {
@@ -13,7 +14,7 @@ class SupportChatCubit extends Cubit<SupportChatState> {
 
     try {
       final ticket = await _supportService.getTicket(ticketUid);
-      emit(SupportChatLoaded(ticket: ticket));
+      emit(SupportChatLoaded(ticket: SupportIssue.fromDto(ticket)));
     } catch (e) {
       emit(SupportChatError(e.toString()));
     }
@@ -28,7 +29,7 @@ class SupportChatCubit extends Cubit<SupportChatState> {
     try {
       await _supportService.sendMessage(ticketUid, message);
       final ticket = await _supportService.getTicket(ticketUid);
-      emit(SupportChatLoaded(ticket: ticket));
+      emit(SupportChatLoaded(ticket: SupportIssue.fromDto(ticket)));
     } catch (e) {
       emit(currentState.copyWith(isSending: false));
     }

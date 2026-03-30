@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/support/dto/support_issue_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/support/support_issue.dart';
 
 sealed class SupportChatState extends Equatable {
   const SupportChatState();
@@ -17,7 +17,7 @@ final class SupportChatLoading extends SupportChatState {
 }
 
 final class SupportChatLoaded extends SupportChatState {
-  final SupportIssueDto ticket;
+  final SupportIssue ticket;
   final bool isSending;
 
   const SupportChatLoaded({
@@ -26,7 +26,7 @@ final class SupportChatLoaded extends SupportChatState {
   });
 
   SupportChatLoaded copyWith({
-    SupportIssueDto? ticket,
+    SupportIssue? ticket,
     bool? isSending,
   }) {
     return SupportChatLoaded(
