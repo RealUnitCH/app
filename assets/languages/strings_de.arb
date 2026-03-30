@@ -94,7 +94,7 @@
   "ibanInvalid": "IBAN ist ungültig",
   "ibanRequired": "IBAN ist erforderlich",
   "identityCheck": "Identitätsprüfung",
-  "identityCheckDescription": "Der Betrag liegt über Ihrem Limit. Um diesen zu erhöhen, bestätigen Sie bitte Ihre Identität (KYC) über DFX. Dabei entsteht eine Geschäftsbeziehung mit RealUnit AG und DFX AG. Die Identitätsprüfung gilt für beide.",
+  "identityCheckDescription": "Klicken Sie auf Weiter, um die Identifikation vorzunehmen. Falls Sie bereits Bestandskunde sind, können Sie im nächsten Schritt Ihre bestehende E-Mail-Adresse verwenden, um eine erneute Identifizierung zu vermeiden.",
   "identityCheckFailed": "Ein Fehler ist während der Identitätsprüfung aufgetreten. Bitte versuchen Sie es erneut.",
   "identityCheckFinallyFailed": "Identitätsprüfung endgültig fehlgeschlagen. Bitte kontaktieren Sie unseren Support.",
   "identityCheckProcess": "Machen Sie sich für die Identitätsprüfung bereit",
