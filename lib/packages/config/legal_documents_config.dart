@@ -48,7 +48,7 @@ class LegalDocumentsConfig {
     ...informationalDocuments,
   ];
 
-  static final primaryDocuments = [
+  static final List<DocumentConfig> primaryDocuments = [
     _privacyPolicy,
     _registrationAgreement,
   ];
