@@ -31,7 +31,7 @@ class LegalDocumentsStep extends StatelessWidget {
             ),
             ...LegalDocumentsConfig.primaryDocuments.map(
               (config) => OutlinedTile(
-                leadingIcon: config.icon,
+                leading: Icon(config.icon, color: RealUnitColors.realUnitBlue, size: 24),
                 title: config.title(context),
                 onTap: () => config.onTap(context),
                 trailingIcon: Icons.chevron_right_rounded,
@@ -52,7 +52,7 @@ class LegalDocumentsStep extends StatelessWidget {
             ),
             ...LegalDocumentsConfig.informationalDocuments.map(
               (config) => OutlinedTile(
-                leadingIcon: config.icon,
+                leading: Icon(config.icon, color: RealUnitColors.realUnitBlue, size: 24),
                 title: config.title(context),
                 onTap: () => config.onTap(context),
                 trailingIcon: Icons.chevron_right_rounded,

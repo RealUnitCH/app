@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/setup/routing/routes/support_routes.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/outlined_tile.dart';
 
 class SupportPage extends StatelessWidget {
@@ -23,14 +24,14 @@ class SupportPage extends StatelessWidget {
             spacing: 12.0,
             children: [
               OutlinedTile(
-                leadingIcon: Icons.format_list_bulleted_add,
+                leading: const Icon(Icons.format_list_bulleted_add, color: RealUnitColors.realUnitBlue, size: 24),
                 title: S.of(context).supportCreateTicket,
                 subtitle: S.of(context).supportCreateTicketDescription,
                 onTap: () => context.pushNamed(SupportRoutes.createTicket),
                 trailingIcon: Icons.chevron_right_rounded,
               ),
               OutlinedTile(
-                leadingIcon: Icons.format_list_bulleted_outlined,
+                leading: const Icon(Icons.format_list_bulleted_outlined, color: RealUnitColors.realUnitBlue, size: 24),
                 title: S.of(context).supportMyTickets,
                 subtitle: S.of(context).supportMyTicketsDescription,
                 onTap: () => context.pushNamed(SupportRoutes.tickets),

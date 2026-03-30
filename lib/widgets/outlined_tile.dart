@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class OutlinedTile extends StatelessWidget {
-  final IconData leadingIcon;
+  final Widget leading;
   final String title;
   final String? subtitle;
   final VoidCallback? onTap;
@@ -10,7 +10,7 @@ class OutlinedTile extends StatelessWidget {
 
   const OutlinedTile({
     super.key,
-    required this.leadingIcon,
+    required this.leading,
     required this.title,
     this.subtitle,
     this.onTap,
@@ -35,7 +35,7 @@ class OutlinedTile extends StatelessWidget {
               : CrossAxisAlignment.center,
           spacing: 12.0,
           children: [
-            Icon(leadingIcon, color: RealUnitColors.realUnitBlue, size: 24),
+            leading,
             Expanded(
               child: Column(
                 spacing: 4.0,

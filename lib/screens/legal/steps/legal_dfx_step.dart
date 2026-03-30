@@ -42,7 +42,7 @@ class LegalDfxStep extends StatelessWidget {
           spacing: 12.0,
           children: [
             OutlinedTile(
-              leadingIcon: Icons.description_outlined,
+              leading: const Icon(Icons.description_outlined, color: RealUnitColors.realUnitBlue, size: 24),
               trailingIcon: Icons.open_in_new_outlined,
               title: s.dfxTermsAndConditions,
               onTap: () => context.pushNamed(
@@ -54,7 +54,7 @@ class LegalDfxStep extends StatelessWidget {
               ),
             ),
             OutlinedTile(
-              leadingIcon: Icons.shield_outlined,
+              leading: const Icon(Icons.shield_outlined, color: RealUnitColors.realUnitBlue, size: 24),
               trailingIcon: Icons.open_in_new_outlined,
               title: s.dfxPrivacyPolicy,
               onTap: () => context.pushNamed(
@@ -66,7 +66,7 @@ class LegalDfxStep extends StatelessWidget {
               ),
             ),
             OutlinedTile(
-              leadingIcon: Icons.policy_outlined,
+              leading: const Icon(Icons.policy_outlined, color: RealUnitColors.realUnitBlue, size: 24),
               trailingIcon: Icons.open_in_new_outlined,
               title: s.dfxDisclaimer,
               onTap: () => context.pushNamed(
@@ -78,7 +78,7 @@ class LegalDfxStep extends StatelessWidget {
               ),
             ),
             OutlinedTile(
-              leadingIcon: Icons.account_balance_outlined,
+              leading: const Icon(Icons.account_balance_outlined, color: RealUnitColors.realUnitBlue, size: 24),
               trailingIcon: Icons.open_in_new_outlined,
               title: s.dfxImprint,
               onTap: () => context.pushNamed(

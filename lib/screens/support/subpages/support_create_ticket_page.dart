@@ -34,7 +34,6 @@ class _SupportCreateTicketView extends StatelessWidget {
         title: Text(S.of(context).supportCreateTicket),
       ),
       body: BlocConsumer<SupportCreateTicketCubit, SupportCreateTicketState>(
-        listenWhen: (prev, curr) => prev.isSuccess != curr.isSuccess,
         listener: (context, state) {
           if (state.isSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -44,6 +43,14 @@ class _SupportCreateTicketView extends StatelessWidget {
               ),
             );
             context.pop();
+          }
+          if (state.error != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.error!),
+                backgroundColor: RealUnitColors.status.red600,
+              ),
+            );
           }
         },
         builder: (context, state) {

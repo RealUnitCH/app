@@ -4,12 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/support/support_issue.dart';
 import 'package:realunit_wallet/screens/support/cubits/support_tickets/support_tickets_cubit.dart';
 import 'package:realunit_wallet/screens/support/cubits/support_tickets/support_tickets_state.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/routes/support_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/outlined_tile.dart';
 
 class SupportTicketsPage extends StatelessWidget {
   const SupportTicketsPage({super.key});
@@ -30,16 +30,14 @@ class _SupportTicketsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context);
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(s.supportMyTickets),
+        title: Text(S.of(context).supportMyTickets),
       ),
       body: BlocBuilder<SupportTicketsCubit, SupportTicketsState>(
         builder: (context, state) {
           return switch (state) {
-            SupportTicketsInitial() || SupportTicketsLoading() => const Center(
+            SupportTicketsLoading() => const Center(
               child: CupertinoActivityIndicator(),
             ),
             SupportTicketsError(:final message) => Center(
@@ -47,83 +45,42 @@ class _SupportTicketsView extends StatelessWidget {
             ),
             SupportTicketsLoaded(:final tickets) =>
               tickets.isEmpty
-                  ? Center(child: Text(s.supportNoTickets))
+                  ? Center(child: Text(S.of(context).supportNoTickets))
                   : ListView.separated(
-                      padding: const EdgeInsets.all(20),
+                      padding: const .all(12),
                       itemCount: tickets.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) => _TicketCard(
-                        ticket: tickets[index],
-                      ),
+                      itemBuilder: (context, index) {
+                        final ticket = tickets.elementAt(index);
+                        return OutlinedTile(
+                          leading: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6.0),
+                            child: Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                shape: .circle,
+                                color: ticket.isOpen
+                                    ? RealUnitColors.green
+                                    : RealUnitColors.neutral400,
+                              ),
+                            ),
+                          ),
+                          title: ticket.name,
+                          subtitle:
+                              '${ticket.created.day}.${ticket.created.month}.${ticket.created.year}',
+                          onTap: () => context.pushNamed(
+                            SupportRoutes.chat,
+                            pathParameters: {'uid': ticket.uid},
+                          ),
+                          trailingIcon: Icons.chevron_right,
+                        );
+                      },
                     ),
+            SupportTicketsInitial() => const SizedBox.shrink(),
           };
         },
       ),
     );
-  }
-}
-
-class _TicketCard extends StatelessWidget {
-  final SupportIssue ticket;
-
-  const _TicketCard({required this.ticket});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => context.pushNamed(
-        SupportRoutes.chat,
-        pathParameters: {'uid': ticket.uid},
-      ),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          border: Border.all(color: RealUnitColors.neutral200),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: ticket.isOpen ? RealUnitColors.green : RealUnitColors.neutral400,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    ticket.name,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _formatDate(ticket.created),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: RealUnitColors.neutral500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.chevron_right,
-              color: RealUnitColors.neutral400,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
   }
 }
