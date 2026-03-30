@@ -7,24 +7,24 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_serv
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/packages/utils/jwt_decoder.dart';
 
-part 'kyc_registration_email_verification_state.dart';
+part 'kyc_email_verification_state.dart';
 
-class KycRegistrationEmailVerificationCubit extends Cubit<KycRegistrationEmailVerificationState> {
+class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
   final DFXAuthService _dfxService;
   final RealUnitWalletService _walletService;
   final RealUnitRegistrationService _registrationService;
 
-  KycRegistrationEmailVerificationCubit({
+  KycEmailVerificationCubit({
     required DFXAuthService dfxService,
     required RealUnitWalletService walletService,
     required RealUnitRegistrationService registrationService,
   }) : _dfxService = dfxService,
        _walletService = walletService,
        _registrationService = registrationService,
-       super(const KycRegistrationEmailVerificationInitial());
+       super(const KycEmailVerificationInitial());
 
   Future<void> checkEmailVerification() async {
-    emit(const KycRegistrationEmailVerificationLoading());
+    emit(const KycEmailVerificationLoading());
 
     final currentAccountId = await getAccountId();
     _dfxService.invalidateAuthToken();
@@ -32,9 +32,9 @@ class KycRegistrationEmailVerificationCubit extends Cubit<KycRegistrationEmailVe
 
     if (currentAccountId != newAccountId) {
       await _completeRegistration();
-      emit(const KycRegistrationEmailVerificationSuccess());
+      emit(const KycEmailVerificationSuccess());
     } else {
-      emit(const KycRegistrationEmailVerificationFailure());
+      emit(const KycEmailVerificationFailure());
     }
   }
 
@@ -45,7 +45,7 @@ class KycRegistrationEmailVerificationCubit extends Cubit<KycRegistrationEmailVe
       await _registrationService.registerWallet(status.realUnitUserDataDto!);
     } catch (e) {
       developer.log(e.toString());
-      emit(const KycRegistrationEmailVerificationRegistrationFailure());
+      emit(const KycEmailVerificationRegistrationFailure());
     }
   }
 
