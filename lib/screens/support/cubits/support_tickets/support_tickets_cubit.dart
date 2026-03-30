@@ -1,9 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/packages/service/dfx/support_service.dart';
-import 'package:realunit_wallet/screens/support/cubits/support_tickets_state.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
+import 'package:realunit_wallet/screens/support/cubits/support_tickets/support_tickets_state.dart';
 
 class SupportTicketsCubit extends Cubit<SupportTicketsState> {
-  final SupportService _supportService;
+  final DfxSupportService _supportService;
 
   SupportTicketsCubit(this._supportService) : super(const SupportTicketsInitial());
 

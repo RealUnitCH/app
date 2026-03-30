@@ -6,8 +6,10 @@ import 'package:realunit_wallet/packages/service/dfx/models/support/dto/support_
 import 'package:realunit_wallet/packages/service/dfx/models/support/support_issue_reason.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/support/support_issue_type.dart';
 
-class SupportService extends DFXAuthService {
-  SupportService(super.appStore);
+class DfxSupportService extends DFXAuthService {
+  static const _supportPath = '/v1/support/issue';
+
+  DfxSupportService(super.appStore);
 
   @override
   get wallet => appStore.wallet.currentAccount;
@@ -16,7 +18,7 @@ class SupportService extends DFXAuthService {
   String get walletAddress => wallet.primaryAddress.address.hexEip55;
 
   Future<List<SupportIssueDto>> getTickets() async {
-    final uri = buildUri(host, '/v1/support/issue');
+    final uri = buildUri(host, _supportPath);
     final authToken = await getAuthToken();
 
     final response = await appStore.httpClient.get(
@@ -29,16 +31,14 @@ class SupportService extends DFXAuthService {
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
-      return jsonList
-          .map((e) => SupportIssueDto.fromJson(e as Map<String, dynamic>))
-          .toList();
+      return jsonList.map((e) => SupportIssueDto.fromJson(e as Map<String, dynamic>)).toList();
     } else {
       throw Exception('Failed to load tickets: ${response.statusCode}');
     }
   }
 
   Future<SupportIssueDto> getTicket(String uid) async {
-    final uri = buildUri(host, '/v1/support/issue/$uid');
+    final uri = buildUri(host, '$_supportPath/$uid');
     final authToken = await getAuthToken();
 
     final response = await appStore.httpClient.get(
@@ -64,7 +64,7 @@ class SupportService extends DFXAuthService {
     required String name,
     String? message,
   }) async {
-    final uri = buildUri(host, '/v1/support/issue');
+    final uri = buildUri(host, _supportPath);
     final authToken = await getAuthToken();
 
     final body = jsonEncode({
@@ -93,7 +93,7 @@ class SupportService extends DFXAuthService {
   }
 
   Future<void> sendMessage(String ticketUid, String message) async {
-    final uri = buildUri(host, '/v1/support/issue/$ticketUid/message');
+    final uri = buildUri(host, '$_supportPath/$ticketUid/message');
     final authToken = await getAuthToken();
 
     final body = jsonEncode({'message': message});

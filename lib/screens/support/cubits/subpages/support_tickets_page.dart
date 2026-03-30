@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/support/dto/support_issue_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/support_service.dart';
-import 'package:realunit_wallet/screens/support/cubits/support_tickets_cubit.dart';
-import 'package:realunit_wallet/screens/support/cubits/support_tickets_state.dart';
+import 'package:realunit_wallet/screens/support/cubits/support_tickets/support_tickets_cubit.dart';
+import 'package:realunit_wallet/screens/support/cubits/support_tickets/support_tickets_state.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/routes/support_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -17,7 +17,7 @@ class SupportTicketsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => SupportTicketsCubit(getIt<SupportService>())..loadTickets(),
+      create: (_) => SupportTicketsCubit(getIt<DfxSupportService>())..loadTickets(),
       child: const _SupportTicketsView(),
     );
   }
@@ -38,21 +38,22 @@ class _SupportTicketsView extends StatelessWidget {
         builder: (context, state) {
           return switch (state) {
             SupportTicketsInitial() || SupportTicketsLoading() => const Center(
-                child: CupertinoActivityIndicator(),
-              ),
+              child: CupertinoActivityIndicator(),
+            ),
             SupportTicketsError(:final message) => Center(
-                child: Text(message),
-              ),
-            SupportTicketsLoaded(:final tickets) => tickets.isEmpty
-                ? Center(child: Text(s.supportNoTickets))
-                : ListView.separated(
-                    padding: const EdgeInsets.all(20),
-                    itemCount: tickets.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) => _TicketCard(
-                      ticket: tickets[index],
+              child: Text(message),
+            ),
+            SupportTicketsLoaded(:final tickets) =>
+              tickets.isEmpty
+                  ? Center(child: Text(s.supportNoTickets))
+                  : ListView.separated(
+                      padding: const EdgeInsets.all(20),
+                      itemCount: tickets.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) => _TicketCard(
+                        ticket: tickets[index],
+                      ),
                     ),
-                  ),
           };
         },
       ),
@@ -97,15 +98,15 @@ class _TicketCard extends StatelessWidget {
                   Text(
                     ticket.name,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     _formatDate(ticket.created),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: RealUnitColors.neutral500,
-                        ),
+                      color: RealUnitColors.neutral500,
+                    ),
                   ),
                 ],
               ),

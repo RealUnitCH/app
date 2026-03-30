@@ -33,10 +33,10 @@ import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_address
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_name/settings_edit_name_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_phone_number/settings_edit_phone_number_page.dart';
 import 'package:realunit_wallet/screens/settings_wallet_address/settings_wallet_address_page.dart';
-import 'package:realunit_wallet/screens/support/support_chat_page.dart';
-import 'package:realunit_wallet/screens/support/support_create_ticket_page.dart';
+import 'package:realunit_wallet/screens/support/cubits/subpages/support_chat_page.dart';
+import 'package:realunit_wallet/screens/support/cubits/subpages/support_create_ticket_page.dart';
+import 'package:realunit_wallet/screens/support/cubits/subpages/support_tickets_page.dart';
 import 'package:realunit_wallet/screens/support/support_page.dart';
-import 'package:realunit_wallet/screens/support/support_tickets_page.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
 import 'package:realunit_wallet/screens/verify_seed/verify_seed_page.dart';

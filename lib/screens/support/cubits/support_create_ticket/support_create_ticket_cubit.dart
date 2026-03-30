@@ -1,14 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/support/support_issue_reason.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/support/support_issue_type.dart';
-import 'package:realunit_wallet/packages/service/dfx/support_service.dart';
-import 'package:realunit_wallet/screens/support/cubits/support_create_ticket_state.dart';
+import 'package:realunit_wallet/screens/support/cubits/support_create_ticket/support_create_ticket_state.dart';
 
 class SupportCreateTicketCubit extends Cubit<SupportCreateTicketState> {
-  final SupportService _supportService;
+  final DfxSupportService _supportService;
 
-  SupportCreateTicketCubit(this._supportService)
-      : super(const SupportCreateTicketState());
+  SupportCreateTicketCubit(this._supportService) : super(const SupportCreateTicketState());
 
   void selectType(SupportIssueType type) {
     emit(state.copyWith(selectedType: type, selectedReason: SupportIssueReason.other));

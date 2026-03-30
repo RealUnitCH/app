@@ -9,31 +9,29 @@ class SupportPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context);
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(s.contactSupport),
+        title: Text(S.of(context).contactSupport),
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.symmetric(
+          padding: const .symmetric(
             horizontal: 20.0,
-            vertical: 16.0,
+            vertical: 12.0,
           ),
           child: Column(
             spacing: 12.0,
             children: [
               SettingsTile(
                 icon: Icons.add_comment_outlined,
-                title: s.supportCreateTicket,
-                subtitle: s.supportCreateTicketDescription,
+                title: S.of(context).supportCreateTicket,
+                subtitle: S.of(context).supportCreateTicketDescription,
                 onTap: () => context.pushNamed(SupportRoutes.createTicket),
               ),
               SettingsTile(
                 icon: Icons.list_alt_outlined,
-                title: s.supportMyTickets,
-                subtitle: s.supportMyTicketsDescription,
+                title: S.of(context).supportMyTickets,
+                subtitle: S.of(context).supportMyTicketsDescription,
                 onTap: () => context.pushNamed(SupportRoutes.tickets),
               ),
             ],

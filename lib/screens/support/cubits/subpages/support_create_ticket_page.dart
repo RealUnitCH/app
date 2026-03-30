@@ -1,12 +1,11 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/support/support_issue_type.dart';
-import 'package:realunit_wallet/packages/service/dfx/support_service.dart';
-import 'package:realunit_wallet/screens/support/cubits/support_create_ticket_cubit.dart';
-import 'package:realunit_wallet/screens/support/cubits/support_create_ticket_state.dart';
+import 'package:realunit_wallet/screens/support/cubits/support_create_ticket/support_create_ticket_cubit.dart';
+import 'package:realunit_wallet/screens/support/cubits/support_create_ticket/support_create_ticket_state.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/primary_button.dart';
@@ -17,7 +16,7 @@ class SupportCreateTicketPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => SupportCreateTicketCubit(getIt<SupportService>()),
+      create: (_) => SupportCreateTicketCubit(getIt<DfxSupportService>()),
       child: const _SupportCreateTicketView(),
     );
   }
@@ -69,9 +68,9 @@ class _SupportCreateTicketView extends StatelessWidget {
     return Text(
       title,
       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w500,
-            color: RealUnitColors.neutral500,
-          ),
+        fontWeight: FontWeight.w500,
+        color: RealUnitColors.neutral500,
+      ),
     );
   }
 }
@@ -107,9 +106,7 @@ class _IssueTypeSelector extends StatelessWidget {
                   Icon(
                     type.$3,
                     size: 18,
-                    color: isSelected
-                        ? RealUnitColors.basic.white
-                        : RealUnitColors.neutral600,
+                    color: isSelected ? RealUnitColors.basic.white : RealUnitColors.neutral600,
                   ),
                   const SizedBox(width: 6),
                   Text(type.$2),
@@ -120,14 +117,10 @@ class _IssueTypeSelector extends StatelessWidget {
               selectedColor: RealUnitColors.realUnitBlue,
               backgroundColor: RealUnitColors.basic.white,
               labelStyle: TextStyle(
-                color: isSelected
-                    ? RealUnitColors.basic.white
-                    : RealUnitColors.neutral600,
+                color: isSelected ? RealUnitColors.basic.white : RealUnitColors.neutral600,
               ),
               side: BorderSide(
-                color: isSelected
-                    ? RealUnitColors.realUnitBlue
-                    : RealUnitColors.neutral200,
+                color: isSelected ? RealUnitColors.realUnitBlue : RealUnitColors.neutral200,
               ),
             );
           }).toList(),

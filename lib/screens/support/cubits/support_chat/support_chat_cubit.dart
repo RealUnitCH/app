@@ -1,13 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/packages/service/dfx/support_service.dart';
-import 'package:realunit_wallet/screens/support/cubits/support_chat_state.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
+import 'package:realunit_wallet/screens/support/cubits/support_chat/support_chat_state.dart';
 
 class SupportChatCubit extends Cubit<SupportChatState> {
-  final SupportService _supportService;
+  final DfxSupportService _supportService;
   final String ticketUid;
 
-  SupportChatCubit(this._supportService, this.ticketUid)
-      : super(const SupportChatInitial());
+  SupportChatCubit(this._supportService, this.ticketUid) : super(const SupportChatInitial());
 
   Future<void> loadTicket() async {
     emit(const SupportChatLoading());

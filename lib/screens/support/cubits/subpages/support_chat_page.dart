@@ -2,10 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/support/dto/support_message_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/support_service.dart';
-import 'package:realunit_wallet/screens/support/cubits/support_chat_cubit.dart';
-import 'package:realunit_wallet/screens/support/cubits/support_chat_state.dart';
+import 'package:realunit_wallet/screens/support/cubits/support_chat/support_chat_cubit.dart';
+import 'package:realunit_wallet/screens/support/cubits/support_chat/support_chat_state.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
@@ -17,7 +17,7 @@ class SupportChatPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => SupportChatCubit(getIt<SupportService>(), ticketUid)..loadTicket(),
+      create: (_) => SupportChatCubit(getIt<DfxSupportService>(), ticketUid)..loadTicket(),
       child: const _SupportChatView(),
     );
   }
@@ -68,37 +68,37 @@ class _SupportChatViewState extends State<_SupportChatView> {
         builder: (context, state) {
           return switch (state) {
             SupportChatInitial() || SupportChatLoading() => const Center(
-                child: CupertinoActivityIndicator(),
-              ),
+              child: CupertinoActivityIndicator(),
+            ),
             SupportChatError(:final message) => Center(
-                child: Text(message),
-              ),
+              child: Text(message),
+            ),
             SupportChatLoaded(:final ticket, :final isSending) => Column(
-                children: [
-                  Expanded(
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.all(16),
-                      itemCount: ticket.messages.length,
-                      itemBuilder: (context, index) => _MessageBubble(
-                        message: ticket.messages[index],
-                      ),
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(16),
+                    itemCount: ticket.messages.length,
+                    itemBuilder: (context, index) => _MessageBubble(
+                      message: ticket.messages[index],
                     ),
                   ),
-                  _MessageInput(
-                    controller: _messageController,
-                    isSending: isSending,
-                    isTicketOpen: ticket.isOpen,
-                    onSend: () {
-                      final message = _messageController.text;
-                      if (message.trim().isNotEmpty) {
-                        context.read<SupportChatCubit>().sendMessage(message);
-                        _messageController.clear();
-                      }
-                    },
-                  ),
-                ],
-              ),
+                ),
+                _MessageInput(
+                  controller: _messageController,
+                  isSending: isSending,
+                  isTicketOpen: ticket.isOpen,
+                  onSend: () {
+                    final message = _messageController.text;
+                    if (message.trim().isNotEmpty) {
+                      context.read<SupportChatCubit>().sendMessage(message);
+                      _messageController.clear();
+                    }
+                  },
+                ),
+              ],
+            ),
           };
         },
       ),
@@ -136,19 +136,17 @@ class _MessageBubble extends StatelessWidget {
                   Text(
                     message.message!,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: isFromUser
-                              ? RealUnitColors.basic.white
-                              : RealUnitColors.neutral900,
-                        ),
+                      color: isFromUser ? RealUnitColors.basic.white : RealUnitColors.neutral900,
+                    ),
                   ),
                 const SizedBox(height: 4),
                 Text(
                   _formatTime(message.created),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: isFromUser
-                            ? RealUnitColors.basic.white.withValues(alpha: 0.7)
-                            : RealUnitColors.neutral500,
-                      ),
+                    color: isFromUser
+                        ? RealUnitColors.basic.white.withValues(alpha: 0.7)
+                        : RealUnitColors.neutral500,
+                  ),
                 ),
               ],
             ),
@@ -188,8 +186,8 @@ class _MessageInput extends StatelessWidget {
           'Ticket geschlossen',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: RealUnitColors.neutral500,
-              ),
+            color: RealUnitColors.neutral500,
+          ),
         ),
       );
     }
@@ -198,7 +196,7 @@ class _MessageInput extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: RealUnitColors.basic.white,
-        border: Border(
+        border: const Border(
           top: BorderSide(color: RealUnitColors.neutral200),
         ),
       ),
