@@ -7,6 +7,7 @@ import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 abstract class DocumentConfig {
   IconData get icon;
@@ -85,30 +86,35 @@ class LegalDocumentsConfig {
     icon: Icons.article_outlined,
     title: (context) => S.of(context).legalDisclaimerCheckboxSecuritiesProspectusBearerShares,
     url: (_) => 'https://realunit.de/ueber-uns/downloads/#eu_prospekte',
+    openExternally: true,
   );
 
   static final _euSecuritiesProspectusRegisteredShares = WebDocumentConfig(
     icon: Icons.article_outlined,
     title: (context) => S.of(context).legalDisclaimerCheckboxSecuritiesProspectusRegisteredShares,
     url: (_) => 'https://realunit.de/ueber-uns/downloads/#eu_prospekte',
+    openExternally: true,
   );
 
   static final _chStockExchangeProspectus = WebDocumentConfig(
     icon: Icons.article_outlined,
     title: (context) => S.of(context).legalDisclaimerCheckboxStockExchangeProspectus,
     url: (_) => 'https://realunit.ch/ueber-uns/downloads/#prospekt',
+    openExternally: true,
   );
 
   static final _articlesOfAssociation = WebDocumentConfig(
     icon: Icons.account_balance_outlined,
     title: (context) => S.of(context).legalDisclaimerCheckboxArticlesOfAssociation,
     url: (_) => 'https://realunit.ch/ueber-uns/downloads/#statuten',
+    openExternally: true,
   );
 
   static final _investmentRegulations = WebDocumentConfig(
     icon: Icons.policy_outlined,
     title: (context) => S.of(context).legalDisclaimerCheckboxInvestmentRegulations,
     url: (_) => 'https://realunit.ch/ueber-uns/downloads/#anlagereglement',
+    openExternally: true,
   );
 }
 
@@ -117,24 +123,32 @@ class WebDocumentConfig implements DocumentConfig {
   final IconData icon;
   final String Function(BuildContext context) _title;
   final String Function(BuildContext context) url;
+  final bool openExternally;
 
   const WebDocumentConfig({
     required this.icon,
     required String Function(BuildContext context) title,
     required this.url,
+    this.openExternally = false,
   }) : _title = title;
 
   @override
   String title(BuildContext context) => _title(context);
 
   @override
-  void onTap(BuildContext context) => context.pushNamed(
-    AppRoutes.webView,
-    extra: WebViewRouteParams(
-      title: title(context),
-      url: Uri.parse(url(context)),
-    ),
-  );
+  void onTap(BuildContext context) {
+    if (openExternally) {
+      launchUrl(Uri.parse(url(context)), mode: LaunchMode.externalApplication);
+    } else {
+      context.pushNamed(
+        AppRoutes.webView,
+        extra: WebViewRouteParams(
+          title: title(context),
+          url: Uri.parse(url(context)),
+        ),
+      );
+    }
+  }
 }
 
 class AktionariatDocumentsConfig {
