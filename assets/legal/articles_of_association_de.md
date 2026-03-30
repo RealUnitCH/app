@@ -2,7 +2,7 @@
 
 *mit Sitz in Baar*
 
-*Stand 04. Juni 2025*
+*Stand 03. März 2026*
 
 
 ## I. Firma, Dauer, Sitz und Zweck der Gesellschaft
@@ -30,7 +30,7 @@ Die Einzelheiten der Anlagestrategie werden vom Verwaltungsrat im Anlagereglemen
 
 ### Art. 4a: Aktienkapital
 
-Das Aktienkapital der Gesellschaft beträgt CHF 39'093'976.00 und ist eingeteilt in 3'334'756 Namenaktien mit einem Nennwert von je CHF 1.00 sowie in 35'759'220 Inhaberaktien mit einem Nennwert von je CHF 1.00.
+Das Aktienkapital der Gesellschaft beträgt CHF 49'093'976.00 und ist eingeteilt in 4'631'855 Namenaktien mit einem Nennwert von je CHF 1.00 sowie in 44'462'121 Inhaberaktien mit einem Nennwert von je CHF 1.00.
 
 Das Aktienkapital ist voll liberiert.
 
@@ -171,6 +171,6 @@ Publikationsorgan der Gesellschaft für alle vom Gesetz vorgeschriebenen Veröff
 
 ---
 
-*Zug, 4. Juni 2025*
+*Zug, 3. März 2026*
 
 *Notariell beglaubigt durch Dr. David Bodmer, Rechtsanwalt, BODMER.LEGAL GmbH, Baarerstrasse 78, 6300 Zug*
