@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 abstract class DocumentConfig {
   IconData get icon;
+  bool get isExternal;
   String title(BuildContext context);
   void onTap(BuildContext context);
 }
@@ -18,6 +19,8 @@ abstract class DocumentConfig {
 class LegalDocumentConfig implements DocumentConfig {
   @override
   final IconData icon;
+  @override
+  bool get isExternal => false;
   final String Function(BuildContext context) _title;
   final String assetBaseName;
   final Map<String, String>? pdfUrls;
@@ -121,6 +124,8 @@ class LegalDocumentsConfig {
 class WebDocumentConfig implements DocumentConfig {
   @override
   final IconData icon;
+  @override
+  bool get isExternal => openExternally;
   final String Function(BuildContext context) _title;
   final String Function(BuildContext context) url;
   final bool openExternally;
