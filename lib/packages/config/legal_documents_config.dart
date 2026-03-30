@@ -8,19 +8,30 @@ import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
 
-class LegalDocumentConfig {
+abstract class DocumentConfig {
+  IconData get icon;
+  String title(BuildContext context);
+  void onTap(BuildContext context);
+}
+
+class LegalDocumentConfig implements DocumentConfig {
+  @override
   final IconData icon;
-  final String Function(BuildContext context) title;
+  final String Function(BuildContext context) _title;
   final String assetBaseName;
   final Map<String, String>? pdfUrls;
 
   const LegalDocumentConfig({
     required this.icon,
-    required this.title,
+    required String Function(BuildContext context) title,
     required this.assetBaseName,
     this.pdfUrls,
-  });
+  }) : _title = title;
 
+  @override
+  String title(BuildContext context) => _title(context);
+
+  @override
   void onTap(BuildContext context) => context.pushNamed(
     LegalRoutes.document,
     extra: LegalDocumentParams(
@@ -32,7 +43,7 @@ class LegalDocumentConfig {
 }
 
 class LegalDocumentsConfig {
-  static final allDocuments = [
+  static final List<DocumentConfig> allDocuments = [
     ...primaryDocuments,
     ...informationalDocuments,
   ];
@@ -42,7 +53,7 @@ class LegalDocumentsConfig {
     _registrationAgreement,
   ];
 
-  static final informationalDocuments = [
+  static final List<DocumentConfig> informationalDocuments = [
     _euSecuritiesProspectusBearerShares,
     _euSecuritiesProspectusRegisteredShares,
     _chStockExchangeProspectus,
@@ -55,26 +66,6 @@ class LegalDocumentsConfig {
         'https://realunit.ch/wp-content/uploads/2026/03/260303_RegV_DE_RealUnit_Schweiz_AG_signiert.pdf',
     'en':
         'https://realunit.ch/wp-content/uploads/2026/03/260303_RegV_EN_RealUnit_Schweiz_AG_signiert.pdf',
-  };
-
-  static const _euSecuritiesProspectusBearerSharesPdfUrls = {
-    'de': 'https://realunit.de/ueber-uns/downloads/#eu_prospekte',
-  };
-
-  static const _euSecuritiesProspectusRegisteredSharesPdfUrls = {
-    'de': 'https://realunit.de/ueber-uns/downloads/#eu_prospekte',
-  };
-
-  static const _chStockExchangeProspectusPDfUrls = {
-    'de': 'https://realunit.ch/ueber-uns/downloads/#prospekt',
-  };
-
-  static const _articlesOfAssociationPdfUrls = {
-    'de': 'https://realunit.ch/ueber-uns/downloads/#statuten',
-  };
-
-  static const _investmentRegulationsPdfUrls = {
-    'de': 'https://realunit.ch/ueber-uns/downloads/#anlagereglement',
   };
 
   static final _privacyPolicy = LegalDocumentConfig(
@@ -90,53 +81,53 @@ class LegalDocumentsConfig {
     pdfUrls: _registrationAgreementPdfUrls,
   );
 
-  static final _euSecuritiesProspectusBearerShares = LegalDocumentConfig(
+  static final _euSecuritiesProspectusBearerShares = WebDocumentConfig(
     icon: Icons.article_outlined,
     title: (context) => S.of(context).legalDisclaimerCheckboxSecuritiesProspectusBearerShares,
-    assetBaseName: 'securities_prospectus_bearer_shares',
-    pdfUrls: _euSecuritiesProspectusBearerSharesPdfUrls,
+    url: (_) => 'https://realunit.de/ueber-uns/downloads/#eu_prospekte',
   );
 
-  static final _euSecuritiesProspectusRegisteredShares = LegalDocumentConfig(
+  static final _euSecuritiesProspectusRegisteredShares = WebDocumentConfig(
     icon: Icons.article_outlined,
     title: (context) => S.of(context).legalDisclaimerCheckboxSecuritiesProspectusRegisteredShares,
-    assetBaseName: 'securities_prospectus_registered_shares',
-    pdfUrls: _euSecuritiesProspectusRegisteredSharesPdfUrls,
+    url: (_) => 'https://realunit.de/ueber-uns/downloads/#eu_prospekte',
   );
 
-  static final _chStockExchangeProspectus = LegalDocumentConfig(
+  static final _chStockExchangeProspectus = WebDocumentConfig(
     icon: Icons.article_outlined,
     title: (context) => S.of(context).legalDisclaimerCheckboxStockExchangeProspectus,
-    assetBaseName: 'ch_stock_exchange_prospectus',
-    pdfUrls: _chStockExchangeProspectusPDfUrls,
+    url: (_) => 'https://realunit.ch/ueber-uns/downloads/#prospekt',
   );
 
-  static final _articlesOfAssociation = LegalDocumentConfig(
+  static final _articlesOfAssociation = WebDocumentConfig(
     icon: Icons.account_balance_outlined,
     title: (context) => S.of(context).legalDisclaimerCheckboxArticlesOfAssociation,
-    assetBaseName: 'articles_of_association',
-    pdfUrls: _articlesOfAssociationPdfUrls,
+    url: (_) => 'https://realunit.ch/ueber-uns/downloads/#statuten',
   );
 
-  static final _investmentRegulations = LegalDocumentConfig(
+  static final _investmentRegulations = WebDocumentConfig(
     icon: Icons.policy_outlined,
     title: (context) => S.of(context).legalDisclaimerCheckboxInvestmentRegulations,
-    assetBaseName: 'investment_regulations',
-    pdfUrls: _investmentRegulationsPdfUrls,
+    url: (_) => 'https://realunit.ch/ueber-uns/downloads/#anlagereglement',
   );
 }
 
-class WebDocumentConfig {
+class WebDocumentConfig implements DocumentConfig {
+  @override
   final IconData icon;
-  final String Function(BuildContext context) title;
+  final String Function(BuildContext context) _title;
   final String Function(BuildContext context) url;
 
   const WebDocumentConfig({
     required this.icon,
-    required this.title,
+    required String Function(BuildContext context) title,
     required this.url,
-  });
+  }) : _title = title;
 
+  @override
+  String title(BuildContext context) => _title(context);
+
+  @override
   void onTap(BuildContext context) => context.pushNamed(
     AppRoutes.webView,
     extra: WebViewRouteParams(
