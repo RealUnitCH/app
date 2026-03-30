@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
@@ -12,7 +13,6 @@ import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registrati
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_submit/kyc_registration_submit_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/kyc_registration_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_address_step.dart';
-import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_email_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_personal_step.dart';
 
 import '../../../helper/helper.dart';
@@ -25,9 +25,11 @@ class MockRegistrationSubmitCubit extends MockCubit<KycRegistrationSubmitState>
 
 class MockKycCubit extends MockCubit<KycState> implements KycCubit {}
 
-class MockDfxRegistrationService extends Mock implements RealUnitRegistrationService {}
+class MockRealUnitRegistrationService extends Mock implements RealUnitRegistrationService {}
 
 class MockDfxCountryService extends Mock implements DfxCountryService {}
+
+class MockDfxKycService extends Mock implements DfxKycService {}
 
 void main() {
   late KycRegistrationStepCubit registrationStepCubit;
@@ -41,9 +43,8 @@ void main() {
 
     when(() => registrationStepCubit.state).thenReturn(
       const KycRegistrationStepState(
-        step: KycRegistrationStep.email,
+        step: KycRegistrationStep.personal,
         steps: [
-          KycRegistrationStep.email,
           KycRegistrationStep.personal,
           KycRegistrationStep.address,
         ],
@@ -56,8 +57,9 @@ void main() {
 
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
-    getIt.registerSingleton<RealUnitRegistrationService>(MockDfxRegistrationService());
+    getIt.registerSingleton<RealUnitRegistrationService>(MockRealUnitRegistrationService());
     getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
+    getIt.registerSingleton<DfxKycService>(MockDfxKycService());
   }
 
   setUpAll(() {
@@ -86,30 +88,10 @@ void main() {
   });
 
   group('$KycRegistrationView', () {
-    testWidgets('renders $KycRegistrationEmailStep', (tester) async {
-      final state = const KycRegistrationStepState(
-        step: KycRegistrationStep.email,
-        steps: [
-          KycRegistrationStep.email,
-          KycRegistrationStep.personal,
-          KycRegistrationStep.address,
-        ],
-      );
-      when(() => registrationStepCubit.state).thenReturn(state);
-
-      await tester.pumpApp(buildSubject(const KycRegistrationView()));
-
-      (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
-      await tester.pump();
-
-      expect(find.byType(KycRegistrationEmailStep).hitTestable(), findsOne);
-    });
-
     testWidgets('renders $KycRegistrationPersonalStep', (tester) async {
       final state = const KycRegistrationStepState(
         step: KycRegistrationStep.personal,
         steps: [
-          KycRegistrationStep.email,
           KycRegistrationStep.personal,
           KycRegistrationStep.address,
         ],
@@ -128,7 +110,6 @@ void main() {
       final state = const KycRegistrationStepState(
         step: KycRegistrationStep.address,
         steps: [
-          KycRegistrationStep.email,
           KycRegistrationStep.personal,
           KycRegistrationStep.address,
         ],

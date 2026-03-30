@@ -5,7 +5,9 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 
 part 'kyc_state.dart';
@@ -23,14 +25,19 @@ class KycCubit extends Cubit<KycState> {
 
   final DfxKycService _kycService;
   final RealUnitWalletService _walletService;
+  final RealUnitRegistrationService _registrationService;
   final int _requiredLevel;
+
+  bool _legalDisclaimerAccepted = false;
 
   KycCubit(
     DfxKycService kycService,
-    RealUnitWalletService walletService, {
+    RealUnitWalletService walletService,
+    RealUnitRegistrationService registrationService, {
     int? requiredLevel,
   }) : _kycService = kycService,
        _walletService = walletService,
+       _registrationService = registrationService,
        _requiredLevel = requiredLevel ?? _minLevelForActions,
        super(const KycInitial());
 
@@ -41,19 +48,35 @@ class KycCubit extends Cubit<KycState> {
       final results = await Future.wait([
         _walletService.getWalletStatus(),
         _kycService.getKycStatus(),
+        _kycService.getUser(),
       ]);
 
       final status = results.elementAt(0) as RealUnitWalletStatusDto;
       final kycStatus = results.elementAt(1) as KycLevelDto;
+      final user = results.elementAt(2) as UserDto;
       final level = kycStatus.kycLevel.value;
 
-      if (!status.isRegistered || level < 20) {
-        final user = await _kycService.getUser();
-        emit(KycSuccess(
-          currentStep: KycStep.registration,
-          email: user.mail?.isNotEmpty == true ? user.mail : null,
-        ));
+      if (user.mail == null) {
+        emit(const KycSuccess(currentStep: KycStep.email));
         return;
+      }
+
+      // edge case, where email exists but level is <10. In this case email is automatically registered for RealUnit
+      if (user.mail != null && level < 10) {
+        await _registrationService.registerEmail(user.mail!);
+        await checkKyc();
+        return;
+      }
+
+      if (!status.isRegistered) {
+        if (!_legalDisclaimerAccepted) {
+          emit(const KycSuccess(currentStep: KycStep.legalDisclaimer));
+          return;
+        }
+        if (level < 20) {
+          emit(const KycSuccess(currentStep: KycStep.registration));
+          return;
+        }
       }
 
       if (level < _requiredLevel) {
@@ -94,6 +117,10 @@ class KycCubit extends Cubit<KycState> {
     } catch (e) {
       emit(KycFailure(e.toString()));
     }
+  }
+
+  void markLegalDisclaimerAccepted() {
+    _legalDisclaimerAccepted = true;
   }
 
   /// should only be called after realunit registration was completed

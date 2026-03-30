@@ -8,9 +8,8 @@ class KycRegistrationStepCubit extends Cubit<KycRegistrationStepState> {
   KycRegistrationStepCubit()
     : super(
         const KycRegistrationStepState(
-          step: KycRegistrationStep.email,
+          step: KycRegistrationStep.personal,
           steps: [
-            KycRegistrationStep.email,
             KycRegistrationStep.personal,
             KycRegistrationStep.address,
           ],
