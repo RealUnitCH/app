@@ -1,6 +1,6 @@
 # Registration Agreement of RealUnit Schweiz AG
 
-*Version March 21, 2025*
+*Version March 03, 2026*
 
 
 ## 1 General Information
@@ -68,8 +68,6 @@ For Share Tokens held on behalf of a third party, the person that controls the t
 Share Token Holders hereby acknowledge and agree to hold the Share Tokens in a personal wallet, which may be a software or hardware, independent of the Issuer. In case the wallet, the private key or access to the wallet is lost, section 10 below applies.
 
 **Alternatively, Share Token Holders have the option to hold the Share Tokens with Hypothekarbank Lenzburg AG (HBL). If this option is selected, the Share Token Holder agrees that personal data provided to the Issuer (in particular contact data such as name and address) are forwarded to HBL.**
-
-**Furthermore, the Share Tokens can be traded via the organized trading facility (OTF) T-DX of Taurus SA. All Share Tokens transferred to and through T-DX are held in custody by Taurus SA for the duration of the trading. Trading via the OTF of Honesto AG is also possible, with custody at InCore Bank AG.**
 
 
 ## 8 Burning Share Tokens
