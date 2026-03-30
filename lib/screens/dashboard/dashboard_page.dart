@@ -122,7 +122,7 @@ class DashboardView extends StatelessWidget {
                     if (balance > BigInt.zero)
                       SingleChildScrollView(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding: const .symmetric(
                             horizontal: 20.0,
                             vertical: 24.0,
                           ),
@@ -141,7 +141,7 @@ class DashboardView extends StatelessWidget {
                       )
                     else
                       Padding(
-                        padding: const EdgeInsets.symmetric(
+                        padding: const .symmetric(
                           horizontal: 20.0,
                           vertical: 24.0,
                         ),
@@ -157,9 +157,9 @@ class DashboardView extends StatelessWidget {
                             const Spacer(),
                             if (isFiatServiceAvailable)
                               Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 20),
+                                padding: const .symmetric(vertical: 20),
                                 child: SizedBox(
-                                  width: double.infinity,
+                                  width: .infinity,
                                   child: FilledButton(
                                     onPressed: () => context.pushNamed(AppRoutes.buy),
                                     child: Text(S.of(context).buyRealUnit),

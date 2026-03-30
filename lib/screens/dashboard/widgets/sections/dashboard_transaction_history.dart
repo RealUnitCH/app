@@ -42,22 +42,20 @@ class DashboardTransactionHistoryView extends StatelessWidget {
       builder: (context, transactions) {
         if (transactions.isNotEmpty) {
           return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: .start,
             spacing: 8.0,
             children: [
               Text(
                 S.of(context).latestTransactions,
-                style: const TextStyle(
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: RealUnitColors.neutral500,
-                  fontSize: 12,
-                  height: 12 / 16,
                 ),
               ),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const .all(12),
                 decoration: BoxDecoration(
                   color: RealUnitColors.basic.white,
-                  borderRadius: BorderRadius.circular(16.0),
+                  borderRadius: .circular(16.0),
                 ),
                 child: Column(
                   spacing: 12.0,
@@ -71,15 +69,15 @@ class DashboardTransactionHistoryView extends StatelessWidget {
                     TextButton(
                       onPressed: () => context.pushNamed(AppRoutes.transactionHistory),
                       style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
+                        padding: .zero,
                         minimumSize: const Size(50, 22),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        alignment: Alignment.centerLeft,
+                        tapTargetSize: .shrinkWrap,
+                        alignment: .centerLeft,
                       ),
                       child: Text(
                         S.of(context).transactionHistory,
-                        style: const TextStyle(
-                          fontSize: 14,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: RealUnitColors.darkBlue,
                         ),
                       ),
                     ),

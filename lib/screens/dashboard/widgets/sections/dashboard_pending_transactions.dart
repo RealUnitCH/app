@@ -32,28 +32,25 @@ class DashboardPendingTransactionsView extends StatelessWidget {
         if (transactions.isEmpty) {
           return const SizedBox.shrink();
         }
-
         return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: .start,
           spacing: 8.0,
           children: [
             Text(
               S.of(context).pendingTransactions,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: RealUnitColors.neutral500,
-                  ),
+                color: RealUnitColors.neutral500,
+              ),
             ),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const .all(12),
               decoration: BoxDecoration(
                 color: RealUnitColors.basic.white,
-                borderRadius: BorderRadius.circular(16.0),
+                borderRadius: .circular(16.0),
               ),
               child: Column(
                 spacing: 12.0,
-                children: transactions
-                    .map((t) => PendingTransactionRow(transaction: t))
-                    .toList(),
+                children: transactions.map((t) => PendingTransactionRow(transaction: t)).toList(),
               ),
             ),
           ],

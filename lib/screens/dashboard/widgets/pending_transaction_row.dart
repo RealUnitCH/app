@@ -15,22 +15,15 @@ class PendingTransactionRow extends StatelessWidget {
 
   bool get _isBuy => transaction.type == TransactionType.buy;
 
-  String _getStatusText(BuildContext context) {
-    if (transaction.state == TransactionState.waitingForPayment) {
-      return S.of(context).transactionWaitingForPayment;
-    }
-    return S.of(context).transactionPending;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: .circular(20),
         color: RealUnitColors.basic.white,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: .center,
         spacing: 10.0,
         children: [
           Container(
@@ -38,47 +31,47 @@ class PendingTransactionRow extends StatelessWidget {
             width: 32,
             decoration: BoxDecoration(
               color: RealUnitColors.brand200,
-              borderRadius: BorderRadius.circular(24.0),
+              borderRadius: .circular(24.0),
             ),
             child: const CupertinoActivityIndicator(),
           ),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: .start,
               children: [
                 Text(
-                  _isBuy
-                      ? S.of(context).transactionBuy
-                      : S.of(context).transactionSell,
+                  _isBuy ? S.of(context).transactionBuy : S.of(context).transactionSell,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                    fontWeight: .w600,
+                  ),
                 ),
                 Text(
-                  _getStatusText(context),
+                  transaction.state == .waitingForPayment
+                      ? S.of(context).transactionWaitingForPayment
+                      : S.of(context).transactionPending,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: RealUnitColors.neutral500,
-                      ),
+                    color: RealUnitColors.neutral500,
+                  ),
                 ),
               ],
             ),
           ),
           Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: .end,
             children: [
               if (transaction.inputAmount != null && transaction.inputAsset != null)
                 Text(
                   '${_formatAmount(transaction.inputAmount!)} ${transaction.inputAsset}',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                    fontWeight: .w600,
+                  ),
                 ),
               if (transaction.date != null)
                 Text(
                   DateFormat('MMM dd, yyyy').format(transaction.date!),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: RealUnitColors.neutral500,
-                      ),
+                    color: RealUnitColors.neutral500,
+                  ),
                 ),
             ],
           ),
