@@ -19,13 +19,13 @@ class SupportCreateTicketPage extends StatelessWidget {
       create: (_) => SupportCreateTicketCubit(
         getIt<DfxSupportService>(),
       ),
-      child: const _SupportCreateTicketView(),
+      child: const SupportCreateTicketView(),
     );
   }
 }
 
-class _SupportCreateTicketView extends StatelessWidget {
-  const _SupportCreateTicketView();
+class SupportCreateTicketView extends StatelessWidget {
+  const SupportCreateTicketView({super.key});
 
   @override
   Widget build(BuildContext context) {

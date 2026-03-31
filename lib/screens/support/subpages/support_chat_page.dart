@@ -21,19 +21,19 @@ class SupportChatPage extends StatelessWidget {
         getIt<DfxSupportService>(),
         ticketUid,
       ),
-      child: const _SupportChatView(),
+      child: const SupportChatView(),
     );
   }
 }
 
-class _SupportChatView extends StatefulWidget {
-  const _SupportChatView();
+class SupportChatView extends StatefulWidget {
+  const SupportChatView({super.key});
 
   @override
-  State<_SupportChatView> createState() => _SupportChatViewState();
+  State<SupportChatView> createState() => _SupportChatViewState();
 }
 
-class _SupportChatViewState extends State<_SupportChatView> {
+class _SupportChatViewState extends State<SupportChatView> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
 

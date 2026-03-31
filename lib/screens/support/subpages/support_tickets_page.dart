@@ -20,13 +20,13 @@ class SupportTicketsPage extends StatelessWidget {
       create: (_) => SupportTicketsCubit(
         getIt<DfxSupportService>(),
       ),
-      child: const _SupportTicketsView(),
+      child: const SupportTicketsView(),
     );
   }
 }
 
-class _SupportTicketsView extends StatelessWidget {
-  const _SupportTicketsView();
+class SupportTicketsView extends StatelessWidget {
+  const SupportTicketsView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +54,7 @@ class _SupportTicketsView extends StatelessWidget {
                         final ticket = tickets.elementAt(index);
                         return OutlinedTile(
                           leading: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6.0),
+                            padding: const .symmetric(vertical: 6.0),
                             child: Container(
                               width: 10,
                               height: 10,
