@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/support/support_issue_reason.dart';
@@ -7,7 +9,9 @@ import 'package:realunit_wallet/screens/support/cubits/support_create_ticket/sup
 class SupportCreateTicketCubit extends Cubit<SupportCreateTicketState> {
   final DfxSupportService _supportService;
 
-  SupportCreateTicketCubit(this._supportService) : super(const SupportCreateTicketState());
+  SupportCreateTicketCubit(DfxSupportService supportService)
+    : _supportService = supportService,
+      super(const SupportCreateTicketState());
 
   void selectType(SupportIssueType type) {
     emit(state.copyWith(selectedType: type, selectedReason: SupportIssueReason.other));
@@ -36,6 +40,7 @@ class SupportCreateTicketCubit extends Cubit<SupportCreateTicketState> {
 
       emit(state.copyWith(isSubmitting: false, isSuccess: true));
     } catch (e) {
+      developer.log('Could not create ticket: $e', name: '$SupportCreateTicketCubit');
       emit(state.copyWith(isSubmitting: false, error: e.toString()));
     }
   }
