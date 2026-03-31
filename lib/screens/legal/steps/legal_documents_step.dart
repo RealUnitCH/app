@@ -55,7 +55,9 @@ class LegalDocumentsStep extends StatelessWidget {
                 leading: Icon(config.icon, color: RealUnitColors.realUnitBlue, size: 24),
                 title: config.title(context),
                 onTap: () => config.onTap(context),
-                trailingIcon: Icons.chevron_right_rounded,
+                trailingIcon: config.isExternal
+                    ? Icons.open_in_new_rounded
+                    : Icons.chevron_right_rounded,
               ),
             ),
           ],

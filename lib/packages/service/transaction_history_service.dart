@@ -38,12 +38,16 @@ class TransactionHistoryService {
 
     developer.log('[explorerAssistedScan][$call call] Trying sync at $latestHeight');
 
-    final txs =
-        await api.txList(address: _appStore.primaryAddress, offset: 0, startblock: latestHeight);
+    final txs = await api.txList(
+      address: _appStore.primaryAddress,
+      offset: 0,
+      startblock: latestHeight,
+    );
 
     if ((txs.result ?? []).isEmpty) {
       developer.log(
-          '[explorerAssistedScan][$call call] 0 Transactions at $latestHeight. Sync finished!');
+        '[explorerAssistedScan][$call call] 0 Transactions at $latestHeight. Sync finished!',
+      );
       return;
     }
 
@@ -73,23 +77,25 @@ class TransactionHistoryService {
         );
       }
 
-      _transactionRepository.insertTransaction(Transaction(
-        height: int.parse(result.blockNumber),
-        txId: result.hash,
-        chainId: chain.chainId,
-        senderAddress: result.from.asHexEip55,
-        receiverAddress: receiver,
-        amount: value,
-        asset: asset ?? chain.nativeAsset,
-        type: isContractCall
-            ? isTokenTransfer
-                ? TransactionTypes.tokenTransfer
-                : TransactionTypes.genericContractCall
-            : TransactionTypes.transfer,
-        note: '',
-        data: isContractCall ? result.input : null,
-        timestamp: DateTime.fromMillisecondsSinceEpoch(int.parse(result.timeStamp) * 1000),
-      ));
+      _transactionRepository.insertTransaction(
+        Transaction(
+          height: int.parse(result.blockNumber),
+          txId: result.hash,
+          chainId: chain.chainId,
+          senderAddress: result.from.asHexEip55,
+          receiverAddress: receiver,
+          amount: value,
+          asset: asset ?? chain.nativeAsset,
+          type: isContractCall
+              ? isTokenTransfer
+                    ? TransactionTypes.tokenTransfer
+                    : TransactionTypes.genericContractCall
+              : TransactionTypes.transfer,
+          note: '',
+          data: isContractCall ? result.input : null,
+          timestamp: DateTime.fromMillisecondsSinceEpoch(int.parse(result.timeStamp) * 1000),
+        ),
+      );
     }
 
     for (EtherScanMintedTokenTxResult result in ercTx.result ?? []) {
@@ -97,29 +103,31 @@ class TransactionHistoryService {
 
       Asset? asset =
           await _assetRepository.getAsset(chain.chainId, result.contractAddress.asHexEip55) ??
-              Asset(
-                chainId: chain.chainId,
-                address: result.to.asHexEip55,
-                name: 'Unknown',
-                symbol: '???',
-                decimals: 18,
-              );
+          Asset(
+            chainId: chain.chainId,
+            address: result.to.asHexEip55,
+            name: 'Unknown',
+            symbol: '???',
+            decimals: 18,
+          );
 
       final exists = await _transactionRepository.existsTransaction(result.hash);
       if (!exists) {
-        _transactionRepository.insertTransaction(Transaction(
-          height: int.parse(result.blockNumber),
-          txId: result.hash,
-          chainId: chain.chainId,
-          senderAddress: result.from.asHexEip55,
-          receiverAddress: result.to.asHexEip55,
-          amount: BigInt.parse(result.value),
-          asset: asset,
-          type: TransactionTypes.tokenTransfer,
-          note: '',
-          data: result.input,
-          timestamp: DateTime.fromMillisecondsSinceEpoch(int.parse(result.timeStamp) * 1000),
-        ));
+        _transactionRepository.insertTransaction(
+          Transaction(
+            height: int.parse(result.blockNumber),
+            txId: result.hash,
+            chainId: chain.chainId,
+            senderAddress: result.from.asHexEip55,
+            receiverAddress: result.to.asHexEip55,
+            amount: BigInt.parse(result.value),
+            asset: asset,
+            type: TransactionTypes.tokenTransfer,
+            note: '',
+            data: result.input,
+            timestamp: DateTime.fromMillisecondsSinceEpoch(int.parse(result.timeStamp) * 1000),
+          ),
+        );
       }
     }
 
@@ -163,9 +171,9 @@ class TransactionHistoryService {
         (t) => t.inputTxId == txId || t.outputTxId == txId,
       );
 
-      if (matchingTransaction != null) {
+      if (matchingTransaction != null && matchingTransaction.id != null) {
         final dfxTransaction = DfxTransaction(
-          dfxId: matchingTransaction.id,
+          dfxId: matchingTransaction.id!,
           rate: matchingTransaction.rate,
           inputTxId: matchingTransaction.inputTxId,
           outputTxId: matchingTransaction.outputTxId,
@@ -231,6 +239,27 @@ class TransactionHistoryService {
 
     final List<dynamic> json = jsonDecode(response.body);
     return json.map((e) => TransactionDto.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<List<TransactionDto>> fetchPendingTransactions() async {
+    final authToken = _appStore.dfxAuthToken;
+    if (authToken == null) return [];
+
+    final uri = buildUri(_host, '$_transactionsPath/detail');
+    final response = await _appStore.httpClient.get(
+      uri,
+      headers: {'Authorization': 'Bearer $authToken'},
+    );
+
+    if (response.statusCode != 200) return [];
+
+    final List<dynamic> json = jsonDecode(response.body);
+    final transactions = json
+        .map((e) => TransactionDto.fromJson(e as Map<String, dynamic>))
+        .toList();
+
+    final walletAddress = _appStore.primaryAddress;
+    return transactions.where((t) => t.isPending && t.belongsToWallet(walletAddress)).toList();
   }
 }
 

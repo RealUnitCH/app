@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/config/legal_documents_config.dart';
 import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
+import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/outlined_tile.dart';
 
@@ -25,7 +26,11 @@ class SettingsLegalDocumentsPage extends StatelessWidget {
             spacing: 12.0,
             children: [
               OutlinedTile(
-                leading: const Icon(Icons.description_outlined, color: RealUnitColors.realUnitBlue, size: 24),
+                leading: const Icon(
+                  Icons.description_outlined,
+                  color: RealUnitColors.realUnitBlue,
+                  size: 24,
+                ),
                 title: S.of(context).termsOfUse,
                 onTap: () => context.pushNamed(LegalRoutes.terms),
                 trailingIcon: Icons.chevron_right_rounded,
@@ -35,8 +40,20 @@ class SettingsLegalDocumentsPage extends StatelessWidget {
                   leading: Icon(config.icon, color: RealUnitColors.realUnitBlue, size: 24),
                   title: config.title(context),
                   onTap: () => config.onTap(context),
-                  trailingIcon: Icons.chevron_right_rounded,
+                  trailingIcon: config.isExternal
+                      ? Icons.open_in_new_rounded
+                      : Icons.chevron_right_rounded,
                 ),
+              ),
+              OutlinedTile(
+                leading: const Icon(Icons.business_outlined),
+                title: S.of(context).aktionariatTitle,
+                onTap: () => context.pushNamed(SettingsRoutes.aktionariatDocuments),
+              ),
+              OutlinedTile(
+                leading: const Icon(Icons.business_outlined),
+                title: S.of(context).dfxTitle,
+                onTap: () => context.pushNamed(SettingsRoutes.dfxDocuments),
               ),
             ],
           ),

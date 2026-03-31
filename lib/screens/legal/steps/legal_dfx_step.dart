@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
-import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
-import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
+import 'package:realunit_wallet/packages/config/legal_documents_config.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/outlined_tile.dart';
 
@@ -13,11 +9,11 @@ class LegalDfxStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final language = context.read<SettingsBloc>().state.language.code;
     final s = S.of(context);
 
     return Column(
-      spacing: 20,
+      crossAxisAlignment: .start,
+      spacing: 20.0,
       children: [
         Column(
           crossAxisAlignment: .start,
@@ -38,57 +34,17 @@ class LegalDfxStep extends StatelessWidget {
             ),
           ],
         ),
+
         Column(
           spacing: 12.0,
           children: [
-            OutlinedTile(
-              leading: const Icon(Icons.description_outlined, color: RealUnitColors.realUnitBlue, size: 24),
-              trailingIcon: Icons.open_in_new_outlined,
-              title: s.dfxTermsAndConditions,
-              onTap: () => context.pushNamed(
-                AppRoutes.webView,
-                extra: WebViewRouteParams(
-                  title: s.dfxTermsAndConditions,
-                  url: Uri.parse('https://docs.dfx.swiss/$language/tnc.html'),
-                ),
+            for (final document in DfxDocumentsConfig.allDocuments)
+              OutlinedTile(
+                leading: Icon(document.icon),
+                trailingIcon: Icons.open_in_new_outlined,
+                title: document.title(context),
+                onTap: () => document.onTap(context),
               ),
-            ),
-            OutlinedTile(
-              leading: const Icon(Icons.shield_outlined, color: RealUnitColors.realUnitBlue, size: 24),
-              trailingIcon: Icons.open_in_new_outlined,
-              title: s.dfxPrivacyPolicy,
-              onTap: () => context.pushNamed(
-                AppRoutes.webView,
-                extra: WebViewRouteParams(
-                  title: s.dfxPrivacyPolicy,
-                  url: Uri.parse('https://docs.dfx.swiss/$language/privacy.html'),
-                ),
-              ),
-            ),
-            OutlinedTile(
-              leading: const Icon(Icons.policy_outlined, color: RealUnitColors.realUnitBlue, size: 24),
-              trailingIcon: Icons.open_in_new_outlined,
-              title: s.dfxDisclaimer,
-              onTap: () => context.pushNamed(
-                AppRoutes.webView,
-                extra: WebViewRouteParams(
-                  title: s.dfxDisclaimer,
-                  url: Uri.parse('https://docs.dfx.swiss/$language/disclaimer.html'),
-                ),
-              ),
-            ),
-            OutlinedTile(
-              leading: const Icon(Icons.account_balance_outlined, color: RealUnitColors.realUnitBlue, size: 24),
-              trailingIcon: Icons.open_in_new_outlined,
-              title: s.dfxImprint,
-              onTap: () => context.pushNamed(
-                AppRoutes.webView,
-                extra: WebViewRouteParams(
-                  title: s.dfxImprint,
-                  url: Uri.parse('https://docs.dfx.swiss/$language/imprint.html'),
-                ),
-              ),
-            ),
           ],
         ),
       ],

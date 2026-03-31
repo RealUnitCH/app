@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
-import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
+import 'package:realunit_wallet/packages/config/legal_documents_config.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/outlined_tile.dart';
 
@@ -14,6 +12,7 @@ class LegalAktionariatStep extends StatelessWidget {
     final s = S.of(context);
 
     return Column(
+      crossAxisAlignment: .start,
       spacing: 20.0,
       children: [
         Column(
@@ -35,57 +34,17 @@ class LegalAktionariatStep extends StatelessWidget {
             ),
           ],
         ),
+
         Column(
           spacing: 12.0,
           children: [
-            OutlinedTile(
-              leading: const Icon(Icons.description_outlined, color: RealUnitColors.realUnitBlue, size: 24),
-              trailingIcon: Icons.open_in_new_outlined,
-              title: s.aktionariatTermsOfService,
-              onTap: () => context.pushNamed(
-                AppRoutes.webView,
-                extra: WebViewRouteParams(
-                  title: s.aktionariatTermsOfService,
-                  url: Uri.parse('https://www.aktionariat.com/terms-of-service'),
-                ),
+            for (final document in AktionariatDocumentsConfig.allDocuments)
+              OutlinedTile(
+                leading: Icon(document.icon),
+                trailingIcon: Icons.open_in_new_outlined,
+                title: document.title(context),
+                onTap: () => document.onTap(context),
               ),
-            ),
-            OutlinedTile(
-              leading: const Icon(Icons.shield_outlined, color: RealUnitColors.realUnitBlue, size: 24),
-              trailingIcon: Icons.open_in_new_outlined,
-              title: s.aktionariatPrivacyPolicy,
-              onTap: () => context.pushNamed(
-                AppRoutes.webView,
-                extra: WebViewRouteParams(
-                  title: s.aktionariatPrivacyPolicy,
-                  url: Uri.parse('https://www.aktionariat.com/privacy-policy'),
-                ),
-              ),
-            ),
-            OutlinedTile(
-              leading: const Icon(Icons.policy_outlined, color: RealUnitColors.realUnitBlue, size: 24),
-              trailingIcon: Icons.open_in_new_outlined,
-              title: s.aktionariatDisclaimer,
-              onTap: () => context.pushNamed(
-                AppRoutes.webView,
-                extra: WebViewRouteParams(
-                  title: s.aktionariatDisclaimer,
-                  url: Uri.parse('https://www.aktionariat.com/disclaimer'),
-                ),
-              ),
-            ),
-            OutlinedTile(
-              leading: const Icon(Icons.account_balance_outlined, color: RealUnitColors.realUnitBlue, size: 24),
-              trailingIcon: Icons.open_in_new_outlined,
-              title: s.aktionariatImprint,
-              onTap: () => context.pushNamed(
-                AppRoutes.webView,
-                extra: WebViewRouteParams(
-                  title: s.aktionariatImprint,
-                  url: Uri.parse('https://www.aktionariat.com/impressum'),
-                ),
-              ),
-            ),
           ],
         ),
       ],

@@ -1,6 +1,6 @@
 # Registrierungsvereinbarung der RealUnit Schweiz AG
 
-*Version 21. März 2025*
+*Version 03. März 2026*
 
 
 ## 1 Allgemeine Informationen
@@ -68,8 +68,6 @@ Für Aktientoken, die im Namen eines Dritten gehalten werden, kann die Person, w
 Die Aktionäre erkennen hiermit an und stimmen zu, die Aktientoken in einem persönlichen (Software oder Hardware) *wallet* zu halten, unabhängig von der Emittentin. Bei Verlust des *wallet*, des *private key* oder des Zugangs zum *wallet*, ist Ziffer 10 anwendbar.
 
 **Alternativ haben Aktionäre die Option, die Aktientoken bei der Hypothekarbank Lenzburg AG (HBL) zu halten. Wird diese Option gewählt, stimmt der Aktionär zu, dass relevante Personendaten (insbesondere Kontaktdaten wie Name und Adresse), welche der Emittentin mitgeteilt wurden, an HBL weitergeleitet werden.**
-
-**Ausserdem können die Aktientoken über das organisierte Handelssystem (*organized trading facility*, *OTF*) T-DX von Taurus SA gehandelt werden. Alle an und via T-DX übertragenen Aktientoken stehen während der Handelsdauer unter Verwahrung von Taurus SA. Ebenso ist ein Handel über das OTF von Honesto AG möglich, mit Verwahrung bei InCore Bank AG.**
 
 
 ## 8 Burning von Aktientoken

@@ -10,24 +10,23 @@ import 'package:realunit_wallet/screens/legal/steps/legal_documents_step.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class LegalDisclaimerPage extends StatelessWidget {
-  const LegalDisclaimerPage({super.key});
+  const LegalDisclaimerPage({super.key, this.onCompleted});
+
+  final VoidCallback? onCompleted;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => LegalDisclaimerCubit(),
-      child: const LegalDisclaimerView(),
+      child: LegalDisclaimerView(onCompleted: onCompleted),
     );
   }
 }
 
 class LegalDisclaimerView extends StatelessWidget {
-  final VoidCallback? onAccepted;
-  final VoidCallback? onDeclined;
+  final VoidCallback? onCompleted;
 
-  const LegalDisclaimerView({super.key, this.onAccepted, this.onDeclined});
-
-  bool get _isInline => onAccepted != null;
+  const LegalDisclaimerView({super.key, this.onCompleted});
 
   @override
   Widget build(BuildContext context) {
@@ -35,58 +34,6 @@ class LegalDisclaimerView extends StatelessWidget {
     return BlocBuilder<LegalDisclaimerCubit, LegalDisclaimerState>(
       builder: (context, state) {
         final cubit = context.read<LegalDisclaimerCubit>();
-        final body = SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Column(
-              children: [
-                LinearProgressIndicator(
-                  value: state.progress,
-                  backgroundColor: RealUnitColors.neutral200,
-                  valueColor: const AlwaysStoppedAnimation<Color>(RealUnitColors.realUnitBlue),
-                ),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: switch (state.currentStep) {
-                      0 => LegalDisclaimerStep(step: state.currentStep),
-                      1 => LegalDisclaimerStep(step: state.currentStep),
-                      2 => const LegalDocumentsStep(),
-                      3 => const LegalAktionariatStep(),
-                      4 => const LegalDfxStep(),
-                      _ => const SizedBox.shrink(),
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  child: Row(
-                    spacing: 20.0,
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: onDeclined ?? () => context.pop(),
-                          child: Text(s.legalDisclaimerNo),
-                        ),
-                      ),
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: () => cubit.nextStep(
-                            onComplete: onAccepted ?? () => context.pop(true),
-                          ),
-                          child: Text(s.legalDisclaimerYes),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-
-        if (_isInline) return body;
-
         return Scaffold(
           appBar: AppBar(
             leading: IconButton(
@@ -101,7 +48,57 @@ class LegalDisclaimerView extends StatelessWidget {
             ),
             title: Text(s.legalDisclaimer),
           ),
-          body: body,
+          body: SafeArea(
+            child: Padding(
+              padding: const .symmetric(horizontal: 20.0),
+              child: Column(
+                children: [
+                  LinearProgressIndicator(
+                    value: state.progress,
+                    backgroundColor: RealUnitColors.neutral200,
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      RealUnitColors.realUnitBlue,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: switch (state.currentStep) {
+                        0 => LegalDisclaimerStep(step: state.currentStep),
+                        1 => LegalDisclaimerStep(step: state.currentStep),
+                        2 => const LegalDocumentsStep(),
+                        3 => const LegalAktionariatStep(),
+                        4 => const LegalDfxStep(),
+                        _ => const SizedBox.shrink(),
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const .symmetric(vertical: 20),
+                    child: Row(
+                      spacing: 20.0,
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => context.pop(),
+                            child: Text(s.legalDisclaimerNo),
+                          ),
+                        ),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () => cubit.nextStep(
+                              onComplete: onCompleted ?? context.pop,
+                            ),
+                            child: Text(s.legalDisclaimerYes),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );
