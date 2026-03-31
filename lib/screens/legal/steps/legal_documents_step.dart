@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/config/legal_documents_config.dart';
-import 'package:realunit_wallet/screens/legal/widgets/legal_document_button.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/outlined_tile.dart';
 
 class LegalDocumentsStep extends StatelessWidget {
   const LegalDocumentsStep({super.key});
@@ -30,10 +30,11 @@ class LegalDocumentsStep extends StatelessWidget {
               ),
             ),
             ...LegalDocumentsConfig.primaryDocuments.map(
-              (config) => LegalDocumentButton(
-                leadingIcon: config.icon,
+              (config) => OutlinedTile(
+                leading: Icon(config.icon, color: RealUnitColors.realUnitBlue, size: 24),
                 title: config.title(context),
                 onTap: () => config.onTap(context),
+                trailingIcon: Icons.chevron_right_rounded,
               ),
             ),
           ],
@@ -50,8 +51,8 @@ class LegalDocumentsStep extends StatelessWidget {
               ),
             ),
             ...LegalDocumentsConfig.informationalDocuments.map(
-              (config) => LegalDocumentButton(
-                leadingIcon: config.icon,
+              (config) => OutlinedTile(
+                leading: Icon(config.icon, color: RealUnitColors.realUnitBlue, size: 24),
                 title: config.title(context),
                 onTap: () => config.onTap(context),
                 trailingIcon: config.isExternal
