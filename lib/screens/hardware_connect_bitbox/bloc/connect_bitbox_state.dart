@@ -14,15 +14,24 @@ class BitboxConnecting extends BitboxFound {
   BitboxConnecting(super.device);
 }
 
-/// Pairing state - user needs to confirm the hash on the BitBox device
-class BitboxPairing extends BitboxFound {
+class BitboxCheckHash extends BitboxFound {
   final String channelHash;
 
-  BitboxPairing(super.device, this.channelHash);
+  BitboxCheckHash(super.device, this.channelHash);
+}
+
+class BitboxPairing extends BitboxFound {
+  BitboxPairing(super.device);
 }
 
 class BitboxConnected extends BitboxConnectionState {
   final BitboxWallet wallet;
 
   BitboxConnected(this.wallet);
+}
+
+class BitboxFinishSetup extends BitboxConnectionState {
+  final BitboxWallet wallet;
+
+  BitboxFinishSetup(this.wallet);
 }

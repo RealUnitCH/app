@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:bitbox_flutter/bitbox_flutter.dart' as sdk;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
+import 'package:realunit_wallet/packages/utils/device_info.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
 part 'connect_bitbox_state.dart';
@@ -14,7 +16,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
   }
 
   Future<void> _startScanning() async {
-    await _service.startScan();
+    if (DeviceInfo.instance.isIOS) await _service.startScan();
     _checkForTimer = Timer.periodic(const Duration(milliseconds: 500), (_) => checkForBitbox());
   }
 
@@ -35,31 +37,36 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     if (state is BitboxConnecting) return;
     emit(BitboxConnecting(device));
     try {
-      // Step 1: Connect and get channel hash for pairing
-      final channelHash = await _service.connectAndInit(device);
-      emit(BitboxPairing(device, channelHash));
-      // User must now confirm on BitBox device and tap confirm in app
+      await _service.init(device);
+      final channelHash = await _service.getChannelHash();
+      emit(BitboxCheckHash(device, channelHash));
     } catch (e) {
-      // TODO: show error to user
+      developer.log(e.toString(), name: '$ConnectBitboxCubit');
       emit(BitboxNotConnected());
       _checkForTimer = Timer.periodic(const Duration(seconds: 2), (_) => checkForBitbox());
     }
   }
 
-  /// Called when user confirms pairing in the app (after confirming on BitBox device)
   Future<void> confirmPairing() async {
     final currentState = state;
-    if (currentState is! BitboxPairing) return;
+    if (currentState is! BitboxCheckHash) return;
 
     try {
+      emit(BitboxPairing(currentState.device));
       await _service.confirmPairing();
       final wallet = await _walletService.createBitboxWallet('Luke-Skywallet');
       emit(BitboxConnected(wallet));
     } catch (e) {
-      // TODO: show error to user
+      developer.log(e.toString(), name: '$ConnectBitboxCubit');
       emit(BitboxNotConnected());
       _checkForTimer = Timer.periodic(const Duration(seconds: 2), (_) => checkForBitbox());
     }
+  }
+
+  void finishSetup() {
+    final currentState = state;
+    if (currentState is! BitboxConnected) return;
+    emit(BitboxFinishSetup(currentState.wallet));
   }
 
   @override
