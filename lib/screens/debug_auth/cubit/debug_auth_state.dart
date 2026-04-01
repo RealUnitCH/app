@@ -36,5 +36,12 @@ class DebugAuthState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [address, signMessage, savedSignature, isLoading, isAuthenticated, errorMessage];
+  List<Object?> get props => [
+        address,
+        signMessage,
+        savedSignature,
+        isLoading,
+        isAuthenticated,
+        errorMessage,
+      ];
 }
