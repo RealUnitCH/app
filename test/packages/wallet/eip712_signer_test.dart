@@ -58,6 +58,8 @@ void main() {
       );
 
       final signature = await Eip712Signer.signRegistration(
+        credentials: credentials,
+        chainId: 1,
         type: registration.type.jsonName,
         email: registration.email,
         name: '${registration.firstName} ${registration.lastName}',
@@ -69,7 +71,6 @@ void main() {
         addressCity: registration.addressCity,
         addressCountry: registration.addressCountry.symbol,
         swissTaxResidence: registration.swissTaxResidence,
-        credentials: credentials,
         registrationDate: registrationDate,
       );
 

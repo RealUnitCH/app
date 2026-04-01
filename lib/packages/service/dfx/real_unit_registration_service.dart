@@ -27,6 +27,8 @@ class RealUnitRegistrationService {
 
   String get _host => _appStore.apiConfig.apiHost;
 
+  int get _chainId => _appStore.apiConfig.asset.chainId;
+
   /// registers an email on the wallet. Should always be called first when registering
   Future<RegistrationEmailStatus> registerEmail(String email) async {
     final authToken = _appStore.dfxAuthToken;
@@ -62,6 +64,7 @@ class RealUnitRegistrationService {
     final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final signature = await Eip712Signer.signRegistration(
       credentials: credentials,
+      chainId: _chainId,
       email: registration.email.toLowerCase(),
       name: name,
       type: registration.type.jsonName,
@@ -138,6 +141,7 @@ class RealUnitRegistrationService {
     final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final signature = await Eip712Signer.signRegistration(
       credentials: credentials,
+      chainId: _chainId,
       email: userData.email,
       name: userData.name,
       type: userData.type,

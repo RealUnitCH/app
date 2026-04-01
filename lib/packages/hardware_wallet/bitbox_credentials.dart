@@ -28,15 +28,22 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
       throw UnimplementedError('EvmLedgerCredentials.signToEcSignature');
 
   @override
-  Future<MsgSignature> signToSignature(Uint8List payload,
-      {int? chainId, bool isEIP1559 = false}) async {
+  Future<MsgSignature> signToSignature(
+    Uint8List payload, {
+    int? chainId,
+    bool isEIP1559 = false,
+  }) async {
     if (bitboxManager == null) {
       throw Exception('Bitbox not connected');
     }
 
     if (isEIP1559) payload = payload.sublist(1);
-    final sig = await bitboxManager!
-        .signETHRLPTransaction(chainId ?? 1, derivationPath!, bytesToHex(payload), isEIP1559);
+    final sig = await bitboxManager!.signETHRLPTransaction(
+      chainId ?? 1,
+      derivationPath!,
+      bytesToHex(payload),
+      isEIP1559,
+    );
 
     final r = bytesToHex(sig.sublist(0, 32));
     final s = bytesToHex(sig.sublist(32, 32 + 32));
@@ -78,6 +85,7 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
 
   Future<String> signTypedDataV4(int chainId, String jsonData) async {
     if (isNotConnected) throw Exception('Bitbox not connected');
+
     final signatureBytes = await bitboxManager!.signETHTypedMessage(
       chainId,
       derivationPath!,

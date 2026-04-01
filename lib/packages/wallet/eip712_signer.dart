@@ -9,6 +9,7 @@ import 'package:web3dart/web3dart.dart';
 class Eip712Signer {
   static Future<String> signRegistration({
     required CredentialsWithKnownAddress credentials,
+    required int chainId,
     required String email,
     required String name,
     required String type,
@@ -21,7 +22,7 @@ class Eip712Signer {
     required String addressCountry,
     required bool swissTaxResidence,
     required String registrationDate,
-  }) async {
+  }) {
     final Map<String, dynamic> typedDataMap = {
       'types': {
         'EIP712Domain': [
@@ -63,23 +64,13 @@ class Eip712Signer {
       },
     };
 
-    final jsonData = jsonEncode(typedDataMap);
-
-    if (credentials is BitboxCredentials) {
-      return credentials.signTypedDataV4(1, jsonData);
-    }
-
-    return EthSigUtil.signTypedData(
-      privateKey: bytesToHex((credentials as EthPrivateKey).privateKey, include0x: true),
-      jsonData: jsonData,
-      version: TypedDataVersion.V4,
-    );
+    return _signTypedData(credentials, chainId, jsonEncode(typedDataMap));
   }
 
   static Future<String> signDelegation({
     required CredentialsWithKnownAddress credentials,
     required Eip7702Data eip7702Data,
-  }) async {
+  }) {
     final Map<String, dynamic> typedDataMap = {
       'types': {
         'EIP712Domain': [
@@ -111,16 +102,22 @@ class Eip712Signer {
       },
     };
 
-    final jsonData = jsonEncode(typedDataMap);
-
-    if (credentials is BitboxCredentials) {
-      return credentials.signTypedDataV4(eip7702Data.domain.chainId, jsonData);
-    }
-
-    return EthSigUtil.signTypedData(
-      privateKey: bytesToHex((credentials as EthPrivateKey).privateKey, include0x: true),
-      jsonData: jsonData,
-      version: TypedDataVersion.V4,
-    );
+    return _signTypedData(credentials, eip7702Data.domain.chainId, jsonEncode(typedDataMap));
   }
+
+  static Future<String> _signTypedData(
+    CredentialsWithKnownAddress credentials,
+    int chainId,
+    String jsonData,
+  ) => switch (credentials) {
+    BitboxCredentials() => credentials.signTypedDataV4(chainId, jsonData),
+    EthPrivateKey() => Future.value(
+      EthSigUtil.signTypedData(
+        privateKey: bytesToHex(credentials.privateKey, include0x: true),
+        jsonData: jsonData,
+        version: TypedDataVersion.V4,
+      ),
+    ),
+    _ => throw UnsupportedError('Unsupported credentials type: ${credentials.runtimeType}'),
+  };
 }
