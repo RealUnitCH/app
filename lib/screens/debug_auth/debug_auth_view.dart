@@ -35,114 +35,132 @@ class _DebugAuthViewState extends State<DebugAuthView> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('Debug Auth')),
-        body: BlocListener<DebugAuthCubit, DebugAuthState>(
-          listenWhen: (prev, curr) => !prev.isAuthenticated && curr.isAuthenticated,
-          listener: (context, state) {
-            context.read<HomeBloc>().add(const DebugAuthCompleteEvent());
-            context.goNamed(AppRoutes.dashboard);
-          },
-          child: BlocBuilder<DebugAuthCubit, DebugAuthState>(
-            builder: (context, state) => SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              spacing: 16,
-              children: [
+    appBar: AppBar(title: const Text('Debug Auth')),
+    body: BlocListener<DebugAuthCubit, DebugAuthState>(
+      listenWhen: (prev, curr) =>
+          !prev.isAuthenticated && curr.isAuthenticated,
+      listener: (context, state) {
+        context.read<HomeBloc>().add(const DebugAuthCompleteEvent());
+        context.goNamed(AppRoutes.dashboard);
+      },
+      child: BlocBuilder<DebugAuthCubit, DebugAuthState>(
+        builder: (context, state) => SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 16,
+            children: [
+              TextField(
+                controller: _addressController,
+                decoration: const InputDecoration(
+                  labelText: 'Wallet Address',
+                  hintText: '0x...',
+                ),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              ElevatedButton(
+                onPressed: state.isLoading
+                    ? null
+                    : () => context
+                        .read<DebugAuthCubit>()
+                        .fetchSignMessage(
+                          _addressController.text.trim(),
+                        ),
+                child: const Text('Fetch Sign Message'),
+              ),
+              if (state.signMessage != null) ...[
+                const Divider(color: RealUnitColors.neutral200),
+                Text(
+                  'Sign Message:',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyLarge
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Clipboard.setData(
+                      ClipboardData(text: state.signMessage!),
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Copied to clipboard'),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: RealUnitColors.neutral100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: SelectableText(
+                      state.signMessage!,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ),
                 TextField(
-                  controller: _addressController,
+                  controller: _signatureController,
                   decoration: const InputDecoration(
-                    labelText: 'Wallet Address',
+                    labelText: 'Signature',
                     hintText: '0x...',
                   ),
                   style: Theme.of(context).textTheme.bodyMedium,
+                  maxLines: 3,
                 ),
                 ElevatedButton(
                   onPressed: state.isLoading
                       ? null
                       : () => context
-                            .read<DebugAuthCubit>()
-                            .fetchSignMessage(_addressController.text.trim()),
-                  child: const Text('Fetch Sign Message'),
+                          .read<DebugAuthCubit>()
+                          .authenticate(
+                            _signatureController.text.trim(),
+                          ),
+                  child: const Text('Authenticate'),
                 ),
-                if (state.signMessage != null) ...[
-                  const Divider(color: RealUnitColors.neutral200),
-                  Text(
-                    'Sign Message:',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              ],
+              if (state.isAuthenticated)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: RealUnitColors.green
+                        .withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Authenticated! Token set in AppStore.',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(
+                          color: RealUnitColors.green,
                           fontWeight: FontWeight.w600,
                         ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      Clipboard.setData(ClipboardData(text: state.signMessage!));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Copied to clipboard')),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: RealUnitColors.neutral100,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: SelectableText(
-                        state.signMessage!,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ),
+                ),
+              if (state.errorMessage != null)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: RealUnitColors.status.red600
+                        .withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  TextField(
-                    controller: _signatureController,
-                    decoration: const InputDecoration(
-                      labelText: 'Signature',
-                      hintText: '0x...',
-                    ),
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    maxLines: 3,
+                  child: Text(
+                    state.errorMessage!,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(
+                          color: RealUnitColors.status.red600,
+                        ),
                   ),
-                  ElevatedButton(
-                    onPressed: state.isLoading
-                        ? null
-                        : () => context
-                              .read<DebugAuthCubit>()
-                              .authenticate(_signatureController.text.trim()),
-                    child: const Text('Authenticate'),
-                  ),
-                ],
-                if (state.isAuthenticated)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: RealUnitColors.green.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'Authenticated! Token set in AppStore.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: RealUnitColors.green,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                  ),
-                if (state.errorMessage != null)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: RealUnitColors.status.red600.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      state.errorMessage!,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: RealUnitColors.status.red600,
-                          ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
+                ),
+            ],
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
