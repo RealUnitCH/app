@@ -16,4 +16,5 @@ abstract final class SettingsRoutes {
   static const editName = 'settingsEditName';
   static const editAddress = 'settingsEditAddress';
   static const editPhone = 'settingsEditPhone';
+  static const debugAuth = 'settingsDebugAuth';
 }

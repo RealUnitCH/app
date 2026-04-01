@@ -12,6 +12,7 @@ class AppStore {
   final httpClient = Client();
   List<Node> _nodes = [];
   AWallet? _wallet;
+  String? _debugAddress;
 
   AppStore(this.getApiConfig);
 
@@ -22,13 +23,16 @@ class AppStore {
     throw Exception('No Wallet set');
   }
 
+  set debugAddress(String address) => _debugAddress = address;
+
   ApiConfig get apiConfig => getApiConfig();
 
   Future<void> refreshNodes(NodeRepository nodeRepository) async {
     _nodes = await nodeRepository.allNodes;
   }
 
-  String get primaryAddress => wallet.currentAccount.primaryAddress.address.hex;
+  String get primaryAddress =>
+      _wallet != null ? wallet.currentAccount.primaryAddress.address.hex : _debugAddress ?? (throw Exception('No Wallet set'));
 
   web3.Web3Client getClient(int chainId) {
     final node = _nodes.firstWhere(

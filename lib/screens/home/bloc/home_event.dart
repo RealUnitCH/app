@@ -31,3 +31,7 @@ final class CompleteOnboardingEvent extends HomeEvent {
 final class AcceptSoftwareTermsEvent extends HomeEvent {
   const AcceptSoftwareTermsEvent();
 }
+
+final class DebugAuthCompleteEvent extends HomeEvent {
+  const DebugAuthCompleteEvent();
+}

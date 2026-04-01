@@ -5,6 +5,7 @@ import 'package:realunit_wallet/packages/open_crypto_pay/models.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
+import 'package:realunit_wallet/screens/debug_auth/debug_auth_page.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/home/home_page.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
@@ -88,6 +89,12 @@ final GoRouter routerConfig = GoRouter(
       name: OnboardingRoutes.completed,
       path: '/onboardingComplete',
       builder: (_, _) => const OnboardingCompletedPage(),
+    ),
+
+    GoRoute(
+      name: SettingsRoutes.debugAuth,
+      path: '/debugAuth',
+      builder: (_, _) => const DebugAuthPage(),
     ),
 
     GoRoute(

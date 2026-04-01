@@ -27,6 +27,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<DeleteCurrentWalletEvent>(_onDeleteCurrentWallet);
     on<CompleteOnboardingEvent>(_onCompleteOnboarding);
     on<AcceptSoftwareTermsEvent>(_onAcceptSoftwareTerms);
+    on<DebugAuthCompleteEvent>(_onDebugAuthComplete);
 
     add(const LoadCurrentWalletEvent());
   }
@@ -125,5 +126,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   void _onAcceptSoftwareTerms(AcceptSoftwareTermsEvent event, Emitter<HomeState> emit) {
     _settingsService.setSoftwareTermsAccepted(true);
     emit(state.copyWith(softwareTermsAccepted: true));
+  }
+
+  void _onDebugAuthComplete(DebugAuthCompleteEvent event, Emitter<HomeState> emit) {
+    emit(state.copyWith(isFiatServiceAvailable: true));
   }
 }
