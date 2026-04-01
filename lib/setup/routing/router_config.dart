@@ -92,7 +92,7 @@ final GoRouter routerConfig = GoRouter(
     ),
 
     GoRoute(
-      name: SettingsRoutes.debugAuth,
+      name: OnboardingRoutes.debugAuth,
       path: '/debugAuth',
       builder: (_, _) => const DebugAuthPage(),
     ),

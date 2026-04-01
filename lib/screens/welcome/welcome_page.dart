@@ -7,7 +7,6 @@ import 'package:realunit_wallet/packages/utils/device_info.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
 import 'package:realunit_wallet/screens/welcome/widgets/welcome_card.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
-import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
 
@@ -121,8 +120,9 @@ class _WelcomePageState extends State<WelcomePage> {
                         if (kDebugMode)
                           WelcomeCard(
                             title: 'Address + Signature',
-                            description: 'Debug only: Authenticate with wallet address and signature.',
-                            onPressed: () => context.pushNamed(SettingsRoutes.debugAuth),
+                            description:
+                                'Debug only: Auth with address + signature.',
+                            onPressed: () => context.pushNamed(OnboardingRoutes.debugAuth),
                             trailing: const Icon(
                               Icons.key,
                               size: 48,
