@@ -51,7 +51,7 @@
   "connectBitboxContent": "Please connect your BitBox02 with your Smartphone.",
   "connectBitboxContentIos": "Please connect your BitBox02 with your Smartphone and activate Bluetooth.",
   "connectBitboxTitle": "Connect BitBox02",
-  "connectedBitboxContent": "Please follow the steps on your BitBox02.",
+  "connectedBitboxContent": "Please follow the steps on your BitBox02, then confirm.",
   "connectedBitboxTitle": "Connection successful",
   "connectWith": "Connect with ${wallet}",
   "contact": "Contact",

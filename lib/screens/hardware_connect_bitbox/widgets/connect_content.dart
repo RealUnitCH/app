@@ -20,8 +20,9 @@ class ConnectContent extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => SizedBox(
+  Widget build(BuildContext context) => Container(
     width: .infinity,
+    padding: const .symmetric(vertical: 20),
     child: Column(
       spacing: 10,
       children: [
@@ -35,9 +36,7 @@ class ConnectContent extends StatelessWidget {
           style: Theme.of(context).textTheme.headlineMedium,
         ),
         child,
-        const SizedBox(
-          height: 20,
-        ),
+        const Spacer(),
         Column(
           spacing: 12,
           children: [

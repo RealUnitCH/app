@@ -36,118 +36,102 @@ class ConnectBitboxView extends StatelessWidget {
         child: Padding(
           padding: const .symmetric(horizontal: 20.0),
           child: Column(
-            mainAxisSize: .min,
             children: [
               Handlebars.horizontal(context, margin: const .only(top: 5), width: 36),
-              BlocBuilder<ConnectBitboxCubit, BitboxConnectionState>(
-                builder: (context, state) => Stack(
-                  children: [
-                    AnimatedSlide(
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeInOut,
-                      offset: state is BitboxNotConnected ? .zero : const Offset(-1.5, 0),
-                      child: ConnectContent(
-                        title: S.of(context).connectBitboxTitle,
-                        imagePath: 'assets/images/illustrations/bitbox_connect.svg',
-                        onCancel: context.pop,
-                        child: Text(
-                          DeviceInfo.instance.isIOS
-                              ? S.of(context).connectBitboxContentIos
-                              : S.of(context).connectBitboxContent,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: RealUnitColors.neutral500,
+              Expanded(
+                child: BlocBuilder<ConnectBitboxCubit, BitboxConnectionState>(
+                  builder: (context, state) => switch (state) {
+                    BitboxConnecting() => ConnectContent(
+                      title: S.of(context).connectBitboxTitle,
+                      imagePath: 'assets/images/illustrations/bitbox_connect.svg',
+                      child: Column(
+                        spacing: 40,
+                        children: [
+                          Text(
+                            'Device found, please check your Bitbox, follow the instructions and memorise the shown pairing code.',
+                            textAlign: .center,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: RealUnitColors.neutral500,
+                            ),
                           ),
-                        ),
+                          const CupertinoActivityIndicator(),
+                        ],
                       ),
                     ),
-                    AnimatedSlide(
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeInOut,
-                      offset: state is BitboxConnecting ? .zero : const Offset(1.5, 0),
+                    BitboxCheckHash(:final channelHash) => ConnectContent(
+                      title: S.of(context).connectBitboxTitle,
+                      imagePath: 'assets/images/illustrations/bitbox_connected.svg',
+                      onConfirm: context.read<ConnectBitboxCubit>().confirmPairing,
+                      onCancel: context.pop,
                       child: Column(
+                        spacing: 16,
                         children: [
-                          ConnectContent(
-                            title: S.of(context).connectBitboxTitle,
-                            imagePath: 'assets/images/illustrations/bitbox_connect.svg',
-                            child: Column(
-                              spacing: 40,
-                              children: [
-                                Text(
-                                  'Device found, please check your Bitbox and follow the instructions, memorise the shown pairing code.',
-                                  textAlign: .center,
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: RealUnitColors.neutral500,
-                                  ),
-                                ),
-                                const CupertinoActivityIndicator(),
-                              ],
+                          Text(
+                            'Verify this code matches the one shown on your BitBox device, then confirm.',
+                            textAlign: .center,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: RealUnitColors.neutral500,
+                            ),
+                          ),
+                          Container(
+                            padding: const .all(16),
+                            decoration: BoxDecoration(
+                              color: RealUnitColors.realUnitBlue.withValues(alpha: 0.1),
+                              borderRadius: .circular(12),
+                            ),
+                            child: Text(
+                              channelHash,
+                              textAlign: .center,
+                              style: Theme.of(context).textTheme.headlineSmall,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    AnimatedSlide(
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeInOut,
-                      offset: state is BitboxCheckHash || state is BitboxPairing
-                          ? Offset.zero
-                          : const Offset(1.5, 0),
-                      child: ConnectContent(
-                        title: S.of(context).connectBitboxTitle,
-                        imagePath: 'assets/images/illustrations/bitbox_connected.svg',
-                        onConfirm: state is BitboxCheckHash
-                            ? () => context.read<ConnectBitboxCubit>().confirmPairing()
-                            : null,
-                        onCancel: state is BitboxCheckHash ? context.pop : null,
-                        child: Column(
-                          spacing: 16,
-                          children: [
-                            SizedBox(
-                              child: Text(
-                                'Verify this code matches the one shown on your BitBox device, then confirm.',
-                                textAlign: .center,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: RealUnitColors.neutral500,
-                                ),
-                              ),
+                    BitboxPairing() => ConnectContent(
+                      title: S.of(context).connectBitboxTitle,
+                      imagePath: 'assets/images/illustrations/bitbox_connected.svg',
+                      child: Column(
+                        spacing: 40,
+                        children: [
+                          Text(
+                            'Verify this code matches the one shown on your BitBox device, then confirm.',
+                            textAlign: .center,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: RealUnitColors.neutral500,
                             ),
-                            state is BitboxPairing
-                                ? const CupertinoActivityIndicator()
-                                : Container(
-                                    padding: const .all(16),
-                                    decoration: BoxDecoration(
-                                      color: RealUnitColors.realUnitBlue.withValues(alpha: 0.1),
-                                      borderRadius: .circular(12),
-                                    ),
-                                    child: Text(
-                                      state is BitboxCheckHash ? state.channelHash : '',
-                                      textAlign: .center,
-                                      style: Theme.of(context).textTheme.headlineSmall,
-                                    ),
-                                  ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    AnimatedSlide(
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeInOut,
-                      offset: state is BitboxConnected ? Offset.zero : const Offset(1.5, 0),
-                      child: ConnectContent(
-                        title: 'Connected',
-                        onConfirm: () => context.read<ConnectBitboxCubit>().finishSetup(),
-                        imagePath: 'assets/images/illustrations/bitbox_connected.svg',
-                        child: Text(
-                          S.of(context).connectedBitboxContent,
-                          textAlign: .center,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: RealUnitColors.neutral500,
                           ),
+                          const CupertinoActivityIndicator(),
+                        ],
+                      ),
+                    ),
+                    BitboxConnected() => ConnectContent(
+                      title: 'Connected',
+                      imagePath: 'assets/images/illustrations/bitbox_connected.svg',
+                      onConfirm: () => context.read<ConnectBitboxCubit>().finishSetup(),
+                      child: Text(
+                        S.of(context).connectedBitboxContent,
+                        textAlign: .center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: RealUnitColors.neutral500,
                         ),
                       ),
                     ),
-                  ],
+                    _ => ConnectContent(
+                      title: S.of(context).connectBitboxTitle,
+                      imagePath: 'assets/images/illustrations/bitbox_connect.svg',
+                      onCancel: context.pop,
+                      child: Text(
+                        DeviceInfo.instance.isIOS
+                            ? S.of(context).connectBitboxContentIos
+                            : S.of(context).connectBitboxContent,
+                        textAlign: .center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: RealUnitColors.neutral500,
+                        ),
+                      ),
+                    ),
+                  },
                 ),
               ),
             ],
