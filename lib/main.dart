@@ -109,10 +109,10 @@ class _WalletAppState extends State<WalletApp> {
     String targetRoute;
     if (!homeState.softwareTermsAccepted) {
       targetRoute = AppRoutes.home;
-    } else if (homeState.openWallet == null && !homeState.isFiatServiceAvailable) {
-      targetRoute = OnboardingRoutes.welcome;
-    } else if (homeState.openWallet == null && homeState.isFiatServiceAvailable) {
+    } else if (kDebugMode && homeState.isDebugAuthenticated) {
       targetRoute = AppRoutes.dashboard;
+    } else if (homeState.openWallet == null) {
+      targetRoute = OnboardingRoutes.welcome;
     } else if (!homeState.onboardingCompleted) {
       targetRoute = OnboardingRoutes.completed;
     } else if (!pinState.isPinSetup) {
