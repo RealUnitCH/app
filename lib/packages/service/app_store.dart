@@ -31,8 +31,9 @@ class AppStore {
     _nodes = await nodeRepository.allNodes;
   }
 
-  String get primaryAddress =>
-      _wallet != null ? wallet.currentAccount.primaryAddress.address.hex : _debugAddress ?? (throw Exception('No Wallet set'));
+  String get primaryAddress => _wallet != null
+      ? wallet.currentAccount.primaryAddress.address.hex
+      : _debugAddress ?? (throw Exception('No Wallet set'));
 
   web3.Web3Client getClient(int chainId) {
     final node = _nodes.firstWhere(

@@ -123,7 +123,7 @@ class _WelcomePageState extends State<WelcomePage> {
                             title: 'Address + Signature',
                             description: 'Debug only: Authenticate with wallet address and signature.',
                             onPressed: () => context.pushNamed(SettingsRoutes.debugAuth),
-                            trailing: Icon(
+                            trailing: const Icon(
                               Icons.key,
                               size: 48,
                               color: RealUnitColors.realUnitBlue,

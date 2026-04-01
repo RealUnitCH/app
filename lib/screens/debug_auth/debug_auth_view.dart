@@ -43,7 +43,7 @@ class _DebugAuthViewState extends State<DebugAuthView> {
             context.goNamed(AppRoutes.dashboard);
           },
           child: BlocBuilder<DebugAuthCubit, DebugAuthState>(
-          builder: (context, state) => SingleChildScrollView(
+            builder: (context, state) => SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -142,7 +142,7 @@ class _DebugAuthViewState extends State<DebugAuthView> {
               ],
             ),
           ),
+          ),
         ),
-      ),
       );
 }
