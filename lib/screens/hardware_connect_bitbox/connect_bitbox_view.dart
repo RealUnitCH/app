@@ -26,8 +26,8 @@ class ConnectBitboxView extends StatelessWidget {
           if (state is BitboxNotConnected) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Something went wrong. Please try to connect again.'),
+                SnackBar(
+                  content: Text(S.of(context).connectBitboxFailed),
                 ),
               );
             }
@@ -48,7 +48,7 @@ class ConnectBitboxView extends StatelessWidget {
                         spacing: 40,
                         children: [
                           Text(
-                            'Device found, please check your Bitbox, follow the instructions and memorise the shown pairing code.',
+                            S.of(context).connectBitboxConnecting,
                             textAlign: .center,
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: RealUnitColors.neutral500,
@@ -67,7 +67,7 @@ class ConnectBitboxView extends StatelessWidget {
                         spacing: 16,
                         children: [
                           Text(
-                            'Verify this code matches the one shown on your BitBox device, then confirm.',
+                            S.of(context).connectBitboxCheckPairingCode,
                             textAlign: .center,
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: RealUnitColors.neutral500,
@@ -95,7 +95,7 @@ class ConnectBitboxView extends StatelessWidget {
                         spacing: 40,
                         children: [
                           Text(
-                            'Verify this code matches the one shown on your BitBox device, then confirm.',
+                            S.of(context).connectBitboxCheckPairingCode,
                             textAlign: .center,
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: RealUnitColors.neutral500,
@@ -106,7 +106,7 @@ class ConnectBitboxView extends StatelessWidget {
                       ),
                     ),
                     BitboxConnected() => ConnectContent(
-                      title: 'Connected',
+                      title: S.of(context).connected,
                       imagePath: 'assets/images/illustrations/bitbox_connected.svg',
                       onConfirm: () => context.read<ConnectBitboxCubit>().finishSetup(),
                       child: Text(
