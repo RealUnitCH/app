@@ -27,6 +27,7 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart'
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
+import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/settings_service.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
@@ -73,7 +74,7 @@ Future<void> finishSetup(String encryptionKey) async {
   getIt.registerSingleton(
     AppStore(
       () => ApiConfig(networkMode: getIt<SettingsRepository>().networkMode),
-      getIt<CacheRepository>(),
+      SessionCache(getIt<CacheRepository>()),
     ),
   );
 

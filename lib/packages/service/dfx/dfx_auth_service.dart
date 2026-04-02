@@ -29,23 +29,20 @@ abstract class DFXAuthService {
       return responseBody['message'] as String;
     } else {
       throw Exception(
-          'Failed to get sign message. Status: ${response.statusCode} ${response.body}');
+        'Failed to get sign message. Status: ${response.statusCode} ${response.body}',
+      );
     }
   }
 
   Future<String> getSignature(String message) async {
-    // Use cached signature if available for this address
-    final cached = appStore.cachedDfxSignature;
-    final cachedAddress = appStore.cachedDfxSignatureAddress;
+    final cached = appStore.sessionCache.signature;
+    final cachedAddress = appStore.sessionCache.signatureAddress;
     if (cached != null && cachedAddress == walletAddress) {
       return cached;
     }
 
-    // Sign with wallet (requires hardware wallet connection for BitBox)
     final signature = await wallet.signMessage(message);
-
-    // Persist signature for future use without hardware wallet
-    await appStore.saveDfxSignature(walletAddress, signature);
+    await appStore.sessionCache.saveSignature(walletAddress, signature);
 
     return signature;
   }
@@ -53,16 +50,18 @@ abstract class DFXAuthService {
   Future<Map<String, dynamic>> getAuthResponse([bool sendWalletName = true]) async {
     final signature = await getSignature(await getSignMessage());
 
-    final requestBody = jsonEncode(sendWalletName
-        ? {
-            'wallet': walletName,
-            'address': walletAddress,
-            'signature': signature,
-          }
-        : {
-            'address': walletAddress,
-            'signature': signature,
-          });
+    final requestBody = jsonEncode(
+      sendWalletName
+          ? {
+              'wallet': walletName,
+              'address': walletAddress,
+              'signature': signature,
+            }
+          : {
+              'address': walletAddress,
+              'signature': signature,
+            },
+    );
 
     final uri = buildUri(host, authPath);
     final response = await appStore.httpClient.post(
@@ -84,15 +83,15 @@ abstract class DFXAuthService {
   }
 
   Future<String?> getAuthToken() async {
-    if (appStore.dfxAuthToken == null) {
-      await appStore.loadCachedDfxSignature();
+    if (appStore.sessionCache.authToken == null) {
+      await appStore.sessionCache.loadSignature();
       final response = await getAuthResponse();
-      appStore.dfxAuthToken = response['accessToken'] as String;
+      appStore.sessionCache.setAuthToken(response['accessToken'] as String);
     }
-    return appStore.dfxAuthToken;
+    return appStore.sessionCache.authToken;
   }
 
-  void invalidateAuthToken() => appStore.dfxAuthToken = null;
+  void invalidateAuthToken() => appStore.sessionCache.clearAuthToken();
 
   Future<String?> refreshAuthToken() async {
     invalidateAuthToken();

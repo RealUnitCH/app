@@ -22,15 +22,18 @@ class RealUnitSellPaymentInfoService {
 
   RealUnitSellPaymentInfoService(AppStore appStore) : _appStore = appStore;
 
-  Future<SellPaymentInfo> getPaymentInfo(int amount, String iban,
-      {Currency currency = Currency.chf}) async {
+  Future<SellPaymentInfo> getPaymentInfo(
+    int amount,
+    String iban, {
+    Currency currency = Currency.chf,
+  }) async {
     final sellDto = RealUnitSellDto(
       amount: amount,
       iban: iban,
       currency: currency,
     );
 
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
     final uri = buildUri(_host, _sellPaymentInfoPath);
     final response = await _appStore.httpClient.put(
       uri,
@@ -74,24 +77,26 @@ class RealUnitSellPaymentInfoService {
       eip7702Data: paymentInfo.eip7702,
     );
     final sellConfirmDto = RealUnitSellConfirmDto(
-        eip7702ConfirmDto: Eip7702ConfirmDto(
-            delegation: Eip7702DelegationDto(
-              delegate: paymentInfo.eip7702.relayerAddress,
-              delegator: paymentInfo.eip7702.message.delegator,
-              authority: paymentInfo.eip7702.message.authority,
-              salt: '${paymentInfo.eip7702.message.salt}',
-              signature: delegationSignature,
-            ),
-            authorization: Eip7702AuthorizationDto(
-              chainId: paymentInfo.eip7702.domain.chainId,
-              address: paymentInfo.eip7702.delegatorAddress,
-              nonce: paymentInfo.eip7702.userNonce,
-              r: '0x${authorizationSignature.r.toRadixString(16)}',
-              s: '0x${authorizationSignature.s.toRadixString(16)}',
-              yParity: authorizationSignature.yParity,
-            )));
+      eip7702ConfirmDto: Eip7702ConfirmDto(
+        delegation: Eip7702DelegationDto(
+          delegate: paymentInfo.eip7702.relayerAddress,
+          delegator: paymentInfo.eip7702.message.delegator,
+          authority: paymentInfo.eip7702.message.authority,
+          salt: '${paymentInfo.eip7702.message.salt}',
+          signature: delegationSignature,
+        ),
+        authorization: Eip7702AuthorizationDto(
+          chainId: paymentInfo.eip7702.domain.chainId,
+          address: paymentInfo.eip7702.delegatorAddress,
+          nonce: paymentInfo.eip7702.userNonce,
+          r: '0x${authorizationSignature.r.toRadixString(16)}',
+          s: '0x${authorizationSignature.s.toRadixString(16)}',
+          yParity: authorizationSignature.yParity,
+        ),
+      ),
+    );
 
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
     final uri = buildUri(_host, _confirmPaymentPath(paymentInfo.id));
     final response = await _appStore.httpClient.put(
       uri,

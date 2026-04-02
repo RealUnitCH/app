@@ -37,7 +37,7 @@ class DfxWidgetService extends DFXAuthService {
 
   String get langCode => _settingsRepository.language;
 
-  bool get isAvailable => appStore.dfxAuthToken != null;
+  bool get isAvailable => appStore.sessionCache.authToken != null;
 
   static List<String> supportedAssets = [
     'Ethereum/DEURO',

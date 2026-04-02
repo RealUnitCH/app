@@ -31,7 +31,7 @@ class RealUnitRegistrationService {
 
   /// registers an email on the wallet. Should always be called first when registering
   Future<RegistrationEmailStatus> registerEmail(String email) async {
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, _registerEmailPath);
     final response = await _appStore.httpClient.post(
@@ -109,7 +109,7 @@ class RealUnitRegistrationService {
         ),
       ),
     );
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, _registerCompletionPath);
     final response = await _appStore.httpClient.post(
@@ -162,7 +162,7 @@ class RealUnitRegistrationService {
       registrationDate: registrationDate,
     );
 
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, _registerWalletPath);
     final response = await _appStore.httpClient.post(
