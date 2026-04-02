@@ -113,7 +113,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     try {
       await _dfxService.getAuthToken();
       emit(state.copyWith(isFiatServiceAvailable: _dfxService.isAvailable));
-    } catch (_) {}
+    } catch (e) {
+      developer.log('Failed to authenticate with DFX service', error: e);
+      emit(state.copyWith(isFiatServiceAvailable: false));
+    }
   }
 
   void _onCompleteOnboarding(HomeEvent event, Emitter<HomeState> emit) {
