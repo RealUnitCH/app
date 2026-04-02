@@ -154,7 +154,7 @@ void setupBlocs() {
   getIt.registerSingleton(
     SettingsBloc(
       getIt<SettingsRepository>(),
-      _getNewAuthToken,
+      () => getIt<DfxWidgetService>().refreshAuthToken(),
     ),
   );
   getIt.registerSingleton(
@@ -173,9 +173,3 @@ void setupBlocs() {
 }
 
 Future<bool> _existsDatabaseFile() async => File(await AppDatabase.getDatabasePath()).exists();
-
-Future<void> _getNewAuthToken() async {
-  final authService = getIt<DfxWidgetService>();
-  authService.invalidateAuthToken();
-  await authService.getAuthToken();
-}
