@@ -32,9 +32,11 @@ class SessionCache {
     _signatureAddress ??= await _cacheRepository.read(_signatureAddressKey);
   }
 
-  void clear() {
+  Future<void> clear() async {
     _signature = null;
     _signatureAddress = null;
     _authToken = null;
+    await _cacheRepository.delete(_signatureKey);
+    await _cacheRepository.delete(_signatureAddressKey);
   }
 }
