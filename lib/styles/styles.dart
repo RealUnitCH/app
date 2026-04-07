@@ -13,8 +13,11 @@ const kTitleTextStyle = TextStyle(fontSize: 16, color: RealUnitColors.realUnitBl
 
 const kSubtitleTextStyle = TextStyle(fontSize: 14, color: DEuroColors.neutralGrey);
 
-const kActionButtonTextStyle =
-    TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600);
+const kActionButtonTextStyle = TextStyle(
+  fontSize: 12,
+  color: Colors.white,
+  fontWeight: FontWeight.w600,
+);
 
 final kFullwidthPrimaryButtonStyle = ElevatedButton.styleFrom(
   backgroundColor: Colors.white.withAlpha(50),
@@ -24,15 +27,7 @@ final kFullwidthPrimaryButtonStyle = ElevatedButton.styleFrom(
 
 final kFullwidthGrayButtonStyle = ElevatedButton.styleFrom(
   backgroundColor: RealUnitColors.neutral100,
-  fixedSize: const Size(double.infinity, 20),
-  elevation: 0.0,
-  textStyle: kFullwidthGrayButtonTextStyle,
-);
-
-const kFullwidthGrayButtonTextStyle = TextStyle(
-  fontSize: 16,
-  color: RealUnitColors.neutral900,
-  fontWeight: FontWeight.w600,
+  foregroundColor: RealUnitColors.neutral900,
 );
 
 final kFullwidthBlueButtonStyle = FilledButton.styleFrom(
@@ -41,8 +36,11 @@ final kFullwidthBlueButtonStyle = FilledButton.styleFrom(
   padding: const EdgeInsets.only(left: 24, right: 24),
 );
 
-const kFullwidthBlueButtonTextStyle =
-    TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w500);
+const kFullwidthBlueButtonTextStyle = TextStyle(
+  fontSize: 16,
+  color: Colors.white,
+  fontWeight: FontWeight.w500,
+);
 
 final kFullwidthSecondaryButtonStyle = ElevatedButton.styleFrom(
   backgroundColor: Colors.black.withAlpha(50),
@@ -57,9 +55,10 @@ final kBalanceBarActionButtonStyle = FilledButton.styleFrom(
 );
 
 final kFullwidthActionButtonStyle = FilledButton.styleFrom(
-    backgroundColor: DEuroColors.neutralGrey.withAlpha(50),
-    padding: const EdgeInsets.only(top: 5, bottom: 5, left: 10, right: 10),
-    iconColor: DEuroColors.neutralGrey);
+  backgroundColor: DEuroColors.neutralGrey.withAlpha(50),
+  padding: const EdgeInsets.only(top: 5, bottom: 5, left: 10, right: 10),
+  iconColor: DEuroColors.neutralGrey,
+);
 
 const kContainerCardStyle = BoxDecoration(
   color: Colors.white,
