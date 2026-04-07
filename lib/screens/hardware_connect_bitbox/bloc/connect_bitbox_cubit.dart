@@ -43,7 +43,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     } catch (e) {
       developer.log(e.toString(), name: '$ConnectBitboxCubit');
       emit(BitboxNotConnected());
-      _checkForTimer = Timer.periodic(const Duration(seconds: 2), (_) => checkForBitbox());
+      _checkForTimer = Timer.periodic(const Duration(milliseconds: 500), (_) => checkForBitbox());
     }
   }
 
@@ -59,7 +59,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     } catch (e) {
       developer.log(e.toString(), name: '$ConnectBitboxCubit');
       emit(BitboxNotConnected());
-      _checkForTimer = Timer.periodic(const Duration(seconds: 2), (_) => checkForBitbox());
+      _checkForTimer = Timer.periodic(const Duration(milliseconds: 500), (_) => checkForBitbox());
     }
   }
 
