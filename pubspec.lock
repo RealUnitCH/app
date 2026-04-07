@@ -86,7 +86,7 @@ packages:
     description:
       path: "."
       ref: "feature/ios-ble-pairing"
-      resolved-ref: f53c4b0b70ec725449358011a7ab3e5c2df8f4b1
+      resolved-ref: dd7a45ce29fc425d769b33c6dc8ec81b53f785de
       url: "https://github.com/DFXswiss/bitbox_flutter.git"
     source: git
     version: "0.0.1"
