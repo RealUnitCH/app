@@ -16,7 +16,7 @@ class ConnectBitboxView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SafeArea(
     child: SizedBox(
-      height: MediaQuery.of(context).size.height * 0.75,
+      height: MediaQuery.of(context).size.height * 0.8,
       width: .infinity,
       child: BlocListener<ConnectBitboxCubit, BitboxConnectionState>(
         listener: (context, state) async {
