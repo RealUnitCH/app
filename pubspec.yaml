@@ -104,6 +104,7 @@ dev_dependencies:
 dependency_overrides:
   analyzer: ^10.0.0
   collection: 1.19.0
+  dart_style: 3.1.5
   web3dart:
     git:
       url: https://github.com/cake-tech/web3dart.git
