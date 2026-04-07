@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/config/legal_documents_config.dart';
-import 'package:realunit_wallet/screens/legal/widgets/legal_document_button.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/outlined_tile.dart';
 
 class LegalDfxStep extends StatelessWidget {
   const LegalDfxStep({super.key});
@@ -39,8 +39,8 @@ class LegalDfxStep extends StatelessWidget {
           spacing: 12.0,
           children: [
             for (final document in DfxDocumentsConfig.allDocuments)
-              LegalDocumentButton(
-                leadingIcon: document.icon,
+              OutlinedTile(
+                leading: Icon(document.icon),
                 trailingIcon: Icons.open_in_new_outlined,
                 title: document.title(context),
                 onTap: () => document.onTap(context),

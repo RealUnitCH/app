@@ -35,6 +35,10 @@ import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_address
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_name/settings_edit_name_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_phone_number/settings_edit_phone_number_page.dart';
 import 'package:realunit_wallet/screens/settings_wallet_address/settings_wallet_address_page.dart';
+import 'package:realunit_wallet/screens/support/subpages/support_chat_page.dart';
+import 'package:realunit_wallet/screens/support/subpages/support_create_ticket_page.dart';
+import 'package:realunit_wallet/screens/support/subpages/support_tickets_page.dart';
+import 'package:realunit_wallet/screens/support/support_page.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
 import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
 import 'package:realunit_wallet/screens/verify_seed/verify_seed_page.dart';
@@ -45,6 +49,7 @@ import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
+import 'package:realunit_wallet/setup/routing/routes/support_routes.dart';
 
 final GoRouter routerConfig = GoRouter(
   initialLocation: '/home',
@@ -283,6 +288,31 @@ final GoRouter routerConfig = GoRouter(
               builder: (_, _) => const SettingsEditPhoneNumberPage(),
             ),
           ],
+        ),
+      ],
+    ),
+
+    GoRoute(
+      name: SupportRoutes.support,
+      path: '/support',
+      builder: (_, _) => const SupportPage(),
+      routes: [
+        GoRoute(
+          name: SupportRoutes.tickets,
+          path: 'tickets',
+          builder: (_, _) => const SupportTicketsPage(),
+        ),
+        GoRoute(
+          name: SupportRoutes.createTicket,
+          path: 'create',
+          builder: (_, _) => const SupportCreateTicketPage(),
+        ),
+        GoRoute(
+          name: SupportRoutes.chat,
+          path: 'chat/:uid',
+          builder: (_, state) => SupportChatPage(
+            ticketUid: state.pathParameters['uid']!,
+          ),
         ),
       ],
     ),

@@ -10,6 +10,7 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_account_service.d
 import 'package:realunit_wallet/screens/dashboard/bloc/balance_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/dashboard_bloc.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_actions.dart';
+import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_pending_transactions.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_portfolio.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_portfolio_chart_widget.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_price_widget.dart';
@@ -121,7 +122,7 @@ class DashboardView extends StatelessWidget {
                     if (balance > BigInt.zero)
                       SingleChildScrollView(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
+                          padding: const .symmetric(
                             horizontal: 20.0,
                             vertical: 24.0,
                           ),
@@ -132,41 +133,40 @@ class DashboardView extends StatelessWidget {
                               DashboardPortfolio(
                                 price: dashboardState.price,
                               ),
+                              const DashboardPendingTransactions(),
                               const DashboardTransactionHistory(),
                             ],
                           ),
                         ),
                       )
                     else
-                      Align(
-                        alignment: .topCenter,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20.0,
-                            vertical: 24.0,
-                          ),
-                          child: Column(
-                            children: [
-                              const Spacer(),
-                              SvgPicture.asset(
-                                'assets/images/illustrations/realu_token.svg',
-                                width: 165,
-                                height: 165,
-                              ),
-                              const Spacer(),
-                              if (isFiatServiceAvailable)
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 20),
-                                  child: SizedBox(
-                                    width: double.infinity,
-                                    child: FilledButton(
-                                      onPressed: () => context.pushNamed(AppRoutes.buy),
-                                      child: Text(S.of(context).buyRealUnit),
-                                    ),
+                      Padding(
+                        padding: const .symmetric(
+                          horizontal: 20.0,
+                          vertical: 24.0,
+                        ),
+                        child: Column(
+                          children: [
+                            const DashboardPendingTransactions(),
+                            const Spacer(),
+                            SvgPicture.asset(
+                              'assets/images/illustrations/realu_token.svg',
+                              width: 165,
+                              height: 165,
+                            ),
+                            const Spacer(),
+                            if (isFiatServiceAvailable)
+                              Padding(
+                                padding: const .symmetric(vertical: 20),
+                                child: SizedBox(
+                                  width: .infinity,
+                                  child: FilledButton(
+                                    onPressed: () => context.pushNamed(AppRoutes.buy),
+                                    child: Text(S.of(context).buyRealUnit),
                                   ),
                                 ),
-                            ],
-                          ),
+                              ),
+                          ],
                         ),
                       ),
                   ],

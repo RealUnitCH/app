@@ -20,6 +20,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart'
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_account_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
@@ -130,17 +131,10 @@ void setupServices() {
 
   getIt.registerCachedFactory(() => DfxCountryService(getIt<AppStore>()));
   getIt.registerFactory(() => DfxBankAccountService(getIt<AppStore>()));
-  getIt.registerFactory(() => DfxKycService(getIt<AppStore>()));
-  getIt.registerFactory(() => OpenCryptoPayService());
-  getIt.registerFactory(() => DFXPriceService(getIt<AppStore>()));
-  getIt.registerFactory(() => RealUnitAccountService(getIt<AppStore>()));
   getIt.registerFactory(() => DfxBrokerbotService(getIt<AppStore>()));
-  getIt.registerFactory(() => RealUnitBuyPaymentInfoService(getIt<AppStore>()));
-  getIt.registerFactory(() => RealUnitSellPaymentInfoService(getIt<AppStore>()));
-  getIt.registerFactory(() => RealUnitPdfService(getIt<AppStore>()));
-  getIt.registerFactory(() => RealUnitRegistrationService(getIt<AppStore>()));
-  getIt.registerFactory(() => RealUnitWalletService(getIt<AppStore>()));
-  getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
+  getIt.registerFactory(() => DfxKycService(getIt<AppStore>()));
+  getIt.registerFactory(() => DFXPriceService(getIt<AppStore>()));
+  getIt.registerFactory(() => DfxSupportService(getIt<AppStore>()));
   getIt.registerFactory(
     () => DfxWidgetService(
       getIt<AppStore>(),
@@ -148,6 +142,16 @@ void setupServices() {
       getIt<AssetRepository>(),
     ),
   );
+
+  getIt.registerFactory(() => RealUnitAccountService(getIt<AppStore>()));
+  getIt.registerFactory(() => RealUnitBuyPaymentInfoService(getIt<AppStore>()));
+  getIt.registerFactory(() => RealUnitPdfService(getIt<AppStore>()));
+  getIt.registerFactory(() => RealUnitRegistrationService(getIt<AppStore>()));
+  getIt.registerFactory(() => RealUnitSellPaymentInfoService(getIt<AppStore>()));
+  getIt.registerFactory(() => RealUnitWalletService(getIt<AppStore>()));
+  getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
+
+  getIt.registerFactory(() => OpenCryptoPayService());
 }
 
 void setupBlocs() {

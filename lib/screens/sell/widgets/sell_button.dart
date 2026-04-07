@@ -8,7 +8,6 @@ import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payme
 import 'package:realunit_wallet/screens/sell/widgets/sell_confirm_sheet.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_executed_sheet.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
-import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class SellButton extends StatelessWidget {
@@ -30,10 +29,7 @@ class SellButton extends StatelessWidget {
             return;
           }
           if (state.error == .registrationRequired) {
-            final result = await context.pushNamed<bool>(LegalRoutes.disclaimer);
-            if (result == true && context.mounted) {
-              await context.pushNamed(AppRoutes.kyc);
-            }
+            await context.pushNamed(AppRoutes.kyc);
             return;
           }
           if (context.mounted) {
