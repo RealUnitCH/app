@@ -10,10 +10,4 @@ class DeviceInfo {
   bool get isIOS => defaultTargetPlatform == TargetPlatform.iOS;
 
   bool get isAndroid => defaultTargetPlatform == TargetPlatform.android;
-
-  bool get isDesktop => [
-    TargetPlatform.macOS,
-    TargetPlatform.windows,
-    TargetPlatform.linux,
-  ].contains(defaultTargetPlatform);
 }
