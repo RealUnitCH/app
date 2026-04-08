@@ -46,39 +46,12 @@ class DfxWidgetService extends DFXAuthService {
     'Optimism/DEURO',
     'Arbitrum/DEURO',
 
-    // 'Ethereum/ZCHF',
-    // 'Polygon/ZCHF',
-    // 'Base/ZCHF',
-    // 'Optimism/ZCHF',
-    // 'Arbitrum/ZCHF',
     'Ethereum/ETH',
     'Base/ETH',
     'Optimism/ETH',
     'Arbitrum/ETH',
     'Polygon/POL',
-
-    // 'Ethereum/FPS',
-    // 'Ethereum/WFPS',
-    // 'Polygon/WFPS',
-    // 'Ethereum/WBTC'
   ];
-
-  // List<String> supportedAssets = [
-  //   'ZCHF',
-  //   'ETH',
-  //   'Polygon/MATIC',
-  //   'FPS',
-  //   'WFPS',
-  //   'WBTC'
-  // ];
-  //
-  // List<String> supportedBlockchains = [
-  //   'Ethereum',
-  //   'Polygon',
-  //   'Base',
-  //   'Optimism',
-  //   'Arbitrum',
-  // ];
 
   String get blockchain => 'Ethereum';
 
@@ -103,10 +76,8 @@ class DfxWidgetService extends DFXAuthService {
         'asset-out': isBuyAction ? assetOut : assetIn,
         'blockchain': blockchain?.name ?? this.blockchain,
         'asset-in': isBuyAction ? assetIn : assetOut,
-        // 'blockchains': supportedBlockchains.join(','),
         'assets': supportedAssets.join(','),
         if (amount != null) 'amount-in': amount,
-        // if (amount != null) 'amount-out': amount,
         if (paymentMethod != null) 'payment-method': paymentMethod,
         if (DeviceInfo.instance.isMobile) 'headless': 'true',
         'redirect-uri': 'deuro-wallet://dfx/callback',
@@ -158,7 +129,6 @@ class DfxWidgetService extends DFXAuthService {
           amount: params['amount'] as String,
         ),
       );
-      // arguments: [depositAddress, params['amount'] as String, asset]
     }
   }
 

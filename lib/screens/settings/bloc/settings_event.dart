@@ -7,10 +7,6 @@ sealed class SettingsEvent extends Equatable {
   List<Object> get props => [];
 }
 
-final class ToggleHideAmountEvent extends SettingsEvent {
-  const ToggleHideAmountEvent();
-}
-
 final class SetLanguageEvent extends SettingsEvent {
   final Language language;
 

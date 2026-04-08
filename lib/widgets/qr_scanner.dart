@@ -55,19 +55,6 @@ class _QRScannerState extends State<QRScanner> {
     try {
       _handleBarcodeInternal(barcodes);
     } catch (e) {
-      // showPopUp<void>(
-      //   context: context,
-      //   builder: (context) {
-      //     return AlertWithOneAction(
-      //       alertTitle: S.of(context).error,
-      //       alertContent: S.of(context).error_dialog_content,
-      //       buttonText: 'ok',
-      //       buttonAction: () {
-      //         Navigator.of(context).pop();
-      //       },
-      //     );
-      //   },
-      // );
       developer.log('QRCode Scanner Error', error: e, name: 'QRScanner._handleBarcode');
     }
   }
@@ -96,27 +83,6 @@ class _QRScannerState extends State<QRScanner> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [Handlebars.horizontal(context)],
             ),
-            // SafeArea(
-            //   child: Row(
-            //       mainAxisAlignment: MainAxisAlignment.end,
-            //     children: [
-            //       Padding(
-            //         padding: const EdgeInsets.only(right: 10),
-            //         child: IconButton(
-            //           style:
-            //               IconButton.styleFrom(backgroundColor: Colors.black26),
-            //           padding: const EdgeInsets.all(10),
-            //           icon: const Icon(
-            //             Icons.close,
-            //             size: 25,
-            //             color: Colors.white,
-            //           ),
-            //           onPressed: context.pop,
-            //         ),
-            //       ),
-            //     ],
-            //   ),
-            // ),
             Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -158,21 +124,16 @@ class BorderPainter extends CustomPainter {
       ..color = Colors.white
       ..strokeWidth = 10
       ..style = PaintingStyle.stroke
-      // ..strokeJoin = StrokeJoin.round
       ..strokeCap = StrokeCap.round;
 
     Path path = Path()
       ..moveTo(cornerSide, 0)
-      // ..lineTo(0, 0)..lineTo(0, cornerSide)
       ..conicTo(0, 0, 0, cornerSide, 30)
       ..moveTo(0, sh - cornerSide)
-      // ..lineTo(0, sh)..lineTo(cornerSide, sh)
       ..conicTo(0, sh, cornerSide, sh, 30)
       ..moveTo(sw - cornerSide, sh)
-      // ..lineTo(sw, sh)..lineTo(sw, sh - cornerSide)
       ..conicTo(sw, sh, sw, sh - cornerSide, 30)
       ..moveTo(sw, cornerSide)
-      // ..lineTo(sw, 0)..lineTo(sw - cornerSide, 0);
       ..conicTo(sw, 0, sw - cornerSide, 0, 30);
 
     canvas.drawPath(path, paint);

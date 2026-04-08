@@ -65,36 +65,7 @@ class AssetSelector extends StatelessWidget {
                       child: CashHoldingBox(
                         asset: balance.asset,
                         balance: balance.balance,
-                        // borderColor:
-                        //     balance.id == selectedBalance.id ? RealUnitColors.realUnitBlue : null,
                       ),
-                      // child: Container(
-                      //   padding: const EdgeInsets.all(5),
-                      //   decoration: BoxDecoration(
-                      //     borderRadius: BorderRadius.circular(10),
-                      //   ),
-                      //   child: Row(
-                      //     children: [
-                      //       Padding(
-                      //         padding: const EdgeInsets.only(right: 16),
-                      //         child: ChainAssetIcon(asset: balance.asset),
-                      //       ),
-                      //       Expanded(
-                      //         child: Column(
-                      //           crossAxisAlignment: CrossAxisAlignment.start,
-                      //           children: [
-                      //             Text(
-                      //               balance.asset.name,
-                      //               style: kPageTitleTextStyle,
-                      //             ),
-                      //           ],
-                      //         ),
-                      //       ),
-                      //       if (balance.id == selectedBalance.id)
-                      //         Icon(Icons.check)
-                      //     ],
-                      //   ),
-                      // ),
                     ),
                   ),
                 ),

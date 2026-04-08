@@ -72,22 +72,6 @@ class TransactionRepository {
   Future<bool> existsTransaction(String txId) =>
       _appDatabase.getTransaction(txId).then((txData) => txData != null);
 
-  // Future<Transaction?> getTransaction(String txId) =>
-  //     _appDatabase.getTransaction(txId).then((txData) async {
-  //       if (txData == null) return null;
-  //       return Transaction(
-  //           height: txData.height,
-  //           txId: txData.txId,
-  //           chainId: txData.chainId,
-  //           senderAddress: txData.senderAddress,
-  //           receiverAddress: txData.receiverAddress,
-  //           amount: BigInt.parse(txData.amount, radix: 16),
-  //           asset: asset,
-  //           type: TransactionTypes.values[txData.type],
-  //           note: txData.note,
-  //           data: txData.data);
-  //     });
-
   Future<List<Transaction>> get allTransactions async {
     final assets = await _assetRepository.allAssets;
     final dfxDetailsList = await _appDatabase.allDfxTransactionDetails;

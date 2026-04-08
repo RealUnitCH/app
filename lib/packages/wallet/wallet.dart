@@ -39,7 +39,6 @@ class SoftwareWallet extends AWallet {
     _currentAccount = primaryAccount;
   }
 
-  void selectAccount(int index) => _currentAccount = WalletAccount(_bip32, index);
 }
 
 class BitboxWallet extends AWallet {

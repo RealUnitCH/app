@@ -3,10 +3,6 @@ import 'package:erc20/erc20.dart';
 import 'package:web3dart/web3dart.dart';
 
 extension PrepareTransaction on ERC20 {
-  /// The optional [transaction] parameter can be used to override parameters
-  /// like the gas price, nonce and max gas. The `data` and `to` fields will be
-  /// set by the contract.
-  ///
   Future<String> prepareTransfer(
     EthereumAddress recipient,
     BigInt amount, {

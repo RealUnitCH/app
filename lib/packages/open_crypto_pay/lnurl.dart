@@ -2,11 +2,6 @@ import 'dart:convert';
 
 import 'package:bech32/bech32.dart';
 
-String encodeLNURL(String url) {
-  final raw = _convert(utf8.encode(url), 8, 5, true);
-  return const Bech32Codec().encode(Bech32('lnurl', raw), 255);
-}
-
 Uri decodeLNURL(String encodedUrl) {
   Uri decodedUri;
 
