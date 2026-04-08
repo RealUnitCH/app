@@ -137,7 +137,6 @@
   "number": "Nummer",
   "onboardingCompletedSubtitle": "Gratulation, Sie haben erfolgreich eine Wallet eröffnet. Sichern Sie im nächsten Schritt den Zugriff auf diese Mobile-App.",
   "onboardingCompletedTitle": "Ihre Wallet ist bereit",
-  "openCryptoPayNotSupported": "Dieser Anbieter unterstützt Open CryptoPay nicht: ${provider}",
   "optional": "optional",
   "or": "Oder",
   "originalPdf": "Original-PDF",

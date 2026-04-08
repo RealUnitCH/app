@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
-import 'package:realunit_wallet/packages/open_crypto_pay/open_crypto_pay_service.dart';
 import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/repository/node_repository.dart';
@@ -142,8 +141,6 @@ void setupServices() {
   getIt.registerFactory(() => RealUnitSellPaymentInfoService(getIt<AppStore>()));
   getIt.registerFactory(() => RealUnitWalletService(getIt<AppStore>()));
   getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
-
-  getIt.registerFactory(() => OpenCryptoPayService());
 }
 
 void setupBlocs() {
