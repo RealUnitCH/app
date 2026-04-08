@@ -65,7 +65,7 @@ class CreateWalletView extends StatelessWidget {
                               child: SizedBox(
                                 width: .infinity,
                                 child: FilledButton(
-                                  onPressed: () => context.goNamed(
+                                  onPressed: () => context.pushNamed(
                                     OnboardingRoutes.verifySeed,
                                     extra: state.wallet,
                                   ),
