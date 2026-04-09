@@ -11,7 +11,6 @@ import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
 import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
 import 'package:realunit_wallet/screens/legal/subpages/legal_document_page.dart';
 import 'package:realunit_wallet/screens/onboarding/onboarding_completed_page.dart';
-import 'package:realunit_wallet/screens/pin/pin_gate_page.dart';
 import 'package:realunit_wallet/screens/pin/setup_pin_page.dart';
 import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/receive/receive_page.dart';
@@ -94,7 +93,13 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: PinRoutes.gate,
       path: '/pinGate',
-      builder: (_, state) => PinGatePage(route: state.extra as String),
+      builder: (_, state) {
+        final params = state.extra as VerifyPinParams;
+        return VerifyPinPage(
+          description: params.description,
+          onAuthenticated: params.onAuthenticated,
+        );
+      },
     ),
 
     GoRoute(
@@ -106,7 +111,7 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: PinRoutes.verify,
       path: '/verifyPin',
-      builder: (_, _) => const VerifyPinPage(),
+      builder: (_, _) => VerifyPinPage.appLock(),
     ),
 
     GoRoute(

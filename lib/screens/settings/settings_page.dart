@@ -5,6 +5,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
+import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_confirm_logout_wallet_sheet.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_section.dart';
@@ -102,7 +103,10 @@ class SettingsPage extends StatelessWidget {
                     trailing: _forwardIcon,
                     onTap: () => context.pushNamed(
                       PinRoutes.gate,
-                      extra: SettingsRoutes.seed,
+                      extra: VerifyPinParams(
+                        onAuthenticated: () => context.pushReplacementNamed(SettingsRoutes.seed),
+                        description: 'Geben Sie Ihre PIN ein, um Ihre Seed-Phrase anzuzeigen',
+                      ),
                     ),
                   ),
               ],
