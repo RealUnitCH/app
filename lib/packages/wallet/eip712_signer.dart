@@ -1,13 +1,15 @@
 import 'dart:convert';
 
 import 'package:eth_sig_util_plus/eth_sig_util_plus.dart';
+import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
 class Eip712Signer {
-  static String signRegistration({
+  static Future<String> signRegistration({
     required CredentialsWithKnownAddress credentials,
+    required int chainId,
     required String email,
     required String name,
     required String type,
@@ -21,10 +23,6 @@ class Eip712Signer {
     required bool swissTaxResidence,
     required String registrationDate,
   }) {
-    if (credentials is! EthPrivateKey) {
-      throw Exception('Hardware wallets not supported for EIP-712 registration signing');
-    }
-
     final Map<String, dynamic> typedDataMap = {
       'types': {
         'EIP712Domain': [
@@ -66,21 +64,13 @@ class Eip712Signer {
       },
     };
 
-    return EthSigUtil.signTypedData(
-      privateKey: bytesToHex(credentials.privateKey, include0x: true),
-      jsonData: jsonEncode(typedDataMap),
-      version: TypedDataVersion.V4,
-    );
+    return _signTypedData(credentials, chainId, jsonEncode(typedDataMap));
   }
 
-  static String signDelegation({
+  static Future<String> signDelegation({
     required CredentialsWithKnownAddress credentials,
     required Eip7702Data eip7702Data,
   }) {
-    if (credentials is! EthPrivateKey) {
-      throw Exception('Hardware wallets not supported for EIP-712 delegation signing');
-    }
-
     final Map<String, dynamic> typedDataMap = {
       'types': {
         'EIP712Domain': [
@@ -112,11 +102,22 @@ class Eip712Signer {
       },
     };
 
-    final signature = EthSigUtil.signTypedData(
-      privateKey: bytesToHex(credentials.privateKey, include0x: true),
-      jsonData: jsonEncode(typedDataMap),
-      version: TypedDataVersion.V4,
-    );
-    return signature;
+    return _signTypedData(credentials, eip7702Data.domain.chainId, jsonEncode(typedDataMap));
   }
+
+  static Future<String> _signTypedData(
+    CredentialsWithKnownAddress credentials,
+    int chainId,
+    String jsonData,
+  ) => switch (credentials) {
+    BitboxCredentials() => credentials.signTypedDataV4(chainId, jsonData),
+    EthPrivateKey() => Future.value(
+      EthSigUtil.signTypedData(
+        privateKey: bytesToHex(credentials.privateKey, include0x: true),
+        jsonData: jsonData,
+        version: TypedDataVersion.V4,
+      ),
+    ),
+    _ => throw UnsupportedError('Unsupported credentials type: ${credentials.runtimeType}'),
+  };
 }
