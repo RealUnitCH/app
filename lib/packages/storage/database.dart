@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
@@ -16,25 +15,6 @@ import 'package:realunit_wallet/packages/storage/wallet_storage.dart';
 part 'database.g.dart';
 
 const _databaseFileName = 'wallet.db.enc';
-
-Future<bool> tryOpeningDatabase(String encryptionPassword) async {
-  final database = AppDatabase(encryptionPassword);
-  try {
-    await database.allNodes;
-    await database.close();
-    return true;
-  } on SqliteException catch (e) {
-    log('SqliteException', error: e, name: 'AppDatabase tryOpeningDatabase');
-    if (e.resultCode == 26) {
-      log('Wrong Pin', error: e, name: 'AppDatabase tryOpeningDatabase');
-    }
-  } catch (e) {
-    log('Unexpected Error', error: e, name: 'AppDatabase tryOpeningDatabase');
-  } finally {
-    await database.close();
-  }
-  return false;
-}
 
 @DriftDatabase(
   tables: [

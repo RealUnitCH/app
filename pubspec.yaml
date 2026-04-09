@@ -39,7 +39,6 @@ dependencies:
   bip39: ^1.0.6
   collection: ^1.19.0
   convert: ^3.1.2
-  crypto: ^3.0.6
   drift: ^2.32.1
   eth_sig_util_plus: ^0.0.10
   eip7702:
@@ -52,7 +51,6 @@ dependencies:
       ref: up-to-date-dependecies
   erc20: ^1.0.1
   equatable: ^2.0.0
-  mobile_scanner: ^7.0.1
   fl_chart: 1.0.0
   flutter_bloc: ^9.0.0
   flutter_idensic_mobile_sdk_plugin: ^1.42.0
@@ -79,8 +77,6 @@ dependencies:
   url_launcher: ^6.3.1
   web3dart: ^2.7.1
   # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
   bitbox_flutter:
     git:
       url: https://github.com/konstantinullrich/bitbox_flutter

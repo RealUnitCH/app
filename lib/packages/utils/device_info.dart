@@ -5,8 +5,6 @@ class DeviceInfo {
 
   static DeviceInfo get instance => DeviceInfo._();
 
-  bool get isMobile => [TargetPlatform.android, TargetPlatform.iOS].contains(defaultTargetPlatform);
-
   bool get isIOS => defaultTargetPlatform == TargetPlatform.iOS;
 
   bool get isAndroid => defaultTargetPlatform == TargetPlatform.android;

@@ -1,4 +1,3 @@
-import 'package:realunit_wallet/packages/wallet/erc20_extension.dart';
 import 'package:realunit_wallet/packages/wallet/transaction_priority.dart';
 import 'package:erc20/erc20.dart';
 import 'package:web3dart/web3dart.dart';
@@ -34,37 +33,3 @@ Future<Future<String> Function()> createERC20Transaction(
       );
 }
 
-Future<String> prepareERC20Transaction(
-  Web3Client client, {
-  required Credentials currentAccount,
-  required String receiveAddress,
-  required BigInt amount,
-  required String contractAddress,
-  required int chainId,
-  TransactionPriority? priority,
-  int? gasPrice,
-}) {
-  final transaction = Transaction(
-    from: currentAccount.address,
-    to: EthereumAddress.fromHex(contractAddress),
-    maxPriorityFeePerGas: chainId == 1 && priority != null
-        ? EtherAmount.fromInt(EtherUnit.gwei, priority.tip)
-        : null,
-    value: EtherAmount.zero(),
-    gasPrice:
-        gasPrice != null ? EtherAmount.fromInt(EtherUnit.wei, gasPrice) : null,
-  );
-
-  final erc20 = ERC20(
-    client: client,
-    address: EthereumAddress.fromHex(contractAddress),
-    chainId: chainId,
-  );
-
-  return erc20.prepareTransfer(
-    EthereumAddress.fromHex(receiveAddress),
-    amount,
-    credentials: currentAccount,
-    transaction: transaction,
-  );
-}

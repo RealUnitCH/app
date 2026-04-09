@@ -130,7 +130,6 @@ void setupServices() {
   getIt.registerFactory(
     () => DfxWidgetService(
       getIt<AppStore>(),
-      getIt<SettingsRepository>(),
     ),
   );
 
