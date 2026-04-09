@@ -8,7 +8,10 @@ class Eip7702Signer {
     required Eip7702Data eip7702Data,
   }) {
     if (credentials is! EthPrivateKey) {
-      throw Exception('Hardware wallets not supported for EIP-7702 authorization signing');
+      throw Exception(
+        'Hardware wallets not supported for EIP-7702 authorization signing. '
+        'BitBox02 firmware does not expose a raw EIP-7702 signing API.',
+      );
     }
 
     final eip7702.UnsignedAuthorization unsignedAuth = (
