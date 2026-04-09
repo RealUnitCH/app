@@ -125,32 +125,6 @@ flutter:
     - assets/images/splash/
     - assets/legal/
 
-  fonts:
-    - family: Satoshi
-      fonts:
-        - asset: assets/fonts/Satoshi-Regular.ttf
-        - asset: assets/fonts/Satoshi-Italic.ttf
-    - family: Satoshi Variable
-      fonts:
-        - asset: assets/fonts/Satoshi-Variable.ttf
-        - asset: assets/fonts/Satoshi-VariableItalic.ttf
-    - family: Satoshi Medium
-      fonts:
-        - asset: assets/fonts/Satoshi-Medium.ttf
-        - asset: assets/fonts/Satoshi-MediumItalic.ttf
-    - family: Satoshi Light
-      fonts:
-        - asset: assets/fonts/Satoshi-Light.ttf
-        - asset: assets/fonts/Satoshi-LightItalic.ttf
-    - family: Satoshi Bold
-      fonts:
-        - asset: assets/fonts/Satoshi-Bold.ttf
-        - asset: assets/fonts/Satoshi-BoldItalic.ttf
-    - family: Satoshi Black
-      fonts:
-        - asset: assets/fonts/Satoshi-Black.ttf
-        - asset: assets/fonts/Satoshi-BlackItalic.ttf
-
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
