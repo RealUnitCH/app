@@ -17,7 +17,7 @@ String formatFixed(BigInt value, int? decimals, {int? fractionalDigits, bool tri
   fraction = fraction.substring(0, fractionalDigits);
 
   if (trimZeros) {
-    fraction = removeTrailing('0', fraction);
+    fraction = _removeTrailing('0', fraction);
   }
 
   final whole = (value ~/ BigInt.parse(multiplier));
@@ -29,7 +29,7 @@ String formatFixed(BigInt value, int? decimals, {int? fractionalDigits, bool tri
   return valString;
 }
 
-String removeTrailing(String pattern, String from) {
+String _removeTrailing(String pattern, String from) {
   if (pattern.isEmpty) return from;
   var i = from.length;
   while (i > 0 && from.startsWith(pattern, i - pattern.length)) {
