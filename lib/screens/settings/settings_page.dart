@@ -105,7 +105,7 @@ class SettingsPage extends StatelessWidget {
                       PinRoutes.gate,
                       extra: VerifyPinParams(
                         onAuthenticated: () => context.pushReplacementNamed(SettingsRoutes.seed),
-                        description: 'Geben Sie Ihre PIN ein, um Ihre Seed-Phrase anzuzeigen',
+                        description: S.of(context).pinVerifySeedDescription,
                       ),
                     ),
                   ),

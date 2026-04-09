@@ -184,6 +184,7 @@
   "pinVerify": "Enter your pin",
   "pinVerifyDescription": "Enter your PIN to unlock your wallet",
   "pinVerifyFailed": "PIN is wrong. Try again.",
+  "pinVerifySeedDescription": "Enter your PIN to view your seed phrase",
   "pleaseSelect": "Please select",
   "portfolio": "Portfolio",
   "portfolioDevelopment": "Portfolio development",

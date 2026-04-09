@@ -184,6 +184,7 @@
   "pinVerify": "Geben Sie Ihre PIN ein",
   "pinVerifyDescription": "Geben Sie Ihre PIN ein, um Ihre Wallet zu entsperren",
   "pinVerifyFailed": "Die PIN ist falsch. Versuchen Sie es erneut.",
+  "pinVerifySeedDescription": "Geben Sie Ihre PIN ein, um Ihre Seed-Phrase anzuzeigen",
   "pleaseSelect": "Bitte auswählen",
   "portfolio": "Bestand",
   "portfolioDevelopment": "Bestandsentwicklung",
