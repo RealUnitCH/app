@@ -30,7 +30,7 @@ class VerifyPinPage extends StatelessWidget {
 
   /// Used for initial app lock check on app start
   factory VerifyPinPage.appLock() => VerifyPinPage(
-    onAuthenticated: getIt<PinAuthCubit>().onPinVerified,
+    onAuthenticated: () => getIt<PinAuthCubit>().onPinVerified(),
     bottom: const _ForgotPinButton(),
   );
 

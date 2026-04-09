@@ -11,6 +11,7 @@ import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/pin/bloc/verify_pin/verify_pin_cubit.dart';
 import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/pin/widgets/pin_indicator.dart';
+import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/widgets/number_pad.dart';
 
 import '../../helper/pump_app.dart';
@@ -26,6 +27,7 @@ class MockSecureStorage extends Mock implements SecureStorage {}
 void main() {
   late VerifyPinCubit verifyPinCubit;
   late PinAuthCubit pinAuthCubit;
+  void onAuthenticated() => {};
 
   setUp(() {
     verifyPinCubit = MockVerifyPinCubit();
@@ -63,9 +65,18 @@ void main() {
 
   group('$VerifyPinPage', () {
     testWidgets('renders $VerifyPinView', (tester) async {
-      await tester.pumpApp(const VerifyPinPage());
+      await tester.pumpApp(VerifyPinPage(onAuthenticated: onAuthenticated));
 
       expect(find.byType(VerifyPinView), findsOne);
+    });
+  });
+
+  group('${VerifyPinPage.appLock()}', () {
+    testWidgets('renders $VerifyPinView with TextButton', (tester) async {
+      await tester.pumpApp(VerifyPinPage.appLock());
+
+      expect(find.byType(VerifyPinView), findsOne);
+      expect(find.byType(TextButton), findsOne);
     });
   });
 
@@ -73,7 +84,9 @@ void main() {
     testWidgets('is initially correctly rendered', (tester) async {
       when(() => verifyPinCubit.state).thenReturn(const VerifyPinState());
 
-      await tester.pumpApp(buildSubject(const VerifyPinView()));
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
 
       expect(find.text(S.current.pinVerify), findsOne);
       expect(find.text(S.current.pinVerifyDescription), findsOne);
@@ -81,13 +94,14 @@ void main() {
       expect(find.byType(PinIndicator), findsOne);
       expect((tester.widget(find.byType(Visibility)) as Visibility).visible, isFalse);
       expect(find.byType(NumberPad), findsOne);
-      expect(find.byType(TextButton), findsOne);
     });
 
     testWidgets('shows error message when pin is incorrect', (tester) async {
       when(() => verifyPinCubit.state).thenReturn(const VerifyPinFailure());
 
-      await tester.pumpApp(buildSubject(const VerifyPinView()));
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
 
       expect((tester.widget(find.byType(Visibility)) as Visibility).visible, isTrue);
     });
@@ -102,7 +116,9 @@ void main() {
           initialState: const VerifyPinState(),
         );
 
-        await tester.pumpApp(buildSubject(const VerifyPinView()));
+        await tester.pumpApp(
+          buildSubject(VerifyPinView(onAuthenticated: getIt<PinAuthCubit>().onPinVerified)),
+        );
         await tester.pump();
 
         verify(() => pinAuthCubit.onPinVerified()).called(1);
