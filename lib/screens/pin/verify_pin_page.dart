@@ -149,21 +149,24 @@ class _VerifyPinViewState extends State<VerifyPinView> {
                                   maintainSize: true,
                                   maintainAnimation: true,
                                   maintainState: true,
-                                  child: Text(
-                                    switch (state) {
-                                      VerifyPinTemporarilyLocked s =>
-                                        S
-                                            .of(context)
-                                            .pinVerifyLockedTemporarily(
-                                              _formatRemaining(s.lockedUntil),
-                                            ),
-                                      VerifyPinLocked _ => S.of(context).pinVerifyLocked,
-                                      _ => S.of(context).pinVerifyFailed,
-                                    },
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: RealUnitColors.status.red600,
+                                  child: SizedBox(
+                                    height: 40.0,
+                                    child: Text(
+                                      switch (state) {
+                                        VerifyPinTemporarilyLocked s =>
+                                          S
+                                              .of(context)
+                                              .pinVerifyLockedTemporarily(
+                                                _formatRemaining(s.lockedUntil),
+                                              ),
+                                        VerifyPinLocked _ => S.of(context).pinVerifyLocked,
+                                        _ => S.of(context).pinVerifyFailed,
+                                      },
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        color: RealUnitColors.status.red600,
+                                      ),
+                                      textAlign: .center,
                                     ),
-                                    textAlign: .center,
                                   ),
                                 ),
                               ],

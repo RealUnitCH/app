@@ -1,5 +1,3 @@
-import 'dart:developer' as developer;
-
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
@@ -39,24 +37,13 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
   }
 
   Future<void> checkPin() async {
-    final storedHash = await _secureStorage.getPinHash();
-    final storedSalt = await _secureStorage.getPinSalt();
-
-    if (storedHash == null || storedSalt == null) {
-      developer.log('No stored PIN hash/salt found', name: '$VerifyPinCubit');
-      emit(VerifyPinFailure(failedAttempts: state.failedAttempts));
-      return;
-    }
-
-    final enteredHash = SecureStorage.hashPin(state.pin, storedSalt);
-    final isCorrect = storedHash == enteredHash;
-
+    final isCorrect = await _secureStorage.verifyPin(state.pin);
     if (isCorrect) {
       if (enableLockout) _settingsRepository.resetPinLockout();
       emit(const VerifyPinSuccess());
     } else {
       if (!enableLockout) {
-        emit(VerifyPinFailure(failedAttempts: 0));
+        emit(const VerifyPinFailure(failedAttempts: 0));
         return;
       }
       final attempts = _settingsRepository.pinFailedAttempts + 1;

@@ -61,6 +61,13 @@ class SecureStorage {
   Future<void> setPinSalt(Uint8List salt) =>
       _secureStorage.write(key: _pinSaltKey, value: bytesToHex(salt));
 
+  Future<bool> verifyPin(String pin) async {
+    final hash = await getPinHash();
+    final salt = await getPinSalt();
+    if (hash == null || salt == null) return false;
+    return hashPin(pin, salt) == hash;
+  }
+
   Future<void> deletePinHash() => Future.wait([
         _secureStorage.delete(key: _pinHashKey),
         _secureStorage.delete(key: _pinSaltKey),
