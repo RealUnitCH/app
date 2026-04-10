@@ -15,4 +15,6 @@ enum NetworkMode {
       };
 
   bool get isTestnet => this == NetworkMode.testnet;
+
+  bool get isMainnet => this == NetworkMode.mainnet;
 }

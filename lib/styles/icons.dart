@@ -33,6 +33,16 @@ class DocumentReportIcon extends _CustomIcon {
       : super(iconPath: 'assets/images/icons/document-report.svg');
 }
 
+class DocumentTextIcon extends _CustomIcon {
+  const DocumentTextIcon({super.size, super.color})
+      : super(iconPath: 'assets/images/icons/document-text.svg');
+}
+
+class IdentificationIcon extends _CustomIcon {
+  const IdentificationIcon({super.size, super.color})
+      : super(iconPath: 'assets/images/icons/identification.svg');
+}
+
 class UserCircleIcon extends _CustomIcon {
   const UserCircleIcon({super.size, super.color})
       : super(iconPath: 'assets/images/icons/user-circle.svg');
@@ -63,8 +73,23 @@ class CollectInterestIcon extends _CustomIcon {
       : super(iconPath: 'assets/images/icons/collect_interest.svg');
 }
 
+class GrowthIcon extends _CustomIcon {
+  const GrowthIcon({super.size, super.color})
+      : super(iconPath: 'assets/images/icons/growth.svg');
+}
+
+class SavingsIcon extends _CustomIcon {
+  const SavingsIcon({super.size, super.color})
+      : super(iconPath: 'assets/images/icons/savings.svg');
+}
+
 class RealUnitIcon extends _CustomIcon {
   const RealUnitIcon({super.size, super.color})
       : super(iconPath: 'assets/images/icons/realunit_icon.svg');
+}
+
+class RealUnitTokenIcon extends _CustomIcon {
+  const RealUnitTokenIcon({super.size, super.color})
+      : super(iconPath: 'assets/images/icons/realunit_token.svg');
 }
 

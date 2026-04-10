@@ -18,6 +18,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<SetCurrencyEvent>(_onSetCurrencyEvent);
     on<SetLanguageEvent>(_onSetLanguageEvent);
     on<SetNetworkModeEvent>(_onSetNetworkModeEvent);
+    on<ToggleHideAmountEvent>(_onToggleHideAmountEvent);
   }
 
   final SettingsRepository _settingsRepository;
@@ -38,5 +39,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     _settingsRepository.networkMode = event.networkMode;
     await getNewAuthToken();
     emit(state.copyWith(networkMode: event.networkMode));
+  }
+
+  void _onToggleHideAmountEvent(ToggleHideAmountEvent event, Emitter<SettingsState> emit) {
+    emit(state.copyWith(hideAmounts: !state.hideAmounts));
   }
 }

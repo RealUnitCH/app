@@ -44,4 +44,5 @@ class BiometricService {
     return success;
   }
 
+  void disable() => _settingsRepository.isBiometricEnabled = false;
 }

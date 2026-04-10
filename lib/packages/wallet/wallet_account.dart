@@ -10,6 +10,8 @@ abstract class AWalletAccount {
 
   AWalletAccount(this.accountIndex, this.primaryAddress);
 
+  String getDerivationPath(int addressIndex) => "m/44'/60'/$accountIndex'/0/$addressIndex";
+
   Future<String> signMessage(String message, {int addressIndex = 0});
 }
 

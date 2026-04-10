@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class RealUnitTextStyle {
+  static const String fontFamily = 'Open Sans';
+
   static final header = _Header();
   static final body = _Body();
 

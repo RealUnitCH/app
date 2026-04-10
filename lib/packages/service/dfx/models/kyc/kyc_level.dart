@@ -146,6 +146,21 @@ enum KycStepType {
 }
 
 extension KycStepTypeExtension on KycStepType {
+  String get value {
+    switch (this) {
+      case KycStepType.auto:
+        return 'Auto';
+      case KycStepType.video:
+        return 'Video';
+      case KycStepType.manual:
+        return 'Manual';
+      case KycStepType.sumsubAuto:
+        return 'SumsubAuto';
+      case KycStepType.sumsubVideo:
+        return 'SumsubVideo';
+    }
+  }
+
   static KycStepType fromValue(String value) {
     switch (value) {
       case 'Auto':
@@ -176,6 +191,27 @@ enum KycStepStatus {
 }
 
 extension KycStepStatusExtension on KycStepStatus {
+  String get value {
+    switch (this) {
+      case KycStepStatus.notStarted:
+        return 'NotStarted';
+      case KycStepStatus.inProgress:
+        return 'InProgress';
+      case KycStepStatus.inReview:
+        return 'InReview';
+      case KycStepStatus.failed:
+        return 'Failed';
+      case KycStepStatus.completed:
+        return 'Completed';
+      case KycStepStatus.outdated:
+        return 'Outdated';
+      case KycStepStatus.dataRequested:
+        return 'DataRequested';
+      case KycStepStatus.onHold:
+        return 'OnHold';
+    }
+  }
+
   static KycStepStatus fromValue(String value) {
     switch (value) {
       case 'NotStarted':
@@ -206,6 +242,15 @@ enum KycStepReason {
 }
 
 extension KycStepReasonExtension on KycStepReason {
+  String get value {
+    switch (this) {
+      case KycStepReason.accountExists:
+        return 'AccountExists';
+      case KycStepReason.accountMergeRequested:
+        return 'AccountMergeRequested';
+    }
+  }
+
   static KycStepReason fromValue(String value) {
     switch (value) {
       case 'AccountExists':

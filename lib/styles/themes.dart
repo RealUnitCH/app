@@ -4,6 +4,7 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/text_styles.dart';
 
 ThemeData get realUnitTheme => ThemeData(
+  fontFamily: RealUnitTextStyle.fontFamily,
   textTheme: RealUnitTextStyle.theme,
   colorScheme: ColorScheme.fromSeed(
     seedColor: RealUnitColors.realUnitBlue,

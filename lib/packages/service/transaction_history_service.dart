@@ -266,6 +266,20 @@ class TransactionHistoryService {
 extension ToEpiAddress on String {
   String get asHexEip55 => EthereumAddress.fromHex(this).hexEip55;
 
+  String get asShortAddress {
+    final address = asHexEip55;
+    return '${address.substring(0, 6)}...${address.substring(address.length - 5)}';
+  }
+
+  bool get isValidAddress {
+    try {
+      EthereumAddress.fromHex(this);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   String get asShortTxId {
     return '${substring(0, 10)}...${substring(length - 10)}';
   }

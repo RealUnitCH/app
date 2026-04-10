@@ -33,3 +33,7 @@ final class SetNetworkModeEvent extends SettingsEvent {
   @override
   List<Object> get props => [networkMode];
 }
+
+final class ToggleHideAmountEvent extends SettingsEvent {
+  const ToggleHideAmountEvent();
+}

@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:realunit_wallet/packages/storage/database.dart';
+import 'package:realunit_wallet/packages/utils/fast_hash.dart';
 
 extension TransactionStorage on AppDatabase {
   Future<int> insertTransactions(
@@ -57,6 +58,9 @@ extension TransactionStorage on AppDatabase {
     ),
   );
 
+  Future<List<TransactionData>> getAllTokenTransactions(int chainId, String address) =>
+      (select(transactions)..where((row) => row.asset.equals(fastHash('$chainId:$address')))).get();
+
   Future<List<TransactionData>> get allTransactions => (select(
     transactions,
   )..orderBy([(u) => OrderingTerm(expression: u.timeStamp, mode: OrderingMode.desc)])).get();
@@ -90,6 +94,26 @@ extension TransactionStorage on AppDatabase {
               (row) => Expression.and([
                 row.asset.isIn(assets),
                 row.type.equals(2),
+                Expression.or([
+                  row.senderAddress.equals(wallet),
+                  row.receiverAddress.equals(wallet),
+                ]),
+              ]),
+            )
+            ..orderBy([(u) => OrderingTerm(expression: u.timeStamp, mode: OrderingMode.desc)])
+            ..limit(limit))
+          .watch();
+
+  Stream<List<TransactionData>> watchTransfersOfSavingsLimit(
+    Iterable<int> assets,
+    String wallet,
+    int limit,
+  ) =>
+      (select(transactions)
+            ..where(
+              (row) => Expression.and([
+                row.asset.isIn(assets),
+                row.type.isIn([3, 4]),
                 Expression.or([
                   row.senderAddress.equals(wallet),
                   row.receiverAddress.equals(wallet),

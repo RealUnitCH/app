@@ -17,6 +17,10 @@ class SupportCreateTicketCubit extends Cubit<SupportCreateTicketState> {
     emit(state.copyWith(selectedType: type, selectedReason: SupportIssueReason.other));
   }
 
+  void selectReason(SupportIssueReason reason) {
+    emit(state.copyWith(selectedReason: reason));
+  }
+
   void updateMessage(String message) {
     emit(state.copyWith(message: message));
   }
