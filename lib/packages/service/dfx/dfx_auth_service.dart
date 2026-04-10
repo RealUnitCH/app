@@ -29,25 +29,39 @@ abstract class DFXAuthService {
       return responseBody['message'] as String;
     } else {
       throw Exception(
-          'Failed to get sign message. Status: ${response.statusCode} ${response.body}');
+        'Failed to get sign message. Status: ${response.statusCode} ${response.body}',
+      );
     }
   }
 
-  Future<String> getSignature(String message) async => wallet.signMessage(message);
+  Future<String> getSignature(String message) async {
+    final cached = appStore.sessionCache.signature;
+    final cachedAddress = appStore.sessionCache.signatureAddress;
+    if (cached != null && cachedAddress == walletAddress) {
+      return cached;
+    }
+
+    final signature = await wallet.signMessage(message);
+    await appStore.sessionCache.saveSignature(walletAddress, signature);
+
+    return signature;
+  }
 
   Future<Map<String, dynamic>> getAuthResponse([bool sendWalletName = true]) async {
-    final signMessage = await getSignature(await getSignMessage());
+    final signature = await getSignature(await getSignMessage());
 
-    final requestBody = jsonEncode(sendWalletName
-        ? {
-            'wallet': walletName,
-            'address': walletAddress,
-            'signature': signMessage,
-          }
-        : {
-            'address': walletAddress,
-            'signature': signMessage,
-          });
+    final requestBody = jsonEncode(
+      sendWalletName
+          ? {
+              'wallet': walletName,
+              'address': walletAddress,
+              'signature': signature,
+            }
+          : {
+              'address': walletAddress,
+              'signature': signature,
+            },
+    );
 
     final uri = buildUri(host, authPath);
     final response = await appStore.httpClient.post(
@@ -69,14 +83,15 @@ abstract class DFXAuthService {
   }
 
   Future<String?> getAuthToken() async {
-    if (appStore.dfxAuthToken == null) {
+    if (appStore.sessionCache.authToken == null) {
+      await appStore.sessionCache.loadSignature();
       final response = await getAuthResponse();
-      appStore.dfxAuthToken = response['accessToken'] as String;
+      appStore.sessionCache.setAuthToken(response['accessToken'] as String);
     }
-    return appStore.dfxAuthToken;
+    return appStore.sessionCache.authToken;
   }
 
-  void invalidateAuthToken() => appStore.dfxAuthToken = null;
+  void invalidateAuthToken() => appStore.sessionCache.clearAuthToken();
 
   Future<String?> refreshAuthToken() async {
     invalidateAuthToken();

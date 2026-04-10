@@ -79,8 +79,8 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   bitbox_flutter:
     git:
-      url: https://github.com/konstantinullrich/bitbox_flutter
-      ref: e33e3888a5f384d960b11ad406b906b5770aede7
+      url: https://github.com/DFXswiss/bitbox_flutter.git
+      ref: feature/ios-ble-pairing
 
 dev_dependencies:
   flutter_test:

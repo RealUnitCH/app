@@ -242,7 +242,7 @@ class TransactionHistoryService {
   }
 
   Future<List<TransactionDto>> fetchPendingTransactions() async {
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
     if (authToken == null) return [];
 
     final uri = buildUri(_host, '$_transactionsPath/detail');

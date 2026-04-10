@@ -10,5 +10,5 @@ class DfxWidgetService extends DFXAuthService {
   @override
   String get walletAddress => wallet.primaryAddress.address.hexEip55;
 
-  bool get isAvailable => appStore.dfxAuthToken != null;
+  bool get isAvailable => appStore.sessionCache.authToken != null;
 }

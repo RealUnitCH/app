@@ -27,9 +27,11 @@ class RealUnitRegistrationService {
 
   String get _host => _appStore.apiConfig.apiHost;
 
+  int get _chainId => _appStore.apiConfig.asset.chainId;
+
   /// registers an email on the wallet. Should always be called first when registering
   Future<RegistrationEmailStatus> registerEmail(String email) async {
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, _registerEmailPath);
     final response = await _appStore.httpClient.post(
@@ -60,8 +62,9 @@ class RealUnitRegistrationService {
     final addressStreet = '${registration.addressStreet} ${registration.addressStreetNumber}'
         .trim();
     final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final signature = Eip712Signer.signRegistration(
+    final signature = await Eip712Signer.signRegistration(
       credentials: credentials,
+      chainId: _chainId,
       email: registration.email.toLowerCase(),
       name: name,
       type: registration.type.jsonName,
@@ -106,7 +109,7 @@ class RealUnitRegistrationService {
         ),
       ),
     );
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, _registerCompletionPath);
     final response = await _appStore.httpClient.post(
@@ -136,8 +139,9 @@ class RealUnitRegistrationService {
   ) async {
     final credentials = _appStore.wallet.primaryAccount.primaryAddress;
     final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final signature = Eip712Signer.signRegistration(
+    final signature = await Eip712Signer.signRegistration(
       credentials: credentials,
+      chainId: _chainId,
       email: userData.email,
       name: userData.name,
       type: userData.type,
@@ -158,7 +162,7 @@ class RealUnitRegistrationService {
       registrationDate: registrationDate,
     );
 
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, _registerWalletPath);
     final response = await _appStore.httpClient.post(

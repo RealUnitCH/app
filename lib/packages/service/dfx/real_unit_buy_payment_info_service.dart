@@ -22,7 +22,7 @@ class RealUnitBuyPaymentInfoService {
   Future<BuyPaymentInfo> getPaymentInfo(int amount, {Currency currency = Currency.chf}) async {
     final buyDto = RealUnitBuyDto(amount: amount, currency: currency);
 
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
     final uri = buildUri(_host, _buyPaymentInfoPath);
     final response = await _appStore.httpClient.put(
       uri,
@@ -60,7 +60,7 @@ class RealUnitBuyPaymentInfoService {
   }
 
   Future<String> confirmPayment(int id) async {
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
     final uri = buildUri(_host, _confirmPaymentPath(id));
 
     final response = await _appStore.httpClient.put(

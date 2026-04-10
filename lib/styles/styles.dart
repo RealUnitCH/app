@@ -11,20 +11,15 @@ const kTitleTextStyle = TextStyle(fontSize: 16, color: RealUnitColors.realUnitBl
 
 const kSubtitleTextStyle = TextStyle(fontSize: 14, color: DEuroColors.neutralGrey);
 
-const kActionButtonTextStyle =
-    TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600);
+const kActionButtonTextStyle = TextStyle(
+  fontSize: 12,
+  color: Colors.white,
+  fontWeight: FontWeight.w600,
+);
 
 final kFullwidthGrayButtonStyle = ElevatedButton.styleFrom(
   backgroundColor: RealUnitColors.neutral100,
-  fixedSize: const Size(double.infinity, 20),
-  elevation: 0.0,
-  textStyle: kFullwidthGrayButtonTextStyle,
-);
-
-const kFullwidthGrayButtonTextStyle = TextStyle(
-  fontSize: 16,
-  color: RealUnitColors.neutral900,
-  fontWeight: FontWeight.w600,
+  foregroundColor: RealUnitColors.neutral900,
 );
 
 final kFullwidthBlueButtonStyle = FilledButton.styleFrom(
@@ -33,8 +28,11 @@ final kFullwidthBlueButtonStyle = FilledButton.styleFrom(
   padding: const EdgeInsets.only(left: 24, right: 24),
 );
 
-const kFullwidthBlueButtonTextStyle =
-    TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w500);
+const kFullwidthBlueButtonTextStyle = TextStyle(
+  fontSize: 16,
+  color: Colors.white,
+  fontWeight: FontWeight.w500,
+);
 
 const kBottomSheetTitleTextStyle = TextStyle(
   fontSize: 22,
