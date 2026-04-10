@@ -20,32 +20,32 @@ class TransactionRepository {
       (await _appDatabase.getLatestTransactions(limit: 1)).firstOrNull?.height ?? 0;
 
   Future<int> insertTransaction(Transaction transaction) => _appDatabase.insertTransactions(
-        transaction.height,
-        transaction.txId,
-        transaction.chainId,
-        transaction.senderAddress,
-        transaction.receiverAddress,
-        transaction.amount.toRadixString(16),
-        transaction.asset.id,
-        transaction.type.index,
-        transaction.note ?? '',
-        transaction.data ?? '',
-        transaction.timestamp,
-      );
+    transaction.height,
+    transaction.txId,
+    transaction.chainId,
+    transaction.senderAddress,
+    transaction.receiverAddress,
+    transaction.amount.toRadixString(16),
+    transaction.asset.id,
+    transaction.type.index,
+    transaction.note ?? '',
+    transaction.data ?? '',
+    transaction.timestamp,
+  );
 
   Future<int> updateTransaction(Transaction transaction) => _appDatabase.updateTransaction(
-        transaction.txId,
-        height: transaction.height,
-        chainId: transaction.chainId,
-        senderAddress: transaction.senderAddress,
-        receiverAddress: transaction.receiverAddress,
-        amount: transaction.amount.toRadixString(16),
-        asset: transaction.asset.id,
-        type: transaction.type.index,
-        note: transaction.note ?? '',
-        data: transaction.data ?? '',
-        timeStamp: transaction.timestamp,
-      );
+    transaction.txId,
+    height: transaction.height,
+    chainId: transaction.chainId,
+    senderAddress: transaction.senderAddress,
+    receiverAddress: transaction.receiverAddress,
+    amount: transaction.amount.toRadixString(16),
+    asset: transaction.asset.id,
+    type: transaction.type.index,
+    note: transaction.note ?? '',
+    data: transaction.data ?? '',
+    timeStamp: transaction.timestamp,
+  );
 
   Future<void> insertDfxTransaction(DfxTransaction transaction) async {
     await insertTransaction(transaction);
@@ -76,43 +76,32 @@ class TransactionRepository {
     final assets = await _assetRepository.allAssets;
     final dfxDetailsList = await _appDatabase.allDfxTransactionDetails;
 
-    return _appDatabase.allTransactions.then((result) => result.map((txData) {
-          final blockchain = Blockchain.getFromChainId(txData.chainId);
-          final txType = TransactionTypes.values[txData.type];
-          final asset = txType == TransactionTypes.transfer
-              ? blockchain.nativeAsset
-              : assets.firstWhere((e) => e.id == txData.asset,
-                  orElse: () => Asset(
-                        chainId: blockchain.chainId,
-                        address: txData.receiverAddress,
-                        name: 'Unknown',
-                        symbol: '???',
-                        decimals: 18,
-                      ));
+    return _appDatabase.allTransactions.then(
+      (result) => result.map((txData) {
+        final blockchain = Blockchain.getFromChainId(txData.chainId);
+        final txType = TransactionTypes.values[txData.type];
+        final asset = txType == TransactionTypes.transfer
+            ? blockchain.nativeAsset
+            : assets.firstWhere(
+                (e) => e.id == txData.asset,
+                orElse: () => Asset(
+                  chainId: blockchain.chainId,
+                  address: txData.receiverAddress,
+                  name: 'Unknown',
+                  symbol: '???',
+                  decimals: 18,
+                ),
+              );
 
-          final dfxDetails =
-              dfxDetailsList.firstWhereOrNull((dfxDetail) => dfxDetail.txId == txData.txId);
-          if (dfxDetails != null) {
-            return DfxTransaction(
-              dfxId: dfxDetails.dfxId,
-              rate: double.tryParse(dfxDetails.rate ?? ''),
-              inputTxId: dfxDetails.inputTxId,
-              outputTxId: dfxDetails.outputTxId,
-              height: txData.height,
-              txId: txData.txId,
-              chainId: txData.chainId,
-              senderAddress: txData.senderAddress,
-              receiverAddress: txData.receiverAddress,
-              amount: BigInt.parse(txData.amount, radix: 16),
-              asset: asset,
-              type: txType,
-              note: txData.note,
-              data: txData.data,
-              timestamp: txData.timeStamp,
-            );
-          }
-
-          return Transaction(
+        final dfxDetails = dfxDetailsList.firstWhereOrNull(
+          (dfxDetail) => dfxDetail.txId == txData.txId,
+        );
+        if (dfxDetails != null) {
+          return DfxTransaction(
+            dfxId: dfxDetails.dfxId,
+            rate: double.tryParse(dfxDetails.rate ?? ''),
+            inputTxId: dfxDetails.inputTxId,
+            outputTxId: dfxDetails.outputTxId,
             height: txData.height,
             txId: txData.txId,
             chainId: txData.chainId,
@@ -125,14 +114,33 @@ class TransactionRepository {
             data: txData.data,
             timestamp: txData.timeStamp,
           );
-        }).toList());
+        }
+
+        return Transaction(
+          height: txData.height,
+          txId: txData.txId,
+          chainId: txData.chainId,
+          senderAddress: txData.senderAddress,
+          receiverAddress: txData.receiverAddress,
+          amount: BigInt.parse(txData.amount, radix: 16),
+          asset: asset,
+          type: txType,
+          note: txData.note,
+          data: txData.data,
+          timestamp: txData.timeStamp,
+        );
+      }).toList(),
+    );
   }
 
   Stream<List<Transaction>> watchTransactions() =>
       _appDatabase.watchTransactions().transform<List<Transaction>>(_transformer);
 
-  Stream<List<Transaction>> watchTransactionsOfAssets(Iterable<Asset> assets, String wallet,
-      [int? limit]) {
+  Stream<List<Transaction>> watchTransactionsOfAssets(
+    Iterable<Asset> assets,
+    String wallet, [
+    int? limit,
+  ]) {
     if (limit != null) {
       return _appDatabase
           .watchTransfersOfAssetsLimit(assets.map((e) => e.id), wallet, limit)
@@ -143,65 +151,83 @@ class TransactionRepository {
         .transform<List<Transaction>>(_transformer);
   }
 
+  Stream<List<Transaction>> watchTransactionsSavings(
+    Iterable<Asset> assets,
+    String wallet,
+    int limit,
+  ) {
+    return _appDatabase
+        .watchTransfersOfSavingsLimit(assets.map((e) => e.id), wallet, limit)
+        .transform<List<Transaction>>(_transformer);
+  }
+
   StreamTransformer<List<TransactionData>, List<Transaction>> get _transformer =>
       StreamTransformer<List<TransactionData>, List<Transaction>>.fromHandlers(
-          handleData: (rawTransactions, sink) async {
-        final transactions = <Transaction>[];
+        handleData: (rawTransactions, sink) async {
+          final transactions = <Transaction>[];
 
-        final assets = await _assetRepository.allAssets;
-        final dfxDetailsList = await _appDatabase.allDfxTransactionDetails;
+          final assets = await _assetRepository.allAssets;
+          final dfxDetailsList = await _appDatabase.allDfxTransactionDetails;
 
-        for (final transactionData in rawTransactions) {
-          final txType = TransactionTypes.values[transactionData.type];
-          final blockchain = Blockchain.getFromChainId(transactionData.chainId);
-          final asset = txType == TransactionTypes.transfer
-              ? blockchain.nativeAsset
-              : assets.firstWhere((e) => e.id == transactionData.asset,
-                  orElse: () => Asset(
-                        chainId: blockchain.chainId,
-                        address: transactionData.receiverAddress,
-                        name: 'Unknown',
-                        symbol: '???',
-                        decimals: 18,
-                      ));
+          for (final transactionData in rawTransactions) {
+            final txType = TransactionTypes.values[transactionData.type];
+            final blockchain = Blockchain.getFromChainId(transactionData.chainId);
+            final asset = txType == TransactionTypes.transfer
+                ? blockchain.nativeAsset
+                : assets.firstWhere(
+                    (e) => e.id == transactionData.asset,
+                    orElse: () => Asset(
+                      chainId: blockchain.chainId,
+                      address: transactionData.receiverAddress,
+                      name: 'Unknown',
+                      symbol: '???',
+                      decimals: 18,
+                    ),
+                  );
 
-          final dfxDetails = dfxDetailsList
-              .firstWhereOrNull((dfxDetail) => dfxDetail.txId == transactionData.txId);
-          if (dfxDetails != null) {
-            transactions.add(DfxTransaction(
-              dfxId: dfxDetails.dfxId,
-              rate: double.tryParse(dfxDetails.rate ?? ''),
-              inputTxId: dfxDetails.inputTxId,
-              outputTxId: dfxDetails.outputTxId,
-              height: transactionData.height,
-              txId: transactionData.txId,
-              chainId: transactionData.chainId,
-              senderAddress: transactionData.senderAddress,
-              receiverAddress: transactionData.receiverAddress,
-              amount: BigInt.parse(transactionData.amount, radix: 16),
-              asset: asset,
-              type: txType,
-              note: transactionData.note,
-              data: transactionData.data,
-              timestamp: transactionData.timeStamp,
-            ));
-          } else {
-            transactions.add(Transaction(
-              height: transactionData.height,
-              txId: transactionData.txId,
-              chainId: transactionData.chainId,
-              senderAddress: transactionData.senderAddress,
-              receiverAddress: transactionData.receiverAddress,
-              amount: BigInt.parse(transactionData.amount, radix: 16),
-              asset: asset,
-              type: txType,
-              note: transactionData.note,
-              data: transactionData.data,
-              timestamp: transactionData.timeStamp,
-            ));
+            final dfxDetails = dfxDetailsList.firstWhereOrNull(
+              (dfxDetail) => dfxDetail.txId == transactionData.txId,
+            );
+            if (dfxDetails != null) {
+              transactions.add(
+                DfxTransaction(
+                  dfxId: dfxDetails.dfxId,
+                  rate: double.tryParse(dfxDetails.rate ?? ''),
+                  inputTxId: dfxDetails.inputTxId,
+                  outputTxId: dfxDetails.outputTxId,
+                  height: transactionData.height,
+                  txId: transactionData.txId,
+                  chainId: transactionData.chainId,
+                  senderAddress: transactionData.senderAddress,
+                  receiverAddress: transactionData.receiverAddress,
+                  amount: BigInt.parse(transactionData.amount, radix: 16),
+                  asset: asset,
+                  type: txType,
+                  note: transactionData.note,
+                  data: transactionData.data,
+                  timestamp: transactionData.timeStamp,
+                ),
+              );
+            } else {
+              transactions.add(
+                Transaction(
+                  height: transactionData.height,
+                  txId: transactionData.txId,
+                  chainId: transactionData.chainId,
+                  senderAddress: transactionData.senderAddress,
+                  receiverAddress: transactionData.receiverAddress,
+                  amount: BigInt.parse(transactionData.amount, radix: 16),
+                  asset: asset,
+                  type: txType,
+                  note: transactionData.note,
+                  data: transactionData.data,
+                  timestamp: transactionData.timeStamp,
+                ),
+              );
+            }
           }
-        }
 
-        sink.add(transactions);
-      });
+          sink.add(transactions);
+        },
+      );
 }
