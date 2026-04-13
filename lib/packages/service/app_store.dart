@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 
 import 'package:http/http.dart';
+import 'package:realunit_wallet/env/env.dart';
 import 'package:realunit_wallet/models/node.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/repository/node_repository.dart';
@@ -38,10 +39,10 @@ class AppStore {
       (node) => node.chainId == chainId,
       orElse: () {
         developer.log('No node found for $chainId using fallback ETH Node');
-        return const Node(
+        return Node(
           chainId: 1,
           name: 'Fallback',
-          httpsUrl: 'https://eth-mainnet.g.alchemy.com/v2/9qEJRkxr1gAyFfwsCU6qODRSqj3TAzjj',
+          httpsUrl: 'https://eth-mainnet.g.alchemy.com/v2/${Env.alchemyApiKey}',
         );
       },
     );

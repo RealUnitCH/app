@@ -7,6 +7,7 @@ import 'package:etherscan_api/etherscan_api.dart';
 import 'package:etherscan_api/src/models/account/token_tx_model.dart';
 // ignore: implementation_imports
 import 'package:etherscan_api/src/models/account/tx_list_model.dart';
+import 'package:realunit_wallet/env/env.dart';
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/models/dfx_transaction.dart';
@@ -33,7 +34,7 @@ class TransactionHistoryService {
 
   Future<void> explorerAssistedScan([int call = 0]) async {
     final chain = Blockchain.ethereum;
-    final api = EtherscanAPI(apiKey: 'IBE36W7QPVF4M62N8AZ6YRTWK52FXWDH33', enableLogs: false);
+    final api = EtherscanAPI(apiKey: Env.etherscanApiKey, enableLogs: false);
     final latestHeight = (await _transactionRepository.getLatestHeight()) + 1;
 
     developer.log('[explorerAssistedScan][$call call] Trying sync at $latestHeight');
