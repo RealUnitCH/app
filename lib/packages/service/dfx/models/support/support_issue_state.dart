@@ -15,5 +15,4 @@ enum SupportIssueState {
     );
   }
 
-  String toJson() => value;
 }

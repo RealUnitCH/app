@@ -1,4 +1,3 @@
-import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/packages/utils/fast_hash.dart';
 
 class Asset {
@@ -19,12 +18,4 @@ class Asset {
     required this.symbol,
     required this.decimals,
   });
-
-  Balance getEmptyBalance(String wallet) => Balance(
-        chainId: chainId,
-        contractAddress: address,
-        walletAddress: wallet,
-        balance: BigInt.zero,
-        asset: this,
-      );
 }

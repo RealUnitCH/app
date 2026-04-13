@@ -2,13 +2,11 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exce
 
 class ApiException implements Exception {
   final int? statusCode;
-  final String? error;
   final String code;
   final String message;
 
   const ApiException({
     this.statusCode,
-    this.error,
     required this.code,
     required this.message,
   });

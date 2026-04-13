@@ -1,6 +1,6 @@
+import 'package:erc20/erc20.dart';
 import 'package:realunit_wallet/packages/wallet/erc20_extension.dart';
 import 'package:realunit_wallet/packages/wallet/transaction_priority.dart';
-import 'package:erc20/erc20.dart';
 import 'package:web3dart/web3dart.dart';
 
 Future<Future<String> Function()> createNativeTransaction(
@@ -15,16 +15,17 @@ Future<Future<String> Function()> createNativeTransaction(
   final transaction = Transaction(
     from: currentAccount.address,
     to: EthereumAddress.fromHex(receiveAddress),
-    maxPriorityFeePerGas:
-        chainId == 1 ? EtherAmount.fromInt(EtherUnit.gwei, priority.tip) : null,
+    maxPriorityFeePerGas: chainId == 1 ? EtherAmount.fromInt(EtherUnit.gwei, priority.tip) : null,
     value: EtherAmount.inWei(amount),
   );
 
-  var signedTransaction = await client
-      .signTransaction(currentAccount, transaction, chainId: chainId);
+  var signedTransaction = await client.signTransaction(
+    currentAccount,
+    transaction,
+    chainId: chainId,
+  );
 
-  return () =>
-      client.sendRawTransaction(prependTransactionType(2, signedTransaction));
+  return () => client.sendRawTransaction(prependTransactionType(2, signedTransaction));
 }
 
 Future<Future<String> Function()> createERC20Transaction(
@@ -39,8 +40,7 @@ Future<Future<String> Function()> createERC20Transaction(
   final transaction = Transaction(
     from: currentAccount.address,
     to: EthereumAddress.fromHex(contractAddress),
-    maxPriorityFeePerGas:
-        chainId == 1 ? EtherAmount.fromInt(EtherUnit.gwei, priority.tip) : null,
+    maxPriorityFeePerGas: chainId == 1 ? EtherAmount.fromInt(EtherUnit.gwei, priority.tip) : null,
     value: EtherAmount.zero(),
   );
 
@@ -51,11 +51,11 @@ Future<Future<String> Function()> createERC20Transaction(
   );
 
   return () => erc20.transfer(
-        EthereumAddress.fromHex(receiveAddress),
-        amount,
-        credentials: currentAccount,
-        transaction: transaction,
-      );
+    EthereumAddress.fromHex(receiveAddress),
+    amount,
+    credentials: currentAccount,
+    transaction: transaction,
+  );
 }
 
 Future<String> prepareERC20Transaction(
@@ -75,8 +75,7 @@ Future<String> prepareERC20Transaction(
         ? EtherAmount.fromInt(EtherUnit.gwei, priority.tip)
         : null,
     value: EtherAmount.zero(),
-    gasPrice:
-        gasPrice != null ? EtherAmount.fromInt(EtherUnit.wei, gasPrice) : null,
+    gasPrice: gasPrice != null ? EtherAmount.fromInt(EtherUnit.wei, gasPrice) : null,
   );
 
   final erc20 = ERC20(

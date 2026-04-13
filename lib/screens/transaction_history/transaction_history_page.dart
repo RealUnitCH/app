@@ -9,8 +9,6 @@ import 'package:realunit_wallet/screens/transaction_history/widgets/transaction_
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/widgets/date_picker_field.dart';
 
-enum DateType { start, end }
-
 class TransactionHistoryPage extends StatelessWidget {
   const TransactionHistoryPage({super.key});
 

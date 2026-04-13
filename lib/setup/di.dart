@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
-import 'package:realunit_wallet/packages/open_crypto_pay/open_crypto_pay_service.dart';
 import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
@@ -88,11 +87,11 @@ Future<void> finishSetup(String encryptionKey) async {
 }
 
 void setupRepositories() {
-  getIt.registerFactory(() => CacheRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => WalletRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => BalanceRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => AssetRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => NodeRepository(getIt<AppDatabase>()));
+  getIt.registerFactory(() => CacheRepository(getIt<AppDatabase>()));
   getIt.registerFactory(
     () => TransactionRepository(
       getIt<AppDatabase>(),
@@ -138,8 +137,6 @@ void setupServices() {
   getIt.registerFactory(
     () => DfxWidgetService(
       getIt<AppStore>(),
-      getIt<SettingsRepository>(),
-      getIt<AssetRepository>(),
     ),
   );
 
@@ -150,8 +147,6 @@ void setupServices() {
   getIt.registerFactory(() => RealUnitSellPaymentInfoService(getIt<AppStore>()));
   getIt.registerFactory(() => RealUnitWalletService(getIt<AppStore>()));
   getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
-
-  getIt.registerFactory(() => OpenCryptoPayService());
 }
 
 void setupBlocs() {

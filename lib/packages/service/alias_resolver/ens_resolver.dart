@@ -14,7 +14,7 @@ class EnsResolver extends AliasResolver {
     final address = await _ensLookup.resolveName(alias);
 
     if (address != null) {
-      return AliasRecord(address: address, name: alias, description: '');
+      return AliasRecord(address: address, name: alias);
     }
     return null;
   }
