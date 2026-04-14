@@ -73,7 +73,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     _balanceService.updateBalances(_appStore.primaryAddress);
     _balanceService.startSync(_appStore.primaryAddress);
     _transactionHistoryService.apiBasedSync();
-    _transactionHistoryService.explorerAssistedScan();
     _transactionHistoryService.ponderBasedSync();
   }
 
@@ -101,7 +100,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     _balanceService.updateBalances(_appStore.primaryAddress);
     _balanceService.startSync(_appStore.primaryAddress);
     _transactionHistoryService.apiBasedSync();
-    _transactionHistoryService.explorerAssistedScan();
     _transactionHistoryService.ponderBasedSync();
 
     emit(state.copyWith(openWallet: _appStore.wallet, isLoadingWallet: false));

@@ -123,7 +123,6 @@ void setupServices() {
   getIt.registerFactory(
     () => TransactionHistoryService(
       getIt<AppStore>(),
-      getIt<AssetRepository>(),
       getIt<TransactionRepository>(),
     ),
   );
