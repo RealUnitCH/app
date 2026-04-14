@@ -117,8 +117,8 @@ class _WelcomePageState extends State<WelcomePage> {
                         ),
                         if (kDebugMode)
                           WelcomeCard(
-                            title: 'Address + Signature',
-                            description: 'Debug only: Auth with address + signature.',
+                            title: '${S.of(context).address} + ${S.of(context).signature}',
+                            description: S.of(context).debugWalletDescription,
                             onPressed: () => context.pushNamed(OnboardingRoutes.debugAuth),
                           ),
                       ],

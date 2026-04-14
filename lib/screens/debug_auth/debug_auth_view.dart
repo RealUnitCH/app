@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/debug_auth/cubit/debug_auth_cubit.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -34,7 +35,7 @@ class _DebugAuthViewState extends State<DebugAuthView> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Debug Auth')),
+    appBar: AppBar(title: Text(S.of(context).debugWalletTitle)),
     body: BlocListener<DebugAuthCubit, DebugAuthState>(
       listenWhen: (prev, curr) => !prev.isAuthenticated && curr.isAuthenticated,
       listener: (context, state) {
@@ -48,7 +49,7 @@ class _DebugAuthViewState extends State<DebugAuthView> {
             spacing: 16,
             children: [
               LabeledTextField(
-                label: 'Wallet Address',
+                label: S.of(context).address,
                 hintText: '0x...',
                 controller: _addressController,
               ),
@@ -58,12 +59,12 @@ class _DebugAuthViewState extends State<DebugAuthView> {
                     : () => context.read<DebugAuthCubit>().fetchSignMessage(
                         _addressController.text.trim(),
                       ),
-                child: const Text('Fetch Sign Message'),
+                child: Text(S.of(context).signMessageGet),
               ),
               if (state.signMessage != null) ...[
                 const Divider(color: RealUnitColors.neutral200),
                 Text(
-                  'Sign Message:',
+                  '${S.of(context).signMessage}:',
                   style: Theme.of(
                     context,
                   ).textTheme.bodyLarge?.copyWith(fontWeight: .w600),
@@ -74,8 +75,8 @@ class _DebugAuthViewState extends State<DebugAuthView> {
                       ClipboardData(text: state.signMessage!),
                     );
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Copied to clipboard'),
+                      SnackBar(
+                        content: Text(S.of(context).copyClipboard),
                         backgroundColor: RealUnitColors.green,
                       ),
                     );
@@ -93,7 +94,7 @@ class _DebugAuthViewState extends State<DebugAuthView> {
                   ),
                 ),
                 LabeledTextField(
-                  label: 'Signature',
+                  label: S.of(context).signature,
                   hintText: '0x...',
                   maxLines: null,
                   controller: _signatureController,
@@ -104,7 +105,7 @@ class _DebugAuthViewState extends State<DebugAuthView> {
                       : () => context.read<DebugAuthCubit>().authenticate(
                           _signatureController.text.trim(),
                         ),
-                  child: const Text('Authenticate'),
+                  child: Text(S.of(context).authenticate),
                 ),
               ],
               if (state.errorMessage != null)
