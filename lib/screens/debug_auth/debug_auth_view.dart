@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/screens/debug_auth/cubit/debug_auth_cubit.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
-import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class DebugAuthView extends StatefulWidget {
@@ -41,7 +39,6 @@ class _DebugAuthViewState extends State<DebugAuthView> {
           !prev.isAuthenticated && curr.isAuthenticated,
       listener: (context, state) {
         context.read<HomeBloc>().add(const DebugAuthCompleteEvent());
-        context.goNamed(AppRoutes.dashboard);
       },
       child: BlocBuilder<DebugAuthCubit, DebugAuthState>(
         builder: (context, state) => SingleChildScrollView(
