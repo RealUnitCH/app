@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/screens/debug_auth/cubit/debug_auth_cubit.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 
 class DebugAuthView extends StatefulWidget {
   const DebugAuthView({super.key});
@@ -35,44 +36,37 @@ class _DebugAuthViewState extends State<DebugAuthView> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Debug Auth')),
     body: BlocListener<DebugAuthCubit, DebugAuthState>(
-      listenWhen: (prev, curr) =>
-          !prev.isAuthenticated && curr.isAuthenticated,
+      listenWhen: (prev, curr) => !prev.isAuthenticated && curr.isAuthenticated,
       listener: (context, state) {
         context.read<HomeBloc>().add(const DebugAuthCompleteEvent());
       },
       child: BlocBuilder<DebugAuthCubit, DebugAuthState>(
         builder: (context, state) => SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const .symmetric(horizontal: 20),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: .stretch,
             spacing: 16,
             children: [
-              TextField(
+              LabeledTextField(
+                label: 'Wallet Address',
+                hintText: '0x...',
                 controller: _addressController,
-                decoration: const InputDecoration(
-                  labelText: 'Wallet Address',
-                  hintText: '0x...',
-                ),
-                style: Theme.of(context).textTheme.bodyMedium,
               ),
-              ElevatedButton(
+              TextButton(
                 onPressed: state.isLoading
                     ? null
-                    : () => context
-                        .read<DebugAuthCubit>()
-                        .fetchSignMessage(
-                          _addressController.text.trim(),
-                        ),
+                    : () => context.read<DebugAuthCubit>().fetchSignMessage(
+                        _addressController.text.trim(),
+                      ),
                 child: const Text('Fetch Sign Message'),
               ),
               if (state.signMessage != null) ...[
                 const Divider(color: RealUnitColors.neutral200),
                 Text(
                   'Sign Message:',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyLarge
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(fontWeight: .w600),
                 ),
                 GestureDetector(
                   onTap: () {
@@ -82,14 +76,15 @@ class _DebugAuthViewState extends State<DebugAuthView> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Copied to clipboard'),
+                        backgroundColor: RealUnitColors.green,
                       ),
                     );
                   },
                   child: Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const .all(12),
                     decoration: BoxDecoration(
                       color: RealUnitColors.neutral100,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: .circular(8),
                     ),
                     child: SelectableText(
                       state.signMessage!,
@@ -97,61 +92,33 @@ class _DebugAuthViewState extends State<DebugAuthView> {
                     ),
                   ),
                 ),
-                TextField(
+                LabeledTextField(
+                  label: 'Signature',
+                  hintText: '0x...',
+                  maxLines: null,
                   controller: _signatureController,
-                  decoration: const InputDecoration(
-                    labelText: 'Signature',
-                    hintText: '0x...',
-                  ),
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  maxLines: 3,
                 ),
-                ElevatedButton(
+                FilledButton(
                   onPressed: state.isLoading
                       ? null
-                      : () => context
-                          .read<DebugAuthCubit>()
-                          .authenticate(
-                            _signatureController.text.trim(),
-                          ),
+                      : () => context.read<DebugAuthCubit>().authenticate(
+                          _signatureController.text.trim(),
+                        ),
                   child: const Text('Authenticate'),
                 ),
               ],
-              if (state.isAuthenticated)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: RealUnitColors.green
-                        .withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'Authenticated! Token set in AppStore.',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(
-                          color: RealUnitColors.green,
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                ),
               if (state.errorMessage != null)
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const .all(12),
                   decoration: BoxDecoration(
-                    color: RealUnitColors.status.red600
-                        .withValues(alpha: 0.1),
+                    color: RealUnitColors.status.red600.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     state.errorMessage!,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(
-                          color: RealUnitColors.status.red600,
-                        ),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: RealUnitColors.status.red600,
+                    ),
                   ),
                 ),
             ],

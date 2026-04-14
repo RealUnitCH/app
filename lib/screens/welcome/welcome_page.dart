@@ -118,14 +118,8 @@ class _WelcomePageState extends State<WelcomePage> {
                         if (kDebugMode)
                           WelcomeCard(
                             title: 'Address + Signature',
-                            description:
-                                'Debug only: Auth with address + signature.',
+                            description: 'Debug only: Auth with address + signature.',
                             onPressed: () => context.pushNamed(OnboardingRoutes.debugAuth),
-                            trailing: const Icon(
-                              Icons.key,
-                              size: 48,
-                              color: RealUnitColors.realUnitBlue,
-                            ),
                           ),
                       ],
                     ),
