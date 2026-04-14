@@ -85,10 +85,6 @@ class SendBloc extends Bloc<SendEvent, SendState> {
     final owner = _appStore.wallet.currentAccount.primaryAddress.address.hexEip55;
     for (final asset in [
       dEUROAsset,
-      dEUROPolygonAsset,
-      dEUROArbitrumAsset,
-      dEUROBaseAsset,
-      dEUROOptimismAsset,
     ]) {
       final balance = await _balanceService.getBalance(asset, owner);
       if (balance != null && balance.balance > BigInt.zero) {

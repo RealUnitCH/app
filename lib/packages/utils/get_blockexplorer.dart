@@ -6,13 +6,5 @@ String getBlockExplorerUrl(Blockchain blockchain) {
       return 'https://etherscan.io';
     case Blockchain.sepolia:
       return 'https://sepolia.etherscan.io';
-    case Blockchain.polygon:
-      return 'https://polygonscan.com';
-    case Blockchain.arbitrum:
-      return 'https://arbiscan.io';
-    case Blockchain.optimism:
-      return 'https://optimistic.etherscan.io';
-    case Blockchain.base:
-      return 'https://basescan.org';
   }
 }
