@@ -16,6 +16,10 @@ jobs:
         with:
           flutter-version: "3.38.7"
           channel: "stable"
+      - name: Create .env
+        run: |
+          echo "ALCHEMY_API_KEY=${{ secrets.ALCHEMY_API_KEY }}" >> .env
+          echo "ETHERSCAN_API_KEY=${{ secrets.ETHERSCAN_API_KEY }}" >> .env
       - run: flutter pub get
       - run: dart run tool/generate_localization.dart
       - run: flutter pub run build_runner build

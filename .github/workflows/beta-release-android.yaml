@@ -76,6 +76,11 @@ jobs:
           keyPassword=$KEY_PWD
           EOF
 
+      - name: Create .env
+        run: |
+          echo "ALCHEMY_API_KEY=${{ secrets.ALCHEMY_API_KEY }}" >> .env
+          echo "ETHERSCAN_API_KEY=${{ secrets.ETHERSCAN_API_KEY }}" >> .env
+
       - name: Install Flutter Dependencies
         run: |
           flutter pub get
