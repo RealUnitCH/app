@@ -12,3 +12,10 @@
 -keepclasseswithmembernames class * {
     native <methods>;
 }
+
+# SumSub SDK requires Google Play Services Tasks                    
+-keep class com.google.android.gms.tasks.** { *; }                                                                              
+
+# SumSub SDK general keep rules                                     
+-keep class com.sumsub.** { *; }                                    
+-dontwarn com.sumsub.**  
