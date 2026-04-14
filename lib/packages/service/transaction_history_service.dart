@@ -4,7 +4,6 @@ import 'package:collection/collection.dart';
 import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
-import 'package:realunit_wallet/packages/ponder/ponder.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/history/dto/account_history_dto.dart';
@@ -20,21 +19,6 @@ class TransactionHistoryService {
   final TransactionRepository _transactionRepository;
 
   TransactionHistoryService(this._appStore, this._transactionRepository);
-
-  Future<void> ponderBasedSync() async {
-    final ponder = Ponder();
-    final transactions = await ponder.getSavingsSavedTransactions(_appStore.primaryAddress);
-    final transactions2 = await ponder.getSavingsWithdrawnTransactions(_appStore.primaryAddress);
-
-    for (final tx in [...transactions, ...transactions2]) {
-      final exists = await _transactionRepository.existsTransaction(tx.txId);
-      if (exists) {
-        _transactionRepository.updateTransaction(tx);
-      } else {
-        _transactionRepository.insertTransaction(tx);
-      }
-    }
-  }
 
   Future<void> apiBasedSync() async {
     final results = await Future.wait([
