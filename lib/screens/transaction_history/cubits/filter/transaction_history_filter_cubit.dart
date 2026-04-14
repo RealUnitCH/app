@@ -11,7 +11,7 @@ class TransactionHistoryFilterCubit extends Cubit<TransactionHistoryFilterState>
     required Asset asset,
     required String walletAddress,
     int? limit,
-  }) : super(const TransactionHistoryFilterState()) {
+  }) : super(TransactionHistoryFilterState()) {
     _repository.watchTransactionsOfAssets([asset], walletAddress).listen(_onTransactionsUpdated);
   }
 
@@ -44,8 +44,11 @@ class TransactionHistoryFilterCubit extends Cubit<TransactionHistoryFilterState>
     );
   }
 
-  List<Transaction> _applyFilter(List<Transaction> transactions,
-      {DateTime? startDate, DateTime? endDate}) {
+  List<Transaction> _applyFilter(
+    List<Transaction> transactions, {
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
     return transactions.where((transaction) {
       final transactionDate = transaction.timestamp;
       final afterStart = startDate == null || !transactionDate.isBefore(startDate);

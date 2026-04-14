@@ -35,7 +35,7 @@ class TransactionHistoryView extends StatelessWidget {
   static final _todaysDate = DateTime.now();
   final _endDateModel = _DatePickerModel(_todaysDate);
   final _startDateModel = _DatePickerModel(
-    DateTime(_todaysDate.year, _todaysDate.month - 1, _todaysDate.day),
+    _todaysDate.subtract(const Duration(days: 365)),
   );
 
   final String walletAddress;
