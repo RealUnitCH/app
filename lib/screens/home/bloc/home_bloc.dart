@@ -27,6 +27,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<DeleteCurrentWalletEvent>(_onDeleteCurrentWallet);
     on<CompleteOnboardingEvent>(_onCompleteOnboarding);
     on<AcceptSoftwareTermsEvent>(_onAcceptSoftwareTerms);
+    on<DebugAuthCompleteEvent>(_onDebugAuthComplete);
 
     add(const LoadCurrentWalletEvent());
   }
@@ -82,8 +83,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     emit(state.copyWith(isLoadingWallet: true));
 
     await _appStore.sessionCache.clear();
-    await _walletService.deleteCurrentWallet();
-    _settingsService.setTermsAccepted(false);
+    if (_walletService.hasWallet()) {
+      await _walletService.deleteCurrentWallet();
+      _settingsService.setTermsAccepted(false);
+    }
     emit(
       HomeState(
         openWallet: null,
@@ -123,5 +126,12 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   void _onAcceptSoftwareTerms(AcceptSoftwareTermsEvent event, Emitter<HomeState> emit) {
     _settingsService.setSoftwareTermsAccepted(true);
     emit(state.copyWith(softwareTermsAccepted: true));
+  }
+
+  Future<void> _onDebugAuthComplete(DebugAuthCompleteEvent event, Emitter<HomeState> emit) async {
+    final wallet = await _walletService.createDebugWallet(event.address);
+    _appStore.wallet = wallet;
+    emit(state.copyWith(openWallet: wallet));
+    await setupFiatService(emit);
   }
 }

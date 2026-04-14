@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
@@ -114,6 +115,12 @@ class _WelcomePageState extends State<WelcomePage> {
                             'assets/images/illustrations/restore_wallet.svg',
                           ),
                         ),
+                        if (kDebugMode)
+                          WelcomeCard(
+                            title: '${S.of(context).address} + ${S.of(context).signature}',
+                            description: S.of(context).debugWalletDescription,
+                            onPressed: () => context.pushNamed(OnboardingRoutes.debugAuth),
+                          ),
                       ],
                     ),
                   ),

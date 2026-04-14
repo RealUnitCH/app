@@ -51,9 +51,7 @@ void main() {
     transactionHistoryReceiptCubit = MockTransactionHistoryReceiptCubit();
 
     when(() => settingsBloc.state).thenReturn(const SettingsState());
-    when(
-      () => transactionHistoryFilterCubit.state,
-    ).thenReturn(const TransactionHistoryFilterState());
+    when(() => transactionHistoryFilterCubit.state).thenReturn(TransactionHistoryFilterState());
     when(
       () => transactionHistoryReceiptCubit.state,
     ).thenReturn(const TransactionHistoryReceiptInitial());
