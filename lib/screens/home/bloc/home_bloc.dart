@@ -131,6 +131,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   }
 
   void _onDebugAuthComplete(DebugAuthCompleteEvent event, Emitter<HomeState> emit) {
-    emit(state.copyWith(isDebugAuthenticated: true));
+    emit(state.copyWith(isDebugAuthenticated: true, isFiatServiceAvailable: true));
   }
 }
