@@ -22,7 +22,7 @@ void main() {
           expect(find.text(S.current.realunitWallet), findsOne);
           expect(find.text(S.current.realunitWalletSubtitle), findsOneWidget);
           final visibleCards = find.byType(WelcomeCard).hitTestable();
-          expect(visibleCards, findsNWidgets(3));
+          expect(visibleCards, findsNWidgets(2));
         },
       );
 

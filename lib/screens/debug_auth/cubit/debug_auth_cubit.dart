@@ -61,7 +61,7 @@ class DebugAuthCubit extends Cubit<DebugAuthState> {
 
       if (response.statusCode == 201) {
         final body = jsonDecode(response.body) as Map<String, dynamic>;
-        _appStore.dfxAuthToken = body['accessToken'] as String;
+        _appStore.sessionCache.setAuthToken(body['accessToken'] as String);
         _appStore.debugAddress = state.address;
         _prefs.setString(_addressKey, state.address);
         _prefs.setString(_signatureKey, signature);
