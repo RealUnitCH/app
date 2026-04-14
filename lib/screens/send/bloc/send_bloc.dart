@@ -3,11 +3,9 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
-import 'package:realunit_wallet/packages/service/alias_resolver/alias_resolver.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
@@ -24,7 +22,6 @@ class SendBloc extends Bloc<SendEvent, SendState> {
     String receiver = '',
     String amount = '0',
   }) : super(SendState(asset: asset, receiver: receiver, amount: amount)) {
-    on<SelectAlias>(_onSelectAlias);
     on<ReceiverChanged>(_onReceiverChanged);
     on<PasteReceiver>(_onPasteReceiver);
     on<AmountChangedAdd>(_onAmountAdd);
@@ -43,36 +40,15 @@ class SendBloc extends Bloc<SendEvent, SendState> {
 
   Future<void> _onReceiverChanged(ReceiverChanged event, Emitter<SendState> emit) async {
     emit(state.copyWith(receiver: event.receiver));
-    if (event.receiver.contains('.')) {
-      final resolvedAlias = await AliasResolver.resolve(
-        alias: event.receiver,
-        ticker: state.asset.symbol,
-        tickerFallback: 'ETH',
-      );
-      emit(state.copyAlias(alias: resolvedAlias));
-    } else {
-      emit(state.copyAlias());
-    }
   }
 
   Future<void> _onPasteReceiver(PasteReceiver event, Emitter<SendState> emit) async {
     if (await Clipboard.hasStrings()) {
       final value = await Clipboard.getData('text/plain');
       if (value?.text?.isEthereumAddress == true) {
-        emit(
-          state.copyAlias(
-            alias: AliasRecord(
-              address: value!.text!,
-              name: S.current.fromClipboard,
-            ),
-          ),
-        );
+        emit(state.copyWith(receiver: value!.text!));
       }
     }
-  }
-
-  Future<void> _onSelectAlias(SelectAlias event, Emitter<SendState> emit) async {
-    emit(state.copyWith(receiver: state.alias?.address));
   }
 
   void _onAmountAdd(AmountChangedAdd event, Emitter<SendState> emit) {

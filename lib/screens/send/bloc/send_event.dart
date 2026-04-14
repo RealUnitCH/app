@@ -33,10 +33,6 @@ final class ReceiverChanged extends SendEvent {
   List<Object> get props => [receiver];
 }
 
-final class SelectAlias extends SendEvent {
-  const SelectAlias();
-}
-
 final class PasteReceiver extends SendEvent {
   const PasteReceiver();
 }

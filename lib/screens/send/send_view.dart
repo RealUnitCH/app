@@ -4,11 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/packages/wallet/is_evm_address.dart';
 import 'package:realunit_wallet/screens/send/bloc/send_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/styles/styles.dart';
 import 'package:realunit_wallet/widgets/asset_selector.dart';
 import 'package:realunit_wallet/widgets/number_pad.dart';
 import 'package:realunit_wallet/widgets/standard_slide_button_widget.dart';
@@ -75,38 +73,6 @@ class SendView extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (sendState.alias != null && !sendState.receiver.isEthereumAddress) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(left: 26, right: 26, top: 10),
-                      child: InkWell(
-                        onTap: () {
-                          receiverFocusNode.unfocus();
-                          context.read<SendBloc>().add(const SelectAlias());
-                        },
-                        child: Row(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.only(right: 10),
-                              child: CircleAvatar(child: Icon(Icons.person)),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  sendState.alias!.name,
-                                  style: kTitleTextStyle,
-                                ),
-                                Text(
-                                  sendState.alias!.address.asMediumAddress,
-                                  style: kSubtitleTextStyle,
-                                )
-                              ],
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
                   if (sendState.receiver.isEthereumAddress && !receiverFocusNode.hasFocus) ...[
                     Padding(
                       padding: const EdgeInsets.only(left: 26, right: 26, top: 10),

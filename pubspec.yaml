@@ -34,7 +34,6 @@ dependencies:
     sdk: flutter
 
   async: ^2.13.0
-  basic_utils: ^5.7.0
   bip32: ^2.0.0
   bip39: ^1.0.6
   collection: ^1.19.0

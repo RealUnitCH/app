@@ -9,14 +9,12 @@ class SendState extends Equatable {
     this.receiver = '',
     this.amount = '0',
     this.isValid = false,
-    this.alias,
     this.balances = const [],
   });
 
   final SendStatus status;
   final Asset asset;
   final String receiver;
-  final AliasRecord? alias;
   final String amount;
   final bool isValid;
   final List<Balance> balances;
@@ -29,7 +27,6 @@ class SendState extends Equatable {
     String? amount,
     bool? isValid,
     Asset? asset,
-    AliasRecord? alias,
     List<Balance>? balances,
   }) =>
       SendState(
@@ -38,23 +35,9 @@ class SendState extends Equatable {
         amount: amount ?? this.amount,
         isValid: isValid ?? this.isValid,
         asset: asset ?? this.asset,
-        alias: alias ?? this.alias,
         balances: balances ?? this.balances,
       );
 
-  SendState copyAlias({
-    AliasRecord? alias,
-  }) =>
-      SendState(
-        status: status,
-        receiver: receiver,
-        amount: amount,
-        isValid: isValid,
-        asset: asset,
-        alias: alias,
-        balances: balances,
-      );
-
   @override
-  List<Object?> get props => [status, receiver, amount, asset, alias, balances];
+  List<Object?> get props => [status, receiver, amount, asset, balances];
 }
