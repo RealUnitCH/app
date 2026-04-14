@@ -3,7 +3,7 @@ import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/setup/di.dart';
 
 Future<void> setupDefaultAssets() async {
-  for (final asset in defaultAssets) {
+  for (final asset in [realUnitAsset, realUnitTestAsset]) {
     await getIt<AssetRepository>().saveAsset(asset);
   }
 }

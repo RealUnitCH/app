@@ -18,7 +18,7 @@ class TransactionRow extends StatelessWidget {
     required this.transaction,
     required this.walletAddress,
     this.firstRowTextColor = RealUnitColors.realUnitBlack,
-    this.secondRowTextColor = RealUnitColors.titanGray60,
+    this.secondRowTextColor = RealUnitColors.neutral400,
     this.showBlockchainIcon = false,
   });
 
@@ -27,93 +27,95 @@ class TransactionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       [TransactionTypes.savingsAdd, TransactionTypes.savingsRemove].contains(transaction.type)
-          ? SavingsTransactionRow(
-              transaction: transaction,
-              firstRowTextColor: firstRowTextColor,
-              secondRowTextColor: secondRowTextColor,
-              showBlockchainIcon: showBlockchainIcon,
-            )
-          : InkWell(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: RealUnitColors.basic.white,
-                ),
-                child: Column(
+      ? SavingsTransactionRow(
+          transaction: transaction,
+          firstRowTextColor: firstRowTextColor,
+          secondRowTextColor: secondRowTextColor,
+          showBlockchainIcon: showBlockchainIcon,
+        )
+      : InkWell(
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: RealUnitColors.basic.white,
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.max,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  spacing: 10.0,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.max,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      spacing: 10.0,
-                      children: [
-                        _isOutbound
-                            ? Container(
-                                height: 32,
-                                width: 32,
-                                decoration: BoxDecoration(
-                                    color: RealUnitColors.brand200,
-                                    borderRadius: BorderRadius.circular(24.0)),
-                                child: const Icon(
-                                  Icons.horizontal_rule_rounded,
-                                  color: RealUnitColors.darkBlue,
-                                ),
-                              )
-                            : Container(
-                                height: 32,
-                                width: 32,
-                                decoration: BoxDecoration(
-                                    color: RealUnitColors.brand200,
-                                    borderRadius: BorderRadius.circular(24.0)),
-                                child: const Icon(
-                                  Icons.add,
-                                  color: RealUnitColors.darkBlue,
-                                ),
-                              ),
-                        Expanded(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.max,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _isOutbound
-                                    ? S.of(context).transactionSell
-                                    : S.of(context).transactionBuy,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  height: 20 / 16,
-                                ),
-                              ),
-                              Text(
-                                DateFormat('MMM dd, yyyy | H:mm').format(transaction.timestamp),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  height: 16 / 12,
-                                  color: RealUnitColors.neutral500,
-                                ),
-                              ),
-                            ],
+                    _isOutbound
+                        ? Container(
+                            height: 32,
+                            width: 32,
+                            decoration: BoxDecoration(
+                              color: RealUnitColors.brand200,
+                              borderRadius: BorderRadius.circular(24.0),
+                            ),
+                            child: const Icon(
+                              Icons.horizontal_rule_rounded,
+                              color: RealUnitColors.darkBlue,
+                            ),
+                          )
+                        : Container(
+                            height: 32,
+                            width: 32,
+                            decoration: BoxDecoration(
+                              color: RealUnitColors.brand200,
+                              borderRadius: BorderRadius.circular(24.0),
+                            ),
+                            child: const Icon(
+                              Icons.add,
+                              color: RealUnitColors.darkBlue,
+                            ),
                           ),
-                        ),
-                        HideAmountText(
-                          leadingSymbol: _isOutbound ? '-' : '+',
-                          amount: transaction.amount,
-                          decimals: transaction.asset.decimals,
-                          fractionalDigits: 0,
-                          trimZeros: false,
-                          trailingSymbol: transaction.asset.symbol,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            height: 20 / 16,
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.max,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _isOutbound
+                                ? S.of(context).transactionSell
+                                : S.of(context).transactionBuy,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              height: 20 / 16,
+                            ),
                           ),
-                        ),
-                      ],
+                          Text(
+                            DateFormat('MMM dd, yyyy | H:mm').format(transaction.timestamp),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              height: 16 / 12,
+                              color: RealUnitColors.neutral500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    HideAmountText(
+                      leadingSymbol: _isOutbound ? '-' : '+',
+                      amount: transaction.amount,
+                      decimals: transaction.asset.decimals,
+                      fractionalDigits: 0,
+                      trimZeros: false,
+                      trailingSymbol: transaction.asset.symbol,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        height: 20 / 16,
+                      ),
                     ),
                   ],
                 ),
-              ),
-            );
+              ],
+            ),
+          ),
+        );
 }
 
 class SavingsTransactionRow extends StatelessWidget {
@@ -126,7 +128,7 @@ class SavingsTransactionRow extends StatelessWidget {
     super.key,
     required this.transaction,
     this.firstRowTextColor = RealUnitColors.realUnitBlack,
-    this.secondRowTextColor = RealUnitColors.titanGray60,
+    this.secondRowTextColor = RealUnitColors.neutral400,
     this.showBlockchainIcon = false,
   });
 
@@ -137,63 +139,67 @@ class SavingsTransactionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-        child: Container(
-          margin: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: RealUnitColors.basic.white,
-          ),
-          child: Column(
+    child: Container(
+      margin: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: RealUnitColors.basic.white,
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.max,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  if (transaction.type == TransactionTypes.savingsRemove)
-                    const CollectInterestIcon(size: 24),
-                  if (transaction.type == TransactionTypes.savingsAdd)
-                    const Icon(Icons.savings, size: 24),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 16),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
+              if (transaction.type == TransactionTypes.savingsRemove)
+                const CollectInterestIcon(size: 24),
+              if (transaction.type == TransactionTypes.savingsAdd)
+                const Icon(Icons.savings, size: 24),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Row(children: [
-                            Text(
-                              transaction.type == TransactionTypes.savingsAdd
-                                  ? S.of(context).savingsAdd
-                                  : S.of(context).savingsRemove,
-                              style: _firstRowTextStyle,
-                            ),
-                            const Spacer(),
-                            HideAmountText(
-                              leadingSymbol: '',
-                              amount: transaction.amount,
-                              decimals: transaction.asset.decimals,
-                              fractionalDigits: 2,
-                              trimZeros: false,
-                              trailingSymbol: transaction.asset.symbol,
-                              style: _firstRowTextStyle,
-                            )
-                          ]),
-                          Row(children: [
-                            Text(
-                              DateFormat('MMM dd, yyyy').format(transaction.timestamp),
-                              style: _secondRowTextStyle,
-                            )
-                          ]),
+                          Text(
+                            transaction.type == TransactionTypes.savingsAdd
+                                ? S.of(context).savingsAdd
+                                : S.of(context).savingsRemove,
+                            style: _firstRowTextStyle,
+                          ),
+                          const Spacer(),
+                          HideAmountText(
+                            leadingSymbol: '',
+                            amount: transaction.amount,
+                            decimals: transaction.asset.decimals,
+                            fractionalDigits: 2,
+                            trimZeros: false,
+                            trailingSymbol: transaction.asset.symbol,
+                            style: _firstRowTextStyle,
+                          ),
                         ],
                       ),
-                    ),
+                      Row(
+                        children: [
+                          Text(
+                            DateFormat('MMM dd, yyyy').format(transaction.timestamp),
+                            style: _secondRowTextStyle,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ],
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 }

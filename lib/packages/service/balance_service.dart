@@ -15,23 +15,21 @@ class BalanceService {
   final BalanceRepository _balanceRepository;
   final AppStore _appStore;
 
-  BalanceService(this._balanceRepository, this._appStore);
+  BalanceService(BalanceRepository balanceRepository, AppStore appStore)
+    : _balanceRepository = balanceRepository,
+      _appStore = appStore;
 
   Timer? _syncTimer;
 
   void startSync(String address) {
     cancelSync();
 
-    _syncTimer = Timer.periodic(const Duration(seconds: 10), (_) => updateBalances(address));
+    _syncTimer = Timer.periodic(const Duration(seconds: 10), (_) => updateBalance(address));
   }
 
   void cancelSync() => _syncTimer?.cancel();
 
-  Future<void> updateBalances(String address) async {
-    await _updateRealUnitBalance(address);
-  }
-
-  Future<void> _updateRealUnitBalance(String address) async {
+  Future<void> updateBalance(String address) async {
     try {
       final uri = buildUri(_host, '$_balancePath/$address');
 

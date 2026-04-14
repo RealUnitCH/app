@@ -20,11 +20,6 @@ class RealUnitColors {
   static const neutral200 = Color.fromARGB(255, 226, 232, 240);
   static const neutral100 = Color.fromARGB(255, 242, 245, 248);
   static const neutral50 = Color(0xFFF8FAFC);
-
-  static const grey = Color.fromARGB(255, 189, 193, 206);
-  static const neutralGrey = Color.fromARGB(255, 133, 141, 173);
-  static const neutralGrey93 = Color.fromARGB(255, 233, 234, 241);
-  static const titanGray60 = Color.fromARGB(255, 139, 146, 168);
 }
 
 class _Basic {

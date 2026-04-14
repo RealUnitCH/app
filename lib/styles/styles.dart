@@ -9,8 +9,6 @@ const kPageTitleTextStyle = TextStyle(
 
 const kTitleTextStyle = TextStyle(fontSize: 16, color: RealUnitColors.realUnitBlack);
 
-const kSubtitleTextStyle = TextStyle(fontSize: 14, color: RealUnitColors.neutralGrey);
-
 const kActionButtonTextStyle = TextStyle(
   fontSize: 12,
   color: Colors.white,
