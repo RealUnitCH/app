@@ -271,15 +271,6 @@ extension ToEpiAddress on String {
     return '${address.substring(0, 6)}...${address.substring(address.length - 5)}';
   }
 
-  String get asShortTxId {
-    return '${substring(0, 10)}...${substring(length - 10)}';
-  }
-
-  String get asMediumAddress {
-    final address = asHexEip55;
-    return '${address.substring(0, 10)}...${address.substring(address.length - 10)}';
-  }
-
   bool get isValidAddress {
     try {
       EthereumAddress.fromHex(this);
@@ -287,5 +278,14 @@ extension ToEpiAddress on String {
     } catch (_) {
       return false;
     }
+  }
+
+  String get asShortTxId {
+    return '${substring(0, 10)}...${substring(length - 10)}';
+  }
+
+  String get asMediumAddress {
+    final address = asHexEip55;
+    return '${address.substring(0, 10)}...${address.substring(address.length - 10)}';
   }
 }

@@ -27,11 +27,9 @@ abstract class AliasResolver {
 class AliasRecord {
   final String address;
   final String name;
-  final String description;
 
   AliasRecord({
     required this.address,
     required this.name,
-    required this.description,
   });
 }

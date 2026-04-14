@@ -48,7 +48,6 @@ class OpenAliasResolver extends AliasResolver {
   }) {
     String address = '';
     String name = formattedName;
-    String note = '';
 
     for (RRecord element in txtRecords) {
       String record = element.data;
@@ -79,23 +78,12 @@ class OpenAliasResolver extends AliasResolver {
           name = recipientName!.replaceAll('recipient_name=', '');
         }
 
-        final description = dataList
-            .where((item) => (item.contains('tx_description')))
-            .firstOrNull
-            ?.replaceAll('(', '')
-            .replaceAll(')', '')
-            .trim();
-
-        if (description?.isNotEmpty == true) {
-          note = description!.replaceAll('tx_description=', '');
-        }
-
         break;
       }
     }
 
     if (address.isEmpty) return null;
 
-    return AliasRecord(address: address, name: name, description: note);
+    return AliasRecord(address: address, name: name);
   }
 }
