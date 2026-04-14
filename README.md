@@ -32,7 +32,7 @@ ETHERSCAN_API_KEY=your_etherscan_api_key
 dart run tool/generate_localization.dart
 ```
 
-### 4. Generate Drift Files
+### 4. Generate Drift and Env Files
 
 ```shell
 dart run build_runner build --delete-conflicting-outputs
