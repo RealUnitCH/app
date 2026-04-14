@@ -45,7 +45,6 @@ dependencies:
     git:
       url: https://github.com/DFXswiss/eip-7702.git
       ref: e7f7d2f96639583b5166b1172e17739e52e56e9f
-  erc20: ^1.0.1
   equatable: ^2.0.0
   fl_chart: 1.0.0
   flutter_bloc: ^9.0.0

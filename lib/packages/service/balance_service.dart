@@ -4,11 +4,9 @@ import 'dart:developer' as developer;
 
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/balance.dart';
-import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:web3dart/web3dart.dart';
 
 class BalanceService {
   static const _balancePath = '/v1/realunit/account';
@@ -31,7 +29,6 @@ class BalanceService {
 
   Future<void> updateBalances(String address) async {
     await _updateRealUnitBalance(address);
-    await _updateNativeBalances(address);
   }
 
   Future<void> _updateRealUnitBalance(String address) async {
@@ -65,24 +62,4 @@ class BalanceService {
 
   Future<Balance?> getBalance(Asset asset, String address) =>
       _balanceRepository.getBalance(asset, address);
-
-  Future<void> _updateNativeBalances(String address) async {
-    for (final chain in Blockchain.values) {
-      try {
-        final balance =
-            await _appStore.getClient(chain.chainId).getBalance(EthereumAddress.fromHex(address));
-        await _balanceRepository.saveBalance(
-          Balance(
-            chainId: chain.chainId,
-            contractAddress: chain.nativeAsset.address,
-            walletAddress: address,
-            balance: balance.getInWei,
-            asset: chain.nativeAsset,
-          ),
-        );
-      } catch (e) {
-        developer.log('Failed to update ${chain.name} balance: $e');
-      }
-    }
-  }
 }

@@ -19,13 +19,11 @@ import 'package:realunit_wallet/screens/send/send_page.dart';
 import 'package:realunit_wallet/screens/settings/settings_page.dart';
 import 'package:realunit_wallet/screens/settings_contact/settings_contact_page.dart';
 import 'package:realunit_wallet/screens/settings_currencies/settings_currencies_page.dart';
-import 'package:realunit_wallet/screens/settings_edit_node/settings_edit_node_page.dart';
 import 'package:realunit_wallet/screens/settings_languages/settings_languages_page.dart';
 import 'package:realunit_wallet/screens/settings_legal_documents/settings_legal_documents_page.dart';
 import 'package:realunit_wallet/screens/settings_legal_documents/subpages/settings_aktionariat_documents_page.dart';
 import 'package:realunit_wallet/screens/settings_legal_documents/subpages/settings_dfx_documents_page.dart';
 import 'package:realunit_wallet/screens/settings_network/settings_network_page.dart';
-import 'package:realunit_wallet/screens/settings_nodes/settings_nodes_page.dart';
 import 'package:realunit_wallet/screens/settings_seed/settings_seed_page.dart';
 import 'package:realunit_wallet/screens/settings_tax_report/settings_tax_report_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/settings_user_data_page.dart';
@@ -238,22 +236,6 @@ final GoRouter routerConfig = GoRouter(
           name: SettingsRoutes.seed,
           path: 'seed',
           builder: (_, _) => const SettingsSeedPage(),
-        ),
-        GoRoute(
-          name: SettingsRoutes.nodes,
-          path: 'nodes',
-          builder: (_, _) => const SettingsNodesPage(),
-          routes: [
-            GoRoute(
-              name: SettingsRoutes.editNode,
-              path: ':chainId',
-              builder: (_, state) => SettingsEditNodePage(
-                blockchain: Blockchain.getFromChainId(
-                  int.parse(state.pathParameters['chainId']!),
-                ),
-              ),
-            ),
-          ],
         ),
         GoRoute(
           name: SettingsRoutes.walletAddress,

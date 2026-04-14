@@ -6,11 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/packages/wallet/is_evm_address.dart';
-import 'package:realunit_wallet/screens/send/bloc/gas_fee_cubit.dart';
 import 'package:realunit_wallet/screens/send/bloc/send_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/styles.dart';
-import 'package:realunit_wallet/widgets/amount_info_row.dart';
 import 'package:realunit_wallet/widgets/asset_selector.dart';
 import 'package:realunit_wallet/widgets/number_pad.dart';
 import 'package:realunit_wallet/widgets/standard_slide_button_widget.dart';
@@ -125,15 +123,6 @@ class SendView extends StatelessWidget {
                           .firstWhere((e) => e.chainId == sendState.blockchain.chainId),
                       availableBalances: sendState.balances,
                       padding: _kPadding,
-                    ),
-                    BlocBuilder<GasFeeCubit, GasFeeState>(
-                      bloc: context.read<SendBloc>().gasFeeCubit,
-                      builder: (context, state) => AmountInfoRow(
-                        padding: _kPadding,
-                        title: S.of(context).fee,
-                        amountString: state.formatedFee,
-                        currencySymbol: sendState.blockchain.nativeSymbol,
-                      ),
                     ),
                     NumberPad(
                       onNumberPressed: (index) =>

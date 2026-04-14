@@ -1,12 +1,8 @@
 import 'dart:async';
-import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/balance.dart';
@@ -15,14 +11,7 @@ import 'package:realunit_wallet/packages/service/alias_resolver/alias_resolver.d
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
-import 'package:realunit_wallet/packages/utils/parse_fixed.dart';
-import 'package:realunit_wallet/packages/wallet/create_transaction.dart';
 import 'package:realunit_wallet/packages/wallet/is_evm_address.dart';
-import 'package:realunit_wallet/packages/wallet/transaction_priority.dart';
-import 'package:realunit_wallet/screens/send/bloc/gas_fee_cubit.dart';
-import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
-import 'package:realunit_wallet/setup/di.dart';
-import 'package:realunit_wallet/widgets/error_bottom_sheet.dart';
 
 part 'send_event.dart';
 part 'send_state.dart';
@@ -34,8 +23,7 @@ class SendBloc extends Bloc<SendEvent, SendState> {
     required Asset asset,
     String receiver = '',
     String amount = '0',
-  }) : gasFeeCubit = GasFeeCubit(_appStore, Blockchain.getFromChainId(asset.chainId)),
-       super(SendState(asset: asset, receiver: receiver, amount: amount)) {
+  }) : super(SendState(asset: asset, receiver: receiver, amount: amount)) {
     on<SelectAlias>(_onSelectAlias);
     on<ReceiverChanged>(_onReceiverChanged);
     on<PasteReceiver>(_onPasteReceiver);
@@ -50,13 +38,6 @@ class SendBloc extends Bloc<SendEvent, SendState> {
     add(const PasteReceiver());
   }
 
-  @override
-  Future<void> close() async {
-    await gasFeeCubit.close();
-    return super.close();
-  }
-
-  final GasFeeCubit gasFeeCubit;
   final AppStore _appStore;
   final BalanceService _balanceService;
 
@@ -64,7 +45,6 @@ class SendBloc extends Bloc<SendEvent, SendState> {
     emit(state.copyWith(receiver: event.receiver));
     if (event.receiver.contains('.')) {
       final resolvedAlias = await AliasResolver.resolve(
-        _appStore.getClient(1),
         alias: event.receiver,
         ticker: state.asset.symbol,
         tickerFallback: 'ETH',
@@ -117,59 +97,11 @@ class SendBloc extends Bloc<SendEvent, SendState> {
 
   void _onAssetChanged(AssetChanged event, Emitter<SendState> emit) {
     emit(state.copyWith(asset: event.asset));
-    gasFeeCubit.blockchain = Blockchain.getFromChainId(state.asset.chainId);
   }
 
   Future<void> _onSubmitted(SendSubmitted event, Emitter<SendState> emit) async {
-    if (state.receiver.isEthereumAddress) {
-      final client = _appStore.getClient(state.blockchain.chainId);
-      final ethBalance = await client.getBalance(
-        _appStore.wallet.currentAccount.primaryAddress.address,
-      );
-      if (ethBalance.getInWei < gasFeeCubit.state.gasFee) {
-        return showModalBottomSheet(
-          context: navigatorKey.currentContext!,
-          builder: (_) => ErrorBottomSheet(
-            message: S.current.errorNotEnoughMoney(
-              state.blockchain.nativeSymbol,
-              state.blockchain.name,
-            ),
-          ),
-        );
-      }
-
-      emit(state.copyWith(status: SendStatus.inProgress));
-      try {
-        final transaction = await createERC20Transaction(
-          client,
-          currentAccount: _appStore.wallet.currentAccount.primaryAddress,
-          receiveAddress: state.receiver,
-          amount: parseFixed(state.amount, state.asset.decimals),
-          contractAddress: state.asset.address,
-          chainId: state.blockchain.chainId,
-          priority: TransactionPriority.slow,
-        );
-
-        final id = await transaction();
-        developer.log(id, name: 'SendBloc');
-        emit(state.copyWith(status: SendStatus.success));
-
-        if (navigatorKey.currentContext != null) {
-          navigatorKey.currentContext?.pop();
-          showCupertinoSheet(
-            context: navigatorKey.currentContext!,
-            builder: (_) => TransactionSentPage(
-              title: S.current.transactionSent,
-              transactionId: id,
-              blockchain: state.blockchain,
-            ),
-          );
-        }
-      } catch (e) {
-        developer.log('Error during send!', error: e, name: 'SendBloc');
-        emit(state.copyWith(status: SendStatus.failure));
-      }
-    }
+    // Transaction sending not yet available via API
+    emit(state.copyWith(status: SendStatus.failure));
   }
 
   Future<void> _onLoadBalances(LoadBalances event, Emitter<SendState> emit) async {
