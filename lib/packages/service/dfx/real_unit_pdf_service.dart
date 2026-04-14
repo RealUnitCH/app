@@ -33,7 +33,7 @@ class RealUnitPdfService {
       date: date,
     );
 
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, _balancePath);
     final response = await _appStore.httpClient.post(
@@ -57,7 +57,7 @@ class RealUnitPdfService {
     List<String> ids, {
     Currency currency = Currency.chf,
   }) async {
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, _transactionsReceiptMultiPath);
     final response = await _appStore.httpClient.post(
@@ -78,7 +78,7 @@ class RealUnitPdfService {
   }
 
   Future<PdfDto> getTransactionReceipt(String id, {Currency currency = Currency.chf}) async {
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, _transactionsReceiptSinglePath);
     final response = await _appStore.httpClient.post(

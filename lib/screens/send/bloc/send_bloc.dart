@@ -84,7 +84,6 @@ class SendBloc extends Bloc<SendEvent, SendState> {
             alias: AliasRecord(
               address: value!.text!,
               name: S.current.fromClipboard,
-              description: '',
             ),
           ),
         );

@@ -2,27 +2,27 @@ part of 'settings_bloc.dart';
 
 final class SettingsState {
   const SettingsState({
-    this.hideAmounts = false,
     this.language = Language.en,
     this.currency = Currency.chf,
     this.networkMode = NetworkMode.mainnet,
+    this.hideAmounts = false,
   });
 
-  final bool hideAmounts;
   final Language language;
   final Currency currency;
   final NetworkMode networkMode;
+  final bool hideAmounts;
 
   SettingsState copyWith({
-    bool? hideAmounts,
     Language? language,
     Currency? currency,
     NetworkMode? networkMode,
+    bool? hideAmounts,
   }) =>
       SettingsState(
-        hideAmounts: hideAmounts ?? this.hideAmounts,
         language: language ?? this.language,
         currency: currency ?? this.currency,
         networkMode: networkMode ?? this.networkMode,
+        hideAmounts: hideAmounts ?? this.hideAmounts,
       );
 }

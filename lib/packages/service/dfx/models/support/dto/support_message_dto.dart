@@ -23,5 +23,4 @@ class SupportMessageDto {
     );
   }
 
-  bool get isFromSupport => author == null;
 }

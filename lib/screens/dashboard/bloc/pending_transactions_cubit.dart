@@ -14,7 +14,4 @@ class PendingTransactionsCubit extends Cubit<List<TransactionDto>> {
     emit(transactions);
   }
 
-  Future<void> refresh() async {
-    await _loadPendingTransactions();
-  }
 }

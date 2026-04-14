@@ -53,6 +53,10 @@
 		<string>This needs needs the photo library access so that you can choose a photo</string>
 		<key>NSFaceIDUsageDescription</key>
 		<string>This app uses Face ID to authenticate the user and unlock the wallet.</string>
+		<key>NSBluetoothAlwaysUsageDescription</key>
+		<string>This app uses Bluetooth to connect to your BitBox02 hardware wallet.</string>
+		<key>NSBluetoothPeripheralUsageDescription</key>
+		<string>This app uses Bluetooth to connect to your BitBox02 hardware wallet.</string>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>UILaunchStoryboardName</key>

@@ -67,7 +67,7 @@ class DfxBrokerbotService {
       throw Exception('SellPrice request failed: sharesInput is invalid');
     }
 
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
     final uri = buildUri(_host, _sellPricePath, {
       'shares': shares.toString(),
       'currency': currency.code,
@@ -91,7 +91,7 @@ class DfxBrokerbotService {
       throw Exception('SellShares request failed: amountInput is invalid');
     }
 
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
     final uri = buildUri(_host, _sellSharesPath, {
       'amount': amount.toString(),
       'currency': currency.code,

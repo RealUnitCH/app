@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:bitbox_flutter/bitbox_manager.dart';
+import 'package:convert/convert.dart' as convert;
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -26,15 +28,22 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
       throw UnimplementedError('EvmLedgerCredentials.signToEcSignature');
 
   @override
-  Future<MsgSignature> signToSignature(Uint8List payload,
-      {int? chainId, bool isEIP1559 = false}) async {
+  Future<MsgSignature> signToSignature(
+    Uint8List payload, {
+    int? chainId,
+    bool isEIP1559 = false,
+  }) async {
     if (bitboxManager == null) {
       throw Exception('Bitbox not connected');
     }
 
     if (isEIP1559) payload = payload.sublist(1);
-    final sig = await bitboxManager!
-        .signETHRLPTransaction(chainId ?? 1, derivationPath!, bytesToHex(payload), isEIP1559);
+    final sig = await bitboxManager!.signETHRLPTransaction(
+      chainId ?? 1,
+      derivationPath!,
+      bytesToHex(payload),
+      isEIP1559,
+    );
 
     final r = bytesToHex(sig.sublist(0, 32));
     final s = bytesToHex(sig.sublist(32, 32 + 32));
@@ -73,6 +82,17 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
   @override
   Uint8List signPersonalMessageToUint8List(Uint8List payload, {int? chainId}) =>
       throw UnimplementedError('EvmLedgerCredentials.signPersonalMessageToUint8List');
+
+  Future<String> signTypedDataV4(int chainId, String jsonData) async {
+    if (isNotConnected) throw Exception('Bitbox not connected');
+
+    final signatureBytes = await bitboxManager!.signETHTypedMessage(
+      chainId,
+      derivationPath!,
+      Uint8List.fromList(utf8.encode(jsonData)),
+    );
+    return '0x${convert.hex.encode(signatureBytes)}';
+  }
 
   bool get isNotConnected => bitboxManager == null;
 }

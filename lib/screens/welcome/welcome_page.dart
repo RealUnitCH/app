@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/utils/device_info.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
 import 'package:realunit_wallet/screens/welcome/widgets/welcome_card.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
@@ -18,13 +17,13 @@ class WelcomePage extends StatefulWidget {
 }
 
 class _WelcomePageState extends State<WelcomePage> {
-  bool showSecondStep = !DeviceInfo.instance.isAndroid;
+  bool showSecondStep = false;
 
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: RealUnitColors.brand700,
     appBar: AppBar(
-      leading: showSecondStep && DeviceInfo.instance.isAndroid
+      leading: showSecondStep
           ? IconButton(
               onPressed: () => setState(() => showSecondStep = false),
               icon: const Icon(Icons.arrow_back_rounded),
@@ -82,15 +81,14 @@ class _WelcomePageState extends State<WelcomePage> {
                             'assets/images/illustrations/software_wallet.svg',
                           ),
                         ),
-                        if (DeviceInfo.instance.isAndroid)
-                          WelcomeCard(
-                            title: S.of(context).bitbox,
-                            description: S.of(context).hardwareWalletSubtitle,
-                            trailing: SvgPicture.asset(
-                              'assets/images/illustrations/bitbox.svg',
-                            ),
-                            onPressed: () => onBitboxPressed(context),
+                        WelcomeCard(
+                          title: S.of(context).bitbox,
+                          description: S.of(context).hardwareWalletSubtitle,
+                          trailing: SvgPicture.asset(
+                            'assets/images/illustrations/bitbox.svg',
                           ),
+                          onPressed: () => onBitboxPressed(context),
+                        ),
                       ],
                     ),
                   ),

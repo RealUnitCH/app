@@ -1,7 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/blockchain.dart';
-import 'package:realunit_wallet/packages/open_crypto_pay/models.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
@@ -18,7 +17,6 @@ import 'package:realunit_wallet/screens/receive/receive_page.dart';
 import 'package:realunit_wallet/screens/restore_wallet/restore_wallet_page.dart';
 import 'package:realunit_wallet/screens/sell/sell_page.dart';
 import 'package:realunit_wallet/screens/send/send_page.dart';
-import 'package:realunit_wallet/screens/send_invoice/send_invoice_page.dart';
 import 'package:realunit_wallet/screens/settings/settings_page.dart';
 import 'package:realunit_wallet/screens/settings_contact/settings_contact_page.dart';
 import 'package:realunit_wallet/screens/settings_currencies/settings_currencies_page.dart';
@@ -186,11 +184,6 @@ final GoRouter routerConfig = GoRouter(
         params: (state.extra as SendRouteParams?) ?? const SendRouteParams(),
       ),
       routes: [
-        GoRoute(
-          name: AppRoutes.sendInvoice,
-          path: 'openCryptoPay',
-          builder: (_, state) => SendInvoicePage(request: state.extra as OpenCryptoPayRequest),
-        ),
         GoRoute(
           name: AppRoutes.sendSuccess,
           path: 'success/:txId',

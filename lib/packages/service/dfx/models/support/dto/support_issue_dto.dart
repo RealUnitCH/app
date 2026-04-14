@@ -37,5 +37,4 @@ class SupportIssueDto {
     );
   }
 
-  bool get isOpen => state == SupportIssueState.created || state == SupportIssueState.pending;
 }

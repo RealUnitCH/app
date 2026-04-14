@@ -35,13 +35,11 @@ dependencies:
 
   async: ^2.13.0
   basic_utils: ^5.7.0
-  bech32: ^0.2.2
   bip32: ^2.0.0
   bip39: ^1.0.6
   collection: ^1.19.0
   convert: ^3.1.2
-  crypto: ^3.0.6
-  drift: ^2.31.0
+  drift: ^2.32.1
   eth_sig_util_plus: ^0.0.10
   eip7702:
     git:
@@ -53,10 +51,9 @@ dependencies:
       ref: up-to-date-dependecies
   erc20: ^1.0.1
   equatable: ^2.0.0
-  mobile_scanner: ^7.0.1
   fl_chart: 1.0.0
   flutter_bloc: ^9.0.0
-  flutter_idensic_mobile_sdk_plugin: ^1.40.2
+  flutter_idensic_mobile_sdk_plugin: ^1.42.0
   image_picker: ^1.1.2
   flutter_inappwebview: ^6.1.5
   flutter_markdown_plus: ^1.0.7
@@ -75,18 +72,15 @@ dependencies:
   qr_flutter: ^4.1.0
   graphql: ^5.2.1
   shared_preferences: ^2.5.2
-  sqlcipher_flutter_libs: ^0.6.4
-  sqlite3: 2.7.4
+  sqlite3: ^3.3.0
   uuid: ^4.5.1
   url_launcher: ^6.3.1
   web3dart: ^2.7.1
   # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
   bitbox_flutter:
     git:
-      url: https://github.com/konstantinullrich/bitbox_flutter
-      ref: e33e3888a5f384d960b11ad406b906b5770aede7
+      url: https://github.com/DFXswiss/bitbox_flutter.git
+      ref: feature/ios-ble-pairing
 
 dev_dependencies:
   flutter_test:
@@ -94,7 +88,7 @@ dev_dependencies:
 
   bloc_test: ^10.0.0
   build_runner: ^2.13.0
-  drift_dev: ^2.31.0
+  drift_dev: ^2.32.1
 
   flutter_launcher_icons: ^0.14.3
   flutter_lints: ^6.0.0
@@ -103,11 +97,18 @@ dev_dependencies:
   mocktail: ^1.0.4
 
 dependency_overrides:
+  analyzer: ^10.0.0
   collection: 1.19.0
+  dart_style: 3.1.5
   web3dart:
     git:
       url: https://github.com/cake-tech/web3dart.git
       ref: cake
+
+hooks:
+  user_defines:
+    sqlite3:
+      source: sqlite3mc
 
 flutter:
   # The following line ensures that the Material Icons font is
@@ -123,32 +124,6 @@ flutter:
     - assets/images/illustrations/
     - assets/images/splash/
     - assets/legal/
-
-  fonts:
-    - family: Satoshi
-      fonts:
-        - asset: assets/fonts/Satoshi-Regular.ttf
-        - asset: assets/fonts/Satoshi-Italic.ttf
-    - family: Satoshi Variable
-      fonts:
-        - asset: assets/fonts/Satoshi-Variable.ttf
-        - asset: assets/fonts/Satoshi-VariableItalic.ttf
-    - family: Satoshi Medium
-      fonts:
-        - asset: assets/fonts/Satoshi-Medium.ttf
-        - asset: assets/fonts/Satoshi-MediumItalic.ttf
-    - family: Satoshi Light
-      fonts:
-        - asset: assets/fonts/Satoshi-Light.ttf
-        - asset: assets/fonts/Satoshi-LightItalic.ttf
-    - family: Satoshi Bold
-      fonts:
-        - asset: assets/fonts/Satoshi-Bold.ttf
-        - asset: assets/fonts/Satoshi-BoldItalic.ttf
-    - family: Satoshi Black
-      fonts:
-        - asset: assets/fonts/Satoshi-Black.ttf
-        - asset: assets/fonts/Satoshi-BlackItalic.ttf
 
 flutter_launcher_icons:
   android: "launcher_icon"
