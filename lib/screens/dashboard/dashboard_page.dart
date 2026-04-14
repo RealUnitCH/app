@@ -146,6 +146,7 @@ class DashboardView extends StatelessWidget {
                           vertical: 24.0,
                         ),
                         child: Column(
+                          crossAxisAlignment: .stretch,
                           children: [
                             const DashboardPendingTransactions(),
                             const Spacer(),

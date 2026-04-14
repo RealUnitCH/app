@@ -15,7 +15,6 @@ class AppStore {
 
   List<Node> _nodes = [];
   AWallet? _wallet;
-  String? _debugAddress;
 
   AppStore(this.getApiConfig, this.sessionCache);
 
@@ -26,13 +25,9 @@ class AppStore {
     throw Exception('No Wallet set');
   }
 
-  set debugAddress(String address) => _debugAddress = address;
-
   ApiConfig get apiConfig => getApiConfig();
 
-  String get primaryAddress => _wallet != null
-      ? wallet.currentAccount.primaryAddress.address.hex
-      : _debugAddress ?? (throw Exception('No Wallet set'));
+  String get primaryAddress => wallet.currentAccount.primaryAddress.address.hex;
 
   Future<void> refreshNodes(NodeRepository nodeRepository) async {
     _nodes = await nodeRepository.allNodes;

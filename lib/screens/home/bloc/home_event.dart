@@ -33,5 +33,10 @@ final class AcceptSoftwareTermsEvent extends HomeEvent {
 }
 
 final class DebugAuthCompleteEvent extends HomeEvent {
-  const DebugAuthCompleteEvent();
+  const DebugAuthCompleteEvent({required this.address});
+
+  final String address;
+
+  @override
+  List<Object> get props => [address];
 }

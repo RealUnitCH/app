@@ -14,6 +14,7 @@ import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/service/biometric_service.dart';
+import 'package:realunit_wallet/packages/service/debug_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_bank_account_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
@@ -147,6 +148,9 @@ void setupServices() {
   getIt.registerFactory(() => RealUnitSellPaymentInfoService(getIt<AppStore>()));
   getIt.registerFactory(() => RealUnitWalletService(getIt<AppStore>()));
   getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
+  getIt.registerFactory(
+    () => DebugAuthService(getIt<AppStore>(), getIt<SharedPreferences>()),
+  );
 }
 
 void setupBlocs() {

@@ -85,8 +85,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     emit(state.copyWith(isLoadingWallet: true));
 
     await _appStore.sessionCache.clear();
-    await _walletService.deleteCurrentWallet();
-    _settingsService.setTermsAccepted(false);
+    if (_walletService.hasWallet()) {
+      await _walletService.deleteCurrentWallet();
+      _settingsService.setTermsAccepted(false);
+    }
     emit(
       HomeState(
         openWallet: null,
@@ -130,7 +132,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     emit(state.copyWith(softwareTermsAccepted: true));
   }
 
-  void _onDebugAuthComplete(DebugAuthCompleteEvent event, Emitter<HomeState> emit) {
-    emit(state.copyWith(isDebugAuthenticated: true, isFiatServiceAvailable: true));
+  Future<void> _onDebugAuthComplete(DebugAuthCompleteEvent event, Emitter<HomeState> emit) async {
+    final wallet = await _walletService.createDebugWallet(event.address);
+    _appStore.wallet = wallet;
+    emit(state.copyWith(openWallet: wallet));
+    await setupFiatService(emit);
   }
 }

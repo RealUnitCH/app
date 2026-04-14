@@ -38,7 +38,7 @@ class _DebugAuthViewState extends State<DebugAuthView> {
     body: BlocListener<DebugAuthCubit, DebugAuthState>(
       listenWhen: (prev, curr) => !prev.isAuthenticated && curr.isAuthenticated,
       listener: (context, state) {
-        context.read<HomeBloc>().add(const DebugAuthCompleteEvent());
+        context.read<HomeBloc>().add(DebugAuthCompleteEvent(address: state.address));
       },
       child: BlocBuilder<DebugAuthCubit, DebugAuthState>(
         builder: (context, state) => SingleChildScrollView(
