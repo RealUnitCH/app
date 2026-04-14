@@ -18,7 +18,7 @@ class TransactionRow extends StatelessWidget {
     required this.transaction,
     required this.walletAddress,
     this.firstRowTextColor = RealUnitColors.realUnitBlack,
-    this.secondRowTextColor = DEuroColors.titanGray60,
+    this.secondRowTextColor = RealUnitColors.titanGray60,
     this.showBlockchainIcon = false,
   });
 
@@ -126,7 +126,7 @@ class SavingsTransactionRow extends StatelessWidget {
     super.key,
     required this.transaction,
     this.firstRowTextColor = RealUnitColors.realUnitBlack,
-    this.secondRowTextColor = DEuroColors.titanGray60,
+    this.secondRowTextColor = RealUnitColors.titanGray60,
     this.showBlockchainIcon = false,
   });
 

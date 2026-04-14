@@ -33,7 +33,7 @@ class _StandardSlideButtonState extends State<StandardSlideButton> {
           height: widget.height,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(40),
-            color: DEuroColors.neutralGrey93,
+            color: RealUnitColors.neutralGrey93,
           ),
           child: Stack(
             alignment: Alignment.centerLeft,
