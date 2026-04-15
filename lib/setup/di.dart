@@ -7,7 +7,6 @@ import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
-import 'package:realunit_wallet/packages/repository/node_repository.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
@@ -83,15 +82,12 @@ Future<void> finishSetup(String encryptionKey) async {
   setupBlocs();
 
   await setupDefaultAssets();
-  await setupDefaultNodes();
-  await getIt<AppStore>().refreshNodes(getIt<NodeRepository>());
 }
 
 void setupRepositories() {
   getIt.registerFactory(() => WalletRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => BalanceRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => AssetRepository(getIt<AppDatabase>()));
-  getIt.registerFactory(() => NodeRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => CacheRepository(getIt<AppDatabase>()));
   getIt.registerFactory(
     () => TransactionRepository(
@@ -124,7 +120,6 @@ void setupServices() {
   getIt.registerFactory(
     () => TransactionHistoryService(
       getIt<AppStore>(),
-      getIt<AssetRepository>(),
       getIt<TransactionRepository>(),
     ),
   );

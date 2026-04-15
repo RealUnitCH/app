@@ -58,7 +58,7 @@ void main() {
     when(
       () => transactionRepository.watchTransactionsOfAssets(any(), any()),
     ).thenAnswer((_) => const Stream<List<Transaction>>.empty());
-    when(() => apiConfig.asset).thenReturn(defaultAssets.first);
+    when(() => apiConfig.asset).thenReturn(realUnitAsset);
     when(() => appStore.primaryAddress).thenReturn(walletAddress);
     when(() => appStore.apiConfig).thenReturn(apiConfig);
   });
@@ -112,7 +112,7 @@ void main() {
           senderAddress: '0x0001114b1da7089986e7e8d19140bfc98e5880c2',
           receiverAddress: '0x0001114b1da7089986e7e8d19140bfc98e5880c2',
           amount: BigInt.from(5),
-          asset: defaultAssets.first,
+          asset: realUnitAsset,
           type: TransactionTypes.transfer,
           data: '',
           note: '',
@@ -125,7 +125,7 @@ void main() {
           senderAddress: '0x0001114b1da7089986e7e8d19140bfc98e5880c2',
           receiverAddress: '0x0001114b1da7089986e7e8d19140bfc98e5880c2',
           amount: BigInt.from(5),
-          asset: defaultAssets.first,
+          asset: realUnitAsset,
           type: TransactionTypes.transfer,
           data: '',
           note: '',

@@ -71,11 +71,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       return;
     }
 
-    _balanceService.updateBalances(_appStore.primaryAddress);
+    _balanceService.updateBalance(_appStore.primaryAddress);
     _balanceService.startSync(_appStore.primaryAddress);
     _transactionHistoryService.apiBasedSync();
-    _transactionHistoryService.explorerAssistedScan();
-    _transactionHistoryService.ponderBasedSync();
   }
 
   Future<void> _onDeleteCurrentWallet(
@@ -101,11 +99,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
   Future<void> _onLoadWallet(LoadWalletEvent event, Emitter<HomeState> emit) async {
     _appStore.wallet = event.wallet;
-    _balanceService.updateBalances(_appStore.primaryAddress);
+    _balanceService.updateBalance(_appStore.primaryAddress);
     _balanceService.startSync(_appStore.primaryAddress);
     _transactionHistoryService.apiBasedSync();
-    _transactionHistoryService.explorerAssistedScan();
-    _transactionHistoryService.ponderBasedSync();
 
     emit(state.copyWith(openWallet: _appStore.wallet, isLoadingWallet: false));
 
