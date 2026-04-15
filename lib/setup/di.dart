@@ -85,7 +85,12 @@ Future<void> finishSetup(String encryptionKey) async {
 }
 
 void setupRepositories() {
-  getIt.registerFactory(() => WalletRepository(getIt<AppDatabase>()));
+  getIt.registerFactory(
+    () => WalletRepository(
+      getIt<AppDatabase>(),
+      getIt<SecureStorage>(),
+    ),
+  );
   getIt.registerFactory(() => BalanceRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => AssetRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => CacheRepository(getIt<AppDatabase>()));

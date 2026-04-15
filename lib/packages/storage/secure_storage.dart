@@ -1,14 +1,18 @@
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pointycastle/api.dart';
+import 'package:pointycastle/block/aes.dart';
+import 'package:pointycastle/block/modes/gcm.dart';
 import 'package:pointycastle/key_derivators/api.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web3dart/crypto.dart';
 
 class SecureStorage {
-  static const _encryptionKey = 'drift.encryption.password';
+  static const _databaseEncryptionKey = 'drift.encryption.password';
+  static const _mnemonicEncryptionKey = 'wallet.mnemonic.encryption.key';
   static const _pinHashKey = 'pin.hash';
 
   final FlutterSecureStorage _secureStorage;
@@ -27,10 +31,10 @@ class SecureStorage {
     return bytesToHex(derivator.process(utf8.encode(key)));
   }
 
-  Future<String?> getEncryptionKey() => _secureStorage.read(key: _encryptionKey);
+  Future<String?> getEncryptionKey() => _secureStorage.read(key: _databaseEncryptionKey);
 
   Future<void> setEncryptionKey(String key) =>
-      _secureStorage.write(key: _encryptionKey, value: key);
+      _secureStorage.write(key: _databaseEncryptionKey, value: key);
 
   // Pin
 
@@ -47,4 +51,36 @@ class SecureStorage {
   Future<void> setPinHash(String hash) => _secureStorage.write(key: _pinHashKey, value: hash);
 
   Future<void> deletePinHash() => _secureStorage.delete(key: _pinHashKey);
+
+  // Mnemonic
+
+  Future<Uint8List> getOrCreateMnemonicKey() async {
+    final existing = await _secureStorage.read(key: _mnemonicEncryptionKey);
+    if (existing != null) return base64.decode(existing);
+    final key = _secureRandomBytes(32);
+    await _secureStorage.write(key: _mnemonicEncryptionKey, value: base64.encode(key));
+    return key;
+  }
+
+  static String encryptSeed(Uint8List key, String plaintext) {
+    final iv = _secureRandomBytes(12);
+    final cipher = GCMBlockCipher(AESEngine())
+      ..init(true, AEADParameters(KeyParameter(key), 128, iv, Uint8List(0)));
+    final ciphertext = cipher.process(Uint8List.fromList(utf8.encode(plaintext)));
+    return '${base64.encode(iv)}:${base64.encode(ciphertext)}';
+  }
+
+  static String decryptSeed(Uint8List key, String encoded) {
+    final colonIndex = encoded.indexOf(':');
+    final iv = base64.decode(encoded.substring(0, colonIndex));
+    final ciphertext = base64.decode(encoded.substring(colonIndex + 1));
+    final cipher = GCMBlockCipher(AESEngine())
+      ..init(false, AEADParameters(KeyParameter(key), 128, iv, Uint8List(0)));
+    return utf8.decode(cipher.process(ciphertext));
+  }
+
+  static Uint8List _secureRandomBytes(int length) {
+    final random = Random.secure();
+    return Uint8List.fromList(List.generate(length, (_) => random.nextInt(256)));
+  }
 }
