@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
@@ -21,6 +22,8 @@ class MockVerifyPinCubit extends MockCubit<VerifyPinState> implements VerifyPinC
 class MockPinAuthCubit extends MockCubit<PinAuthState> implements PinAuthCubit {}
 
 class MockBiometricService extends Mock implements BiometricService {}
+
+class MockSettingsRepository extends Mock implements SettingsRepository {}
 
 class MockSecureStorage extends Mock implements SecureStorage {}
 
@@ -43,6 +46,9 @@ void main() {
     getIt.registerSingleton<BiometricService>(biometricService);
     getIt.registerSingleton<SecureStorage>(MockSecureStorage());
     getIt.registerSingleton<PinAuthCubit>(pinAuthCubit);
+    final settingsRepository = MockSettingsRepository();
+    when(() => settingsRepository.pinFailedAttempts).thenReturn(1);
+    getIt.registerSingleton<SettingsRepository>(settingsRepository);
   }
 
   setUpAll(() {
@@ -97,13 +103,61 @@ void main() {
     });
 
     testWidgets('shows error message when pin is incorrect', (tester) async {
-      when(() => verifyPinCubit.state).thenReturn(const VerifyPinFailure());
+      when(() => verifyPinCubit.state).thenReturn(const VerifyPinFailure(failedAttempts: 1));
 
       await tester.pumpApp(
         buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
       );
 
       expect((tester.widget(find.byType(Visibility)) as Visibility).visible, isTrue);
+    });
+
+    testWidgets('shows error message and locks temporarily when pin is reaches threshold', (
+      tester,
+    ) async {
+      when(() => verifyPinCubit.state).thenReturn(
+        VerifyPinTemporarilyLocked(
+          failedAttempts: 9,
+          lockedUntil: DateTime.now().add(const Duration(minutes: 1)),
+        ),
+      );
+
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
+      expect(find.text(S.current.pinVerifyLockedTemporarily('59s')), findsOne);
+      expect(
+        tester
+            .widget<IgnorePointer>(
+              find.byWidgetPredicate(
+                (widget) => widget is IgnorePointer && widget.child.runtimeType == NumberPad,
+              ),
+            )
+            .ignoring,
+        isTrue,
+      );
+    });
+
+    testWidgets('shows error message and locks permanently when pin is reaches threshold', (
+      tester,
+    ) async {
+      when(() => verifyPinCubit.state).thenReturn(const VerifyPinLocked(failedAttempts: 9));
+
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
+
+      expect(find.text(S.current.pinVerifyLocked), findsOne);
+      expect(
+        tester
+            .widget<IgnorePointer>(
+              find.byWidgetPredicate(
+                (widget) => widget is IgnorePointer && widget.child.runtimeType == NumberPad,
+              ),
+            )
+            .ignoring,
+        isTrue,
+      );
     });
 
     group('$BlocListener', () {
