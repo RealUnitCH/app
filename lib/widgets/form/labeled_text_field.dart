@@ -9,6 +9,7 @@ class LabeledTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final void Function(String)? onChanged;
   final String? Function(String?)? validator;
+  final int? maxLines;
   final bool hideErrorText;
   final TextCapitalization textCapitalization;
 
@@ -21,6 +22,7 @@ class LabeledTextField extends StatelessWidget {
     this.keyboardType,
     this.onChanged,
     this.validator,
+    this.maxLines = 1,
     this.hideErrorText = true,
     this.textCapitalization = TextCapitalization.none,
   });
@@ -77,6 +79,7 @@ class LabeledTextField extends StatelessWidget {
                   )
                 : null,
           ),
+          maxLines: maxLines,
           keyboardType: keyboardType,
           validator: validator,
         ),

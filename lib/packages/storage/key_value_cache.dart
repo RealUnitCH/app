@@ -8,6 +8,9 @@ extension CacheStorage on AppDatabase {
   Future<CacheEntry?> readCacheEntry(String key) =>
       (select(keyValueCache)..where((row) => row.id.equals(key))).getSingleOrNull();
 
+  Future<int> deleteCacheEntry(String key) =>
+      (delete(keyValueCache)..where((row) => row.id.equals(key))).go();
+
   Future<List<CacheEntry>> get allCacheEntries => keyValueCache.all().get();
 }
 

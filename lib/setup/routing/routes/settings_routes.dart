@@ -9,8 +9,6 @@ abstract final class SettingsRoutes {
   static const network = 'settingsNetwork';
   static const taxReport = 'settingsTaxReport';
   static const seed = 'settingsSeed';
-  static const nodes = 'settingsNodes';
-  static const editNode = 'settingsEditNode';
   static const walletAddress = 'settingsWalletAddress';
   static const userData = 'settingsUserData';
   static const editName = 'settingsEditName';

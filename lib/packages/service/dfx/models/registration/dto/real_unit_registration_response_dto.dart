@@ -12,8 +12,4 @@ class RealUnitRegistrationResponseDto {
       status: RegistrationStatus.fromString(json['status'] as String),
     );
   }
-
-  Map<String, dynamic> toJson() => {
-        'status': status.name,
-      };
 }

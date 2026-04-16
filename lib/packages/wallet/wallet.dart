@@ -1,9 +1,13 @@
+import 'dart:typed_data';
+
 import 'package:bip32/bip32.dart';
 import 'package:bip39/bip39.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
+import 'package:web3dart/crypto.dart';
+import 'package:web3dart/web3dart.dart';
 
-enum WalletType { software, bitbox }
+enum WalletType { software, bitbox, debug }
 
 abstract class AWallet {
   WalletType get walletType;
@@ -57,8 +61,58 @@ class BitboxWallet extends AWallet {
   BitboxWalletAccount get currentAccount => _currentAccount;
 
   BitboxWallet(super.id, super.name, String address, this._bitboxService) {
-    primaryAccount = BitboxWalletAccount(0, _bitboxService.getCredentials(
-        address));
+    primaryAccount = BitboxWalletAccount(0, _bitboxService.getCredentials(address));
     _currentAccount = primaryAccount;
+  }
+}
+
+class _DebugCredentials extends CredentialsWithKnownAddress {
+  final EthereumAddress _address;
+
+  _DebugCredentials(String hexAddress) : _address = EthereumAddress.fromHex(hexAddress);
+
+  @override
+  EthereumAddress get address => _address;
+
+  @override
+  MsgSignature signToEcSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) =>
+      throw UnsupportedError('Debug wallet cannot sign');
+
+  @override
+  Future<MsgSignature> signToSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) =>
+      throw UnsupportedError('Debug wallet cannot sign');
+
+  @override
+  Future<Uint8List> signPersonalMessage(Uint8List payload, {int? chainId}) =>
+      throw UnsupportedError('Debug wallet cannot sign');
+
+  @override
+  Uint8List signPersonalMessageToUint8List(Uint8List payload, {int? chainId}) =>
+      throw UnsupportedError('Debug wallet cannot sign');
+}
+
+class DebugWalletAccount extends AWalletAccount {
+  DebugWalletAccount(String hexAddress) : super(0, _DebugCredentials(hexAddress));
+
+  @override
+  Future<String> signMessage(String message, {int addressIndex = 0}) =>
+      throw UnsupportedError('Debug wallet cannot sign');
+}
+
+class DebugWallet extends AWallet {
+  @override
+  WalletType get walletType => WalletType.debug;
+
+  final String address;
+  late final DebugWalletAccount _account;
+
+  @override
+  DebugWalletAccount get primaryAccount => _account;
+
+  @override
+  DebugWalletAccount get currentAccount => _account;
+
+  DebugWallet(super.id, super.name, this.address) {
+    _account = DebugWalletAccount(address);
   }
 }

@@ -38,24 +38,6 @@ class ReceivePage extends StatelessWidget {
               uri: EthereumURI(address: address, amount: '').toString(),
               subtitle: address,
             ),
-            // if (_appStore.dfxAuthToken != null) ...[
-            //   OptionCard(
-            //     title: S.of(context).deposit_with_bank_transfer,
-            //     description: S.of(context).deposit_with_bank_transfer_description,
-            //     leadingIcon: Icons.money,
-            //     action: () => getIt
-            //         .get<DFXService>()
-            //         .launchProvider(context, true, paymentMethod: "bank"),
-            //   ),
-            //   OptionCard(
-            //     title: S.of(context).deposit_with_card,
-            //     description: S.of(context).deposit_with_card_description,
-            //     leadingIcon: Icons.credit_card,
-            //     action: () => getIt
-            //         .get<DFXService>()
-            //         .launchProvider(context, true, paymentMethod: "card"),
-            //   ),
-            // ],
           ],
         ),
       ),

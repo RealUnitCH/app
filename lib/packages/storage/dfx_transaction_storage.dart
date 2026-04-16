@@ -40,11 +40,11 @@ extension DfxTransactionStorage on AppDatabase {
   Future<DfxTransactionDetailsData?> getDfxTransactionDetailsByDfxId(int dfxId) =>
       (select(dfxTransactionDetails)..where((row) => row.dfxId.equals(dfxId))).getSingleOrNull();
 
-  Future<List<DfxTransactionDetailsData>> get allDfxTransactionDetails =>
-      dfxTransactionDetails.all().get();
-
   Stream<List<DfxTransactionDetailsData>> watchDfxTransactionDetails() =>
       select(dfxTransactionDetails).watch();
+
+  Future<List<DfxTransactionDetailsData>> get allDfxTransactionDetails =>
+      dfxTransactionDetails.all().get();
 }
 
 @DataClassName('DfxTransactionDetailsData')

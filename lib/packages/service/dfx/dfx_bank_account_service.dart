@@ -14,7 +14,7 @@ class DfxBankAccountService {
   DfxBankAccountService(AppStore appStore) : _appStore = appStore;
 
   Future<List<BankAccountDto>> getBankAccounts() async {
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, _bankAccountPath);
     final response = await _appStore.httpClient.get(
@@ -35,7 +35,7 @@ class DfxBankAccountService {
   }
 
   Future<BankAccountDto> createBankAccount(String iban, String? label) async {
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, _bankAccountPath);
     final response = await _appStore.httpClient.post(
@@ -63,7 +63,7 @@ class DfxBankAccountService {
     bool? isDefault,
     bool? isActive,
   }) async {
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, '$_bankAccountPath/$id');
     final response = await _appStore.httpClient.put(

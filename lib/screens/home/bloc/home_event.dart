@@ -31,3 +31,12 @@ final class CompleteOnboardingEvent extends HomeEvent {
 final class AcceptSoftwareTermsEvent extends HomeEvent {
   const AcceptSoftwareTermsEvent();
 }
+
+final class DebugAuthCompleteEvent extends HomeEvent {
+  const DebugAuthCompleteEvent({required this.address});
+
+  final String address;
+
+  @override
+  List<Object> get props => [address];
+}

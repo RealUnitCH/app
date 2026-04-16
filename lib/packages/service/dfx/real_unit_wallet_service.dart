@@ -15,7 +15,7 @@ class RealUnitWalletService {
   String get _host => _appStore.apiConfig.apiHost;
 
   Future<RealUnitWalletStatusDto> getWalletStatus() async {
-    final authToken = _appStore.dfxAuthToken;
+    final authToken = _appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, _walletStatusPath);
     final response = await _appStore.httpClient.get(

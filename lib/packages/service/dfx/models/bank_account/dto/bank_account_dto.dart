@@ -13,14 +13,6 @@ class BankAccountDto {
     required this.isDefault,
   });
 
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'iban': iban,
-    if (label != null) 'label': label,
-    'active': isActive,
-    'default': isDefault,
-  };
-
   factory BankAccountDto.fromJson(Map<String, dynamic> json) {
     return BankAccountDto(
       id: json['id'] as int,
