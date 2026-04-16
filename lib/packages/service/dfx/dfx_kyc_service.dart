@@ -26,7 +26,7 @@ class DfxKycService extends DFXAuthService {
   String get walletAddress => wallet.primaryAddress.address.hexEip55;
 
   Future<UserDto> getUser() async {
-    final authToken = appStore.dfxAuthToken;
+    final authToken = appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, _userPath);
     var response = await appStore.httpClient.get(
@@ -59,7 +59,7 @@ class DfxKycService extends DFXAuthService {
 
   Future<KycLevelDto> getKycStatus() async {
     final user = await getUser();
-    final authToken = appStore.dfxAuthToken;
+    final authToken = appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, _kycPath);
     final response = await appStore.httpClient.get(
@@ -82,7 +82,7 @@ class DfxKycService extends DFXAuthService {
 
   Future<KycSessionDto> continueKyc() async {
     final user = await getUser();
-    final authToken = appStore.dfxAuthToken;
+    final authToken = appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, _kycPath);
     final response = await appStore.httpClient.put(
@@ -106,7 +106,7 @@ class DfxKycService extends DFXAuthService {
   /// sets the given KycStep in progress as the currentStep
   Future<KycSessionDto> startStep(KycStepName stepName) async {
     final user = await getUser();
-    final authToken = appStore.dfxAuthToken;
+    final authToken = appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, '$_kycPath/${stepName.value}');
     final response = await appStore.httpClient.get(
@@ -128,7 +128,7 @@ class DfxKycService extends DFXAuthService {
   }
 
   Future<void> updateUser(Map<String, dynamic> body) async {
-    final authToken = appStore.dfxAuthToken;
+    final authToken = appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, _userPath);
     final response = await appStore.httpClient.put(
@@ -149,7 +149,7 @@ class DfxKycService extends DFXAuthService {
   /// similar to `updateUser()` but is used to set/update data of a user by using the provided session url from `startStep()` or `continueKyc()`
   Future<void> setData(String url, Map<String, dynamic> body) async {
     final user = await getUser();
-    final authToken = appStore.dfxAuthToken;
+    final authToken = appStore.sessionCache.authToken;
 
     final uri = Uri.parse(url);
     final response = await appStore.httpClient.put(
@@ -171,7 +171,7 @@ class DfxKycService extends DFXAuthService {
 
   Future<void> request2FaCode() async {
     final user = await getUser();
-    final authToken = appStore.dfxAuthToken;
+    final authToken = appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, '$_kycPath/2fa', {'level': 'Strict'});
     final response = await appStore.httpClient.post(
@@ -192,7 +192,7 @@ class DfxKycService extends DFXAuthService {
 
   Future<void> verify2FaCode(String code) async {
     final user = await getUser();
-    final authToken = appStore.dfxAuthToken;
+    final authToken = appStore.sessionCache.authToken;
 
     final uri = buildUri(_host, '$_kycPath/2fa/verify');
     final response = await appStore.httpClient.post(
@@ -217,7 +217,7 @@ class DfxKycService extends DFXAuthService {
     Language language = Language.de,
   }) async {
     final user = await getUser();
-    final authToken = appStore.dfxAuthToken;
+    final authToken = appStore.sessionCache.authToken;
 
     final uri = Uri.parse('$url?lang=${language.code}');
     final response = await appStore.httpClient.get(
@@ -240,7 +240,7 @@ class DfxKycService extends DFXAuthService {
 
   Future<void> setFinancialData(String url, List<KycFinancialResponse> responses) async {
     final user = await getUser();
-    final authToken = appStore.dfxAuthToken;
+    final authToken = appStore.sessionCache.authToken;
 
     final uri = Uri.parse(url);
     final response = await appStore.httpClient.put(

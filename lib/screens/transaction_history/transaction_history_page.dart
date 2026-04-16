@@ -9,8 +9,6 @@ import 'package:realunit_wallet/screens/transaction_history/widgets/transaction_
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/widgets/date_picker_field.dart';
 
-enum DateType { start, end }
-
 class TransactionHistoryPage extends StatelessWidget {
   const TransactionHistoryPage({super.key});
 
@@ -37,7 +35,7 @@ class TransactionHistoryView extends StatelessWidget {
   static final _todaysDate = DateTime.now();
   final _endDateModel = _DatePickerModel(_todaysDate);
   final _startDateModel = _DatePickerModel(
-    DateTime(_todaysDate.year, _todaysDate.month - 1, _todaysDate.day),
+    _todaysDate.subtract(const Duration(days: 365)),
   );
 
   final String walletAddress;

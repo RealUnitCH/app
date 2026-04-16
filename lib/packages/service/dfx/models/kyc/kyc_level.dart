@@ -1,6 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:realunit_wallet/generated/i18n.dart';
-
 enum KycLevel { level0, level10, level20, level30, level40, level50, terminated, rejected }
 
 enum KycStepName {
@@ -212,27 +209,6 @@ extension KycStepStatusExtension on KycStepStatus {
         return 'DataRequested';
       case KycStepStatus.onHold:
         return 'OnHold';
-    }
-  }
-
-  String localizedValue(BuildContext context) {
-    switch (this) {
-      case KycStepStatus.notStarted:
-        return S.of(context).kycStepStatusNotStarted;
-      case KycStepStatus.inProgress:
-        return S.of(context).kycStepStatusInProgress;
-      case KycStepStatus.inReview:
-        return S.of(context).kycStepStatusInReview;
-      case KycStepStatus.failed:
-        return S.of(context).kycStepStatusFailed;
-      case KycStepStatus.completed:
-        return S.of(context).kycStepStatusCompleted;
-      case KycStepStatus.outdated:
-        return S.of(context).kycStepStatusOutdated;
-      case KycStepStatus.dataRequested:
-        return S.of(context).kycStepStatusDataRequested;
-      case KycStepStatus.onHold:
-        return S.of(context).kycStepStatusOnHold;
     }
   }
 

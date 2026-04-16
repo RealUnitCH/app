@@ -11,4 +11,6 @@ class CacheRepository {
 
   Future<String?> read(String key) async =>
       (await _appDatabase.readCacheEntry(key))?.value;
+
+  Future<void> delete(String key) => _appDatabase.deleteCacheEntry(key);
 }

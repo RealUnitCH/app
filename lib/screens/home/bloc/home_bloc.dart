@@ -27,6 +27,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<DeleteCurrentWalletEvent>(_onDeleteCurrentWallet);
     on<CompleteOnboardingEvent>(_onCompleteOnboarding);
     on<AcceptSoftwareTermsEvent>(_onAcceptSoftwareTerms);
+    on<DebugAuthCompleteEvent>(_onDebugAuthComplete);
 
     add(const LoadCurrentWalletEvent());
   }
@@ -70,11 +71,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       return;
     }
 
-    _balanceService.updateBalances(_appStore.primaryAddress);
+    _balanceService.updateBalance(_appStore.primaryAddress);
     _balanceService.startSync(_appStore.primaryAddress);
     _transactionHistoryService.apiBasedSync();
-    _transactionHistoryService.explorerAssistedScan();
-    _transactionHistoryService.ponderBasedSync();
   }
 
   Future<void> _onDeleteCurrentWallet(
@@ -83,9 +82,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   ) async {
     emit(state.copyWith(isLoadingWallet: true));
 
-    _dfxService.invalidateAuthToken();
-    await _walletService.deleteCurrentWallet();
-    _settingsService.setTermsAccepted(false);
+    await _appStore.sessionCache.clear();
+    if (_walletService.hasWallet()) {
+      await _walletService.deleteCurrentWallet();
+      _settingsService.setTermsAccepted(false);
+    }
     emit(
       HomeState(
         openWallet: null,
@@ -98,11 +99,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
   Future<void> _onLoadWallet(LoadWalletEvent event, Emitter<HomeState> emit) async {
     _appStore.wallet = event.wallet;
-    _balanceService.updateBalances(_appStore.primaryAddress);
+    _balanceService.updateBalance(_appStore.primaryAddress);
     _balanceService.startSync(_appStore.primaryAddress);
     _transactionHistoryService.apiBasedSync();
-    _transactionHistoryService.explorerAssistedScan();
-    _transactionHistoryService.ponderBasedSync();
 
     emit(state.copyWith(openWallet: _appStore.wallet, isLoadingWallet: false));
 
@@ -110,11 +109,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   }
 
   Future<void> setupFiatService(Emitter<HomeState> emit) async {
-    if (_appStore.wallet.walletType != WalletType.software) return;
     try {
       await _dfxService.getAuthToken();
       emit(state.copyWith(isFiatServiceAvailable: _dfxService.isAvailable));
-    } catch (_) {}
+    } catch (e) {
+      developer.log('Failed to authenticate with DFX service', error: e);
+      emit(state.copyWith(isFiatServiceAvailable: false));
+    }
   }
 
   void _onCompleteOnboarding(HomeEvent event, Emitter<HomeState> emit) {
@@ -125,5 +126,12 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   void _onAcceptSoftwareTerms(AcceptSoftwareTermsEvent event, Emitter<HomeState> emit) {
     _settingsService.setSoftwareTermsAccepted(true);
     emit(state.copyWith(softwareTermsAccepted: true));
+  }
+
+  Future<void> _onDebugAuthComplete(DebugAuthCompleteEvent event, Emitter<HomeState> emit) async {
+    final wallet = await _walletService.createDebugWallet(event.address);
+    _appStore.wallet = wallet;
+    emit(state.copyWith(openWallet: wallet));
+    await setupFiatService(emit);
   }
 }

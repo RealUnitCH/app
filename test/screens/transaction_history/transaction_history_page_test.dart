@@ -51,13 +51,14 @@ void main() {
     transactionHistoryReceiptCubit = MockTransactionHistoryReceiptCubit();
 
     when(() => settingsBloc.state).thenReturn(const SettingsState());
-    when(() => transactionHistoryFilterCubit.state)
-        .thenReturn(const TransactionHistoryFilterState());
-    when(() => transactionHistoryReceiptCubit.state)
-        .thenReturn(const TransactionHistoryReceiptInitial());
-    when(() => transactionRepository.watchTransactionsOfAssets(any(), any()))
-        .thenAnswer((_) => const Stream<List<Transaction>>.empty());
-    when(() => apiConfig.asset).thenReturn(defaultAssets.first);
+    when(() => transactionHistoryFilterCubit.state).thenReturn(TransactionHistoryFilterState());
+    when(
+      () => transactionHistoryReceiptCubit.state,
+    ).thenReturn(const TransactionHistoryReceiptInitial());
+    when(
+      () => transactionRepository.watchTransactionsOfAssets(any(), any()),
+    ).thenAnswer((_) => const Stream<List<Transaction>>.empty());
+    when(() => apiConfig.asset).thenReturn(realUnitAsset);
     when(() => appStore.primaryAddress).thenReturn(walletAddress);
     when(() => appStore.apiConfig).thenReturn(apiConfig);
   });
@@ -105,33 +106,36 @@ void main() {
     testWidgets('renders $TransactionHistoryRow for each Transaction', (tester) async {
       final transactions = [
         Transaction(
-            height: 0,
-            txId: 'txId',
-            chainId: 0,
-            senderAddress: '0x0001114b1da7089986e7e8d19140bfc98e5880c2',
-            receiverAddress: '0x0001114b1da7089986e7e8d19140bfc98e5880c2',
-            amount: BigInt.from(5),
-            asset: defaultAssets.first,
-            type: TransactionTypes.transfer,
-            data: '',
-            note: '',
-            timestamp: DateTime.now()),
+          height: 0,
+          txId: 'txId',
+          chainId: 0,
+          senderAddress: '0x0001114b1da7089986e7e8d19140bfc98e5880c2',
+          receiverAddress: '0x0001114b1da7089986e7e8d19140bfc98e5880c2',
+          amount: BigInt.from(5),
+          asset: realUnitAsset,
+          type: TransactionTypes.transfer,
+          data: '',
+          note: '',
+          timestamp: DateTime.now(),
+        ),
         Transaction(
-            height: 0,
-            txId: 'txId',
-            chainId: 1,
-            senderAddress: '0x0001114b1da7089986e7e8d19140bfc98e5880c2',
-            receiverAddress: '0x0001114b1da7089986e7e8d19140bfc98e5880c2',
-            amount: BigInt.from(5),
-            asset: defaultAssets.first,
-            type: TransactionTypes.transfer,
-            data: '',
-            note: '',
-            timestamp: DateTime.now()),
+          height: 0,
+          txId: 'txId',
+          chainId: 1,
+          senderAddress: '0x0001114b1da7089986e7e8d19140bfc98e5880c2',
+          receiverAddress: '0x0001114b1da7089986e7e8d19140bfc98e5880c2',
+          amount: BigInt.from(5),
+          asset: realUnitAsset,
+          type: TransactionTypes.transfer,
+          data: '',
+          note: '',
+          timestamp: DateTime.now(),
+        ),
       ];
 
-      when(() => transactionHistoryFilterCubit.state)
-          .thenReturn(TransactionHistoryFilterState(all: transactions, filtered: transactions));
+      when(
+        () => transactionHistoryFilterCubit.state,
+      ).thenReturn(TransactionHistoryFilterState(all: transactions, filtered: transactions));
 
       await tester.pumpApp(buildSubject());
 

@@ -8,18 +8,23 @@ import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
+import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
+import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 
 class MockApiConfig extends Mock implements ApiConfig {}
 
 class MockBalanceRepository extends Mock implements BalanceRepository {}
 
+class MockCacheRepository extends Mock implements CacheRepository {}
+
 class TestAppStore extends AppStore {
   final http.Client client;
 
-  TestAppStore(this.client, ApiConfig Function() apiConfig) : super(apiConfig);
+  TestAppStore(this.client, ApiConfig Function() apiConfig, CacheRepository cacheRepository)
+    : super(apiConfig, SessionCache(cacheRepository));
 
   @override
   http.Client get httpClient => client;
@@ -42,18 +47,21 @@ void main() {
   });
 
   setUpAll(() {
-    registerFallbackValue(Balance(
-      chainId: 1,
-      contractAddress: '0x0',
-      walletAddress: '0x0',
-      balance: BigInt.zero,
-      asset: realUnitAsset,
-    ));
+    registerFallbackValue(
+      Balance(
+        chainId: 1,
+        contractAddress: '0x0',
+        walletAddress: '0x0',
+        balance: BigInt.zero,
+        asset: realUnitAsset,
+      ),
+    );
   });
 
   AppStore buildAppStore(Future<http.Response> Function(http.Request) handler) {
     final client = MockClient(handler);
-    return TestAppStore(client, () => apiConfig)..dfxAuthToken = 'test-auth-token';
+    return TestAppStore(client, () => apiConfig, MockCacheRepository())
+      ..sessionCache.setAuthToken('test-auth-token');
   }
 
   group('$BalanceService', () {
@@ -73,15 +81,16 @@ void main() {
           capturedMethod = request.method;
 
           return http.Response(
-              jsonEncode({
-                'balance': '12345',
-                'addressType': 0,
-              }),
-              200);
+            jsonEncode({
+              'balance': '12345',
+              'addressType': 0,
+            }),
+            200,
+          );
         });
 
         balanceService = BalanceService(balanceRepository, appStore);
-        await balanceService.updateBalances(address);
+        await balanceService.updateBalance(address);
 
         expect(capturedMethod, equals('GET'));
         expect(capturedUrl, contains(apiConfig.apiHost));
@@ -102,7 +111,7 @@ void main() {
         final service = BalanceService(balanceRepository, appStore);
 
         await expectLater(
-          service.updateBalances('0xTestAddress'),
+          service.updateBalance('0xTestAddress'),
           completes,
         );
 
