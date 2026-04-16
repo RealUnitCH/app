@@ -91,6 +91,18 @@ final GoRouter routerConfig = GoRouter(
     ),
 
     GoRoute(
+      name: PinRoutes.gate,
+      path: '/pinGate',
+      builder: (_, state) {
+        final params = state.extra as VerifyPinParams;
+        return VerifyPinPage(
+          description: params.description,
+          onAuthenticated: params.onAuthenticated,
+        );
+      },
+    ),
+
+    GoRoute(
       name: PinRoutes.setup,
       path: '/setupPin',
       builder: (_, _) => const SetupPinPage(),
@@ -99,7 +111,7 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: PinRoutes.verify,
       path: '/verifyPin',
-      builder: (_, _) => const VerifyPinPage(),
+      builder: (_, _) => VerifyPinPage.appLock(),
     ),
 
     GoRoute(
@@ -171,7 +183,6 @@ final GoRouter routerConfig = GoRouter(
       path: '/receive',
       builder: (_, _) => const ReceivePage(isBottomSheet: false),
     ),
-
 
     GoRoute(
       name: SettingsRoutes.settings,
