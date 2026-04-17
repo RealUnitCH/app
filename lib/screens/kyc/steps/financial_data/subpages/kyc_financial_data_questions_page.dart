@@ -11,6 +11,7 @@ import 'package:realunit_wallet/screens/kyc/steps/financial_data/widgets/kyc_que
 import 'package:realunit_wallet/screens/kyc/steps/financial_data/widgets/kyc_question_text_field_widget.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
+import 'package:realunit_wallet/setup/routing/routes/support_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class KycFinancialDataQuestionsPage extends StatelessWidget {
@@ -108,21 +109,21 @@ class KycFinancialDataQuestionsPage extends StatelessWidget {
   }
 
   Widget _buildDescription(BuildContext context, KycFinancialQuestion question) {
-    final link = question.key == 'tnc'
-        ? KycFinancialDataLinks.termsAndConditionsUrl
-        : question.key == 'notification_of_changes'
-        ? KycFinancialDataLinks.supportUrl
-        : null;
-
-    if (link != null) {
+    if (question.key == 'tnc' || question.key == 'notification_of_changes') {
       return GestureDetector(
-        onTap: () => context.pushNamed(
-          AppRoutes.webView,
-          extra: WebViewRouteParams(
-            title: question.title,
-            url: Uri.parse(link),
+        onTap: switch (question.key) {
+          'tnc' => () => context.pushNamed(
+            AppRoutes.webView,
+            extra: WebViewRouteParams(
+              title: question.title,
+              url: Uri.parse(KycFinancialDataLinks.termsAndConditionsUrl),
+            ),
           ),
-        ),
+          'notification_of_changes' => () => context.pushNamed(
+            SupportRoutes.support,
+          ),
+          _ => null,
+        },
         child: Text(
           question.description ?? '',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
