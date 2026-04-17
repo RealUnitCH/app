@@ -63,8 +63,12 @@ class SetupPinCubit extends Cubit<SetupPinState> {
 
   Future<void> _confirmPin(String confirmPin) async {
     if (confirmPin == _createPin) {
-      final hash = SecureStorage.hashPin(confirmPin);
-      await _secureStorage.setPinHash(hash);
+      final salt = SecureStorage.generatePinSalt();
+      final hash = SecureStorage.hashPin(confirmPin, salt);
+      await Future.wait([
+        _secureStorage.setPinSalt(salt),
+        _secureStorage.setPinHash(hash),
+      ]);
       _settingsRepository.isPinEnabled = true;
       emit(state.copyWith(isComplete: true));
     } else {

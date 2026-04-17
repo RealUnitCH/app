@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
@@ -24,21 +27,31 @@ class VerifyPinPage extends StatelessWidget {
   final String? description;
   final VoidCallback onAuthenticated;
   final Widget? bottom;
+  final bool enableLockout;
 
   /// Used to verify PIN before showing specific feature
-  const VerifyPinPage({super.key, this.description, required this.onAuthenticated, this.bottom});
+  const VerifyPinPage({
+    super.key,
+    this.description,
+    required this.onAuthenticated,
+    this.bottom,
+    this.enableLockout = false,
+  });
 
   /// Used for initial app lock check on app start
   factory VerifyPinPage.appLock() => VerifyPinPage(
     onAuthenticated: () => getIt<PinAuthCubit>().onPinVerified(),
     bottom: const _ForgotPinButton(),
+    enableLockout: true,
   );
 
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (_) => VerifyPinCubit(
       getIt<SecureStorage>(),
+      getIt<SettingsRepository>(),
       getIt<BiometricService>(),
+      enableLockout: enableLockout,
     ),
     child: VerifyPinView(
       description: description,
@@ -65,6 +78,8 @@ class VerifyPinView extends StatefulWidget {
 }
 
 class _VerifyPinViewState extends State<VerifyPinView> {
+  Timer? _countdownTimer;
+
   @override
   void initState() {
     super.initState();
@@ -78,85 +93,138 @@ class _VerifyPinViewState extends State<VerifyPinView> {
     listener: (context, state) {
       if (state is VerifyPinSuccess) {
         widget.onAuthenticated();
+      } else if (state is VerifyPinTemporarilyLocked) {
+        _startCountdown(state.lockedUntil);
       }
     },
-    builder: (context, state) => Scaffold(
-      appBar: AppBar(),
-      backgroundColor: RealUnitColors.brand700,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) => SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: IntrinsicHeight(
-                child: Column(
-                  spacing: 4.0,
-                  children: [
-                    const Spacer(),
-                    Padding(
-                      padding: const .symmetric(horizontal: 20.0),
-                      child: Column(
-                        mainAxisAlignment: .center,
-                        children: [
-                          Column(
-                            spacing: 8.0,
-                            children: [
-                              Text(
-                                S.of(context).pinVerify,
-                                textAlign: .center,
-                                style: Theme.of(context).textTheme.headlineMedium,
-                              ),
-                              Text(
-                                widget.description ?? S.of(context).pinVerifyDescription,
-                                textAlign: .center,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: RealUnitColors.neutral500,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 32),
-                          Column(
-                            spacing: 16.0,
-                            children: [
-                              PinIndicator(
-                                pinLength: state.pin.length,
-                                expectedPinLength: pinLength,
-                                wrongPin: state is VerifyPinFailure,
-                              ),
-                              Visibility(
-                                visible: state is VerifyPinFailure,
-                                maintainSize: true,
-                                maintainAnimation: true,
-                                maintainState: true,
-                                child: Text(
-                                  S.of(context).pinVerifyFailed,
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: RealUnitColors.status.red600,
-                                  ),
+    builder: (context, state) {
+      final isLocked = state is VerifyPinTemporarilyLocked || state is VerifyPinLocked;
+
+      return Scaffold(
+        appBar: AppBar(),
+        backgroundColor: RealUnitColors.brand700,
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    spacing: 4.0,
+                    children: [
+                      const Spacer(),
+                      Padding(
+                        padding: const .symmetric(horizontal: 20.0),
+                        child: Column(
+                          mainAxisAlignment: .center,
+                          children: [
+                            Column(
+                              spacing: 8.0,
+                              children: [
+                                Text(
+                                  S.of(context).pinVerify,
                                   textAlign: .center,
+                                  style: Theme.of(context).textTheme.headlineMedium,
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                                Text(
+                                  widget.description ?? S.of(context).pinVerifyDescription,
+                                  textAlign: .center,
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: RealUnitColors.neutral500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 32),
+                            Column(
+                              spacing: 16.0,
+                              children: [
+                                PinIndicator(
+                                  pinLength: state.pin.length,
+                                  expectedPinLength: pinLength,
+                                  wrongPin: state is VerifyPinFailure || isLocked,
+                                ),
+                                Visibility(
+                                  visible: state is VerifyPinFailure || isLocked,
+                                  maintainSize: true,
+                                  maintainAnimation: true,
+                                  maintainState: true,
+                                  child: SizedBox(
+                                    height: 40.0,
+                                    child: Text(
+                                      switch (state) {
+                                        VerifyPinTemporarilyLocked s =>
+                                          S
+                                              .of(context)
+                                              .pinVerifyLockedTemporarily(
+                                                _formatRemaining(s.lockedUntil),
+                                              ),
+                                        VerifyPinLocked _ => S.of(context).pinVerifyLocked,
+                                        _ => S.of(context).pinVerifyFailed,
+                                      },
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        color: RealUnitColors.status.red600,
+                                      ),
+                                      textAlign: .center,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const Spacer(),
-                    NumberPad(
-                      onNumberPressed: context.read<VerifyPinCubit>().addDigit,
-                      onDeletePressed: context.read<VerifyPinCubit>().deleteDigit,
-                    ),
-                    if (widget.bottom != null) widget.bottom! else const SizedBox(height: 60.0),
-                  ],
+                      const Spacer(),
+                      IgnorePointer(
+                        ignoring: isLocked,
+                        child: NumberPad(
+                          onNumberPressed: context.read<VerifyPinCubit>().addDigit,
+                          onDeletePressed: context.read<VerifyPinCubit>().deleteDigit,
+                        ),
+                      ),
+                      if (widget.bottom != null) widget.bottom! else const SizedBox(height: 60.0),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
-    ),
+      );
+    },
   );
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startCountdown(DateTime lockedUntil) {
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      if (DateTime.now().isAfter(lockedUntil)) {
+        _countdownTimer?.cancel();
+        context.read<VerifyPinCubit>().onLockExpired();
+      } else {
+        setState(() {});
+      }
+    });
+  }
+
+  String _formatRemaining(DateTime lockedUntil) {
+    final remaining = lockedUntil.difference(DateTime.now());
+    if (remaining.inHours >= 1) {
+      final minutes = remaining.inMinutes.remainder(60);
+      return '${remaining.inHours}h ${minutes}m';
+    } else if (remaining.inMinutes >= 1) {
+      final seconds = remaining.inSeconds.remainder(60);
+      return '${remaining.inMinutes}m ${seconds}s';
+    } else {
+      return '${remaining.inSeconds}s';
+    }
+  }
 }
 
 class _ForgotPinButton extends StatelessWidget {

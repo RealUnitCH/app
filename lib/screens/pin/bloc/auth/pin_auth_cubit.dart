@@ -53,6 +53,7 @@ class PinAuthCubit extends Cubit<PinAuthState> {
   void reset() {
     _settingsRepository.isPinEnabled = false;
     _settingsRepository.isBiometricEnabled = false;
+    _settingsRepository.resetPinLockout();
     _secureStorage.deletePinHash();
     emit(const PinAuthState());
   }

@@ -165,6 +165,8 @@
   "pinVerify": "Enter your pin",
   "pinVerifyDescription": "Enter your PIN to unlock your wallet",
   "pinVerifyFailed": "PIN is wrong. Try again.",
+  "pinVerifyLocked": "Too many failed attempts. Use 'Forgot PIN?' to reset.",
+  "pinVerifyLockedTemporarily": "Too many failed attempts. Try again in ${remaining}.",
   "pinVerifySeedDescription": "Enter your PIN to view your seed phrase",
   "pleaseSelect": "Please select",
   "portfolio": "Portfolio",
