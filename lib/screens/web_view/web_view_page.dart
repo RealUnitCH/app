@@ -68,14 +68,9 @@ class WebViewPageBody extends StatelessWidget {
   Widget build(BuildContext context) => InAppWebView(
     initialSettings: InAppWebViewSettings(
       transparentBackground: true,
-      resourceCustomSchemes: ['deuro-wallet'],
     ),
-    initialUrlRequest: URLRequest(url: WebUri.uri(uri)),
-    onLoadStart: (controller, url) {
-      if (url?.scheme == 'deuro-wallet') {
-        controller.stopLoading();
-        context.pop('$url');
-      }
-    },
+    initialUrlRequest: URLRequest(
+      url: WebUri.uri(uri),
+    ),
   );
 }
