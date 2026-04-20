@@ -24,6 +24,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   ) : super(const HomeState()) {
     on<LoadCurrentWalletEvent>(_onLoadCurrentWallet);
     on<LoadWalletEvent>(_onLoadWallet);
+    on<SyncWalletServicesEvent>(_onSyncWalletServices);
     on<DeleteCurrentWalletEvent>(_onDeleteCurrentWallet);
     on<CompleteOnboardingEvent>(_onCompleteOnboarding);
     on<AcceptSoftwareTermsEvent>(_onAcceptSoftwareTerms);
@@ -63,7 +64,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         ),
       );
 
-      await setupFiatService(emit);
+      await _setupFiatService(emit);
     } catch (e) {
       developer.log('Something went wrong during wallet loading', error: e);
       emit(state.copyWith(isLoadingWallet: false));
@@ -98,25 +99,15 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   }
 
   Future<void> _onLoadWallet(LoadWalletEvent event, Emitter<HomeState> emit) async {
-    _appStore.wallet = event.wallet;
-    _balanceService.updateBalance(_appStore.primaryAddress);
-    _balanceService.startSync(_appStore.primaryAddress);
-    _transactionHistoryService.apiBasedSync();
-
+    _updateWallet(event.wallet);
     emit(state.copyWith(openWallet: _appStore.wallet, isLoadingWallet: false));
-
-    await setupFiatService(emit);
+    await _setupFiatService(emit);
   }
 
-  Future<void> setupFiatService(Emitter<HomeState> emit) async {
-    try {
-      await _dfxService.getAuthToken();
-      emit(state.copyWith(isFiatServiceAvailable: _dfxService.isAvailable));
-    } catch (e) {
-      developer.log('Failed to authenticate with DFX service', error: e);
-      emit(state.copyWith(isFiatServiceAvailable: false));
-    }
-  }
+  Future<void> _onSyncWalletServices(
+    SyncWalletServicesEvent event,
+    Emitter<HomeState> emit,
+  ) async => _updateWallet(event.wallet);
 
   void _onCompleteOnboarding(HomeEvent event, Emitter<HomeState> emit) {
     _settingsService.setTermsAccepted(true);
@@ -132,6 +123,23 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     final wallet = await _walletService.createDebugWallet(event.address);
     _appStore.wallet = wallet;
     emit(state.copyWith(openWallet: wallet));
-    await setupFiatService(emit);
+    await _setupFiatService(emit);
+  }
+
+  Future<void> _setupFiatService(Emitter<HomeState> emit) async {
+    try {
+      await _dfxService.getAuthToken();
+      emit(state.copyWith(isFiatServiceAvailable: _dfxService.isAvailable));
+    } catch (e) {
+      developer.log('Failed to authenticate with DFX service', error: e);
+      emit(state.copyWith(isFiatServiceAvailable: false));
+    }
+  }
+
+  void _updateWallet(AWallet wallet) {
+    _appStore.wallet = wallet;
+    _balanceService.updateBalance(_appStore.primaryAddress);
+    _balanceService.startSync(_appStore.primaryAddress);
+    _transactionHistoryService.apiBasedSync();
   }
 }

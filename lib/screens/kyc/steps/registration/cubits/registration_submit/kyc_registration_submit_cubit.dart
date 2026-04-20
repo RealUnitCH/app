@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
@@ -42,30 +43,49 @@ class KycRegistrationSubmitCubit extends Cubit<KycRegistrationSubmitState> {
       final user = await _kycService.getUser();
       final mail = user.mail;
       if (mail != null) {
-        final status = await _registrationService.completeRegistration(
-          Registration(
-            type: type,
-            email: mail,
-            firstName: firstName,
-            lastName: lastName,
-            phoneNumber: phoneNumber,
-            birthday: birthday,
-            nationality: nationality,
-            addressStreet: addressStreet,
-            addressStreetNumber: addressStreetNumber,
-            addressPostalCode: addressPostalCode,
-            addressCity: addressCity,
-            addressCountry: addressCountry,
-            swissTaxResidence: swissTaxResidence,
-          ),
+        final registration = Registration(
+          type: type,
+          email: mail,
+          firstName: firstName,
+          lastName: lastName,
+          phoneNumber: phoneNumber,
+          birthday: birthday,
+          nationality: nationality,
+          addressStreet: addressStreet,
+          addressStreetNumber: addressStreetNumber,
+          addressPostalCode: addressPostalCode,
+          addressCity: addressCity,
+          addressCountry: addressCountry,
+          swissTaxResidence: swissTaxResidence,
         );
-        emit(KycRegistrationSubmitSuccess(status));
+
+        await _doCompleteRegistration(registration);
       } else {
-        emit(const KycRegistrationSubmitFailure('Mail could not be fetched'));
+        emit(const KycRegistrationSubmitFailure('Mail is null'));
       }
     } catch (e) {
       developer.log(e.toString());
       emit(KycRegistrationSubmitFailure(e.toString()));
+      return;
     }
+  }
+
+  Future<void> _doCompleteRegistration(Registration registration) async {
+    try {
+      final status = await _registrationService.completeRegistration(registration);
+      emit(KycRegistrationSubmitSuccess(status));
+    } on BitboxNotConnectedException {
+      emit(
+        KycRegistrationSubmitBitboxRequired(registration: registration),
+      );
+    } catch (e) {
+      developer.log(e.toString());
+      emit(KycRegistrationSubmitFailure(e.toString()));
+    }
+  }
+
+  Future<void> retrySubmit(Registration registration) async {
+    emit(KycRegistrationSubmitLoading());
+    await _doCompleteRegistration(registration);
   }
 }

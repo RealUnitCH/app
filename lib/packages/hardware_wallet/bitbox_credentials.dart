@@ -75,7 +75,7 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
 
   @override
   Future<Uint8List> signPersonalMessage(Uint8List payload, {int? chainId}) async {
-    if (isNotConnected) throw Exception('Bitbox not connected');
+    if (!isConnected) throw Exception('Bitbox not connected');
     return await bitboxManager!.signETHMessage(chainId ?? 1, derivationPath!, payload);
   }
 
@@ -84,7 +84,7 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
       throw UnimplementedError('EvmLedgerCredentials.signPersonalMessageToUint8List');
 
   Future<String> signTypedDataV4(int chainId, String jsonData) async {
-    if (isNotConnected) throw Exception('Bitbox not connected');
+    if (!isConnected) throw Exception('Bitbox not connected');
 
     final signatureBytes = await bitboxManager!.signETHTypedMessage(
       chainId,
@@ -94,5 +94,5 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
     return '0x${convert.hex.encode(signatureBytes)}';
   }
 
-  bool get isNotConnected => bitboxManager == null;
+  bool get isConnected => bitboxManager != null;
 }

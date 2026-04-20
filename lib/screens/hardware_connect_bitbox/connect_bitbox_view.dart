@@ -4,14 +4,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/utils/device_info.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/bloc/connect_bitbox_cubit.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/widgets/connect_content.dart';
-import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/handlebars.dart';
 
 class ConnectBitboxView extends StatelessWidget {
-  const ConnectBitboxView({super.key});
+  const ConnectBitboxView({super.key, required this.onFinish});
+
+  final void Function(AWallet wallet) onFinish;
 
   @override
   Widget build(BuildContext context) => SafeArea(
@@ -21,7 +23,7 @@ class ConnectBitboxView extends StatelessWidget {
       child: BlocListener<ConnectBitboxCubit, BitboxConnectionState>(
         listener: (context, state) async {
           if (state is BitboxFinishSetup) {
-            if (context.mounted) context.read<HomeBloc>().add(LoadWalletEvent(state.wallet));
+            onFinish(state.wallet);
           }
           if (state is BitboxNotConnected) {
             if (context.mounted) {
