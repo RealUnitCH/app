@@ -138,7 +138,7 @@ void main() {
           await tester.pumpAndSettle();
 
           final visibleCards = find.byType(WelcomeCard).hitTestable();
-          expect(visibleCards, findsNWidgets(2));
+          expect(visibleCards, findsNWidgets(3));
           expect(
             find
                 .byWidgetPredicate(

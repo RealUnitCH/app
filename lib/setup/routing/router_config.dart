@@ -1,10 +1,10 @@
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/models/blockchain.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
+import 'package:realunit_wallet/screens/debug_auth/debug_auth_page.dart';
 import 'package:realunit_wallet/screens/home/home_page.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
 import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
@@ -15,17 +15,14 @@ import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/receive/receive_page.dart';
 import 'package:realunit_wallet/screens/restore_wallet/restore_wallet_page.dart';
 import 'package:realunit_wallet/screens/sell/sell_page.dart';
-import 'package:realunit_wallet/screens/send/send_page.dart';
 import 'package:realunit_wallet/screens/settings/settings_page.dart';
 import 'package:realunit_wallet/screens/settings_contact/settings_contact_page.dart';
 import 'package:realunit_wallet/screens/settings_currencies/settings_currencies_page.dart';
-import 'package:realunit_wallet/screens/settings_edit_node/settings_edit_node_page.dart';
 import 'package:realunit_wallet/screens/settings_languages/settings_languages_page.dart';
 import 'package:realunit_wallet/screens/settings_legal_documents/settings_legal_documents_page.dart';
 import 'package:realunit_wallet/screens/settings_legal_documents/subpages/settings_aktionariat_documents_page.dart';
 import 'package:realunit_wallet/screens/settings_legal_documents/subpages/settings_dfx_documents_page.dart';
 import 'package:realunit_wallet/screens/settings_network/settings_network_page.dart';
-import 'package:realunit_wallet/screens/settings_nodes/settings_nodes_page.dart';
 import 'package:realunit_wallet/screens/settings_seed/settings_seed_page.dart';
 import 'package:realunit_wallet/screens/settings_tax_report/settings_tax_report_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/settings_user_data_page.dart';
@@ -38,7 +35,6 @@ import 'package:realunit_wallet/screens/support/subpages/support_create_ticket_p
 import 'package:realunit_wallet/screens/support/subpages/support_tickets_page.dart';
 import 'package:realunit_wallet/screens/support/support_page.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
-import 'package:realunit_wallet/screens/transaction_sent/transaction_sent_page.dart';
 import 'package:realunit_wallet/screens/verify_seed/verify_seed_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/screens/welcome/welcome_page.dart';
@@ -89,6 +85,24 @@ final GoRouter routerConfig = GoRouter(
     ),
 
     GoRoute(
+      name: OnboardingRoutes.debugAuth,
+      path: '/debugAuth',
+      builder: (_, _) => const DebugAuthPage(),
+    ),
+
+    GoRoute(
+      name: PinRoutes.gate,
+      path: '/pinGate',
+      builder: (_, state) {
+        final params = state.extra as VerifyPinParams;
+        return VerifyPinPage(
+          description: params.description,
+          onAuthenticated: params.onAuthenticated,
+        );
+      },
+    ),
+
+    GoRoute(
       name: PinRoutes.setup,
       path: '/setupPin',
       builder: (_, _) => const SetupPinPage(),
@@ -97,7 +111,7 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: PinRoutes.verify,
       path: '/verifyPin',
-      builder: (_, _) => const VerifyPinPage(),
+      builder: (_, _) => VerifyPinPage.appLock(),
     ),
 
     GoRoute(
@@ -171,25 +185,6 @@ final GoRouter routerConfig = GoRouter(
     ),
 
     GoRoute(
-      name: AppRoutes.send,
-      path: '/send',
-      builder: (_, state) => SendPage(
-        params: (state.extra as SendRouteParams?) ?? const SendRouteParams(),
-      ),
-      routes: [
-        GoRoute(
-          name: AppRoutes.sendSuccess,
-          path: 'success/:txId',
-          builder: (context, state) => TransactionSentPage(
-            title: S.of(context).transactionSent,
-            transactionId: state.pathParameters['txId']!,
-            blockchain: Blockchain.ethereum,
-          ),
-        ),
-      ],
-    ),
-
-    GoRoute(
       name: SettingsRoutes.settings,
       path: '/settings',
       builder: (_, _) => const SettingsPage(),
@@ -238,22 +233,6 @@ final GoRouter routerConfig = GoRouter(
           name: SettingsRoutes.seed,
           path: 'seed',
           builder: (_, _) => const SettingsSeedPage(),
-        ),
-        GoRoute(
-          name: SettingsRoutes.nodes,
-          path: 'nodes',
-          builder: (_, _) => const SettingsNodesPage(),
-          routes: [
-            GoRoute(
-              name: SettingsRoutes.editNode,
-              path: ':chainId',
-              builder: (_, state) => SettingsEditNodePage(
-                blockchain: Blockchain.getFromChainId(
-                  int.parse(state.pathParameters['chainId']!),
-                ),
-              ),
-            ),
-          ],
         ),
         GoRoute(
           name: SettingsRoutes.walletAddress,

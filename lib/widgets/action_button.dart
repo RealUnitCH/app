@@ -33,7 +33,7 @@ class ActionButton extends StatelessWidget {
             width: 110,
             height: 50,
             child: isLoading
-                ? const CupertinoActivityIndicator(color: DEuroColors.dEuroGold)
+                ? const CupertinoActivityIndicator(color: RealUnitColors.okker)
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [icon, Text(label, textAlign: TextAlign.center, style: textStyle)],

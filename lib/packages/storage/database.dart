@@ -20,7 +20,7 @@ const _databaseFileName = 'wallet.db.enc';
 Future<bool> tryOpeningDatabase(String encryptionPassword) async {
   final database = AppDatabase(encryptionPassword);
   try {
-    await database.allNodes;
+    await database.select(database.assets).get();
     await database.close();
     return true;
   } on SqliteException catch (e) {

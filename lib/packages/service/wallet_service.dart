@@ -30,6 +30,12 @@ class WalletService {
     return SoftwareWallet(walletId, name, seed);
   }
 
+  Future<DebugWallet> createDebugWallet(String address) async {
+    final walletId = await _repository.createViewWallet('Debug', WalletType.debug, address);
+    await _settingsRepository.saveCurrentWalletId(walletId);
+    return DebugWallet(walletId, 'Debug', address);
+  }
+
   Future<AWallet> getWalletById(int id) async {
     final result = (await _repository.getWalletById(id))!;
     final walletType = WalletType.values[result.type];
@@ -38,6 +44,8 @@ class WalletService {
         return SoftwareWallet(result.id, result.name, result.seed);
       case WalletType.bitbox:
         return BitboxWallet(result.id, result.name, result.address, _bitboxService);
+      case WalletType.debug:
+        return DebugWallet(result.id, result.name, result.address);
     }
   }
 

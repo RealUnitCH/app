@@ -7,13 +7,13 @@ import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
-import 'package:realunit_wallet/packages/repository/node_repository.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/service/biometric_service.dart';
+import 'package:realunit_wallet/packages/service/debug_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_bank_account_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
@@ -82,15 +82,12 @@ Future<void> finishSetup(String encryptionKey) async {
   setupBlocs();
 
   await setupDefaultAssets();
-  await setupDefaultNodes();
-  await getIt<AppStore>().refreshNodes(getIt<NodeRepository>());
 }
 
 void setupRepositories() {
   getIt.registerFactory(() => WalletRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => BalanceRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => AssetRepository(getIt<AppDatabase>()));
-  getIt.registerFactory(() => NodeRepository(getIt<AppDatabase>()));
   getIt.registerFactory(() => CacheRepository(getIt<AppDatabase>()));
   getIt.registerFactory(
     () => TransactionRepository(
@@ -123,7 +120,6 @@ void setupServices() {
   getIt.registerFactory(
     () => TransactionHistoryService(
       getIt<AppStore>(),
-      getIt<AssetRepository>(),
       getIt<TransactionRepository>(),
     ),
   );
@@ -147,6 +143,9 @@ void setupServices() {
   getIt.registerFactory(() => RealUnitSellPaymentInfoService(getIt<AppStore>()));
   getIt.registerFactory(() => RealUnitWalletService(getIt<AppStore>()));
   getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
+  getIt.registerFactory(
+    () => DebugAuthService(getIt<AppStore>(), getIt<SharedPreferences>()),
+  );
 }
 
 void setupBlocs() {

@@ -90,7 +90,7 @@ void main() {
         });
 
         balanceService = BalanceService(balanceRepository, appStore);
-        await balanceService.updateBalances(address);
+        await balanceService.updateBalance(address);
 
         expect(capturedMethod, equals('GET'));
         expect(capturedUrl, contains(apiConfig.apiHost));
@@ -111,7 +111,7 @@ void main() {
         final service = BalanceService(balanceRepository, appStore);
 
         await expectLater(
-          service.updateBalances('0xTestAddress'),
+          service.updateBalance('0xTestAddress'),
           completes,
         );
 

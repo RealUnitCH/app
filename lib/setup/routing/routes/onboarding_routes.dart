@@ -4,4 +4,5 @@ abstract final class OnboardingRoutes {
   static const verifySeed = 'verifySeed';
   static const restoreWallet = 'restoreWallet';
   static const completed = 'onboardingCompleted';
+  static const debugAuth = 'debugAuth';
 }
