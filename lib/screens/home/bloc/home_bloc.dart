@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
@@ -21,6 +22,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     this._dfxService,
     this._settingsService,
     this._appStore,
+    this._bitboxService,
   ) : super(const HomeState()) {
     on<LoadCurrentWalletEvent>(_onLoadCurrentWallet);
     on<LoadWalletEvent>(_onLoadWallet);
@@ -39,6 +41,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final DfxWidgetService _dfxService;
   final SettingsService _settingsService;
   final AppStore _appStore;
+  final BitboxService _bitboxService;
 
   Future<void> _onLoadCurrentWallet(LoadCurrentWalletEvent event, Emitter<HomeState> emit) async {
     emit(
@@ -83,6 +86,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   ) async {
     emit(state.copyWith(isLoadingWallet: true));
 
+    _bitboxService.stopConnectionStatusObserver();
     await _appStore.sessionCache.clear();
     if (_walletService.hasWallet()) {
       await _walletService.deleteCurrentWallet();
@@ -104,10 +108,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     await _setupFiatService(emit);
   }
 
-  Future<void> _onSyncWalletServices(
+  void _onSyncWalletServices(
     SyncWalletServicesEvent event,
     Emitter<HomeState> emit,
-  ) async => _updateWallet(event.wallet);
+  ) => _updateWallet(event.wallet);
 
   void _onCompleteOnboarding(HomeEvent event, Emitter<HomeState> emit) {
     _settingsService.setTermsAccepted(true);
