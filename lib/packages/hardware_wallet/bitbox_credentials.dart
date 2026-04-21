@@ -23,6 +23,11 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
     derivationPath = derivationPath_ ?? "m/44'/60'/0'/0/0";
   }
 
+  void clearBitbox() {
+    bitboxManager = null;
+    derivationPath = null;
+  }
+
   @override
   MsgSignature signToEcSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) =>
       throw UnimplementedError('EvmLedgerCredentials.signToEcSignature');
