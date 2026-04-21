@@ -38,13 +38,12 @@ class BitboxService {
         _isConnected = false;
         _credentials?.clearBitbox();
         _credentials = null;
-        _connectionStatusObserver?.cancel();
-        _connectionStatusObserver = null;
+        stopConnectionStatusObserver();
       }
     });
   }
 
-  void stopDisconnectMonitor() {
+  void stopConnectionStatusObserver() {
     _connectionStatusObserver?.cancel();
     _connectionStatusObserver = null;
   }

@@ -61,7 +61,7 @@ class KycRegistrationSubmitCubit extends Cubit<KycRegistrationSubmitState> {
 
         await _doCompleteRegistration(registration);
       } else {
-        emit(const KycRegistrationSubmitFailure('Mail is null'));
+        emit(const KycRegistrationSubmitFailure('Mail could not be fetched'));
       }
     } catch (e) {
       developer.log(e.toString());

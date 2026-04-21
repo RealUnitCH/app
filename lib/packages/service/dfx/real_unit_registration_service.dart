@@ -61,7 +61,7 @@ class RealUnitRegistrationService {
   Future<RegistrationStatus> completeRegistration(Registration registration) async {
     final credentials = _appStore.wallet.primaryAccount.primaryAddress;
     if (credentials is BitboxCredentials && !credentials.isConnected) {
-      throw BitboxNotConnectedException(credentials);
+      throw const BitboxNotConnectedException();
     }
     final name = '${registration.firstName} ${registration.lastName}'.trim();
     final addressStreet = '${registration.addressStreet} ${registration.addressStreetNumber}'
@@ -144,7 +144,7 @@ class RealUnitRegistrationService {
   ) async {
     final credentials = _appStore.wallet.primaryAccount.primaryAddress;
     if (credentials is BitboxCredentials && !credentials.isConnected) {
-      throw BitboxNotConnectedException(credentials);
+      throw const BitboxNotConnectedException();
     }
     final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final signature = await Eip712Signer.signRegistration(
