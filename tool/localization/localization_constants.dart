@@ -68,6 +68,9 @@ class S implements WidgetsLocalizations {
   String get shareButtonLabel => throw UnimplementedError();
 
   @override
+  String get radioButtonUnselectedLabel => 'throw UnimplementedError()';
+
+  @override
   String get noResultsFound => 'No results found';
 
   @override
