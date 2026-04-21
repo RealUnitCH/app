@@ -22,40 +22,52 @@ class SettingsLegalDocumentsPage extends StatelessWidget {
             horizontal: 20.0,
             vertical: 12.0,
           ),
-          child: Column(
-            spacing: 12.0,
-            children: [
-              OutlinedTile(
-                leading: const Icon(
-                  Icons.description_outlined,
-                  color: RealUnitColors.realUnitBlue,
-                  size: 24,
+          child: SafeArea(
+            child: Column(
+              spacing: 12.0,
+              children: [
+                OutlinedTile(
+                  leading: const Icon(
+                    Icons.description_outlined,
+                    color: RealUnitColors.realUnitBlue,
+                  ),
+                  title: S.of(context).termsOfUse,
+                  onTap: () => context.pushNamed(LegalRoutes.terms),
+                  trailingIcon: Icons.chevron_right_rounded,
                 ),
-                title: S.of(context).termsOfUse,
-                onTap: () => context.pushNamed(LegalRoutes.terms),
-                trailingIcon: Icons.chevron_right_rounded,
-              ),
-              ...LegalDocumentsConfig.allDocuments.map(
-                (config) => OutlinedTile(
-                  leading: Icon(config.icon, color: RealUnitColors.realUnitBlue, size: 24),
-                  title: config.title(context),
-                  onTap: () => config.onTap(context),
-                  trailingIcon: config.isExternal
-                      ? Icons.open_in_new_rounded
-                      : Icons.chevron_right_rounded,
+                ...LegalDocumentsConfig.allDocuments.map(
+                  (config) => OutlinedTile(
+                    leading: Icon(
+                      config.icon,
+                      color: RealUnitColors.realUnitBlue,
+                    ),
+                    title: config.title(context),
+                    onTap: () => config.onTap(context),
+                    trailingIcon: config.isExternal
+                        ? Icons.open_in_new_rounded
+                        : Icons.chevron_right_rounded,
+                  ),
                 ),
-              ),
-              OutlinedTile(
-                leading: const Icon(Icons.business_outlined),
-                title: S.of(context).aktionariatTitle,
-                onTap: () => context.pushNamed(SettingsRoutes.aktionariatDocuments),
-              ),
-              OutlinedTile(
-                leading: const Icon(Icons.business_outlined),
-                title: S.of(context).dfxTitle,
-                onTap: () => context.pushNamed(SettingsRoutes.dfxDocuments),
-              ),
-            ],
+                OutlinedTile(
+                  leading: const Icon(
+                    Icons.business_outlined,
+                    color: RealUnitColors.realUnitBlue,
+                  ),
+                  title: S.of(context).aktionariatTitle,
+                  onTap: () => context.pushNamed(SettingsRoutes.aktionariatDocuments),
+                  trailingIcon: Icons.chevron_right_rounded,
+                ),
+                OutlinedTile(
+                  leading: const Icon(
+                    Icons.business_outlined,
+                    color: RealUnitColors.realUnitBlue,
+                  ),
+                  title: S.of(context).dfxTitle,
+                  onTap: () => context.pushNamed(SettingsRoutes.dfxDocuments),
+                  trailingIcon: Icons.chevron_right_rounded,
+                ),
+              ],
+            ),
           ),
         ),
       ),
