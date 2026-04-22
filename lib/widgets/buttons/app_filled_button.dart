@@ -22,7 +22,7 @@ class AppFilledButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final FilledButtonVariant variant;
   final FilledButtonState state;
-  final Widget? icon;
+  final IconData? icon;
   final bool fullWidth;
 
   @override
@@ -43,7 +43,10 @@ class AppFilledButton extends StatelessWidget {
       return FilledButton.icon(
         onPressed: onPressed,
         style: style,
-        icon: icon!,
+        icon: Icon(
+          icon!,
+          color: variant == FilledButtonVariant.secondary ? RealUnitColors.realUnitBlack : null,
+        ),
         label: Text(label),
       );
     }
@@ -90,7 +93,7 @@ class AppFilledButton extends StatelessWidget {
           foregroundColor: WidgetStateProperty.all(RealUnitColors.basic.white),
           iconColor: WidgetStateProperty.all(RealUnitColors.basic.white),
         ),
-        icon: icon!,
+        icon: Icon(icon!),
         label: Text(label),
       );
     }
@@ -114,7 +117,7 @@ class AppFilledButton extends StatelessWidget {
           foregroundColor: WidgetStateProperty.all(RealUnitColors.basic.white),
           iconColor: WidgetStateProperty.all(RealUnitColors.basic.white),
         ),
-        icon: icon!,
+        icon: Icon(icon!),
         label: Text(label),
       );
     }

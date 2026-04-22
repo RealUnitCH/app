@@ -61,16 +61,6 @@ ThemeData get realUnitTheme => ThemeData(
       ),
     ),
   ),
-  outlinedButtonTheme: OutlinedButtonThemeData(
-    style: ButtonStyle(
-      padding: const WidgetStatePropertyAll(
-        .symmetric(vertical: 14.0, horizontal: 20.0),
-      ),
-      textStyle: WidgetStatePropertyAll(
-        RealUnitTextStyle.body.base.copyWith(fontWeight: .w600),
-      ),
-    ),
-  ),
   filledButtonTheme: FilledButtonThemeData(
     style: ButtonStyle(
       padding: const WidgetStatePropertyAll(
