@@ -51,44 +51,46 @@ ThemeData get realUnitTheme => ThemeData(
       ),
     ),
   ),
+  textButtonTheme: TextButtonThemeData(
+    style: ButtonStyle(
+      padding: const WidgetStatePropertyAll(
+        .symmetric(vertical: 14.0, horizontal: 20.0),
+      ),
+      textStyle: WidgetStatePropertyAll(
+        RealUnitTextStyle.body.base.copyWith(fontWeight: .w600),
+      ),
+    ),
+  ),
+  outlinedButtonTheme: OutlinedButtonThemeData(
+    style: ButtonStyle(
+      padding: const WidgetStatePropertyAll(
+        .symmetric(vertical: 14.0, horizontal: 20.0),
+      ),
+      textStyle: WidgetStatePropertyAll(
+        RealUnitTextStyle.body.base.copyWith(fontWeight: .w600),
+      ),
+    ),
+  ),
   filledButtonTheme: FilledButtonThemeData(
     style: ButtonStyle(
       padding: const WidgetStatePropertyAll(
-        EdgeInsetsGeometry.symmetric(vertical: 14.0, horizontal: 20.0),
+        .symmetric(vertical: 14.0, horizontal: 20.0),
       ),
       backgroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
-        if (states.contains(WidgetState.error)) {
-          return RealUnitColors.status.red600;
-        }
-        if (states.contains(WidgetState.disabled)) {
-          return RealUnitColors.neutral200;
-        }
+        if (states.contains(WidgetState.disabled)) return RealUnitColors.neutral200;
         return RealUnitColors.realUnitBlue;
       }),
       foregroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
-        if (states.contains(WidgetState.error)) {
-          return RealUnitColors.basic.white;
-        }
-        if (states.contains(WidgetState.disabled)) {
-          return RealUnitColors.neutral400;
-        }
+        if (states.contains(WidgetState.disabled)) return RealUnitColors.neutral400;
         return RealUnitColors.basic.white;
       }),
       iconColor: WidgetStateProperty.resolveWith<Color?>((states) {
-        if (states.contains(WidgetState.error)) {
-          return RealUnitColors.basic.white;
-        }
-        if (states.contains(WidgetState.disabled)) {
-          return RealUnitColors.neutral400;
-        }
+        if (states.contains(WidgetState.disabled)) return RealUnitColors.neutral400;
         return RealUnitColors.basic.white;
       }),
-      textStyle: WidgetStateTextStyle.resolveWith((states) {
-        if (states.contains(WidgetState.disabled)) {
-          return RealUnitTextStyle.body.base.copyWith(fontWeight: .w600);
-        }
-        return RealUnitTextStyle.body.base.copyWith(fontWeight: .w600);
-      }),
+      textStyle: WidgetStatePropertyAll(
+        RealUnitTextStyle.body.base.copyWith(fontWeight: .w600),
+      ),
     ),
   ),
 );
