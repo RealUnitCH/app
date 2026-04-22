@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/styles/styles.dart';
 
 class StandardSlideButton extends StatefulWidget {
   const StandardSlideButton({
@@ -41,8 +40,8 @@ class _StandardSlideButtonState extends State<StandardSlideButton> {
             Center(
               child: Text(
                 widget.buttonText,
-                style: kPageTitleTextStyle.copyWith(
-                  fontWeight: FontWeight.w600,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: .w600,
                   color: RealUnitColors.realUnitBlue,
                 ),
               ),
