@@ -7,6 +7,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/create_wallet/bloc/create_wallet_cubit.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/seed_blur_card.dart';
 
 class CreateWalletView extends StatelessWidget {
@@ -62,17 +63,11 @@ class CreateWalletView extends StatelessWidget {
                             const Spacer(),
                             Padding(
                               padding: const .symmetric(vertical: 20),
-                              child: SizedBox(
-                                width: .infinity,
-                                child: FilledButton(
-                                  onPressed: () => context.pushNamed(
-                                    OnboardingRoutes.verifySeed,
-                                    extra: state.wallet,
-                                  ),
-                                  child: Text(
-                                    S.of(context).createWalletConfirm,
-                                    textAlign: .center,
-                                  ),
+                              child: AppFilledButton(
+                                label: S.of(context).createWalletConfirm,
+                                onPressed: () => context.pushNamed(
+                                  OnboardingRoutes.verifySeed,
+                                  extra: state.wallet,
                                 ),
                               ),
                             ),

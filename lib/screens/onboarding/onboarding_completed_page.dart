@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 class OnboardingCompletedPage extends StatelessWidget {
   const OnboardingCompletedPage({super.key});
@@ -57,13 +58,10 @@ class OnboardingCompletedPage extends StatelessWidget {
                         const Spacer(),
                         Padding(
                           padding: const .symmetric(vertical: 20),
-                          child: SizedBox(
-                            width: .infinity,
-                            child: FilledButton(
-                              onPressed: () =>
-                                  context.read<HomeBloc>().add(const CompleteOnboardingEvent()),
-                              child: Text(s.next),
-                            ),
+                          child: AppFilledButton(
+                            onPressed: () =>
+                                context.read<HomeBloc>().add(const CompleteOnboardingEvent()),
+                            label: s.next,
                           ),
                         ),
                       ],

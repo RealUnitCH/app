@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/restore_wallet/cubit/restore_wallet/restore_wallet_cubit.dart';
 import 'package:realunit_wallet/screens/restore_wallet/cubit/validate_seed/validate_seed_cubit.dart';
-import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/mnemonic_field.dart';
 
 class RestoreWalletButton extends StatelessWidget {
@@ -17,11 +17,8 @@ class RestoreWalletButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      child: SizedBox(
-        width: double.infinity,
-        child: _buildButton(context),
-      ),
+      padding: const .symmetric(vertical: 20),
+      child: _buildButton(context),
     );
   }
 
@@ -32,51 +29,27 @@ class RestoreWalletButton extends StatelessWidget {
     switch (seedState) {
       case ValidateSeedState.valid:
         if (restoreWalletState.wallet != null) {
-          return FilledButton.icon(
-            onPressed: null,
-            icon: Icon(Icons.check, color: RealUnitColors.basic.white),
-            style: ButtonStyle(
-              backgroundColor: WidgetStateColor.resolveWith((states) => RealUnitColors.green),
-              foregroundColor: WidgetStateColor.resolveWith((states) => RealUnitColors.basic.white),
-            ),
-            label: Text(S.of(context).restoreWalletSuccessful),
+          return AppFilledButton(
+            icon: Icons.check,
+            label: S.of(context).restoreWalletSuccessful,
+            state: .success,
           );
         }
-        return FilledButton.icon(
-          onPressed: null,
-          icon: SizedBox(
-            height: 14,
-            width: 14,
-            child: CircularProgressIndicator(
-              strokeWidth: 1.5,
-              color: RealUnitColors.basic.white.withValues(alpha: 0.5),
-            ),
-          ),
-          style: ButtonStyle(
-            backgroundColor: WidgetStateColor.resolveWith(
-                (states) => RealUnitColors.realUnitBlue.withValues(alpha: 0.5)),
-            foregroundColor: WidgetStateColor.resolveWith(
-                (states) => RealUnitColors.basic.white.withValues(alpha: 0.5)),
-          ),
-          label: Text(S.of(context).next),
+        return AppFilledButton(
+          label: S.of(context).next,
+          state: .loading,
         );
       case (ValidateSeedState.invalid):
-        return FilledButton(
-          onPressed: null,
-          style: ButtonStyle(
-            backgroundColor: WidgetStateColor.resolveWith((states) => RealUnitColors.status.red600),
-            foregroundColor: WidgetStateColor.resolveWith((states) => RealUnitColors.basic.white),
-          ),
-          child: Text(S.of(context).recoveryWordsInvalid),
+        return AppFilledButton(
+          label: S.of(context).recoveryWordsInvalid,
+          state: .error,
         );
       default:
-        return FilledButton(
+        return AppFilledButton(
+          label: S.of(context).next,
           onPressed: seedState == ValidateSeedState.complete
               ? () => context.read<ValidateSeedCubit>().validateSeed(_controllers.seed)
               : null,
-          child: Text(
-            S.of(context).next,
-          ),
         );
     }
   }

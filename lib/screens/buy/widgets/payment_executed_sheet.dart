@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/handlebars.dart';
 
 class PaymentExecutedSheet extends StatelessWidget {
@@ -74,27 +75,13 @@ class PaymentExecutedSheet extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 28),
-                FilledButton(
-                  style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(
-                      RealUnitColors.neutral100,
-                    ),
-                    foregroundColor: WidgetStateProperty.all(
-                      RealUnitColors.realUnitBlack,
-                    ),
-                  ),
+                AppFilledButton(
+                  fullWidth: false,
+                  variant: .secondary,
                   onPressed: () {
                     context.pop();
                   },
-                  child: Text(
-                    S.of(context).close,
-                    style: const TextStyle(
-                      color: RealUnitColors.realUnitBlack,
-                      fontSize: 16,
-                      height: 20 / 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  label: S.of(context).close,
                 ),
               ],
             ),

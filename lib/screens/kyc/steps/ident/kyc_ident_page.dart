@@ -5,6 +5,7 @@ import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/ident/cubits/kyc_ident/kyc_ident_cubit.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 class KycIdentPage extends StatelessWidget {
   final String accessToken;
@@ -108,36 +109,23 @@ class KycIdentView extends StatelessWidget {
                     width: double.infinity,
                     child: BlocBuilder<KycIdentCubit, KycIdentState>(
                       builder: (context, state) {
-                        if (state is KycIdentLoading) {
-                          return FilledButton.icon(
-                            onPressed: null,
-                            icon: SizedBox(
-                              height: 14,
-                              width: 14,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 1.5,
-                                color: RealUnitColors.basic.black.withValues(alpha: 0.5),
-                              ),
-                            ),
-                            label: Text(S.of(context).next),
-                          );
-                        }
                         if (state is KycIdentFailure) {
                           if (state.status == FailureStatus.finallyRejected) {
-                            return FilledButton(
+                            return AppFilledButton(
                               onPressed: null,
-                              child: Text(S.of(context).next),
+                              label: S.of(context).next,
                             );
                           }
                         }
-                        return FilledButton(
+                        return AppFilledButton(
+                          state: state is KycIdentLoading ? .loading : .idle,
                           onPressed: () {
                             context.read<KycIdentCubit>().startIdent(
                               accessToken,
                               localeCode: context.read<SettingsBloc>().state.language.code,
                             );
                           },
-                          child: Text(S.of(context).next),
+                          label: S.of(context).next,
                         );
                       },
                     ),

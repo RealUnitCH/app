@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 class KycAccountMergePage extends StatelessWidget {
   const KycAccountMergePage({super.key});
@@ -34,12 +35,9 @@ class KycAccountMergePage extends StatelessWidget {
               ),
               Padding(
                 padding: const .symmetric(vertical: 16.0),
-                child: SizedBox(
-                  width: .infinity,
-                  child: FilledButton(
-                    onPressed: () => context.read<KycCubit>().checkKyc(),
-                    child: Text(S.of(context).refresh),
-                  ),
+                child: AppFilledButton(
+                  onPressed: () => context.read<KycCubit>().checkKyc(),
+                  label: S.of(context).refresh,
                 ),
               ),
               const Spacer(),

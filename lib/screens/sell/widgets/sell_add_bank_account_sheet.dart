@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_bank_accounts/sell_bank_accounts_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/iban_input_formatter.dart';
 
 class SellAddBankAccountSheet extends StatefulWidget {
@@ -178,7 +179,8 @@ class _SellAddBankAccountSheetState extends State<SellAddBankAccountSheet> {
                               ),
                             ],
                           ),
-                          FilledButton(
+                          AppFilledButton(
+                            fullWidth: false,
                             onPressed: () {
                               if (_formKey.currentState?.validate() ?? false) {
                                 context.read<SellBankAccountsCubit>().add(
@@ -189,7 +191,7 @@ class _SellAddBankAccountSheetState extends State<SellAddBankAccountSheet> {
                                 );
                               }
                             },
-                            child: Text(S.of(context).next),
+                            label: S.of(context).next,
                           ),
                         ],
                       ),

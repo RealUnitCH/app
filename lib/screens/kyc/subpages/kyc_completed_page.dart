@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 class KycCompletedPage extends StatelessWidget {
   const KycCompletedPage({super.key});
@@ -36,13 +37,10 @@ class KycCompletedPage extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: context.pop,
-                    child: Text(S.of(context).close),
-                  ),
+                padding: const .symmetric(vertical: 16.0),
+                child: AppFilledButton(
+                  onPressed: context.pop,
+                  label: S.of(context).close,
                 ),
               ),
               const Spacer(),

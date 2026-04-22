@@ -10,6 +10,7 @@ import 'package:realunit_wallet/screens/dashboard/widgets/transaction_row.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_text_button.dart';
 
 class DashboardTransactionHistory extends StatelessWidget {
   const DashboardTransactionHistory({super.key});
@@ -66,20 +67,10 @@ class DashboardTransactionHistoryView extends StatelessWidget {
                         walletAddress: walletAddress,
                       ),
                     ),
-                    TextButton(
+                    AppTextButton(
+                      fullWidth: false,
                       onPressed: () => context.pushNamed(AppRoutes.transactionHistory),
-                      style: TextButton.styleFrom(
-                        padding: .zero,
-                        minimumSize: const Size(50, 22),
-                        tapTargetSize: .shrinkWrap,
-                        alignment: .centerLeft,
-                      ),
-                      child: Text(
-                        S.of(context).transactionHistory,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: RealUnitColors.darkBlue,
-                        ),
-                      ),
+                      label: S.of(context).transactionHistory,
                     ),
                   ],
                 ),

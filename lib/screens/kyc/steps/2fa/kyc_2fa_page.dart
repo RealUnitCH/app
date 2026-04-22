@@ -7,6 +7,8 @@ import 'package:realunit_wallet/screens/kyc/steps/2fa/cubits/kyc_2fa/kyc_2fa_cub
 import 'package:realunit_wallet/screens/kyc/steps/2fa/cubits/kyc_2fa_verify/kyc_2fa_verify_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
+import 'package:realunit_wallet/widgets/buttons/app_text_button.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 
 class Kyc2FaPage extends StatelessWidget {
@@ -128,49 +130,30 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
                     Column(
                       spacing: 4.0,
                       children: [
-                        SizedBox(
-                          width: double.infinity,
-                          child: BlocBuilder<Kyc2FaVerifyCubit, Kyc2FaVerifyState>(
-                            builder: (context, state) {
-                              if (state is Kyc2FaVerifyLoading) {
-                                return FilledButton.icon(
-                                  onPressed: null,
-                                  icon: SizedBox(
-                                    height: 14,
-                                    width: 14,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 1.5,
-                                      color: RealUnitColors.basic.black.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                    ),
-                                  ),
-                                  label: Text(S.of(context).next),
-                                );
-                              }
-                              return FilledButton(
-                                onPressed: () {
-                                  if (_formKey.currentState?.validate() ?? false) {
-                                    context.read<Kyc2FaVerifyCubit>().verifyCode(codeCtrl.text);
-                                  }
-                                },
-                                child: Text(S.of(context).next),
-                              );
-                            },
-                          ),
+                        BlocBuilder<Kyc2FaVerifyCubit, Kyc2FaVerifyState>(
+                          builder: (context, state) {
+                            return AppFilledButton(
+                              state: state is Kyc2FaVerifyLoading ? .loading : .idle,
+                              onPressed: () {
+                                if (_formKey.currentState?.validate() ?? false) {
+                                  context.read<Kyc2FaVerifyCubit>().verifyCode(codeCtrl.text);
+                                }
+                              },
+                              label: S.of(context).next,
+                            );
+                          },
                         ),
                         BlocBuilder<Kyc2FaCubit, Kyc2FaState>(
                           builder: (context, state) {
                             final isLoading = state is Kyc2FaLoading;
-                            return TextButton(
+                            return AppTextButton(
+                              fullWidth: false,
                               onPressed: isLoading
                                   ? null
                                   : () => context.read<Kyc2FaCubit>().requestCode(),
-                              child: Text(
-                                isLoading
-                                    ? '${S.of(context).sending}...'
-                                    : S.of(context).twoFaResendCode,
-                              ),
+                              label: isLoading
+                                  ? '${S.of(context).sending}...'
+                                  : S.of(context).twoFaResendCode,
                             );
                           },
                         ),

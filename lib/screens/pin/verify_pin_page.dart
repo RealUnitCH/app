@@ -14,6 +14,7 @@ import 'package:realunit_wallet/screens/pin/widgets/forgot_pin_bottom_sheet.dart
 import 'package:realunit_wallet/screens/pin/widgets/pin_indicator.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_text_button.dart';
 import 'package:realunit_wallet/widgets/number_pad.dart';
 
 class VerifyPinParams {
@@ -235,7 +236,8 @@ class _ForgotPinButton extends StatelessWidget {
     padding: const EdgeInsets.only(bottom: 8.0),
     child: SizedBox(
       height: 52.0,
-      child: TextButton(
+      child: AppTextButton(
+        fullWidth: false,
         onPressed: () async {
           final isReset = await showModalBottomSheet<bool>(
             context: context,
@@ -250,7 +252,7 @@ class _ForgotPinButton extends StatelessWidget {
             }
           }
         },
-        child: Text(S.of(context).pinForgotten),
+        label: S.of(context).pinForgotten,
       ),
     ),
   );
