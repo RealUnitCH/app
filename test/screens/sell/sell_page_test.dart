@@ -1,5 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -27,6 +27,7 @@ import 'package:realunit_wallet/screens/sell/widgets/sell_button.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_converter.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_max_amount_button.dart';
 import 'package:realunit_wallet/styles/currency.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../helper/helper.dart';
@@ -219,7 +220,7 @@ void main() {
 
         expect(
           find.byWidgetPredicate(
-            (Widget widget) => widget is FilledButton && widget.onPressed == null,
+            (Widget widget) => widget is AppFilledButton && widget.onPressed == null,
           ),
           findsOne,
         );
@@ -229,7 +230,7 @@ void main() {
         when(() => sellPaymentInfoCubit.state).thenReturn(const SellPaymentInfoLoading());
         await tester.pumpApp(buildSubject(const SellView()));
 
-        expect(find.byType(CircularProgressIndicator), findsOne);
+        expect(find.byType(CupertinoActivityIndicator), findsOne);
       });
 
       testWidgets('is disabled button when minimum amount is not met', (tester) async {
@@ -253,7 +254,7 @@ void main() {
         );
         expect(
           find.byWidgetPredicate(
-            (Widget widget) => widget is FilledButton && widget.onPressed == null,
+            (Widget widget) => widget is AppFilledButton && widget.onPressed == null,
           ),
           findsOne,
         );
@@ -278,7 +279,7 @@ void main() {
 
         expect(
           find.byWidgetPredicate(
-            (Widget widget) => widget is FilledButton && widget.onPressed != null,
+            (Widget widget) => widget is AppFilledButton && widget.onPressed != null,
           ),
           findsOne,
         );

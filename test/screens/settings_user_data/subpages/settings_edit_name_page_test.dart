@@ -11,6 +11,7 @@ import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_name/se
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_failure_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_loading_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_pending_page.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/form/file_picker_field.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 
@@ -91,7 +92,7 @@ void main() {
 
       expect(find.byType(LabeledTextField), findsNWidgets(2));
       expect(find.byType(FilePickerField), findsOne);
-      expect(find.byType(FilledButton), findsOne);
+      expect(find.byType(AppFilledButton), findsOne);
       expect(find.byType(CupertinoActivityIndicator), findsNothing);
     });
 
@@ -102,7 +103,7 @@ void main() {
 
       expect(find.byType(LabeledTextField), findsNWidgets(2));
       expect(find.byType(FilePickerField), findsOne);
-      expect(find.byType(FilledButton), findsOne);
+      expect(find.byType(AppFilledButton), findsOne);
       expect(find.byType(CupertinoActivityIndicator), findsOne);
     });
   });
