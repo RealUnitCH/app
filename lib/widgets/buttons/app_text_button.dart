@@ -12,15 +12,15 @@ class AppTextButton extends StatelessWidget {
 
   final String label;
   final VoidCallback? onPressed;
-  final Widget? icon;
+  final IconData? icon;
   final bool fullWidth;
 
   @override
   Widget build(BuildContext context) {
     final button = icon != null
-        ? TextButton.icon(onPressed: onPressed, icon: icon!, label: Text(label))
+        ? TextButton.icon(onPressed: onPressed, icon: Icon(icon!), label: Text(label))
         : TextButton(onPressed: onPressed, child: Text(label));
-    if (fullWidth) return SizedBox(width: double.infinity, child: button);
+    if (fullWidth) return SizedBox(width: .infinity, child: button);
     return button;
   }
 }

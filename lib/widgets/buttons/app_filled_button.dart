@@ -47,7 +47,10 @@ class AppFilledButton extends StatelessWidget {
           icon!,
           color: variant == FilledButtonVariant.secondary ? RealUnitColors.realUnitBlack : null,
         ),
-        label: Text(label),
+        label: Text(
+          label,
+          textAlign: .center,
+        ),
       );
     }
     return FilledButton(
@@ -81,7 +84,10 @@ class AppFilledButton extends StatelessWidget {
             : RealUnitColors.basic.white.withValues(alpha: 0.5),
       ),
     ),
-    label: Text(label),
+    label: Text(
+      label,
+      textAlign: .center,
+    ),
   );
 
   Widget _successButton() {
@@ -94,7 +100,10 @@ class AppFilledButton extends StatelessWidget {
           iconColor: WidgetStateProperty.all(RealUnitColors.basic.white),
         ),
         icon: Icon(icon!),
-        label: Text(label),
+        label: Text(
+          label,
+          textAlign: .center,
+        ),
       );
     }
     return FilledButton(
@@ -104,7 +113,10 @@ class AppFilledButton extends StatelessWidget {
         foregroundColor: WidgetStateProperty.all(RealUnitColors.basic.white),
         iconColor: WidgetStateProperty.all(RealUnitColors.basic.white),
       ),
-      child: Text(label),
+      child: Text(
+        label,
+        textAlign: .center,
+      ),
     );
   }
 
@@ -118,7 +130,10 @@ class AppFilledButton extends StatelessWidget {
           iconColor: WidgetStateProperty.all(RealUnitColors.basic.white),
         ),
         icon: Icon(icon!),
-        label: Text(label),
+        label: Text(
+          label,
+          textAlign: .center,
+        ),
       );
     }
 
@@ -128,7 +143,10 @@ class AppFilledButton extends StatelessWidget {
         backgroundColor: WidgetStateProperty.all(RealUnitColors.status.red600),
         foregroundColor: WidgetStateProperty.all(RealUnitColors.basic.white),
       ),
-      child: Text(label),
+      child: Text(
+        label,
+        textAlign: .center,
+      ),
     );
   }
 
