@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/bloc/connect_bitbox_cubit.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_view.dart';
 import 'package:realunit_wallet/setup/di.dart';
 
 class ConnectBitboxPage extends StatelessWidget {
-  const ConnectBitboxPage({super.key});
+  const ConnectBitboxPage({super.key, required this.onFinish});
+
+  final void Function(AWallet wallet) onFinish;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
@@ -15,6 +18,6 @@ class ConnectBitboxPage extends StatelessWidget {
       getIt<BitboxService>(),
       getIt<WalletService>(),
     ),
-    child: const ConnectBitboxView(),
+    child: ConnectBitboxView(onFinish: onFinish),
   );
 }

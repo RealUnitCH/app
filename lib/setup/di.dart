@@ -168,6 +168,7 @@ void setupBlocs() {
       getIt<DfxWidgetService>(),
       getIt<SettingsService>(),
       getIt<AppStore>(),
+      getIt<BitboxService>(),
     ),
   );
   getIt.registerSingleton(
