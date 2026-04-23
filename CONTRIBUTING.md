@@ -1,4 +1,4 @@
-# RealUnit App — Claude Code Guidelines
+# RealUnit App — Contributing Guidelines
 
 ## Build & Test Commands
 
