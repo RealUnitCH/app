@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/config/legal_documents_config.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/outlined_tile.dart';
 
 class SettingsDfxDocumentsPage extends StatelessWidget {
@@ -23,7 +24,10 @@ class SettingsDfxDocumentsPage extends StatelessWidget {
             children: [
               for (final document in DfxDocumentsConfig.allDocuments)
                 OutlinedTile(
-                  leading: Icon(document.icon),
+                  leading: Icon(
+                    document.icon,
+                    color: RealUnitColors.realUnitBlue,
+                  ),
                   trailingIcon: Icons.open_in_new_outlined,
                   title: document.title(context),
                   onTap: () => document.onTap(context),

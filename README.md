@@ -4,7 +4,7 @@ A Flutter Wallet for Real Unit Investors.
 
 ## Getting Started
 
-Before getting started, please make sure you have Flutter version 3.38.7 and the latest version of golang and gomobile installed.
+Before getting started, please make sure you have Flutter version 3.41.6 and the latest version of golang and gomobile installed.
 
 ```shell
 go install golang.org/x/mobile/cmd/gomobile@latest
