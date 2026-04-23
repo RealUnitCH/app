@@ -28,3 +28,14 @@ class KycRegistrationSubmitFailure extends KycRegistrationSubmitState {
   @override
   List<Object?> get props => [message];
 }
+
+class KycRegistrationSubmitBitboxRequired extends KycRegistrationSubmitState {
+  final Registration registration;
+
+  const KycRegistrationSubmitBitboxRequired({
+    required this.registration,
+  });
+
+  @override
+  List<Object?> get props => [registration];
+}

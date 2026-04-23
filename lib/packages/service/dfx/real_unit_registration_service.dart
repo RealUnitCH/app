@@ -2,8 +2,10 @@ import 'dart:convert';
 
 import 'package:intl/intl.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
+import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_email_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_email_response_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_register_wallet_request_dto.dart';
@@ -58,6 +60,9 @@ class RealUnitRegistrationService {
   /// registers a wallet and and adds the wallet to the new user
   Future<RegistrationStatus> completeRegistration(Registration registration) async {
     final credentials = _appStore.wallet.primaryAccount.primaryAddress;
+    if (credentials is BitboxCredentials && !credentials.isConnected) {
+      throw const BitboxNotConnectedException();
+    }
     final name = '${registration.firstName} ${registration.lastName}'.trim();
     final addressStreet = '${registration.addressStreet} ${registration.addressStreetNumber}'
         .trim();
@@ -138,6 +143,9 @@ class RealUnitRegistrationService {
     RealUnitUserDataDto userData,
   ) async {
     final credentials = _appStore.wallet.primaryAccount.primaryAddress;
+    if (credentials is BitboxCredentials && !credentials.isConnected) {
+      throw const BitboxNotConnectedException();
+    }
     final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final signature = await Eip712Signer.signRegistration(
       credentials: credentials,
