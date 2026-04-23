@@ -5,10 +5,12 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
+import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_confirm_logout_wallet_sheet.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_section.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
@@ -99,7 +101,13 @@ class SettingsPage extends StatelessWidget {
                     title: S.of(context).settingsWalletBackup,
                     leading: const KeySolidIcon(size: 24),
                     trailing: _forwardIcon,
-                    onTap: () => context.pushNamed(SettingsRoutes.seed),
+                    onTap: () => context.pushNamed(
+                      PinRoutes.gate,
+                      extra: VerifyPinParams(
+                        onAuthenticated: () => context.pushReplacementNamed(SettingsRoutes.seed),
+                        description: S.of(context).pinVerifySeedDescription,
+                      ),
+                    ),
                   ),
               ],
             ),

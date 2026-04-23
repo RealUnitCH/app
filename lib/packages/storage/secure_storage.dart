@@ -14,6 +14,7 @@ class SecureStorage {
   static const _databaseEncryptionKey = 'drift.encryption.password';
   static const _mnemonicEncryptionKey = 'wallet.mnemonic.encryption.key';
   static const _pinHashKey = 'pin.hash';
+  static const _pinSaltKey = 'pin.salt';
 
   final FlutterSecureStorage _secureStorage;
 
@@ -38,8 +39,12 @@ class SecureStorage {
 
   // Pin
 
-  static String hashPin(String pin) {
-    final salt = Uint8List(8)..setRange(0, 8, utf8.encode('PIN salt'));
+  static Uint8List generatePinSalt() {
+    final random = Random.secure();
+    return Uint8List.fromList(List.generate(16, (_) => random.nextInt(256)));
+  }
+
+  static String hashPin(String pin, Uint8List salt) {
     final derivator = KeyDerivator('SHA-256/HMAC/PBKDF2');
     final params = Pbkdf2Parameters(salt, 10000, 32);
     derivator.init(params);
@@ -50,7 +55,26 @@ class SecureStorage {
 
   Future<void> setPinHash(String hash) => _secureStorage.write(key: _pinHashKey, value: hash);
 
-  Future<void> deletePinHash() => _secureStorage.delete(key: _pinHashKey);
+  Future<void> deletePinHash() => Future.wait([
+    _secureStorage.delete(key: _pinHashKey),
+    _secureStorage.delete(key: _pinSaltKey),
+  ]);
+
+  Future<Uint8List?> getPinSalt() async {
+    final hex = await _secureStorage.read(key: _pinSaltKey);
+    if (hex == null) return null;
+    return hexToBytes(hex);
+  }
+
+  Future<void> setPinSalt(Uint8List salt) =>
+      _secureStorage.write(key: _pinSaltKey, value: bytesToHex(salt));
+
+  Future<bool> verifyPin(String pin) async {
+    final hash = await getPinHash();
+    final salt = await getPinSalt();
+    if (hash == null || salt == null) return false;
+    return hashPin(pin, salt) == hash;
+  }
 
   // Mnemonic
 

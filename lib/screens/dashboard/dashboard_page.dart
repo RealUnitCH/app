@@ -7,8 +7,10 @@ import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_account_service.dart';
+import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/balance_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/dashboard_bloc.dart';
+import 'package:realunit_wallet/screens/dashboard/bloc/pending_transactions_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_actions.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_pending_transactions.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_portfolio.dart';
@@ -46,6 +48,11 @@ class DashboardPage extends StatelessWidget {
             getIt<BalanceRepository>(),
             asset: getIt<AppStore>().apiConfig.asset,
             walletAddress: getIt<AppStore>().primaryAddress,
+          ),
+        ),
+        BlocProvider(
+          create: (context) => PendingTransactionsCubit(
+            getIt<TransactionHistoryService>(),
           ),
         ),
       ],
@@ -133,7 +140,7 @@ class DashboardView extends StatelessWidget {
                               DashboardPortfolio(
                                 price: dashboardState.price,
                               ),
-                              const DashboardPendingTransactions(),
+                              const DashboardPendingTransactionsView(),
                               const DashboardTransactionHistory(),
                             ],
                           ),
@@ -148,7 +155,7 @@ class DashboardView extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: .stretch,
                           children: [
-                            const DashboardPendingTransactions(),
+                            const DashboardPendingTransactionsView(),
                             const Spacer(),
                             SvgPicture.asset(
                               'assets/images/illustrations/realu_token.svg',
