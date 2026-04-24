@@ -1,14 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:no_screenshot/no_screenshot.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/settings_seed/bloc/settings_seed_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
 import 'package:realunit_wallet/widgets/seed_blur_card.dart';
 
-class SettingsSeedView extends StatelessWidget {
+class SettingsSeedView extends StatefulWidget {
   const SettingsSeedView({super.key});
+
+  @override
+  State<SettingsSeedView> createState() => _SettingsSeedViewState();
+}
+
+class _SettingsSeedViewState extends State<SettingsSeedView> {
+  @override
+  void initState() {
+    NoScreenshot.instance.screenshotOff();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -88,4 +100,10 @@ class SettingsSeedView extends StatelessWidget {
       ),
     ),
   );
+
+  @override
+  void dispose() {
+    NoScreenshot.instance.screenshotOn();
+    super.dispose();
+  }
 }
