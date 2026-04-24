@@ -9,6 +9,8 @@ import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
+import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/kyc_registration_step_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_submit/kyc_registration_submit_cubit.dart';
@@ -97,7 +99,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
         ),
       ),
       body: BlocListener<KycRegistrationSubmitCubit, KycRegistrationSubmitState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is KycRegistrationSubmitSuccess) {
             if (state.status == RegistrationStatus.completed) {
               context.read<KycCubit>().checkKyc();
@@ -110,6 +112,22 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
                 backgroundColor: RealUnitColors.status.red600,
               ),
             );
+          }
+          if (state is KycRegistrationSubmitBitboxRequired) {
+            final registration = state.registration;
+            final result = await showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              builder: (_) => ConnectBitboxPage(
+                onFinish: (wallet) {
+                  context.read<HomeBloc>().add(SyncWalletServicesEvent(wallet));
+                  context.pop(true);
+                },
+              ),
+            );
+            if (context.mounted && result == true) {
+              context.read<KycRegistrationSubmitCubit>().retrySubmit(registration);
+            }
           }
         },
         child: Column(

@@ -24,6 +24,15 @@ final class LoadWalletEvent extends HomeEvent {
   List<Object> get props => [wallet];
 }
 
+final class SyncWalletServicesEvent extends HomeEvent {
+  const SyncWalletServicesEvent(this.wallet);
+
+  final AWallet wallet;
+
+  @override
+  List<Object> get props => [wallet];
+}
+
 final class CompleteOnboardingEvent extends HomeEvent {
   const CompleteOnboardingEvent();
 }

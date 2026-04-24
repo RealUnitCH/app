@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
+import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/welcome/widgets/welcome_card.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -137,7 +139,9 @@ class _WelcomePageState extends State<WelcomePage> {
     await showModalBottomSheet(
       isScrollControlled: true,
       context: context,
-      builder: (_) => const ConnectBitboxPage(),
+      builder: (_) => ConnectBitboxPage(
+        onFinish: (wallet) => context.read<HomeBloc>().add(LoadWalletEvent(wallet)),
+      ),
     );
   }
 }
