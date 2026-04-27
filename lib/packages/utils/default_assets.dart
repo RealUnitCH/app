@@ -1,5 +1,8 @@
 import 'package:realunit_wallet/models/asset.dart';
 
+const ethereumEthAssetId = 111;
+const sepoliaEthAssetId = 392;
+
 const realUnitAsset = Asset(
   chainId: 1,
   address: '0x553C7f9C780316FC1D34b8e14ac2465Ab22a090B',

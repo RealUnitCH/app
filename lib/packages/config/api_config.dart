@@ -17,6 +17,8 @@ class ApiConfig {
       : 'api.dfx.swiss';
 
   Asset get asset => networkMode.isTestnet ? realUnitTestAsset : realUnitAsset;
+
+  int get ethAssetId => networkMode.isTestnet ? sepoliaEthAssetId : ethereumEthAssetId;
 }
 
 Uri buildUri(
