@@ -56,8 +56,6 @@ class SettingsEditNameCubit extends Cubit<SettingsEditNameState> {
         'fileName': fileName,
       });
       emit(const SettingsEditNameSuccess());
-    } on TfaRequiredException {
-      emit(const SettingsEditNameRequiresTfa());
     } catch (e) {
       emit(SettingsEditNameFailure(e.toString()));
     }

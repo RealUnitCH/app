@@ -64,8 +64,6 @@ class SettingsEditAddressCubit extends Cubit<SettingsEditAddressState> {
         },
       });
       emit(const SettingsEditAddressSuccess());
-    } on TfaRequiredException {
-      emit(const SettingsEditAddressRequiresTfa());
     } catch (e) {
       emit(SettingsEditAddressFailure(e.toString()));
     }
