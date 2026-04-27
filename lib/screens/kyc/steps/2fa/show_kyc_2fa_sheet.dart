@@ -9,8 +9,6 @@ Future<void> showKyc2FaSheet(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    isDismissible: true,
-    enableDrag: false,
     builder: (sheetContext) => Kyc2FaPage(
       onVerified: () {
         Navigator.of(sheetContext).pop();

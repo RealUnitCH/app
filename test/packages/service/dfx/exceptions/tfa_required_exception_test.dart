@@ -37,7 +37,7 @@ void main() {
     });
   });
 
-  group('${ApiException}.fromJson', () {
+  group('$ApiException.fromJson', () {
     test('dispatches code: TFA_REQUIRED to $TfaRequiredException', () {
       final exception = ApiException.fromJson({
         'code': 'TFA_REQUIRED',
