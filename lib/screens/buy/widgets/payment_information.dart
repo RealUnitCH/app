@@ -38,6 +38,11 @@ class PaymentInformation extends StatelessWidget {
               title: S.of(context).identityCheckRequired,
               description: S.of(context).identityCheckDescription,
             );
+          } else if (error == PaymentInfoError.tfaRequired) {
+            return PaymentActionRequired(
+              title: S.of(context).twoFaRequired,
+              description: S.of(context).twoFaRequiredDescription,
+            );
           } else if (error == PaymentInfoError.unknown) {
             return PaymentActionRequired(
               title: S.of(context).paymentInformationFailed,

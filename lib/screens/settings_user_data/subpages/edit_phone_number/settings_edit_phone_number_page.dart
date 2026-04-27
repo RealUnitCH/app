@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/screens/kyc/steps/2fa/show_kyc_2fa_sheet.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_phone_number/cubit/settings_edit_phone_number_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -48,6 +49,17 @@ class _SettingsEditPhoneNumberViewState extends State<SettingsEditPhoneNumberVie
               ),
             );
             context.pop(true);
+          }
+          if (state is SettingsEditPhoneNumberRequiresTfa) {
+            showKyc2FaSheet(
+              context,
+              onVerified: () {
+                final phone = _phoneCtrl.value;
+                if (phone != null) {
+                  context.read<SettingsEditPhoneNumberCubit>().editPhoneNumber(phone);
+                }
+              },
+            );
           }
         },
         builder: (context, state) {

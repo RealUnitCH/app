@@ -5,6 +5,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
+import 'package:realunit_wallet/screens/kyc/steps/2fa/show_kyc_2fa_sheet.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
@@ -88,6 +89,23 @@ class PaymentAdditionalActionNeededButton extends StatelessWidget {
                     }
                   },
                   child: Text(S.of(context).next),
+                ),
+              ),
+            );
+          }
+          if (paymentState.error == PaymentInfoError.tfaRequired) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => showKyc2FaSheet(
+                    context,
+                    onVerified: () => context.read<BuyPaymentInfoCubit>().getPaymentInfo(
+                      amount: amountController.text,
+                    ),
+                  ),
+                  child: Text(S.of(context).twoFaVerify),
                 ),
               ),
             );

@@ -49,3 +49,7 @@ class SettingsEditNameFailure extends SettingsEditNameState {
   @override
   List<Object?> get props => [message];
 }
+
+class SettingsEditNameRequiresTfa extends SettingsEditNameState {
+  const SettingsEditNameRequiresTfa();
+}

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/tfa_required_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 
 part 'settings_edit_address_state.dart';
@@ -27,6 +28,8 @@ class SettingsEditAddressCubit extends Cubit<SettingsEditAddressState> {
       final url = session.currentStep?.session.url;
       if (url == null) throw Exception('No session URL returned');
       emit(SettingsEditAddressReady(url));
+    } on TfaRequiredException {
+      emit(const SettingsEditAddressRequiresTfa());
     } catch (e) {
       emit(SettingsEditAddressFailure(e.toString()));
     }
@@ -61,6 +64,8 @@ class SettingsEditAddressCubit extends Cubit<SettingsEditAddressState> {
         },
       });
       emit(const SettingsEditAddressSuccess());
+    } on TfaRequiredException {
+      emit(const SettingsEditAddressRequiresTfa());
     } catch (e) {
       emit(SettingsEditAddressFailure(e.toString()));
     }
