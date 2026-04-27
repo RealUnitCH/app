@@ -3,14 +3,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:no_screenshot/no_screenshot.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/create_wallet/bloc/create_wallet_cubit.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/seed_blur_card.dart';
 
-class CreateWalletView extends StatelessWidget {
+class CreateWalletView extends StatefulWidget {
   const CreateWalletView({super.key});
+
+  @override
+  State<CreateWalletView> createState() => _CreateWalletViewState();
+}
+
+class _CreateWalletViewState extends State<CreateWalletView> {
+  @override
+  void initState() {
+    NoScreenshot.instance.screenshotOff();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -92,4 +104,10 @@ class CreateWalletView extends StatelessWidget {
       ),
     ),
   );
+
+  @override
+  void dispose() {
+    NoScreenshot.instance.screenshotOn();
+    super.dispose();
+  }
 }

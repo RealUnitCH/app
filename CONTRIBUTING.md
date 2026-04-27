@@ -1,4 +1,4 @@
-# RealUnit App — Claude Code Guidelines
+# RealUnit App — Contributing Guidelines
 
 ## Build & Test Commands
 
@@ -11,6 +11,13 @@ flutter analyze                             # lint check
 ```
 
 After changing ARB files, always regenerate: `dart run tool/generate_localization.dart`
+
+## API Access — CRITICAL
+
+- The app is **only allowed to talk to the DFX API**: `api.dfx.swiss` (mainnet) and `dev.api.dfx.swiss` (testnet/Sepolia). No other hosts.
+- **No third-party APIs**: no direct Ethereum JSON-RPC calls (Infura, Alchemy, public nodes, etc.), no block explorer APIs (Etherscan, …), no price feeds, no analytics endpoints, no third-party SDKs that call out over the network.
+- If a feature needs on-chain data (e.g. native ETH balance, transaction status, token balance), add a new endpoint to [`DFXswiss/api`](https://github.com/DFXswiss/api) and let the app call that endpoint. The API is the single gateway.
+- All network calls must go through `AppStore.httpClient` with `buildUri(_host, …)` — `_host` resolves to the DFX API host via `ApiConfig`. Do not instantiate `http.Client`/`Dio`/`Web3Client` against other hosts.
 
 ## Project Architecture
 
