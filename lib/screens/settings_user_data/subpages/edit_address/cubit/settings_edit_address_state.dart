@@ -49,3 +49,7 @@ class SettingsEditAddressFailure extends SettingsEditAddressState {
   @override
   List<Object?> get props => [message];
 }
+
+class SettingsEditAddressRequiresTfa extends SettingsEditAddressState {
+  const SettingsEditAddressRequiresTfa();
+}

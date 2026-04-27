@@ -1,4 +1,5 @@
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/tfa_required_exception.dart';
 
 class ApiException implements Exception {
   final int? statusCode;
@@ -19,6 +20,8 @@ class ApiException implements Exception {
         return KycLevelRequiredException.fromJson(json);
       case 'REGISTRATION_REQUIRED':
         return RegistrationRequiredException.fromJson(json);
+      case 'TFA_REQUIRED':
+        return TfaRequiredException.fromJson(json);
       default:
         final message = json['message'];
         return ApiException(

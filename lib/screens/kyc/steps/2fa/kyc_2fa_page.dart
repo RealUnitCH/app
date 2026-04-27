@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
-import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/2fa/cubits/kyc_2fa/kyc_2fa_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/2fa/cubits/kyc_2fa_verify/kyc_2fa_verify_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
@@ -10,7 +9,9 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 
 class Kyc2FaPage extends StatelessWidget {
-  const Kyc2FaPage({super.key});
+  final VoidCallback onVerified;
+
+  const Kyc2FaPage({super.key, required this.onVerified});
 
   @override
   Widget build(BuildContext context) {
@@ -27,13 +28,15 @@ class Kyc2FaPage extends StatelessWidget {
           ),
         ),
       ],
-      child: const Kyc2FaView(),
+      child: Kyc2FaView(onVerified: onVerified),
     );
   }
 }
 
 class Kyc2FaView extends StatefulWidget {
-  const Kyc2FaView({super.key});
+  final VoidCallback onVerified;
+
+  const Kyc2FaView({super.key, required this.onVerified});
 
   @override
   State<Kyc2FaView> createState() => _Kyc2FaViewState();
@@ -59,7 +62,7 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
           BlocListener<Kyc2FaVerifyCubit, Kyc2FaVerifyState>(
             listener: (context, state) {
               if (state is Kyc2FaVerifySuccess) {
-                context.read<KycCubit>().checkKyc();
+                widget.onVerified();
               }
               if (state is Kyc2FaVerifyFailure) {
                 ScaffoldMessenger.of(context).showSnackBar(

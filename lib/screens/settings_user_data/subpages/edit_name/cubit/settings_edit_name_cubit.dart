@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/tfa_required_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 
 part 'settings_edit_name_state.dart';
@@ -27,6 +28,8 @@ class SettingsEditNameCubit extends Cubit<SettingsEditNameState> {
       final url = session.currentStep?.session.url;
       if (url == null) throw Exception('No session URL returned');
       emit(SettingsEditNameReady(url));
+    } on TfaRequiredException {
+      emit(const SettingsEditNameRequiresTfa());
     } catch (e) {
       emit(SettingsEditNameFailure(e.toString()));
     }
@@ -53,6 +56,8 @@ class SettingsEditNameCubit extends Cubit<SettingsEditNameState> {
         'fileName': fileName,
       });
       emit(const SettingsEditNameSuccess());
+    } on TfaRequiredException {
+      emit(const SettingsEditNameRequiresTfa());
     } catch (e) {
       emit(SettingsEditNameFailure(e.toString()));
     }

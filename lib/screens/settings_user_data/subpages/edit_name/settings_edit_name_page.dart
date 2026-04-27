@@ -6,10 +6,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/utils/xfile_extension.dart';
+import 'package:realunit_wallet/screens/kyc/steps/2fa/show_kyc_2fa_sheet.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_name/cubit/settings_edit_name_cubit.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_failure_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_loading_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_pending_page.dart';
+import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_requires_tfa_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/form/file_picker_field.dart';
@@ -70,6 +72,13 @@ class _SettingsEditNameViewState extends State<SettingsEditNameView> {
           message,
           title: S.of(context).changeName,
           onRefresh: context.read<SettingsEditNameCubit>().refresh,
+        ),
+        SettingsEditNameRequiresTfa() => SettingsEditRequiresTfaPage(
+          title: S.of(context).changeName,
+          onVerify: () => showKyc2FaSheet(
+            context,
+            onVerified: context.read<SettingsEditNameCubit>().refresh,
+          ),
         ),
         SettingsEditNameReady() || SettingsEditNameSubmitting() => Scaffold(
           appBar: AppBar(title: Text(S.of(context).changeName)),
