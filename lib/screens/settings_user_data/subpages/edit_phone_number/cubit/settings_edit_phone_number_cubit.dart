@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/exceptions/tfa_required_exception.dart';
 
 part 'settings_edit_phone_number_state.dart';
 
@@ -17,8 +16,6 @@ class SettingsEditPhoneNumberCubit extends Cubit<SettingsEditPhoneNumberState> {
       emit(const SettingsEditPhoneNumberSubmitting());
       await _kycService.updateUser({'phone': phone});
       emit(const SettingsEditPhoneNumberSuccess());
-    } on TfaRequiredException {
-      emit(const SettingsEditPhoneNumberRequiresTfa());
     } catch (e) {
       emit(SettingsEditPhoneNumberFailure(e.toString()));
     }

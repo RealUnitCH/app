@@ -27,7 +27,3 @@ class SettingsEditPhoneNumberFailure extends SettingsEditPhoneNumberState {
   @override
   List<Object?> get props => [message];
 }
-
-class SettingsEditPhoneNumberRequiresTfa extends SettingsEditPhoneNumberState {
-  const SettingsEditPhoneNumberRequiresTfa();
-}
