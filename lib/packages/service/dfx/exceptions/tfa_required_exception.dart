@@ -7,7 +7,7 @@ class TfaRequiredException extends ApiException {
     required super.code,
     required super.message,
     this.level,
-  });
+  }) : super(statusCode: 403);
 
   factory TfaRequiredException.fromJson(Map<String, dynamic> json) {
     return TfaRequiredException(
