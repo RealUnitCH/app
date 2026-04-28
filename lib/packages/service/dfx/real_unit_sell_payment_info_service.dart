@@ -10,7 +10,6 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/rea
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_payment_info_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_unsigned_transactions_request_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/real_unit_sell_step.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 import 'package:realunit_wallet/packages/wallet/eip7702_signer.dart';
@@ -131,7 +130,6 @@ class RealUnitSellPaymentInfoService {
 
   Future<String> broadcastTransaction(
     int id,
-    RealUnitSellStep step,
     String signedTransaction,
   ) async {
     final authToken = _appStore.sessionCache.authToken;
@@ -143,7 +141,7 @@ class RealUnitSellPaymentInfoService {
         'Authorization': 'Bearer $authToken',
       },
       body: jsonEncode(
-        BroadcastTransactionRequestDto(step: step, signedTransaction: signedTransaction).toJson(),
+        BroadcastTransactionRequestDto(signedTransaction: signedTransaction).toJson(),
       ),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {

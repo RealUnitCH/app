@@ -9,7 +9,6 @@ import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/real_unit_sell_step.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
 
@@ -129,7 +128,6 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
       final signedDeposit = await _signTransaction(depositState.rawDepositTransaction, credentials);
       await _sellService.broadcastTransaction(
         _paymentInfo.id,
-        RealUnitSellStep.brokerbotSell,
         depositState.signedSwapTransaction,
       );
       await _broadcastDepositAndConfirm(depositState.signedSwapTransaction, signedDeposit);
@@ -163,7 +161,6 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
     try {
       final txHash = await _sellService.broadcastTransaction(
         _paymentInfo.id,
-        RealUnitSellStep.zchfDeposit,
         signedDeposit,
       );
       await _sellService.confirmPaymentWithTxHash(_paymentInfo, txHash);
