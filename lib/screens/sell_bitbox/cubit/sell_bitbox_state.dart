@@ -1,27 +1,29 @@
 part of 'sell_bitbox_cubit.dart';
 
-abstract class SellBitboxState extends Equatable {
+sealed class SellBitboxState extends Equatable {
   @override
   List<Object?> get props => [];
 }
 
-class SellBitboxBitboxRequired extends SellBitboxState {}
+sealed class SellBitboxEthState extends SellBitboxState {}
 
-// ETH check
+sealed class SellBitboxSwapState extends SellBitboxState {}
 
-class SellBitboxCheckingEth extends SellBitboxState {}
+sealed class SellBitboxDepositState extends SellBitboxState {}
 
-class SellBitboxRequestingFaucet extends SellBitboxState {}
+class SellBitboxBitboxRequired extends SellBitboxEthState {}
 
-class SellBitboxWaitingForEth extends SellBitboxState {}
+class SellBitboxCheckingEth extends SellBitboxEthState {}
 
-class SellBitboxEthReady extends SellBitboxState {}
+class SellBitboxRequestingFaucet extends SellBitboxEthState {}
 
-// REALU → ZCHF swap
+class SellBitboxWaitingForEth extends SellBitboxEthState {}
 
-class SellBitboxPreparingSwap extends SellBitboxState {}
+class SellBitboxEthReady extends SellBitboxEthState {}
 
-class SellBitboxAwaitingSwapConfirm extends SellBitboxState {
+class SellBitboxPreparingSwap extends SellBitboxSwapState {}
+
+class SellBitboxAwaitingSwapConfirm extends SellBitboxSwapState {
   final String rawTransaction;
 
   SellBitboxAwaitingSwapConfirm(this.rawTransaction);
@@ -30,13 +32,11 @@ class SellBitboxAwaitingSwapConfirm extends SellBitboxState {
   List<Object?> get props => [rawTransaction];
 }
 
-class SellBitboxSwapping extends SellBitboxState {}
+class SellBitboxSwapping extends SellBitboxSwapState {}
 
-// ZCHF → DFX deposit
+class SellBitboxPreparingDeposit extends SellBitboxDepositState {}
 
-class SellBitboxPreparingDeposit extends SellBitboxState {}
-
-class SellBitboxAwaitingDepositConfirm extends SellBitboxState {
+class SellBitboxAwaitingDepositConfirm extends SellBitboxDepositState {
   final double zchfBalance;
 
   SellBitboxAwaitingDepositConfirm(this.zchfBalance);
@@ -45,11 +45,9 @@ class SellBitboxAwaitingDepositConfirm extends SellBitboxState {
   List<Object?> get props => [zchfBalance];
 }
 
-class SellBitboxDepositing extends SellBitboxState {}
+class SellBitboxDepositing extends SellBitboxDepositState {}
 
-// ── Terminal
-
-class SellBitboxSuccess extends SellBitboxState {}
+class SellBitboxSuccess extends SellBitboxDepositState {}
 
 class SellBitboxError extends SellBitboxState {
   final String message;

@@ -19,6 +19,7 @@ class ApiConfig {
   Asset get asset => networkMode.isTestnet ? realUnitTestAsset : realUnitAsset;
 
   int get ethAssetId => networkMode.isTestnet ? sepoliaEthAssetId : ethereumEthAssetId;
+  int get zchfAssetId => networkMode.isTestnet ? sepoliaZchfAssetId : ethereumZchfAssetId;
 }
 
 Uri buildUri(

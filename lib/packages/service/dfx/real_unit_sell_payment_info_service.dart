@@ -3,10 +3,15 @@ import 'dart:convert';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_request_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_response_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_confirm_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_confirm_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_payment_info_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/unsigned_transaction_request_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/unsigned_transaction_response_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/real_unit_sell_step.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 import 'package:realunit_wallet/packages/wallet/eip7702_signer.dart';
@@ -15,6 +20,8 @@ import 'package:realunit_wallet/styles/currency.dart';
 class RealUnitSellPaymentInfoService {
   static const _sellPaymentInfoPath = '/v1/realunit/sell';
   static String _confirmPaymentPath(int id) => '/v1/realunit/sell/$id/confirm';
+  static String _unsignedTxPath(int id) => '/v1/realunit/sell/$id/unsigned-transaction';
+  static String _broadcastPath(int id) => '/v1/realunit/sell/$id/broadcast';
 
   String get _host => _appStore.apiConfig.apiHost;
 
@@ -57,6 +64,9 @@ class RealUnitSellPaymentInfoService {
         estimatedAmount: responseDto.estimatedAmount,
         exchangeRate: responseDto.exchangeRate,
         rate: responseDto.rate,
+        depositAddress: responseDto.depositAddress,
+        tokenAddress: responseDto.tokenAddress,
+        chainId: responseDto.chainId,
       );
     } else if (response.statusCode == 403) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
@@ -66,6 +76,7 @@ class RealUnitSellPaymentInfoService {
     }
   }
 
+  /// Confirms payment for Software Wallet
   Future<void> confirmPayment(SellPaymentInfo paymentInfo) async {
     final credentials = _appStore.wallet.currentAccount.primaryAddress;
     final delegationSignature = await Eip712Signer.signDelegation(
@@ -76,35 +87,98 @@ class RealUnitSellPaymentInfoService {
       credentials: credentials,
       eip7702Data: paymentInfo.eip7702,
     );
-    final sellConfirmDto = RealUnitSellConfirmDto(
-      eip7702ConfirmDto: Eip7702ConfirmDto(
-        delegation: Eip7702DelegationDto(
-          delegate: paymentInfo.eip7702.relayerAddress,
-          delegator: paymentInfo.eip7702.message.delegator,
-          authority: paymentInfo.eip7702.message.authority,
-          salt: '${paymentInfo.eip7702.message.salt}',
-          signature: delegationSignature,
-        ),
-        authorization: Eip7702AuthorizationDto(
-          chainId: paymentInfo.eip7702.domain.chainId,
-          address: paymentInfo.eip7702.delegatorAddress,
-          nonce: paymentInfo.eip7702.userNonce,
-          r: '0x${authorizationSignature.r.toRadixString(16)}',
-          s: '0x${authorizationSignature.s.toRadixString(16)}',
-          yParity: authorizationSignature.yParity,
+    await _sendConfirm(
+      paymentInfo.id,
+      RealUnitSellConfirmDto(
+        eip7702ConfirmDto: Eip7702ConfirmDto(
+          delegation: Eip7702DelegationDto(
+            delegate: paymentInfo.eip7702.relayerAddress,
+            delegator: paymentInfo.eip7702.message.delegator,
+            authority: paymentInfo.eip7702.message.authority,
+            salt: '${paymentInfo.eip7702.message.salt}',
+            signature: delegationSignature,
+          ),
+          authorization: Eip7702AuthorizationDto(
+            chainId: paymentInfo.eip7702.domain.chainId,
+            address: paymentInfo.eip7702.delegatorAddress,
+            nonce: paymentInfo.eip7702.userNonce,
+            r: '0x${authorizationSignature.r.toRadixString(16)}',
+            s: '0x${authorizationSignature.s.toRadixString(16)}',
+            yParity: authorizationSignature.yParity,
+          ),
         ),
       ),
     );
+  }
 
+  Future<String> createUnsignedTransaction(
+    int id,
+    RealUnitSellStep step, {
+    double? amount,
+  }) async {
     final authToken = _appStore.sessionCache.authToken;
-    final uri = buildUri(_host, _confirmPaymentPath(paymentInfo.id));
+    final uri = buildUri(_host, _unsignedTxPath(id));
+    final requestDto = UnsignedTransactionRequestDto(step: step, amount: amount);
     final response = await _appStore.httpClient.put(
       uri,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $authToken',
       },
-      body: jsonEncode(sellConfirmDto),
+      body: jsonEncode(requestDto.toJson()),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(
+        'Failed to create unsigned transaction: ${response.statusCode} ${response.body}',
+      );
+    }
+    final responseDto = UnsignedTransactionResponseDto.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+    return responseDto.rawTransaction;
+  }
+
+  Future<String> broadcastTransaction(
+    int id,
+    RealUnitSellStep step,
+    String signedTransaction,
+  ) async {
+    final authToken = _appStore.sessionCache.authToken;
+    final uri = buildUri(_host, _broadcastPath(id));
+    final response = await _appStore.httpClient.put(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $authToken',
+      },
+      body: jsonEncode(
+        BroadcastTransactionRequestDto(step: step, signedTransaction: signedTransaction).toJson(),
+      ),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to broadcast transaction: ${response.statusCode} ${response.body}');
+    }
+    final responseDto = BroadcastTransactionResponseDto.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+    return responseDto.txHash;
+  }
+
+  /// Confirms payment for Bitbox Wallet using txHash obtained after broadcasting the transaction
+  Future<void> confirmPaymentWithTxHash(SellPaymentInfo paymentInfo, String txHash) async {
+    await _sendConfirm(paymentInfo.id, RealUnitSellConfirmDto(txHash: txHash));
+  }
+
+  Future<void> _sendConfirm(int id, RealUnitSellConfirmDto dto) async {
+    final authToken = _appStore.sessionCache.authToken;
+    final uri = buildUri(_host, _confirmPaymentPath(id));
+    final response = await _appStore.httpClient.put(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $authToken',
+      },
+      body: jsonEncode(dto.toJson()),
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
