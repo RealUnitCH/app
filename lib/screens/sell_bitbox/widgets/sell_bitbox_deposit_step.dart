@@ -15,12 +15,6 @@ class SellBitboxDepositStep extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<SellBitboxCubit, SellBitboxState>(
       builder: (context, state) {
-        if (state is SellBitboxPreparingDeposit) {
-          return const Column(
-            mainAxisAlignment: .center,
-            children: [CupertinoActivityIndicator()],
-          );
-        }
         if (state is SellBitboxAwaitingDepositConfirm) {
           return Column(
             mainAxisAlignment: .center,
@@ -43,7 +37,7 @@ class SellBitboxDepositStep extends StatelessWidget {
                     _row(
                       context,
                       label: S.of(context).sellBitboxDepositFrom,
-                      value: '${state.zchfBalance.toStringAsFixed(2)} ZCHF',
+                      value: '${paymentInfo.estimatedAmount.toStringAsFixed(2)} ZCHF',
                     ),
                     const Divider(color: RealUnitColors.neutral200, height: 1),
                     _row(
@@ -78,6 +72,31 @@ class SellBitboxDepositStep extends StatelessWidget {
                 S.of(context).sellBitboxDepositing,
                 style: Theme.of(context).textTheme.bodyLarge,
                 textAlign: .center,
+              ),
+            ],
+          );
+        }
+        if (state is SellBitboxDepositRetry) {
+          return Column(
+            mainAxisAlignment: .center,
+            spacing: 24,
+            children: [
+              Icon(Icons.error_outline, size: 48, color: RealUnitColors.status.red600),
+              Text(
+                S.of(context).sellBitboxDepositRetryTitle,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: .bold),
+                textAlign: .center,
+              ),
+              Text(
+                S.of(context).sellBitboxDepositRetryDescription,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: RealUnitColors.neutral500),
+                textAlign: .center,
+              ),
+              FilledButton(
+                onPressed: () => context.read<SellBitboxCubit>().retryDeposit(),
+                child: Text(S.of(context).retry),
               ),
             ],
           );

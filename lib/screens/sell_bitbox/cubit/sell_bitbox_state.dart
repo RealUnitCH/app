@@ -24,28 +24,44 @@ class SellBitboxEthReady extends SellBitboxEthState {}
 class SellBitboxPreparingSwap extends SellBitboxSwapState {}
 
 class SellBitboxAwaitingSwapConfirm extends SellBitboxSwapState {
-  final String rawTransaction;
+  final String rawSwapTransaction;
+  final String rawDepositTransaction;
 
-  SellBitboxAwaitingSwapConfirm(this.rawTransaction);
+  SellBitboxAwaitingSwapConfirm(this.rawSwapTransaction, this.rawDepositTransaction);
 
   @override
-  List<Object?> get props => [rawTransaction];
+  List<Object?> get props => [rawSwapTransaction, rawDepositTransaction];
 }
 
 class SellBitboxSwapping extends SellBitboxSwapState {}
 
-class SellBitboxPreparingDeposit extends SellBitboxDepositState {}
-
 class SellBitboxAwaitingDepositConfirm extends SellBitboxDepositState {
-  final double zchfBalance;
+  final String signedSwapTransaction;
+  final String rawDepositTransaction;
 
-  SellBitboxAwaitingDepositConfirm(this.zchfBalance);
+  SellBitboxAwaitingDepositConfirm(this.signedSwapTransaction, this.rawDepositTransaction);
 
   @override
-  List<Object?> get props => [zchfBalance];
+  List<Object?> get props => [signedSwapTransaction, rawDepositTransaction];
 }
 
 class SellBitboxDepositing extends SellBitboxDepositState {}
+
+// Swap was broadcast successfully but deposit broadcast failed
+class SellBitboxDepositRetry extends SellBitboxDepositState {
+  final String signedSwapTransaction;
+  final String signedDepositTransaction;
+  final String errorMessage;
+
+  SellBitboxDepositRetry(
+    this.signedSwapTransaction,
+    this.signedDepositTransaction,
+    this.errorMessage,
+  );
+
+  @override
+  List<Object?> get props => [signedSwapTransaction, signedDepositTransaction, errorMessage];
+}
 
 class SellBitboxSuccess extends SellBitboxDepositState {}
 

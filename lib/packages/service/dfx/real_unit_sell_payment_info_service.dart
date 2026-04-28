@@ -9,8 +9,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_confirm_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_payment_info_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/unsigned_transaction_request_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/unsigned_transaction_response_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_unsigned_transactions_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/real_unit_sell_step.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
@@ -20,7 +19,7 @@ import 'package:realunit_wallet/styles/currency.dart';
 class RealUnitSellPaymentInfoService {
   static const _sellPaymentInfoPath = '/v1/realunit/sell';
   static String _confirmPaymentPath(int id) => '/v1/realunit/sell/$id/confirm';
-  static String _unsignedTxPath(int id) => '/v1/realunit/sell/$id/unsigned-transaction';
+  static String _unsignedTxsPath(int id) => '/v1/realunit/sell/$id/unsigned-transactions';
   static String _broadcastPath(int id) => '/v1/realunit/sell/$id/broadcast';
 
   String get _host => _appStore.apiConfig.apiHost;
@@ -67,6 +66,8 @@ class RealUnitSellPaymentInfoService {
         depositAddress: responseDto.depositAddress,
         tokenAddress: responseDto.tokenAddress,
         chainId: responseDto.chainId,
+        ethBalance: responseDto.ethBalance,
+        requiredGasEth: responseDto.requiredGasEth,
       );
     } else if (response.statusCode == 403) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
@@ -111,31 +112,21 @@ class RealUnitSellPaymentInfoService {
     );
   }
 
-  Future<String> createUnsignedTransaction(
-    int id,
-    RealUnitSellStep step, {
-    double? amount,
-  }) async {
+  Future<RealUnitUnsignedTransactionsRequestDto> createUnsignedTransactions(int id) async {
     final authToken = _appStore.sessionCache.authToken;
-    final uri = buildUri(_host, _unsignedTxPath(id));
-    final requestDto = UnsignedTransactionRequestDto(step: step, amount: amount);
+    final uri = buildUri(_host, _unsignedTxsPath(id));
     final response = await _appStore.httpClient.put(
       uri,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $authToken',
       },
-      body: jsonEncode(requestDto.toJson()),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception(
-        'Failed to create unsigned transaction: ${response.statusCode} ${response.body}',
-      );
+      throw Exception('Failed to create unsigned transactions: ${response.body}');
     }
-    final responseDto = UnsignedTransactionResponseDto.fromJson(
-      jsonDecode(response.body) as Map<String, dynamic>,
-    );
-    return responseDto.rawTransaction;
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    return RealUnitUnsignedTransactionsRequestDto.fromJson(json);
   }
 
   Future<String> broadcastTransaction(

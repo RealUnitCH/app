@@ -138,31 +138,33 @@ class SellBitboxView extends StatelessWidget {
         child: SizedBox(
           width: .infinity,
           child: Padding(
-            padding: const .symmetric(horizontal: 20, vertical: 20),
+            padding: const .symmetric(horizontal: 20),
             child: Column(
               mainAxisSize: .min,
+              spacing: 28.0,
               children: [
                 Handlebars.horizontal(context, margin: const .only(top: 5), width: 36),
-                const SizedBox(height: 28),
                 const Icon(
                   Icons.check_circle_rounded,
                   color: RealUnitColors.realUnitBlue,
                   size: 64,
                 ),
-                const SizedBox(height: 28),
-                Text(
-                  S.of(context).sellSuccess,
-                  style: Theme.of(context).textTheme.headlineMedium,
+                Column(
+                  spacing: 8.0,
+                  children: [
+                    Text(
+                      S.of(context).sellSuccess,
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    Text(
+                      S.of(context).sellSuccessDescription,
+                      textAlign: .center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: RealUnitColors.neutral500,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  S.of(context).sellSuccessDescription,
-                  textAlign: .center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: RealUnitColors.neutral500,
-                  ),
-                ),
-                const SizedBox(height: 28),
                 FilledButton(
                   style: ButtonStyle(
                     backgroundColor: WidgetStateProperty.all(RealUnitColors.neutral100),

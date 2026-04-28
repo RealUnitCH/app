@@ -14,6 +14,8 @@ class SellPaymentInfo {
   final String depositAddress;
   final String tokenAddress;
   final int chainId;
+  final double ethBalance;
+  final double requiredGasEth;
 
   const SellPaymentInfo({
     required this.id,
@@ -27,5 +29,7 @@ class SellPaymentInfo {
     required this.depositAddress,
     required this.tokenAddress,
     required this.chainId,
+    required this.ethBalance,
+    required this.requiredGasEth,
   });
 }

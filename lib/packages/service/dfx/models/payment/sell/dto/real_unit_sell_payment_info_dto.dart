@@ -23,6 +23,8 @@ class RealUnitSellPaymentInfoDto {
   final double estimatedAmount;
   final Currency currency;
   final BeneficiaryDto beneficiary;
+  final double ethBalance;
+  final double requiredGasEth;
   final bool isValid;
 
   const RealUnitSellPaymentInfoDto({
@@ -45,6 +47,8 @@ class RealUnitSellPaymentInfoDto {
     required this.estimatedAmount,
     required this.currency,
     required this.beneficiary,
+    required this.ethBalance,
+    required this.requiredGasEth,
     required this.isValid,
   });
 
@@ -71,6 +75,8 @@ class RealUnitSellPaymentInfoDto {
       estimatedAmount: (json['estimatedAmount'] as num).toDouble(),
       currency: Currency.fromCode(json['currency'] as String),
       beneficiary: BeneficiaryDto.fromJson(json['beneficiary'] as Map<String, dynamic>),
+      ethBalance: (json['ethBalance'] as num).toDouble(),
+      requiredGasEth: (json['requiredGasEth'] as num).toDouble(),
       isValid: json['isValid'] as bool,
     );
   }

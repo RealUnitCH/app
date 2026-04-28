@@ -48,8 +48,7 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
         return;
       }
 
-      final balance = await _blockchainService.getEthBalance(_appStore.primaryAddress);
-      if (balance > 0) {
+      if (_paymentInfo.ethBalance >= _paymentInfo.requiredGasEth) {
         emit(SellBitboxEthReady());
       } else {
         await _requestFaucet();
@@ -76,7 +75,7 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
     _ethPollingTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
       try {
         final balance = await _blockchainService.getEthBalance(_appStore.primaryAddress);
-        if (balance > 0) {
+        if (balance >= _paymentInfo.requiredGasEth) {
           _ethPollingTimer?.cancel();
           emit(SellBitboxEthReady());
         }
@@ -89,11 +88,8 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
   Future<void> proceedToSwap() async {
     try {
       emit(SellBitboxPreparingSwap());
-      final rawTransaction = await _sellService.createUnsignedTransaction(
-        _paymentInfo.id,
-        RealUnitSellStep.brokerbotSell,
-      );
-      emit(SellBitboxAwaitingSwapConfirm(rawTransaction));
+      final transactions = await _sellService.createUnsignedTransactions(_paymentInfo.id);
+      emit(SellBitboxAwaitingSwapConfirm(transactions.swap, transactions.deposit));
     } catch (e) {
       emit(SellBitboxError(e.toString()));
     }
@@ -111,26 +107,8 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
 
     try {
       emit(SellBitboxSwapping());
-      final signedTransaction = await _signTransaction(swapState.rawTransaction, credentials);
-      await _sellService.broadcastTransaction(
-        _paymentInfo.id,
-        RealUnitSellStep.brokerbotSell,
-        signedTransaction,
-      );
-      await _prepareDeposit(credentials);
-    } catch (e) {
-      emit(SellBitboxError(e.toString()));
-    }
-  }
-
-  Future<void> _prepareDeposit(BitboxCredentials credentials) async {
-    try {
-      emit(SellBitboxPreparingDeposit());
-      final zchfBalance = await _blockchainService.getTokenBalance(
-        _appStore.primaryAddress,
-        _appStore.apiConfig.zchfAssetId,
-      );
-      emit(SellBitboxAwaitingDepositConfirm(zchfBalance));
+      final signedSwap = await _signTransaction(swapState.rawSwapTransaction, credentials);
+      emit(SellBitboxAwaitingDepositConfirm(signedSwap, swapState.rawDepositTransaction));
     } catch (e) {
       emit(SellBitboxError(e.toString()));
     }
@@ -148,22 +126,50 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
 
     try {
       emit(SellBitboxDepositing());
-      final sellStep = RealUnitSellStep.zchfDeposit;
-      final rawTransaction = await _sellService.createUnsignedTransaction(
+      final signedDeposit = await _signTransaction(depositState.rawDepositTransaction, credentials);
+      await _sellService.broadcastTransaction(
         _paymentInfo.id,
-        sellStep,
-        amount: depositState.zchfBalance,
+        RealUnitSellStep.brokerbotSell,
+        depositState.signedSwapTransaction,
       );
-      final signedTransaction = await _signTransaction(rawTransaction, credentials);
+      await _broadcastDepositAndConfirm(depositState.signedSwapTransaction, signedDeposit);
+    } catch (e) {
+      emit(SellBitboxError(e.toString()));
+    }
+  }
+
+  Future<void> retryDeposit() async {
+    final retryState = state;
+    if (retryState is! SellBitboxDepositRetry) return;
+
+    try {
+      emit(SellBitboxDepositing());
+      await _broadcastDepositAndConfirm(
+        retryState.signedSwapTransaction,
+        retryState.signedDepositTransaction,
+      );
+    } catch (e) {
+      emit(
+        SellBitboxDepositRetry(
+          retryState.signedSwapTransaction,
+          retryState.signedDepositTransaction,
+          e.toString(),
+        ),
+      );
+    }
+  }
+
+  Future<void> _broadcastDepositAndConfirm(String signedSwap, String signedDeposit) async {
+    try {
       final txHash = await _sellService.broadcastTransaction(
         _paymentInfo.id,
-        sellStep,
-        signedTransaction,
+        RealUnitSellStep.zchfDeposit,
+        signedDeposit,
       );
       await _sellService.confirmPaymentWithTxHash(_paymentInfo, txHash);
       emit(SellBitboxSuccess());
     } catch (e) {
-      emit(SellBitboxError(e.toString()));
+      emit(SellBitboxDepositRetry(signedSwap, signedDeposit, e.toString()));
     }
   }
 
