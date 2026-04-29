@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:convert/convert.dart' as convert;
@@ -9,6 +8,7 @@ import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
 
@@ -157,7 +157,10 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
     }
   }
 
-  Future<void> _broadcastDepositAndConfirm(String signedSwap, String signedDeposit) async {
+  Future<void> _broadcastDepositAndConfirm(
+    BroadcastTransactionRequestDto signedSwap,
+    BroadcastTransactionRequestDto signedDeposit,
+  ) async {
     try {
       final txHash = await _sellService.broadcastTransaction(
         _paymentInfo.id,
@@ -170,7 +173,10 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
     }
   }
 
-  Future<String> _signTransaction(String rawTransaction, BitboxCredentials credentials) async {
+  Future<BroadcastTransactionRequestDto> _signTransaction(
+    String rawTransaction,
+    BitboxCredentials credentials,
+  ) async {
     final payload = Uint8List.fromList(
       convert.hex.decode(
         rawTransaction.startsWith('0x') ? rawTransaction.substring(2) : rawTransaction,
@@ -183,7 +189,12 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
     );
     final r = sig.r.toRadixString(16).padLeft(64, '0');
     final s = sig.s.toRadixString(16).padLeft(64, '0');
-    return jsonEncode({'unsignedTx': rawTransaction, 'r': '0x$r', 's': '0x$s', 'v': sig.v});
+    return BroadcastTransactionRequestDto(
+      unsignedTx: rawTransaction,
+      r: '0x$r',
+      s: '0x$s',
+      v: sig.v,
+    );
   }
 
   @override

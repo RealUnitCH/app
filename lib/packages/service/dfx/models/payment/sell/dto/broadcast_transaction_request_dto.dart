@@ -1,13 +1,22 @@
 class BroadcastTransactionRequestDto {
-  final String signedTransaction;
+  final String unsignedTx;
+  final String r;
+  final String s;
+  final int v;
 
   const BroadcastTransactionRequestDto({
-    required this.signedTransaction,
+    required this.unsignedTx,
+    required this.r,
+    required this.s,
+    required this.v,
   });
 
   Map<String, dynamic> toJson() {
     return {
-      'signedTransaction': signedTransaction,
+      'unsignedTx': unsignedTx,
+      'r': r,
+      's': s,
+      'v': v,
     };
   }
 }

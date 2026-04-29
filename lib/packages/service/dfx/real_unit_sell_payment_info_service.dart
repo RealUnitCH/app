@@ -130,7 +130,7 @@ class RealUnitSellPaymentInfoService {
 
   Future<String> broadcastTransaction(
     int id,
-    String signedTransaction,
+    BroadcastTransactionRequestDto dto,
   ) async {
     final authToken = _appStore.sessionCache.authToken;
     final uri = buildUri(_host, _broadcastPath(id));
@@ -140,9 +140,7 @@ class RealUnitSellPaymentInfoService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $authToken',
       },
-      body: jsonEncode(
-        BroadcastTransactionRequestDto(signedTransaction: signedTransaction).toJson(),
-      ),
+      body: jsonEncode(dto.toJson()),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('Failed to broadcast transaction: ${response.statusCode} ${response.body}');

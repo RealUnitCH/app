@@ -36,7 +36,7 @@ class SellBitboxAwaitingSwapConfirm extends SellBitboxSwapState {
 class SellBitboxSwapping extends SellBitboxSwapState {}
 
 class SellBitboxAwaitingDepositConfirm extends SellBitboxDepositState {
-  final String signedSwapTransaction;
+  final BroadcastTransactionRequestDto signedSwapTransaction;
   final String rawDepositTransaction;
 
   SellBitboxAwaitingDepositConfirm(this.signedSwapTransaction, this.rawDepositTransaction);
@@ -49,8 +49,8 @@ class SellBitboxDepositing extends SellBitboxDepositState {}
 
 // Swap was broadcast successfully but deposit broadcast failed
 class SellBitboxDepositRetry extends SellBitboxDepositState {
-  final String signedSwapTransaction;
-  final String signedDepositTransaction;
+  final BroadcastTransactionRequestDto signedSwapTransaction;
+  final BroadcastTransactionRequestDto signedDepositTransaction;
   final String errorMessage;
 
   SellBitboxDepositRetry(
