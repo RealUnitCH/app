@@ -12,26 +12,23 @@ class BuyConfirmCubit extends Cubit<BuyConfirmState> {
 
   BuyConfirmCubit(RealUnitBuyPaymentInfoService buyPaymentInfoService)
     : _buyPaymentInfoService = buyPaymentInfoService,
-      super(BuyConfirmInitial());
+      super(const BuyConfirmInitial());
 
   Future<void> confirmPayment(int paymentInfoId) async {
     try {
-      emit(BuyConfirmLoading());
+      emit(const BuyConfirmLoading());
       final reference = await _buyPaymentInfoService.confirmPayment(paymentInfoId);
       emit(BuyConfirmSuccess(reference));
     } on ApiException catch (e) {
       developer.log(e.toString());
       emit(
         BuyConfirmFailure(
-          kind: e.statusCode == 503
-              ? BuyConfirmFailureKind.aktionariat
-              : BuyConfirmFailureKind.generic,
-          error: e.toString(),
+          e.statusCode == 503 ? BuyConfirmError.aktionariat : BuyConfirmError.unknown,
         ),
       );
     } catch (e) {
       developer.log(e.toString());
-      emit(BuyConfirmFailure(kind: BuyConfirmFailureKind.generic, error: e.toString()));
+      emit(const BuyConfirmFailure(BuyConfirmError.unknown));
     }
   }
 }

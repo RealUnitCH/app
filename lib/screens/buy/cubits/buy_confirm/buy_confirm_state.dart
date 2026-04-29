@@ -1,31 +1,36 @@
 part of 'buy_confirm_cubit.dart';
 
-enum BuyConfirmFailureKind { aktionariat, generic }
+enum BuyConfirmError { aktionariat, unknown }
 
 abstract class BuyConfirmState extends Equatable {
+  const BuyConfirmState();
+
   @override
   List<Object?> get props => [];
 }
 
-class BuyConfirmInitial extends BuyConfirmState {}
+class BuyConfirmInitial extends BuyConfirmState {
+  const BuyConfirmInitial();
+}
 
-class BuyConfirmLoading extends BuyConfirmState {}
+class BuyConfirmLoading extends BuyConfirmState {
+  const BuyConfirmLoading();
+}
 
 class BuyConfirmSuccess extends BuyConfirmState {
   final String reference;
 
-  BuyConfirmSuccess(this.reference);
+  const BuyConfirmSuccess(this.reference);
 
   @override
   List<Object?> get props => [reference];
 }
 
 class BuyConfirmFailure extends BuyConfirmState {
-  final BuyConfirmFailureKind kind;
-  final String error;
+  final BuyConfirmError error;
 
-  BuyConfirmFailure({required this.kind, required this.error});
+  const BuyConfirmFailure(this.error);
 
   @override
-  List<Object?> get props => [kind, error];
+  List<Object?> get props => [error];
 }
