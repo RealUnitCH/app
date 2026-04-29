@@ -71,7 +71,8 @@ class RealUnitBuyPaymentInfoService {
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to confirm payment: ${response.statusCode} ${response.body}');
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson);
     }
 
     final json = jsonDecode(response.body) as Map<String, dynamic>;
