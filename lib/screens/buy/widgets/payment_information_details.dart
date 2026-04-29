@@ -70,10 +70,12 @@ class PaymentInformationDetailsView extends StatelessWidget {
         }
         if (state is BuyConfirmFailure) {
           if (context.mounted) {
+            final text = switch (state.kind) {
+              BuyConfirmFailureKind.aktionariat => S.of(context).buyPaymentConfirmFailedAktionariat,
+              BuyConfirmFailureKind.generic => S.of(context).buyPaymentConfirmFailed,
+            };
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(S.of(context).buyPaymentConfirmFailed),
-              ),
+              SnackBar(content: Text(text)),
             );
           }
         }

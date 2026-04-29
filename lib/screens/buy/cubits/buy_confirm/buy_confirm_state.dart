@@ -1,5 +1,7 @@
 part of 'buy_confirm_cubit.dart';
 
+enum BuyConfirmFailureKind { aktionariat, generic }
+
 abstract class BuyConfirmState extends Equatable {
   @override
   List<Object?> get props => [];
@@ -19,10 +21,11 @@ class BuyConfirmSuccess extends BuyConfirmState {
 }
 
 class BuyConfirmFailure extends BuyConfirmState {
+  final BuyConfirmFailureKind kind;
   final String error;
 
-  BuyConfirmFailure(this.error);
+  BuyConfirmFailure({required this.kind, required this.error});
 
   @override
-  List<Object?> get props => [error];
+  List<Object?> get props => [kind, error];
 }
