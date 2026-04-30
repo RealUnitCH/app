@@ -6,6 +6,7 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 
@@ -65,16 +66,39 @@ void main() {
         expect(reference, equals(referenceText));
       });
 
-      test('throws exception on non-200/201 status code', () async {
+      test('throws ApiException on non-200/201 status code', () async {
         final appStore = buildAppStore(
-          (request) async => http.Response('{"error": "Not found"}', 404),
+          (request) async => http.Response(
+            '{"statusCode": 404, "message": "Not found"}',
+            404,
+          ),
         );
 
         final service = RealUnitBuyPaymentInfoService(appStore);
 
         expect(
           () => service.confirmPayment(999),
-          throwsA(isA<Exception>()),
+          throwsA(
+            isA<ApiException>().having((e) => e.statusCode, 'statusCode', 404),
+          ),
+        );
+      });
+
+      test('throws ApiException with statusCode 503 on Aktionariat failure', () async {
+        final appStore = buildAppStore(
+          (request) async => http.Response(
+            '{"statusCode": 503, "message": "Aktionariat API error: upstream"}',
+            503,
+          ),
+        );
+
+        final service = RealUnitBuyPaymentInfoService(appStore);
+
+        expect(
+          () => service.confirmPayment(999),
+          throwsA(
+            isA<ApiException>().having((e) => e.statusCode, 'statusCode', 503),
+          ),
         );
       });
 
