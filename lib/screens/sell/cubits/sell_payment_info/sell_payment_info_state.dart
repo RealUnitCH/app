@@ -17,11 +17,12 @@ class SellPaymentInfoLoading extends SellPaymentInfoState {
 
 class SellPaymentInfoSuccess extends SellPaymentInfoState {
   final SellPaymentInfo sellPaymentInfo;
+  final bool isBitbox;
 
-  const SellPaymentInfoSuccess(this.sellPaymentInfo);
+  const SellPaymentInfoSuccess(this.sellPaymentInfo, {required this.isBitbox});
 
   @override
-  List<Object?> get props => [sellPaymentInfo];
+  List<Object?> get props => [sellPaymentInfo, isBitbox];
 }
 
 class SellPaymentInfoFailure extends SellPaymentInfoState {

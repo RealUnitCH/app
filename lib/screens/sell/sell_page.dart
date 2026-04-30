@@ -37,6 +37,7 @@ class SellPage extends StatelessWidget {
           create: (context) => SellPaymentInfoCubit(
             getIt<RealUnitSellPaymentInfoService>(),
             getIt<DFXPriceService>(),
+            getIt<AppStore>(),
           ),
         ),
         BlocProvider(
