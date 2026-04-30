@@ -39,30 +39,4 @@ class DfxBlockchainApiService {
     if (balances.isEmpty) return 0.0;
     return ((balances.first as Map<String, dynamic>)['balance'] as num).toDouble();
   }
-
-  Future<double> getTokenBalance(String address, int assetId) async {
-    final authToken = _appStore.sessionCache.authToken;
-    final uri = buildUri(_host, _balancesPath);
-    final response = await _appStore.httpClient.post(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
-      },
-      body: jsonEncode({
-        'address': address,
-        'blockchain': _blockchain,
-        'assetIds': [assetId],
-      }),
-    );
-
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to get token balance: ${response.statusCode}');
-    }
-
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    final balances = json['balances'] as List<dynamic>;
-    if (balances.isEmpty) return 0.0;
-    return ((balances.first as Map<String, dynamic>)['balance'] as num).toDouble();
-  }
 }
