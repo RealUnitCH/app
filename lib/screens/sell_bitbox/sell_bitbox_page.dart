@@ -189,9 +189,9 @@ class SellBitboxView extends StatelessWidget {
   }
 
   int _stepIndex(SellBitboxState state) => switch (state) {
+    SellBitboxEthState() => 0,
     SellBitboxSwapState() => 1,
     SellBitboxDepositState() => 2,
-    SellBitboxEthState() => 0,
     _ => 0,
   };
 }
