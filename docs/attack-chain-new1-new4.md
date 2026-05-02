@@ -53,9 +53,9 @@ Ein normaler User hat ein Phone mit gesperrtem Bootloader, Verified Boot, Hardwa
 - Social Engineering gegen den User (Phishing).
 - Kompromittierung des User-iCloud/Google-Accounts (separat zu betrachten).
 
-Dieser Angriffsvektor ist **vom DFX-Trust-Modell vollständig unabhängig** — der User vertraut DFX möglicherweise vollständig, das ändert aber nichts daran, dass ein Phone-Verlust auf einem **rootbaren Setup** zur Mnemonic-Exfiltration führen kann.
+Dieser Angriffsvektor ist **vom DFX-Trust-Modell vollständig unabhängig** — der User vertraut DFX möglicherweise vollständig, das ändert aber nichts daran, dass ein Phone-Verlust auf einem **rootbaren Setup** zur Mnemonic-Exfiltration und damit zum Total-Loss der Wallet-Position führen kann.
 
-**Aber:** Der reale Schaden hängt zusätzlich von einem Faktor ab, den dieses Dokument nicht eigenständig prüft (siehe Abschnitt 8): **ob der RealUnit-Token-Smart-Contract Transfer-Restrictions hat** (KYC-Whitelist, übliche Praxis bei tokenisierten Schweizer Wertpapieren). Falls ja, kann der Angreifer die RealUnit-Tokens nicht direkt drainen — der Schaden reduziert sich auf andere ETH-basierte Assets auf derselben Adresse, Privacy-Verlust und Cross-Wallet-Risiko via wiederverwendete Mnemonic.
+Der RealUnit-Token (`0x553C7f9C780316FC1D34b8e14ac2465Ab22a090B`, Ethereum Mainnet) ist nach Auskunft des Issuers **frei übertragbar** — keine KYC-Whitelist auf Smart-Contract-Ebene. Damit entfällt eine theoretische Restriktion, die den Schaden begrenzt hätte. Der Angreifer kann nach erfolgreicher Mnemonic-Exfiltration die RealUnit-Tokens direkt an seine eigene Adresse transferieren und über DEX-Liquidity (sofern vorhanden) oder OTC monetarisieren.
 
 ---
 
@@ -254,10 +254,10 @@ In MetaMask, Rabby, Frame, MyEtherWallet — beliebige Wallet-Software, die BIP3
 
 **Schritt 10 — Funds transferieren**
 
-- **RealUnit-Tokens:** Transfer hängt davon ab, ob der ERC-20-Contract Transfer-Restrictions hat (KYC-Whitelist auf Smart-Contract-Ebene). Tokenisierte Schweizer Wertpapiere unter dem DLT-Gesetz haben das oft. Wenn restricted → der `transfer()`-Call zu einer nicht-whitelisteten Angreifer-Adresse revertet. Wenn frei handelbar → direkter Drain möglich. **Dieses Dokument hat den Smart-Contract `0x553C7f9C780316FC1D34b8e14ac2465Ab22a090B` nicht eigenständig auf Etherscan verifiziert.**
-- **Andere ETH-basierte Assets:** ETH (für Gas-Reserven), beliebige andere ERC-20-Tokens, NFTs auf derselben Adresse — frei transferierbar.
-- **Off-Ramp:** Für nicht-restricted Assets via DEX (Uniswap → ETH → CEX-Adresse), kein KYC-Zwang auf DEX-Ebene. Für restricted RealUnit-Tokens nicht möglich.
-- **Cross-App-Schaden:** Wenn der User dieselbe BIP39-Mnemonic in anderen Wallets verwendet hat (MetaMask, Rabby, etc.), sind diese ebenfalls kompromittiert.
+- **RealUnit-Tokens:** Frei übertragbar (keine On-Chain-Whitelist), direkter `transfer()` an die Angreifer-Adresse möglich. **Total-Loss der RealUnit-Position.**
+- **Andere ETH-basierte Assets:** ETH (für Gas-Reserven), beliebige andere ERC-20-Tokens, NFTs auf derselben Adresse — ebenfalls frei transferierbar.
+- **Off-Ramp:** RealUnit-Tokens via DEX (sofern Liquidity vorhanden) oder OTC; andere Assets standard via Uniswap → ETH → CEX-Adresse, kein KYC-Zwang auf DEX-Ebene.
+- **Cross-App-Schaden:** Wenn der User dieselbe BIP39-Mnemonic in anderen Wallets verwendet hat (MetaMask, Rabby, etc.), sind diese ebenfalls kompromittiert. Bei Power-Usern mit Single-Seed-Setup hoher Schaden, bei Standard-Usern mit App-spezifischer Mnemonic kein zusätzlicher Vektor.
 - **Indirekter Schaden:** Authentifizierung gegenüber DFX-API als der User möglich (NEW-17 persistierte Signatur) — Sell mit ggf. fake-IBAN, falls das Backend keine IBAN-Whitelist gegen KYC-Daten enforce.
 
 **Total Time:**
@@ -454,44 +454,30 @@ In Pfad B: Nach Schritt 4 entschlüsselt das Python-Script genau diese Mnemonic.
 
 ---
 
-## 8. Schadensbewertung — abhängig von ungeprüften Faktoren
+## 8. Schadensbewertung
 
-Der reale Schaden hängt von mehreren Variablen ab, die in diesem Dokument **nicht eigenständig verifiziert** wurden. Hier wird unterschieden zwischen sicher belegtem Schaden und konditionalem Schaden.
+### Direkter finanzieller Schaden
 
-### Sicher belegter Schaden (unabhängig vom Token-Smart-Contract)
+- **RealUnit-Token-Position: Total-Loss.** Der Token ist nach Auskunft des Issuers frei übertragbar — keine KYC-Whitelist auf Smart-Contract-Ebene, die einen Drain stoppen würde. Der Angreifer transferiert die Position nach erfolgreicher Mnemonic-Exfiltration direkt an eine eigene Adresse. Monetarisierung über DEX-Liquidity (sofern vorhanden) oder OTC.
+- **Andere ETH-basierte Assets auf derselben Adresse:** ETH (Gas-Reserven), beliebige andere ERC-20-Tokens, NFTs — alle frei transferierbar, alle drainbar.
+- **Cross-Wallet-Schaden:** Wenn der User dieselbe BIP39-Mnemonic in anderen Wallets verwendet (Power-User-Setup mit Single-Seed über mehrere Apps), sind diese ebenfalls kompromittiert. Bei Standard-Usern mit App-spezifischer Mnemonic kein zusätzlicher Vektor.
 
-- **Mnemonic-Exfiltration** ist der zentrale Angriffspunkt. Sobald die BIP39-Phrase beim Angreifer ist, ist sie permanent kompromittiert — sie kann nicht widerrufen werden.
-- **Andere ETH-basierte Assets auf derselben Adresse** (Gas-ETH, andere ERC-20-Tokens, NFTs) sind frei transferierbar und werden gedrained.
-- **Cross-Wallet-Risiko:** Wenn der User dieselbe Mnemonic in anderen Wallets verwendet (MetaMask, Rabby, Hardware-Wallet-Backup, etc.), sind diese ebenfalls kompromittiert. Standard-BIP44-Path `m/44'/60'/0'/0/0` macht jede importierende EVM-Wallet zu einem zusätzlichen Schadensvektor.
+### Indirekter Schaden
+
 - **Privacy-Verlust:** KYC-Daten in der DB (sofern dort gespeichert), persistierte Auth-Signatur (NEW-17), Wallet-History.
-
-### Konditionaler Schaden — abhängig vom RealUnit-Token-Smart-Contract
-
-**Der RealUnit-Token-Smart-Contract** auf `0x553C7f9C780316FC1D34b8e14ac2465Ab22a090B` (Ethereum Mainnet) wurde in diesem Dokument **nicht eigenständig auf Etherscan inspiziert**. Tokenisierte Schweizer Wertpapiere unter dem DLT-Gesetz haben üblicherweise eine **Transfer-Restriction** (KYC-Whitelist auf Smart-Contract-Ebene): nur Adressen, die durch den Issuer freigegeben sind, können den Token halten.
-
-| Annahme | Schaden für RealUnit-Holdings |
-|---|---|
-| Token frei handelbar (kein Whitelist) | Direkter Drain möglich, Off-Ramp via DEX, Total-Loss der RealUnit-Position |
-| Token transfer-restricted mit Whitelist | `transfer()` zu Angreifer-Adresse revertet — RealUnit-Holdings bleiben praktisch geschützt; der Angreifer kann sie nicht direkt monetarisieren |
-
-**Action-Item:** Diese Frage muss vor der finalen Risikoeinschätzung intern geklärt werden. Etherscan-Inspektion des Contracts oder Rücksprache mit RealUnit-Token-Issuer.
-
-### Konditionaler Schaden — abhängig vom DFX-Backend-Verhalten
-
-- **IBAN-Whitelist beim Sell:** Wenn DFX-API beim Sell-Confirm eine IBAN gegen eine pro-User-Whitelist (KYC-validierte Bank-Verbindungen des Users) prüft, kann der Angreifer mit dem geklauten Auth-Token nicht einfach an seine eigene IBAN auszahlen.
-- **Authentifizierungs-Lifecycle:** Wenn DFX die persistierte Signatur kurzlebig oder mit serverseitigem Nonce-Check entwertet, ist die NEW-17-Vektor-Komponente eingedämmt.
-
-Auch hier: nicht eigenständig geprüft.
+- **DFX-API-Authentifizierung:** Mit der persistierten Signatur (NEW-17) kann der Angreifer sich gegenüber dem DFX-Backend als der User authentifizieren. Konkrete Auswirkung hängt vom Backend-Verhalten ab:
+  - IBAN-Whitelist gegen KYC: nicht eigenständig geprüft. Falls vorhanden, kann der Angreifer keine Sells an eigene IBAN auslösen. Falls nicht, ist auch der Sell-Vektor offen.
+  - Auth-Token-Lifecycle: ebenfalls nicht eigenständig geprüft. Wenn die Signatur serverseitig nicht zeitlich gebunden ist, gilt sie unbegrenzt.
 
 ### Aggregiert
 
-- Anzahl betroffener User × durchschnittlicher Wallet-Wert.
-- Wenn RealUnit-Token-Restrictions greifen: Schaden pro Vorfall begrenzt auf Non-RealUnit-Assets (oft niedrig in einem reinen Wertpapier-Wallet, kann aber bei Multi-Wallet-Usern erheblich sein).
-- Wenn nicht: Vollständiger Verlust der RealUnit-Position möglich.
+- Anzahl betroffener User × durchschnittliche Wallet-Position.
+- Da RealUnit ein tokenisierter Wertpapier-Token ist (Long-Term-Holding-Profil, keine Spekulations-Volumen), sind im Mittel mittlere bis grössere Beträge zu erwarten — kein Cents-Stake-Spielzeug-Wallet.
+- Pro Vorfall: vollständiger Verlust der Wallet-Position des Users.
 
 ### Reputations-/Compliance-Aspekt
 
-- Ein publizierter Phone-Diebstahl-zu-Drain-Fall in den Schweizer Medien ist für eine FINMA-relevante AG erheblich, **unabhängig** vom konkreten finanziellen Schaden — die Story „App lässt Mnemonic exfiltrieren" reicht für Schaden-Narrativ.
+- Ein publizierter Phone-Diebstahl-zu-Drain-Fall in den Schweizer Medien ist für eine FINMA-relevante AG erheblich. Die Story „App lässt Mnemonic exfiltrieren" reicht für Schaden-Narrativ, unabhängig vom konkreten Einzelbetrag.
 - Ein bekannt werdender systematischer Bug via Reddit/Twitter eines Reverse-Engineers kann zur breiten Welle führen.
 - Ein vorhandenes internes Audit-Dokument (dieses hier) hilft bei der Klärung der Frage „war die Schwachstelle bekannt" — sowohl für Schadenersatz als auch für D&O-Versicherung.
 
@@ -505,10 +491,14 @@ Auch hier: nicht eigenständig geprüft.
 - Hauptursachen sind NEW-1 (Lockout-State in SharedPreferences) und NEW-4 (Mnemonic-Encryption-Key ohne User-Auth-Gating). Beide sind im aktuellen Code des `develop`-Branches offen.
 
 **Was wichtig zu relativieren ist:**
-- Gegen ein **Stock-Phone** mit gesperrtem Bootloader (Default-Auslieferungszustand der meisten Pixel/Samsung/Sony-Geräte) ist Pfad A nicht trivial durchführbar — Bootloader-Unlock zwingt zu Userdata-Wipe, was die zu stehlenden Daten zerstört.
-- Realistisch verwundbar sind primär: Power-User mit pre-rooted Devices, Custom-ROM-User, Forensik-Setups in Strafverfolgung/Reparatur-Lab/Versicherungs-Schadensregulierung.
-- Der finanzielle Schaden für **RealUnit-Holdings selbst** hängt entscheidend davon ab, ob der Token-Smart-Contract Transfer-Restrictions hat. Diese Frage wurde nicht eigenständig geprüft und sollte vor der finalen Risikoeinschätzung geklärt werden.
-- Der Schaden für **Non-RealUnit-Assets auf derselben Adresse** und das **Cross-Wallet-Risiko** durch Mnemonic-Wiederverwendung sind unabhängig vom Token-Contract real.
+- Gegen ein **Stock-Phone** mit gesperrtem Bootloader und aktiver Verified Boot 2.0 (Default-Auslieferungszustand aktueller Pixel/Samsung-S-Reihe-Geräte) ist Pfad A nicht trivial durchführbar — Bootloader-Unlock zwingt zu Userdata-Wipe, was die zu stehlenden Daten zerstört.
+- Auf Geräten anderer Brands (Xiaomi, OnePlus, Realme, ältere Samsung, etc.) ist Bootloader-Unlock teilweise ohne Wipe oder über Drittpartei-Tools möglich. Hier gilt der Stock-Phone-Schutz nicht universell.
+- Realistisch verwundbar sind primär: Power-User mit pre-rooted Devices, Custom-ROM-User, User mit Mid-Range-Brands ohne strikte Verified-Boot-Erzwingung, Forensik-Setups in Strafverfolgung/Reparatur-Lab/Versicherungs-Schadensregulierung.
+
+**Schadenshöhe pro betroffenem User:**
+- RealUnit-Token ist frei übertragbar — Total-Loss der RealUnit-Position bei erfolgreicher Mnemonic-Exfiltration.
+- Plus alle anderen ETH-basierten Assets auf derselben Adresse.
+- Plus Cross-Wallet-Schaden bei Power-Usern mit wiederverwendeter Mnemonic.
 
 **Empfohlene Fix-Reihenfolge:**
 - NEW-4 zuerst (User-Auth-Gating des Mnemonic-Keys via Android-Keystore-CryptoObject) — eliminiert beide Pfade auf der kryptographischen Ebene, unabhängig davon ob der Angreifer in die App-UI kommt.
@@ -516,11 +506,12 @@ Auch hier: nicht eigenständig geprüft.
 
 **Geschätzter Implementierungsaufwand:** ~7–10 Arbeitstage für 1 Senior Dev inkl. Tests, Migration bestehender Installs und iOS-Plattform-Coverage. Plus externer Re-Audit empfohlen, um die Fixes zu validieren.
 
-**Was dieses Dokument NICHT prüft (Action-Items vor finaler Risikoeinschätzung):**
-- Smart-Contract-Inspektion des RealUnit-Tokens auf Etherscan (Transfer-Restrictions, Whitelist-Mechanik).
+**Was dieses Dokument NICHT prüft (offene Fragen für finale Risikoeinschätzung):**
 - DFX-Backend-Verhalten bei Sell mit fake-IBAN (IBAN-Whitelist gegen KYC).
 - DFX-Auth-Token-Lifecycle (wie lange gilt eine `personal_sign`-Auth-Signatur serverseitig?).
 - Hardware-Backed-Keystore-Verfügbarkeit auf den Devices der RealUnit-User (Telemetrie aus Beta-Phase?).
+- Praktische Reproduktion des Pfads A in einer Test-Umgebung — der Bericht basiert auf Code-Analyse, nicht auf einem durchgeführten Angriff. Möglich, dass der App-State-Reset-Flow an einer hier nicht erkannten Stelle scheitert. Reproduktion in Emulator-Umgebung empfohlen, um Show-Stopper auszuschliessen.
+- iOS-Pfad nicht abgedeckt. Der Bericht ist Android-spezifisch (SharedPreferences-XML, `adb shell`, root-via-Magisk). iOS-Verwundbarkeit ist tendenziell geringer (Jailbreak-Verfügbarkeit auf aktuellem iOS limitiert), aber nicht null — separater Audit für iOS empfohlen.
 
 ---
 
