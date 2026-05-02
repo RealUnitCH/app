@@ -29,7 +29,7 @@ Damit dieser Angriff praktisch durchführbar ist, muss eine der folgenden Beding
 Ein normaler User hat ein Phone mit gesperrtem Bootloader, Verified Boot, Hardware-Backed-Keystore. Wenn der Angreifer das Phone gestohlen hat und es vorher nicht rooted war, sind seine Optionen:
 
 - `fastboot oem unlock` zwingt zu einem Userdata-Wipe — die Wallet-Daten werden dabei gelöscht. Der Angriff ist genau gegen die Daten gerichtet, die der Unlock zerstört. Pfad ist tot.
-- Cellebrite/Forensik-Bypass funktioniert für ältere Android-Versionen oder spezifische Hardware-Vulnerabilities; auf aktuellen Pixel/Samsung-Knox-Geräten ist das nicht trivial verfügbar und kostet pro Extraktion 4- bis 5-stellige Beträge.
+- Cellebrite/Forensik-Bypass funktioniert für ältere Android-Versionen oder spezifische Hardware-Vulnerabilities. Auf aktuellen Pixel/Samsung-Knox-Geräten ist das nicht trivial verfügbar; konkrete Preise und Verfügbarkeit sind nicht öffentlich, Premium-Forensik-Tools werden primär an Strafverfolgung und Behörden vergeben, nicht an den freien Markt.
 - Andere Hardware-Exploits sind realistisch nur für Strafverfolgung und Nation-State-Akteure.
 
 **Wer ist also realistisch verwundbar:**
@@ -196,7 +196,7 @@ In `main.dart:116-117` greift dann:
 
 → Die App routet auf den **PIN-Setup-Screen** statt auf den App-Lock-Verify-Screen. Kein bestehender PIN wird abgefragt.
 
-**Schritt 6 — Neuen PIN setzen**
+**Schritt 5 — Neuen PIN setzen**
 
 Auf dem PIN-Setup-Screen wählt der Angreifer einen neuen PIN, z.B. `123456`. `setup_pin_cubit.dart:64-72`:
 
@@ -221,11 +221,13 @@ Future<void> _confirmPin(String confirmPin) async {
 
 Wichtig zu verstehen: Das Wallet wird **nicht erst nach** dem PIN-Setup geladen, sondern **schon beim App-Start** durch `HomeBloc._onLoadCurrentWallet` (`home_bloc.dart:46-81`). `_appStore.wallet = wallet;` (Zeile 60) wird ausgeführt, bevor irgendein PIN-State geprüft ist. Der gesamte Decrypt-Pfad läuft also schon durch, bevor der PIN-Setup-Screen überhaupt angezeigt wird. Was der Angreifer im PIN-Setup tut, ist nur der Schritt, der den `main.dart:_navigate()`-Router weiterlaufen lässt. Das Wallet selbst, inklusive entschlüsselter Mnemonic im Memory, ist seit App-Start aktiv.
 
-**Schritt 6b — Optional: Biometric-Prompt überspringen**
+**Schritt 5b — Optional: Biometric-Prompt überspringen**
 
 Nach `setup_pin_page.dart:37-44` wird `_promptBiometricSetup` aufgerufen, das fragt, ob Biometric aktiviert werden soll. Der Angreifer wählt „Ablehnen" oder cancelt den Geräte-Biometric-Prompt — `_biometricService.enable()` returnt `false`, kein Fehler wird geworfen, der Flow setzt fort mit `getIt<PinAuthCubit>().onPinSetupComplete()`.
 
-**Schritt 7 — App-Routing zum Dashboard**
+Auf einem Emulator ohne Hardware-Biometrics wird der Prompt komplett geskipped (`isAvailable() == false`) — Live-Test bestätigt.
+
+**Schritt 6 — App-Routing zum Dashboard**
 
 `PinAuthCubit.onPinSetupComplete()` emittiert `(isPinSetup: true, isPinVerified: true)`. Der `BlocListener<PinAuthCubit>` in `main.dart:91-95` triggert `_navigate()` — alle Bedingungen (`softwareTermsAccepted`, `openWallet != null`, `onboardingCompleted`, `isPinSetup`, `isPinVerified`) sind erfüllt → `targetRoute = AppRoutes.dashboard`.
 
@@ -244,25 +246,31 @@ Future<WalletInfo?> getWalletById(int id) async {
 
 → Die App lädt das Original-Wallet vollständig (Original-Mnemonic, Original-Address, Original-Balance) und zeigt es im Dashboard.
 
-**Schritt 8 — Mnemonic anzeigen**
+**Schritt 7 — Mnemonic anzeigen**
 
 Settings → „Backup Wallet" → Step-up-PIN (mit dem **neu** vom Angreifer gesetzten PIN, weil der Original-Hash überschrieben wurde) → SettingsSeed-Screen zeigt die BIP39-Mnemonic.
 
 `settings_seed_view.dart:21` aktiviert zwar `NoScreenshot.instance.screenshotOff()` (FLAG_SECURE), aber:
-- Der Angreifer kann die Worte einfach abschreiben oder mit einer zweiten Kamera abfotografieren.
-- FLAG_SECURE schützt nur gegen System-Screenshots, nicht gegen visuelle Erfassung.
-- Auf rooted Device kann FLAG_SECURE per Frida-Hook umgangen werden:
-  ```bash
-  frida -U -l no_flag_secure.js -f swiss.realunit.app
-  ```
 
-**Schritt 9 — Mnemonic in Angreifer-Wallet importieren**
+**Primärer Weg — `uiautomator dump` (Live verifiziert):**
+```bash
+adb shell uiautomator dump /sdcard/d.xml
+adb pull /sdcard/d.xml ~/seed.xml
+grep -oE 'content-desc="1\.[^"]+"' ~/seed.xml
+```
+Der Accessibility-Service ignoriert FLAG_SECURE. Im UI-Tree erscheint die Mnemonic als `content-desc` der `SeedBlurCard`-Komponente — sogar dann, wenn der visuelle Blur-Overlay noch aktiv ist (siehe Anhang A0 / B-2). Kein Frida nötig, keine visuelle Erfassung.
+
+**Alternative Wege:**
+- Visuelle Erfassung: Worte abschreiben oder mit zweiter Kamera abfotografieren.
+- Frida-Hook auf `Window.setFlags`, der FLAG_SECURE entfernt — nur dann nötig, wenn der Angreifer einen System-Screenshot statt UI-Dump will.
+
+**Schritt 8 — Mnemonic in Angreifer-Wallet importieren**
 
 In MetaMask, Rabby, Frame, MyEtherWallet — beliebige Wallet-Software, die BIP39 + BIP44-Path `m/44'/60'/0'/0/0` unterstützt.
 
 → Permanenter Wallet-Zugriff.
 
-**Schritt 10 — Funds transferieren**
+**Schritt 9 — Funds transferieren**
 
 - **RealUnit-Tokens:** Frei übertragbar (keine On-Chain-Whitelist), direkter `transfer()` an die Angreifer-Adresse möglich. **Total-Loss der RealUnit-Position.**
 - **Andere ETH-basierte Assets:** ETH (für Gas-Reserven), beliebige andere ERC-20-Tokens, NFTs auf derselben Adresse — ebenfalls frei transferierbar.
@@ -382,7 +390,7 @@ Wie in Pfad A.
 | **Biometric (Fingerprint/FaceID)** | `local_auth` gibt nur einen `bool` zurück, ist nicht an den Mnemonic-Key gebunden (NEW-5). Pfad A: Angreifer setzt Biometric ggf. neu. Pfad B: Komplett umgangen. |
 | **SQLCipher-DB-Encryption** | Schlüssel liegt in FlutterSecureStorage, ohne User-Auth-Gate verwendbar (NEW-4). |
 | **Mnemonic-AES-GCM-Encryption (Audit-Fix für 4.1)** | Schlüssel liegt im selben Trust-Anchor (FlutterSecureStorage), ohne User-Auth-Gate verwendbar. Effektiv kosmetisch. |
-| **FLAG_SECURE / NoScreenshot** | Pfad A: Mit Frida-Hook umgehbar; ausserdem visuelle Erfassung möglich. Pfad B: Irrelevant. |
+| **FLAG_SECURE / NoScreenshot** | Pfad A: Schützt nur gegen System-Screenshot/Casting, **nicht gegen `adb shell uiautomator dump`** (Accessibility-Service liest UI-Tree mit Klartext-Mnemonic, Live verifiziert). Frida-Hook und visuelle Erfassung sind weitere Bypass-Pfade. Pfad B: Irrelevant. |
 | **`allowBackup="false"` im Manifest** | Schützt vor `adb backup`. Schützt nicht vor direktem Filesystem-Zugriff via Root. |
 | **PIN-Lockout (5/6/7/8 min Throttling)** | Counter in SharedPreferences, manipulierbar (NEW-1). Pfad A: Komplett umgangen, weil neuer PIN gesetzt wird. |
 | **Step-up-PIN vor Seed-Reveal** | Pfad A: Neuer PIN funktioniert für den Step-up. Pfad B: Komplett umgangen. |
@@ -418,6 +426,8 @@ In Schritt 4 (lokales Entschlüsseln) würde der Angreifer feststellen, dass der
 - Aber: Ohne Decrypt-Möglichkeit für den Mnemonic kann er die Tokens nicht transferieren (Signing braucht den Mnemonic). Die App müsste bei jedem Transfer den Biometric-Prompt zeigen.
 - D.h. der schlimmste Schaden (permanenter Total-Loss via Mnemonic-Exfiltration) ist verhindert. Es bleibt höchstens ein „App-Browse-Access" für den Angreifer — unangenehm, aber nicht finanziell katastrophal.
 
+**Wichtige Voraussetzung für diesen Schutz:** NEW-4-Fix muss tatsächlich verhindern, dass `_appStore.wallet` bzw. der entschlüsselte Seed im Memory landet, ohne dass der User den Biometric-Prompt erfolgreich beantwortet hat. Andernfalls bleibt die `uiautomator dump`-Exfiltration via Settings-Seed-Reveal offen, sobald der Angreifer den App-PIN-Setup-Bypass über Pfad A geschafft hat. Konkret: Das aktuelle eager-Loading in `HomeBloc._onLoadCurrentWallet:46-81` muss zu einem on-demand-Decrypt umstrukturiert werden, der im UI-Thread einen sichtbaren Biometric-Prompt zeigt.
+
 ### Was NEW-1-Fix zusätzlich bringt
 
 Wenn Lockout-State und `isPinEnabled` in SecureStorage liegen statt in SharedPreferences:
@@ -433,7 +443,7 @@ Wenn Lockout-State und `isPinEnabled` in SecureStorage liegen statt in SharedPre
 - Pfad A: Stark entschärft durch NEW-1 (PIN-Bruteforce statt trivialer XML-Edit). Falls PIN ohnehin gut gewählt, faktisch geschlossen.
 - Pfad B: Auch nach NEW-4-Fix bleibt der Angreifer im Sandbox-Kontext der App und kann mit Frida den Biometric-Prompt versuchen — aber er hat den Fingerprint des Users nicht, und der Geräte-PIN-Fallback ist der Lockscreen-PIN, den er auch nicht hat.
 - Theoretisch offen für Premium-Forensik mit TEE-Bypass (Cellebrite mit aktuellen Exploits, GrayKey, Nation-State-Tooling). Diese Tools sind nicht öffentlich verfügbar und richten sich an Strafverfolgung; relevant für ein Threat-Modell „RealUnit-Holder wird Subjekt einer Strafverfolgungs-Aktion mit forensischer Hardware-Extraktion", aber nicht für „Phone wird in der Bahn gestohlen".
-- Hardware-backed Keystore mit User-Auth-Gating ist der industrielle Standard für Banking-Apps in der Schweiz (e.g. UBS, Twint, Swissquote-App) und gilt als ausreichend gegen alle nicht-staatlichen Angreifer.
+- Hardware-backed Keystore mit User-Auth-Gating ist Industry-Standard für sicherheitskritische Mobile-Apps (Banking, Payment, MFA) und gilt allgemein als ausreichend gegen alle nicht-staatlichen Angreifer. Konkrete Implementations-Details der genannten Schweizer Banking-Apps (UBS, Twint, etc.) wurden in diesem Bericht nicht eigenständig verifiziert.
 
 → Nach beiden Fixes ist die App auf einem Sicherheitsniveau, das mit etablierten Schweizer Banking-Apps vergleichbar ist.
 
@@ -441,16 +451,16 @@ Wenn Lockout-State und `isPinEnabled` in SecureStorage liegen statt in SharedPre
 
 ## 7. Praktische Demonstration in einer kontrollierten Umgebung
 
-Zum Verifizieren des Angriffs in einem internen Test-Setup:
+Pfad A wurde am 2026-05-02 in einer Test-Umgebung reproduziert (siehe Anhang A0 für den Live-Log). Dieses Kapitel beschreibt das Setup für eine Wiederholung oder unabhängige Verifikation.
 
 ### Setup
-1. Android-Emulator (Android Studio AVD) mit Android 14, x86_64, Google APIs **NICHT** Google Play (Play-Images blockieren root via Verified Boot).
+1. Android-Emulator (Android Studio AVD) mit Android 14, ARM64-v8a (Apple Silicon) oder x86_64 (Intel/AMD), Google APIs **NICHT** Google Play (Play-Images blockieren root via Verified Boot).
 2. RealUnit-App debug-build installieren oder Beta-APK sideloaden.
 3. Wallet erstellen, PIN setzen (z.B. 654321), Mnemonic notieren.
 4. Test-Tokens auf der Adresse minten (Sepolia-Testnet, NetworkMode auf Testnet umstellen).
 
 ### Pfad A reproduzieren
-Schritte aus Abschnitt 3 nachvollziehen.
+Schritte aus Abschnitt 3 nachvollziehen, oder den exakten Befehlsablauf aus Anhang A0 / Anhang B nutzen.
 
 ### Pfad B reproduzieren
 Schritte aus Abschnitt 4 nachvollziehen. SQLCipher CLI nötig:
@@ -459,7 +469,7 @@ brew install sqlcipher  # macOS
 ```
 
 ### Erwartetes Ergebnis
-In Pfad A: Nach Schritt 8 wird genau die Mnemonic angezeigt, die in Schritt 3 des Setups notiert wurde.
+In Pfad A: Nach Schritt 7 wird genau die Mnemonic im UI bzw. via `uiautomator dump` ausgelesen, die in Schritt 3 des Setups notiert wurde.
 In Pfad B: Nach Schritt 4 entschlüsselt das Python-Script genau diese Mnemonic.
 
 ---
@@ -496,9 +506,9 @@ In Pfad B: Nach Schritt 4 entschlüsselt das Python-Script genau diese Mnemonic.
 ## 9. Zusammenfassung
 
 **Was technisch belegt ist:**
-- Auf einem **bereits-rooted Android-Gerät** kann ein Angreifer mit physischem Zugriff in 15–30 Minuten via SharedPreferences-Edit + neuer PIN den App-Lock bypassen und die Mnemonic via Settings-Seed-Reveal exfiltrieren. Das ist Pfad A.
-- Auf einem rooted Gerät mit Frida-Server kann der Angreifer alternativ über DB-Extraktion + In-Process-Hook auf FlutterSecureStorage die Mnemonic exfiltrieren ohne die App-UI zu touchen. Das ist Pfad B.
-- Hauptursachen sind NEW-1 (Lockout-State in SharedPreferences) und NEW-4 (Mnemonic-Encryption-Key ohne User-Auth-Gating). Beide sind im aktuellen Code des `develop`-Branches offen.
+- Pfad A wurde am 2026-05-02 in einem Android-14-Emulator gegen die debug-APK des aktuellen `develop`-Branches **praktisch reproduziert** (Anhang A0). Auf einem bereits-rooted Android-Gerät kann ein Angreifer mit physischem Zugriff in **~3 Minuten manuell** (oder ~1 Minute mit Skript) via `am force-stop` + SharedPreferences-Edit + PIN-Reset den App-Lock bypassen und die Mnemonic via `adb shell uiautomator dump` exfiltrieren. Frida ist nicht nötig.
+- Pfad B (DB-Extraktion + In-Process-Hook auf FlutterSecureStorage) ist eine Alternative für Angreifer, die den User nicht aussperren wollen — komplexer, aber unauffällig.
+- Hauptursachen sind NEW-1 (Lockout-State in SharedPreferences) und NEW-4 (Mnemonic-Encryption-Key ohne User-Auth-Gating). Beide sind im aktuellen Code des `develop`-Branches offen. Hinzu kommt der Live-Befund, dass **FLAG_SECURE keinen Schutz gegen `uiautomator dump`** bietet — eine separate Härtung der Mnemonic-Widgets gegen Accessibility-Reads ist erforderlich.
 
 **Was wichtig zu relativieren ist:**
 - Gegen ein **Stock-Phone** mit gesperrtem Bootloader und aktiver Verified Boot 2.0 (Default-Auslieferungszustand aktueller Pixel/Samsung-S-Reihe-Geräte) ist Pfad A nicht trivial durchführbar — Bootloader-Unlock zwingt zu Userdata-Wipe, was die zu stehlenden Daten zerstört.
@@ -616,22 +626,24 @@ Für die Praxis bedeutet das: Wer auf den Seed-Reveal-Screen kommt (egal ob via 
 **B-3: Pre-Fill der Verify-Backup-Wörter im debug-Build.**
 Beim Wallet-Setup erscheint nach der Mnemonic-Anzeige ein "Verify your backup"-Screen, der 4 Wörter abfragt. Im debug-Build sind die Antworten bereits in den Text-Feldern eingetragen (Code-Pfad in `verify_seed_cubit.dart:35` mit `kDebugMode`-Pre-fill). Das ist **nicht** sicherheitsrelevant — es ist eine Dev-Convenience und nur in Debug-Builds aktiv. Aber es ist ein Beleg, dass Debug-Builds andere Code-Pfade haben als Release-Builds — was bei der Reproduktion zu beachten ist. Pfad A funktioniert in beiden Build-Varianten gleich, weil `pin_auth_cubit.dart` und `setup_pin_cubit.dart` keine Debug-Flags haben.
 
-### Total Time
+### Zeitabschätzung
 
-Vom `am force-stop` bis zur exfiltrierten Mnemonic: **ca. 8 Minuten** in dieser Reproduktion. Davon:
-- ~30 Sekunden für XML-Edit + App-Restart
-- ~3 Minuten für PIN-Setup (Create + Confirm)
-- ~1 Minute Navigation Settings → Wallet backup
-- ~1 Minute Step-up-PIN-Eingabe + Reveal-Screen
-- ~1 Minute UI-Dump + Mnemonic-Extraktion
+Die Reproduktion wurde nicht stoppuhr-gemessen, sondern über mehrere `adb`-Aufrufe mit Zwischenschritten (UI-Dumps, Verifikationen) durchgeführt — die Wallclock-Zeit der Test-Session ist daher kein realistischer Indikator für die Angriffsdauer.
 
-Bei einem geübten Operator mit Skript-Automatisierung wäre das deutlich schneller (~2-3 Minuten). Im Reparatur-Lab oder Forensik-Setup mit fertigem Toolset entsprechend kürzer.
+Realistische Schätzung der Angriffszeit ab dem Punkt, an dem der Angreifer Shell-Zugriff hat:
+- ~30 Sekunden für `am force-stop` + XML-Edit + App-Restart.
+- ~30 Sekunden Wartezeit auf App-Start auf realer Hardware (länger im Emulator).
+- ~30 Sekunden für PIN-Setup (Create + Confirm) via UI-Tap.
+- ~1 Minute Navigation Settings → Wallet backup → Step-up-PIN-Eingabe.
+- ~10 Sekunden für `uiautomator dump` + Mnemonic-Extraktion via `grep`.
+
+**Gesamt ~3 Minuten manuell, ~1 Minute mit fertigem Skript.** Das ist deutlich kürzer als die in §1 ursprünglich geschätzten "15-30 Minuten" — diese Zahl bezog sich auf einen Operator, der nicht primär `uiautomator dump` als Exfiltrations-Methode kennt und stattdessen Frida-Setup durchläuft.
 
 ---
 
 ## Anhang A — Statisches Trace der Pfad-A-Logik
 
-Anstelle einer praktischen Reproduktion (Toolchain-Setup-Aufwand) wurde der Code-Pfad statisch verfolgt, mit Fokus auf State-Maschinen-Übergänge und mögliche Validations-Gates, die den Angriff brechen könnten. Ergebnis:
+Ergänzend zur Live-Reproduktion in Anhang A0 wurde der Code-Pfad statisch verfolgt, mit Fokus auf State-Maschinen-Übergänge und mögliche Validations-Gates, die den Angriff brechen könnten. Dieser Anhang dient der Begründung, **warum** der Live-Test wie beschrieben funktioniert hat — und welche Code-Pfade ein zukünftiger Fix entschärfen muss. Ergebnis:
 
 ### Initialisierungs-Reihenfolge beim App-Start (`main.dart`)
 
@@ -693,7 +705,7 @@ Reihenfolge der Bedingungen:
 5. `onAuthenticated()` callback ruft `context.pushReplacementNamed(SettingsRoutes.seed)`.
 6. `SettingsSeedPage` instanziiert `SettingsSeedCubit((getIt<AppStore>().wallet as SoftwareWallet))` — der Cast funktioniert, weil `_appStore.wallet` seit App-Start (nicht erst seit PIN-Setup) gesetzt ist.
 7. `SettingsSeedCubit` initial-State: `SettingsSeedState(wallet.seed)` — die Klartext-Mnemonic.
-8. `SeedBlurCard` zeigt `seed` (geblurt, bis User tappt). Auf rooted Device kann FLAG_SECURE per Frida-Hook umgangen werden.
+8. `SeedBlurCard` zeigt `seed` (geblurt, bis User tappt). FLAG_SECURE blockiert `adb screencap`, aber **nicht** `adb shell uiautomator dump` — der Accessibility-Service liest die Mnemonic als `content-desc` aus dem semantischen Render-Tree, geblurt oder nicht (Live verifiziert in Anhang A0 / B-1, B-2). Auf rooted Device wäre als zusätzlicher Bypass auch ein Frida-Hook auf `Window.setFlags` möglich.
 
 ### Trace-Ergebnis
 
