@@ -114,7 +114,7 @@ Drei sicherheitsrelevante Flags liegen in `shared_prefs.xml` (Klartext-XML im Ap
 Auf einem rootbaren Gerät (oder bei forensischer Extraktion) kann ein Angreifer diese Datei direkt editieren:
 
 1. **Lockout zurücksetzen:** `pinFailedAttempts=0`, `pinLockedUntil` löschen → unbegrenztes PIN-Brute-Force trotz konfigurierter Throttling-Stufen.
-2. **App-Lock umgehen:** `isPinEnabled=false`. In `PinAuthCubit.initialize()` (`pin_auth_cubit.dart:23-29`) wird daraus `isPinSetup: false` und damit `isPinVerified: !isPinSetup = true`. `main.dart:116` routet dann direkt ins Dashboard ohne PIN/Biometric.
+2. **App-Lock umgehen via PIN-Reset:** `isPinEnabled=false` setzen. `PinAuthCubit.initialize()` (`pin_auth_cubit.dart:23-29`) macht daraus `isPinSetup: false`. `main.dart:116-117` routet die App auf `PinRoutes.setup`. Der Angreifer wählt einen neuen PIN — `SetupPinCubit._confirmPin` (`setup_pin_cubit.dart:64-72`) schreibt frischen Salt+Hash in SecureStorage und überschreibt damit den ursprünglichen PIN-Hash. Anschliessend offenes Dashboard. Wegen NEW-4 ist der Mnemonic-Encryption-Key auch ohne den ursprünglichen PIN dekryptierbar — `WalletRepository._decryptSeed` liefert die Phrase im Klartext. Settings → Show Seed → Step-up mit dem neu gesetzten PIN (NEW-3 ohne Lockout) → Mnemonic-Exfiltration. Nebeneffekt: Der legitime User kann sich nach dem Angriff nicht mehr einloggen (Denial-of-Service durch Hash-Überschreibung).
 
 **Empfehlung:**
 - Migration aller drei Werte in FlutterSecureStorage (Android Keystore-backed).
