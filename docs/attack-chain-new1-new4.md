@@ -133,11 +133,14 @@ Dies ist der Pfad, den ein durchschnittlich technischer Phone-Dieb mit Root-Zugr
 
 ### Schritt-für-Schritt
 
-**Schritt 1 — Shell-Zugriff**
+**Schritt 1 — App killen, BEVOR die XML angefasst wird**
+
+`SharedPreferences` werden auf Android in-memory gecacht und asynchron auf Disk geschrieben. Wenn die App noch läuft, wenn der Angreifer die XML editiert, kann der App-Prozess die Memory-Werte später zurückschreiben und die Manipulation überschreiben. Daher zuerst:
 
 ```bash
 adb shell
 su
+am force-stop swiss.realunit.app
 cd /data/data/swiss.realunit.app/shared_prefs/
 ```
 
@@ -165,13 +168,9 @@ Optional auch Lockout-Counter zurücksetzen, falls schon Versuche stattgefunden 
 sed -i '/flutter.pinFailedAttempts/d; /flutter.pinLockedUntil/d' FlutterSharedPreferences.xml
 ```
 
-**Schritt 4 — App force-stoppen**
+Hinweis: Das `sed`-Pattern-Matching ist anfällig für Whitespace-Varianten zwischen Android-Versionen. Robusteres Vorgehen wäre via Python mit XML-Parser. Für die Demonstration reicht `sed` aber.
 
-```bash
-am force-stop swiss.realunit.app
-```
-
-**Schritt 5 — App starten**
+**Schritt 4 — App starten**
 
 Über die UI normal antippen, oder:
 ```bash
@@ -217,9 +216,19 @@ Future<void> _confirmPin(String confirmPin) async {
 
 → Der ursprüngliche PIN-Hash wird überschrieben. Der legitime User kann sich nach dem Angriff nicht mehr mit seinem alten PIN einloggen (Denial-of-Service-Nebeneffekt).
 
-**Schritt 7 — App lädt das bestehende Wallet**
+**Architektur-Detail — `_appStore.wallet` ist bereits gesetzt:**
 
-Der Wallet-Loading-Code in `wallet_service.dart:39-50` ruft `_repository.getWalletById(id)`, was in `wallet_repository.dart:20-25` den Decrypt-Pfad triggert:
+Wichtig zu verstehen: Das Wallet wird **nicht erst nach** dem PIN-Setup geladen, sondern **schon beim App-Start** durch `HomeBloc._onLoadCurrentWallet` (`home_bloc.dart:46-81`). `_appStore.wallet = wallet;` (Zeile 60) wird ausgeführt, bevor irgendein PIN-State geprüft ist. Der gesamte Decrypt-Pfad läuft also schon durch, bevor der PIN-Setup-Screen überhaupt angezeigt wird. Was der Angreifer im PIN-Setup tut, ist nur der Schritt, der den `main.dart:_navigate()`-Router weiterlaufen lässt. Das Wallet selbst, inklusive entschlüsselter Mnemonic im Memory, ist seit App-Start aktiv.
+
+**Schritt 6b — Optional: Biometric-Prompt überspringen**
+
+Nach `setup_pin_page.dart:37-44` wird `_promptBiometricSetup` aufgerufen, das fragt, ob Biometric aktiviert werden soll. Der Angreifer wählt „Ablehnen" oder cancelt den Geräte-Biometric-Prompt — `_biometricService.enable()` returnt `false`, kein Fehler wird geworfen, der Flow setzt fort mit `getIt<PinAuthCubit>().onPinSetupComplete()`.
+
+**Schritt 7 — App-Routing zum Dashboard**
+
+`PinAuthCubit.onPinSetupComplete()` emittiert `(isPinSetup: true, isPinVerified: true)`. Der `BlocListener<PinAuthCubit>` in `main.dart:91-95` triggert `_navigate()` — alle Bedingungen (`softwareTermsAccepted`, `openWallet != null`, `onboardingCompleted`, `isPinSetup`, `isPinVerified`) sind erfüllt → `targetRoute = AppRoutes.dashboard`.
+
+Der Wallet-Loading-Code in `wallet_service.dart:39-50` ruft `_repository.getWalletById(id)`, was in `wallet_repository.dart:20-25` den Decrypt-Pfad triggert (war bereits beim App-Start gelaufen, hier nur zur Erläuterung der NEW-4-Schwäche):
 
 ```dart
 Future<WalletInfo?> getWalletById(int id) async {
@@ -510,9 +519,177 @@ In Pfad B: Nach Schritt 4 entschlüsselt das Python-Script genau diese Mnemonic.
 - DFX-Backend-Verhalten bei Sell mit fake-IBAN (IBAN-Whitelist gegen KYC).
 - DFX-Auth-Token-Lifecycle (wie lange gilt eine `personal_sign`-Auth-Signatur serverseitig?).
 - Hardware-Backed-Keystore-Verfügbarkeit auf den Devices der RealUnit-User (Telemetrie aus Beta-Phase?).
-- Praktische Reproduktion des Pfads A in einer Test-Umgebung — der Bericht basiert auf Code-Analyse, nicht auf einem durchgeführten Angriff. Möglich, dass der App-State-Reset-Flow an einer hier nicht erkannten Stelle scheitert. Reproduktion in Emulator-Umgebung empfohlen, um Show-Stopper auszuschliessen.
 - iOS-Pfad nicht abgedeckt. Der Bericht ist Android-spezifisch (SharedPreferences-XML, `adb shell`, root-via-Magisk). iOS-Verwundbarkeit ist tendenziell geringer (Jailbreak-Verfügbarkeit auf aktuellem iOS limitiert), aber nicht null — separater Audit für iOS empfohlen.
 
 ---
 
-*Dieses Dokument ist die technische Begleitung zum Follow-Up-Audit `docs/security-review-followup.md`. Es ergänzt die dort vergebenen Severity-Ratings um den konkreten Angriffspfad und die daraus folgende Empfehlung der Fix-Priorisierung.*
+## Anhang A — Statisches Trace der Pfad-A-Logik
+
+Anstelle einer praktischen Reproduktion (Toolchain-Setup-Aufwand) wurde der Code-Pfad statisch verfolgt, mit Fokus auf State-Maschinen-Übergänge und mögliche Validations-Gates, die den Angriff brechen könnten. Ergebnis:
+
+### Initialisierungs-Reihenfolge beim App-Start (`main.dart`)
+
+1. `setupEssentials()` — `secureStorage.getEncryptionKey()` liest DB-Key aus FSS. In Pfad A unverändert → DB-Key gefunden, kein Reset-Pfad triggered.
+2. `finishSetup(databaseKey)` — DB wird geöffnet, Repositories und Services registriert.
+3. `setupBlocs()` — `HomeBloc` wird mit sofortigem `add(LoadCurrentWalletEvent())` instanziiert. `PinAuthCubit..initialize()` wird mit `isPinSetup = settingsRepository.isPinEnabled` (false aus manipulierter XML) initialisiert → `isPinVerified: !false = true`.
+4. `runApp(LifecycleInitializer(WalletApp()))`.
+5. `_WalletAppState.initState()` registriert `addPostFrameCallback((_) => _navigate())`.
+
+### Wallet-Loading-Flow (`HomeBloc._onLoadCurrentWallet`)
+
+1. `emit(state.copyWith(isLoadingWallet: true, softwareTermsAccepted: ...));`
+2. `if (state.openWallet != null || !_walletService.hasWallet()) { emit(...isLoadingWallet:false); return; }` — in Pfad A ist `state.openWallet == null` und `hasWallet() == true` (currentWalletId in SharedPrefs unverändert), Code läuft weiter.
+3. `final wallet = await _walletService.getCurrentWallet();`
+   - `_settingsRepository.currentWalletId!` — nicht null in Pfad A.
+   - `getWalletById(id)` ruft `_repository.getWalletById(id)`.
+   - `WalletRepository._decryptWalletInfo` ruft `_secureStorage.getOrCreateMnemonicKey()` — **kein User-Auth-Gate** (NEW-4).
+   - `SecureStorage.decryptSeed(key, info.seed)` entschlüsselt AES-GCM mit dem aus FSS gelesenen Key.
+   - Rückgabe: `WalletInfo` mit Mnemonic im Klartext.
+   - `SoftwareWallet(result.id, result.name, result.seed)` — Constructor ruft `mnemonicToSeed(seed)` (PBKDF2). Bei korrekter Mnemonic kein Throw.
+4. `_appStore.wallet = wallet;` — **Wallet ist jetzt im Memory verfügbar**, vor jeder PIN-Verifikation.
+5. `emit(state.copyWith(openWallet: wallet, isLoadingWallet: false, onboardingCompleted: ...));`
+
+**Mögliches Failure-Szenario:** Wenn `mnemonicToSeed` wegen korruptem Mnemonic wirft → Catch-Block, `state.copyWith(isLoadingWallet:false)`. `state.openWallet` bleibt null. In `_navigate()` führt das zu `OnboardingRoutes.welcome` (App-Reset). Der Angreifer würde auf den Welcome-Screen landen. **In reiner Pfad-A-Manipulation (nur SharedPrefs angefasst) wird Mnemonic NICHT korruptiert** — der Mnemonic-Encryption-Key in FSS bleibt intakt.
+
+### Routing-Entscheidung (`main.dart:_navigate`)
+
+Reihenfolge der Bedingungen:
+1. `isLoadingWallet` → return ohne Navigation.
+2. `!softwareTermsAccepted` → `AppRoutes.home` (legaler Welcome). Nicht in Pfad A.
+3. `openWallet == null` → `OnboardingRoutes.welcome`. Nur bei Wallet-Load-Crash.
+4. `!onboardingCompleted` → `OnboardingRoutes.completed`. Nicht in Pfad A (kommt aus `isTermsAccepted` SharedPref, unverändert).
+5. **`!isPinSetup` → `PinRoutes.setup`. ← Pfad A landet hier.**
+6. `!isPinVerified` → `PinRoutes.verify`. Nicht erreicht.
+7. `else` → `AppRoutes.dashboard`.
+
+### PIN-Setup-Flow (`SetupPinCubit._confirmPin`)
+
+1. `final salt = SecureStorage.generatePinSalt();` — neuer 16-Byte-Random.
+2. `final hash = SecureStorage.hashPin(confirmPin, salt);` — PBKDF2-HMAC-SHA256, 10000 Iterationen.
+3. `_secureStorage.setPinSalt(salt)` und `setPinHash(hash)` — **überschreiben** alten Salt/Hash in FSS.
+4. `_settingsRepository.isPinEnabled = true;` — schreibt `flutter.isPinEnabled=true` zurück in SharedPrefs.
+5. `emit(state.copyWith(isComplete: true));`
+
+### PIN-Setup-Complete → Dashboard
+
+1. `setup_pin_page.dart:39-44`: `BlocConsumer.listener` reagiert auf `isComplete`.
+2. `_promptBiometricSetup(context)` — fragt User. Bei „Nein"/Cancel: `enable()` returnt false, kein Throw, Flow setzt fort.
+3. `getIt<PinAuthCubit>().onPinSetupComplete();` — emit `(isPinSetup: true, isPinVerified: true)`.
+4. `BlocListener<PinAuthCubit>` in `main.dart:91-95` triggert `_navigate()`.
+5. Alle Bedingungen erfüllt → `targetRoute = AppRoutes.dashboard`.
+
+### Settings-Seed-Reveal
+
+1. Dashboard → Settings → "Backup Wallet" Button.
+2. `settings_page.dart:104-110` ruft `PinRoutes.gate` mit `VerifyPinParams.onAuthenticated`.
+3. Step-up-PIN: User gibt den **neu** gesetzten PIN ein. `verifyPin` vergleicht gegen den **neuen** Hash in FSS — passt.
+4. `enableLockout: false` (NEW-3) → kein Lockout, aber im Single-Try-Szenario irrelevant.
+5. `onAuthenticated()` callback ruft `context.pushReplacementNamed(SettingsRoutes.seed)`.
+6. `SettingsSeedPage` instanziiert `SettingsSeedCubit((getIt<AppStore>().wallet as SoftwareWallet))` — der Cast funktioniert, weil `_appStore.wallet` seit App-Start (nicht erst seit PIN-Setup) gesetzt ist.
+7. `SettingsSeedCubit` initial-State: `SettingsSeedState(wallet.seed)` — die Klartext-Mnemonic.
+8. `SeedBlurCard` zeigt `seed` (geblurt, bis User tappt). Auf rooted Device kann FLAG_SECURE per Frida-Hook umgangen werden.
+
+### Trace-Ergebnis
+
+**Keine zusätzlichen Validations-Gates gefunden, die Pfad A bremsen würden.** Der Code-Pfad ist konsistent mit der Beschreibung in §3 dieses Dokuments. Die einzigen Reset-Triggers (DB-Key-Mismatch, Wallet-Load-Exception) werden in Pfad A nicht aktiviert, weil der Angreifer den Mnemonic-Key in FSS nicht anfasst.
+
+**Architektur-Beobachtung als Nebenergebnis:** `_appStore.wallet` ist seit dem ersten erfolgreichen `_onLoadCurrentWallet` global im Memory verfügbar — **vor** jeder PIN-Verifikation. Das ist eine separate Architektur-Schwäche, die unabhängig von NEW-4 besteht: Die App vertraut darauf, dass der App-Lock allein den UI-Zugriff auf das Wallet kontrolliert. Wenn der UI-Zugriff über `_navigate()`-Logik umgangen wird (durch direkte Route-Navigation, Deep-Link, oder die gefundene SharedPrefs-Manipulation), ist das Wallet-Objekt sofort verfügbar.
+
+---
+
+## Anhang B — Reproduktions-Anleitung für DFX-Mobile-Dev
+
+Setup-Schritte, um Pfad A in einer kontrollierten Umgebung zu verifizieren. Geschätzte Zeit: ~1 Stunde inkl. Setup, vorausgesetzt Android Studio ist installiert.
+
+### B.1 — AVD mit rootbarem Image erstellen
+
+```bash
+# Falls noch nicht installiert
+sdkmanager --install "system-images;android-34;google_apis;x86_64"
+sdkmanager --install "platform-tools" "emulator"
+
+# AVD erstellen — wichtig: google_apis (nicht playstore), sonst kein root möglich
+avdmanager create avd \
+  --name realunit_test \
+  --package "system-images;android-34;google_apis;x86_64" \
+  --device "pixel_7"
+```
+
+### B.2 — Emulator starten und root-Verifikation
+
+```bash
+emulator -avd realunit_test -writable-system &
+adb wait-for-device
+adb root  # Sollte "restarting adbd as root" returnen
+adb shell whoami  # → root
+```
+
+### B.3 — RealUnit-App bauen und installieren
+
+```bash
+cd ~/Documents/GitHub/dfx/realunit-app
+flutter pub get
+dart run tool/generate_localization.dart
+flutter pub run build_runner build --delete-conflicting-outputs
+flutter build apk --debug  # Debug-Build reicht für die Reproduktion
+adb install build/app/outputs/flutter-apk/app-debug.apk
+```
+
+### B.4 — Wallet einrichten
+
+App auf dem Emulator manuell:
+1. Onboarding durchklicken, Software-Terms akzeptieren.
+2. Neues Wallet erstellen.
+3. Mnemonic notieren (z.B. in Klartext-Datei `~/realunit_test_mnemonic.txt`).
+4. PIN setzen, z.B. `654321`.
+5. Biometric optional aktivieren.
+6. Im Dashboard angekommen, App in den Hintergrund schicken (Home-Button).
+
+### B.5 — Pfad A durchführen
+
+```bash
+# 1. App killen
+adb shell am force-stop swiss.realunit.app
+
+# 2. shared_prefs inspizieren
+adb shell run-as swiss.realunit.app cat /data/data/swiss.realunit.app/shared_prefs/FlutterSharedPreferences.xml
+# (Da Debug-Build: run-as funktioniert; bei Release-Build: adb root + cat)
+
+# 3. isPinEnabled auf false setzen
+adb shell "su -c \"sed -i 's|<boolean name=\\\"flutter.isPinEnabled\\\" value=\\\"true\\\" />|<boolean name=\\\"flutter.isPinEnabled\\\" value=\\\"false\\\" />|' /data/data/swiss.realunit.app/shared_prefs/FlutterSharedPreferences.xml\""
+
+# 4. App neu starten
+adb shell am start -n swiss.realunit.app/.MainActivity
+```
+
+**Erwartetes Verhalten:** Statt PIN-Verify-Screen erscheint PIN-Setup-Screen.
+
+### B.6 — Neuen PIN setzen und Mnemonic abrufen
+
+Manuell auf dem Emulator:
+1. Neuen PIN setzen, z.B. `123456`.
+2. Biometric ablehnen.
+3. Im Dashboard ankommen.
+4. Settings → Backup Wallet → Step-up-PIN `123456` → Seed-Reveal.
+5. Angezeigte Mnemonic mit `~/realunit_test_mnemonic.txt` vergleichen.
+
+**Erwartetes Ergebnis:** Identische Mnemonic → Pfad A verifiziert.
+
+### B.7 — Falls etwas nicht klappt: Debugging
+
+- App startet auf Splash-Screen und friert ein → vermutlich Exception in `_onLoadCurrentWallet`. `adb logcat | grep -i flutter` zeigt den Stack-Trace.
+- App geht direkt zum Welcome-Screen statt PIN-Setup → Wallet wurde nicht geladen, prüfen ob `currentWalletId` und `flutter.softwareTermsAccepted` noch in SharedPrefs gesetzt sind.
+- PIN-Setup geht durch, aber Dashboard friert ein → BalanceService oder DFX-API-Aufruf scheitert. Für die Reproduktion irrelevant — Mnemonic-Reveal in Settings ist auch ohne erfolgreiches DFX-Auth zugänglich.
+
+### B.8 — Cleanup
+
+```bash
+adb uninstall swiss.realunit.app
+emulator -avd realunit_test -no-window -no-audio &
+# oder
+avdmanager delete avd --name realunit_test
+```
+
+---
+
+*Dieses Dokument ist die technische Begleitung zum Follow-Up-Audit `docs/security-review-followup.md`. Es ergänzt die dort vergebenen Severity-Ratings um den konkreten Angriffspfad, das statische Trace-Ergebnis und die daraus folgende Empfehlung der Fix-Priorisierung.*
