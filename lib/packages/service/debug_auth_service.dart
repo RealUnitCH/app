@@ -52,7 +52,7 @@ class DebugAuthService {
       final body = jsonDecode(response.body) as Map<String, dynamic>;
       final checksumAddress = EthereumAddress.fromHex(address).hexEip55;
       _appStore.sessionCache.setAuthToken(body['accessToken'] as String);
-      await _appStore.sessionCache.saveSignature(checksumAddress, signature);
+      _appStore.sessionCache.saveSignature(checksumAddress, signature);
       await _prefs.setString(_addressKey, address);
       await _prefs.setString(_signatureKey, signature);
     } else {

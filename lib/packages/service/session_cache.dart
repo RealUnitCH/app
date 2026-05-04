@@ -20,22 +20,21 @@ class SessionCache {
 
   void clearAuthToken() => _authToken = null;
 
-  Future<void> saveSignature(String address, String signature) async {
+  void saveSignature(String address, String signature) {
     _signature = signature;
     _signatureAddress = address;
-    await _cacheRepository.write(_signatureKey, signature);
-    await _cacheRepository.write(_signatureAddressKey, address);
   }
 
-  Future<void> loadSignature() async {
-    _signature ??= await _cacheRepository.read(_signatureKey);
-    _signatureAddress ??= await _cacheRepository.read(_signatureAddressKey);
+  void loadSignature() {
+    // No-op: signatures are no longer persisted to disk.
+    // They are regenerated on each app start via fresh signing.
   }
 
   Future<void> clear() async {
     _signature = null;
     _signatureAddress = null;
     _authToken = null;
+    // Clean up any previously persisted signatures
     await _cacheRepository.delete(_signatureKey);
     await _cacheRepository.delete(_signatureAddressKey);
   }

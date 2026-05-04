@@ -42,7 +42,7 @@ abstract class DFXAuthService {
     }
 
     final signature = await wallet.signMessage(message);
-    await appStore.sessionCache.saveSignature(walletAddress, signature);
+    appStore.sessionCache.saveSignature(walletAddress, signature);
 
     return signature;
   }
@@ -84,7 +84,7 @@ abstract class DFXAuthService {
 
   Future<String?> getAuthToken() async {
     if (appStore.sessionCache.authToken == null) {
-      await appStore.sessionCache.loadSignature();
+      appStore.sessionCache.loadSignature();
       final response = await getAuthResponse();
       appStore.sessionCache.setAuthToken(response['accessToken'] as String);
     }
