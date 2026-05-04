@@ -20,7 +20,7 @@ class SettingsContactSuccess extends SettingsContactState {
 
   const SettingsContactSuccess({this.emailSet = false});
 
-  SettingsContactSuccess copyWith({bool? loading, bool? emailSet}) {
+  SettingsContactSuccess copyWith({bool? emailSet}) {
     return SettingsContactSuccess(
       emailSet: emailSet ?? this.emailSet,
     );
