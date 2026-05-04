@@ -115,13 +115,25 @@ class RealUnitSellPaymentInfoService {
     }
   }
 
+  // MetaMask Delegation Framework v1.3.0, CREATE2 — identical on all EVM chains
+  static const _metaMaskDelegatorAddress = '0x63c0c19a282a1b52b07dd5a65b58948a07dae32b';
+  static const _delegationManagerAddress = '0xdb9b1e94b5b69df7e401ddbede43491141047db3';
+
   void _validateEip7702Data(Eip7702Data data, String walletAddress, int userAmount) {
     final expectedChainId = _appStore.apiConfig.asset.chainId;
 
-    // Validate signed fields against known values
-    if (data.delegatorAddress.toLowerCase() != walletAddress.toLowerCase()) {
-      throw Exception('EIP-7702 delegator address does not match wallet address');
+    // Pin signed contract addresses against known constants
+    if (data.delegatorAddress.toLowerCase() != _metaMaskDelegatorAddress) {
+      throw Exception('EIP-7702 delegator address does not match expected MetaMask Delegator contract');
     }
+    if (data.delegationManagerAddress.toLowerCase() != _delegationManagerAddress) {
+      throw Exception('EIP-7702 delegation manager address does not match expected contract');
+    }
+    if (data.domain.verifyingContract.toLowerCase() != _delegationManagerAddress) {
+      throw Exception('EIP-7702 verifying contract does not match expected DelegationManager');
+    }
+
+    // Validate signed fields against known values
     if (data.message.delegator.toLowerCase() != walletAddress.toLowerCase()) {
       throw Exception('EIP-7702 message delegator does not match wallet address');
     }
@@ -129,12 +141,9 @@ class RealUnitSellPaymentInfoService {
       throw Exception('EIP-7702 chain ID mismatch: expected $expectedChainId, got ${data.domain.chainId}');
     }
 
-    // Cross-check signed fields against response metadata
+    // Cross-check signed delegate against response metadata
     if (data.message.delegate.toLowerCase() != data.relayerAddress.toLowerCase()) {
-      throw Exception('EIP-7702 signed delegate does not match relayer address');
-    }
-    if (data.domain.verifyingContract.toLowerCase() != data.delegationManagerAddress.toLowerCase()) {
-      throw Exception('EIP-7702 verifying contract does not match delegation manager');
+      throw Exception('EIP-7702 message delegate does not match relayer address');
     }
 
     // Validate unsigned metadata for consistency
