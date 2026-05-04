@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/pin/constants/pin_constants.dart';
@@ -10,15 +9,12 @@ part 'setup_pin_state.dart';
 class SetupPinCubit extends Cubit<SetupPinState> {
   SetupPinCubit(
     SecureStorage secureStorage,
-    SettingsRepository settingsRepository,
     BiometricService biometricService,
   ) : _secureStorage = secureStorage,
-      _settingsRepository = settingsRepository,
       _biometricService = biometricService,
       super(const SetupPinState());
 
   final SecureStorage _secureStorage;
-  final SettingsRepository _settingsRepository;
   final BiometricService _biometricService;
 
   String? _createPin;
@@ -69,7 +65,6 @@ class SetupPinCubit extends Cubit<SetupPinState> {
         _secureStorage.setPinSalt(salt),
         _secureStorage.setPinHash(hash),
       ]);
-      _settingsRepository.isPinEnabled = true;
       emit(state.copyWith(isComplete: true));
     } else {
       emit(

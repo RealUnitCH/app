@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
@@ -24,8 +23,6 @@ class MockBiometricService extends Mock implements BiometricService {}
 
 class MockSecureStorage extends Mock implements SecureStorage {}
 
-class MockSettingsRepository extends Mock implements SettingsRepository {}
-
 void main() {
   late SetupPinCubit setupPinCubit;
   late PinAuthCubit pinAuthCubit;
@@ -41,7 +38,6 @@ void main() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<BiometricService>(MockBiometricService());
     getIt.registerSingleton<SecureStorage>(MockSecureStorage());
-    getIt.registerSingleton<SettingsRepository>(MockSettingsRepository());
     getIt.registerSingleton<PinAuthCubit>(pinAuthCubit);
   }
 

@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/pin/constants/pin_constants.dart';
@@ -10,16 +9,13 @@ part 'verify_pin_state.dart';
 class VerifyPinCubit extends Cubit<VerifyPinState> {
   VerifyPinCubit(
     SecureStorage secureStorage,
-    SettingsRepository settingsRepository,
     BiometricService biometricService, {
     this.enableLockout = false,
   }) : _secureStorage = secureStorage,
-       _settingsRepository = settingsRepository,
        _biometricService = biometricService,
        super(const VerifyPinState());
 
   final SecureStorage _secureStorage;
-  final SettingsRepository _settingsRepository;
   final BiometricService _biometricService;
   final bool enableLockout;
 
@@ -39,16 +35,16 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
   Future<void> checkPin() async {
     final isCorrect = await _secureStorage.verifyPin(state.pin);
     if (isCorrect) {
-      if (enableLockout) _settingsRepository.resetPinLockout();
+      if (enableLockout) await _secureStorage.resetPinLockout();
       emit(const VerifyPinSuccess());
     } else {
       if (!enableLockout) {
         emit(const VerifyPinFailure(failedAttempts: 0));
         return;
       }
-      final attempts = _settingsRepository.pinFailedAttempts + 1;
-      _settingsRepository.pinFailedAttempts = attempts;
-      _emitLockState(attempts);
+      final attempts = await _secureStorage.getPinFailedAttempts() + 1;
+      await _secureStorage.setPinFailedAttempts(attempts);
+      await _emitLockState(attempts);
     }
   }
 
@@ -58,17 +54,17 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
 
   Future<void> checkBiometricAvailability() async {
     if (enableLockout) {
-      final lockedUntil = _settingsRepository.pinLockedUntil;
+      final lockedUntil = await _secureStorage.getPinLockedUntil();
       if (lockedUntil != null) {
         if (DateTime.now().isBefore(lockedUntil)) {
-          final attempts = _settingsRepository.pinFailedAttempts;
+          final attempts = await _secureStorage.getPinFailedAttempts();
           emit(VerifyPinTemporarilyLocked(failedAttempts: attempts, lockedUntil: lockedUntil));
           return;
         }
-        _settingsRepository.pinLockedUntil = null;
+        await _secureStorage.setPinLockedUntil(null);
       }
 
-      final attempts = _settingsRepository.pinFailedAttempts;
+      final attempts = await _secureStorage.getPinFailedAttempts();
       if (attempts >= permanentLockoutThreshold) {
         emit(VerifyPinLocked(failedAttempts: attempts));
         return;
@@ -84,13 +80,13 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
     }
   }
 
-  void _emitLockState(int attempts) {
+  Future<void> _emitLockState(int attempts) async {
     final duration = _lockoutDuration(attempts);
     if (duration == null) {
       emit(VerifyPinLocked(failedAttempts: attempts));
     } else if (duration > Duration.zero) {
       final lockedUntil = DateTime.now().add(duration);
-      _settingsRepository.pinLockedUntil = lockedUntil;
+      await _secureStorage.setPinLockedUntil(lockedUntil);
       emit(VerifyPinTemporarilyLocked(failedAttempts: attempts, lockedUntil: lockedUntil));
     } else {
       emit(VerifyPinFailure(failedAttempts: attempts));

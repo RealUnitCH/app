@@ -14,6 +14,9 @@ class SecureStorage {
   static const _mnemonicEncryptionKey = 'wallet.mnemonic.encryption.key';
   static const _pinHashKey = 'pin.hash';
   static const _pinSaltKey = 'pin.salt';
+  static const _biometricEnabledKey = 'biometric.enabled';
+  static const _pinFailedAttemptsKey = 'pin.failedAttempts';
+  static const _pinLockedUntilKey = 'pin.lockedUntil';
 
   final FlutterSecureStorage _secureStorage;
 
@@ -49,6 +52,8 @@ class SecureStorage {
 
   Future<void> setPinHash(String hash) => _secureStorage.write(key: _pinHashKey, value: hash);
 
+  Future<bool> hasPinHash() async => await _secureStorage.read(key: _pinHashKey) != null;
+
   Future<void> deletePinHash() => Future.wait([
     _secureStorage.delete(key: _pinHashKey),
     _secureStorage.delete(key: _pinSaltKey),
@@ -69,6 +74,40 @@ class SecureStorage {
     if (hash == null || salt == null) return false;
     return hashPin(pin, salt) == hash;
   }
+
+  // Pin lockout
+
+  Future<int> getPinFailedAttempts() async {
+    final value = await _secureStorage.read(key: _pinFailedAttemptsKey);
+    return int.tryParse(value ?? '') ?? 0;
+  }
+
+  Future<void> setPinFailedAttempts(int count) =>
+      _secureStorage.write(key: _pinFailedAttemptsKey, value: count.toString());
+
+  Future<DateTime?> getPinLockedUntil() async {
+    final value = await _secureStorage.read(key: _pinLockedUntilKey);
+    return value != null ? DateTime.tryParse(value) : null;
+  }
+
+  Future<void> setPinLockedUntil(DateTime? until) => until != null
+      ? _secureStorage.write(key: _pinLockedUntilKey, value: until.toIso8601String())
+      : _secureStorage.delete(key: _pinLockedUntilKey);
+
+  Future<void> resetPinLockout() => Future.wait([
+    _secureStorage.delete(key: _pinFailedAttemptsKey),
+    _secureStorage.delete(key: _pinLockedUntilKey),
+  ]);
+
+  // Biometric
+
+  Future<bool> getIsBiometricEnabled() async =>
+      await _secureStorage.read(key: _biometricEnabledKey) == 'true';
+
+  Future<void> setIsBiometricEnabled({required bool enabled}) =>
+      _secureStorage.write(key: _biometricEnabledKey, value: enabled.toString());
+
+  Future<void> deleteBiometricEnabled() => _secureStorage.delete(key: _biometricEnabledKey);
 
   // Mnemonic
 

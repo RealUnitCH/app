@@ -24,6 +24,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     this._appStore,
     this._bitboxService,
   ) : super(const HomeState()) {
+    on<CheckWalletExistsEvent>(_onCheckWalletExists);
     on<LoadCurrentWalletEvent>(_onLoadCurrentWallet);
     on<LoadWalletEvent>(_onLoadWallet);
     on<SyncWalletServicesEvent>(_onSyncWalletServices);
@@ -32,7 +33,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<AcceptSoftwareTermsEvent>(_onAcceptSoftwareTerms);
     on<DebugAuthCompleteEvent>(_onDebugAuthComplete);
 
-    add(const LoadCurrentWalletEvent());
+    add(const CheckWalletExistsEvent());
   }
 
   final WalletService _walletService;
@@ -43,18 +44,22 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final AppStore _appStore;
   final BitboxService _bitboxService;
 
-  Future<void> _onLoadCurrentWallet(LoadCurrentWalletEvent event, Emitter<HomeState> emit) async {
+  void _onCheckWalletExists(CheckWalletExistsEvent event, Emitter<HomeState> emit) {
+    final hasWallet = _walletService.hasWallet();
     emit(
       state.copyWith(
-        isLoadingWallet: true,
+        hasWallet: hasWallet,
         softwareTermsAccepted: _settingsService.isSoftwareTermsAccepted,
+        onboardingCompleted: hasWallet ? _settingsService.isTermsAccepted : false,
       ),
     );
+  }
 
-    if (state.openWallet != null || !_walletService.hasWallet()) {
-      emit(state.copyWith(isLoadingWallet: false));
-      return;
-    }
+  Future<void> _onLoadCurrentWallet(LoadCurrentWalletEvent event, Emitter<HomeState> emit) async {
+    if (state.openWallet != null || !_walletService.hasWallet()) return;
+
+    emit(state.copyWith(isLoadingWallet: true));
+
     try {
       final wallet = await _walletService.getCurrentWallet();
       _appStore.wallet = wallet;
@@ -63,7 +68,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         state.copyWith(
           openWallet: wallet,
           isLoadingWallet: false,
-          onboardingCompleted: _settingsService.isTermsAccepted,
         ),
       );
 
@@ -71,7 +75,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     } catch (e) {
       developer.log('Something went wrong during wallet loading', error: e);
       emit(state.copyWith(isLoadingWallet: false));
-
       return;
     }
 
@@ -104,7 +107,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
   Future<void> _onLoadWallet(LoadWalletEvent event, Emitter<HomeState> emit) async {
     _updateWallet(event.wallet);
-    emit(state.copyWith(openWallet: _appStore.wallet, isLoadingWallet: false));
+    emit(
+      state.copyWith(
+        hasWallet: true,
+        openWallet: _appStore.wallet,
+        isLoadingWallet: false,
+      ),
+    );
     await _setupFiatService(emit);
   }
 
@@ -126,7 +135,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   Future<void> _onDebugAuthComplete(DebugAuthCompleteEvent event, Emitter<HomeState> emit) async {
     final wallet = await _walletService.createDebugWallet(event.address);
     _appStore.wallet = wallet;
-    emit(state.copyWith(openWallet: wallet));
+    emit(state.copyWith(hasWallet: true, openWallet: wallet));
     await _setupFiatService(emit);
   }
 
