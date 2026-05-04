@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -84,11 +85,12 @@ final GoRouter routerConfig = GoRouter(
       builder: (_, _) => const OnboardingCompletedPage(),
     ),
 
-    GoRoute(
-      name: OnboardingRoutes.debugAuth,
-      path: '/debugAuth',
-      builder: (_, _) => const DebugAuthPage(),
-    ),
+    if (kDebugMode)
+      GoRoute(
+        name: OnboardingRoutes.debugAuth,
+        path: '/debugAuth',
+        builder: (_, _) => const DebugAuthPage(),
+      ),
 
     GoRoute(
       name: PinRoutes.gate,
