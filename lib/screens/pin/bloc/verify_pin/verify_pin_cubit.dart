@@ -8,7 +8,7 @@ part 'verify_pin_state.dart';
 class VerifyPinCubit extends Cubit<VerifyPinState> {
   VerifyPinCubit(
     SecureStorage secureStorage, {
-    this.enableLockout = false,
+    this.enableLockout = true,
   }) : _secureStorage = secureStorage,
        super(const VerifyPinState());
 

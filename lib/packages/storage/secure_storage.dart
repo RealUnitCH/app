@@ -120,6 +120,9 @@ class SecureStorage {
   /// Returns true if successful — subsequent getOrCreateMnemonicKey() will
   /// use the cached key without showing another biometric prompt.
   Future<bool> tryBiometricUnlock() async {
+    final biometricEnabled = await getIsBiometricEnabled();
+    if (!biometricEnabled) return false;
+
     final biometricAvailable =
         await BiometricStorage().canAuthenticate() == CanAuthenticateResponse.success;
     if (!biometricAvailable) return false;
