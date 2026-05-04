@@ -17,6 +17,10 @@ class RealUnitSellPaymentInfoService {
   static const _sellPaymentInfoPath = '/v1/realunit/sell';
   static String _confirmPaymentPath(int id) => '/v1/realunit/sell/$id/confirm';
 
+  // MetaMask Delegation Framework v1.3.0, CREATE2 — identical on all EVM chains
+  static const _metaMaskDelegatorAddress = '0x63c0c19a282a1b52b07dd5a65b58948a07dae32b';
+  static const _delegationManagerAddress = '0xdb9b1e94b5b69df7e401ddbede43491141047db3';
+
   String get _host => _appStore.apiConfig.apiHost;
 
   final AppStore _appStore;
@@ -114,10 +118,6 @@ class RealUnitSellPaymentInfoService {
       throw Exception('Failed to confirm payment: ${response.statusCode}');
     }
   }
-
-  // MetaMask Delegation Framework v1.3.0, CREATE2 — identical on all EVM chains
-  static const _metaMaskDelegatorAddress = '0x63c0c19a282a1b52b07dd5a65b58948a07dae32b';
-  static const _delegationManagerAddress = '0xdb9b1e94b5b69df7e401ddbede43491141047db3';
 
   void _validateEip7702Data(Eip7702Data data, String walletAddress, int userAmount) {
     final expectedChainId = _appStore.apiConfig.asset.chainId;
