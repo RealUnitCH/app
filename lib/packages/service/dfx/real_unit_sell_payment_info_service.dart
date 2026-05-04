@@ -118,6 +118,7 @@ class RealUnitSellPaymentInfoService {
   void _validateEip7702Data(Eip7702Data data, String walletAddress, int userAmount) {
     final expectedChainId = _appStore.apiConfig.asset.chainId;
 
+    // Validate signed fields against known values
     if (data.delegatorAddress.toLowerCase() != walletAddress.toLowerCase()) {
       throw Exception('EIP-7702 delegator address does not match wallet address');
     }
@@ -127,10 +128,19 @@ class RealUnitSellPaymentInfoService {
     if (data.domain.chainId != expectedChainId) {
       throw Exception('EIP-7702 chain ID mismatch: expected $expectedChainId, got ${data.domain.chainId}');
     }
+
+    // Cross-check signed fields against response metadata
+    if (data.message.delegate.toLowerCase() != data.relayerAddress.toLowerCase()) {
+      throw Exception('EIP-7702 signed delegate does not match relayer address');
+    }
+    if (data.domain.verifyingContract.toLowerCase() != data.delegationManagerAddress.toLowerCase()) {
+      throw Exception('EIP-7702 verifying contract does not match delegation manager');
+    }
+
+    // Validate unsigned metadata for consistency
     if (data.tokenAddress.toLowerCase() != _appStore.apiConfig.asset.address.toLowerCase()) {
       throw Exception('EIP-7702 token address does not match RealUnit token');
     }
-
     final expectedWei = BigInt.from(userAmount) * BigInt.from(10).pow(_appStore.apiConfig.asset.decimals);
     final actualWei = BigInt.tryParse(data.amountWei);
     if (actualWei == null || actualWei != expectedWei) {
