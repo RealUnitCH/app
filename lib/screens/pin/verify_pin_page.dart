@@ -35,7 +35,7 @@ class VerifyPinPage extends StatelessWidget {
     this.description,
     required this.onAuthenticated,
     this.bottom,
-    this.enableLockout = false,
+    this.enableLockout = true,
   });
 
   /// Used for initial app lock check on app start

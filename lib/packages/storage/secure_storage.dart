@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:biometric_storage/biometric_storage.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pointycastle/api.dart';
 import 'package:pointycastle/block/aes.dart';
@@ -109,9 +110,58 @@ class SecureStorage {
 
   Future<void> deleteBiometricEnabled() => _secureStorage.delete(key: _biometricEnabledKey);
 
-  // Mnemonic
+  // Mnemonic — biometric-gated via hardware keystore
+
+  static const _biometricMnemonicKey = 'wallet.mnemonic.key.biometric';
 
   Future<Uint8List> getOrCreateMnemonicKey() async {
+    final biometricAvailable =
+        await BiometricStorage().canAuthenticate() == CanAuthenticateResponse.success;
+
+    if (biometricAvailable) {
+      return _getOrCreateBiometricMnemonicKey();
+    }
+
+    return _getOrCreateLegacyMnemonicKey();
+  }
+
+  Future<Uint8List> _getOrCreateBiometricMnemonicKey() async {
+    final storage = await BiometricStorage().getStorage(
+      _biometricMnemonicKey,
+      options: StorageFileInitOptions(
+        authenticationRequired: true,
+        androidBiometricOnly: false,
+      ),
+      promptInfo: const PromptInfo(
+        androidPromptInfo: AndroidPromptInfo(
+          title: 'Wallet entsperren',
+          subtitle: 'Authentifizieren Sie sich, um auf Ihr Wallet zuzugreifen',
+          negativeButton: 'Abbrechen',
+        ),
+        iosPromptInfo: IosPromptInfo(
+          accessTitle: 'Wallet entsperren',
+        ),
+      ),
+    );
+
+    final existing = await storage.read();
+    if (existing != null) return base64.decode(existing);
+
+    // Migrate from FlutterSecureStorage if key exists there
+    final legacyKey = await _secureStorage.read(key: _mnemonicEncryptionKey);
+    if (legacyKey != null) {
+      await storage.write(legacyKey);
+      await _secureStorage.delete(key: _mnemonicEncryptionKey);
+      return base64.decode(legacyKey);
+    }
+
+    // Generate new key
+    final key = _secureRandomBytes(32);
+    await storage.write(base64.encode(key));
+    return key;
+  }
+
+  Future<Uint8List> _getOrCreateLegacyMnemonicKey() async {
     final existing = await _secureStorage.read(key: _mnemonicEncryptionKey);
     if (existing != null) return base64.decode(existing);
     final key = _secureRandomBytes(32);
