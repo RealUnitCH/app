@@ -4,7 +4,6 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_confirm_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_confirm_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_payment_info_dto.dart';
@@ -69,8 +68,6 @@ class RealUnitSellPaymentInfoService {
 
   Future<void> confirmPayment(SellPaymentInfo paymentInfo) async {
     final credentials = _appStore.wallet.currentAccount.primaryAddress;
-    _validateEip7702Data(paymentInfo.eip7702, credentials.address.hexEip55, paymentInfo.amount);
-
     final delegationSignature = await Eip712Signer.signDelegation(
       credentials: credentials,
       eip7702Data: paymentInfo.eip7702,
@@ -112,29 +109,6 @@ class RealUnitSellPaymentInfoService {
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('Failed to confirm payment: ${response.statusCode}');
-    }
-  }
-
-  void _validateEip7702Data(Eip7702Data data, String walletAddress, int userAmount) {
-    final expectedChainId = _appStore.apiConfig.asset.chainId;
-
-    if (data.delegatorAddress.toLowerCase() != walletAddress.toLowerCase()) {
-      throw Exception('EIP-7702 delegator address does not match wallet address');
-    }
-    if (data.message.delegator.toLowerCase() != walletAddress.toLowerCase()) {
-      throw Exception('EIP-7702 message delegator does not match wallet address');
-    }
-    if (data.domain.chainId != expectedChainId) {
-      throw Exception('EIP-7702 chain ID mismatch: expected $expectedChainId, got ${data.domain.chainId}');
-    }
-    if (data.tokenAddress.toLowerCase() != _appStore.apiConfig.asset.address.toLowerCase()) {
-      throw Exception('EIP-7702 token address does not match RealUnit token');
-    }
-
-    final expectedWei = BigInt.from(userAmount) * BigInt.from(10).pow(_appStore.apiConfig.asset.decimals);
-    final actualWei = BigInt.tryParse(data.amountWei);
-    if (actualWei == null || actualWei != expectedWei) {
-      throw Exception('EIP-7702 amount mismatch: expected $expectedWei, got ${data.amountWei}');
     }
   }
 }
