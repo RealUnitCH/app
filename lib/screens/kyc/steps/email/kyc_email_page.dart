@@ -7,6 +7,7 @@ import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_step/kyc_em
 import 'package:realunit_wallet/screens/kyc/steps/email/subpages/kyc_email_verification_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 
 class KycEmailPage extends StatelessWidget {
@@ -111,37 +112,21 @@ class _KycEmailFormState extends State<KycEmailForm> {
                   ),
                   Padding(
                     padding: const .symmetric(vertical: 16.0),
-                    child: SizedBox(
-                      width: .infinity,
-                      child: BlocBuilder<KycEmailStepCubit, KycEmailStepState>(
-                        builder: (context, state) {
-                          if (state is KycEmailStepLoading) {
-                            return FilledButton.icon(
-                              onPressed: null,
-                              icon: SizedBox(
-                                height: 14,
-                                width: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 1.5,
-                                  color: RealUnitColors.basic.black.withValues(alpha: 0.5),
-                                ),
-                              ),
-                              label: Text(S.of(context).next),
-                            );
-                          }
-                          return FilledButton(
-                            onPressed: () {
-                              FocusManager.instance.primaryFocus?.unfocus();
-                              if (_formKey.currentState?.validate() ?? false) {
-                                context.read<KycEmailStepCubit>().registerEmail(
-                                  _emailCtrl.text.trim(),
-                                );
-                              }
-                            },
-                            child: Text(S.of(context).next),
-                          );
-                        },
-                      ),
+                    child: BlocBuilder<KycEmailStepCubit, KycEmailStepState>(
+                      builder: (context, state) {
+                        return AppFilledButton(
+                          state: state is KycEmailStepLoading ? .loading : .idle,
+                          onPressed: () {
+                            FocusManager.instance.primaryFocus?.unfocus();
+                            if (_formKey.currentState?.validate() ?? false) {
+                              context.read<KycEmailStepCubit>().registerEmail(
+                                _emailCtrl.text.trim(),
+                              );
+                            }
+                          },
+                          label: S.of(context).next,
+                        );
+                      },
                     ),
                   ),
                 ],

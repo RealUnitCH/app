@@ -13,6 +13,7 @@ import 'package:realunit_wallet/screens/pin/bloc/verify_pin/verify_pin_cubit.dar
 import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/pin/widgets/pin_indicator.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/widgets/buttons/app_text_button.dart';
 import 'package:realunit_wallet/widgets/number_pad.dart';
 
 import '../../helper/pump_app.dart';
@@ -78,11 +79,11 @@ void main() {
   });
 
   group('${VerifyPinPage.appLock()}', () {
-    testWidgets('renders $VerifyPinView with TextButton', (tester) async {
+    testWidgets('renders $VerifyPinView with AppTextButton', (tester) async {
       await tester.pumpApp(VerifyPinPage.appLock());
 
       expect(find.byType(VerifyPinView), findsOne);
-      expect(find.byType(TextButton), findsOne);
+      expect(find.byType(AppTextButton), findsOne);
     });
   });
 

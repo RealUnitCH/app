@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/handlebars.dart';
 
 class ForgotPinBottomSheet extends StatelessWidget {
@@ -51,38 +52,16 @@ class ForgotPinBottomSheet extends StatelessWidget {
                     spacing: 12.0,
                     children: [
                       Expanded(
-                        child: FilledButton(
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all(
-                              RealUnitColors.neutral100,
-                            ),
-                            foregroundColor: WidgetStateProperty.all(
-                              RealUnitColors.realUnitBlack,
-                            ),
-                          ),
+                        child: AppFilledButton(
+                          variant: .secondary,
                           onPressed: () => context.pop(false),
-                          child: Text(
-                            S.of(context).close,
-                            style: const TextStyle(
-                              color: RealUnitColors.realUnitBlack,
-                              fontSize: 16,
-                              height: 20 / 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          label: S.of(context).close,
                         ),
                       ),
                       Expanded(
-                        child: FilledButton(
+                        child: AppFilledButton(
                           onPressed: () => context.pop(true),
-                          child: Text(
-                            S.of(context).reset,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              height: 20 / 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          label: S.of(context).reset,
                         ),
                       ),
                     ],

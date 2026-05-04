@@ -12,7 +12,7 @@ import 'package:realunit_wallet/screens/buy/cubits/buy_confirm/buy_confirm_cubit
 import 'package:realunit_wallet/screens/buy/widgets/payment_executed_sheet.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/styles/styles.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/tab_selector.dart';
 
 enum PaymentInfoOptions {
@@ -217,37 +217,13 @@ class PaymentInformationDetailsView extends StatelessWidget {
                   width: .infinity,
                   child: BlocBuilder<BuyConfirmCubit, BuyConfirmState>(
                     builder: (context, state) {
-                      return state is BuyConfirmLoading
-                          ? FilledButton.icon(
-                              onPressed: null,
-                              icon: SizedBox(
-                                height: 14,
-                                width: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 1.5,
-                                  color: RealUnitColors.basic.black.withValues(alpha: 0.5),
-                                ),
-                              ),
-                              label: const SizedBox.shrink(),
-                            )
-                          : FilledButton(
-                              onPressed: () => context.read<BuyConfirmCubit>().confirmPayment(
-                                buyPaymentInfo.id,
-                              ),
-                              style: ButtonStyle(
-                                padding: WidgetStateProperty.resolveWith(
-                                  (states) => const .symmetric(
-                                    vertical: 10.0,
-                                    horizontal: 20.0,
-                                  ),
-                                ),
-                              ),
-                              child: Text(
-                                S.of(context).buyPaymentConfirm,
-                                textAlign: .center,
-                                style: kFullwidthBlueButtonTextStyle,
-                              ),
-                            );
+                      return AppFilledButton(
+                        onPressed: () => context.read<BuyConfirmCubit>().confirmPayment(
+                          buyPaymentInfo.id,
+                        ),
+                        state: state is BuyConfirmLoading ? .loading : .idle,
+                        label: S.of(context).buyPaymentConfirm,
+                      );
                     },
                   ),
                 ),

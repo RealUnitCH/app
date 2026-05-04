@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +11,7 @@ import 'package:realunit_wallet/screens/settings_user_data/subpages/others/setti
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_pending_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/form/file_picker_field.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 import 'package:realunit_wallet/widgets/image_picker_sheet.dart';
@@ -128,14 +128,10 @@ class _SettingsEditNameViewState extends State<SettingsEditNameView> {
                                 const Spacer(),
                                 Padding(
                                   padding: const .symmetric(vertical: 16.0),
-                                  child: SizedBox(
-                                    width: .infinity,
-                                    child: FilledButton(
-                                      onPressed: isSubmitting ? null : _onSubmit,
-                                      child: isSubmitting
-                                          ? const CupertinoActivityIndicator()
-                                          : Text(S.of(context).save),
-                                    ),
+                                  child: AppFilledButton(
+                                    onPressed: _onSubmit,
+                                    state: isSubmitting ? .loading : .idle,
+                                    label: S.of(context).save,
                                   ),
                                 ),
                               ],

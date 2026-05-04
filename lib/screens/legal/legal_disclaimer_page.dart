@@ -8,6 +8,7 @@ import 'package:realunit_wallet/screens/legal/steps/legal_dfx_step.dart';
 import 'package:realunit_wallet/screens/legal/steps/legal_disclaimer_step.dart';
 import 'package:realunit_wallet/screens/legal/steps/legal_documents_step.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 class LegalDisclaimerPage extends StatelessWidget {
   const LegalDisclaimerPage({super.key, this.onCompleted});
@@ -79,17 +80,18 @@ class LegalDisclaimerView extends StatelessWidget {
                       spacing: 20.0,
                       children: [
                         Expanded(
-                          child: OutlinedButton(
+                          child: AppFilledButton(
+                            variant: .secondary,
                             onPressed: () => context.pop(),
-                            child: Text(s.legalDisclaimerNo),
+                            label: s.legalDisclaimerNo,
                           ),
                         ),
                         Expanded(
-                          child: FilledButton(
+                          child: AppFilledButton(
                             onPressed: () => cubit.nextStep(
                               onComplete: onCompleted ?? context.pop,
                             ),
-                            child: Text(s.legalDisclaimerYes),
+                            label: s.legalDisclaimerYes,
                           ),
                         ),
                       ],

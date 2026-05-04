@@ -7,6 +7,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 class LegalDocumentParams {
   final String title;
@@ -87,20 +88,18 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
                   top: false,
                   child: Padding(
                     padding: const .all(20.0),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () => context.pushNamed(
-                          AppRoutes.webView,
-                          extra: WebViewRouteParams(
-                            title: S.of(context).originalPdf,
-                            url: Uri.parse(_pdfUrl!),
-                            showExternalBrowserButton: true,
-                          ),
+                    child: AppFilledButton(
+                      variant: .secondary,
+                      onPressed: () => context.pushNamed(
+                        AppRoutes.webView,
+                        extra: WebViewRouteParams(
+                          title: S.of(context).originalPdf,
+                          url: Uri.parse(_pdfUrl!),
+                          showExternalBrowserButton: true,
                         ),
-                        icon: const Icon(Icons.picture_as_pdf_outlined),
-                        label: Text(S.of(context).originalPdf),
                       ),
+                      icon: Icons.picture_as_pdf_outlined,
+                      label: S.of(context).originalPdf,
                     ),
                   ),
                 ),

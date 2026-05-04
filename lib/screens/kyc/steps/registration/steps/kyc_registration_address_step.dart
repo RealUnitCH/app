@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/form/country_field.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 
@@ -106,18 +107,15 @@ class KycRegistrationAddressStep extends StatelessWidget {
                   },
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () async {
-                        FocusManager.instance.primaryFocus?.unfocus();
-                        if (_formKey.currentState?.validate() ?? false) {
-                          await onSubmit();
-                        }
-                      },
-                      child: Text(S.of(context).complete),
-                    ),
+                  padding: const .symmetric(vertical: 16.0),
+                  child: AppFilledButton(
+                    onPressed: () async {
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      if (_formKey.currentState?.validate() ?? false) {
+                        await onSubmit();
+                      }
+                    },
+                    label: S.of(context).complete,
                   ),
                 ),
               ],

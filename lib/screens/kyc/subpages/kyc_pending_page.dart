@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/text_substring_highlighting.dart';
 
 class KycPendingPage extends StatelessWidget {
@@ -60,13 +61,10 @@ class KycPendingView extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () => context.read<KycCubit>().checkKyc(),
-                    child: Text(S.of(context).refresh),
-                  ),
+                padding: const .symmetric(vertical: 16.0),
+                child: AppFilledButton(
+                  onPressed: () => context.read<KycCubit>().checkKyc(),
+                  label: S.of(context).refresh,
                 ),
               ),
               const Spacer(),

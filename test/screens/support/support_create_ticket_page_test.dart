@@ -1,4 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -57,7 +58,7 @@ void main() {
 
       expect(find.byType(TagSelection<SupportIssueType>), findsOne);
       expect(find.byType(TextField), findsOne);
-      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.byType(CupertinoActivityIndicator), findsNothing);
       final button = tester.widget<FilledButton>(find.bySubtype<FilledButton>());
       expect(button.onPressed, isNull);
     });
@@ -74,7 +75,7 @@ void main() {
 
       await tester.pumpApp(buildSubject(const SupportCreateTicketView()));
 
-      expect(find.byType(CircularProgressIndicator), findsOne);
+      expect(find.byType(CupertinoActivityIndicator), findsOne);
       final button = tester.widget<FilledButton>(find.bySubtype<FilledButton>());
       expect(button.onPressed, isNull);
     });
@@ -90,7 +91,7 @@ void main() {
 
       await tester.pumpApp(buildSubject(const SupportCreateTicketView()));
 
-      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.byType(CupertinoActivityIndicator), findsNothing);
       final button = tester.widget<FilledButton>(find.bySubtype<FilledButton>());
       expect(button.onPressed, isNotNull);
     });

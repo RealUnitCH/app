@@ -8,6 +8,7 @@ import 'package:realunit_wallet/screens/support/cubits/support_create_ticket/sup
 import 'package:realunit_wallet/screens/support/cubits/support_create_ticket/support_create_ticket_state.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/tag_selection.dart';
 
 class SupportCreateTicketPage extends StatelessWidget {
@@ -151,29 +152,12 @@ class SupportCreateTicketView extends StatelessWidget {
                               ],
                             ),
                             const Spacer(),
-                            SizedBox(
-                              width: .infinity,
-                              child: state.isSubmitting
-                                  ? FilledButton.icon(
-                                      onPressed: null,
-                                      icon: SizedBox(
-                                        height: 14,
-                                        width: 14,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 1.5,
-                                          color: RealUnitColors.basic.black.withValues(alpha: 0.5),
-                                        ),
-                                      ),
-                                      label: Text(S.of(context).supportSend),
-                                    )
-                                  : FilledButton(
-                                      onPressed: state.canSubmit
-                                          ? () => context.read<SupportCreateTicketCubit>().submit()
-                                          : null,
-                                      child: Text(
-                                        S.of(context).supportSend,
-                                      ),
-                                    ),
+                            AppFilledButton(
+                              state: state.isSubmitting ? .loading : .idle,
+                              onPressed: state.canSubmit
+                                  ? () => context.read<SupportCreateTicketCubit>().submit()
+                                  : null,
+                              label: S.of(context).supportSend,
                             ),
                           ],
                         ),

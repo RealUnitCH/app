@@ -5,6 +5,8 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/debug_auth/cubit/debug_auth_cubit.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
+import 'package:realunit_wallet/widgets/buttons/app_text_button.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 
 class DebugAuthView extends StatefulWidget {
@@ -53,13 +55,13 @@ class _DebugAuthViewState extends State<DebugAuthView> {
                 hintText: '0x...',
                 controller: _addressController,
               ),
-              TextButton(
+              AppTextButton(
                 onPressed: state.isLoading
                     ? null
                     : () => context.read<DebugAuthCubit>().fetchSignMessage(
                         _addressController.text.trim(),
                       ),
-                child: Text(S.of(context).signMessageGet),
+                label: S.of(context).signMessageGet,
               ),
               if (state.signMessage != null) ...[
                 const Divider(color: RealUnitColors.neutral200),
@@ -99,13 +101,12 @@ class _DebugAuthViewState extends State<DebugAuthView> {
                   maxLines: null,
                   controller: _signatureController,
                 ),
-                FilledButton(
-                  onPressed: state.isLoading
-                      ? null
-                      : () => context.read<DebugAuthCubit>().authenticate(
-                          _signatureController.text.trim(),
-                        ),
-                  child: Text(S.of(context).authenticate),
+                AppFilledButton(
+                  state: state.isLoading ? .loading : .idle,
+                  onPressed: () => context.read<DebugAuthCubit>().authenticate(
+                    _signatureController.text.trim(),
+                  ),
+                  label: S.of(context).authenticate,
                 ),
               ],
               if (state.errorMessage != null)

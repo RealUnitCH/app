@@ -9,12 +9,12 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
+import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
@@ -23,6 +23,7 @@ import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information_details.dart';
 import 'package:realunit_wallet/styles/currency.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/tab_selector.dart';
 
 import '../../helper/helper.dart';
@@ -62,7 +63,9 @@ void main() {
 
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
-    getIt.registerSingleton<AppStore>(AppStore(() => MockApiConfig(), SessionCache(MockCacheRepository())));
+    getIt.registerSingleton<AppStore>(
+      AppStore(() => MockApiConfig(), SessionCache(MockCacheRepository())),
+    );
     getIt.registerSingleton<DfxBrokerbotService>(MockDfxBrokerbotService());
     getIt.registerSingleton<RealUnitBuyPaymentInfoService>(MockRealUnitBuyPaymentInfoService());
     getIt.registerSingleton<DFXPriceService>(MockDfxPriceService());
@@ -194,7 +197,7 @@ void main() {
       expect(find.text(S.current.registrationRequired), findsOne);
       expect(
         find.byWidgetPredicate(
-          (Widget widget) => widget is FilledButton && widget.onPressed != null,
+          (Widget widget) => widget is AppFilledButton && widget.onPressed != null,
         ),
         findsOne,
       );
@@ -212,7 +215,7 @@ void main() {
       expect(find.text(S.current.identityCheckRequired), findsOne);
       expect(
         find.byWidgetPredicate(
-          (Widget widget) => widget is FilledButton && widget.onPressed != null,
+          (Widget widget) => widget is AppFilledButton && widget.onPressed != null,
         ),
         findsOne,
       );
@@ -241,7 +244,7 @@ void main() {
       expect(find.text(S.current.buyMinAmount('${minAmount.round()}', currency.code)), findsOne);
       expect(
         find.byWidgetPredicate(
-          (Widget widget) => widget is FilledButton && widget.onPressed == null,
+          (Widget widget) => widget is AppFilledButton && widget.onPressed == null,
         ),
         findsOne,
       );

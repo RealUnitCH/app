@@ -7,6 +7,7 @@ import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_c
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 class PaymentAdditionalActionNeededButton extends StatelessWidget {
   final TextEditingController amountController;
@@ -40,12 +41,9 @@ class PaymentAdditionalActionNeededButton extends StatelessWidget {
                       fontSize: 14,
                     ),
                   ),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: null,
-                      child: Text(S.of(context).next),
-                    ),
+                  AppFilledButton(
+                    onPressed: null,
+                    label: S.of(context).next,
                   ),
                 ],
               ),
@@ -54,41 +52,35 @@ class PaymentAdditionalActionNeededButton extends StatelessWidget {
           if (paymentState.error == PaymentInfoError.registrationRequired) {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () async {
-                    await context.pushNamed(AppRoutes.kyc);
-                    if (context.mounted) {
-                      context.read<BuyPaymentInfoCubit>().getPaymentInfo(
-                        amount: amountController.text,
-                      );
-                    }
-                  },
-                  child: Text(S.of(context).next),
-                ),
+              child: AppFilledButton(
+                onPressed: () async {
+                  await context.pushNamed(AppRoutes.kyc);
+                  if (context.mounted) {
+                    context.read<BuyPaymentInfoCubit>().getPaymentInfo(
+                      amount: amountController.text,
+                    );
+                  }
+                },
+                label: S.of(context).next,
               ),
             );
           }
           if (paymentState.error == PaymentInfoError.kycRequired) {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () async {
-                    await context.pushNamed(
-                      AppRoutes.kyc,
-                      extra: paymentState.requiredLevel,
+              child: AppFilledButton(
+                onPressed: () async {
+                  await context.pushNamed(
+                    AppRoutes.kyc,
+                    extra: paymentState.requiredLevel,
+                  );
+                  if (context.mounted) {
+                    context.read<BuyPaymentInfoCubit>().getPaymentInfo(
+                      amount: amountController.text,
                     );
-                    if (context.mounted) {
-                      context.read<BuyPaymentInfoCubit>().getPaymentInfo(
-                        amount: amountController.text,
-                      );
-                    }
-                  },
-                  child: Text(S.of(context).next),
-                ),
+                  }
+                },
+                label: S.of(context).next,
               ),
             );
           }

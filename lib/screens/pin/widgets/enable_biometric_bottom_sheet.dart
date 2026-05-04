@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
+import 'package:realunit_wallet/widgets/buttons/app_text_button.dart';
 
 class EnableBiometricBottomSheet extends StatelessWidget {
   const EnableBiometricBottomSheet({super.key});
@@ -44,19 +46,13 @@ class EnableBiometricBottomSheet extends StatelessWidget {
             Column(
               spacing: 8.0,
               children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    child: Text(S.of(context).enable),
-                  ),
+                AppFilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  label: S.of(context).enable,
                 ),
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: Text(S.of(context).skip),
-                  ),
+                AppTextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  label: S.of(context).skip,
                 ),
               ],
             ),

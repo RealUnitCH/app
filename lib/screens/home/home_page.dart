@@ -5,6 +5,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/text_substring_highlighting.dart';
 
 class HomePage extends StatelessWidget {
@@ -71,14 +72,11 @@ class HomePage extends StatelessWidget {
                           ),
                           Padding(
                             padding: const .symmetric(vertical: 20.0),
-                            child: SizedBox(
-                              width: .infinity,
-                              child: FilledButton(
-                                onPressed: () => context.read<HomeBloc>().add(
-                                  const AcceptSoftwareTermsEvent(),
-                                ),
-                                child: Text(S.of(context).start),
+                            child: AppFilledButton(
+                              onPressed: () => context.read<HomeBloc>().add(
+                                const AcceptSoftwareTermsEvent(),
                               ),
+                              label: S.of(context).start,
                             ),
                           ),
                         ],

@@ -1,6 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -9,6 +8,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_name/settings_edit_name_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_phone_number/cubit/settings_edit_phone_number_cubit.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_phone_number/settings_edit_phone_number_page.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/form/phone_number_field.dart';
 
 import '../../../helper/pump_app.dart';
@@ -57,7 +57,7 @@ void main() {
       await tester.pumpApp(buildSubject(const SettingsEditPhoneNumberView()));
 
       expect(find.byType(PhoneNumberField), findsOne);
-      expect(find.byType(FilledButton), findsOne);
+      expect(find.byType(AppFilledButton), findsOne);
       expect(find.byType(CupertinoActivityIndicator), findsNothing);
     });
 
@@ -69,7 +69,7 @@ void main() {
       await tester.pumpApp(buildSubject(const SettingsEditPhoneNumberView()));
 
       expect(find.byType(PhoneNumberField), findsOne);
-      expect(find.byType(FilledButton), findsOne);
+      expect(find.byType(AppFilledButton), findsOne);
       expect(find.byType(CupertinoActivityIndicator), findsOne);
     });
 
@@ -82,7 +82,7 @@ void main() {
 
       expect(find.byType(PhoneNumberField), findsOne);
       expect(find.text(error), findsOne);
-      expect(find.byType(FilledButton), findsOne);
+      expect(find.byType(AppFilledButton), findsOne);
       expect(find.byType(CupertinoActivityIndicator), findsNothing);
     });
   });
