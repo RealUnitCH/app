@@ -67,8 +67,20 @@ class AppDatabase extends _$AppDatabase {
   );
 
   static Future<String> getDatabasePath() async {
-    final path = await getApplicationDocumentsDirectory();
-    return p.join(path.path, _databaseFileName);
+    final dir = await getApplicationSupportDirectory();
+    final newPath = p.join(dir.path, _databaseFileName);
+
+    // Migrate from Documents/ (backed up to iCloud) to Application Support/ (not backed up)
+    if (!File(newPath).existsSync()) {
+      final legacyDir = await getApplicationDocumentsDirectory();
+      final legacyPath = p.join(legacyDir.path, _databaseFileName);
+      if (File(legacyPath).existsSync()) {
+        await Directory(dir.path).create(recursive: true);
+        await File(legacyPath).rename(newPath);
+      }
+    }
+
+    return newPath;
   }
 }
 
