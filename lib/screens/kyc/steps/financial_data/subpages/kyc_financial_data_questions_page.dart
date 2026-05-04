@@ -13,6 +13,7 @@ import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/support_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 class KycFinancialDataQuestionsPage extends StatelessWidget {
   final KycFinancialDataLoadedSuccess state;
@@ -84,16 +85,13 @@ class KycFinancialDataQuestionsPage extends StatelessWidget {
                         const Spacer(),
                         Padding(
                           padding: const .symmetric(vertical: 16.0),
-                          child: SizedBox(
-                            width: .infinity,
-                            child: FilledButton(
-                              onPressed: state.hasAnswer
-                                  ? () => context.read<KycFinancialDataCubit>().submitAndNext()
-                                  : null,
-                              child: Text(
-                                state.isLastQuestion ? S.of(context).complete : S.of(context).next,
-                              ),
-                            ),
+                          child: AppFilledButton(
+                            onPressed: state.hasAnswer
+                                ? () => context.read<KycFinancialDataCubit>().submitAndNext()
+                                : null,
+                            label: state.isLastQuestion
+                                ? S.of(context).complete
+                                : S.of(context).next,
                           ),
                         ),
                       ],

@@ -8,6 +8,7 @@ import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_confirm/sell_confirm_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/handlebars.dart';
 
 class SellConfirmSheet extends StatelessWidget {
@@ -166,24 +167,11 @@ class SellConfirmSheetView extends StatelessWidget {
                   child: BlocBuilder<SellConfirmCubit, SellConfirmState>(
                     builder: (context, state) {
                       final isLoading = state is SellConfirmLoading;
-                      if (isLoading) {
-                        return FilledButton.icon(
-                          onPressed: null,
-                          icon: SizedBox(
-                            height: 14,
-                            width: 14,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 1.5,
-                              color: RealUnitColors.basic.black.withValues(alpha: 0.5),
-                            ),
-                          ),
-                          label: Text(S.of(context).confirm),
-                        );
-                      }
-                      return FilledButton(
+                      return AppFilledButton(
+                        label: S.of(context).confirm,
                         onPressed: () =>
                             context.read<SellConfirmCubit>().confirmPayment(paymentInfo),
-                        child: Text(S.of(context).confirm),
+                        state: isLoading ? .loading : .idle,
                       );
                     },
                   ),

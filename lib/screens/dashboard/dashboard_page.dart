@@ -24,6 +24,7 @@ import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -166,12 +167,9 @@ class DashboardView extends StatelessWidget {
                             if (isFiatServiceAvailable)
                               Padding(
                                 padding: const .symmetric(vertical: 20),
-                                child: SizedBox(
-                                  width: .infinity,
-                                  child: FilledButton(
-                                    onPressed: () => context.pushNamed(AppRoutes.buy),
-                                    child: Text(S.of(context).buyRealUnit),
-                                  ),
+                                child: AppFilledButton(
+                                  onPressed: () => context.pushNamed(AppRoutes.buy),
+                                  label: S.of(context).buyRealUnit,
                                 ),
                               ),
                           ],

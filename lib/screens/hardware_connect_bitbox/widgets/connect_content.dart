@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 class ConnectContent extends StatelessWidget {
   final String imagePath;
@@ -41,18 +41,16 @@ class ConnectContent extends StatelessWidget {
           spacing: 12,
           children: [
             if (onConfirm != null)
-              FilledButton(
+              AppFilledButton(
                 onPressed: onConfirm,
-                child: Text(S.of(context).confirm),
+                label: S.of(context).confirm,
               ),
             if (onCancel != null)
-              FilledButton(
-                style: Theme.of(context).filledButtonTheme.style?.copyWith(
-                  backgroundColor: .all(RealUnitColors.neutral100),
-                  foregroundColor: .all(RealUnitColors.realUnitBlack),
-                ),
+              AppFilledButton(
+                variant: .secondary,
+                fullWidth: false,
                 onPressed: onCancel,
-                child: Text(S.of(context).cancel),
+                label: S.of(context).cancel,
               ),
           ],
         ),

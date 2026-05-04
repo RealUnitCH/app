@@ -9,6 +9,7 @@ import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/2fa/cubits/kyc_2fa/kyc_2fa_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/2fa/cubits/kyc_2fa_verify/kyc_2fa_verify_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/2fa/kyc_2fa_page.dart';
+import 'package:realunit_wallet/widgets/buttons/app_text_button.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 
 import '../../../helper/pump_app.dart';
@@ -74,7 +75,7 @@ void main() {
 
       expect(find.byType(LabeledTextField), findsOne);
       expect(find.byType(FilledButton), findsOne);
-      expect(find.byType(TextButton), findsOne);
+      expect(find.byType(AppTextButton), findsOne);
     });
   });
 

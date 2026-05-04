@@ -9,6 +9,7 @@ import 'package:realunit_wallet/screens/sell/widgets/sell_confirm_sheet.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_executed_sheet.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 class SellButton extends StatelessWidget {
   final String amount;
@@ -66,20 +67,9 @@ class SellButton extends StatelessWidget {
         if (state is SellPaymentInfoLoading) {
           return Padding(
             padding: const .symmetric(vertical: 20),
-            child: SizedBox(
-              width: .infinity,
-              child: FilledButton.icon(
-                onPressed: null,
-                icon: SizedBox(
-                  height: 14,
-                  width: 14,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 1.5,
-                    color: RealUnitColors.basic.black.withValues(alpha: 0.5),
-                  ),
-                ),
-                label: Text('$amount ${S.of(context).sellRealu}'),
-              ),
+            child: AppFilledButton(
+              state: .loading,
+              label: '$amount ${S.of(context).sellRealu}',
             ),
           );
         }
@@ -100,12 +90,9 @@ class SellButton extends StatelessWidget {
                     color: RealUnitColors.neutral500,
                   ),
                 ),
-                SizedBox(
-                  width: .infinity,
-                  child: FilledButton(
-                    onPressed: null,
-                    child: Text('$amount ${S.of(context).sellRealu}'),
-                  ),
+                AppFilledButton(
+                  onPressed: null,
+                  label: '$amount ${S.of(context).sellRealu}',
                 ),
               ],
             ),
@@ -114,27 +101,21 @@ class SellButton extends StatelessWidget {
         if (bankAccount != null && amount.isNotEmpty) {
           return Padding(
             padding: const .symmetric(vertical: 20),
-            child: SizedBox(
-              width: .infinity,
-              child: FilledButton(
-                onPressed: () => context.read<SellPaymentInfoCubit>().getPaymentInfo(
-                  amount: amount,
-                  iban: bankAccount!.iban,
-                  currency: converterState.currency,
-                ),
-                child: Text('$amount ${S.of(context).sellRealu}'),
+            child: AppFilledButton(
+              onPressed: () => context.read<SellPaymentInfoCubit>().getPaymentInfo(
+                amount: amount,
+                iban: bankAccount!.iban,
+                currency: converterState.currency,
               ),
+              label: '$amount ${S.of(context).sellRealu}',
             ),
           );
         }
         return Padding(
           padding: const .symmetric(vertical: 20),
-          child: SizedBox(
-            width: .infinity,
-            child: FilledButton(
-              onPressed: null,
-              child: Text('$amount ${S.of(context).sellRealu}'),
-            ),
+          child: AppFilledButton(
+            onPressed: null,
+            label: '$amount ${S.of(context).sellRealu}',
           ),
         );
       },

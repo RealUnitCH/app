@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:realunit_wallet/styles/styles.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class WebViewRouteParams {
@@ -41,7 +40,10 @@ class WebViewPage extends StatelessWidget {
       ),
       title: Text(
         _title,
-        style: kPageTitleTextStyle,
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+          color: RealUnitColors.realUnitBlack,
+          fontWeight: .w700,
+        ),
       ),
       actions: [
         if (_showExternalBrowserButton)

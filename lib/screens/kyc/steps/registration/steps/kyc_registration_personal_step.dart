@@ -4,6 +4,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/kyc_registration_step_cubit.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/form/birthday_field.dart';
 import 'package:realunit_wallet/widgets/form/country_field.dart';
 import 'package:realunit_wallet/widgets/form/dropdown_field.dart';
@@ -102,18 +103,15 @@ class KycRegistrationPersonalStep extends StatelessWidget {
                   },
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () {
-                        FocusManager.instance.primaryFocus?.unfocus();
-                        if (_formKey.currentState?.validate() ?? false) {
-                          context.read<KycRegistrationStepCubit>().next();
-                        }
-                      },
-                      child: Text(S.of(context).next),
-                    ),
+                  padding: const .symmetric(vertical: 16.0),
+                  child: AppFilledButton(
+                    onPressed: () {
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      if (_formKey.currentState?.validate() ?? false) {
+                        context.read<KycRegistrationStepCubit>().next();
+                      }
+                    },
+                    label: S.of(context).next,
                   ),
                 ),
               ],

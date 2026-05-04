@@ -7,6 +7,7 @@ import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/nationality/cubit/kyc_nationality/kyc_nationality_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/form/country_field.dart';
 
 class KycNationalityPage extends StatelessWidget {
@@ -77,39 +78,21 @@ class _KycNationalityViewState extends State<KycNationalityView> {
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: BlocBuilder<KycNationalityCubit, KycNationalityState>(
-                          builder: (context, state) {
-                            if (state is KycNationalityLoading) {
-                              return FilledButton.icon(
-                                onPressed: null,
-                                icon: SizedBox(
-                                  height: 14,
-                                  width: 14,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 1.5,
-                                    color: RealUnitColors.basic.black.withValues(
-                                      alpha: 0.5,
-                                    ),
-                                  ),
-                                ),
-                                label: Text(S.of(context).next),
-                              );
-                            }
-                            return FilledButton(
-                              onPressed: () {
-                                if (_formKey.currentState?.validate() ?? false) {
-                                  context.read<KycNationalityCubit>().registerNationality(
-                                    url: widget.url,
-                                    nationality: nationalityCtrl.value!,
-                                  );
-                                }
-                              },
-                              child: Text(S.of(context).next),
-                            );
-                          },
-                        ),
+                      child: BlocBuilder<KycNationalityCubit, KycNationalityState>(
+                        builder: (context, state) {
+                          return AppFilledButton(
+                            state: state is KycNationalityLoading ? .loading : .idle,
+                            onPressed: () {
+                              if (_formKey.currentState?.validate() ?? false) {
+                                context.read<KycNationalityCubit>().registerNationality(
+                                  url: widget.url,
+                                  nationality: nationalityCtrl.value!,
+                                );
+                              }
+                            },
+                            label: S.of(context).next,
+                          );
+                        },
                       ),
                     ),
                   ],

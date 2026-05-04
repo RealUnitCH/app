@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 class SettingsEditFailurePage extends StatelessWidget {
   final String title;
@@ -38,12 +39,9 @@ class SettingsEditFailurePage extends StatelessWidget {
               ),
               Padding(
                 padding: const .symmetric(vertical: 16.0),
-                child: SizedBox(
-                  width: .infinity,
-                  child: FilledButton(
-                    onPressed: onRefresh,
-                    child: Text(S.of(context).refresh),
-                  ),
+                child: AppFilledButton(
+                  onPressed: onRefresh,
+                  label: S.of(context).refresh,
                 ),
               ),
               const Spacer(),

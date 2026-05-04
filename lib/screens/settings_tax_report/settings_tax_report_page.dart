@@ -7,6 +7,7 @@ import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings_tax_report/cubit/settings_tax_report_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/date_picker_field.dart';
 
 class SettingsTaxReportPage extends StatelessWidget {
@@ -77,28 +78,15 @@ class SettingsTaxReportView extends StatelessWidget {
               ),
               BlocBuilder<SettingsTaxReportCubit, SettingsTaxReportState>(
                 builder: (context, state) {
-                  if (state is SettingsTaxReportLoading) {
-                    return FilledButton.icon(
-                      onPressed: null,
-                      icon: SizedBox(
-                        height: 14,
-                        width: 14,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 1.5,
-                          color: RealUnitColors.basic.black.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      label: Text(S.of(context).pdf),
-                    );
-                  }
-                  return FilledButton.icon(
+                  return AppFilledButton(
+                    label: S.of(context).pdf,
                     onPressed: () => context.read<SettingsTaxReportCubit>().generateTaxReport(
                       date: _datePickerModel.value,
                       currency: settingsState.currency,
                       language: settingsState.language,
                     ),
-                    label: Text(S.of(context).pdf),
-                    icon: const Icon(Icons.file_download_outlined),
+                    state: state is SettingsTaxReportLoading ? .loading : .idle,
+                    icon: Icons.file_download_outlined,
                   );
                 },
               ),

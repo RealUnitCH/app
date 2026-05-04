@@ -9,6 +9,7 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.da
 import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_verification/kyc_email_verification_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 class KycEmailVerificationPage extends StatelessWidget {
   const KycEmailVerificationPage({super.key});
@@ -87,36 +88,16 @@ class KycEmailVerificationView extends StatelessWidget {
                       ),
                       Padding(
                         padding: const .symmetric(vertical: 16.0),
-                        child: SizedBox(
-                          width: .infinity,
-                          child: BlocBuilder<KycEmailVerificationCubit, KycEmailVerificationState>(
-                            builder: (context, state) {
-                              if (state is KycEmailVerificationLoading) {
-                                return FilledButton.icon(
-                                  onPressed: null,
-                                  icon: SizedBox(
-                                    height: 14,
-                                    width: 14,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 1.5,
-                                      color: RealUnitColors.basic.black.withValues(alpha: 0.5),
-                                    ),
-                                  ),
-                                  label: Text(
-                                    S.of(context).registerEmailVerificationButton,
-                                  ),
-                                );
-                              }
-                              return FilledButton(
-                                onPressed: () => context
-                                    .read<KycEmailVerificationCubit>()
-                                    .checkEmailVerification(),
-                                child: Text(
-                                  S.of(context).registerEmailVerificationButton,
-                                ),
-                              );
-                            },
-                          ),
+                        child: BlocBuilder<KycEmailVerificationCubit, KycEmailVerificationState>(
+                          builder: (context, state) {
+                            return AppFilledButton(
+                              state: state is KycEmailVerificationLoading ? .loading : .idle,
+                              onPressed: () => context
+                                  .read<KycEmailVerificationCubit>()
+                                  .checkEmailVerification(),
+                              label: S.of(context).registerEmailVerificationButton,
+                            );
+                          },
                         ),
                       ),
                     ],
