@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/pin/constants/pin_constants.dart';
 
@@ -8,15 +7,12 @@ part 'verify_pin_state.dart';
 
 class VerifyPinCubit extends Cubit<VerifyPinState> {
   VerifyPinCubit(
-    SecureStorage secureStorage,
-    BiometricService biometricService, {
+    SecureStorage secureStorage, {
     this.enableLockout = false,
   }) : _secureStorage = secureStorage,
-       _biometricService = biometricService,
        super(const VerifyPinState());
 
   final SecureStorage _secureStorage;
-  final BiometricService _biometricService;
   final bool enableLockout;
 
   void addDigit(int digit) {
@@ -71,12 +67,11 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
       }
     }
 
-    final canUse = await _biometricService.canUse();
-    if (canUse) {
-      final success = await _biometricService.authenticate();
-      if (success) {
-        emit(const VerifyPinSuccess());
-      }
+    // Try biometric unlock via hardware keystore (single prompt, no local_auth)
+    final biometricSuccess = await _secureStorage.tryBiometricUnlock();
+    if (biometricSuccess) {
+      if (enableLockout) await _secureStorage.resetPinLockout();
+      emit(const VerifyPinSuccess());
     }
   }
 

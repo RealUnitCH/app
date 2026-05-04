@@ -48,7 +48,7 @@ Future<String> setupEssentials() async {
 
   getIt.registerFactory(() => SettingsRepository(getIt<SharedPreferences>()));
 
-  final secureStorage = const SecureStorage();
+  final secureStorage = SecureStorage();
   getIt.registerSingleton(secureStorage);
 
   await _migrateSecurityFlags(sharedPreferences, secureStorage);

@@ -49,7 +49,6 @@ class VerifyPinPage extends StatelessWidget {
   Widget build(BuildContext context) => BlocProvider(
     create: (_) => VerifyPinCubit(
       getIt<SecureStorage>(),
-      getIt<BiometricService>(),
       enableLockout: enableLockout,
     ),
     child: VerifyPinView(

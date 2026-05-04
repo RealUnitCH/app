@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/pin/bloc/verify_pin/verify_pin_cubit.dart';
@@ -20,8 +19,6 @@ import '../../helper/pump_app.dart';
 class MockVerifyPinCubit extends MockCubit<VerifyPinState> implements VerifyPinCubit {}
 
 class MockPinAuthCubit extends MockCubit<PinAuthState> implements PinAuthCubit {}
-
-class MockBiometricService extends Mock implements BiometricService {}
 
 class MockSecureStorage extends Mock implements SecureStorage {}
 
@@ -39,12 +36,10 @@ void main() {
 
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
-    final biometricService = MockBiometricService();
-    when(() => biometricService.canUse()).thenAnswer((_) => Future.value(false));
-    getIt.registerSingleton<BiometricService>(biometricService);
     final secureStorage = MockSecureStorage();
     when(() => secureStorage.getPinLockedUntil()).thenAnswer((_) => Future.value(null));
     when(() => secureStorage.getPinFailedAttempts()).thenAnswer((_) => Future.value(0));
+    when(() => secureStorage.tryBiometricUnlock()).thenAnswer((_) => Future.value(false));
     getIt.registerSingleton<SecureStorage>(secureStorage);
     getIt.registerSingleton<PinAuthCubit>(pinAuthCubit);
   }

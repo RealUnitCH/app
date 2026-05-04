@@ -21,7 +21,9 @@ class SecureStorage {
 
   final FlutterSecureStorage _secureStorage;
 
-  const SecureStorage() : _secureStorage = const FlutterSecureStorage();
+  Uint8List? _cachedMnemonicKey;
+
+  SecureStorage() : _secureStorage = const FlutterSecureStorage();
 
   // Database
 
@@ -114,7 +116,38 @@ class SecureStorage {
 
   static const _biometricMnemonicKey = 'wallet.mnemonic.key.biometric';
 
+  /// Pre-authenticate via biometric and cache the mnemonic key.
+  /// Returns true if successful — subsequent getOrCreateMnemonicKey() will
+  /// use the cached key without showing another biometric prompt.
+  Future<bool> tryBiometricUnlock() async {
+    final biometricAvailable =
+        await BiometricStorage().canAuthenticate() == CanAuthenticateResponse.success;
+    if (!biometricAvailable) return false;
+
+    // Skip if migration is pending (legacy key exists) — migration needs its own prompt
+    final legacyKey = await _secureStorage.read(key: _mnemonicEncryptionKey);
+    if (legacyKey != null) return false;
+
+    try {
+      final storage = await _getBiometricStorage();
+      final existing = await storage.read();
+      if (existing != null) {
+        _cachedMnemonicKey = base64.decode(existing);
+        return true;
+      }
+    } on AuthException {
+      return false;
+    }
+    return false;
+  }
+
   Future<Uint8List> getOrCreateMnemonicKey() async {
+    final cached = _cachedMnemonicKey;
+    if (cached != null) {
+      _cachedMnemonicKey = null;
+      return cached;
+    }
+
     final biometricAvailable =
         await BiometricStorage().canAuthenticate() == CanAuthenticateResponse.success;
 
