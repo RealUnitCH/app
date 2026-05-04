@@ -79,10 +79,9 @@ QueryExecutor _openDatabase(String encryptionPassword) {
     return NativeDatabase.createInBackground(
       File(path),
       setup: (db) {
-        final escapedKey = encryptionPassword.replaceAll("'", "''");
         db.execute("pragma cipher = 'sqlcipher'");
         db.execute('pragma legacy = 4');
-        db.execute("pragma key = '$escapedKey'");
+        db.execute("pragma key = \"x'$encryptionPassword'\";");
         db.execute('select count(*) from sqlite_master');
       },
     );
