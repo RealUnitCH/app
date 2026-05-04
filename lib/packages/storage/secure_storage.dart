@@ -125,37 +125,41 @@ class SecureStorage {
     return _getOrCreateLegacyMnemonicKey();
   }
 
+  Future<BiometricStorageFile> _getBiometricStorage() => BiometricStorage().getStorage(
+    _biometricMnemonicKey,
+    options: StorageFileInitOptions(
+      authenticationRequired: true,
+      androidBiometricOnly: false,
+    ),
+    promptInfo: const PromptInfo(
+      androidPromptInfo: AndroidPromptInfo(
+        title: 'Unlock Wallet',
+        subtitle: 'Authenticate to access your wallet',
+        negativeButton: 'Cancel',
+      ),
+      iosPromptInfo: IosPromptInfo(
+        accessTitle: 'Unlock to access your wallet',
+      ),
+    ),
+  );
+
   Future<Uint8List> _getOrCreateBiometricMnemonicKey() async {
-    final storage = await BiometricStorage().getStorage(
-      _biometricMnemonicKey,
-      options: StorageFileInitOptions(
-        authenticationRequired: true,
-        androidBiometricOnly: false,
-      ),
-      promptInfo: const PromptInfo(
-        androidPromptInfo: AndroidPromptInfo(
-          title: 'Wallet entsperren',
-          subtitle: 'Authentifizieren Sie sich, um auf Ihr Wallet zuzugreifen',
-          negativeButton: 'Abbrechen',
-        ),
-        iosPromptInfo: IosPromptInfo(
-          accessTitle: 'Wallet entsperren',
-        ),
-      ),
-    );
-
-    final existing = await storage.read();
-    if (existing != null) return base64.decode(existing);
-
-    // Migrate from FlutterSecureStorage if key exists there
+    // Check legacy storage first (no biometric prompt needed)
     final legacyKey = await _secureStorage.read(key: _mnemonicEncryptionKey);
     if (legacyKey != null) {
+      // Migrate: write to biometric storage (triggers prompt), then delete legacy
+      final storage = await _getBiometricStorage();
       await storage.write(legacyKey);
       await _secureStorage.delete(key: _mnemonicEncryptionKey);
       return base64.decode(legacyKey);
     }
 
-    // Generate new key
+    // Read from biometric storage (triggers prompt if value exists)
+    final storage = await _getBiometricStorage();
+    final existing = await storage.read();
+    if (existing != null) return base64.decode(existing);
+
+    // Generate new key and store with biometric protection
     final key = _secureRandomBytes(32);
     await storage.write(base64.encode(key));
     return key;

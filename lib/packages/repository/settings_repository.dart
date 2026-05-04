@@ -43,8 +43,6 @@ class SettingsRepository {
 
   set networkMode(NetworkMode mode) => _sharedPreferences.setString('networkMode', mode.name);
 
-
-
   bool get softwareTermsAccepted => _sharedPreferences.getBool('softwareTermsAccepted') ?? false;
 
   set softwareTermsAccepted(bool accepted) =>

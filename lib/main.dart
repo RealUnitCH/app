@@ -128,6 +128,8 @@ class _WalletAppState extends State<WalletApp> {
     } else if (!pinState.isPinVerified) {
       targetRoute = PinRoutes.verify;
     } else if (homeState.openWallet == null) {
+      // Wallet load failed (e.g. biometric prompt cancelled) — reset to verify
+      getIt<PinAuthCubit>().onWalletLoadFailed();
       return;
     } else {
       targetRoute = AppRoutes.dashboard;
