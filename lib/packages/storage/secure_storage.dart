@@ -38,9 +38,12 @@ class SecureStorage {
     return Uint8List.fromList(List.generate(16, (_) => random.nextInt(256)));
   }
 
-  static String hashPin(String pin, Uint8List salt) {
+  static const _pinHashIterations = 600000;
+  static const _legacyPinHashIterations = 10000;
+
+  static String hashPin(String pin, Uint8List salt, {int iterations = _pinHashIterations}) {
     final derivator = KeyDerivator('SHA-256/HMAC/PBKDF2');
-    final params = Pbkdf2Parameters(salt, 10000, 32);
+    final params = Pbkdf2Parameters(salt, iterations, 32);
     derivator.init(params);
     return bytesToHex(derivator.process(utf8.encode(pin)));
   }
@@ -67,7 +70,17 @@ class SecureStorage {
     final hash = await getPinHash();
     final salt = await getPinSalt();
     if (hash == null || salt == null) return false;
-    return hashPin(pin, salt) == hash;
+
+    if (hashPin(pin, salt) == hash) return true;
+
+    // Transparent rehash: verify against legacy iterations, upgrade if match
+    if (hashPin(pin, salt, iterations: _legacyPinHashIterations) == hash) {
+      final newHash = hashPin(pin, salt);
+      await setPinHash(newHash);
+      return true;
+    }
+
+    return false;
   }
 
   // Mnemonic
