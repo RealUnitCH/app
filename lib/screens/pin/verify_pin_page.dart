@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
@@ -36,7 +35,7 @@ class VerifyPinPage extends StatelessWidget {
     this.description,
     required this.onAuthenticated,
     this.bottom,
-    this.enableLockout = false,
+    this.enableLockout = true,
   });
 
   /// Used for initial app lock check on app start
@@ -50,7 +49,6 @@ class VerifyPinPage extends StatelessWidget {
   Widget build(BuildContext context) => BlocProvider(
     create: (_) => VerifyPinCubit(
       getIt<SecureStorage>(),
-      getIt<SettingsRepository>(),
       getIt<BiometricService>(),
       enableLockout: enableLockout,
     ),
@@ -247,8 +245,10 @@ class _ForgotPinButton extends StatelessWidget {
           if (isReset == true) {
             await Future.delayed(const Duration(milliseconds: 300));
             if (context.mounted) {
-              context.read<PinAuthCubit>().reset();
-              context.read<HomeBloc>().add(const DeleteCurrentWalletEvent());
+              await context.read<PinAuthCubit>().reset();
+              if (context.mounted) {
+                context.read<HomeBloc>().add(const DeleteCurrentWalletEvent());
+              }
             }
           }
         },

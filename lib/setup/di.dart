@@ -51,6 +51,8 @@ Future<String> setupEssentials() async {
   final secureStorage = const SecureStorage();
   getIt.registerSingleton(secureStorage);
 
+  await _migrateSecurityFlags(sharedPreferences, secureStorage);
+
   final encryptionKey = await secureStorage.getEncryptionKey();
 
   if (encryptionKey == null) {
@@ -79,7 +81,7 @@ Future<void> finishSetup(String encryptionKey) async {
   );
 
   setupServices();
-  setupBlocs();
+  await setupBlocs();
 
   await setupDefaultAssets();
 }
@@ -111,7 +113,7 @@ void setupServices() {
   );
   getIt.registerFactory(
     () => BiometricService(
-      getIt<SettingsRepository>(),
+      getIt<SecureStorage>(),
     ),
   );
   getIt.registerSingleton(BitboxService());
@@ -153,7 +155,7 @@ void setupServices() {
   );
 }
 
-void setupBlocs() {
+Future<void> setupBlocs() async {
   getIt.registerSingleton(
     SettingsBloc(
       getIt<SettingsRepository>(),
@@ -171,9 +173,39 @@ void setupBlocs() {
       getIt<BitboxService>(),
     ),
   );
-  getIt.registerSingleton(
-    PinAuthCubit(getIt<SecureStorage>(), getIt<SettingsRepository>())..initialize(),
-  );
+
+  final pinAuthCubit = PinAuthCubit(getIt<SecureStorage>());
+  await pinAuthCubit.initialize();
+  getIt.registerSingleton(pinAuthCubit);
 }
 
 Future<bool> _existsDatabaseFile() async => File(await AppDatabase.getDatabasePath()).exists();
+
+Future<void> _migrateSecurityFlags(
+  SharedPreferences prefs,
+  SecureStorage secureStorage,
+) async {
+  // Migrate isBiometricEnabled from SharedPreferences to SecureStorage
+  final biometricEnabled = prefs.getBool('isBiometricEnabled');
+  if (biometricEnabled != null) {
+    await secureStorage.setIsBiometricEnabled(enabled: biometricEnabled);
+    await prefs.remove('isBiometricEnabled');
+  }
+
+  // Migrate lockout state from SharedPreferences to SecureStorage
+  final failedAttempts = prefs.getInt('pinFailedAttempts');
+  if (failedAttempts != null) {
+    await secureStorage.setPinFailedAttempts(failedAttempts);
+    await prefs.remove('pinFailedAttempts');
+  }
+
+  final lockedUntil = prefs.getString('pinLockedUntil');
+  if (lockedUntil != null) {
+    final parsed = DateTime.tryParse(lockedUntil);
+    if (parsed != null) await secureStorage.setPinLockedUntil(parsed);
+    await prefs.remove('pinLockedUntil');
+  }
+
+  // Clean up legacy isPinEnabled flag (now derived from PIN hash existence)
+  await prefs.remove('isPinEnabled');
+}

@@ -20,13 +20,14 @@ class SeedBlurCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => GestureDetector(
         onTap: onTap,
-        child: Stack(
-          children: [
-            MnemonicReadOnlyField(
-              seedWords: seed.seedWords,
-            ),
-            if (blur)
-              Positioned.fill(
+        child: ExcludeSemantics(
+          child: Stack(
+            children: [
+              MnemonicReadOnlyField(
+                seedWords: seed.seedWords,
+              ),
+              if (blur)
+                Positioned.fill(
                 child: Padding(
                   padding: const EdgeInsets.all(1.5),
                   child: ClipRRect(
@@ -58,7 +59,8 @@ class SeedBlurCard extends StatelessWidget {
                   ),
                 ),
               ),
-          ],
+            ],
+          ),
         ),
       );
 }

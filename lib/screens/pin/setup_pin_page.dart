@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
@@ -21,7 +20,6 @@ class SetupPinPage extends StatelessWidget {
     return BlocProvider(
       create: (_) => SetupPinCubit(
         getIt<SecureStorage>(),
-        getIt<SettingsRepository>(),
         getIt<BiometricService>(),
       ),
       child: const SetupPinView(),
