@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'dart:convert' show utf8;
 
 import 'package:bip32/bip32.dart';
 import 'package:convert/convert.dart';
@@ -29,7 +29,7 @@ class WalletAccount extends AWalletAccount {
 
   @override
   Future<String> signMessage(String message, {int addressIndex = 0}) async =>
-      '0x${hex.encode(_getPrivateKeyAt(root, addressIndex, addressIndex).signPersonalMessageToUint8List(ascii.encode(message)))}';
+      '0x${hex.encode(_getPrivateKeyAt(root, accountIndex, addressIndex).signPersonalMessageToUint8List(utf8.encode(message)))}';
 }
 
 class BitboxWalletAccount extends AWalletAccount {
@@ -37,5 +37,5 @@ class BitboxWalletAccount extends AWalletAccount {
 
   @override
   Future<String> signMessage(String message, {int addressIndex = 0}) async =>
-      '0x${hex.encode(await primaryAddress.signPersonalMessage(ascii.encode(message)))}';
+      '0x${hex.encode(await primaryAddress.signPersonalMessage(utf8.encode(message)))}';
 }
