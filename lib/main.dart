@@ -128,8 +128,8 @@ class _WalletAppState extends State<WalletApp> {
     } else if (!pinState.isPinVerified) {
       targetRoute = PinRoutes.verify;
     } else if (homeState.openWallet == null) {
-      // Wallet load failed (e.g. decryption error) — reset to verify
-      getIt<PinAuthCubit>().onWalletLoadFailed();
+      // Wallet not loaded yet — trigger load and wait for HomeBloc update
+      _loadWalletIfNeeded();
       return;
     } else {
       targetRoute = AppRoutes.dashboard;

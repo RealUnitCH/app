@@ -31,8 +31,6 @@ class PinAuthCubit extends Cubit<PinAuthState> {
 
   void onPinVerified() => emit(state.copyWith(isPinVerified: true));
 
-  void onWalletLoadFailed() => emit(state.copyWith(isPinVerified: false));
-
   void onAppHidden() => _lastBackgroundTime ??= DateTime.now();
 
   void onAppResumed() {
