@@ -15,8 +15,10 @@ import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/service/debug_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_bank_account_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
@@ -135,6 +137,8 @@ void setupServices() {
   getIt.registerFactory(() => DfxKycService(getIt<AppStore>()));
   getIt.registerFactory(() => DFXPriceService(getIt<AppStore>()));
   getIt.registerFactory(() => DfxSupportService(getIt<AppStore>()));
+  getIt.registerFactory(() => DfxFaucetService(getIt<AppStore>()));
+  getIt.registerFactory(() => DfxBlockchainApiService(getIt<AppStore>()));
   getIt.registerFactory(
     () => DfxWidgetService(
       getIt<AppStore>(),

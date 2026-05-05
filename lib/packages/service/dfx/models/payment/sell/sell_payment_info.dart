@@ -11,6 +11,11 @@ class SellPaymentInfo {
   final BeneficiaryDto beneficiary;
   final double estimatedAmount;
   final Currency currency;
+  final String depositAddress;
+  final String tokenAddress;
+  final int chainId;
+  final double ethBalance;
+  final double requiredGasEth;
 
   const SellPaymentInfo({
     required this.id,
@@ -21,5 +26,10 @@ class SellPaymentInfo {
     required this.beneficiary,
     required this.estimatedAmount,
     required this.currency,
+    required this.depositAddress,
+    required this.tokenAddress,
+    required this.chainId,
+    required this.ethBalance,
+    required this.requiredGasEth,
   });
 }
