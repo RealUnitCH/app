@@ -70,6 +70,11 @@ class WebViewPageBody extends StatelessWidget {
   Widget build(BuildContext context) => InAppWebView(
     initialSettings: InAppWebViewSettings(
       transparentBackground: true,
+      javaScriptEnabled: false,
+      mixedContentMode: MixedContentMode.MIXED_CONTENT_NEVER_ALLOW,
+      allowFileAccess: false,
+      allowFileAccessFromFileURLs: false,
+      allowUniversalAccessFromFileURLs: false,
     ),
     initialUrlRequest: URLRequest(
       url: WebUri.uri(uri),
