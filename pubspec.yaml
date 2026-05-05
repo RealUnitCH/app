@@ -96,7 +96,7 @@ dependency_overrides:
   web3dart:
     git:
       url: https://github.com/cake-tech/web3dart.git
-      ref: cake
+      ref: aa3f932dbf54eda651b7bd01ad00204acf998bd0
 
 hooks:
   user_defines:
