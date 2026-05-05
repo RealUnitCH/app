@@ -97,6 +97,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     }
     emit(
       HomeState(
+        hasWallet: false,
         openWallet: null,
         isLoadingWallet: false,
         isFiatServiceAvailable: false,
