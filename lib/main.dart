@@ -90,6 +90,9 @@ class _WalletAppState extends State<WalletApp> {
             ),
             BlocListener<PinAuthCubit, PinAuthState>(
               listener: (context, pinState) {
+                if (pinState.isPinVerified) {
+                  _loadWalletIfNeeded();
+                }
                 _navigate();
               },
             ),
@@ -100,6 +103,13 @@ class _WalletAppState extends State<WalletApp> {
     ),
   );
 
+  void _loadWalletIfNeeded() {
+    final homeState = getIt<HomeBloc>().state;
+    if (homeState.hasWallet && homeState.openWallet == null && !homeState.isLoadingWallet) {
+      getIt<HomeBloc>().add(const LoadCurrentWalletEvent());
+    }
+  }
+
   void _navigate() {
     final homeState = getIt<HomeBloc>().state;
     final pinState = getIt<PinAuthCubit>().state;
@@ -109,7 +119,7 @@ class _WalletAppState extends State<WalletApp> {
     String targetRoute;
     if (!homeState.softwareTermsAccepted) {
       targetRoute = AppRoutes.home;
-    } else if (homeState.openWallet == null) {
+    } else if (!homeState.hasWallet) {
       targetRoute = OnboardingRoutes.welcome;
     } else if (!homeState.onboardingCompleted) {
       targetRoute = OnboardingRoutes.completed;
@@ -117,6 +127,10 @@ class _WalletAppState extends State<WalletApp> {
       targetRoute = PinRoutes.setup;
     } else if (!pinState.isPinVerified) {
       targetRoute = PinRoutes.verify;
+    } else if (homeState.openWallet == null) {
+      // Wallet not loaded yet — trigger load and wait for HomeBloc update
+      _loadWalletIfNeeded();
+      return;
     } else {
       targetRoute = AppRoutes.dashboard;
     }

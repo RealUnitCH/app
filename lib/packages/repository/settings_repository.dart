@@ -43,39 +43,8 @@ class SettingsRepository {
 
   set networkMode(NetworkMode mode) => _sharedPreferences.setString('networkMode', mode.name);
 
-  bool get isPinEnabled => _sharedPreferences.getBool('isPinEnabled') ?? false;
-
-  set isPinEnabled(bool enabled) => _sharedPreferences.setBool('isPinEnabled', enabled);
-
-  bool get isBiometricEnabled => _sharedPreferences.getBool('isBiometricEnabled') ?? false;
-
-  set isBiometricEnabled(bool enabled) => _sharedPreferences.setBool('isBiometricEnabled', enabled);
-
   bool get softwareTermsAccepted => _sharedPreferences.getBool('softwareTermsAccepted') ?? false;
 
   set softwareTermsAccepted(bool accepted) =>
       _sharedPreferences.setBool('softwareTermsAccepted', accepted);
-
-  int get pinFailedAttempts => _sharedPreferences.getInt('pinFailedAttempts') ?? 0;
-
-  set pinFailedAttempts(int count) => _sharedPreferences.setInt('pinFailedAttempts', count);
-
-  DateTime? get pinLockedUntil {
-    final value = _sharedPreferences.getString('pinLockedUntil');
-    if (value == null) return null;
-    return DateTime.tryParse(value);
-  }
-
-  set pinLockedUntil(DateTime? lockedUntil) {
-    if (lockedUntil == null) {
-      _sharedPreferences.remove('pinLockedUntil');
-    } else {
-      _sharedPreferences.setString('pinLockedUntil', lockedUntil.toIso8601String());
-    }
-  }
-
-  void resetPinLockout() {
-    _sharedPreferences.remove('pinFailedAttempts');
-    _sharedPreferences.remove('pinLockedUntil');
-  }
 }
