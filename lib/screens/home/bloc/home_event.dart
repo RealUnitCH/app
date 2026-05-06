@@ -7,6 +7,10 @@ sealed class HomeEvent extends Equatable {
   List<Object> get props => [];
 }
 
+final class CheckWalletExistsEvent extends HomeEvent {
+  const CheckWalletExistsEvent();
+}
+
 final class LoadCurrentWalletEvent extends HomeEvent {
   const LoadCurrentWalletEvent();
 }

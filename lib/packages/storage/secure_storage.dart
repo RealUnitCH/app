@@ -14,6 +14,9 @@ class SecureStorage {
   static const _mnemonicEncryptionKey = 'wallet.mnemonic.encryption.key';
   static const _pinHashKey = 'pin.hash';
   static const _pinSaltKey = 'pin.salt';
+  static const _biometricEnabledKey = 'biometric.enabled';
+  static const _pinFailedAttemptsKey = 'pin.failedAttempts';
+  static const _pinLockedUntilKey = 'pin.lockedUntil';
 
   final FlutterSecureStorage _secureStorage;
 
@@ -38,9 +41,12 @@ class SecureStorage {
     return Uint8List.fromList(List.generate(16, (_) => random.nextInt(256)));
   }
 
-  static String hashPin(String pin, Uint8List salt) {
+  static const _pinHashIterations = 600000;
+  static const _legacyPinHashIterations = 10000;
+
+  static String hashPin(String pin, Uint8List salt, {int iterations = _pinHashIterations}) {
     final derivator = KeyDerivator('SHA-256/HMAC/PBKDF2');
-    final params = Pbkdf2Parameters(salt, 10000, 32);
+    final params = Pbkdf2Parameters(salt, iterations, 32);
     derivator.init(params);
     return bytesToHex(derivator.process(utf8.encode(pin)));
   }
@@ -48,6 +54,8 @@ class SecureStorage {
   Future<String?> getPinHash() => _secureStorage.read(key: _pinHashKey);
 
   Future<void> setPinHash(String hash) => _secureStorage.write(key: _pinHashKey, value: hash);
+
+  Future<bool> hasPinHash() async => await _secureStorage.read(key: _pinHashKey) != null;
 
   Future<void> deletePinHash() => Future.wait([
     _secureStorage.delete(key: _pinHashKey),
@@ -67,8 +75,52 @@ class SecureStorage {
     final hash = await getPinHash();
     final salt = await getPinSalt();
     if (hash == null || salt == null) return false;
-    return hashPin(pin, salt) == hash;
+
+    if (hashPin(pin, salt) == hash) return true;
+
+    // Transparent rehash: verify against legacy iterations, upgrade if match
+    if (hashPin(pin, salt, iterations: _legacyPinHashIterations) == hash) {
+      final newHash = hashPin(pin, salt);
+      await setPinHash(newHash);
+      return true;
+    }
+
+    return false;
   }
+
+  // Pin lockout
+
+  Future<int> getPinFailedAttempts() async {
+    final value = await _secureStorage.read(key: _pinFailedAttemptsKey);
+    return int.tryParse(value ?? '') ?? 0;
+  }
+
+  Future<void> setPinFailedAttempts(int count) =>
+      _secureStorage.write(key: _pinFailedAttemptsKey, value: count.toString());
+
+  Future<DateTime?> getPinLockedUntil() async {
+    final value = await _secureStorage.read(key: _pinLockedUntilKey);
+    return value != null ? DateTime.tryParse(value) : null;
+  }
+
+  Future<void> setPinLockedUntil(DateTime? until) => until != null
+      ? _secureStorage.write(key: _pinLockedUntilKey, value: until.toIso8601String())
+      : _secureStorage.delete(key: _pinLockedUntilKey);
+
+  Future<void> resetPinLockout() => Future.wait([
+    _secureStorage.delete(key: _pinFailedAttemptsKey),
+    _secureStorage.delete(key: _pinLockedUntilKey),
+  ]);
+
+  // Biometric
+
+  Future<bool> getIsBiometricEnabled() async =>
+      await _secureStorage.read(key: _biometricEnabledKey) == 'true';
+
+  Future<void> setIsBiometricEnabled({required bool enabled}) =>
+      _secureStorage.write(key: _biometricEnabledKey, value: enabled.toString());
+
+  Future<void> deleteBiometricEnabled() => _secureStorage.delete(key: _biometricEnabledKey);
 
   // Mnemonic
 

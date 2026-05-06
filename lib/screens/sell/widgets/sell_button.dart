@@ -43,21 +43,26 @@ class SellButton extends StatelessWidget {
           }
         }
         if (state is SellPaymentInfoSuccess) {
-          final bool? confirmedSuccess = await showModalBottomSheet(
-            isScrollControlled: true,
-            context: context,
-            builder: (_) => SellConfirmSheet(
-              paymentInfo: state.sellPaymentInfo,
-            ),
-          );
-          if (confirmedSuccess ?? false) {
-            if (context.mounted) {
-              await showModalBottomSheet(
-                context: context,
-                builder: (_) => const SellExecutedSheet(),
-              );
+          if (state.isBitbox && context.mounted) {
+            context.pushNamed(AppRoutes.sellBitbox, extra: state.sellPaymentInfo);
+            return;
+          } else {
+            final bool? confirmedSuccess = await showModalBottomSheet(
+              isScrollControlled: true,
+              context: context,
+              builder: (_) => SellConfirmSheet(
+                paymentInfo: state.sellPaymentInfo,
+              ),
+            );
+            if (confirmedSuccess ?? false) {
+              if (context.mounted) {
+                await showModalBottomSheet(
+                  context: context,
+                  builder: (_) => const SellExecutedSheet(),
+                );
+              }
+              if (context.mounted) context.pop();
             }
-            if (context.mounted) context.pop();
           }
         }
       },

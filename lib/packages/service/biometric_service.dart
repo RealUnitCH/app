@@ -1,17 +1,17 @@
 import 'dart:developer' as developer;
 
 import 'package:local_auth/local_auth.dart';
-import 'package:realunit_wallet/packages/repository/settings_repository.dart';
+import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 
 /// Service for handling biometric authentication.
 class BiometricService {
   final LocalAuthentication _auth = LocalAuthentication();
 
   BiometricService(
-    SettingsRepository settingsRepository,
-  ) : _settingsRepository = settingsRepository;
+    SecureStorage secureStorage,
+  ) : _secureStorage = secureStorage;
 
-  final SettingsRepository _settingsRepository;
+  final SecureStorage _secureStorage;
 
   Future<bool> isAvailable() async {
     final canCheck = await _auth.canCheckBiometrics;
@@ -19,9 +19,9 @@ class BiometricService {
     return canCheck && isSupported;
   }
 
-  bool get isEnabled => _settingsRepository.isBiometricEnabled;
+  Future<bool> isEnabled() => _secureStorage.getIsBiometricEnabled();
 
-  Future<bool> canUse() async => isEnabled && await isAvailable();
+  Future<bool> canUse() async => await isEnabled() && await isAvailable();
 
   Future<bool> authenticate() async {
     try {
@@ -39,10 +39,10 @@ class BiometricService {
   Future<bool> enable() async {
     final success = await authenticate();
     if (success) {
-      _settingsRepository.isBiometricEnabled = true;
+      await _secureStorage.setIsBiometricEnabled(enabled: true);
     }
     return success;
   }
 
-  void disable() => _settingsRepository.isBiometricEnabled = false;
+  Future<void> disable() => _secureStorage.setIsBiometricEnabled(enabled: false);
 }

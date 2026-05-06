@@ -2,11 +2,13 @@ import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 part 'sell_payment_info_state.dart';
@@ -16,12 +18,15 @@ const double _minAmountChf = 10;
 class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
   final RealUnitSellPaymentInfoService _sellPaymentInfoService;
   final DFXPriceService _priceService;
+  final AppStore _appStore;
 
   SellPaymentInfoCubit(
     RealUnitSellPaymentInfoService sellPaymentInfoService,
     DFXPriceService priceService,
+    AppStore appStore,
   ) : _sellPaymentInfoService = sellPaymentInfoService,
       _priceService = priceService,
+      _appStore = appStore,
       super(const SellPaymentInfoInitial());
 
   Future<void> getPaymentInfo({
@@ -38,7 +43,8 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
         currency: currency,
       );
 
-      emit(SellPaymentInfoSuccess(paymentInfo));
+      final isBitbox = _appStore.wallet.walletType == WalletType.bitbox;
+      emit(SellPaymentInfoSuccess(paymentInfo, isBitbox: isBitbox));
     } on KycLevelRequiredException catch (e) {
       emit(
         SellPaymentInfoFailure(

@@ -130,8 +130,10 @@ class SettingsPage extends StatelessWidget {
                   if (isLogout ?? false) {
                     await Future.delayed(const Duration(milliseconds: 300));
                     if (context.mounted) {
-                      context.read<PinAuthCubit>().reset();
-                      context.read<HomeBloc>().add(const DeleteCurrentWalletEvent());
+                      await context.read<PinAuthCubit>().reset();
+                      if (context.mounted) {
+                        context.read<HomeBloc>().add(const DeleteCurrentWalletEvent());
+                      }
                     }
                   }
                 },

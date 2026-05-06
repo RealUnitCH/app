@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/pin/constants/pin_constants.dart';
 
@@ -9,18 +8,15 @@ part 'pin_auth_state.dart';
 class PinAuthCubit extends Cubit<PinAuthState> {
   PinAuthCubit(
     SecureStorage secureStorage,
-    SettingsRepository settingsRepository,
   ) : _secureStorage = secureStorage,
-      _settingsRepository = settingsRepository,
       super(const PinAuthState());
 
   final SecureStorage _secureStorage;
-  final SettingsRepository _settingsRepository;
 
   DateTime? _lastBackgroundTime;
 
-  void initialize() {
-    final isPinSetup = _settingsRepository.isPinEnabled;
+  Future<void> initialize() async {
+    final isPinSetup = await _secureStorage.hasPinHash();
     emit(
       state.copyWith(
         isPinSetup: isPinSetup,
@@ -50,11 +46,12 @@ class PinAuthCubit extends Cubit<PinAuthState> {
     _lastBackgroundTime = null;
   }
 
-  void reset() {
-    _settingsRepository.isPinEnabled = false;
-    _settingsRepository.isBiometricEnabled = false;
-    _settingsRepository.resetPinLockout();
-    _secureStorage.deletePinHash();
+  Future<void> reset() async {
+    await Future.wait([
+      _secureStorage.deletePinHash(),
+      _secureStorage.deleteBiometricEnabled(),
+      _secureStorage.resetPinLockout(),
+    ]);
     emit(const PinAuthState());
   }
 }

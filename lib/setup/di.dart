@@ -15,8 +15,10 @@ import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/service/debug_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_bank_account_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
@@ -51,6 +53,8 @@ Future<String> setupEssentials() async {
   final secureStorage = const SecureStorage();
   getIt.registerSingleton(secureStorage);
 
+  await _migrateSecurityFlags(sharedPreferences, secureStorage);
+
   final encryptionKey = await secureStorage.getEncryptionKey();
 
   if (encryptionKey == null) {
@@ -79,7 +83,7 @@ Future<void> finishSetup(String encryptionKey) async {
   );
 
   setupServices();
-  setupBlocs();
+  await setupBlocs();
 
   await setupDefaultAssets();
 }
@@ -111,7 +115,7 @@ void setupServices() {
   );
   getIt.registerFactory(
     () => BiometricService(
-      getIt<SettingsRepository>(),
+      getIt<SecureStorage>(),
     ),
   );
   getIt.registerSingleton(BitboxService());
@@ -135,6 +139,8 @@ void setupServices() {
   getIt.registerFactory(() => DfxKycService(getIt<AppStore>()));
   getIt.registerFactory(() => DFXPriceService(getIt<AppStore>()));
   getIt.registerFactory(() => DfxSupportService(getIt<AppStore>()));
+  getIt.registerFactory(() => DfxFaucetService(getIt<AppStore>()));
+  getIt.registerFactory(() => DfxBlockchainApiService(getIt<AppStore>()));
   getIt.registerFactory(
     () => DfxWidgetService(
       getIt<AppStore>(),
@@ -153,7 +159,7 @@ void setupServices() {
   );
 }
 
-void setupBlocs() {
+Future<void> setupBlocs() async {
   getIt.registerSingleton(
     SettingsBloc(
       getIt<SettingsRepository>(),
@@ -171,9 +177,39 @@ void setupBlocs() {
       getIt<BitboxService>(),
     ),
   );
-  getIt.registerSingleton(
-    PinAuthCubit(getIt<SecureStorage>(), getIt<SettingsRepository>())..initialize(),
-  );
+
+  final pinAuthCubit = PinAuthCubit(getIt<SecureStorage>());
+  await pinAuthCubit.initialize();
+  getIt.registerSingleton(pinAuthCubit);
 }
 
 Future<bool> _existsDatabaseFile() async => File(await AppDatabase.getDatabasePath()).exists();
+
+Future<void> _migrateSecurityFlags(
+  SharedPreferences prefs,
+  SecureStorage secureStorage,
+) async {
+  // Migrate isBiometricEnabled from SharedPreferences to SecureStorage
+  final biometricEnabled = prefs.getBool('isBiometricEnabled');
+  if (biometricEnabled != null) {
+    await secureStorage.setIsBiometricEnabled(enabled: biometricEnabled);
+    await prefs.remove('isBiometricEnabled');
+  }
+
+  // Migrate lockout state from SharedPreferences to SecureStorage
+  final failedAttempts = prefs.getInt('pinFailedAttempts');
+  if (failedAttempts != null) {
+    await secureStorage.setPinFailedAttempts(failedAttempts);
+    await prefs.remove('pinFailedAttempts');
+  }
+
+  final lockedUntil = prefs.getString('pinLockedUntil');
+  if (lockedUntil != null) {
+    final parsed = DateTime.tryParse(lockedUntil);
+    if (parsed != null) await secureStorage.setPinLockedUntil(parsed);
+    await prefs.remove('pinLockedUntil');
+  }
+
+  // Clean up legacy isPinEnabled flag (now derived from PIN hash existence)
+  await prefs.remove('isPinEnabled');
+}
