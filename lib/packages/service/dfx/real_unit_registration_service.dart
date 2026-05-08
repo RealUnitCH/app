@@ -51,7 +51,7 @@ class RealUnitRegistrationService {
 
     if (response.statusCode != 201 && response.statusCode != 202) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
-      throw ApiException.fromJson(errorJson);
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
     final responseDto = RealUnitRegistrationEmailResponseDto.fromJson(jsonDecode(response.body));
     return responseDto.status;
@@ -127,11 +127,8 @@ class RealUnitRegistrationService {
     );
 
     if (response.statusCode != 201 && response.statusCode != 202) {
-      final messages = jsonDecode(response.body)['message'] is List
-          ? List<String>.from(jsonDecode(response.body)['message'])
-          : <String>[jsonDecode(response.body)['message']];
-
-      throw Exception(messages.join('\n'));
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
     final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
@@ -184,7 +181,7 @@ class RealUnitRegistrationService {
 
     if (response.statusCode != 201 && response.statusCode != 202) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
-      throw ApiException.fromJson(errorJson);
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
     final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));

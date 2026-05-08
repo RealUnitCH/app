@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/support/dto/support_issue_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/support/support_issue_reason.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/support/support_issue_type.dart';
@@ -29,12 +30,13 @@ class DfxSupportService extends DFXAuthService {
       },
     );
 
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
-      return jsonList.map((e) => SupportIssueDto.fromJson(e as Map<String, dynamic>)).toList();
-    } else {
-      throw Exception('Failed to load tickets: ${response.statusCode}');
+    if (response.statusCode != 200) {
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
+
+    final List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
+    return jsonList.map((e) => SupportIssueDto.fromJson(e as Map<String, dynamic>)).toList();
   }
 
   Future<SupportIssueDto> getTicket(String uid) async {
@@ -49,13 +51,14 @@ class DfxSupportService extends DFXAuthService {
       },
     );
 
-    if (response.statusCode == 200) {
-      return SupportIssueDto.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
-      );
-    } else {
-      throw Exception('Failed to load ticket: ${response.statusCode}');
+    if (response.statusCode != 200) {
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
+
+    return SupportIssueDto.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   Future<SupportIssueDto> createTicket({
@@ -83,13 +86,14 @@ class DfxSupportService extends DFXAuthService {
       body: body,
     );
 
-    if (response.statusCode == 201) {
-      return SupportIssueDto.fromJson(
-        jsonDecode(response.body) as Map<String, dynamic>,
-      );
-    } else {
-      throw Exception('Failed to create ticket: ${response.statusCode}');
+    if (response.statusCode != 201) {
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
+
+    return SupportIssueDto.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   Future<void> sendMessage(String ticketUid, String message) async {
@@ -108,7 +112,8 @@ class DfxSupportService extends DFXAuthService {
     );
 
     if (response.statusCode != 201) {
-      throw Exception('Failed to send message: ${response.statusCode}');
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
   }
 }

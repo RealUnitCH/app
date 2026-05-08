@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 
 class DfxBlockchainApiService {
   static const _balancesPath = 'v1/blockchain/balances';
@@ -31,7 +32,8 @@ class DfxBlockchainApiService {
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to get balances: ${response.statusCode}');
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
     final json = jsonDecode(response.body) as Map<String, dynamic>;

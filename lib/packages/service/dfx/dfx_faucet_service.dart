@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/faucet/faucet_response_dto.dart';
 
 class DfxFaucetService {
@@ -28,7 +29,7 @@ class DfxFaucetService {
       return FaucetResponseDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
     }
 
-    final body = jsonDecode(response.body) as Map<String, dynamic>;
-    throw Exception(body['message'] ?? 'Faucet request failed');
+    final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+    throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
   }
 }
