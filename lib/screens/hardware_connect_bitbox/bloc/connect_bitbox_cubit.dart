@@ -40,13 +40,13 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     emit(BitboxConnecting(device));
     try {
       // Snapshot any hash from a prior pairing on the same BitboxService
-      // instance so polling waits for *this* session's hash to land instead
-      // of accepting a stale value from an earlier pairing.
+      // instance so polling waits for the new session's hash instead of
+      // accepting a stale value from an earlier pairing.
       String? priorHash;
       try {
         priorHash = await _service.getChannelHash().timeout(const Duration(seconds: 2));
       } catch (_) {
-        // no prior session — leave priorHash null, any non-empty new hash is accepted
+        // no prior session
       }
       if (isClosed) return;
 
