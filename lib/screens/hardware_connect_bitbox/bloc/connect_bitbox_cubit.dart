@@ -45,7 +45,9 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
       String? priorHash;
       try {
         priorHash = await _service.getChannelHash().timeout(const Duration(seconds: 2));
-      } catch (_) {}
+      } catch (_) {
+        // no prior session — leave priorHash null, any non-empty new hash is accepted
+      }
       if (isClosed) return;
 
       var initFailed = false;
