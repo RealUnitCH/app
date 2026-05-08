@@ -53,7 +53,7 @@ class RealUnitBuyPaymentInfoService {
       );
     } else if (response.statusCode == 403) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
-      throw ApiException.fromJson(errorJson);
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     } else {
       throw Exception('Unexpected status code: ${response.statusCode}');
     }
@@ -72,7 +72,7 @@ class RealUnitBuyPaymentInfoService {
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
-      throw ApiException.fromJson(errorJson);
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
     final json = jsonDecode(response.body) as Map<String, dynamic>;

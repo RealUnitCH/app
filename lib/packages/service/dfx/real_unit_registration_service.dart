@@ -51,7 +51,7 @@ class RealUnitRegistrationService {
 
     if (response.statusCode != 201 && response.statusCode != 202) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
-      throw ApiException.fromJson(errorJson);
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
     final responseDto = RealUnitRegistrationEmailResponseDto.fromJson(jsonDecode(response.body));
     return responseDto.status;
@@ -184,7 +184,7 @@ class RealUnitRegistrationService {
 
     if (response.statusCode != 201 && response.statusCode != 202) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
-      throw ApiException.fromJson(errorJson);
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
     final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));

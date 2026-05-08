@@ -47,7 +47,7 @@ class RealUnitPdfService {
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
-      throw ApiException.fromJson(errorJson);
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
     return PdfDto.fromJson(jsonDecode(response.body));
@@ -71,7 +71,7 @@ class RealUnitPdfService {
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
-      throw ApiException.fromJson(errorJson);
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
     return PdfDto.fromJson(jsonDecode(response.body));
@@ -92,7 +92,7 @@ class RealUnitPdfService {
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
-      throw ApiException.fromJson(errorJson);
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
     return PdfDto.fromJson(jsonDecode(response.body));

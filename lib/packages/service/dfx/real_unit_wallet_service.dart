@@ -28,7 +28,7 @@ class RealUnitWalletService {
 
     if (response.statusCode != 200) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
-      throw ApiException.fromJson(errorJson);
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
     final dto = RealUnitWalletStatusDto.fromJson(jsonDecode(response.body));

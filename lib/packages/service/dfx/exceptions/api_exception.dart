@@ -11,7 +11,7 @@ class ApiException implements Exception {
     required this.message,
   });
 
-  factory ApiException.fromJson(Map<String, dynamic> json) {
+  factory ApiException.fromJson(Map<String, dynamic> json, {int? httpStatusCode}) {
     final code = json['code'] as String?;
 
     switch (code) {
@@ -22,7 +22,7 @@ class ApiException implements Exception {
       default:
         final message = json['message'];
         return ApiException(
-          statusCode: json['statusCode'] as int,
+          statusCode: json['statusCode'] as int? ?? httpStatusCode,
           code: code ?? 'UNKNOWN',
           message: message is List ? message.join(', ') : message?.toString() ?? 'Unknown error',
         );
