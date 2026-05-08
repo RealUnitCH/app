@@ -16,9 +16,9 @@ class ApiException implements Exception {
 
     switch (code) {
       case 'KYC_LEVEL_REQUIRED':
-        return KycLevelRequiredException.fromJson(json);
+        return KycLevelRequiredException.fromJson(json, httpStatusCode: httpStatusCode);
       case 'REGISTRATION_REQUIRED':
-        return RegistrationRequiredException.fromJson(json);
+        return RegistrationRequiredException.fromJson(json, httpStatusCode: httpStatusCode);
       default:
         final message = json['message'];
         return ApiException(
