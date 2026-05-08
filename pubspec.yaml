@@ -73,7 +73,7 @@ dependencies:
   bitbox_flutter:
     git:
       url: https://github.com/DFXswiss/bitbox_flutter.git
-      ref: feature/ios-ble-pairing
+      ref: v0.0.1
 
 dev_dependencies:
   flutter_test:
