@@ -27,6 +27,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
 
   Future<void> checkForBitbox() async {
     final devices = await _service.getAllUsbDevices();
+    if (isClosed) return;
     if (devices.isNotEmpty) {
       emit(BitboxFound(devices.first));
       _checkForTimer?.cancel();
