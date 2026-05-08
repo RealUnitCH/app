@@ -39,6 +39,17 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     if (state is BitboxConnecting) return;
     emit(BitboxConnecting(device));
     try {
+      // Snapshot any hash from a prior pairing on the same BitboxService
+      // instance so polling waits for the new session's hash instead of
+      // accepting a stale value from an earlier pairing.
+      String? priorHash;
+      try {
+        priorHash = await _service.getChannelHash().timeout(const Duration(seconds: 2));
+      } catch (_) {
+        // no prior session
+      }
+      if (isClosed) return;
+
       var initFailed = false;
       _pendingInit = _service
           .init(device)
@@ -67,7 +78,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
         if (initFailed) throw Exception('init failed');
         try {
           final hash = await _service.getChannelHash().timeout(const Duration(seconds: 2));
-          if (hash.isNotEmpty) channelHash = hash;
+          if (hash.isNotEmpty && hash != priorHash) channelHash = hash;
         } catch (_) {}
       }
 
@@ -91,7 +102,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
 
     try {
       emit(BitboxPairing(currentState.device));
-      final initOk = await (_pendingInit ?? Future.value(true)).timeout(
+      final initOk = await _pendingInit!.timeout(
         const Duration(seconds: 120),
         onTimeout: () => false,
       );
