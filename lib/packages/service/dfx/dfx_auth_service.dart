@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
+import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 
@@ -83,6 +84,10 @@ abstract class DFXAuthService {
   }
 
   Future<String?> getAuthToken() async {
+    // bitbox_flutter's ETHSignMessage panics on a NACK and crashes the engine,
+    // so don't trigger backend auth that requires a fresh signature for
+    // BitBox-backed wallets until the SDK returns the error gracefully.
+    if (wallet.primaryAddress is BitboxCredentials) return null;
     if (appStore.sessionCache.authToken == null) {
       await appStore.sessionCache.loadSignature();
       final response = await getAuthResponse();
