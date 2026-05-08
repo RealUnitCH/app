@@ -106,9 +106,9 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
   }
 
   @override
-  Future<void> close() async {
+  Future<void> close() {
     _checkForTimer?.cancel();
     _pendingInit = null;
-    super.close();
+    return super.close();
   }
 }
