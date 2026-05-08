@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,9 +8,7 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.da
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 
 part 'kyc_state.dart';
 
@@ -22,38 +22,55 @@ class KycCubit extends Cubit<KycState> {
   };
 
   static const _minLevelForActions = 30;
+  static const _checkKycTimeout = Duration(seconds: 30);
 
   final DfxKycService _kycService;
-  final RealUnitWalletService _walletService;
   final RealUnitRegistrationService _registrationService;
   final int _requiredLevel;
 
   bool _legalDisclaimerAccepted = false;
+  bool _emailRegistrationAttempted = false;
+
+  // Per-cubit-instance gate. Reset on every KYC entry because `KycPageManager`
+  // creates a fresh `KycCubit` via `BlocProvider(create:)`, so each entry
+  // forces a fresh hardware-wallet confirmation before sensitive steps.
+  bool _bitboxConfirmed = false;
 
   KycCubit(
     DfxKycService kycService,
-    RealUnitWalletService walletService,
     RealUnitRegistrationService registrationService, {
     int? requiredLevel,
   }) : _kycService = kycService,
-       _walletService = walletService,
        _registrationService = registrationService,
        _requiredLevel = requiredLevel ?? _minLevelForActions,
        super(const KycInitial());
 
   Future<void> checkKyc() async {
     try {
+      await _runCheckKyc().timeout(_checkKycTimeout);
+    } on TimeoutException {
+      if (!isClosed) emit(const KycFailure('KYC backend did not respond in time'));
+    } catch (e) {
+      if (!isClosed) emit(KycFailure(e.toString()));
+    }
+  }
+
+  Future<void> _runCheckKyc() async {
+    try {
       emit(const KycLoading());
 
       final results = await Future.wait([
-        _walletService.getWalletStatus(),
         _kycService.getKycStatus(),
         _kycService.getUser(),
       ]);
 
-      final status = results.elementAt(0) as RealUnitWalletStatusDto;
-      final kycStatus = results.elementAt(1) as KycLevelDto;
-      final user = results.elementAt(2) as UserDto;
+      // `Future.timeout` does not cancel the underlying work — guard against
+      // a slow API response landing after the outer timeout fired and
+      // overwriting the failure state.
+      if (isClosed) return;
+
+      final kycStatus = results.elementAt(0) as KycLevelDto;
+      final user = results.elementAt(1) as UserDto;
       final level = kycStatus.kycLevel.value;
 
       if (user.mail == null) {
@@ -63,20 +80,31 @@ class KycCubit extends Cubit<KycState> {
 
       // edge case, where email exists but level is <10. In this case email is automatically registered for RealUnit
       if (user.mail != null && level < 10) {
+        if (_emailRegistrationAttempted) {
+          // Backend did not bump the level after registration; surface the
+          // current state instead of recursing forever.
+          emit(const KycSuccess(currentStep: KycStep.email));
+          return;
+        }
+        _emailRegistrationAttempted = true;
         await _registrationService.registerEmail(user.mail!);
-        await checkKyc();
+        await _runCheckKyc();
         return;
       }
 
-      if (!status.isRegistered) {
-        if (!_legalDisclaimerAccepted) {
-          emit(const KycSuccess(currentStep: KycStep.legalDisclaimer));
-          return;
-        }
-        if (level < 20) {
-          emit(const KycSuccess(currentStep: KycStep.registration));
-          return;
-        }
+      // Disclaimer + form (name/address) + EIP-712 13-step sign always
+      // precede every state past the email step, even when the user is
+      // already at `>= requiredLevel`. The hardware-wallet ceremony is the
+      // security gate, not the backend KYC level — without the sign a
+      // returning user with a high level would otherwise be granted
+      // sensitive actions on this device without ever touching the BitBox.
+      if (!_legalDisclaimerAccepted) {
+        emit(const KycSuccess(currentStep: KycStep.legalDisclaimer));
+        return;
+      }
+      if (!_bitboxConfirmed) {
+        emit(const KycSuccess(currentStep: KycStep.registration));
+        return;
       }
 
       if (level < _requiredLevel) {
@@ -98,7 +126,11 @@ class KycCubit extends Cubit<KycState> {
 
         if (pendingStep != null) {
           final step = _mapStepName(pendingStep.name);
-          if (step != null) emit(KycPending(step));
+          if (step != null) {
+            emit(KycPending(step));
+          } else {
+            emit(KycUnsupportedStepFailure(pendingStep.name));
+          }
           return;
         }
 
@@ -108,8 +140,9 @@ class KycCubit extends Cubit<KycState> {
 
       emit(const KycCompleted());
     } on ApiException catch (e) {
-      // API returns 403 when 2FA verification is required before proceeding
-      if (e.statusCode == 403) {
+      // API returns 403 / code TFA_REQUIRED when 2FA verification is required
+      // before proceeding.
+      if (e.statusCode == 403 || e.code == 'TFA_REQUIRED') {
         emit(const KycSuccess(currentStep: KycStep.twoFa));
       } else {
         rethrow;
@@ -121,6 +154,10 @@ class KycCubit extends Cubit<KycState> {
 
   void markLegalDisclaimerAccepted() {
     _legalDisclaimerAccepted = true;
+  }
+
+  void markBitboxConfirmed() {
+    _bitboxConfirmed = true;
   }
 
   /// should only be called after realunit registration was completed

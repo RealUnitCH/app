@@ -1,12 +1,14 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
-import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 
 abstract class DFXAuthService {
   static const walletName = 'RealUnit';
+  static const _signMessageTimeout = Duration(minutes: 3);
+  static const _httpTimeout = Duration(seconds: 20);
 
   final String signMessagePath = '/v1/auth/signMessage';
   final String authPath = '/v1/auth';
@@ -23,7 +25,9 @@ abstract class DFXAuthService {
   Future<String> getSignMessage() async {
     final uri = buildUri(host, signMessagePath, {'address': walletAddress});
 
-    final response = await appStore.httpClient.get(uri, headers: {'accept': 'application/json'});
+    final response = await appStore.httpClient
+        .get(uri, headers: {'accept': 'application/json'})
+        .timeout(_httpTimeout);
 
     if (response.statusCode == 200) {
       final responseBody = jsonDecode(response.body);
@@ -42,7 +46,10 @@ abstract class DFXAuthService {
       return cached;
     }
 
-    final signature = await wallet.signMessage(message);
+    final signature = await wallet.signMessage(message).timeout(_signMessageTimeout);
+    if (signature.isEmpty || signature == '0x') {
+      throw Exception('Wallet returned an empty signature');
+    }
     await appStore.sessionCache.saveSignature(walletAddress, signature);
 
     return signature;
@@ -65,11 +72,9 @@ abstract class DFXAuthService {
     );
 
     final uri = buildUri(host, authPath);
-    final response = await appStore.httpClient.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: requestBody,
-    );
+    final response = await appStore.httpClient
+        .post(uri, headers: {'Content-Type': 'application/json'}, body: requestBody)
+        .timeout(_httpTimeout);
 
     if (response.statusCode == 201) {
       final responseBody = jsonDecode(response.body);
@@ -83,11 +88,11 @@ abstract class DFXAuthService {
     }
   }
 
+  // The BitBox-credentials skip introduced in PR #304 is no longer needed:
+  // bitbox_flutter v0.0.2 fixed the BLE force-unwrap and dedup hang, the
+  // empty-signature guard in `getSignature` covers the cancel/disconnect
+  // case gracefully, and the SDK no longer panics on NACK.
   Future<String?> getAuthToken() async {
-    // bitbox_flutter's ETHSignMessage panics on a NACK and crashes the engine,
-    // so don't trigger backend auth that requires a fresh signature for
-    // BitBox-backed wallets until the SDK returns the error gracefully.
-    if (wallet.primaryAddress is BitboxCredentials) return null;
     if (appStore.sessionCache.authToken == null) {
       await appStore.sessionCache.loadSignature();
       final response = await getAuthResponse();

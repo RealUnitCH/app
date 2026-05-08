@@ -109,15 +109,25 @@ class Eip712Signer {
     CredentialsWithKnownAddress credentials,
     int chainId,
     String jsonData,
-  ) => switch (credentials) {
-    BitboxCredentials() => credentials.signTypedDataV4(chainId, jsonData),
-    EthPrivateKey() => Future.value(
-      EthSigUtil.signTypedData(
-        privateKey: bytesToHex(credentials.privateKey, include0x: true),
-        jsonData: jsonData,
-        version: TypedDataVersion.V4,
+  ) async {
+    final signature = await switch (credentials) {
+      BitboxCredentials() => credentials.signTypedDataV4(chainId, jsonData),
+      EthPrivateKey() => Future.value(
+        EthSigUtil.signTypedData(
+          privateKey: bytesToHex(credentials.privateKey, include0x: true),
+          jsonData: jsonData,
+          version: TypedDataVersion.V4,
+        ),
       ),
-    ),
-    _ => throw UnsupportedError('Unsupported credentials type: ${credentials.runtimeType}'),
-  };
+      _ => throw UnsupportedError('Unsupported credentials type: ${credentials.runtimeType}'),
+    };
+    // The BitBox swift wrapper returns empty bytes ('0x') when the user
+    // cancels on the device or the BLE link drops mid-sign; without this
+    // guard the empty sig would be sent to the backend and the abort would
+    // be misread as a successful sign.
+    if (signature.isEmpty || signature == '0x') {
+      throw Exception('Signature was empty — wallet may have been cancelled or disconnected');
+    }
+    return signature;
+  }
 }
