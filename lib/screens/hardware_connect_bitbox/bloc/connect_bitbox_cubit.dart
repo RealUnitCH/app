@@ -40,19 +40,29 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     emit(BitboxConnecting(device));
     try {
       var initFailed = false;
-      _pendingInit = _service.init(device).then((success) {
-        if (!success) initFailed = true;
-        return success;
-      }).catchError((Object e) {
-        developer.log('init error: $e', name: '$ConnectBitboxCubit');
-        initFailed = true;
-        return false;
-      });
+      _pendingInit = _service
+          .init(device)
+          .then((success) {
+            if (!success) initFailed = true;
+            return success;
+          })
+          .catchError((Object e) {
+            developer.log('init error: $e', name: '$ConnectBitboxCubit');
+            initFailed = true;
+            return false;
+          });
 
       String channelHash = '';
       final deadline = DateTime.now().add(const Duration(seconds: 90));
+      var firstIteration = true;
       while (channelHash.isEmpty && DateTime.now().isBefore(deadline) && !isClosed) {
-        await Future.delayed(const Duration(milliseconds: 500));
+        // First sleep is longer so the SDK can finish setting up its Go-side
+        // device pointer before we call into it; subsequent iterations stay
+        // tight so the post-PIN handover feels snappy.
+        await Future.delayed(
+          firstIteration ? const Duration(milliseconds: 500) : const Duration(milliseconds: 100),
+        );
+        firstIteration = false;
         if (isClosed) return;
         if (initFailed) throw Exception('init failed');
         try {
