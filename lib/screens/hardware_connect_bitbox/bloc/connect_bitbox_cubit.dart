@@ -27,6 +27,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
 
   Future<void> checkForBitbox() async {
     final devices = await _service.getAllUsbDevices();
+    if (isClosed) return;
     if (devices.isNotEmpty) {
       emit(BitboxFound(devices.first));
       _checkForTimer?.cancel();
@@ -50,8 +51,9 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
 
       String channelHash = '';
       final deadline = DateTime.now().add(const Duration(seconds: 90));
-      while (channelHash.isEmpty && DateTime.now().isBefore(deadline)) {
+      while (channelHash.isEmpty && DateTime.now().isBefore(deadline) && !isClosed) {
         await Future.delayed(const Duration(milliseconds: 500));
+        if (isClosed) return;
         if (initFailed) throw Exception('init failed');
         try {
           final hash = await _service.getChannelHash().timeout(const Duration(seconds: 2));
@@ -59,12 +61,15 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
         } catch (_) {}
       }
 
+      if (isClosed) return;
+
       if (channelHash.isEmpty) throw TimeoutException('no channel hash within 90s');
 
       emit(BitboxCheckHash(device, channelHash));
     } catch (e) {
       developer.log(e.toString(), name: '$ConnectBitboxCubit');
       _pendingInit = null;
+      if (isClosed) return;
       emit(BitboxNotConnected());
       _checkForTimer = Timer.periodic(const Duration(milliseconds: 500), (_) => checkForBitbox());
     }
@@ -88,6 +93,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     } catch (e) {
       developer.log(e.toString(), name: '$ConnectBitboxCubit');
       _pendingInit = null;
+      if (isClosed) return;
       emit(BitboxNotConnected());
       _checkForTimer = Timer.periodic(const Duration(milliseconds: 500), (_) => checkForBitbox());
     }
@@ -100,8 +106,9 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
   }
 
   @override
-  Future<void> close() async {
+  Future<void> close() {
     _checkForTimer?.cancel();
-    super.close();
+    _pendingInit = null;
+    return super.close();
   }
 }
