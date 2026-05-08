@@ -55,7 +55,8 @@ class RealUnitBuyPaymentInfoService {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     } else {
-      throw Exception('Unexpected status code: ${response.statusCode}');
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
   }
 
