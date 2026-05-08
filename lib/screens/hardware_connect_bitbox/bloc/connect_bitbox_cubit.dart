@@ -20,6 +20,11 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     _checkForTimer = Timer.periodic(const Duration(milliseconds: 500), (_) => checkForBitbox());
   }
 
+  // Tracks whether the SDK's Go-side device pointer has been initialised in
+  // this process. Until it has, calling getChannelHash dereferences nil and
+  // crashes the engine, so we only read the cached hash for re-pairings.
+  static bool _sdkInitialised = false;
+
   final BitboxService _service;
   final WalletService _walletService;
   Timer? _checkForTimer;
@@ -39,15 +44,25 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     if (state is BitboxConnecting) return;
     emit(BitboxConnecting(device));
     try {
+      // The SDK's Go-side device singleton survives across pairings, so on a
+      // re-pair the previous channel hash is still cached until the new noise
+      // handshake replaces it. Capture that stale value first and reject it
+      // during the poll so the user never sees a code that does not match the
+      // BitBox display.
+      final priorHash = _sdkInitialised ? await _readChannelHash() : '';
+
       var initFailed = false;
-      _pendingInit = _service.init(device).then((success) {
-        if (!success) initFailed = true;
-        return success;
-      }).catchError((Object e) {
-        developer.log('init error: $e', name: '$ConnectBitboxCubit');
-        initFailed = true;
-        return false;
-      });
+      _pendingInit = _service
+          .init(device)
+          .then((success) {
+            if (!success) initFailed = true;
+            return success;
+          })
+          .catchError((Object e) {
+            developer.log('init error: $e', name: '$ConnectBitboxCubit');
+            initFailed = true;
+            return false;
+          });
 
       String channelHash = '';
       final deadline = DateTime.now().add(const Duration(seconds: 90));
@@ -55,16 +70,15 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
         await Future.delayed(const Duration(milliseconds: 500));
         if (isClosed) return;
         if (initFailed) throw Exception('init failed');
-        try {
-          final hash = await _service.getChannelHash().timeout(const Duration(seconds: 2));
-          if (hash.isNotEmpty) channelHash = hash;
-        } catch (_) {}
+        final hash = await _readChannelHash();
+        if (hash.isNotEmpty && hash != priorHash) channelHash = hash;
       }
 
       if (isClosed) return;
 
       if (channelHash.isEmpty) throw TimeoutException('no channel hash within 90s');
 
+      _sdkInitialised = true;
       emit(BitboxCheckHash(device, channelHash));
     } catch (e) {
       developer.log(e.toString(), name: '$ConnectBitboxCubit');
@@ -72,6 +86,14 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
       if (isClosed) return;
       emit(BitboxNotConnected());
       _checkForTimer = Timer.periodic(const Duration(milliseconds: 500), (_) => checkForBitbox());
+    }
+  }
+
+  Future<String> _readChannelHash() async {
+    try {
+      return await _service.getChannelHash().timeout(const Duration(seconds: 2));
+    } catch (_) {
+      return '';
     }
   }
 
