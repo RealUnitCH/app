@@ -57,13 +57,11 @@ class KycCubit extends Cubit<KycState> {
     try {
       await _runCheckKyc(generation).timeout(_checkKycTimeout);
     } on TimeoutException {
-      if (generation == _runGeneration && !isClosed) {
-        emit(const KycFailure('KYC backend did not respond in time'));
-      }
+      if (isClosed || generation != _runGeneration) return;
+      emit(const KycFailure('KYC backend did not respond in time'));
     } catch (e) {
-      if (generation == _runGeneration && !isClosed) {
-        emit(KycFailure(e.toString()));
-      }
+      if (isClosed || generation != _runGeneration) return;
+      emit(KycFailure(e.toString()));
     }
   }
 
@@ -151,7 +149,7 @@ class KycCubit extends Cubit<KycState> {
 
       emit(const KycCompleted());
     } on ApiException catch (e) {
-      if (generation != _runGeneration || isClosed) return;
+      if (isClosed || generation != _runGeneration) return;
       // API returns 403 / code TFA_REQUIRED when 2FA verification is required
       // before proceeding.
       if (e.statusCode == 403 || e.code == 'TFA_REQUIRED') {
@@ -160,7 +158,7 @@ class KycCubit extends Cubit<KycState> {
         rethrow;
       }
     } catch (e) {
-      if (generation != _runGeneration || isClosed) return;
+      if (isClosed || generation != _runGeneration) return;
       emit(KycFailure(e.toString()));
     }
   }
