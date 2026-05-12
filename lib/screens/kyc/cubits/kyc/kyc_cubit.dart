@@ -36,9 +36,12 @@ class KycCubit extends Cubit<KycState> {
   // forces a fresh hardware-wallet confirmation before sensitive steps.
   bool _bitboxConfirmed = false;
 
-  // `Future.timeout` does not cancel the underlying work — this flag lets
-  // late HTTP responses bail out instead of overwriting the failure state.
-  bool _timedOut = false;
+  // `Future.timeout` does not cancel the underlying work, so a late HTTP
+  // response from an earlier call can still resume and emit state after a
+  // retry. Each `checkKyc()` captures its own generation; the run body and
+  // any continuations bail when their generation no longer matches the
+  // current one. Acts as a cancellation token for non-cancellable work.
+  int _runGeneration = 0;
 
   KycCubit(
     DfxKycService kycService,
@@ -50,19 +53,21 @@ class KycCubit extends Cubit<KycState> {
        super(const KycInitial());
 
   Future<void> checkKyc() async {
-    _timedOut = false;
+    final generation = ++_runGeneration;
     try {
-      await _runCheckKyc().timeout(_checkKycTimeout);
+      await _runCheckKyc(generation).timeout(_checkKycTimeout);
     } on TimeoutException {
-      _timedOut = true;
-      if (!isClosed) emit(const KycFailure('KYC backend did not respond in time'));
+      if (isClosed || generation != _runGeneration) return;
+      emit(const KycFailure('KYC backend did not respond in time'));
     } catch (e) {
-      if (!isClosed) emit(KycFailure(e.toString()));
+      if (isClosed || generation != _runGeneration) return;
+      emit(KycFailure(e.toString()));
     }
   }
 
-  Future<void> _runCheckKyc() async {
+  Future<void> _runCheckKyc(int generation) async {
     try {
+      if (isClosed || generation != _runGeneration) return;
       emit(const KycLoading());
 
       final results = await Future.wait([
@@ -70,7 +75,7 @@ class KycCubit extends Cubit<KycState> {
         _kycService.getUser(),
       ]);
 
-      if (isClosed || _timedOut) return;
+      if (isClosed || generation != _runGeneration) return;
 
       final kycStatus = results.elementAt(0) as KycLevelDto;
       final user = results.elementAt(1) as UserDto;
@@ -91,7 +96,8 @@ class KycCubit extends Cubit<KycState> {
         }
         _emailRegistrationAttempted = true;
         await _registrationService.registerEmail(user.mail!);
-        await _runCheckKyc();
+        if (isClosed || generation != _runGeneration) return;
+        await _runCheckKyc(generation);
         return;
       }
 
@@ -137,12 +143,13 @@ class KycCubit extends Cubit<KycState> {
           return;
         }
 
-        await _continueKyc();
+        await _continueKyc(generation);
         return;
       }
 
       emit(const KycCompleted());
     } on ApiException catch (e) {
+      if (isClosed || generation != _runGeneration) return;
       // API returns 403 / code TFA_REQUIRED when 2FA verification is required
       // before proceeding.
       if (e.statusCode == 403 || e.code == 'TFA_REQUIRED') {
@@ -151,6 +158,7 @@ class KycCubit extends Cubit<KycState> {
         rethrow;
       }
     } catch (e) {
+      if (isClosed || generation != _runGeneration) return;
       emit(KycFailure(e.toString()));
     }
   }
@@ -164,9 +172,9 @@ class KycCubit extends Cubit<KycState> {
   }
 
   /// should only be called after realunit registration was completed
-  Future<void> _continueKyc() async {
+  Future<void> _continueKyc(int generation) async {
     final kycStatus = await _kycService.continueKyc();
-    if (isClosed || _timedOut) return;
+    if (isClosed || generation != _runGeneration) return;
     final currentStep = kycStatus.kycSteps.firstWhere((step) => step.isCurrent);
 
     final kycStep = _mapStepName(currentStep.name);
