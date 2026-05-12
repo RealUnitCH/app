@@ -204,6 +204,7 @@
   "registerPhoneNumberInvalid": "Telefonnummer ist erforderlich",
   "registerPhoneNumberOnlyDigits": "Nur Zahlen sind erlaubt",
   "registerPhoneNumberTooShort": "Telefonnummer ist zu kurz",
+  "registrationFailed": "Registrierung fehlgeschlagen:\n${message}",
   "registrationRequired": "Registrierung erforderlich",
   "registrationRequiredDescription": "Um RealUnit Token kaufen zu können, müssen Sie sich einmalig registrieren.",
   "reset": "Zurücksetzen",

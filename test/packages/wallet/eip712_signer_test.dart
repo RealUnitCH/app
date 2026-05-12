@@ -10,6 +10,23 @@ import 'package:web3dart/web3dart.dart';
 
 class _MockBitboxCredentials extends Mock implements BitboxCredentials {}
 
+Future<String> _signWith(BitboxCredentials credentials) => Eip712Signer.signRegistration(
+  credentials: credentials,
+  chainId: 1,
+  type: RegistrationUserType.human.jsonName,
+  email: 'cancel@dfx.swiss',
+  name: 'Cancel User',
+  phoneNumber: '+41790000000',
+  birthday: '1990-01-01',
+  nationality: 'CH',
+  addressStreet: 'Teststrasse 1',
+  addressPostalCode: '8000',
+  addressCity: 'Zurich',
+  addressCountry: 'CH',
+  swissTaxResidence: true,
+  registrationDate: '2026-05-12',
+);
+
 void main() {
   late String privateKeyHex;
   late RegistrationUserType type;
@@ -85,58 +102,18 @@ void main() {
       );
     });
 
-    test('throws SigningCancelledException when BitBox returns empty signature', () async {
-      final credentials = _MockBitboxCredentials();
-      when(() => credentials.address)
-          .thenReturn(EthereumAddress.fromHex('0x0000000000000000000000000000000000000001'));
-      when(() => credentials.signTypedDataV4(any(), any())).thenAnswer((_) async => '');
+    for (final emptySignature in const ['', '0x']) {
+      test('throws SigningCancelledException when BitBox returns "$emptySignature"', () async {
+        final credentials = _MockBitboxCredentials();
+        when(
+          () => credentials.address,
+        ).thenReturn(EthereumAddress.fromHex('0x0000000000000000000000000000000000000001'));
+        when(
+          () => credentials.signTypedDataV4(any(), any()),
+        ).thenAnswer((_) async => emptySignature);
 
-      expect(
-        () => Eip712Signer.signRegistration(
-          credentials: credentials,
-          chainId: 1,
-          type: RegistrationUserType.human.jsonName,
-          email: 'cancel@dfx.swiss',
-          name: 'Cancel User',
-          phoneNumber: '+41790000000',
-          birthday: '1990-01-01',
-          nationality: 'CH',
-          addressStreet: 'Teststrasse 1',
-          addressPostalCode: '8000',
-          addressCity: 'Zurich',
-          addressCountry: 'CH',
-          swissTaxResidence: true,
-          registrationDate: '2026-05-12',
-        ),
-        throwsA(isA<SigningCancelledException>()),
-      );
-    });
-
-    test('throws SigningCancelledException when BitBox returns 0x signature', () async {
-      final credentials = _MockBitboxCredentials();
-      when(() => credentials.address)
-          .thenReturn(EthereumAddress.fromHex('0x0000000000000000000000000000000000000001'));
-      when(() => credentials.signTypedDataV4(any(), any())).thenAnswer((_) async => '0x');
-
-      expect(
-        () => Eip712Signer.signRegistration(
-          credentials: credentials,
-          chainId: 1,
-          type: RegistrationUserType.human.jsonName,
-          email: 'cancel@dfx.swiss',
-          name: 'Cancel User',
-          phoneNumber: '+41790000000',
-          birthday: '1990-01-01',
-          nationality: 'CH',
-          addressStreet: 'Teststrasse 1',
-          addressPostalCode: '8000',
-          addressCity: 'Zurich',
-          addressCountry: 'CH',
-          swissTaxResidence: true,
-          registrationDate: '2026-05-12',
-        ),
-        throwsA(isA<SigningCancelledException>()),
-      );
-    });
+        expect(() => _signWith(credentials), throwsA(isA<SigningCancelledException>()));
+      });
+    }
   });
 }

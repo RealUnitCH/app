@@ -113,7 +113,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
           if (state is KycRegistrationSubmitFailure) {
             final message = state.cause is SigningCancelledException
                 ? S.of(context).signingCancelled
-                : 'Registration failed:\n${state.message}';
+                : S.of(context).registrationFailed(state.message);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(message),
