@@ -195,6 +195,7 @@
   "registerEmailInvalid": "Email is invalid",
   "registerEmailRequired": "Email is required",
   "registerEmailVerification": "Email verification",
+  "registerEmailVerificationBitboxSignHint": "Confirm the signature on your BitBox — the message spans multiple pages, hold the touch sensor to advance.",
   "registerEmailVerificationButton": "I have confirmed my email address",
   "registerEmailVerificationDescription": "It looks like you already have an account. We have just sent you an email. To continue with your existing account, please confirm your email address by clicking on the link in the email.",
   "registerEmailVerificationFailed": "You have not yet confirmed your email address.",

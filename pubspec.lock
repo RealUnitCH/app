@@ -69,8 +69,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "feature/ios-ble-pairing"
-      resolved-ref: dd7a45ce29fc425d769b33c6dc8ec81b53f785de
+      ref: "v0.0.3"
+      resolved-ref: "1807d51fc93e215b5860cb9888b6409aea5bba67"
       url: "https://github.com/DFXswiss/bitbox_flutter.git"
     source: git
     version: "0.0.1"
