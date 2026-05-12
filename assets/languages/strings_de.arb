@@ -254,6 +254,7 @@
   "settingsWalletBackupSubtitle2": "Dies ist die einzige Möglichkeit, Ihre Wallet wiederherzustellen.",
   "showSeed": "Seed anzeigen",
   "signature": "Signatur",
+  "signingCancelled": "Signatur abgebrochen — bitte BitBox erneut bestätigen",
   "signMessage": "Signierte Nachricht",
   "signMessageGet": "Signierte Nachricht abrufen",
   "skip": "Überspringen",

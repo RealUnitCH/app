@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:eth_sig_util_plus/eth_sig_util_plus.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
+import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -126,7 +127,7 @@ class Eip712Signer {
     // guard the empty sig would be sent to the backend and the abort would
     // be misread as a successful sign.
     if (signature.isEmpty || signature == '0x') {
-      throw Exception('Signature was empty — wallet may have been cancelled or disconnected');
+      throw const SigningCancelledException();
     }
     return signature;
   }
