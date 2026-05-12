@@ -22,11 +22,12 @@ class KycRegistrationSubmitSuccess extends KycRegistrationSubmitState {
 
 class KycRegistrationSubmitFailure extends KycRegistrationSubmitState {
   final String message;
+  final Object? cause;
 
-  const KycRegistrationSubmitFailure(this.message);
+  const KycRegistrationSubmitFailure(this.message, {this.cause});
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, cause];
 }
 
 class KycRegistrationSubmitBitboxRequired extends KycRegistrationSubmitState {
