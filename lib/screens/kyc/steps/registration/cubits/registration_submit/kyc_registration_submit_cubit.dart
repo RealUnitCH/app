@@ -66,7 +66,7 @@ class KycRegistrationSubmitCubit extends Cubit<KycRegistrationSubmitState> {
       }
     } catch (e) {
       developer.log(e.toString());
-      emit(KycRegistrationSubmitFailure(e.toString()));
+      emit(KycRegistrationSubmitFailure(e.toString(), cause: e));
       return;
     }
   }
@@ -92,7 +92,7 @@ class KycRegistrationSubmitCubit extends Cubit<KycRegistrationSubmitState> {
       emit(const KycRegistrationSubmitSuccess(RegistrationStatus.completed));
     } catch (e) {
       developer.log(e.toString());
-      emit(KycRegistrationSubmitFailure(e.toString()));
+      emit(KycRegistrationSubmitFailure(e.toString(), cause: e));
     }
   }
 

@@ -3,6 +3,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
+import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -96,23 +97,19 @@ void main() {
       expect(walletAccount.signCallCount, 1);
     });
 
-    test('throws when the wallet returns an empty signature', () async {
-      walletAccount = _StubWalletAccount('');
+    for (final emptySignature in const ['', '0x']) {
+      test(
+        'throws SigningCancelledException when the wallet returns "$emptySignature"',
+        () async {
+          walletAccount = _StubWalletAccount(emptySignature);
 
-      expect(
-        () => buildService().getSignature('msg'),
-        throwsA(isA<Exception>()),
+          expect(
+            () => buildService().getSignature('msg'),
+            throwsA(isA<SigningCancelledException>()),
+          );
+        },
       );
-    });
-
-    test("throws when the wallet returns '0x'", () async {
-      walletAccount = _StubWalletAccount('0x');
-
-      expect(
-        () => buildService().getSignature('msg'),
-        throwsA(isA<Exception>()),
-      );
-    });
+    }
   });
 
   group('$DFXAuthService getAuthToken', () {

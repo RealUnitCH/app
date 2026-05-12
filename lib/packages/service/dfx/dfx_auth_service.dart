@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 
 abstract class DFXAuthService {
@@ -48,7 +49,7 @@ abstract class DFXAuthService {
 
     final signature = await wallet.signMessage(message).timeout(_signMessageTimeout);
     if (signature.isEmpty || signature == '0x') {
-      throw Exception('Wallet returned an empty signature');
+      throw const SigningCancelledException();
     }
     await appStore.sessionCache.saveSignature(walletAddress, signature);
 
