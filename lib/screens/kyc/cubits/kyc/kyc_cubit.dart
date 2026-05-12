@@ -36,6 +36,10 @@ class KycCubit extends Cubit<KycState> {
   // forces a fresh hardware-wallet confirmation before sensitive steps.
   bool _bitboxConfirmed = false;
 
+  // `Future.timeout` does not cancel the underlying work — this flag lets
+  // late HTTP responses bail out instead of overwriting the failure state.
+  bool _timedOut = false;
+
   KycCubit(
     DfxKycService kycService,
     RealUnitRegistrationService registrationService, {
@@ -46,9 +50,11 @@ class KycCubit extends Cubit<KycState> {
        super(const KycInitial());
 
   Future<void> checkKyc() async {
+    _timedOut = false;
     try {
       await _runCheckKyc().timeout(_checkKycTimeout);
     } on TimeoutException {
+      _timedOut = true;
       if (!isClosed) emit(const KycFailure('KYC backend did not respond in time'));
     } catch (e) {
       if (!isClosed) emit(KycFailure(e.toString()));
@@ -64,10 +70,7 @@ class KycCubit extends Cubit<KycState> {
         _kycService.getUser(),
       ]);
 
-      // `Future.timeout` does not cancel the underlying work — guard against
-      // a slow API response landing after the outer timeout fired and
-      // overwriting the failure state.
-      if (isClosed) return;
+      if (isClosed || _timedOut) return;
 
       final kycStatus = results.elementAt(0) as KycLevelDto;
       final user = results.elementAt(1) as UserDto;
@@ -163,6 +166,7 @@ class KycCubit extends Cubit<KycState> {
   /// should only be called after realunit registration was completed
   Future<void> _continueKyc() async {
     final kycStatus = await _kycService.continueKyc();
+    if (isClosed || _timedOut) return;
     final currentStep = kycStatus.kycSteps.firstWhere((step) => step.isCurrent);
 
     final kycStep = _mapStepName(currentStep.name);
