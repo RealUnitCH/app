@@ -4,11 +4,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
@@ -102,13 +104,19 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
         listener: (context, state) async {
           if (state is KycRegistrationSubmitSuccess) {
             if (state.status == RegistrationStatus.completed) {
+              // completeRegistration already produced the BitBox 13-step sign,
+              // so skip the security ceremony on the next checkKyc.
+              context.read<KycCubit>().markBitboxConfirmed();
               context.read<KycCubit>().checkKyc();
             }
           }
           if (state is KycRegistrationSubmitFailure) {
+            final message = state.cause is SigningCancelledException
+                ? S.of(context).signingCancelled
+                : S.of(context).registrationFailed(state.message);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Registration failed:\n${state.message}'),
+                content: Text(message),
                 backgroundColor: RealUnitColors.status.red600,
               ),
             );

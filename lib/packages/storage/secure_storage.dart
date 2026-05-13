@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pointycastle/api.dart';
 import 'package:pointycastle/block/aes.dart';
@@ -51,6 +51,18 @@ class SecureStorage {
     return bytesToHex(derivator.process(utf8.encode(pin)));
   }
 
+  /// Off-main-thread variant of [hashPin]. PBKDF2 with 600k iterations takes
+  /// several seconds on a phone and freezes the UI when run synchronously, so
+  /// any caller reachable from the UI should await this instead.
+  static Future<String> hashPinAsync(
+    String pin,
+    Uint8List salt, {
+    int iterations = _pinHashIterations,
+  }) => compute(
+    _hashPinIsolate,
+    (pin: pin, salt: salt, iterations: iterations),
+  );
+
   Future<String?> getPinHash() => _secureStorage.read(key: _pinHashKey);
 
   Future<void> setPinHash(String hash) => _secureStorage.write(key: _pinHashKey, value: hash);
@@ -76,11 +88,11 @@ class SecureStorage {
     final salt = await getPinSalt();
     if (hash == null || salt == null) return false;
 
-    if (hashPin(pin, salt) == hash) return true;
+    if (await hashPinAsync(pin, salt) == hash) return true;
 
     // Transparent rehash: verify against legacy iterations, upgrade if match
-    if (hashPin(pin, salt, iterations: _legacyPinHashIterations) == hash) {
-      final newHash = hashPin(pin, salt);
+    if (await hashPinAsync(pin, salt, iterations: _legacyPinHashIterations) == hash) {
+      final newHash = await hashPinAsync(pin, salt);
       await setPinHash(newHash);
       return true;
     }
@@ -154,3 +166,6 @@ class SecureStorage {
     return Uint8List.fromList(List.generate(length, (_) => random.nextInt(256)));
   }
 }
+
+String _hashPinIsolate(({String pin, Uint8List salt, int iterations}) args) =>
+    SecureStorage.hashPin(args.pin, args.salt, iterations: args.iterations);

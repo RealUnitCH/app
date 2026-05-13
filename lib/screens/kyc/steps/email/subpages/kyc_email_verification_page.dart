@@ -3,9 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
+import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_verification/kyc_email_verification_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -90,12 +92,32 @@ class KycEmailVerificationView extends StatelessWidget {
                         padding: const .symmetric(vertical: 16.0),
                         child: BlocBuilder<KycEmailVerificationCubit, KycEmailVerificationState>(
                           builder: (context, state) {
-                            return AppFilledButton(
-                              state: state is KycEmailVerificationLoading ? .loading : .idle,
-                              onPressed: () => context
-                                  .read<KycEmailVerificationCubit>()
-                                  .checkEmailVerification(),
-                              label: S.of(context).registerEmailVerificationButton,
+                            final isLoading = state is KycEmailVerificationLoading;
+                            final isBitbox = context
+                                    .read<HomeBloc>()
+                                    .state
+                                    .openWallet
+                                    ?.currentAccount
+                                    .primaryAddress is BitboxCredentials;
+                            return Column(
+                              spacing: 12,
+                              children: [
+                                AppFilledButton(
+                                  state: isLoading ? .loading : .idle,
+                                  onPressed: () => context
+                                      .read<KycEmailVerificationCubit>()
+                                      .checkEmailVerification(),
+                                  label: S.of(context).registerEmailVerificationButton,
+                                ),
+                                if (isLoading && isBitbox)
+                                  Text(
+                                    S.of(context).registerEmailVerificationBitboxSignHint,
+                                    textAlign: .center,
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: RealUnitColors.neutral500,
+                                    ),
+                                  ),
+                              ],
                             );
                           },
                         ),

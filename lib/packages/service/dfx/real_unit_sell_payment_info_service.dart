@@ -75,9 +75,10 @@ class RealUnitSellPaymentInfoService {
       );
     } else if (response.statusCode == 403) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
-      throw ApiException.fromJson(errorJson);
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     } else {
-      throw Exception('Unexpected status code: ${response.body}');
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
   }
 
@@ -129,7 +130,8 @@ class RealUnitSellPaymentInfoService {
       },
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to create unsigned transactions: ${response.body}');
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
     final json = jsonDecode(response.body) as Map<String, dynamic>;
     return RealUnitUnsignedTransactionsRequestDto.fromJson(json);
@@ -150,7 +152,8 @@ class RealUnitSellPaymentInfoService {
       body: jsonEncode(dto.toJson()),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to broadcast transaction: ${response.statusCode} ${response.body}');
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
     final responseDto = BroadcastTransactionResponseDto.fromJson(
       jsonDecode(response.body) as Map<String, dynamic>,
@@ -176,7 +179,8 @@ class RealUnitSellPaymentInfoService {
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to confirm payment: ${response.statusCode}');
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
   }
 

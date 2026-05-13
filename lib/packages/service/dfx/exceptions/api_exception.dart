@@ -11,18 +11,18 @@ class ApiException implements Exception {
     required this.message,
   });
 
-  factory ApiException.fromJson(Map<String, dynamic> json) {
+  factory ApiException.fromJson(Map<String, dynamic> json, {int? httpStatusCode}) {
     final code = json['code'] as String?;
 
     switch (code) {
       case 'KYC_LEVEL_REQUIRED':
-        return KycLevelRequiredException.fromJson(json);
+        return KycLevelRequiredException.fromJson(json, httpStatusCode: httpStatusCode);
       case 'REGISTRATION_REQUIRED':
-        return RegistrationRequiredException.fromJson(json);
+        return RegistrationRequiredException.fromJson(json, httpStatusCode: httpStatusCode);
       default:
         final message = json['message'];
         return ApiException(
-          statusCode: json['statusCode'] as int,
+          statusCode: json['statusCode'] as int? ?? httpStatusCode,
           code: code ?? 'UNKNOWN',
           message: message is List ? message.join(', ') : message?.toString() ?? 'Unknown error',
         );

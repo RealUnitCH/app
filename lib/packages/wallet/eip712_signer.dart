@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:eth_sig_util_plus/eth_sig_util_plus.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
+import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -109,15 +110,25 @@ class Eip712Signer {
     CredentialsWithKnownAddress credentials,
     int chainId,
     String jsonData,
-  ) => switch (credentials) {
-    BitboxCredentials() => credentials.signTypedDataV4(chainId, jsonData),
-    EthPrivateKey() => Future.value(
-      EthSigUtil.signTypedData(
-        privateKey: bytesToHex(credentials.privateKey, include0x: true),
-        jsonData: jsonData,
-        version: TypedDataVersion.V4,
+  ) async {
+    final signature = await switch (credentials) {
+      BitboxCredentials() => credentials.signTypedDataV4(chainId, jsonData),
+      EthPrivateKey() => Future.value(
+        EthSigUtil.signTypedData(
+          privateKey: bytesToHex(credentials.privateKey, include0x: true),
+          jsonData: jsonData,
+          version: TypedDataVersion.V4,
+        ),
       ),
-    ),
-    _ => throw UnsupportedError('Unsupported credentials type: ${credentials.runtimeType}'),
-  };
+      _ => throw UnsupportedError('Unsupported credentials type: ${credentials.runtimeType}'),
+    };
+    // The BitBox swift wrapper returns empty bytes ('0x') when the user
+    // cancels on the device or the BLE link drops mid-sign; without this
+    // guard the empty sig would be sent to the backend and the abort would
+    // be misread as a successful sign.
+    if (signature.isEmpty || signature == '0x') {
+      throw const SigningCancelledException();
+    }
+    return signature;
+  }
 }

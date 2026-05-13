@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/bank_account/dto/bank_account_dto.dart';
 
 class DfxBankAccountService {
@@ -26,7 +27,8 @@ class DfxBankAccountService {
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to add bank account: ${response.body}');
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
     final List<dynamic> jsonList = jsonDecode(response.body);
@@ -51,7 +53,8 @@ class DfxBankAccountService {
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to add bank account: ${response.body}');
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
     return BankAccountDto.fromJson(jsonDecode(response.body));
@@ -80,7 +83,8 @@ class DfxBankAccountService {
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to update bank account: ${response.body}');
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
     return BankAccountDto.fromJson(jsonDecode(response.body));

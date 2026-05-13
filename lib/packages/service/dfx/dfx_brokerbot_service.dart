@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_buy_price_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_buy_shares_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_sell_price_dto.dart';
@@ -78,7 +79,8 @@ class DfxBrokerbotService {
     );
 
     if (res.statusCode != 200) {
-      throw Exception('SellPrice request failed: ${res.body}');
+      final errorJson = jsonDecode(res.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: res.statusCode);
     }
 
     return BrokerbotSellPriceDto.fromJson(jsonDecode(res.body));
@@ -102,7 +104,8 @@ class DfxBrokerbotService {
     );
 
     if (res.statusCode != 200) {
-      throw Exception('SellShares request failed: ${res.body}');
+      final errorJson = jsonDecode(res.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: res.statusCode);
     }
 
     return BrokerbotSellSharesDto.fromJson(jsonDecode(res.body));
