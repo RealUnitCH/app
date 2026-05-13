@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
-import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_response_dto.dart';
@@ -14,9 +14,10 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/rea
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 import 'package:realunit_wallet/packages/wallet/eip7702_signer.dart';
+import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
-class RealUnitSellPaymentInfoService {
+class RealUnitSellPaymentInfoService extends DFXAuthService {
   static const _sellPaymentInfoPath = '/v1/realunit/sell';
   static String _confirmPaymentPath(int id) => '/v1/realunit/sell/$id/confirm';
   static String _unsignedTxsPath(int id) => '/v1/realunit/sell/$id/unsigned-transactions';
@@ -26,11 +27,13 @@ class RealUnitSellPaymentInfoService {
   static const _metaMaskDelegatorAddress = '0x63c0c19a282a1b52b07dd5a65b58948a07dae32b';
   static const _delegationManagerAddress = '0xdb9b1e94b5b69df7e401ddbede43491141047db3';
 
-  String get _host => _appStore.apiConfig.apiHost;
+  RealUnitSellPaymentInfoService(super.appStore);
 
-  final AppStore _appStore;
+  @override
+  AWalletAccount get wallet => appStore.wallet.currentAccount;
 
-  RealUnitSellPaymentInfoService(AppStore appStore) : _appStore = appStore;
+  @override
+  String get walletAddress => wallet.primaryAddress.address.hexEip55;
 
   Future<SellPaymentInfo> getPaymentInfo(
     int amount,
@@ -43,13 +46,11 @@ class RealUnitSellPaymentInfoService {
       currency: currency,
     );
 
-    final authToken = _appStore.sessionCache.authToken;
-    final uri = buildUri(_host, _sellPaymentInfoPath);
-    final response = await _appStore.httpClient.put(
+    final uri = buildUri(host, _sellPaymentInfoPath);
+    final response = await authenticatedPut(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
       body: jsonEncode(sellDto.toJson()),
     );
@@ -84,7 +85,7 @@ class RealUnitSellPaymentInfoService {
 
   /// Confirms payment for Software Wallet
   Future<void> confirmPayment(SellPaymentInfo paymentInfo) async {
-    final credentials = _appStore.wallet.currentAccount.primaryAddress;
+    final credentials = appStore.wallet.currentAccount.primaryAddress;
     _validateEip7702Data(paymentInfo.eip7702, credentials.address.hexEip55, paymentInfo.amount);
 
     final delegationSignature = await Eip712Signer.signDelegation(
@@ -120,13 +121,11 @@ class RealUnitSellPaymentInfoService {
   }
 
   Future<RealUnitUnsignedTransactionsRequestDto> createUnsignedTransactions(int id) async {
-    final authToken = _appStore.sessionCache.authToken;
-    final uri = buildUri(_host, _unsignedTxsPath(id));
-    final response = await _appStore.httpClient.put(
+    final uri = buildUri(host, _unsignedTxsPath(id));
+    final response = await authenticatedPut(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
@@ -141,13 +140,11 @@ class RealUnitSellPaymentInfoService {
     int id,
     BroadcastTransactionRequestDto dto,
   ) async {
-    final authToken = _appStore.sessionCache.authToken;
-    final uri = buildUri(_host, _broadcastPath(id));
-    final response = await _appStore.httpClient.put(
+    final uri = buildUri(host, _broadcastPath(id));
+    final response = await authenticatedPut(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
       body: jsonEncode(dto.toJson()),
     );
@@ -167,13 +164,11 @@ class RealUnitSellPaymentInfoService {
   }
 
   Future<void> _sendConfirm(int id, RealUnitSellConfirmDto dto) async {
-    final authToken = _appStore.sessionCache.authToken;
-    final uri = buildUri(_host, _confirmPaymentPath(id));
-    final response = await _appStore.httpClient.put(
+    final uri = buildUri(host, _confirmPaymentPath(id));
+    final response = await authenticatedPut(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
       body: jsonEncode(dto.toJson()),
     );
@@ -185,11 +180,13 @@ class RealUnitSellPaymentInfoService {
   }
 
   void _validateEip7702Data(Eip7702Data data, String walletAddress, int userAmount) {
-    final expectedChainId = _appStore.apiConfig.asset.chainId;
+    final expectedChainId = appStore.apiConfig.asset.chainId;
 
     // Pin signed contract addresses against known constants
     if (data.delegatorAddress.toLowerCase() != _metaMaskDelegatorAddress) {
-      throw Exception('EIP-7702 delegator address does not match expected MetaMask Delegator contract');
+      throw Exception(
+        'EIP-7702 delegator address does not match expected MetaMask Delegator contract',
+      );
     }
     if (data.delegationManagerAddress.toLowerCase() != _delegationManagerAddress) {
       throw Exception('EIP-7702 delegation manager address does not match expected contract');
@@ -203,7 +200,9 @@ class RealUnitSellPaymentInfoService {
       throw Exception('EIP-7702 message delegator does not match wallet address');
     }
     if (data.domain.chainId != expectedChainId) {
-      throw Exception('EIP-7702 chain ID mismatch: expected $expectedChainId, got ${data.domain.chainId}');
+      throw Exception(
+        'EIP-7702 chain ID mismatch: expected $expectedChainId, got ${data.domain.chainId}',
+      );
     }
 
     // Cross-check signed delegate against response metadata
@@ -212,10 +211,11 @@ class RealUnitSellPaymentInfoService {
     }
 
     // Validate unsigned metadata for consistency
-    if (data.tokenAddress.toLowerCase() != _appStore.apiConfig.asset.address.toLowerCase()) {
+    if (data.tokenAddress.toLowerCase() != appStore.apiConfig.asset.address.toLowerCase()) {
       throw Exception('EIP-7702 token address does not match RealUnit token');
     }
-    final expectedWei = BigInt.from(userAmount) * BigInt.from(10).pow(_appStore.apiConfig.asset.decimals);
+    final expectedWei =
+        BigInt.from(userAmount) * BigInt.from(10).pow(appStore.apiConfig.asset.decimals);
     final actualWei = BigInt.tryParse(data.amountWei);
     if (actualWei == null || actualWei != expectedWei) {
       throw Exception('EIP-7702 amount mismatch: expected $expectedWei, got ${data.amountWei}');

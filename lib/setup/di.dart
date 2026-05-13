@@ -171,7 +171,6 @@ Future<void> setupBlocs() async {
       getIt<WalletService>(),
       getIt<BalanceService>(),
       getIt<TransactionHistoryService>(),
-      getIt<DfxWidgetService>(),
       getIt<SettingsService>(),
       getIt<AppStore>(),
       getIt<BitboxService>(),

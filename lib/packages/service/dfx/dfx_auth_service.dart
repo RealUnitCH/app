@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:http/http.dart' as http;
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
@@ -107,5 +108,98 @@ abstract class DFXAuthService {
   Future<String?> refreshAuthToken() async {
     invalidateAuthToken();
     return getAuthToken();
+  }
+
+  Future<http.Response> authenticatedGet(
+    Uri uri, {
+    Map<String, String> headers = const {},
+  }) async {
+    var authToken = await getAuthToken();
+    var response = await appStore.httpClient.get(
+      uri,
+      headers: {
+        ...headers,
+        'Authorization': 'Bearer $authToken',
+      },
+    );
+
+    if (response.statusCode == 401) {
+      authToken = await refreshAuthToken();
+      response = await appStore.httpClient.get(
+        uri,
+        headers: {
+          ...headers,
+          'Authorization': 'Bearer $authToken',
+        },
+      );
+    }
+
+    return response;
+  }
+
+  Future<http.Response> authenticatedPut(
+    Uri uri, {
+    Map<String, String> headers = const {},
+    Object? body,
+    Encoding? encoding,
+  }) async {
+    var authToken = await getAuthToken();
+    var response = await appStore.httpClient.put(
+      uri,
+      headers: {
+        ...headers,
+        'Authorization': 'Bearer $authToken',
+      },
+      body: body,
+      encoding: encoding,
+    );
+
+    if (response.statusCode == 401) {
+      authToken = await refreshAuthToken();
+      response = await appStore.httpClient.put(
+        uri,
+        headers: {
+          ...headers,
+          'Authorization': 'Bearer $authToken',
+        },
+        body: body,
+        encoding: encoding,
+      );
+    }
+
+    return response;
+  }
+
+  Future<http.Response> authenticatedPost(
+    Uri uri, {
+    Map<String, String> headers = const {},
+    Object? body,
+    Encoding? encoding,
+  }) async {
+    var authToken = await getAuthToken();
+    var response = await appStore.httpClient.post(
+      uri,
+      headers: {
+        ...headers,
+        'Authorization': 'Bearer $authToken',
+      },
+      body: body,
+      encoding: encoding,
+    );
+
+    if (response.statusCode == 401) {
+      authToken = await refreshAuthToken();
+      response = await appStore.httpClient.post(
+        uri,
+        headers: {
+          ...headers,
+          'Authorization': 'Bearer $authToken',
+        },
+        body: body,
+        encoding: encoding,
+      );
+    }
+
+    return response;
   }
 }
