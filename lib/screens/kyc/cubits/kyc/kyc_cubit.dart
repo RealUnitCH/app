@@ -132,8 +132,13 @@ class KycCubit extends Cubit<KycState> {
         (step) => _requiredStepNames.contains(step.name),
       );
 
+      // `onHold` is semantically a backend-side wait state — the user has no
+      // actionable next step, the same as `inReview`. Treat it identically so
+      // a high-level user with an `onHold` required step is shown the pending
+      // screen instead of falling through to `KycCompleted`.
+      const pendingStatuses = {KycStepStatus.inReview, KycStepStatus.onHold};
       final pendingStep = requiredSteps.firstWhereOrNull(
-        (step) => step.status == KycStepStatus.inReview,
+        (step) => pendingStatuses.contains(step.status),
       );
       if (pendingStep != null) {
         final step = _mapStepName(pendingStep.name);

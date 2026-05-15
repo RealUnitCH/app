@@ -5,17 +5,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 
-class MockBitboxManager extends Mock implements BitboxManager {}
+class _MockBitboxManager extends Mock implements BitboxManager {}
 
 void main() {
-  late MockBitboxManager manager;
+  late _MockBitboxManager manager;
 
   setUpAll(() {
     registerFallbackValue(Uint8List(0));
   });
 
   setUp(() {
-    manager = MockBitboxManager();
+    manager = _MockBitboxManager();
   });
 
   BitboxCredentials connected() =>
@@ -47,21 +47,23 @@ void main() {
       final fakeSig = Uint8List.fromList(
         List<int>.filled(32, 0xAA) + List<int>.filled(32, 0xBB) + [0x01],
       );
-      when(() => manager.signETHRLPTransaction(any(), any(), any(), any()))
-          .thenAnswer((_) async => fakeSig);
+      when(
+        () => manager.signETHRLPTransaction(any(), any(), any(), any()),
+      ).thenAnswer((_) async => fakeSig);
 
       final payload = Uint8List.fromList([0x02, 0xCA, 0xFE, 0xBA, 0xBE]);
       final sig = await connected().signToSignature(payload, chainId: 1, isEIP1559: true);
 
       expect(sig.v, 1, reason: 'EIP-1559 keeps the raw parity v as-is');
-      final captured = verify(() => manager.signETHRLPTransaction(
-            captureAny(),
-            captureAny(),
-            captureAny(),
-            captureAny(),
-          )).captured;
-      expect(captured[2], 'cafebabe',
-          reason: 'leading 0x02 must be stripped before hex-encoding');
+      final captured = verify(
+        () => manager.signETHRLPTransaction(
+          captureAny(),
+          captureAny(),
+          captureAny(),
+          captureAny(),
+        ),
+      ).captured;
+      expect(captured[2], 'cafebabe', reason: 'leading 0x02 must be stripped before hex-encoding');
     });
 
     test('signToSignature returns raw v for legacy (non-EIP-155) signatures', () async {
@@ -69,8 +71,9 @@ void main() {
       final fakeSig = Uint8List.fromList(
         List<int>.filled(32, 0x11) + List<int>.filled(32, 0x22) + [27],
       );
-      when(() => manager.signETHRLPTransaction(any(), any(), any(), any()))
-          .thenAnswer((_) async => fakeSig);
+      when(
+        () => manager.signETHRLPTransaction(any(), any(), any(), any()),
+      ).thenAnswer((_) async => fakeSig);
 
       final sig = await connected().signToSignature(Uint8List.fromList([0xDE, 0xAD]));
       expect(sig.v, 27);
@@ -81,11 +84,11 @@ void main() {
       final fakeSig = Uint8List.fromList(
         List<int>.filled(32, 0x11) + List<int>.filled(32, 0x22) + [37],
       );
-      when(() => manager.signETHRLPTransaction(any(), any(), any(), any()))
-          .thenAnswer((_) async => fakeSig);
+      when(
+        () => manager.signETHRLPTransaction(any(), any(), any(), any()),
+      ).thenAnswer((_) async => fakeSig);
 
-      final sig = await connected()
-          .signToSignature(Uint8List.fromList([0xDE, 0xAD]), chainId: 1);
+      final sig = await connected().signToSignature(Uint8List.fromList([0xDE, 0xAD]), chainId: 1);
       expect(sig.v, 37);
     });
 
@@ -93,11 +96,11 @@ void main() {
       final fakeSig = Uint8List.fromList(
         List<int>.filled(32, 0x11) + List<int>.filled(32, 0x22) + [38],
       );
-      when(() => manager.signETHRLPTransaction(any(), any(), any(), any()))
-          .thenAnswer((_) async => fakeSig);
+      when(
+        () => manager.signETHRLPTransaction(any(), any(), any(), any()),
+      ).thenAnswer((_) async => fakeSig);
 
-      final sig = await connected()
-          .signToSignature(Uint8List.fromList([0xDE, 0xAD]), chainId: 1);
+      final sig = await connected().signToSignature(Uint8List.fromList([0xDE, 0xAD]), chainId: 1);
       expect(sig.v, 38);
     });
 
@@ -110,18 +113,20 @@ void main() {
     });
 
     test('signPersonalMessage passes chainId and derivation path to the manager', () async {
-      when(() => manager.signETHMessage(any(), any(), any()))
-          .thenAnswer((_) async => Uint8List.fromList(List.filled(65, 0x01)));
+      when(
+        () => manager.signETHMessage(any(), any(), any()),
+      ).thenAnswer((_) async => Uint8List.fromList(List.filled(65, 0x01)));
 
-      final sig =
-          await connected().signPersonalMessage(Uint8List.fromList([1, 2, 3]), chainId: 1);
+      final sig = await connected().signPersonalMessage(Uint8List.fromList([1, 2, 3]), chainId: 1);
 
       expect(sig.length, 65);
-      final captured = verify(() => manager.signETHMessage(
-            captureAny(),
-            captureAny(),
-            captureAny(),
-          )).captured;
+      final captured = verify(
+        () => manager.signETHMessage(
+          captureAny(),
+          captureAny(),
+          captureAny(),
+        ),
+      ).captured;
       expect(captured[0], 1);
       expect(captured[1], "m/44'/60'/0'/0/0");
     });
@@ -135,8 +140,9 @@ void main() {
     });
 
     test('signTypedDataV4 hex-encodes signature bytes with 0x prefix', () async {
-      when(() => manager.signETHTypedMessage(any(), any(), any()))
-          .thenAnswer((_) async => Uint8List.fromList([0xCA, 0xFE, 0xBA, 0xBE]));
+      when(
+        () => manager.signETHTypedMessage(any(), any(), any()),
+      ).thenAnswer((_) async => Uint8List.fromList([0xCA, 0xFE, 0xBA, 0xBE]));
 
       final sig = await connected().signTypedDataV4(1, '{"primaryType":"Foo"}');
       expect(sig, '0xcafebabe');
@@ -145,8 +151,7 @@ void main() {
     test('serializes parallel signs through the static queue', () async {
       var inFlight = 0;
       var maxParallel = 0;
-      when(() => manager.signETHTypedMessage(any(), any(), any()))
-          .thenAnswer((_) async {
+      when(() => manager.signETHTypedMessage(any(), any(), any())).thenAnswer((_) async {
         inFlight++;
         if (inFlight > maxParallel) maxParallel = inFlight;
         await Future<void>.delayed(const Duration(milliseconds: 50));
@@ -166,8 +171,7 @@ void main() {
 
     test('queue continues after a sign throws (slot released in finally)', () async {
       var call = 0;
-      when(() => manager.signETHTypedMessage(any(), any(), any()))
-          .thenAnswer((_) async {
+      when(() => manager.signETHTypedMessage(any(), any(), any())).thenAnswer((_) async {
         call++;
         if (call == 1) throw Exception('first sign explodes');
         return Uint8List.fromList([0x42]);

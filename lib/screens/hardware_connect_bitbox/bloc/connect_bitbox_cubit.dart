@@ -17,19 +17,28 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
   static const Duration _defaultConfirmPairingTimeout = Duration(seconds: 75);
   static const Duration _defaultCreateWalletTimeout = Duration(seconds: 30);
 
+  // Outer cap on `init()` — the user has to press the pairing button on the
+  // device while we wait. 120s is the SDK's own pairing-confirm budget plus a
+  // small margin; anything beyond that almost certainly means the user
+  // walked away and the device-side ephemeral noise channel has died.
+  static const Duration _defaultPairingPinTimeout = Duration(seconds: 120);
+
   ConnectBitboxCubit(
     this._service,
     this._walletService, {
     Duration confirmPairingTimeout = _defaultConfirmPairingTimeout,
     Duration createWalletTimeout = _defaultCreateWalletTimeout,
-  })  : _confirmPairingTimeout = confirmPairingTimeout,
-        _createWalletTimeout = createWalletTimeout,
-        super(BitboxNotConnected()) {
+    Duration pairingPinTimeout = _defaultPairingPinTimeout,
+  }) : _confirmPairingTimeout = confirmPairingTimeout,
+       _createWalletTimeout = createWalletTimeout,
+       _pairingPinTimeout = pairingPinTimeout,
+       super(BitboxNotConnected()) {
     _startScanning();
   }
 
   final Duration _confirmPairingTimeout;
   final Duration _createWalletTimeout;
+  final Duration _pairingPinTimeout;
 
   Future<void> _startScanning() async {
     if (DeviceInfo.instance.isIOS) await _service.startScan();
@@ -119,7 +128,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     try {
       emit(BitboxPairing(currentState.device));
       final initOk = await _pendingInit!.timeout(
-        const Duration(seconds: 120),
+        _pairingPinTimeout,
         onTimeout: () => false,
       );
       if (!initOk) throw Exception('pairing not confirmed on device');

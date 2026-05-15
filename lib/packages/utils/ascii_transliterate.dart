@@ -12,7 +12,6 @@
 /// the BitBox sign envelope.
 library;
 
-// ignore: depend_on_referenced_packages
 import 'package:characters/characters.dart';
 
 /// Multi-char replacements (German digraphs + nordic æ/ø) — applied first.
@@ -123,5 +122,4 @@ String toBitboxSafeAscii(String input) {
 }
 
 /// Convenience for nullable strings.
-String? toBitboxSafeAsciiOrNull(String? input) =>
-    input == null ? null : toBitboxSafeAscii(input);
+String? toBitboxSafeAsciiOrNull(String? input) => input == null ? null : toBitboxSafeAscii(input);

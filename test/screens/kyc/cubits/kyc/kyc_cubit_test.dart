@@ -500,6 +500,23 @@ void main() {
     );
 
     blocTest<KycCubit, KycState>(
+      'emits KycPending at high level when ident is onHold (backend wait state)',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => withIdentStatus(KycStepStatus.onHold),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        cubit.markBitboxConfirmed();
+        await cubit.checkKyc();
+      },
+      expect: () => [const KycLoading(), const KycPending(KycStep.ident)],
+    );
+
+    blocTest<KycCubit, KycState>(
       'emits KycPending at high level when ident is inReview',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
