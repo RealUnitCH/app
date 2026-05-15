@@ -74,9 +74,9 @@ void main() {
 
     testWidgets('renders the label when provided', (tester) async {
       await tester.pumpWidget(_host(
-        DropdownField<String>(
+        const DropdownField<String>(
           label: 'Country',
-          items: const [
+          items: [
             DropdownMenuItem(value: 'CH', child: Text('CH')),
           ],
         ),
