@@ -116,33 +116,51 @@ class KycCubit extends Cubit<KycState> {
         return;
       }
 
+      // Step status drives routing, not the numeric level: the backend can
+      // report level >= required while individual required steps are still
+      // failed/outdated/notStarted/dataRequested, and those have to be
+      // re-done before the user is "completed".
+      final hasMergeRequest = kycStatus.kycSteps.any(
+        (step) => step.reason == KycStepReason.accountMergeRequested,
+      );
+      if (hasMergeRequest) {
+        emit(const KycAccountMergeRequested());
+        return;
+      }
+
+      final requiredSteps = kycStatus.kycSteps.where(
+        (step) => _requiredStepNames.contains(step.name),
+      );
+
+      final pendingStep = requiredSteps.firstWhereOrNull(
+        (step) => step.status == KycStepStatus.inReview,
+      );
+      if (pendingStep != null) {
+        final step = _mapStepName(pendingStep.name);
+        if (step != null) {
+          emit(KycPending(step));
+        } else {
+          emit(KycUnsupportedStepFailure(pendingStep.name));
+        }
+        return;
+      }
+
+      const actionableStatuses = {
+        KycStepStatus.notStarted,
+        KycStepStatus.inProgress,
+        KycStepStatus.failed,
+        KycStepStatus.outdated,
+        KycStepStatus.dataRequested,
+      };
+      final unfinishedStep = requiredSteps.firstWhereOrNull(
+        (step) => actionableStatuses.contains(step.status),
+      );
+      if (unfinishedStep != null) {
+        await _continueKyc(generation);
+        return;
+      }
+
       if (level < _requiredLevel) {
-        final hasMergeRequest = kycStatus.kycSteps.any(
-          (step) => step.reason == KycStepReason.accountMergeRequested,
-        );
-        if (hasMergeRequest) {
-          emit(const KycAccountMergeRequested());
-          return;
-        }
-
-        final requiredSteps = kycStatus.kycSteps.where(
-          (step) => _requiredStepNames.contains(step.name),
-        );
-
-        final pendingStep = requiredSteps.firstWhereOrNull(
-          (step) => step.status == KycStepStatus.inReview,
-        );
-
-        if (pendingStep != null) {
-          final step = _mapStepName(pendingStep.name);
-          if (step != null) {
-            emit(KycPending(step));
-          } else {
-            emit(KycUnsupportedStepFailure(pendingStep.name));
-          }
-          return;
-        }
-
         await _continueKyc(generation);
         return;
       }
