@@ -11,7 +11,7 @@ void main() {
   group('$QRAddressWidget', () {
     testWidgets('renders a QrImageView for the uri', (tester) async {
       await tester.pumpWidget(_host(
-        QRAddressWidget(uri: 'ethereum:$_address', subtitle: _address),
+        const QRAddressWidget(uri: 'ethereum:$_address', subtitle: _address),
       ));
 
       expect(find.byType(QrImageView), findsOneWidget);
@@ -20,7 +20,7 @@ void main() {
     testWidgets('renders the address as one Text.rich containing all chunks',
         (tester) async {
       await tester.pumpWidget(_host(
-        QRAddressWidget(uri: '', subtitle: _address),
+        const QRAddressWidget(uri: '', subtitle: _address),
       ));
 
       // RichText is rendered with concatenated text — find.textContaining
@@ -31,7 +31,7 @@ void main() {
 
     testWidgets('renders a copy icon next to the address', (tester) async {
       await tester.pumpWidget(_host(
-        QRAddressWidget(uri: '', subtitle: _address),
+        const QRAddressWidget(uri: '', subtitle: _address),
       ));
 
       expect(find.byIcon(Icons.copy_outlined), findsOneWidget);
@@ -40,7 +40,7 @@ void main() {
     testWidgets('tapping the address row is wrapped in a tappable InkWell',
         (tester) async {
       await tester.pumpWidget(_host(
-        QRAddressWidget(uri: '', subtitle: _address),
+        const QRAddressWidget(uri: '', subtitle: _address),
       ));
 
       // Tapping should not throw (clipboard plugin is no-op in test bindings).
