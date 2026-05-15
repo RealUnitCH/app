@@ -69,8 +69,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v0.0.3"
-      resolved-ref: "1807d51fc93e215b5860cb9888b6409aea5bba67"
+      ref: "v0.0.5"
+      resolved-ref: "99b31247416b9333a4e89f4b32b2f4565622a4b0"
       url: "https://github.com/DFXswiss/bitbox_flutter.git"
     source: git
     version: "0.0.1"
