@@ -28,7 +28,7 @@ void main() {
       build: () => SettingsSeedCubit(wallet),
       act: (c) => c.toggleShowSeed(),
       expect: () => [
-        SettingsSeedState(_testSeed, showSeed: true),
+        const SettingsSeedState(_testSeed, showSeed: true),
       ],
     );
 
@@ -39,8 +39,8 @@ void main() {
         ..toggleShowSeed()
         ..toggleShowSeed(),
       expect: () => [
-        SettingsSeedState(_testSeed, showSeed: true),
-        SettingsSeedState(_testSeed),
+        const SettingsSeedState(_testSeed, showSeed: true),
+        const SettingsSeedState(_testSeed),
       ],
     );
   });
