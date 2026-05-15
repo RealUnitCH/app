@@ -9,23 +9,23 @@ import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/bloc/connect_bitbox_cubit.dart';
 
-class MockBitboxService extends Mock implements BitboxService {}
+class _MockBitboxService extends Mock implements BitboxService {}
 
-class MockWalletService extends Mock implements WalletService {}
+class _MockWalletService extends Mock implements WalletService {}
 
-class MockBitboxWallet extends Mock implements BitboxWallet {}
+class _MockBitboxWallet extends Mock implements BitboxWallet {}
 
-class FakeBitboxDevice extends Fake implements sdk.BitboxDevice {}
+class _FakeBitboxDevice extends Fake implements sdk.BitboxDevice {}
 
 void main() {
-  late MockBitboxService service;
-  late MockWalletService walletService;
-  late FakeBitboxDevice device;
-  late MockBitboxWallet wallet;
+  late _MockBitboxService service;
+  late _MockWalletService walletService;
+  late _FakeBitboxDevice device;
+  late _MockBitboxWallet wallet;
 
   setUpAll(() {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-    registerFallbackValue(FakeBitboxDevice());
+    registerFallbackValue(_FakeBitboxDevice());
   });
 
   tearDownAll(() {
@@ -33,10 +33,10 @@ void main() {
   });
 
   setUp(() {
-    service = MockBitboxService();
-    walletService = MockWalletService();
-    device = FakeBitboxDevice();
-    wallet = MockBitboxWallet();
+    service = _MockBitboxService();
+    walletService = _MockWalletService();
+    device = _FakeBitboxDevice();
+    wallet = _MockBitboxWallet();
 
     when(() => service.startScan()).thenAnswer((_) async => true);
     when(() => service.getAllUsbDevices()).thenAnswer((_) async => []);
@@ -45,17 +45,18 @@ void main() {
   });
 
   // Tests pass in short timeouts so the bounce-back path can be exercised in
-  // real time. Production defaults are 75s/30s.
+  // real time. Production defaults are 75s/30s/120s.
   ConnectBitboxCubit makeCubit({
     Duration confirmPairingTimeout = const Duration(milliseconds: 500),
     Duration createWalletTimeout = const Duration(milliseconds: 500),
-  }) =>
-      ConnectBitboxCubit(
-        service,
-        walletService,
-        confirmPairingTimeout: confirmPairingTimeout,
-        createWalletTimeout: createWalletTimeout,
-      );
+    Duration pairingPinTimeout = const Duration(milliseconds: 500),
+  }) => ConnectBitboxCubit(
+    service,
+    walletService,
+    confirmPairingTimeout: confirmPairingTimeout,
+    createWalletTimeout: createWalletTimeout,
+    pairingPinTimeout: pairingPinTimeout,
+  );
 
   Future<void> waitForState<T>(
     ConnectBitboxCubit cubit, {
@@ -188,6 +189,32 @@ void main() {
       expect(cubit.state, isA<BitboxNotConnected>());
     });
 
+    test('bounces to NotConnected when init never resolves past pairingPinTimeout', () async {
+      // `_pendingInit` is awaited inside `confirmPairing()`. If the user
+      // never presses the device-side pairing button, init stays pending —
+      // the new `pairingPinTimeout` outer cap turns that into a typed
+      // failure path back to BitboxNotConnected.
+      var pollCount = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) => Completer<bool>().future);
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 3 ? '' : 'HASH-ok';
+      });
+
+      final cubit = makeCubit(pairingPinTimeout: const Duration(milliseconds: 200));
+      addTearDown(cubit.close);
+
+      await waitForState<BitboxCheckHash>(cubit);
+      unawaited(cubit.confirmPairing());
+      await waitForState<BitboxPairing>(cubit);
+      await cubit.stream
+          .firstWhere((s) => s is BitboxNotConnected)
+          .timeout(const Duration(seconds: 2));
+      expect(cubit.state, isA<BitboxNotConnected>());
+      verifyNever(() => service.confirmPairing());
+    });
+
     test('bounces to NotConnected when createBitboxWallet hangs past the timeout', () async {
       var pollCount = 0;
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
@@ -197,8 +224,9 @@ void main() {
         return pollCount < 3 ? '' : 'HASH-ok';
       });
       when(() => service.confirmPairing()).thenAnswer((_) async {});
-      when(() => walletService.createBitboxWallet(any()))
-          .thenAnswer((_) => Completer<BitboxWallet>().future);
+      when(
+        () => walletService.createBitboxWallet(any()),
+      ).thenAnswer((_) => Completer<BitboxWallet>().future);
 
       final cubit = makeCubit(createWalletTimeout: const Duration(milliseconds: 200));
       addTearDown(cubit.close);
