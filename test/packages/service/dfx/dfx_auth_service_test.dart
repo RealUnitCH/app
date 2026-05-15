@@ -1,11 +1,19 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/config/api_config.dart';
+import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:web3dart/web3dart.dart';
+
+// ---------------------------------------------------------------------------
+// Helpers — signature / cache surface (see `getSignature`, `getAuthToken`).
+// ---------------------------------------------------------------------------
 
 class _MockAppStore extends Mock implements AppStore {}
 
@@ -30,8 +38,8 @@ class _StubWalletAccount extends AWalletAccount {
   }
 }
 
-class _TestAuthService extends DFXAuthService {
-  _TestAuthService(super.appStore, this._wallet, this._address);
+class _SignatureTestAuthService extends DFXAuthService {
+  _SignatureTestAuthService(super.appStore, this._wallet, this._address);
 
   final AWalletAccount _wallet;
   final String _address;
@@ -43,87 +51,168 @@ class _TestAuthService extends DFXAuthService {
   String get walletAddress => _address;
 }
 
+// ---------------------------------------------------------------------------
+// Helpers — authenticated request retry-on-401 surface.
+// ---------------------------------------------------------------------------
+
+class _MockApiConfig extends Mock implements ApiConfig {}
+
+class _MockCacheRepository extends Mock implements CacheRepository {}
+
+class _RetryTestAppStore extends AppStore {
+  _RetryTestAppStore(this._client)
+    : super(_MockApiConfig.new, SessionCache(_MockCacheRepository()));
+
+  final http.Client _client;
+
+  @override
+  http.Client get httpClient => _client;
+}
+
+class _RetryTestAuthService extends DFXAuthService {
+  _RetryTestAuthService(super.appStore);
+
+  int authTokenCalls = 0;
+  int refreshAuthTokenCalls = 0;
+
+  @override
+  AWalletAccount get wallet => throw UnimplementedError();
+
+  @override
+  String get walletAddress => throw UnimplementedError();
+
+  @override
+  Future<String?> getAuthToken() async {
+    authTokenCalls++;
+    return 'expired-token';
+  }
+
+  @override
+  Future<String?> refreshAuthToken() async {
+    refreshAuthTokenCalls++;
+    return 'fresh-token';
+  }
+}
+
 void main() {
-  late AppStore appStore;
-  late SessionCache sessionCache;
-  late _StubWalletAccount walletAccount;
+  // -------------------------------------------------------------------------
+  // getSignature / getAuthToken — signature cache + empty-sig guards.
+  // -------------------------------------------------------------------------
 
-  const address = '0x1111111111111111111111111111111111111111';
-  const validSig = '0xdeadbeef';
+  group('$DFXAuthService getSignature / getAuthToken', () {
+    late AppStore appStore;
+    late SessionCache sessionCache;
+    late _StubWalletAccount walletAccount;
 
-  setUp(() {
-    appStore = _MockAppStore();
-    sessionCache = _MockSessionCache();
-    walletAccount = _StubWalletAccount(validSig);
+    const address = '0x1111111111111111111111111111111111111111';
+    const validSig = '0xdeadbeef';
 
-    when(() => appStore.sessionCache).thenReturn(sessionCache);
-    when(() => sessionCache.signature).thenReturn(null);
-    when(() => sessionCache.signatureAddress).thenReturn(null);
-    when(() => sessionCache.authToken).thenReturn(null);
-    when(() => sessionCache.saveSignature(any(), any())).thenAnswer((_) async {});
+    setUp(() {
+      appStore = _MockAppStore();
+      sessionCache = _MockSessionCache();
+      walletAccount = _StubWalletAccount(validSig);
+
+      when(() => appStore.sessionCache).thenReturn(sessionCache);
+      when(() => sessionCache.signature).thenReturn(null);
+      when(() => sessionCache.signatureAddress).thenReturn(null);
+      when(() => sessionCache.authToken).thenReturn(null);
+      when(() => sessionCache.saveSignature(any(), any())).thenAnswer((_) async {});
+    });
+
+    _SignatureTestAuthService buildService() =>
+        _SignatureTestAuthService(appStore, walletAccount, address);
+
+    group('getSignature', () {
+      test('returns the cached signature when address matches (no re-sign)', () async {
+        when(() => sessionCache.signature).thenReturn(validSig);
+        when(() => sessionCache.signatureAddress).thenReturn(address);
+
+        final result = await buildService().getSignature('msg');
+
+        expect(result, validSig);
+        expect(walletAccount.signCallCount, 0);
+        verifyNever(() => sessionCache.saveSignature(any(), any()));
+      });
+
+      test('signs and caches when no cached signature exists', () async {
+        final result = await buildService().getSignature('msg');
+
+        expect(result, validSig);
+        expect(walletAccount.signCallCount, 1);
+        verify(() => sessionCache.saveSignature(address, validSig)).called(1);
+      });
+
+      test('signs again when the cached signature belongs to a different address', () async {
+        when(() => sessionCache.signature).thenReturn(validSig);
+        when(() => sessionCache.signatureAddress).thenReturn(
+          '0x2222222222222222222222222222222222222222',
+        );
+
+        final result = await buildService().getSignature('msg');
+
+        expect(result, validSig);
+        expect(walletAccount.signCallCount, 1);
+      });
+
+      for (final emptySignature in const ['', '0x']) {
+        test(
+          'throws SigningCancelledException when the wallet returns "$emptySignature"',
+          () async {
+            walletAccount = _StubWalletAccount(emptySignature);
+
+            expect(
+              () => buildService().getSignature('msg'),
+              throwsA(isA<SigningCancelledException>()),
+            );
+          },
+        );
+      }
+    });
+
+    group('getAuthToken', () {
+      test('returns the cached auth token without re-signing', () async {
+        when(() => sessionCache.authToken).thenReturn('cached.jwt.token');
+
+        final token = await buildService().getAuthToken();
+
+        expect(token, 'cached.jwt.token');
+        expect(walletAccount.signCallCount, 0);
+      });
+    });
+
+    // TODO(#314 Phase 0): cover the 3 min `_signMessageTimeout` via the
+    // `fake_async` package. Not yet a dev_dependency in this repo — adding it
+    // would require a follow-up. Captured here as an explicit gap.
   });
 
-  _TestAuthService buildService() => _TestAuthService(appStore, walletAccount, address);
+  // -------------------------------------------------------------------------
+  // authenticatedGet/Put/Post — one-time refresh-on-401 retry.
+  // -------------------------------------------------------------------------
 
-  group('$DFXAuthService getSignature', () {
-    test('returns the cached signature when address matches (no re-sign)', () async {
-      when(() => sessionCache.signature).thenReturn(validSig);
-      when(() => sessionCache.signatureAddress).thenReturn(address);
+  group('$DFXAuthService authenticated requests', () {
+    test('retries authenticated requests once with a refreshed token on 401', () async {
+      final seenAuthHeaders = <String?>[];
+      final client = MockClient((request) async {
+        seenAuthHeaders.add(request.headers['Authorization']);
 
-      final result = await buildService().getSignature('msg');
+        if (seenAuthHeaders.length == 1) {
+          return http.Response('{"message":"Unauthorized"}', 401);
+        }
 
-      expect(result, validSig);
-      expect(walletAccount.signCallCount, 0);
-      verifyNever(() => sessionCache.saveSignature(any(), any()));
-    });
+        return http.Response('{"ok":true}', 200);
+      });
+      final service = _RetryTestAuthService(_RetryTestAppStore(client));
 
-    test('signs and caches when no cached signature exists', () async {
-      final result = await buildService().getSignature('msg');
-
-      expect(result, validSig);
-      expect(walletAccount.signCallCount, 1);
-      verify(() => sessionCache.saveSignature(address, validSig)).called(1);
-    });
-
-    test('signs again when the cached signature belongs to a different address', () async {
-      when(() => sessionCache.signature).thenReturn(validSig);
-      when(() => sessionCache.signatureAddress).thenReturn(
-        '0x2222222222222222222222222222222222222222',
+      final response = await service.authenticatedPut(
+        Uri.parse('https://api.example.test/v1/resource'),
+        headers: {'Content-Type': 'application/json'},
+        body: '{"value":1}',
       );
 
-      final result = await buildService().getSignature('msg');
-
-      expect(result, validSig);
-      expect(walletAccount.signCallCount, 1);
-    });
-
-    for (final emptySignature in const ['', '0x']) {
-      test(
-        'throws SigningCancelledException when the wallet returns "$emptySignature"',
-        () async {
-          walletAccount = _StubWalletAccount(emptySignature);
-
-          expect(
-            () => buildService().getSignature('msg'),
-            throwsA(isA<SigningCancelledException>()),
-          );
-        },
-      );
-    }
-  });
-
-  group('$DFXAuthService getAuthToken', () {
-    test('returns the cached auth token without re-signing', () async {
-      when(() => sessionCache.authToken).thenReturn('cached.jwt.token');
-
-      final token = await buildService().getAuthToken();
-
-      expect(token, 'cached.jwt.token');
-      expect(walletAccount.signCallCount, 0);
+      expect(response.statusCode, 200);
+      expect(seenAuthHeaders, ['Bearer expired-token', 'Bearer fresh-token']);
+      expect(service.authTokenCalls, 1);
+      expect(service.refreshAuthTokenCalls, 1);
     });
   });
-
-  // TODO(#314 Phase 0): cover the 3 min `_signMessageTimeout` via the
-  // `fake_async` package. Not yet a dev_dependency in this repo — adding it
-  // would require a follow-up. Captured here as an explicit gap.
 }

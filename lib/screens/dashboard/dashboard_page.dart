@@ -17,7 +17,6 @@ import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_por
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_portfolio_chart_widget.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_price_widget.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_transaction_history.dart';
-import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
@@ -67,7 +66,6 @@ class DashboardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isFiatServiceAvailable = context.watch<HomeBloc>().state.isFiatServiceAvailable;
     final dashboardState = context.watch<DashboardBloc>().state;
     final balance = context.watch<BalanceCubit>().state.balance;
 
@@ -137,7 +135,7 @@ class DashboardView extends StatelessWidget {
                           child: Column(
                             spacing: 20.0,
                             children: [
-                              if (isFiatServiceAvailable) const DashboardActions(),
+                              const DashboardActions(),
                               DashboardPortfolio(
                                 price: dashboardState.price,
                               ),
@@ -164,14 +162,13 @@ class DashboardView extends StatelessWidget {
                               height: 165,
                             ),
                             const Spacer(),
-                            if (isFiatServiceAvailable)
-                              Padding(
-                                padding: const .symmetric(vertical: 20),
-                                child: AppFilledButton(
-                                  onPressed: () => context.pushNamed(AppRoutes.buy),
-                                  label: S.of(context).buyRealUnit,
-                                ),
+                            Padding(
+                              padding: const .symmetric(vertical: 20),
+                              child: AppFilledButton(
+                                onPressed: () => context.pushNamed(AppRoutes.buy),
+                                label: S.of(context).buyRealUnit,
                               ),
+                            ),
                           ],
                         ),
                       ),

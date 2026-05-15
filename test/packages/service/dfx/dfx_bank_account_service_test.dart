@@ -22,14 +22,13 @@ Map<String, dynamic> _bankAccount({
   String? label,
   bool isActive = true,
   bool isDefault = false,
-}) =>
-    {
-      'id': id,
-      'iban': iban,
-      'label': label,
-      'active': isActive,
-      'default': isDefault,
-    };
+}) => {
+  'id': id,
+  'iban': iban,
+  'label': label,
+  'active': isActive,
+  'default': isDefault,
+};
 
 void main() {
   late _MockAppStore appStore;
@@ -38,9 +37,12 @@ void main() {
   setUp(() {
     appStore = _MockAppStore();
     sessionCache = SessionCache(_MockCacheRepository());
+    // Pre-seed the JWT so `authenticatedGet/Put/Post` short-circuits the
+    // `getAuthToken` refresh path (which would otherwise need a fully
+    // stubbed wallet + signMessage endpoint).
+    sessionCache.setAuthToken('test-jwt');
     when(() => appStore.sessionCache).thenReturn(sessionCache);
-    when(() => appStore.apiConfig)
-        .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+    when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
   });
 
   DfxBankAccountService build(http.Client client) {
@@ -74,10 +76,12 @@ void main() {
     });
 
     test('getBankAccounts throws ApiException on non-2xx', () async {
-      final client = MockClient((_) async => http.Response(
-            jsonEncode({'statusCode': 403, 'message': 'forbidden'}),
-            403,
-          ));
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({'statusCode': 403, 'message': 'forbidden'}),
+          403,
+        ),
+      );
 
       expect(
         () => build(client).getBankAccounts(),
@@ -117,10 +121,12 @@ void main() {
     });
 
     test('createBankAccount throws ApiException on non-2xx', () async {
-      final client = MockClient((_) async => http.Response(
-            jsonEncode({'statusCode': 422, 'message': 'invalid iban'}),
-            422,
-          ));
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({'statusCode': 422, 'message': 'invalid iban'}),
+          422,
+        ),
+      );
 
       expect(
         () => build(client).createBankAccount('NOT_AN_IBAN', null),
@@ -157,10 +163,12 @@ void main() {
     });
 
     test('updateBankAccount throws ApiException on non-2xx', () async {
-      final client = MockClient((_) async => http.Response(
-            jsonEncode({'statusCode': 404, 'message': 'not found'}),
-            404,
-          ));
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({'statusCode': 404, 'message': 'not found'}),
+          404,
+        ),
+      );
 
       expect(
         () => build(client).updateBankAccount(id: 99, label: 'x'),
