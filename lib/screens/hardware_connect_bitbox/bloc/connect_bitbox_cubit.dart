@@ -11,9 +11,34 @@ import 'package:realunit_wallet/packages/wallet/wallet.dart';
 part 'connect_bitbox_state.dart';
 
 class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
-  ConnectBitboxCubit(this._service, this._walletService) : super(BitboxNotConnected()) {
+  // Bound the host-side calls slightly above the native 60s BLE read timeout
+  // so a dropped indication surfaces as BitboxNotConnected, not an endless
+  // spinner.
+  static const Duration _defaultConfirmPairingTimeout = Duration(seconds: 75);
+  static const Duration _defaultCreateWalletTimeout = Duration(seconds: 30);
+
+  // Outer cap on `init()` — the user has to press the pairing button on the
+  // device while we wait. 120s is the SDK's own pairing-confirm budget plus a
+  // small margin; anything beyond that almost certainly means the user
+  // walked away and the device-side ephemeral noise channel has died.
+  static const Duration _defaultPairingPinTimeout = Duration(seconds: 120);
+
+  ConnectBitboxCubit(
+    this._service,
+    this._walletService, {
+    Duration confirmPairingTimeout = _defaultConfirmPairingTimeout,
+    Duration createWalletTimeout = _defaultCreateWalletTimeout,
+    Duration pairingPinTimeout = _defaultPairingPinTimeout,
+  }) : _confirmPairingTimeout = confirmPairingTimeout,
+       _createWalletTimeout = createWalletTimeout,
+       _pairingPinTimeout = pairingPinTimeout,
+       super(BitboxNotConnected()) {
     _startScanning();
   }
+
+  final Duration _confirmPairingTimeout;
+  final Duration _createWalletTimeout;
+  final Duration _pairingPinTimeout;
 
   Future<void> _startScanning() async {
     if (DeviceInfo.instance.isIOS) await _service.startScan();
@@ -103,12 +128,27 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     try {
       emit(BitboxPairing(currentState.device));
       final initOk = await _pendingInit!.timeout(
-        const Duration(seconds: 120),
+        _pairingPinTimeout,
         onTimeout: () => false,
       );
       if (!initOk) throw Exception('pairing not confirmed on device');
-      await _service.confirmPairing();
-      final wallet = await _walletService.createBitboxWallet('Luke-Skywallet');
+      await _service.confirmPairing().timeout(
+        _confirmPairingTimeout,
+        onTimeout: () => throw TimeoutException(
+          'BitBox did not acknowledge channel-hash verify within '
+          '${_confirmPairingTimeout.inSeconds}s — BLE link likely silent. '
+          'Disconnect the device, restart the app, and re-pair.',
+        ),
+      );
+      final wallet = await _walletService
+          .createBitboxWallet('Luke-Skywallet')
+          .timeout(
+            _createWalletTimeout,
+            onTimeout: () => throw TimeoutException(
+              'BitBox did not return an ETH address within '
+              '${_createWalletTimeout.inSeconds}s. Try disconnecting and re-pairing.',
+            ),
+          );
       _service.startConnectionStatusObserver();
       emit(BitboxConnected(wallet));
     } catch (e) {
