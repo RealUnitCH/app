@@ -1,25 +1,28 @@
 import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
-import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_buy_price_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_buy_shares_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_sell_price_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_sell_shares_dto.dart';
+import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
-class DfxBrokerbotService {
+class DfxBrokerbotService extends DFXAuthService {
   static const _buyPricePath = '/v1/realunit/brokerbot/buyPrice';
   static const _buySharesPath = '/v1/realunit/brokerbot/buyShares';
   static const _sellPricePath = '/v1/realunit/brokerbot/sellPrice';
   static const _sellSharesPath = '/v1/realunit/brokerbot/sellShares';
 
-  String get _host => _appStore.apiConfig.apiHost;
+  DfxBrokerbotService(super.appStore);
 
-  final AppStore _appStore;
+  @override
+  AWalletAccount get wallet => appStore.wallet.currentAccount;
 
-  DfxBrokerbotService(this._appStore);
+  @override
+  String get walletAddress => wallet.primaryAddress.address.hexEip55;
 
   /// Convert REALU shares → CHF
   Future<BrokerbotBuyPriceDto> getBuyPrice(String sharesInput, Currency currency) async {
@@ -28,11 +31,11 @@ class DfxBrokerbotService {
       throw Exception('BuyPrice request failed: sharesInput is not valid');
     }
 
-    final uri = buildUri(_host, _buyPricePath, {
+    final uri = buildUri(host, _buyPricePath, {
       'shares': shares.toString(),
       'currency': currency.code,
     });
-    final res = await _appStore.httpClient.get(uri);
+    final res = await appStore.httpClient.get(uri);
 
     if (res.statusCode != 200) {
       throw Exception('BuyPrice request failed: ${res.body}');
@@ -48,11 +51,11 @@ class DfxBrokerbotService {
       throw Exception('Shares request failed: amountInput is not valid');
     }
 
-    final uri = buildUri(_host, _buySharesPath, {
+    final uri = buildUri(host, _buySharesPath, {
       'amount': amount.toString(),
       'currency': currency.code,
     });
-    final res = await _appStore.httpClient.get(uri);
+    final res = await appStore.httpClient.get(uri);
 
     if (res.statusCode != 200) {
       throw Exception('Shares request failed: ${res.body}');
@@ -68,15 +71,11 @@ class DfxBrokerbotService {
       throw Exception('SellPrice request failed: sharesInput is invalid');
     }
 
-    final authToken = _appStore.sessionCache.authToken;
-    final uri = buildUri(_host, _sellPricePath, {
+    final uri = buildUri(host, _sellPricePath, {
       'shares': shares.toString(),
       'currency': currency.code,
     });
-    final res = await _appStore.httpClient.get(
-      uri,
-      headers: {'Authorization': 'Bearer $authToken'},
-    );
+    final res = await authenticatedGet(uri);
 
     if (res.statusCode != 200) {
       final errorJson = jsonDecode(res.body) as Map<String, dynamic>;
@@ -93,15 +92,11 @@ class DfxBrokerbotService {
       throw Exception('SellShares request failed: amountInput is invalid');
     }
 
-    final authToken = _appStore.sessionCache.authToken;
-    final uri = buildUri(_host, _sellSharesPath, {
+    final uri = buildUri(host, _sellSharesPath, {
       'amount': amount.toString(),
       'currency': currency.code,
     });
-    final res = await _appStore.httpClient.get(
-      uri,
-      headers: {'Authorization': 'Bearer $authToken'},
-    );
+    final res = await authenticatedGet(uri);
 
     if (res.statusCode != 200) {
       final errorJson = jsonDecode(res.body) as Map<String, dynamic>;

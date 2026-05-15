@@ -1,34 +1,35 @@
 import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
-import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/dto/real_unit_buy_confirm_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/dto/real_unit_buy_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/dto/real_unit_buy_payment_info_dto.dart';
+import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
-class RealUnitBuyPaymentInfoService {
+class RealUnitBuyPaymentInfoService extends DFXAuthService {
   static const _buyPaymentInfoPath = '/v1/realunit/buy';
   static String _confirmPaymentPath(int id) => '/v1/realunit/buy/$id/confirm';
 
-  String get _host => _appStore.apiConfig.apiHost;
+  RealUnitBuyPaymentInfoService(super.appStore);
 
-  final AppStore _appStore;
+  @override
+  AWalletAccount get wallet => appStore.wallet.currentAccount;
 
-  RealUnitBuyPaymentInfoService(AppStore appStore) : _appStore = appStore;
+  @override
+  String get walletAddress => wallet.primaryAddress.address.hexEip55;
 
   Future<BuyPaymentInfo> getPaymentInfo(int amount, {Currency currency = Currency.chf}) async {
     final buyDto = RealUnitBuyDto(amount: amount, currency: currency);
 
-    final authToken = _appStore.sessionCache.authToken;
-    final uri = buildUri(_host, _buyPaymentInfoPath);
-    final response = await _appStore.httpClient.put(
+    final uri = buildUri(host, _buyPaymentInfoPath);
+    final response = await authenticatedPut(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
       body: jsonEncode(buyDto.toJson()),
     );
@@ -61,14 +62,10 @@ class RealUnitBuyPaymentInfoService {
   }
 
   Future<String> confirmPayment(int id) async {
-    final authToken = _appStore.sessionCache.authToken;
-    final uri = buildUri(_host, _confirmPaymentPath(id));
+    final uri = buildUri(host, _confirmPaymentPath(id));
 
-    final response = await _appStore.httpClient.put(
+    final response = await authenticatedPut(
       uri,
-      headers: {
-        'Authorization': 'Bearer $authToken',
-      },
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {

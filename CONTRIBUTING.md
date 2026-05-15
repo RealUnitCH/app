@@ -89,6 +89,7 @@ lib/
 - Uses `flutter_test`, `bloc_test`, and `mocktail` (NOT mockito).
 - Test structure mirrors `lib/` structure.
 - Test helper at `test/helper/` (provides `pumpApp`).
+- For BitBox-related code, the layered test strategy (Tier 0–4) is documented in [`docs/testing.md`](docs/testing.md), with concrete patterns for cubit tests, widget tests, service + HTTP tests, and `FakeBitboxCredentials`-backed integration tests.
 
 ## Widget Guidelines
 

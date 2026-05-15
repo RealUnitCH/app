@@ -58,6 +58,7 @@ class PaymentAdditionalActionNeededButton extends StatelessWidget {
                   if (context.mounted) {
                     context.read<BuyPaymentInfoCubit>().getPaymentInfo(
                       amount: amountController.text,
+                      currency: context.read<BuyConverterCubit>().state.currency,
                     );
                   }
                 },
@@ -77,10 +78,23 @@ class PaymentAdditionalActionNeededButton extends StatelessWidget {
                   if (context.mounted) {
                     context.read<BuyPaymentInfoCubit>().getPaymentInfo(
                       amount: amountController.text,
+                      currency: context.read<BuyConverterCubit>().state.currency,
                     );
                   }
                 },
                 label: S.of(context).next,
+              ),
+            );
+          }
+          if (paymentState.error == PaymentInfoError.unknown) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: AppFilledButton(
+                onPressed: () => context.read<BuyPaymentInfoCubit>().getPaymentInfo(
+                  amount: amountController.text,
+                  currency: context.read<BuyConverterCubit>().state.currency,
+                ),
+                label: S.of(context).retry,
               ),
             );
           }

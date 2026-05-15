@@ -56,7 +56,7 @@ void main() {
     when(
       () => buyPaymentInfoCubit.getPaymentInfo(
         amount: any(named: 'amount'),
-        currency: Currency.chf,
+        currency: any(named: 'currency'),
       ),
     ).thenAnswer((_) => Future.value());
   });
@@ -72,6 +72,7 @@ void main() {
   }
 
   setUpAll(() {
+    registerFallbackValue(Currency.chf);
     setupDependencyInjection();
   });
 
@@ -248,6 +249,30 @@ void main() {
         ),
         findsOne,
       );
+    });
+
+    testWidgets('retries payment info when unknown error is shown', (tester) async {
+      when(() => buyPaymentInfoCubit.state).thenReturn(
+        const BuyPaymentInfoFailure(PaymentInfoError.unknown),
+      );
+      when(() => converterCubit.state).thenReturn(
+        const BuyConverterState(currency: Currency.eur),
+      );
+
+      await tester.pumpApp(buildSubject(const BuyView()));
+
+      expect(find.text(S.current.paymentInformationFailed), findsOne);
+      expect(find.text(S.current.retry), findsOne);
+
+      await tester.tap(find.text(S.current.retry));
+      await tester.pump();
+
+      verify(
+        () => buyPaymentInfoCubit.getPaymentInfo(
+          amount: '',
+          currency: Currency.eur,
+        ),
+      ).called(1);
     });
 
     testWidgets('updates controllers when $BuyConverterState changes', (tester) async {
