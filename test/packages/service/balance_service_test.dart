@@ -56,6 +56,7 @@ void main() {
         asset: realUnitAsset,
       ),
     );
+    registerFallbackValue(realUnitAsset);
   });
 
   AppStore buildAppStore(Future<http.Response> Function(http.Request) handler) {
@@ -117,6 +118,59 @@ void main() {
 
         verifyNever(() => balanceRepository.saveBalance(any()));
       });
+
+      test('skips saving when the JSON has no balance field', () async {
+        final appStore = buildAppStore(
+          (_) async => http.Response(jsonEncode({'addressType': 0}), 200),
+        );
+
+        final service = BalanceService(balanceRepository, appStore);
+        await service.updateBalance('0xAnyAddress');
+
+        verifyNever(() => balanceRepository.saveBalance(any()));
+      });
+
+      test('catches a non-numeric balance string and skips saving', () async {
+        // Production code does BigInt.parse on the value; non-numeric raises
+        // FormatException which the catch-block swallows.
+        final appStore = buildAppStore(
+          (_) async => http.Response(jsonEncode({'balance': 'NaN'}), 200),
+        );
+
+        final service = BalanceService(balanceRepository, appStore);
+        await service.updateBalance('0xAnyAddress');
+
+        verifyNever(() => balanceRepository.saveBalance(any()));
+      });
+    });
+
+    test('getBalance delegates to BalanceRepository.getBalance', () async {
+      final expected = Balance(
+        chainId: realUnitAsset.chainId,
+        contractAddress: realUnitAsset.address,
+        walletAddress: '0xAnyAddress',
+        balance: BigInt.from(42),
+        asset: realUnitAsset,
+      );
+      when(() => balanceRepository.getBalance(any(), any()))
+          .thenAnswer((_) async => expected);
+
+      final appStore = buildAppStore((_) async => http.Response('{}', 200));
+      final service = BalanceService(balanceRepository, appStore);
+
+      final result = await service.getBalance(realUnitAsset, '0xAnyAddress');
+
+      expect(result, same(expected));
+      verify(() => balanceRepository.getBalance(realUnitAsset, '0xAnyAddress'))
+          .called(1);
+    });
+
+    test('cancelSync is a safe no-op before startSync has run', () {
+      final appStore = buildAppStore((_) async => http.Response('{}', 200));
+      final service = BalanceService(balanceRepository, appStore);
+
+      // Should not throw.
+      service.cancelSync();
     });
   });
 }
