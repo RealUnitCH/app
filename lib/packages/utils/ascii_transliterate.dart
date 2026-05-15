@@ -120,6 +120,3 @@ String toBitboxSafeAscii(String input) {
   }
   return out.toString();
 }
-
-/// Convenience for nullable strings.
-String? toBitboxSafeAsciiOrNull(String? input) => input == null ? null : toBitboxSafeAscii(input);

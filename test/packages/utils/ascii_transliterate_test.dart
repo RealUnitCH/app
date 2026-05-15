@@ -61,10 +61,4 @@ void main() {
       }
     });
   });
-
-  group('toBitboxSafeAsciiOrNull', () {
-    test('returns null for null input', () => expect(toBitboxSafeAsciiOrNull(null), isNull));
-    test('transliterates non-null input',
-        () => expect(toBitboxSafeAsciiOrNull('Krüger'), 'Krueger'));
-  });
 }
