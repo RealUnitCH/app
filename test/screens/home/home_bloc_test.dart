@@ -3,7 +3,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/service/settings_service.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
@@ -15,8 +14,6 @@ class _MockBalanceService extends Mock implements BalanceService {}
 
 class _MockTransactionHistoryService extends Mock implements TransactionHistoryService {}
 
-class _MockDfxWidgetService extends Mock implements DfxWidgetService {}
-
 class _MockSettingsService extends Mock implements SettingsService {}
 
 class _MockAppStore extends Mock implements AppStore {}
@@ -27,7 +24,6 @@ void main() {
   late _MockWalletService walletService;
   late _MockBalanceService balanceService;
   late _MockTransactionHistoryService transactionHistoryService;
-  late _MockDfxWidgetService dfxService;
   late _MockSettingsService settingsService;
   late _MockAppStore appStore;
   late _MockBitboxService bitboxService;
@@ -36,7 +32,6 @@ void main() {
     walletService = _MockWalletService();
     balanceService = _MockBalanceService();
     transactionHistoryService = _MockTransactionHistoryService();
-    dfxService = _MockDfxWidgetService();
     settingsService = _MockSettingsService();
     appStore = _MockAppStore();
     bitboxService = _MockBitboxService();
@@ -51,7 +46,6 @@ void main() {
         walletService,
         balanceService,
         transactionHistoryService,
-        dfxService,
         settingsService,
         appStore,
         bitboxService,
