@@ -28,14 +28,22 @@ void main() {
       );
     });
 
-    testWidgets('renders 12 cell Text widgets (one per word)', (tester) async {
+    testWidgets('lays out the words in two columns (left col holds words 1-6)',
+        (tester) async {
       await tester.pumpWidget(_host(
         MnemonicReadOnlyField(seedWords: _seed),
       ));
 
-      // Every cell carries a Text widget. The base also wraps the layout in
-      // a Container with a border, no extra Text elsewhere.
-      expect(find.byType(Text), findsNWidgets(12));
+      // Indexing inside _MnemonicFieldBase is `rowIndex + colIndex * rows`
+      // (rows=6, cols=2), so the first 6 words live in the left column.
+      // Pinning two adjacent words in the left column proves the column-first
+      // layout is in effect.
+      final firstWord = tester.getTopLeft(find.text('abandon'));
+      final secondWord = tester.getTopLeft(find.text('ability'));
+      // abandon (index 0) is at row 0, ability (index 1) is at row 1 in
+      // the same column → same x, larger y.
+      expect(secondWord.dx, firstWord.dx);
+      expect(secondWord.dy, greaterThan(firstWord.dy));
     });
   });
 }
