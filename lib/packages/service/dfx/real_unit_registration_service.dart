@@ -16,6 +16,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/registration/registr
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
+import 'package:realunit_wallet/packages/utils/ascii_transliterate.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 
 class RealUnitRegistrationService {
@@ -63,22 +64,35 @@ class RealUnitRegistrationService {
     if (credentials is BitboxCredentials && !credentials.isConnected) {
       throw const BitboxNotConnectedException();
     }
-    final name = '${registration.firstName} ${registration.lastName}'.trim();
-    final addressStreet = '${registration.addressStreet} ${registration.addressStreetNumber}'
-        .trim();
+    // BitBox firmware rejects non-ASCII bytes in EIP-712 string fields.
+    // Transliterate everything that goes into the signed envelope AND the
+    // matching DTO copy so the signed hash matches the backend-stored data
+    // byte-for-byte. KYC personal data below keeps the original spelling so
+    // ID-verification still sees the legal name with diacritics.
+    final email = toBitboxSafeAscii(registration.email.toLowerCase());
+    final name = toBitboxSafeAscii(
+      '${registration.firstName} ${registration.lastName}'.trim(),
+    );
+    final phoneNumber = toBitboxSafeAscii(registration.phoneNumber);
+    final birthday = toBitboxSafeAscii(registration.birthday);
+    final addressStreet = toBitboxSafeAscii(
+      '${registration.addressStreet} ${registration.addressStreetNumber}'.trim(),
+    );
+    final addressPostalCode = toBitboxSafeAscii(registration.addressPostalCode);
+    final addressCity = toBitboxSafeAscii(registration.addressCity);
     final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final signature = await Eip712Signer.signRegistration(
       credentials: credentials,
       chainId: _chainId,
-      email: registration.email.toLowerCase(),
+      email: email,
       name: name,
       type: registration.type.jsonName,
-      phoneNumber: registration.phoneNumber,
-      birthday: registration.birthday,
+      phoneNumber: phoneNumber,
+      birthday: birthday,
       nationality: registration.nationality.symbol,
       addressStreet: addressStreet,
-      addressPostalCode: registration.addressPostalCode,
-      addressCity: registration.addressCity,
+      addressPostalCode: addressPostalCode,
+      addressCity: addressCity,
       addressCountry: registration.addressCountry.symbol,
       swissTaxResidence: registration.swissTaxResidence,
       registrationDate: registrationDate,
@@ -86,14 +100,14 @@ class RealUnitRegistrationService {
 
     final requestDto = RealUnitRegistrationRequestDto(
       type: registration.type.jsonName,
-      email: registration.email.toLowerCase(),
+      email: email,
       name: name,
-      phoneNumber: registration.phoneNumber,
-      birthday: registration.birthday,
+      phoneNumber: phoneNumber,
+      birthday: birthday,
       nationality: registration.nationality.symbol,
       addressStreet: addressStreet,
-      addressPostalCode: registration.addressPostalCode,
-      addressCity: registration.addressCity,
+      addressPostalCode: addressPostalCode,
+      addressCity: addressCity,
       addressCountry: registration.addressCountry.symbol,
       swissTaxResidence: registration.swissTaxResidence,
       registrationDate: registrationDate,
@@ -144,18 +158,19 @@ class RealUnitRegistrationService {
       throw const BitboxNotConnectedException();
     }
     final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    // Same ASCII guard as completeRegistration — see comment there.
     final signature = await Eip712Signer.signRegistration(
       credentials: credentials,
       chainId: _chainId,
-      email: userData.email,
-      name: userData.name,
+      email: toBitboxSafeAscii(userData.email),
+      name: toBitboxSafeAscii(userData.name),
       type: userData.type,
-      phoneNumber: userData.phoneNumber,
-      birthday: userData.birthday,
+      phoneNumber: toBitboxSafeAscii(userData.phoneNumber),
+      birthday: toBitboxSafeAscii(userData.birthday),
       nationality: userData.nationality,
-      addressStreet: userData.addressStreet,
-      addressPostalCode: userData.addressPostalCode,
-      addressCity: userData.addressCity,
+      addressStreet: toBitboxSafeAscii(userData.addressStreet),
+      addressPostalCode: toBitboxSafeAscii(userData.addressPostalCode),
+      addressCity: toBitboxSafeAscii(userData.addressCity),
       addressCountry: userData.addressCountry,
       swissTaxResidence: userData.swissTaxResidence,
       registrationDate: registrationDate,
