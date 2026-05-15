@@ -120,8 +120,8 @@ void main() {
   // The raw transaction bytes are arbitrary hex — the test private key inside
   // FakeBitboxCredentials produces a deterministic signature over them, so we
   // only need to assert that the cubit reached the post-sign state.
-  const _rawSwap = '0xdeadbeef';
-  const _rawDeposit = '0xcafebabe';
+  const rawSwap = '0xdeadbeef';
+  const rawDeposit = '0xcafebabe';
 
   group('confirmSwap (BitBox sign success)', () {
     test(
@@ -129,8 +129,8 @@ void main() {
       () async {
         when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
           (_) async => const RealUnitUnsignedTransactionsRequestDto(
-            swap: _rawSwap,
-            deposit: _rawDeposit,
+            swap: rawSwap,
+            deposit: rawDeposit,
           ),
         );
 
@@ -144,12 +144,12 @@ void main() {
         final state = cubit.state as SellBitboxAwaitingDepositConfirm;
         // The signed envelope carries the raw swap tx byte-for-byte and a
         // non-zero (r, s) pair from the deterministic test key.
-        expect(state.signedSwapTransaction.unsignedTx, _rawSwap);
+        expect(state.signedSwapTransaction.unsignedTx, rawSwap);
         expect(state.signedSwapTransaction.r, startsWith('0x'));
         expect(state.signedSwapTransaction.s, startsWith('0x'));
         expect(state.signedSwapTransaction.r.length, 66); // 0x + 64 hex chars
         expect(state.signedSwapTransaction.s.length, 66);
-        expect(state.rawDepositTransaction, _rawDeposit);
+        expect(state.rawDepositTransaction, rawDeposit);
         expect(creds.signCallCount, 1);
 
         await cubit.close();
@@ -182,8 +182,8 @@ void main() {
       () async {
         when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
           (_) async => const RealUnitUnsignedTransactionsRequestDto(
-            swap: _rawSwap,
-            deposit: _rawDeposit,
+            swap: rawSwap,
+            deposit: rawDeposit,
           ),
         );
 
@@ -212,8 +212,8 @@ void main() {
         // call inside that helper. Pin the count + the order of the
         // unsignedTx fields.
         expect(broadcastCalls, hasLength(2));
-        expect(broadcastCalls[0].unsignedTx, _rawSwap);
-        expect(broadcastCalls[1].unsignedTx, _rawDeposit);
+        expect(broadcastCalls[0].unsignedTx, rawSwap);
+        expect(broadcastCalls[1].unsignedTx, rawDeposit);
 
         verify(() => sellService.confirmPaymentWithTxHash(any(), '0xdeposittxhash'))
             .called(1);
@@ -228,8 +228,8 @@ void main() {
         () async {
       when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
         (_) async => const RealUnitUnsignedTransactionsRequestDto(
-          swap: _rawSwap,
-          deposit: _rawDeposit,
+          swap: rawSwap,
+          deposit: rawDeposit,
         ),
       );
 
@@ -252,8 +252,8 @@ void main() {
       await cubit.confirmDeposit();
 
       final state = cubit.state as SellBitboxDepositRetry;
-      expect(state.signedSwapTransaction.unsignedTx, _rawSwap);
-      expect(state.signedDepositTransaction.unsignedTx, _rawDeposit);
+      expect(state.signedSwapTransaction.unsignedTx, rawSwap);
+      expect(state.signedDepositTransaction.unsignedTx, rawDeposit);
       expect(state.errorMessage, contains('rpc 502'));
 
       await cubit.close();
@@ -264,8 +264,8 @@ void main() {
     test('re-runs the deposit broadcast and emits Success on the retry', () async {
       when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
         (_) async => const RealUnitUnsignedTransactionsRequestDto(
-          swap: _rawSwap,
-          deposit: _rawDeposit,
+          swap: rawSwap,
+          deposit: rawDeposit,
         ),
       );
 
@@ -302,8 +302,8 @@ void main() {
         () async {
       when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
         (_) async => const RealUnitUnsignedTransactionsRequestDto(
-          swap: _rawSwap,
-          deposit: _rawDeposit,
+          swap: rawSwap,
+          deposit: rawDeposit,
         ),
       );
 
