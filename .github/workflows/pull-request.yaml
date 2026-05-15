@@ -20,4 +20,29 @@ jobs:
       - run: dart run tool/generate_localization.dart
       - run: flutter pub run build_runner build
       - run: flutter analyze
-      - run: flutter test
+      - run: flutter test --coverage
+
+      # Strip generated and unreachable-from-tests files before reporting so
+      # the artifact reflects only the activated surface we actually intend
+      # to cover. Threshold enforcement is not yet wired (see README
+      # "Coverage infrastructure roadmap"); this step only produces a
+      # measurable baseline.
+      - name: Filter coverage report
+        run: |
+          if [ -f coverage/lcov.info ]; then
+            brew install lcov >/dev/null
+            lcov --remove coverage/lcov.info \
+              'lib/generated/**' \
+              'lib/main.dart' \
+              --output-file coverage/lcov.info \
+              --ignore-errors unused
+            lcov --summary coverage/lcov.info || true
+          fi
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info
+          if-no-files-found: warn
