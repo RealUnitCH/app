@@ -1,0 +1,11 @@
+# Captures docs/handbook/screenshots/11-dashboard.png
+# Skip biometric prompt; land on dashboard. Backend calls (portfolio, price,
+# history) may still be in-flight; we use the Empfangen action button as the
+# readiness signal — once the action bar is rendered, the page layout is final.
+appId: swiss.realunit.app
+---
+- tapOn: 'Überspringen'
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: 'RealUnit kaufen'
+    timeout: 15000

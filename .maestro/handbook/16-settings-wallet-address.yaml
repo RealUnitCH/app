@@ -1,0 +1,14 @@
+# Captures docs/handbook/screenshots/16-settings-wallet-address.png
+# Receive equivalent — shows the wallet's EVM address + QR code.
+appId: swiss.realunit.app
+---
+- tapOn:
+    point: 8%,8%
+- waitForAnimationToEnd
+- tapOn:
+    text: '.*Wallet-Adresse.*'
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: '.*0x.*'
+    timeout: 5000

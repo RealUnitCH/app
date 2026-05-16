@@ -1,0 +1,8 @@
+# Captures docs/handbook/screenshots/03-software-wallet-terms.png
+appId: swiss.realunit.app
+---
+- tapOn:
+    text: '.*Digitale Wallet.*'
+- waitForAnimationToEnd
+- assertVisible:
+    text: '.*Neue Wallet erstellen.*'

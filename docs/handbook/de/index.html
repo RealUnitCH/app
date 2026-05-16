@@ -344,6 +344,24 @@
             <li>
               <a href="#spec-01"><span class="spec-num">01</span>Welcome &amp; Onboarding</a>
             </li>
+            <li>
+              <a href="#spec-02"><span class="spec-num">02</span>Wallet erstellen</a>
+            </li>
+            <li>
+              <a href="#spec-03"><span class="spec-num">03</span>Onboarding abschliessen</a>
+            </li>
+            <li>
+              <a href="#spec-04"><span class="spec-num">04</span>PIN einrichten</a>
+            </li>
+            <li>
+              <a href="#spec-05"><span class="spec-num">05</span>Dashboard</a>
+            </li>
+            <li>
+              <a href="#spec-06"><span class="spec-num">06</span>Einstellungen</a>
+            </li>
+            <li>
+              <a href="#spec-07"><span class="spec-num">07</span>Wallet-Sicherung</a>
+            </li>
           </ol>
         </nav>
       </aside>
@@ -362,7 +380,7 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/DFXswiss/realunit-app">DFXswiss/realunit-app</a></span>
-            <span>🧪 <b>Tests:</b> ~1100 (Tier 0/1) · 1 Tier-3 flow (Welcome)</span>
+            <span>🧪 <b>Tests:</b> ~1100 (Tier 0/1) · 19 Tier-3 screens</span>
           </div>
         </section>
 
@@ -393,12 +411,16 @@
             Handbook nutzt den Simulator-Weg, der heute schon funktioniert.
           </p>
 
-          <div class="callout warn">
+          <div class="callout info">
             <p>
-              <b>Heute:</b> nur ein einziger Flow (01-Welcome) als Proof. Weitere Specs werden
-              inkrementell ergänzt. Jeder weitere Flow ist eine zusätzliche
-              <code>.maestro/NN-name.yaml</code> + ein neuer
-              <code>&lt;section class="spec"&gt;</code>-Block in diesem File.
+              <b>Pipeline:</b> 19 Flows in <code>.maestro/handbook/</code>, alphabetisch
+              durchlaufen. Maestro übernimmt Navigation und Assertions; der eigentliche
+              Screenshot kommt von
+              <code>xcrun simctl io booted screenshot</code> — Flutters
+              <code>BackdropFilter</code> rendert auf einem GPU-Layer, der von
+              <code>takeScreenshot</code> (XCUITest) nicht erfasst wird. Vor jedem Run macht
+              der Wrapper <code>simctl erase</code>, damit das iOS-Keychain (Wallet + PIN)
+              frisch ist.
             </p>
           </div>
         </section>
@@ -409,14 +431,14 @@
           <div class="spec-head">
             <div class="lhs">
               <h2><span class="num">01</span>Welcome &amp; Onboarding</h2>
-              <div class="file">.maestro/01-welcome.yaml</div>
+              <div class="file">.maestro/handbook/01..03-*.yaml</div>
             </div>
             <div class="rhs">
               <b>3 Screens</b>
               <div class="links">
                 <a
-                  href="https://github.com/DFXswiss/realunit-app/blob/develop/.maestro/01-welcome.yaml"
-                  >Flow ↗</a
+                  href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
+                  >Flows ↗</a
                 >
               </div>
             </div>
@@ -433,7 +455,7 @@
             <div class="test">
               <div class="head">
                 <span class="name">01-welcome</span>
-                <span class="src">L7</span>
+                <span class="src">01-welcome.yaml</span>
               </div>
               <div class="img">
                 <img
@@ -451,7 +473,7 @@
             <div class="test">
               <div class="head">
                 <span class="name">02-create-vs-restore</span>
-                <span class="src">L11</span>
+                <span class="src">02-create-vs-restore.yaml</span>
               </div>
               <div class="img">
                 <img
@@ -469,7 +491,7 @@
             <div class="test">
               <div class="head">
                 <span class="name">03-software-wallet-terms</span>
-                <span class="src">L15</span>
+                <span class="src">03-software-wallet-terms.yaml</span>
               </div>
               <div class="img">
                 <img
@@ -482,6 +504,488 @@
                 (frische BIP-39-Mnemonic), <b>Wallet wiederherstellen</b> (Import einer
                 bestehenden Phrase, z.B. von Aktionariat), und <b>Adresse + Signatur</b> als
                 Debug-Pfad für die Backend-Integration.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <hr class="sep" />
+
+        <section id="spec-02" class="spec">
+          <div class="spec-head">
+            <div class="lhs">
+              <h2><span class="num">02</span>Wallet erstellen</h2>
+              <div class="file">.maestro/handbook/04..06-*.yaml</div>
+            </div>
+            <div class="rhs">
+              <b>3 Screens</b>
+              <div class="links">
+                <a
+                  href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
+                  >Flows ↗</a
+                >
+              </div>
+            </div>
+          </div>
+          <p class="spec-intro">
+            BIP-39-Seed-Backup-Flow. Drei Schritte: Seed-Phrase wird zuerst verschleiert
+            angezeigt mit einer Aufforderung sie aufzuschreiben, dann durch Tap enthüllt
+            (12 Wörter), und schliesslich verifiziert (4 zufällige Wörter müssen wieder
+            eingegeben werden). Im Debug-Build sind die Verify-Felder vorausgefüllt, damit
+            E2E-Tests nicht den BIP-39-Wortlisten-Match laufen müssen.
+          </p>
+
+          <div class="callout warn">
+            <p>
+              Die SeedBlurCard nutzt Flutters <code>BackdropFilter</code> — Maestros eigener
+              <code>takeScreenshot</code> liefert hier nur ein schwarzes PNG, weil XCUITest
+              den GPU-Layer nicht erfasst. <code>xcrun simctl io booted screenshot</code>
+              hingegen rendert das fertige Frame korrekt. Beide Seed-Screens unten sind
+              echte Captures, kein Mock.
+            </p>
+          </div>
+
+          <div class="tests cols-2">
+            <div class="test">
+              <div class="head">
+                <span class="name">04-seed-hidden</span>
+                <span class="src">04-seed-hidden.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/04-seed-hidden.png"
+                  alt="Seed-Backup — verschleiert"
+                />
+              </div>
+              <div class="desc">
+                Die <b>Wallet-Sicherung</b>-Seite mit dem Hinweistext „Notieren Sie Ihre
+                Wiederherstellungs-Wörter auf einem Blatt Papier..." und der verschleierten
+                SeedBlurCard. Die Wörter sind als unscharfe Lozenges sichtbar, in der Mitte
+                steht <em>Hier tippen, um anzuzeigen</em>. Der CTA <b>Ich habe es gesichert</b>
+                ist disabled, bis der User mindestens einmal die Phrase aufgedeckt hat.
+              </div>
+            </div>
+            <div class="test">
+              <div class="head">
+                <span class="name">05-seed-revealed</span>
+                <span class="src">05-seed-revealed.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/05-seed-revealed.png"
+                  alt="Seed-Backup — enthüllt"
+                />
+              </div>
+              <div class="desc">
+                Nach dem Tap zeigt die Karte alle <b>12 BIP-39-Wörter</b> in einem
+                2-Spalten-Grid mit Index. Der Hintergrund ist klar lesbar, der CTA ist
+                aktiviert. Im echten Release-Build wechselt die Karte nach einigen Sekunden
+                automatisch zurück in den verschleierten Zustand.
+              </div>
+            </div>
+            <div class="test">
+              <div class="head">
+                <span class="name">06-verify-seed</span>
+                <span class="src">06-verify-seed.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/06-verify-seed.png"
+                  alt="Seed-Backup — verifizieren"
+                />
+              </div>
+              <div class="desc">
+                <b>Sicherung überprüfen</b>: vier zufällig gewählte Indizes (im Screenshot:
+                Wort 4, 5, 10, 12) müssen vom User wieder eingetippt werden. In
+                <code>kDebugMode</code> trägt der <code>VerifySeedCubit</code> die korrekten
+                Wörter aus der gerade generierten Seed-Phrase direkt ein — daher die
+                ausgefüllten Felder im Screenshot. Im Release-Build sind die Felder leer.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <hr class="sep" />
+
+        <section id="spec-03" class="spec">
+          <div class="spec-head">
+            <div class="lhs">
+              <h2><span class="num">03</span>Onboarding abschliessen</h2>
+              <div class="file">.maestro/handbook/07-onboarding-completed.yaml</div>
+            </div>
+            <div class="rhs">
+              <b>1 Screen</b>
+              <div class="links">
+                <a
+                  href="https://github.com/DFXswiss/realunit-app/blob/develop/.maestro/handbook/07-onboarding-completed.yaml"
+                  >Flow ↗</a
+                >
+              </div>
+            </div>
+          </div>
+          <p class="spec-intro">
+            Brücke zwischen Seed-Sicherung und PIN-Einrichtung. An dieser Stelle ist die
+            Wallet zwar generiert, aber noch nicht durch eine lokale PIN gegen Zugriff
+            geschützt. Der Screen markiert den erfolgreichen ersten Teil der Onboarding-Reise.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test">
+              <div class="head">
+                <span class="name">07-onboarding-completed</span>
+                <span class="src">07-onboarding-completed.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/07-onboarding-completed.png"
+                  alt="Ihre Wallet ist bereit"
+                />
+              </div>
+              <div class="desc">
+                Vollbild-Bestätigung mit RealU-Token-Hexagon, Headline
+                <b>„Ihre Wallet ist bereit"</b> und dem Hinweis, dass im nächsten Schritt
+                der Zugriff auf die Mobile-App gesichert wird (PIN). <b>Weiter</b>-CTA
+                triggert <code>HomeBloc.CompleteOnboardingEvent</code>, was die Navigation
+                in die PIN-Setup-Route auflöst.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <hr class="sep" />
+
+        <section id="spec-04" class="spec">
+          <div class="spec-head">
+            <div class="lhs">
+              <h2><span class="num">04</span>PIN einrichten</h2>
+              <div class="file">.maestro/handbook/08..10-*.yaml</div>
+            </div>
+            <div class="rhs">
+              <b>3 Screens</b>
+              <div class="links">
+                <a
+                  href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
+                  >Flows ↗</a
+                >
+              </div>
+            </div>
+          </div>
+          <p class="spec-intro">
+            6-stellige App-PIN als zweiter Schutzlayer. <code>SetupPinPage</code> hat zwei
+            Zustände auf derselben Seite (<code>create</code> → <code>confirm</code>) — der
+            Titel und der Hilfstext wechseln, der Numpad bleibt. Nach erfolgreicher
+            Bestätigung erscheint ein Bottom-Sheet, das biometrisches Unlock (Face ID /
+            Touch ID) anbietet.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test">
+              <div class="head">
+                <span class="name">08-pin-setup</span>
+                <span class="src">08-pin-setup.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/08-pin-setup.png"
+                  alt="PIN erstellen — leer"
+                />
+              </div>
+              <div class="desc">
+                Initialer Zustand <b>Erstellen Sie Ihre PIN</b>, Subtitle bittet um eine
+                6-stellige Eingabe, sechs leere Dots, klassischer 3×4-Numpad mit Backspace.
+                Der zentrale State ist <code>SetupPinCubit.create</code>.
+              </div>
+            </div>
+            <div class="test">
+              <div class="head">
+                <span class="name">09-pin-confirm</span>
+                <span class="src">09-pin-confirm.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/09-pin-confirm.png"
+                  alt="PIN bestätigen — leer"
+                />
+              </div>
+              <div class="desc">
+                Nach 6 Ziffern wechselt der Cubit in <code>confirm</code>, die Dots werden
+                zurückgesetzt, Titel und Hilfstext ändern sich auf
+                <b>Bestätigen Sie Ihre PIN</b>. Die Seite ist dieselbe — keine Navigation.
+                Eingabe einer abweichenden PIN würde <code>pinConfirmFailed</code> auslösen
+                und zurück in <code>create</code> springen.
+              </div>
+            </div>
+            <div class="test">
+              <div class="head">
+                <span class="name">10-biometric-prompt</span>
+                <span class="src">10-biometric-prompt.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/10-biometric-prompt.png"
+                  alt="Biometrische Authentifizierung anbieten"
+                />
+              </div>
+              <div class="desc">
+                Modal-Sheet mit Fingerprint-Icon, Headline
+                <b>„Biometrische Authentifizierung aktivieren"</b>, und zwei Aktionen:
+                <b>Aktivieren</b> (Face ID / Touch ID einrichten) oder
+                <b>Überspringen</b>. Der Hintergrund bleibt sichtbar — der PIN-Screen mit
+                gefüllten Dots ist abgedunkelt. Auf dem Simulator gibt es kein echtes
+                Face ID, deshalb verwendet die E2E-Pipeline <b>Überspringen</b>.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <hr class="sep" />
+
+        <section id="spec-05" class="spec">
+          <div class="spec-head">
+            <div class="lhs">
+              <h2><span class="num">05</span>Dashboard</h2>
+              <div class="file">.maestro/handbook/11-dashboard.yaml</div>
+            </div>
+            <div class="rhs">
+              <b>1 Screen</b>
+              <div class="links">
+                <a
+                  href="https://github.com/DFXswiss/realunit-app/blob/develop/.maestro/handbook/11-dashboard.yaml"
+                  >Flow ↗</a
+                >
+              </div>
+            </div>
+          </div>
+          <p class="spec-intro">
+            Haupteinstieg nach abgeschlossenem Onboarding. Zeigt den aktuellen RealUnit
+            Aktienkurs in der gewählten Anzeigewährung (Default CHF), die Performance-Kurve
+            mit Zeitfenstern (1W/1M/3M/1J/MAX), den eigenen Bestand (hier leer) und den
+            primären <b>RealUnit kaufen</b>-CTA. Der Backend-Roundtrip nach dem
+            Onboarding-Skip ist asynchron — der Wrapper wartet bis der Kauf-CTA gerendert
+            ist, damit das Screenshot kein Loading-State ist.
+          </p>
+
+          <div class="tests cols-1">
+            <div class="test">
+              <div class="head">
+                <span class="name">11-dashboard</span>
+                <span class="src">11-dashboard.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/11-dashboard.png"
+                  alt="Dashboard mit leerem Bestand"
+                />
+              </div>
+              <div class="desc">
+                AppBar mit RealUnit-Wallet-Logo und Hamburger-Icon (rechts) zum Aufruf der
+                Einstellungen. Darunter <b>RealUnit Aktienkurs</b> mit aktueller Anzeige
+                (z.B. <code>CHF 1.43</code>), interaktiver Chart, Time-Range-Tabs. Der
+                Empty-State des Portfolios (R-Hexagon ohne Holdings) signalisiert eine
+                frische Wallet — bei Holdings wird die Position dort gerendert.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <hr class="sep" />
+
+        <section id="spec-06" class="spec">
+          <div class="spec-head">
+            <div class="lhs">
+              <h2><span class="num">06</span>Einstellungen</h2>
+              <div class="file">.maestro/handbook/12..16-*.yaml</div>
+            </div>
+            <div class="rhs">
+              <b>5 Screens</b>
+              <div class="links">
+                <a
+                  href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
+                  >Flows ↗</a
+                >
+              </div>
+            </div>
+          </div>
+          <p class="spec-intro">
+            Sammelpunkt für lokale Einstellungen (Sprache, Anzeigewährung, Netzwerk) sowie
+            On-Chain-Identität (Wallet-Adresse, Recovery-Phrase) und User-Daten für die
+            DFX-Integration (KYC, Steuerbericht). Reachable via Hamburger-Icon rechts oben
+            in der Dashboard-AppBar.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test">
+              <div class="head">
+                <span class="name">12-settings</span>
+                <span class="src">12-settings.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/12-settings.png"
+                  alt="Settings-Übersicht"
+                />
+              </div>
+              <div class="desc">
+                Vollständige Settings-Liste: Sprachen, Währung, Netzwerk, Steuerbericht,
+                Nutzerdaten, Rechtsdokumente, Kontakt, Wallet-Adresse, Wallet-Sicherung,
+                Geschäftsbeziehung beenden. Aktive Auswahlen (Sprache, Währung, Netzwerk)
+                werden inline als trailing Text rechts angezeigt.
+              </div>
+            </div>
+            <div class="test">
+              <div class="head">
+                <span class="name">13-settings-languages</span>
+                <span class="src">13-settings-languages.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/13-settings-languages.png"
+                  alt="Sprachen — Auswahl"
+                />
+              </div>
+              <div class="desc">
+                Aktuell unterstützte Sprachen: <b>Englisch</b>, <b>Deutsch</b>. Auswahl wird
+                im <code>SettingsBloc</code> persistiert und triggert <code>S.of(context)</code>
+                Rebuilds in der gesamten App. ARB-Quellen liegen in
+                <code>assets/languages/strings_*.arb</code>.
+              </div>
+            </div>
+            <div class="test">
+              <div class="head">
+                <span class="name">14-settings-currency</span>
+                <span class="src">14-settings-currency.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/14-settings-currency.png"
+                  alt="Währung — Auswahl"
+                />
+              </div>
+              <div class="desc">
+                Wahl zwischen <b>EUR</b> und <b>CHF</b> als Anzeigewährung für Aktienkurs,
+                Portfolio und Buy/Sell. Änderung emittiert ein <code>CurrencyChangedEvent</code>
+                im <code>DashboardBloc</code>, das Kursdaten in der neuen Währung nachlädt.
+              </div>
+            </div>
+            <div class="test">
+              <div class="head">
+                <span class="name">15-settings-network</span>
+                <span class="src">15-settings-network.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/15-settings-network.png"
+                  alt="Netzwerk — Mainnet/Testnet"
+                />
+              </div>
+              <div class="desc">
+                Umschalter zwischen <b>Mainnet</b> (Production RealUnit-Kontrakt) und
+                <b>Testnet</b>. Hat Side-Effects: aktive Verbindung wird neu aufgebaut,
+                Chain-spezifische DTOs werden neu instanziiert. Der Switch ist primär für
+                interne Tests und Aktionariat-Demo-Flows gedacht.
+              </div>
+            </div>
+            <div class="test">
+              <div class="head">
+                <span class="name">16-settings-wallet-address</span>
+                <span class="src">16-settings-wallet-address.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/16-settings-wallet-address.png"
+                  alt="Wallet-Adresse mit QR"
+                />
+              </div>
+              <div class="desc">
+                EVM-Adresse der Wallet (<code>0x…</code>) mit QR-Code und Copy-Button —
+                der „Receive"-Punkt der App, auch wenn er nicht so heisst. Beim Buy-Flow
+                kommt die gleiche Information in einem Bottom-Sheet zum Vorschein. QR ist
+                der vom <code>qr_flutter</code>-Package gerenderte Standard-EIP-3770-Frame
+                ohne EIP-681-Payload.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <hr class="sep" />
+
+        <section id="spec-07" class="spec">
+          <div class="spec-head">
+            <div class="lhs">
+              <h2><span class="num">07</span>Wallet-Sicherung</h2>
+              <div class="file">.maestro/handbook/17..19-*.yaml</div>
+            </div>
+            <div class="rhs">
+              <b>3 Screens</b>
+              <div class="links">
+                <a
+                  href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
+                  >Flows ↗</a
+                >
+              </div>
+            </div>
+          </div>
+          <p class="spec-intro">
+            PIN-gated Re-Display der Recovery-Phrase aus den Settings — falls der User die
+            Wörter nach dem Onboarding noch einmal sehen oder neu notieren will. Die
+            <code>SettingsRoutes.seed</code>-Route hängt hinter dem
+            <code>VerifyPinPage</code>-Gate; ein direkter Deep-Link würde gleich umgeleitet.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test">
+              <div class="head">
+                <span class="name">17-settings-backup-pin</span>
+                <span class="src">17-settings-backup-pin.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/17-settings-backup-pin.png"
+                  alt="PIN-Gate vor Recovery-Phrase"
+                />
+              </div>
+              <div class="desc">
+                Selber Numpad wie <code>SetupPinPage</code>, aber im
+                <code>VerifyPinPage</code>-Modus. Titel <b>Geben Sie Ihre PIN ein</b>,
+                Subtitle erläutert, dass dieser Schritt die Wiederherstellungs-Phrase
+                schützt. <b>PIN vergessen?</b> als sekundäre Aktion am unteren Rand —
+                führt aktuell zurück in den Restore-Flow.
+              </div>
+            </div>
+            <div class="test">
+              <div class="head">
+                <span class="name">18-settings-seed-hidden</span>
+                <span class="src">18-settings-seed-hidden.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/18-settings-seed-hidden.png"
+                  alt="Settings-Seed verschleiert"
+                />
+              </div>
+              <div class="desc">
+                Spiegelseite von <code>04-seed-hidden</code>, aber innerhalb der Settings —
+                derselbe SeedBlurCard-Widget, dieselbe BackdropFilter-Magie. Sektion-Header
+                <b>Wiederherstellungs-Wörter</b>, darunter die unscharfe Karte. Wer hier
+                landet, kann die Phrase neu sichern, ohne die Wallet zurückzusetzen.
+              </div>
+            </div>
+            <div class="test">
+              <div class="head">
+                <span class="name">19-settings-seed-revealed</span>
+                <span class="src">19-settings-seed-revealed.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/19-settings-seed-revealed.png"
+                  alt="Settings-Seed enthüllt"
+                />
+              </div>
+              <div class="desc">
+                Wörter werden nach Tap angezeigt. Im Gegensatz zum Onboarding-Flow gibt es
+                hier keinen <em>Verify-Schritt</em> — der User hat die Phrase bereits
+                einmal verifiziert. Nach kurzer Zeit kehrt die Karte automatisch in den
+                Blur-Zustand zurück (Code: <code>SettingsSeedBloc</code>).
               </div>
             </div>
           </div>

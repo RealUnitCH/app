@@ -1,0 +1,15 @@
+# Captures docs/handbook/screenshots/17-settings-backup-pin.png
+# Tapping "Wallet-Sicherung" routes through the PIN gate before showing the
+# recovery phrase. The numeric keypad re-appears with the verify-PIN copy.
+appId: swiss.realunit.app
+---
+- tapOn:
+    point: 8%,8%
+- waitForAnimationToEnd
+- tapOn:
+    text: '.*Wallet-Sicherung.*'
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: '.*PIN.*'
+    timeout: 5000

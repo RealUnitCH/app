@@ -1,0 +1,13 @@
+# Captures docs/handbook/screenshots/15-settings-network.png
+appId: swiss.realunit.app
+---
+- tapOn:
+    point: 8%,8%
+- waitForAnimationToEnd
+- tapOn:
+    text: '.*Netzwerk.*'
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: '.*Mainnet.*'
+    timeout: 5000

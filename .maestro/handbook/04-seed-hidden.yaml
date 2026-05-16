@@ -1,0 +1,9 @@
+# Captures docs/handbook/screenshots/04-seed-hidden.png
+# Seed-backup screen with the SeedBlurCard still covered. BackdropFilter screen —
+# Maestro's own takeScreenshot would render black; xcrun captures correctly.
+appId: swiss.realunit.app
+---
+- tapOn:
+    text: '.*Neue Wallet erstellen.*'
+- waitForAnimationToEnd
+- assertVisible: 'Wallet-Sicherung'

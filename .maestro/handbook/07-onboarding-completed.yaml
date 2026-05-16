@@ -1,0 +1,7 @@
+# Captures docs/handbook/screenshots/07-onboarding-completed.png
+# Wallet created — final onboarding confirmation screen "Ihre Wallet ist bereit".
+appId: swiss.realunit.app
+---
+- tapOn: 'Bestätigen'
+- waitForAnimationToEnd
+- assertVisible: 'Weiter'

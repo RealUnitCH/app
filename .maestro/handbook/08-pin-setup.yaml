@@ -1,0 +1,7 @@
+# Captures docs/handbook/screenshots/08-pin-setup.png
+# Empty PIN setup numpad — "Erstellen Sie Ihre PIN".
+appId: swiss.realunit.app
+---
+- tapOn: 'Weiter'
+- waitForAnimationToEnd
+- assertVisible: 'Erstellen Sie Ihre PIN'

@@ -1,0 +1,14 @@
+# Captures docs/handbook/screenshots/18-settings-seed-hidden.png
+# After entering the PIN, the settings seed page renders the same SeedBlurCard
+# used during onboarding (BackdropFilter — only xcrun can capture it).
+appId: swiss.realunit.app
+---
+- repeat:
+    times: 6
+    commands:
+      - tapOn: '1'
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: '.*Wiederherstellungs.*'
+    timeout: 5000

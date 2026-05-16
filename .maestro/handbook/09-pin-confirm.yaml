@@ -1,0 +1,11 @@
+# Captures docs/handbook/screenshots/09-pin-confirm.png
+# After entering six 1s, the same screen flips to confirm mode with the title
+# "Bestätigen Sie Ihre PIN" (single SetupPinPage with create/confirm states).
+appId: swiss.realunit.app
+---
+- repeat:
+    times: 6
+    commands:
+      - tapOn: '1'
+- waitForAnimationToEnd
+- assertVisible: 'Bestätigen Sie Ihre PIN'

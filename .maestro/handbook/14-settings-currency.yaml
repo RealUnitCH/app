@@ -1,0 +1,13 @@
+# Captures docs/handbook/screenshots/14-settings-currency.png
+appId: swiss.realunit.app
+---
+- tapOn:
+    point: 8%,8%
+- waitForAnimationToEnd
+- tapOn:
+    text: '.*Währung.*'
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: '.*Schweizer.*'
+    timeout: 5000

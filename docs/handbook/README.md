@@ -28,16 +28,28 @@ xcrun simctl install booted build/ios/iphonesimulator/Runner.app
 scripts/run-handbook-flows.sh
 ```
 
-Das Script führt alle Flows in `.maestro/` aus, die mit `tags: [handbook]`
-markiert sind, und bewegt die PNGs nach `docs/handbook/screenshots/`.
+Das Script iteriert `.maestro/handbook/*.yaml` alphabetisch durch. Pro Flow:
+
+1. Maestro navigiert zum Ziel-Screen
+2. `xcrun simctl io booted screenshot` macht das eigentliche Bild
+   (Maestros eigener `takeScreenshot` rendert `BackdropFilter`-Layer schwarz)
+
+Der Filename des Flows ist auch der Filename des PNG. Vor jedem Lauf macht
+das Skript `simctl erase` + reinstall, damit das iOS-Keychain (Wallet + PIN)
+frisch ist — sonst landen Folgeläufe direkt auf dem App-Lock-Screen.
 
 ## Einen neuen Flow hinzufügen
 
-1. Anlegen: `.maestro/NN-<name>.yaml` mit `tags: [handbook]` und
-   `takeScreenshot`-Steps mit Pfad `screenshots/NN-<screen>`.
+1. Anlegen: `.maestro/handbook/NN-<name>.yaml`.
+   - Erster Flow startet mit `launchApp: clearState: true`.
+   - Folgeflows starten ohne `launchApp` — sie greifen den App-State auf,
+     wo der vorherige Flow ihn hingelegt hat.
+   - Kein `takeScreenshot`-Step — das übernimmt der Wrapper.
+   - Beende mit `assertVisible` oder `extendedWaitUntil`, damit der
+     Screenshot stabil ist (sonst trifft xcrun mitten in der Transition).
 2. Lauf: `scripts/run-handbook-flows.sh`.
 3. HTML: einen neuen `<section class="spec">`-Block in `docs/handbook/de/index.html`
-   ergänzen (Muster siehe spec-01).
+   ergänzen (Muster siehe spec-02).
 4. TOC: den Eintrag in `<nav class="toc">` mit Anker zur neuen Section
    ergänzen.
 
