@@ -1,0 +1,9 @@
+# Captures docs/handbook/screenshots/01-welcome.png
+# Screenshot is taken by scripts/run-handbook-flows.sh via xcrun after this flow.
+appId: swiss.realunit.app
+---
+- launchApp:
+    appId: swiss.realunit.app
+    clearState: true
+- waitForAnimationToEnd
+- assertVisible: 'Start'

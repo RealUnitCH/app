@@ -1,0 +1,8 @@
+# Captures docs/handbook/screenshots/02-create-vs-restore.png
+# Depends on 01-welcome being the previous flow (no clearState, continues from Start screen).
+appId: swiss.realunit.app
+---
+- tapOn: 'Start'
+- waitForAnimationToEnd
+- assertVisible:
+    text: '.*Digitale Wallet.*'

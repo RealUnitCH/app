@@ -1,0 +1,7 @@
+# Captures docs/handbook/screenshots/19-settings-seed-revealed.png
+# Same BIP-39 grid as 05-seed-revealed; lives behind the PIN gate inside Settings.
+appId: swiss.realunit.app
+---
+- tapOn:
+    point: 50%,65%
+- waitForAnimationToEnd

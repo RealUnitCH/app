@@ -1,0 +1,10 @@
+# Captures docs/handbook/screenshots/06-verify-seed.png
+# In kDebugMode the verify-seed cubit auto-fills the required words from the
+# generated seed, so the input fields are visibly pre-populated. The screenshot
+# documents the verify step UI; the user-facing flow asks the user to type
+# the words manually in release builds.
+appId: swiss.realunit.app
+---
+- tapOn: 'Ich habe es gesichert'
+- waitForAnimationToEnd
+- assertVisible: 'Sicherung überprüfen'

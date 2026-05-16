@@ -1,0 +1,10 @@
+# Captures docs/handbook/screenshots/13-settings-languages.png
+appId: swiss.realunit.app
+---
+- tapOn:
+    text: '.*Sprachen.*'
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: '.*Deutsch.*'
+    timeout: 5000

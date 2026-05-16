@@ -1,0 +1,8 @@
+# Captures docs/handbook/screenshots/05-seed-revealed.png
+# Tap the SeedBlurCard (wrapped in ExcludeSemantics, so coordinate-based tap).
+appId: swiss.realunit.app
+---
+- tapOn:
+    point: 50%,50%
+- waitForAnimationToEnd
+- assertVisible: 'Ich habe es gesichert'

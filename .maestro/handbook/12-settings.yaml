@@ -1,0 +1,9 @@
+# Captures docs/handbook/screenshots/12-settings.png
+# Tap the top-right hamburger icon. It's an IconButton(Icons.menu) with no
+# tooltip/semantic label, so we tap by coordinate.
+appId: swiss.realunit.app
+---
+- tapOn:
+    point: 91%,10%
+- waitForAnimationToEnd
+- assertVisible: 'Einstellungen'
