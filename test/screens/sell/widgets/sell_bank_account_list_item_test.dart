@@ -35,8 +35,8 @@ void main() {
 
     testWidgets('isActive=false: bg is neutral200', (tester) async {
       await tester.pumpApp(_host(
-        SellBankAccountListItem(
-          account: const BankAccount(
+        const SellBankAccountListItem(
+          account: BankAccount(
             id: 1,
             iban: 'CH9300762011623852957',
             name: 'Old account',
