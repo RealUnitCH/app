@@ -35,7 +35,7 @@ void main() {
         routes: [
           GoRoute(
             path: '/',
-            builder: (_, __) => const SellExecutedSheet(),
+            builder: (_, _) => const SellExecutedSheet(),
           ),
         ],
       );
