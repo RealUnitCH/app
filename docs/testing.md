@@ -116,6 +116,62 @@ See `test/packages/service/dfx/dfx_bank_account_service_test.dart`.
 
 - Test mocks should be private to the file (`class _MockX extends Mock implements X {}`). Don't leak them across files.
 
+### Constructor-fires-work cubits
+
+Some cubits kick off async work in their constructor (`SellBitboxCubit` calls `scheduleMicrotask(_checkEthBalance)`; `KycCubit` enters `checkKyc` via the page-level `BlocProvider(create: …)`). `blocTest`'s state-sequence assertion attaches a listener *after* the constructor runs, so it can miss the synchronous initial emit.
+
+Wait for the terminal state instead:
+
+```dart
+final cubit = build();
+final state = await cubit.stream.firstWhere((s) => s is SellBitboxEthReady);
+```
+
+This is also the pattern when you want to assert on the *final* state after a chain of internal emits (Loading → RequestingFaucet → WaitingForEth) without listing every transient step.
+
+### Widget tests that overflow the default viewport
+
+The default `tester` viewport is 800×600. Rows with multiple expanded children + long labels (`SellBitboxDepositStep`'s amount row, `LegalDisclaimerStep`'s text columns) report `RenderFlex overflowed by N pixels on the right/bottom`. Bump the viewport in the offending test:
+
+```dart
+tester.view.physicalSize = const Size(1200, 2400);
+tester.view.devicePixelRatio = 1.0;
+addTearDown(tester.view.resetPhysicalSize);
+```
+
+Don't change the production widget to compensate — the production layout is fine on real devices.
+
+### GoRouter harness for sheets that call `context.pop`
+
+`pumpApp` (via `MaterialApp.home`) does not provide a GoRouter, so any sheet that calls `context.pop(result)` throws "Null check operator used on a null value" on render. Use the `MaterialApp.router` constructor with a minimal route:
+
+```dart
+final router = GoRouter(
+  routes: [GoRoute(path: '/', builder: (_, _) => const MyBottomSheet())],
+);
+addTearDown(router.dispose);
+await tester.pumpWidget(MaterialApp.router(
+  routerConfig: router,
+  localizationsDelegates: [S.delegate, GlobalMaterialLocalizations.delegate],
+  supportedLocales: S.delegate.supportedLocales,
+));
+```
+
+`pumpApp` is fine for widgets that don't pop — only switch to the router harness when you need `context.pop` resolvable.
+
+### Shared test private key
+
+`FakeBitboxCredentials` derives its signatures from a single deterministic test private key. Reuse the same key directly when you need a real `EthPrivateKey` credential (for example to drive `Eip7702Signer.signAuthorization`, which rejects `BitboxCredentials`):
+
+```dart
+const _testPrivateKeyHex =
+    'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
+final privKey = EthPrivateKey.fromHex(_testPrivateKeyHex);
+// Derived address: 0x9F5713DEacB8e9CAB6c2d3FaE1AFc2715F8D2D71
+```
+
+Sharing the key lets cross-layer tests assert on a single recovered signer address — and means any envelope encoded by `FakeBitboxCredentials(success)` round-trips through `Eip712Signer.signRegistration` to the same byte sequence.
+
 ## Tier 1 — cubit / widget + SDK-boundary fake
 
 Tier 1 reuses the same `flutter_test` runner but swaps in [`FakeBitboxCredentials`](../lib/packages/hardware_wallet/fake_bitbox_credentials.dart) at the BitBox boundary. The fake `is BitboxCredentials`, so every production type guard (e.g. the `BitboxNotConnectedException` check in `RealUnitRegistrationService`) treats it identically to a real device.
@@ -193,6 +249,20 @@ flutter test --coverage
 ```
 
 Coverage is uploaded as an artifact (see [#323](https://github.com/DFXswiss/realunit-app/pull/323)). The repo holds a [100 % coverage rule](https://github.com/DFXswiss/realunit-app/pull/322) for new code — drop the threshold only with reviewer sign-off and a written reason.
+
+## Surface that needs infra work before it can be unit-tested
+
+Some files are deliberately uncovered today because exercising them would change project architecture, not just add a test. Don't waste time stubbing around these without a focused infra PR first:
+
+| Area | Why it's not unit-tested | What it would take |
+|---|---|---|
+| `lib/packages/repository/*` (Drift wrappers) | `AppDatabase(String encryptionPassword)` builds a native SQLCipher executor; no in-memory injection point | Add `AppDatabase.forTesting(QueryExecutor e) : super(e)` and let tests pass `NativeDatabase.memory()` |
+| `lib/screens/*/`-Page widgets that call `getIt<X>()` directly (Dashboard, Receive, Settings sub-pages) | Service locator usage inside `build` makes the cubits the page wires up impossible to swap | Move the `BlocProvider(create: (_) => Cubit(getIt<X>()))` lookup up one layer so tests can `BlocProvider.value` a mock |
+| `transaction_history_*receipt_cubit`, `settings_tax_report_cubit` | Call `getApplicationDocumentsDirectory()` from `path_provider` directly | Inject the path lookup (or use [`path_provider_platform_interface`](https://pub.dev/packages/path_provider_platform_interface) with a fake) |
+| `lib/screens/kyc/steps/ident/cubits/kyc_ident_cubit.dart` | Drives the Sumsub `flutter_idensic_mobile_sdk_plugin` directly | Move the SDK call behind a port the cubit takes via constructor injection |
+| `lib/widgets/chain_asset_icon.dart`, `lib/widgets/image_picker_sheet.dart` | `Image.asset` / `ImagePicker` need a real asset bundle / platform channel | Mock the asset loader / use the platform-interface fake |
+
+When you find yourself wanting to test one of these, do the infra PR first and document the new injection point in this file.
 
 ## Adding tests when you touch BitBox-related code
 
