@@ -1,0 +1,14 @@
+# syntax=docker/dockerfile:1
+#
+# Static nginx host for docs/handbook/ — served at handbook.realuni.app (PRD)
+# and dev-handbook.realuni.app (DEV) via Cloudflare Tunnel.
+#
+# Built independently of the Flutter app: no Flutter toolchain, no app code.
+# Build context is the repo root; only docs/handbook/ is copied in.
+
+FROM nginx:1.27-alpine
+
+COPY docs/handbook/ /usr/share/nginx/html/
+COPY handbook.nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 8080
