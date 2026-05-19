@@ -8,22 +8,80 @@
       name="description"
       content="RealUnit Wallet — Handbuch und Test-Dokumentation. Jeder Screenshot ist eine Maestro-Tier-3-Aufnahme; die App-Variante, die auf realer Hardware exakt diese Screens produziert, ist die spezifizierte."
     />
+    <script>
+      // Auto-open the <details> for the hash anchor (e.g. /handbook/de#spec-04).
+      function openHashTarget() {
+        var hash = location.hash;
+        if (!hash || hash.length < 2) return;
+        var el;
+        try {
+          el = document.querySelector(hash);
+        } catch (e) {
+          return;
+        }
+        if (!el) return;
+        var det = el.tagName === 'DETAILS' ? el : el.closest('details');
+        if (det) {
+          det.open = true;
+          requestAnimationFrame(function () {
+            det.scrollIntoView({ behavior: 'instant', block: 'start' });
+          });
+        }
+      }
+      window.addEventListener('hashchange', openHashTarget);
+      document.addEventListener('DOMContentLoaded', openHashTarget);
+
+      // TOC clicks: open the target <details> before the browser scrolls.
+      document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.toc a[href^="#"]').forEach(function (a) {
+          a.addEventListener('click', function () {
+            var id = a.getAttribute('href').slice(1);
+            if (!id) return;
+            var el = document.getElementById(id);
+            var det = el && (el.tagName === 'DETAILS' ? el : el.closest('details'));
+            if (det) det.open = true;
+          });
+        });
+
+        // Expand/collapse-all toggle in the sidebar.
+        var toggle = document.getElementById('spec-toggle-all');
+        if (!toggle) return;
+        var update = function () {
+          var anyClosed = false;
+          document.querySelectorAll('details.spec').forEach(function (d) {
+            if (!d.open) anyClosed = true;
+          });
+          toggle.setAttribute('data-state', anyClosed ? 'collapsed' : 'expanded');
+          toggle.textContent = anyClosed ? 'Alle ausklappen' : 'Alle einklappen';
+        };
+        toggle.addEventListener('click', function () {
+          var open = toggle.getAttribute('data-state') === 'collapsed';
+          document.querySelectorAll('details.spec').forEach(function (d) {
+            d.open = open;
+          });
+          update();
+        });
+        document.querySelectorAll('details.spec').forEach(function (d) {
+          d.addEventListener('toggle', update);
+        });
+        update();
+      });
+    </script>
     <style>
       :root {
-        --bg: #fafafa;
-        --surface: #ffffff;
-        --surface-2: #f5f5f5;
-        --line: #e8e8e8;
-        --line-2: #d6d6d6;
-        --ink: #1d1b20;
-        --ink-2: #4a4a4a;
-        --ink-3: #777777;
-        --ink-4: #a0a0a0;
-        --brand: #1d80c4;
-        --brand-hover: #1a6fab;
-        --ok: #16a34a;
-        --warn: #ca8a04;
-        --err: #dc2626;
+        /* RealUnit brand palette — mirrors lib/styles/colors.dart (RealUnitColors).
+           Same blue used on realunit.ch (#1988C6). Keep in sync with the app. */
+        --bg: #d1e6f5;             /* brand200 */
+        --surface: #ffffff;         /* basic.white */
+        --surface-2: #f2f5f8;       /* neutral100 */
+        --line: #e2e8f0;            /* neutral200 */
+        --line-2: #ced5de;          /* neutral300 */
+        --ink: #343233;             /* realUnitBlack */
+        --ink-2: #475569;           /* neutral600 */
+        --ink-3: #64748b;           /* neutral500 */
+        --ink-4: #94a3b8;           /* neutral400 */
+        --brand: #1988c6;           /* realUnitBlue */
+        --warn: #e9ad3f;            /* okker */
         --content-width: 960px;
       }
       * {
@@ -185,8 +243,26 @@
         margin: 48px 0;
       }
 
-      section.spec {
-        margin-bottom: 72px;
+      details.spec {
+        margin: 0 0 72px;
+        scroll-margin-top: 24px;
+      }
+      details.spec > summary {
+        list-style: none;
+        cursor: pointer;
+        user-select: none;
+        padding: 6px 0 4px;
+      }
+      details.spec > summary::-webkit-details-marker {
+        display: none;
+      }
+      details.spec > summary:focus-visible {
+        outline: 2px solid var(--brand);
+        outline-offset: 4px;
+        border-radius: 4px;
+      }
+      details.spec > summary:hover .spec-head .lhs h2 {
+        color: var(--brand);
       }
 
       .spec-head {
@@ -201,6 +277,25 @@
         font-size: 22px;
         font-weight: 600;
         letter-spacing: -0.005em;
+        display: inline-flex;
+        align-items: baseline;
+        gap: 10px;
+        transition: color 0.15s;
+      }
+      .spec-head .lhs h2::before {
+        content: '▸';
+        display: inline-block;
+        width: 12px;
+        font-size: 14px;
+        color: var(--ink-4);
+        transition:
+          transform 0.18s ease-out,
+          color 0.15s;
+        transform: translateY(-1px);
+      }
+      details.spec[open] .spec-head .lhs h2::before {
+        transform: translateY(-1px) rotate(90deg);
+        color: var(--brand);
       }
       .spec-head .lhs h2 .num {
         display: inline-block;
@@ -299,7 +394,7 @@
 
       .callout {
         border-left: 3px solid var(--brand);
-        background: rgba(29, 128, 196, 0.05);
+        background: rgba(25, 136, 198, 0.06);
         padding: 14px 18px;
         margin: 24px 0;
         border-radius: 0 4px 4px 0;
@@ -310,7 +405,7 @@
       }
       .callout.warn {
         border-color: var(--warn);
-        background: rgba(202, 138, 4, 0.06);
+        background: rgba(233, 173, 63, 0.10);
       }
       .callout p {
         margin: 0;
@@ -318,6 +413,31 @@
         font-size: 13.5px;
       }
       .callout b {
+        color: var(--ink);
+      }
+
+      /* Sidebar expand/collapse-all toggle */
+      .toc-actions {
+        margin: 6px 0 16px;
+      }
+      .toc-actions button {
+        appearance: none;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        color: var(--ink-2);
+        cursor: pointer;
+        font: inherit;
+        font-size: 12px;
+        padding: 5px 10px;
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          color 0.15s;
+      }
+      .toc-actions button:hover {
+        background: var(--surface-2);
+        border-color: var(--line-2);
         color: var(--ink);
       }
     </style>
@@ -339,6 +459,9 @@
         </nav>
 
         <div class="toc-label">Specs</div>
+        <div class="toc-actions">
+          <button type="button" id="spec-toggle-all" data-state="expanded">Alle einklappen</button>
+        </div>
         <nav class="toc">
           <ol>
             <li>
@@ -427,22 +550,24 @@
 
         <hr class="sep" />
 
-        <section id="spec-01" class="spec">
-          <div class="spec-head">
-            <div class="lhs">
-              <h2><span class="num">01</span>Welcome &amp; Onboarding</h2>
-              <div class="file">.maestro/handbook/01..03-*.yaml</div>
-            </div>
-            <div class="rhs">
-              <b>3 Screens</b>
-              <div class="links">
-                <a
-                  href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
-                  >Flows ↗</a
-                >
+        <details id="spec-01" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">01</span>Welcome &amp; Onboarding</h2>
+                <div class="file">.maestro/handbook/01..03-*.yaml</div>
+              </div>
+              <div class="rhs">
+                <b>3 Screens</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
+                    >Flows ↗</a
+                  >
+                </div>
               </div>
             </div>
-          </div>
+          </summary>
           <p class="spec-intro">
             Der allererste Screen, den ein neuer User sieht. Zwei Wege gehen davon ab — die
             <em>App-Wallet</em> (Seed-Phrase auf dem Gerät) und die
@@ -507,26 +632,28 @@
               </div>
             </div>
           </div>
-        </section>
+        </details>
 
         <hr class="sep" />
 
-        <section id="spec-02" class="spec">
-          <div class="spec-head">
-            <div class="lhs">
-              <h2><span class="num">02</span>Wallet erstellen</h2>
-              <div class="file">.maestro/handbook/04..06-*.yaml</div>
-            </div>
-            <div class="rhs">
-              <b>3 Screens</b>
-              <div class="links">
-                <a
-                  href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
-                  >Flows ↗</a
-                >
+        <details id="spec-02" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">02</span>Wallet erstellen</h2>
+                <div class="file">.maestro/handbook/04..06-*.yaml</div>
+              </div>
+              <div class="rhs">
+                <b>3 Screens</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
+                    >Flows ↗</a
+                  >
+                </div>
               </div>
             </div>
-          </div>
+          </summary>
           <p class="spec-intro">
             BIP-39-Seed-Backup-Flow. Drei Schritte: Seed-Phrase wird zuerst verschleiert
             angezeigt mit einer Aufforderung sie aufzuschreiben, dann durch Tap enthüllt
@@ -603,26 +730,28 @@
               </div>
             </div>
           </div>
-        </section>
+        </details>
 
         <hr class="sep" />
 
-        <section id="spec-03" class="spec">
-          <div class="spec-head">
-            <div class="lhs">
-              <h2><span class="num">03</span>Onboarding abschliessen</h2>
-              <div class="file">.maestro/handbook/07-onboarding-completed.yaml</div>
-            </div>
-            <div class="rhs">
-              <b>1 Screen</b>
-              <div class="links">
-                <a
-                  href="https://github.com/DFXswiss/realunit-app/blob/develop/.maestro/handbook/07-onboarding-completed.yaml"
-                  >Flow ↗</a
-                >
+        <details id="spec-03" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">03</span>Onboarding abschliessen</h2>
+                <div class="file">.maestro/handbook/07-onboarding-completed.yaml</div>
+              </div>
+              <div class="rhs">
+                <b>1 Screen</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/DFXswiss/realunit-app/blob/develop/.maestro/handbook/07-onboarding-completed.yaml"
+                    >Flow ↗</a
+                  >
+                </div>
               </div>
             </div>
-          </div>
+          </summary>
           <p class="spec-intro">
             Brücke zwischen Seed-Sicherung und PIN-Einrichtung. An dieser Stelle ist die
             Wallet zwar generiert, aber noch nicht durch eine lokale PIN gegen Zugriff
@@ -650,26 +779,28 @@
               </div>
             </div>
           </div>
-        </section>
+        </details>
 
         <hr class="sep" />
 
-        <section id="spec-04" class="spec">
-          <div class="spec-head">
-            <div class="lhs">
-              <h2><span class="num">04</span>PIN einrichten</h2>
-              <div class="file">.maestro/handbook/08..10-*.yaml</div>
-            </div>
-            <div class="rhs">
-              <b>3 Screens</b>
-              <div class="links">
-                <a
-                  href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
-                  >Flows ↗</a
-                >
+        <details id="spec-04" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">04</span>PIN einrichten</h2>
+                <div class="file">.maestro/handbook/08..10-*.yaml</div>
+              </div>
+              <div class="rhs">
+                <b>3 Screens</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
+                    >Flows ↗</a
+                  >
+                </div>
               </div>
             </div>
-          </div>
+          </summary>
           <p class="spec-intro">
             6-stellige App-PIN als zweiter Schutzlayer. <code>SetupPinPage</code> hat zwei
             Zustände auf derselben Seite (<code>create</code> → <code>confirm</code>) — der
@@ -736,26 +867,28 @@
               </div>
             </div>
           </div>
-        </section>
+        </details>
 
         <hr class="sep" />
 
-        <section id="spec-05" class="spec">
-          <div class="spec-head">
-            <div class="lhs">
-              <h2><span class="num">05</span>Dashboard</h2>
-              <div class="file">.maestro/handbook/11-dashboard.yaml</div>
-            </div>
-            <div class="rhs">
-              <b>1 Screen</b>
-              <div class="links">
-                <a
-                  href="https://github.com/DFXswiss/realunit-app/blob/develop/.maestro/handbook/11-dashboard.yaml"
-                  >Flow ↗</a
-                >
+        <details id="spec-05" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">05</span>Dashboard</h2>
+                <div class="file">.maestro/handbook/11-dashboard.yaml</div>
+              </div>
+              <div class="rhs">
+                <b>1 Screen</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/DFXswiss/realunit-app/blob/develop/.maestro/handbook/11-dashboard.yaml"
+                    >Flow ↗</a
+                  >
+                </div>
               </div>
             </div>
-          </div>
+          </summary>
           <p class="spec-intro">
             Haupteinstieg nach abgeschlossenem Onboarding. Zeigt den aktuellen RealUnit
             Aktienkurs in der gewählten Anzeigewährung (Default CHF), die Performance-Kurve
@@ -786,26 +919,28 @@
               </div>
             </div>
           </div>
-        </section>
+        </details>
 
         <hr class="sep" />
 
-        <section id="spec-06" class="spec">
-          <div class="spec-head">
-            <div class="lhs">
-              <h2><span class="num">06</span>Einstellungen</h2>
-              <div class="file">.maestro/handbook/12..16-*.yaml</div>
-            </div>
-            <div class="rhs">
-              <b>5 Screens</b>
-              <div class="links">
-                <a
-                  href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
-                  >Flows ↗</a
-                >
+        <details id="spec-06" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">06</span>Einstellungen</h2>
+                <div class="file">.maestro/handbook/12..16-*.yaml</div>
+              </div>
+              <div class="rhs">
+                <b>5 Screens</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
+                    >Flows ↗</a
+                  >
+                </div>
               </div>
             </div>
-          </div>
+          </summary>
           <p class="spec-intro">
             Sammelpunkt für lokale Einstellungen (Sprache, Anzeigewährung, Netzwerk) sowie
             On-Chain-Identität (Wallet-Adresse, Recovery-Phrase) und User-Daten für die
@@ -905,26 +1040,28 @@
               </div>
             </div>
           </div>
-        </section>
+        </details>
 
         <hr class="sep" />
 
-        <section id="spec-07" class="spec">
-          <div class="spec-head">
-            <div class="lhs">
-              <h2><span class="num">07</span>Wallet-Sicherung</h2>
-              <div class="file">.maestro/handbook/17..19-*.yaml</div>
-            </div>
-            <div class="rhs">
-              <b>3 Screens</b>
-              <div class="links">
-                <a
-                  href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
-                  >Flows ↗</a
-                >
+        <details id="spec-07" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">07</span>Wallet-Sicherung</h2>
+                <div class="file">.maestro/handbook/17..19-*.yaml</div>
+              </div>
+              <div class="rhs">
+                <b>3 Screens</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
+                    >Flows ↗</a
+                  >
+                </div>
               </div>
             </div>
-          </div>
+          </summary>
           <p class="spec-intro">
             PIN-gated Re-Display der Recovery-Phrase aus den Settings — falls der User die
             Wörter nach dem Onboarding noch einmal sehen oder neu notieren will. Die
@@ -989,7 +1126,7 @@
               </div>
             </div>
           </div>
-        </section>
+        </details>
       </main>
     </div>
   </body>
