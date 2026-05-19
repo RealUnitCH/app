@@ -190,15 +190,71 @@ void main() {
   // -------------------------------------------------------------------------
 
   group('$DFXAuthService authenticated requests', () {
-    test('retries authenticated requests once with a refreshed token on 401', () async {
+    test('authenticatedGet retries once with a refreshed token on 401', () async {
       final seenAuthHeaders = <String?>[];
+      final seenMethods = <String>[];
       final client = MockClient((request) async {
         seenAuthHeaders.add(request.headers['Authorization']);
+        seenMethods.add(request.method);
 
         if (seenAuthHeaders.length == 1) {
           return http.Response('{"message":"Unauthorized"}', 401);
         }
+        return http.Response('{"ok":true}', 200);
+      });
+      final service = _RetryTestAuthService(_RetryTestAppStore(client));
 
+      final response = await service.authenticatedGet(
+        Uri.parse('https://api.example.test/v1/resource'),
+        headers: {'Accept': 'application/json'},
+      );
+
+      expect(response.statusCode, 200);
+      expect(seenMethods, ['GET', 'GET']);
+      expect(seenAuthHeaders, ['Bearer expired-token', 'Bearer fresh-token']);
+      expect(service.authTokenCalls, 1);
+      expect(service.refreshAuthTokenCalls, 1);
+    });
+
+    test('authenticatedPost retries once with a refreshed token on 401 and resends the body',
+        () async {
+      final seenAuthHeaders = <String?>[];
+      final seenBodies = <String>[];
+      final client = MockClient((request) async {
+        seenAuthHeaders.add(request.headers['Authorization']);
+        seenBodies.add(request.body);
+
+        if (seenAuthHeaders.length == 1) {
+          return http.Response('{"message":"Unauthorized"}', 401);
+        }
+        return http.Response('{"ok":true}', 201);
+      });
+      final service = _RetryTestAuthService(_RetryTestAppStore(client));
+
+      final response = await service.authenticatedPost(
+        Uri.parse('https://api.example.test/v1/resource'),
+        headers: {'Content-Type': 'application/json'},
+        body: '{"value":1}',
+      );
+
+      expect(response.statusCode, 201);
+      expect(seenAuthHeaders, ['Bearer expired-token', 'Bearer fresh-token']);
+      // Same body resent on retry — no truncation, no double-encoding.
+      expect(seenBodies, ['{"value":1}', '{"value":1}']);
+      expect(service.refreshAuthTokenCalls, 1);
+    });
+
+    test('authenticatedPut retries once with a refreshed token on 401 and resends the body',
+        () async {
+      final seenAuthHeaders = <String?>[];
+      final seenBodies = <String>[];
+      final client = MockClient((request) async {
+        seenAuthHeaders.add(request.headers['Authorization']);
+        seenBodies.add(request.body);
+
+        if (seenAuthHeaders.length == 1) {
+          return http.Response('{"message":"Unauthorized"}', 401);
+        }
         return http.Response('{"ok":true}', 200);
       });
       final service = _RetryTestAuthService(_RetryTestAppStore(client));
@@ -211,8 +267,63 @@ void main() {
 
       expect(response.statusCode, 200);
       expect(seenAuthHeaders, ['Bearer expired-token', 'Bearer fresh-token']);
-      expect(service.authTokenCalls, 1);
+      expect(seenBodies, ['{"value":1}', '{"value":1}']);
+      expect(service.refreshAuthTokenCalls, 1);
+    });
+
+    test('does not retry a third time when the refreshed token also yields 401', () async {
+      var calls = 0;
+      final client = MockClient((_) async {
+        calls++;
+        return http.Response('{"message":"Unauthorized"}', 401);
+      });
+      final service = _RetryTestAuthService(_RetryTestAppStore(client));
+
+      final response = await service.authenticatedGet(
+        Uri.parse('https://api.example.test/v1/resource'),
+      );
+
+      // Exactly two HTTP calls — initial + one retry — and the 401 is
+      // surfaced to the caller.
+      expect(calls, 2);
+      expect(response.statusCode, 401);
+      expect(service.refreshAuthTokenCalls, 1);
+    });
+
+    test('propagates exceptions thrown by refreshAuthToken without swallowing them',
+        () async {
+      final client = MockClient((_) async => http.Response(
+            '{"message":"Unauthorized"}',
+            401,
+          ));
+      final service = _ThrowingRefreshAuthService(_RetryTestAppStore(client));
+
+      await expectLater(
+        service.authenticatedGet(Uri.parse('https://api.example.test/v1/resource')),
+        throwsA(isA<StateError>()),
+      );
       expect(service.refreshAuthTokenCalls, 1);
     });
   });
+}
+
+class _ThrowingRefreshAuthService extends DFXAuthService {
+  _ThrowingRefreshAuthService(super.appStore);
+
+  int refreshAuthTokenCalls = 0;
+
+  @override
+  AWalletAccount get wallet => throw UnimplementedError();
+
+  @override
+  String get walletAddress => throw UnimplementedError();
+
+  @override
+  Future<String?> getAuthToken() async => 'expired-token';
+
+  @override
+  Future<String?> refreshAuthToken() async {
+    refreshAuthTokenCalls++;
+    throw StateError('refresh boom');
+  }
 }
