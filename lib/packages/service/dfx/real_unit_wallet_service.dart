@@ -1,29 +1,20 @@
 import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
-import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 
-class RealUnitWalletService {
-  RealUnitWalletService(AppStore appStore) : _appStore = appStore;
+class RealUnitWalletService extends DFXAuthService {
+  RealUnitWalletService(super.appStore);
 
   static const _walletStatusPath = '/v1/realunit/wallet/status';
 
-  final AppStore _appStore;
-
-  String get _host => _appStore.apiConfig.apiHost;
-
   Future<RealUnitWalletStatusDto> getWalletStatus() async {
-    final authToken = _appStore.sessionCache.authToken;
-
-    final uri = buildUri(_host, _walletStatusPath);
-    final response = await _appStore.httpClient.get(
+    final uri = buildUri(host, _walletStatusPath);
+    final response = await authenticatedGet(
       uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
-      },
+      headers: {'Content-Type': 'application/json'},
     );
 
     if (response.statusCode != 200) {
@@ -31,7 +22,6 @@ class RealUnitWalletService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    final dto = RealUnitWalletStatusDto.fromJson(jsonDecode(response.body));
-    return dto;
+    return RealUnitWalletStatusDto.fromJson(jsonDecode(response.body));
   }
 }
