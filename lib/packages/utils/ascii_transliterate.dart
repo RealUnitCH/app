@@ -14,7 +14,8 @@ library;
 
 import 'package:characters/characters.dart';
 
-/// Multi-char replacements (German digraphs + nordic æ/ø) — applied first.
+/// Multi-char replacements (German digraphs + nordic æ/ø + ellipsis) —
+/// applied first.
 const Map<String, String> _multiCharReplacements = {
   // German
   'ä': 'ae', 'ö': 'oe', 'ü': 'ue', 'ß': 'ss',
@@ -25,6 +26,10 @@ const Map<String, String> _multiCharReplacements = {
   'ø': 'oe', 'Ø': 'Oe',
   'ð': 'd', 'Ð': 'D',
   'þ': 'th', 'Þ': 'Th',
+  // Typographic punctuation produced by iOS/Android autocorrect — without
+  // this, names like `D’Angelo` end up signed as `D?Angelo` and the
+  // BitBox-side payload no longer matches the backend's.
+  '…': '...',
 };
 
 /// Single-char replacements — base-letter equivalents for any single
@@ -83,6 +88,14 @@ const Map<String, String> _singleCharReplacements = {
   // z
   'ź': 'z', 'ż': 'z', 'ž': 'z',
   'Ź': 'Z', 'Ż': 'Z', 'Ž': 'Z',
+  // Typographic punctuation (smart quotes + en/em dashes) — folded to
+  // the ASCII equivalent the user typed before autocorrect intervened.
+  '‘': "'", // ‘ left single quote
+  '’': "'", // ’ right single quote / curly apostrophe
+  '“': '"', // “ left double quote
+  '”': '"', // ” right double quote
+  '–': '-', // – en dash
+  '—': '-', // — em dash
 };
 
 /// Returns an ASCII-safe representation of [input]. German umlauts and
