@@ -80,6 +80,7 @@ void main() {
     });
 
     test('returns 0.0 when the balances list is empty', () async {
+      sessionCache.setAuthToken('jwt-abc');
       final client = MockClient((_) async => http.Response(
             jsonEncode({'balances': []}),
             200,
@@ -89,6 +90,7 @@ void main() {
     });
 
     test('accepts a 201 response in addition to 200', () async {
+      sessionCache.setAuthToken('jwt-abc');
       final client = MockClient((_) async => http.Response(
             jsonEncode({
               'balances': [
@@ -102,9 +104,13 @@ void main() {
     });
 
     test('throws ApiException on a non-2xx response', () async {
+      sessionCache.setAuthToken('jwt-abc');
+      // 4xx other than 401 — bypasses the refresh-on-401 retry path and is
+      // surfaced to the caller directly. The dedicated 401-retry behaviour is
+      // covered in dfx_auth_service_test.dart.
       final client = MockClient((_) async => http.Response(
-            jsonEncode({'statusCode': 401, 'message': 'Unauthorized'}),
-            401,
+            jsonEncode({'statusCode': 403, 'message': 'Forbidden'}),
+            403,
           ));
 
       expect(
