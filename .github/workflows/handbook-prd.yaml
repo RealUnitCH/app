@@ -67,3 +67,25 @@ jobs:
             -o ProxyCommand="cloudflared access ssh --hostname ${{ secrets.DEPLOY_PRD_HOST }}" \
             ${{ secrets.DEPLOY_PRD_USER }}@${{ secrets.DEPLOY_PRD_HOST }} \
             "${{ env.DEPLOY_SERVICE }}"
+
+      # Post-deploy smoke test: poll the public endpoint until the nginx
+      # container answers 200, or give up. Without this step a "green"
+      # deploy can lie — a misconfigured nginx leaves the container
+      # Up-but-unresponsive while the workflow reports success. Mirrors
+      # the pattern from zkcoins/server `deploy-dev.yaml`.
+      - name: Smoke test public endpoint
+        env:
+          SMOKE_URL: https://handbook.dfxserve.com/de/
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 30); do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 "$SMOKE_URL" || echo "000")
+            if [ "$code" = "200" ]; then
+              echo "PRD handbook responded 200 after ${i} attempt(s)"
+              exit 0
+            fi
+            echo "[$i/30] $SMOKE_URL -> ${code} (waiting 10 s)"
+            sleep 10
+          done
+          echo "::error::PRD handbook never returned 200 within ~5 min after deploy"
+          exit 1
