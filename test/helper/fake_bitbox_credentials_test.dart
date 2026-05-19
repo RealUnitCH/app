@@ -3,8 +3,9 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
-import 'package:realunit_wallet/packages/hardware_wallet/fake_bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
+
+import 'fake_bitbox_credentials.dart';
 
 const _typedData =
     '{"types":{"EIP712Domain":[{"name":"name","type":"string"}],'

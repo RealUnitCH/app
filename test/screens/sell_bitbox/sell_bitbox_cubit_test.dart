@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
-import 'package:realunit_wallet/packages/hardware_wallet/fake_bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
@@ -18,6 +17,8 @@ import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/screens/sell_bitbox/cubit/sell_bitbox_cubit.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 import 'package:web3dart/web3dart.dart';
+
+import '../../helper/fake_bitbox_credentials.dart';
 
 class _MockFaucet extends Mock implements DfxFaucetService {}
 

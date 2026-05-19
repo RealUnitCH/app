@@ -6,7 +6,6 @@ import 'package:http/testing.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
-import 'package:realunit_wallet/packages/hardware_wallet/fake_bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
@@ -21,6 +20,8 @@ import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
+
+import '../../../helper/fake_bitbox_credentials.dart';
 
 class _MockAppStore extends Mock implements AppStore {}
 

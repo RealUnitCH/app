@@ -12,9 +12,10 @@
 // will move to a top-level `integration_test/` directory.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:realunit_wallet/packages/hardware_wallet/fake_bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
+
+import '../helper/fake_bitbox_credentials.dart';
 
 Future<String> _signRegistration(FakeBitboxCredentials credentials) =>
     Eip712Signer.signRegistration(
