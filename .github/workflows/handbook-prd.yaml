@@ -1,11 +1,9 @@
-name: Handbook PRD image
+name: Handbook PRD CI/CD
 
-# Builds and publishes the handbook nginx image to Docker Hub on every push
-# to main. Tag: dfxswiss/realunit-app-handbook:latest.
+# Builds the handbook nginx image, publishes dfxswiss/realunit-app-handbook:latest
+# to Docker Hub, and tells the prd server to pull + recreate the container.
 #
-# Deployment to dfxprd (handbook.realuni.app via Cloudflare Tunnel) is wired
-# up in the DFXswiss/server repo once the realuni.app zone and the
-# realunit-app-handbook compose stack are in place.
+# Mirrors infrastructure/templates/ssh-deploy-prd.yaml from DFXServer/server.
 
 on:
   push:
@@ -17,12 +15,16 @@ on:
       - ".github/workflows/handbook-prd.yaml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   DOCKER_TAGS: dfxswiss/realunit-app-handbook:latest
+  DEPLOY_SERVICE: realunit-app-handbook
 
 jobs:
-  build-and-push:
-    name: Build and push handbook image (latest)
+  build-and-deploy:
+    name: Build and deploy to PRD
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout
@@ -45,3 +47,23 @@ jobs:
           push: true
           tags: ${{ env.DOCKER_TAGS }}
           platforms: linux/arm64
+
+      - name: Install cloudflared
+        env:
+          CLOUDFLARED_VERSION: "2025.4.0"
+          CLOUDFLARED_SHA256: "2561391ee9abdc828afcc52f5ac314b6551a9a6a31ff59cbc64efc63aec04615"
+        run: |
+          curl -fsSL "https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/cloudflared-linux-arm64" -o /usr/local/bin/cloudflared
+          echo "${CLOUDFLARED_SHA256}  /usr/local/bin/cloudflared" | sha256sum -c -
+          chmod +x /usr/local/bin/cloudflared
+
+      - name: Deploy to server
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_PRD_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "${{ secrets.DEPLOY_PRD_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy_key \
+            -o ProxyCommand="cloudflared access ssh --hostname ${{ secrets.DEPLOY_PRD_HOST }}" \
+            ${{ secrets.DEPLOY_PRD_USER }}@${{ secrets.DEPLOY_PRD_HOST }} \
+            "${{ env.DEPLOY_SERVICE }}"

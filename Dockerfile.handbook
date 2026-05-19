@@ -6,9 +6,12 @@
 # Built independently of the Flutter app: no Flutter toolchain, no app code.
 # Build context is the repo root; only docs/handbook/ is copied in.
 
-FROM nginx:1.27-alpine
+FROM nginx:1.27.5-alpine
 
 COPY docs/handbook/ /usr/share/nginx/html/
 COPY handbook.nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD wget -qO- --timeout=3 http://127.0.0.1:8080/de/ >/dev/null || exit 1
