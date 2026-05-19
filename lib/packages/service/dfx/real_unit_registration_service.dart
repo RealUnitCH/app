@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
-import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_email_request_dto.dart';
@@ -19,29 +19,22 @@ import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_u
 import 'package:realunit_wallet/packages/utils/ascii_transliterate.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 
-class RealUnitRegistrationService {
-  RealUnitRegistrationService(AppStore appStore) : _appStore = appStore;
+class RealUnitRegistrationService extends DFXAuthService {
+  RealUnitRegistrationService(super.appStore);
 
   static const _registerEmailPath = '/v1/realunit/register/email';
   static const _registerCompletionPath = '/v1/realunit/register/complete';
   static const _registerWalletPath = '/v1/realunit/register/wallet';
 
-  final AppStore _appStore;
-
-  String get _host => _appStore.apiConfig.apiHost;
-
-  int get _chainId => _appStore.apiConfig.asset.chainId;
+  int get _chainId => appStore.apiConfig.asset.chainId;
 
   /// registers an email on the wallet. Should always be called first when registering
   Future<RegistrationEmailStatus> registerEmail(String email) async {
-    final authToken = _appStore.sessionCache.authToken;
-
-    final uri = buildUri(_host, _registerEmailPath);
-    final response = await _appStore.httpClient.post(
+    final uri = buildUri(host, _registerEmailPath);
+    final response = await authenticatedPost(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
       body: jsonEncode(
         RealUnitEmailRegistrationRequestDto(
@@ -60,7 +53,7 @@ class RealUnitRegistrationService {
 
   /// registers a wallet and and adds the wallet to the new user
   Future<RegistrationStatus> completeRegistration(Registration registration) async {
-    final credentials = _appStore.wallet.primaryAccount.primaryAddress;
+    final credentials = appStore.wallet.primaryAccount.primaryAddress;
     if (credentials is BitboxCredentials && !credentials.isConnected) {
       throw const BitboxNotConnectedException();
     }
@@ -128,14 +121,12 @@ class RealUnitRegistrationService {
         ),
       ),
     );
-    final authToken = _appStore.sessionCache.authToken;
 
-    final uri = buildUri(_host, _registerCompletionPath);
-    final response = await _appStore.httpClient.post(
+    final uri = buildUri(host, _registerCompletionPath);
+    final response = await authenticatedPost(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
       body: jsonEncode(requestDto),
     );
@@ -153,7 +144,7 @@ class RealUnitRegistrationService {
   Future<RegistrationStatus> registerWallet(
     RealUnitUserDataDto userData,
   ) async {
-    final credentials = _appStore.wallet.primaryAccount.primaryAddress;
+    final credentials = appStore.wallet.primaryAccount.primaryAddress;
     if (credentials is BitboxCredentials && !credentials.isConnected) {
       throw const BitboxNotConnectedException();
     }
@@ -182,14 +173,11 @@ class RealUnitRegistrationService {
       registrationDate: registrationDate,
     );
 
-    final authToken = _appStore.sessionCache.authToken;
-
-    final uri = buildUri(_host, _registerWalletPath);
-    final response = await _appStore.httpClient.post(
+    final uri = buildUri(host, _registerWalletPath);
+    final response = await authenticatedPost(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
       body: jsonEncode(requestDto),
     );
