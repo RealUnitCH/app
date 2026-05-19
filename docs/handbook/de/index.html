@@ -10,20 +10,23 @@
     />
     <style>
       :root {
-        --bg: #fafafa;
-        --surface: #ffffff;
-        --surface-2: #f5f5f5;
-        --line: #e8e8e8;
-        --line-2: #d6d6d6;
-        --ink: #1d1b20;
-        --ink-2: #4a4a4a;
-        --ink-3: #777777;
-        --ink-4: #a0a0a0;
-        --brand: #1d80c4;
-        --brand-hover: #1a6fab;
-        --ok: #16a34a;
-        --warn: #ca8a04;
-        --err: #dc2626;
+        /* RealUnit brand palette — mirrors lib/styles/colors.dart (RealUnitColors).
+           Same blue used on realunit.ch (#1988C6). Keep in sync with the app. */
+        --bg: #f8fafc;             /* neutral50 */
+        --surface: #ffffff;         /* basic.white */
+        --surface-2: #f2f5f8;       /* neutral100 */
+        --line: #e2e8f0;            /* neutral200 */
+        --line-2: #ced5de;          /* neutral300 */
+        --ink: #343233;             /* realUnitBlack */
+        --ink-2: #475569;           /* neutral600 */
+        --ink-3: #64748b;           /* neutral500 */
+        --ink-4: #94a3b8;           /* neutral400 */
+        --brand: #1988c6;           /* realUnitBlue */
+        --brand-hover: #034c81;     /* darkBlue */
+        --brand-soft: #ecf3f9;      /* brand700 */
+        --ok: #4cac36;              /* green */
+        --warn: #e9ad3f;            /* okker */
+        --err: #e02523;             /* status.red600 */
         --content-width: 960px;
       }
       * {
@@ -299,7 +302,7 @@
 
       .callout {
         border-left: 3px solid var(--brand);
-        background: rgba(29, 128, 196, 0.05);
+        background: rgba(25, 136, 198, 0.06);
         padding: 14px 18px;
         margin: 24px 0;
         border-radius: 0 4px 4px 0;
@@ -310,7 +313,7 @@
       }
       .callout.warn {
         border-color: var(--warn);
-        background: rgba(202, 138, 4, 0.06);
+        background: rgba(233, 173, 63, 0.10);
       }
       .callout p {
         margin: 0;
