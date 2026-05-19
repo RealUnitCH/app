@@ -14,7 +14,6 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/rea
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 import 'package:realunit_wallet/packages/wallet/eip7702_signer.dart';
-import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 class RealUnitSellPaymentInfoService extends DFXAuthService {
@@ -28,12 +27,6 @@ class RealUnitSellPaymentInfoService extends DFXAuthService {
   static const _delegationManagerAddress = '0xdb9b1e94b5b69df7e401ddbede43491141047db3';
 
   RealUnitSellPaymentInfoService(super.appStore);
-
-  @override
-  AWalletAccount get wallet => appStore.wallet.currentAccount;
-
-  @override
-  String get walletAddress => wallet.primaryAddress.address.hexEip55;
 
   Future<SellPaymentInfo> getPaymentInfo(
     int amount,

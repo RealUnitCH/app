@@ -8,27 +8,18 @@ import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dt
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_session_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
-import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/styles/language.dart';
 
 class DfxKycService extends DFXAuthService {
   static const _userPath = '/v2/user';
   static const _kycPath = 'v2/kyc';
 
-  String get _host => appStore.apiConfig.apiHost;
-
   DfxKycService(super.appStore);
-
-  @override
-  AWalletAccount get wallet => appStore.wallet.currentAccount;
-
-  @override
-  String get walletAddress => wallet.primaryAddress.address.hexEip55;
 
   Future<UserDto> getUser() async {
     final authToken = appStore.sessionCache.authToken;
 
-    final uri = buildUri(_host, _userPath);
+    final uri = buildUri(host, _userPath);
     var response = await appStore.httpClient.get(
       uri,
       headers: {
@@ -61,7 +52,7 @@ class DfxKycService extends DFXAuthService {
     final user = await getUser();
     final authToken = appStore.sessionCache.authToken;
 
-    final uri = buildUri(_host, _kycPath);
+    final uri = buildUri(host, _kycPath);
     final response = await appStore.httpClient.get(
       uri,
       headers: {
@@ -84,7 +75,7 @@ class DfxKycService extends DFXAuthService {
     final user = await getUser();
     final authToken = appStore.sessionCache.authToken;
 
-    final uri = buildUri(_host, _kycPath);
+    final uri = buildUri(host, _kycPath);
     final response = await appStore.httpClient.put(
       uri,
       headers: {
@@ -108,7 +99,7 @@ class DfxKycService extends DFXAuthService {
     final user = await getUser();
     final authToken = appStore.sessionCache.authToken;
 
-    final uri = buildUri(_host, '$_kycPath/${stepName.value}');
+    final uri = buildUri(host, '$_kycPath/${stepName.value}');
     final response = await appStore.httpClient.get(
       uri,
       headers: {
@@ -130,7 +121,7 @@ class DfxKycService extends DFXAuthService {
   Future<void> updateUser(Map<String, dynamic> body) async {
     final authToken = appStore.sessionCache.authToken;
 
-    final uri = buildUri(_host, _userPath);
+    final uri = buildUri(host, _userPath);
     final response = await appStore.httpClient.put(
       uri,
       headers: {
@@ -173,7 +164,7 @@ class DfxKycService extends DFXAuthService {
     final user = await getUser();
     final authToken = appStore.sessionCache.authToken;
 
-    final uri = buildUri(_host, '$_kycPath/2fa', {'level': 'Strict'});
+    final uri = buildUri(host, '$_kycPath/2fa', {'level': 'Strict'});
     final response = await appStore.httpClient.post(
       uri,
       headers: {
@@ -194,7 +185,7 @@ class DfxKycService extends DFXAuthService {
     final user = await getUser();
     final authToken = appStore.sessionCache.authToken;
 
-    final uri = buildUri(_host, '$_kycPath/2fa/verify');
+    final uri = buildUri(host, '$_kycPath/2fa/verify');
     final response = await appStore.httpClient.post(
       uri,
       headers: {

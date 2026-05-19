@@ -4,18 +4,11 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/bank_account/dto/bank_account_dto.dart';
-import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 
 class DfxBankAccountService extends DFXAuthService {
   static const _bankAccountPath = 'v1/bankAccount';
 
   DfxBankAccountService(super.appStore);
-
-  @override
-  AWalletAccount get wallet => appStore.wallet.currentAccount;
-
-  @override
-  String get walletAddress => wallet.primaryAddress.address.hexEip55;
 
   Future<List<BankAccountDto>> getBankAccounts() async {
     final uri = buildUri(host, _bankAccountPath);

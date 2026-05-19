@@ -12,12 +12,6 @@ class DfxSupportService extends DFXAuthService {
 
   DfxSupportService(super.appStore);
 
-  @override
-  get wallet => appStore.wallet.currentAccount;
-
-  @override
-  String get walletAddress => wallet.primaryAddress.address.hexEip55;
-
   Future<List<SupportIssueDto>> getTickets() async {
     final uri = buildUri(host, _supportPath);
     final authToken = await getAuthToken();
