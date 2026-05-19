@@ -1,29 +1,37 @@
 name: RealUnit Build
 
 # Trigger model mirrors zkcoins/server `ci.yaml`:
-#  - `pull_request: develop` is the primary trigger; the release PR
-#    (develop → main) is opened automatically and would otherwise fire
-#    a duplicate CI run for every push to develop.
+#  - `pull_request: develop` is the primary trigger. The release PR
+#    (develop → main) is opened automatically by `auto-release-pr.yaml`,
+#    so we deliberately do NOT include `main` in `pull_request.branches`:
+#    every push to develop would otherwise fire a second `pull_request`
+#    run on the release PR for the same SHA, and the concurrency block
+#    below would cancel one of them and surface a red "cancelled" check
+#    on the release PR.
 #  - `ready_for_review` makes the workflow fire the moment a draft PR
 #    is marked ready — drafts themselves skip via the `if:` guard
 #    below (saves macOS-runner minutes while work is still in progress).
+#  - `labeled` / `unlabeled` are intentionally omitted: realunit-app has
+#    no label-gated heavy job (unlike zkcoins/server's `ci:full`).
 #  - `push: develop` keeps post-merge verification as an authoritative
 #    source of truth, independent of any PR state.
+#  - `workflow_dispatch` is kept as a manual override and is NOT
+#    draft-gated (see the job `if:` guard below).
 on:
   workflow_dispatch:
   push:
     branches: [develop]
   pull_request:
-    branches:
-      - develop
-      - main
+    branches: [develop]
     types: [opened, synchronize, reopened, ready_for_review]
 
 # Group by SHA so a new push cancels the in-flight run for the
 # outdated commit. macOS runners are scarce — letting an obsolete
-# run finish wastes ~10 minutes per push.
+# run finish wastes ~10 minutes per push. Falls back to `github.sha`
+# for `push` and `workflow_dispatch` events (where there is no
+# `pull_request.head.sha`).
 concurrency:
-  group: pr-${{ github.event.pull_request.head.sha || github.sha }}
+  group: ci-${{ github.event.pull_request.head.sha || github.sha }}
   cancel-in-progress: true
 
 permissions:
@@ -32,8 +40,10 @@ permissions:
 jobs:
   build:
     name: Analyze & Test
-    # Skip on draft PRs; matches our `gh pr create --draft` workflow.
-    # Push events always run (post-merge gate).
+    # Skip on draft PRs (matches our `gh pr create --draft` workflow).
+    # `push` (post-merge gate) and `workflow_dispatch` (manual override)
+    # always run — the condition is "anything that isn't a PR, or a PR
+    # that isn't a draft".
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: macos-latest
     timeout-minutes: 30
