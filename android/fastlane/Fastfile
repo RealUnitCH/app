@@ -34,30 +34,35 @@ platform :android do
 
   desc "Build and upload to Play Store Beta"
   lane :beta do
+    # Tag (e.g. "v0.0.42-beta.123") -> tag_name "0.0.42-beta.123" -> marketing "0.0.42".
+    # Play Store accepts free-form versionName, but we mirror the iOS split for
+    # consistency: marketing version is what users see, build number disambiguates.
     new_build_number = next_build_number
     raw_version_name = ENV["NEW_VERSION"] || "v0.0.0"
-    new_version_name = raw_version_name.delete('v')
+    tag_name = raw_version_name.sub(/^v/, '')
+    marketing_version = tag_name.split('-').first
 
     Dir.chdir("..") do
-      sh("flutter", "build", "appbundle", 
+      sh("flutter", "build", "appbundle",
          "--release",
-         "--build-name=#{new_version_name}", 
-         "--build-number=#{new_build_number}", 
-         "--no-tree-shake-icons", 
-         "--obfuscate", 
+         "--build-name=#{marketing_version}",
+         "--build-number=#{new_build_number}",
+         "--no-tree-shake-icons",
+         "--obfuscate",
          "--split-debug-info=build/debug_info"
       )
-      sh("flutter", "build", "apk", 
+      sh("flutter", "build", "apk",
          "--release",
-         "--build-name=#{new_version_name}", 
-         "--build-number=#{new_build_number}", 
-         "--no-tree-shake-icons", 
-         "--obfuscate", 
+         "--build-name=#{marketing_version}",
+         "--build-number=#{new_build_number}",
+         "--no-tree-shake-icons",
+         "--obfuscate",
          "--split-debug-info=build/debug_info"
       )
-    File.rename(
-      "../build/app/outputs/flutter-apk/app-release.apk", 
-      "../build/app/outputs/flutter-apk/realunit-#{new_version_name}.apk")
+      File.rename(
+        "../build/app/outputs/flutter-apk/app-release.apk",
+        "../build/app/outputs/flutter-apk/realunit-#{tag_name}.apk"
+      )
     end
 
     upload_to_play_store(
