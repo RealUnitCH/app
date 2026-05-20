@@ -9,6 +9,10 @@ extension WalletStorage on AppDatabase {
   Future<WalletInfo?> getWalletById(int id) =>
       (select(walletInfos)..where((row) => row.id.equals(id))).getSingleOrNull();
 
+  Future<int> updateWalletAddress(int id, String address) =>
+      (update(walletInfos)..where((row) => row.id.equals(id)))
+          .write(WalletInfosCompanion(address: Value(address)));
+
   Future<int> insertWalletAccount(int walletId, String name, int accountIndex) =>
       into(walletAccountInfos).insert(
         WalletAccountInfosCompanion.insert(

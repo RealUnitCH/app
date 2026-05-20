@@ -54,11 +54,17 @@ class WalletService {
     switch (walletType) {
       case WalletType.software:
         // Legacy rows created before address-caching landed have an empty
-        // address column — fall back to decrypting on first load and the
-        // address will be re-persisted on the next createWallet.
+        // address column — decrypt the mnemonic this one time, persist the
+        // derived address back to the row, then keep using the fast path on
+        // subsequent loads.
         if (info.address.isEmpty) {
           final unlocked = (await _repository.getUnlockedWalletById(id))!;
-          return SoftwareWallet(unlocked.id, unlocked.name, unlocked.seed);
+          final wallet = SoftwareWallet(unlocked.id, unlocked.name, unlocked.seed);
+          await _repository.updateAddress(
+            id,
+            wallet.currentAccount.primaryAddress.address.hexEip55,
+          );
+          return wallet;
         }
         return SoftwareViewWallet(info.id, info.name, info.address);
       case WalletType.bitbox:

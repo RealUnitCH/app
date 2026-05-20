@@ -48,6 +48,7 @@ void main() {
         .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
     when(() => appStore.sessionCache).thenReturn(session);
     when(() => appStore.wallet).thenReturn(wallet);
+    when(() => appStore.ensureUnlocked()).thenAnswer((_) async {});
     when(() => wallet.primaryAccount).thenReturn(account);
   });
 

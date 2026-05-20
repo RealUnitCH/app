@@ -46,6 +46,7 @@ void main() {
     when(() => settings.saveCurrentWalletId(any())).thenAnswer((_) async => true);
     when(() => settings.removeCurrentWalletId()).thenAnswer((_) async => true);
     when(() => repo.deleteWallet(any())).thenAnswer((_) async {});
+    when(() => repo.updateAddress(any(), any())).thenAnswer((_) async {});
   });
 
   group('$WalletService', () {
@@ -124,7 +125,7 @@ void main() {
         verifyNever(() => repo.getUnlockedWalletById(any()));
       });
 
-      test('falls back to unlocked SoftwareWallet for legacy rows without cached address',
+      test('falls back to unlocked SoftwareWallet for legacy rows and backfills the address',
           () async {
         when(() => repo.getWalletInfo(1)).thenAnswer(
           (_) async => _info(id: 1, name: 'Main', type: WalletType.software),
@@ -137,6 +138,11 @@ void main() {
 
         expect(wallet, isA<SoftwareWallet>());
         expect((wallet as SoftwareWallet).seed, _testMnemonic);
+        // The next load takes the fast path because the address has been
+        // backfilled into the row.
+        verify(
+          () => repo.updateAddress(1, wallet.currentAccount.primaryAddress.address.hexEip55),
+        ).called(1);
       });
 
       test('returns DebugWallet for debug type', () async {

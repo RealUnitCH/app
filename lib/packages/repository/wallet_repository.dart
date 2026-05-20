@@ -27,6 +27,12 @@ class WalletRepository {
   /// cost just to render the dashboard — the cached address is enough.
   Future<WalletInfo?> getWalletInfo(int id) => _appDatabase.getWalletById(id);
 
+  /// Backfills the address column for legacy software-wallet rows that were
+  /// created before address-caching landed. After this runs once, subsequent
+  /// loads of the same row stay on the fast view-wallet path.
+  Future<void> updateAddress(int id, String address) =>
+      _appDatabase.updateWalletAddress(id, address);
+
   /// Returns the wallet row with the seed decrypted. Only call this when the
   /// private key is actually needed (signing a sell, revealing the seed).
   Future<WalletInfo?> getUnlockedWalletById(int id) async {

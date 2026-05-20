@@ -113,6 +113,7 @@ void main() {
       walletAccount = _StubWalletAccount(validSig);
 
       when(() => appStore.sessionCache).thenReturn(sessionCache);
+      when(() => appStore.ensureUnlocked()).thenAnswer((_) async {});
       when(() => sessionCache.signature).thenReturn(null);
       when(() => sessionCache.signatureAddress).thenReturn(null);
       when(() => sessionCache.authToken).thenReturn(null);
