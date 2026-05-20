@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
@@ -15,14 +16,30 @@ import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
   static const _forwardIcon = Icon(
     Icons.arrow_forward_ios,
     size: 20,
     color: RealUnitColors.realUnitBlack,
   );
+
+  PackageInfo? _packageInfo;
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (!mounted) return;
+      setState(() => _packageInfo = info);
+    });
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -140,6 +157,20 @@ class SettingsPage extends StatelessWidget {
               ),
             ],
           ),
+          if (_packageInfo != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+              child: Text(
+                S.of(context).settingsAppVersion(
+                  _packageInfo!.version,
+                  _packageInfo!.buildNumber,
+                ),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: RealUnitColors.neutral500,
+                ),
+              ),
+            ),
         ],
       ),
     ),

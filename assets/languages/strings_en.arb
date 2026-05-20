@@ -245,6 +245,7 @@
   "sellSuccessDescription": "The amount will be paid into the bank account you have specified.",
   "sending": "Sending",
   "settings": "Settings",
+  "settingsAppVersion": "Version ${version} (${build})",
   "settingsCurrency": "Currency",
   "settingsDeleteWallet": "Terminate business relationship",
   "settingsLanguages": "Languages",
