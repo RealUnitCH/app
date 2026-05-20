@@ -28,8 +28,12 @@ platform :ios do
   lane :beta do
     setup_ci
 
+    # Tag (e.g. "v0.0.42-beta.123") -> tag_name "0.0.42-beta.123" -> marketing "0.0.42".
+    # CFBundleShortVersionString must be three integers (App Store ITMS-90060);
+    # the -beta.N suffix lives in the IPA filename and the TestFlight build number.
     raw_version_name = ENV["NEW_VERSION"] || "v0.0.0"
-    new_version_name = raw_version_name.delete('v')
+    tag_name = raw_version_name.sub(/^v/, '')
+    marketing_version = tag_name.split('-').first
     latest_build = latest_testflight_build_number(api_key: get_api_key)
 
     sync_code_signing(
@@ -40,19 +44,19 @@ platform :ios do
     )
 
     increment_version_number(
-      version_number: new_version_name,
+      version_number: marketing_version,
       xcodeproj: "Runner.xcodeproj"
     )
-    
+
     increment_build_number(
-      build_number: latest_build + 1,  
+      build_number: latest_build + 1,
       xcodeproj: "Runner.xcodeproj"
     )
-    
+
     gym(
       workspace: "Runner.xcworkspace",
       scheme: "Runner",
-      output_name: "realunit-#{new_version_name}.ipa",
+      output_name: "realunit-#{tag_name}.ipa",
       xcargs: "-verbose",
       verbose: true
     )

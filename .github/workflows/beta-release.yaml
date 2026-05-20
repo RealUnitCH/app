@@ -1,17 +1,21 @@
-name: Beta Release
+name: Release
 
 on:
   workflow_dispatch:
   push:
     tags:
       - "v*"
+      - "!v*-beta*"
 
 permissions:
   contents: write
 
+concurrency:
+  group: store-release
+  cancel-in-progress: false
+
 jobs:
   android-deploy:
-    if: ${{ !contains(github.ref_name, 'beta') }}
     runs-on: ubuntu-latest
 
     steps:
@@ -95,9 +99,9 @@ jobs:
       # Build & Deploy
       # -------------------
 
-      - name: Deploy to Play Store (Beta)
+      - name: Upload to Play Store
         run: bundle exec fastlane beta
-        working-directory: ./android
+        working-directory: android
         env:
           NEW_VERSION: ${{ github.ref_name }}
 
@@ -108,7 +112,6 @@ jobs:
           path: build/app/outputs/flutter-apk/realunit-*.apk
 
   ios-deploy:
-    if: ${{ !contains(github.ref_name, 'beta') }}
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
@@ -189,20 +192,19 @@ jobs:
       # Build & Deploy
       # -------------------
 
-      - name: Deploy to App Store (Beta)
+      - name: Upload to TestFlight
         run: bundle exec fastlane beta --verbose
         working-directory: ios
         env:
           NEW_VERSION: ${{ github.ref_name }}
 
-      - name: Upload ipa artifact
+      - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-ipa
           path: ios/realunit-*.ipa
 
   github-release:
-    if: ${{ !contains(github.ref_name, 'beta') }}
     needs: [android-deploy, ios-deploy]
     runs-on: ubuntu-latest
     steps:
@@ -217,23 +219,23 @@ jobs:
               "template": "#{{CHANGELOG}}",
               "categories": [
                 {
-                  "title": "## 🚀 Features",
+                  "title": "## Features",
                   "labels": ["feat", "feature"]
                 },
                 {
-                  "title": "## 🐛 Fixes",
+                  "title": "## Fixes",
                   "labels": ["fix", "bug"]
                 },
                 {
-                  "title": "## 📦 Refactor",
+                  "title": "## Refactor",
                   "labels": ["refactor"]
                 },
                 {
-                  "title": "## 📦 Others",
+                  "title": "## Others",
                   "labels": ["chore"]
                 },
                 {
-                  "title": "## 🌀 Not labelled",
+                  "title": "## Not labelled",
                   "labels": []
                 }
               ],
