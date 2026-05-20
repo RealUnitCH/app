@@ -10,6 +10,8 @@ class _MockBitboxManager extends Mock implements BitboxManager {}
 
 class _FakeDevice extends Fake implements BitboxDevice {}
 
+class _ParseError implements Exception {}
+
 void main() {
   late _MockBitboxManager manager;
 
@@ -196,5 +198,84 @@ void main() {
           .timeout(const Duration(seconds: 1));
       expect(sig, '0x42');
     });
+
+    // Post-#461 mid-flow recovery: _runOrThrowDisconnect must convert a
+    // mid-sign plugin error into BitboxNotConnectedException only when the
+    // device probe confirms the device is gone.
+    test(
+      'signToSignature surfaces BitboxNotConnectedException when device is gone mid-sign',
+      () async {
+        when(
+          () => manager.signETHRLPTransaction(any(), any(), any(), any()),
+        ).thenThrow(Exception('plugin: USB write failed mid-sign'));
+        when(() => manager.devices).thenAnswer((_) async => <BitboxDevice>[]);
+
+        final c = connected();
+        await expectLater(
+          c.signToSignature(Uint8List.fromList([0xDE, 0xAD]), chainId: 1),
+          throwsA(isA<BitboxNotConnectedException>()),
+        );
+        expect(c.isConnected, isFalse, reason: 'clearBitbox must have run on lost device');
+      },
+    );
+
+    // Post-#461 mid-flow recovery: a still-reachable device means the
+    // original error wins; we must not mask real plugin/parse failures.
+    test(
+      'signToSignature rethrows the original error when device is still present mid-sign',
+      () async {
+        when(
+          () => manager.signETHRLPTransaction(any(), any(), any(), any()),
+        ).thenThrow(_ParseError());
+        when(() => manager.devices).thenAnswer((_) async => [_FakeDevice()]);
+
+        final c = connected();
+        await expectLater(
+          c.signToSignature(Uint8List.fromList([0xDE, 0xAD]), chainId: 1),
+          throwsA(isA<_ParseError>()),
+        );
+        expect(c.isConnected, isTrue, reason: 'clearBitbox must NOT run when device is still there');
+      },
+    );
+
+    // Post-#461 mid-flow recovery: if the probe itself blows up, _deviceLost
+    // returns true (defensive fallback) and the disconnect path wins.
+    test(
+      'signToSignature treats device as lost when the device probe itself throws',
+      () async {
+        when(
+          () => manager.signETHRLPTransaction(any(), any(), any(), any()),
+        ).thenThrow(Exception('plugin: USB write failed mid-sign'));
+        when(() => manager.devices).thenThrow(Exception('USB descriptor closed'));
+
+        final c = connected();
+        await expectLater(
+          c.signToSignature(Uint8List.fromList([0xDE, 0xAD]), chainId: 1),
+          throwsA(isA<BitboxNotConnectedException>()),
+        );
+        expect(c.isConnected, isFalse, reason: 'failed probe must be treated as lost device');
+      },
+    );
+
+    // Cross-method guard: every sign method must route through
+    // _runOrThrowDisconnect. Drive the disconnect path through
+    // signTypedDataV4 so a future refactor that drops the wrap from one
+    // method gets caught here.
+    test(
+      'signTypedDataV4 also routes through _runOrThrowDisconnect on device loss',
+      () async {
+        when(
+          () => manager.signETHTypedMessage(any(), any(), any()),
+        ).thenThrow(Exception('plugin: BLE drop mid-sign'));
+        when(() => manager.devices).thenAnswer((_) async => <BitboxDevice>[]);
+
+        final c = connected();
+        await expectLater(
+          c.signTypedDataV4(1, '{"primaryType":"Foo"}'),
+          throwsA(isA<BitboxNotConnectedException>()),
+        );
+        expect(c.isConnected, isFalse, reason: 'clearBitbox must have run on lost device');
+      },
+    );
   });
 }
