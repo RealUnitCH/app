@@ -98,11 +98,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.22"
+          go-version: "1.24"
 
       - name: Install bitbox-audit
         continue-on-error: true
-        run: go install github.com/DFXswiss/bitbox-testkit/go/cmd/bitbox-audit@main
+        run: go install github.com/DFXswiss/bitbox-testkit/go/cmd/bitbox-audit@v0.5.0
 
       - name: Run bitbox-audit
         continue-on-error: true
