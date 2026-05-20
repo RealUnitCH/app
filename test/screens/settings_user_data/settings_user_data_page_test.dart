@@ -75,15 +75,11 @@ void main() {
     });
 
     testWidgets('renders correctly when loading user data failed', (tester) async {
-      final errorMessage = 'not working bro';
-      when(() => settingsUserDataCubit.state).thenReturn(SettingsUserDataFailure(errorMessage));
+      when(() => settingsUserDataCubit.state).thenReturn(const SettingsUserDataFailure());
 
       await tester.pumpApp(buildSubject(const SettingsUserDataView()));
 
-      expect(
-        find.byWidgetPredicate((Widget widget) => widget is Text && widget.data == errorMessage),
-        findsOne,
-      );
+      expect(find.text(S.current.paymentInformationFailed), findsOne);
     });
 
     testWidgets('renders correctly when user data loaded successfully', (tester) async {

@@ -8,10 +8,13 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
+import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
+import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/settings_user_data/cubit/settings_user_data_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 class SettingsUserDataPage extends StatelessWidget {
   const SettingsUserDataPage({super.key});
@@ -129,12 +132,65 @@ class SettingsUserDataView extends StatelessWidget {
             SettingsUserDataLoading() => const Center(
               child: CupertinoActivityIndicator(),
             ),
-            SettingsUserDataFailure(:final message) => Center(
-              child: Text(message),
+            SettingsUserDataBitboxDisconnected() => _BitboxDisconnectedView(
+              onReconnected: () => context.read<SettingsUserDataCubit>().getUserData(),
+            ),
+            SettingsUserDataFailure() => Center(
+              child: Text(S.of(context).paymentInformationFailed),
             ),
 
             _ => const SizedBox.shrink(),
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _BitboxDisconnectedView extends StatelessWidget {
+  const _BitboxDisconnectedView({required this.onReconnected});
+
+  final VoidCallback onReconnected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 16,
+          children: [
+            Text(
+              S.of(context).bitboxDisconnectedTitle,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            Text(
+              S.of(context).bitboxDisconnectedDescription,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: RealUnitColors.neutral500,
+              ),
+            ),
+            AppFilledButton(
+              onPressed: () async {
+                final homeBloc = context.read<HomeBloc>();
+                await showModalBottomSheet<void>(
+                  isScrollControlled: true,
+                  context: context,
+                  builder: (sheetContext) => ConnectBitboxPage(
+                    onFinish: (wallet) {
+                      homeBloc.add(LoadWalletEvent(wallet));
+                      Navigator.of(sheetContext).pop();
+                    },
+                  ),
+                );
+                onReconnected();
+              },
+              label: S.of(context).bitboxReconnect,
+            ),
+          ],
         ),
       ),
     );

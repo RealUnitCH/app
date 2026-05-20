@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
@@ -57,6 +58,13 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
       emit(
         SellPaymentInfoFailure(
           PaymentInfoError.registrationRequired,
+          message: e.toString(),
+        ),
+      );
+    } on BitboxNotConnectedException catch (e) {
+      emit(
+        SellPaymentInfoFailure(
+          PaymentInfoError.bitboxDisconnected,
           message: e.toString(),
         ),
       );

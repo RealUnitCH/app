@@ -70,14 +70,14 @@ void main() {
       expect(const SettingsUserDataInitial(), isNot(const SettingsUserDataLoading()));
     });
 
-    test('Failure props pin the message', () {
+    test('Failure equals itself', () {
       expect(
-        const SettingsUserDataFailure('boom'),
-        const SettingsUserDataFailure('boom'),
+        const SettingsUserDataFailure(),
+        const SettingsUserDataFailure(),
       );
       expect(
-        const SettingsUserDataFailure('boom'),
-        isNot(const SettingsUserDataFailure('other')),
+        const SettingsUserDataFailure(),
+        isNot(const SettingsUserDataBitboxDisconnected()),
       );
     });
 

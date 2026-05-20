@@ -61,11 +61,13 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
       if (!isConnected) throw const BitboxNotConnectedException();
 
       if (isEIP1559) payload = payload.sublist(1);
-      final sig = await bitboxManager!.signETHRLPTransaction(
-        chainId ?? 1,
-        derivationPath!,
-        bytesToHex(payload),
-        isEIP1559,
+      final sig = await _runOrThrowDisconnect(
+        () => bitboxManager!.signETHRLPTransaction(
+          chainId ?? 1,
+          derivationPath!,
+          bytesToHex(payload),
+          isEIP1559,
+        ),
       );
 
       final r = bytesToHex(sig.sublist(0, 32));
@@ -101,7 +103,9 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
   Future<Uint8List> signPersonalMessage(Uint8List payload, {int? chainId}) {
     return _synchronizeSign(() async {
       if (!isConnected) throw const BitboxNotConnectedException();
-      return await bitboxManager!.signETHMessage(chainId ?? 1, derivationPath!, payload);
+      return await _runOrThrowDisconnect(
+        () => bitboxManager!.signETHMessage(chainId ?? 1, derivationPath!, payload),
+      );
     });
   }
 
@@ -113,13 +117,38 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
     return _synchronizeSign(() async {
       if (!isConnected) throw const BitboxNotConnectedException();
 
-      final signatureBytes = await bitboxManager!.signETHTypedMessage(
-        chainId,
-        derivationPath!,
-        Uint8List.fromList(utf8.encode(jsonData)),
+      final signatureBytes = await _runOrThrowDisconnect(
+        () => bitboxManager!.signETHTypedMessage(
+          chainId,
+          derivationPath!,
+          Uint8List.fromList(utf8.encode(jsonData)),
+        ),
       );
       return '0x${convert.hex.encode(signatureBytes)}';
     });
+  }
+
+  Future<T> _runOrThrowDisconnect<T>(Future<T> Function() op) async {
+    try {
+      return await op();
+    } catch (_) {
+      // The underlying BLE channel may have dropped mid-sign — verify the device
+      // is still reachable. If not, surface a typed disconnect error so callers
+      // can prompt the user to reconnect instead of showing a raw exception.
+      try {
+        final devices = await bitboxManager?.devices ?? const [];
+        if (devices.isEmpty) {
+          clearBitbox();
+          throw const BitboxNotConnectedException();
+        }
+      } on BitboxNotConnectedException {
+        rethrow;
+      } catch (_) {
+        clearBitbox();
+        throw const BitboxNotConnectedException();
+      }
+      rethrow;
+    }
   }
 
   bool get isConnected => bitboxManager != null;

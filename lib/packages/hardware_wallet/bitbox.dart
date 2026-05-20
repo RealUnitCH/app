@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:bitbox_flutter/bitbox_flutter.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
@@ -15,9 +16,9 @@ class BitboxService {
 
   BitboxCredentials getCredentials(String address) {
     final credentials = BitboxCredentials(address);
+    _credentials = credentials;
     if (_isConnected) {
       credentials.setBitbox(bitboxManager);
-      _credentials = credentials;
     }
     return credentials;
   }
@@ -27,6 +28,11 @@ class BitboxService {
     final didInit = await bitboxManager.initBitBox();
     if (!didInit) throw Exception('Failed to init');
     _isConnected = true;
+    // Restore the bitbox manager on any credentials handed out before this
+    // (re-)connect — otherwise existing wallets keep a cleared credentials
+    // instance and the next sign throws BitboxNotConnectedException even
+    // though the device is back online.
+    _credentials?.setBitbox(bitboxManager);
     return didInit;
   }
 
@@ -37,8 +43,18 @@ class BitboxService {
       if (devices.isEmpty) {
         _isConnected = false;
         _credentials?.clearBitbox();
-        _credentials = null;
+        // Keep the _credentials reference so init() can re-attach the manager
+        // on the same instance after a reconnect.
         stopConnectionStatusObserver();
+        // Close the underlying transport. Required on Android so the USB
+        // file-descriptor is released — otherwise the next connect() can
+        // fail because the OS still considers the device claimed. Safe on
+        // iOS where the BLE link is already gone at this point.
+        try {
+          await bitboxManager.disconnect();
+        } catch (e) {
+          developer.log('disconnect after device-loss failed: $e', name: '$BitboxService');
+        }
       }
     });
   }

@@ -1,7 +1,10 @@
+import 'dart:developer' as developer;
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
@@ -90,8 +93,11 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
           pendingSteps: pendingSteps,
         ),
       );
+    } on BitboxNotConnectedException {
+      emit(const SettingsUserDataBitboxDisconnected());
     } catch (e) {
-      emit(SettingsUserDataFailure(e.toString()));
+      developer.log(e.toString());
+      emit(const SettingsUserDataFailure());
     }
   }
 }

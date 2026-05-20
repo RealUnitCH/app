@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_step_dto.dart';
@@ -194,7 +195,7 @@ void main() {
       final cubit = build();
       await cubit.stream.firstWhere((s) => s is SettingsUserDataFailure);
 
-      expect((cubit.state as SettingsUserDataFailure).message, contains('network'));
+      expect(cubit.state, isA<SettingsUserDataFailure>());
     });
 
     test('Failure when countryService.getCountryBySymbol throws', () async {
@@ -213,10 +214,20 @@ void main() {
       final cubit = build();
       await cubit.stream.firstWhere((s) => s is SettingsUserDataFailure);
 
-      expect(
-        (cubit.state as SettingsUserDataFailure).message,
-        contains('unknown country'),
+      expect(cubit.state, isA<SettingsUserDataFailure>());
+    });
+
+    test('BitboxDisconnected when BitboxNotConnectedException thrown', () async {
+      when(() => walletService.getWalletStatus())
+          .thenAnswer((_) async => throw const BitboxNotConnectedException());
+      when(() => kycService.getKycStatus()).thenAnswer(
+        (_) async => const KycLevelDto(kycLevel: KycLevel.level0, kycSteps: []),
       );
+
+      final cubit = build();
+      await cubit.stream.firstWhere((s) => s is SettingsUserDataBitboxDisconnected);
+
+      expect(cubit.state, isA<SettingsUserDataBitboxDisconnected>());
     });
   });
 }
