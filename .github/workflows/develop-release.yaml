@@ -1,4 +1,4 @@
-name: Develop Beta Release
+name: Beta Release
 
 on:
   workflow_dispatch:
@@ -98,9 +98,9 @@ jobs:
       # Build & Deploy
       # -------------------
 
-      - name: Deploy to Play Store (Internal)
+      - name: Upload to Play Store
         run: bundle exec fastlane beta
-        working-directory: ./android
+        working-directory: android
         env:
           NEW_VERSION: ${{ github.ref_name }}
 
@@ -191,13 +191,13 @@ jobs:
       # Build & Deploy
       # -------------------
 
-      - name: Deploy to TestFlight
+      - name: Upload to TestFlight
         run: bundle exec fastlane beta --verbose
         working-directory: ios
         env:
           NEW_VERSION: ${{ github.ref_name }}
 
-      - name: Upload ipa artifact
+      - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-ipa

@@ -1,4 +1,4 @@
-name: Beta Release
+name: Release
 
 on:
   workflow_dispatch:
@@ -99,9 +99,9 @@ jobs:
       # Build & Deploy
       # -------------------
 
-      - name: Deploy to Play Store (Beta)
+      - name: Upload to Play Store
         run: bundle exec fastlane beta
-        working-directory: ./android
+        working-directory: android
         env:
           NEW_VERSION: ${{ github.ref_name }}
 
@@ -192,13 +192,13 @@ jobs:
       # Build & Deploy
       # -------------------
 
-      - name: Deploy to App Store (Beta)
+      - name: Upload to TestFlight
         run: bundle exec fastlane beta --verbose
         working-directory: ios
         env:
           NEW_VERSION: ${{ github.ref_name }}
 
-      - name: Upload ipa artifact
+      - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-ipa
@@ -219,23 +219,23 @@ jobs:
               "template": "#{{CHANGELOG}}",
               "categories": [
                 {
-                  "title": "## 🚀 Features",
+                  "title": "## Features",
                   "labels": ["feat", "feature"]
                 },
                 {
-                  "title": "## 🐛 Fixes",
+                  "title": "## Fixes",
                   "labels": ["fix", "bug"]
                 },
                 {
-                  "title": "## 📦 Refactor",
+                  "title": "## Refactor",
                   "labels": ["refactor"]
                 },
                 {
-                  "title": "## 📦 Others",
+                  "title": "## Others",
                   "labels": ["chore"]
                 },
                 {
-                  "title": "## 🌀 Not labelled",
+                  "title": "## Not labelled",
                   "labels": []
                 }
               ],
