@@ -41,6 +41,12 @@ abstract class DFXAuthService {
     }
   }
 
+  // Exceptions this method can throw on the BitBox path:
+  //   * `BitboxNotConnectedException` — `BitboxCredentials.signPersonalMessage`
+  //     aborts up front when the device is disconnected (BLE link dropped).
+  //   * `SigningCancelledException` — the user cancels on the device, so the
+  //     BitBox swift wrapper returns empty bytes / `'0x'`, normalised here.
+  //   * `TimeoutException` — the user never confirms within `_signMessageTimeout`.
   Future<String> getSignature(String message) async {
     final cached = appStore.sessionCache.signature;
     final cachedAddress = appStore.sessionCache.signatureAddress;

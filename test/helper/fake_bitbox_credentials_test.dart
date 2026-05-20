@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
-import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 
 import 'fake_bitbox_credentials.dart';
 
@@ -58,7 +58,7 @@ void main() {
         expect(sig, '0x');
       });
 
-      test('disconnect: throws SigningCancelledException', () async {
+      test('disconnect: throws BitboxNotConnectedException', () async {
         final fake = FakeBitboxCredentials(
           behavior: FakeBitboxBehavior.disconnect,
           signDelay: Duration.zero,
@@ -66,7 +66,7 @@ void main() {
 
         expect(
           () => fake.signTypedDataV4(1, _typedData),
-          throwsA(isA<SigningCancelledException>()),
+          throwsA(isA<BitboxNotConnectedException>()),
         );
       });
 
@@ -131,7 +131,7 @@ void main() {
 
         await expectLater(
           fake.signTypedDataV4(1, _typedData),
-          throwsA(isA<SigningCancelledException>()),
+          throwsA(isA<BitboxNotConnectedException>()),
         );
 
         fake.behavior = FakeBitboxBehavior.success;
@@ -162,7 +162,7 @@ void main() {
         expect(sig, isEmpty);
       });
 
-      test('disconnect: throws SigningCancelledException', () async {
+      test('disconnect: throws BitboxNotConnectedException', () async {
         final fake = FakeBitboxCredentials(
           behavior: FakeBitboxBehavior.disconnect,
           signDelay: Duration.zero,
@@ -170,7 +170,7 @@ void main() {
 
         expect(
           () => fake.signPersonalMessage(Uint8List.fromList([1, 2, 3])),
-          throwsA(isA<SigningCancelledException>()),
+          throwsA(isA<BitboxNotConnectedException>()),
         );
       });
     });

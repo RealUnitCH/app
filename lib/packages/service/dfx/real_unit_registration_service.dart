@@ -2,10 +2,8 @@ import 'dart:convert';
 
 import 'package:intl/intl.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
-import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
-import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_email_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_email_response_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_register_wallet_request_dto.dart';
@@ -54,9 +52,6 @@ class RealUnitRegistrationService extends DFXAuthService {
   /// registers a wallet and and adds the wallet to the new user
   Future<RegistrationStatus> completeRegistration(Registration registration) async {
     final credentials = appStore.wallet.primaryAccount.primaryAddress;
-    if (credentials is BitboxCredentials && !credentials.isConnected) {
-      throw const BitboxNotConnectedException();
-    }
     // BitBox firmware rejects non-ASCII bytes in EIP-712 string fields.
     // Transliterate everything that goes into the signed envelope AND the
     // matching DTO copy so the signed hash matches the backend-stored data
@@ -145,9 +140,6 @@ class RealUnitRegistrationService extends DFXAuthService {
     RealUnitUserDataDto userData,
   ) async {
     final credentials = appStore.wallet.primaryAccount.primaryAddress;
-    if (credentials is BitboxCredentials && !credentials.isConnected) {
-      throw const BitboxNotConnectedException();
-    }
     final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     // Same ASCII guard as completeRegistration — see comment there.
     final signature = await Eip712Signer.signRegistration(

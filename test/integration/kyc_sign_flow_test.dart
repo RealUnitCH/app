@@ -4,7 +4,8 @@
 // touches end-to-end and that have all had production bugs in the past
 // month (PR #312, #316, #318, #319):
 //
-//   FakeBitboxCredentials → Eip712Signer.signRegistration → SigningCancelledException
+//   FakeBitboxCredentials → Eip712Signer.signRegistration →
+//   { SigningCancelledException on cancel, BitboxNotConnectedException on disconnect }
 //
 // They run headless (no device, no simulator), so they live under
 // `test/integration/` and run as part of `flutter test`. Future scenarios
@@ -12,6 +13,7 @@
 // will move to a top-level `integration_test/` directory.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 
@@ -67,7 +69,7 @@ void main() {
     );
 
     test(
-      'BLE disconnect: fake throws SigningCancelledException directly',
+      'BLE disconnect: fake throws BitboxNotConnectedException directly',
       () async {
         final fake = FakeBitboxCredentials(
           behavior: FakeBitboxBehavior.disconnect,
@@ -76,7 +78,7 @@ void main() {
 
         await expectLater(
           _signRegistration(fake),
-          throwsA(isA<SigningCancelledException>()),
+          throwsA(isA<BitboxNotConnectedException>()),
         );
       },
     );
@@ -91,7 +93,7 @@ void main() {
 
         await expectLater(
           _signRegistration(fake),
-          throwsA(isA<SigningCancelledException>()),
+          throwsA(isA<BitboxNotConnectedException>()),
         );
 
         fake.behavior = FakeBitboxBehavior.success;
