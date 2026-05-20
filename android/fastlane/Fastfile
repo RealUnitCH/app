@@ -15,8 +15,35 @@
 
 default_platform(:android)
 
+# Runs tool/generate_release_info.dart (single source of truth for tag →
+# marketing version + version code) and reads the values back from the
+# generated Dart file. The generated file is the canonical artefact —
+# parsing stdout is brittle because `dart run` prepends "Running build
+# hooks..." with no trailing newline. Same helper is mirrored in
+# ios/fastlane/Fastfile.
+def resolve_release_info(raw_tag)
+  generated = Dir.chdir("../..") do
+    sh("dart", "run", "tool/generate_release_info.dart", "--tag=#{raw_tag}")
+    File.read("lib/generated/release_info.dart")
+  end
+
+  info = {
+    "release_tag"       => generated.match(/releaseTag = '([^']+)'/)&.[](1),
+    "marketing_version" => generated.match(/releaseMarketingVersion = '([^']+)'/)&.[](1),
+    "version_code"      => generated.match(/releaseVersionCode = (\d+)/)&.[](1),
+  }
+  missing = info.select { |_, v| v.nil? }.keys
+  UI.user_error!("release-info generator missing keys: #{missing.join(', ')}") unless missing.empty?
+  # `dev` sentinel (versionCode=0) is intended for local builds only —
+  # Play Store rejects versionCode 0. Fail loudly before invoking gradle/gym.
+  if info["version_code"].to_i <= 0
+    UI.user_error!("refusing to build a store release without a release tag (got: '#{raw_tag}')")
+  end
+  info
+end
+
 platform :android do
-  
+
   def release_track
     return "internal"
   end
@@ -25,28 +52,19 @@ platform :android do
     return "../build/app/outputs/bundle/release/app-release.aab"
   end
 
-  def next_build_number
-    internal_codes = google_play_track_version_codes(track: release_track) || []
-    version_code = internal_codes
-    
-    version_code.empty? ? 1 : version_code.max + 1
-  end
-
   desc "Build and upload to Play Store Beta"
   lane :beta do
-    # Tag (e.g. "v0.0.42-beta.123") -> tag_name "0.0.42-beta.123" -> marketing "0.0.42".
-    # Play Store accepts free-form versionName, but we mirror the iOS split for
-    # consistency: marketing version is what users see, build number disambiguates.
-    new_build_number = next_build_number
     raw_version_name = ENV["NEW_VERSION"] || "v0.0.0"
-    tag_name = raw_version_name.sub(/^v/, '')
-    marketing_version = tag_name.split('-').first
+    info = resolve_release_info(raw_version_name)
+    tag_name = info["release_tag"]
+    marketing_version = info["marketing_version"]
+    version_code = info["version_code"]
 
     Dir.chdir("..") do
       sh("flutter", "build", "appbundle",
          "--release",
          "--build-name=#{marketing_version}",
-         "--build-number=#{new_build_number}",
+         "--build-number=#{version_code}",
          "--no-tree-shake-icons",
          "--obfuscate",
          "--split-debug-info=build/debug_info"
@@ -54,7 +72,7 @@ platform :android do
       sh("flutter", "build", "apk",
          "--release",
          "--build-name=#{marketing_version}",
-         "--build-number=#{new_build_number}",
+         "--build-number=#{version_code}",
          "--no-tree-shake-icons",
          "--obfuscate",
          "--split-debug-info=build/debug_info"
