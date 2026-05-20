@@ -67,6 +67,7 @@ lib/
 - `pubspec.yaml`'s `version:` field has two roles:
   - `+0` is a sentinel for local builds — CI always overrides `--build-name`/`--build-number` from the tag. Don't bump the `+N` part manually.
   - The `X.Y.Z` part is consumed by `.github/workflows/auto-tag.yaml` as a **floor** for Major/Minor bumps (patch increments come from the latest tag). To start a new Minor/Major train (e.g. `1.1.0-beta.*`), bump the `X.Y.Z` part in `pubspec.yaml` on develop and the next auto-tag will pick it up. Patch-level work needs no edit — just push to develop.
+- Schema limits: `MAJOR`, `MINOR`, `PATCH` in `0..99`, `BETA_N` in `1..998`. The generator hard-fails outside these bounds. Before approaching `PATCH = 99` on a given train, bump `pubspec.yaml`'s minor (e.g. `1.0.99` → `1.1.0`) so auto-tag starts a new train. There is intentionally no safety net — surprising a CI cap is preferable to silently overflowing the version code.
 
 ## State Management
 
