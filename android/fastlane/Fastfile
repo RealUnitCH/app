@@ -22,11 +22,11 @@ default_platform(:android)
 # hooks..." with no trailing newline. Same helper is mirrored in
 # ios/fastlane/Fastfile.
 def resolve_release_info(raw_tag)
-  Dir.chdir("../..") do
+  generated = Dir.chdir("../..") do
     sh("dart", "run", "tool/generate_release_info.dart", "--tag=#{raw_tag}")
+    File.read("lib/generated/release_info.dart")
   end
 
-  generated = File.read("../lib/generated/release_info.dart")
   info = {
     "release_tag"       => generated.match(/releaseTag = '([^']+)'/)&.[](1),
     "marketing_version" => generated.match(/releaseMarketingVersion = '([^']+)'/)&.[](1),

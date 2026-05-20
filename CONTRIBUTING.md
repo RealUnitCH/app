@@ -61,10 +61,12 @@ lib/
 
 ## Release Versioning
 
-- Single source of truth: the git tag (`vX.Y.Z` for stable, `vX.Y.Z-beta.N` for beta).
+- Single source of truth for a published build: the git tag (`vX.Y.Z` for stable, `vX.Y.Z-beta.N` for beta).
 - `tool/generate_release_info.dart` derives both the in-app `releaseTag` and the platform-identical `versionCode` from the tag (Schema: `MAJOR*10_000_000 + MINOR*100_000 + PATCH*1_000 + BETA_N`; stable uses `BETA_N = 999`). The tool is invoked by every release workflow before `flutter build`, and by both Fastfiles (Android + iOS) so the build number is identical across platforms.
-- `pubspec.yaml`'s `version:` field is a sentinel (`1.0.0+0`) for local builds — the CI always overrides it via `--build-name`/`--build-number`. Don't bump it manually; bump the tag instead.
-- Local builds carry `releaseTag = 'dev'` so the settings footer reads `Version dev` instead of a stale pinned build number.
+- Local builds carry `releaseTag = 'dev'` (versionCode `0`) so the settings footer reads `Version dev` instead of a stale pinned build number.
+- `pubspec.yaml`'s `version:` field has two roles:
+  - `+0` is a sentinel for local builds — CI always overrides `--build-name`/`--build-number` from the tag. Don't bump the `+N` part manually.
+  - The `X.Y.Z` part is consumed by `.github/workflows/auto-tag.yaml` as a **floor** for Major/Minor bumps (patch increments come from the latest tag). To start a new Minor/Major train (e.g. `1.1.0-beta.*`), bump the `X.Y.Z` part in `pubspec.yaml` on develop and the next auto-tag will pick it up. Patch-level work needs no edit — just push to develop.
 
 ## State Management
 
