@@ -75,13 +75,18 @@ jobs:
       # this step blocks the auto-release PR from collecting a green
       # check and surfaces the regression in CI. Mirrors the pattern
       # from zkcoins/server `deploy-dev.yaml`.
+      #
+      # Probes the canonical root URL with `curl -L` so the default-locale
+      # redirect (`/` → `/de/`) is followed end to end: nginx up, root
+      # routing intact, locale `index.html` served. Pinning a specific
+      # locale path would re-rot if the locale layout ever changes.
       - name: Smoke test public endpoint
         env:
-          SMOKE_URL: https://dev-handbook.dfxserve.com/de/
+          SMOKE_URL: https://dev-handbook.realunit.app/
         run: |
           set -euo pipefail
           for i in $(seq 1 30); do
-            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 "$SMOKE_URL" || echo "000")
+            code=$(curl -sS -L --max-redirs 3 -o /dev/null -w '%{http_code}' --max-time 10 "$SMOKE_URL" || echo "000")
             if [ "$code" = "200" ]; then
               echo "DEV handbook responded 200 after ${i} attempt(s)"
               exit 0
