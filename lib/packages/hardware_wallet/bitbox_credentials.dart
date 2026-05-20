@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:typed_data';
 
 import 'package:bitbox_flutter/bitbox_manager.dart';
@@ -12,6 +13,8 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
   // Single device, single noise cipher — concurrent signs would advance the
   // nonce out of order and break decryption permanently.
   static Future<void> _signQueue = Future.value();
+
+  static const _defaultDerivationPath = "m/44'/60'/0'/0/0";
 
   final String _address;
 
@@ -37,14 +40,18 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
   @override
   EthereumAddress get address => EthereumAddress.fromHex(_address);
 
+  /// Attaches (or re-attaches) a manager. Preserves an existing
+  /// [derivationPath] across reconnects — multi-account / non-default-index
+  /// wallets would silently revert to the default path otherwise.
   void setBitbox(BitboxManager connection, [String? derivationPath_]) {
     bitboxManager = connection;
-    derivationPath = derivationPath_ ?? "m/44'/60'/0'/0/0";
+    derivationPath = derivationPath_ ?? derivationPath ?? _defaultDerivationPath;
   }
 
   void clearBitbox() {
     bitboxManager = null;
-    derivationPath = null;
+    // Keep [derivationPath] so a re-attach via setBitbox() with no path argument
+    // restores the same one the caller originally chose.
   }
 
   @override
@@ -58,13 +65,20 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
     bool isEIP1559 = false,
   }) {
     return _synchronizeSign(() async {
-      if (!isConnected) throw const BitboxNotConnectedException();
+      // Snapshot the manager + path up-front so an observer-driven null-out
+      // between the connection check and the sign call doesn't NoSuchMethod.
+      final manager = bitboxManager;
+      final path = derivationPath;
+      if (manager == null || path == null) {
+        throw const BitboxNotConnectedException();
+      }
 
       if (isEIP1559) payload = payload.sublist(1);
       final sig = await _runOrThrowDisconnect(
-        () => bitboxManager!.signETHRLPTransaction(
+        manager,
+        () => manager.signETHRLPTransaction(
           chainId ?? 1,
-          derivationPath!,
+          path,
           bytesToHex(payload),
           isEIP1559,
         ),
@@ -102,9 +116,14 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
   @override
   Future<Uint8List> signPersonalMessage(Uint8List payload, {int? chainId}) {
     return _synchronizeSign(() async {
-      if (!isConnected) throw const BitboxNotConnectedException();
+      final manager = bitboxManager;
+      final path = derivationPath;
+      if (manager == null || path == null) {
+        throw const BitboxNotConnectedException();
+      }
       return await _runOrThrowDisconnect(
-        () => bitboxManager!.signETHMessage(chainId ?? 1, derivationPath!, payload),
+        manager,
+        () => manager.signETHMessage(chainId ?? 1, path, payload),
       );
     });
   }
@@ -115,12 +134,17 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
 
   Future<String> signTypedDataV4(int chainId, String jsonData) {
     return _synchronizeSign(() async {
-      if (!isConnected) throw const BitboxNotConnectedException();
+      final manager = bitboxManager;
+      final path = derivationPath;
+      if (manager == null || path == null) {
+        throw const BitboxNotConnectedException();
+      }
 
       final signatureBytes = await _runOrThrowDisconnect(
-        () => bitboxManager!.signETHTypedMessage(
+        manager,
+        () => manager.signETHTypedMessage(
           chainId,
-          derivationPath!,
+          path,
           Uint8List.fromList(utf8.encode(jsonData)),
         ),
       );
@@ -128,14 +152,24 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
     });
   }
 
-  /// Wrap a sign call so that a BLE/USB drop mid-operation surfaces as
-  /// [BitboxNotConnectedException] instead of a raw plugin error. If the
-  /// device is still reachable after the failure, the original error wins.
-  Future<T> _runOrThrowDisconnect<T>(Future<T> Function() op) async {
+  /// Wraps a sign call so a BLE/USB drop mid-operation surfaces as
+  /// [BitboxNotConnectedException]. Narrowed to [Exception] so genuine bugs
+  /// in the sign path (encoding error, type cast, assert) keep their type
+  /// and stack instead of being silently re-labelled as a disconnect.
+  Future<T> _runOrThrowDisconnect<T>(
+    BitboxManager manager,
+    Future<T> Function() op,
+  ) async {
     try {
       return await op();
-    } catch (_) {
-      if (await _deviceLost()) {
+    } on Exception catch (e, st) {
+      if (await _deviceLost(manager)) {
+        developer.log(
+          'sign failed during disconnect: $e',
+          name: '$BitboxCredentials',
+          error: e,
+          stackTrace: st,
+        );
         clearBitbox();
         throw const BitboxNotConnectedException();
       }
@@ -143,13 +177,11 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
     }
   }
 
-  Future<bool> _deviceLost() async {
-    final manager = bitboxManager;
-    if (manager == null) return true;
+  Future<bool> _deviceLost(BitboxManager manager) async {
     try {
       final devices = await manager.devices;
       return devices.isEmpty;
-    } catch (_) {
+    } on Exception {
       // Probing the device list itself failed — treat as lost.
       return true;
     }
