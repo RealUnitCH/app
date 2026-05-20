@@ -47,10 +47,12 @@ class SecureStorage {
   // hardware-backed boundary. Online brute-force against the app UI is bounded
   // by the lockout cascade in `verify_pin_cubit.dart`. The stronger guarantee
   // for the actual private key comes from the OS-keystore-managed mnemonic
-  // encryption key — not from this hash. Earlier 10k / 600k hashes are still
-  // accepted and transparently upgraded to [_pinHashIterations].
-  static const _pinHashIterations = 100000;
-  static const _legacyIterationCandidates = <int>[600000, 10000];
+  // encryption key — not from this hash. 250k roughly doubles the offline
+  // brute-force cost vs. 100k while staying perceptibly sub-second on the
+  // median target phone. Earlier 100k / 600k / 10k hashes are still accepted
+  // and transparently rehashed to [_pinHashIterations].
+  static const _pinHashIterations = 250000;
+  static const _legacyIterationCandidates = <int>[600000, 100000, 10000];
 
   static String hashPin(String pin, Uint8List salt, {int iterations = _pinHashIterations}) {
     final derivator = KeyDerivator('SHA-256/HMAC/PBKDF2');

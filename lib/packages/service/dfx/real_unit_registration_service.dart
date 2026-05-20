@@ -52,8 +52,18 @@ class RealUnitRegistrationService extends DFXAuthService {
   /// registers a wallet and and adds the wallet to the new user
   Future<RegistrationStatus> completeRegistration(Registration registration) async {
     // EIP-712 registration signature requires the private key — promote the
-    // view-wallet (if any) to a fully unlocked SoftwareWallet first.
+    // view-wallet (if any) to a fully unlocked SoftwareWallet first, then
+    // lock back down in the finally so a throw mid-sequence doesn't leave the
+    // key resident.
     await walletService.ensureCurrentWalletUnlocked();
+    try {
+      return await _completeRegistration(registration);
+    } finally {
+      await walletService.lockCurrentWallet();
+    }
+  }
+
+  Future<RegistrationStatus> _completeRegistration(Registration registration) async {
     final credentials = appStore.wallet.primaryAccount.primaryAddress;
     // BitBox firmware rejects non-ASCII bytes in EIP-712 string fields.
     // Transliterate everything that goes into the signed envelope AND the
@@ -134,10 +144,6 @@ class RealUnitRegistrationService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    // Drop the mnemonic from memory now that the registration signature is
-    // submitted. The auth-token path keeps working off the cached session
-    // signature.
-    await walletService.lockCurrentWallet();
     final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
     return responseDto.status;
   }
@@ -147,6 +153,14 @@ class RealUnitRegistrationService extends DFXAuthService {
     RealUnitUserDataDto userData,
   ) async {
     await walletService.ensureCurrentWalletUnlocked();
+    try {
+      return await _registerWallet(userData);
+    } finally {
+      await walletService.lockCurrentWallet();
+    }
+  }
+
+  Future<RegistrationStatus> _registerWallet(RealUnitUserDataDto userData) async {
     final credentials = appStore.wallet.primaryAccount.primaryAddress;
     final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     // Same ASCII guard as completeRegistration — see comment there.
@@ -187,7 +201,6 @@ class RealUnitRegistrationService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    await walletService.lockCurrentWallet();
     final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
     return responseDto.status;
   }

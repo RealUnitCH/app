@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bip39/bip39.dart' as bip39;
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
@@ -11,7 +13,17 @@ class WalletService {
   final BitboxService _bitboxService;
   final AppStore _appStore;
 
-  const WalletService(
+  /// Auto-lock the unlocked software wallet after this long if no explicit
+  /// [lockCurrentWallet] has fired. Sized to comfortably outlast a normal
+  /// sign-then-broadcast round-trip while still capping how long the mnemonic
+  /// can sit resident on the heap.
+  static const Duration _idleLockTimeout = Duration(seconds: 60);
+
+  /// Cancellation guard for [_idleLockTimer] so a lock-during-test or a
+  /// concurrent explicit lock doesn't double-fire.
+  Timer? _idleLockTimer;
+
+  WalletService(
     this._bitboxService,
     this._repository,
     this._settingsRepository,
@@ -113,18 +125,33 @@ class WalletService {
   Future<void> ensureCurrentWalletUnlocked() async {
     if (_appStore.wallet is! SoftwareViewWallet) return;
     _appStore.wallet = await unlockCurrentWallet();
+    // Safety net: if a caller forgets to call lockCurrentWallet() after the
+    // sign, drop the mnemonic anyway once the idle window elapses. The reviewer
+    // flagged "user sells once then leaves the app foregrounded" — that path
+    // now caps at [_idleLockTimeout].
+    _scheduleIdleLock();
   }
 
   /// Replaces the in-memory [SoftwareWallet] with its lock-screen-safe
   /// [SoftwareViewWallet] counterpart, dropping the mnemonic. Called after a
-  /// sign operation completes or an idle timer fires so the private key isn't
-  /// kept resident for the rest of the foreground session. No-op for wallet
-  /// types that don't hold a mnemonic.
+  /// sign operation completes or [_idleLockTimer] fires so the private key
+  /// isn't kept resident for the rest of the foreground session. No-op for
+  /// wallet types that don't hold a mnemonic.
   Future<void> lockCurrentWallet() async {
+    _idleLockTimer?.cancel();
+    _idleLockTimer = null;
     final current = _appStore.wallet;
     if (current is! SoftwareWallet) return;
     final address = current.currentAccount.primaryAddress.address.hexEip55;
     _appStore.wallet = SoftwareViewWallet(current.id, current.name, address);
+  }
+
+  void _scheduleIdleLock() {
+    _idleLockTimer?.cancel();
+    _idleLockTimer = Timer(_idleLockTimeout, () {
+      _idleLockTimer = null;
+      lockCurrentWallet();
+    });
   }
 
   Future<void> deleteCurrentWallet() async {
