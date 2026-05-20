@@ -83,3 +83,49 @@ jobs:
           name: coverage-lcov
           path: coverage/lcov.info
           if-no-files-found: warn
+
+  # Runs the bitbox-audit CLI from DFXswiss/bitbox-testkit to surface which
+  # of the documented BitBox firmware quirks are statically detected in this
+  # repo and which still need runtime coverage. Intentionally non-blocking
+  # and not part of required_status_checks — purely informational.
+  bitbox-audit:
+    name: BitBox quirks audit
+    # Same guard pattern as `build`: skip drafts, always run on push/dispatch.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Install bitbox-audit
+        continue-on-error: true
+        run: go install github.com/DFXswiss/bitbox-testkit/go/cmd/bitbox-audit@main
+
+      - name: Run bitbox-audit
+        continue-on-error: true
+        run: |
+          "$(go env GOPATH)/bin/bitbox-audit" \
+            --repo . \
+            --format markdown \
+            --output bitbox-audit-report.md
+
+      - name: Inline report into run summary
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ -f bitbox-audit-report.md ]; then
+            cat bitbox-audit-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "bitbox-audit-report.md not produced — see job logs." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitbox-audit-report
+          path: bitbox-audit-report.md
+          if-no-files-found: warn
