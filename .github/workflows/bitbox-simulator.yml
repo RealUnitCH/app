@@ -15,9 +15,13 @@ name: bitbox-simulator
 #
 # What this does NOT validate: realunit-app's Dart code talking to
 # the BitBox via the bitbox_flutter plugin against real hardware.
-# That still requires a physical BitBox02 (or a future TCP-to-USB
-# shim). The simulator covers the FIRMWARE side of the protocol;
-# bitbox_flutter at ref v0.0.3 is the consumer side.
+# That still requires a physical BitBox02. The simulator covers the
+# FIRMWARE side of the protocol; the Dart consumer side is exercised
+# by Tier 1 (SDK-boundary fake, cross-layer tests under
+# `test/integration/`) and ultimately by Tier 3 Maestro flows on
+# real hardware. See `docs/testing.md` for the four-tier model and
+# issue #314 for the rollout plan. The pinned bitbox_flutter version
+# lives in `pubspec.yaml`.
 #
 # Runs on every PR that touches BitBox surface AND on manual trigger.
 # For ad-hoc maintainer validation, bitbox-simulator-slash.yml
