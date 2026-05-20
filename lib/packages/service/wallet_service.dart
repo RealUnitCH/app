@@ -2,14 +2,21 @@ import 'package:bip39/bip39.dart' as bip39;
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
 class WalletService {
   final WalletRepository _repository;
   final SettingsRepository _settingsRepository;
   final BitboxService _bitboxService;
+  final AppStore _appStore;
 
-  const WalletService(this._bitboxService, this._repository, this._settingsRepository);
+  const WalletService(
+    this._bitboxService,
+    this._repository,
+    this._settingsRepository,
+    this._appStore,
+  );
 
   Future<SoftwareWallet> createSeedWallet(String name) async {
     final mnemonic = bip39.generateMnemonic();
@@ -95,6 +102,29 @@ class WalletService {
   Future<SoftwareWallet> unlockCurrentWallet() async {
     final id = _settingsRepository.currentWalletId!;
     return unlockWalletById(id);
+  }
+
+  /// Promotes the currently loaded wallet from [SoftwareViewWallet] (address
+  /// only) to a fully unlocked [SoftwareWallet] (mnemonic in memory) so the
+  /// next sign operation can run. No-op for wallets that aren't locked.
+  ///
+  /// Owning the lifecycle here — instead of behind a callback wired onto
+  /// [AppStore] — keeps the latter as a pure state container.
+  Future<void> ensureCurrentWalletUnlocked() async {
+    if (_appStore.wallet is! SoftwareViewWallet) return;
+    _appStore.wallet = await unlockCurrentWallet();
+  }
+
+  /// Replaces the in-memory [SoftwareWallet] with its lock-screen-safe
+  /// [SoftwareViewWallet] counterpart, dropping the mnemonic. Called after a
+  /// sign operation completes or an idle timer fires so the private key isn't
+  /// kept resident for the rest of the foreground session. No-op for wallet
+  /// types that don't hold a mnemonic.
+  Future<void> lockCurrentWallet() async {
+    final current = _appStore.wallet;
+    if (current is! SoftwareWallet) return;
+    final address = current.currentAccount.primaryAddress.address.hexEip55;
+    _appStore.wallet = SoftwareViewWallet(current.id, current.name, address);
   }
 
   Future<void> deleteCurrentWallet() async {

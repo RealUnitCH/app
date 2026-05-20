@@ -11,10 +11,13 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_bank_account_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
 
 class _MockAppStore extends Mock implements AppStore {}
 
 class _MockCacheRepository extends Mock implements CacheRepository {}
+
+class _MockWalletService extends Mock implements WalletService {}
 
 Map<String, dynamic> _bankAccount({
   int id = 1,
@@ -32,10 +35,12 @@ Map<String, dynamic> _bankAccount({
 
 void main() {
   late _MockAppStore appStore;
+  late _MockWalletService walletService;
   late SessionCache sessionCache;
 
   setUp(() {
     appStore = _MockAppStore();
+    walletService = _MockWalletService();
     sessionCache = SessionCache(_MockCacheRepository());
     // Pre-seed the JWT so `authenticatedGet/Put/Post` short-circuits the
     // `getAuthToken` refresh path (which would otherwise need a fully
@@ -43,11 +48,13 @@ void main() {
     sessionCache.setAuthToken('test-jwt');
     when(() => appStore.sessionCache).thenReturn(sessionCache);
     when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+    when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
+    when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
   });
 
   DfxBankAccountService build(http.Client client) {
     when(() => appStore.httpClient).thenReturn(client);
-    return DfxBankAccountService(appStore);
+    return DfxBankAccountService(appStore, walletService);
   }
 
   group('$DfxBankAccountService', () {

@@ -50,8 +50,8 @@ void main() {
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<WalletService>(MockWalletService());
-    // `RestoreWalletPage.build` reaches for `DfxKycService` to pass to the
-    // cubit as a transport for `ensureSignatureFor`. Register a stub.
+    // RestoreWalletCubit pulls a DFXAuthService (smallest concrete: DfxKycService)
+    // to pre-warm the auth signature after persisting the mnemonic.
     getIt.registerSingleton<DfxKycService>(MockDfxKycService());
   }
 

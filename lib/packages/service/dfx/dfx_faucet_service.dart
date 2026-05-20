@@ -8,7 +8,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/faucet/faucet_respon
 class DfxFaucetService extends DFXAuthService {
   static const _faucetPath = 'v1/faucet';
 
-  DfxFaucetService(super.appStore);
+  DfxFaucetService(super.appStore, super.walletService);
 
   Future<FaucetResponseDto> requestFaucet() async {
     final uri = buildUri(host, _faucetPath);

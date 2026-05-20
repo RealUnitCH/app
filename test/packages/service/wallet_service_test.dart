@@ -3,6 +3,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -12,6 +13,8 @@ class _MockWalletRepository extends Mock implements WalletRepository {}
 class _MockSettingsRepository extends Mock implements SettingsRepository {}
 
 class _MockBitboxService extends Mock implements BitboxService {}
+
+class _MockAppStore extends Mock implements AppStore {}
 
 const _testMnemonic =
     'test test test test test test test test test test test junk';
@@ -30,6 +33,7 @@ void main() {
   late _MockWalletRepository repo;
   late _MockSettingsRepository settings;
   late _MockBitboxService bitbox;
+  late _MockAppStore appStore;
   late WalletService service;
 
   setUpAll(() {
@@ -41,7 +45,8 @@ void main() {
     repo = _MockWalletRepository();
     settings = _MockSettingsRepository();
     bitbox = _MockBitboxService();
-    service = WalletService(bitbox, repo, settings);
+    appStore = _MockAppStore();
+    service = WalletService(bitbox, repo, settings, appStore);
 
     when(() => settings.saveCurrentWalletId(any())).thenAnswer((_) async => true);
     when(() => settings.removeCurrentWalletId()).thenAnswer((_) async => true);

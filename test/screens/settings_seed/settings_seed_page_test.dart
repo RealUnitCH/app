@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/settings_seed/bloc/settings_seed_cubit.dart';
 import 'package:realunit_wallet/screens/settings_seed/settings_seed_page.dart';
@@ -19,11 +20,14 @@ class MockSettingsSeedCubit extends MockCubit<SettingsSeedState> implements Sett
 
 class MockAppStore extends Mock implements AppStore {}
 
+class MockWalletService extends Mock implements WalletService {}
+
 class MockWallet extends Mock implements SoftwareWallet {}
 
 void main() {
   late SettingsSeedCubit settingsSeedCubit;
   final AppStore appStore = MockAppStore();
+  final WalletService walletService = MockWalletService();
   final SoftwareWallet wallet = MockWallet();
 
   setUp(() {
@@ -42,11 +46,14 @@ void main() {
     when(() => wallet.seed).thenReturn(
       'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
     );
+    when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
+    when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
   });
 
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<AppStore>(appStore);
+    getIt.registerSingleton<WalletService>(walletService);
   }
 
   setUpAll(() {

@@ -11,6 +11,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:web3dart/web3dart.dart';
@@ -18,6 +19,8 @@ import 'package:web3dart/web3dart.dart';
 class _MockAppStore extends Mock implements AppStore {}
 
 class _MockCacheRepository extends Mock implements CacheRepository {}
+
+class _MockWalletService extends Mock implements WalletService {}
 
 class _StubWalletAccount extends AWalletAccount {
   _StubWalletAccount() : super(0, _StubCreds());
@@ -54,21 +57,25 @@ const _userJson = {
 
 void main() {
   late _MockAppStore appStore;
+  late _MockWalletService walletService;
   late SessionCache sessionCache;
 
   setUp(() {
     appStore = _MockAppStore();
+    walletService = _MockWalletService();
     sessionCache = SessionCache(_MockCacheRepository());
     sessionCache.setAuthToken('jwt-1');
     when(() => appStore.sessionCache).thenReturn(sessionCache);
     when(() => appStore.apiConfig)
         .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
     when(() => appStore.wallet).thenReturn(_StubWallet());
+    when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
+    when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
   });
 
   DfxKycService build(http.Client client) {
     when(() => appStore.httpClient).thenReturn(client);
-    return DfxKycService(appStore);
+    return DfxKycService(appStore, walletService);
   }
 
   group('$DfxKycService', () {

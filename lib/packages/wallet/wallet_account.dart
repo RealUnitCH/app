@@ -2,7 +2,6 @@ import 'dart:convert' show utf8;
 
 import 'package:bip32/bip32.dart';
 import 'package:convert/convert.dart';
-import 'package:realunit_wallet/packages/wallet/exceptions/wallet_locked_exception.dart';
 import 'package:web3dart/web3dart.dart';
 
 abstract class AWalletAccount {
@@ -44,7 +43,15 @@ class BitboxWalletAccount extends AWalletAccount {
 class SoftwareViewWalletAccount extends AWalletAccount {
   SoftwareViewWalletAccount(super.accountIndex, super.primaryAddress);
 
+  // Programmer error: callers must await WalletService.ensureCurrentWalletUnlocked
+  // before signing. The locked credentials on this account already assert on the
+  // same path, so this method is reachable only when the caller bypasses the
+  // wallet's primaryAddress and calls signMessage directly.
   @override
-  Future<String> signMessage(String message, {int addressIndex = 0}) =>
-      throw const WalletLockedException();
+  Future<String> signMessage(String message, {int addressIndex = 0}) {
+    assert(false, 'SoftwareViewWalletAccount.signMessage called without first '
+        'awaiting WalletService.ensureCurrentWalletUnlocked()');
+    throw StateError('SoftwareViewWalletAccount cannot sign while the mnemonic '
+        'is locked — call WalletService.ensureCurrentWalletUnlocked() first.');
+  }
 }

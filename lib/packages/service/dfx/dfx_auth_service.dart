@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 
@@ -15,8 +16,9 @@ abstract class DFXAuthService {
   final String signMessagePath = '/v1/auth/signMessage';
   final String authPath = '/v1/auth';
   final AppStore appStore;
+  final WalletService walletService;
 
-  DFXAuthService(this.appStore);
+  DFXAuthService(this.appStore, this.walletService);
 
   String get host => appStore.apiConfig.apiHost;
 
@@ -77,12 +79,13 @@ abstract class DFXAuthService {
 
     // Cache miss — we actually need the private key. Decrypt the mnemonic on
     // demand if the currently loaded wallet is a view-only software wallet.
-    await appStore.ensureUnlocked();
+    await walletService.ensureCurrentWalletUnlocked();
     final signature = await wallet.signMessage(message).timeout(_signMessageTimeout);
     if (signature.isEmpty || signature == '0x') {
       throw const SigningCancelledException();
     }
     await appStore.sessionCache.saveSignature(walletAddress, signature);
+    await walletService.lockCurrentWallet();
 
     return signature;
   }

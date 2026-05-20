@@ -15,7 +15,7 @@ class DfxBrokerbotService extends DFXAuthService {
   static const _sellPricePath = '/v1/realunit/brokerbot/sellPrice';
   static const _sellSharesPath = '/v1/realunit/brokerbot/sellShares';
 
-  DfxBrokerbotService(super.appStore);
+  DfxBrokerbotService(super.appStore, super.walletService);
 
   /// Convert REALU shares → CHF
   Future<BrokerbotBuyPriceDto> getBuyPrice(String sharesInput, Currency currency) async {

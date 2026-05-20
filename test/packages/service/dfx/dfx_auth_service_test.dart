@@ -7,6 +7,7 @@ import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:web3dart/web3dart.dart';
@@ -18,6 +19,8 @@ import 'package:web3dart/web3dart.dart';
 class _MockAppStore extends Mock implements AppStore {}
 
 class _MockSessionCache extends Mock implements SessionCache {}
+
+class _MockWalletService extends Mock implements WalletService {}
 
 class _StubWalletAccount extends AWalletAccount {
   _StubWalletAccount(this._signature)
@@ -39,7 +42,7 @@ class _StubWalletAccount extends AWalletAccount {
 }
 
 class _SignatureTestAuthService extends DFXAuthService {
-  _SignatureTestAuthService(super.appStore, this._wallet, this._address);
+  _SignatureTestAuthService(super.appStore, super.walletService, this._wallet, this._address);
 
   final AWalletAccount _wallet;
   final String _address;
@@ -70,7 +73,7 @@ class _RetryTestAppStore extends AppStore {
 }
 
 class _RetryTestAuthService extends DFXAuthService {
-  _RetryTestAuthService(super.appStore);
+  _RetryTestAuthService(super.appStore, super.walletService);
 
   int authTokenCalls = 0;
   int refreshAuthTokenCalls = 0;
@@ -107,13 +110,18 @@ void main() {
     const address = '0x1111111111111111111111111111111111111111';
     const validSig = '0xdeadbeef';
 
+    late _MockWalletService walletService;
+
     setUp(() {
       appStore = _MockAppStore();
       sessionCache = _MockSessionCache();
       walletAccount = _StubWalletAccount(validSig);
+      walletService = _MockWalletService();
 
       when(() => appStore.sessionCache).thenReturn(sessionCache);
-      when(() => appStore.ensureUnlocked()).thenAnswer((_) async {});
+      when(() => walletService.ensureCurrentWalletUnlocked())
+          .thenAnswer((_) async {});
+      when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
       when(() => sessionCache.signature).thenReturn(null);
       when(() => sessionCache.signatureAddress).thenReturn(null);
       when(() => sessionCache.authToken).thenReturn(null);
@@ -121,7 +129,7 @@ void main() {
     });
 
     _SignatureTestAuthService buildService() =>
-        _SignatureTestAuthService(appStore, walletAccount, address);
+        _SignatureTestAuthService(appStore, walletService, walletAccount, address);
 
     group('getSignature', () {
       test('returns the cached signature when address matches (no re-sign)', () async {
@@ -203,7 +211,7 @@ void main() {
         }
         return http.Response('{"ok":true}', 200);
       });
-      final service = _RetryTestAuthService(_RetryTestAppStore(client));
+      final service = _RetryTestAuthService(_RetryTestAppStore(client), _MockWalletService());
 
       final response = await service.authenticatedGet(
         Uri.parse('https://api.example.test/v1/resource'),
@@ -230,7 +238,7 @@ void main() {
         }
         return http.Response('{"ok":true}', 201);
       });
-      final service = _RetryTestAuthService(_RetryTestAppStore(client));
+      final service = _RetryTestAuthService(_RetryTestAppStore(client), _MockWalletService());
 
       final response = await service.authenticatedPost(
         Uri.parse('https://api.example.test/v1/resource'),
@@ -258,7 +266,7 @@ void main() {
         }
         return http.Response('{"ok":true}', 200);
       });
-      final service = _RetryTestAuthService(_RetryTestAppStore(client));
+      final service = _RetryTestAuthService(_RetryTestAppStore(client), _MockWalletService());
 
       final response = await service.authenticatedPut(
         Uri.parse('https://api.example.test/v1/resource'),
@@ -278,7 +286,7 @@ void main() {
         calls++;
         return http.Response('{"message":"Unauthorized"}', 401);
       });
-      final service = _RetryTestAuthService(_RetryTestAppStore(client));
+      final service = _RetryTestAuthService(_RetryTestAppStore(client), _MockWalletService());
 
       final response = await service.authenticatedGet(
         Uri.parse('https://api.example.test/v1/resource'),
@@ -297,7 +305,7 @@ void main() {
             '{"message":"Unauthorized"}',
             401,
           ));
-      final service = _ThrowingRefreshAuthService(_RetryTestAppStore(client));
+      final service = _ThrowingRefreshAuthService(_RetryTestAppStore(client), _MockWalletService());
 
       await expectLater(
         service.authenticatedGet(Uri.parse('https://api.example.test/v1/resource')),
@@ -309,7 +317,7 @@ void main() {
 }
 
 class _ThrowingRefreshAuthService extends DFXAuthService {
-  _ThrowingRefreshAuthService(super.appStore);
+  _ThrowingRefreshAuthService(super.appStore, super.walletService);
 
   int refreshAuthTokenCalls = 0;
 

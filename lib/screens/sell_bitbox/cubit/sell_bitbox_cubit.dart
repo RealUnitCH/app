@@ -107,10 +107,6 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
       emit(SellBitboxError('BitBox wallet not connected'));
       return;
     }
-    if (!credentials.isConnected) {
-      emit(SellBitboxBitboxRequired());
-      return;
-    }
 
     try {
       emit(SellBitboxSwapping());
@@ -130,10 +126,6 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
     final credentials = _appStore.wallet.currentAccount.primaryAddress;
     if (credentials is! BitboxCredentials) {
       emit(SellBitboxError('BitBox wallet not connected'));
-      return;
-    }
-    if (!credentials.isConnected) {
-      emit(SellBitboxBitboxRequired());
       return;
     }
 

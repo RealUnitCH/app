@@ -13,10 +13,13 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.da
 import 'package:realunit_wallet/packages/service/dfx/models/support/support_issue_reason.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/support/support_issue_type.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
 
 class _MockAppStore extends Mock implements AppStore {}
 
 class _MockCacheRepository extends Mock implements CacheRepository {}
+
+class _MockWalletService extends Mock implements WalletService {}
 
 Map<String, dynamic> _ticketJson({String uid = 'uid-1'}) => {
       'uid': uid,
@@ -30,10 +33,12 @@ Map<String, dynamic> _ticketJson({String uid = 'uid-1'}) => {
 
 void main() {
   late _MockAppStore appStore;
+  late _MockWalletService walletService;
   late SessionCache sessionCache;
 
   setUp(() {
     appStore = _MockAppStore();
+    walletService = _MockWalletService();
     sessionCache = SessionCache(_MockCacheRepository());
     // Pre-populate the auth token so the base-class getAuthToken short-
     // circuits without exercising the signing flow.
@@ -41,11 +46,13 @@ void main() {
     when(() => appStore.sessionCache).thenReturn(sessionCache);
     when(() => appStore.apiConfig)
         .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+    when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
+    when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
   });
 
   DfxSupportService build(http.Client client) {
     when(() => appStore.httpClient).thenReturn(client);
-    return DfxSupportService(appStore);
+    return DfxSupportService(appStore, walletService);
   }
 
   group('$DfxSupportService', () {

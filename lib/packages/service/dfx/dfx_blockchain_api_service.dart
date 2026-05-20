@@ -9,7 +9,7 @@ class DfxBlockchainApiService extends DFXAuthService {
 
   String get _blockchain => appStore.apiConfig.asset.chainId == 1 ? 'Ethereum' : 'Sepolia';
 
-  DfxBlockchainApiService(super.appStore);
+  DfxBlockchainApiService(super.appStore, super.walletService);
 
   Future<double> getEthBalance(String address) async {
     final uri = buildUri(host, _balancesPath);

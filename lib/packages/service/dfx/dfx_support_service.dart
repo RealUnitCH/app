@@ -10,7 +10,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/support/support_issu
 class DfxSupportService extends DFXAuthService {
   static const _supportPath = '/v1/support/issue';
 
-  DfxSupportService(super.appStore);
+  DfxSupportService(super.appStore, super.walletService);
 
   Future<List<SupportIssueDto>> getTickets() async {
     final uri = buildUri(host, _supportPath);

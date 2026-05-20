@@ -38,8 +38,10 @@ void main() {
     final walletService = MockWalletService();
     when(() => walletService.createSeedWallet(any())).thenAnswer((_) => Future.value(MockWallet()));
     getIt.registerSingleton<WalletService>(walletService);
-    // `CreateWalletPage.build` reaches for `DfxKycService` to pass to the cubit
-    // as a transport for `ensureSignatureFor`. Register a stub so DI resolves.
+    // CreateWalletCubit now depends on DFXAuthService (via DfxKycService — the
+    // smallest registered subclass) to pre-warm the auth signature on
+    // pairing. The page is what triggers the cubit, so the page-level test
+    // needs the same DI surface.
     getIt.registerSingleton<DfxKycService>(MockDfxKycService());
   }
 

@@ -14,7 +14,7 @@ class DfxKycService extends DFXAuthService {
   static const _userPath = '/v2/user';
   static const _kycPath = 'v2/kyc';
 
-  DfxKycService(super.appStore);
+  DfxKycService(super.appStore, super.walletService);
 
   Future<UserDto> getUser() async {
     final uri = buildUri(host, _userPath);

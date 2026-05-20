@@ -18,7 +18,7 @@ import 'package:realunit_wallet/packages/utils/ascii_transliterate.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 
 class RealUnitRegistrationService extends DFXAuthService {
-  RealUnitRegistrationService(super.appStore);
+  RealUnitRegistrationService(super.appStore, super.walletService);
 
   static const _registerEmailPath = '/v1/realunit/register/email';
   static const _registerCompletionPath = '/v1/realunit/register/complete';
@@ -53,7 +53,7 @@ class RealUnitRegistrationService extends DFXAuthService {
   Future<RegistrationStatus> completeRegistration(Registration registration) async {
     // EIP-712 registration signature requires the private key — promote the
     // view-wallet (if any) to a fully unlocked SoftwareWallet first.
-    await appStore.ensureUnlocked();
+    await walletService.ensureCurrentWalletUnlocked();
     final credentials = appStore.wallet.primaryAccount.primaryAddress;
     // BitBox firmware rejects non-ASCII bytes in EIP-712 string fields.
     // Transliterate everything that goes into the signed envelope AND the
@@ -134,6 +134,10 @@ class RealUnitRegistrationService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
+    // Drop the mnemonic from memory now that the registration signature is
+    // submitted. The auth-token path keeps working off the cached session
+    // signature.
+    await walletService.lockCurrentWallet();
     final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
     return responseDto.status;
   }
@@ -142,6 +146,7 @@ class RealUnitRegistrationService extends DFXAuthService {
   Future<RegistrationStatus> registerWallet(
     RealUnitUserDataDto userData,
   ) async {
+    await walletService.ensureCurrentWalletUnlocked();
     final credentials = appStore.wallet.primaryAccount.primaryAddress;
     final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     // Same ASCII guard as completeRegistration — see comment there.
@@ -182,6 +187,7 @@ class RealUnitRegistrationService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
+    await walletService.lockCurrentWallet();
     final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
     return responseDto.status;
   }
