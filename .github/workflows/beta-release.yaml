@@ -5,13 +5,17 @@ on:
   push:
     tags:
       - "v*"
+      - "!v*-beta*"
 
 permissions:
   contents: write
 
+concurrency:
+  group: store-release
+  cancel-in-progress: false
+
 jobs:
   android-deploy:
-    if: ${{ !contains(github.ref_name, 'beta') }}
     runs-on: ubuntu-latest
 
     steps:
@@ -108,7 +112,6 @@ jobs:
           path: build/app/outputs/flutter-apk/realunit-*.apk
 
   ios-deploy:
-    if: ${{ !contains(github.ref_name, 'beta') }}
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
@@ -202,7 +205,6 @@ jobs:
           path: ios/realunit-*.ipa
 
   github-release:
-    if: ${{ !contains(github.ref_name, 'beta') }}
     needs: [android-deploy, ios-deploy]
     runs-on: ubuntu-latest
     steps:
