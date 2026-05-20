@@ -20,14 +20,15 @@
 
 import 'dart:io';
 
-const _outputPath = 'lib/generated/release_info.dart';
+const _defaultOutputPath = 'lib/generated/release_info.dart';
 const _stableBetaN = 999;
 const _maxBetaN = 998;
 
 void main(List<String> args) {
   final rawTag = _argValue(args, '--tag');
+  final outputPath = _argValue(args, '--output') ?? _defaultOutputPath;
   final info = _resolve(rawTag);
-  _writeReleaseInfo(info);
+  _writeReleaseInfo(info, outputPath);
 
   stdout.writeln('release_tag=${info.tag}');
   stdout.writeln('marketing_version=${info.marketingVersion}');
@@ -111,8 +112,9 @@ String? _argValue(List<String> args, String key) {
   return null;
 }
 
-void _writeReleaseInfo(ReleaseInfo info) {
-  final dir = Directory('lib/generated');
+void _writeReleaseInfo(ReleaseInfo info, String outputPath) {
+  final file = File(outputPath);
+  final dir = file.parent;
   if (!dir.existsSync()) dir.createSync(recursive: true);
 
   final content =
@@ -122,7 +124,7 @@ void _writeReleaseInfo(ReleaseInfo info) {
       'const int releaseVersionCode = ${info.versionCode};\n'
       'const bool releaseIsStable = ${info.isStable};\n';
 
-  File(_outputPath).writeAsStringSync(content);
+  file.writeAsStringSync(content);
 }
 
 class ReleaseInfo {

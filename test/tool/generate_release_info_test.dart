@@ -1,15 +1,15 @@
 // Verifies the tag → versionCode mapping in tool/generate_release_info.dart.
 // We invoke the script as a subprocess (the same way Fastlane does) and read
-// the canonical artefact `lib/generated/release_info.dart` back — stdout is
-// not the authoritative output channel because `dart run` prepends "Running
-// build hooks..." with no trailing newline.
+// the canonical artefact back — stdout is not the authoritative output channel
+// because `dart run` prepends "Running build hooks..." with no trailing
+// newline. Each test writes to its own temp file via `--output=` so the
+// working-tree copy at `lib/generated/release_info.dart` is never touched.
 
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
 const _script = 'tool/generate_release_info.dart';
-const _generated = 'lib/generated/release_info.dart';
 
 class _ReleaseInfo {
   _ReleaseInfo(this.tag, this.marketing, this.versionCode, this.isStable);
@@ -22,30 +22,50 @@ class _ReleaseInfo {
 Future<_ReleaseInfo> _run({String? tag}) async {
   // Invoke the script directly (not via `dart run`) — the tool has no
   // package dependencies, so this skips the pub-resolve overhead and keeps
-  // the suite fast.
-  final args = <String>[_script, if (tag != null) '--tag=$tag'];
-  final result = await Process.run('dart', args);
-  expect(
-    result.exitCode,
-    0,
-    reason: 'dart run failed (exit=${result.exitCode}): ${result.stderr}',
-  );
-  final contents = await File(_generated).readAsString();
-  return _ReleaseInfo(
-    RegExp(r"releaseTag = '([^']+)'").firstMatch(contents)!.group(1)!,
-    RegExp(r"releaseMarketingVersion = '([^']+)'").firstMatch(contents)!.group(1)!,
-    int.parse(RegExp(r'releaseVersionCode = (\d+)').firstMatch(contents)!.group(1)!),
-    RegExp(r'releaseIsStable = (true|false)').firstMatch(contents)!.group(1) == 'true',
-  );
+  // the suite fast. Each invocation gets its own temp output file so the
+  // checked-in tree is never mutated.
+  final tempDir = Directory.systemTemp.createTempSync('release_info_test_');
+  final outputFile = File('${tempDir.path}/release_info.dart');
+  try {
+    final args = <String>[
+      _script,
+      if (tag != null) '--tag=$tag',
+      '--output=${outputFile.path}',
+    ];
+    final result = await Process.run('dart', args);
+    expect(
+      result.exitCode,
+      0,
+      reason: 'dart run failed (exit=${result.exitCode}): ${result.stderr}',
+    );
+    final contents = await outputFile.readAsString();
+    return _ReleaseInfo(
+      RegExp(r"releaseTag = '([^']+)'").firstMatch(contents)!.group(1)!,
+      RegExp(r"releaseMarketingVersion = '([^']+)'").firstMatch(contents)!.group(1)!,
+      int.parse(RegExp(r'releaseVersionCode = (\d+)').firstMatch(contents)!.group(1)!),
+      RegExp(r'releaseIsStable = (true|false)').firstMatch(contents)!.group(1) == 'true',
+    );
+  } finally {
+    if (tempDir.existsSync()) tempDir.deleteSync(recursive: true);
+  }
+}
+
+Future<ProcessResult> _runRaw(List<String> extraArgs) {
+  // Error-path helper: we still need a temp `--output=` so a successful
+  // invocation would not touch the working tree, but the tests here assert
+  // a non-zero exit so the file is never written anyway.
+  final tempDir = Directory.systemTemp.createTempSync('release_info_test_');
+  final outputFile = File('${tempDir.path}/release_info.dart');
+  return Process.run('dart', [
+    _script,
+    ...extraArgs,
+    '--output=${outputFile.path}',
+  ]).whenComplete(() {
+    if (tempDir.existsSync()) tempDir.deleteSync(recursive: true);
+  });
 }
 
 void main() {
-  // Restore the local-dev sentinel after each test so the working tree stays
-  // build-able for whoever runs `flutter analyze` after the test suite.
-  tearDownAll(() async {
-    await _run();
-  });
-
   group('generate_release_info: stable tags', () {
     test('v1.0.0 → versionCode 10_000_999, BETA_N = 999 (stable sentinel)',
         () async {
@@ -109,22 +129,22 @@ void main() {
 
   group('generate_release_info: error cases', () {
     test('malformed tag → non-zero exit', () async {
-      final result = await Process.run('dart', [_script, '--tag=garbage']);
+      final result = await _runRaw(['--tag=garbage']);
       expect(result.exitCode, isNot(0));
     });
 
     test('beta number > 998 → non-zero exit', () async {
-      final result = await Process.run('dart', [_script, '--tag=v1.0.0-beta.999']);
+      final result = await _runRaw(['--tag=v1.0.0-beta.999']);
       expect(result.exitCode, isNot(0));
     });
 
     test('major > 99 → non-zero exit', () async {
-      final result = await Process.run('dart', [_script, '--tag=v100.0.0']);
+      final result = await _runRaw(['--tag=v100.0.0']);
       expect(result.exitCode, isNot(0));
     });
 
     test('release-candidate suffix is not supported → non-zero exit', () async {
-      final result = await Process.run('dart', [_script, '--tag=v1.0.0-rc.1']);
+      final result = await _runRaw(['--tag=v1.0.0-rc.1']);
       expect(result.exitCode, isNot(0));
     });
   });
