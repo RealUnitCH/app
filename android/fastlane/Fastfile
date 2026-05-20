@@ -34,6 +34,11 @@ def resolve_release_info(raw_tag)
   }
   missing = info.select { |_, v| v.nil? }.keys
   UI.user_error!("release-info generator missing keys: #{missing.join(', ')}") unless missing.empty?
+  # `dev` sentinel (versionCode=0) is intended for local builds only —
+  # Play Store rejects versionCode 0. Fail loudly before invoking gradle/gym.
+  if info["version_code"].to_i <= 0
+    UI.user_error!("refusing to build a store release without a release tag (got: '#{raw_tag}')")
+  end
   info
 end
 

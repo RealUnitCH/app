@@ -20,7 +20,10 @@ class _ReleaseInfo {
 }
 
 Future<_ReleaseInfo> _run({String? tag}) async {
-  final args = <String>['run', _script, if (tag != null) '--tag=$tag'];
+  // Invoke the script directly (not via `dart run`) — the tool has no
+  // package dependencies, so this skips the pub-resolve overhead and keeps
+  // the suite fast.
+  final args = <String>[_script, if (tag != null) '--tag=$tag'];
   final result = await Process.run('dart', args);
   expect(
     result.exitCode,
@@ -106,27 +109,39 @@ void main() {
 
   group('generate_release_info: error cases', () {
     test('malformed tag → non-zero exit', () async {
-      final result = await Process.run(
-        'dart',
-        ['run', _script, '--tag=garbage'],
-      );
+      final result = await Process.run('dart', [_script, '--tag=garbage']);
       expect(result.exitCode, isNot(0));
     });
 
     test('beta number > 998 → non-zero exit', () async {
-      final result = await Process.run(
-        'dart',
-        ['run', _script, '--tag=v1.0.0-beta.999'],
-      );
+      final result = await Process.run('dart', [_script, '--tag=v1.0.0-beta.999']);
       expect(result.exitCode, isNot(0));
     });
 
     test('major > 99 → non-zero exit', () async {
-      final result = await Process.run(
-        'dart',
-        ['run', _script, '--tag=v100.0.0'],
-      );
+      final result = await Process.run('dart', [_script, '--tag=v100.0.0']);
       expect(result.exitCode, isNot(0));
+    });
+
+    test('release-candidate suffix is not supported → non-zero exit', () async {
+      final result = await Process.run('dart', [_script, '--tag=v1.0.0-rc.1']);
+      expect(result.exitCode, isNot(0));
+    });
+  });
+
+  group('generate_release_info: platform-prefixed tags', () {
+    test('android/v1.0.0-beta.4 strips the prefix and computes 10000004',
+        () async {
+      final info = await _run(tag: 'android/v1.0.0-beta.4');
+      expect(info.tag, '1.0.0-beta.4');
+      expect(info.versionCode, 10000004);
+    });
+
+    test('ios/v1.0.0 strips the prefix and computes 10000999', () async {
+      final info = await _run(tag: 'ios/v1.0.0');
+      expect(info.tag, '1.0.0');
+      expect(info.versionCode, 10000999);
+      expect(info.isStable, isTrue);
     });
   });
 }

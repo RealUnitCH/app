@@ -48,7 +48,11 @@ ReleaseInfo _resolve(String? rawTag) {
 }
 
 ReleaseInfo _parseTag(String raw) {
-  final stripped = raw.startsWith('v') ? raw.substring(1) : raw;
+  // Strip optional platform prefix used by the single-platform release
+  // workflows (`android/v...`, `ios/v...`). The combined develop-release
+  // workflow uses bare `vX.Y.Z[-beta.N]` tags, so this is a no-op there.
+  final unprefixed = raw.replaceFirst(RegExp(r'^(android|ios)/'), '');
+  final stripped = unprefixed.startsWith('v') ? unprefixed.substring(1) : unprefixed;
   final parts = stripped.split('-');
 
   final marketing = parts.first;
