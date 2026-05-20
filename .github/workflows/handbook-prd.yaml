@@ -75,7 +75,7 @@ jobs:
       # the pattern from zkcoins/server `deploy-dev.yaml`.
       - name: Smoke test public endpoint
         env:
-          SMOKE_URL: https://handbook.dfxserve.com/de/
+          SMOKE_URL: https://handbook.realunit.app/de/
         run: |
           set -euo pipefail
           for i in $(seq 1 30); do
