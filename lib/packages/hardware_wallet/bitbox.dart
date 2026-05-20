@@ -5,7 +5,14 @@ import 'package:bitbox_flutter/bitbox_flutter.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 
 class BitboxService {
+  // Observer poll period is widened in production and tightened in tests so
+  // device-loss-recovery behaviour can be exercised in real time without
+  // five-second sleeps.
+  BitboxService({Duration connectionStatusInterval = const Duration(seconds: 5)})
+    : _connectionStatusInterval = connectionStatusInterval;
+
   final BitboxManager bitboxManager = BitboxManager();
+  final Duration _connectionStatusInterval;
   bool _isConnected = false;
   BitboxCredentials? _credentials;
   Timer? _connectionStatusObserver;
@@ -38,7 +45,7 @@ class BitboxService {
 
   void startConnectionStatusObserver() {
     _connectionStatusObserver?.cancel();
-    _connectionStatusObserver = Timer.periodic(const Duration(seconds: 5), (_) async {
+    _connectionStatusObserver = Timer.periodic(_connectionStatusInterval, (_) async {
       final devices = await getAllUsbDevices();
       if (devices.isEmpty) {
         _isConnected = false;
