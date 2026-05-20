@@ -91,6 +91,22 @@ lib/
 - Test helper at `test/helper/` (provides `pumpApp`).
 - For BitBox-related code, the layered test strategy (Tier 0–4) is documented in [`docs/testing.md`](docs/testing.md), with concrete patterns for cubit tests, widget tests, service + HTTP tests, and `FakeBitboxCredentials`-backed integration tests.
 - [`docs/testing.md`](docs/testing.md) also lists the surface that needs an infra PR first (Drift repositories, `getIt`-coupled pages, `path_provider`-coupled cubits, the Sumsub SDK, plugin-coupled widgets). Don't try to mock around those without changing the injection point.
+- Service-lifecycle tests are mandatory for any service with a `Timer`, observer/subscription loop, or platform/MethodChannel dependency: instantiate the real class (no mock of the service itself), swap `BitboxUsbPlatform.instance` in `setUp` and restore in `tearDown`, and prefer deterministic time control over wall-clock `Future.delayed` for periodic-timer assertions.[^fake-async]
+  - Why: mocking the service-under-test hides timer leaks, unsubscribed listeners, and double-init bugs; wall-clock delays make tests slow and flaky.
+  - See: `test/packages/hardware_wallet/bitbox_service_test.dart`.
+- Exception surface tests are mandatory: every typed exception in `lib/` (any class that `implements Exception` or `extends Exception`) MUST override `toString()` so the rendered string does not contain `Instance of` and is non-empty (matches the assertions in the surface test), AND MUST be enumerated in the shared surface test the moment it is introduced.[^surface-complete]
+  - Why: exceptions surface in logs, Sentry, and user-facing error states — the Dart default `Instance of '...'` is useless for debugging and unfriendly for users.
+  - See: `test/packages/service/dfx/exceptions/exception_surface_test.dart`.
+- Platform-specific code paths (USB transports, BLE lifecycle, secure storage, biometric prompts, deep links) MUST either ship an `integration_test/` counterpart exercising the real plugin or vendor simulator, OR carry an inline `// @no-integration-test: <reason>` annotation as either a file-level dartdoc comment OR immediately above the function/method declaration.[^integration-test]
+  - Why: unit tests with mocked platform channels cannot catch real-device regressions (permission prompts, OS-level lifecycle, transport quirks); the annotation makes the absence of an integration test a deliberate, reviewable decision.
+  - See: grep the annotation with
+    ```bash
+    rg "^//\s*@no-integration-test:" lib/
+    ```
+
+[^fake-async]: Once PR [#473](https://github.com/DFXswiss/realunit-app/pull/473) (branch `test/bitbox-observer-hardening`) lands — it migrates `bitbox_service_test.dart` to `package:fake_async` and adds the `dev_dependency` — replace the soft wording with `package:fake_async` as the MUST.
+[^surface-complete]: Assumes the complete surface enumeration from branch [`test/exception-surface-complete-coverage`](https://github.com/DFXswiss/realunit-app/tree/test/exception-surface-complete-coverage), which adds the two missing entries (`RegistrationRequiredException`, `KycLevelRequiredException`). Lands together with that PR.
+[^integration-test]: Activates once an `integration_test/` directory exists in the repo; until then, treat option 1 as N/A and the `// @no-integration-test:` annotation as the documenting form.
 
 ## Widget Guidelines
 
