@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:bip32/bip32.dart';
 import 'package:bip39/bip39.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
+import 'package:realunit_wallet/packages/wallet/exceptions/wallet_locked_exception.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
@@ -44,6 +45,54 @@ class SoftwareWallet extends AWallet {
   }
 
   void selectAccount(int index) => _currentAccount = WalletAccount(_bip32, index);
+}
+
+/// Software wallet without the mnemonic in memory — only the public address is
+/// cached. Used at app startup so the dashboard renders before the (expensive
+/// and rarely needed) BIP32 derivation happens. Must be upgraded to a full
+/// [SoftwareWallet] via `WalletService.unlockCurrentWallet` before any sign
+/// operation.
+class SoftwareViewWallet extends AWallet {
+  @override
+  WalletType get walletType => WalletType.software;
+
+  @override
+  late final SoftwareViewWalletAccount primaryAccount;
+
+  late SoftwareViewWalletAccount _currentAccount;
+
+  @override
+  SoftwareViewWalletAccount get currentAccount => _currentAccount;
+
+  SoftwareViewWallet(super.id, super.name, String address) {
+    primaryAccount = SoftwareViewWalletAccount(0, _LockedCredentials(address));
+    _currentAccount = primaryAccount;
+  }
+}
+
+class _LockedCredentials extends CredentialsWithKnownAddress {
+  final EthereumAddress _address;
+
+  _LockedCredentials(String hexAddress) : _address = EthereumAddress.fromHex(hexAddress);
+
+  @override
+  EthereumAddress get address => _address;
+
+  @override
+  MsgSignature signToEcSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) =>
+      throw const WalletLockedException();
+
+  @override
+  Future<MsgSignature> signToSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) =>
+      throw const WalletLockedException();
+
+  @override
+  Future<Uint8List> signPersonalMessage(Uint8List payload, {int? chainId}) =>
+      throw const WalletLockedException();
+
+  @override
+  Uint8List signPersonalMessageToUint8List(Uint8List payload, {int? chainId}) =>
+      throw const WalletLockedException();
 }
 
 class BitboxWallet extends AWallet {

@@ -100,6 +100,9 @@ void main() {
         .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
     when(() => appStore.sessionCache).thenReturn(session);
     when(() => appStore.wallet).thenReturn(wallet);
+    // Wallet is already a full SoftwareWallet in this fixture — ensureUnlocked
+    // is a no-op for non-view wallets, but mocktail still needs a stub.
+    when(() => appStore.ensureUnlocked()).thenAnswer((_) async {});
     when(() => wallet.currentAccount).thenReturn(account);
     when(() => account.primaryAddress).thenReturn(_privKey);
   });

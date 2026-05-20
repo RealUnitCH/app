@@ -2,6 +2,12 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
 
+    <!-- BitBox02 connects via USB-OTG on Android. Declared as optional so the
+         app still installs on tablets/devices without USB host support; the
+         BitBox flow simply won't be usable there. The actual per-device
+         permission is requested at runtime by bitbox_flutter. -->
+    <uses-feature android:name="android.hardware.usb.host" android:required="false" />
+
     <application
         android:label="Real Unit Wallet"
         android:name="${applicationName}"

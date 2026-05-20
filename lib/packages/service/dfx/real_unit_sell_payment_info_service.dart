@@ -78,6 +78,10 @@ class RealUnitSellPaymentInfoService extends DFXAuthService {
 
   /// Confirms payment for Software Wallet
   Future<void> confirmPayment(SellPaymentInfo paymentInfo) async {
+    // EIP-712 + EIP-7702 typed-data signing requires the private key; promote
+    // the view-wallet to a fully unlocked SoftwareWallet before reading
+    // credentials.
+    await appStore.ensureUnlocked();
     final credentials = appStore.wallet.currentAccount.primaryAddress;
     _validateEip7702Data(paymentInfo.eip7702, credentials.address.hexEip55, paymentInfo.amount);
 

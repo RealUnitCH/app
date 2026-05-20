@@ -8,6 +8,7 @@ import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
@@ -71,6 +72,9 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
   }
 
   void _startEthPolling() {
+    // Cancel any prior timer first — retryAfterConnection can re-enter the
+    // faucet/polling branch while a previous timer is still alive.
+    _ethPollingTimer?.cancel();
     _ethPollingTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
       try {
         final balance = await _blockchainService.getEthBalance(_appStore.primaryAddress);
@@ -103,11 +107,17 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
       emit(SellBitboxError('BitBox wallet not connected'));
       return;
     }
+    if (!credentials.isConnected) {
+      emit(SellBitboxBitboxRequired());
+      return;
+    }
 
     try {
       emit(SellBitboxSwapping());
       final signedSwap = await _signTransaction(swapState.rawSwapTransaction, credentials);
       emit(SellBitboxAwaitingDepositConfirm(signedSwap, swapState.rawDepositTransaction));
+    } on BitboxNotConnectedException {
+      emit(SellBitboxBitboxRequired());
     } catch (e) {
       emit(SellBitboxError(e.toString()));
     }
@@ -122,6 +132,10 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
       emit(SellBitboxError('BitBox wallet not connected'));
       return;
     }
+    if (!credentials.isConnected) {
+      emit(SellBitboxBitboxRequired());
+      return;
+    }
 
     try {
       emit(SellBitboxDepositing());
@@ -131,6 +145,8 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
         depositState.signedSwapTransaction,
       );
       await _broadcastDepositAndConfirm(depositState.signedSwapTransaction, signedDeposit);
+    } on BitboxNotConnectedException {
+      emit(SellBitboxBitboxRequired());
     } catch (e) {
       emit(SellBitboxError(e.toString()));
     }

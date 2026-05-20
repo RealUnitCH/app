@@ -4,6 +4,7 @@ import 'dart:developer' as developer;
 import 'package:bitbox_flutter/bitbox_flutter.dart' as sdk;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/utils/device_info.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -25,7 +26,8 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
 
   ConnectBitboxCubit(
     this._service,
-    this._walletService, {
+    this._walletService,
+    this._authService, {
     Duration confirmPairingTimeout = _defaultConfirmPairingTimeout,
     Duration createWalletTimeout = _defaultCreateWalletTimeout,
     Duration pairingPinTimeout = _defaultPairingPinTimeout,
@@ -47,6 +49,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
 
   final BitboxService _service;
   final WalletService _walletService;
+  final DFXAuthService _authService;
   Timer? _checkForTimer;
   Future<bool>? _pendingInit;
 
@@ -149,6 +152,19 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
               '${_createWalletTimeout.inSeconds}s. Try disconnecting and re-pairing.',
             ),
           );
+      // Capture the DFX auth signature now, while the BitBox is guaranteed
+      // connected. Once persisted, every later buy / KYC / user-data call runs
+      // off the cached signature without needing the hardware wallet present.
+      // A failure here is non-fatal: we still complete pairing and rely on the
+      // lazy-create path in DFXAuthService.getSignature as a fallback.
+      try {
+        await _authService.ensureSignatureFor(wallet.currentAccount);
+      } catch (e) {
+        developer.log(
+          'initial signature capture failed: $e',
+          name: '$ConnectBitboxCubit',
+        );
+      }
       _service.startConnectionStatusObserver();
       emit(BitboxConnected(wallet));
     } catch (e) {
@@ -169,6 +185,9 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
   @override
   Future<void> close() {
     _checkForTimer?.cancel();
+    // Detach from the in-flight init future so any late error doesn't surface
+    // as an unhandled exception after the cubit is gone.
+    _pendingInit?.ignore();
     _pendingInit = null;
     return super.close();
   }

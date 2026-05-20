@@ -4,6 +4,7 @@ import 'package:async/async.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
@@ -70,6 +71,8 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
       );
     } on RegistrationRequiredException {
       return const BuyPaymentInfoFailure(PaymentInfoError.registrationRequired);
+    } on BitboxNotConnectedException {
+      return const BuyPaymentInfoFailure(PaymentInfoError.bitboxDisconnected);
     } catch (e) {
       developer.log(e.toString());
       return const BuyPaymentInfoFailure(PaymentInfoError.unknown);

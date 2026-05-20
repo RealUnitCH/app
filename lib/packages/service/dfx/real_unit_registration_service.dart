@@ -51,6 +51,9 @@ class RealUnitRegistrationService extends DFXAuthService {
 
   /// registers a wallet and and adds the wallet to the new user
   Future<RegistrationStatus> completeRegistration(Registration registration) async {
+    // EIP-712 registration signature requires the private key — promote the
+    // view-wallet (if any) to a fully unlocked SoftwareWallet first.
+    await appStore.ensureUnlocked();
     final credentials = appStore.wallet.primaryAccount.primaryAddress;
     // BitBox firmware rejects non-ASCII bytes in EIP-712 string fields.
     // Transliterate everything that goes into the signed envelope AND the

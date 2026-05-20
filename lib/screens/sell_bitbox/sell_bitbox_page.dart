@@ -7,8 +7,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
-import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
-import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/screens/hardware_connect_bitbox/show_bitbox_reconnect_sheet.dart';
 import 'package:realunit_wallet/screens/sell_bitbox/cubit/sell_bitbox_cubit.dart';
 import 'package:realunit_wallet/screens/sell_bitbox/widgets/sell_bitbox_deposit_step.dart';
 import 'package:realunit_wallet/screens/sell_bitbox/widgets/sell_bitbox_eth_step.dart';
@@ -47,17 +46,8 @@ class SellBitboxView extends StatelessWidget {
     return BlocConsumer<SellBitboxCubit, SellBitboxState>(
       listener: (context, state) async {
         if (state is SellBitboxBitboxRequired) {
-          final result = await showModalBottomSheet<bool>(
-            context: context,
-            isScrollControlled: true,
-            builder: (_) => ConnectBitboxPage(
-              onFinish: (wallet) {
-                context.read<HomeBloc>().add(SyncWalletServicesEvent(wallet));
-                context.pop(true);
-              },
-            ),
-          );
-          if (result == true && context.mounted) {
+          final reconnected = await showBitboxReconnectSheet(context);
+          if (reconnected && context.mounted) {
             context.read<SellBitboxCubit>().retryAfterConnection();
           }
           return;

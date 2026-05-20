@@ -16,12 +16,11 @@ class SettingsUserDataLoading extends SettingsUserDataState {
 }
 
 class SettingsUserDataFailure extends SettingsUserDataState {
-  final String message;
+  const SettingsUserDataFailure();
+}
 
-  const SettingsUserDataFailure(this.message);
-
-  @override
-  List<Object?> get props => [message];
+class SettingsUserDataBitboxDisconnected extends SettingsUserDataState {
+  const SettingsUserDataBitboxDisconnected();
 }
 
 class SettingsUserDataSuccess extends SettingsUserDataState {
