@@ -227,6 +227,35 @@ void main() {
       verifyNever(() => service.confirmPairing());
     });
 
+    // BitBox quirk P1 (pairing-channel-hash-before-confirm): the channel hash
+    // must reach the UI before the host calls confirmPairing on the device,
+    // otherwise the user has no way to verify the hash matches the device
+    // display. The cubit enforces this by emitting BitboxCheckHash before
+    // user-driven confirmPairing() ever invokes the service.
+    test('emits BitboxCheckHash before service.confirmPairing is called (P1)', () async {
+      var pollCount = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 3 ? '' : 'HASH-VISIBLE-TO-USER';
+      });
+      when(() => service.confirmPairing()).thenAnswer((_) async {});
+
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      await waitForState<BitboxCheckHash>(cubit);
+      expect(
+        (cubit.state as BitboxCheckHash).channelHash,
+        'HASH-VISIBLE-TO-USER',
+      );
+      verifyNever(() => service.confirmPairing());
+
+      await cubit.confirmPairing();
+      verify(() => service.confirmPairing()).called(1);
+    });
+
     test('bounces to NotConnected when createBitboxWallet hangs past the timeout', () async {
       var pollCount = 0;
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
