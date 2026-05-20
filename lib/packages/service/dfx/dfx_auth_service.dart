@@ -24,22 +24,7 @@ abstract class DFXAuthService {
 
   String get walletAddress => wallet.primaryAddress.address.hexEip55;
 
-  Future<String> getSignMessage() async {
-    final uri = buildUri(host, signMessagePath, {'address': walletAddress});
-
-    final response = await appStore.httpClient
-        .get(uri, headers: {'accept': 'application/json'})
-        .timeout(_httpTimeout);
-
-    if (response.statusCode == 200) {
-      final responseBody = jsonDecode(response.body);
-      return responseBody['message'] as String;
-    } else {
-      throw Exception(
-        'Failed to get sign message. Status: ${response.statusCode} ${response.body}',
-      );
-    }
-  }
+  Future<String> getSignMessage() => _fetchSignMessage(walletAddress);
 
   /// Create-and-persist the auth signature for [account] without going through
   /// `appStore.wallet`. Used during the BitBox pairing flow so the signature is
@@ -56,22 +41,25 @@ abstract class DFXAuthService {
       return;
     }
 
-    final messageUri = buildUri(host, signMessagePath, {'address': address});
-    final messageResponse = await appStore.httpClient
-        .get(messageUri, headers: {'accept': 'application/json'})
-        .timeout(_httpTimeout);
-    if (messageResponse.statusCode != 200) {
-      throw Exception(
-        'Failed to get sign message. Status: ${messageResponse.statusCode} ${messageResponse.body}',
-      );
-    }
-    final message = (jsonDecode(messageResponse.body) as Map<String, dynamic>)['message'] as String;
-
+    final message = await _fetchSignMessage(address);
     final signature = await account.signMessage(message).timeout(_signMessageTimeout);
     if (signature.isEmpty || signature == '0x') {
       throw const SigningCancelledException();
     }
     await appStore.sessionCache.saveSignature(address, signature);
+  }
+
+  Future<String> _fetchSignMessage(String address) async {
+    final uri = buildUri(host, signMessagePath, {'address': address});
+    final response = await appStore.httpClient
+        .get(uri, headers: {'accept': 'application/json'})
+        .timeout(_httpTimeout);
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Failed to get sign message. Status: ${response.statusCode} ${response.body}',
+      );
+    }
+    return (jsonDecode(response.body) as Map<String, dynamic>)['message'] as String;
   }
 
   // Exceptions this method can throw on the BitBox path:
