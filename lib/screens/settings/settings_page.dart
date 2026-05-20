@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -35,10 +37,14 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    PackageInfo.fromPlatform().then((info) {
-      if (!mounted) return;
-      setState(() => _packageInfo = info);
-    });
+    PackageInfo.fromPlatform()
+        .then((info) {
+          if (!mounted) return;
+          setState(() => _packageInfo = info);
+        })
+        .catchError((Object e) {
+          developer.log('Failed to load package info', error: e);
+        });
   }
 
   @override
