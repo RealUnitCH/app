@@ -64,18 +64,11 @@ void main() {
 
   group('$TransactionHistoryService', () {
     group('fetchPendingTransactions', () {
-      test('returns [] without hitting the network when no auth token is set', () async {
-        var called = false;
-        final client = MockClient((_) async {
-          called = true;
-          return http.Response('[]', 200);
-        });
-
-        final list = await build(client).fetchPendingTransactions();
-
-        expect(list, isEmpty);
-        expect(called, isFalse);
-      });
+      // The pre-migration "no auth token -> silent empty list" branch is
+      // gone: the request now routes through `authenticatedGet`, which
+      // triggers the sign + token-exchange bootstrap on a missing token and
+      // refreshes on 401. The 401-retry plumbing is exercised exhaustively
+      // in `dfx_auth_service_test.dart`.
 
       test('GETs /v1/transaction/detail with the Bearer JWT', () async {
         sessionCache.setAuthToken('jwt-1');

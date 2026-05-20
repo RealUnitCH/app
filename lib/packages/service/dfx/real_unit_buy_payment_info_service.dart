@@ -7,7 +7,6 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_paym
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/dto/real_unit_buy_confirm_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/dto/real_unit_buy_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/dto/real_unit_buy_payment_info_dto.dart';
-import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 class RealUnitBuyPaymentInfoService extends DFXAuthService {
@@ -15,12 +14,6 @@ class RealUnitBuyPaymentInfoService extends DFXAuthService {
   static String _confirmPaymentPath(int id) => '/v1/realunit/buy/$id/confirm';
 
   RealUnitBuyPaymentInfoService(super.appStore);
-
-  @override
-  AWalletAccount get wallet => appStore.wallet.currentAccount;
-
-  @override
-  String get walletAddress => wallet.primaryAddress.address.hexEip55;
 
   Future<BuyPaymentInfo> getPaymentInfo(int amount, {Currency currency = Currency.chf}) async {
     final buyDto = RealUnitBuyDto(amount: amount, currency: currency);

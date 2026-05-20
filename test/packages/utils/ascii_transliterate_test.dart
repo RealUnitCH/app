@@ -46,6 +46,21 @@ void main() {
       expect(toBitboxSafeAscii('Hello 🦊 world'), 'Hello ? world');
     });
 
+    test('folds smart quotes and dashes back to their ASCII equivalents', () {
+      // Right single quote (curly apostrophe) — what iOS autocorrect
+      // turns ' into mid-word; previously surfaced as `D?Angelo`.
+      expect(toBitboxSafeAscii('D’Angelo'), "D'Angelo");
+      // Left single quote.
+      expect(toBitboxSafeAscii('‘hello’'), "'hello'");
+      // Left + right double quotes.
+      expect(toBitboxSafeAscii('“quoted”'), '"quoted"');
+      // En dash and em dash both flatten to a hyphen.
+      expect(toBitboxSafeAscii('Anna–Maria'), 'Anna-Maria');
+      expect(toBitboxSafeAscii('Anna—Maria'), 'Anna-Maria');
+      // Horizontal ellipsis expands to three ASCII dots.
+      expect(toBitboxSafeAscii('wait…'), 'wait...');
+    });
+
     test('result is always printable ASCII', () {
       const inputs = [
         'Krüger', 'Müller', 'Strauß',

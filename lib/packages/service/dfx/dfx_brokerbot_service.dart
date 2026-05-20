@@ -7,7 +7,6 @@ import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_buy_pr
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_buy_shares_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_sell_price_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_sell_shares_dto.dart';
-import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 class DfxBrokerbotService extends DFXAuthService {
@@ -17,12 +16,6 @@ class DfxBrokerbotService extends DFXAuthService {
   static const _sellSharesPath = '/v1/realunit/brokerbot/sellShares';
 
   DfxBrokerbotService(super.appStore);
-
-  @override
-  AWalletAccount get wallet => appStore.wallet.currentAccount;
-
-  @override
-  String get walletAddress => wallet.primaryAddress.address.hexEip55;
 
   /// Convert REALU shares → CHF
   Future<BrokerbotBuyPriceDto> getBuyPrice(String sharesInput, Currency currency) async {

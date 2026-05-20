@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
-import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/pdf/balance_pdf_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/pdf/multi_receipt_dto.dart';
@@ -10,16 +10,12 @@ import 'package:realunit_wallet/packages/service/dfx/models/pdf/single_receipt_d
 import 'package:realunit_wallet/styles/currency.dart';
 import 'package:realunit_wallet/styles/language.dart';
 
-class RealUnitPdfService {
+class RealUnitPdfService extends DFXAuthService {
   static const _balancePath = '/v1/realunit/balance/pdf';
   static const _transactionsReceiptMultiPath = 'v1/realunit/transactions/receipt/multi';
   static const _transactionsReceiptSinglePath = '/v1/realunit/transactions/receipt/single';
 
-  String get _host => _appStore.apiConfig.apiHost;
-
-  final AppStore _appStore;
-
-  RealUnitPdfService(AppStore appStore) : _appStore = appStore;
+  RealUnitPdfService(super.appStore);
 
   Future<PdfDto> getBalanceReport({
     required DateTime date,
@@ -28,19 +24,16 @@ class RealUnitPdfService {
   }) async {
     final balancePdfDto = BalancePdfDto(
       language: language,
-      address: _appStore.primaryAddress,
+      address: appStore.primaryAddress,
       currency: currency,
       date: date,
     );
 
-    final authToken = _appStore.sessionCache.authToken;
-
-    final uri = buildUri(_host, _balancePath);
-    final response = await _appStore.httpClient.post(
+    final uri = buildUri(host, _balancePath);
+    final response = await authenticatedPost(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
       body: jsonEncode(balancePdfDto),
     );
@@ -57,14 +50,11 @@ class RealUnitPdfService {
     List<String> ids, {
     Currency currency = Currency.chf,
   }) async {
-    final authToken = _appStore.sessionCache.authToken;
-
-    final uri = buildUri(_host, _transactionsReceiptMultiPath);
-    final response = await _appStore.httpClient.post(
+    final uri = buildUri(host, _transactionsReceiptMultiPath);
+    final response = await authenticatedPost(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
       body: jsonEncode(MultiReceiptDto(txIds: ids, currency: currency)),
     );
@@ -78,14 +68,11 @@ class RealUnitPdfService {
   }
 
   Future<PdfDto> getTransactionReceipt(String id, {Currency currency = Currency.chf}) async {
-    final authToken = _appStore.sessionCache.authToken;
-
-    final uri = buildUri(_host, _transactionsReceiptSinglePath);
-    final response = await _appStore.httpClient.post(
+    final uri = buildUri(host, _transactionsReceiptSinglePath);
+    final response = await authenticatedPost(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
       body: jsonEncode(SingleReceiptDto(txId: id, currency: currency)),
     );

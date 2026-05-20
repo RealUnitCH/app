@@ -5,20 +5,18 @@ import 'package:realunit_wallet/models/dfx_transaction.dart';
 import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
-import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/history/dto/account_history_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/transactions/dto/transactions_dto.dart';
 import 'package:web3dart/credentials.dart';
 
-class TransactionHistoryService {
+class TransactionHistoryService extends DFXAuthService {
   static String _accountHistoryPath(String address) => '/v1/realunit/account/$address/history';
   static const String _transactionsPath = 'v1/transaction';
-  String get _host => _appStore.apiConfig.apiHost;
 
-  final AppStore _appStore;
   final TransactionRepository _transactionRepository;
 
-  TransactionHistoryService(this._appStore, this._transactionRepository);
+  TransactionHistoryService(super.appStore, this._transactionRepository);
 
   Future<void> apiBasedSync() async {
     final results = await Future.wait([
@@ -49,11 +47,11 @@ class TransactionHistoryService {
           outputTxId: matchingTransaction.outputTxId,
           height: 0, // TODO
           txId: txId,
-          chainId: _appStore.apiConfig.asset.chainId,
+          chainId: appStore.apiConfig.asset.chainId,
           senderAddress: transfer.from,
           receiverAddress: transfer.to,
           amount: BigInt.parse(transfer.value),
-          asset: _appStore.apiConfig.asset,
+          asset: appStore.apiConfig.asset,
           type: TransactionTypes.tokenTransfer,
           note: '',
           data: null,
@@ -69,11 +67,11 @@ class TransactionHistoryService {
         final transaction = Transaction(
           height: 0, // TODO
           txId: txId,
-          chainId: _appStore.apiConfig.asset.chainId,
+          chainId: appStore.apiConfig.asset.chainId,
           senderAddress: transfer.from,
           receiverAddress: transfer.to,
           amount: BigInt.parse(transfer.value),
-          asset: _appStore.apiConfig.asset,
+          asset: appStore.apiConfig.asset,
           type: TransactionTypes.tokenTransfer,
           note: '',
           data: null,
@@ -90,10 +88,10 @@ class TransactionHistoryService {
   }
 
   Future<AccountHistoryDto?> _fetchAccountHistory() async {
-    final address = _appStore.primaryAddress;
-    final uri = buildUri(_host, _accountHistoryPath(address));
+    final address = appStore.primaryAddress;
+    final uri = buildUri(host, _accountHistoryPath(address));
 
-    final response = await _appStore.httpClient.get(uri);
+    final response = await appStore.httpClient.get(uri);
     if (response.statusCode != 200) return null;
 
     final body = jsonDecode(response.body) as Map<String, dynamic>;
@@ -101,10 +99,10 @@ class TransactionHistoryService {
   }
 
   Future<List<TransactionDto>> _fetchTransactions() async {
-    final address = _appStore.primaryAddress;
-    final uri = buildUri(_host, _transactionsPath, {'userAddress': address});
+    final address = appStore.primaryAddress;
+    final uri = buildUri(host, _transactionsPath, {'userAddress': address});
 
-    final response = await _appStore.httpClient.get(uri);
+    final response = await appStore.httpClient.get(uri);
     if (response.statusCode != 200) return [];
 
     final List<dynamic> json = jsonDecode(response.body);
@@ -112,14 +110,8 @@ class TransactionHistoryService {
   }
 
   Future<List<TransactionDto>> fetchPendingTransactions() async {
-    final authToken = _appStore.sessionCache.authToken;
-    if (authToken == null) return [];
-
-    final uri = buildUri(_host, '$_transactionsPath/detail');
-    final response = await _appStore.httpClient.get(
-      uri,
-      headers: {'Authorization': 'Bearer $authToken'},
-    );
+    final uri = buildUri(host, '$_transactionsPath/detail');
+    final response = await authenticatedGet(uri);
 
     if (response.statusCode != 200) return [];
 
@@ -128,7 +120,7 @@ class TransactionHistoryService {
         .map((e) => TransactionDto.fromJson(e as Map<String, dynamic>))
         .toList();
 
-    final walletAddress = _appStore.primaryAddress;
+    final walletAddress = appStore.primaryAddress;
     return transactions.where((t) => t.isPending && t.belongsToWallet(walletAddress)).toList();
   }
 }

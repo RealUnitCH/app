@@ -20,9 +20,9 @@ abstract class DFXAuthService {
 
   String get host => appStore.apiConfig.apiHost;
 
-  AWalletAccount get wallet;
+  AWalletAccount get wallet => appStore.wallet.currentAccount;
 
-  String get walletAddress;
+  String get walletAddress => wallet.primaryAddress.address.hexEip55;
 
   Future<String> getSignMessage() async {
     final uri = buildUri(host, signMessagePath, {'address': walletAddress});
@@ -113,28 +113,14 @@ abstract class DFXAuthService {
   Future<http.Response> authenticatedGet(
     Uri uri, {
     Map<String, String> headers = const {},
-  }) async {
-    var authToken = await getAuthToken();
-    var response = await appStore.httpClient.get(
-      uri,
-      headers: {
-        ...headers,
-        'Authorization': 'Bearer $authToken',
-      },
-    );
-
-    if (response.statusCode == 401) {
-      authToken = await refreshAuthToken();
-      response = await appStore.httpClient.get(
-        uri,
-        headers: {
-          ...headers,
-          'Authorization': 'Bearer $authToken',
-        },
-      );
-    }
-
-    return response;
+  }) {
+    return _authenticated((token) => appStore.httpClient.get(
+          uri,
+          headers: {
+            ...headers,
+            'Authorization': 'Bearer $token',
+          },
+        ));
   }
 
   Future<http.Response> authenticatedPut(
@@ -142,32 +128,16 @@ abstract class DFXAuthService {
     Map<String, String> headers = const {},
     Object? body,
     Encoding? encoding,
-  }) async {
-    var authToken = await getAuthToken();
-    var response = await appStore.httpClient.put(
-      uri,
-      headers: {
-        ...headers,
-        'Authorization': 'Bearer $authToken',
-      },
-      body: body,
-      encoding: encoding,
-    );
-
-    if (response.statusCode == 401) {
-      authToken = await refreshAuthToken();
-      response = await appStore.httpClient.put(
-        uri,
-        headers: {
-          ...headers,
-          'Authorization': 'Bearer $authToken',
-        },
-        body: body,
-        encoding: encoding,
-      );
-    }
-
-    return response;
+  }) {
+    return _authenticated((token) => appStore.httpClient.put(
+          uri,
+          headers: {
+            ...headers,
+            'Authorization': 'Bearer $token',
+          },
+          body: body,
+          encoding: encoding,
+        ));
   }
 
   Future<http.Response> authenticatedPost(
@@ -175,29 +145,31 @@ abstract class DFXAuthService {
     Map<String, String> headers = const {},
     Object? body,
     Encoding? encoding,
-  }) async {
+  }) {
+    return _authenticated((token) => appStore.httpClient.post(
+          uri,
+          headers: {
+            ...headers,
+            'Authorization': 'Bearer $token',
+          },
+          body: body,
+          encoding: encoding,
+        ));
+  }
+
+  /// Runs [request] with a Bearer token and retries once on a 401 with a
+  /// refreshed token. The caller is responsible for passing the token into
+  /// the request headers (so each verb can keep its own `body`/`encoding`
+  /// arguments without us re-serialising them here).
+  Future<http.Response> _authenticated(
+    Future<http.Response> Function(String? token) request,
+  ) async {
     var authToken = await getAuthToken();
-    var response = await appStore.httpClient.post(
-      uri,
-      headers: {
-        ...headers,
-        'Authorization': 'Bearer $authToken',
-      },
-      body: body,
-      encoding: encoding,
-    );
+    var response = await request(authToken);
 
     if (response.statusCode == 401) {
       authToken = await refreshAuthToken();
-      response = await appStore.httpClient.post(
-        uri,
-        headers: {
-          ...headers,
-          'Authorization': 'Bearer $authToken',
-        },
-        body: body,
-        encoding: encoding,
-      );
+      response = await request(authToken);
     }
 
     return response;

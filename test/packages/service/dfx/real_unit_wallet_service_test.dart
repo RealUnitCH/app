@@ -34,6 +34,12 @@ void main() {
   }
 
   group('$RealUnitWalletService', () {
+    // The 401 -> refresh -> retry plumbing of `authenticatedGet` is covered
+    // exhaustively in `dfx_auth_service_test.dart` (GET / POST / PUT retry,
+    // no-third-retry, refresh-throws propagation). Per-service wiring is
+    // verified implicitly by the "Bearer JWT" assertion below — the header
+    // can only land on the request if it routes through `authenticatedGet`.
+
     test('getWalletStatus GETs /v1/realunit/wallet/status with the Bearer JWT', () async {
       sessionCache.setAuthToken('jwt-1');
       String? path;
@@ -59,6 +65,7 @@ void main() {
     });
 
     test('getWalletStatus parses isRegistered=true with null userData', () async {
+      sessionCache.setAuthToken('jwt-1');
       final client = MockClient((_) async => http.Response(
             jsonEncode({'isRegistered': true, 'userData': null}),
             200,
@@ -70,10 +77,14 @@ void main() {
       expect(status.realUnitUserDataDto, isNull);
     });
 
-    test('getWalletStatus throws ApiException on non-200', () async {
+    test('getWalletStatus throws ApiException on a non-2xx non-401 response', () async {
+      sessionCache.setAuthToken('jwt-1');
+      // Non-401 — bypasses the refresh-on-401 retry path and is surfaced to
+      // the caller directly. The 401-retry behaviour is covered exhaustively
+      // in dfx_auth_service_test.dart.
       final client = MockClient((_) async => http.Response(
-            jsonEncode({'statusCode': 401, 'message': 'Unauthorized'}),
-            401,
+            jsonEncode({'statusCode': 500, 'message': 'oops'}),
+            500,
           ));
 
       expect(

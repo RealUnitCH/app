@@ -58,6 +58,7 @@ void main() {
     });
 
     test('accepts a 201 response in addition to 200', () async {
+      sessionCache.setAuthToken('jwt-zzz');
       final client = MockClient((_) async => http.Response(
             jsonEncode({'txId': 'tx-1', 'amount': 1.0}),
             201,
@@ -69,6 +70,7 @@ void main() {
     });
 
     test('throws ApiException on a non-2xx response', () async {
+      sessionCache.setAuthToken('jwt-zzz');
       final client = MockClient((_) async => http.Response(
             jsonEncode({'statusCode': 429, 'message': 'Too Many Requests'}),
             429,
@@ -78,20 +80,6 @@ void main() {
         () => build(client).requestFaucet(),
         throwsA(isA<ApiException>()),
       );
-    });
-
-    test('omits the authToken value (sends literal "null") when none is set', () async {
-      Map<String, String>? capturedHeaders;
-      final client = MockClient((request) async {
-        capturedHeaders = request.headers;
-        return http.Response(jsonEncode({'txId': '0x', 'amount': 0.0}), 200);
-      });
-
-      await build(client).requestFaucet();
-
-      // Documents the current behaviour: callers must guard against an empty
-      // auth token themselves; the service does not refuse the request.
-      expect(capturedHeaders!['Authorization'], 'Bearer null');
     });
   });
 }
