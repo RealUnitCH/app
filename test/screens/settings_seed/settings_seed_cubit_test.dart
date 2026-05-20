@@ -36,8 +36,13 @@ void main() {
     blocTest<SettingsSeedCubit, SettingsSeedState>(
       'toggleShowSeed flips showSeed and keeps seed unchanged',
       build: () => SettingsSeedCubit(appStore),
-      wait: const Duration(milliseconds: 10),
-      act: (c) => c.toggleShowSeed(),
+      // Wait for the async `_loadSeed()` ensureUnlocked → seed emit to settle
+      // before toggling. A static `wait:` duration races on slow CI runners —
+      // wait on the stream instead.
+      act: (c) async {
+        await c.stream.firstWhere((s) => s.seed.isNotEmpty);
+        c.toggleShowSeed();
+      },
       verify: (c) {
         expect(c.state.seed, _testSeed);
         expect(c.state.showSeed, isTrue);
@@ -47,10 +52,12 @@ void main() {
     blocTest<SettingsSeedCubit, SettingsSeedState>(
       'toggleShowSeed twice returns to showSeed=false',
       build: () => SettingsSeedCubit(appStore),
-      wait: const Duration(milliseconds: 10),
-      act: (c) => c
-        ..toggleShowSeed()
-        ..toggleShowSeed(),
+      act: (c) async {
+        await c.stream.firstWhere((s) => s.seed.isNotEmpty);
+        c
+          ..toggleShowSeed()
+          ..toggleShowSeed();
+      },
       verify: (c) {
         expect(c.state.seed, _testSeed);
         expect(c.state.showSeed, isFalse);

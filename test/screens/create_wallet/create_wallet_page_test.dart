@@ -6,6 +6,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/create_wallet/bloc/create_wallet_cubit.dart';
@@ -18,6 +19,8 @@ import '../../helper/pump_app.dart';
 class MockCreateWalletCubit extends MockCubit<CreateWalletState> implements CreateWalletCubit {}
 
 class MockWalletService extends Mock implements WalletService {}
+
+class MockDfxKycService extends Mock implements DfxKycService {}
 
 class MockWallet extends Mock implements SoftwareWallet {}
 
@@ -35,6 +38,9 @@ void main() {
     final walletService = MockWalletService();
     when(() => walletService.createSeedWallet(any())).thenAnswer((_) => Future.value(MockWallet()));
     getIt.registerSingleton<WalletService>(walletService);
+    // `CreateWalletPage.build` reaches for `DfxKycService` to pass to the cubit
+    // as a transport for `ensureSignatureFor`. Register a stub so DI resolves.
+    getIt.registerSingleton<DfxKycService>(MockDfxKycService());
   }
 
   setUpAll(() {

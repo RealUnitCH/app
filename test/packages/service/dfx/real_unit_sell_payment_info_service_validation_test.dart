@@ -107,6 +107,9 @@ void main() {
         .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
     when(() => appStore.sessionCache).thenReturn(session);
     when(() => appStore.wallet).thenReturn(wallet);
+    // Wallet here is already a non-view software wallet, so ensureUnlocked is
+    // a no-op semantically — mocktail still needs a stub for the call site.
+    when(() => appStore.ensureUnlocked()).thenAnswer((_) async {});
     when(() => wallet.currentAccount).thenReturn(account);
     // Wallet address must match message.delegator for the validation guard
     // to pass the delegator check.
