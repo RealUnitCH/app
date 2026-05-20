@@ -1,7 +1,11 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/settings_seed/bloc/settings_seed_cubit.dart';
+
+class _MockAppStore extends Mock implements AppStore {}
 
 // Canonical BIP39 test mnemonic — recommended fixture for any wallet code
 // path that needs a deterministic, well-known seed.
@@ -10,38 +14,47 @@ const _testSeed =
 
 void main() {
   late SoftwareWallet wallet;
+  late _MockAppStore appStore;
 
   setUp(() {
     wallet = SoftwareWallet(1, 'Test', _testSeed);
+    appStore = _MockAppStore();
+    when(() => appStore.ensureUnlocked()).thenAnswer((_) async {});
+    when(() => appStore.wallet).thenReturn(wallet);
   });
 
   group('$SettingsSeedCubit', () {
-    test('initial state mirrors the wallet seed with showSeed=false', () {
-      final cubit = SettingsSeedCubit(wallet);
+    test('initial state surfaces the wallet seed after ensureUnlocked', () async {
+      final cubit = SettingsSeedCubit(appStore);
+      await cubit.stream.firstWhere((s) => s.seed.isNotEmpty);
 
       expect(cubit.state.seed, _testSeed);
       expect(cubit.state.showSeed, isFalse);
+      verify(() => appStore.ensureUnlocked()).called(1);
     });
 
     blocTest<SettingsSeedCubit, SettingsSeedState>(
       'toggleShowSeed flips showSeed and keeps seed unchanged',
-      build: () => SettingsSeedCubit(wallet),
+      build: () => SettingsSeedCubit(appStore),
+      wait: const Duration(milliseconds: 10),
       act: (c) => c.toggleShowSeed(),
-      expect: () => [
-        const SettingsSeedState(_testSeed, showSeed: true),
-      ],
+      verify: (c) {
+        expect(c.state.seed, _testSeed);
+        expect(c.state.showSeed, isTrue);
+      },
     );
 
     blocTest<SettingsSeedCubit, SettingsSeedState>(
       'toggleShowSeed twice returns to showSeed=false',
-      build: () => SettingsSeedCubit(wallet),
+      build: () => SettingsSeedCubit(appStore),
+      wait: const Duration(milliseconds: 10),
       act: (c) => c
         ..toggleShowSeed()
         ..toggleShowSeed(),
-      expect: () => [
-        const SettingsSeedState(_testSeed, showSeed: true),
-        const SettingsSeedState(_testSeed),
-      ],
+      verify: (c) {
+        expect(c.state.seed, _testSeed);
+        expect(c.state.showSeed, isFalse);
+      },
     );
   });
 

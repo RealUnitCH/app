@@ -13,8 +13,7 @@ class WalletService {
 
   Future<SoftwareWallet> createSeedWallet(String name) async {
     final mnemonic = bip39.generateMnemonic();
-    final walletId = await _repository.createWallet(name, WalletType.software, mnemonic);
-    return SoftwareWallet(walletId, name, mnemonic);
+    return _persistSoftwareWallet(name, mnemonic);
   }
 
   Future<BitboxWallet> createBitboxWallet(String name) async {
@@ -25,9 +24,19 @@ class WalletService {
   }
 
   Future<SoftwareWallet> restoreWallet(String name, String seed) async {
-    final walletId = await _repository.createWallet(name, WalletType.software, seed);
-    await _settingsRepository.saveCurrentWalletId(walletId);
-    return SoftwareWallet(walletId, name, seed);
+    final wallet = await _persistSoftwareWallet(name, seed);
+    await _settingsRepository.saveCurrentWalletId(wallet.id);
+    return wallet;
+  }
+
+  /// Builds the BIP32 wallet once to derive the public address, then persists
+  /// `(encryptedSeed, address)` so app-start can render the dashboard from the
+  /// cached address without re-running the derivation.
+  Future<SoftwareWallet> _persistSoftwareWallet(String name, String seed) async {
+    final fullWallet = SoftwareWallet(0, name, seed);
+    final address = fullWallet.currentAccount.primaryAddress.address.hexEip55;
+    final id = await _repository.createWallet(name, WalletType.software, seed, address);
+    return SoftwareWallet(id, name, seed);
   }
 
   Future<DebugWallet> createDebugWallet(String address) async {
@@ -36,17 +45,37 @@ class WalletService {
     return DebugWallet(walletId, 'Debug', address);
   }
 
+  /// Loads a wallet using only what's persisted in clear text — for software
+  /// wallets this means a [SoftwareViewWallet] (address only, no mnemonic in
+  /// memory). Use [unlockWalletById] when the private key is actually needed.
   Future<AWallet> getWalletById(int id) async {
-    final result = (await _repository.getWalletById(id))!;
-    final walletType = WalletType.values[result.type];
+    final info = (await _repository.getWalletInfo(id))!;
+    final walletType = WalletType.values[info.type];
     switch (walletType) {
       case WalletType.software:
-        return SoftwareWallet(result.id, result.name, result.seed);
+        // Legacy rows created before address-caching landed have an empty
+        // address column — fall back to decrypting on first load and the
+        // address will be re-persisted on the next createWallet.
+        if (info.address.isEmpty) {
+          final unlocked = (await _repository.getUnlockedWalletById(id))!;
+          return SoftwareWallet(unlocked.id, unlocked.name, unlocked.seed);
+        }
+        return SoftwareViewWallet(info.id, info.name, info.address);
       case WalletType.bitbox:
-        return BitboxWallet(result.id, result.name, result.address, _bitboxService);
+        return BitboxWallet(info.id, info.name, info.address, _bitboxService);
       case WalletType.debug:
-        return DebugWallet(result.id, result.name, result.address);
+        return DebugWallet(info.id, info.name, info.address);
     }
+  }
+
+  /// Decrypts the mnemonic and returns a [SoftwareWallet] ready to sign.
+  /// Throws if the wallet type is not software.
+  Future<SoftwareWallet> unlockWalletById(int id) async {
+    final info = (await _repository.getUnlockedWalletById(id))!;
+    if (WalletType.values[info.type] != WalletType.software) {
+      throw StateError('unlockWalletById called for non-software wallet');
+    }
+    return SoftwareWallet(info.id, info.name, info.seed);
   }
 
   Future<void> setCurrentWallet(int walletId) async =>
@@ -55,6 +84,11 @@ class WalletService {
   Future<AWallet> getCurrentWallet() async {
     final id = _settingsRepository.currentWalletId!;
     return getWalletById(id);
+  }
+
+  Future<SoftwareWallet> unlockCurrentWallet() async {
+    final id = _settingsRepository.currentWalletId!;
+    return unlockWalletById(id);
   }
 
   Future<void> deleteCurrentWallet() async {

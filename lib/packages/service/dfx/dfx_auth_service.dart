@@ -75,6 +75,9 @@ abstract class DFXAuthService {
       return cached;
     }
 
+    // Cache miss — we actually need the private key. Decrypt the mnemonic on
+    // demand if the currently loaded wallet is a view-only software wallet.
+    await appStore.ensureUnlocked();
     final signature = await wallet.signMessage(message).timeout(_signMessageTimeout);
     if (signature.isEmpty || signature == '0x') {
       throw const SigningCancelledException();

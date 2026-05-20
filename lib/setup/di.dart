@@ -126,6 +126,12 @@ void setupServices() {
       getIt<SettingsRepository>(),
     ),
   );
+  // Wire the lazy-unlock callback so `AppStore.ensureUnlocked()` can promote
+  // a view-wallet to an unlocked SoftwareWallet without the auth-service layer
+  // having to import WalletService directly.
+  getIt<AppStore>().attachUnlocker(
+    () => getIt<WalletService>().unlockCurrentWallet(),
+  );
   getIt.registerFactory(
     () => TransactionHistoryService(
       getIt<AppStore>(),

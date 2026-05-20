@@ -50,8 +50,8 @@ void main() {
 
   group('$WalletService', () {
     group('createSeedWallet', () {
-      test('returns a SoftwareWallet with the generated mnemonic persisted', () async {
-        when(() => repo.createWallet(any(), any(), any())).thenAnswer((_) async => 42);
+      test('returns a SoftwareWallet with the generated mnemonic and address persisted', () async {
+        when(() => repo.createWallet(any(), any(), any(), any())).thenAnswer((_) async => 42);
 
         final wallet = await service.createSeedWallet('Main');
 
@@ -60,11 +60,15 @@ void main() {
         expect(wallet.name, 'Main');
         // Generated mnemonic must be valid bip39.
         expect(service.validateSeed(wallet.seed), isTrue);
-        verify(() => repo.createWallet('Main', WalletType.software, wallet.seed)).called(1);
+        // Address from the wallet must match what was stored in the repo.
+        final expectedAddress = wallet.currentAccount.primaryAddress.address.hexEip55;
+        verify(
+          () => repo.createWallet('Main', WalletType.software, wallet.seed, expectedAddress),
+        ).called(1);
       });
 
       test('does not set the wallet as current (caller is responsible)', () async {
-        when(() => repo.createWallet(any(), any(), any())).thenAnswer((_) async => 42);
+        when(() => repo.createWallet(any(), any(), any(), any())).thenAnswer((_) async => 42);
 
         await service.createSeedWallet('Main');
 
@@ -74,14 +78,17 @@ void main() {
 
     group('restoreWallet', () {
       test('persists the provided seed and marks the wallet as current', () async {
-        when(() => repo.createWallet(any(), any(), any())).thenAnswer((_) async => 7);
+        when(() => repo.createWallet(any(), any(), any(), any())).thenAnswer((_) async => 7);
 
         final wallet = await service.restoreWallet('Restored', _testMnemonic);
 
         expect(wallet.id, 7);
         expect(wallet.name, 'Restored');
         expect(wallet.seed, _testMnemonic);
-        verify(() => repo.createWallet('Restored', WalletType.software, _testMnemonic)).called(1);
+        final expectedAddress = wallet.currentAccount.primaryAddress.address.hexEip55;
+        verify(
+          () => repo.createWallet('Restored', WalletType.software, _testMnemonic, expectedAddress),
+        ).called(1);
         verify(() => settings.saveCurrentWalletId(7)).called(1);
       });
     });
@@ -101,8 +108,28 @@ void main() {
     });
 
     group('getWalletById', () {
-      test('returns SoftwareWallet for software type', () async {
-        when(() => repo.getWalletById(1)).thenAnswer(
+      test('returns SoftwareViewWallet (address only) for cached-address software rows', () async {
+        when(() => repo.getWalletInfo(1)).thenAnswer(
+          (_) async => _info(
+            id: 1,
+            name: 'Main',
+            address: _debugAddress,
+            type: WalletType.software,
+          ),
+        );
+
+        final wallet = await service.getWalletById(1);
+
+        expect(wallet, isA<SoftwareViewWallet>());
+        verifyNever(() => repo.getUnlockedWalletById(any()));
+      });
+
+      test('falls back to unlocked SoftwareWallet for legacy rows without cached address',
+          () async {
+        when(() => repo.getWalletInfo(1)).thenAnswer(
+          (_) async => _info(id: 1, name: 'Main', type: WalletType.software),
+        );
+        when(() => repo.getUnlockedWalletById(1)).thenAnswer(
           (_) async => _info(id: 1, name: 'Main', seed: _testMnemonic, type: WalletType.software),
         );
 
@@ -113,7 +140,7 @@ void main() {
       });
 
       test('returns DebugWallet for debug type', () async {
-        when(() => repo.getWalletById(2)).thenAnswer(
+        when(() => repo.getWalletInfo(2)).thenAnswer(
           (_) async => _info(id: 2, name: 'Debug', address: _debugAddress, type: WalletType.debug),
         );
 
@@ -124,9 +151,30 @@ void main() {
       });
 
       test('throws when the repository returns null (no such id)', () async {
-        when(() => repo.getWalletById(404)).thenAnswer((_) async => null);
+        when(() => repo.getWalletInfo(404)).thenAnswer((_) async => null);
 
         expect(() => service.getWalletById(404), throwsA(isA<TypeError>()));
+      });
+    });
+
+    group('unlockWalletById', () {
+      test('returns a fully unlocked SoftwareWallet', () async {
+        when(() => repo.getUnlockedWalletById(1)).thenAnswer(
+          (_) async => _info(id: 1, name: 'Main', seed: _testMnemonic, type: WalletType.software),
+        );
+
+        final wallet = await service.unlockWalletById(1);
+
+        expect(wallet, isA<SoftwareWallet>());
+        expect(wallet.seed, _testMnemonic);
+      });
+
+      test('throws for non-software wallet types', () async {
+        when(() => repo.getUnlockedWalletById(2)).thenAnswer(
+          (_) async => _info(id: 2, name: 'BBox', address: _debugAddress, type: WalletType.bitbox),
+        );
+
+        expect(() => service.unlockWalletById(2), throwsA(isA<StateError>()));
       });
     });
 
@@ -141,8 +189,13 @@ void main() {
     group('getCurrentWallet', () {
       test('reads the current id and resolves it through getWalletById', () async {
         when(() => settings.currentWalletId).thenReturn(3);
-        when(() => repo.getWalletById(3)).thenAnswer(
-          (_) async => _info(id: 3, name: 'Saved', seed: _testMnemonic, type: WalletType.software),
+        when(() => repo.getWalletInfo(3)).thenAnswer(
+          (_) async => _info(
+            id: 3,
+            name: 'Saved',
+            address: _debugAddress,
+            type: WalletType.software,
+          ),
         );
 
         final wallet = await service.getCurrentWallet();
@@ -155,6 +208,20 @@ void main() {
         when(() => settings.currentWalletId).thenReturn(null);
 
         expect(() => service.getCurrentWallet(), throwsA(isA<TypeError>()));
+      });
+    });
+
+    group('unlockCurrentWallet', () {
+      test('reads the current id and resolves it through unlockWalletById', () async {
+        when(() => settings.currentWalletId).thenReturn(3);
+        when(() => repo.getUnlockedWalletById(3)).thenAnswer(
+          (_) async => _info(id: 3, name: 'Saved', seed: _testMnemonic, type: WalletType.software),
+        );
+
+        final wallet = await service.unlockCurrentWallet();
+
+        expect(wallet, isA<SoftwareWallet>());
+        expect(wallet.seed, _testMnemonic);
       });
     });
 

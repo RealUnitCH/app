@@ -41,8 +41,16 @@ class SecureStorage {
     return Uint8List.fromList(List.generate(16, (_) => random.nextInt(256)));
   }
 
-  static const _pinHashIterations = 600000;
-  static const _legacyPinHashIterations = 10000;
+  // PIN-hash iteration count, picked for sub-second verification on mid-range
+  // phones. The PIN hash + salt live in [FlutterSecureStorage] (Android Keystore
+  // / iOS Keychain), so an offline brute-force first requires breaking that
+  // hardware-backed boundary. Online brute-force against the app UI is bounded
+  // by the lockout cascade in `verify_pin_cubit.dart`. The stronger guarantee
+  // for the actual private key comes from the OS-keystore-managed mnemonic
+  // encryption key — not from this hash. Earlier 10k / 600k hashes are still
+  // accepted and transparently upgraded to [_pinHashIterations].
+  static const _pinHashIterations = 100000;
+  static const _legacyIterationCandidates = <int>[600000, 10000];
 
   static String hashPin(String pin, Uint8List salt, {int iterations = _pinHashIterations}) {
     final derivator = KeyDerivator('SHA-256/HMAC/PBKDF2');
@@ -51,9 +59,9 @@ class SecureStorage {
     return bytesToHex(derivator.process(utf8.encode(pin)));
   }
 
-  /// Off-main-thread variant of [hashPin]. PBKDF2 with 600k iterations takes
-  /// several seconds on a phone and freezes the UI when run synchronously, so
-  /// any caller reachable from the UI should await this instead.
+  /// Off-main-thread variant of [hashPin]. Even at the reduced iteration count
+  /// PBKDF2 dominates the visible unlock latency, so any caller reachable from
+  /// the UI should await this instead of running it synchronously.
   static Future<String> hashPinAsync(
     String pin,
     Uint8List salt, {
@@ -90,11 +98,15 @@ class SecureStorage {
 
     if (await hashPinAsync(pin, salt) == hash) return true;
 
-    // Transparent rehash: verify against legacy iterations, upgrade if match
-    if (await hashPinAsync(pin, salt, iterations: _legacyPinHashIterations) == hash) {
-      final newHash = await hashPinAsync(pin, salt);
-      await setPinHash(newHash);
-      return true;
+    // Transparent rehash: any earlier iteration count we ever shipped is still
+    // accepted exactly once, then upgraded to the current target so subsequent
+    // unlocks pay the fast path.
+    for (final legacy in _legacyIterationCandidates) {
+      if (await hashPinAsync(pin, salt, iterations: legacy) == hash) {
+        final newHash = await hashPinAsync(pin, salt);
+        await setPinHash(newHash);
+        return true;
+      }
     }
 
     return false;

@@ -9,15 +9,27 @@ class WalletRepository {
 
   const WalletRepository(this._appDatabase, this._secureStorage);
 
-  Future<int> createWallet(String name, WalletType type, String seed) async {
+  Future<int> createWallet(
+    String name,
+    WalletType type,
+    String seed,
+    String address,
+  ) async {
     final encryptedSeed = await _encryptSeed(seed);
-    return _appDatabase.insertWallet(name, encryptedSeed, '', type.index);
+    return _appDatabase.insertWallet(name, encryptedSeed, address, type.index);
   }
 
   Future<int> createViewWallet(String name, WalletType type, String address) =>
       _appDatabase.insertWallet(name, '', address, type.index);
 
-  Future<WalletInfo?> getWalletById(int id) async {
+  /// Returns the wallet row with the encrypted seed *still encrypted*. Use this
+  /// at app startup so we don't pay the mnemonic-decrypt / BIP32-derivation
+  /// cost just to render the dashboard — the cached address is enough.
+  Future<WalletInfo?> getWalletInfo(int id) => _appDatabase.getWalletById(id);
+
+  /// Returns the wallet row with the seed decrypted. Only call this when the
+  /// private key is actually needed (signing a sell, revealing the seed).
+  Future<WalletInfo?> getUnlockedWalletById(int id) async {
     final info = await _appDatabase.getWalletById(id);
     if (info == null) return null;
     if (info.seed.isEmpty) return info;
