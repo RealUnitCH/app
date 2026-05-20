@@ -79,15 +79,21 @@ abstract class DFXAuthService {
 
     // Cache miss — we actually need the private key. Decrypt the mnemonic on
     // demand if the currently loaded wallet is a view-only software wallet.
+    // try/finally so a throw from sign / saveSignature can't leave the mnemonic
+    // resident for the 60 s idle window — matches the pattern in
+    // RealUnitSellPaymentInfoService.confirmPayment and
+    // RealUnitRegistrationService.completeRegistration / registerWallet.
     await walletService.ensureCurrentWalletUnlocked();
-    final signature = await wallet.signMessage(message).timeout(_signMessageTimeout);
-    if (signature.isEmpty || signature == '0x') {
-      throw const SigningCancelledException();
+    try {
+      final signature = await wallet.signMessage(message).timeout(_signMessageTimeout);
+      if (signature.isEmpty || signature == '0x') {
+        throw const SigningCancelledException();
+      }
+      await appStore.sessionCache.saveSignature(walletAddress, signature);
+      return signature;
+    } finally {
+      await walletService.lockCurrentWallet();
     }
-    await appStore.sessionCache.saveSignature(walletAddress, signature);
-    await walletService.lockCurrentWallet();
-
-    return signature;
   }
 
   Future<Map<String, dynamic>> getAuthResponse([bool sendWalletName = true]) async {

@@ -13,15 +13,16 @@ class WalletService {
   final BitboxService _bitboxService;
   final AppStore _appStore;
 
-  /// Auto-lock the unlocked software wallet after this long if no explicit
-  /// [lockCurrentWallet] has fired. Sized to comfortably outlast a normal
-  /// sign-then-broadcast round-trip while still capping how long the mnemonic
-  /// can sit resident on the heap.
-  static const Duration _idleLockTimeout = Duration(seconds: 60);
+  /// Auto-lock 60 s after each unlock, regardless of subsequent activity. The
+  /// timer is armed in [ensureCurrentWalletUnlocked] and is NOT reset by user
+  /// interaction — it caps the maximum lifetime of the in-memory mnemonic
+  /// after an explicit unlock, not an idle window. Sized to comfortably
+  /// outlast a normal sign-then-broadcast round-trip.
+  static const Duration _postUnlockLockTimeout = Duration(seconds: 60);
 
-  /// Cancellation guard for [_idleLockTimer] so a lock-during-test or a
+  /// Cancellation guard for the post-unlock timer so a lock-during-test or a
   /// concurrent explicit lock doesn't double-fire.
-  Timer? _idleLockTimer;
+  Timer? _postUnlockLockTimer;
 
   WalletService(
     this._bitboxService,
@@ -126,32 +127,32 @@ class WalletService {
     if (_appStore.wallet is! SoftwareViewWallet) return;
     _appStore.wallet = await unlockCurrentWallet();
     // Safety net: if a caller forgets to call lockCurrentWallet() after the
-    // sign, drop the mnemonic anyway once the idle window elapses. The reviewer
-    // flagged "user sells once then leaves the app foregrounded" — that path
-    // now caps at [_idleLockTimeout].
-    _scheduleIdleLock();
+    // sign, drop the mnemonic anyway once the post-unlock window elapses. The
+    // reviewer flagged "user sells once then leaves the app foregrounded" —
+    // that path now caps at [_postUnlockLockTimeout].
+    _schedulePostUnlockLock();
   }
 
   /// Replaces the in-memory [SoftwareWallet] with its lock-screen-safe
   /// [SoftwareViewWallet] counterpart, dropping the mnemonic. Called after a
-  /// sign operation completes or [_idleLockTimer] fires so the private key
-  /// isn't kept resident for the rest of the foreground session. No-op for
-  /// wallet types that don't hold a mnemonic.
+  /// sign operation completes or the post-unlock timer fires so the private
+  /// key isn't kept resident for the rest of the foreground session. No-op
+  /// for wallet types that don't hold a mnemonic.
   Future<void> lockCurrentWallet() async {
-    _idleLockTimer?.cancel();
-    _idleLockTimer = null;
+    _postUnlockLockTimer?.cancel();
+    _postUnlockLockTimer = null;
     final current = _appStore.wallet;
     if (current is! SoftwareWallet) return;
     final address = current.currentAccount.primaryAddress.address.hexEip55;
     _appStore.wallet = SoftwareViewWallet(current.id, current.name, address);
   }
 
-  void _scheduleIdleLock() {
-    _idleLockTimer?.cancel();
-    _idleLockTimer = Timer(_idleLockTimeout, () {
-      _idleLockTimer = null;
-      lockCurrentWallet();
-    });
+  void _schedulePostUnlockLock() {
+    _postUnlockLockTimer?.cancel();
+    // Bind directly to lockCurrentWallet — it cancels + nulls the timer field
+    // itself, so a redundant null in this callback would just couple two
+    // pieces of code to the same invariant.
+    _postUnlockLockTimer = Timer(_postUnlockLockTimeout, lockCurrentWallet);
   }
 
   Future<void> deleteCurrentWallet() async {

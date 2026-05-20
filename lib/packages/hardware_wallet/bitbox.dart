@@ -14,11 +14,19 @@ class BitboxService {
   final BitboxManager bitboxManager = BitboxManager();
   final Duration _connectionStatusInterval;
   bool _isConnected = false;
-  // Keyed by EIP-55 address so multi-wallet (future) reconnect re-attaches
-  // every active set of credentials, not just the most recently handed out.
+  // Keyed by the lowercased address so multi-wallet (future) reconnect
+  // re-attaches every active set of credentials, not just the most recently
+  // handed out. Lowercase invariant: callers may hand in EIP-55-mixed or raw
+  // hex — we normalise via [_key] on every read/write so a checksum-flip
+  // can't fork the map.
   final Map<String, BitboxCredentials> _credentialsByAddress = {};
   Timer? _connectionStatusObserver;
   Future<void>? _pendingDisconnect;
+
+  /// Normalises an address into the form used as the map key. Lowercase is
+  /// the cheapest robust choice — EIP-55 checksum differs in casing only, so
+  /// `0xAbC` and `0xabc` collapse to the same entry.
+  String _key(String address) => address.toLowerCase();
 
   Future<List<BitboxDevice>> getAllUsbDevices() => bitboxManager.devices;
 
@@ -26,7 +34,7 @@ class BitboxService {
 
   BitboxCredentials getCredentials(String address) {
     final credentials = _credentialsByAddress.putIfAbsent(
-      address,
+      _key(address),
       () => BitboxCredentials(address),
     );
     if (_isConnected) {
