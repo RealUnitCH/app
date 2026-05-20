@@ -39,13 +39,13 @@ void main() {
       ),
     );
     when(() => appStore.wallet).thenReturn(wallet);
-    // Page builds a real SettingsSeedCubit via BlocProvider(create: ...), which
-    // calls ensureUnlocked() before reading the seed. Stub it so mocktail
-    // returns a real Future<void> instead of null.
-    when(() => appStore.ensureUnlocked()).thenAnswer((_) async {});
     when(() => wallet.seed).thenReturn(
       'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
     );
+    // Page builds a real SettingsSeedCubit via BlocProvider(create: ...), which
+    // calls WalletService.ensureCurrentWalletUnlocked() before reading the
+    // seed and lockCurrentWallet() on close. Stub both so mocktail returns
+    // real Future<void>s instead of null.
     when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
     when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
   });

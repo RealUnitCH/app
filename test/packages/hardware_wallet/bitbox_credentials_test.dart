@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:bitbox_flutter/bitbox_flutter.dart';
-import 'package:bitbox_flutter/bitbox_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
@@ -234,7 +233,7 @@ void main() {
         when(
           () => manager.signETHRLPTransaction(any(), any(), any(), any()),
         ).thenThrow(_ParseError());
-        when(() => manager.devices).thenAnswer((_) async => [_FakeDevice()]);
+        when(() => manager.devices).thenAnswer((_) async => [_FakeBitboxDevice()]);
 
         final c = connected();
         await expectLater(
@@ -284,5 +283,21 @@ void main() {
         expect(c.isConnected, isFalse, reason: 'clearBitbox must have run on lost device');
       },
     );
+
+    test('sign on cleared credentials throws BitboxNotConnectedException, not NoSuchMethod',
+        () async {
+      // Snapshot semantics (3.2) — the manager may be nulled by the observer
+      // between the connection check and the sign call. The snapshot-on-entry
+      // pattern means the null check fires and the bang-operator path is
+      // never reached.
+      final c = BitboxCredentials('0x000000000000000000000000000000000000dead')
+        ..setBitbox(manager);
+      c.clearBitbox();
+
+      await expectLater(
+        c.signTypedDataV4(1, '{"primaryType":"A"}'),
+        throwsA(isA<BitboxNotConnectedException>()),
+      );
+    });
   });
 }

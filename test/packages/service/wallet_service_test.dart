@@ -39,6 +39,7 @@ void main() {
   setUpAll(() {
     // mocktail needs a default for non-primitive types used with `any()`.
     registerFallbackValue(WalletType.software);
+    registerFallbackValue(SoftwareViewWallet(0, '_fallback', _debugAddress) as AWallet);
   });
 
   setUp(() {
@@ -279,6 +280,68 @@ void main() {
         const broken =
             'test test test test test test test test test test test ability';
         expect(service.validateSeed(broken), isFalse);
+      });
+    });
+
+    group('ensureCurrentWalletUnlocked', () {
+      test('promotes a SoftwareViewWallet to a SoftwareWallet', () async {
+        final view = SoftwareViewWallet(7, 'Main', _debugAddress);
+        final stored = <AWallet>[view];
+        when(() => appStore.wallet).thenAnswer((_) => stored.last);
+        when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
+          final newWallet = inv.positionalArguments.single as AWallet;
+          stored.add(newWallet);
+          return newWallet;
+        });
+        when(() => settings.currentWalletId).thenReturn(7);
+        when(() => repo.getUnlockedWalletById(7)).thenAnswer(
+          (_) async => _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
+        );
+
+        await service.ensureCurrentWalletUnlocked();
+
+        expect(stored.last, isA<SoftwareWallet>());
+        expect((stored.last as SoftwareWallet).seed, _testMnemonic);
+      });
+
+      test('is a no-op when the current wallet is not a SoftwareViewWallet', () async {
+        final unlocked = SoftwareWallet(7, 'Main', _testMnemonic);
+        when(() => appStore.wallet).thenReturn(unlocked);
+
+        await service.ensureCurrentWalletUnlocked();
+
+        verifyNever(() => repo.getUnlockedWalletById(any()));
+      });
+    });
+
+    group('lockCurrentWallet', () {
+      test('replaces an unlocked SoftwareWallet with its SoftwareViewWallet counterpart',
+          () async {
+        final unlocked = SoftwareWallet(9, 'Main', _testMnemonic);
+        AWallet? written;
+        when(() => appStore.wallet).thenReturn(unlocked);
+        when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
+          final newWallet = inv.positionalArguments.single as AWallet;
+          written = newWallet;
+          return newWallet;
+        });
+
+        await service.lockCurrentWallet();
+
+        expect(written, isA<SoftwareViewWallet>());
+        expect(written!.id, 9);
+        expect(written!.name, 'Main');
+      });
+
+      test('is a no-op when the wallet is already locked / not software', () async {
+        when(() => appStore.wallet).thenReturn(
+          SoftwareViewWallet(9, 'Main', _debugAddress),
+        );
+
+        await service.lockCurrentWallet();
+
+        // No write happened.
+        verifyNever(() => appStore.wallet = any(that: isA<AWallet>()));
       });
     });
   });

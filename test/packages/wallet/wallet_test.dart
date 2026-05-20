@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
@@ -97,6 +99,98 @@ void main() {
       expect(
         () => wallet.primaryAccount.signMessage('payload'),
         throwsA(isA<UnsupportedError>()),
+      );
+    });
+  });
+
+  group('$SoftwareViewWallet', () {
+    // Programmer-error tests: any sign path that bypassed
+    // WalletService.ensureCurrentWalletUnlocked() must surface loudly, not
+    // silently return a wrong-type result. In release builds the assert is
+    // stripped and the StateError still fires.
+    const address = '0x0000000000000000000000000000000000000001';
+
+    test('exposes walletType == software', () {
+      final wallet = SoftwareViewWallet(1, 'Main', address);
+
+      expect(wallet.walletType, WalletType.software);
+    });
+
+    test('primaryAccount == currentAccount, both view-wallet specialisations', () {
+      final wallet = SoftwareViewWallet(1, 'Main', address);
+
+      expect(identical(wallet.primaryAccount, wallet.currentAccount), isTrue);
+      expect(wallet.primaryAccount, isA<SoftwareViewWalletAccount>());
+    });
+
+    test('primaryAccount.primaryAddress.address resolves the cached EIP-55 hex', () {
+      final wallet = SoftwareViewWallet(1, 'Main', address);
+
+      expect(wallet.primaryAccount.primaryAddress.address.hex.toLowerCase(), address);
+    });
+
+    test('primaryAccount.signMessage throws StateError instead of signing', () {
+      final wallet = SoftwareViewWallet(1, 'Main', address);
+
+      expect(
+        () => wallet.primaryAccount.signMessage('payload'),
+        // In debug builds the assert(false) fires first and surfaces as an
+        // AssertionError; in release the assert is stripped and the StateError
+        // wins. Both are Error subtypes, which is the contract — _not_ a
+        // typed Exception that callers would catch and route.
+        throwsA(isA<Error>()),
+      );
+    });
+
+    test('credentials.signToSignature throws StateError', () {
+      final wallet = SoftwareViewWallet(1, 'Main', address);
+
+      expect(
+        () => wallet.primaryAccount.primaryAddress.signToSignature(Uint8List(0)),
+        // In debug builds the assert(false) fires first and surfaces as an
+        // AssertionError; in release the assert is stripped and the StateError
+        // wins. Both are Error subtypes, which is the contract — _not_ a
+        // typed Exception that callers would catch and route.
+        throwsA(isA<Error>()),
+      );
+    });
+
+    test('credentials.signPersonalMessage throws StateError', () {
+      final wallet = SoftwareViewWallet(1, 'Main', address);
+
+      expect(
+        () => wallet.primaryAccount.primaryAddress.signPersonalMessage(Uint8List(0)),
+        // In debug builds the assert(false) fires first and surfaces as an
+        // AssertionError; in release the assert is stripped and the StateError
+        // wins. Both are Error subtypes, which is the contract — _not_ a
+        // typed Exception that callers would catch and route.
+        throwsA(isA<Error>()),
+      );
+    });
+
+    test('credentials.signPersonalMessageToUint8List throws StateError', () {
+      final wallet = SoftwareViewWallet(1, 'Main', address);
+
+      expect(
+        () => wallet.primaryAccount.primaryAddress.signPersonalMessageToUint8List(Uint8List(0)),
+        // In debug builds the assert(false) fires first and surfaces as an
+        // AssertionError; in release the assert is stripped and the StateError
+        // wins. Both are Error subtypes, which is the contract — _not_ a
+        // typed Exception that callers would catch and route.
+        throwsA(isA<Error>()),
+      );
+    });
+
+    test('credentials.signToEcSignature throws StateError', () {
+      final wallet = SoftwareViewWallet(1, 'Main', address);
+
+      expect(
+        () => wallet.primaryAccount.primaryAddress.signToEcSignature(Uint8List(0)),
+        // In debug builds the assert(false) fires first and surfaces as an
+        // AssertionError; in release the assert is stripped and the StateError
+        // wins. Both are Error subtypes, which is the contract — _not_ a
+        // typed Exception that callers would catch and route.
+        throwsA(isA<Error>()),
       );
     });
   });
