@@ -92,6 +92,35 @@ lib/
 - For BitBox-related code, the layered test strategy (Tier 0–4) is documented in [`docs/testing.md`](docs/testing.md), with concrete patterns for cubit tests, widget tests, service + HTTP tests, and `FakeBitboxCredentials`-backed integration tests.
 - [`docs/testing.md`](docs/testing.md) also lists the surface that needs an infra PR first (Drift repositories, `getIt`-coupled pages, `path_provider`-coupled cubits, the Sumsub SDK, plugin-coupled widgets). Don't try to mock around those without changing the injection point.
 
+### 1. Service-lifecycle tests are mandatory
+
+Any service class with at least one of: a `Timer` (one-shot or periodic), an observer / subscription loop, or a direct platform/MethodChannel dependency MUST have a dedicated test file that instantiates the *real* class (no mock of the service itself) and drives its lifecycle end-to-end. For BitBox-touching code, use `installSimulatedBitboxPlatform` from `bitbox_flutter/testing.dart`. Tests with time-based behaviour MUST use `package:fake_async` rather than wall-clock `Future.delayed`.
+
+Why: mocking the service-under-test hides the very lifecycle bugs (timer leaks, unsubscribed listeners, double-init) these tests exist to catch. Wall-clock delays make tests slow and flaky.
+
+Reference example: `test/packages/hardware_wallet/bitbox_service_test.dart`.
+
+### 2. Exception surface tests are mandatory
+
+Every typed exception in `lib/` (any class that `implements Exception` or `extends Exception`) MUST have a `toString()` override that returns a human-readable message — not the Dart default `Instance of '<ClassName>'`. The shared `test/packages/service/dfx/exceptions/exception_surface_test.dart` enumerates every typed exception and asserts the rendered string is human-readable. When you add a new typed exception, you MUST add it to that list at the same time.
+
+Why: exceptions surface in logs, Sentry, and user-facing error states. A default `Instance of '...'` is useless for debugging and unfriendly for users. Centralising the assertion in one test file keeps the contract visible.
+
+Reference example: `test/packages/service/dfx/exceptions/exception_surface_test.dart`.
+
+### 3. Platform-specific code paths need an integration test (or explicit waiver)
+
+Code paths that depend on Android- or iOS-specific behaviour (USB transports, BLE lifecycle, secure storage, biometric prompts, deep links) MUST either:
+
+1. Have a corresponding `integration_test/` counterpart that exercises the platform behaviour against the real plugin / a vendor simulator, OR
+2. Carry an inline `// @no-integration-test: <reason>` annotation at the top of the file or function block, explicitly stating why a unit-level test is sufficient.
+
+Code review must call out platform-specific code that has neither.
+
+Why: unit tests with mocked platform channels cannot catch real-device regressions (permission prompts, OS-level lifecycle, transport quirks). The annotation makes the absence of an integration test a deliberate, reviewable decision rather than an oversight.
+
+Reference example: forward-looking — no `integration_test/` directory exists yet; the first integration test to land will become the reference.
+
 ## Widget Guidelines
 
 - Prefer `StatelessWidget` unless lifecycle management is truly needed.
