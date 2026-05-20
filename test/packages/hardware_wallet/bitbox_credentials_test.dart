@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:bitbox_flutter/bitbox_flutter.dart';
-import 'package:bitbox_flutter/bitbox_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
