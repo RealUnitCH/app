@@ -185,6 +185,9 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
   @override
   Future<void> close() {
     _checkForTimer?.cancel();
+    // Detach from the in-flight init future so any late error doesn't surface
+    // as an unhandled exception after the cubit is gone.
+    _pendingInit?.ignore();
     _pendingInit = null;
     return super.close();
   }

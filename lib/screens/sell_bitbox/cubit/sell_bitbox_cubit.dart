@@ -72,6 +72,9 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
   }
 
   void _startEthPolling() {
+    // Cancel any prior timer first — retryAfterConnection can re-enter the
+    // faucet/polling branch while a previous timer is still alive.
+    _ethPollingTimer?.cancel();
     _ethPollingTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
       try {
         final balance = await _blockchainService.getEthBalance(_appStore.primaryAddress);
