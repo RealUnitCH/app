@@ -1,12 +1,14 @@
 import 'dart:typed_data';
 
-import 'package:bitbox_flutter/bitbox_manager.dart';
+import 'package:bitbox_flutter/bitbox_flutter.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 
 class _MockBitboxManager extends Mock implements BitboxManager {}
+
+class _FakeDevice extends Fake implements BitboxDevice {}
 
 void main() {
   late _MockBitboxManager manager;
@@ -171,6 +173,12 @@ void main() {
     });
 
     test('queue continues after a sign throws (slot released in finally)', () async {
+      // `_runOrThrowDisconnect` probes `manager.devices` on a thrown sign to
+      // decide whether to relabel the error as BitboxNotConnectedException.
+      // Stub it to a non-empty list so the original "first sign explodes"
+      // survives — this test exercises the queue, not the disconnect path.
+      when(() => manager.devices).thenAnswer((_) async => [_FakeDevice()]);
+
       var call = 0;
       when(() => manager.signETHTypedMessage(any(), any(), any())).thenAnswer((_) async {
         call++;
