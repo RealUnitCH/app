@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/wallet_locked_exception.dart';
 
@@ -18,6 +19,13 @@ void main() {
       const SigningCancelledException(),
       const WalletLockedException(),
       const ApiException(code: 'TEST', message: 'test'),
+      const RegistrationRequiredException(code: 'TEST', message: 'test'),
+      const KycLevelRequiredException(
+        code: 'TEST',
+        message: 'test',
+        requiredLevel: 1,
+        currentLevel: 0,
+      ),
     ];
 
     for (final ex in exceptions) {
