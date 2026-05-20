@@ -128,26 +128,30 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
     });
   }
 
+  /// Wrap a sign call so that a BLE/USB drop mid-operation surfaces as
+  /// [BitboxNotConnectedException] instead of a raw plugin error. If the
+  /// device is still reachable after the failure, the original error wins.
   Future<T> _runOrThrowDisconnect<T>(Future<T> Function() op) async {
     try {
       return await op();
     } catch (_) {
-      // The underlying BLE channel may have dropped mid-sign — verify the device
-      // is still reachable. If not, surface a typed disconnect error so callers
-      // can prompt the user to reconnect instead of showing a raw exception.
-      try {
-        final devices = await bitboxManager?.devices ?? const [];
-        if (devices.isEmpty) {
-          clearBitbox();
-          throw const BitboxNotConnectedException();
-        }
-      } on BitboxNotConnectedException {
-        rethrow;
-      } catch (_) {
+      if (await _deviceLost()) {
         clearBitbox();
         throw const BitboxNotConnectedException();
       }
       rethrow;
+    }
+  }
+
+  Future<bool> _deviceLost() async {
+    final manager = bitboxManager;
+    if (manager == null) return true;
+    try {
+      final devices = await manager.devices;
+      return devices.isEmpty;
+    } catch (_) {
+      // Probing the device list itself failed — treat as lost.
+      return true;
     }
   }
 

@@ -309,6 +309,7 @@
   "twoFaSendCodeFailed": "Es ist ein Problem beim Senden der Mail aufgetreten",
   "twoFaWrongCode": "Der Code ist falsch",
   "userData": "Nutzerdaten",
+  "userDataLoadFailed": "Beim Laden der Nutzerdaten ist ein Fehler aufgetreten.",
   "userDataNotFound": "Zu dieser Wallet sind keine Nutzerdaten hinterlegt.",
   "verifySeedInvalid": "Die Wörter stimmen nicht überein",
   "verifySeedSubtitle": "Bitte geben Sie die folgenden Wörter aus Ihrer Wiederherstellungsphrase ein, um zu bestätigen, dass Sie sie korrekt notiert haben.",

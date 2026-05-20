@@ -8,8 +8,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
-import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
-import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/screens/hardware_connect_bitbox/show_bitbox_reconnect_sheet.dart';
 import 'package:realunit_wallet/screens/settings_user_data/cubit/settings_user_data_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
@@ -136,7 +135,7 @@ class SettingsUserDataView extends StatelessWidget {
               onReconnected: () => context.read<SettingsUserDataCubit>().getUserData(),
             ),
             SettingsUserDataFailure() => Center(
-              child: Text(S.of(context).paymentInformationFailed),
+              child: Text(S.of(context).userDataLoadFailed),
             ),
 
             _ => const SizedBox.shrink(),
@@ -175,17 +174,7 @@ class _BitboxDisconnectedView extends StatelessWidget {
             ),
             AppFilledButton(
               onPressed: () async {
-                final homeBloc = context.read<HomeBloc>();
-                await showModalBottomSheet<void>(
-                  isScrollControlled: true,
-                  context: context,
-                  builder: (sheetContext) => ConnectBitboxPage(
-                    onFinish: (wallet) {
-                      homeBloc.add(LoadWalletEvent(wallet));
-                      Navigator.of(sheetContext).pop();
-                    },
-                  ),
-                );
+                await showBitboxReconnectSheet(context);
                 onReconnected();
               },
               label: S.of(context).bitboxReconnect,

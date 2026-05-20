@@ -79,7 +79,7 @@ void main() {
 
       await tester.pumpApp(buildSubject(const SettingsUserDataView()));
 
-      expect(find.text(S.current.paymentInformationFailed), findsOne);
+      expect(find.text(S.current.userDataLoadFailed), findsOne);
     });
 
     testWidgets('renders correctly when user data loaded successfully', (tester) async {

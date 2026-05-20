@@ -5,8 +5,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
-import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
-import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/screens/hardware_connect_bitbox/show_bitbox_reconnect_sheet.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
@@ -93,19 +92,9 @@ class PaymentAdditionalActionNeededButton extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: AppFilledButton(
                 onPressed: () async {
-                  final homeBloc = context.read<HomeBloc>();
                   final paymentInfoCubit = context.read<BuyPaymentInfoCubit>();
                   final converterCubit = context.read<BuyConverterCubit>();
-                  await showModalBottomSheet<void>(
-                    isScrollControlled: true,
-                    context: context,
-                    builder: (sheetContext) => ConnectBitboxPage(
-                      onFinish: (wallet) {
-                        homeBloc.add(LoadWalletEvent(wallet));
-                        Navigator.of(sheetContext).pop();
-                      },
-                    ),
-                  );
+                  await showBitboxReconnectSheet(context);
                   paymentInfoCubit.getPaymentInfo(
                     amount: amountController.text,
                     currency: converterCubit.state.currency,

@@ -309,6 +309,7 @@
   "twoFaSendCodeFailed": "There was a problem sending the email",
   "twoFaWrongCode": "The Code is wrong",
   "userData": "User data",
+  "userDataLoadFailed": "An error occurred while loading user data.",
   "userDataNotFound": "No user data is stored for this wallet.",
   "verifySeedInvalid": "The words don't match",
   "verifySeedSubtitle": "Please enter the following words from your recovery phrase to confirm you've written them down correctly.",
