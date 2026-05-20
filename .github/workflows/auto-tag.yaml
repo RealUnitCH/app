@@ -56,9 +56,19 @@ jobs:
           MINOR=$(echo "$VERSION" | cut -d. -f2)
           PATCH=$(echo "$VERSION" | cut -d. -f3)
 
-          # Next release version
+          # Default: patch-bump on top of latest tag
           NEW_PATCH=$((PATCH + 1))
           NEXT_VERSION="v${MAJOR}.${MINOR}.${NEW_PATCH}"
+
+          # Floor: marketing version from pubspec.yaml (strip "+buildNumber").
+          # If pubspec is ahead of the patch-bumped tag, jump to pubspec instead.
+          # Lets us bump major/minor by editing pubspec.yaml in a PR.
+          PUBSPEC_VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f1)
+          if [ -n "$PUBSPEC_VERSION" ]; then
+            HIGHEST=$(printf '%s\n%s\n' "${NEXT_VERSION#v}" "$PUBSPEC_VERSION" | sort -V | tail -n 1)
+            NEXT_VERSION="v${HIGHEST}"
+            echo "::notice::pubspec marketing version: $PUBSPEC_VERSION; resolved next: $NEXT_VERSION"
+          fi
 
           if [ "$BRANCH" = "main" ]; then
             NEW_TAG="$NEXT_VERSION"
