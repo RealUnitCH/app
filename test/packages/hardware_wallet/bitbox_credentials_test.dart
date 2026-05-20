@@ -4,6 +4,7 @@ import 'package:bitbox_flutter/bitbox_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 
 class _MockBitboxManager extends Mock implements BitboxManager {}
 
@@ -35,11 +36,11 @@ void main() {
       expect(c.isConnected, isFalse);
     });
 
-    test('signToSignature throws when bitboxManager is null', () {
+    test('signToSignature throws BitboxNotConnectedException when bitboxManager is null', () {
       final c = BitboxCredentials('0x000000000000000000000000000000000000dead');
       expect(
         () => c.signToSignature(Uint8List.fromList(List.filled(32, 0))),
-        throwsException,
+        throwsA(isA<BitboxNotConnectedException>()),
       );
     });
 
@@ -104,11 +105,11 @@ void main() {
       expect(sig.v, 38);
     });
 
-    test('signPersonalMessage throws when not connected', () {
+    test('signPersonalMessage throws BitboxNotConnectedException when not connected', () {
       final c = BitboxCredentials('0x000000000000000000000000000000000000dead');
       expect(
         () => c.signPersonalMessage(Uint8List.fromList([1, 2, 3])),
-        throwsException,
+        throwsA(isA<BitboxNotConnectedException>()),
       );
     });
 
@@ -131,11 +132,11 @@ void main() {
       expect(captured[1], "m/44'/60'/0'/0/0");
     });
 
-    test('signTypedDataV4 throws when not connected', () {
+    test('signTypedDataV4 throws BitboxNotConnectedException when not connected', () {
       final c = BitboxCredentials('0x000000000000000000000000000000000000dead');
       expect(
         () => c.signTypedDataV4(1, '{"primaryType":"Foo"}'),
-        throwsException,
+        throwsA(isA<BitboxNotConnectedException>()),
       );
     });
 

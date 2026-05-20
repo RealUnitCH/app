@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:eth_sig_util_plus/eth_sig_util_plus.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
@@ -19,7 +20,9 @@ enum FakeBitboxBehavior {
   cancel,
 
   /// BLE link drops before/during the ceremony — the credentials report
-  /// `isConnected == false` and the sign throws.
+  /// `isConnected == false` and the sign throws `BitboxNotConnectedException`,
+  /// mirroring what the real `BitboxCredentials` does when `bitboxManager` is
+  /// null.
   disconnect,
 
   /// The device hangs and never responds — the sign awaits forever (caller
@@ -83,7 +86,7 @@ class FakeBitboxCredentials extends BitboxCredentials {
       case FakeBitboxBehavior.cancel:
         return '0x';
       case FakeBitboxBehavior.disconnect:
-        throw const SigningCancelledException();
+        throw const BitboxNotConnectedException();
       case FakeBitboxBehavior.timeout:
         await Completer<void>().future;
         return '';
@@ -103,7 +106,7 @@ class FakeBitboxCredentials extends BitboxCredentials {
       case FakeBitboxBehavior.cancel:
         return Uint8List(0);
       case FakeBitboxBehavior.disconnect:
-        throw const SigningCancelledException();
+        throw const BitboxNotConnectedException();
       case FakeBitboxBehavior.timeout:
         await Completer<void>().future;
         return Uint8List(0);
@@ -125,8 +128,9 @@ class FakeBitboxCredentials extends BitboxCredentials {
         final pk = EthPrivateKey.fromHex(_testPrivateKeyHex);
         return pk.signToSignature(payload, chainId: chainId, isEIP1559: isEIP1559);
       case FakeBitboxBehavior.cancel:
-      case FakeBitboxBehavior.disconnect:
         throw const SigningCancelledException();
+      case FakeBitboxBehavior.disconnect:
+        throw const BitboxNotConnectedException();
       case FakeBitboxBehavior.timeout:
         await Completer<void>().future;
         return MsgSignature(BigInt.zero, BigInt.zero, 0);

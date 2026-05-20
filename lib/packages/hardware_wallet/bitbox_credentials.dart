@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:bitbox_flutter/bitbox_manager.dart';
 import 'package:convert/convert.dart' as convert;
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -57,9 +58,7 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
     bool isEIP1559 = false,
   }) {
     return _synchronizeSign(() async {
-      if (bitboxManager == null) {
-        throw Exception('Bitbox not connected');
-      }
+      if (!isConnected) throw const BitboxNotConnectedException();
 
       if (isEIP1559) payload = payload.sublist(1);
       final sig = await bitboxManager!.signETHRLPTransaction(
@@ -101,7 +100,7 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
   @override
   Future<Uint8List> signPersonalMessage(Uint8List payload, {int? chainId}) {
     return _synchronizeSign(() async {
-      if (!isConnected) throw Exception('Bitbox not connected');
+      if (!isConnected) throw const BitboxNotConnectedException();
       return await bitboxManager!.signETHMessage(chainId ?? 1, derivationPath!, payload);
     });
   }
@@ -112,7 +111,7 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
 
   Future<String> signTypedDataV4(int chainId, String jsonData) {
     return _synchronizeSign(() async {
-      if (!isConnected) throw Exception('Bitbox not connected');
+      if (!isConnected) throw const BitboxNotConnectedException();
 
       final signatureBytes = await bitboxManager!.signETHTypedMessage(
         chainId,
