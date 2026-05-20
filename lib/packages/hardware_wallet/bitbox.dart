@@ -46,7 +46,17 @@ class BitboxService {
   void startConnectionStatusObserver() {
     _connectionStatusObserver?.cancel();
     _connectionStatusObserver = Timer.periodic(_connectionStatusInterval, (_) async {
-      final devices = await getAllUsbDevices();
+      final List<BitboxDevice> devices;
+      try {
+        devices = await getAllUsbDevices();
+      } catch (e) {
+        // Transient BLE/USB hiccups inside the periodic callback used to
+        // surface as uncaught async errors and kill the recovery loop. Log
+        // and wait for the next tick — only an explicit empty device list
+        // is allowed to trigger the device-loss path below.
+        developer.log('device probe failed in observer tick: $e', name: '$BitboxService');
+        return;
+      }
       if (devices.isEmpty) {
         _isConnected = false;
         _credentials?.clearBitbox();
