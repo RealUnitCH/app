@@ -196,5 +196,63 @@ void main() {
           .timeout(const Duration(seconds: 1));
       expect(sig, '0x42');
     });
+
+    // Post-#461 mid-flow recovery: _runOrThrowDisconnect must convert a
+    // mid-sign plugin error into BitboxNotConnectedException only when the
+    // device probe confirms the device is gone.
+    test(
+      'signToSignature mid-sign throw with devices empty surfaces as BitboxNotConnectedException and clears credentials',
+      () async {
+        when(
+          () => manager.signETHRLPTransaction(any(), any(), any(), any()),
+        ).thenThrow(Exception('plugin: USB write failed mid-sign'));
+        when(() => manager.devices).thenAnswer((_) async => <BitboxDevice>[]);
+
+        final c = connected();
+        await expectLater(
+          c.signToSignature(Uint8List.fromList([0xDE, 0xAD]), chainId: 1),
+          throwsA(isA<BitboxNotConnectedException>()),
+        );
+        expect(c.isConnected, isFalse, reason: 'clearBitbox must have run on lost device');
+      },
+    );
+
+    // Post-#461 mid-flow recovery: a still-reachable device means the
+    // original error wins; we must not mask real plugin/parse failures.
+    test(
+      'signToSignature mid-sign throw with devices still present rethrows the original error',
+      () async {
+        when(
+          () => manager.signETHRLPTransaction(any(), any(), any(), any()),
+        ).thenThrow(StateError('parse'));
+        when(() => manager.devices).thenAnswer((_) async => [_FakeDevice()]);
+
+        final c = connected();
+        await expectLater(
+          c.signToSignature(Uint8List.fromList([0xDE, 0xAD]), chainId: 1),
+          throwsA(isA<StateError>()),
+        );
+        expect(c.isConnected, isTrue, reason: 'clearBitbox must NOT run when device is still there');
+      },
+    );
+
+    // Post-#461 mid-flow recovery: if the probe itself blows up, _deviceLost
+    // returns true (defensive fallback) and the disconnect path wins.
+    test(
+      'signToSignature mid-sign throw with devices-probe itself throwing treats device as lost',
+      () async {
+        when(
+          () => manager.signETHRLPTransaction(any(), any(), any(), any()),
+        ).thenThrow(Exception('plugin: USB write failed mid-sign'));
+        when(() => manager.devices).thenThrow(Exception('USB descriptor closed'));
+
+        final c = connected();
+        await expectLater(
+          c.signToSignature(Uint8List.fromList([0xDE, 0xAD]), chainId: 1),
+          throwsA(isA<BitboxNotConnectedException>()),
+        );
+        expect(c.isConnected, isFalse, reason: 'failed probe must be treated as lost device');
+      },
+    );
   });
 }
