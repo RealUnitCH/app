@@ -53,6 +53,7 @@
   "connectBitboxContent": "Bitte verbinden Sie Ihre BitBox02 mit Ihrem Smartphone.",
   "connectBitboxContentIos": "Bitte verbinden Sie Ihre BitBox02 mit Ihrem Smartphone und aktivieren Sie zusätzlich Bluetooth.",
   "connectBitboxFailed": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+  "connectBitboxSignInHint": "Nach der Code-Überprüfung wird die BitBox um eine zusätzliche Bestätigung zur Anmeldung gebeten.",
   "connectBitboxTitle": "BitBox02 verbinden",
   "connected": "Verbunden",
   "connectedBitboxContent": "Bitte bestätigen Sie und folgen nun den letzten Anweisungen auf Ihrer BitBox02.",

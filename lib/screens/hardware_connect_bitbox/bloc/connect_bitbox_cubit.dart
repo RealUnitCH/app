@@ -152,20 +152,13 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
               '${_createWalletTimeout.inSeconds}s. Try disconnecting and re-pairing.',
             ),
           );
-      // Capture the DFX auth signature now, while the BitBox is guaranteed
-      // connected. Once persisted, every later buy / KYC / user-data call runs
-      // off the cached signature without needing the hardware wallet present.
-      // A failure here is non-fatal: we still complete pairing and rely on the
-      // lazy-create path in DFXAuthService.getSignature as a fallback.
-      try {
-        await _authService.ensureSignatureFor(wallet.currentAccount);
-      } catch (e) {
-        developer.log(
-          'initial signature capture failed: $e',
-          name: '$ConnectBitboxCubit',
-        );
-      }
       _service.startConnectionStatusObserver();
+      // Fire-and-forget the auth-signature capture. Once persisted, every
+      // later buy / KYC / user-data call runs off the cached signature without
+      // needing the hardware wallet present. Awaiting would block the pairing
+      // UI for the EIP-191 BitBox confirmation + the 20 s HTTP timeout; if it
+      // fails the lazy path in DFXAuthService.getSignature still recovers.
+      unawaited(_warmAuthSignature(wallet));
       emit(BitboxConnected(wallet));
     } catch (e) {
       developer.log(e.toString(), name: '$ConnectBitboxCubit');
@@ -180,6 +173,23 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     final currentState = state;
     if (currentState is! BitboxConnected) return;
     emit(BitboxFinishSetup(currentState.wallet));
+  }
+
+  Future<void> _warmAuthSignature(AWallet wallet) async {
+    try {
+      await _authService.ensureSignatureFor(wallet.currentAccount);
+    } catch (e) {
+      // Visible-to-support log so the failure shows up in any later debug
+      // session: signature-cache misses on the first authenticated call would
+      // trigger a fresh BitBox button press, which is the failure mode #461
+      // was supposed to remove.
+      developer.log(
+        'initial signature capture failed — next authenticated call '
+        'will trigger a fresh BitBox confirmation: $e',
+        name: '$ConnectBitboxCubit',
+        level: 1000, // SEVERE
+      );
+    }
   }
 
   @override

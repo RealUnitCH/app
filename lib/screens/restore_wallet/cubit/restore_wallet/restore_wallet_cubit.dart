@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
@@ -21,10 +22,20 @@ class RestoreWalletCubit extends Cubit<RestoreWalletState> {
     final normalizedSeed = seed.split(' ').where((element) => element.isNotEmpty).join(' ');
 
     final wallet = await _walletService.restoreWallet('Obi-Wallet-Kenobi', normalizedSeed);
+    // Fire-and-forget the auth-signature capture so a 20 s HTTP timeout doesn't
+    // block the wallet-restore UI. The lazy path in DFXAuthService.getSignature
+    // is the safety net.
+    unawaited(_warmAuthSignature(wallet));
 
-    // Capture the DFX auth signature while the freshly restored mnemonic is
-    // still in memory — same rationale as the BitBox pairing flow. Non-fatal
-    // on failure; the lazy path in DFXAuthService.getSignature recovers later.
+    emit(
+      RestoreWalletState(
+        isLoading: false,
+        wallet: wallet,
+      ),
+    );
+  }
+
+  Future<void> _warmAuthSignature(SoftwareWallet wallet) async {
     try {
       await _authService.ensureSignatureFor(wallet.currentAccount);
     } catch (e) {
@@ -33,12 +44,5 @@ class RestoreWalletCubit extends Cubit<RestoreWalletState> {
         name: '$RestoreWalletCubit',
       );
     }
-
-    emit(
-      RestoreWalletState(
-        isLoading: false,
-        wallet: wallet,
-      ),
-    );
   }
 }

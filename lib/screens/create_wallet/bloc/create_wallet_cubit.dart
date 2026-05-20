@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,10 +16,14 @@ class CreateWalletCubit extends Cubit<CreateWalletState> {
 
   void createWallet() async {
     final wallet = await _service.createSeedWallet('Obi-Wallet-Kenobi');
+    // Fire-and-forget the auth-signature capture — the lazy path in
+    // DFXAuthService.getSignature is the safety net, and a 20 s HTTP timeout
+    // shouldn't gate the "creating wallet" UI.
+    unawaited(_warmAuthSignature(wallet));
+    emit(state.copyWith(wallet: wallet));
+  }
 
-    // Capture the DFX auth signature while the freshly generated mnemonic is
-    // still in memory — same rationale as the BitBox pairing flow. Non-fatal
-    // on failure; the lazy path in DFXAuthService.getSignature recovers later.
+  Future<void> _warmAuthSignature(SoftwareWallet wallet) async {
     try {
       await _authService.ensureSignatureFor(wallet.currentAccount);
     } catch (e) {
@@ -27,8 +32,6 @@ class CreateWalletCubit extends Cubit<CreateWalletState> {
         name: '$CreateWalletCubit',
       );
     }
-
-    emit(state.copyWith(wallet: wallet));
   }
 
   void toggleShowSeed() {
