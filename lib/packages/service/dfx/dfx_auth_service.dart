@@ -41,6 +41,39 @@ abstract class DFXAuthService {
     }
   }
 
+  /// Create-and-persist the auth signature for [account] without going through
+  /// `appStore.wallet`. Used during the BitBox pairing flow so the signature is
+  /// captured while the hardware wallet is guaranteed connected — every
+  /// subsequent buy / KYC / user-data call can then run off the cached
+  /// signature without needing the BitBox.
+  ///
+  /// No-op if a signature for this address is already in the cache.
+  Future<void> ensureSignatureFor(AWalletAccount account) async {
+    final address = account.primaryAddress.address.hexEip55;
+    await appStore.sessionCache.loadSignature();
+    if (appStore.sessionCache.signature != null &&
+        appStore.sessionCache.signatureAddress == address) {
+      return;
+    }
+
+    final messageUri = buildUri(host, signMessagePath, {'address': address});
+    final messageResponse = await appStore.httpClient
+        .get(messageUri, headers: {'accept': 'application/json'})
+        .timeout(_httpTimeout);
+    if (messageResponse.statusCode != 200) {
+      throw Exception(
+        'Failed to get sign message. Status: ${messageResponse.statusCode} ${messageResponse.body}',
+      );
+    }
+    final message = (jsonDecode(messageResponse.body) as Map<String, dynamic>)['message'] as String;
+
+    final signature = await account.signMessage(message).timeout(_signMessageTimeout);
+    if (signature.isEmpty || signature == '0x') {
+      throw const SigningCancelledException();
+    }
+    await appStore.sessionCache.saveSignature(address, signature);
+  }
+
   // Exceptions this method can throw on the BitBox path:
   //   * `BitboxNotConnectedException` — `BitboxCredentials.signPersonalMessage`
   //     aborts up front when the device is disconnected (BLE link dropped).

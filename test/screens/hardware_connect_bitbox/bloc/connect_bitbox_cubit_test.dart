@@ -5,8 +5,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
+import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/bloc/connect_bitbox_cubit.dart';
 
 class _MockBitboxService extends Mock implements BitboxService {}
@@ -15,17 +17,23 @@ class _MockWalletService extends Mock implements WalletService {}
 
 class _MockBitboxWallet extends Mock implements BitboxWallet {}
 
+class _MockAuthService extends Mock implements DFXAuthService {}
+
 class _FakeBitboxDevice extends Fake implements sdk.BitboxDevice {}
+
+class _FakeBitboxWalletAccount extends Fake implements BitboxWalletAccount {}
 
 void main() {
   late _MockBitboxService service;
   late _MockWalletService walletService;
+  late _MockAuthService authService;
   late _FakeBitboxDevice device;
   late _MockBitboxWallet wallet;
 
   setUpAll(() {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     registerFallbackValue(_FakeBitboxDevice());
+    registerFallbackValue(_FakeBitboxWalletAccount());
   });
 
   tearDownAll(() {
@@ -35,6 +43,7 @@ void main() {
   setUp(() {
     service = _MockBitboxService();
     walletService = _MockWalletService();
+    authService = _MockAuthService();
     device = _FakeBitboxDevice();
     wallet = _MockBitboxWallet();
 
@@ -42,6 +51,8 @@ void main() {
     when(() => service.getAllUsbDevices()).thenAnswer((_) async => []);
     when(() => service.startConnectionStatusObserver()).thenReturn(null);
     when(() => walletService.createBitboxWallet(any())).thenAnswer((_) async => wallet);
+    when(() => wallet.currentAccount).thenReturn(_FakeBitboxWalletAccount());
+    when(() => authService.ensureSignatureFor(any())).thenAnswer((_) async {});
   });
 
   // Tests pass in short timeouts so the bounce-back path can be exercised in
@@ -53,6 +64,7 @@ void main() {
   }) => ConnectBitboxCubit(
     service,
     walletService,
+    authService,
     confirmPairingTimeout: confirmPairingTimeout,
     createWalletTimeout: createWalletTimeout,
     pairingPinTimeout: pairingPinTimeout,
