@@ -127,6 +127,32 @@ Features tagged `mvp` whose current test coverage is insufficient — these bloc
 
 Non-BitBox code only needs Tier 0 + widget tests; Tier 1+ are reserved for hardware-coupled paths.
 
+## Tests
+
+| Stack    | Command                   | What it covers                                                                                                                                                                                            |
+| -------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Flutter  | `flutter test`            | Unit + widget specs under `test/**` (pure-Dart `test` and `testWidgets`)                                                                                                                                  |
+| Coverage | `flutter test --coverage` | Writes `coverage/lcov.info`. CI filters out `lib/generated/**` and `lib/main.dart` so the figure reflects the activated surface. Threshold enforcement is not yet wired — see "Coverage infrastructure roadmap" above. |
+| Analyzer | `flutter analyze`         | Dart static analysis per `analysis_options.yaml`                                                                                                                                                          |
+
+Tier 1 (`integration_test/`) and Tier 3 (`.maestro/`) runners are tracked under "Testing tiers" above but not yet committed.
+
+## CI/CD
+
+| Workflow                     | Trigger                                                       | Action                                                                                  |
+| ---------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `pull-request.yaml`          | PR to `develop` / `main` · manual                             | `flutter analyze` + `flutter test --coverage`, filter generated files, upload lcov artifact |
+| `bitbox-simulator.yml`       | PR touching `lib/packages/hardware_wallet/**` or `wallet/**`  | Runs the BitBox02 firmware simulator with `bitbox-testkit` baselines (Tier 2)           |
+| `bitbox-simulator-slash.yml` | `/bitbox-simulator` comment on any PR                         | Same engine as above, on-demand per PR (variants: default / `ref=main`)                 |
+| `auto-release-pr.yaml`       | Push `develop` · manual                                       | Opens Release PR `develop` → `main`                                                     |
+| `auto-tag.yaml`              | Push `develop` / `main`                                       | Creates the next release tag from the merged version                                    |
+| `develop-release.yaml`       | Tag `v*-beta*` · manual                                       | Develop-beta Android APK + GitHub pre-release                                           |
+| `beta-release.yaml`          | Tag `v*` (non-beta) · manual                                  | Combined Android + iOS deploy + GitHub release                                          |
+| `beta-release-android.yaml`  | Tag `android/v*` · manual                                     | Android-only beta deploy (Play Internal Testing)                                        |
+| `beta-release-ios.yaml`      | Tag `ios/v*` · manual                                         | iOS-only beta deploy (TestFlight, Fastlane Match)                                       |
+| `handbook-dev.yaml`          | Push `develop` under `docs/handbook/**` · manual              | Builds `dfxswiss/realunit-app-handbook:beta`, redeploys the handbook DEV container      |
+| `handbook-prd.yaml`          | Push `main` under `docs/handbook/**` · manual                 | Builds `dfxswiss/realunit-app-handbook:latest`, redeploys the handbook PRD container    |
+
 ## Getting started
 
 Before getting started, please make sure you have Flutter version 3.41.6 and the latest version of golang and gomobile installed.
