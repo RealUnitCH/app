@@ -24,9 +24,12 @@ void main() {
   });
 
   group('$SettingsSeedCubit', () {
-    test('initial state surfaces the wallet seed after ensureUnlocked', () async {
+    test('initial state surfaces the wallet seed; ensureUnlocked is invoked', () async {
       final cubit = SettingsSeedCubit(appStore);
-      await cubit.stream.firstWhere((s) => s.seed.isNotEmpty);
+      // For a wallet that is already a SoftwareWallet the seed is in initial
+      // state. `_loadSeed()` still runs and invokes ensureUnlocked — drain
+      // the microtask queue so the call is observable to mocktail.
+      await Future<void>.delayed(Duration.zero);
 
       expect(cubit.state.seed, _testSeed);
       expect(cubit.state.showSeed, isFalse);
@@ -36,13 +39,7 @@ void main() {
     blocTest<SettingsSeedCubit, SettingsSeedState>(
       'toggleShowSeed flips showSeed and keeps seed unchanged',
       build: () => SettingsSeedCubit(appStore),
-      // Wait for the async `_loadSeed()` ensureUnlocked → seed emit to settle
-      // before toggling. A static `wait:` duration races on slow CI runners —
-      // wait on the stream instead.
-      act: (c) async {
-        await c.stream.firstWhere((s) => s.seed.isNotEmpty);
-        c.toggleShowSeed();
-      },
+      act: (c) => c.toggleShowSeed(),
       verify: (c) {
         expect(c.state.seed, _testSeed);
         expect(c.state.showSeed, isTrue);
@@ -52,12 +49,9 @@ void main() {
     blocTest<SettingsSeedCubit, SettingsSeedState>(
       'toggleShowSeed twice returns to showSeed=false',
       build: () => SettingsSeedCubit(appStore),
-      act: (c) async {
-        await c.stream.firstWhere((s) => s.seed.isNotEmpty);
-        c
-          ..toggleShowSeed()
-          ..toggleShowSeed();
-      },
+      act: (c) => c
+        ..toggleShowSeed()
+        ..toggleShowSeed(),
       verify: (c) {
         expect(c.state.seed, _testSeed);
         expect(c.state.showSeed, isFalse);
