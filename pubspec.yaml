@@ -16,7 +16,11 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+29
+# Sentinel only — CI always overrides via `--build-name`/`--build-number`
+# derived from the release tag (see tool/generate_release_info.dart). Local
+# builds carry `+0` so the settings footer shows `dev` instead of a stale
+# pinned build number.
+version: 1.0.0+0
 
 environment:
   sdk: ">=3.10.0 <4.0.0"

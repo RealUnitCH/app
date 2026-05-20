@@ -55,6 +55,7 @@ jobs:
           channel: "stable"
       - run: flutter pub get
       - run: dart run tool/generate_localization.dart
+      - run: dart run tool/generate_release_info.dart
       - run: flutter pub run build_runner build
       - run: flutter analyze
       - run: flutter test --coverage

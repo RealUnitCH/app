@@ -5,6 +5,7 @@
 ```bash
 flutter pub get
 dart run tool/generate_localization.dart   # generate i18n from ARB files
+dart run tool/generate_release_info.dart   # generate release_info.dart (writes the `dev` sentinel locally)
 flutter pub run build_runner build          # generate code (drift, etc.)
 flutter test                                # run all tests
 flutter analyze                             # lint check
@@ -57,6 +58,13 @@ lib/
 - Punctuation belongs in the template (`'${s.label}: $value'`), NOT in the ARB value.
 - Before adding a new key: search existing keys first — reuse where possible.
 - Avoid using `S.current` (no context) in cubits/blocs. Prefer emitting typed states and resolving localization in the UI via `S.of(context)`. When localization is needed in functions, pass `BuildContext` rather than `S`.
+
+## Release Versioning
+
+- Single source of truth: the git tag (`vX.Y.Z` for stable, `vX.Y.Z-beta.N` for beta).
+- `tool/generate_release_info.dart` derives both the in-app `releaseTag` and the platform-identical `versionCode` from the tag (Schema: `MAJOR*10_000_000 + MINOR*100_000 + PATCH*1_000 + BETA_N`; stable uses `BETA_N = 999`). The tool is invoked by every release workflow before `flutter build`, and by both Fastfiles (Android + iOS) so the build number is identical across platforms.
+- `pubspec.yaml`'s `version:` field is a sentinel (`1.0.0+0`) for local builds — the CI always overrides it via `--build-name`/`--build-number`. Don't bump it manually; bump the tag instead.
+- Local builds carry `releaseTag = 'dev'` so the settings footer reads `Version dev` instead of a stale pinned build number.
 
 ## State Management
 
