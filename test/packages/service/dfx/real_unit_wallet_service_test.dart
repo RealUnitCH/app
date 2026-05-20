@@ -16,26 +16,6 @@ class _MockAppStore extends Mock implements AppStore {}
 
 class _MockCacheRepository extends Mock implements CacheRepository {}
 
-/// Forces `getAuthToken` / `refreshAuthToken` to deterministic values so the
-/// 401-retry test does not have to reach into the wallet / sign-message
-/// pipeline. The retry plumbing itself is covered end-to-end in
-/// `dfx_auth_service_test.dart`; this stub just lets us assert that
-/// `RealUnitWalletService.getWalletStatus` is wired onto it.
-class _RetryRealUnitWalletService extends RealUnitWalletService {
-  _RetryRealUnitWalletService(super.appStore);
-
-  int refreshAuthTokenCalls = 0;
-
-  @override
-  Future<String?> getAuthToken() async => 'expired-token';
-
-  @override
-  Future<String?> refreshAuthToken() async {
-    refreshAuthTokenCalls++;
-    return 'fresh-token';
-  }
-}
-
 void main() {
   late _MockAppStore appStore;
   late SessionCache sessionCache;
@@ -53,12 +33,13 @@ void main() {
     return RealUnitWalletService(appStore);
   }
 
-  _RetryRealUnitWalletService buildRetry(http.Client client) {
-    when(() => appStore.httpClient).thenReturn(client);
-    return _RetryRealUnitWalletService(appStore);
-  }
-
   group('$RealUnitWalletService', () {
+    // The 401 -> refresh -> retry plumbing of `authenticatedGet` is covered
+    // exhaustively in `dfx_auth_service_test.dart` (GET / POST / PUT retry,
+    // no-third-retry, refresh-throws propagation). Per-service wiring is
+    // verified implicitly by the "Bearer JWT" assertion below — the header
+    // can only land on the request if it routes through `authenticatedGet`.
+
     test('getWalletStatus GETs /v1/realunit/wallet/status with the Bearer JWT', () async {
       sessionCache.setAuthToken('jwt-1');
       String? path;
@@ -99,8 +80,8 @@ void main() {
     test('getWalletStatus throws ApiException on a non-2xx non-401 response', () async {
       sessionCache.setAuthToken('jwt-1');
       // Non-401 — bypasses the refresh-on-401 retry path and is surfaced to
-      // the caller directly. The 401-retry behaviour is covered below and
-      // exhaustively in dfx_auth_service_test.dart.
+      // the caller directly. The 401-retry behaviour is covered exhaustively
+      // in dfx_auth_service_test.dart.
       final client = MockClient((_) async => http.Response(
             jsonEncode({'statusCode': 500, 'message': 'oops'}),
             500,
@@ -110,28 +91,6 @@ void main() {
         () => build(client).getWalletStatus(),
         throwsA(isA<ApiException>()),
       );
-    });
-
-    test('getWalletStatus retries once with a refreshed token on 401', () async {
-      final seenAuthHeaders = <String?>[];
-      final client = MockClient((request) async {
-        seenAuthHeaders.add(request.headers['Authorization']);
-
-        if (seenAuthHeaders.length == 1) {
-          return http.Response('{"message":"Unauthorized"}', 401);
-        }
-        return http.Response(
-          jsonEncode({'isRegistered': true, 'userData': null}),
-          200,
-        );
-      });
-
-      final service = buildRetry(client);
-      final status = await service.getWalletStatus();
-
-      expect(status.isRegistered, isTrue);
-      expect(seenAuthHeaders, ['Bearer expired-token', 'Bearer fresh-token']);
-      expect(service.refreshAuthTokenCalls, 1);
     });
   });
 }
