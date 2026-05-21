@@ -12,11 +12,10 @@ import 'package:flutter_test/flutter_test.dart';
 const _script = 'tool/generate_release_info.dart';
 
 class _ReleaseInfo {
-  _ReleaseInfo(this.tag, this.marketing, this.versionCode, this.isStable);
+  _ReleaseInfo(this.tag, this.marketing, this.versionCode);
   final String tag;
   final String marketing;
   final int versionCode;
-  final bool isStable;
 }
 
 Future<_ReleaseInfo> _run({String? tag}) async {
@@ -43,7 +42,6 @@ Future<_ReleaseInfo> _run({String? tag}) async {
       RegExp(r"releaseTag = '([^']+)'").firstMatch(contents)!.group(1)!,
       RegExp(r"releaseMarketingVersion = '([^']+)'").firstMatch(contents)!.group(1)!,
       int.parse(RegExp(r'releaseVersionCode = (\d+)').firstMatch(contents)!.group(1)!),
-      RegExp(r'releaseIsStable = (true|false)').firstMatch(contents)!.group(1) == 'true',
     );
   } finally {
     if (tempDir.existsSync()) tempDir.deleteSync(recursive: true);
@@ -72,7 +70,6 @@ void main() {
       expect(info.tag, '1.0.0');
       expect(info.marketing, '1.0.0');
       expect(info.versionCode, 10000999);
-      expect(info.isStable, isTrue);
     });
 
     test('v1.0.15 → versionCode 10_015_999 (first patch after legacy beta train)',
@@ -81,7 +78,6 @@ void main() {
       expect(info.tag, '1.0.15');
       expect(info.marketing, '1.0.15');
       expect(info.versionCode, 10015999);
-      expect(info.isStable, isTrue);
     });
 
     test('v1.0.15 build code outranks the highest published beta (v1.0.0-beta.14)',
@@ -97,7 +93,6 @@ void main() {
     test('v2.5.7 → versionCode 20_507_999', () async {
       final info = await _run(tag: 'v2.5.7');
       expect(info.versionCode, 20507999);
-      expect(info.isStable, isTrue);
     });
 
     test('successive patch bumps yield monotonically increasing version codes',
@@ -116,14 +111,12 @@ void main() {
       expect(info.tag, 'dev');
       expect(info.marketing, '0.0.0');
       expect(info.versionCode, 0);
-      expect(info.isStable, isFalse);
     });
 
     test('--tag=dev → same as no --tag', () async {
       final info = await _run(tag: 'dev');
       expect(info.tag, 'dev');
       expect(info.versionCode, 0);
-      expect(info.isStable, isFalse);
     });
   });
 
@@ -165,14 +158,12 @@ void main() {
       final info = await _run(tag: 'android/v1.0.15');
       expect(info.tag, '1.0.15');
       expect(info.versionCode, 10015999);
-      expect(info.isStable, isTrue);
     });
 
     test('ios/v1.0.0 strips the prefix and computes 10_000_999', () async {
       final info = await _run(tag: 'ios/v1.0.0');
       expect(info.tag, '1.0.0');
       expect(info.versionCode, 10000999);
-      expect(info.isStable, isTrue);
     });
 
     test('android/v1.0.0-beta.4 is rejected like every other beta suffix',
