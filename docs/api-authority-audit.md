@@ -160,6 +160,7 @@ backend's understanding of state and the app's interpretation of it.
   - **API change needed:** call `/v1/language` (already exists on the DFX API)
 - **V14** — `lib/widgets/form/country_field.dart:65-79` — `['CH', 'DE', 'IT', 'FR']` priority list at top
   - **API change needed:** `/v1/country?priority=true` returns ordered list; UI does not hardcode preference
+  - **Closed by:** W4.4 / #499
 - **V28** — `lib/packages/config/network_mode.dart:4-20` — `enum NetworkMode { mainnet, testnet }`
   - **Boundary case:** network mode determines *which* API host the app calls. Cannot itself be API-driven (chicken-and-egg). **Accepted as documented exception** (see `api-authority-plan.md`). Tagged for completeness.
 
@@ -175,15 +176,17 @@ backend's understanding of state and the app's interpretation of it.
 
 - **V17** — `lib/packages/config/legal_documents_config.dart:69-122, :160-191, :193-236` — Registration-Agreement PDFs (DE/EN), RealUnit Prospekt URLs (`:69-122`), Aktionariat document URLs (`:160-191`), DFX-Docs URLs (`:193-236`)
   - **API change needed:** `/v1/legal-document?type=registration&language=de` returns the current URL + version; app renders without knowing URLs in advance. Same endpoint also covers the Aktionariat and DFX-Docs blocks
+  - **Closed by:** W4.4 / #499
 - **V44** — `lib/screens/kyc/steps/financial_data/constants/kyc_financial_data_links.dart:2` — hardcoded `https://dfx.swiss/terms-and-conditions`
   - **Local decision:** same root cause as V17 but outside `legal_documents_config.dart` — a separate constants file holds a legal URL
   - **API change needed:** `/v1/legal-document` endpoint (the same endpoint W4.1 introduces); app reads the URL instead of compiling it in
-  - **Closed by:** W4.4 (same wave as V17)
+  - **Closed by:** W4.4 / #499 (same wave as V17)
 
 ### Company contact info hardcoded
 
 - **V18** — `lib/screens/settings_contact/settings_contact_page.dart:82, 93-94, 104, 109, 133-134` — phone, email, website, postal address
   - **API change needed:** `/v1/company-info` (or the existing `/v1/settings`) returns this for the RealUnit branding; allows future white-labeling
+  - **Closed by:** W4.4 / #499
 
 ### Asset configuration hardcoded
 
