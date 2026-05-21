@@ -125,6 +125,7 @@ jobs:
         with:
           flutter-version: "3.41.6"
           channel: "stable"
+          cache: true
 
       - run: flutter pub get
       - run: dart run tool/generate_localization.dart

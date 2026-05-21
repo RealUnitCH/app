@@ -47,6 +47,8 @@ jobs:
           push: true
           tags: ${{ env.DOCKER_TAGS }}
           platforms: linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Install cloudflared
         env:
