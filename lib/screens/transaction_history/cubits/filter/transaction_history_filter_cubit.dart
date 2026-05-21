@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/transaction.dart';
@@ -12,10 +14,13 @@ class TransactionHistoryFilterCubit extends Cubit<TransactionHistoryFilterState>
     required String walletAddress,
     int? limit,
   }) : super(TransactionHistoryFilterState()) {
-    _repository.watchTransactionsOfAssets([asset], walletAddress).listen(_onTransactionsUpdated);
+    _subscription = _repository.watchTransactionsOfAssets([asset], walletAddress).listen(
+      _onTransactionsUpdated,
+    );
   }
 
   final TransactionRepository _repository;
+  StreamSubscription<List<Transaction>>? _subscription;
 
   void _onTransactionsUpdated(List<Transaction> transactions) {
     emit(
@@ -55,5 +60,11 @@ class TransactionHistoryFilterCubit extends Cubit<TransactionHistoryFilterState>
       final beforeEnd = endDate == null || !transactionDate.isAfter(endDate);
       return afterStart && beforeEnd;
     }).toList();
+  }
+
+  @override
+  Future<void> close() {
+    _subscription?.cancel();
+    return super.close();
   }
 }

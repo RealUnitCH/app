@@ -290,4 +290,14 @@ void main() {
       expect(body!.containsKey('eip7702'), isFalse);
     });
   });
+
+  group('malformed JSON responses', () {
+    test('getPaymentInfo with non-JSON 200 throws FormatException', () {
+      final client = MockClient((_) async => http.Response('not json', 200));
+      expect(
+        () => build(client).getPaymentInfo(100, 'CH...'),
+        throwsA(isA<FormatException>()),
+      );
+    });
+  });
 }

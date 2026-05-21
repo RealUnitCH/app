@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
@@ -162,6 +164,22 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 250));
 
       verifyNever(() => service.getBuyShares(any(), any()));
+    });
+
+    test('does not emit after close', () async {
+      final completer = Completer<BrokerbotBuySharesDto>();
+      when(() => service.getBuyShares(any(), any()))
+          .thenAnswer((_) => completer.future);
+
+      final cubit = BuyConverterCubit(service);
+      await cubit.onFiatChanged('100');
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      await cubit.close();
+      completer.complete(BrokerbotBuySharesDto(
+        shares: 1,
+        pricePerShare: 100,
+        availableShares: 100,
+      ));
     });
   });
 }

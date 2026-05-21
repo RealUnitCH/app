@@ -128,6 +128,18 @@ void main() {
       },
     );
 
+    test('close cancels the stream subscription (no emit after close)', () async {
+      final cubit = build();
+      await cubit.close();
+
+      // Emit on the source stream after close — must not propagate.
+      stream.add([_tx(DateTime.now())]);
+      await Future<void>.delayed(Duration.zero);
+
+      // If the subscription were still active, the cubit would throw
+      // StateError on emit.
+    });
+
     blocTest<TransactionHistoryFilterCubit, TransactionHistoryFilterState>(
       'a subsequent stream update re-applies the current filter',
       build: build,

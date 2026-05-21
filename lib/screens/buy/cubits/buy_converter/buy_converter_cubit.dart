@@ -22,10 +22,12 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
 
     _fiatDebounce?.cancel();
     _fiatDebounce = Timer(const Duration(milliseconds: 100), () async {
+      if (isClosed) return;
       emit(state.copyWith(loading: true));
 
       try {
         final result = await _brokerbotService.getBuyShares(value, state.currency);
+        if (isClosed) return;
         emit(
           state.copyWith(
             sharesText: result.shares.toString(),
@@ -34,6 +36,7 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
         );
       } catch (e) {
         developer.log(e.toString());
+        if (isClosed) return;
         emit(state.copyWith(loading: false));
       }
     });
@@ -45,10 +48,12 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
 
     _sharesDebounce?.cancel();
     _sharesDebounce = Timer(const Duration(milliseconds: 100), () async {
+      if (isClosed) return;
       emit(state.copyWith(loading: true));
 
       try {
         final result = await _brokerbotService.getBuyPrice(value, state.currency);
+        if (isClosed) return;
         emit(
           state.copyWith(
             fiatText: result.totalCost.toStringAsFixed(_fractionDigits(value)),
@@ -57,6 +62,7 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
         );
       } catch (e) {
         developer.log(e.toString());
+        if (isClosed) return;
         emit(state.copyWith(loading: false));
       }
     });
@@ -67,6 +73,7 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
 
     try {
       final result = await _brokerbotService.getBuyShares(state.fiatText, currency);
+      if (isClosed) return;
       emit(
         state.copyWith(
           sharesText: result.shares.toString(),
@@ -76,6 +83,7 @@ class BuyConverterCubit extends Cubit<BuyConverterState> {
       );
     } catch (e) {
       developer.log(e.toString());
+      if (isClosed) return;
       emit(
         state.copyWith(
           loading: false,
