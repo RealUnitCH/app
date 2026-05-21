@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -84,6 +86,42 @@ void main() {
         2,
         reason: 'after invalidateCache the next call must hit the network',
       );
+    });
+
+    test('cache refreshes after the 5-minute TTL elapses', () {
+      // Beweist, dass die TTL wirklich greift (nicht nur invalidateCache).
+      // Mid-Session-Backend-Änderungen an buyable/sellable müssen ohne
+      // App-Restart sichtbar werden — sonst sind Compliance-Stops blind.
+      fakeAsync((async) {
+        var callCount = 0;
+        final client = MockClient((_) async {
+          callCount++;
+          return http.Response(jsonEncode([_chf]), 200);
+        });
+        final service = build(client);
+
+        unawaited(service.getAllFiats());
+        async.flushMicrotasks();
+        expect(callCount, 1);
+
+        async.elapse(const Duration(minutes: 4, seconds: 59));
+        unawaited(service.getAllFiats());
+        async.flushMicrotasks();
+        expect(
+          callCount,
+          1,
+          reason: 'within 5-min TTL the cache must still be served',
+        );
+
+        async.elapse(const Duration(seconds: 2));
+        unawaited(service.getAllFiats());
+        async.flushMicrotasks();
+        expect(
+          callCount,
+          2,
+          reason: 'past the 5-min TTL the next call must refetch',
+        );
+      });
     });
   });
 }

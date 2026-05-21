@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:clock/clock.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/language/dto/dfx_language_dto.dart';
@@ -27,7 +28,7 @@ class DfxLanguageService {
   Future<List<DfxLanguageDto>> getAllLanguages() async {
     final cached = _cachedLanguages;
     final cachedAt = _cachedAt;
-    if (cached != null && cachedAt != null && DateTime.now().difference(cachedAt) < _cacheTtl) {
+    if (cached != null && cachedAt != null && clock.now().difference(cachedAt) < _cacheTtl) {
       return cached;
     }
 
@@ -43,7 +44,7 @@ class DfxLanguageService {
         .map((json) => DfxLanguageDto.fromJson(json))
         .toList();
     _cachedLanguages = languages;
-    _cachedAt = DateTime.now();
+    _cachedAt = clock.now();
     return languages;
   }
 

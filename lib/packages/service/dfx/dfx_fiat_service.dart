@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:clock/clock.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/fiat/dto/dfx_fiat_dto.dart';
@@ -28,7 +29,7 @@ class DfxFiatService {
   Future<List<DfxFiatDto>> getAllFiats() async {
     final cached = _cachedFiats;
     final cachedAt = _cachedAt;
-    if (cached != null && cachedAt != null && DateTime.now().difference(cachedAt) < _cacheTtl) {
+    if (cached != null && cachedAt != null && clock.now().difference(cachedAt) < _cacheTtl) {
       return cached;
     }
 
@@ -42,7 +43,7 @@ class DfxFiatService {
     final List<dynamic> jsonList = jsonDecode(response.body);
     final fiats = jsonList.map((json) => DfxFiatDto.fromJson(json)).toList();
     _cachedFiats = fiats;
-    _cachedAt = DateTime.now();
+    _cachedAt = clock.now();
     return fiats;
   }
 
