@@ -22,10 +22,12 @@ The 100% rule above is the target state. Until the items below land, it is aspir
 
 - [x] `flutter test --coverage` step in `.github/workflows/pull-request.yaml`
 - [x] lcov filter narrowed to the activated surface (`lib/packages/**` + `lib/screens/**/cubit(s)/**` + `lib/screens/**/bloc/**`) and a per-run summary posted to the workflow step summary
-- [ ] lcov threshold check (e.g. via `very_good_cli` or a custom `lcov` parser) failing the build below 100% on the scope above
+- [x] lcov threshold check failing the build below a committed floor on the scope above
 - [ ] GitHub branch protection on `develop` requiring the coverage check
 - [ ] Build-time feature-flag mechanism (analogous to `EXPO_PUBLIC_ENABLE_*` in `dfx-wallet`) so non-MVP features can be gated out of the activated surface — required before the 100% rule is realistic across all feature areas
 - [ ] Inline `// coverage:ignore-*` annotations on truly unreachable paths, each with a one-line reason
+
+**Ratchet protocol.** The committed floor lives in two flat files at the repo root: `.coverage-floor-lines` and `.coverage-floor-functions` (integer percent, no `%` suffix). CI fails the build when scoped coverage drops below either value. Raising the floor is encouraged on every PR that raises measured coverage — bump the file in the same commit and the gate moves up. Lowering the floor requires explicit reviewer sign-off; PR convention is the `coverage:lower-floor` label so the regression is visible in the PR list rather than smuggled in. The functions floor is parked at a placeholder today because `flutter test --coverage` does not emit `FN` records — the gate warns instead of failing on that metric until upstream adds support.
 
 Three PRs already in flight close the largest gaps for KYC + BitBox logic: [#319](https://github.com/DFXswiss/realunit-app/pull/319) (Tier 0 cubit tests), [#320](https://github.com/DFXswiss/realunit-app/pull/320) (Tier 1 FakeBitbox integration), [#321](https://github.com/DFXswiss/realunit-app/pull/321) (dashboard buy actions + auth service tests).
 
@@ -133,7 +135,7 @@ Non-BitBox code only needs Tier 0 + widget tests; Tier 1+ are reserved for hardw
 | Stack    | Command                   | What it covers                                                                                                                                                                                            |
 | -------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Flutter  | `flutter test`            | Unit + widget specs under `test/**` (pure-Dart `test` and `testWidgets`)                                                                                                                                  |
-| Coverage | `flutter test --coverage` | Writes `coverage/lcov.info`. CI filters out `lib/generated/**` and `lib/main.dart` so the figure reflects the activated surface. Threshold enforcement is not yet wired — see "Coverage infrastructure roadmap" above. |
+| Coverage | `flutter test --coverage` | Writes `coverage/lcov.info`. CI narrows it to the activated surface and hard-fails when scoped coverage drops below the floor in `.coverage-floor-lines` / `.coverage-floor-functions`. See "Coverage infrastructure roadmap" above for the ratchet protocol. |
 | Analyzer | `flutter analyze`         | Dart static analysis per `analysis_options.yaml`                                                                                                                                                          |
 
 Tier 1 (`integration_test/`) and Tier 3 (`.maestro/`) runners are tracked under "Testing tiers" above but not yet committed.
@@ -142,7 +144,7 @@ Tier 1 (`integration_test/`) and Tier 3 (`.maestro/`) runners are tracked under 
 
 | Workflow                     | Trigger                                                       | Action                                                                                  |
 | ---------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `pull-request.yaml`          | PR to `develop` / `main` · manual                             | `flutter analyze` + `flutter test --coverage`, filter generated files, upload lcov artifact |
+| `pull-request.yaml`          | PR to `develop` / `main` · manual                             | `flutter analyze` + `flutter test --coverage`, scope lcov to the activated surface, fail below the committed floor, upload lcov artifact |
 | `bitbox-simulator.yml`       | PR touching `lib/packages/hardware_wallet/**` or `wallet/**`  | Runs the BitBox02 firmware simulator with `bitbox-testkit` baselines (Tier 2)           |
 | `bitbox-simulator-slash.yml` | `/bitbox-simulator` comment on any PR                         | Same engine as above, on-demand per PR (variants: default / `ref=main`)                 |
 | `auto-release-pr.yaml`       | Push `develop` · manual                                       | Opens Release PR `develop` → `main`                                                     |
