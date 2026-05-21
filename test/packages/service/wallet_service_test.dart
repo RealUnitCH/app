@@ -58,8 +58,86 @@ void main() {
   });
 
   group('$WalletService', () {
+    group('generateUncommittedSeedWallet', () {
+      test('returns an in-memory SoftwareWallet with the id=0 sentinel and a valid bip39 mnemonic',
+          () async {
+        final draft = await service.generateUncommittedSeedWallet('Main');
+
+        expect(draft, isA<SoftwareWallet>());
+        expect(draft.id, 0,
+            reason: 'uncommitted drafts use the 0 sentinel until commitGeneratedWallet lands the row');
+        expect(draft.name, 'Main');
+        expect(service.validateSeed(draft.seed), isTrue);
+      });
+
+      test('does NOT write to the repository — the encrypted seed must not land on disk', () async {
+        await service.generateUncommittedSeedWallet('Main');
+
+        // Pin the disk-side guarantee: nothing flows into `walletInfos` until
+        // a separate `commitGeneratedWallet` call. Without this, every
+        // `_dropMnemonic` regenerate in `CreateWalletCubit` would persist a
+        // fresh encrypted-seed row, and `WalletStorage.deleteWallet` only
+        // touches `walletAccountInfos`, so those rows would accumulate
+        // undeletable.
+        verifyNever(() => repo.createWallet(any(), any(), any(), any()));
+        verifyNever(() => settings.saveCurrentWalletId(any()));
+      });
+
+      test('two consecutive calls produce distinct mnemonics (entropy not pinned by the API)',
+          () async {
+        final a = await service.generateUncommittedSeedWallet('Main');
+        final b = await service.generateUncommittedSeedWallet('Main');
+
+        expect(a.seed, isNot(equals(b.seed)),
+            reason: 'each call must produce a fresh mnemonic — pinning entropy would '
+                'silently break the "regenerate on hidden" contract');
+      });
+    });
+
+    group('commitGeneratedWallet', () {
+      test('persists the draft seed and returns a SoftwareWallet carrying the DB-assigned id',
+          () async {
+        when(() => repo.createWallet(any(), any(), any(), any())).thenAnswer((_) async => 42);
+
+        final draft = await service.generateUncommittedSeedWallet('Main');
+        final committed = await service.commitGeneratedWallet(draft);
+
+        expect(committed.id, 42);
+        expect(committed.name, 'Main');
+        expect(committed.seed, draft.seed,
+            reason: 'commit must preserve the draft mnemonic — no silent re-generation');
+        final expectedAddress = committed.currentAccount.primaryAddress.address.hexEip55;
+        verify(
+          () => repo.createWallet('Main', WalletType.software, draft.seed, expectedAddress),
+        ).called(1);
+      });
+
+      test('writes exactly one row per call (no implicit dedup at this layer)', () async {
+        // Pin the disk-side contract: each commit call is one row. The dedup
+        // lives at the cubit layer (`VerifySeedCubit.verify` is invoked once
+        // per successful quiz). Surfaces a regression where commit silently
+        // dedups and a follow-up caller assumes idempotence.
+        when(() => repo.createWallet(any(), any(), any(), any())).thenAnswer((_) async => 1);
+
+        final draft = await service.generateUncommittedSeedWallet('Main');
+        await service.commitGeneratedWallet(draft);
+
+        verify(() => repo.createWallet(any(), any(), any(), any())).called(1);
+      });
+
+      test('does not set the wallet as current (caller is responsible)', () async {
+        when(() => repo.createWallet(any(), any(), any(), any())).thenAnswer((_) async => 7);
+
+        final draft = await service.generateUncommittedSeedWallet('Main');
+        await service.commitGeneratedWallet(draft);
+
+        verifyNever(() => settings.saveCurrentWalletId(any()));
+      });
+    });
+
     group('createSeedWallet', () {
-      test('returns a SoftwareWallet with the generated mnemonic and address persisted', () async {
+      test('generate+commit convenience — persists a freshly generated mnemonic in one call',
+          () async {
         when(() => repo.createWallet(any(), any(), any(), any())).thenAnswer((_) async => 42);
 
         final wallet = await service.createSeedWallet('Main');

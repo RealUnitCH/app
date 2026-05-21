@@ -48,7 +48,8 @@ void main() {
     // account or the unstubbed null trips the cast.
     final stubbedWallet = MockWallet();
     when(() => stubbedWallet.currentAccount).thenReturn(MockWalletAccount());
-    when(() => walletService.createSeedWallet(any())).thenAnswer((_) async => stubbedWallet);
+    when(() => walletService.generateUncommittedSeedWallet(any()))
+        .thenAnswer((_) async => stubbedWallet);
     getIt.registerSingleton<WalletService>(walletService);
     // CreateWalletCubit now depends on DFXAuthService (via DfxKycService — the
     // smallest registered subclass) to pre-warm the auth signature on

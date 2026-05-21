@@ -14,6 +14,8 @@ class _MockAuthService extends Mock implements DFXAuthService {}
 
 class _FakeWalletAccount extends Fake implements AWalletAccount {}
 
+class _FakeSoftwareWallet extends Fake implements SoftwareWallet {}
+
 const _testMnemonic =
     'test test test test test test test test test test test junk';
 
@@ -23,6 +25,9 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(_FakeWalletAccount());
+    // Needed by the disk-side regression test that asserts
+    // `commitGeneratedWallet(any())` is never called.
+    registerFallbackValue(_FakeSoftwareWallet());
   });
 
   setUp(() {
@@ -41,15 +46,19 @@ void main() {
 
     test('createWallet stores the newly created SoftwareWallet in state', () async {
       final wallet = SoftwareWallet(7, 'Obi-Wallet-Kenobi', _testMnemonic);
-      when(() => service.createSeedWallet(any())).thenAnswer((_) async => wallet);
+      when(() => service.generateUncommittedSeedWallet(any())).thenAnswer((_) async => wallet);
 
       final cubit = CreateWalletCubit(service, authService);
       cubit.createWallet();
       await cubit.stream.firstWhere((s) => s.wallet != null);
 
       expect(cubit.state.wallet, same(wallet));
-      verify(() => service.createSeedWallet('Obi-Wallet-Kenobi')).called(1);
+      verify(() => service.generateUncommittedSeedWallet('Obi-Wallet-Kenobi')).called(1);
       verify(() => authService.ensureSignatureFor(wallet.currentAccount)).called(1);
+      // Pin the disk-side guarantee: the cubit MUST NOT commit on
+      // generation — that's `VerifySeedCubit.verify()`'s job, gated on
+      // the user actually keeping the seed.
+      verifyNever(() => service.commitGeneratedWallet(any()));
     });
 
     blocTest<CreateWalletCubit, CreateWalletState>(
@@ -67,7 +76,7 @@ void main() {
 
     test('toggleShowSeed preserves the wallet field', () async {
       final wallet = SoftwareWallet(1, 'W', _testMnemonic);
-      when(() => service.createSeedWallet(any())).thenAnswer((_) async => wallet);
+      when(() => service.generateUncommittedSeedWallet(any())).thenAnswer((_) async => wallet);
       final cubit = CreateWalletCubit(service, authService);
       cubit.createWallet();
       await cubit.stream.firstWhere((s) => s.wallet != null);
@@ -87,7 +96,7 @@ void main() {
       testWidgets('hidden drops the just-generated mnemonic from cubit state',
           (tester) async {
         final wallet = SoftwareWallet(7, 'Obi-Wallet-Kenobi', _testMnemonic);
-        when(() => service.createSeedWallet(any())).thenAnswer((_) async => wallet);
+        when(() => service.generateUncommittedSeedWallet(any())).thenAnswer((_) async => wallet);
 
         final cubit = CreateWalletCubit(service, authService);
         addTearDown(cubit.close);
@@ -156,7 +165,7 @@ void main() {
         testWidgets('${lifecycle.name} does NOT clear the cubit state — only hidden does',
             (tester) async {
           final wallet = SoftwareWallet(7, 'Obi-Wallet-Kenobi', _testMnemonic);
-          when(() => service.createSeedWallet(any())).thenAnswer((_) async => wallet);
+          when(() => service.generateUncommittedSeedWallet(any())).thenAnswer((_) async => wallet);
           final cubit = CreateWalletCubit(service, authService);
           addTearDown(cubit.close);
           cubit.createWallet();
@@ -188,9 +197,12 @@ void main() {
           'hidden → resumed re-generates a fresh wallet so the view is not '
           'stuck on the loading indicator', (tester) async {
         var generated = 0;
-        when(() => service.createSeedWallet(any())).thenAnswer((_) async {
+        when(() => service.generateUncommittedSeedWallet(any())).thenAnswer((_) async {
           generated++;
-          return SoftwareWallet(generated, 'Obi-Wallet-Kenobi', _testMnemonic);
+          // id stays 0 — the draft is uncommitted until VerifySeedCubit
+          // confirms the seed. The `generated` counter is the proof of
+          // re-generation, not an artefact of the id field.
+          return SoftwareWallet(0, 'Obi-Wallet-Kenobi', _testMnemonic);
         });
         // Record every emission so we can pin both the intermediate cleared
         // state AND the regenerated state — without the recording, `pump`
@@ -237,8 +249,14 @@ void main() {
         expect(emissions.last.wallet, isNot(same(initial)),
             reason: 'a NEW SoftwareWallet must be generated, not the cleared one');
         expect(generated, 2,
-            reason: '_dropMnemonic must re-fire createSeedWallet so the view '
-                'recovers from the cleared state');
+            reason: '_dropMnemonic must re-fire generateUncommittedSeedWallet '
+                'so the view recovers from the cleared state');
+        // Disk-side pin for the Option B refactor: the cubit must NEVER
+        // commit on its own. `WalletStorage.deleteWallet` only touches
+        // `walletAccountInfos`, so any commit here would write an
+        // undeletable row to `walletInfos` and accumulate one per
+        // hide-cycle.
+        verifyNever(() => service.commitGeneratedWallet(any()));
       });
     });
   });
