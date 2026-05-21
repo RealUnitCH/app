@@ -319,6 +319,7 @@
   "userData": "Nutzerdaten",
   "userDataLoadFailed": "Beim Laden der Nutzerdaten ist ein Fehler aufgetreten.",
   "userDataNotFound": "Zu dieser Wallet sind keine Nutzerdaten hinterlegt.",
+  "verifySeedCommitFailed": "Ihre Wallet konnte nicht gespeichert werden — zum Erneut-Versuchen tippen",
   "verifySeedInvalid": "Die Wörter stimmen nicht überein",
   "verifySeedSubtitle": "Bitte geben Sie die folgenden Wörter aus Ihrer Wiederherstellungsphrase ein, um zu bestätigen, dass Sie sie korrekt notiert haben.",
   "verifySeedSuccessful": "Seed erfolgreich überprüft",

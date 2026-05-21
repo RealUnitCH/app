@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:math';
 
 import 'package:equatable/equatable.dart';
@@ -55,6 +56,13 @@ class VerifySeedCubit extends Cubit<VerifySeedState> {
   }
 
   Future<bool> verify() async {
+    // Re-entrancy guard. The button's `onPressed` is fire-and-forget, so a
+    // second tap can land while the first commit is still in flight (or
+    // already done). A second commit would also trip
+    // `commitGeneratedWallet`'s `assert(draft.id == 0)` on the now-committed
+    // `_wallet`. Bail out and let the first call own the transition.
+    if (state.isVerifying || state.isVerified) return false;
+
     final seedWords = _wallet.seed.seedWords;
 
     for (int i = 0; i < state.wordIndices.length; i++) {
@@ -75,10 +83,31 @@ class VerifySeedCubit extends Cubit<VerifySeedState> {
     // `walletInfos`. The user only reaches this branch by typing the four
     // requested words correctly, so the seed they kept is the seed we
     // store.
-    final committed = await _walletService.commitGeneratedWallet(_wallet);
-    _wallet = committed;
-    await _walletService.setCurrentWallet(committed.id);
-    emit(state.copyWith(isVerified: true));
-    return true;
+    emit(state.copyWith(isVerifying: true, commitFailed: false));
+    try {
+      final committed = await _walletService.commitGeneratedWallet(_wallet);
+      _wallet = committed;
+      await _walletService.setCurrentWallet(committed.id);
+      emit(
+        state.copyWith(
+          isVerifying: false,
+          isVerified: true,
+          committedWallet: committed,
+        ),
+      );
+      return true;
+    } catch (e, stack) {
+      // Persisting the wallet failed or hung-then-threw. Surface a retry
+      // affordance instead of leaving the screen stuck on a plain
+      // "Bestätigen" with no feedback — `verify` must never resolve into a
+      // state that is neither success nor a visible error.
+      developer.log(
+        'Failed to commit verified wallet',
+        error: e,
+        stackTrace: stack,
+      );
+      emit(state.copyWith(isVerifying: false, commitFailed: true));
+      return false;
+    }
   }
 }

@@ -319,6 +319,7 @@
   "userData": "User data",
   "userDataLoadFailed": "An error occurred while loading user data.",
   "userDataNotFound": "No user data is stored for this wallet.",
+  "verifySeedCommitFailed": "Couldn't save your wallet — tap to retry",
   "verifySeedInvalid": "The words don't match",
   "verifySeedSubtitle": "Please enter the following words from your recovery phrase to confirm you've written them down correctly.",
   "verifySeedSuccessful": "Seed successfully verified",
