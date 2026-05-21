@@ -1,7 +1,17 @@
 # Captures docs/handbook/screenshots/10-biometric-prompt.png
 # Re-entering the same six 1s. After the PIN is confirmed the app shows a
-# bottom-sheet asking whether to enable biometric unlock. On a clean simulator
-# this is the screen between PIN confirm and dashboard.
+# bottom-sheet asking whether to enable biometric unlock, but ONLY if the
+# simulator has Face ID enrolled (`LocalAuthentication.canCheckBiometrics`
+# returns true). A freshly `simctl erase`-ed runner does not have
+# enrollment, and Apple removed the `simctl ui ... biometric` subcommand
+# around Xcode 26 (verified locally: `simctl ui --help` lists only
+# `appearance`, `increase_contrast`, `content_size`), so we cannot force
+# enrollment on CI. The flow handles both paths: with enrollment the
+# bottom sheet appears and we wait for "Überspringen"; without enrollment
+# the app proceeds straight to the dashboard and we skip the wait. The
+# captured screenshot will then show the dashboard instead of the
+# biometric prompt — local re-captures on a developer's machine with
+# Face ID enrolled produce the documented screenshot.
 appId: swiss.realunit.app
 ---
 - repeat:
@@ -9,6 +19,10 @@ appId: swiss.realunit.app
     commands:
       - tapOn: '1'
 - waitForAnimationToEnd
-- extendedWaitUntil:
-    visible: 'Überspringen'
-    timeout: 15000
+- runFlow:
+    when:
+      visible: 'Überspringen'
+    commands:
+      - extendedWaitUntil:
+          visible: 'Überspringen'
+          timeout: 5000

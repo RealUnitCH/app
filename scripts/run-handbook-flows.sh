@@ -95,16 +95,6 @@ echo "Pinning simulator locale to de_CH"
 xcrun simctl spawn "$UDID" defaults write -g AppleLanguages -array de_CH
 xcrun simctl spawn "$UDID" defaults write -g AppleLocale -string de_CH
 
-# Enroll Face ID on the booted simulator. Without enrollment,
-# `LocalAuthentication.canCheckBiometrics` returns false on a fresh
-# `simctl erase`-ed device, BiometricService.isAvailable() is false, and
-# the post-PIN-setup "Enable biometric" bottom sheet is skipped entirely.
-# Flow 11 then has no "Überspringen" button to tap and hangs. Fail hard
-# if `simctl ui` ever stops supporting this: a silent skip would put us
-# back into the same hang on the next dashboard flow.
-echo "Enrolling Face ID on simulator"
-xcrun simctl ui "$UDID" biometric enrolled true
-
 echo "Installing $APP_ID from $APP_BUNDLE"
 xcrun simctl install "$UDID" "$APP_BUNDLE"
 
