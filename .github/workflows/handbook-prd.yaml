@@ -56,6 +56,7 @@ jobs:
           CLOUDFLARED_VERSION: "2025.4.0"
           CLOUDFLARED_SHA256: "2561391ee9abdc828afcc52f5ac314b6551a9a6a31ff59cbc64efc63aec04615"
         run: |
+          set -euo pipefail
           curl -fsSL "https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/cloudflared-linux-arm64" -o /usr/local/bin/cloudflared
           echo "${CLOUDFLARED_SHA256}  /usr/local/bin/cloudflared" | sha256sum -c -
           chmod +x /usr/local/bin/cloudflared
@@ -70,6 +71,7 @@ jobs:
       # for the apparent smoke-test flakiness tracked in #487 Item 4).
       - name: Deploy to server
         run: |
+          set -euo pipefail
           mkdir -p ~/.ssh
           echo "${{ secrets.DEPLOY_PRD_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key

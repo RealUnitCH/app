@@ -30,6 +30,7 @@ jobs:
       - name: Check for existing PR
         id: check-pr
         run: |
+          set -euo pipefail
           PR_COUNT=$(gh pr list --base main --head develop --state open --json number --jq 'length')
           echo "pr_exists=$([[ $PR_COUNT -gt 0 ]] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
           echo "::notice::Open PRs from develop to main: $PR_COUNT"
@@ -40,6 +41,7 @@ jobs:
         id: check-diff
         if: steps.check-pr.outputs.pr_exists == 'false'
         run: |
+          set -euo pipefail
           DIFF_COUNT=$(git rev-list --count origin/main..origin/develop)
           echo "has_changes=$([[ $DIFF_COUNT -gt 0 ]] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
           echo "commit_count=$DIFF_COUNT" >> $GITHUB_OUTPUT
@@ -51,6 +53,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMMIT_COUNT: ${{ steps.check-diff.outputs.commit_count }}
         run: |
+          set -euo pipefail
           printf '%s\n' \
             "## Automatic Release PR" \
             "" \
