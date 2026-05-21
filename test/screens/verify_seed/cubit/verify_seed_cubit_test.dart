@@ -277,5 +277,58 @@ void main() {
       expect(cubit.state.isVerified, isTrue);
       verify(() => service.commitGeneratedWallet(any())).called(2);
     });
+
+    test('verify does not emit after the cubit is closed mid-commit',
+        () async {
+      // The AppBar back button stays enabled on the verify-seed page while
+      // the commit is in flight, so the cubit can be closed before
+      // `commitGeneratedWallet` resolves. A post-close `emit` would throw
+      // `StateError` — the same async-tail bug `create_wallet_cubit` /
+      // `connect_bitbox_cubit` / `kyc_cubit` guard against with `isClosed`.
+      final completer = Completer<SoftwareWallet>();
+      when(() => service.commitGeneratedWallet(any()))
+          .thenAnswer((_) => completer.future);
+
+      final cubit = VerifySeedCubit(wallet, service);
+      final pending = cubit.verify();
+
+      await cubit.close();
+      completer.complete(SoftwareWallet(42, 'Main', _testMnemonic));
+      final result = await pending;
+
+      // No StateError thrown from the post-close emit path, and
+      // setCurrentWallet is skipped once the cubit is closed.
+      expect(result, isFalse);
+      verifyNever(() => service.setCurrentWallet(any()));
+    });
+
+    test('verify does not emit when the cubit is closed between commit and setCurrentWallet',
+        () async {
+      // Cover the second async boundary too: `setCurrentWallet` is awaited
+      // *after* a successful commit. If the user pops the page during that
+      // gap, the success emission must be skipped — not throw.
+      final commitDone = Completer<SoftwareWallet>();
+      final setCurrentStarted = Completer<void>();
+      final setCurrentFinish = Completer<void>();
+      when(() => service.commitGeneratedWallet(any()))
+          .thenAnswer((_) => commitDone.future);
+      when(() => service.setCurrentWallet(any())).thenAnswer((_) {
+        setCurrentStarted.complete();
+        return setCurrentFinish.future;
+      });
+
+      final cubit = VerifySeedCubit(wallet, service);
+      final pending = cubit.verify();
+      commitDone.complete(SoftwareWallet(42, 'Main', _testMnemonic));
+      await setCurrentStarted.future;
+
+      // Close the cubit while `setCurrentWallet` is still pending — the
+      // success `emit` that follows must be skipped.
+      await cubit.close();
+      setCurrentFinish.complete();
+      final result = await pending;
+
+      expect(result, isFalse);
+    });
   });
 }

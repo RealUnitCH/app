@@ -86,8 +86,18 @@ class VerifySeedCubit extends Cubit<VerifySeedState> {
     emit(state.copyWith(isVerifying: true, commitFailed: false));
     try {
       final committed = await _walletService.commitGeneratedWallet(_wallet);
+      // Async-tail guard: the AppBar back button on the verify-seed screen
+      // stays enabled while `isVerifying` is true, so the user can pop the
+      // page (closing the cubit) before the commit resolves. A post-close
+      // `emit` would throw `StateError`. Matches the
+      // `connect_bitbox_cubit` / `create_wallet_cubit` / `kyc_cubit`
+      // pattern. The committed row is already persisted at this point —
+      // dropping the success emission is acceptable; the user simply
+      // restarts onboarding and re-uses the existing wallet.
+      if (isClosed) return false;
       _wallet = committed;
       await _walletService.setCurrentWallet(committed.id);
+      if (isClosed) return false;
       emit(
         state.copyWith(
           isVerifying: false,
@@ -106,6 +116,7 @@ class VerifySeedCubit extends Cubit<VerifySeedState> {
         error: e,
         stackTrace: stack,
       );
+      if (isClosed) return false;
       emit(state.copyWith(isVerifying: false, commitFailed: true));
       return false;
     }
