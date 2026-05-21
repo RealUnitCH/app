@@ -46,6 +46,11 @@ void main() {
     id: 4,
     iban: 'CH0000000000000000004',
   );
+  const accountDefaultButInactive = BankAccount(
+    id: 6,
+    iban: 'CH0000000000000000006',
+    isDefault: true,
+  );
 
   setUpAll(() {
     registerFallbackValue(accountActiveNonDefault1);
@@ -75,7 +80,11 @@ void main() {
         accountsCubit,
         Stream.fromIterable(const [
           SellBankAccountsInitial(),
-          SellBankAccountsSuccess([accountActiveNonDefault1, accountDefault, accountActiveNonDefault2]),
+          SellBankAccountsSuccess([
+            accountActiveNonDefault1,
+            accountDefault,
+            accountActiveNonDefault2,
+          ]),
         ]),
         initialState: const SellBankAccountsInitial(),
       );
@@ -87,8 +96,11 @@ void main() {
     });
 
     testWidgets(
-      'falls back to the last active account when no default is set',
+      'selects null when no default is flagged (no active-fallback heuristic)',
       (tester) async {
+        // Strict mode per "Keine Fallbacks" rule: if the backend doesn't tag a
+        // default we do NOT silently pick "the last active account". The user
+        // has to choose explicitly.
         whenListen(
           accountsCubit,
           Stream.fromIterable(const [
@@ -101,7 +113,7 @@ void main() {
         await pumpView(tester);
         await tester.pump();
 
-        verify(() => selectedCubit.selectBankAccount(accountActiveNonDefault2)).called(1);
+        verify(() => selectedCubit.selectBankAccount(null)).called(1);
       },
     );
 
@@ -125,11 +137,39 @@ void main() {
     );
 
     testWidgets(
+      'selects null when the only default account is inactive',
+      (tester) async {
+        // Threat model: backend bug could ship `default: true, active: false`.
+        // We must not auto-select such an account — `sell_button.dart` only
+        // null-checks the selection, so an inactive default would slip through.
+        whenListen(
+          accountsCubit,
+          Stream.fromIterable(const [
+            SellBankAccountsInitial(),
+            SellBankAccountsSuccess([
+              accountActiveNonDefault1,
+              accountDefaultButInactive,
+            ]),
+          ]),
+          initialState: const SellBankAccountsInitial(),
+        );
+
+        await pumpView(tester);
+        await tester.pump();
+
+        verify(() => selectedCubit.selectBankAccount(null)).called(1);
+      },
+    );
+
+    testWidgets(
       'picks the first default when multiple defaults are flagged',
       (tester) async {
         // Plan W1.2 acceptance: "If multiple defaults (shouldn't happen) →
         // first wins." Pins `firstWhereOrNull` ordering so a future switch to
-        // `lastWhereOrNull` (or any reverse iteration) is caught by CI.
+        // `lastWhereOrNull` (or any reverse iteration) is caught by CI. The
+        // `developer.log` warning emitted in this case is observable in dev
+        // tooling but not asserted here (dart:developer has no mockable
+        // surface).
         whenListen(
           accountsCubit,
           Stream.fromIterable(const [
