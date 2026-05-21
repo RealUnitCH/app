@@ -112,10 +112,6 @@ Shown during a profile-edit operation:
 
 - `SettingsEditLoadingPage`, `SettingsEditPendingPage`, `SettingsEditFailurePage`
 
-### Hardware wallet
-
-- `ConnectBitboxPage` — BitBox connection screen, pushed within the hardware-wallet flow (not a route)
-
 ### Sell flow
 
 - `SellBankAccountSelectionPage` — bank-account picker shown within the sell flow
@@ -124,11 +120,12 @@ Shown during a profile-edit operation:
 
 - **`*Page` / `*View` pattern.** Several screens split into a `*Page` widget
   (provides the bloc/cubit) and a `*View` widget (builds the `Scaffold`):
-  `CreateWalletView`, `RestoreWalletView`, `SettingsSeedView`, `DebugAuthView`,
-  `ConnectBitboxView`. These are not separate screens — each belongs to its
-  `*Page`.
-- **Modal bottom sheets** (e.g. `EnableBiometricBottomSheet`, the BitBox
-  reconnect sheet, `ReceivePage` in `isBottomSheet` mode) are not routes and are
-  out of scope for this inventory.
+  `CreateWalletView`, `RestoreWalletView`, `SettingsSeedView`, `DebugAuthView`.
+  These are not separate screens — each belongs to its `*Page`.
+- **Modal bottom sheets** are not routes/screens and are out of scope for this
+  inventory. Examples: `EnableBiometricBottomSheet`; `ReceivePage` in
+  `isBottomSheet` mode; `ConnectBitboxPage` — despite its `Page` suffix it
+  builds no `Scaffold` and is shown via `showModalBottomSheet` from the welcome
+  screen, KYC registration and the BitBox reconnect helper.
 - `LegalDocumentPage` backs two routes (`legalDocument`, `terms`) and
   `VerifyPinPage` backs two (`pinGate`, `verifyPin`) via different constructors.
