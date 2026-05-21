@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
@@ -378,6 +380,54 @@ void main() {
         await service.lockCurrentWallet();
         expect(stored.last, isA<SoftwareViewWallet>(),
             reason: 'last holder release flips back to view wallet');
+      });
+
+      // Genuine concurrency race: both ensures are pending on the DB read
+      // when the lock fires between them. Without the holder counter the
+      // lock would observe the (mid-unlock) view wallet, no-op, and the
+      // second ensure would then complete and write the unlocked wallet —
+      // which then never gets locked back because lockCurrentWallet
+      // already returned. With the counter, the lock decrements but does
+      // not flip the wallet because two ensures are still in flight.
+      test('lock between two in-flight ensures preserves the unlocked wallet', () async {
+        final stored = <AWallet>[SoftwareViewWallet(7, 'Main', _debugAddress)];
+        when(() => appStore.wallet).thenAnswer((_) => stored.last);
+        when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
+          final newWallet = inv.positionalArguments.single as AWallet;
+          stored.add(newWallet);
+          return newWallet;
+        });
+        when(() => settings.currentWalletId).thenReturn(7);
+
+        // Gate the repository read so we can interleave concurrent calls.
+        final gate = Completer<WalletInfo>();
+        when(() => repo.getUnlockedWalletById(7)).thenAnswer((_) => gate.future);
+
+        // Fire two ensures without awaiting — both block on the gated read.
+        final ensureA = service.ensureCurrentWalletUnlocked();
+        final ensureB = service.ensureCurrentWalletUnlocked();
+
+        // Flow A releases its hold while both unlocks are still pending.
+        // The counter must keep the wallet from being flipped back to a
+        // view wallet because flow B is still holding the contract.
+        await service.lockCurrentWallet();
+
+        // Release the gated read so both ensures can complete.
+        gate.complete(
+          _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
+        );
+        await Future.wait([ensureA, ensureB]);
+
+        expect(stored.last, isA<SoftwareWallet>(),
+            reason: 'lock fired mid-unlock must not shadow the in-flight unlock');
+
+        // Drain the remaining holders. Two more locks: one to match the
+        // second ensure's release, one to confirm the counter clamps at 0
+        // and doesn't go negative.
+        await service.lockCurrentWallet();
+        await service.lockCurrentWallet();
+        expect(stored.last, isA<SoftwareViewWallet>(),
+            reason: 'final holder release flips back to view wallet');
       });
     });
   });
