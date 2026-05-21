@@ -20,6 +20,15 @@ extension KycProcessStatusExtension on KycProcessStatus {
     }
   }
 
+  // Unknown values must throw, not silently degrade to `inProgress`. Silent
+  // default would re-introduce the exact "local default decision" that the
+  // API-as-Decision-Authority rule (foundation PR #491) forbids: if the API
+  // later adds e.g. `OnHold` or `Suspended` the app must fail loud so we
+  // notice instead of routing the user through `_continueKyc` blindly.
+  //
+  // The pre-#3732 backwards-compat default applies only to an **absent**
+  // field — the DTO parsers handle that on the JSON layer (see
+  // `KycLevelDto.fromJson` / `KycSessionDto.fromJson`).
   static KycProcessStatus fromValue(String value) {
     switch (value) {
       case 'InProgress':
@@ -31,7 +40,7 @@ extension KycProcessStatusExtension on KycProcessStatus {
       case 'Failed':
         return KycProcessStatus.failed;
       default:
-        return KycProcessStatus.inProgress;
+        throw ArgumentError('Unsupported KYC process status: $value');
     }
   }
 }
