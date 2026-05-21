@@ -20,6 +20,49 @@ After changing ARB files, always regenerate: `dart run tool/generate_localizatio
 - If a feature needs on-chain data (e.g. native ETH balance, transaction status, token balance), add a new endpoint to [`DFXswiss/api`](https://github.com/DFXswiss/api) and let the app call that endpoint. The API is the single gateway.
 - All network calls must go through `AppStore.httpClient` with `buildUri(_host, …)` — `_host` resolves to the DFX API host via `ApiConfig`. Do not instantiate `http.Client`/`Dio`/`Web3Client` against other hosts.
 
+## API as Decision Authority — CRITICAL
+
+Network access is one half of the gateway rule. **Business decisions are the other half.** The DFX API is the single source of truth for what the user is allowed to do, what state they are in, and what they should be asked to do next. The realunit-app is a **rendering layer** for what the API says.
+
+### The rule
+
+- **The app does not decide if a flow is allowed.** The API decides. If the API accepts a call, the app must not block it pre-emptively.
+- **The app does not interpret status strings into business meaning.** It renders what the API returns as `currentStep` / `nextAction` / `state`.
+- **The app does not duplicate backend sets/enums as gating logic.** DTO mirroring for type safety is fine; local `_requiredStepNames`, `actionableStatuses`, `_minLevelForActions`, `_minAmountChf` constants are not.
+- **Prompts to the user fire only when the API requests them.** "Please verify yourself" appears only when the API signals a pending KYC step — never because the app inferred something from a level number or expired timestamp.
+
+### The test
+
+Before adding an `if` / `switch` / `.filter()` on API data, ask:
+
+1. Does the API already return the answer I'm computing? → use it directly.
+2. If I remove this local logic and render the API field 1:1, what breaks? → if "nothing", remove it; if "a missing field", extend the API.
+3. When local and API disagree, who wins? → the API. Always.
+
+### What is OK in the app
+
+- UI input validation (format, required field, length) — UI concern
+- Display formatting (date, currency, locale) — UI concern
+- Local security gates (PIN, wallet lock, BitBox connection) — physical security boundary, cannot be API-driven
+- Cryptographic operations (EIP-712 signing, key derivation) — must be local
+
+### What is NOT OK in the app
+
+- Deciding which KYC steps are required (`_requiredStepNames`, `_minLevelForActions`) — **the API decides via `requiredKycSteps()` on its side**
+- Deciding which step status is "actionable" or "pending" (`actionableStatuses`, `pendingStatuses`) — **the API returns `currentStep` directly**
+- Min/max transaction amounts, fees, supported currencies hardcoded — **must come from `/quote` / `/fiat` / `/asset` endpoints**
+- Routing flows based on local conditions (`if isBitbox → sellBitbox`) — **API signals the required workflow**
+- Feature visibility based on derived local state (Support link only if `emailSet`, Edit only if `!inReview`) — **API returns capability flags**
+- Pre-flight validation duplicating API rules — **call the API, render its error**
+
+### When the API doesn't yet expose what we need
+
+Extend the API, then change the app. **Do not add app-side workarounds.** Open an issue / PR in [`DFXswiss/api`](https://github.com/DFXswiss/api) describing the missing field (e.g. `KycStepDto.isRequired`, `BuyQuoteDto.minAmount`, `SettingsCapabilityDto.canBackup`) and wait for it. Temporary local logic is technical debt that **stays** — every shortcut accumulates as another place the app diverges from the API.
+
+### Audit
+
+A full audit of current violations lives in [`docs/api-authority-audit.md`](docs/api-authority-audit.md). New PRs must not add to it; ideally they reduce it.
+
 ## Project Architecture
 
 ```
