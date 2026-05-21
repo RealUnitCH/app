@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
@@ -11,9 +10,12 @@ import 'package:realunit_wallet/styles/currency.dart';
 class _MockBuyPaymentInfoService extends Mock
     implements RealUnitBuyPaymentInfoService {}
 
-class _MockPriceService extends Mock implements DFXPriceService {}
-
-const _info = BuyPaymentInfo(
+BuyPaymentInfo _info({
+  bool isValid = true,
+  double? minVolume,
+  String? error,
+  Currency currency = Currency.chf,
+}) => BuyPaymentInfo(
   id: 1,
   iban: 'CH56 0483 5012 3456 78',
   bic: 'CRESCHZZ80A',
@@ -23,12 +25,14 @@ const _info = BuyPaymentInfo(
   zip: '8000',
   city: 'Zurich',
   country: 'CH',
-  currency: Currency.chf,
+  currency: currency,
+  isValid: isValid,
+  minVolume: minVolume,
+  error: error,
 );
 
 void main() {
   late _MockBuyPaymentInfoService service;
-  late _MockPriceService priceService;
 
   setUpAll(() {
     registerFallbackValue(Currency.chf);
@@ -36,29 +40,30 @@ void main() {
 
   setUp(() {
     service = _MockBuyPaymentInfoService();
-    priceService = _MockPriceService();
   });
 
-  BuyPaymentInfoCubit build() => BuyPaymentInfoCubit(service, priceService);
+  BuyPaymentInfoCubit build() => BuyPaymentInfoCubit(service);
 
   group('$BuyPaymentInfoCubit', () {
     test('initial state is BuyPaymentInfoInitial', () {
       expect(build().state, isA<BuyPaymentInfoInitial>());
     });
 
-    test('happy path with CHF emits Loading then Success', () async {
+    test('happy path emits Success with the payment info from the API', () async {
       when(() => service.getPaymentInfo(any(), currency: any(named: 'currency')))
-          .thenAnswer((_) async => _info);
+          .thenAnswer((_) async => _info());
 
       final cubit = build();
       await cubit.getPaymentInfo(amount: '300');
 
       expect(cubit.state, isA<BuyPaymentInfoSuccess>());
-      expect((cubit.state as BuyPaymentInfoSuccess).buyPaymentInfo, _info);
       verify(() => service.getPaymentInfo(300, currency: Currency.chf)).called(1);
     });
 
-    test('amount below 100 CHF minimum → MinAmountNotMetFailure', () async {
+    test('API isValid=false with error=AmountTooLow → MinAmountNotMetFailure with API limit', () async {
+      when(() => service.getPaymentInfo(any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => _info(isValid: false, error: 'AmountTooLow', minVolume: 100));
+
       final cubit = build();
       await cubit.getPaymentInfo(amount: '50');
 
@@ -66,44 +71,54 @@ void main() {
       final f = cubit.state as BuyPaymentInfoMinAmountNotMetFailure;
       expect(f.error, PaymentInfoError.minAmountNotMet);
       expect(f.minAmount, 100);
-      verifyNever(() => service.getPaymentInfo(any(), currency: any(named: 'currency')));
+      verify(() => service.getPaymentInfo(50, currency: Currency.chf)).called(1);
     });
 
-    test('EUR minimum is scaled by getChfToEurRate (ceil'
-        ')', () async {
-      // 100 CHF * 0.92 EUR/CHF = 92 → ceil = 92.
-      when(() => priceService.getChfToEurRate()).thenAnswer((_) async => 0.92);
+    test('EUR min is reported by the API as-is, not scaled in the app', () async {
+      // For EUR the API returns its own currency-specific minVolume; the
+      // app no longer multiplies a hardcoded CHF baseline by an exchange
+      // rate locally — the rate lives server-side.
+      when(() => service.getPaymentInfo(any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => _info(
+            isValid: false,
+            error: 'AmountTooLow',
+            minVolume: 92,
+            currency: Currency.eur,
+          ));
 
       final cubit = build();
       await cubit.getPaymentInfo(amount: '50', currency: Currency.eur);
 
-      expect(cubit.state, isA<BuyPaymentInfoMinAmountNotMetFailure>());
       final f = cubit.state as BuyPaymentInfoMinAmountNotMetFailure;
       expect(f.minAmount, 92);
+      verify(() => service.getPaymentInfo(50, currency: Currency.eur)).called(1);
     });
 
-    test('EUR amount above scaled minimum proceeds to service', () async {
-      when(() => priceService.getChfToEurRate()).thenAnswer((_) async => 0.92);
+    test('API isValid=false with unknown error → generic Failure', () async {
       when(() => service.getPaymentInfo(any(), currency: any(named: 'currency')))
-          .thenAnswer((_) async => _info);
+          .thenAnswer((_) async => _info(isValid: false, error: 'AmountTooHigh', minVolume: 100));
 
       final cubit = build();
-      await cubit.getPaymentInfo(amount: '200', currency: Currency.eur);
+      await cubit.getPaymentInfo(amount: '999999999');
 
-      expect(cubit.state, isA<BuyPaymentInfoSuccess>());
-      verify(() => service.getPaymentInfo(200, currency: Currency.eur)).called(1);
+      expect(cubit.state, isA<BuyPaymentInfoFailure>());
+      expect((cubit.state as BuyPaymentInfoFailure).error, PaymentInfoError.unknown);
     });
 
-    test('empty amount string is treated as 0 → below minimum', () async {
+    test('empty amount string is treated as 0 → still calls the API', () async {
+      when(() => service.getPaymentInfo(any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => _info(isValid: false, error: 'AmountTooLow', minVolume: 100));
+
       final cubit = build();
       await cubit.getPaymentInfo(amount: '');
 
       expect(cubit.state, isA<BuyPaymentInfoMinAmountNotMetFailure>());
+      verify(() => service.getPaymentInfo(0, currency: Currency.chf)).called(1);
     });
 
     test('comma decimal separator is normalised to dot', () async {
       when(() => service.getPaymentInfo(any(), currency: any(named: 'currency')))
-          .thenAnswer((_) async => _info);
+          .thenAnswer((_) async => _info());
 
       final cubit = build();
       await cubit.getPaymentInfo(amount: '300,75');
