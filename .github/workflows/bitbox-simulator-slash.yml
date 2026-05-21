@@ -28,6 +28,7 @@ jobs:
       github.event.issue.pull_request != null &&
       startsWith(github.event.comment.body, '/bitbox-simulator')
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       authorized: ${{ steps.authz.outputs.authorized }}
       sha: ${{ steps.parse.outputs.sha }}

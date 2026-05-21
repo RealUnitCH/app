@@ -21,6 +21,7 @@ jobs:
     # human-pushed MAJOR/MINOR tag (App-Store-update marker).
     name: Decide whether this is an internal-patch tag
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       proceed: ${{ steps.check.outputs.proceed }}
     steps:
@@ -47,6 +48,7 @@ jobs:
     needs: guard
     if: needs.guard.outputs.proceed == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Check out code
@@ -146,6 +148,7 @@ jobs:
     needs: guard
     if: needs.guard.outputs.proceed == 'true'
     runs-on: macos-26
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -242,6 +245,7 @@ jobs:
     needs: [guard, android-deploy, ios-deploy]
     if: needs.guard.outputs.proceed == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
