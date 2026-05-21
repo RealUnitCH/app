@@ -54,7 +54,10 @@ class KycAccountMergeRequested extends KycState {
 }
 
 class KycUnsupportedStepFailure extends KycState {
-  final KycStepName stepName;
+  // Null when the backend says `PendingReview` but the step list contains no
+  // `isRequired` step we can name — we still surface the failure (never a
+  // silent `KycCompleted`) but cannot point the user at a specific step.
+  final KycStepName? stepName;
   const KycUnsupportedStepFailure(this.stepName);
 
   @override

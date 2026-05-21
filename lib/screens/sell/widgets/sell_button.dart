@@ -24,10 +24,7 @@ class SellButton extends StatelessWidget {
       listener: (context, state) async {
         if (state is SellPaymentInfoFailure) {
           if (state.error == .kycRequired) {
-            await context.pushNamed(
-              AppRoutes.kyc,
-              extra: state.requiredLevel,
-            );
+            await context.pushNamed(AppRoutes.kyc);
             return;
           }
           if (state.error == .registrationRequired) {

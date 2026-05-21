@@ -8,6 +8,7 @@ class KycSessionDto extends KycLevelDto {
   const KycSessionDto({
     required super.kycLevel,
     required super.kycSteps,
+    super.processStatus,
     this.currentStep,
   });
 
@@ -17,6 +18,9 @@ class KycSessionDto extends KycLevelDto {
       kycSteps: (json['kycSteps'] as List<dynamic>)
           .map((e) => KycStepDto.fromJson(e as Map<String, dynamic>))
           .toList(),
+      processStatus: json['processStatus'] != null
+          ? KycProcessStatusExtension.fromValue(json['processStatus'] as String)
+          : KycProcessStatus.inProgress,
       currentStep: json['currentStep'] != null
           ? KycStepSessionDto.fromJson(json['currentStep'] as Map<String, dynamic>)
           : null,
