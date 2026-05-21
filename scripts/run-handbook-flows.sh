@@ -27,12 +27,16 @@
 #   without this pin and would fail the first German-string assertion.
 #
 # Retry strategy:
-#   The Maestro 2.5.x driver intermittently hangs at XCUITest startup
-#   on macos-latest + iOS 26.x (see mobile-dev-inc/maestro#3137). Each
-#   flow is retried up to MAESTRO_MAX_ATTEMPTS times (default 3) when
-#   the failure log contains `IOSDriverTimeoutException`. Assertion
-#   failures are NEVER retried — those are real regressions and must
-#   surface as red CI checks.
+#   The Maestro version is pinned by `.maestro-version` (read by the
+#   workflow's install step). Historically Maestro 2.3.x–2.5.x had
+#   intermittent driver-hang AND silent-tap-loss issues on Apple
+#   Silicon + iOS 26.x (see mobile-dev-inc/maestro#3137); the pin
+#   targets a known-good release. The retry remains as a safety net
+#   for residual Apple-XCTest crashes (~10 % per the #3137 thread):
+#   each flow is retried up to MAESTRO_MAX_ATTEMPTS times (default 3)
+#   when the failure log contains `IOSDriverTimeoutException`.
+#   Assertion failures are NEVER retried — those are real regressions
+#   and must surface as red CI checks.
 #
 # Usage:  scripts/run-handbook-flows.sh
 

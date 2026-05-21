@@ -44,17 +44,24 @@ name: Tier 3 — Handbook flows
 #   assertion downstream. `simctl erase` wipes the whole device — the
 #   only known-good clean-state for this purpose.
 #
-# Known upstream flakiness:
-#   Maestro 2.3.0 introduced a regression that makes the XCUITest driver
-#   intermittently hang during startup with zero stdout on Apple Silicon
-#   + iOS 26.x simulators. Confirmed working in 2.0.10 per
+# Maestro version pin:
+#   Maestro 2.3.0–2.5.1 has two intermittent failure modes on Apple
+#   Silicon + iOS 26.x simulators: (a) XCUITest driver hangs during
+#   startup with zero stdout, (b) `tapOnElement` reports completed but
+#   the Flutter app never receives the touch event (verified via
+#   Maestro `--debug-output`: captured screenshot shows unchanged
+#   screen after tap). Both regressions tracked upstream in
 #   mobile-dev-inc/maestro#3137 (closed by upstream with the 2.0.10
-#   workaround). We currently pin 2.5.1 and retry the driver-hang class
-#   in `scripts/run-handbook-flows.sh` (up to 3 attempts per flow, only
-#   `IOSDriverTimeoutException` — never assertion failures). The
-#   post-mortem block in the script captures `lsof` / `ps` / simctl log
-#   so future regressions can be diagnosed forensically. Reliability
-#   tracking lives in DFXswiss/realunit-app#487.
+#   workaround). We pin via `.maestro-version` (today: `2.0.10`),
+#   which per the #3137 thread runs ~20 sequential flows reliably
+#   with ~10 % residual Apple-XCTest crash on screen transitions.
+#   The retry loop in `scripts/run-handbook-flows.sh` stays in place
+#   as a safety net for that residual crash class, retrying only on
+#   `IOSDriverTimeoutException` — assertion failures are never
+#   retried. The post-mortem block (lsof / ps / simctl log + Maestro
+#   `--debug-output`) captures failure state so future regressions
+#   can be diagnosed forensically. Reliability tracking lives in
+#   DFXswiss/realunit-app#487 Hard Risk 2b.
 #
 # Why no pixel-diff in v1:
 #   Font antialiasing differs between runner image versions and a strict
