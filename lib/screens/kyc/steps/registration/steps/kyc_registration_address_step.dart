@@ -61,6 +61,10 @@ class KycRegistrationAddressStep extends StatelessWidget {
                         controller: addressNumberCtrl,
                         label: S.of(context).number,
                         keyboardType: TextInputType.streetAddress,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return '';
+                          return null;
+                        },
                       ),
                     ),
                   ],
