@@ -29,6 +29,9 @@ class SettingsSeedCubit extends Cubit<SettingsSeedState> {
     // Revealing the recovery phrase needs the actual mnemonic in memory —
     // promote a view-wallet to its unlocked form before reading the seed.
     await _walletService.ensureCurrentWalletUnlocked();
+    // The user can navigate away during DB decryption — emit() after close()
+    // throws StateError as an unhandled async error, so bail before the cast.
+    if (isClosed) return;
     final wallet = _appStore.wallet as SoftwareWallet;
     // copyWith preserves a [showSeed] toggle that may have raced ahead of the
     // unlock so the user's choice isn't dropped on the floor.
