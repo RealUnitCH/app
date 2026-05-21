@@ -9,10 +9,11 @@ on:
 jobs:
   android-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -60,6 +61,7 @@ jobs:
           PLAY_STORE_JSON: ${{ secrets.PLAY_STORE_JSON_BASE64 }}
           ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
+          set -euo pipefail
           echo "$PLAY_STORE_JSON" | base64 --decode > android/credentials.json
           echo "$ANDROID_KEYSTORE" | base64 --decode > android/app/upload-keystore.jks
 

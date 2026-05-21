@@ -15,6 +15,7 @@ jobs:
   create-tag:
     name: Create Release Tag
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,10 +34,14 @@ jobs:
       - name: Get latest tag
         id: get-tag
         run: |
+          set -euo pipefail
           # Only consider clean semver tags (vX.Y.Z). Legacy beta tags
           # (vX.Y.Z-beta.N) are ignored — they were superseded by the
-          # plain-SemVer schema.
-          LATEST_TAG=$(git tag -l --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+          # plain-SemVer schema. The trailing `|| true` keeps the
+          # pipeline tolerant of an empty grep under `pipefail`: a
+          # fresh repo with zero matching tags is a legitimate state
+          # that the next `[ -z ... ]` branch handles explicitly.
+          LATEST_TAG=$(git tag -l --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
 
           if [ -z "$LATEST_TAG" ]; then
             echo "No existing tags found, starting with v0.0.0"
@@ -49,6 +54,7 @@ jobs:
       - name: Calculate next version
         id: next-version
         run: |
+          set -euo pipefail
           LATEST_TAG="${{ steps.get-tag.outputs.latest_tag }}"
 
           # Remove 'v' prefix and split into parts
@@ -64,8 +70,11 @@ jobs:
           # Floor for major/minor jumps: when pubspec.yaml is ahead of the
           # patch-bumped tag, use pubspec instead. Patch increments still come
           # from the tag history; pubspec is only consulted to trigger jumps.
+          # `|| true` keeps the pipeline tolerant of an empty grep under
+          # `pipefail`: a pubspec without a `version:` line is a legitimate
+          # state that the next `[ -n ... ]` branch handles explicitly.
           PUBSPEC_VERSION=$(grep -E '^version:[[:space:]]+[0-9]+\.[0-9]+\.[0-9]+' pubspec.yaml \
-            | awk '{print $2}' | cut -d+ -f1)
+            | awk '{print $2}' | cut -d+ -f1 || true)
           if [ -n "$PUBSPEC_VERSION" ]; then
             HIGHEST=$(printf '%s\n%s\n' "${NEXT_VERSION#v}" "$PUBSPEC_VERSION" | sort -V | tail -n 1)
             NEXT_VERSION="v${HIGHEST}"
@@ -80,6 +89,7 @@ jobs:
       - name: Check if tag exists
         id: check-tag
         run: |
+          set -euo pipefail
           NEW_TAG="${{ steps.next-version.outputs.new_tag }}"
           if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
             echo "::error::Tag $NEW_TAG already exists!"
@@ -91,6 +101,7 @@ jobs:
       - name: Create and push tag
         if: steps.check-tag.outputs.exists == 'false'
         run: |
+          set -euo pipefail
           NEW_TAG="${{ steps.next-version.outputs.new_tag }}"
 
           git config user.name "github-actions[bot]"

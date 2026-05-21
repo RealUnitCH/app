@@ -29,6 +29,11 @@ name: bitbox-simulator
 
 on:
   pull_request:
+    # Match the rest of the repo: pull_request workflows only listen to
+    # PRs targeting `develop`. The release lane (develop → main) is
+    # produced by `auto-release-pr.yaml` and doesn't need a second
+    # firmware simulator run on the same SHA.
+    branches: [develop]
     paths:
       - 'lib/packages/hardware_wallet/**'
       - 'lib/packages/wallet/**'
@@ -40,9 +45,13 @@ on:
       - '.github/workflows/bitbox-simulator.yml'
   workflow_dispatch:
 
+# `read` only — this workflow does not comment back on the PR, so the
+# default-elevated `write` was unused and granted more authority than
+# needed (the slash-command sibling keeps `write` because it DOES
+# create comments to report authz/parse state).
 permissions:
   contents: read
-  pull-requests: write
+  pull-requests: read
 
 concurrency:
   group: bitbox-simulator-${{ github.ref }}
@@ -51,6 +60,11 @@ concurrency:
 jobs:
   simulator:
     name: BitBox02 simulator (real firmware)
+    # Skip on draft PRs (matches `pull-request.yaml` + `tier3-handbook.yaml`).
+    # `workflow_dispatch` falls through because there's no `pull_request`
+    # context — the condition is "anything that isn't a PR, or a PR
+    # that isn't a draft".
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

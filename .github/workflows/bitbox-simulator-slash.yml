@@ -28,6 +28,7 @@ jobs:
       github.event.issue.pull_request != null &&
       startsWith(github.event.comment.body, '/bitbox-simulator')
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       authorized: ${{ steps.authz.outputs.authorized }}
       sha: ${{ steps.parse.outputs.sha }}
@@ -41,7 +42,14 @@ jobs:
           ACTOR: ${{ github.event.comment.user.login }}
         with:
           script: |
-            const allowed = ['OWNER', 'MEMBER', 'COLLABORATOR'];
+            // OWNER + MEMBER only. `COLLABORATOR` is excluded on purpose:
+            // it includes outside collaborators (people invited per-repo
+            // who are NOT in the DFXswiss org). The slash command accepts
+            // a `ref=` token that resolves into `actions/checkout@v4` with
+            // `ref:`, and an attacker-controlled ref can run arbitrary
+            // code on the runner — only trusted org identities are
+            // allowed to trigger that path.
+            const allowed = ['OWNER', 'MEMBER'];
             const ok = allowed.includes(process.env.ASSOC);
             core.setOutput('authorized', ok ? 'true' : 'false');
             if (!ok) {
