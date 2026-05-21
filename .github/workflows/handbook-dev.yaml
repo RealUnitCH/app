@@ -1,9 +1,8 @@
 name: Handbook DEV CI/CD
 
-# Builds the handbook nginx image, publishes dfxswiss/realunit-app-handbook:beta
-# to Docker Hub, and tells the dev server to pull + recreate the container.
-#
-# Mirrors infrastructure/templates/ssh-deploy-dev.yaml from DFXServer/server.
+# Thin caller for the reusable handbook workflow.
+# All deploy logic lives in .github/workflows/handbook.yaml — this file
+# only wires the DEV-specific tag, smoke URL, and DEPLOY_DEV_* secrets.
 
 on:
   push:
@@ -13,101 +12,23 @@ on:
       - "Dockerfile.handbook"
       - "handbook.nginx.conf"
       - ".github/workflows/handbook-dev.yaml"
+      - ".github/workflows/handbook.yaml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
-env:
-  DOCKER_TAGS: dfxswiss/realunit-app-handbook:beta
-  DEPLOY_SERVICE: realunit-app-handbook
-
 jobs:
-  build-and-deploy:
-    name: Build and deploy to DEV
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 20
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push handbook image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: Dockerfile.handbook
-          push: true
-          tags: ${{ env.DOCKER_TAGS }}
-          platforms: linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Install cloudflared
-        env:
-          CLOUDFLARED_VERSION: "2025.4.0"
-          CLOUDFLARED_SHA256: "2561391ee9abdc828afcc52f5ac314b6551a9a6a31ff59cbc64efc63aec04615"
-        run: |
-          set -euo pipefail
-          curl -fsSL "https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/cloudflared-linux-arm64" -o /usr/local/bin/cloudflared
-          echo "${CLOUDFLARED_SHA256}  /usr/local/bin/cloudflared" | sha256sum -c -
-          chmod +x /usr/local/bin/cloudflared
-
-      # Deploy via SSH through Cloudflare Tunnel. The `IdentitiesOnly=yes`
-      # and `IdentityAgent=none` options pin SSH to ONLY the explicit
-      # `deploy_key` and disable ssh-agent lookup — without them,
-      # OpenSSH probes default keys + agent identities first and may
-      # exhaust the server's MaxAuthTries before reaching deploy_key,
-      # producing intermittent "Permission denied … Too many
-      # authentication failures" on otherwise-healthy runs (root cause
-      # for the apparent smoke-test flakiness tracked in #487 Item 4).
-      - name: Deploy to server
-        run: |
-          set -euo pipefail
-          mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_DEV_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          echo "${{ secrets.DEPLOY_DEV_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
-          ssh -i ~/.ssh/deploy_key \
-            -o IdentitiesOnly=yes \
-            -o IdentityAgent=none \
-            -o ProxyCommand="cloudflared access ssh --hostname ${{ secrets.DEPLOY_DEV_HOST }}" \
-            ${{ secrets.DEPLOY_DEV_USER }}@${{ secrets.DEPLOY_DEV_HOST }} \
-            "${{ env.DEPLOY_SERVICE }}"
-
-      # Post-deploy smoke test: poll the public endpoint until the nginx
-      # container answers 200, or give up. Without this step a "green"
-      # deploy can lie — a misconfigured nginx leaves the container
-      # Up-but-unresponsive while the workflow reports success. Failing
-      # this step blocks the auto-release PR from collecting a green
-      # check and surfaces the regression in CI. Mirrors the pattern
-      # from zkcoins/server `deploy-dev.yaml`.
-      #
-      # Probes the canonical root URL with `curl -L` so the default-locale
-      # redirect (`/` → `/de/`) is followed end to end: nginx up, root
-      # routing intact, locale `index.html` served. Pinning a specific
-      # locale path would re-rot if the locale layout ever changes.
-      - name: Smoke test public endpoint
-        env:
-          SMOKE_URL: https://dev-handbook.realunit.app/
-        run: |
-          set -euo pipefail
-          for i in $(seq 1 30); do
-            code=$(curl -sS -L --max-redirs 3 -o /dev/null -w '%{http_code}' --max-time 10 "$SMOKE_URL" || echo "000")
-            if [ "$code" = "200" ]; then
-              echo "DEV handbook responded 200 after ${i} attempt(s)"
-              exit 0
-            fi
-            echo "[$i/30] $SMOKE_URL -> ${code} (waiting 10 s)"
-            sleep 10
-          done
-          echo "::error::DEV handbook never returned 200 within ~5 min after deploy"
-          exit 1
+  deploy:
+    uses: ./.github/workflows/handbook.yaml
+    with:
+      environment: DEV
+      docker_tag: dfxswiss/realunit-app-handbook:beta
+      smoke_url: https://dev-handbook.realunit.app/
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_DEV_SSH_KEY }}
+      DEPLOY_SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_DEV_SSH_KNOWN_HOSTS }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_DEV_USER }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_DEV_HOST }}
