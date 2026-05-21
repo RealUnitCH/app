@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -39,12 +41,22 @@ class BankAccountFieldView extends StatelessWidget {
       listenWhen: (previous, current) => previous.accounts.length != current.accounts.length,
       listener: (context, state) {
         if (state.accounts.isNotEmpty) {
-          // Prefer the backend-tagged default account; fall back to the most
-          // recently added active one if no default is set. The API is the
-          // authority on which account is the user's preferred one.
-          final preferred =
-              state.accounts.firstWhereOrNull((a) => a.isDefault) ??
-              state.accounts.lastWhereOrNull((a) => a.isActive);
+          // API as authority: only auto-select the backend-tagged default
+          // account, and only if it is also active. No fallback heuristic —
+          // if the backend doesn't mark a default the picker stays empty and
+          // the user must choose explicitly. See "Keine Fallbacks" rule.
+          final defaults = state.accounts.where((a) => a.isDefault).toList();
+          if (defaults.length > 1) {
+            developer.log(
+              'Backend returned ${defaults.length} default bank accounts; '
+              'expected at most one. Picking the first in list order.',
+              name: 'SellBankAccountField',
+              level: 900,
+            );
+          }
+          final preferred = state.accounts.firstWhereOrNull(
+            (a) => a.isDefault && a.isActive,
+          );
           context.read<SellSelectedBankAccountCubit>().selectBankAccount(preferred);
         }
       },

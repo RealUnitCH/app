@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -32,9 +34,25 @@ class SellBankAccountSelectionPage extends StatelessWidget {
                     BlocListener<SellBankAccountsCubit, SellBankAccountsState>(
                       listener: (context, state) {
                         if (state is SellBankAccountsSuccess) {
+                          // Mirrors the auto-selection in `BankAccountFieldView`:
+                          // API is authority — only the backend-tagged default
+                          // (and only if active) is auto-selected. No active-
+                          // fallback heuristic, otherwise re-opening this page
+                          // would overwrite a correctly chosen default with the
+                          // last-active account.
+                          final defaults = state.accounts.where((a) => a.isDefault).toList();
+                          if (defaults.length > 1) {
+                            developer.log(
+                              'Backend returned ${defaults.length} default '
+                              'bank accounts; expected at most one. Picking '
+                              'the first in list order.',
+                              name: 'SellBankAccountSelectionPage',
+                              level: 900,
+                            );
+                          }
                           context.read<SellSelectedBankAccountCubit>().selectBankAccount(
-                            state.accounts.lastWhereOrNull(
-                              (account) => account.isActive,
+                            state.accounts.firstWhereOrNull(
+                              (account) => account.isDefault && account.isActive,
                             ),
                           );
                         }
