@@ -20,9 +20,7 @@ import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
 
 class KycPageManager extends StatelessWidget {
-  final int? requiredLevel;
-
-  const KycPageManager({super.key, this.requiredLevel});
+  const KycPageManager({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +28,6 @@ class KycPageManager extends StatelessWidget {
       create: (context) => KycCubit(
         getIt<DfxKycService>(),
         getIt<RealUnitRegistrationService>(),
-        requiredLevel: requiredLevel,
       )..checkKyc(),
       child: const KycViewManager(),
     );
@@ -47,7 +44,7 @@ class KycViewManager extends StatelessWidget {
         KycLoading() => const KycLoadingPage(),
         KycFailure(:final message) => KycFailurePage(message: message),
         KycUnsupportedStepFailure(:final stepName) => KycFailurePage(
-          message: S.of(context).kycUnsupportedStepDescription(stepName.value),
+          message: S.of(context).kycUnsupportedStepDescription(stepName?.value ?? '-'),
         ),
         KycAccountMergeRequested() => const KycAccountMergePage(),
         KycPending(:final pendingStep) => KycPendingPage(pendingStep: pendingStep),

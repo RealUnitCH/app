@@ -31,6 +31,23 @@ class VerifySeedButton extends StatelessWidget {
         state: .success,
       );
     }
+    if (state.isVerifying) {
+      return AppFilledButton(
+        label: S.of(context).confirm,
+        state: .loading,
+      );
+    }
+    if (state.commitFailed) {
+      // The words matched but persisting threw. Offer a tappable retry —
+      // the `.idle` state keeps `onPressed` wired (the `.error` variant
+      // hard-nulls it). The cubit's re-entrancy guard plus the
+      // `commitFailed` reset on retry make a second `verify()` call safe.
+      return AppFilledButton(
+        onPressed: () => context.read<VerifySeedCubit>().verify(),
+        icon: Icons.refresh,
+        label: S.of(context).verifySeedCommitFailed,
+      );
+    }
     return AppFilledButton(
       onPressed: state.canVerify ? () => context.read<VerifySeedCubit>().verify() : null,
       label: S.of(context).confirm,

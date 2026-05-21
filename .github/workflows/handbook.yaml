@@ -1,0 +1,139 @@
+name: Handbook reusable CI/CD
+
+# Reusable workflow that builds the handbook nginx image, publishes it to
+# Docker Hub, and tells the target server to pull + recreate the container.
+#
+# Callers (handbook-dev.yaml, handbook-prd.yaml) provide the per-environment
+# parameters (tag, smoke URL, deploy secrets) so the deploy logic itself
+# lives in exactly one place.
+#
+# Mirrors infrastructure/templates/ssh-deploy-*.yaml from DFXServer/server.
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Target environment label (dev | prd) — used in job name + smoke log lines"
+        required: true
+        type: string
+      docker_tag:
+        description: "Full Docker image tag, e.g. dfxswiss/realunit-app-handbook:beta"
+        required: true
+        type: string
+      smoke_url:
+        description: "Public URL to poll after deploy"
+        required: true
+        type: string
+    secrets:
+      DOCKER_USERNAME:
+        required: true
+      DOCKER_PASSWORD:
+        required: true
+      DEPLOY_SSH_KEY:
+        required: true
+      DEPLOY_SSH_KNOWN_HOSTS:
+        required: true
+      DEPLOY_USER:
+        required: true
+      DEPLOY_HOST:
+        required: true
+
+# Reusable workflows do NOT inherit `permissions` from the caller — GITHUB_TOKEN
+# scopes are resolved per-workflow. Mirror the `contents: read` floor that both
+# callers set so the reusable behaves identically to the pre-extract setup.
+permissions:
+  contents: read
+
+env:
+  DEPLOY_SERVICE: realunit-app-handbook
+
+jobs:
+  build-and-deploy:
+    name: Build and deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push handbook image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.handbook
+          push: true
+          tags: ${{ inputs.docker_tag }}
+          platforms: linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Install cloudflared
+        env:
+          CLOUDFLARED_VERSION: "2025.4.0"
+          CLOUDFLARED_SHA256: "2561391ee9abdc828afcc52f5ac314b6551a9a6a31ff59cbc64efc63aec04615"
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/cloudflared-linux-arm64" -o /usr/local/bin/cloudflared
+          echo "${CLOUDFLARED_SHA256}  /usr/local/bin/cloudflared" | sha256sum -c -
+          chmod +x /usr/local/bin/cloudflared
+
+      # Deploy via SSH through Cloudflare Tunnel. The `IdentitiesOnly=yes`
+      # and `IdentityAgent=none` options pin SSH to ONLY the explicit
+      # `deploy_key` and disable ssh-agent lookup — without them,
+      # OpenSSH probes default keys + agent identities first and may
+      # exhaust the server's MaxAuthTries before reaching deploy_key,
+      # producing intermittent "Permission denied … Too many
+      # authentication failures" on otherwise-healthy runs (root cause
+      # for the apparent smoke-test flakiness tracked in #487 Item 4).
+      - name: Deploy to server
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "${{ secrets.DEPLOY_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy_key \
+            -o IdentitiesOnly=yes \
+            -o IdentityAgent=none \
+            -o ProxyCommand="cloudflared access ssh --hostname ${{ secrets.DEPLOY_HOST }}" \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "${{ env.DEPLOY_SERVICE }}"
+
+      # Post-deploy smoke test: poll the public endpoint until the nginx
+      # container answers 200, or give up. Without this step a "green"
+      # deploy can lie — a misconfigured nginx leaves the container
+      # Up-but-unresponsive while the workflow reports success. Failing
+      # this step blocks the auto-release PR from collecting a green
+      # check and surfaces the regression in CI. Mirrors the pattern
+      # from zkcoins/server `deploy-dev.yaml`.
+      #
+      # Probes the canonical root URL with `curl -L` so the default-locale
+      # redirect (`/` → `/de/`) is followed end to end: nginx up, root
+      # routing intact, locale `index.html` served. Pinning a specific
+      # locale path would re-rot if the locale layout ever changes.
+      - name: Smoke test public endpoint
+        env:
+          SMOKE_URL: ${{ inputs.smoke_url }}
+          ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 30); do
+            code=$(curl -sS -L --max-redirs 3 -o /dev/null -w '%{http_code}' --max-time 10 "$SMOKE_URL" || echo "000")
+            if [ "$code" = "200" ]; then
+              echo "${ENVIRONMENT} handbook responded 200 after ${i} attempt(s)"
+              exit 0
+            fi
+            echo "[$i/30] $SMOKE_URL -> ${code} (waiting 10 s)"
+            sleep 10
+          done
+          echo "::error::${ENVIRONMENT} handbook never returned 200 within ~5 min after deploy"
+          exit 1

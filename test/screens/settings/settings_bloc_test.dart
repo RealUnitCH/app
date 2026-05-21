@@ -74,6 +74,24 @@ void main() {
       verify(() => repo.networkMode = NetworkMode.testnet).called(1);
     });
 
+    test('SetNetworkModeEvent invokes onNetworkModeChanged after auth refresh', () async {
+      final callOrder = <String>[];
+      final bloc = SettingsBloc(
+        repo,
+        () async {
+          callOrder.add('auth');
+        },
+        onNetworkModeChanged: () => callOrder.add('invalidate'),
+      );
+
+      bloc.add(const SetNetworkModeEvent(NetworkMode.testnet));
+      await bloc.stream.firstWhere((s) => s.networkMode == NetworkMode.testnet);
+
+      // Reference-data invalidation must happen after the auth refresh so
+      // the next fetch hits the new backend with the new token.
+      expect(callOrder, ['auth', 'invalidate']);
+    });
+
     blocTest<SettingsBloc, SettingsState>(
       'ToggleHideAmountEvent flips hideAmounts each time',
       build: build,

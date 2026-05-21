@@ -56,6 +56,7 @@ class SellBankAccountsCubit extends Cubit<SellBankAccountsState> {
               iban: bankAccount.iban,
               name: bankAccount.label,
               isActive: bankAccount.isActive,
+              isDefault: bankAccount.isDefault,
             ),
           )
           .toList();

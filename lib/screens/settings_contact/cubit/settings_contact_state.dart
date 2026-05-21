@@ -16,18 +16,23 @@ class SettingsContactLoading extends SettingsContactState {
 }
 
 class SettingsContactSuccess extends SettingsContactState {
-  final bool emailSet;
+  final bool supportAvailable;
+  // Backend-driven contact info for the current brand. The page renders
+  // its phone / email / website / imprint from this DTO instead of
+  // shipping them hardcoded.
+  final DfxCompanyInfoDto? companyInfo;
 
-  const SettingsContactSuccess({this.emailSet = false});
+  const SettingsContactSuccess({this.supportAvailable = false, this.companyInfo});
 
-  SettingsContactSuccess copyWith({bool? emailSet}) {
+  SettingsContactSuccess copyWith({bool? supportAvailable, DfxCompanyInfoDto? companyInfo}) {
     return SettingsContactSuccess(
-      emailSet: emailSet ?? this.emailSet,
+      supportAvailable: supportAvailable ?? this.supportAvailable,
+      companyInfo: companyInfo ?? this.companyInfo,
     );
   }
 
   @override
-  List<Object?> get props => [emailSet];
+  List<Object?> get props => [supportAvailable, companyInfo];
 }
 
 class SettingsContactFailure extends SettingsContactState {

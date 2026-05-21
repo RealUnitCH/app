@@ -97,6 +97,13 @@ void main() {
       when(() => kycService.getKycStatus()).thenAnswer(
         (_) async => const KycLevelDto(kycLevel: KycLevel.level20, kycSteps: []),
       );
+      when(() => kycService.getUser()).thenAnswer(
+        (_) async => const UserDto(
+          mail: 'a@b.com',
+          kyc: UserKycDto(hash: 'h', level: KycLevel.level20, dataComplete: true),
+          capabilities: UserCapabilitiesDto(canEditName: true, canEditAddress: true, canEditPhone: true),
+        ),
+      );
       when(() => countryService.getCountryBySymbol('CH')).thenAnswer((_) async => _ch);
       when(() => countryService.getCountryBySymbol('DE')).thenAnswer((_) async => _de);
 
@@ -109,6 +116,7 @@ void main() {
       expect(success.userData!.nationality, _ch);
       expect(success.userData!.addressCountry, _de);
       expect(success.pendingSteps, isEmpty);
+      expect(success.capabilities.canEditName, isTrue);
     });
 
     test('Success surfaces pending change steps that are inReview', () async {
@@ -128,6 +136,12 @@ void main() {
             // Non-change-step in review is ignored.
             _step(KycStepName.contactData, KycStepStatus.inReview, seq: 2),
           ],
+        ),
+      );
+      when(() => kycService.getUser()).thenAnswer(
+        (_) async => const UserDto(
+          mail: 'a@b.com',
+          kyc: UserKycDto(hash: 'h', level: KycLevel.level20, dataComplete: true),
         ),
       );
       when(() => countryService.getCountryBySymbol(any())).thenAnswer((_) async => _ch);
@@ -167,29 +181,17 @@ void main() {
       verifyNever(() => countryService.getCountryBySymbol(any()));
     });
 
-    test('userData null + getUser throws → Success() with no email', () async {
-      when(() => walletService.getWalletStatus()).thenAnswer(
-        (_) async => RealUnitWalletStatusDto(isRegistered: false),
-      );
-      when(() => kycService.getKycStatus()).thenAnswer(
-        (_) async => const KycLevelDto(kycLevel: KycLevel.level0, kycSteps: []),
-      );
-      when(() => kycService.getUser())
-          .thenAnswer((_) async => throw Exception('no user'));
-
-      final cubit = build();
-      await cubit.stream.firstWhere((s) => s is SettingsUserDataSuccess);
-
-      final success = cubit.state as SettingsUserDataSuccess;
-      expect(success.userData, isNull);
-      expect(success.email, isNull);
-    });
-
     test('Failure when walletService.getWalletStatus throws', () async {
       when(() => walletService.getWalletStatus())
           .thenAnswer((_) async => throw Exception('network'));
       when(() => kycService.getKycStatus()).thenAnswer(
         (_) async => const KycLevelDto(kycLevel: KycLevel.level0, kycSteps: []),
+      );
+      when(() => kycService.getUser()).thenAnswer(
+        (_) async => const UserDto(
+          mail: 'a@b.com',
+          kyc: UserKycDto(hash: 'h', level: KycLevel.level0, dataComplete: false),
+        ),
       );
 
       final cubit = build();
@@ -208,6 +210,12 @@ void main() {
       when(() => kycService.getKycStatus()).thenAnswer(
         (_) async => const KycLevelDto(kycLevel: KycLevel.level20, kycSteps: []),
       );
+      when(() => kycService.getUser()).thenAnswer(
+        (_) async => const UserDto(
+          mail: 'a@b.com',
+          kyc: UserKycDto(hash: 'h', level: KycLevel.level20, dataComplete: true),
+        ),
+      );
       when(() => countryService.getCountryBySymbol(any()))
           .thenAnswer((_) async => throw Exception('unknown country'));
 
@@ -222,6 +230,12 @@ void main() {
           .thenAnswer((_) async => throw const BitboxNotConnectedException());
       when(() => kycService.getKycStatus()).thenAnswer(
         (_) async => const KycLevelDto(kycLevel: KycLevel.level0, kycSteps: []),
+      );
+      when(() => kycService.getUser()).thenAnswer(
+        (_) async => const UserDto(
+          mail: 'a@b.com',
+          kyc: UserKycDto(hash: 'h', level: KycLevel.level0, dataComplete: false),
+        ),
       );
 
       final cubit = build();

@@ -41,4 +41,31 @@ void main() {
       });
     });
   });
+
+  group('$KycProcessStatus', () {
+    test('round-trips every enum value through fromValue/value', () {
+      for (final status in KycProcessStatus.values) {
+        expect(KycProcessStatusExtension.fromValue(status.value), status);
+      }
+    });
+
+    // Foundation rule (#491) forbids silent local defaults on unknown API
+    // values. An unknown `processStatus` string would previously degrade
+    // silently to `inProgress`, which then routes into `_continueKyc` —
+    // the exact "local default decision" the rule eliminates.
+    test('throws ArgumentError on unknown string input', () {
+      expect(
+        () => KycProcessStatusExtension.fromValue('OnHold'),
+        throwsArgumentError,
+      );
+      expect(
+        () => KycProcessStatusExtension.fromValue('Suspended'),
+        throwsArgumentError,
+      );
+      expect(
+        () => KycProcessStatusExtension.fromValue(''),
+        throwsArgumentError,
+      );
+    });
+  });
 }

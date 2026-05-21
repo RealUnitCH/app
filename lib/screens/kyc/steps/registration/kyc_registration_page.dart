@@ -103,11 +103,22 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
       body: BlocListener<KycRegistrationSubmitCubit, KycRegistrationSubmitState>(
         listener: (context, state) async {
           if (state is KycRegistrationSubmitSuccess) {
-            if (state.status == RegistrationStatus.completed) {
-              // completeRegistration already produced the EIP-712 registration
-              // signature, so the sign gate is satisfied for this session.
-              context.read<KycCubit>().markRegistrationSignProduced();
-              context.read<KycCubit>().checkKyc();
+            // The submit cubit only emits Success after a successful EIP-712
+            // sign through `_signEip712`, regardless of the resulting backend
+            // status (completed, pendingReview, forwardingFailed,
+            // alreadyRegistered). The sign gate is therefore satisfied for
+            // every Success branch — mark it produced and let `checkKyc`
+            // resolve the next KYC step from the API.
+            context.read<KycCubit>().markRegistrationSignProduced();
+            context.read<KycCubit>().checkKyc();
+
+            if (state.status == RegistrationStatus.forwardingFailed) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(S.of(context).registrationForwardingFailed),
+                  backgroundColor: RealUnitColors.status.red600,
+                ),
+              );
             }
           }
           if (state is KycRegistrationSubmitFailure) {

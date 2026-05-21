@@ -34,6 +34,7 @@ KycStepDto _step(
   KycStepStatus status = KycStepStatus.notStarted,
   KycStepReason? reason,
   bool isCurrent = false,
+  bool isRequired = false,
   int sequenceNumber = 0,
 }) => KycStepDto(
   name: name,
@@ -41,18 +42,40 @@ KycStepDto _step(
   reason: reason,
   sequenceNumber: sequenceNumber,
   isCurrent: isCurrent,
+  isRequired: isRequired,
 );
 
 KycLevelDto _kycStatus({
   required KycLevel level,
   List<KycStepDto> steps = const [],
-}) => KycLevelDto(kycLevel: level, kycSteps: steps);
+  KycProcessStatus processStatus = KycProcessStatus.inProgress,
+}) => KycLevelDto(kycLevel: level, kycSteps: steps, processStatus: processStatus);
 
 KycSessionDto _session({
   required KycLevel level,
   required List<KycStepDto> steps,
   KycStepSessionDto? currentStep,
-}) => KycSessionDto(kycLevel: level, kycSteps: steps, currentStep: currentStep);
+  KycProcessStatus processStatus = KycProcessStatus.inProgress,
+}) => KycSessionDto(
+  kycLevel: level,
+  kycSteps: steps,
+  currentStep: currentStep,
+  processStatus: processStatus,
+);
+
+KycStepSessionDto _currentStep(
+  KycStepName name, {
+  String url = 'https://example.com/session',
+  UrlType urlType = UrlType.browser,
+  KycStepStatus status = KycStepStatus.inProgress,
+  int sequenceNumber = 0,
+}) => KycStepSessionDto(
+  session: KycSessionInfoDto(url: url, type: urlType),
+  name: name,
+  status: status,
+  sequenceNumber: sequenceNumber,
+  isCurrent: true,
+);
 
 void main() {
   late DfxKycService kycService;
@@ -63,8 +86,7 @@ void main() {
     registrationService = _MockRealUnitRegistrationService();
   });
 
-  KycCubit buildCubit({int? requiredLevel}) =>
-      KycCubit(kycService, registrationService, requiredLevel: requiredLevel);
+  KycCubit buildCubit() => KycCubit(kycService, registrationService);
 
   group('$KycCubit checkKyc', () {
     blocTest<KycCubit, KycState>(
@@ -91,18 +113,12 @@ void main() {
         );
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
         when(() => registrationService.registerEmail(any())).thenAnswer(
-          // Second pass — backend still hasn't bumped level; the recursion
-          // guard should emit KycSuccess(email) instead of looping.
           (_) async => RegistrationEmailStatus.emailRegistered,
         );
       },
       build: buildCubit,
       act: (cubit) => cubit.checkKyc(),
       expect: () => [
-        // First pass enters _runCheckKyc → KycLoading, then attempts
-        // registerEmail and recurses. The recursive call's KycLoading is
-        // deduped by bloc (state unchanged). On the second pass
-        // _emailRegistrationAttempted is true and the guard surfaces email.
         const KycLoading(),
         const KycSuccess(currentStep: KycStep.email),
       ],
@@ -147,7 +163,7 @@ void main() {
     );
 
     blocTest<KycCubit, KycState>(
-      'emits KycAccountMergeRequested when level < required and merge step present',
+      'emits KycAccountMergeRequested when any step carries the accountMergeRequested reason',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
           (_) async => _kycStatus(
@@ -174,14 +190,64 @@ void main() {
       ],
     );
 
+    // From here on the routing is API-driven via `processStatus` —
+    // the cubit no longer iterates `kycSteps` to derive completion or
+    // pendingness.
     blocTest<KycCubit, KycState>(
-      'emits KycPending when a required step is inReview',
+      'emits KycCompleted when API reports processStatus=Completed',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
           (_) async => _kycStatus(
-            level: KycLevel.level20,
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        cubit.markRegistrationSignProduced();
+        await cubit.checkKyc();
+      },
+      expect: () => [const KycLoading(), const KycCompleted()],
+    );
+
+    blocTest<KycCubit, KycState>(
+      'emits KycPending(ident) when API reports processStatus=PendingReview and ident is the required pending step',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.pendingReview,
             steps: [
-              _step(KycStepName.ident, status: KycStepStatus.inReview),
+              _step(KycStepName.ident, status: KycStepStatus.inReview, isRequired: true),
+            ],
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        cubit.markRegistrationSignProduced();
+        await cubit.checkKyc();
+      },
+      expect: () => [const KycLoading(), const KycPending(KycStep.ident)],
+    );
+
+    // PendingReview is authoritative. The cubit must NEVER collapse this
+    // branch to `KycCompleted` — that would be the mirror image of the
+    // 2026-05-21 ident-misroute (API: review pending → app: dashboard).
+    blocTest<KycCubit, KycState>(
+      'emits KycUnsupportedStepFailure (not Completed) when PendingReview has no required step at all',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.pendingReview,
+            steps: [
+              _step(KycStepName.ident, status: KycStepStatus.completed),
             ],
           ),
         );
@@ -195,18 +261,53 @@ void main() {
       },
       expect: () => [
         const KycLoading(),
-        const KycPending(KycStep.ident),
+        const KycUnsupportedStepFailure(null),
+      ],
+    );
+
+    // PendingReview + a required step the app cannot render (e.g.
+    // additionalDocuments, residencePermit, statutes, personalData — all
+    // absent from `_mapStepName`). Must surface an explicit failure with
+    // the step name, never `KycCompleted`.
+    blocTest<KycCubit, KycState>(
+      'emits KycUnsupportedStepFailure(step) when PendingReview required step is unmapped',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.pendingReview,
+            steps: [
+              _step(
+                KycStepName.additionalDocuments,
+                status: KycStepStatus.inReview,
+                isRequired: true,
+              ),
+            ],
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        cubit.markRegistrationSignProduced();
+        await cubit.checkKyc();
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycUnsupportedStepFailure(KycStepName.additionalDocuments),
       ],
     );
 
     blocTest<KycCubit, KycState>(
-      'emits KycPending(dfxApproval) when dfxApproval is the inReview step',
+      'emits KycPending(dfxApproval) when dfxApproval is the only required step in PendingReview',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
           (_) async => _kycStatus(
-            level: KycLevel.level20,
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.pendingReview,
             steps: [
-              _step(KycStepName.dfxApproval, status: KycStepStatus.inReview),
+              _step(KycStepName.dfxApproval, status: KycStepStatus.inReview, isRequired: true),
             ],
           ),
         );
@@ -222,18 +323,23 @@ void main() {
     );
 
     blocTest<KycCubit, KycState>(
-      'calls _continueKyc and emits KycSuccess(currentStep) when level < required and no pending step',
+      'calls _continueKyc and emits KycSuccess(currentStep) when processStatus=InProgress',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
-          (_) async => _kycStatus(level: KycLevel.level20),
+          (_) async => _kycStatus(
+            level: KycLevel.level20,
+            processStatus: KycProcessStatus.inProgress,
+          ),
         );
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
         when(() => kycService.continueKyc()).thenAnswer(
           (_) async => _session(
             level: KycLevel.level20,
-            steps: [
-              _step(KycStepName.ident, isCurrent: true),
-            ],
+            steps: const [],
+            currentStep: _currentStep(
+              KycStepName.ident,
+              url: 'https://example.com/ident',
+            ),
           ),
         );
       },
@@ -245,7 +351,10 @@ void main() {
       },
       expect: () => [
         const KycLoading(),
-        const KycSuccess(currentStep: KycStep.ident),
+        const KycSuccess(
+          currentStep: KycStep.ident,
+          urlOrToken: 'https://example.com/ident',
+        ),
       ],
     );
 
@@ -253,15 +362,17 @@ void main() {
       'emits KycUnsupportedStepFailure when _continueKyc currentStep has no UI mapping',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
-          (_) async => _kycStatus(level: KycLevel.level20),
+          (_) async => _kycStatus(
+            level: KycLevel.level20,
+            processStatus: KycProcessStatus.inProgress,
+          ),
         );
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
         when(() => kycService.continueKyc()).thenAnswer(
           (_) async => _session(
             level: KycLevel.level20,
-            steps: [
-              _step(KycStepName.personalData, isCurrent: true),
-            ],
+            steps: const [],
+            currentStep: _currentStep(KycStepName.personalData),
           ),
         );
       },
@@ -277,11 +388,47 @@ void main() {
       ],
     );
 
+    // V45 follow-up: when the API answers `inProgress` but does not name a
+    // `currentStep` we surface an explicit failure instead of throwing a
+    // `StateError` from a `firstWhere`-on-empty (which used to leak as raw
+    // stack-trace text into the user-facing i18n message).
     blocTest<KycCubit, KycState>(
-      'emits KycCompleted when level >= required and gates have passed',
+      'emits KycUnsupportedStepFailure(null) when _continueKyc returns no currentStep',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
-          (_) async => _kycStatus(level: KycLevel.level30),
+          (_) async => _kycStatus(
+            level: KycLevel.level20,
+            processStatus: KycProcessStatus.inProgress,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => kycService.continueKyc()).thenAnswer(
+          (_) async => _session(
+            level: KycLevel.level20,
+            steps: const [],
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        cubit.markRegistrationSignProduced();
+        await cubit.checkKyc();
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycUnsupportedStepFailure(null),
+      ],
+    );
+
+    blocTest<KycCubit, KycState>(
+      'emits KycFailure when API reports processStatus=Failed (KYC terminated)',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.terminated,
+            processStatus: KycProcessStatus.failed,
+          ),
         );
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
       },
@@ -291,14 +438,17 @@ void main() {
         cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
-      expect: () => [const KycLoading(), const KycCompleted()],
+      expect: () => [const KycLoading(), isA<KycFailure>()],
     );
 
     blocTest<KycCubit, KycState>(
-      'returning user at level >= required still routes through the sign gate first',
+      'returning user at completed processStatus still routes through the sign gate first',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
-          (_) async => _kycStatus(level: KycLevel.level50),
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
         );
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
       },
@@ -390,178 +540,12 @@ void main() {
         isA<KycFailure>(),
       ],
     );
-
-    blocTest<KycCubit, KycState>(
-      'honours custom requiredLevel: level 20 with required 10 → KycCompleted',
-      setUp: () {
-        when(() => kycService.getKycStatus()).thenAnswer(
-          (_) async => _kycStatus(level: KycLevel.level20),
-        );
-        when(() => kycService.getUser()).thenAnswer((_) async => _user());
-      },
-      build: () => buildCubit(requiredLevel: 10),
-      act: (cubit) async {
-        cubit.markLegalDisclaimerAccepted();
-        cubit.markRegistrationSignProduced();
-        await cubit.checkKyc();
-      },
-      expect: () => [const KycLoading(), const KycCompleted()],
-    );
-  });
-
-  group('$KycCubit step-status routing (regression for #332)', () {
-    // The new routing logic (PR #332) drives next-step decisions from step
-    // status, not the numeric level. A backend can report level >= required
-    // while individual required steps are failed/outdated/notStarted — the
-    // user must redo those before the app concludes "completed".
-
-    KycLevelDto allCompleted({KycLevel level = KycLevel.level30}) => _kycStatus(
-      level: level,
-      steps: [
-        _step(KycStepName.contactData, status: KycStepStatus.completed),
-        _step(KycStepName.nationalityData, status: KycStepStatus.completed),
-        _step(KycStepName.ident, status: KycStepStatus.completed),
-        _step(KycStepName.financialData, status: KycStepStatus.completed),
-        _step(KycStepName.dfxApproval, status: KycStepStatus.completed),
-      ],
-    );
-
-    KycLevelDto withIdentStatus(KycStepStatus identStatus) => _kycStatus(
-      level: KycLevel.level50,
-      steps: [
-        _step(KycStepName.contactData, status: KycStepStatus.completed),
-        _step(KycStepName.nationalityData, status: KycStepStatus.completed),
-        _step(KycStepName.ident, status: identStatus),
-        _step(KycStepName.financialData, status: KycStepStatus.completed),
-        _step(KycStepName.dfxApproval, status: KycStepStatus.completed),
-      ],
-    );
-
-    blocTest<KycCubit, KycState>(
-      'emits KycCompleted when all required steps are completed',
-      setUp: () {
-        when(() => kycService.getKycStatus()).thenAnswer((_) async => allCompleted());
-        when(() => kycService.getUser()).thenAnswer((_) async => _user());
-      },
-      build: buildCubit,
-      act: (cubit) async {
-        cubit.markLegalDisclaimerAccepted();
-        cubit.markRegistrationSignProduced();
-        await cubit.checkKyc();
-      },
-      expect: () => [const KycLoading(), const KycCompleted()],
-    );
-
-    blocTest<KycCubit, KycState>(
-      'does not emit KycCompleted at high level when a required step is failed/outdated',
-      setUp: () {
-        when(() => kycService.getKycStatus()).thenAnswer(
-          (_) async => _kycStatus(
-            level: KycLevel.level50,
-            steps: [
-              _step(KycStepName.contactData, status: KycStepStatus.completed),
-              _step(KycStepName.nationalityData, status: KycStepStatus.completed),
-              _step(KycStepName.ident, status: KycStepStatus.failed),
-              _step(KycStepName.financialData, status: KycStepStatus.outdated),
-              _step(KycStepName.dfxApproval, status: KycStepStatus.completed),
-            ],
-          ),
-        );
-        when(() => kycService.getUser()).thenAnswer((_) async => _user());
-        when(() => kycService.continueKyc()).thenAnswer(
-          (_) async => _session(
-            level: KycLevel.level50,
-            steps: [_step(KycStepName.ident, isCurrent: true)],
-          ),
-        );
-      },
-      build: buildCubit,
-      act: (cubit) async {
-        cubit.markLegalDisclaimerAccepted();
-        cubit.markRegistrationSignProduced();
-        await cubit.checkKyc();
-      },
-      verify: (cubit) {
-        expect(cubit.state, isNot(isA<KycCompleted>()));
-      },
-    );
-
-    blocTest<KycCubit, KycState>(
-      'routes via _continueKyc to the unfinished step when ident is failed at high level',
-      setUp: () {
-        when(() => kycService.getKycStatus()).thenAnswer(
-          (_) async => withIdentStatus(KycStepStatus.failed),
-        );
-        when(() => kycService.getUser()).thenAnswer((_) async => _user());
-        when(() => kycService.continueKyc()).thenAnswer(
-          (_) async => _session(
-            level: KycLevel.level50,
-            steps: [_step(KycStepName.ident, isCurrent: true)],
-          ),
-        );
-      },
-      build: buildCubit,
-      act: (cubit) async {
-        cubit.markLegalDisclaimerAccepted();
-        cubit.markRegistrationSignProduced();
-        await cubit.checkKyc();
-      },
-      expect: () => [
-        const KycLoading(),
-        const KycSuccess(currentStep: KycStep.ident),
-      ],
-      verify: (_) {
-        verify(() => kycService.continueKyc()).called(1);
-      },
-    );
-
-    blocTest<KycCubit, KycState>(
-      'emits KycPending at high level when ident is onHold (backend wait state)',
-      setUp: () {
-        when(() => kycService.getKycStatus()).thenAnswer(
-          (_) async => withIdentStatus(KycStepStatus.onHold),
-        );
-        when(() => kycService.getUser()).thenAnswer((_) async => _user());
-      },
-      build: buildCubit,
-      act: (cubit) async {
-        cubit.markLegalDisclaimerAccepted();
-        cubit.markRegistrationSignProduced();
-        await cubit.checkKyc();
-      },
-      expect: () => [const KycLoading(), const KycPending(KycStep.ident)],
-    );
-
-    blocTest<KycCubit, KycState>(
-      'emits KycPending at high level when ident is inReview',
-      setUp: () {
-        when(() => kycService.getKycStatus()).thenAnswer(
-          (_) async => withIdentStatus(KycStepStatus.inReview),
-        );
-        when(() => kycService.getUser()).thenAnswer((_) async => _user());
-      },
-      build: buildCubit,
-      act: (cubit) async {
-        cubit.markLegalDisclaimerAccepted();
-        cubit.markRegistrationSignProduced();
-        await cubit.checkKyc();
-      },
-      expect: () => [const KycLoading(), const KycPending(KycStep.ident)],
-    );
   });
 
   group('$KycCubit timeout & generation handling', () {
     test(
       'a late response from a timed-out call does NOT overwrite the fresh state of a retry (regression for #315 / #317)',
       () async {
-        // Call 1: getKycStatus hangs forever — the cubit's 30 s outer timeout
-        // would normally fire, but in tests we use `fakeAsync`-style time
-        // skipping is overkill here; instead we await call 1 with a tight
-        // outer timeout via Future.any and immediately fire call 2.
-        // The contract under test: when call 1's late response finally
-        // resolves, it must NOT emit further state because the generation
-        // counter has moved on.
-
         final call1Completer = Completer<KycLevelDto>();
         var firstCall = true;
         when(() => kycService.getKycStatus()).thenAnswer((_) {
@@ -569,7 +553,9 @@ void main() {
             firstCall = false;
             return call1Completer.future;
           }
-          return Future.value(_kycStatus(level: KycLevel.level30));
+          return Future.value(
+            _kycStatus(level: KycLevel.level50, processStatus: KycProcessStatus.completed),
+          );
         });
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
 
@@ -580,40 +566,28 @@ void main() {
         final states = <KycState>[];
         final sub = cubit.stream.listen(states.add);
 
-        // Fire call 1 but don't await it — its outer .timeout(30s) won't fire
-        // in a unit test, so we simulate the timeout-and-retry race by
-        // starting call 2 before call 1 resolves.
         final call1Future = cubit.checkKyc();
 
-        // Yield to let call 1 emit KycLoading and reach the Future.wait await.
         await Future<void>.delayed(Duration.zero);
 
-        // Call 2 — fresh response.
         await cubit.checkKyc();
 
-        // Now resolve call 1's hanging response. Its post-await guard must
-        // detect the generation mismatch and bail without emitting.
-        call1Completer.complete(_kycStatus(level: KycLevel.level30));
+        call1Completer.complete(
+          _kycStatus(level: KycLevel.level50, processStatus: KycProcessStatus.completed),
+        );
         await call1Future;
         await Future<void>.delayed(Duration.zero);
 
         await sub.cancel();
         await cubit.close();
 
-        // Call 1 emits KycLoading. Call 2's KycLoading is deduped by bloc
-        // (state already KycLoading). Call 2 then emits KycCompleted on the
-        // fresh response. Call 1's late response must be dropped by the
-        // generation guard — no extra state after KycCompleted, and the
-        // final state must be the fresh KycCompleted.
         expect(states, [const KycLoading(), const KycCompleted()]);
         expect(cubit.state, const KycCompleted());
       },
     );
 
     blocTest<KycCubit, KycState>(
-      'emits KycFailure when a backend call throws TimeoutException '
-      '(proxy for the outer 30 s `.timeout()` firing — FakeAsync is not wired '
-      'into this repo yet)',
+      'emits KycFailure when a backend call throws TimeoutException',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
           (_) async => throw TimeoutException('backend slow'),
@@ -631,7 +605,10 @@ void main() {
       'progresses past the sign gate once both marks are set',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
-          (_) async => _kycStatus(level: KycLevel.level30),
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
         );
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
       },

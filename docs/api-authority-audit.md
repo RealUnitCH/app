@@ -42,10 +42,10 @@ the 2026-05-21 ident-misroute report that triggered this audit).
   - **Local decision:** entire next-step selection algorithm — duplicates `KycService.tryContinue` on the API
   - **API change needed:** none — the `currentStep` field from `PUT /v2/kyc` already contains the answer; remove the loop, route from `currentStep` only
   - **Closed by:** W2.2 (subsumed by the `_runCheckKyc` rewrite that collapses V1, V2, V3 — V5 is *the same loop* those three constants drive). Tagged separately so reviewers can grep the routing-chain code path explicitly.
-- **V45** — `lib/screens/kyc/cubits/kyc/kyc_cubit.dart:208` — `_continueKyc` repeats the same manual filter over `kycSteps`
+- **V45** — `lib/screens/kyc/cubits/kyc/kyc_cubit.dart:_continueKyc` — `_continueKyc` repeats the same manual filter over `kycSteps`
   - **Local decision:** `kycStatus.kycSteps.firstWhere((step) => step.isCurrent)` — parallel code path with the same anti-pattern as V5's `_runCheckKyc` loop, called after a realunit registration completes
   - **API change needed:** none — the `currentStep` field is already authoritative; consume it directly. When W2.2 rewrites `_runCheckKyc` to render `currentStep` directly, this loop must also be deleted in the same PR
-  - **Closed by:** W2.2 (same wave/PR as V5)
+  - **Closed by:** W2.2 (#494). `_continueKyc` now reads `KycSessionDto.currentStep` directly. A missing `currentStep` surfaces `KycUnsupportedStepFailure(null)` instead of throwing a bare `StateError` (which had been leaking as raw stack-trace text into the user-facing i18n message).
 - **V4** — `lib/screens/kyc/cubits/kyc/kyc_cubit.dart:179-182` — `e.statusCode == 403 || e.code == 'TFA_REQUIRED'` → emit 2FA step
   - **Local decision:** translate HTTP status into a UI flow
   - **API change needed:** API returns `nextStep: '2fa'` in the response body — app does not switch on status codes
@@ -138,12 +138,6 @@ backend's understanding of state and the app's interpretation of it.
   - **Local decision:** that an API "no" is actually "yes, with a different next step"
   - **API change needed:** API returns `{ status: 'already_registered', nextStep: 'merge' }` and the app dispatches; the cubit must not paper over a 400
 
-### Bank-account default selection ignores API hint
-
-- **V11** — `lib/screens/sell/widgets/sell_bank_account_field.dart:41-44` — `state.accounts.lastWhereOrNull((a) => a.isActive)`
-  - **Local decision:** "the last active bank account is the right default" — duplicates the API's `BankAccountDto.default` flag with a positional heuristic
-  - **API change needed:** none — `BankAccountDto.isDefault` already exists in the app's own DTO (`lib/packages/service/dfx/models/bank_account/dto/bank_account_dto.dart:6`) and is parsed from the API's `default` field; the selector just needs to consume it
-
 ### Local startup gate that delays API surface
 
 - **V34** — `lib/main.dart:120` — `if (!homeState.softwareTermsAccepted) ...` blocks the dashboard until terms acceptance
@@ -161,11 +155,12 @@ backend's understanding of state and the app's interpretation of it.
 - **V46** — `lib/screens/kyc/steps/registration/steps/kyc_registration_personal_step.dart:50-53` — `[RegistrationUserType.values.first]` restricts the account-type dropdown to a single value
   - **Local decision:** the DTO carries multiple `RegistrationUserType` values but the UI only renders `.values.first` (i.e. `human`). Which account types this branded app exposes is a business decision frozen in code
   - **API change needed:** `availableUserTypes: ['human']` capability flag on `UserV2Dto` (or on the registration endpoint response); app renders the returned list. Same shape as V12 / V13
-  - **Closed by:** W3.1 / W3.2 (capabilities)
+  - **Deferred:** not in W3.1 / W3.2 scope — the dropdown source is `RegistrationUserType.values` (a local enum), not a capability list from `UserCapabilitiesDto`. Surfacing the available account types requires a separate API change (own capability field or endpoint extension) and a UI migration; tracked for a follow-up wave.
 - **V13** — `lib/styles/language.dart:3-22` — `enum Language { EN, DE }`
   - **API change needed:** call `/v1/language` (already exists on the DFX API)
 - **V14** — `lib/widgets/form/country_field.dart:65-79` — `['CH', 'DE', 'IT', 'FR']` priority list at top
   - **API change needed:** `/v1/country?priority=true` returns ordered list; UI does not hardcode preference
+  - **Closed by:** W4.4 / #499
 - **V28** — `lib/packages/config/network_mode.dart:4-20` — `enum NetworkMode { mainnet, testnet }`
   - **Boundary case:** network mode determines *which* API host the app calls. Cannot itself be API-driven (chicken-and-egg). **Accepted as documented exception** (see `api-authority-plan.md`). Tagged for completeness.
 
@@ -181,15 +176,17 @@ backend's understanding of state and the app's interpretation of it.
 
 - **V17** — `lib/packages/config/legal_documents_config.dart:69-122, :160-191, :193-236` — Registration-Agreement PDFs (DE/EN), RealUnit Prospekt URLs (`:69-122`), Aktionariat document URLs (`:160-191`), DFX-Docs URLs (`:193-236`)
   - **API change needed:** `/v1/legal-document?type=registration&language=de` returns the current URL + version; app renders without knowing URLs in advance. Same endpoint also covers the Aktionariat and DFX-Docs blocks
+  - **Closed by:** W4.4 / #499
 - **V44** — `lib/screens/kyc/steps/financial_data/constants/kyc_financial_data_links.dart:2` — hardcoded `https://dfx.swiss/terms-and-conditions`
   - **Local decision:** same root cause as V17 but outside `legal_documents_config.dart` — a separate constants file holds a legal URL
   - **API change needed:** `/v1/legal-document` endpoint (the same endpoint W4.1 introduces); app reads the URL instead of compiling it in
-  - **Closed by:** W4.4 (same wave as V17)
+  - **Closed by:** W4.4 / #499 (same wave as V17)
 
 ### Company contact info hardcoded
 
 - **V18** — `lib/screens/settings_contact/settings_contact_page.dart:82, 93-94, 104, 109, 133-134` — phone, email, website, postal address
   - **API change needed:** `/v1/company-info` (or the existing `/v1/settings`) returns this for the RealUnit branding; allows future white-labeling
+  - **Closed by:** W4.4 / #499
 
 ### Asset configuration hardcoded
 
@@ -262,6 +259,7 @@ required.**
 
 For completeness:
 
+- **V11** — `lib/screens/sell/widgets/sell_bank_account_field.dart` + `lib/screens/sell/widgets/sell_bank_account_selection_page.dart` — auto-selection now consumes `BankAccountDto.default` (mapped through to `BankAccount.isDefault`) under a strict `isDefault && isActive` filter on both surfaces; no positional fallback. Multi-default ambiguity is logged via `developer.log` and resolved by picking the first list entry. **Closed by:** W1.2 / [`DFXswiss/realunit-app#495`](https://github.com/DFXswiss/realunit-app/pull/495).
 - **V39** — `lib/screens/kyc/steps/email/kyc_email_page.dart:91` — `markRegistrationSignProduced()` after merge confirmation. Local session-gate position, called from a code path where the API already signaled success. Fixed by [`DFXswiss/realunit-app#466`](https://github.com/DFXswiss/realunit-app/pull/466). **OK.**
 - **V40** — `KycEmailVerificationCubit._completeRegistration` — surfaces failures correctly ([`DFXswiss/realunit-app#466`](https://github.com/DFXswiss/realunit-app/pull/466) / [`DFXswiss/api#3731`](https://github.com/DFXswiss/api/pull/3731)). Once [`DFXswiss/api#3731`](https://github.com/DFXswiss/api/pull/3731) merges and the `register/wallet` endpoint is idempotent, the client-side retry logic at the email verification page can be simplified further.
 
@@ -274,14 +272,14 @@ Numbers below are the **canonical counts** used everywhere this audit is referen
 | Severity | Count | V-IDs | Primary location |
 |---|---|---|---|
 | **P0** — blocks users today | 16 | V1–V5, V6a–V6d, V7, V8, V9, V13b, V16, V20, V45 | `kyc_cubit.dart` (7 incl. `_continueKyc`), buy/sell payment-info cubits (2), settings user-data + edit cubits (4), settings_contact (1), settings (1), sell_button (1) |
-| **P1** — local interpretation, no immediate block | 12 | V11, V15, V21–V27, V34, V41, V43 | `kyc_cubit.dart` + email-verification + registration-submit cubits + bank-account field + main.dart + real_unit_registration_service + financial-data questions page |
+| **P1** — local interpretation, no immediate block | 11 | V15, V21–V27, V34, V41, V43 | `kyc_cubit.dart` + email-verification + registration-submit cubits + main.dart + real_unit_registration_service + financial-data questions page |
 | **P2** — hardcoded lists/config | 22 | V10a–V10c, V12, V13, V13c, V14, V17–V19, V28–V33, V42, V44, V46, V47, V48, V49 | currency/language/country, legal docs, company info, assets, date pickers, default currency, tax-report date, faucet decision, support categories, registration user types |
 | **P3** — DTO mirroring (informational) | 4 | V35–V38 | service/dfx/models |
-| **P4** — fixed or in-flight | 2 | V39, V40 | tracked in [`DFXswiss/realunit-app#466`](https://github.com/DFXswiss/realunit-app/pull/466) / [`DFXswiss/api#3731`](https://github.com/DFXswiss/api/pull/3731) |
+| **P4** — fixed or in-flight | 3 | V11, V39, V40 | tracked in [`DFXswiss/realunit-app#466`](https://github.com/DFXswiss/realunit-app/pull/466) / [`DFXswiss/realunit-app#495`](https://github.com/DFXswiss/realunit-app/pull/495) / [`DFXswiss/api#3731`](https://github.com/DFXswiss/api/pull/3731) |
 
-**Total distinct violations across P0–P2:** 50 (16 + 12 + 22). Recounted on 2026-05-21 after a post-initial-review audit pass found 9 additional violations (V41–V49) that the initial four-stream scan had missed.
+**Total distinct violations across P0–P2:** 49 (16 + 11 + 22). Recounted on 2026-05-21 after a post-initial-review audit pass found 9 additional violations (V41–V49) that the initial four-stream scan had missed; V11 moved to P4 once W1.2 shipped.
 **Plus boundary cases accepted as documented exceptions:** V13b, V25, V28, V30, V33 — tagged in the audit, not counted as actionable.
-**Actionable P0–P2 (excluding documented exceptions):** 45.
+**Actionable P0–P2 (excluding documented exceptions):** 44.
 
 **Most-affected single file:** `lib/screens/kyc/cubits/kyc/kyc_cubit.dart` —
 ~10 distinct violations. The entire `_runCheckKyc` body should be replaceable by
@@ -310,7 +308,7 @@ Pair-PRs landed against the rule, in dependency order:
 | W1.1+1.2 | — | [#493](https://github.com/DFXswiss/realunit-app/pull/493) | V7, V8 — buy/sell min from quote |
 | W1.2bank | — | [#495](https://github.com/DFXswiss/realunit-app/pull/495) | V11 — bank-account default |
 | W1.3+1.4 | — | [#496](https://github.com/DFXswiss/realunit-app/pull/496) | V12, V13 — currency + language from API |
-| W2 | [api#3732](https://github.com/DFXswiss/api/pull/3732) | [#494](https://github.com/DFXswiss/realunit-app/pull/494) | V1, V2, V3, V5 — **closes the 2026-05-21 ident-misroute** |
+| W2 | [api#3732](https://github.com/DFXswiss/api/pull/3732) | [#494](https://github.com/DFXswiss/realunit-app/pull/494) | V1, V2, V3, V5, V45 — **closes the 2026-05-21 ident-misroute** |
 | W3 | [api#3733](https://github.com/DFXswiss/api/pull/3733) | [#497](https://github.com/DFXswiss/realunit-app/pull/497) | V6a, V6b, V9 + structured ALREADY_REGISTERED status |
 | W4 | [api#3734](https://github.com/DFXswiss/api/pull/3734) | [#499](https://github.com/DFXswiss/realunit-app/pull/499) | V14, V17, V18 — legal-document + company-info + country.displayOrder |
 

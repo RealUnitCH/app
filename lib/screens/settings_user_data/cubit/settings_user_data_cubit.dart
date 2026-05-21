@@ -8,6 +8,7 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/user_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
@@ -43,19 +44,16 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
       final results = await Future.wait([
         _walletService.getWalletStatus(),
         _kycService.getKycStatus(),
+        _kycService.getUser(),
       ]);
 
       final result = results.elementAt(0) as RealUnitWalletStatusDto;
       final kycStatus = results.elementAt(1) as KycLevelDto;
+      final user = results.elementAt(2) as UserDto;
       final userDataDto = result.realUnitUserDataDto;
 
       if (userDataDto == null) {
-        try {
-          final user = await _kycService.getUser();
-          emit(SettingsUserDataSuccess(email: user.mail));
-        } catch (_) {
-          emit(const SettingsUserDataSuccess());
-        }
+        emit(SettingsUserDataSuccess(email: user.mail, capabilities: user.capabilities));
         return;
       }
 
@@ -91,6 +89,7 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
             lang: userDataDto.lang,
           ),
           pendingSteps: pendingSteps,
+          capabilities: user.capabilities,
         ),
       );
     } on BitboxNotConnectedException {

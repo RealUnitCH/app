@@ -11,6 +11,11 @@ class DfxCountryDto {
   final bool bankAllowed;
   final bool cardAllowed;
   final bool cryptoAllowed;
+  // Backend-tagged sort priority for country pickers (`country.displayOrder`).
+  // Lower is higher in the list. Defaults to 999 server-side for the long
+  // tail and is seeded with CH=1, DE=2, IT=3, FR=4 — replacing the
+  // hardcoded `priorityCountries` list the app used to ship.
+  final int displayOrder;
 
   const DfxCountryDto({
     required this.id,
@@ -25,6 +30,7 @@ class DfxCountryDto {
     required this.bankAllowed,
     required this.cardAllowed,
     required this.cryptoAllowed,
+    this.displayOrder = 999,
   });
 
   factory DfxCountryDto.fromJson(Map<String, dynamic> json) {
@@ -41,6 +47,7 @@ class DfxCountryDto {
       bankAllowed: json['bankAllowed'] as bool,
       cardAllowed: json['cardAllowed'] as bool,
       cryptoAllowed: json['cryptoAllowed'] as bool,
+      displayOrder: (json['displayOrder'] as int?) ?? 999,
     );
   }
 }

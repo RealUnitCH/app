@@ -72,10 +72,7 @@ class PaymentAdditionalActionNeededButton extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: AppFilledButton(
                 onPressed: () async {
-                  await context.pushNamed(
-                    AppRoutes.kyc,
-                    extra: paymentState.requiredLevel,
-                  );
+                  await context.pushNamed(AppRoutes.kyc);
                   if (context.mounted) {
                     context.read<BuyPaymentInfoCubit>().getPaymentInfo(
                       amount: amountController.text,

@@ -51,15 +51,18 @@ void main() {
       expect((cubit.state as SettingsEditNameReady).url, contains('edit-name'));
     });
 
-    test('reaches Pending when the step is already inReview', () async {
-      when(() => kyc.startStep(KycStepName.nameChange))
-          .thenAnswer((_) async => _session(stepStatus: KycStepStatus.inReview));
+    test(
+      'reaches Pending only when the session returns no URL (W3.2: inReview-gating moved upstream to canEditName)',
+      () async {
+        when(() => kyc.startStep(KycStepName.nameChange))
+            .thenAnswer((_) async => _session(stepStatus: KycStepStatus.inReview, url: null));
 
-      final cubit = SettingsEditNameCubit(kycService: kyc);
-      await cubit.stream.firstWhere((s) => s is SettingsEditNamePending);
+        final cubit = SettingsEditNameCubit(kycService: kyc);
+        await cubit.stream.firstWhere((s) => s is SettingsEditNamePending);
 
-      expect(cubit.state, isA<SettingsEditNamePending>());
-    });
+        expect(cubit.state, isA<SettingsEditNamePending>());
+      },
+    );
 
     test('reaches Failure when the API throws', () async {
       when(() => kyc.startStep(any()))
@@ -71,17 +74,17 @@ void main() {
       expect((cubit.state as SettingsEditNameFailure).message, contains('rate-limited'));
     });
 
-    test('reaches Failure when the session has no URL', () async {
+    test('reaches Pending when the session has no URL', () async {
+      // The session lacking a URL is now interpreted as "still in some
+      // pending review state" rather than a hard failure — the upstream
+      // capability gate stops this branch from being reached in practice.
       when(() => kyc.startStep(KycStepName.nameChange))
           .thenAnswer((_) async => _session(stepStatus: KycStepStatus.notStarted, url: null));
 
       final cubit = SettingsEditNameCubit(kycService: kyc);
-      await cubit.stream.firstWhere((s) => s is SettingsEditNameFailure);
+      await cubit.stream.firstWhere((s) => s is SettingsEditNamePending);
 
-      expect(
-        (cubit.state as SettingsEditNameFailure).message,
-        contains('No session URL'),
-      );
+      expect(cubit.state, isA<SettingsEditNamePending>());
     });
 
     test('refresh() re-runs _loadEdit and can recover from a prior failure', () async {
