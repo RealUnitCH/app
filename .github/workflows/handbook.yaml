@@ -38,6 +38,12 @@ on:
       DEPLOY_HOST:
         required: true
 
+# Reusable workflows do NOT inherit `permissions` from the caller — GITHUB_TOKEN
+# scopes are resolved per-workflow. Mirror the `contents: read` floor that both
+# callers set so the reusable behaves identically to the pre-extract setup.
+permissions:
+  contents: read
+
 env:
   DEPLOY_SERVICE: realunit-app-handbook
 
