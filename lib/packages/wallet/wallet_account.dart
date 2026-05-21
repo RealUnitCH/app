@@ -2,7 +2,6 @@ import 'dart:convert' show utf8;
 
 import 'package:bip32/bip32.dart';
 import 'package:convert/convert.dart';
-import 'package:realunit_wallet/packages/wallet/exceptions/wallet_locked_exception.dart';
 import 'package:web3dart/web3dart.dart';
 
 abstract class AWalletAccount {
@@ -39,12 +38,4 @@ class BitboxWalletAccount extends AWalletAccount {
   @override
   Future<String> signMessage(String message, {int addressIndex = 0}) async =>
       '0x${hex.encode(await primaryAddress.signPersonalMessage(utf8.encode(message)))}';
-}
-
-class SoftwareViewWalletAccount extends AWalletAccount {
-  SoftwareViewWalletAccount(super.accountIndex, super.primaryAddress);
-
-  @override
-  Future<String> signMessage(String message, {int addressIndex = 0}) =>
-      throw const WalletLockedException();
 }

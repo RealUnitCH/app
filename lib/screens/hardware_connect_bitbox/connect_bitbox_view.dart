@@ -87,6 +87,13 @@ class ConnectBitboxView extends StatelessWidget {
                               style: Theme.of(context).textTheme.headlineSmall,
                             ),
                           ),
+                          Text(
+                            S.of(context).connectBitboxSignInHint,
+                            textAlign: .center,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: RealUnitColors.neutral500,
+                            ),
+                          ),
                         ],
                       ),
                     ),

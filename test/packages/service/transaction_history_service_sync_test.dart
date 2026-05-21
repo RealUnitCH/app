@@ -13,12 +13,15 @@ import 'package:realunit_wallet/packages/repository/transaction_repository.dart'
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
 
 class _MockAppStore extends Mock implements AppStore {}
 
 class _MockCacheRepository extends Mock implements CacheRepository {}
 
 class _MockTransactionRepository extends Mock implements TransactionRepository {}
+
+class _MockWalletService extends Mock implements WalletService {}
 
 class _FakeTransaction extends Fake implements Transaction {}
 
@@ -71,6 +74,7 @@ Map<String, dynamic> _txJson({
 
 void main() {
   late _MockAppStore appStore;
+  late _MockWalletService walletService;
   late SessionCache sessionCache;
   late _MockTransactionRepository txRepo;
 
@@ -81,6 +85,7 @@ void main() {
 
   setUp(() {
     appStore = _MockAppStore();
+    walletService = _MockWalletService();
     sessionCache = SessionCache(_MockCacheRepository());
     txRepo = _MockTransactionRepository();
     when(() => appStore.sessionCache).thenReturn(sessionCache);
@@ -92,11 +97,13 @@ void main() {
     when(() => txRepo.insertDfxTransaction(any())).thenAnswer((_) async {});
     when(() => txRepo.updateTransaction(any())).thenAnswer((_) async => 1);
     when(() => txRepo.updateDfxTransaction(any())).thenAnswer((_) async {});
+    when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
+    when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
   });
 
   TransactionHistoryService build(http.Client client) {
     when(() => appStore.httpClient).thenReturn(client);
-    return TransactionHistoryService(appStore, txRepo);
+    return TransactionHistoryService(appStore, walletService, txRepo);
   }
 
   group('$TransactionHistoryService.apiBasedSync', () {

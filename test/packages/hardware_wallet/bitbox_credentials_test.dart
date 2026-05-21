@@ -8,7 +8,7 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception
 
 class _MockBitboxManager extends Mock implements BitboxManager {}
 
-class _FakeDevice extends Fake implements BitboxDevice {}
+class _FakeBitboxDevice extends Fake implements BitboxDevice {}
 
 class _ParseError implements Exception {}
 
@@ -21,6 +21,12 @@ void main() {
 
   setUp(() {
     manager = _MockBitboxManager();
+    // _runOrThrowDisconnect probes manager.devices to distinguish a real
+    // disconnect from a sign-internal failure. Tests below that expect the
+    // *original* error to surface must report the device as still connected.
+    when(() => manager.devices).thenAnswer((_) async => <BitboxDevice>[
+          _FakeBitboxDevice(),
+        ]);
   });
 
   BitboxCredentials connected() =>
@@ -179,7 +185,7 @@ void main() {
       // decide whether to relabel the error as BitboxNotConnectedException.
       // Stub it to a non-empty list so the original "first sign explodes"
       // survives — this test exercises the queue, not the disconnect path.
-      when(() => manager.devices).thenAnswer((_) async => [_FakeDevice()]);
+      when(() => manager.devices).thenAnswer((_) async => [_FakeBitboxDevice()]);
 
       var call = 0;
       when(() => manager.signETHTypedMessage(any(), any(), any())).thenAnswer((_) async {
@@ -227,7 +233,7 @@ void main() {
         when(
           () => manager.signETHRLPTransaction(any(), any(), any(), any()),
         ).thenThrow(_ParseError());
-        when(() => manager.devices).thenAnswer((_) async => [_FakeDevice()]);
+        when(() => manager.devices).thenAnswer((_) async => [_FakeBitboxDevice()]);
 
         final c = connected();
         await expectLater(
@@ -277,5 +283,21 @@ void main() {
         expect(c.isConnected, isFalse, reason: 'clearBitbox must have run on lost device');
       },
     );
+
+    test('sign on cleared credentials throws BitboxNotConnectedException, not NoSuchMethod',
+        () async {
+      // Snapshot semantics (3.2) — the manager may be nulled by the observer
+      // between the connection check and the sign call. The snapshot-on-entry
+      // pattern means the null check fires and the bang-operator path is
+      // never reached.
+      final c = BitboxCredentials('0x000000000000000000000000000000000000dead')
+        ..setBitbox(manager);
+      c.clearBitbox();
+
+      await expectLater(
+        c.signTypedDataV4(1, '{"primaryType":"A"}'),
+        throwsA(isA<BitboxNotConnectedException>()),
+      );
+    });
   });
 }

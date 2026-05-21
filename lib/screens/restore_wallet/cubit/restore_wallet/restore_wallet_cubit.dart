@@ -1,4 +1,4 @@
-import 'dart:developer' as developer;
+import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,18 +21,16 @@ class RestoreWalletCubit extends Cubit<RestoreWalletState> {
     final normalizedSeed = seed.split(' ').where((element) => element.isNotEmpty).join(' ');
 
     final wallet = await _walletService.restoreWallet('Obi-Wallet-Kenobi', normalizedSeed);
-
-    // Capture the DFX auth signature while the freshly restored mnemonic is
-    // still in memory — same rationale as the BitBox pairing flow. Non-fatal
-    // on failure; the lazy path in DFXAuthService.getSignature recovers later.
-    try {
-      await _authService.ensureSignatureFor(wallet.currentAccount);
-    } catch (e) {
-      developer.log(
-        'initial signature capture failed: $e',
-        name: '$RestoreWalletCubit',
-      );
-    }
+    // Fire-and-forget the auth-signature capture so a 20 s HTTP timeout doesn't
+    // block the wallet-restore UI. The lazy path in DFXAuthService.getSignature
+    // is the safety net.
+    unawaited(
+      warmAuthSignature(
+        _authService,
+        wallet.currentAccount,
+        loggerName: '$RestoreWalletCubit',
+      ),
+    );
 
     emit(
       RestoreWalletState(

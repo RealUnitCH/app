@@ -26,7 +26,7 @@ class RealUnitSellPaymentInfoService extends DFXAuthService {
   static const _metaMaskDelegatorAddress = '0x63c0c19a282a1b52b07dd5a65b58948a07dae32b';
   static const _delegationManagerAddress = '0xdb9b1e94b5b69df7e401ddbede43491141047db3';
 
-  RealUnitSellPaymentInfoService(super.appStore);
+  RealUnitSellPaymentInfoService(super.appStore, super.walletService);
 
   Future<SellPaymentInfo> getPaymentInfo(
     int amount,
@@ -81,40 +81,47 @@ class RealUnitSellPaymentInfoService extends DFXAuthService {
     // EIP-712 + EIP-7702 typed-data signing requires the private key; promote
     // the view-wallet to a fully unlocked SoftwareWallet before reading
     // credentials.
-    await appStore.ensureUnlocked();
-    final credentials = appStore.wallet.currentAccount.primaryAddress;
-    _validateEip7702Data(paymentInfo.eip7702, credentials.address.hexEip55, paymentInfo.amount);
+    await walletService.ensureCurrentWalletUnlocked();
+    try {
+      final credentials = appStore.wallet.currentAccount.primaryAddress;
+      _validateEip7702Data(paymentInfo.eip7702, credentials.address.hexEip55, paymentInfo.amount);
 
-    final delegationSignature = await Eip712Signer.signDelegation(
-      credentials: credentials,
-      eip7702Data: paymentInfo.eip7702,
-    );
-    final authorizationSignature = Eip7702Signer.signAuthorization(
-      credentials: credentials,
-      eip7702Data: paymentInfo.eip7702,
-    );
-    await _sendConfirm(
-      paymentInfo.id,
-      RealUnitSellConfirmDto(
-        eip7702ConfirmDto: Eip7702ConfirmDto(
-          delegation: Eip7702DelegationDto(
-            delegate: paymentInfo.eip7702.relayerAddress,
-            delegator: paymentInfo.eip7702.message.delegator,
-            authority: paymentInfo.eip7702.message.authority,
-            salt: '${paymentInfo.eip7702.message.salt}',
-            signature: delegationSignature,
-          ),
-          authorization: Eip7702AuthorizationDto(
-            chainId: paymentInfo.eip7702.domain.chainId,
-            address: paymentInfo.eip7702.delegatorAddress,
-            nonce: paymentInfo.eip7702.userNonce,
-            r: '0x${authorizationSignature.r.toRadixString(16)}',
-            s: '0x${authorizationSignature.s.toRadixString(16)}',
-            yParity: authorizationSignature.yParity,
+      final delegationSignature = await Eip712Signer.signDelegation(
+        credentials: credentials,
+        eip7702Data: paymentInfo.eip7702,
+      );
+      final authorizationSignature = Eip7702Signer.signAuthorization(
+        credentials: credentials,
+        eip7702Data: paymentInfo.eip7702,
+      );
+      await _sendConfirm(
+        paymentInfo.id,
+        RealUnitSellConfirmDto(
+          eip7702ConfirmDto: Eip7702ConfirmDto(
+            delegation: Eip7702DelegationDto(
+              delegate: paymentInfo.eip7702.relayerAddress,
+              delegator: paymentInfo.eip7702.message.delegator,
+              authority: paymentInfo.eip7702.message.authority,
+              salt: '${paymentInfo.eip7702.message.salt}',
+              signature: delegationSignature,
+            ),
+            authorization: Eip7702AuthorizationDto(
+              chainId: paymentInfo.eip7702.domain.chainId,
+              address: paymentInfo.eip7702.delegatorAddress,
+              nonce: paymentInfo.eip7702.userNonce,
+              r: '0x${authorizationSignature.r.toRadixString(16)}',
+              s: '0x${authorizationSignature.s.toRadixString(16)}',
+              yParity: authorizationSignature.yParity,
+            ),
           ),
         ),
-      ),
-    );
+      );
+    } finally {
+      // Drop the mnemonic from memory as soon as signing is done — see
+      // [WalletService.lockCurrentWallet]. Runs on the throw path too so an
+      // EIP-712 validation failure mid-sequence doesn't leave the key resident.
+      await walletService.lockCurrentWallet();
+    }
   }
 
   Future<RealUnitUnsignedTransactionsRequestDto> createUnsignedTransactions(int id) async {

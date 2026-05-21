@@ -9,10 +9,13 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
 
 class MockApiConfig extends Mock implements ApiConfig {}
 
 class MockCacheRepository extends Mock implements CacheRepository {}
+
+class _MockWalletService extends Mock implements WalletService {}
 
 class TestAppStore extends AppStore {
   final http.Client client;
@@ -26,12 +29,16 @@ class TestAppStore extends AppStore {
 
 void main() {
   late ApiConfig apiConfig;
+  late _MockWalletService walletService;
   late RealUnitBuyPaymentInfoService service;
 
   setUp(() {
     apiConfig = MockApiConfig();
+    walletService = _MockWalletService();
     when(() => apiConfig.apiHost).thenReturn('dev.api.dfx.swiss');
     when(() => apiConfig.networkMode).thenReturn(NetworkMode.testnet);
+    when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
+    when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
   });
 
   AppStore buildAppStore(Future<http.Response> Function(http.Request) handler) {
@@ -56,7 +63,7 @@ void main() {
 
         final paymentInfoId = 123;
 
-        service = RealUnitBuyPaymentInfoService(appStore);
+        service = RealUnitBuyPaymentInfoService(appStore, walletService);
         final reference = await service.confirmPayment(paymentInfoId);
 
         expect(capturedMethod, equals('PUT'));
@@ -74,7 +81,7 @@ void main() {
           ),
         );
 
-        final service = RealUnitBuyPaymentInfoService(appStore);
+        final service = RealUnitBuyPaymentInfoService(appStore, walletService);
 
         expect(
           () => service.confirmPayment(999),
@@ -92,7 +99,7 @@ void main() {
           ),
         );
 
-        final service = RealUnitBuyPaymentInfoService(appStore);
+        final service = RealUnitBuyPaymentInfoService(appStore, walletService);
 
         expect(
           () => service.confirmPayment(999),
@@ -107,7 +114,7 @@ void main() {
         final appStore = buildAppStore(
           (request) async => http.Response('{"reference":"$referenceText"}', 200),
         );
-        service = RealUnitBuyPaymentInfoService(appStore);
+        service = RealUnitBuyPaymentInfoService(appStore, walletService);
 
         final reference = await service.confirmPayment(1);
         expect(reference, equals(referenceText));
@@ -118,7 +125,7 @@ void main() {
         final appStore = buildAppStore(
           (request) async => http.Response('{"reference":"$referenceText"}', 201),
         );
-        service = RealUnitBuyPaymentInfoService(appStore);
+        service = RealUnitBuyPaymentInfoService(appStore, walletService);
 
         final reference = await service.confirmPayment(1);
         expect(reference, equals(referenceText));

@@ -1,15 +1,52 @@
+import 'dart:async';
+
 import 'package:bip39/bip39.dart' as bip39;
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
 class WalletService {
   final WalletRepository _repository;
   final SettingsRepository _settingsRepository;
   final BitboxService _bitboxService;
+  final AppStore _appStore;
 
-  const WalletService(this._bitboxService, this._repository, this._settingsRepository);
+  /// Auto-lock 60 s after each unlock, regardless of subsequent activity. The
+  /// timer is armed in [ensureCurrentWalletUnlocked] and is NOT reset by user
+  /// interaction — it caps the maximum lifetime of the in-memory mnemonic
+  /// after an explicit unlock, not an idle window. Sized to comfortably
+  /// outlast a normal sign-then-broadcast round-trip.
+  static const Duration _postUnlockLockTimeout = Duration(seconds: 60);
+
+  /// Cancellation guard for the post-unlock timer so a lock-during-test or a
+  /// concurrent explicit lock doesn't double-fire.
+  Timer? _postUnlockLockTimer;
+
+  /// Active holders of the unlocked-wallet contract. Incremented on every
+  /// [ensureCurrentWalletUnlocked] call, decremented on every matching
+  /// [lockCurrentWallet] — the wallet only flips back to a view-wallet once
+  /// the last holder has released. Closes the race where flow A locks
+  /// between flow B's ensure and its sign, leaving B with a
+  /// [SoftwareViewWallet] mid-flight and an [UnsupportedError] from the
+  /// locked-credentials sentinel. The post-unlock timer bypasses the counter
+  /// via [_forceLock] so the 60s safety net still caps the mnemonic lifetime
+  /// even if a caller forgets to release.
+  int _activeUnlockHolders = 0;
+
+  /// Shared future for the currently-in-flight unlock, so two overlapping
+  /// [ensureCurrentWalletUnlocked] calls reuse the same DB read + AES-GCM
+  /// decrypt instead of triggering it twice. Cleared in `finally` so the
+  /// next post-lock ensure starts a fresh unlock.
+  Future<SoftwareWallet>? _unlockInFlight;
+
+  WalletService(
+    this._bitboxService,
+    this._repository,
+    this._settingsRepository,
+    this._appStore,
+  );
 
   Future<SoftwareWallet> createSeedWallet(String name) async {
     final mnemonic = bip39.generateMnemonic();
@@ -95,6 +132,75 @@ class WalletService {
   Future<SoftwareWallet> unlockCurrentWallet() async {
     final id = _settingsRepository.currentWalletId!;
     return unlockWalletById(id);
+  }
+
+  /// Promotes the currently loaded wallet from [SoftwareViewWallet] (address
+  /// only) to a fully unlocked [SoftwareWallet] (mnemonic in memory) so the
+  /// next sign operation can run. No-op for wallets that aren't locked.
+  ///
+  /// Owning the lifecycle here — instead of behind a callback wired onto
+  /// [AppStore] — keeps the latter as a pure state container.
+  ///
+  /// Every call increments [_activeUnlockHolders]; callers must pair with
+  /// exactly one [lockCurrentWallet] in a finally so concurrent sign flows
+  /// don't tear the unlocked state out from under each other.
+  Future<void> ensureCurrentWalletUnlocked() async {
+    _activeUnlockHolders++;
+    if (_appStore.wallet is SoftwareViewWallet) {
+      // Coalesce overlapping unlocks onto a single in-flight future so we
+      // don't hammer the DB and re-run AES-GCM for every concurrent caller.
+      final inFlight = _unlockInFlight ??= unlockCurrentWallet();
+      try {
+        _appStore.wallet = await inFlight;
+      } finally {
+        // Only the caller that started the unlock clears the slot; later
+        // joiners observe the field already nulled and skip the clear.
+        if (identical(_unlockInFlight, inFlight)) _unlockInFlight = null;
+      }
+    }
+    // Safety net: if a caller forgets to call lockCurrentWallet() after the
+    // sign, drop the mnemonic anyway once the post-unlock window elapses. The
+    // reviewer flagged "user sells once then leaves the app foregrounded" —
+    // that path now caps at [_postUnlockLockTimeout].
+    _schedulePostUnlockLock();
+  }
+
+  /// Replaces the in-memory [SoftwareWallet] with its lock-screen-safe
+  /// [SoftwareViewWallet] counterpart, dropping the mnemonic. Called after a
+  /// sign operation completes so the private key isn't kept resident for the
+  /// rest of the foreground session. No-op for wallet types that don't hold
+  /// a mnemonic.
+  ///
+  /// Respects [_activeUnlockHolders] — a second concurrent caller still
+  /// holding the unlocked contract keeps the wallet unlocked. The 60s safety
+  /// net runs through [_forceLock] instead so it can bypass the counter.
+  Future<void> lockCurrentWallet() async {
+    if (_activeUnlockHolders > 0) _activeUnlockHolders--;
+    if (_activeUnlockHolders > 0) return;
+    _postUnlockLockTimer?.cancel();
+    _postUnlockLockTimer = null;
+    _lockWalletInPlace();
+  }
+
+  void _schedulePostUnlockLock() {
+    _postUnlockLockTimer?.cancel();
+    _postUnlockLockTimer = Timer(_postUnlockLockTimeout, _forceLock);
+  }
+
+  /// Hard cap on the in-memory mnemonic lifetime. Bypasses
+  /// [_activeUnlockHolders] so a stuck holder can't keep the key resident
+  /// past the safety window.
+  void _forceLock() {
+    _activeUnlockHolders = 0;
+    _postUnlockLockTimer = null;
+    _lockWalletInPlace();
+  }
+
+  void _lockWalletInPlace() {
+    final current = _appStore.wallet;
+    if (current is! SoftwareWallet) return;
+    final address = current.currentAccount.primaryAddress.address.hexEip55;
+    _appStore.wallet = SoftwareViewWallet(current.id, current.name, address);
   }
 
   Future<void> deleteCurrentWallet() async {

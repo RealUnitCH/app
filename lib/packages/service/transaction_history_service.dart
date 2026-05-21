@@ -16,7 +16,7 @@ class TransactionHistoryService extends DFXAuthService {
 
   final TransactionRepository _transactionRepository;
 
-  TransactionHistoryService(super.appStore, this._transactionRepository);
+  TransactionHistoryService(super.appStore, super.walletService, this._transactionRepository);
 
   Future<void> apiBasedSync() async {
     final results = await Future.wait([

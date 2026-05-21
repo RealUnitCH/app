@@ -8,7 +8,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/bank_account/dto/ban
 class DfxBankAccountService extends DFXAuthService {
   static const _bankAccountPath = 'v1/bankAccount';
 
-  DfxBankAccountService(super.appStore);
+  DfxBankAccountService(super.appStore, super.walletService);
 
   Future<List<BankAccountDto>> getBankAccounts() async {
     final uri = buildUri(host, _bankAccountPath);

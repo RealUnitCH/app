@@ -16,6 +16,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/registration/registr
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:web3dart/web3dart.dart';
@@ -28,6 +29,8 @@ class _MockAccount extends Mock implements AWalletAccount {}
 
 class _MockCacheRepository extends Mock implements CacheRepository {}
 
+class _MockWalletService extends Mock implements WalletService {}
+
 const _testPrivateKeyHex =
     'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
 
@@ -37,12 +40,14 @@ void main() {
   late _MockAppStore appStore;
   late _MockWallet wallet;
   late _MockAccount account;
+  late _MockWalletService walletService;
   late SessionCache session;
 
   setUp(() {
     appStore = _MockAppStore();
     wallet = _MockWallet();
     account = _MockAccount();
+    walletService = _MockWalletService();
     session = SessionCache(_MockCacheRepository());
     session.setAuthToken('jwt-1');
 
@@ -50,14 +55,15 @@ void main() {
         .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
     when(() => appStore.sessionCache).thenReturn(session);
     when(() => appStore.wallet).thenReturn(wallet);
-    when(() => appStore.ensureUnlocked()).thenAnswer((_) async {});
     when(() => wallet.primaryAccount).thenReturn(account);
     when(() => account.primaryAddress).thenReturn(_privKey);
+    when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
+    when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
   });
 
   RealUnitRegistrationService build(http.Client client) {
     when(() => appStore.httpClient).thenReturn(client);
-    return RealUnitRegistrationService(appStore);
+    return RealUnitRegistrationService(appStore, walletService);
   }
 
   Registration buildRegistration() => const Registration(

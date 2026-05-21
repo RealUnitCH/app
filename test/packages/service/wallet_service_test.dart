@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -12,6 +15,8 @@ class _MockWalletRepository extends Mock implements WalletRepository {}
 class _MockSettingsRepository extends Mock implements SettingsRepository {}
 
 class _MockBitboxService extends Mock implements BitboxService {}
+
+class _MockAppStore extends Mock implements AppStore {}
 
 const _testMnemonic =
     'test test test test test test test test test test test junk';
@@ -30,18 +35,21 @@ void main() {
   late _MockWalletRepository repo;
   late _MockSettingsRepository settings;
   late _MockBitboxService bitbox;
+  late _MockAppStore appStore;
   late WalletService service;
 
   setUpAll(() {
     // mocktail needs a default for non-primitive types used with `any()`.
     registerFallbackValue(WalletType.software);
+    registerFallbackValue(SoftwareViewWallet(0, '_fallback', _debugAddress) as AWallet);
   });
 
   setUp(() {
     repo = _MockWalletRepository();
     settings = _MockSettingsRepository();
     bitbox = _MockBitboxService();
-    service = WalletService(bitbox, repo, settings);
+    appStore = _MockAppStore();
+    service = WalletService(bitbox, repo, settings, appStore);
 
     when(() => settings.saveCurrentWalletId(any())).thenAnswer((_) async => true);
     when(() => settings.removeCurrentWalletId()).thenAnswer((_) async => true);
@@ -274,6 +282,181 @@ void main() {
         const broken =
             'test test test test test test test test test test test ability';
         expect(service.validateSeed(broken), isFalse);
+      });
+    });
+
+    group('ensureCurrentWalletUnlocked', () {
+      test('promotes a SoftwareViewWallet to a SoftwareWallet', () async {
+        final view = SoftwareViewWallet(7, 'Main', _debugAddress);
+        final stored = <AWallet>[view];
+        when(() => appStore.wallet).thenAnswer((_) => stored.last);
+        when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
+          final newWallet = inv.positionalArguments.single as AWallet;
+          stored.add(newWallet);
+          return newWallet;
+        });
+        when(() => settings.currentWalletId).thenReturn(7);
+        when(() => repo.getUnlockedWalletById(7)).thenAnswer(
+          (_) async => _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
+        );
+
+        await service.ensureCurrentWalletUnlocked();
+
+        expect(stored.last, isA<SoftwareWallet>());
+        expect((stored.last as SoftwareWallet).seed, _testMnemonic);
+      });
+
+      test('is a no-op when the current wallet is not a SoftwareViewWallet', () async {
+        final unlocked = SoftwareWallet(7, 'Main', _testMnemonic);
+        when(() => appStore.wallet).thenReturn(unlocked);
+
+        await service.ensureCurrentWalletUnlocked();
+
+        verifyNever(() => repo.getUnlockedWalletById(any()));
+      });
+    });
+
+    group('lockCurrentWallet', () {
+      test('replaces an unlocked SoftwareWallet with its SoftwareViewWallet counterpart',
+          () async {
+        final unlocked = SoftwareWallet(9, 'Main', _testMnemonic);
+        AWallet? written;
+        when(() => appStore.wallet).thenReturn(unlocked);
+        when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
+          final newWallet = inv.positionalArguments.single as AWallet;
+          written = newWallet;
+          return newWallet;
+        });
+
+        await service.lockCurrentWallet();
+
+        expect(written, isA<SoftwareViewWallet>());
+        expect(written!.id, 9);
+        expect(written!.name, 'Main');
+      });
+
+      test('is a no-op when the wallet is already locked / not software', () async {
+        when(() => appStore.wallet).thenReturn(
+          SoftwareViewWallet(9, 'Main', _debugAddress),
+        );
+
+        await service.lockCurrentWallet();
+
+        // No write happened.
+        verifyNever(() => appStore.wallet = any(that: isA<AWallet>()));
+      });
+    });
+
+    group('ensure/lock reentrancy', () {
+      // Race: flow A and flow B both call ensureCurrentWalletUnlocked while
+      // the wallet is locked. A finishes its sign + lock first; B is still
+      // mid-sign and must see an unlocked wallet. Without the holder counter
+      // A's lock would tear the mnemonic out from under B and the next
+      // sign call would hit _LockedCredentials → UnsupportedError.
+      test('two parallel ensures + one lock leave the wallet unlocked', () async {
+        final stored = <AWallet>[SoftwareViewWallet(7, 'Main', _debugAddress)];
+        when(() => appStore.wallet).thenAnswer((_) => stored.last);
+        when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
+          final newWallet = inv.positionalArguments.single as AWallet;
+          stored.add(newWallet);
+          return newWallet;
+        });
+        when(() => settings.currentWalletId).thenReturn(7);
+        when(() => repo.getUnlockedWalletById(7)).thenAnswer(
+          (_) async => _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
+        );
+
+        // Flow A: ensure + lock (e.g. confirmPayment finishing first).
+        await service.ensureCurrentWalletUnlocked();
+        // Flow B enters its ensure while A is still holding the contract.
+        await service.ensureCurrentWalletUnlocked();
+        // Flow A releases — B still holds, so the wallet must stay unlocked.
+        await service.lockCurrentWallet();
+
+        expect(stored.last, isA<SoftwareWallet>(),
+            reason: 'second holder must keep the wallet unlocked');
+
+        // Flow B releases — now the wallet locks back to the view form.
+        await service.lockCurrentWallet();
+        expect(stored.last, isA<SoftwareViewWallet>(),
+            reason: 'last holder release flips back to view wallet');
+      });
+
+      // Genuine concurrency race: both ensures are pending on the DB read
+      // when the lock fires between them. Without the holder counter the
+      // lock would observe the (mid-unlock) view wallet, no-op, and the
+      // second ensure would then complete and write the unlocked wallet —
+      // which then never gets locked back because lockCurrentWallet
+      // already returned. With the counter, the lock decrements but does
+      // not flip the wallet because two ensures are still in flight.
+      test('lock between two in-flight ensures preserves the unlocked wallet', () async {
+        final stored = <AWallet>[SoftwareViewWallet(7, 'Main', _debugAddress)];
+        when(() => appStore.wallet).thenAnswer((_) => stored.last);
+        when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
+          final newWallet = inv.positionalArguments.single as AWallet;
+          stored.add(newWallet);
+          return newWallet;
+        });
+        when(() => settings.currentWalletId).thenReturn(7);
+
+        // Gate the repository read so we can interleave concurrent calls.
+        final gate = Completer<WalletInfo>();
+        when(() => repo.getUnlockedWalletById(7)).thenAnswer((_) => gate.future);
+
+        // Fire two ensures without awaiting — both block on the gated read.
+        final ensureA = service.ensureCurrentWalletUnlocked();
+        final ensureB = service.ensureCurrentWalletUnlocked();
+
+        // Flow A releases its hold while both unlocks are still pending.
+        // The counter must keep the wallet from being flipped back to a
+        // view wallet because flow B is still holding the contract.
+        await service.lockCurrentWallet();
+
+        // Release the gated read so both ensures can complete.
+        gate.complete(
+          _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
+        );
+        await Future.wait([ensureA, ensureB]);
+
+        expect(stored.last, isA<SoftwareWallet>(),
+            reason: 'lock fired mid-unlock must not shadow the in-flight unlock');
+
+        // Drain the remaining holders. Two more locks: one to match the
+        // second ensure's release, one to confirm the counter clamps at 0
+        // and doesn't go negative.
+        await service.lockCurrentWallet();
+        await service.lockCurrentWallet();
+        expect(stored.last, isA<SoftwareViewWallet>(),
+            reason: 'final holder release flips back to view wallet');
+      });
+
+      // Two overlapping ensures must coalesce onto a single DB read +
+      // AES-GCM decrypt, not trigger the repository twice. Functionally
+      // both versions would land on the same SoftwareWallet, but the
+      // extra decrypt is wasteful.
+      test('two parallel ensures dedupe the repository decrypt', () async {
+        final stored = <AWallet>[SoftwareViewWallet(7, 'Main', _debugAddress)];
+        when(() => appStore.wallet).thenAnswer((_) => stored.last);
+        when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
+          final newWallet = inv.positionalArguments.single as AWallet;
+          stored.add(newWallet);
+          return newWallet;
+        });
+        when(() => settings.currentWalletId).thenReturn(7);
+
+        final gate = Completer<WalletInfo>();
+        when(() => repo.getUnlockedWalletById(7)).thenAnswer((_) => gate.future);
+
+        final ensureA = service.ensureCurrentWalletUnlocked();
+        final ensureB = service.ensureCurrentWalletUnlocked();
+
+        gate.complete(
+          _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
+        );
+        await Future.wait([ensureA, ensureB]);
+
+        verify(() => repo.getUnlockedWalletById(7)).called(1);
+        expect(stored.last, isA<SoftwareWallet>());
       });
     });
   });

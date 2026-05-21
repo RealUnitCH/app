@@ -11,26 +11,33 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
 
 class _MockAppStore extends Mock implements AppStore {}
 
 class _MockCacheRepository extends Mock implements CacheRepository {}
 
+class _MockWalletService extends Mock implements WalletService {}
+
 void main() {
   late _MockAppStore appStore;
+  late _MockWalletService walletService;
   late SessionCache sessionCache;
 
   setUp(() {
     appStore = _MockAppStore();
+    walletService = _MockWalletService();
     sessionCache = SessionCache(_MockCacheRepository());
     when(() => appStore.sessionCache).thenReturn(sessionCache);
     when(() => appStore.apiConfig)
         .thenReturn(const ApiConfig(networkMode: NetworkMode.testnet));
+    when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
+    when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
   });
 
   DfxFaucetService build(http.Client client) {
     when(() => appStore.httpClient).thenReturn(client);
-    return DfxFaucetService(appStore);
+    return DfxFaucetService(appStore, walletService);
   }
 
   group('$DfxFaucetService', () {

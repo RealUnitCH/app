@@ -119,46 +119,62 @@ void setupServices() {
     ),
   );
   getIt.registerSingleton(BitboxService());
-  getIt.registerFactory(
+  getIt.registerLazySingleton(
     () => WalletService(
       getIt<BitboxService>(),
       getIt<WalletRepository>(),
       getIt<SettingsRepository>(),
+      getIt<AppStore>(),
     ),
-  );
-  // Wire the lazy-unlock callback so `AppStore.ensureUnlocked()` can promote
-  // a view-wallet to an unlocked SoftwareWallet without the auth-service layer
-  // having to import WalletService directly.
-  getIt<AppStore>().attachUnlocker(
-    () => getIt<WalletService>().unlockCurrentWallet(),
   );
   getIt.registerFactory(
     () => TransactionHistoryService(
       getIt<AppStore>(),
+      getIt<WalletService>(),
       getIt<TransactionRepository>(),
     ),
   );
 
   getIt.registerCachedFactory(() => DfxCountryService(getIt<AppStore>()));
-  getIt.registerFactory(() => DfxBankAccountService(getIt<AppStore>()));
-  getIt.registerFactory(() => DfxBrokerbotService(getIt<AppStore>()));
-  getIt.registerFactory(() => DfxKycService(getIt<AppStore>()));
-  getIt.registerFactory(() => DFXPriceService(getIt<AppStore>()));
-  getIt.registerFactory(() => DfxSupportService(getIt<AppStore>()));
-  getIt.registerFactory(() => DfxFaucetService(getIt<AppStore>()));
-  getIt.registerFactory(() => DfxBlockchainApiService(getIt<AppStore>()));
   getIt.registerFactory(
-    () => DfxWidgetService(
-      getIt<AppStore>(),
-    ),
+    () => DfxBankAccountService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
+    () => DfxBrokerbotService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
+    () => DfxKycService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(() => DFXPriceService(getIt<AppStore>()));
+  getIt.registerFactory(
+    () => DfxSupportService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
+    () => DfxFaucetService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
+    () => DfxBlockchainApiService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
+    () => DfxWidgetService(getIt<AppStore>(), getIt<WalletService>()),
   );
 
   getIt.registerFactory(() => RealUnitAccountService(getIt<AppStore>()));
-  getIt.registerFactory(() => RealUnitBuyPaymentInfoService(getIt<AppStore>()));
-  getIt.registerFactory(() => RealUnitPdfService(getIt<AppStore>()));
-  getIt.registerFactory(() => RealUnitRegistrationService(getIt<AppStore>()));
-  getIt.registerFactory(() => RealUnitSellPaymentInfoService(getIt<AppStore>()));
-  getIt.registerFactory(() => RealUnitWalletService(getIt<AppStore>()));
+  getIt.registerFactory(
+    () => RealUnitBuyPaymentInfoService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
+    () => RealUnitPdfService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
+    () => RealUnitRegistrationService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
+    () => RealUnitSellPaymentInfoService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
+    () => RealUnitWalletService(getIt<AppStore>(), getIt<WalletService>()),
+  );
   getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
   getIt.registerFactory(
     () => DebugAuthService(getIt<AppStore>(), getIt<SharedPreferences>()),

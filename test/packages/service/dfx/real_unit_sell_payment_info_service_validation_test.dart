@@ -11,6 +11,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/rea
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/styles/currency.dart';
@@ -23,6 +24,8 @@ class _MockWallet extends Mock implements AWallet {}
 class _MockAccount extends Mock implements AWalletAccount {}
 
 class _MockCacheRepository extends Mock implements CacheRepository {}
+
+class _MockWalletService extends Mock implements WalletService {}
 
 class _PrivKeyCreds extends Fake implements CredentialsWithKnownAddress {
   _PrivKeyCreds(this._address);
@@ -94,12 +97,14 @@ void main() {
   late _MockAppStore appStore;
   late _MockWallet wallet;
   late _MockAccount account;
+  late _MockWalletService walletService;
   late SessionCache session;
 
   setUp(() {
     appStore = _MockAppStore();
     wallet = _MockWallet();
     account = _MockAccount();
+    walletService = _MockWalletService();
     session = SessionCache(_MockCacheRepository());
     session.setAuthToken('jwt-1');
 
@@ -107,19 +112,18 @@ void main() {
         .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
     when(() => appStore.sessionCache).thenReturn(session);
     when(() => appStore.wallet).thenReturn(wallet);
-    // Wallet here is already a non-view software wallet, so ensureUnlocked is
-    // a no-op semantically — mocktail still needs a stub for the call site.
-    when(() => appStore.ensureUnlocked()).thenAnswer((_) async {});
     when(() => wallet.currentAccount).thenReturn(account);
     // Wallet address must match message.delegator for the validation guard
     // to pass the delegator check.
     when(() => account.primaryAddress).thenReturn(_PrivKeyCreds(_walletAddress));
+    when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
+    when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
   });
 
   RealUnitSellPaymentInfoService build({http.Client? client}) {
     when(() => appStore.httpClient)
         .thenReturn(client ?? MockClient((_) async => http.Response('{}', 200)));
-    return RealUnitSellPaymentInfoService(appStore);
+    return RealUnitSellPaymentInfoService(appStore, walletService);
   }
 
   group('confirmPayment validation guard', () {

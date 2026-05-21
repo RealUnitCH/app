@@ -15,7 +15,7 @@ class RealUnitPdfService extends DFXAuthService {
   static const _transactionsReceiptMultiPath = 'v1/realunit/transactions/receipt/multi';
   static const _transactionsReceiptSinglePath = '/v1/realunit/transactions/receipt/single';
 
-  RealUnitPdfService(super.appStore);
+  RealUnitPdfService(super.appStore, super.walletService);
 
   Future<PdfDto> getBalanceReport({
     required DateTime date,

@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:bip32/bip32.dart';
 import 'package:bip39/bip39.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
-import 'package:realunit_wallet/packages/wallet/exceptions/wallet_locked_exception.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
@@ -70,6 +69,11 @@ class SoftwareViewWallet extends AWallet {
   }
 }
 
+// Every sign path is unreachable while [WalletService.ensureCurrentWalletUnlocked]
+// runs before the credentials are used. Hitting any of these would mean a new
+// caller forgot to call it — surface that immediately in dev via [assert] and
+// fall through to a plain [StateError] (programmer error) in release, instead
+// of a typed exception that the rest of the app would have to catch and route.
 class _LockedCredentials extends CredentialsWithKnownAddress {
   final EthereumAddress _address;
 
@@ -79,20 +83,48 @@ class _LockedCredentials extends CredentialsWithKnownAddress {
   EthereumAddress get address => _address;
 
   @override
-  MsgSignature signToEcSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) =>
-      throw const WalletLockedException();
+  MsgSignature signToEcSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) {
+    assert(false, _viewWalletProgrammerError);
+    throw StateError(_viewWalletProgrammerError);
+  }
 
   @override
-  Future<MsgSignature> signToSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) =>
-      throw const WalletLockedException();
+  Future<MsgSignature> signToSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) {
+    assert(false, _viewWalletProgrammerError);
+    throw StateError(_viewWalletProgrammerError);
+  }
 
   @override
-  Future<Uint8List> signPersonalMessage(Uint8List payload, {int? chainId}) =>
-      throw const WalletLockedException();
+  Future<Uint8List> signPersonalMessage(Uint8List payload, {int? chainId}) {
+    assert(false, _viewWalletProgrammerError);
+    throw StateError(_viewWalletProgrammerError);
+  }
 
   @override
-  Uint8List signPersonalMessageToUint8List(Uint8List payload, {int? chainId}) =>
-      throw const WalletLockedException();
+  Uint8List signPersonalMessageToUint8List(Uint8List payload, {int? chainId}) {
+    assert(false, _viewWalletProgrammerError);
+    throw StateError(_viewWalletProgrammerError);
+  }
+}
+
+const _viewWalletProgrammerError =
+    'SoftwareViewWallet credentials reached a sign call — '
+    'every signing path must await WalletService.ensureCurrentWalletUnlocked() first.';
+
+class SoftwareViewWalletAccount extends AWalletAccount {
+  SoftwareViewWalletAccount(super.accountIndex, super.primaryAddress);
+
+  // Programmer error: callers must await WalletService.ensureCurrentWalletUnlocked
+  // before signing. The locked credentials on this account already assert on the
+  // same path, so this method is reachable only when the caller bypasses the
+  // wallet's primaryAddress and calls signMessage directly.
+  @override
+  Future<String> signMessage(String message, {int addressIndex = 0}) {
+    assert(false, 'SoftwareViewWalletAccount.signMessage called without first '
+        'awaiting WalletService.ensureCurrentWalletUnlocked()');
+    throw StateError('SoftwareViewWalletAccount cannot sign while the mnemonic '
+        'is locked — call WalletService.ensureCurrentWalletUnlocked() first.');
+  }
 }
 
 class BitboxWallet extends AWallet {

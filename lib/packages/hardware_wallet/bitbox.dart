@@ -14,16 +14,29 @@ class BitboxService {
   final BitboxManager bitboxManager = BitboxManager();
   final Duration _connectionStatusInterval;
   bool _isConnected = false;
-  BitboxCredentials? _credentials;
+  // Keyed by the lowercased address so multi-wallet (future) reconnect
+  // re-attaches every active set of credentials, not just the most recently
+  // handed out. Lowercase invariant: callers may hand in EIP-55-mixed or raw
+  // hex — we normalise via [_key] on every read/write so a checksum-flip
+  // can't fork the map.
+  final Map<String, BitboxCredentials> _credentialsByAddress = {};
   Timer? _connectionStatusObserver;
+  Future<void>? _pendingDisconnect;
+
+  /// Normalises an address into the form used as the map key. Lowercase is
+  /// the cheapest robust choice — EIP-55 checksum differs in casing only, so
+  /// `0xAbC` and `0xabc` collapse to the same entry.
+  String _key(String address) => address.toLowerCase();
 
   Future<List<BitboxDevice>> getAllUsbDevices() => bitboxManager.devices;
 
   Future<bool> startScan() => bitboxManager.startScan();
 
   BitboxCredentials getCredentials(String address) {
-    final credentials = BitboxCredentials(address);
-    _credentials = credentials;
+    final credentials = _credentialsByAddress.putIfAbsent(
+      _key(address),
+      () => BitboxCredentials(address),
+    );
     if (_isConnected) {
       credentials.setBitbox(bitboxManager);
     }
@@ -31,15 +44,21 @@ class BitboxService {
   }
 
   Future<bool> init(BitboxDevice device) async {
+    // The disconnect observer fires .disconnect() asynchronously when the
+    // device drops. If the user re-plugs immediately we'd race two ops on the
+    // same SDK manager and the result is undefined. Wait for any in-flight
+    // disconnect to finish first.
+    await _pendingDisconnect;
     await bitboxManager.connect(device);
     final didInit = await bitboxManager.initBitBox();
     if (!didInit) throw Exception('Failed to init');
     _isConnected = true;
-    // Restore the bitbox manager on any credentials handed out before this
-    // (re-)connect — otherwise existing wallets keep a cleared credentials
-    // instance and the next sign throws BitboxNotConnectedException even
-    // though the device is back online.
-    _credentials?.setBitbox(bitboxManager);
+    // Re-attach the manager to every active credentials instance so existing
+    // wallets heal automatically on reconnect. The previous derivationPath is
+    // preserved inside setBitbox().
+    for (final credentials in _credentialsByAddress.values) {
+      credentials.setBitbox(bitboxManager);
+    }
     return didInit;
   }
 
@@ -58,22 +77,33 @@ class BitboxService {
         return;
       }
       if (devices.isEmpty) {
+        // Two ticks can fire back-to-back if the body's awaits straddle the
+        // next interval — bail if the previous tick already entered the
+        // device-loss path. _isConnected acts as the single-writer flag
+        // because we set it to false before any further work.
+        if (!_isConnected) return;
         _isConnected = false;
-        _credentials?.clearBitbox();
-        // Keep the _credentials reference so init() can re-attach the manager
-        // on the same instance after a reconnect.
+        for (final credentials in _credentialsByAddress.values) {
+          credentials.clearBitbox();
+        }
         stopConnectionStatusObserver();
         // Close the underlying transport. Required on Android so the USB
         // file-descriptor is released — otherwise the next connect() can
         // fail because the OS still considers the device claimed. Safe on
         // iOS where the BLE link is already gone at this point.
-        try {
-          await bitboxManager.disconnect();
-        } catch (e) {
-          developer.log('disconnect after device-loss failed: $e', name: '$BitboxService');
-        }
+        _pendingDisconnect = _disconnectAndForget();
+        await _pendingDisconnect;
+        _pendingDisconnect = null;
       }
     });
+  }
+
+  Future<void> _disconnectAndForget() async {
+    try {
+      await bitboxManager.disconnect();
+    } on Exception catch (e) {
+      developer.log('disconnect after device-loss failed: $e', name: '$BitboxService');
+    }
   }
 
   void stopConnectionStatusObserver() {

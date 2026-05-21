@@ -11,6 +11,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 import 'package:realunit_wallet/styles/language.dart';
 
@@ -18,25 +19,31 @@ class _MockAppStore extends Mock implements AppStore {}
 
 class _MockCacheRepository extends Mock implements CacheRepository {}
 
+class _MockWalletService extends Mock implements WalletService {}
+
 const _address = '0x000000000000000000000000000000000000beef';
 
 void main() {
   late _MockAppStore appStore;
+  late _MockWalletService walletService;
   late SessionCache sessionCache;
 
   setUp(() {
     appStore = _MockAppStore();
+    walletService = _MockWalletService();
     sessionCache = SessionCache(_MockCacheRepository());
     when(() => appStore.sessionCache).thenReturn(sessionCache);
     when(() => appStore.apiConfig)
         .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
     when(() => appStore.primaryAddress).thenReturn(_address);
     sessionCache.setAuthToken('jwt-pdf');
+    when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
+    when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
   });
 
   RealUnitPdfService build(http.Client client) {
     when(() => appStore.httpClient).thenReturn(client);
-    return RealUnitPdfService(appStore);
+    return RealUnitPdfService(appStore, walletService);
   }
 
   group('$RealUnitPdfService', () {

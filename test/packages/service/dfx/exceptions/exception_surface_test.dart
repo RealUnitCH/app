@@ -3,7 +3,6 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.da
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
-import 'package:realunit_wallet/packages/wallet/exceptions/wallet_locked_exception.dart';
 
 // Guard against a recurring failure mode: an Exception subclass without a
 // toString() override gets rendered as `Instance of '...'` whenever a cubit
@@ -17,7 +16,6 @@ void main() {
     final exceptions = <Object>[
       const BitboxNotConnectedException(),
       const SigningCancelledException(),
-      const WalletLockedException(),
       const ApiException(code: 'TEST', message: 'test'),
       const RegistrationRequiredException(code: 'TEST', message: 'test'),
       const KycLevelRequiredException(

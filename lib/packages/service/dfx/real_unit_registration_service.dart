@@ -18,7 +18,7 @@ import 'package:realunit_wallet/packages/utils/ascii_transliterate.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 
 class RealUnitRegistrationService extends DFXAuthService {
-  RealUnitRegistrationService(super.appStore);
+  RealUnitRegistrationService(super.appStore, super.walletService);
 
   static const _registerEmailPath = '/v1/realunit/register/email';
   static const _registerCompletionPath = '/v1/realunit/register/complete';
@@ -52,8 +52,18 @@ class RealUnitRegistrationService extends DFXAuthService {
   /// registers a wallet and and adds the wallet to the new user
   Future<RegistrationStatus> completeRegistration(Registration registration) async {
     // EIP-712 registration signature requires the private key — promote the
-    // view-wallet (if any) to a fully unlocked SoftwareWallet first.
-    await appStore.ensureUnlocked();
+    // view-wallet (if any) to a fully unlocked SoftwareWallet first, then
+    // lock back down in the finally so a throw mid-sequence doesn't leave the
+    // key resident.
+    await walletService.ensureCurrentWalletUnlocked();
+    try {
+      return await _completeRegistration(registration);
+    } finally {
+      await walletService.lockCurrentWallet();
+    }
+  }
+
+  Future<RegistrationStatus> _completeRegistration(Registration registration) async {
     final credentials = appStore.wallet.primaryAccount.primaryAddress;
     // BitBox firmware rejects non-ASCII bytes in EIP-712 string fields.
     // Transliterate everything that goes into the signed envelope AND the
@@ -142,6 +152,15 @@ class RealUnitRegistrationService extends DFXAuthService {
   Future<RegistrationStatus> registerWallet(
     RealUnitUserDataDto userData,
   ) async {
+    await walletService.ensureCurrentWalletUnlocked();
+    try {
+      return await _registerWallet(userData);
+    } finally {
+      await walletService.lockCurrentWallet();
+    }
+  }
+
+  Future<RegistrationStatus> _registerWallet(RealUnitUserDataDto userData) async {
     final credentials = appStore.wallet.primaryAccount.primaryAddress;
     final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     // Same ASCII guard as completeRegistration — see comment there.

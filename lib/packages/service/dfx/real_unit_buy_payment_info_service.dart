@@ -13,7 +13,7 @@ class RealUnitBuyPaymentInfoService extends DFXAuthService {
   static const _buyPaymentInfoPath = '/v1/realunit/buy';
   static String _confirmPaymentPath(int id) => '/v1/realunit/buy/$id/confirm';
 
-  RealUnitBuyPaymentInfoService(super.appStore);
+  RealUnitBuyPaymentInfoService(super.appStore, super.walletService);
 
   Future<BuyPaymentInfo> getPaymentInfo(int amount, {Currency currency = Currency.chf}) async {
     final buyDto = RealUnitBuyDto(amount: amount, currency: currency);

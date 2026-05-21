@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/bank_account/bank_account.dart';
+import 'package:realunit_wallet/screens/hardware_connect_bitbox/show_bitbox_reconnect_sheet.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_converter/sell_converter_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_confirm_sheet.dart';
@@ -31,6 +32,19 @@ class SellButton extends StatelessWidget {
           }
           if (state.error == .registrationRequired) {
             await context.pushNamed(AppRoutes.kyc);
+            return;
+          }
+          if (state.error == .bitboxDisconnected) {
+            final paymentInfoCubit = context.read<SellPaymentInfoCubit>();
+            final converterCurrency = context.read<SellConverterCubit>().state.currency;
+            await showBitboxReconnectSheet(context);
+            if (bankAccount != null && amount.isNotEmpty) {
+              paymentInfoCubit.getPaymentInfo(
+                amount: amount,
+                iban: bankAccount!.iban,
+                currency: converterCurrency,
+              );
+            }
             return;
           }
           if (context.mounted) {

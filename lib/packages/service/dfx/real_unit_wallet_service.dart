@@ -6,7 +6,7 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.da
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 
 class RealUnitWalletService extends DFXAuthService {
-  RealUnitWalletService(super.appStore);
+  RealUnitWalletService(super.appStore, super.walletService);
 
   static const _walletStatusPath = '/v1/realunit/wallet/status';
 
