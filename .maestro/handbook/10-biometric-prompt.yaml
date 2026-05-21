@@ -7,22 +7,34 @@
 # around Xcode 26 (verified locally: `simctl ui --help` lists only
 # `appearance`, `increase_contrast`, `content_size`), so we cannot force
 # enrollment on CI. The flow handles both paths: with enrollment the
-# bottom sheet appears and we wait for "Überspringen"; without enrollment
-# the app proceeds straight to the dashboard and we skip the wait. The
-# captured screenshot will then show the dashboard instead of the
-# biometric prompt — local re-captures on a developer's machine with
-# Face ID enrolled produce the documented screenshot.
+# bottom sheet appears ("Überspringen"); without enrollment the app
+# proceeds straight to the dashboard ("RealUnit kaufen"). The captured
+# screenshot will then show the dashboard instead of the biometric
+# prompt — local re-captures on a developer's machine with Face ID
+# enrolled produce the documented screenshot.
+#
+# Each tap is gated on neither post-confirm state being reached yet and
+# re-tapped if a digit was silently dropped (Maestro/XCUITest tap-loss on
+# Apple Silicon + iOS 26, mobile-dev-inc/maestro#3137). The gate also
+# keeps surplus iterations from tapping through the biometric bottom
+# sheet on a local re-capture. The closing extendedWaitUntil fails here,
+# in this flow, if the PIN never completed — instead of one flow later
+# in 11-dashboard with a misleading "RealUnit kaufen not visible".
 appId: swiss.realunit.app
 ---
 - repeat:
-    times: 6
+    times: 12
     commands:
-      - tapOn: '1'
+      - runFlow:
+          when:
+            notVisible:
+              text: '.*Überspringen.*|.*RealUnit kaufen.*'
+          commands:
+            - tapOn:
+                text: '1'
+                optional: true
 - waitForAnimationToEnd
-- runFlow:
-    when:
-      visible: 'Überspringen'
-    commands:
-      - extendedWaitUntil:
-          visible: 'Überspringen'
-          timeout: 5000
+- extendedWaitUntil:
+    visible:
+      text: '.*Überspringen.*|.*RealUnit kaufen.*'
+    timeout: 30000

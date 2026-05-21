@@ -1,12 +1,23 @@
 # Captures docs/handbook/screenshots/09-pin-confirm.png
 # After entering six 1s, the same screen flips to confirm mode with the title
 # "Bestätigen Sie Ihre PIN" (single SetupPinPage with create/confirm states).
+#
+# Each tap is gated on the confirm screen not yet showing and re-tapped if a
+# digit was silently dropped (Maestro/XCUITest tap-loss on Apple Silicon +
+# iOS 26, mobile-dev-inc/maestro#3137). The gate also stops the loop the
+# instant the screen flips, so no surplus tap bleeds into the confirm PIN.
 appId: swiss.realunit.app
 ---
 - repeat:
-    times: 6
+    times: 12
     commands:
-      - tapOn: '1'
+      - runFlow:
+          when:
+            notVisible: 'Bestätigen Sie Ihre PIN'
+          commands:
+            - tapOn:
+                text: '1'
+                optional: true
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible: 'Bestätigen Sie Ihre PIN'
