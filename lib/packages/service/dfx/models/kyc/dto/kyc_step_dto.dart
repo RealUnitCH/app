@@ -7,6 +7,10 @@ class KycStepDto {
   final KycStepReason? reason;
   final int sequenceNumber;
   final bool isCurrent;
+  // `true` when the backend's `requiredKycSteps(userData)` includes this
+  // step for the current user. Authoritative — clients no longer maintain
+  // a parallel set. Defaults to `false` for old API responses.
+  final bool isRequired;
 
   const KycStepDto({
     required this.name,
@@ -15,6 +19,7 @@ class KycStepDto {
     this.reason,
     required this.sequenceNumber,
     required this.isCurrent,
+    this.isRequired = false,
   });
 
   factory KycStepDto.fromJson(Map<String, dynamic> json) {
@@ -27,6 +32,7 @@ class KycStepDto {
           : null,
       sequenceNumber: json['sequenceNumber'] as int,
       isCurrent: json['isCurrent'] as bool? ?? false,
+      isRequired: json['isRequired'] as bool? ?? false,
     );
   }
 }

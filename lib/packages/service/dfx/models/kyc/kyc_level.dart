@@ -1,5 +1,41 @@
 enum KycLevel { level0, level10, level20, level30, level40, level50, terminated, rejected }
 
+// Mirror of `KycProcessStatus` in the API
+// (`src/subdomains/generic/kyc/dto/output/kyc-info.dto.ts`). The high-level
+// KYC process state. Defaults to `inProgress` if absent on the wire so
+// pre-PR backends degrade reasonably.
+enum KycProcessStatus { inProgress, pendingReview, completed, failed }
+
+extension KycProcessStatusExtension on KycProcessStatus {
+  String get value {
+    switch (this) {
+      case KycProcessStatus.inProgress:
+        return 'InProgress';
+      case KycProcessStatus.pendingReview:
+        return 'PendingReview';
+      case KycProcessStatus.completed:
+        return 'Completed';
+      case KycProcessStatus.failed:
+        return 'Failed';
+    }
+  }
+
+  static KycProcessStatus fromValue(String value) {
+    switch (value) {
+      case 'InProgress':
+        return KycProcessStatus.inProgress;
+      case 'PendingReview':
+        return KycProcessStatus.pendingReview;
+      case 'Completed':
+        return KycProcessStatus.completed;
+      case 'Failed':
+        return KycProcessStatus.failed;
+      default:
+        return KycProcessStatus.inProgress;
+    }
+  }
+}
+
 enum KycStepName {
   contactData,
   personalData,

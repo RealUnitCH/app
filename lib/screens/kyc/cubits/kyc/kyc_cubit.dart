@@ -13,20 +13,10 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_serv
 part 'kyc_state.dart';
 
 class KycCubit extends Cubit<KycState> {
-  static const _requiredStepNames = {
-    KycStepName.contactData,
-    KycStepName.nationalityData,
-    KycStepName.ident,
-    KycStepName.financialData,
-    KycStepName.dfxApproval,
-  };
-
-  static const _minLevelForActions = 30;
   static const _checkKycTimeout = Duration(seconds: 30);
 
   final DfxKycService _kycService;
   final RealUnitRegistrationService _registrationService;
-  final int _requiredLevel;
 
   bool _legalDisclaimerAccepted = false;
   bool _emailRegistrationAttempted = false;
@@ -48,12 +38,10 @@ class KycCubit extends Cubit<KycState> {
 
   KycCubit(
     DfxKycService kycService,
-    RealUnitRegistrationService registrationService, {
-    int? requiredLevel,
-  }) : _kycService = kycService,
-       _registrationService = registrationService,
-       _requiredLevel = requiredLevel ?? _minLevelForActions,
-       super(const KycInitial());
+    RealUnitRegistrationService registrationService,
+  ) : _kycService = kycService,
+      _registrationService = registrationService,
+      super(const KycInitial());
 
   Future<void> checkKyc() async {
     final generation = ++_runGeneration;
@@ -89,8 +77,9 @@ class KycCubit extends Cubit<KycState> {
         return;
       }
 
-      // edge case, where email exists but level is <10. In this case email is automatically registered for RealUnit
-      if (user.mail != null && level < 10) {
+      // Edge case: email exists but level is < 10. Backend hasn't bumped the
+      // level after a prior auto-registration attempt — re-fire it once.
+      if (level < 10) {
         if (_emailRegistrationAttempted) {
           // Backend did not bump the level after registration; surface the
           // current state instead of recursing forever.
@@ -104,12 +93,11 @@ class KycCubit extends Cubit<KycState> {
         return;
       }
 
-      // Disclaimer + EIP-712 registration sign always precede every state
-      // past the email step, even when the user is already at
-      // `>= requiredLevel`. The sign is the per-session security gate, not
-      // the backend KYC level — without it a returning user with a high
-      // level would otherwise be granted sensitive actions on this device
-      // without re-proving ownership of the wallet key.
+      // Disclaimer + EIP-712 registration sign are local session gates that
+      // must precede every sensitive call. They do not encode business
+      // routing — the API does — they just enforce a per-session security
+      // ceremony on this device before the cubit forwards anything that
+      // requires a signed user identity.
       if (!_legalDisclaimerAccepted) {
         emit(const KycSuccess(currentStep: KycStep.legalDisclaimer));
         return;
@@ -119,10 +107,9 @@ class KycCubit extends Cubit<KycState> {
         return;
       }
 
-      // Step status drives routing, not the numeric level: the backend can
-      // report level >= required while individual required steps are still
-      // failed/outdated/notStarted/dataRequested, and those have to be
-      // re-done before the user is "completed".
+      // Account-merge invitation is still surfaced from the step list because
+      // it is delivered as a step `reason`, not as `currentStep`. Render
+      // verbatim what the backend tagged.
       final hasMergeRequest = kycStatus.kycSteps.any(
         (step) => step.reason == KycStepReason.accountMergeRequested,
       );
@@ -131,49 +118,35 @@ class KycCubit extends Cubit<KycState> {
         return;
       }
 
-      final requiredSteps = kycStatus.kycSteps.where(
-        (step) => _requiredStepNames.contains(step.name),
-      );
-
-      // `onHold` is semantically a backend-side wait state — the user has no
-      // actionable next step, the same as `inReview`. Treat it identically so
-      // a high-level user with an `onHold` required step is shown the pending
-      // screen instead of falling through to `KycCompleted`.
-      const pendingStatuses = {KycStepStatus.inReview, KycStepStatus.onHold};
-      final pendingStep = requiredSteps.firstWhereOrNull(
-        (step) => pendingStatuses.contains(step.status),
-      );
-      if (pendingStep != null) {
-        final step = _mapStepName(pendingStep.name);
-        if (step != null) {
-          emit(KycPending(step));
-        } else {
-          emit(KycUnsupportedStepFailure(pendingStep.name));
-        }
-        return;
+      // From here on the API is the authority. Render `processStatus` plus
+      // the matching `currentStep` from the session response; no local
+      // iteration over `kycSteps`, no local "what counts as actionable"
+      // set, no local level threshold. See docs/api-authority-plan.md
+      // (Wave 2) for the design.
+      switch (kycStatus.processStatus) {
+        case KycProcessStatus.completed:
+          emit(const KycCompleted());
+          return;
+        case KycProcessStatus.failed:
+          emit(const KycFailure('KYC terminated'));
+          return;
+        case KycProcessStatus.pendingReview:
+          final pending = kycStatus.kycSteps.firstWhereOrNull(
+            (s) => s.isRequired && _mapStepName(s.name) != null,
+          );
+          final step = pending != null ? _mapStepName(pending.name) : null;
+          if (step != null) {
+            emit(KycPending(step));
+          } else if (pending != null) {
+            emit(KycUnsupportedStepFailure(pending.name));
+          } else {
+            emit(const KycCompleted());
+          }
+          return;
+        case KycProcessStatus.inProgress:
+          await _continueKyc(generation);
+          return;
       }
-
-      const actionableStatuses = {
-        KycStepStatus.notStarted,
-        KycStepStatus.inProgress,
-        KycStepStatus.failed,
-        KycStepStatus.outdated,
-        KycStepStatus.dataRequested,
-      };
-      final unfinishedStep = requiredSteps.firstWhereOrNull(
-        (step) => actionableStatuses.contains(step.status),
-      );
-      if (unfinishedStep != null) {
-        await _continueKyc(generation);
-        return;
-      }
-
-      if (level < _requiredLevel) {
-        await _continueKyc(generation);
-        return;
-      }
-
-      emit(const KycCompleted());
     } on ApiException catch (e) {
       if (isClosed || generation != _runGeneration) return;
       // The body `code` is the authoritative signal — `TfaRequiredException`
