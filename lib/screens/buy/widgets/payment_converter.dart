@@ -2,22 +2,44 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/repository/supported_fiat_repository.dart';
 import 'package:realunit_wallet/packages/utils/asset_logo.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
+import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
-class PaymentConverter extends StatelessWidget {
+class PaymentConverter extends StatefulWidget {
   const PaymentConverter({
     super.key,
-    required TextEditingController amountController,
-    required TextEditingController resultController,
-  }) : _amountController = amountController,
-       _resultController = resultController;
+    required this.amountController,
+    required this.resultController,
+  });
 
-  final TextEditingController _amountController;
-  final TextEditingController _resultController;
+  final TextEditingController amountController;
+  final TextEditingController resultController;
+
+  @override
+  State<PaymentConverter> createState() => _PaymentConverterState();
+}
+
+class _PaymentConverterState extends State<PaymentConverter> {
+  TextEditingController get _amountController => widget.amountController;
+  TextEditingController get _resultController => widget.resultController;
+
+  // Backend-authoritative list of buyable currencies for the picker. Loaded
+  // once per session via `SupportedFiatRepository` (in-memory cached) so
+  // the popup itemBuilder can render synchronously.
+  List<Currency> _buyable = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    getIt<SupportedFiatRepository>().getBuyable().then((currencies) {
+      if (mounted) setState(() => _buyable = currencies);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +102,7 @@ class PaymentConverter extends StatelessWidget {
                             if (currency == state.currency) return;
                             context.read<BuyConverterCubit>().onCurrencyChanged(currency);
                           },
-                          itemBuilder: (context) => Currency.values.map((currency) {
+                          itemBuilder: (context) => _buyable.map((currency) {
                             return PopupMenuItem(
                               value: currency,
                               child: Column(

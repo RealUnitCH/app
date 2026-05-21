@@ -8,6 +8,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/balance.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
+import 'package:realunit_wallet/packages/repository/supported_fiat_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_bank_account_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
@@ -51,6 +52,8 @@ class MockDfxPriceService extends Mock implements DFXPriceService {}
 class MockRealUnitSellPaymentInfoService extends Mock implements RealUnitSellPaymentInfoService {}
 
 class MockBalanceRepository extends Mock implements BalanceRepository {}
+
+class MockSupportedFiatRepository extends Mock implements SupportedFiatRepository {}
 
 class MockApiConfig extends Mock implements ApiConfig {}
 
@@ -132,6 +135,12 @@ void main() {
     );
     when(() => balanceRepository.saveBalance(any())).thenAnswer((_) async {});
     getIt.registerSingleton<BalanceRepository>(balanceRepository);
+
+    final fiatRepo = MockSupportedFiatRepository();
+    when(() => fiatRepo.getSellable()).thenAnswer((_) async => const [Currency.chf]);
+    when(() => fiatRepo.getBuyable()).thenAnswer((_) async => const [Currency.chf, Currency.eur]);
+    when(() => fiatRepo.getAll()).thenAnswer((_) async => const [Currency.chf, Currency.eur]);
+    getIt.registerSingleton<SupportedFiatRepository>(fiatRepo);
   }
 
   setUpAll(() async => await setupDependencyInjection());

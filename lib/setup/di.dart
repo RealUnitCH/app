@@ -8,6 +8,8 @@ import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
+import 'package:realunit_wallet/packages/repository/supported_fiat_repository.dart';
+import 'package:realunit_wallet/packages/repository/supported_language_repository.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
@@ -19,7 +21,9 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_fiat_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_language_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
@@ -136,6 +140,14 @@ void setupServices() {
   );
 
   getIt.registerCachedFactory(() => DfxCountryService(getIt<AppStore>()));
+  getIt.registerLazySingleton(() => DfxFiatService(getIt<AppStore>()));
+  getIt.registerLazySingleton(() => DfxLanguageService(getIt<AppStore>()));
+  getIt.registerLazySingleton(
+    () => SupportedFiatRepository(getIt<DfxFiatService>()),
+  );
+  getIt.registerLazySingleton(
+    () => SupportedLanguageRepository(getIt<DfxLanguageService>()),
+  );
   getIt.registerFactory(
     () => DfxBankAccountService(getIt<AppStore>(), getIt<WalletService>()),
   );
