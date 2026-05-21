@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:realunit_wallet/packages/storage/asset_storage.dart';
@@ -50,6 +51,10 @@ Future<bool> tryOpeningDatabase(String encryptionPassword) async {
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase(String encryptionPassword) : super(_openDatabase(encryptionPassword));
+
+  /// In-memory database for unit tests. Bypasses SQLCipher and path_provider.
+  @visibleForTesting
+  AppDatabase.forTesting(super.executor);
 
   @override
   int get schemaVersion => 2;

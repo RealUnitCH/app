@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
@@ -100,6 +102,19 @@ void main() {
         (cubit.state as SellConfirmFailure).error,
         contains('signing cancelled'),
       );
+    });
+
+    test('does not emit after close', () async {
+      final completer = Completer<void>();
+      when(() => service.confirmPayment(any()))
+          .thenAnswer((_) => completer.future);
+
+      final cubit = SellConfirmCubit(service);
+      unawaited(cubit.confirmPayment(_stubPaymentInfo()));
+      await cubit.close();
+      completer.complete();
+
+      // If emit fires after close, StateError is thrown by the framework.
     });
   });
 }

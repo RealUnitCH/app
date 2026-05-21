@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_bank_account_service.dart';
@@ -118,6 +120,17 @@ void main() {
 
       expect(cubit.state, isA<SellBankAccountsUpdateFailure>());
       expect(cubit.state.accounts, hasLength(1));
+    });
+
+    test('does not emit after close when loading on construction', () async {
+      final completer = Completer<List<BankAccountDto>>();
+      when(() => service.getBankAccounts()).thenAnswer((_) => completer.future);
+
+      final cubit = SellBankAccountsCubit(service);
+      await cubit.close();
+      completer.complete([_dto(id: 1)]);
+
+      // If emit fires after close, StateError is thrown by the framework.
     });
   });
 }

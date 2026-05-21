@@ -131,5 +131,19 @@ void main() {
         expect(reference, equals(referenceText));
       });
     });
+
+    group('malformed JSON responses', () {
+      test('confirmPayment with non-JSON 200 throws FormatException', () async {
+        final appStore = buildAppStore(
+          (_) async => http.Response('not json', 200),
+        );
+        service = RealUnitBuyPaymentInfoService(appStore, walletService);
+
+        expect(
+          () => service.confirmPayment(1),
+          throwsA(isA<FormatException>()),
+        );
+      });
+    });
   });
 }

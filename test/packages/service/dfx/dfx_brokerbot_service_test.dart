@@ -93,6 +93,22 @@ void main() {
           throwsException,
         );
       });
+
+      test('throws for Infinity input (UI prevents this via digitsOnly formatter)', () {
+        expect(
+          () => build(MockClient((_) async => http.Response('{}', 200)))
+              .getBuyPrice('Infinity', Currency.chf),
+          throwsException,
+        );
+      });
+
+      test('throws for NaN input (UI prevents this via digitsOnly formatter)', () {
+        expect(
+          () => build(MockClient((_) async => http.Response('{}', 200)))
+              .getBuyPrice('NaN', Currency.chf),
+          throwsException,
+        );
+      });
     });
 
     group('getBuyShares', () {
@@ -228,6 +244,62 @@ void main() {
         await Future<void>.delayed(Duration.zero);
         expect(called, isFalse);
       });
+    });
+  });
+
+  group('malformed JSON responses', () {
+    late _MockAppStore appStore;
+    late _MockWalletService walletService;
+    late SessionCache sessionCache;
+
+    setUp(() {
+      appStore = _MockAppStore();
+      walletService = _MockWalletService();
+      sessionCache = SessionCache(_MockCacheRepository());
+      when(() => appStore.sessionCache).thenReturn(sessionCache);
+      when(() => appStore.apiConfig)
+          .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+      when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
+      when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
+    });
+
+    DfxBrokerbotService buildLocal(http.Client client) {
+      when(() => appStore.httpClient).thenReturn(client);
+      return DfxBrokerbotService(appStore, walletService);
+    }
+
+    test('getBuyPrice with non-JSON 200 throws FormatException', () {
+      final client = MockClient((_) async => http.Response('not json', 200));
+      expect(
+        () => buildLocal(client).getBuyPrice('10', Currency.chf),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('getSellPrice with non-JSON 200 throws FormatException', () {
+      sessionCache.setAuthToken('jwt-test');
+      final client = MockClient((_) async => http.Response('not json', 200));
+      expect(
+        () => buildLocal(client).getSellPrice('10', Currency.chf),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('getBuyShares with non-JSON 200 throws FormatException', () {
+      final client = MockClient((_) async => http.Response('not json', 200));
+      expect(
+        () => buildLocal(client).getBuyShares('100', Currency.chf),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('getSellShares with non-JSON 200 throws FormatException', () {
+      sessionCache.setAuthToken('jwt-test');
+      final client = MockClient((_) async => http.Response('not json', 200));
+      expect(
+        () => buildLocal(client).getSellShares('100', Currency.chf),
+        throwsA(isA<FormatException>()),
+      );
     });
   });
 }

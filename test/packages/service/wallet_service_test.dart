@@ -666,5 +666,31 @@ void main() {
         expect(stored.last, isA<SoftwareWallet>());
       });
     });
+
+    group('persistence failure resilience', () {
+      test('commitGeneratedWallet propagates repository exception', () async {
+        when(() => repo.createWallet(any(), any(), any(), any()))
+            .thenThrow(Exception('disk full'));
+
+        final draft = await service.generateUncommittedSeedWallet('Main');
+
+        expect(
+          () => service.commitGeneratedWallet(draft),
+          throwsA(isA<Exception>()),
+        );
+        verifyNever(() => settings.saveCurrentWalletId(any()));
+      });
+
+      test('restoreWallet propagates repository exception without setting current', () async {
+        when(() => repo.createWallet(any(), any(), any(), any()))
+            .thenThrow(Exception('disk full'));
+
+        expect(
+          () => service.restoreWallet('Restored', _testMnemonic),
+          throwsA(isA<Exception>()),
+        );
+        verifyNever(() => settings.saveCurrentWalletId(any()));
+      });
+    });
   });
 }

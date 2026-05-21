@@ -30,5 +30,14 @@ void main() {
 
       expect(uri.toString(), 'ethereum:$address?amount=0.000001');
     });
+
+    // Amount is not URI-encoded, but both call sites hardcode amount='' so this
+    // is unreachable today. Kept as defense-in-depth if the receive flow ever
+    // accepts user-supplied amounts.
+    test('amount with special characters is not URI-encoded (currently unreachable)', () {
+      final uri = EthereumURI(amount: '1.5&evil=1', address: address);
+
+      expect(uri.toString(), contains('&evil'));
+    });
   });
 }
