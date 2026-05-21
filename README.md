@@ -139,7 +139,7 @@ Non-BitBox code only needs Tier 0 + widget tests; Tier 1+ are reserved for hardw
 | Coverage | `flutter test --coverage` | Writes `coverage/lcov.info`. CI narrows it to the activated surface and hard-fails when scoped coverage drops below the floor in `.coverage-floor-lines` / `.coverage-floor-functions`. See "Coverage infrastructure roadmap" above for the ratchet protocol. |
 | Analyzer | `flutter analyze`         | Dart static analysis per `analysis_options.yaml`                                                                                                                                                          |
 
-Tier 1 (`integration_test/`) and Tier 3 (`.maestro/`) runners are tracked under "Testing tiers" above but not yet committed.
+Tier 1 (`integration_test/`) is tracked under "Testing tiers" above but not yet committed. Tier 3a (Maestro handbook flows on iOS Simulator) is wired via [`tier3-handbook.yaml`](.github/workflows/tier3-handbook.yaml); Tier 3b (BitBox02 real-hardware variant) remains deferred.
 
 ## CI/CD
 
