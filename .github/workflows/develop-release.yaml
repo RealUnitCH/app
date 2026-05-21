@@ -241,6 +241,17 @@ jobs:
           name: ios-ipa
           path: ios/realunit-*.ipa
 
+      # Remove the App Store Connect .p8 private key from the runner
+      # workspace once Fastlane has finished. Hosted runners are
+      # ephemeral so the file would be discarded anyway when the VM
+      # is recycled, but `actions/upload-artifact` above globs from
+      # the workspace and a stray `AuthKey.p8` would otherwise be
+      # eligible for inclusion in any future artifact whose `path`
+      # widened. Defence-in-depth — costs nothing.
+      - name: Clean up App Store Connect key
+        if: always()
+        run: rm -f "${FASTLANE_APPLE_API_KEY_PATH:-${{ github.workspace }}/AuthKey.p8}" || true
+
   github-release:
     needs: [guard, android-deploy, ios-deploy]
     if: needs.guard.outputs.proceed == 'true'
