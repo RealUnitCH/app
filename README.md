@@ -1,6 +1,6 @@
 # Real Unit App
 
-A Flutter wallet for Real Unit investors. Multi-chain, BitBox02-ready, KYC-aware.
+A Flutter wallet for Real Unit investors. Multi-chain, BitBox-ready, KYC-aware.
 
 > **Status:** Early development. APIs, flows and UI are still moving.
 
@@ -37,7 +37,7 @@ Three PRs already in flight close the largest gaps for KYC + BitBox logic: [#319
 
 User-facing functions, their activation status, and the tests that cover them. It is the source of truth for "what does this wallet actually do" — keep it in sync when adding or removing a flow.
 
-**Status legend:** `always` = ships on every build · `android-only` = only available on Android (BitBox flows) · `planned` = surface exists but flow not yet implemented.
+**Status legend:** `always` = ships on every build · `hardware` = needs a BitBox hardware wallet (see [Supported hardware wallets](#supported-hardware-wallets) below) · `planned` = surface exists but flow not yet implemented.
 
 **Triage legend** (MVP testing decision): `mvp` = in MVP scope, must reach full test coverage before launch · `defer` = ships but does not block MVP coverage (coverage required eventually, no hard deadline) · `planned` = not in scope for MVP.
 
@@ -45,13 +45,24 @@ User-facing functions, their activation status, and the tests that cover them. I
 
 > Per-feature line-coverage % is omitted today because `--coverage` is not yet wired into CI. Once roadmap items 1 + 2 land, this column will be populated automatically.
 
+### Supported hardware wallets
+
+`hardware`-status flows require a BitBox device. Platform availability depends on the model:
+
+| Device | Android | iOS |
+| --- | --- | --- |
+| BitBox 02 | yes | no |
+| BitBox 02 Nova | yes | yes |
+
+The transport is USB on Android and Bluetooth on iOS; the original BitBox 02 has no Bluetooth, so iOS support requires a BitBox 02 Nova.
+
 ### Onboarding & authentication
 
 | Feature | Status | Triage | Tests |
 | --- | --- | --- | --- |
 | Welcome screen | always | mvp | widget (`welcome_page_test.dart`, `welcome/widgets/welcome_card_test.dart`) |
 | Create wallet — software (generate seed) | always | mvp | widget (`create_wallet/create_wallet_page_test.dart`); no cubit/service test |
-| Create wallet — BitBox02 (hardware connect) | android-only | mvp | — (integration test landing in [#320](https://github.com/DFXswiss/realunit-app/pull/320)) |
+| Create wallet — BitBox (hardware connect) | hardware | mvp | — (integration test landing in [#320](https://github.com/DFXswiss/realunit-app/pull/320)) |
 | Restore wallet — software seed phrase | always | mvp | widget (`restore_wallet/restore_wallet_page_test.dart`) |
 | Verify seed phrase (3-word challenge) | always | mvp | widget (`verify_seed/verify_seed_page_test.dart`) |
 | Setup PIN | always | mvp | widget (`pin/setup_pin_page_test.dart`) |
@@ -67,7 +78,7 @@ User-facing functions, their activation status, and the tests that cover them. I
 | Dashboard — asset list + total balance | always | mvp | widget (`home/home_page_test.dart`); no hook/service test |
 | Receive — address + QR code | always | mvp | — |
 | Transaction history | always | mvp | widget (`transaction_history/transaction_history_page_test.dart`) |
-| Sell to BitBox02 (on-chain transfer) | android-only | defer | — |
+| Sell to BitBox (on-chain transfer) | hardware | defer | — |
 
 ### DFX backend integration
 
@@ -113,7 +124,7 @@ User-facing functions, their activation status, and the tests that cover them. I
 
 Features tagged `mvp` whose current test coverage is insufficient — these block "100% on activated features":
 
-- **Create wallet — BitBox02** — no test today; integration test landing in [#320](https://github.com/DFXswiss/realunit-app/pull/320)
+- **Create wallet — BitBox** — no test today; integration test landing in [#320](https://github.com/DFXswiss/realunit-app/pull/320)
 - **Receive** — no test for the address/QR screen
 - **Biometric unlock** — no test (`biometric_service.dart` has no unit spec; no widget spec asserts the unlock surface)
 - **Legal disclaimer gate** — widget exists, cubit transition not directly tested
