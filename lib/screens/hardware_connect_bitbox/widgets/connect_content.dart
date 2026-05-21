@@ -10,6 +10,11 @@ class ConnectContent extends StatelessWidget {
   final VoidCallback? onConfirm;
   final VoidCallback? onCancel;
 
+  /// Overrides for the button labels. Default to the generic confirm / cancel
+  /// strings so existing call sites stay unchanged.
+  final String? confirmLabel;
+  final String? cancelLabel;
+
   const ConnectContent({
     super.key,
     required this.imagePath,
@@ -17,6 +22,8 @@ class ConnectContent extends StatelessWidget {
     required this.child,
     this.onConfirm,
     this.onCancel,
+    this.confirmLabel,
+    this.cancelLabel,
   });
 
   @override
@@ -43,14 +50,14 @@ class ConnectContent extends StatelessWidget {
             if (onConfirm != null)
               AppFilledButton(
                 onPressed: onConfirm,
-                label: S.of(context).confirm,
+                label: confirmLabel ?? S.of(context).confirm,
               ),
             if (onCancel != null)
               AppFilledButton(
                 variant: .secondary,
                 fullWidth: false,
                 onPressed: onCancel,
-                label: S.of(context).cancel,
+                label: cancelLabel ?? S.of(context).cancel,
               ),
           ],
         ),

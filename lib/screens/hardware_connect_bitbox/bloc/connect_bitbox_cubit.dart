@@ -153,19 +153,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
             ),
           );
       _service.startConnectionStatusObserver();
-      // Fire-and-forget the auth-signature capture. Once persisted, every
-      // later buy / KYC / user-data call runs off the cached signature without
-      // needing the hardware wallet present. Awaiting would block the pairing
-      // UI for the EIP-191 BitBox confirmation + the 20 s HTTP timeout; if it
-      // fails the lazy path in DFXAuthService.getSignature still recovers.
-      unawaited(
-        warmAuthSignature(
-          _authService,
-          wallet.currentAccount,
-          loggerName: '$ConnectBitboxCubit',
-        ),
-      );
-      emit(BitboxConnected(wallet));
+      await _captureAuthSignature(wallet);
     } catch (e) {
       developer.log(e.toString(), name: '$ConnectBitboxCubit');
       _pendingInit = null;
@@ -173,6 +161,46 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
       emit(BitboxNotConnected());
       _checkForTimer = Timer.periodic(const Duration(milliseconds: 500), (_) => checkForBitbox());
     }
+  }
+
+  /// Captures and caches the auth signature as an awaited, user-guided step of
+  /// the pairing flow. The BitBox is guaranteed connected here, so every later
+  /// buy / KYC / user-data call can run off the cached signature without
+  /// re-engaging the device. A failure surfaces as [BitboxSignatureFailed] with
+  /// its own retry / continue path instead of being swallowed — never rethrows,
+  /// so `confirmPairing`'s outer catch is unaffected.
+  Future<void> _captureAuthSignature(BitboxWallet wallet) async {
+    if (isClosed) return;
+    emit(BitboxCapturingSignature(wallet));
+    try {
+      await _authService.ensureSignatureFor(wallet.currentAccount);
+      if (isClosed) return;
+      emit(BitboxConnected(wallet));
+    } catch (e) {
+      developer.log(
+        'auth signature capture failed: $e',
+        name: '$ConnectBitboxCubit',
+      );
+      if (isClosed) return;
+      emit(BitboxSignatureFailed(wallet));
+    }
+  }
+
+  /// Re-runs the signature capture after a [BitboxSignatureFailed].
+  Future<void> retrySignatureCapture() async {
+    final currentState = state;
+    if (currentState is! BitboxSignatureFailed) return;
+    await _captureAuthSignature(currentState.wallet);
+  }
+
+  /// Skips the signature capture after a [BitboxSignatureFailed]. The lazy path
+  /// in `DFXAuthService.getSignature` still recovers on the next authenticated
+  /// call — the UI warns but never hard-blocks the user.
+  void continueWithoutSignature() {
+    final currentState = state;
+    if (currentState is! BitboxSignatureFailed) return;
+    if (isClosed) return;
+    emit(BitboxConnected(currentState.wallet));
   }
 
   void finishSetup() {

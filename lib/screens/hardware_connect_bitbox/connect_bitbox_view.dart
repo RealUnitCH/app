@@ -114,6 +114,39 @@ class ConnectBitboxView extends StatelessWidget {
                         ],
                       ),
                     ),
+                    BitboxCapturingSignature() => ConnectContent(
+                      title: S.of(context).connectBitboxSignatureCapturingTitle,
+                      imagePath: 'assets/images/illustrations/bitbox_connected.svg',
+                      child: Column(
+                        spacing: 40,
+                        children: [
+                          Text(
+                            S.of(context).connectBitboxSignatureCapturing,
+                            textAlign: .center,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: RealUnitColors.neutral500,
+                            ),
+                          ),
+                          const CupertinoActivityIndicator(),
+                        ],
+                      ),
+                    ),
+                    BitboxSignatureFailed() => ConnectContent(
+                      title: S.of(context).connectBitboxSignatureFailedTitle,
+                      imagePath: 'assets/images/illustrations/bitbox_connected.svg',
+                      onConfirm: () => context.read<ConnectBitboxCubit>().retrySignatureCapture(),
+                      onCancel: () =>
+                          context.read<ConnectBitboxCubit>().continueWithoutSignature(),
+                      confirmLabel: S.of(context).retry,
+                      cancelLabel: S.of(context).continueAnyway,
+                      child: Text(
+                        S.of(context).connectBitboxSignatureFailed,
+                        textAlign: .center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: RealUnitColors.neutral500,
+                        ),
+                      ),
+                    ),
                     BitboxConnected() => ConnectContent(
                       title: S.of(context).connected,
                       imagePath: 'assets/images/illustrations/bitbox_connected.svg',
