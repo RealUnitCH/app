@@ -44,6 +44,16 @@ name: Tier 3 — Handbook flows
 #   assertion downstream. `simctl erase` wipes the whole device — the
 #   only known-good clean-state for this purpose.
 #
+# Known upstream flakiness:
+#   Maestro CLI ≤ 2.5.1 hardcodes `127.0.0.1` (IPv4 literal) for the
+#   XCUITest driver connect. The XCTest runner on macos-15-arm64 +
+#   iOS 26.2 intermittently binds to `::1` only — when that happens
+#   no amount of `MAESTRO_DRIVER_STARTUP_TIMEOUT` helps. Tracking:
+#   mobile-dev-inc/maestro#1299 (open since 2023-07), PR #3166 (open,
+#   merge pending). Diagnostic post-mortem steps in this workflow +
+#   scripts/run-handbook-flows.sh dump loopback listeners on flow
+#   failure so we can confirm the bind family in CI logs.
+#
 # Why no pixel-diff in v1:
 #   Font antialiasing differs between runner image versions and a strict
 #   pixel match would be flakier than the regressions it catches. The
@@ -164,6 +174,12 @@ jobs:
           xcrun simctl bootstatus "$UDID" -b
 
       - name: Install Maestro CLI
+        env:
+          # Pin Maestro to a known version so a silent intraday upstream
+          # release cannot flip behaviour mid-iteration. 2.5.1 is the
+          # latest stable as of 30 Apr 2026. The install.sh installer
+          # reads $MAESTRO_VERSION and pulls cli-$MAESTRO_VERSION/maestro.zip.
+          MAESTRO_VERSION: "2.5.1"
         run: |
           set -euo pipefail
           curl -fsSL "https://get.maestro.mobile.dev" | bash
@@ -182,6 +198,31 @@ jobs:
       # fully responsive, producing `IOSDriverTimeoutException`. Bump to
       # 300 s so the driver has headroom even when the runner is loaded.
       # MAESTRO_CLI_NO_ANALYTICS skips the startup analytics HTTP call.
+      # Pre-flight diagnostic for the Maestro IPv4/IPv6 binding hypothesis
+      # (Maestro upstream PR #3166 / issue #1299). When the XCUITest
+      # runner binds only to `::1` while Maestro CLI hardcodes connect
+      # to `127.0.0.1`, the driver never becomes reachable. Logging the
+      # loopback state + tool versions here lets us correlate the
+      # failure mode in the post-mortem step below across multiple
+      # iterations.
+      - name: Diagnostics — pre-flight network + tool state
+        run: |
+          set +e
+          echo "=== /etc/hosts ==="
+          cat /etc/hosts
+          echo
+          echo "=== ifconfig lo0 ==="
+          ifconfig lo0
+          echo
+          echo "=== xcodebuild -version ==="
+          xcodebuild -version
+          echo
+          echo "=== maestro --version ==="
+          "$HOME/.maestro/bin/maestro" --version
+          echo
+          echo "=== xcrun simctl list runtimes ==="
+          xcrun simctl list runtimes | grep -i ios
+
       - name: Run handbook flows
         env:
           MAESTRO_DRIVER_STARTUP_TIMEOUT: "300000"

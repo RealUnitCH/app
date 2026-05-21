@@ -120,7 +120,24 @@ for flow in "${flows[@]}"; do
   png="$SCREENS_DIR/$base.png"
   echo
   echo "▶ $base"
-  "$MAESTRO" test "$flow"
+  # Run the flow. If it fails, capture network + process state for the
+  # upstream Maestro IPv4/IPv6 bind hypothesis (see workflow header +
+  # DFXswiss/realunit-app#487 tracking). The lsof | grep IPv[46] line
+  # is the binary tell: if the XCTRunner is listening on IPv6 only
+  # while Maestro CLI connects to 127.0.0.1, we see the issue exactly.
+  # We exit 1 explicitly after the post-mortem so the calling workflow
+  # step still fails as before.
+  if ! "$MAESTRO" test "$flow"; then
+    echo "--- POST-MORTEM: TCP loopback listeners ---"
+    /usr/sbin/lsof -iTCP -sTCP:LISTEN -nP 2>/dev/null | grep -E 'IPv[46]|java|xctest|XCT|maestro' || true
+    echo "--- POST-MORTEM: live maestro / XCT / xcodebuild processes ---"
+    ps -A 2>/dev/null | grep -E 'maestro|XCT|xcodebuild' | grep -v grep || true
+    echo "--- POST-MORTEM: simulator log (last 2 min) ---"
+    xcrun simctl spawn "$UDID" log show \
+      --predicate 'process == "XCTRunner" OR process CONTAINS "swiss.realunit.app"' \
+      --last 2m --style compact 2>/dev/null | tail -200 || true
+    exit 1
+  fi
   xcrun simctl io booted screenshot "$tmp_png" >/dev/null
   mv "$tmp_png" "$png"
   echo "  captured → ${png#$REPO_ROOT/}"
