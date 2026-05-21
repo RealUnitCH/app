@@ -16,14 +16,14 @@ All counts below are the **canonical numbers** for this PR; the audit file lists
 
 | | Count | Notes |
 |---|---|---|
-| Distinct violations in audit (P0–P2 bulleted) | 41 | 15 P0 + 10 P1 + 16 P2 |
+| Distinct violations in audit (P0–P2 bulleted) | 50 | 16 P0 + 12 P1 + 22 P2 (post-initial-review pass added V41–V49) |
 | Of those, **documented exceptions** (rule does not apply) | 5 | V13b (BitBox backup), V25 (401 refresh), V28 (network mode), V30 (default assets), V33 (BIP-39) |
-| **Actionable** P0–P2 (recounted from audit) | 36 | what the waves below close |
+| **Actionable** P0–P2 (recounted from audit) | 45 | what the waves below close |
 | Closed by Wave 1 (app-only, ships today) | 11 across 6 items | V4, V7, V8, V10a, V10b, V10c, V11, V12, V13, V13c, V34 |
-| Closed by Wave 2 (KYC routing collapse) | 6 | V1, V2, V3, V5, V21, V22 (session-gate positions move under the API) |
-| Closed by Wave 3 (capability flags) | 7 | V6a, V6b, V6c, V6d, V9, V15, V16 |
-| Closed by Wave 4 (new endpoints) | 4 | V14, V17, V18, V19 |
-| Closed by Wave 5 (remaining P1/P2) | 8 | V20, V23, V24, V26, V27, V29, V31, V32 |
+| Closed by Wave 2 (KYC routing collapse) | 7 | V1, V2, V3, V5, V21, V22, V45 (session-gate positions move under the API; V45 is the parallel `_continueKyc` loop) |
+| Closed by Wave 3 (capability flags) | 9 | V6a, V6b, V6c, V6d, V9, V15, V16, V43, V46 |
+| Closed by Wave 4 (new endpoints) | 8 | V14, V17, V18, V19, V41, V42, V44, V49 |
+| Closed by Wave 5 (remaining P1/P2) | 10 | V20, V23, V24, V26, V27, V29, V31, V32, V47, V48 |
 | P3 (DTO mirroring, informational) | 4 | V35–V38, not counted as actionable |
 | P4 (already addressed) | 2 | V39, V40 |
 
@@ -163,15 +163,15 @@ This is the single highest-impact wave. **One API PR + one App PR** rewrites the
 
 | | |
 |---|---|
-| Closes | V1, V2, V3, V5, V21, V22, original 2026-05-21 ident-misroute report |
+| Closes | V1, V2, V3, V5, V21, V22, V45, original 2026-05-21 ident-misroute report |
 | Repo | DFXswiss/realunit-app, branch `refactor/kyc-cubit-api-driven` |
-| Changes | Rewrite `lib/screens/kyc/cubits/kyc/kyc_cubit.dart:_runCheckKyc`. Specifically: 1. Delete `_requiredStepNames` (line 16-22) and `_minLevelForActions` (line 24)  2. Delete `actionableStatuses`, `pendingStatuses`, the iteration at lines 134-168  3. Read `processStatus` and `canTrade` from API response  4. Route purely from `currentStep`: present → render the matching page. Absent → check `processStatus` ∈ {Completed, PendingReview} → emit `KycCompleted` / `KycPending`  5. `_legalDisclaimerAccepted` / `_registrationSignProduced` stay as session security gates BUT no longer drive routing — they only let the app respond when API tells it to show the registration page  6. Drop the `requiredLevel` constructor parameter — it's dead once `canTrade` exists |
+| Changes | Rewrite `lib/screens/kyc/cubits/kyc/kyc_cubit.dart:_runCheckKyc`. Specifically: 1. Delete `_requiredStepNames` (line 16-22) and `_minLevelForActions` (line 24)  2. Delete `actionableStatuses`, `pendingStatuses`, the iteration at lines 134-168  3. Read `processStatus` and `canTrade` from API response  4. Route purely from `currentStep`: present → render the matching page. Absent → check `processStatus` ∈ {Completed, PendingReview} → emit `KycCompleted` / `KycPending`  5. `_legalDisclaimerAccepted` / `_registrationSignProduced` stay as session security gates BUT no longer drive routing — they only let the app respond when API tells it to show the registration page  6. Drop the `requiredLevel` constructor parameter — it's dead once `canTrade` exists  7. Delete the same `kycSteps.firstWhere(step.isCurrent)` loop in `_continueKyc` (line 208) — that's V45, the parallel path called after registration completes; same `currentStep`-driven rewrite applies |
 | Acceptance | Replay the 2026-05-21 reproduction: user 338759 with InProgress Ident step opens app → API returns `currentStep: ident`. App renders KycIdentPage. **No local computation needed.** Hand-test: clear the InProgress Ident in DB → API returns no currentStep + `canTrade: true` → app lands on Dashboard |
 | Test plan | Cubit tests: 1) Mock API: `canTrade: true, currentStep: null, processStatus: Completed` → emit `KycCompleted`. 2) Mock API: `currentStep: {name: 'Ident', status: 'InProgress'}` → emit `KycSuccess(KycStep.ident)`. 3) Mock API: `processStatus: PendingReview, currentStep: null` → emit `KycPending`. Verify cubit code length drops by ~80% |
 | Risk | Med — central routing logic. Mitigate with extensive cubit tests covering every state the API can return |
 | Effort | M (~1–1.5 days including test rewrite) |
 
-**Wave 2 total:** ~2.5 dev-days. **Closes the original incident** + structurally removes 6 audit findings (V1, V2, V3, V5, V21, V22).
+**Wave 2 total:** ~2.5 dev-days. **Closes the original incident** + structurally removes 7 audit findings (V1, V2, V3, V5, V21, V22, V45).
 
 ---
 
@@ -183,9 +183,9 @@ Closes the rest of the P0/P1 KYC-adjacent items.
 
 | | |
 |---|---|
-| Closes | V6a, V6b, V6c, V6d, V9, V15, V16 |
+| Closes | V6a, V6b, V6c, V6d, V9, V15, V16, V43, V46 |
 | Repo | DFXswiss/api, branch `feat/user-capabilities` |
-| Changes | 1. `UserV2Dto`: add `capabilities: UserCapabilitiesDto { canEditName: bool, canEditMail: bool, canEditPhone: bool, canEditAddress: bool, supportAvailable: bool }`. Computed from KYC step states and other server-side conditions. (Closes V6a, V6b, V6c, V9.) Additionally expose a `category` on `KycStepDto` (e.g. `'changeRequest' | 'registration' | 'verification'`) so the app can filter change-flow steps without a hardcoded `_changeStepNames` set. (Closes V6d.)  2. `RealUnitRegistrationStatus` (`src/.../realunit-registration.dto.ts:26-30`): add `ALREADY_REGISTERED`. Change `realunit.service.ts:608, 670` from `throw BadRequestException` to `return RealUnitRegistrationStatus.ALREADY_REGISTERED` (different-signature path still throws — [`DFXswiss/api#3731`](https://github.com/DFXswiss/api/pull/3731) handles that nuance). (Closes V15.)  3. `SellPaymentInfoDto`: add `@ApiPropertyOptional() requiredWorkflow?: 'standard' \| 'sellBitbox' \| 'gasless'`. Compute server-side based on user wallet type + asset chain. (Closes V16.) |
+| Changes | 1. `UserV2Dto`: add `capabilities: UserCapabilitiesDto { canEditName: bool, canEditMail: bool, canEditPhone: bool, canEditAddress: bool, supportAvailable: bool, availableUserTypes: string[] }`. Computed from KYC step states and other server-side conditions. `availableUserTypes` lets the registration screen render only the account types this branded app exposes instead of hardcoding `RegistrationUserType.values.first`. (Closes V6a, V6b, V6c, V9, V46.) Additionally expose a `category` on `KycStepDto` (e.g. `'changeRequest' | 'registration' | 'verification'`) so the app can filter change-flow steps without a hardcoded `_changeStepNames` set. (Closes V6d.)  2. `RealUnitRegistrationStatus` (`src/.../realunit-registration.dto.ts:26-30`): add `ALREADY_REGISTERED`. Change `realunit.service.ts:608, 670` from `throw BadRequestException` to `return RealUnitRegistrationStatus.ALREADY_REGISTERED` (different-signature path still throws — [`DFXswiss/api#3731`](https://github.com/DFXswiss/api/pull/3731) handles that nuance). (Closes V15.)  3. `SellPaymentInfoDto`: add `@ApiPropertyOptional() requiredWorkflow?: 'standard' \| 'sellBitbox' \| 'gasless'`. Compute server-side based on user wallet type + asset chain. (Closes V16.)  4. `KycFinancialQuestion` DTO: add `link?: { url?: string, action?: 'support' \| 'webview' }` so the financial-data questions page can render the right action target from the DTO instead of switching on `question.key`. (Closes V43.) |
 | Acceptance | `GET /v2/user` includes `capabilities`. `POST /realunit/register/wallet` for already-registered same-wallet returns 201 + `ALREADY_REGISTERED` (not 400). `PUT /sell/paymentInfos` includes `requiredWorkflow` |
 | Test plan | New unit tests for the mapper (`user.mapper.spec.ts`): InReview KYC user → `canEditName: false`. No-mail user → `supportAvailable: false`. Realunit service test for `ALREADY_REGISTERED` path. Sell-payment-info service: BitBox-credentials → `requiredWorkflow: 'sellBitbox'` |
 | Risk | Med — `capabilities` is a new contract; missing a flag means apps stay on local logic. Be exhaustive |
@@ -195,9 +195,9 @@ Closes the rest of the P0/P1 KYC-adjacent items.
 
 | | |
 |---|---|
-| Closes | V6a, V6b, V6c, V6d, V9, V15, V16 |
+| Closes | V6a, V6b, V6c, V6d, V9, V15, V16, V43, V46 |
 | Repo | DFXswiss/realunit-app, branch `refactor/use-user-capabilities` |
-| Changes | 1. `settings_user_data_page.dart:239` + `settings_edit_name_cubit.dart:22` + `settings_edit_address_cubit.dart:22`: drop status interpretation → `user.capabilities.canEditName` / `canEditAddress` (V6a/V6b/V6c)  2. `settings_user_data_cubit.dart:18-22`: delete `_changeStepNames` set → use the new step `category` flag or API capabilities to filter change-flow steps (V6d)  3. `settings_contact_page.dart:54-67`: drop email check → `user.capabilities.supportAvailable` (V9)  4. `kyc_registration_submit_cubit.dart:76, 92`: drop the "treat error as success" hack — handle `ALREADY_REGISTERED` as an explicit success status returned by the API (V15)  5. `sell_button.dart:60-62`: drop `isBitbox` local check → `state.paymentInfo.requiredWorkflow == 'sellBitbox' ? AppRoutes.sellBitbox : AppRoutes.sell` (V16) |
+| Changes | 1. `settings_user_data_page.dart:239` + `settings_edit_name_cubit.dart:22` + `settings_edit_address_cubit.dart:22`: drop status interpretation → `user.capabilities.canEditName` / `canEditAddress` (V6a/V6b/V6c)  2. `settings_user_data_cubit.dart:18-22`: delete `_changeStepNames` set → use the new step `category` flag or API capabilities to filter change-flow steps (V6d)  3. `settings_contact_page.dart:54-67` + `settings_contact_cubit.dart:22`: drop email check (both the cubit's `emailSet` computation and the page's read of it) → `user.capabilities.supportAvailable` (V9)  4. `kyc_registration_submit_cubit.dart:76, 92`: drop the "treat error as success" hack — handle `ALREADY_REGISTERED` as an explicit success status returned by the API (V15)  5. `sell_button.dart:60-62`: drop `isBitbox` local check → `state.paymentInfo.requiredWorkflow == 'sellBitbox' ? AppRoutes.sellBitbox : AppRoutes.sell` (V16)  6. `kyc_financial_data_questions_page.dart:110-122`: render the question's `link` metadata instead of switching on `question.key` (V43)  7. `kyc_registration_personal_step.dart:50-53`: read `user.capabilities.availableUserTypes` instead of `RegistrationUserType.values.first` (V46) |
 | Acceptance | All four spots stop interpreting status / wallet type / exception body |
 | Risk | Low (App-side, mechanical) |
 | Effort | M (~1 day) |
@@ -214,9 +214,9 @@ The remaining P2 items that require entirely new API surface. Lower urgency — 
 
 | | |
 |---|---|
-| Closes | V17 |
+| Closes | V17, V44 |
 | Repo | DFXswiss/api, branch `feat/legal-document-endpoint` |
-| Changes | New module `src/shared/models/legal-document/`: entity (`type, language, version, url, enabled`), repository, service, controller (`GET /v1/legal-document`, optional `?type=` and `?language=` filters), DTO. Migration creates `legal_document` table with seed data from the current `lib/packages/config/legal_documents_config.dart` hardcoded URLs. Admin endpoint to update URLs (compliance role) |
+| Changes | New module `src/shared/models/legal-document/`: entity (`type, language, version, url, enabled`), repository, service, controller (`GET /v1/legal-document`, optional `?type=` and `?language=` filters), DTO. Migration creates `legal_document` table with seed data from the current `lib/packages/config/legal_documents_config.dart` hardcoded URLs **plus** the `dfx.swiss/terms-and-conditions` URL hardcoded in `lib/screens/kyc/steps/financial_data/constants/kyc_financial_data_links.dart` (V44). Admin endpoint to update URLs (compliance role) |
 | Acceptance | `GET /v1/legal-document?type=registrationAgreement&language=de` returns the agreement PDF URL + current version |
 | Risk | Low — net-new module, no existing behavior touched |
 | Effort | M (~2 days, mostly seed-data + admin endpoints) |
@@ -230,24 +230,34 @@ The remaining P2 items that require entirely new API surface. Lower urgency — 
 | Changes | New module + endpoint returning company contact info for the realunit-app brand. Public (no auth). Future-proofs white-labeling |
 | Effort | S (~half day) |
 
-### W4.3 (API PR) — Country priority + recommended language
+### W4.3 (API PR) — Country priority + recommended language + recommended currency
 
 | | |
 |---|---|
-| Closes | V14, V19 |
+| Closes | V14, V19, V41, V42 |
 | Repo | DFXswiss/api, branch `feat/country-priority-recommended-language` |
-| Changes | 1. `GET /v1/country` accepts `?priorityForRegion=CH` query → returns countries sorted with Swiss-preferred ones first. Or simpler: add `displayOrder: int` to the country entity for backend-configurable priority  2. `UserV2Dto` (or new endpoint `GET /v1/language/recommended?ip=…&acceptLanguage=…`): return a recommended language code |
+| Changes | 1. `GET /v1/country` accepts `?priorityForRegion=CH` query → returns countries sorted with Swiss-preferred ones first. Or simpler: add `displayOrder: int` to the country entity for backend-configurable priority  2. `UserV2Dto` (or new endpoint `GET /v1/language/recommended?ip=…&acceptLanguage=…`): return a recommended language code (V19) **and** a recommended currency (V42 — same shape, paired so the app picks both defaults in one round-trip)  3. The realunit-registration endpoint derives the account language from the `Accept-Language` header (or the user's settings-language sent in the body), so the app no longer needs to send `lang: 'DE'` (V41) |
 | Effort | S |
 
-### W4.4 (App PR) — Consume W4.1–W4.3
+### W4.5 (API PR) — `GET /v1/support/issue-types`
 
 | | |
 |---|---|
-| Closes | V14, V17, V18, V19 |
-| Changes | 1. Delete `lib/packages/config/legal_documents_config.dart` hardcoded URLs → call `/v1/legal-document`. Cache locally for offline  2. Delete hardcoded contact info in `settings_contact_page.dart:82-134` → render from `/v1/company-info`. Cache  3. Delete `priorityCountries` in `country_field.dart:65-79` → use API order  4. Replace `settings_repository.dart:18-24` system-locale default with API recommendation, fallback to system locale only on first-launch-no-network |
-| Effort | M (~1 day) |
+| Closes | V49 |
+| Repo | DFXswiss/api, branch `feat/support-issue-types-endpoint` |
+| Changes | New `GET /v1/support/issue-types` endpoint returning `{ key, icon, label }[]` (or i18n-key-only with the app holding the translations). Per-brand: realunit returns a curated subset, other apps can expose different subsets. Replaces the hardcoded `SupportIssueType` tile list + the English-only `_getTicketName` labels in the app |
+| Acceptance | `GET /v1/support/issue-types` returns a list keyed to the existing `SupportIssueType` values; new categories appear without an app release |
+| Effort | S |
 
-**Wave 4 total:** ~3.5 dev-days.
+### W4.4 (App PR) — Consume W4.1–W4.3, W4.5
+
+| | |
+|---|---|
+| Closes | V14, V17, V18, V19, V41, V42, V44, V49 |
+| Changes | 1. Delete `lib/packages/config/legal_documents_config.dart` hardcoded URLs **and** `lib/screens/kyc/steps/financial_data/constants/kyc_financial_data_links.dart` (V44) → call `/v1/legal-document`. Cache locally for offline  2. Delete hardcoded contact info in `settings_contact_page.dart:82-134` → render from `/v1/company-info`. Cache  3. Delete `priorityCountries` in `country_field.dart:65-79` → use API order  4. Replace `settings_repository.dart:18-24` (language fallback) **and** `settings_repository.dart:28` (currency fallback, V42) with API recommendations; system-locale fallback only on first-launch-no-network  5. Drop the hardcoded `lang: 'DE'` in `real_unit_registration_service.dart:117` (V41) → send the user's actual settings-language (or rely on the `Accept-Language` header)  6. Replace the hardcoded `SupportIssueType` tile list in `support_create_ticket_page.dart:85-110` and the English-only `_getTicketName` switch in `support_create_ticket_cubit.dart:48-57` with the API-returned list (V49) |
+| Effort | M (~1.5 days) |
+
+**Wave 4 total:** ~4 dev-days.
 
 ---
 
@@ -259,12 +269,12 @@ The tail items the first four waves don't cover. Lower urgency than Waves 1–3 
 
 | | |
 |---|---|
-| Closes | V20, V23, V24, V26, V27, V31, V32 |
+| Closes | V20, V23, V24, V26, V27, V31, V32, V47, V48 |
 | Repo | DFXswiss/api, branch `feat/api-authority-tail` |
-| Changes | 1. `POST /v1/realunit/register/wallet` (or new `POST /v1/kyc/check-merge`): return `{ merged: bool, mergedAccountId?: string, propagated: bool }` directly. Server polls internally until propagated, so the client does not need its own generation/retry orchestration. (Closes V23, V26, V27.)  2. `Transaction` mapper: add `statusKey: string` and `statusLabel: string` so the app renders text instead of switching on `state == waitingForPayment`. (Closes V24.)  3. New `GET /v1/user/account-bounds` returning `{ firstTransactionDate, lastTransactionDate }` — both `transaction_history_page.dart:68-69` and `settings_tax_report_page.dart:73` use it for `firstDate`. (Closes V31, V32.)  4. Auto-registration of email at `level < 10` becomes server-side: `PUT /v2/kyc` performs it before returning `currentStep`. App stops doing `if (level < 10) register()`. (Closes V20.) |
-| Acceptance | (1) Client calls `check-merge` exactly once → no client-side 30s timeout needed. (2) `pending_transaction_row.dart` switches on `statusKey`, not on the typed enum. (3) Pickers' `firstDate` comes from API. (4) New-user flow shows `currentStep: 'email'` without the app pre-calling register. |
+| Changes | 1. `POST /v1/realunit/register/wallet` (or new `POST /v1/kyc/check-merge`): return `{ merged: bool, mergedAccountId?: string, propagated: bool }` directly. Server polls internally until propagated, so the client does not need its own generation/retry orchestration. (Closes V23, V26, V27.)  2. `Transaction` mapper: add `statusKey: string` and `statusLabel: string` so the app renders text instead of switching on `state == waitingForPayment`. (Closes V24.)  3. New `GET /v1/user/account-bounds` returning `{ firstTransactionDate, lastTransactionDate }` — both `transaction_history_page.dart:68-69, :82` and `settings_tax_report_page.dart:73` use it for `firstDate`. (Closes V31, V32.)  4. Auto-registration of email at `level < 10` becomes server-side: `PUT /v2/kyc` performs it before returning `currentStep`. App stops doing `if (level < 10) register()`. (Closes V20.)  5. `/v1/realunit/balance/pdf` accepts a `date` (not a timestamp); the server picks the evaluation moment (today → "now"; past date → end-of-day). The app stops computing `_getDateWithLatestTime`. (Closes V47.)  6. `SellPaymentInfoDto` exposes `needsFaucet: bool` and optionally `faucetPollingHint: int` (seconds), computed server-side from `ethBalance` vs `requiredGasEth`. The bitbox-sell cubit renders the boolean + uses the hint as the polling interval instead of comparing the two numbers locally. (Closes V48.) |
+| Acceptance | (1) Client calls `check-merge` exactly once → no client-side 30s timeout needed. (2) `pending_transaction_row.dart` switches on `statusKey`, not on the typed enum. (3) Pickers' `firstDate` comes from API. (4) New-user flow shows `currentStep: 'email'` without the app pre-calling register. (5) Tax-report download sends a date, server picks the timestamp. (6) Bitbox-sell shows the faucet-pending UI when `needsFaucet: true` without comparing balances. |
 | Risk | Med — V20 in particular changes when the email registration POST fires; needs careful regression testing. |
-| Effort | M (~2 days) |
+| Effort | M (~2.5 days) |
 
 ### W5.2 (API PR) — Asset configuration endpoint
 
@@ -281,11 +291,11 @@ The tail items the first four waves don't cover. Lower urgency than Waves 1–3 
 
 | | |
 |---|---|
-| Closes | V20, V23, V24, V26, V27, V29, V31, V32 |
+| Closes | V20, V23, V24, V26, V27, V29, V31, V32, V47, V48 |
 | Repo | DFXswiss/realunit-app, branch `refactor/api-authority-tail` |
-| Changes | Apply the per-item changes from W5.1 + W5.2 in the app: delete `_runGeneration` (kyc_cubit.dart:42-69), `_mergeDetected` orchestration (kyc_email_verification_cubit.dart:24-37), JWT-decode merge detection (kyc_email_verification_cubit.dart:49-63), the `level < 10 → register` branch (kyc_cubit.dart:88-104), the pending-row state switch (pending_transaction_row.dart:49-51), the picker `firstDate` constants (transaction_history_page.dart:68-69, settings_tax_report_page.dart:73), and the hardcoded `ApiConfig` token block (api_config.dart:19-22). |
+| Changes | Apply the per-item changes from W5.1 + W5.2 in the app: delete `_runGeneration` (kyc_cubit.dart:42-69), `_mergeDetected` orchestration (kyc_email_verification_cubit.dart:24-37), JWT-decode merge detection (kyc_email_verification_cubit.dart:49-63), the `level < 10 → register` branch (kyc_cubit.dart:88-104), the pending-row state switch (pending_transaction_row.dart:49-51), the picker `firstDate` constants (transaction_history_page.dart:68-69, :82 and settings_tax_report_page.dart:73), the hardcoded `ApiConfig` token block (api_config.dart:19-22), the `_getDateWithLatestTime` transform in `settings_tax_report_cubit.dart:53-64` (V47), and the local ETH-balance-vs-required-gas comparisons in `sell_bitbox_cubit.dart:51, :81` (V48 — replace with `_paymentInfo.needsFaucet`). |
 | Risk | Med — JWT decode and polling are critical paths; cover with cubit tests before merge. |
-| Effort | M (~1.5 days) |
+| Effort | M (~2 days) |
 
 ### Out of scope — explicitly accepted boundary cases
 
@@ -299,7 +309,7 @@ These items appear in the audit but are **not** closed by any wave. Future PRs s
 | `WalletType == software` for backup visibility (`settings_page.dart:100`) | V13b | Device-capability fact; BitBox cannot expose its seed. |
 | `401 → token refresh` (`dfx_auth_service.dart:233-239`) | V25 | HTTP-standard convention; the 401 contract is contractual. |
 
-**Wave 5 total:** ~4 dev-days.
+**Wave 5 total:** ~4.5 dev-days.
 
 ---
 

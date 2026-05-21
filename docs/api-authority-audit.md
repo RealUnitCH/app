@@ -42,6 +42,10 @@ the 2026-05-21 ident-misroute report that triggered this audit).
   - **Local decision:** entire next-step selection algorithm — duplicates `KycService.tryContinue` on the API
   - **API change needed:** none — the `currentStep` field from `PUT /v2/kyc` already contains the answer; remove the loop, route from `currentStep` only
   - **Closed by:** W2.2 (subsumed by the `_runCheckKyc` rewrite that collapses V1, V2, V3 — V5 is *the same loop* those three constants drive). Tagged separately so reviewers can grep the routing-chain code path explicitly.
+- **V45** — `lib/screens/kyc/cubits/kyc/kyc_cubit.dart:208` — `_continueKyc` repeats the same manual filter over `kycSteps`
+  - **Local decision:** `kycStatus.kycSteps.firstWhere((step) => step.isCurrent)` — parallel code path with the same anti-pattern as V5's `_runCheckKyc` loop, called after a realunit registration completes
+  - **API change needed:** none — the `currentStep` field is already authoritative; consume it directly. When W2.2 rewrites `_runCheckKyc` to render `currentStep` directly, this loop must also be deleted in the same PR
+  - **Closed by:** W2.2 (same wave/PR as V5)
 - **V4** — `lib/screens/kyc/cubits/kyc/kyc_cubit.dart:179-182` — `e.statusCode == 403 || e.code == 'TFA_REQUIRED'` → emit 2FA step
   - **Local decision:** translate HTTP status into a UI flow
   - **API change needed:** API returns `nextStep: '2fa'` in the response body — app does not switch on status codes
@@ -73,7 +77,7 @@ the 2026-05-21 ident-misroute report that triggered this audit).
 - **V6d** — `lib/screens/settings_user_data/cubit/settings_user_data_cubit.dart:18-22` — `_changeStepNames` static const set ({nameChange, addressChange, phoneChange})
   - **Local decision:** which KYC step names represent a user-data change flow — same shape as `_requiredStepNames` (V1), just a different subset
   - **API change needed:** API exposes a `category: 'changeRequest'` (or similar) flag on `KycStepDto`, app filters by it
-- **V9** — `lib/screens/settings_contact/settings_contact_page.dart:54-67` — "Contact Support" only shown if email is set
+- **V9** — `lib/screens/settings_contact/settings_contact_page.dart:54-67` (the page reads `emailSet`) + `lib/screens/settings_contact/cubit/settings_contact_cubit.dart:22` (the cubit computes `emailSet: userDto.mail != null` from the user DTO) — "Contact Support" only shown if email is set
   - **API change needed:** API exposes `support.available: bool` (or always allow it through the support endpoint and the API returns 400 if not eligible)
 - **V13b** — `lib/screens/settings/settings_page.dart:100` — "Wallet Backup" only shown if `walletType == WalletType.software`
   - **Boundary case:** wallet-type is a device-local fact (BitBox cannot expose its seed); this one is **defensible** as a UI capability. **Accepted as documented exception** (see *Documented exceptions* in `api-authority-plan.md`). Tagged for completeness.
@@ -84,6 +88,20 @@ the 2026-05-21 ident-misroute report that triggered this audit).
 
 These do not block users today, but every one accumulates drift between the
 backend's understanding of state and the app's interpretation of it.
+
+### Hardcoded language sent to backend on registration
+
+- **V41** — `lib/packages/service/dfx/real_unit_registration_service.dart:117` — `lang: 'DE'` constant sent to the API on registration completion
+  - **Local decision:** account language is hardcoded to `'DE'` regardless of the user's actual settings-language / device locale — silently miscategorizes the user's UI language
+  - **API change needed:** API derives account language from `Accept-Language` header (or settings-language) on the request; or — interim — the app sends the user's actual settings-language. The app must not pick a fixed value
+  - **Closed by:** W4.4 (extended) — handled together with the recommended-language work in W4.3 / W4.4
+
+### Client-side mapping of KYC financial-question key to UI action
+
+- **V43** — `lib/screens/kyc/steps/financial_data/subpages/kyc_financial_data_questions_page.dart:110-122` — switch on `question.key == 'tnc'` / `'notification_of_changes'` to pick action target
+  - **Local decision:** which `key` opens a webview (with a hardcoded URL) vs which routes to Support — encoded in the rendering page; any new question type added server-side silently fails to surface the right action
+  - **API change needed:** extend `KycFinancialQuestion` DTO with a structured `link: { url?: string, action?: 'support' \| 'webview' }` (or equivalent). The page renders the link metadata; it does not switch on `key` literals
+  - **Closed by:** W3.1 / W3.2
 
 ### Local session gates that should be positioned by the API
 
@@ -140,6 +158,10 @@ backend's understanding of state and the app's interpretation of it.
 
 - **V12** — `lib/styles/currency.dart:3-22` — `enum Currency { EUR, CHF }`
   - **API change needed:** call `/v1/fiat` and render the list returned for this user's region
+- **V46** — `lib/screens/kyc/steps/registration/steps/kyc_registration_personal_step.dart:50-53` — `[RegistrationUserType.values.first]` restricts the account-type dropdown to a single value
+  - **Local decision:** the DTO carries multiple `RegistrationUserType` values but the UI only renders `.values.first` (i.e. `human`). Which account types this branded app exposes is a business decision frozen in code
+  - **API change needed:** `availableUserTypes: ['human']` capability flag on `UserV2Dto` (or on the registration endpoint response); app renders the returned list. Same shape as V12 / V13
+  - **Closed by:** W3.1 / W3.2 (capabilities)
 - **V13** — `lib/styles/language.dart:3-22` — `enum Language { EN, DE }`
   - **API change needed:** call `/v1/language` (already exists on the DFX API)
 - **V14** — `lib/widgets/form/country_field.dart:65-79` — `['CH', 'DE', 'IT', 'FR']` priority list at top
@@ -157,8 +179,12 @@ backend's understanding of state and the app's interpretation of it.
 
 ### Legal documents URLs hardcoded
 
-- **V17** — `lib/packages/config/legal_documents_config.dart:69-122` — Registration-Agreement PDFs (DE/EN), RealUnit Prospekt, Aktionariat, DFX-Docs URLs
-  - **API change needed:** `/v1/legal-document?type=registration&language=de` returns the current URL + version; app renders without knowing URLs in advance
+- **V17** — `lib/packages/config/legal_documents_config.dart:69-122, :160-191, :193-236` — Registration-Agreement PDFs (DE/EN), RealUnit Prospekt URLs (`:69-122`), Aktionariat document URLs (`:160-191`), DFX-Docs URLs (`:193-236`)
+  - **API change needed:** `/v1/legal-document?type=registration&language=de` returns the current URL + version; app renders without knowing URLs in advance. Same endpoint also covers the Aktionariat and DFX-Docs blocks
+- **V44** — `lib/screens/kyc/steps/financial_data/constants/kyc_financial_data_links.dart:2` — hardcoded `https://dfx.swiss/terms-and-conditions`
+  - **Local decision:** same root cause as V17 but outside `legal_documents_config.dart` — a separate constants file holds a legal URL
+  - **API change needed:** `/v1/legal-document` endpoint (the same endpoint W4.1 introduces); app reads the URL instead of compiling it in
+  - **Closed by:** W4.4 (same wave as V17)
 
 ### Company contact info hardcoded
 
@@ -174,7 +200,7 @@ backend's understanding of state and the app's interpretation of it.
 
 ### Date / size constants
 
-- **V31** — `lib/screens/transaction_history/transaction_history_page.dart:68-69` — `firstDate: DateTime(2025)` on history picker
+- **V31** — `lib/screens/transaction_history/transaction_history_page.dart:68-69, :82` — `firstDate: DateTime(2025)` on the start-date picker (`:68-69`) **and** the end-date picker (`:82`)
 - **V32** — `lib/screens/settings_tax_report/settings_tax_report_page.dart:73` — `firstDate: DateTime(2025)` on tax-report picker
   - **API change needed:** `/v1/user/account-bounds` returns `{ firstTransactionDate, lastTransactionDate }`; both pickers use that as `firstDate`
 - **V33** — `lib/screens/settings_seed/settings_seed_view.dart:98` — `if (wordCount != 12)` mnemonic length check
@@ -184,6 +210,34 @@ backend's understanding of state and the app's interpretation of it.
 
 - **V19** — `lib/packages/repository/settings_repository.dart:18-24` — `systemLang == 'de' ? 'de' : 'en'`
   - **API change needed:** API recommends a default language per user/region; until then, this is acceptable Frontend-only behavior (no user has been onboarded yet).
+
+### Default currency selection
+
+- **V42** — `lib/packages/repository/settings_repository.dart:28` — `_sharedPreferences.getString('currency') ?? 'CHF'`
+  - **Local decision:** the fallback currency, used when the user has never picked one, is hardcoded to CHF. Same shape as V19's language fallback, just for currency
+  - **API change needed:** API recommends a default currency per user/region (alongside the recommended language from W4.3); app uses it as the fallback. Same wave as V19
+  - **Closed by:** W4.4 (extended) — alongside the recommended-language work
+
+### Tax-report date transformation chosen client-side
+
+- **V47** — `lib/screens/settings_tax_report/cubit/settings_tax_report_cubit.dart:53-64` — `_getDateWithLatestTime(selectedDate)` decides whether to ask the API for "now minus 1 minute" (today) or "end of day" (past dates)
+  - **Local decision:** which exact UTC timestamp the API should evaluate the balance at, derived locally from "is the selected date today"
+  - **API change needed:** `/v1/realunit/balance/pdf` accepts a date (not a timestamp) and the server picks the appropriate evaluation moment. The app sends `date` only; backend owns the time semantics. UX-only — not user-blocking
+  - **Closed by:** W5.1 (extended)
+
+### Faucet-vs-ready decision derived from raw API balances
+
+- **V48** — `lib/screens/sell_bitbox/cubit/sell_bitbox_cubit.dart:51, :81` — `if (_paymentInfo.ethBalance >= _paymentInfo.requiredGasEth) … else _requestFaucet()` (and the same comparison in the 5s polling loop at `:81`)
+  - **Local decision:** the client compares two API-supplied numbers to decide "request faucet" vs "ready". A semantic decision encoded as a numeric inequality
+  - **API change needed:** `SellPaymentInfoDto` (or the sell endpoint response) exposes `needsFaucet: bool` and optionally `faucetPollingHint: int` (seconds). App renders the boolean and the hinted polling interval instead of computing them
+  - **Closed by:** W5 (new sub-item)
+
+### Support categories + labels hardcoded
+
+- **V49** — `lib/screens/support/subpages/support_create_ticket_page.dart:85-110` (UI list of `SupportIssueType` tiles) + `lib/screens/support/cubits/support_create_ticket/support_create_ticket_cubit.dart:48-57` (non-i18n English labels in `_getTicketName`)
+  - **Local decision:** which support categories this branded app exposes — a business decision baked into the page — and the human-readable label of each category, in English only, baked into the cubit
+  - **API change needed:** `/v1/support/issue-types` capability endpoint returning `{ key, icon, label }[]`. App renders the list with localized labels from the API (or i18n keys keyed on `key`). Adding a new category requires no app release
+  - **Closed by:** W4 (or a new endpoint slot in W4) — additive
 
 ---
 
@@ -219,15 +273,15 @@ Numbers below are the **canonical counts** used everywhere this audit is referen
 
 | Severity | Count | V-IDs | Primary location |
 |---|---|---|---|
-| **P0** — blocks users today | 15 | V1–V5, V6a–V6d, V7, V8, V9, V13b, V16, V20 | `kyc_cubit.dart` (6), buy/sell payment-info cubits (2), settings user-data + edit cubits (4), settings_contact (1), settings (1), sell_button (1) |
-| **P1** — local interpretation, no immediate block | 10 | V11, V15, V21–V27, V34 | `kyc_cubit.dart` + email-verification + registration-submit cubits + bank-account field + main.dart |
-| **P2** — hardcoded lists/config | 16 | V10a–V10c, V12, V13, V13c, V14, V17–V19, V28–V33 | currency/language/country, legal docs, company info, assets, date pickers |
+| **P0** — blocks users today | 16 | V1–V5, V6a–V6d, V7, V8, V9, V13b, V16, V20, V45 | `kyc_cubit.dart` (7 incl. `_continueKyc`), buy/sell payment-info cubits (2), settings user-data + edit cubits (4), settings_contact (1), settings (1), sell_button (1) |
+| **P1** — local interpretation, no immediate block | 12 | V11, V15, V21–V27, V34, V41, V43 | `kyc_cubit.dart` + email-verification + registration-submit cubits + bank-account field + main.dart + real_unit_registration_service + financial-data questions page |
+| **P2** — hardcoded lists/config | 22 | V10a–V10c, V12, V13, V13c, V14, V17–V19, V28–V33, V42, V44, V46, V47, V48, V49 | currency/language/country, legal docs, company info, assets, date pickers, default currency, tax-report date, faucet decision, support categories, registration user types |
 | **P3** — DTO mirroring (informational) | 4 | V35–V38 | service/dfx/models |
 | **P4** — fixed or in-flight | 2 | V39, V40 | tracked in [`DFXswiss/realunit-app#466`](https://github.com/DFXswiss/realunit-app/pull/466) / [`DFXswiss/api#3731`](https://github.com/DFXswiss/api/pull/3731) |
 
-**Total distinct violations across P0–P2:** 41 (15 + 10 + 16).
+**Total distinct violations across P0–P2:** 50 (16 + 12 + 22). Recounted on 2026-05-21 after a post-initial-review audit pass found 9 additional violations (V41–V49) that the initial four-stream scan had missed.
 **Plus boundary cases accepted as documented exceptions:** V13b, V25, V28, V30, V33 — tagged in the audit, not counted as actionable.
-**Actionable P0–P2 (excluding documented exceptions):** 36.
+**Actionable P0–P2 (excluding documented exceptions):** 45.
 
 **Most-affected single file:** `lib/screens/kyc/cubits/kyc/kyc_cubit.dart` —
 ~10 distinct violations. The entire `_runCheckKyc` body should be replaceable by
