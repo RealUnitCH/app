@@ -60,25 +60,10 @@ class _CountryFieldState extends State<CountryField> {
   }
 
   Future<List<Country>> _loadCountries() async {
-    final countries = await countryService.getAllCountries();
-
-    final priority = ['CH', 'DE', 'IT', 'FR'];
-
-    countries.sort((a, b) {
-      final aIndex = priority.indexOf(a.symbol.toUpperCase());
-      final bIndex = priority.indexOf(b.symbol.toUpperCase());
-
-      if (aIndex != -1 && bIndex != -1) {
-        return aIndex.compareTo(bIndex);
-      }
-
-      if (aIndex != -1) return -1;
-      if (bIndex != -1) return 1;
-
-      return a.name.compareTo(b.name);
-    });
-
-    return countries;
+    // The API tags each country with `displayOrder` (lower is higher in the
+    // picker). The backend already sorts by `displayOrder` then `name`, so
+    // the list arrives in the right order — no local priority list needed.
+    return countryService.getAllCountries();
   }
 
   void _preloadCountry(Country? initialCountry) {

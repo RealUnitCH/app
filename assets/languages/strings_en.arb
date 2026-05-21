@@ -160,6 +160,8 @@
   "payoutAccountAdd": "Add payout account",
   "payoutAccountSelect": "Select payout account",
   "pdf": "PDF",
+  "pdfLoading": "Loading PDF…",
+  "pdfNotAvailable": "PDF not available — tap to retry",
   "pendingTransactions": "Pending transactions",
   "personalData": "Personal data",
   "phone": "Phone",

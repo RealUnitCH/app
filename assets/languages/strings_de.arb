@@ -160,6 +160,8 @@
   "payoutAccountAdd": "Auszahlungskonto hinzufügen",
   "payoutAccountSelect": "Auszahlungskonto auswählen",
   "pdf": "PDF",
+  "pdfLoading": "PDF wird geladen…",
+  "pdfNotAvailable": "PDF nicht verfügbar — antippen zum Erneutversuchen",
   "pendingTransactions": "Ausstehende Transaktionen",
   "personalData": "Persönliche Daten",
   "phone": "Telefon",

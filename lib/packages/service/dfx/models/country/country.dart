@@ -6,12 +6,17 @@ class Country extends Equatable {
   final String symbol;
   final String name;
   final String? foreignName;
+  // Lower is higher in country pickers. Default 999 keeps the long tail
+  // alphabetic. Backend-tagged via `country.displayOrder`; replaces the
+  // hardcoded `priorityCountries = ['CH','DE','IT','FR']` list.
+  final int displayOrder;
 
   const Country({
     required this.id,
     required this.symbol,
     required this.name,
     this.foreignName,
+    this.displayOrder = 999,
   });
 
   @override
@@ -25,6 +30,7 @@ extension DfxCountryDtoMapper on DfxCountryDto {
       symbol: symbol,
       name: name,
       foreignName: foreignName,
+      displayOrder: displayOrder,
     );
   }
 }

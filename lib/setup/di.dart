@@ -19,11 +19,13 @@ import 'package:realunit_wallet/packages/service/debug_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_bank_account_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_company_info_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_fiat_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_language_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_legal_document_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
@@ -148,6 +150,8 @@ void setupServices() {
   getIt.registerLazySingleton(
     () => SupportedLanguageRepository(getIt<DfxLanguageService>()),
   );
+  getIt.registerLazySingleton(() => DfxLegalDocumentService(getIt<AppStore>()));
+  getIt.registerLazySingleton(() => DfxCompanyInfoService(getIt<AppStore>()));
   getIt.registerFactory(
     () => DfxBankAccountService(getIt<AppStore>(), getIt<WalletService>()),
   );
