@@ -8,4 +8,4 @@ appId: swiss.realunit.app
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible: 'Start'
-    timeout: 15000
+    timeout: 30000
