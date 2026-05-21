@@ -12,11 +12,10 @@ import 'package:flutter_test/flutter_test.dart';
 const _script = 'tool/generate_release_info.dart';
 
 class _ReleaseInfo {
-  _ReleaseInfo(this.tag, this.marketing, this.versionCode, this.isStable);
+  _ReleaseInfo(this.tag, this.marketing, this.versionCode);
   final String tag;
   final String marketing;
   final int versionCode;
-  final bool isStable;
 }
 
 Future<_ReleaseInfo> _run({String? tag}) async {
@@ -43,7 +42,6 @@ Future<_ReleaseInfo> _run({String? tag}) async {
       RegExp(r"releaseTag = '([^']+)'").firstMatch(contents)!.group(1)!,
       RegExp(r"releaseMarketingVersion = '([^']+)'").firstMatch(contents)!.group(1)!,
       int.parse(RegExp(r'releaseVersionCode = (\d+)').firstMatch(contents)!.group(1)!),
-      RegExp(r'releaseIsStable = (true|false)').firstMatch(contents)!.group(1) == 'true',
     );
   } finally {
     if (tempDir.existsSync()) tempDir.deleteSync(recursive: true);
@@ -67,47 +65,43 @@ Future<ProcessResult> _runRaw(List<String> extraArgs) {
 
 void main() {
   group('generate_release_info: stable tags', () {
-    test('v1.0.0 → versionCode 10_000_999, BETA_N = 999 (stable sentinel)',
-        () async {
+    test('v1.0.0 → versionCode 10_000_999, stable suffix 999', () async {
       final info = await _run(tag: 'v1.0.0');
       expect(info.tag, '1.0.0');
       expect(info.marketing, '1.0.0');
       expect(info.versionCode, 10000999);
-      expect(info.isStable, isTrue);
+    });
+
+    test('v1.0.15 → versionCode 10_015_999 (first patch after legacy beta train)',
+        () async {
+      final info = await _run(tag: 'v1.0.15');
+      expect(info.tag, '1.0.15');
+      expect(info.marketing, '1.0.15');
+      expect(info.versionCode, 10015999);
+    });
+
+    test('v1.0.15 build code outranks the highest published beta (v1.0.0-beta.14)',
+        () async {
+      // The legacy beta train topped out at v1.0.0-beta.14 → 10_000_014.
+      // v1.0.15 must come out strictly higher so Play Store / TestFlight
+      // accept the upload without manual intervention.
+      const legacyHighestBetaCode = 10000014;
+      final firstStable = (await _run(tag: 'v1.0.15')).versionCode;
+      expect(firstStable, greaterThan(legacyHighestBetaCode));
     });
 
     test('v2.5.7 → versionCode 20_507_999', () async {
       final info = await _run(tag: 'v2.5.7');
       expect(info.versionCode, 20507999);
-      expect(info.isStable, isTrue);
-    });
-  });
-
-  group('generate_release_info: beta tags', () {
-    test('v1.0.0-beta.2 → versionCode 10_000_002', () async {
-      final info = await _run(tag: 'v1.0.0-beta.2');
-      expect(info.tag, '1.0.0-beta.2');
-      expect(info.marketing, '1.0.0');
-      expect(info.versionCode, 10000002);
-      expect(info.isStable, isFalse);
     });
 
-    test('v0.0.42-beta.130 (old beta train) → 42130', () async {
-      final info = await _run(tag: 'v0.0.42-beta.130');
-      expect(info.versionCode, 42130);
-    });
-
-    test('stable strictly outranks every beta in the same X.Y.Z train',
+    test('successive patch bumps yield monotonically increasing version codes',
         () async {
-      final beta = (await _run(tag: 'v1.0.0-beta.998')).versionCode;
-      final stable = (await _run(tag: 'v1.0.0')).versionCode;
-      expect(stable, greaterThan(beta));
-    });
-
-    test('v1.0.1-beta.1 outranks v1.0.0 stable (next train)', () async {
-      final stable100 = (await _run(tag: 'v1.0.0')).versionCode;
-      final beta101 = (await _run(tag: 'v1.0.1-beta.1')).versionCode;
-      expect(beta101, greaterThan(stable100));
+      final p0 = (await _run(tag: 'v1.0.0')).versionCode;
+      final p1 = (await _run(tag: 'v1.0.1')).versionCode;
+      final m1 = (await _run(tag: 'v1.1.0')).versionCode;
+      expect(p1, greaterThan(p0));
+      expect(m1, greaterThan(p1));
     });
   });
 
@@ -117,7 +111,6 @@ void main() {
       expect(info.tag, 'dev');
       expect(info.marketing, '0.0.0');
       expect(info.versionCode, 0);
-      expect(info.isStable, isFalse);
     });
 
     test('--tag=dev → same as no --tag', () async {
@@ -133,8 +126,18 @@ void main() {
       expect(result.exitCode, isNot(0));
     });
 
-    test('beta number > 998 → non-zero exit', () async {
-      final result = await _runRaw(['--tag=v1.0.0-beta.999']);
+    test('beta suffix is no longer accepted → non-zero exit', () async {
+      final result = await _runRaw(['--tag=v1.0.0-beta.2']);
+      expect(result.exitCode, isNot(0));
+    });
+
+    test('release-candidate suffix is not supported → non-zero exit', () async {
+      final result = await _runRaw(['--tag=v1.0.0-rc.1']);
+      expect(result.exitCode, isNot(0));
+    });
+
+    test('build-metadata suffix is not supported → non-zero exit', () async {
+      final result = await _runRaw(['--tag=v1.0.0+build.1']);
       expect(result.exitCode, isNot(0));
     });
 
@@ -143,25 +146,30 @@ void main() {
       expect(result.exitCode, isNot(0));
     });
 
-    test('release-candidate suffix is not supported → non-zero exit', () async {
-      final result = await _runRaw(['--tag=v1.0.0-rc.1']);
+    test('patch > 99 → non-zero exit', () async {
+      final result = await _runRaw(['--tag=v1.0.100']);
       expect(result.exitCode, isNot(0));
     });
   });
 
   group('generate_release_info: platform-prefixed tags', () {
-    test('android/v1.0.0-beta.4 strips the prefix and computes 10000004',
+    test('android/v1.0.15 strips the prefix and computes 10_015_999',
         () async {
-      final info = await _run(tag: 'android/v1.0.0-beta.4');
-      expect(info.tag, '1.0.0-beta.4');
-      expect(info.versionCode, 10000004);
+      final info = await _run(tag: 'android/v1.0.15');
+      expect(info.tag, '1.0.15');
+      expect(info.versionCode, 10015999);
     });
 
-    test('ios/v1.0.0 strips the prefix and computes 10000999', () async {
+    test('ios/v1.0.0 strips the prefix and computes 10_000_999', () async {
       final info = await _run(tag: 'ios/v1.0.0');
       expect(info.tag, '1.0.0');
       expect(info.versionCode, 10000999);
-      expect(info.isStable, isTrue);
+    });
+
+    test('android/v1.0.0-beta.4 is rejected like every other beta suffix',
+        () async {
+      final result = await _runRaw(['--tag=android/v1.0.0-beta.4']);
+      expect(result.exitCode, isNot(0));
     });
   });
 }

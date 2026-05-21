@@ -145,13 +145,34 @@ Tier 1 (`integration_test/`) and Tier 3 (`.maestro/`) runners are tracked under 
 | `bitbox-simulator.yml`       | PR touching `lib/packages/hardware_wallet/**` or `wallet/**`  | Runs the BitBox02 firmware simulator with `bitbox-testkit` baselines (Tier 2)           |
 | `bitbox-simulator-slash.yml` | `/bitbox-simulator` comment on any PR                         | Same engine as above, on-demand per PR (variants: default / `ref=main`)                 |
 | `auto-release-pr.yaml`       | Push `develop` · manual                                       | Opens Release PR `develop` → `main`                                                     |
-| `auto-tag.yaml`              | Push `develop` / `main`                                       | Creates the next release tag from the merged version                                    |
-| `develop-release.yaml`       | Tag `v*-beta*` · manual                                       | Develop-beta Android APK + GitHub pre-release                                           |
-| `beta-release.yaml`          | Tag `v*` (non-beta) · manual                                  | Combined Android + iOS deploy + GitHub release                                          |
-| `beta-release-android.yaml`  | Tag `android/v*` · manual                                     | Android-only beta deploy (Play Internal Testing)                                        |
-| `beta-release-ios.yaml`      | Tag `ios/v*` · manual                                         | iOS-only beta deploy (TestFlight, Fastlane Match)                                       |
+| `auto-tag.yaml`              | Push `develop`                                                | Creates the next `vX.Y.Z` patch tag (PATCH = previous + 1, MINOR/MAJOR from pubspec floor) |
+| `develop-release.yaml`       | Tag `v*` with PATCH >= 1 · manual                             | Internal release: Android + iOS deploy to Play Internal + TestFlight, GitHub pre-release |
+| `beta-release.yaml`          | Tag `v*` with PATCH == 0 · manual                             | Production candidate: Android + iOS deploy to Play Internal + TestFlight, GitHub release (production promotion is manual in the store backends) |
+| `beta-release-android.yaml`  | Tag `android/v*` · manual                                     | Android-only deploy (Play Internal Testing)                                             |
+| `beta-release-ios.yaml`      | Tag `ios/v*` · manual                                         | iOS-only deploy (TestFlight, Fastlane Match)                                            |
 | `handbook-dev.yaml`          | Push `develop` under `docs/handbook/**` · manual              | Builds `dfxswiss/realunit-app-handbook:beta`, redeploys the handbook DEV container      |
 | `handbook-prd.yaml`          | Push `main` under `docs/handbook/**` · manual                 | Builds `dfxswiss/realunit-app-handbook:latest`, redeploys the handbook PRD container    |
+
+## Release versioning
+
+Tags follow plain SemVer: `vMAJOR.MINOR.PATCH`. There is no pre-release suffix — the previous `vX.Y.Z-beta.N` schema has been retired.
+
+| Component | When does it bump? | Workflow | Distribution |
+| --- | --- | --- | --- |
+| `PATCH` (`v1.0.X` with X >= 1) | Automatically on every push to `develop` (see `auto-tag.yaml`). | `develop-release.yaml` ("Internal Release") | TestFlight + Play Internal. |
+| `MINOR` (`v1.X.0`) | Manual tag push (App-Store-update marker). | `beta-release.yaml` ("Production Release Candidate") | TestFlight + Play Internal. Production promotion is done manually in the store backends. |
+| `MAJOR` (`vX.0.0`) | Manual tag push. | `beta-release.yaml` ("Production Release Candidate") | TestFlight + Play Internal. Production promotion is done manually in the store backends. |
+
+Both release workflows listen on the same tag pattern (`v*`) and use a guard job to route based on the PATCH component: patch tags go through the Internal Release lane, MAJOR/MINOR tags through the Production Release Candidate lane. Either way the build lands in the Test tracks first — the App Store / Play Store production track is never updated by a tag push.
+
+The build number is derived deterministically from the tag by `tool/generate_release_info.dart` using `MAJOR * 10_000_000 + MINOR * 100_000 + PATCH * 1_000 + 999`. The fixed `+999` suffix keeps every new build strictly above the legacy beta build codes; the first new build `v1.0.15` lands at `10_015_999`, comfortably above the highest published legacy beta `v1.0.0-beta.14` at `10_000_014`.
+
+`pubspec.yaml`'s `version:` field has two roles:
+
+- The `+0` build-number sentinel is for local builds — CI always overrides `--build-name` / `--build-number` from the tag. Don't bump the `+N` part manually.
+- The `X.Y.Z` part is a **floor** for MAJOR / MINOR jumps. Patch increments come from the latest tag; pubspec is only consulted to trigger jumps. To start a new MINOR / MAJOR train (e.g. `v1.1.0`), bump pubspec on `develop` and the next auto-tag will pick it up.
+
+Typical patch flow: PR merges into `develop` → `auto-tag.yaml` creates `v1.0.X` → `develop-release.yaml` ships the build to TestFlight + Play Internal.
 
 ## Getting started
 

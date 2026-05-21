@@ -68,10 +68,10 @@ platform :ios do
       git_url: "git@github.com:DFXswiss/fastlane-certificates.git"
     )
 
-    # CFBundleShortVersionString must be three integers (App Store ITMS-90060);
-    # the -beta.N suffix lives in the IPA filename and the in-app release tag,
-    # not in the marketing version. The build number is tag-deterministic and
-    # identical to the Android versionCode (see tool/generate_release_info.dart).
+    # CFBundleShortVersionString must be three integers (App Store ITMS-90060).
+    # The marketing version equals the bare tag (e.g. "1.0.15"). The build number is
+    # tag-deterministic and identical to the Android versionCode (see
+    # tool/generate_release_info.dart).
     increment_version_number(
       version_number: marketing_version,
       xcodeproj: "Runner.xcodeproj"
