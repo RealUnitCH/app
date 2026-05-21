@@ -29,6 +29,8 @@ The 100% rule above is the target state. Until the items below land, it is aspir
 
 **Ratchet protocol.** The committed floor lives in two flat files at the repo root: `.coverage-floor-lines` and `.coverage-floor-functions` (integer percent, no `%` suffix). CI fails the build when scoped coverage drops below either value. Raising the floor is encouraged on every PR that raises measured coverage — bump the file in the same commit and the gate moves up. Lowering the floor requires explicit reviewer sign-off; PR convention is the `coverage:lower-floor` label so the regression is visible in the PR list rather than smuggled in. The functions floor is parked at a placeholder today because `flutter test --coverage` does not emit `FN` records — the gate warns instead of failing on that metric until upstream adds support.
 
+> **Before first use:** the opt-in labels `gh label create coverage:lower-floor` and `gh label create tier3:full` need to exist on the repo or the gates silently no-op when reviewers apply them.
+
 Three PRs already in flight close the largest gaps for KYC + BitBox logic: [#319](https://github.com/DFXswiss/realunit-app/pull/319) (Tier 0 cubit tests), [#320](https://github.com/DFXswiss/realunit-app/pull/320) (Tier 1 FakeBitbox integration), [#321](https://github.com/DFXswiss/realunit-app/pull/321) (dashboard buy actions + auth service tests).
 
 ## Features
