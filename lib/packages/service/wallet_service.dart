@@ -169,12 +169,19 @@ class WalletService {
   /// [SoftwareViewWallet] counterpart, dropping the mnemonic. Called after a
   /// sign operation completes so the private key isn't kept resident for the
   /// rest of the foreground session. No-op for wallet types that don't hold
-  /// a mnemonic.
+  /// a mnemonic, and no-op when no wallet has been loaded yet.
   ///
   /// Respects [_activeUnlockHolders] — a second concurrent caller still
   /// holding the unlocked contract keeps the wallet unlocked. The 60s safety
   /// net runs through [_forceLock] instead so it can bypass the counter.
   Future<void> lockCurrentWallet() async {
+    // Onboarding / pre-load guard. The app-lifecycle `hidden` hook can fire
+    // before [HomeBloc] populates [AppStore.wallet] — making the precondition
+    // explicit here keeps the lifecycle caller a one-liner and means a future
+    // lockCurrentWallet extension (DB write, etc.) won't get its errors
+    // silently caught at the call site.
+    if (!_appStore.isWalletLoaded) return;
+
     if (_activeUnlockHolders > 0) _activeUnlockHolders--;
     if (_activeUnlockHolders > 0) return;
     _postUnlockLockTimer?.cancel();

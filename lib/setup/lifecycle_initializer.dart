@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/widgets.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
+import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 
@@ -51,6 +53,12 @@ class _LifecycleInitializerState extends State<LifecycleInitializer> {
 
   void _onHidden() {
     getIt<PinAuthCubit>().onAppHidden();
+    // Drop the mnemonic before iOS suspends the isolate. `lockCurrentWallet`
+    // is defensive on its own — no try/catch / catchError by design, so a
+    // Future.error surfaces in the Zone instead of being silently swallowed.
+    // Microtask race to watch: if `_onResumed` ever calls
+    // `ensureCurrentWalletUnlocked`, ordering against this pending lock matters.
+    unawaited(getIt<WalletService>().lockCurrentWallet());
   }
 
   void _onPaused() {
