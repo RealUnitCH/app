@@ -77,6 +77,11 @@ class BitboxService {
         return;
       }
       if (devices.isEmpty) {
+        // Two ticks can fire back-to-back if the body's awaits straddle the
+        // next interval — bail if the previous tick already entered the
+        // device-loss path. _isConnected acts as the single-writer flag
+        // because we set it to false before any further work.
+        if (!_isConnected) return;
         _isConnected = false;
         for (final credentials in _credentialsByAddress.values) {
           credentials.clearBitbox();
