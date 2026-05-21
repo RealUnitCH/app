@@ -23,7 +23,8 @@ The 100% rule above is the target state. Until the items below land, it is aspir
 - [x] `flutter test --coverage` step in `.github/workflows/pull-request.yaml`
 - [x] lcov filter narrowed to the activated surface (`lib/packages/**` + `lib/screens/**/cubit(s)/**` + `lib/screens/**/bloc/**`) and a per-run summary posted to the workflow step summary
 - [x] lcov threshold check failing the build below a committed floor on the scope above
-- [ ] GitHub branch protection on `develop` requiring the coverage check
+- [x] Floor gate lives in its own CI job (`Coverage Floor Gate`) so it is wire-up-ready as a separately required status check
+- [ ] GitHub branch protection on `develop` requiring the `Coverage Floor Gate` check (ruleset `PRs` / id `11317379`)
 - [ ] Build-time feature-flag mechanism (analogous to `EXPO_PUBLIC_ENABLE_*` in `dfx-wallet`) so non-MVP features can be gated out of the activated surface — required before the 100% rule is realistic across all feature areas
 - [ ] Inline `// coverage:ignore-*` annotations on truly unreachable paths, each with a one-line reason
 
