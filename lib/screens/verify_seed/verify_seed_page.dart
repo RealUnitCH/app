@@ -22,14 +22,12 @@ class VerifySeedPage extends StatelessWidget {
       wallet,
       getIt<WalletService>(),
     ),
-    child: VerifySeedView(wallet: wallet),
+    child: const VerifySeedView(),
   );
 }
 
 class VerifySeedView extends StatelessWidget {
-  final SoftwareWallet wallet;
-
-  const VerifySeedView({super.key, required this.wallet});
+  const VerifySeedView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +41,16 @@ class VerifySeedView extends StatelessWidget {
             if (state.isVerified) {
               await Future.delayed(const Duration(seconds: 2));
               if (context.mounted) {
-                context.read<HomeBloc>().add(LoadWalletEvent(wallet));
+                // Load the *committed* wallet (`state.committedWallet`), not
+                // the page's draft (`id == 0`). `committedWallet` is only
+                // ever set together with `isVerified`, so it is non-null
+                // here. `LoadWalletEvent` makes `HomeBloc` set
+                // `hasWallet: true`, which `main.dart`'s `_navigate()` needs
+                // to route forward to onboarding-completed instead of
+                // looping back to welcome.
+                context.read<HomeBloc>().add(
+                  LoadWalletEvent(state.committedWallet!),
+                );
               }
             }
           },

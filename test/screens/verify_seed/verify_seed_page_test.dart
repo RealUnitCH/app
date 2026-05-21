@@ -82,7 +82,7 @@ void main() {
         ),
       );
 
-      await tester.pumpApp(buildSubject(VerifySeedView(wallet: MockWallet())));
+      await tester.pumpApp(buildSubject(const VerifySeedView()));
 
       expect(
         find.byWidgetPredicate((widget) => widget is SvgPicture && widget.width == 124),
@@ -103,7 +103,7 @@ void main() {
           ),
         );
 
-        await tester.pumpApp(buildSubject(VerifySeedView(wallet: MockWallet())));
+        await tester.pumpApp(buildSubject(const VerifySeedView()));
 
         expect(
           find.byWidgetPredicate(
@@ -124,7 +124,7 @@ void main() {
           ),
         );
 
-        await tester.pumpApp(buildSubject(VerifySeedView(wallet: MockWallet())));
+        await tester.pumpApp(buildSubject(const VerifySeedView()));
 
         expect(
           find.byWidgetPredicate(
@@ -146,7 +146,7 @@ void main() {
           ),
         );
 
-        await tester.pumpApp(buildSubject(VerifySeedView(wallet: MockWallet())));
+        await tester.pumpApp(buildSubject(const VerifySeedView()));
 
         expect(
           find.byWidgetPredicate(
@@ -168,7 +168,7 @@ void main() {
           ),
         );
 
-        await tester.pumpApp(buildSubject(VerifySeedView(wallet: MockWallet())));
+        await tester.pumpApp(buildSubject(const VerifySeedView()));
 
         expect(
           find.byWidgetPredicate(
@@ -183,20 +183,31 @@ void main() {
     });
 
     group('$BlocListener', () {
-      testWidgets('sends $HomeEvent when entered words are verified', (tester) async {
-        final wallet = MockWallet();
-
+      testWidgets('sends $LoadWalletEvent with the committed wallet when verified',
+          (tester) async {
+        // The committed wallet `verify()` produced — a persisted row with a
+        // real id (42), not the draft's `0` sentinel.
+        final committed = SoftwareWallet(
+          42,
+          'Main',
+          'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
+        );
         whenListen(
           verifySeedCubit,
-          Stream.fromIterable([const VerifySeedState(isVerified: true)]),
+          Stream.fromIterable([
+            VerifySeedState(isVerified: true, committedWallet: committed),
+          ]),
           initialState: const VerifySeedState(),
         );
 
-        await tester.pumpApp(buildSubject(VerifySeedView(wallet: wallet)));
+        await tester.pumpApp(buildSubject(const VerifySeedView()));
         await tester.pump();
         await tester.pump(const Duration(seconds: 2));
 
-        verify(() => homeBloc.add(LoadWalletEvent(wallet))).called(1);
+        // The page must dispatch `LoadWalletEvent` (so `HomeBloc` sets
+        // `hasWallet: true` and `main.dart` routes onboarding forward) with
+        // the *committed* wallet — not the draft (`id == 0`).
+        verify(() => homeBloc.add(LoadWalletEvent(committed))).called(1);
       });
     });
   });

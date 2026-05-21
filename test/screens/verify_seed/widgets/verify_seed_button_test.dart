@@ -76,5 +76,38 @@ void main() {
         expect(b.onPressed, isNotNull);
       },
     );
+
+    testWidgets(
+      'isVerifying: renders the loading-variant AppFilledButton',
+      (tester) async {
+        when(() => cubit.state)
+            .thenReturn(const VerifySeedState(isVerifying: true));
+
+        await tester.pumpApp(_host(cubit));
+
+        expect(button(tester).state, FilledButtonState.loading);
+      },
+    );
+
+    testWidgets(
+      'commitFailed: renders a tappable retry button that calls verify()',
+      (tester) async {
+        when(() => cubit.state)
+            .thenReturn(const VerifySeedState(commitFailed: true));
+        when(() => cubit.verify()).thenAnswer((_) async => false);
+
+        await tester.pumpApp(_host(cubit));
+
+        final b = button(tester);
+        // `.idle` keeps `onPressed` wired — the `.error` variant hard-nulls
+        // it, which would make the retry affordance untappable.
+        expect(b.state, FilledButtonState.idle);
+        expect(b.icon, Icons.refresh);
+        expect(b.onPressed, isNotNull);
+
+        b.onPressed!();
+        verify(() => cubit.verify()).called(1);
+      },
+    );
   });
 }
