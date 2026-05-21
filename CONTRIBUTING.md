@@ -61,13 +61,17 @@ lib/
 
 ## Release Versioning
 
-- Single source of truth for a published build: the git tag (`vX.Y.Z` for stable, `vX.Y.Z-beta.N` for beta).
-- `tool/generate_release_info.dart` derives both the in-app `releaseTag` and the platform-identical `versionCode` from the tag (Schema: `MAJOR*10_000_000 + MINOR*100_000 + PATCH*1_000 + BETA_N`; stable uses `BETA_N = 999`). The tool is invoked by every release workflow before `flutter build`, and by both Fastfiles (Android + iOS) so the build number is identical across platforms.
+- Single source of truth for a published build: the git tag. Tags are plain SemVer `vX.Y.Z` — no pre-release suffix. The previous `vX.Y.Z-beta.N` schema has been retired and tags carrying any suffix are rejected by the generator.
+- PATCH (`v1.0.X`, X >= 1) is bumped automatically by `.github/workflows/auto-tag.yaml` on every push to `develop`. MINOR / MAJOR are manual tag pushes — they mark an App-Store-update candidate.
+- Both release workflows ship to Test tracks only (TestFlight + Play Internal). Production promotion is done manually in the store backends, never by a tag push.
+- `tool/generate_release_info.dart` derives the in-app `releaseTag`, the platform-identical `versionCode` and the `marketingVersion` from the tag. Schema: `MAJOR * 10_000_000 + MINOR * 100_000 + PATCH * 1_000 + 999`. The fixed `+999` suffix keeps new build codes strictly above the legacy beta train (highest published was `v1.0.0-beta.14` → `10_000_014`).
 - Local builds carry `releaseTag = 'dev'` (versionCode `0`) so the settings footer reads `Version dev` instead of a stale pinned build number.
 - `pubspec.yaml`'s `version:` field has two roles:
-  - `+0` is a sentinel for local builds — CI always overrides `--build-name`/`--build-number` from the tag. Don't bump the `+N` part manually.
-  - The `X.Y.Z` part is consumed by `.github/workflows/auto-tag.yaml` as a **floor** for Major/Minor bumps (patch increments come from the latest tag). To start a new Minor/Major train (e.g. `1.1.0-beta.*`), bump the `X.Y.Z` part in `pubspec.yaml` on develop and the next auto-tag will pick it up. Patch-level work needs no edit — just push to develop.
-- Schema limits: `MAJOR`, `MINOR`, `PATCH` in `0..99`, `BETA_N` in `1..998`. The generator hard-fails outside these bounds. Before approaching `PATCH = 99` on a given train, bump `pubspec.yaml`'s minor (e.g. `1.0.99` → `1.1.0`) so auto-tag starts a new train. There is intentionally no safety net — surprising a CI cap is preferable to silently overflowing the version code.
+  - `+0` is a sentinel for local builds — CI always overrides `--build-name` / `--build-number` from the tag. Don't bump the `+N` part manually.
+  - The `X.Y.Z` part is consumed by `auto-tag.yaml` as a **floor** for MAJOR / MINOR bumps. Patch increments come from the latest tag; pubspec is only consulted to trigger jumps. To start a new MINOR / MAJOR train (e.g. `1.1.0`), bump the `X.Y.Z` part in `pubspec.yaml` on `develop` and the next auto-tag will pick it up. Patch-level work needs no edit — just push to develop.
+- Schema limits: `MAJOR`, `MINOR`, `PATCH` in `0..99`. The generator hard-fails outside these bounds. Before approaching `PATCH = 99` on a given train, bump `pubspec.yaml`'s MINOR (e.g. `1.0.99` → `1.1.0`) so auto-tag starts a new train. There is intentionally no safety net — surprising a CI cap is preferable to silently overflowing the version code.
+
+See the README's "Release versioning" section for the full table and the typical patch flow.
 
 ## State Management
 
