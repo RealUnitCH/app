@@ -198,6 +198,12 @@ Future<void> setupBlocs() async {
     SettingsBloc(
       getIt<SettingsRepository>(),
       () => getIt<DfxWidgetService>().refreshAuthToken(),
+      onNetworkModeChanged: () {
+        // Reference-data lists are scoped per backend (mainnet vs. testnet),
+        // so drop their session caches when the user switches networks.
+        getIt<DfxFiatService>().invalidateCache();
+        getIt<DfxLanguageService>().invalidateCache();
+      },
     ),
   );
   getIt.registerSingleton(

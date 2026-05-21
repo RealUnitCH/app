@@ -64,5 +64,26 @@ void main() {
 
       expect(() => service.getAllFiats(), throwsException);
     });
+
+    test('invalidateCache forces the next call to refetch', () async {
+      var callCount = 0;
+      final client = MockClient((request) async {
+        callCount++;
+        return http.Response(jsonEncode([_chf]), 200);
+      });
+      final service = build(client);
+
+      await service.getAllFiats();
+      await service.getAllFiats();
+      expect(callCount, 1, reason: 'second call within TTL must hit the cache');
+
+      service.invalidateCache();
+      await service.getAllFiats();
+      expect(
+        callCount,
+        2,
+        reason: 'after invalidateCache the next call must hit the network',
+      );
+    });
   });
 }
