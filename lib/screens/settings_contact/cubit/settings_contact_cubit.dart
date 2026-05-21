@@ -26,10 +26,28 @@ class SettingsContactCubit extends Cubit<SettingsContactState> {
   }
 
   Future<void> init() async {
+    emit(const SettingsContactLoading());
+
+    // Beide Calls parallel starten. getUser ist Pflicht — schlägt er fehl,
+    // kippt der Cubit in Failure. company-info ist optional: ein Ausfall
+    // (z.B. /v1/company-info/RealUnit 500/Timeout) blendet nur das
+    // Impressum/Phone/Mail/Website-Panel aus, der Support-Tile bleibt
+    // sichtbar, wenn die API-Capability `supportAvailable` true ist.
+    final userFuture = _kycService.getUser();
+    final companyInfoFuture = _companyInfoService
+        .getForBrand(_brand)
+        .then<DfxCompanyInfoDto?>((info) => info)
+        .catchError((Object e) {
+          developer.log(
+            'company-info lookup failed: $e',
+            name: '$SettingsContactCubit',
+          );
+          return null;
+        });
+
     try {
-      emit(const SettingsContactLoading());
-      final userDto = await _kycService.getUser();
-      final companyInfo = await _companyInfoService.getForBrand(_brand);
+      final userDto = await userFuture;
+      final companyInfo = await companyInfoFuture;
       // Render Support directly from the backend's capability flag
       // (`UserCapabilitiesDto.supportAvailable`) instead of inferring
       // it from `mail != null`. The flag and the mail check happen to

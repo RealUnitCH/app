@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_company_info_service.dart';
@@ -77,15 +79,56 @@ void main() {
       expect((cubit.state as SettingsContactFailure).message, contains('boom'));
     });
 
-    test('Failure when company-info lookup throws', () async {
-      when(() => kyc.getUser()).thenAnswer((_) async => _user(mail: 'a@b.com'));
-      when(() => companyInfo.getForBrand(any()))
-          .thenAnswer((_) async => throw Exception('no brand'));
+    test(
+      'Success(companyInfo=null) when only company-info lookup throws — getUser ok ⇒ Support-Tile bleibt sichtbar',
+      () async {
+        when(() => kyc.getUser())
+            .thenAnswer((_) async => _user(mail: 'a@b.com', supportAvailable: true));
+        when(
+          () => companyInfo.getForBrand(any()),
+        ).thenAnswer((_) async => throw Exception('no brand'));
+
+        final cubit = SettingsContactCubit(kyc, companyInfo);
+        await cubit.stream.firstWhere((s) => s is SettingsContactSuccess);
+
+        final state = cubit.state as SettingsContactSuccess;
+        expect(state.supportAvailable, isTrue);
+        expect(
+          state.companyInfo,
+          isNull,
+          reason:
+              'Teilausfall: Support-Tile rendert via supportAvailable, Impressum/Phone/Mail-Block via null-Guard',
+        );
+      },
+    );
+
+    test('getUser + companyInfo werden parallel angestossen', () async {
+      // Wenn beide Calls sequentiell laufen würden, müsste companyInfo
+      // erst nach Auflösung von getUser starten. Wir simulieren einen
+      // langsamen getUser und einen schnellen companyInfo und prüfen,
+      // dass companyInfo nicht auf getUser warten musste.
+      final userCompleter = Completer<UserDto>();
+      var companyInfoCalled = false;
+      when(() => kyc.getUser()).thenAnswer((_) => userCompleter.future);
+      when(() => companyInfo.getForBrand(any())).thenAnswer((_) async {
+        companyInfoCalled = true;
+        return _realUnitInfo;
+      });
 
       final cubit = SettingsContactCubit(kyc, companyInfo);
-      await cubit.stream.firstWhere((s) => s is SettingsContactFailure);
+      // Microtask-Queue durchlaufen lassen, damit beide Futures starten.
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        companyInfoCalled,
+        isTrue,
+        reason: 'companyInfo muss starten bevor getUser auflöst',
+      );
 
-      expect((cubit.state as SettingsContactFailure).message, contains('no brand'));
+      userCompleter.complete(_user(mail: 'a@b.com', supportAvailable: true));
+      await cubit.stream.firstWhere((s) => s is SettingsContactSuccess);
+
+      expect((cubit.state as SettingsContactSuccess).supportAvailable, isTrue);
+      expect((cubit.state as SettingsContactSuccess).companyInfo, isNotNull);
     });
 
     test('manual init() call after a failure recovers to Success', () async {
