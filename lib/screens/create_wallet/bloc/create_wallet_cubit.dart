@@ -25,10 +25,19 @@ class CreateWalletCubit extends Cubit<CreateWalletState> {
   late final AppLifecycleListener _lifecycleListener;
 
   void createWallet() async {
-    final wallet = await _service.createSeedWallet('Obi-Wallet-Kenobi');
-    // Fire-and-forget the auth-signature capture — the lazy path in
-    // DFXAuthService.getSignature is the safety net, and a 20 s HTTP timeout
-    // shouldn't gate the "creating wallet" UI.
+    // Defer the DB write to `VerifySeedCubit.verify()` via
+    // `WalletService.commitGeneratedWallet`. Writing on every regenerate
+    // would persist a fresh encrypted-seed row on each `_dropMnemonic`
+    // cycle (N+1 rows per onboarding session with N hide-cycles), and
+    // `WalletStorage.deleteWallet` only touches `walletAccountInfos` —
+    // those `walletInfos` rows would accumulate undeletable. The draft
+    // carries the `0` sentinel id until committed.
+    final wallet = await _service.generateUncommittedSeedWallet('Obi-Wallet-Kenobi');
+    // Fire-and-forget the auth-signature capture. The signature is derived
+    // from the primary address, which is deterministic from the mnemonic
+    // — valid for the same wallet once it's committed. The lazy path in
+    // DFXAuthService.getSignature is the safety net, and a 20 s HTTP
+    // timeout shouldn't gate the "creating wallet" UI.
     unawaited(
       warmAuthSignature(
         _authService,
@@ -38,9 +47,10 @@ class CreateWalletCubit extends Cubit<CreateWalletState> {
     );
     // Async-tail guard: with the `_dropMnemonic` re-fire on `hidden`, the
     // user can return to foreground and immediately pop the screen before
-    // the regenerated `createSeedWallet` resolves — the AppBar back closes
-    // the cubit, and a post-close `emit` would throw `StateError`. Matches
-    // the `connect_bitbox_cubit` / `kyc_cubit` pattern.
+    // the regenerated `generateUncommittedSeedWallet` resolves — the
+    // AppBar back closes the cubit, and a post-close `emit` would throw
+    // `StateError`. Matches the `connect_bitbox_cubit` / `kyc_cubit`
+    // pattern.
     if (isClosed) return;
     emit(state.copyWith(wallet: wallet));
   }

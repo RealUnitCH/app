@@ -17,7 +17,11 @@ class VerifySeedCubit extends Cubit<VerifySeedState> {
     _initVerification();
   }
 
-  final SoftwareWallet _wallet;
+  /// The draft wallet handed in by `CreateWalletCubit`. Until [verify]
+  /// succeeds and `WalletService.commitGeneratedWallet` lands the row, the
+  /// id is the `0` sentinel — it must NOT be passed to
+  /// `setCurrentWallet` directly; commit first, use the returned id.
+  SoftwareWallet _wallet;
   final WalletService _walletService;
 
   void _initVerification() {
@@ -63,7 +67,17 @@ class VerifySeedCubit extends Cubit<VerifySeedState> {
       }
     }
 
-    await _walletService.setCurrentWallet(_wallet.id);
+    // Commit the draft mnemonic to disk BEFORE marking it current — the
+    // wallet handed in by `CreateWalletCubit` is the in-memory-only draft
+    // produced by `WalletService.generateUncommittedSeedWallet` (id == 0).
+    // Persisting at confirm time means a regenerate triggered by an
+    // app-hidden cycle in the create flow never leaves an orphan row in
+    // `walletInfos`. The user only reaches this branch by typing the four
+    // requested words correctly, so the seed they kept is the seed we
+    // store.
+    final committed = await _walletService.commitGeneratedWallet(_wallet);
+    _wallet = committed;
+    await _walletService.setCurrentWallet(committed.id);
     emit(state.copyWith(isVerified: true));
     return true;
   }
