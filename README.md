@@ -14,7 +14,7 @@ A Flutter wallet for Real Unit investors. Multi-chain, BitBox02-ready, KYC-aware
 
 **Coverage scope:** `lib/packages/**` (services, repositories, signers, utils) and the `cubits/` + `bloc/` directories under each `lib/screens/<feature>/`. Widget files (`lib/screens/<feature>/<feature>_page.dart` and `lib/widgets/**`) are exercised via `testWidgets` specs and excluded from the line-coverage gate — widget tests count as `widget` coverage in the feature matrix, not as line %.
 
-The four-tier testing model (Tier 0 Cubit unit · Tier 1 FakeBitbox integration · Tier 2 firmware simulator · Tier 3 Maestro hardware) is tracked in [#314](https://github.com/DFXswiss/realunit-app/issues/314). New BitBox-touching PRs are expected to add tests at the appropriate tier(s).
+The four-tier testing model (Tier 0 Cubit unit · Tier 1 FakeBitbox integration · Tier 2 firmware simulator · Tier 3 Maestro flows (handbook simulator + deferred BitBox02 hardware)) is tracked in [#314](https://github.com/DFXswiss/realunit-app/issues/314). New BitBox-touching PRs are expected to add tests at the appropriate tier(s).
 
 ## Coverage infrastructure roadmap
 
