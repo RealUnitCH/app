@@ -167,8 +167,6 @@ Tier 1 (`integration_test/`) is tracked under "Testing tiers" above but not yet 
 | `auto-tag.yaml`              | Push `develop`                                                | Creates the next `vX.Y.Z` patch tag (PATCH = previous + 1, MINOR/MAJOR from pubspec floor) |
 | `develop-release.yaml`       | Tag `v*` with PATCH >= 1 · manual                             | Internal release: Android + iOS deploy to Play Internal + TestFlight, GitHub pre-release |
 | `beta-release.yaml`          | Tag `v*` with PATCH == 0 · manual                             | Production candidate: Android + iOS deploy to Play Internal + TestFlight, GitHub release (production promotion is manual in the store backends) |
-| `beta-release-android.yaml`  | Tag `android/v*` · manual                                     | Android-only deploy (Play Internal Testing)                                             |
-| `beta-release-ios.yaml`      | Tag `ios/v*` · manual                                         | iOS-only deploy (TestFlight, Fastlane Match)                                            |
 | `handbook-dev.yaml`          | Push `develop` under `docs/handbook/**` · manual              | Builds `dfxswiss/realunit-app-handbook:beta`, redeploys the handbook DEV container      |
 | `handbook-prd.yaml`          | Push `main` under `docs/handbook/**` · manual                 | Builds `dfxswiss/realunit-app-handbook:latest`, redeploys the handbook PRD container    |
 
