@@ -73,5 +73,17 @@ void main() {
     test('sessionCache is exposed unchanged', () {
       expect(store.sessionCache, same(sessionCache));
     });
+
+    test('isWalletLoaded is false before any wallet is set', () {
+      expect(store.isWalletLoaded, isFalse);
+    });
+
+    test('isWalletLoaded flips to true once a wallet is set', () {
+      expect(store.isWalletLoaded, isFalse);
+
+      store.wallet = SoftwareWallet(1, 'Main', _testMnemonic);
+
+      expect(store.isWalletLoaded, isTrue);
+    });
   });
 }
