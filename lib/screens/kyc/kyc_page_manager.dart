@@ -44,7 +44,7 @@ class KycViewManager extends StatelessWidget {
         KycLoading() => const KycLoadingPage(),
         KycFailure(:final message) => KycFailurePage(message: message),
         KycUnsupportedStepFailure(:final stepName) => KycFailurePage(
-          message: S.of(context).kycUnsupportedStepDescription(stepName.value),
+          message: S.of(context).kycUnsupportedStepDescription(stepName?.value ?? '-'),
         ),
         KycAccountMergeRequested() => const KycAccountMergePage(),
         KycPending(:final pendingStep) => KycPendingPage(pendingStep: pendingStep),

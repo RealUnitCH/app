@@ -131,17 +131,26 @@ class KycCubit extends Cubit<KycState> {
           emit(const KycFailure('KYC terminated'));
           return;
         case KycProcessStatus.pendingReview:
+          // PendingReview is authoritative: the API says "do not let the user
+          // through". Never collapse this branch to `KycCompleted` — that
+          // would be the same class of misroute as the 2026-05-21 incident,
+          // just in the opposite direction (API: review pending → app:
+          // completed). If we cannot identify a required step we surface
+          // `KycUnsupportedStepFailure` so the user gets an explicit error
+          // instead of a silent dashboard handoff.
           final pending = kycStatus.kycSteps.firstWhereOrNull(
-            (s) => s.isRequired && _mapStepName(s.name) != null,
+            (s) => s.isRequired,
           );
-          final step = pending != null ? _mapStepName(pending.name) : null;
-          if (step != null) {
-            emit(KycPending(step));
-          } else if (pending != null) {
-            emit(KycUnsupportedStepFailure(pending.name));
-          } else {
-            emit(const KycCompleted());
+          if (pending == null) {
+            emit(const KycUnsupportedStepFailure(null));
+            return;
           }
+          final step = _mapStepName(pending.name);
+          if (step == null) {
+            emit(KycUnsupportedStepFailure(pending.name));
+            return;
+          }
+          emit(KycPending(step));
           return;
         case KycProcessStatus.inProgress:
           await _continueKyc(generation);
@@ -180,7 +189,20 @@ class KycCubit extends Cubit<KycState> {
   Future<void> _continueKyc(int generation) async {
     final kycStatus = await _kycService.continueKyc();
     if (isClosed || generation != _runGeneration) return;
-    final currentStep = kycStatus.kycSteps.firstWhere((step) => step.isCurrent);
+
+    // `KycSessionDto.currentStep` is the authoritative source — see
+    // `docs/api-authority-audit.md` V45 and `docs/api-authority-plan.md`
+    // §W2.2. Never iterate `kycSteps` here: the local filter is the same
+    // anti-pattern V1/V2/V3/V5 just eliminated in `_runCheckKyc`. If the
+    // session response has no `currentStep` we surface
+    // `KycUnsupportedStepFailure` instead of throwing a bare `StateError`
+    // through the outer catch (which used to land as raw stack trace text
+    // in the i18n message).
+    final currentStep = kycStatus.currentStep;
+    if (currentStep == null) {
+      emit(const KycUnsupportedStepFailure(null));
+      return;
+    }
 
     final kycStep = _mapStepName(currentStep.name);
     if (kycStep == null) {
@@ -191,7 +213,7 @@ class KycCubit extends Cubit<KycState> {
     emit(
       KycSuccess(
         currentStep: kycStep,
-        urlOrToken: kycStatus.currentStep?.session.url,
+        urlOrToken: currentStep.session.url,
       ),
     );
   }

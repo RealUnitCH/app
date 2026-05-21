@@ -63,6 +63,20 @@ KycSessionDto _session({
   processStatus: processStatus,
 );
 
+KycStepSessionDto _currentStep(
+  KycStepName name, {
+  String url = 'https://example.com/session',
+  UrlType urlType = UrlType.browser,
+  KycStepStatus status = KycStepStatus.inProgress,
+  int sequenceNumber = 0,
+}) => KycStepSessionDto(
+  session: KycSessionInfoDto(url: url, type: urlType),
+  name: name,
+  status: status,
+  sequenceNumber: sequenceNumber,
+  isCurrent: true,
+);
+
 void main() {
   late DfxKycService kycService;
   late RealUnitRegistrationService registrationService;
@@ -222,6 +236,69 @@ void main() {
       expect: () => [const KycLoading(), const KycPending(KycStep.ident)],
     );
 
+    // PendingReview is authoritative. The cubit must NEVER collapse this
+    // branch to `KycCompleted` — that would be the mirror image of the
+    // 2026-05-21 ident-misroute (API: review pending → app: dashboard).
+    blocTest<KycCubit, KycState>(
+      'emits KycUnsupportedStepFailure (not Completed) when PendingReview has no required step at all',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.pendingReview,
+            steps: [
+              _step(KycStepName.ident, status: KycStepStatus.completed),
+            ],
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        cubit.markRegistrationSignProduced();
+        await cubit.checkKyc();
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycUnsupportedStepFailure(null),
+      ],
+    );
+
+    // PendingReview + a required step the app cannot render (e.g.
+    // additionalDocuments, residencePermit, statutes, personalData — all
+    // absent from `_mapStepName`). Must surface an explicit failure with
+    // the step name, never `KycCompleted`.
+    blocTest<KycCubit, KycState>(
+      'emits KycUnsupportedStepFailure(step) when PendingReview required step is unmapped',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.pendingReview,
+            steps: [
+              _step(
+                KycStepName.additionalDocuments,
+                status: KycStepStatus.inReview,
+                isRequired: true,
+              ),
+            ],
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        cubit.markRegistrationSignProduced();
+        await cubit.checkKyc();
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycUnsupportedStepFailure(KycStepName.additionalDocuments),
+      ],
+    );
+
     blocTest<KycCubit, KycState>(
       'emits KycPending(dfxApproval) when dfxApproval is the only required step in PendingReview',
       setUp: () {
@@ -258,7 +335,11 @@ void main() {
         when(() => kycService.continueKyc()).thenAnswer(
           (_) async => _session(
             level: KycLevel.level20,
-            steps: [_step(KycStepName.ident, isCurrent: true)],
+            steps: const [],
+            currentStep: _currentStep(
+              KycStepName.ident,
+              url: 'https://example.com/ident',
+            ),
           ),
         );
       },
@@ -270,7 +351,10 @@ void main() {
       },
       expect: () => [
         const KycLoading(),
-        const KycSuccess(currentStep: KycStep.ident),
+        const KycSuccess(
+          currentStep: KycStep.ident,
+          urlOrToken: 'https://example.com/ident',
+        ),
       ],
     );
 
@@ -287,7 +371,8 @@ void main() {
         when(() => kycService.continueKyc()).thenAnswer(
           (_) async => _session(
             level: KycLevel.level20,
-            steps: [_step(KycStepName.personalData, isCurrent: true)],
+            steps: const [],
+            currentStep: _currentStep(KycStepName.personalData),
           ),
         );
       },
@@ -300,6 +385,39 @@ void main() {
       expect: () => [
         const KycLoading(),
         const KycUnsupportedStepFailure(KycStepName.personalData),
+      ],
+    );
+
+    // V45 follow-up: when the API answers `inProgress` but does not name a
+    // `currentStep` we surface an explicit failure instead of throwing a
+    // `StateError` from a `firstWhere`-on-empty (which used to leak as raw
+    // stack-trace text into the user-facing i18n message).
+    blocTest<KycCubit, KycState>(
+      'emits KycUnsupportedStepFailure(null) when _continueKyc returns no currentStep',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level20,
+            processStatus: KycProcessStatus.inProgress,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => kycService.continueKyc()).thenAnswer(
+          (_) async => _session(
+            level: KycLevel.level20,
+            steps: const [],
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        cubit.markRegistrationSignProduced();
+        await cubit.checkKyc();
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycUnsupportedStepFailure(null),
       ],
     );
 
