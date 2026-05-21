@@ -51,8 +51,8 @@ class SettingsContactView extends StatelessWidget {
                 children: [
                   BlocBuilder<SettingsContactCubit, SettingsContactState>(
                     builder: (context, state) => switch (state) {
-                      SettingsContactSuccess(:final emailSet) =>
-                        emailSet
+                      SettingsContactSuccess(:final supportAvailable) =>
+                        supportAvailable
                             ? OutlinedTile(
                                 leading: const Icon(
                                   Icons.support_agent_outlined,

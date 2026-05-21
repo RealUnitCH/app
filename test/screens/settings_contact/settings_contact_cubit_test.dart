@@ -7,9 +7,10 @@ import 'package:realunit_wallet/screens/settings_contact/cubit/settings_contact_
 
 class _MockKycService extends Mock implements DfxKycService {}
 
-UserDto _user({String? mail}) => UserDto(
+UserDto _user({String? mail, bool supportAvailable = false}) => UserDto(
       mail: mail,
       kyc: const UserKycDto(hash: 'h', level: KycLevel.level0, dataComplete: false),
+      capabilities: UserCapabilitiesDto(supportAvailable: supportAvailable),
     );
 
 void main() {
@@ -23,23 +24,25 @@ void main() {
   // listener attaches, Loading has already been emitted. We assert the
   // final state and the service call instead of the sequence.
   group('$SettingsContactCubit', () {
-    test('reaches Success(emailSet: true) when getUser returns a mail', () async {
-      when(() => kyc.getUser()).thenAnswer((_) async => _user(mail: 'a@b.com'));
+    test('reaches Success(supportAvailable: true) when API capability flag is true', () async {
+      when(() => kyc.getUser())
+          .thenAnswer((_) async => _user(mail: 'a@b.com', supportAvailable: true));
 
       final cubit = SettingsContactCubit(kyc);
       await cubit.stream.firstWhere((s) => s is SettingsContactSuccess);
 
-      expect((cubit.state as SettingsContactSuccess).emailSet, isTrue);
+      expect((cubit.state as SettingsContactSuccess).supportAvailable, isTrue);
       verify(() => kyc.getUser()).called(1);
     });
 
-    test('reaches Success(emailSet: false) when getUser returns no mail', () async {
-      when(() => kyc.getUser()).thenAnswer((_) async => _user(mail: null));
+    test('reaches Success(supportAvailable: false) when API capability flag is false', () async {
+      when(() => kyc.getUser())
+          .thenAnswer((_) async => _user(mail: null, supportAvailable: false));
 
       final cubit = SettingsContactCubit(kyc);
       await cubit.stream.firstWhere((s) => s is SettingsContactSuccess);
 
-      expect((cubit.state as SettingsContactSuccess).emailSet, isFalse);
+      expect((cubit.state as SettingsContactSuccess).supportAvailable, isFalse);
     });
 
     test('reaches Failure when getUser throws', () async {
@@ -57,7 +60,7 @@ void main() {
       when(() => kyc.getUser()).thenAnswer((_) async {
         calls++;
         if (calls == 1) throw Exception('transient');
-        return _user(mail: 'recovered@b.com');
+        return _user(mail: 'recovered@b.com', supportAvailable: true);
       });
 
       final cubit = SettingsContactCubit(kyc);
@@ -66,7 +69,7 @@ void main() {
       await cubit.init();
 
       expect(cubit.state, isA<SettingsContactSuccess>());
-      expect((cubit.state as SettingsContactSuccess).emailSet, isTrue);
+      expect((cubit.state as SettingsContactSuccess).supportAvailable, isTrue);
     });
   });
 }

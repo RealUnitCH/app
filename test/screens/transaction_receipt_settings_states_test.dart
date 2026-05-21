@@ -6,24 +6,24 @@ import 'package:realunit_wallet/screens/transaction_history/cubits/receipt/trans
 
 void main() {
   group('$SettingsContactState', () {
-    test('Success defaults emailSet to false', () {
+    test('Success defaults supportAvailable to false', () {
       const state = SettingsContactSuccess();
-      expect(state.emailSet, isFalse);
+      expect(state.supportAvailable, isFalse);
     });
 
     test('Success.copyWith preserves untouched field', () {
-      const base = SettingsContactSuccess(emailSet: true);
+      const base = SettingsContactSuccess(supportAvailable: true);
       final next = base.copyWith();
-      expect(next.emailSet, isTrue);
+      expect(next.supportAvailable, isTrue);
     });
 
-    test('Success Equatable props pin emailSet', () {
+    test('Success Equatable props pin supportAvailable', () {
       expect(
-        const SettingsContactSuccess(emailSet: true),
-        const SettingsContactSuccess(emailSet: true),
+        const SettingsContactSuccess(supportAvailable: true),
+        const SettingsContactSuccess(supportAvailable: true),
       );
       expect(
-        const SettingsContactSuccess(emailSet: true),
+        const SettingsContactSuccess(supportAvailable: true),
         isNot(const SettingsContactSuccess()),
       );
     });

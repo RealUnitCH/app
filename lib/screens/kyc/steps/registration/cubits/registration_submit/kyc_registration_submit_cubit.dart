@@ -3,7 +3,6 @@ import 'dart:developer' as developer;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
@@ -74,22 +73,16 @@ class KycRegistrationSubmitCubit extends Cubit<KycRegistrationSubmitState> {
   Future<void> _doCompleteRegistration(Registration registration) async {
     try {
       final status = await _registrationService.completeRegistration(registration);
+      // The API returns a structured `RegistrationStatus` in every
+      // success case — including `alreadyRegistered`
+      // (DFXswiss/api#3733). We forward whatever the backend says and
+      // let `KycCubit.checkKyc()` resolve the next step on the listener
+      // side; no more swallowing of generic ApiExceptions as success.
       emit(KycRegistrationSubmitSuccess(status));
     } on BitboxNotConnectedException {
       emit(
         KycRegistrationSubmitBitboxRequired(registration: registration),
       );
-    } on ApiException catch (e) {
-      // The EIP-712 13-step sign already succeeded on the device — the user
-      // has proven hardware-wallet control. The backend's logical rejection
-      // (already registered / wallet linked to another account / merge
-      // required) is informational, not a signal that the ceremony failed.
-      // Treat the sign as completed and let `KycCubit.checkKyc()` resolve
-      // the next step from the refreshed KYC status (merge page, ident,
-      // ...). Network / parse errors throw a different exception type and
-      // still surface as a failure below.
-      developer.log('completeRegistration backend rejected after sign: $e');
-      emit(const KycRegistrationSubmitSuccess(RegistrationStatus.completed));
     } catch (e) {
       developer.log(e.toString());
       emit(KycRegistrationSubmitFailure(e.toString(), cause: e));

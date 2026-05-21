@@ -49,15 +49,18 @@ void main() {
       expect((cubit.state as SettingsEditAddressReady).url, contains('edit-address'));
     });
 
-    test('reaches Pending when the step is already inReview', () async {
-      when(() => kyc.startStep(KycStepName.addressChange))
-          .thenAnswer((_) async => _session(stepStatus: KycStepStatus.inReview));
+    test(
+      'reaches Pending only when the session returns no URL (W3.2: inReview-gating moved upstream to canEditAddress)',
+      () async {
+        when(() => kyc.startStep(KycStepName.addressChange))
+            .thenAnswer((_) async => _session(stepStatus: KycStepStatus.inReview, url: null));
 
-      final cubit = SettingsEditAddressCubit(kycService: kyc);
-      await cubit.stream.firstWhere((s) => s is SettingsEditAddressPending);
+        final cubit = SettingsEditAddressCubit(kycService: kyc);
+        await cubit.stream.firstWhere((s) => s is SettingsEditAddressPending);
 
-      expect(cubit.state, isA<SettingsEditAddressPending>());
-    });
+        expect(cubit.state, isA<SettingsEditAddressPending>());
+      },
+    );
 
     test('reaches Failure on API throw', () async {
       when(() => kyc.startStep(any()))
@@ -72,17 +75,17 @@ void main() {
       );
     });
 
-    test('reaches Failure when session has no URL', () async {
+    test('reaches Pending when the session has no URL', () async {
+      // The session lacking a URL is now interpreted as "still in some
+      // pending review state" rather than a hard failure — the upstream
+      // capability gate stops this branch from being reached in practice.
       when(() => kyc.startStep(KycStepName.addressChange))
           .thenAnswer((_) async => _session(stepStatus: KycStepStatus.notStarted, url: null));
 
       final cubit = SettingsEditAddressCubit(kycService: kyc);
-      await cubit.stream.firstWhere((s) => s is SettingsEditAddressFailure);
+      await cubit.stream.firstWhere((s) => s is SettingsEditAddressPending);
 
-      expect(
-        (cubit.state as SettingsEditAddressFailure).message,
-        contains('No session URL'),
-      );
+      expect(cubit.state, isA<SettingsEditAddressPending>());
     });
 
     test('submitAddress is a no-op when not in Ready state', () async {

@@ -161,7 +161,7 @@ backend's understanding of state and the app's interpretation of it.
 - **V46** — `lib/screens/kyc/steps/registration/steps/kyc_registration_personal_step.dart:50-53` — `[RegistrationUserType.values.first]` restricts the account-type dropdown to a single value
   - **Local decision:** the DTO carries multiple `RegistrationUserType` values but the UI only renders `.values.first` (i.e. `human`). Which account types this branded app exposes is a business decision frozen in code
   - **API change needed:** `availableUserTypes: ['human']` capability flag on `UserV2Dto` (or on the registration endpoint response); app renders the returned list. Same shape as V12 / V13
-  - **Closed by:** W3.1 / W3.2 (capabilities)
+  - **Deferred:** not in W3.1 / W3.2 scope — the dropdown source is `RegistrationUserType.values` (a local enum), not a capability list from `UserCapabilitiesDto`. Surfacing the available account types requires a separate API change (own capability field or endpoint extension) and a UI migration; tracked for a follow-up wave.
 - **V13** — `lib/styles/language.dart:3-22` — `enum Language { EN, DE }`
   - **API change needed:** call `/v1/language` (already exists on the DFX API)
 - **V14** — `lib/widgets/form/country_field.dart:65-79` — `['CH', 'DE', 'IT', 'FR']` priority list at top
