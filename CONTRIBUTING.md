@@ -31,7 +31,7 @@ Network access is one half of the gateway rule. **Business decisions are the oth
 - **The app does not duplicate backend sets/enums as gating logic.** DTO mirroring for type safety is fine; local `_requiredStepNames`, `actionableStatuses`, `_minLevelForActions`, `_minAmountChf` constants are not.
 - **Prompts to the user fire only when the API requests them.** "Please verify yourself" appears only when the API signals a pending KYC step — never because the app inferred something from a level number or expired timestamp.
 
-### The test
+### The test (Wer entscheidet?)
 
 Before adding an `if` / `switch` / `.filter()` on API data, ask:
 
