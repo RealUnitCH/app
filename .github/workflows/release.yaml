@@ -137,6 +137,7 @@ jobs:
           KEY_PWD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
+          set -euo pipefail
           cat <<EOF > android/key.properties
           storeFile=upload-keystore.jks
           storePassword=$STORE_PWD
