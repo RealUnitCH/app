@@ -20,7 +20,8 @@ The four-tier testing model (Tier 0 Cubit unit · Tier 1 FakeBitbox integration 
 
 The 100% rule above is the target state. Until the items below land, it is aspirational and not yet CI-enforced:
 
-- [ ] `flutter test --coverage` step in `.github/workflows/pull-request.yaml`
+- [x] `flutter test --coverage` step in `.github/workflows/pull-request.yaml`
+- [x] lcov filter narrowed to the activated surface (`lib/packages/**` + `lib/screens/**/cubit(s)/**` + `lib/screens/**/bloc/**`) and a per-run summary posted to the workflow step summary
 - [ ] lcov threshold check (e.g. via `very_good_cli` or a custom `lcov` parser) failing the build below 100% on the scope above
 - [ ] GitHub branch protection on `develop` requiring the coverage check
 - [ ] Build-time feature-flag mechanism (analogous to `EXPO_PUBLIC_ENABLE_*` in `dfx-wallet`) so non-MVP features can be gated out of the activated surface — required before the 100% rule is realistic across all feature areas

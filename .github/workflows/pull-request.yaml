@@ -60,22 +60,62 @@ jobs:
       - run: flutter analyze
       - run: flutter test --coverage
 
-      # Strip generated and unreachable-from-tests files before reporting so
-      # the artifact reflects only the activated surface we actually intend
-      # to cover. Threshold enforcement is not yet wired (see README
-      # "Coverage infrastructure roadmap"); this step only produces a
-      # measurable baseline.
-      - name: Filter coverage report
+      # Narrow the coverage report to the README-defined activated surface:
+      #   lib/packages/**             — services, repositories, signers, utils
+      #   lib/screens/**/cubit(s)/**  — Cubit logic per feature
+      #   lib/screens/**/bloc/**      — Bloc logic per feature
+      # Widget files (lib/screens/**/*_page.dart, lib/widgets/**) are covered
+      # by `testWidgets` specs and excluded from the line-coverage scope by
+      # design — see README "Coverage scope". Threshold enforcement is the
+      # next step (see README "Coverage infrastructure roadmap"); this step
+      # only produces the scoped baseline + a human-readable summary.
+      #
+      # The extract patterns use lcov's fnmatch matcher, where `*` is greedy
+      # across `/` — so `lib/packages/*` matches arbitrarily deep paths under
+      # that prefix, and `lib/screens/*/cubit/*` matches any feature subtree
+      # (including nested ones like `lib/screens/kyc/steps/email/cubits/...`).
+      # `--ignore-errors unused,empty` covers both a missing prefix after a
+      # rename and a refactor that empties the extracted file — the latter
+      # would otherwise hard-fail on newer lcov versions.
+      #
+      # Note vs. the previous step: `lcov --summary` is no longer guarded by
+      # `|| true`, so a summary failure (e.g. corrupt tracefile) now surfaces
+      # as a red step instead of being silently swallowed. Intentional: the
+      # filtered baseline is the input to the next roadmap item (threshold
+      # check), and silent failures upstream would invalidate that signal.
+      - name: Filter coverage to README scope
         run: |
-          if [ -f coverage/lcov.info ]; then
-            brew install lcov >/dev/null
-            lcov --remove coverage/lcov.info \
-              'lib/generated/**' \
-              'lib/main.dart' \
-              --output-file coverage/lcov.info \
-              --ignore-errors unused
-            lcov --summary coverage/lcov.info || true
+          if [ ! -f coverage/lcov.info ]; then
+            echo "::warning::coverage/lcov.info not found — skipping coverage filter"
+            exit 0
           fi
+          brew install lcov >/dev/null
+          lcov --extract coverage/lcov.info \
+            'lib/packages/*' \
+            'lib/screens/*/cubit/*' \
+            'lib/screens/*/cubits/*' \
+            'lib/screens/*/bloc/*' \
+            --output-file coverage/lcov.info \
+            --ignore-errors unused,empty
+          lcov --summary coverage/lcov.info | tee coverage/lcov.summary
+
+      - name: Report coverage summary
+        if: always()
+        run: |
+          if [ ! -f coverage/lcov.summary ]; then
+            exit 0
+          fi
+          {
+            echo "## Coverage report (README scope)"
+            echo
+            echo "Scope: \`lib/packages/**\` + \`lib/screens/**/cubit(s)/**\` + \`lib/screens/**/bloc/**\`"
+            echo
+            echo '```'
+            cat coverage/lcov.summary
+            echo '```'
+            echo
+            echo "_Threshold enforcement is not yet wired — see README \"Coverage infrastructure roadmap\"._"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload coverage report
         if: always()
