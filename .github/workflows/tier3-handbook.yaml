@@ -113,11 +113,12 @@ jobs:
       github.event_name != 'pull_request'
       || contains(github.event.pull_request.labels.*.name, 'tier3:full')
     runs-on: macos-latest
-    # 30 min envelope: ~5 min Flutter + tooling setup, ~3 min sim boot/erase,
-    # ~12 min for the 19 handbook flows running back-to-back, plus headroom.
-    # `pull-request.yaml` uses 30 too — keep them aligned for predictable
-    # runner-pool sizing.
-    timeout-minutes: 30
+    # ~12 min setup (Flutter + tooling, build, sim erase/boot/install) plus
+    # ~20-25 min for the 19 handbook flows — each flow restarts the XCUITest
+    # driver (~40-60 s). A full run lands around 32-37 min, so the former
+    # 30 min envelope was too tight and flaked into the job timeout; 45 min
+    # gives headroom for runner-speed variance and the per-flow retry budget.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
