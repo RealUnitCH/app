@@ -30,11 +30,11 @@ void main() {
   });
 
   group('$SettingsSeedCubit', () {
-    test('initial state surfaces the wallet seed; ensureUnlocked is invoked', () async {
+    test('initial state surfaces the wallet seed; ensureCurrentWalletUnlocked is invoked', () async {
       final cubit = SettingsSeedCubit(appStore, walletService);
       // For a wallet that is already a SoftwareWallet the seed is in initial
-      // state. `_loadSeed()` still runs and invokes ensureUnlocked — drain
-      // the microtask queue so the call is observable to mocktail.
+      // state. `_loadSeed()` still runs and invokes ensureCurrentWalletUnlocked
+      // — drain the microtask queue so the call is observable to mocktail.
       await Future<void>.delayed(Duration.zero);
 
       expect(cubit.state.seed, _testSeed);

@@ -107,8 +107,9 @@ void main() {
     when(() => appStore.wallet).thenReturn(wallet);
     when(() => wallet.currentAccount).thenReturn(account);
     when(() => account.primaryAddress).thenReturn(_privKey);
-    // Wallet is already a full SoftwareWallet in this fixture — ensureUnlocked
-    // is a no-op for non-view wallets, but mocktail still needs a stub.
+    // Wallet is already a full SoftwareWallet in this fixture —
+    // ensureCurrentWalletUnlocked is a no-op for non-view wallets, but
+    // mocktail still needs a stub.
     when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
     when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
   });
