@@ -39,19 +39,3 @@ class BitboxWalletAccount extends AWalletAccount {
   Future<String> signMessage(String message, {int addressIndex = 0}) async =>
       '0x${hex.encode(await primaryAddress.signPersonalMessage(utf8.encode(message)))}';
 }
-
-class SoftwareViewWalletAccount extends AWalletAccount {
-  SoftwareViewWalletAccount(super.accountIndex, super.primaryAddress);
-
-  // Programmer error: callers must await WalletService.ensureCurrentWalletUnlocked
-  // before signing. The locked credentials on this account already assert on the
-  // same path, so this method is reachable only when the caller bypasses the
-  // wallet's primaryAddress and calls signMessage directly.
-  @override
-  Future<String> signMessage(String message, {int addressIndex = 0}) {
-    assert(false, 'SoftwareViewWalletAccount.signMessage called without first '
-        'awaiting WalletService.ensureCurrentWalletUnlocked()');
-    throw StateError('SoftwareViewWalletAccount cannot sign while the mnemonic '
-        'is locked — call WalletService.ensureCurrentWalletUnlocked() first.');
-  }
-}

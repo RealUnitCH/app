@@ -111,6 +111,22 @@ const _viewWalletProgrammerError =
     'SoftwareViewWallet credentials reached a sign call — '
     'every signing path must await WalletService.ensureCurrentWalletUnlocked() first.';
 
+class SoftwareViewWalletAccount extends AWalletAccount {
+  SoftwareViewWalletAccount(super.accountIndex, super.primaryAddress);
+
+  // Programmer error: callers must await WalletService.ensureCurrentWalletUnlocked
+  // before signing. The locked credentials on this account already assert on the
+  // same path, so this method is reachable only when the caller bypasses the
+  // wallet's primaryAddress and calls signMessage directly.
+  @override
+  Future<String> signMessage(String message, {int addressIndex = 0}) {
+    assert(false, 'SoftwareViewWalletAccount.signMessage called without first '
+        'awaiting WalletService.ensureCurrentWalletUnlocked()');
+    throw StateError('SoftwareViewWalletAccount cannot sign while the mnemonic '
+        'is locked — call WalletService.ensureCurrentWalletUnlocked() first.');
+  }
+}
+
 class BitboxWallet extends AWallet {
   @override
   WalletType get walletType => WalletType.bitbox;
