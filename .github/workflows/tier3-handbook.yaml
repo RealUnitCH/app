@@ -174,7 +174,18 @@ jobs:
       # full simctl reset cycle. Don't duplicate any of that logic here —
       # any change in flow handling should land in the script so manual runs
       # and CI runs stay in sync.
+      #
+      # MAESTRO_DRIVER_STARTUP_TIMEOUT: hosted macOS runners are noisy
+      # neighbours — observed `simctl install Runner.app` taking ~90 s on
+      # a slow run (vs. ~10 s typical). Maestro's default 90 s XCUITest
+      # driver startup window then runs out before the simulator is
+      # fully responsive, producing `IOSDriverTimeoutException`. Bump to
+      # 300 s so the driver has headroom even when the runner is loaded.
+      # MAESTRO_CLI_NO_ANALYTICS skips the startup analytics HTTP call.
       - name: Run handbook flows
+        env:
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: "300000"
+          MAESTRO_CLI_NO_ANALYTICS: "1"
         run: scripts/run-handbook-flows.sh
 
       - name: Upload captured screenshots
