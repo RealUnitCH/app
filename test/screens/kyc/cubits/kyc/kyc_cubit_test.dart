@@ -128,7 +128,7 @@ void main() {
     );
 
     blocTest<KycCubit, KycState>(
-      'emits KycSuccess(registration) when disclaimer accepted but BitBox not confirmed',
+      'emits KycSuccess(registration) when disclaimer accepted but registration sign not yet produced',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
           (_) async => _kycStatus(level: KycLevel.level20),
@@ -165,7 +165,7 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markBitboxConfirmed();
+        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [
@@ -190,7 +190,7 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markBitboxConfirmed();
+        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [
@@ -215,7 +215,7 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markBitboxConfirmed();
+        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [const KycLoading(), const KycPending(KycStep.dfxApproval)],
@@ -240,7 +240,7 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markBitboxConfirmed();
+        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [
@@ -268,7 +268,7 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markBitboxConfirmed();
+        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [
@@ -288,14 +288,14 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markBitboxConfirmed();
+        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [const KycLoading(), const KycCompleted()],
     );
 
     blocTest<KycCubit, KycState>(
-      'returning user at level >= required still routes through the BitBox gate first',
+      'returning user at level >= required still routes through the sign gate first',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
           (_) async => _kycStatus(level: KycLevel.level50),
@@ -386,7 +386,7 @@ void main() {
       build: () => buildCubit(requiredLevel: 10),
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markBitboxConfirmed();
+        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [const KycLoading(), const KycCompleted()],
@@ -430,7 +430,7 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markBitboxConfirmed();
+        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [const KycLoading(), const KycCompleted()],
@@ -462,7 +462,7 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markBitboxConfirmed();
+        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       verify: (cubit) {
@@ -487,7 +487,7 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markBitboxConfirmed();
+        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [
@@ -510,7 +510,7 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markBitboxConfirmed();
+        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [const KycLoading(), const KycPending(KycStep.ident)],
@@ -527,7 +527,7 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markBitboxConfirmed();
+        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [const KycLoading(), const KycPending(KycStep.ident)],
@@ -559,7 +559,7 @@ void main() {
 
         final cubit = KycCubit(kycService, registrationService)
           ..markLegalDisclaimerAccepted()
-          ..markBitboxConfirmed();
+          ..markRegistrationSignProduced();
 
         final states = <KycState>[];
         final sub = cubit.stream.listen(states.add);
@@ -610,9 +610,9 @@ void main() {
     );
   });
 
-  group('$KycCubit markLegalDisclaimerAccepted / markBitboxConfirmed', () {
+  group('$KycCubit markLegalDisclaimerAccepted / markRegistrationSignProduced', () {
     blocTest<KycCubit, KycState>(
-      'progresses past the BitBox gate once both marks are set',
+      'progresses past the sign gate once both marks are set',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
           (_) async => _kycStatus(level: KycLevel.level30),
@@ -623,8 +623,8 @@ void main() {
       act: (cubit) async {
         await cubit.checkKyc(); // expects legalDisclaimer
         cubit.markLegalDisclaimerAccepted();
-        await cubit.checkKyc(); // expects registration (BitBox gate)
-        cubit.markBitboxConfirmed();
+        await cubit.checkKyc(); // expects registration (sign gate)
+        cubit.markRegistrationSignProduced();
         await cubit.checkKyc(); // expects KycCompleted
       },
       expect: () => [

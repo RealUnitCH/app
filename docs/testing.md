@@ -53,7 +53,7 @@ blocTest<KycCubit, KycState>(
   build: buildCubit,
   act: (cubit) async {
     cubit.markLegalDisclaimerAccepted();
-    cubit.markBitboxConfirmed();
+    cubit.markRegistrationSignProduced();
     await cubit.checkKyc();
   },
   expect: () => [const KycLoading(), const KycCompleted()],
