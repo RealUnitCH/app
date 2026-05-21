@@ -129,8 +129,8 @@ void main() {
     );
 
     blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
-      'changed account id but no userData → cubit settles on Success (Registration'
-      'Failure is intermediate, overwritten by the outer Success emit)',
+      'changed account id but no userData → RegistrationFailure, no Success '
+      '(propagation race: user can retry by tapping the confirm button again)',
       setUp: () {
         final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
@@ -144,11 +144,19 @@ void main() {
       },
       build: build,
       act: (c) => c.checkEmailVerification(),
-      verify: (c) => expect(c.state, isA<KycEmailVerificationSuccess>()),
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationRegistrationFailure>(),
+      ],
+      verify: (_) {
+        verifyNever(() => registrationService.registerWallet(any()));
+      },
     );
 
     blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
-      'registerWallet throws: cubit still settles on Success (does not crash)',
+      'registerWallet throws → RegistrationFailure, no Success '
+      '(failure is surfaced so the user can retry instead of proceeding '
+      'with a wallet that is not actually registered)',
       setUp: () {
         final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
@@ -164,8 +172,54 @@ void main() {
       },
       build: build,
       act: (c) => c.checkEmailVerification(),
-      verify: (c) {
-        expect(c.state, isA<KycEmailVerificationSuccess>());
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationRegistrationFailure>(),
+      ],
+      verify: (_) => verify(() => registrationService.registerWallet(_userData)).called(1),
+    );
+
+    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
+      'retry after null-userData race: second call skips account-id check '
+      '(propagation completed → registerWallet succeeds → Success)',
+      setUp: () {
+        // First call: account-id changes, userData not yet propagated.
+        // Second call: same account-id (already merged), userData now present.
+        // Without the `_mergeDetected` short-circuit the second call would
+        // hit the same-account-id guard and emit Failure ("email not yet
+        // confirmed") — verifying the retry path works.
+        final tokens = [_fakeJwt(1), _fakeJwt(2), _fakeJwt(2), _fakeJwt(2)];
+        var i = 0;
+        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
+        var walletStatusCallCount = 0;
+        when(() => walletService.getWalletStatus()).thenAnswer((_) async {
+          walletStatusCallCount++;
+          return walletStatusCallCount == 1
+              ? RealUnitWalletStatusDto(
+                  isRegistered: false,
+                  realUnitUserDataDto: null,
+                )
+              : RealUnitWalletStatusDto(
+                  isRegistered: true,
+                  realUnitUserDataDto: _userData,
+                );
+        });
+        when(() => registrationService.registerWallet(any()))
+            .thenAnswer((_) async => RegistrationStatus.completed);
+      },
+      build: build,
+      act: (c) async {
+        await c.checkEmailVerification();
+        await c.checkEmailVerification();
+      },
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationRegistrationFailure>(),
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationSuccess>(),
+      ],
+      verify: (_) {
+        verify(() => registrationService.registerWallet(_userData)).called(1);
       },
     );
   });

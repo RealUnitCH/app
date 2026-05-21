@@ -104,9 +104,9 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
         listener: (context, state) async {
           if (state is KycRegistrationSubmitSuccess) {
             if (state.status == RegistrationStatus.completed) {
-              // completeRegistration already produced the BitBox 13-step sign,
-              // so skip the security ceremony on the next checkKyc.
-              context.read<KycCubit>().markBitboxConfirmed();
+              // completeRegistration already produced the EIP-712 registration
+              // signature, so the sign gate is satisfied for this session.
+              context.read<KycCubit>().markRegistrationSignProduced();
               context.read<KycCubit>().checkKyc();
             }
           }

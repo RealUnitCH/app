@@ -31,10 +31,13 @@ class KycCubit extends Cubit<KycState> {
   bool _legalDisclaimerAccepted = false;
   bool _emailRegistrationAttempted = false;
 
-  // Per-cubit-instance gate. Reset on every KYC entry because `KycPageManager`
-  // creates a fresh `KycCubit` via `BlocProvider(create:)`, so each entry
-  // forces a fresh hardware-wallet confirmation before sensitive steps.
-  bool _bitboxConfirmed = false;
+  // Tracks whether the EIP-712 registration signature has been produced in
+  // *this* KYC entry. Wallet-agnostic — for software wallets the sign is a
+  // silent local operation, for BitBox it is the visible 13-step ceremony.
+  // Per-cubit-instance by design: `KycPageManager` creates a fresh `KycCubit`
+  // via `BlocProvider(create:)`, so every `/kyc` entry forces a fresh sign
+  // before sensitive steps and stale sessions cannot be re-used.
+  bool _registrationSignProduced = false;
 
   // `Future.timeout` does not cancel the underlying work, so a late HTTP
   // response from an earlier call can still resume and emit state after a
@@ -101,17 +104,17 @@ class KycCubit extends Cubit<KycState> {
         return;
       }
 
-      // Disclaimer + form (name/address) + EIP-712 13-step sign always
-      // precede every state past the email step, even when the user is
-      // already at `>= requiredLevel`. The hardware-wallet ceremony is the
-      // security gate, not the backend KYC level — without the sign a
-      // returning user with a high level would otherwise be granted
-      // sensitive actions on this device without ever touching the BitBox.
+      // Disclaimer + EIP-712 registration sign always precede every state
+      // past the email step, even when the user is already at
+      // `>= requiredLevel`. The sign is the per-session security gate, not
+      // the backend KYC level — without it a returning user with a high
+      // level would otherwise be granted sensitive actions on this device
+      // without re-proving ownership of the wallet key.
       if (!_legalDisclaimerAccepted) {
         emit(const KycSuccess(currentStep: KycStep.legalDisclaimer));
         return;
       }
-      if (!_bitboxConfirmed) {
+      if (!_registrationSignProduced) {
         emit(const KycSuccess(currentStep: KycStep.registration));
         return;
       }
@@ -190,8 +193,12 @@ class KycCubit extends Cubit<KycState> {
     _legalDisclaimerAccepted = true;
   }
 
-  void markBitboxConfirmed() {
-    _bitboxConfirmed = true;
+  /// Records that the EIP-712 registration signature has been produced in
+  /// this session, so subsequent [checkKyc] calls pass the sign gate.
+  /// Callers: any code path that triggers the sign — currently the
+  /// new-registration form submit and the existing-customer merge confirm.
+  void markRegistrationSignProduced() {
+    _registrationSignProduced = true;
   }
 
   /// should only be called after realunit registration was completed
