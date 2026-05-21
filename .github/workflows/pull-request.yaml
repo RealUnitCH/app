@@ -85,6 +85,7 @@ jobs:
       # check), and silent failures upstream would invalidate that signal.
       - name: Filter coverage to README scope
         run: |
+          set -euo pipefail
           if [ ! -f coverage/lcov.info ]; then
             echo "::warning::coverage/lcov.info not found — skipping coverage filter"
             exit 0
@@ -178,6 +179,7 @@ jobs:
       - name: Report coverage summary
         if: always()
         run: |
+          set -euo pipefail
           if [ ! -f coverage/lcov.summary ]; then
             exit 0
           fi
@@ -224,6 +226,7 @@ jobs:
       - name: Run bitbox-audit
         continue-on-error: true
         run: |
+          set -euo pipefail
           "$(go env GOPATH)/bin/bitbox-audit" \
             --repo . \
             --format markdown \
@@ -233,6 +236,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
+          set -euo pipefail
           if [ -f bitbox-audit-report.md ]; then
             cat bitbox-audit-report.md >> "$GITHUB_STEP_SUMMARY"
           else
