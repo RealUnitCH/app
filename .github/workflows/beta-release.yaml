@@ -1,11 +1,10 @@
-name: Release
+name: Production Release Candidate
 
 on:
   workflow_dispatch:
   push:
     tags:
       - "v*"
-      - "!v*-beta*"
 
 permissions:
   contents: write
@@ -15,7 +14,42 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  guard:
+    # Only MINOR / MAJOR tags run here — vX.Y.0 with Z == 0. These are
+    # manual pushes that mark an App-Store-update candidate. Patch tags
+    # (vX.Y.Z with Z >= 1, produced by auto-tag on develop) are handled
+    # by the internal-release workflow.
+    #
+    # Both workflows ship to the same Test tracks (TestFlight + Play
+    # Internal). Production promotion is still done manually in the
+    # store backends.
+    name: Decide whether this is a production-candidate tag
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.check.outputs.proceed }}
+    steps:
+      - name: Inspect tag
+        id: check
+        run: |
+          TAG="${{ github.ref_name }}"
+          # Strict shape: vX.Y.Z with all parts numeric, no suffix.
+          if ! echo "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::notice::Tag $TAG is not a plain vX.Y.Z tag; skipping production release."
+            echo "proceed=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          PATCH=$(echo "$TAG" | cut -d. -f3)
+          if [ "$PATCH" -ne 0 ]; then
+            echo "::notice::Tag $TAG has PATCH=$PATCH; internal-release workflow handles this."
+            echo "proceed=false" >> $GITHUB_OUTPUT
+          else
+            echo "::notice::Tag $TAG has PATCH=0; running production-candidate release."
+            echo "proceed=true" >> $GITHUB_OUTPUT
+          fi
+
   android-deploy:
+    needs: guard
+    if: needs.guard.outputs.proceed == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -113,6 +147,8 @@ jobs:
           path: build/app/outputs/flutter-apk/realunit-*.apk
 
   ios-deploy:
+    needs: guard
+    if: needs.guard.outputs.proceed == 'true'
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
@@ -207,7 +243,8 @@ jobs:
           path: ios/realunit-*.ipa
 
   github-release:
-    needs: [android-deploy, ios-deploy]
+    needs: [guard, android-deploy, ios-deploy]
+    if: needs.guard.outputs.proceed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
