@@ -91,9 +91,6 @@ void main() {
         currency: Currency.chf,
       ),
     ).thenAnswer((_) => Future.value());
-    when(
-      () => sellPaymentInfoCubit.validateMinAmount(fiatAmount: any(named: 'fiatAmount')),
-    ).thenAnswer((_) => Future.value());
     when(() => sellSelectedBankAccountCubit.state).thenReturn(null);
     when(() => sellBalanceCubit.state).thenReturn(
       Balance(

@@ -44,6 +44,10 @@ class RealUnitBuyPaymentInfoService extends DFXAuthService {
         currency: responseDto.currency,
         paymentRequest: responseDto.paymentRequest,
         remittanceInfo: responseDto.remittanceInfo,
+        isValid: responseDto.isValid,
+        minVolume: responseDto.minVolume,
+        maxVolume: responseDto.maxVolume,
+        error: responseDto.error,
       );
     } else if (response.statusCode == 403) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;

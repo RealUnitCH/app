@@ -26,6 +26,7 @@ class RealUnitSellPaymentInfoDto {
   final double ethBalance;
   final double requiredGasEth;
   final bool isValid;
+  final String? error;
 
   const RealUnitSellPaymentInfoDto({
     required this.id,
@@ -50,6 +51,7 @@ class RealUnitSellPaymentInfoDto {
     required this.ethBalance,
     required this.requiredGasEth,
     required this.isValid,
+    this.error,
   });
 
   factory RealUnitSellPaymentInfoDto.fromJson(Map<String, dynamic> json) {
@@ -78,6 +80,7 @@ class RealUnitSellPaymentInfoDto {
       ethBalance: (json['ethBalance'] as num).toDouble(),
       requiredGasEth: (json['requiredGasEth'] as num).toDouble(),
       isValid: json['isValid'] as bool,
+      error: json['error'] as String?,
     );
   }
 }

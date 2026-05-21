@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
@@ -16,16 +15,19 @@ import 'package:realunit_wallet/styles/currency.dart';
 class _MockSellPaymentInfoService extends Mock
     implements RealUnitSellPaymentInfoService {}
 
-class _MockPriceService extends Mock implements DFXPriceService {}
-
 class _MockAppStore extends Mock implements AppStore {}
 
 const _testMnemonic =
     'test test test test test test test test test test test junk';
 
-const _info = SellPaymentInfo(
+SellPaymentInfo _info({
+  bool isValid = true,
+  double minVolume = 10,
+  String? error,
+  Currency currency = Currency.chf,
+}) => SellPaymentInfo(
   id: 1,
-  eip7702: Eip7702Data(
+  eip7702: const Eip7702Data(
     relayerAddress: '0x1',
     delegationManagerAddress: '0x2',
     delegatorAddress: '0x3',
@@ -51,19 +53,21 @@ const _info = SellPaymentInfo(
   amount: 100,
   exchangeRate: 1.0,
   rate: 1.0,
-  beneficiary: BeneficiaryDto(iban: 'CH56'),
+  beneficiary: const BeneficiaryDto(iban: 'CH56'),
   estimatedAmount: 100,
-  currency: Currency.chf,
+  currency: currency,
   depositAddress: '0xA',
   tokenAddress: '0xB',
   chainId: 1,
   ethBalance: 0.01,
   requiredGasEth: 0.001,
+  isValid: isValid,
+  minVolume: minVolume,
+  error: error,
 );
 
 void main() {
   late _MockSellPaymentInfoService service;
-  late _MockPriceService priceService;
   late _MockAppStore appStore;
 
   setUpAll(() {
@@ -72,157 +76,131 @@ void main() {
 
   setUp(() {
     service = _MockSellPaymentInfoService();
-    priceService = _MockPriceService();
     appStore = _MockAppStore();
-    // Default to a software wallet so isBitbox is false unless overridden.
     when(() => appStore.wallet)
         .thenReturn(SoftwareWallet(1, 'Main', _testMnemonic));
   });
 
-  SellPaymentInfoCubit build() =>
-      SellPaymentInfoCubit(service, priceService, appStore);
+  SellPaymentInfoCubit build() => SellPaymentInfoCubit(service, appStore);
 
   group('$SellPaymentInfoCubit', () {
     test('initial state is SellPaymentInfoInitial', () {
       expect(build().state, isA<SellPaymentInfoInitial>());
     });
 
-    group('getPaymentInfo', () {
-      test('happy path emits Success with isBitbox=false for a software wallet', () async {
-        when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
-            .thenAnswer((_) async => _info);
+    test('happy path emits Success with isBitbox=false for a software wallet', () async {
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => _info());
 
-        final cubit = build();
-        await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
 
-        final success = cubit.state as SellPaymentInfoSuccess;
-        expect(success.sellPaymentInfo, _info);
-        expect(success.isBitbox, isFalse);
-        verify(() => service.getPaymentInfo(100, 'CH56', currency: Currency.chf)).called(1);
-      });
-
-      test('Success.isBitbox=true when the current wallet is a BitboxWallet', () async {
-        when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
-            .thenAnswer((_) async => _info);
-        when(() => appStore.wallet)
-            .thenReturn(_BitboxStubWallet());
-
-        final cubit = build();
-        await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
-
-        expect((cubit.state as SellPaymentInfoSuccess).isBitbox, isTrue);
-      });
-
-      test('KycLevelRequiredException → Failure(kycRequired, requiredLevel)', () async {
-        when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
-            .thenAnswer(
-          (_) async => throw const KycLevelRequiredException(
-            statusCode: 403,
-            code: 'KYC_REQUIRED',
-            message: 'KYC required',
-            requiredLevel: 30,
-            currentLevel: 10,
-          ),
-        );
-
-        final cubit = build();
-        await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
-
-        final f = cubit.state as SellPaymentInfoFailure;
-        expect(f.error, PaymentInfoError.kycRequired);
-        expect(f.requiredLevel, 30);
-      });
-
-      test('RegistrationRequiredException → Failure(registrationRequired)', () async {
-        when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
-            .thenAnswer(
-          (_) async => throw const RegistrationRequiredException(
-            statusCode: 403,
-            code: 'REGISTRATION_REQUIRED',
-            message: 'Sign first',
-          ),
-        );
-
-        final cubit = build();
-        await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
-
-        expect(
-          (cubit.state as SellPaymentInfoFailure).error,
-          PaymentInfoError.registrationRequired,
-        );
-      });
-
-      test('generic exception → Failure(unknown) carrying the message', () async {
-        when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
-            .thenAnswer((_) async => throw Exception('network'));
-
-        final cubit = build();
-        await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
-
-        final f = cubit.state as SellPaymentInfoFailure;
-        expect(f.error, PaymentInfoError.unknown);
-        expect(f.message, contains('network'));
-      });
+      final success = cubit.state as SellPaymentInfoSuccess;
+      expect(success.isBitbox, isFalse);
+      verify(() => service.getPaymentInfo(100, 'CH56', currency: Currency.chf)).called(1);
     });
 
-    group('validateMinAmount', () {
-      test('CHF amount below the 10 CHF floor emits MinAmountNotMet', () async {
-        final cubit = build();
+    test('Success.isBitbox=true when the current wallet is a BitboxWallet', () async {
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => _info());
+      when(() => appStore.wallet).thenReturn(_BitboxStubWallet());
 
-        await cubit.validateMinAmount(fiatAmount: '5');
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
 
-        final s = cubit.state as SellPaymentInfoMinAmountNotMet;
-        expect(s.minAmount, 10);
-        expect(s.currency, Currency.chf);
-      });
+      expect((cubit.state as SellPaymentInfoSuccess).isBitbox, isTrue);
+    });
 
-      test('CHF amount above the floor leaves state untouched (no MinAmountNotMet)', () async {
-        final cubit = build();
+    test('API isValid=false with error=AmountTooLow → MinAmountNotMet with API limit', () async {
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => _info(isValid: false, error: 'AmountTooLow', minVolume: 10));
 
-        await cubit.validateMinAmount(fiatAmount: '15');
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '5', iban: 'CH56');
 
-        expect(cubit.state, isA<SellPaymentInfoInitial>());
-      });
+      final s = cubit.state as SellPaymentInfoMinAmountNotMet;
+      expect(s.minAmount, 10);
+      expect(s.currency, Currency.chf);
+    });
 
-      test('EUR minimum is scaled by getChfToEurRate (ceil)', () async {
-        // 10 CHF × 0.92 EUR/CHF = 9.2 → ceil = 10.
-        when(() => priceService.getChfToEurRate()).thenAnswer((_) async => 0.92);
+    test('EUR minimum is reported by the API as-is, not scaled in the app', () async {
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => _info(
+            isValid: false,
+            error: 'AmountTooLow',
+            minVolume: 9,
+            currency: Currency.eur,
+          ));
 
-        final cubit = build();
-        await cubit.validateMinAmount(fiatAmount: '5', currency: Currency.eur);
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '5', iban: 'CH56', currency: Currency.eur);
 
-        final s = cubit.state as SellPaymentInfoMinAmountNotMet;
-        expect(s.minAmount, 10);
-        expect(s.currency, Currency.eur);
-      });
+      final s = cubit.state as SellPaymentInfoMinAmountNotMet;
+      expect(s.minAmount, 9);
+      expect(s.currency, Currency.eur);
+    });
 
-      test('previously below-min state is cleared back to Initial when amount rises', () async {
-        when(() => priceService.getChfToEurRate()).thenAnswer((_) async => 0.92);
-        final cubit = build();
-        await cubit.validateMinAmount(fiatAmount: '5');
-        expect(cubit.state, isA<SellPaymentInfoMinAmountNotMet>());
+    test('API isValid=false with unrelated error → Failure(unknown) carrying the error', () async {
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => _info(isValid: false, error: 'KycRequired'));
 
-        await cubit.validateMinAmount(fiatAmount: '20');
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
 
-        expect(cubit.state, isA<SellPaymentInfoInitial>());
-      });
+      final f = cubit.state as SellPaymentInfoFailure;
+      expect(f.error, PaymentInfoError.unknown);
+      expect(f.message, 'KycRequired');
+    });
 
-      test('comma separator is normalised to dot', () async {
-        final cubit = build();
+    test('KycLevelRequiredException → Failure(kycRequired, requiredLevel)', () async {
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer(
+        (_) async => throw const KycLevelRequiredException(
+          statusCode: 403,
+          code: 'KYC_REQUIRED',
+          message: 'KYC required',
+          requiredLevel: 30,
+          currentLevel: 10,
+        ),
+      );
 
-        await cubit.validateMinAmount(fiatAmount: '15,5');
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
 
-        // 15.5 ≥ 10 → no MinAmountNotMet.
-        expect(cubit.state, isA<SellPaymentInfoInitial>());
-      });
+      final f = cubit.state as SellPaymentInfoFailure;
+      expect(f.error, PaymentInfoError.kycRequired);
+      expect(f.requiredLevel, 30);
+    });
 
-      test('empty string is treated as 0 → below minimum', () async {
-        final cubit = build();
+    test('RegistrationRequiredException → Failure(registrationRequired)', () async {
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer(
+        (_) async => throw const RegistrationRequiredException(
+          statusCode: 403,
+          code: 'REGISTRATION_REQUIRED',
+          message: 'Sign first',
+        ),
+      );
 
-        await cubit.validateMinAmount(fiatAmount: '');
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
 
-        expect(cubit.state, isA<SellPaymentInfoMinAmountNotMet>());
-      });
+      expect(
+        (cubit.state as SellPaymentInfoFailure).error,
+        PaymentInfoError.registrationRequired,
+      );
+    });
+
+    test('generic exception → Failure(unknown) carrying the message', () async {
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => throw Exception('network'));
+
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
+
+      final f = cubit.state as SellPaymentInfoFailure;
+      expect(f.error, PaymentInfoError.unknown);
+      expect(f.message, contains('network'));
     });
   });
 }

@@ -3,7 +3,6 @@ import 'dart:developer' as developer;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
@@ -14,19 +13,21 @@ import 'package:realunit_wallet/styles/currency.dart';
 
 part 'sell_payment_info_state.dart';
 
-const double _minAmountChf = 10;
+// Backend QuoteError code for the "amount below the per-currency minimum"
+// case. The API returns this in the success body's `error` field together
+// with the authoritative `minVolume`; the app surfaces it as a typed state
+// for the UI to render. Other QuoteError values (KYC, limit, …) are
+// already routed via dedicated ApiExceptions and dedicated failure states.
+const String _quoteErrorAmountTooLow = 'AmountTooLow';
 
 class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
   final RealUnitSellPaymentInfoService _sellPaymentInfoService;
-  final DFXPriceService _priceService;
   final AppStore _appStore;
 
   SellPaymentInfoCubit(
     RealUnitSellPaymentInfoService sellPaymentInfoService,
-    DFXPriceService priceService,
     AppStore appStore,
   ) : _sellPaymentInfoService = sellPaymentInfoService,
-      _priceService = priceService,
       _appStore = appStore,
       super(const SellPaymentInfoInitial());
 
@@ -43,6 +44,28 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
         iban,
         currency: currency,
       );
+
+      // Only the backend knows the current per-currency limits, exchange
+      // rates and any compliance gating — when it tags the quote
+      // `isValid: false` we surface its verdict without re-interpreting it.
+      if (!paymentInfo.isValid) {
+        if (paymentInfo.error == _quoteErrorAmountTooLow) {
+          emit(
+            SellPaymentInfoMinAmountNotMet(
+              minAmount: paymentInfo.minVolume,
+              currency: paymentInfo.currency,
+            ),
+          );
+          return;
+        }
+        emit(
+          SellPaymentInfoFailure(
+            PaymentInfoError.unknown,
+            message: paymentInfo.error ?? '',
+          ),
+        );
+        return;
+      }
 
       final isBitbox = _appStore.wallet.walletType == WalletType.bitbox;
       emit(SellPaymentInfoSuccess(paymentInfo, isBitbox: isBitbox));
@@ -75,38 +98,6 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
           PaymentInfoError.unknown,
           message: e.toString(),
         ),
-      );
-    }
-  }
-
-  Future<void> validateMinAmount({
-    required String fiatAmount,
-    Currency currency = Currency.chf,
-  }) async {
-    try {
-      final sanitizedAmount = fiatAmount.isEmpty ? '0' : fiatAmount.replaceAll(',', '.');
-      final parsedAmount = double.tryParse(sanitizedAmount) ?? 0;
-
-      double minAmount = _minAmountChf;
-      if (currency == Currency.eur) {
-        final chfToEurRate = await _priceService.getChfToEurRate();
-        minAmount = (_minAmountChf * chfToEurRate).ceilToDouble();
-      }
-
-      if (parsedAmount < minAmount) {
-        emit(
-          SellPaymentInfoMinAmountNotMet(
-            minAmount: minAmount,
-            currency: currency,
-          ),
-        );
-      } else if (state is SellPaymentInfoMinAmountNotMet) {
-        emit(const SellPaymentInfoInitial());
-      }
-    } catch (e) {
-      developer.log(
-        'Error validating min amount: $e',
-        name: '$SellPaymentInfoCubit',
       );
     }
   }
