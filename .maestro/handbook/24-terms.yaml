@@ -19,6 +19,11 @@
 # extendedWaitUntil is the actual correctness check; if the tap missed, the
 # H1 assertion fails loudly with the document not opening rather than passing
 # silently.
+#
+# The coordinate tap is gated on the terms document not yet showing and
+# re-tapped if it was silently dropped (Maestro/XCUITest tap-loss on Apple
+# Silicon + iOS 26, mobile-dev-inc/maestro#3137). The gate stops the loop the
+# instant the document opens, so surplus iterations no-op.
 appId: swiss.realunit.app
 ---
 - launchApp:
@@ -36,8 +41,17 @@ appId: swiss.realunit.app
     visible:
       text: '.*Mit der Nutzung dieser App.*'
     timeout: 10000
-- tapOn:
-    point: 35%,80%
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              text: '.*Nutzungsbedingungen der RealUnit Wallet App.*'
+          commands:
+            - tapOn:
+                point: 35%,80%
+                optional: true
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:

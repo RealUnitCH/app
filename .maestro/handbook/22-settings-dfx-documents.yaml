@@ -3,13 +3,37 @@
 # SettingsLegalDocumentsPage, then open the "Dokumente der DFX AG" entry
 # -> SettingsDfxDocumentsPage. The settle target is "Allgemeine
 # Geschäftsbedingungen", the DFX terms tile, which is unique to this sub-page.
+#
+# Both taps (back to the legal-documents list, then into the DFX sub-page)
+# are gated on their target not yet showing and re-tapped if one was silently
+# dropped (Maestro/XCUITest tap-loss on Apple Silicon + iOS 26,
+# mobile-dev-inc/maestro#3137). Each gate stops its loop the instant the
+# screen changes, so surplus iterations no-op.
 appId: swiss.realunit.app
 ---
-- tapOn:
-    point: 8%,8%
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              text: '.*Dokumente der DFX AG.*'
+          commands:
+            - tapOn:
+                point: 8%,8%
+                optional: true
 - waitForAnimationToEnd
-- tapOn:
-    text: '.*Dokumente der DFX AG.*'
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              text: '.*Allgemeine Geschäftsbedingungen.*'
+          commands:
+            - tapOn:
+                text: '.*Dokumente der DFX AG.*'
+                optional: true
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
