@@ -57,6 +57,14 @@ jobs:
           echo "${CLOUDFLARED_SHA256}  /usr/local/bin/cloudflared" | sha256sum -c -
           chmod +x /usr/local/bin/cloudflared
 
+      # Deploy via SSH through Cloudflare Tunnel. The `IdentitiesOnly=yes`
+      # and `IdentityAgent=none` options pin SSH to ONLY the explicit
+      # `deploy_key` and disable ssh-agent lookup — without them,
+      # OpenSSH probes default keys + agent identities first and may
+      # exhaust the server's MaxAuthTries before reaching deploy_key,
+      # producing intermittent "Permission denied … Too many
+      # authentication failures" on otherwise-healthy runs (root cause
+      # for the apparent smoke-test flakiness tracked in #487 Item 4).
       - name: Deploy to server
         run: |
           mkdir -p ~/.ssh
@@ -64,6 +72,8 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           echo "${{ secrets.DEPLOY_DEV_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
           ssh -i ~/.ssh/deploy_key \
+            -o IdentitiesOnly=yes \
+            -o IdentityAgent=none \
             -o ProxyCommand="cloudflared access ssh --hostname ${{ secrets.DEPLOY_DEV_HOST }}" \
             ${{ secrets.DEPLOY_DEV_USER }}@${{ secrets.DEPLOY_DEV_HOST }} \
             "${{ env.DEPLOY_SERVICE }}"
