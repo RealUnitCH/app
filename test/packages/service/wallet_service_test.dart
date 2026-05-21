@@ -317,6 +317,12 @@ void main() {
     });
 
     group('lockCurrentWallet', () {
+      // Tests in this group assume a loaded wallet — the "no wallet loaded
+      // yet" path is explicitly tested below by overriding to false.
+      setUp(() {
+        when(() => appStore.isWalletLoaded).thenReturn(true);
+      });
+
       test('replaces an unlocked SoftwareWallet with its SoftwareViewWallet counterpart',
           () async {
         final unlocked = SoftwareWallet(9, 'Main', _testMnemonic);
@@ -345,9 +351,76 @@ void main() {
         // No write happened.
         verifyNever(() => appStore.wallet = any(that: isA<AWallet>()));
       });
+
+      // Pre-load guard: the app-lifecycle `hidden` hook fires the first time
+      // the user backgrounds the app, which can happen during onboarding
+      // before HomeBloc has populated AppStore.wallet. The early-return on
+      // !isWalletLoaded keeps the lifecycle caller a one-liner — no try/catch
+      // around an "expected" Exception('No Wallet set') from appStore.wallet.
+      test('is a no-op when no wallet has been loaded yet', () async {
+        when(() => appStore.isWalletLoaded).thenReturn(false);
+
+        await service.lockCurrentWallet();
+
+        // Never even reaches the wallet getter — no MissingStubError, no
+        // write, no exception leaking to the unawaited caller.
+        verifyNever(() => appStore.wallet);
+        verifyNever(() => appStore.wallet = any(that: isA<AWallet>()));
+      });
     });
 
     group('ensure/lock reentrancy', () {
+      // Tests in this group exercise lockCurrentWallet end-to-end, so the
+      // pre-load guard expects a positive isWalletLoaded.
+      setUp(() {
+        when(() => appStore.isWalletLoaded).thenReturn(true);
+      });
+
+      // App-lifecycle hidden fires an unpaired lockCurrentWallet — i.e. one
+      // without a matching prior ensureCurrentWalletUnlocked. Sequence:
+      //   flow X ensure → counter 1, wallet unlocked
+      //   _onHidden lock → counter 0, wallet flipped to view
+      //   flow X finally lock → counter still 0 (underflow guard), _lockWalletInPlace
+      //     no-ops because the wallet is already the view form.
+      // The 1:1 ensure↔lock invariant is technically broken by the unpaired
+      // lifecycle call, but the underflow guard + `is! SoftwareWallet` guard
+      // keep the state consistent. This test pins that contract.
+      test('unpaired lock from lifecycle leaves the holder counter at 0, never below', () async {
+        final stored = <AWallet>[SoftwareViewWallet(7, 'Main', _debugAddress)];
+        when(() => appStore.wallet).thenAnswer((_) => stored.last);
+        when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
+          final newWallet = inv.positionalArguments.single as AWallet;
+          stored.add(newWallet);
+          return newWallet;
+        });
+        when(() => settings.currentWalletId).thenReturn(7);
+        when(() => repo.getUnlockedWalletById(7)).thenAnswer(
+          (_) async => _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
+        );
+
+        // Sign flow opens the contract.
+        await service.ensureCurrentWalletUnlocked();
+        expect(stored.last, isA<SoftwareWallet>(),
+            reason: 'sign flow unlocked the wallet');
+
+        // App-lifecycle hidden fires concurrently — drops to view wallet.
+        await service.lockCurrentWallet();
+        expect(stored.last, isA<SoftwareViewWallet>(),
+            reason: 'lifecycle lock flipped the wallet to its view form');
+
+        // Sign flow finally — counter is already 0, must NOT underflow and
+        // must NOT crash on _lockWalletInPlace reading the (now view) wallet.
+        await service.lockCurrentWallet();
+        expect(stored.last, isA<SoftwareViewWallet>(),
+            reason: 'finally lock is idempotent — counter stays at 0');
+
+        // A subsequent ensure must still produce a usable unlocked wallet —
+        // i.e. the counter didn't drift negative and break the next cycle.
+        await service.ensureCurrentWalletUnlocked();
+        expect(stored.last, isA<SoftwareWallet>(),
+            reason: 'next ensure starts cleanly from counter == 0');
+      });
+
       // Race: flow A and flow B both call ensureCurrentWalletUnlocked while
       // the wallet is locked. A finishes its sign + lock first; B is still
       // mid-sign and must see an unlocked wallet. Without the holder counter
