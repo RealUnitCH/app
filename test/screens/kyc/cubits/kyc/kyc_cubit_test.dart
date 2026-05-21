@@ -314,10 +314,26 @@ void main() {
     );
 
     blocTest<KycCubit, KycState>(
-      'routes to twoFa step on ApiException(statusCode: 403)',
+      'does NOT route to twoFa on 403 without TFA_REQUIRED body code',
       setUp: () {
         when(() => kycService.getKycStatus()).thenThrow(
           const ApiException(statusCode: 403, code: 'FORBIDDEN', message: ''),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        isA<KycFailure>(),
+      ],
+    );
+
+    blocTest<KycCubit, KycState>(
+      "routes to twoFa step on ApiException(code: 'TFA_REQUIRED'), regardless of HTTP status",
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenThrow(
+          const ApiException(statusCode: 400, code: 'TFA_REQUIRED', message: ''),
         );
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
       },
@@ -330,10 +346,10 @@ void main() {
     );
 
     blocTest<KycCubit, KycState>(
-      "routes to twoFa step on ApiException(code: 'TFA_REQUIRED')",
+      "routes to twoFa step on ApiException(statusCode: 403, code: 'TFA_REQUIRED')",
       setUp: () {
         when(() => kycService.getKycStatus()).thenThrow(
-          const ApiException(statusCode: 400, code: 'TFA_REQUIRED', message: ''),
+          const ApiException(statusCode: 403, code: 'TFA_REQUIRED', message: ''),
         );
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
       },
