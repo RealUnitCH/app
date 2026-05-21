@@ -126,7 +126,8 @@ Features tagged `mvp` whose current test coverage is insufficient — these bloc
 - **Tier 0 — Cubit unit tests** (`bloc_test` + `mocktail`). Fast, no platform, no BitBox. Covers every state transition.
 - **Tier 1 — FakeBitbox integration tests** (`integration_test/` + `FakeBitboxCredentials`). Drives full app flow without hardware. Phase landing in [#320](https://github.com/DFXswiss/realunit-app/pull/320).
 - **Tier 2 — Firmware simulator** (TCP transport + Docker `bitbox02-firmware/simulator`). End-to-end with real crypto, no hardware. Planned.
-- **Tier 3 — Maestro hardware flows** (`.maestro/*.yaml`). Real BitBox device. Manually triggered before each release.
+- **Tier 3a — Maestro handbook flows** (`.maestro/handbook/*.yaml`). Software-only flows run on a fresh iOS Simulator. Automated via [`tier3-handbook.yaml`](.github/workflows/tier3-handbook.yaml) — opt-in on PRs via the `tier3:full` label, always runs on push to `develop`.
+- **Tier 3b — Maestro hardware flows** (`.maestro/*.yaml`, BitBox02 device). Status: deferred — still manually triggered before each release.
 
 Non-BitBox code only needs Tier 0 + widget tests; Tier 1+ are reserved for hardware-coupled paths.
 
