@@ -145,6 +145,7 @@ Tier 1 (`integration_test/`) and Tier 3 (`.maestro/`) runners are tracked under 
 | Workflow                     | Trigger                                                       | Action                                                                                  |
 | ---------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | `pull-request.yaml`          | PR to `develop` / `main` · manual                             | `flutter analyze` + `flutter test --coverage`, scope lcov to the activated surface, fail below the committed floor, upload lcov artifact |
+| `tier3-handbook.yaml`        | PR to `develop` with label `tier3:full` · push `develop` · manual | Runs every `.maestro/handbook/*.yaml` flow on a fresh iOS Simulator (`iPhone 17`) and uploads captured screenshots (Tier 3) |
 | `bitbox-simulator.yml`       | PR touching `lib/packages/hardware_wallet/**` or `wallet/**`  | Runs the BitBox02 firmware simulator with `bitbox-testkit` baselines (Tier 2)           |
 | `bitbox-simulator-slash.yml` | `/bitbox-simulator` comment on any PR                         | Same engine as above, on-demand per PR (variants: default / `ref=main`)                 |
 | `auto-release-pr.yaml`       | Push `develop` · manual                                       | Opens Release PR `develop` → `main`                                                     |

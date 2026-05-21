@@ -7,7 +7,7 @@ RealUnit's tests are organised into five tiers (see [#314](https://github.com/DF
 | 0 | Pure Dart logic — cubits, services, signers, parsers | None | ✅ `flutter test --coverage` |
 | 1 | Cubit / widget + SDK-boundary fake — sign ceremonies via `FakeBitboxCredentials`; HTTP via `MockClient` | None | ✅ `flutter test --coverage` |
 | 2 | Real BitBox firmware-simulator over TCP (`bitbox_flutter` TCP transport) | Docker, no device | 🟡 Deferred — Phase 2 of #314 |
-| 3 | Real BitBox02 hardware via Maestro YAML flows | iPhone + BitBox02 Nova | 🟡 Deferred — Phase 3 of #314 |
+| 3 | Maestro YAML flows on an iOS Simulator (handbook capture) · real BitBox02 hardware variant deferred | iPhone simulator (handbook) · iPhone + BitBox02 Nova (hardware) | 🟢 Handbook flows automated · 🟡 hardware variant deferred — Phase 3 of #314 |
 | 4 | BLE traffic capture / replay | Capture on hardware, replay anywhere | 🟡 Stretch — Phase 4 of #314 |
 
 ## When to pick which tier
@@ -228,9 +228,13 @@ flutter test integration_test/ --dart-define=BITBOX_HOST=localhost:15423
 
 Does **not** exercise iOS BLE — the simulator is USB-style framing only. Tier 3 stays the only validation for the BLE transport.
 
-## Tier 3 — Maestro on real hardware (deferred)
+## Tier 3 — Maestro flows
 
-YAML flows under `.maestro/` driven by [`maestro`](https://maestro.mobile.dev). Required pre-release for security-sensitive flows. Status: deferred — Phase 3 of #314.
+YAML flows under `.maestro/` driven by [`maestro`](https://maestro.mobile.dev).
+
+Status: the handbook subset (`.maestro/handbook/*.yaml`) is automated on PRs labelled `tier3:full` and on every push to `develop` — see `.github/workflows/tier3-handbook.yaml`. The runner boots a fresh `iPhone 17` simulator, erases it (Keychain wipes are the only reliable way to start on the welcome flow, see `scripts/run-handbook-flows.sh` for the rationale), installs the debug build, runs every flow back-to-back, and uploads `docs/handbook/screenshots/` as a build artifact so reviewers can spot visual drift before merge.
+
+The real-hardware variant (BitBox02 Nova) stays deferred — Phase 3 of #314 — and is the entry point for any PR that adds a `bitbox:full` label later.
 
 ## Tier 4 — VCR / replay (stretch)
 
