@@ -6,7 +6,13 @@ The source of truth for navigable screens is the `GoRouter` definition in
 `lib/setup/routing/router_config.dart`; route names live in
 `lib/setup/routing/routes/`. Screens shown *within* a parent route (KYC steps,
 status sub-pages) are not registered as routes and are listed separately below.
-Keep this file in sync when routes or screen widgets change.
+Keep this file in sync when routes, screen widgets or handbook screenshots change.
+
+The **Handbook** column gives the handbook screenshot number(s) —
+`docs/handbook/screenshots/NN-*.png` — that document the screen, or `—` if it is
+not in the handbook. The handbook covers the new-user onboarding journey
+(sign-up → dashboard) plus the settings screens reachable from it: 19 screenshots
+in total, **14 of the 40 routed screens**. See `docs/handbook/README.md`.
 
 ## Routed screens
 
@@ -15,78 +21,78 @@ with their full path.
 
 ### Start & onboarding
 
-| Route name | Path | Widget |
-|---|---|---|
-| `home` | `/home` | `HomePage` — entry point / routing gate |
-| `welcome` | `/welcome` | `WelcomePage` |
-| `createWallet` | `/createWallet` | `CreateWalletPage` |
-| `verifySeed` | `/verifySeed` | `VerifySeedPage` |
-| `restoreWallet` | `/restoreWallet` | `RestoreWalletPage` |
-| `onboardingCompleted` | `/onboardingComplete` | `OnboardingCompletedPage` |
-| `debugAuth` | `/debugAuth` | `DebugAuthPage` — **debug builds only (`kDebugMode`)** |
+| Route name | Path | Widget | Handbook |
+|---|---|---|---|
+| `home` | `/home` | `HomePage` — entry point / routing gate | `01` |
+| `welcome` | `/welcome` | `WelcomePage` | `02`, `03` |
+| `createWallet` | `/createWallet` | `CreateWalletPage` | `04`, `05` |
+| `verifySeed` | `/verifySeed` | `VerifySeedPage` | `06` |
+| `restoreWallet` | `/restoreWallet` | `RestoreWalletPage` | — |
+| `onboardingCompleted` | `/onboardingComplete` | `OnboardingCompletedPage` | `07` |
+| `debugAuth` | `/debugAuth` | `DebugAuthPage` — **debug builds only (`kDebugMode`)** | — |
 
 ### PIN & app lock
 
-| Route name | Path | Widget |
-|---|---|---|
-| `pinGate` | `/pinGate` | `VerifyPinPage` — action gate (e.g. reveal seed) |
-| `setupPin` | `/setupPin` | `SetupPinPage` |
-| `verifyPin` | `/verifyPin` | `VerifyPinPage.appLock()` — app unlock |
+| Route name | Path | Widget | Handbook |
+|---|---|---|---|
+| `pinGate` | `/pinGate` | `VerifyPinPage` — action gate (e.g. reveal seed) | `17` |
+| `setupPin` | `/setupPin` | `SetupPinPage` | `08`, `09` |
+| `verifyPin` | `/verifyPin` | `VerifyPinPage.appLock()` — app unlock | — |
 
 ### Main app
 
-| Route name | Path | Widget |
-|---|---|---|
-| `dashboard` | `/dashboard` | `DashboardPage` |
-| `transactionHistory` | `/dashboard/transactionHistory` | `TransactionHistoryPage` |
-| `buy` | `/buy` | `BuyPage` |
-| `sell` | `/sell` | `SellPage` |
-| `sellBitbox` | `/sellBitbox` | `SellBitboxPage` |
-| `receive` | `/receive` | `ReceivePage` |
-| `kyc` | `/kyc` | `KycPageManager` — orchestrates the KYC steps (see below) |
-| `webView` | `/webView` | `WebViewPage` |
+| Route name | Path | Widget | Handbook |
+|---|---|---|---|
+| `dashboard` | `/dashboard` | `DashboardPage` | `11` |
+| `transactionHistory` | `/dashboard/transactionHistory` | `TransactionHistoryPage` | — |
+| `buy` | `/buy` | `BuyPage` | — |
+| `sell` | `/sell` | `SellPage` | — |
+| `sellBitbox` | `/sellBitbox` | `SellBitboxPage` | — |
+| `receive` | `/receive` | `ReceivePage` | — |
+| `kyc` | `/kyc` | `KycPageManager` — orchestrates the KYC steps (see below) | — |
+| `webView` | `/webView` | `WebViewPage` | — |
 
 ### Legal
 
-| Route name | Path | Widget |
-|---|---|---|
-| `legalDisclaimer` | `/legalDisclaimer` | `LegalDisclaimerPage` |
-| `legalDocument` | `/legalDocument` | `LegalDocumentPage` |
-| `terms` | `/termsOfUse` | `LegalDocumentPage` (terms of use) |
+| Route name | Path | Widget | Handbook |
+|---|---|---|---|
+| `legalDisclaimer` | `/legalDisclaimer` | `LegalDisclaimerPage` | — |
+| `legalDocument` | `/legalDocument` | `LegalDocumentPage` | — |
+| `terms` | `/termsOfUse` | `LegalDocumentPage` (terms of use) | — |
 
 ### Settings
 
-| Route name | Path | Widget |
-|---|---|---|
-| `settings` | `/settings` | `SettingsPage` |
-| `settingsAktionariatDocuments` | `/settings/aktionariatDocuments` | `SettingsAktionariatDocumentsPage` |
-| `settingsContact` | `/settings/contact` | `SettingsContactPage` |
-| `settingsCurrencies` | `/settings/currencies` | `SettingsCurrenciesPage` |
-| `settingsDfxDocuments` | `/settings/dfxDocuments` | `SettingsDfxDocumentsPage` |
-| `settingsLanguages` | `/settings/languages` | `SettingsLanguagePage` |
-| `settingsLegalDocuments` | `/settings/legalDocuments` | `SettingsLegalDocumentsPage` |
-| `settingsNetwork` | `/settings/network` | `SettingsNetworkPage` |
-| `settingsTaxReport` | `/settings/taxReport` | `SettingsTaxReportPage` |
-| `settingsSeed` | `/settings/seed` | `SettingsSeedPage` |
-| `settingsWalletAddress` | `/settings/walletAddress` | `SettingsWalletAddressPage` |
-| `settingsUserData` | `/settings/userData` | `SettingsUserDataPage` |
-| `settingsEditName` | `/settings/userData/editName` | `SettingsEditNamePage` |
-| `settingsEditAddress` | `/settings/userData/editAddress` | `SettingsEditAddressPage` |
-| `settingsEditPhone` | `/settings/userData/editPhoneNumber` | `SettingsEditPhoneNumberPage` |
+| Route name | Path | Widget | Handbook |
+|---|---|---|---|
+| `settings` | `/settings` | `SettingsPage` | `12` |
+| `settingsAktionariatDocuments` | `/settings/aktionariatDocuments` | `SettingsAktionariatDocumentsPage` | — |
+| `settingsContact` | `/settings/contact` | `SettingsContactPage` | — |
+| `settingsCurrencies` | `/settings/currencies` | `SettingsCurrenciesPage` | `14` |
+| `settingsDfxDocuments` | `/settings/dfxDocuments` | `SettingsDfxDocumentsPage` | — |
+| `settingsLanguages` | `/settings/languages` | `SettingsLanguagePage` | `13` |
+| `settingsLegalDocuments` | `/settings/legalDocuments` | `SettingsLegalDocumentsPage` | — |
+| `settingsNetwork` | `/settings/network` | `SettingsNetworkPage` | `15` |
+| `settingsTaxReport` | `/settings/taxReport` | `SettingsTaxReportPage` | — |
+| `settingsSeed` | `/settings/seed` | `SettingsSeedPage` | `18`, `19` |
+| `settingsWalletAddress` | `/settings/walletAddress` | `SettingsWalletAddressPage` | `16` |
+| `settingsUserData` | `/settings/userData` | `SettingsUserDataPage` | — |
+| `settingsEditName` | `/settings/userData/editName` | `SettingsEditNamePage` | — |
+| `settingsEditAddress` | `/settings/userData/editAddress` | `SettingsEditAddressPage` | — |
+| `settingsEditPhone` | `/settings/userData/editPhoneNumber` | `SettingsEditPhoneNumberPage` | — |
 
 ### Support
 
-| Route name | Path | Widget |
-|---|---|---|
-| `support` | `/support` | `SupportPage` |
-| `supportTickets` | `/support/tickets` | `SupportTicketsPage` |
-| `supportCreateTicket` | `/support/create` | `SupportCreateTicketPage` |
-| `supportChat` | `/support/chat/:uid` | `SupportChatPage` |
+| Route name | Path | Widget | Handbook |
+|---|---|---|---|
+| `support` | `/support` | `SupportPage` | — |
+| `supportTickets` | `/support/tickets` | `SupportTicketsPage` | — |
+| `supportCreateTicket` | `/support/create` | `SupportCreateTicketPage` | — |
+| `supportChat` | `/support/chat/:uid` | `SupportChatPage` | — |
 
 ## Non-routed screens
 
 Full-screen content the user sees, but driven inside a parent route rather than
-registered as its own `GoRoute`.
+registered as its own `GoRoute`. **None of these are documented in the handbook.**
 
 ### KYC flow
 
@@ -118,6 +124,10 @@ Shown during a profile-edit operation:
 
 ## Notes
 
+- **Handbook coverage.** The 19 handbook screenshots are each the output of a
+  Maestro Tier-3 flow (`.maestro/handbook/NN-*.yaml`). Screenshot
+  `10-biometric-prompt` documents the `EnableBiometricBottomSheet` modal — not a
+  routed screen — which is why the table numbering skips from `09` to `11`.
 - **`*Page` / `*View` pattern.** Several screens split into a `*Page` widget
   (provides the bloc/cubit) and a `*View` widget (builds the `Scaffold`):
   `CreateWalletView`, `RestoreWalletView`, `SettingsSeedView`, `DebugAuthView`.
@@ -129,3 +139,5 @@ Shown during a profile-edit operation:
   screen, KYC registration and the BitBox reconnect helper.
 - `LegalDocumentPage` backs two routes (`legalDocument`, `terms`) and
   `VerifyPinPage` backs two (`pinGate`, `verifyPin`) via different constructors.
+  The handbook screenshot `17` shows `VerifyPinPage` in its `pinGate` use; the
+  `verifyPin` app-lock use is not separately documented.
