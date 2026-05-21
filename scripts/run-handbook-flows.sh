@@ -26,6 +26,14 @@
 #   the next run brings it back to defaults. CI runners default to en_US
 #   without this pin and would fail the first German-string assertion.
 #
+# Retry strategy:
+#   The Maestro 2.5.x driver intermittently hangs at XCUITest startup
+#   on macos-latest + iOS 26.x (see mobile-dev-inc/maestro#3137). Each
+#   flow is retried up to MAESTRO_MAX_ATTEMPTS times (default 3) when
+#   the failure log contains `IOSDriverTimeoutException`. Assertion
+#   failures are NEVER retried — those are real regressions and must
+#   surface as red CI checks.
+#
 # Usage:  scripts/run-handbook-flows.sh
 
 set -euo pipefail
@@ -114,19 +122,37 @@ unset IFS
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
+# Worst-case the entire suite is 3 × 19 × ~1 min plus 3 × ~6 min
+# driver-startup-timeout per failed attempt, which still fits inside
+# the workflow's 30 min envelope.
+MAESTRO_MAX_ATTEMPTS="${MAESTRO_MAX_ATTEMPTS:-3}"
+
 for flow in "${flows[@]}"; do
   base="$(basename "$flow" .yaml)"
   tmp_png="$TMP_DIR/$base.png"
   png="$SCREENS_DIR/$base.png"
   echo
   echo "▶ $base"
-  # If a flow fails, capture network + process state for forensic
-  # post-mortem. The lsof output shows which process is bound on which
-  # loopback family — useful regardless of root cause. The simctl log
-  # tail surfaces XCTRunner crashes that don't make it into Maestro's
-  # own stack trace. See realunit-app#486 / realunit-app#487 for the
-  # Tier 3 reliability discussion.
-  if ! "$MAESTRO" test "$flow"; then
+
+  attempt=0
+  while : ; do
+    attempt=$((attempt + 1))
+    flow_log="$TMP_DIR/$base.attempt-$attempt.log"
+    if "$MAESTRO" test "$flow" 2>&1 | tee "$flow_log"; then
+      [ "$attempt" -gt 1 ] && echo "  passed on attempt $attempt"
+      break
+    fi
+    # Only retry the upstream driver-hang class. Assertion failures
+    # are real regressions and must surface red — never retry them.
+    if grep -q 'IOSDriverTimeoutException' "$flow_log" && \
+       [ "$attempt" -lt "$MAESTRO_MAX_ATTEMPTS" ]; then
+      echo "  driver hang on attempt $attempt of $MAESTRO_MAX_ATTEMPTS; restarting simulator and retrying"
+      xcrun simctl shutdown "$UDID" || true
+      xcrun simctl boot "$UDID"
+      xcrun simctl bootstatus "$UDID" -b >/dev/null
+      continue
+    fi
+    # Real failure OR retries exhausted: post-mortem + exit.
     echo "--- POST-MORTEM: TCP loopback listeners ---"
     /usr/sbin/lsof -iTCP -sTCP:LISTEN -nP 2>/dev/null | grep -E 'IPv[46]|java|xctest|XCT|maestro' || true
     echo "--- POST-MORTEM: live maestro / XCT / xcodebuild processes ---"
@@ -136,7 +162,8 @@ for flow in "${flows[@]}"; do
       --predicate 'process == "XCTRunner" OR process CONTAINS "swiss.realunit.app"' \
       --last 2m --style compact 2>/dev/null | tail -200 || true
     exit 1
-  fi
+  done
+
   xcrun simctl io booted screenshot "$tmp_png" >/dev/null
   mv "$tmp_png" "$png"
   echo "  captured → ${png#$REPO_ROOT/}"
