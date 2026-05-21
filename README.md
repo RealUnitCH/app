@@ -165,8 +165,9 @@ Tier 1 (`integration_test/`) is tracked under "Testing tiers" above but not yet 
 | `bitbox-simulator-slash.yml` | `/bitbox-simulator` comment on any PR                         | Same engine as above, on-demand per PR (variants: default / `ref=main`)                 |
 | `auto-release-pr.yaml`       | Push `develop` · manual                                       | Opens Release PR `develop` → `main`                                                     |
 | `auto-tag.yaml`              | Push `develop`                                                | Creates the next `vX.Y.Z` patch tag (PATCH = previous + 1, MINOR/MAJOR from pubspec floor) |
-| `develop-release.yaml`       | Tag `v*` with PATCH >= 1 · manual                             | Internal release: Android + iOS deploy to Play Internal + TestFlight, GitHub pre-release |
-| `beta-release.yaml`          | Tag `v*` with PATCH == 0 · manual                             | Production candidate: Android + iOS deploy to Play Internal + TestFlight, GitHub release (production promotion is manual in the store backends) |
+| `release.yaml`               | Tag `v*` · manual                                             | Single store-release pipeline. Guard job routes by PATCH: `vX.Y.0` → production candidate (GitHub release, prerelease: false); `vX.Y.Z` (Z >= 1) → internal release (GitHub pre-release). Both lanes deploy Android + iOS to Play Internal + TestFlight; production promotion stays manual in the store backends. |
+| `beta-release-android.yaml`  | Tag `android/v*` · manual                                     | Android-only deploy (Play Internal Testing)                                             |
+| `beta-release-ios.yaml`      | Tag `ios/v*` · manual                                         | iOS-only deploy (TestFlight, Fastlane Match)                                            |
 | `handbook-dev.yaml`          | Push `develop` under `docs/handbook/**` · manual              | Builds `dfxswiss/realunit-app-handbook:beta`, redeploys the handbook DEV container      |
 | `handbook-prd.yaml`          | Push `main` under `docs/handbook/**` · manual                 | Builds `dfxswiss/realunit-app-handbook:latest`, redeploys the handbook PRD container    |
 
@@ -176,11 +177,11 @@ Tags follow plain SemVer: `vMAJOR.MINOR.PATCH`. There is no pre-release suffix �
 
 | Component | When does it bump? | Workflow | Distribution |
 | --- | --- | --- | --- |
-| `PATCH` (`v1.0.X` with X >= 1) | Automatically on every push to `develop` (see `auto-tag.yaml`). | `develop-release.yaml` ("Internal Release") | TestFlight + Play Internal. |
-| `MINOR` (`v1.X.0`) | Manual tag push (App-Store-update marker). | `beta-release.yaml` ("Production Release Candidate") | TestFlight + Play Internal. Production promotion is done manually in the store backends. |
-| `MAJOR` (`vX.0.0`) | Manual tag push. | `beta-release.yaml` ("Production Release Candidate") | TestFlight + Play Internal. Production promotion is done manually in the store backends. |
+| `PATCH` (`v1.0.X` with X >= 1) | Automatically on every push to `develop` (see `auto-tag.yaml`). | `release.yaml` (internal lane) | TestFlight + Play Internal. |
+| `MINOR` (`v1.X.0`) | Manual tag push (App-Store-update marker). | `release.yaml` (production-candidate lane) | TestFlight + Play Internal. Production promotion is done manually in the store backends. |
+| `MAJOR` (`vX.0.0`) | Manual tag push. | `release.yaml` (production-candidate lane) | TestFlight + Play Internal. Production promotion is done manually in the store backends. |
 
-Both release workflows listen on the same tag pattern (`v*`) and use a guard job to route based on the PATCH component: patch tags go through the Internal Release lane, MAJOR/MINOR tags through the Production Release Candidate lane. Either way the build lands in the Test tracks first — the App Store / Play Store production track is never updated by a tag push.
+A single release workflow (`release.yaml`) listens on the `v*` tag pattern and uses a guard job to route based on the PATCH component: patch tags go through the internal lane (`prerelease: true` on GitHub), MAJOR/MINOR tags through the production-candidate lane (`prerelease: false`). Either way the build lands in the Test tracks first — the App Store / Play Store production track is never updated by a tag push.
 
 The build number is derived deterministically from the tag by `tool/generate_release_info.dart` using `MAJOR * 10_000_000 + MINOR * 100_000 + PATCH * 1_000 + 999`. The fixed `+999` suffix keeps every new build strictly above the legacy beta build codes; the first new build `v1.0.15` lands at `10_015_999`, comfortably above the highest published legacy beta `v1.0.0-beta.14` at `10_000_014`.
 
@@ -189,7 +190,7 @@ The build number is derived deterministically from the tag by `tool/generate_rel
 - The `+0` build-number sentinel is for local builds — CI always overrides `--build-name` / `--build-number` from the tag. Don't bump the `+N` part manually.
 - The `X.Y.Z` part is a **floor** for MAJOR / MINOR jumps. Patch increments come from the latest tag; pubspec is only consulted to trigger jumps. To start a new MINOR / MAJOR train (e.g. `v1.1.0`), bump pubspec on `develop` and the next auto-tag will pick it up.
 
-Typical patch flow: PR merges into `develop` → `auto-tag.yaml` creates `v1.0.X` → `develop-release.yaml` ships the build to TestFlight + Play Internal.
+Typical patch flow: PR merges into `develop` → `auto-tag.yaml` creates `v1.0.X` → `release.yaml` (internal lane) ships the build to TestFlight + Play Internal.
 
 ## Getting started
 
