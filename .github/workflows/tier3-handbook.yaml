@@ -178,7 +178,16 @@ jobs:
       - name: Install Maestro CLI
         run: |
           set -euo pipefail
-          export MAESTRO_VERSION="$(cat .maestro-version)"
+          # `.maestro-version` is committed; if it ever goes missing or
+          # empty, fail loudly here rather than letting Maestro's installer
+          # try to fetch `cli-/maestro.zip` and crash on a 404 with a
+          # confusing error message downstream.
+          MAESTRO_VERSION="$(cat .maestro-version)"
+          if [ -z "$MAESTRO_VERSION" ]; then
+            echo "::error::.maestro-version is empty or missing at repo root"
+            exit 1
+          fi
+          export MAESTRO_VERSION
           curl -fsSL "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
