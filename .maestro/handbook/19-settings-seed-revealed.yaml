@@ -5,3 +5,6 @@ appId: swiss.realunit.app
 - tapOn:
     point: 50%,65%
 - waitForAnimationToEnd
+- extendedWaitUntil:
+    notVisible: 'Hier tippen, um anzuzeigen'
+    timeout: 15000

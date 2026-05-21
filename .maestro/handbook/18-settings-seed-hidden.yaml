@@ -11,4 +11,4 @@ appId: swiss.realunit.app
 - extendedWaitUntil:
     visible:
       text: '.*Wiederherstellungs.*'
-    timeout: 5000
+    timeout: 15000

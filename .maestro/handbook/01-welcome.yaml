@@ -6,4 +6,6 @@ appId: swiss.realunit.app
     appId: swiss.realunit.app
     clearState: true
 - waitForAnimationToEnd
-- assertVisible: 'Start'
+- extendedWaitUntil:
+    visible: 'Start'
+    timeout: 15000

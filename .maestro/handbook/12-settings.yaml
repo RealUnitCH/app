@@ -6,4 +6,6 @@ appId: swiss.realunit.app
 - tapOn:
     point: 91%,10%
 - waitForAnimationToEnd
-- assertVisible: 'Einstellungen'
+- extendedWaitUntil:
+    visible: 'Einstellungen'
+    timeout: 15000

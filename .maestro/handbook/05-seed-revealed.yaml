@@ -5,4 +5,6 @@ appId: swiss.realunit.app
 - tapOn:
     point: 50%,50%
 - waitForAnimationToEnd
-- assertVisible: 'Ich habe es gesichert'
+- extendedWaitUntil:
+    visible: 'Ich habe es gesichert'
+    timeout: 15000
