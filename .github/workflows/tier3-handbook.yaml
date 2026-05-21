@@ -31,6 +31,10 @@ name: Tier 3 — Handbook flows
 #   experience of "I added the label, the previous run died" is worse
 #   than the cost of one extra runner-minute.
 #
+# Locale: scripts/run-handbook-flows.sh pins the booted simulator to de_CH
+# so German handbook assertions pass on `macos-latest` runners (default
+# en_US). Local re-captures inherit the same locale → screenshots stable.
+#
 # Why `simctl erase` per run (not `clearState`):
 #   `scripts/run-handbook-flows.sh` already does this, but worth restating
 #   here because it drives the choice of macOS runner. The wallet seed and

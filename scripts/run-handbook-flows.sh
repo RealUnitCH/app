@@ -18,6 +18,14 @@
 #     --simulator --debug` then `xcrun simctl install booted ...Runner.app`)
 #   * maestro CLI on PATH (or at $HOME/.maestro/bin/maestro)
 #
+# Locale:
+#   The booted simulator's locale is pinned to de_CH because the handbook
+#   flows assert on German UI strings (e.g. "Digitale Wallet", "Erstellen
+#   Sie Ihre PIN", "Einstellungen"). Local devs running this script will
+#   have their simulator locale temporarily overridden; `simctl erase` on
+#   the next run brings it back to defaults. CI runners default to en_US
+#   without this pin and would fail the first German-string assertion.
+#
 # Usage:  scripts/run-handbook-flows.sh
 
 set -euo pipefail
@@ -73,6 +81,19 @@ xcrun simctl shutdown "$UDID"
 xcrun simctl erase "$UDID"
 xcrun simctl boot "$UDID"
 xcrun simctl bootstatus "$UDID" -b >/dev/null
+
+# Pin simulator locale to de_CH. The handbook flows assert on German UI
+# strings (e.g. "Digitale Wallet", "Erstellen Sie Ihre PIN", "Einstellungen")
+# because the app's default locale is de_CH. CI runners boot iOS simulators
+# in en_US by default, which would fail every German-string assertion on
+# the very first flow that has one. Local developers usually have their
+# simulator in de_CH already, so re-captures locally and on CI now match.
+# Run after `bootstatus -b` so the device is guaranteed ready for
+# `simctl spawn`, and use `spawn` so the defaults land in the booted
+# device's domain, not the host's NSGlobalDomain.
+echo "Pinning simulator locale to de_CH"
+xcrun simctl spawn "$UDID" defaults write -g AppleLanguages -array de_CH
+xcrun simctl spawn "$UDID" defaults write -g AppleLocale -string de_CH
 
 echo "Installing $APP_ID from $APP_BUNDLE"
 xcrun simctl install "$UDID" "$APP_BUNDLE"
