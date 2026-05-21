@@ -42,10 +42,10 @@ the 2026-05-21 ident-misroute report that triggered this audit).
   - **Local decision:** entire next-step selection algorithm — duplicates `KycService.tryContinue` on the API
   - **API change needed:** none — the `currentStep` field from `PUT /v2/kyc` already contains the answer; remove the loop, route from `currentStep` only
   - **Closed by:** W2.2 (subsumed by the `_runCheckKyc` rewrite that collapses V1, V2, V3 — V5 is *the same loop* those three constants drive). Tagged separately so reviewers can grep the routing-chain code path explicitly.
-- **V45** — `lib/screens/kyc/cubits/kyc/kyc_cubit.dart:208` — `_continueKyc` repeats the same manual filter over `kycSteps`
+- **V45** — `lib/screens/kyc/cubits/kyc/kyc_cubit.dart:_continueKyc` — `_continueKyc` repeats the same manual filter over `kycSteps`
   - **Local decision:** `kycStatus.kycSteps.firstWhere((step) => step.isCurrent)` — parallel code path with the same anti-pattern as V5's `_runCheckKyc` loop, called after a realunit registration completes
   - **API change needed:** none — the `currentStep` field is already authoritative; consume it directly. When W2.2 rewrites `_runCheckKyc` to render `currentStep` directly, this loop must also be deleted in the same PR
-  - **Closed by:** W2.2 (same wave/PR as V5)
+  - **Closed by:** W2.2 (#494). `_continueKyc` now reads `KycSessionDto.currentStep` directly. A missing `currentStep` surfaces `KycUnsupportedStepFailure(null)` instead of throwing a bare `StateError` (which had been leaking as raw stack-trace text into the user-facing i18n message).
 - **V4** — `lib/screens/kyc/cubits/kyc/kyc_cubit.dart:179-182` — `e.statusCode == 403 || e.code == 'TFA_REQUIRED'` → emit 2FA step
   - **Local decision:** translate HTTP status into a UI flow
   - **API change needed:** API returns `nextStep: '2fa'` in the response body — app does not switch on status codes
@@ -310,7 +310,7 @@ Pair-PRs landed against the rule, in dependency order:
 | W1.1+1.2 | — | [#493](https://github.com/DFXswiss/realunit-app/pull/493) | V7, V8 — buy/sell min from quote |
 | W1.2bank | — | [#495](https://github.com/DFXswiss/realunit-app/pull/495) | V11 — bank-account default |
 | W1.3+1.4 | — | [#496](https://github.com/DFXswiss/realunit-app/pull/496) | V12, V13 — currency + language from API |
-| W2 | [api#3732](https://github.com/DFXswiss/api/pull/3732) | [#494](https://github.com/DFXswiss/realunit-app/pull/494) | V1, V2, V3, V5 — **closes the 2026-05-21 ident-misroute** |
+| W2 | [api#3732](https://github.com/DFXswiss/api/pull/3732) | [#494](https://github.com/DFXswiss/realunit-app/pull/494) | V1, V2, V3, V5, V45 — **closes the 2026-05-21 ident-misroute** |
 | W3 | [api#3733](https://github.com/DFXswiss/api/pull/3733) | [#497](https://github.com/DFXswiss/realunit-app/pull/497) | V6a, V6b, V9 + structured ALREADY_REGISTERED status |
 | W4 | [api#3734](https://github.com/DFXswiss/api/pull/3734) | [#499](https://github.com/DFXswiss/realunit-app/pull/499) | V14, V17, V18 — legal-document + company-info + country.displayOrder |
 
