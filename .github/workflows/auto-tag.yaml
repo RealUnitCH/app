@@ -2,7 +2,7 @@ name: Auto Tag on Merge
 
 on:
   push:
-    branches: [main, develop]
+    branches: [develop]
 
 permissions:
   contents: write
@@ -33,7 +33,9 @@ jobs:
       - name: Get latest tag
         id: get-tag
         run: |
-          # Get only clean semver tags (vX.Y.Z), exclude pre-release tags
+          # Only consider clean semver tags (vX.Y.Z). Legacy beta tags
+          # (vX.Y.Z-beta.N) are ignored — they were superseded by the
+          # plain-SemVer schema.
           LATEST_TAG=$(git tag -l --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
 
           if [ -z "$LATEST_TAG" ]; then
@@ -48,7 +50,6 @@ jobs:
         id: next-version
         run: |
           LATEST_TAG="${{ steps.get-tag.outputs.latest_tag }}"
-          BRANCH="${{ github.ref_name }}"
 
           # Remove 'v' prefix and split into parts
           VERSION="${LATEST_TAG#v}"
@@ -56,7 +57,7 @@ jobs:
           MINOR=$(echo "$VERSION" | cut -d. -f2)
           PATCH=$(echo "$VERSION" | cut -d. -f3)
 
-          # Default: patch-bump on top of latest tag
+          # Default: patch-bump on top of latest tag.
           NEW_PATCH=$((PATCH + 1))
           NEXT_VERSION="v${MAJOR}.${MINOR}.${NEW_PATCH}"
 
@@ -71,21 +72,7 @@ jobs:
             echo "::notice::pubspec marketing version: $PUBSPEC_VERSION; resolved next: $NEXT_VERSION"
           fi
 
-          if [ "$BRANCH" = "main" ]; then
-            NEW_TAG="$NEXT_VERSION"
-          else
-            # For develop: find latest beta tag for the next version
-            LATEST_BETA=$(git tag -l --sort=-v:refname "${NEXT_VERSION}-beta.*" | head -n 1)
-
-            if [ -z "$LATEST_BETA" ]; then
-              NEW_TAG="${NEXT_VERSION}-beta.1"
-            else
-              # Extract beta number and increment
-              BETA_NUM=$(echo "$LATEST_BETA" | sed "s/${NEXT_VERSION}-beta\.//")
-              NEW_BETA=$((BETA_NUM + 1))
-              NEW_TAG="${NEXT_VERSION}-beta.${NEW_BETA}"
-            fi
-          fi
+          NEW_TAG="$NEXT_VERSION"
 
           echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
           echo "::notice::New tag: $NEW_TAG"
