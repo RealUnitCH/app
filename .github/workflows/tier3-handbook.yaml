@@ -1,0 +1,143 @@
+name: Tier 3 — Handbook flows
+
+# Drives every `.maestro/handbook/*.yaml` flow against a freshly-erased iOS
+# Simulator and uploads the captured PNGs as a build artifact. Tier 3 in the
+# four-tier model defined in `docs/testing.md`: real BitBox hardware is
+# explicitly out of scope here — the handbook flows only need the software
+# wallet path, so a hosted macOS runner is enough.
+#
+# Trigger model:
+#   * `pull_request: develop` with a `tier3:full` label gate. macOS runner
+#     minutes are scarce; running on every PR would dwarf the existing
+#     Analyze & Test job. Reviewers opt-in by labelling the PR.
+#   * `push: develop` always runs — post-merge verification is the
+#     authoritative source of truth for "did the handbook flows survive
+#     this merge", independent of any PR state. Same reasoning as
+#     `pull-request.yaml`.
+#   * `workflow_dispatch` for manual catch-up runs and a re-run path when
+#     the macOS image flips an Xcode default and we need to verify the fix
+#     before re-arming the gate. Always runs (label gate doesn't apply).
+#   * `labeled` / `unlabeled` keep the trigger surface in sync with the
+#     `tier3:full` opt-in: adding the label after the PR opened starts a
+#     run; removing it cancels via the concurrency block below.
+#
+# Concurrency:
+#   Same trick as zk-coins/server `ci.yaml` and adapted in
+#   `pull-request.yaml`: group by `pull_request.head.sha` (or `github.sha`
+#   for push/dispatch) so a new push cancels the in-flight run. The
+#   exception: `labeled` / `unlabeled` events get their own
+#   `tier3-label-<run_id>` group so a label toggle on the same SHA does
+#   NOT kill an already-running ~15-minute flow execution — the user
+#   experience of "I added the label, the previous run died" is worse
+#   than the cost of one extra runner-minute.
+#
+# Why `simctl erase` per run (not `clearState`):
+#   `scripts/run-handbook-flows.sh` already does this, but worth restating
+#   here because it drives the choice of macOS runner. The wallet seed and
+#   PIN live in the iOS Keychain, which survives both Maestro `clearState`
+#   and an app reinstall. A booted simulator from a prior run would start
+#   on the lock screen instead of the welcome flow, breaking every
+#   assertion downstream. `simctl erase` wipes the whole device — the
+#   only known-good clean-state for this purpose.
+#
+# Why no pixel-diff in v1:
+#   Font antialiasing differs between runner image versions and a strict
+#   pixel match would be flakier than the regressions it catches. The
+#   per-flow `assertVisible` / `extendedWaitUntil` already covers the
+#   most common drift modes (page removed, label changed, navigation
+#   reordered). Pixel-diff against `handbook.realunit.app` is tracked as
+#   a follow-up — see `docs/testing.md` Tier 3 section.
+#
+# Why `iPhone 17` specifically:
+#   The `.maestro/handbook/*.yaml` flows were authored against this device
+#   class and `docs/handbook/screenshots/` was captured on it. Any other
+#   device shifts the safe-area insets and re-flows the cards — flow
+#   assertions would still pass but the screenshots would no longer match
+#   the live handbook. When the macOS runner image stops shipping iPhone
+#   17 by default, bump this here AND re-capture the screenshots in the
+#   same PR (run `scripts/run-handbook-flows.sh` locally on the new device
+#   and commit the diff).
+#
+# Cross-reference: README "CI/CD" table + `docs/testing.md` Tier 3 entry.
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+concurrency:
+  group: >-
+    ${{
+      (github.event.action == 'labeled' || github.event.action == 'unlabeled')
+        && format('tier3-label-{0}', github.run_id)
+        || format('tier3-{0}', github.event.pull_request.head.sha || github.sha)
+    }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  flows:
+    name: Maestro handbook flows
+    # PRs only run with the `tier3:full` label. push/dispatch always run.
+    # Drafts pass through unconditionally on push (they cannot push, so
+    # the only way here is via a labelled PR) — no extra `draft == false`
+    # guard needed.
+    if: >-
+      github.event_name != 'pull_request'
+      || contains(github.event.pull_request.labels.*.name, 'tier3:full')
+    runs-on: macos-latest
+    # 30 min envelope: ~5 min Flutter + tooling setup, ~3 min sim boot/erase,
+    # ~12 min for the 19 handbook flows running back-to-back, plus headroom.
+    # `pull-request.yaml` uses 30 too — keep them aligned for predictable
+    # runner-pool sizing.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.6"
+          channel: "stable"
+
+      - run: flutter pub get
+      - run: dart run tool/generate_localization.dart
+      - run: dart run tool/generate_release_info.dart
+      - run: flutter pub run build_runner build
+
+      - name: Build iOS simulator app
+        run: flutter build ios --simulator --debug
+
+      # `scripts/run-handbook-flows.sh` does its own `simctl shutdown / erase /
+      # boot / bootstatus / install` once it has a booted UDID. We just need
+      # ANY iPhone 17 simulator in `Booted` state for the script to discover.
+      - name: Boot iOS Simulator
+        run: |
+          set -euo pipefail
+          xcrun simctl boot "iPhone 17"
+          xcrun simctl bootstatus "iPhone 17" -b
+
+      - name: Install Maestro CLI
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      # The script handles per-flow execution, screenshot staging via /tmp
+      # (CoreSimulator can't write to ~/Documents under macOS TCC), and the
+      # full simctl reset cycle. Don't duplicate any of that logic here —
+      # any change in flow handling should land in the script so manual runs
+      # and CI runs stay in sync.
+      - name: Run handbook flows
+        run: scripts/run-handbook-flows.sh
+
+      - name: Upload captured screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: handbook-captures
+          path: docs/handbook/screenshots/
+          if-no-files-found: warn
