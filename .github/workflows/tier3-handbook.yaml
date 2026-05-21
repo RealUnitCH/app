@@ -115,21 +115,31 @@ jobs:
       # boot / bootstatus / install` once it has a booted UDID. We just need
       # ANY iPhone 17 simulator in `Booted` state for the script to discover.
       #
-      # Why resolve a UDID first instead of `simctl boot "iPhone 17"` directly:
+      # UDID resolution:
       #   `macos-latest` pre-creates three devices literally named "iPhone 17"
-      #   across iOS 26.0 / 26.1 / 26.2 runtimes. `simctl boot <name>` picks
-      #   one implicitly (currently latest runtime) — behaviour is not
-      #   documented in `man simctl`, so we don't rely on it. Resolve a UDID
-      #   ourselves and pin to an iOS-26.x runtime; if Apple ever ships
-      #   multiple iOS-26 patch levels, sort descending picks the highest.
-      #   Fails loudly if no matching device is available — we deliberately
-      #   do NOT fall back to another model, a missing iPhone 17 means the
-      #   runner image changed and the screenshots need re-capturing.
+      #   across iOS 26.0 / 26.1 / 26.2 runtimes. We resolve a UDID explicitly
+      #   instead of `simctl boot "iPhone 17"` so the device choice is
+      #   deterministic and visible in the workflow log. The resolver filters
+      #   to available `iPhone 17` devices on any `iOS-26` runtime, then sorts
+      #   by the numeric tuple of the trailing version segments — so an
+      #   eventual `iOS-26-10` outranks `iOS-26-2` (a lexicographic sort would
+      #   pick the wrong one because `"2" > "1"` as strings).
+      #   Fails loudly with `sys.exit` if no iPhone 17 is available on any
+      #   iOS-26 runtime: we deliberately do NOT fall back to another model
+      #   or major version, because a missing iPhone 17 means the runner
+      #   image changed and the screenshots need re-capturing in the same PR.
       - name: Boot iOS Simulator
         run: |
           set -euo pipefail
           UDID="$(xcrun simctl list devices available --json | /usr/bin/python3 -c "
           import json, sys
+          def runtime_key(rt):
+              # 'com.apple.CoreSimulator.SimRuntime.iOS-26-2' -> (26, 2)
+              # Anything non-numeric in the trailing chunks → -1, so a
+              # malformed entry sorts below well-formed ones rather than
+              # crashing the resolver.
+              parts = rt.split('iOS-', 1)[-1].split('-')
+              return tuple(int(p) if p.isdigit() else -1 for p in parts)
           devices = json.load(sys.stdin)['devices']
           candidates = []
           for runtime, devs in devices.items():
@@ -140,8 +150,9 @@ jobs:
                       candidates.append((runtime, d['udid']))
           if not candidates:
               sys.exit('no available iPhone 17 device on an iOS 26.x runtime')
-          # Sort by runtime string descending → highest patch level wins.
-          candidates.sort(reverse=True)
+          # Sort by numeric runtime tuple descending → highest patch wins,
+          # so iOS-26-10 beats iOS-26-2 once Apple ships that.
+          candidates.sort(key=lambda c: runtime_key(c[0]), reverse=True)
           print(candidates[0][1])
           ")"
           echo "Booting iPhone 17 UDID=$UDID"
