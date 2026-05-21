@@ -308,11 +308,12 @@ void main() {
     });
 
     test('getCredentials called twice with the same address while connected returns equally-connected instances', () {
-      // Defensive pin: the observer's clearBitbox() operates on whichever
-      // BitboxCredentials reference is currently stored in _credentials. A
-      // future refactor that caches and returns the same instance across
-      // calls would break that contract — each hand-out must be a fresh
-      // instance so the observer always targets the latest one.
+      // Defensive pin: post-#472 the service caches BitboxCredentials in a
+      // map keyed by lowercased address, and the disconnect observer iterates
+      // every entry to call clearBitbox(). So callers must always see the
+      // same canonical instance for a given address — a refactor that hands
+      // out a fresh instance per call would let the observer clear an
+      // orphaned reference instead of the one the caller is still holding.
       fakeAsync((async) {
         final service = pairedServiceSync(async);
 
@@ -321,8 +322,8 @@ void main() {
 
         expect(first.isConnected, isTrue);
         expect(second.isConnected, isTrue);
-        expect(second, isNot(same(first)),
-            reason: 'each getCredentials call must produce a distinct instance');
+        expect(second, same(first),
+            reason: 'getCredentials must return the cached instance for a given address');
       });
     });
   });
