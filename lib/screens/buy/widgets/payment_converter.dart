@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -32,13 +34,38 @@ class _PaymentConverterState extends State<PaymentConverter> {
   // once per session via `SupportedFiatRepository` (in-memory cached) so
   // the popup itemBuilder can render synchronously.
   List<Currency> _buyable = const [];
+  bool _loadFailed = false;
 
   @override
   void initState() {
     super.initState();
-    getIt<SupportedFiatRepository>().getBuyable().then((currencies) {
-      if (mounted) setState(() => _buyable = currencies);
-    });
+    getIt<SupportedFiatRepository>().getBuyable().then(
+      (currencies) {
+        if (mounted) setState(() => _buyable = currencies);
+      },
+      onError: (Object error, StackTrace stack) {
+        developer.log(
+          'PaymentConverter: failed to load buyable currencies — picker will '
+          'be disabled and the user is notified',
+          name: 'realunit_wallet.buy',
+          error: error,
+          stackTrace: stack,
+          level: 1000, // SEVERE
+        );
+        if (!mounted) return;
+        setState(() => _loadFailed = true);
+        // Defer to post-frame so we have a Scaffold ancestor in scope.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(S.of(context).settingsCurrencyLoadFailed),
+              backgroundColor: RealUnitColors.status.red600,
+            ),
+          );
+        });
+      },
+    );
   }
 
   @override
@@ -97,6 +124,10 @@ class _PaymentConverterState extends State<PaymentConverter> {
                     child: BlocBuilder<BuyConverterCubit, BuyConverterState>(
                       builder: (context, state) {
                         return PopupMenuButton<Currency>(
+                          key: _loadFailed
+                              ? const Key('buy-currency-picker-disabled')
+                              : const Key('buy-currency-picker'),
+                          enabled: !_loadFailed && _buyable.isNotEmpty,
                           initialValue: state.currency,
                           onSelected: (currency) {
                             if (currency == state.currency) return;

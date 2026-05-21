@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -34,13 +36,37 @@ class _SellConverterState extends State<SellConverter> {
   // Backend-authoritative list of sellable currencies for the picker.
   // Loaded once per session via `SupportedFiatRepository`.
   List<Currency> _sellable = const [];
+  bool _loadFailed = false;
 
   @override
   void initState() {
     super.initState();
-    getIt<SupportedFiatRepository>().getSellable().then((currencies) {
-      if (mounted) setState(() => _sellable = currencies);
-    });
+    getIt<SupportedFiatRepository>().getSellable().then(
+      (currencies) {
+        if (mounted) setState(() => _sellable = currencies);
+      },
+      onError: (Object error, StackTrace stack) {
+        developer.log(
+          'SellConverter: failed to load sellable currencies — picker will '
+          'be disabled and the user is notified',
+          name: 'realunit_wallet.sell',
+          error: error,
+          stackTrace: stack,
+          level: 1000, // SEVERE
+        );
+        if (!mounted) return;
+        setState(() => _loadFailed = true);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(S.of(context).settingsCurrencyLoadFailed),
+              backgroundColor: RealUnitColors.status.red600,
+            ),
+          );
+        });
+      },
+    );
   }
 
   @override
@@ -214,6 +240,10 @@ class _SellConverterState extends State<SellConverter> {
                     child: BlocBuilder<SellConverterCubit, SellConverterState>(
                       builder: (context, state) {
                         return PopupMenuButton<Currency>(
+                          key: _loadFailed
+                              ? const Key('sell-currency-picker-disabled')
+                              : const Key('sell-currency-picker'),
+                          enabled: !_loadFailed && _sellable.isNotEmpty,
                           initialValue: state.currency,
                           onSelected: (currency) {
                             if (currency == state.currency) return;
