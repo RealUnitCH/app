@@ -1,0 +1,14 @@
+# Captures docs/handbook/screenshots/21-settings-aktionariat-documents.png
+# Continues from 20-settings-legal-documents. From SettingsLegalDocumentsPage
+# tap the "Dokumente der Aktionariat AG" entry -> SettingsAktionariatDocumentsPage.
+# The settle target is "Impressum", which is one of the four document tiles on
+# the Aktionariat sub-page and is not present on SettingsLegalDocumentsPage.
+appId: swiss.realunit.app
+---
+- tapOn:
+    text: '.*Dokumente der Aktionariat AG.*'
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: '.*Impressum.*'
+    timeout: 30000

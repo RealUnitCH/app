@@ -1,0 +1,26 @@
+# Captures docs/handbook/screenshots/24-terms.png
+# Self-contained: launches fresh with clearState. On the HomePage splash the
+# copy above the Start button is a TextSubstringHighlighting rich-text widget
+# (lib/widgets/text_substring_highlighting.dart). Its highlighted substring
+# "Nutzungsbedingungen" carries a TapGestureRecognizer that routes to
+# LegalRoutes.terms -> LegalDocumentPage. The whole paragraph is a single
+# RichText / a11y node, and "Nutzungsbedingungen" also appears as the page
+# title on LegalDocumentPage, so a text: tap is ambiguous. The centred
+# two-line sentence ("Mit der Nutzung dieser App akzeptieren Sie die
+# Nutzungsbedingungen dieser Software.") wraps so the highlighted word leads
+# the second line just above the Start button — tapped here by coordinate.
+appId: swiss.realunit.app
+---
+- launchApp:
+    appId: swiss.realunit.app
+    clearState: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: 'Start'
+    timeout: 30000
+- tapOn:
+    point: 35%,80%
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: 'Nutzungsbedingungen'
+    timeout: 30000

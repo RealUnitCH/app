@@ -1,0 +1,25 @@
+# Captures docs/handbook/screenshots/23-restore-wallet.png
+# Self-contained: launches fresh with clearState. From the HomePage splash tap
+# "Start" -> WelcomePage. Tap the "Digitale Wallet (App)" card to flip the
+# welcome toggle to step 2, then tap the "Wallet wiederherstellen" card
+# -> RestoreWalletPage. The settle target is the seed-entry description text,
+# which is unique to RestoreWalletView (the "Wallet wiederherstellen" heading
+# shares its string with the welcome card and would match too early).
+appId: swiss.realunit.app
+---
+- launchApp:
+    appId: swiss.realunit.app
+    clearState: true
+- waitForAnimationToEnd
+- tapOn: 'Start'
+- waitForAnimationToEnd
+- tapOn:
+    text: '.*Digitale Wallet.*'
+- waitForAnimationToEnd
+- tapOn:
+    text: '.*Wallet wiederherstellen.*'
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: '.*Wiederherstellungs-Wörter.*'
+    timeout: 30000

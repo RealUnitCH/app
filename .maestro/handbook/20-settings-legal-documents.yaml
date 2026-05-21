@@ -1,0 +1,16 @@
+# Captures docs/handbook/screenshots/20-settings-legal-documents.png
+# Continues from 19-settings-seed-revealed (no clearState). The seed page is
+# pushed on top of the Settings menu, so we tap back to the menu, then open
+# "Rechtsdokumente" -> SettingsLegalDocumentsPage.
+appId: swiss.realunit.app
+---
+- tapOn:
+    point: 8%,8%
+- waitForAnimationToEnd
+- tapOn:
+    text: '.*Rechtsdokumente.*'
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: '.*Dokumente der Aktionariat AG.*'
+    timeout: 30000
