@@ -1,0 +1,114 @@
+# App Screens
+
+Complete inventory of every screen in the RealUnit wallet app — one row per screen.
+
+The source of truth for navigable screens is the `GoRouter` definition in
+`lib/setup/routing/router_config.dart`; route names live in
+`lib/setup/routing/routes/`. Keep this file in sync when routes, screen widgets
+or handbook screenshots change.
+
+Column meaning:
+
+- **Route** / **Path** — the `GoRoute` name and path. `—` means the screen is
+  **not a route**: it is shown inside a parent route (KYC steps, status
+  sub-pages, disclaimer steps).
+- **Handbook** — the handbook screenshot number(s) (`docs/handbook/screenshots/NN-*.png`)
+  that document the screen, or `—` if it is not in the handbook. The handbook
+  covers the new-user onboarding journey (sign-up → dashboard) plus the settings
+  screens reachable from it: 19 screenshots, **14 of the 40 routed screens**.
+  See `docs/handbook/README.md`.
+
+| Area | Widget | Route | Path | Handbook |
+|---|---|---|---|---|
+| Onboarding | `HomePage` | `home` | `/home` | `01` |
+| Onboarding | `WelcomePage` | `welcome` | `/welcome` | `02`, `03` |
+| Onboarding | `CreateWalletPage` | `createWallet` | `/createWallet` | `04`, `05` |
+| Onboarding | `VerifySeedPage` | `verifySeed` | `/verifySeed` | `06` |
+| Onboarding | `RestoreWalletPage` | `restoreWallet` | `/restoreWallet` | — |
+| Onboarding | `OnboardingCompletedPage` | `onboardingCompleted` | `/onboardingComplete` | `07` |
+| Onboarding | `DebugAuthPage` | `debugAuth` | `/debugAuth` | — |
+| PIN & lock | `VerifyPinPage` | `pinGate` | `/pinGate` | `17` |
+| PIN & lock | `SetupPinPage` | `setupPin` | `/setupPin` | `08`, `09` |
+| PIN & lock | `VerifyPinPage` | `verifyPin` | `/verifyPin` | — |
+| Dashboard & trading | `DashboardPage` | `dashboard` | `/dashboard` | `11` |
+| Dashboard & trading | `TransactionHistoryPage` | `transactionHistory` | `/dashboard/transactionHistory` | — |
+| Dashboard & trading | `BuyPage` | `buy` | `/buy` | — |
+| Dashboard & trading | `SellPage` | `sell` | `/sell` | — |
+| Dashboard & trading | `SellBitboxPage` | `sellBitbox` | `/sellBitbox` | — |
+| Dashboard & trading | `SellBankAccountSelectionPage` | — | — | — |
+| Dashboard & trading | `ReceivePage` | `receive` | `/receive` | — |
+| Dashboard & trading | `WebViewPage` | `webView` | `/webView` | — |
+| Legal | `LegalDisclaimerPage` | `legalDisclaimer` | `/legalDisclaimer` | — |
+| Legal | `LegalDocumentPage` | `legalDocument` | `/legalDocument` | — |
+| Legal | `LegalDocumentPage` | `terms` | `/termsOfUse` | — |
+| Legal | `LegalDisclaimerStep` | — | — | — |
+| Legal | `LegalDfxStep` | — | — | — |
+| Legal | `LegalAktionariatStep` | — | — | — |
+| Legal | `LegalDocumentsStep` | — | — | — |
+| Settings | `SettingsPage` | `settings` | `/settings` | `12` |
+| Settings | `SettingsAktionariatDocumentsPage` | `settingsAktionariatDocuments` | `/settings/aktionariatDocuments` | — |
+| Settings | `SettingsContactPage` | `settingsContact` | `/settings/contact` | — |
+| Settings | `SettingsCurrenciesPage` | `settingsCurrencies` | `/settings/currencies` | `14` |
+| Settings | `SettingsDfxDocumentsPage` | `settingsDfxDocuments` | `/settings/dfxDocuments` | — |
+| Settings | `SettingsLanguagePage` | `settingsLanguages` | `/settings/languages` | `13` |
+| Settings | `SettingsLegalDocumentsPage` | `settingsLegalDocuments` | `/settings/legalDocuments` | — |
+| Settings | `SettingsNetworkPage` | `settingsNetwork` | `/settings/network` | `15` |
+| Settings | `SettingsTaxReportPage` | `settingsTaxReport` | `/settings/taxReport` | — |
+| Settings | `SettingsSeedPage` | `settingsSeed` | `/settings/seed` | `18`, `19` |
+| Settings | `SettingsWalletAddressPage` | `settingsWalletAddress` | `/settings/walletAddress` | `16` |
+| Settings | `SettingsUserDataPage` | `settingsUserData` | `/settings/userData` | — |
+| Settings | `SettingsEditNamePage` | `settingsEditName` | `/settings/userData/editName` | — |
+| Settings | `SettingsEditAddressPage` | `settingsEditAddress` | `/settings/userData/editAddress` | — |
+| Settings | `SettingsEditPhoneNumberPage` | `settingsEditPhone` | `/settings/userData/editPhoneNumber` | — |
+| Settings | `SettingsEditLoadingPage` | — | — | — |
+| Settings | `SettingsEditPendingPage` | — | — | — |
+| Settings | `SettingsEditFailurePage` | — | — | — |
+| Support | `SupportPage` | `support` | `/support` | — |
+| Support | `SupportTicketsPage` | `supportTickets` | `/support/tickets` | — |
+| Support | `SupportCreateTicketPage` | `supportCreateTicket` | `/support/create` | — |
+| Support | `SupportChatPage` | `supportChat` | `/support/chat/:uid` | — |
+| KYC | `KycPageManager` | `kyc` | `/kyc` | — |
+| KYC | `KycRegistrationPage` | — | — | — |
+| KYC | `KycRegistrationPersonalStep` | — | — | — |
+| KYC | `KycRegistrationAddressStep` | — | — | — |
+| KYC | `KycNationalityPage` | — | — | — |
+| KYC | `KycEmailPage` | — | — | — |
+| KYC | `KycEmailVerificationPage` | — | — | — |
+| KYC | `Kyc2faPage` | — | — | — |
+| KYC | `KycIdentPage` | — | — | — |
+| KYC | `KycFinancialDataPage` | — | — | — |
+| KYC | `KycFinancialDataQuestionsPage` | — | — | — |
+| KYC | `KycFinancialDataLoadingPage` | — | — | — |
+| KYC | `KycFinancialDataFailurePage` | — | — | — |
+| KYC | `KycLoadingPage` | — | — | — |
+| KYC | `KycPendingPage` | — | — | — |
+| KYC | `KycCompletedPage` | — | — | — |
+| KYC | `KycFailurePage` | — | — | — |
+| KYC | `KycAccountMergePage` | — | — | — |
+
+65 screens — 40 routed (`GoRoute`) + 25 non-routed.
+
+## Notes
+
+- **Non-routed screens** are driven inside a parent route: the KYC pages are
+  orchestrated by `KycPageManager` under `/kyc`; the `*Step` widgets are steps
+  inside a parent (`LegalDisclaimerStep` etc. inside `LegalDisclaimerPage`,
+  `KycRegistration*Step` inside `KycRegistrationPage`); the `*Loading` /
+  `*Pending` / `*Failure` pages are operation-status screens.
+- **`debugAuth`** is registered only in debug builds (`kDebugMode`).
+- **Shared widgets.** `LegalDocumentPage` backs two routes (`legalDocument`,
+  `terms`); `VerifyPinPage` backs two (`pinGate`, `verifyPin`) via different
+  constructors. Handbook screenshot `17` shows `VerifyPinPage` in its `pinGate`
+  use; the `verifyPin` app-lock use is not separately documented.
+- **Handbook numbering.** The 19 handbook screenshots are each the output of a
+  Maestro Tier-3 flow (`.maestro/handbook/NN-*.yaml`). Screenshot
+  `10-biometric-prompt` documents the `EnableBiometricBottomSheet` modal — not a
+  routed screen — so the table has no `10`.
+- **`*Page` / `*View` pattern.** Several screens split into a `*Page` widget
+  (provides the bloc/cubit) and a `*View` widget (builds the `Scaffold`):
+  `CreateWalletView`, `RestoreWalletView`, `SettingsSeedView`, `DebugAuthView`.
+  These are not separate screens — each belongs to its `*Page`.
+- **Modal bottom sheets** are not screens and are out of scope: e.g.
+  `EnableBiometricBottomSheet`; `ReceivePage` in `isBottomSheet` mode;
+  `ConnectBitboxPage` — despite its `Page` suffix it builds no `Scaffold` and is
+  shown via `showModalBottomSheet`.

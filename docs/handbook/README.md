@@ -48,10 +48,12 @@ frisch ist — sonst landen Folgeläufe direkt auf dem App-Lock-Screen.
    - Beende mit `assertVisible` oder `extendedWaitUntil`, damit der
      Screenshot stabil ist (sonst trifft xcrun mitten in der Transition).
 2. Lauf: `scripts/run-handbook-flows.sh`.
-3. HTML: einen neuen `<section class="spec">`-Block in `docs/handbook/de/index.html`
-   ergänzen (Muster siehe spec-02).
-4. TOC: den Eintrag in `<nav class="toc">` mit Anker zur neuen Section
-   ergänzen.
+3. HTML: in `docs/handbook/de/index.html` einen neuen `<div class="test">`-Block
+   in die thematisch passende `<details id="spec-NN" class="spec">`-Sektion
+   einfügen (Muster siehe spec-01). Die Screenshots sind in wenige thematische
+   spec-Sektionen gruppiert — ein neuer Flow kommt meist in eine bestehende.
+4. Nur bei einem neuen Thema: eine neue `<details id="spec-NN" class="spec">`
+   anlegen und den Anker `#spec-NN` in `<nav class="toc">` ergänzen.
 
 ## Beziehung zu den Tier-0/Tier-1-Tests
 
