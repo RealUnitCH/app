@@ -15,7 +15,7 @@ Column meaning:
 - **Handbook** — the handbook screenshot number(s) (`docs/handbook/screenshots/NN-*.png`)
   that document the screen, or `—` if it is not in the handbook. The handbook
   covers the new-user onboarding journey (sign-up → dashboard) plus the settings
-  screens reachable from it: 19 screenshots, **14 of the 40 routed screens**.
+  screens reachable from it: 24 screenshots, **19 of the 40 routed screens**.
   See `docs/handbook/README.md`.
 
 | Area | Widget | Route | Path | Handbook |
@@ -24,7 +24,7 @@ Column meaning:
 | Onboarding | `WelcomePage` | `welcome` | `/welcome` | `02`, `03` |
 | Onboarding | `CreateWalletPage` | `createWallet` | `/createWallet` | `04`, `05` |
 | Onboarding | `VerifySeedPage` | `verifySeed` | `/verifySeed` | `06` |
-| Onboarding | `RestoreWalletPage` | `restoreWallet` | `/restoreWallet` | — |
+| Onboarding | `RestoreWalletPage` | `restoreWallet` | `/restoreWallet` | `23` |
 | Onboarding | `OnboardingCompletedPage` | `onboardingCompleted` | `/onboardingComplete` | `07` |
 | Onboarding | `DebugAuthPage` | `debugAuth` | `/debugAuth` | — |
 | PIN & lock | `VerifyPinPage` | `pinGate` | `/pinGate` | `17` |
@@ -40,18 +40,18 @@ Column meaning:
 | Dashboard & trading | `WebViewPage` | `webView` | `/webView` | — |
 | Legal | `LegalDisclaimerPage` | `legalDisclaimer` | `/legalDisclaimer` | — |
 | Legal | `LegalDocumentPage` | `legalDocument` | `/legalDocument` | — |
-| Legal | `LegalDocumentPage` | `terms` | `/termsOfUse` | — |
+| Legal | `LegalDocumentPage` | `terms` | `/termsOfUse` | `24` |
 | Legal | `LegalDisclaimerStep` | — | — | — |
 | Legal | `LegalDfxStep` | — | — | — |
 | Legal | `LegalAktionariatStep` | — | — | — |
 | Legal | `LegalDocumentsStep` | — | — | — |
 | Settings | `SettingsPage` | `settings` | `/settings` | `12` |
-| Settings | `SettingsAktionariatDocumentsPage` | `settingsAktionariatDocuments` | `/settings/aktionariatDocuments` | — |
+| Settings | `SettingsAktionariatDocumentsPage` | `settingsAktionariatDocuments` | `/settings/aktionariatDocuments` | `21` |
 | Settings | `SettingsContactPage` | `settingsContact` | `/settings/contact` | — |
 | Settings | `SettingsCurrenciesPage` | `settingsCurrencies` | `/settings/currencies` | `14` |
-| Settings | `SettingsDfxDocumentsPage` | `settingsDfxDocuments` | `/settings/dfxDocuments` | — |
+| Settings | `SettingsDfxDocumentsPage` | `settingsDfxDocuments` | `/settings/dfxDocuments` | `22` |
 | Settings | `SettingsLanguagePage` | `settingsLanguages` | `/settings/languages` | `13` |
-| Settings | `SettingsLegalDocumentsPage` | `settingsLegalDocuments` | `/settings/legalDocuments` | — |
+| Settings | `SettingsLegalDocumentsPage` | `settingsLegalDocuments` | `/settings/legalDocuments` | `20` |
 | Settings | `SettingsNetworkPage` | `settingsNetwork` | `/settings/network` | `15` |
 | Settings | `SettingsTaxReportPage` | `settingsTaxReport` | `/settings/taxReport` | — |
 | Settings | `SettingsSeedPage` | `settingsSeed` | `/settings/seed` | `18`, `19` |

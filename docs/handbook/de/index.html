@@ -485,6 +485,9 @@
             <li>
               <a href="#spec-07"><span class="spec-num">07</span>Wallet-Sicherung</a>
             </li>
+            <li>
+              <a href="#spec-08"><span class="spec-num">08</span>Wiederherstellung &amp; Rechtliches</a>
+            </li>
           </ol>
         </nav>
       </aside>
@@ -503,7 +506,7 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/DFXswiss/realunit-app">DFXswiss/realunit-app</a></span>
-            <span>🧪 <b>Tests:</b> ~1100 (Tier 0/1) · 19 Tier-3 screens</span>
+            <span>🧪 <b>Tests:</b> ~1100 (Tier 0/1) · 24 Tier-3 screens</span>
           </div>
         </section>
 
@@ -536,7 +539,7 @@
 
           <div class="callout info">
             <p>
-              <b>Pipeline:</b> 19 Flows in <code>.maestro/handbook/</code>, alphabetisch
+              <b>Pipeline:</b> 24 Flows in <code>.maestro/handbook/</code>, alphabetisch
               durchlaufen. Maestro übernimmt Navigation und Assertions; der eigentliche
               Screenshot kommt von
               <code>xcrun simctl io booted screenshot</code> — Flutters
@@ -928,10 +931,10 @@
             <div class="spec-head">
               <div class="lhs">
                 <h2><span class="num">06</span>Einstellungen</h2>
-                <div class="file">.maestro/handbook/12..16-*.yaml</div>
+                <div class="file">.maestro/handbook/12..16,20..22-*.yaml</div>
               </div>
               <div class="rhs">
-                <b>5 Screens</b>
+                <b>8 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
@@ -1039,6 +1042,57 @@
                 ohne EIP-681-Payload.
               </div>
             </div>
+            <div class="test">
+              <div class="head">
+                <span class="name">20-settings-legal-documents</span>
+                <span class="src">20-settings-legal-documents.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/20-settings-legal-documents.png"
+                  alt="Rechtsdokumente — Übersicht"
+                />
+              </div>
+              <div class="desc">
+                Die <b>Rechtsdokumente</b>-Übersichtsseite in den Einstellungen. Bündelt
+                die rechtlich relevanten Dokumente in zwei Gruppen — <b>Aktionariat</b> und
+                <b>DFX</b> — die jeweils auf eine eigene Unterseite führen.
+              </div>
+            </div>
+            <div class="test">
+              <div class="head">
+                <span class="name">21-settings-aktionariat-documents</span>
+                <span class="src">21-settings-aktionariat-documents.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/21-settings-aktionariat-documents.png"
+                  alt="Aktionariat-Dokumente"
+                />
+              </div>
+              <div class="desc">
+                Unterseite mit den <b>RealUnit/Aktionariat</b>-Aktionärsdokumenten —
+                Unterlagen rund um die RealUnit-Aktie und die Aktionariat-Plattform. Jeder
+                Eintrag öffnet das Dokument im <code>LegalDocumentPage</code>-Viewer.
+              </div>
+            </div>
+            <div class="test">
+              <div class="head">
+                <span class="name">22-settings-dfx-documents</span>
+                <span class="src">22-settings-dfx-documents.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/22-settings-dfx-documents.png"
+                  alt="DFX-Dokumente"
+                />
+              </div>
+              <div class="desc">
+                Unterseite mit den <b>DFX</b>-Rechtsdokumenten — die rechtlichen Unterlagen
+                des DFX-Integrationspartners (z.B. AGB und Datenschutz für Buy/Sell und
+                KYC). Jeder Eintrag öffnet das Dokument im <code>LegalDocumentPage</code>-Viewer.
+              </div>
+            </div>
           </div>
         </details>
 
@@ -1123,6 +1177,73 @@
                 hier keinen <em>Verify-Schritt</em> — der User hat die Phrase bereits
                 einmal verifiziert. Nach kurzer Zeit kehrt die Karte automatisch in den
                 Blur-Zustand zurück (Code: <code>SettingsSeedBloc</code>).
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-08" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">08</span>Wiederherstellung &amp; Rechtliches</h2>
+                <div class="file">.maestro/handbook/23..24-*.yaml</div>
+              </div>
+              <div class="rhs">
+                <b>2 Screens</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
+                    >Flows ↗</a
+                  >
+                </div>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Zwei eigenständige Screens ausserhalb des linearen Onboarding-Pfads: die
+            Wiederherstellung einer bestehenden Wallet aus dem „restore"-Zweig des
+            Onboardings, und die Nutzungsbedingungen, die direkt vom Splash-Screen aus
+            geöffnet werden können.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test">
+              <div class="head">
+                <span class="name">23-restore-wallet</span>
+                <span class="src">23-restore-wallet.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/23-restore-wallet.png"
+                  alt="Wallet wiederherstellen"
+                />
+              </div>
+              <div class="desc">
+                Der <b>Wallet wiederherstellen</b>-Screen aus dem „restore"-Zweig des
+                Onboardings. Hier gibt der User seine bestehende
+                <b>12-Wort-Recovery-Phrase</b> ein, um eine bereits vorhandene Wallet auf
+                dem Gerät zu reaktivieren — etwa nach einem Geräte-Wechsel oder einer
+                Neuinstallation.
+              </div>
+            </div>
+            <div class="test">
+              <div class="head">
+                <span class="name">24-terms</span>
+                <span class="src">24-terms.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/24-terms.png"
+                  alt="Nutzungsbedingungen"
+                />
+              </div>
+              <div class="desc">
+                Die <b>Nutzungsbedingungen</b> als Dokumentseite, geöffnet über den
+                i18n-Disclaimer-Link auf dem Splash-Screen. Gerendert vom
+                <code>LegalDocumentPage</code>-Viewer in seiner <code>terms</code>-Variante.
               </div>
             </div>
           </div>
