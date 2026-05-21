@@ -126,9 +126,11 @@ unset IFS
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-# Worst-case the entire suite is 3 × 19 × ~1 min plus 3 × ~6 min
-# driver-startup-timeout per failed attempt, which still fits inside
-# the workflow's 30 min envelope.
+# Per-attempt retry budget for the upstream driver-hang class. The full
+# suite overruns a tight CI envelope; the onboarding flows (01-06) tend
+# to dominate. The per-flow / per-attempt timing logged below is the data
+# to size the workflow's `timeout-minutes` (see tier3-handbook.yaml) and
+# to target a real speed-up.
 MAESTRO_MAX_ATTEMPTS="${MAESTRO_MAX_ATTEMPTS:-3}"
 
 # Maestro's `--debug-output` writes per-attempt view-hierarchy.json +
@@ -140,27 +142,39 @@ MAESTRO_MAX_ATTEMPTS="${MAESTRO_MAX_ATTEMPTS:-3}"
 MAESTRO_DEBUG_ROOT="$TMP_DIR/maestro-debug"
 mkdir -p "$MAESTRO_DEBUG_ROOT"
 
+# Whole-second duration → `Nm SSs`. Drives the per-attempt / per-flow /
+# suite timing lines below — the data for sizing the CI envelope and
+# finding which flows to speed up.
+fmt_duration() {
+  printf '%dm %02ds' $(( $1 / 60 )) $(( $1 % 60 ))
+}
+
+suite_start=$(date +%s)
+timings=()
+
 for flow in "${flows[@]}"; do
   base="$(basename "$flow" .yaml)"
   tmp_png="$TMP_DIR/$base.png"
   png="$SCREENS_DIR/$base.png"
   echo
   echo "▶ $base"
+  flow_start=$(date +%s)
 
   attempt=0
   while : ; do
     attempt=$((attempt + 1))
+    attempt_start=$(date +%s)
     flow_log="$TMP_DIR/$base.attempt-$attempt.log"
     debug_dir="$MAESTRO_DEBUG_ROOT/$base-attempt-$attempt"
     if "$MAESTRO" test --debug-output "$debug_dir" --flatten-debug-output "$flow" 2>&1 | tee "$flow_log"; then
-      [ "$attempt" -gt 1 ] && echo "  passed on attempt $attempt"
+      echo "  attempt $attempt passed in $(fmt_duration $(( $(date +%s) - attempt_start )))"
       break
     fi
     # Only retry the upstream driver-hang class. Assertion failures
     # are real regressions and must surface red — never retry them.
     if grep -q 'IOSDriverTimeoutException' "$flow_log" && \
        [ "$attempt" -lt "$MAESTRO_MAX_ATTEMPTS" ]; then
-      echo "  driver hang on attempt $attempt of $MAESTRO_MAX_ATTEMPTS; restarting simulator and retrying"
+      echo "  driver hang on attempt $attempt of $MAESTRO_MAX_ATTEMPTS after $(fmt_duration $(( $(date +%s) - attempt_start ))); restarting simulator and retrying"
       xcrun simctl shutdown "$UDID" || true
       xcrun simctl boot "$UDID"
       xcrun simctl bootstatus "$UDID" -b >/dev/null
@@ -187,9 +201,19 @@ for flow in "${flows[@]}"; do
 
   xcrun simctl io booted screenshot "$tmp_png" >/dev/null
   mv "$tmp_png" "$png"
-  echo "  captured → ${png#$REPO_ROOT/}"
+  flow_secs=$(( $(date +%s) - flow_start ))
+  timings+=("$base|$flow_secs|$attempt")
+  echo "  captured → ${png#"$REPO_ROOT"/}  [flow total $(fmt_duration "$flow_secs"), $attempt attempt(s)]"
 done
 
 echo
-echo "Done. Screenshots in $SCREENS_DIR:"
+echo "Done in $(fmt_duration $(( $(date +%s) - suite_start )))."
+echo
+echo "Per-flow wall-clock (slowest first) — data for sizing tier3-handbook.yaml"
+echo "timeout-minutes and for targeting the slow flows:"
+printf '%s\n' "${timings[@]}" | sort -t'|' -k2 -rn | while IFS='|' read -r name secs att; do
+  printf '  %-34s %9s  (%s attempt(s))\n' "$name" "$(fmt_duration "$secs")" "$att"
+done
+echo
+echo "Screenshots in $SCREENS_DIR:"
 ls -1 "$SCREENS_DIR"
