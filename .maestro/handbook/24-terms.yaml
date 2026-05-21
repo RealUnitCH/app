@@ -5,14 +5,20 @@
 # "Nutzungsbedingungen" carries a TapGestureRecognizer that routes to
 # LegalRoutes.terms -> LegalDocumentPage. The whole paragraph is a single
 # RichText / a11y node, and "Nutzungsbedingungen" also appears as the page
-# title on LegalDocumentPage, so a text: tap is ambiguous. The centred
-# two-line sentence ("Mit der Nutzung dieser App akzeptieren Sie die
-# Nutzungsbedingungen dieser Software.") wraps so the highlighted word leads
-# the second line just above the Start button — tapped here by coordinate.
-# The closing assertion targets the document H1 "Nutzungsbedingungen der
-# RealUnit Wallet App", which is unique to the terms page — the bare word
-# also appears on the splash, so asserting it alone would pass even if the
-# coordinate tap missed.
+# title on LegalDocumentPage, so the closing assertion targets the document
+# H1 "Nutzungsbedingungen der RealUnit Wallet App", which is unique to the
+# terms page (the bare word also appears on the splash, so asserting it
+# alone would pass even if the tap missed).
+#
+# Tap strategy: the RichText is bracketed top-and-bottom by stable anchors
+# ("Mit der Nutzung dieser App" and the "Start" button below). Before tapping
+# we wait for the full paragraph text to be rasterised, then tap by relative
+# coordinate inside the RichText body. The coordinate sits roughly mid-line
+# of the second wrapped line on iPhone 17 — where "Nutzungsbedingungen" lands
+# because of how the German copy wraps in `softwareTermsText`. The closing
+# extendedWaitUntil is the actual correctness check; if the tap missed, the
+# H1 assertion fails loudly with the document not opening rather than passing
+# silently.
 appId: swiss.realunit.app
 ---
 - launchApp:
@@ -22,6 +28,14 @@ appId: swiss.realunit.app
 - extendedWaitUntil:
     visible: 'Start'
     timeout: 30000
+# Anchor that the full splash paragraph (not just the Start button) is on
+# screen before the coordinate tap — without this guard Maestro can fire the
+# tap during the splash-image fade-in while the RichText is still painting,
+# missing the highlighted substring.
+- extendedWaitUntil:
+    visible:
+      text: '.*Mit der Nutzung dieser App.*'
+    timeout: 10000
 - tapOn:
     point: 35%,80%
 - waitForAnimationToEnd
