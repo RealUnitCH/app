@@ -9,8 +9,11 @@ part 'settings_event.dart';
 part 'settings_state.dart';
 
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
-  SettingsBloc(this._settingsRepository, this.getNewAuthToken)
-      : super(SettingsState(
+  SettingsBloc(
+    this._settingsRepository,
+    this.getNewAuthToken, {
+    this.onNetworkModeChanged,
+  }) : super(SettingsState(
           language: Language.fromCode(_settingsRepository.language),
           currency: Currency.fromCode(_settingsRepository.currency),
           networkMode: _settingsRepository.networkMode,
@@ -23,6 +26,11 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
 
   final SettingsRepository _settingsRepository;
   final Future<void> Function() getNewAuthToken;
+
+  /// Called after the network mode has been persisted and a fresh auth token
+  /// has been fetched, but before the new state is emitted. Used to invalidate
+  /// reference-data caches (fiats, languages) that are scoped per backend.
+  final void Function()? onNetworkModeChanged;
 
   void _onSetLanguageEvent(SetLanguageEvent event, Emitter<SettingsState> emit) {
     _settingsRepository.language = event.language.code;
@@ -38,6 +46,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       SetNetworkModeEvent event, Emitter<SettingsState> emit) async {
     _settingsRepository.networkMode = event.networkMode;
     await getNewAuthToken();
+    onNetworkModeChanged?.call();
     emit(state.copyWith(networkMode: event.networkMode));
   }
 
