@@ -120,13 +120,12 @@ for flow in "${flows[@]}"; do
   png="$SCREENS_DIR/$base.png"
   echo
   echo "▶ $base"
-  # Run the flow. If it fails, capture network + process state for the
-  # upstream Maestro IPv4/IPv6 bind hypothesis (see workflow header +
-  # DFXswiss/realunit-app#487 tracking). The lsof | grep IPv[46] line
-  # is the binary tell: if the XCTRunner is listening on IPv6 only
-  # while Maestro CLI connects to 127.0.0.1, we see the issue exactly.
-  # We exit 1 explicitly after the post-mortem so the calling workflow
-  # step still fails as before.
+  # If a flow fails, capture network + process state for forensic
+  # post-mortem. The lsof output shows which process is bound on which
+  # loopback family — useful regardless of root cause. The simctl log
+  # tail surfaces XCTRunner crashes that don't make it into Maestro's
+  # own stack trace. See realunit-app#486 / realunit-app#487 for the
+  # Tier 3 reliability discussion.
   if ! "$MAESTRO" test "$flow"; then
     echo "--- POST-MORTEM: TCP loopback listeners ---"
     /usr/sbin/lsof -iTCP -sTCP:LISTEN -nP 2>/dev/null | grep -E 'IPv[46]|java|xctest|XCT|maestro' || true
