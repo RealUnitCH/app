@@ -38,7 +38,25 @@
 #   Assertion failures are NEVER retried — those are real regressions
 #   and must surface as red CI checks.
 #
-# Usage:  scripts/run-handbook-flows.sh
+# Usage:
+#   scripts/run-handbook-flows.sh                    # run ALL handbook flows
+#   scripts/run-handbook-flows.sh 23-restore-wallet  # run only matching flows
+#   scripts/run-handbook-flows.sh '2*' 30-settings   # multiple glob patterns
+#
+#   With no arguments every flow in .maestro/handbook/*.yaml runs (the
+#   default, full-suite behaviour). With one or more positional arguments,
+#   each argument is a bash glob pattern matched against the flow basename
+#   (filename without the `.yaml` extension); only flows whose basename
+#   matches AT LEAST ONE pattern are run, in the same deterministic sorted
+#   order. If arguments are given but match zero flows the script exits 1.
+#
+# WARNING — handbook flows are a sequential CHAIN sharing app state:
+#   The numbered flows are designed to run in order, each one continuing
+#   from the app state the previous flow left behind. Running a mid-chain
+#   flow in isolation will fail because it expects state set up by the
+#   flows before it. Only flows that begin with their own `launchApp`
+#   re-establish a known starting point and are therefore safe to run
+#   alone — every other flow must be run together with its predecessors.
 
 set -euo pipefail
 
@@ -120,6 +138,30 @@ fi
 # Sort for deterministic ordering — flow filename is the source of truth.
 IFS=$'\n' flows=($(printf '%s\n' "${flows[@]}" | sort))
 unset IFS
+
+# Optional positional arguments are basename glob patterns. With no
+# arguments every flow runs (full suite). With arguments, keep only the
+# flows whose basename (filename without `.yaml`) matches at least one
+# pattern. Matching uses bash's `[[ == ]]` glob — NEVER `eval` — so
+# patterns like `2*` or `23-restore-wallet` work without shell injection.
+if [ "$#" -gt 0 ]; then
+  patterns=("$@")
+  selected=()
+  for flow in "${flows[@]}"; do
+    base="$(basename "$flow" .yaml)"
+    for pat in "${patterns[@]}"; do
+      if [[ $base == $pat ]]; then
+        selected+=("$flow")
+        break
+      fi
+    done
+  done
+  if [ "${#selected[@]}" -eq 0 ]; then
+    echo "error: no handbook flows match the given pattern(s): ${patterns[*]}" >&2
+    exit 1
+  fi
+  flows=("${selected[@]}")
+fi
 
 # xcrun simctl runs inside CoreSimulator which is sandboxed by macOS TCC and
 # cannot write to ~/Documents directly. Stage to /tmp and `mv` afterwards.
