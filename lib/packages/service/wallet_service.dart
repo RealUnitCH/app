@@ -24,6 +24,17 @@ class WalletService {
   /// concurrent explicit lock doesn't double-fire.
   Timer? _postUnlockLockTimer;
 
+  /// Active holders of the unlocked-wallet contract. Incremented on every
+  /// [ensureCurrentWalletUnlocked] call, decremented on every matching
+  /// [lockCurrentWallet] — the wallet only flips back to a view-wallet once
+  /// the last holder has released. Closes the race where flow A locks
+  /// between flow B's ensure and its sign, leaving B with a
+  /// [SoftwareViewWallet] mid-flight and an [UnsupportedError] from the
+  /// locked-credentials sentinel. The post-unlock timer bypasses the counter
+  /// via [_forceLock] so the 60s safety net still caps the mnemonic lifetime
+  /// even if a caller forgets to release.
+  int _activeUnlockHolders = 0;
+
   WalletService(
     this._bitboxService,
     this._repository,
@@ -123,9 +134,15 @@ class WalletService {
   ///
   /// Owning the lifecycle here — instead of behind a callback wired onto
   /// [AppStore] — keeps the latter as a pure state container.
+  ///
+  /// Every call increments [_activeUnlockHolders]; callers must pair with
+  /// exactly one [lockCurrentWallet] in a finally so concurrent sign flows
+  /// don't tear the unlocked state out from under each other.
   Future<void> ensureCurrentWalletUnlocked() async {
-    if (_appStore.wallet is! SoftwareViewWallet) return;
-    _appStore.wallet = await unlockCurrentWallet();
+    _activeUnlockHolders++;
+    if (_appStore.wallet is SoftwareViewWallet) {
+      _appStore.wallet = await unlockCurrentWallet();
+    }
     // Safety net: if a caller forgets to call lockCurrentWallet() after the
     // sign, drop the mnemonic anyway once the post-unlock window elapses. The
     // reviewer flagged "user sells once then leaves the app foregrounded" —
@@ -135,24 +152,40 @@ class WalletService {
 
   /// Replaces the in-memory [SoftwareWallet] with its lock-screen-safe
   /// [SoftwareViewWallet] counterpart, dropping the mnemonic. Called after a
-  /// sign operation completes or the post-unlock timer fires so the private
-  /// key isn't kept resident for the rest of the foreground session. No-op
-  /// for wallet types that don't hold a mnemonic.
+  /// sign operation completes so the private key isn't kept resident for the
+  /// rest of the foreground session. No-op for wallet types that don't hold
+  /// a mnemonic.
+  ///
+  /// Respects [_activeUnlockHolders] — a second concurrent caller still
+  /// holding the unlocked contract keeps the wallet unlocked. The 60s safety
+  /// net runs through [_forceLock] instead so it can bypass the counter.
   Future<void> lockCurrentWallet() async {
+    if (_activeUnlockHolders > 0) _activeUnlockHolders--;
+    if (_activeUnlockHolders > 0) return;
     _postUnlockLockTimer?.cancel();
     _postUnlockLockTimer = null;
-    final current = _appStore.wallet;
-    if (current is! SoftwareWallet) return;
-    final address = current.currentAccount.primaryAddress.address.hexEip55;
-    _appStore.wallet = SoftwareViewWallet(current.id, current.name, address);
+    _lockWalletInPlace();
   }
 
   void _schedulePostUnlockLock() {
     _postUnlockLockTimer?.cancel();
-    // Bind directly to lockCurrentWallet — it cancels + nulls the timer field
-    // itself, so a redundant null in this callback would just couple two
-    // pieces of code to the same invariant.
-    _postUnlockLockTimer = Timer(_postUnlockLockTimeout, lockCurrentWallet);
+    _postUnlockLockTimer = Timer(_postUnlockLockTimeout, _forceLock);
+  }
+
+  /// Hard cap on the in-memory mnemonic lifetime. Bypasses
+  /// [_activeUnlockHolders] so a stuck holder can't keep the key resident
+  /// past the safety window.
+  void _forceLock() {
+    _activeUnlockHolders = 0;
+    _postUnlockLockTimer = null;
+    _lockWalletInPlace();
+  }
+
+  void _lockWalletInPlace() {
+    final current = _appStore.wallet;
+    if (current is! SoftwareWallet) return;
+    final address = current.currentAccount.primaryAddress.address.hexEip55;
+    _appStore.wallet = SoftwareViewWallet(current.id, current.name, address);
   }
 
   Future<void> deleteCurrentWallet() async {

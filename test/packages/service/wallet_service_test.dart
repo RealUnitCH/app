@@ -344,5 +344,41 @@ void main() {
         verifyNever(() => appStore.wallet = any(that: isA<AWallet>()));
       });
     });
+
+    group('ensure/lock reentrancy', () {
+      // Race: flow A and flow B both call ensureCurrentWalletUnlocked while
+      // the wallet is locked. A finishes its sign + lock first; B is still
+      // mid-sign and must see an unlocked wallet. Without the holder counter
+      // A's lock would tear the mnemonic out from under B and the next
+      // sign call would hit _LockedCredentials → UnsupportedError.
+      test('two parallel ensures + one lock leave the wallet unlocked', () async {
+        final stored = <AWallet>[SoftwareViewWallet(7, 'Main', _debugAddress)];
+        when(() => appStore.wallet).thenAnswer((_) => stored.last);
+        when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
+          final newWallet = inv.positionalArguments.single as AWallet;
+          stored.add(newWallet);
+          return newWallet;
+        });
+        when(() => settings.currentWalletId).thenReturn(7);
+        when(() => repo.getUnlockedWalletById(7)).thenAnswer(
+          (_) async => _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
+        );
+
+        // Flow A: ensure + lock (e.g. confirmPayment finishing first).
+        await service.ensureCurrentWalletUnlocked();
+        // Flow B enters its ensure while A is still holding the contract.
+        await service.ensureCurrentWalletUnlocked();
+        // Flow A releases — B still holds, so the wallet must stay unlocked.
+        await service.lockCurrentWallet();
+
+        expect(stored.last, isA<SoftwareWallet>(),
+            reason: 'second holder must keep the wallet unlocked');
+
+        // Flow B releases — now the wallet locks back to the view form.
+        await service.lockCurrentWallet();
+        expect(stored.last, isA<SoftwareViewWallet>(),
+            reason: 'last holder release flips back to view wallet');
+      });
+    });
   });
 }
