@@ -202,7 +202,7 @@
   "registerEmailVerificationButton": "Ich habe meine E-Mail bestätigt",
   "registerEmailVerificationDescription": "Wie es aussieht, haben Sie bereits ein Konto. Wir haben Ihnen gerade eine E-Mail geschickt. Um mit Ihrem bestehenden Konto fortzufahren, bestätigen Sie bitte Ihre E-Mail-Adresse, indem Sie auf den zugesandten Link klicken.",
   "registerEmailVerificationFailed": "Sie haben Ihre E-Mail noch nicht bestätigt.",
-  "registerEmailVerificationRegistrationFailed": "Ihre neue Wallet konnte Ihrem Account zugeordnet, jedoch konnte die Wallet nicht registriert werden. Bitte melden Sie sich beim Support.",
+  "registerEmailVerificationRegistrationFailed": "Die Wallet-Registrierung wurde noch nicht abgeschlossen. Bitte versuchen Sie es in wenigen Sekunden erneut. Falls das Problem weiterhin besteht, kontaktieren Sie den Support.",
   "registerEmailVerificationTitle": "Willkommen zurück!",
   "registerPhoneNumberInvalid": "Telefonnummer ist erforderlich",
   "registerPhoneNumberOnlyDigits": "Nur Zahlen sind erlaubt",
