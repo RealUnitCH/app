@@ -22,9 +22,11 @@ class SellBankAccountsCubit extends Cubit<SellBankAccountsState> {
       emit(SellBankAccountsLoading(state.accounts));
 
       await _dfxBankAccountService.createBankAccount(iban, label);
+      if (isClosed) return;
       await _loadBankAccounts();
     } catch (e) {
       developer.log(e.toString());
+      if (isClosed) return;
       emit(SellBankAccountsAddFailure(state.accounts, e.toString()));
     }
   }
@@ -37,18 +39,22 @@ class SellBankAccountsCubit extends Cubit<SellBankAccountsState> {
         id: bankAccount.id,
         isActive: false,
       );
+      if (isClosed) return;
       await _loadBankAccounts();
     } catch (e) {
       developer.log(e.toString());
+      if (isClosed) return;
       emit(SellBankAccountsUpdateFailure(state.accounts));
     }
   }
 
   Future<void> _loadBankAccounts() async {
+    if (isClosed) return;
     try {
       emit(SellBankAccountsLoading(state.accounts));
 
       final dto = await _dfxBankAccountService.getBankAccounts();
+      if (isClosed) return;
       final bankAccounts = dto
           .map(
             (bankAccount) => BankAccount(
@@ -63,6 +69,7 @@ class SellBankAccountsCubit extends Cubit<SellBankAccountsState> {
       emit(SellBankAccountsSuccess(bankAccounts));
     } catch (e) {
       developer.log(e.toString());
+      if (isClosed) return;
       emit(const SellBankAccountsLoadFailure());
     }
   }

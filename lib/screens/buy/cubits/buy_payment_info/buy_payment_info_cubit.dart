@@ -40,6 +40,7 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
     );
 
     final newState = await _completer!.value;
+    if (isClosed) return;
     emit(newState);
   }
 

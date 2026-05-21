@@ -32,10 +32,13 @@ class SettingsTaxReportCubit extends Cubit<SettingsTaxReportState> {
         currency: currency,
         language: language,
       );
+      if (isClosed) return;
       final file = await _createFileFromBytes(response.pdfData, date);
+      if (isClosed) return;
 
       emit(SettingsTaxReportSuccess(file.path));
     } catch (e) {
+      if (isClosed) return;
       emit(SettingsTaxReportFailure(e.toString()));
     }
   }

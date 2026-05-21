@@ -21,10 +21,13 @@ class TransactionHistoryMultiReceiptCubit extends Cubit<TransactionHistoryMultiR
       emit(const TransactionHistoryMultiReceiptLoading());
 
       final response = await _pdfService.getTransactionsReceipt(ids, currency: currency);
+      if (isClosed) return;
       final file = await _createFileFromBytes(response.pdfData);
+      if (isClosed) return;
 
       emit(TransactionHistoryMultiReceiptSuccess(file.path));
     } catch (e) {
+      if (isClosed) return;
       emit(TransactionHistoryMultiReceiptFailure(e.toString()));
     }
   }

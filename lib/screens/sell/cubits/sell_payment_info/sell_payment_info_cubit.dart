@@ -44,6 +44,7 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
         iban,
         currency: currency,
       );
+      if (isClosed) return;
 
       // Only the backend knows the current per-currency limits, exchange
       // rates and any compliance gating — when it tags the quote
@@ -70,6 +71,7 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
       final isBitbox = _appStore.wallet.walletType == WalletType.bitbox;
       emit(SellPaymentInfoSuccess(paymentInfo, isBitbox: isBitbox));
     } on KycLevelRequiredException catch (e) {
+      if (isClosed) return;
       emit(
         SellPaymentInfoFailure(
           PaymentInfoError.kycRequired,
@@ -78,6 +80,7 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
         ),
       );
     } on RegistrationRequiredException catch (e) {
+      if (isClosed) return;
       emit(
         SellPaymentInfoFailure(
           PaymentInfoError.registrationRequired,
@@ -85,6 +88,7 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
         ),
       );
     } on BitboxNotConnectedException catch (e) {
+      if (isClosed) return;
       emit(
         SellPaymentInfoFailure(
           PaymentInfoError.bitboxDisconnected,
@@ -93,6 +97,7 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
       );
     } catch (e) {
       developer.log(e.toString());
+      if (isClosed) return;
       emit(
         SellPaymentInfoFailure(
           PaymentInfoError.unknown,
