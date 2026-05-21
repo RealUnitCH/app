@@ -209,6 +209,7 @@
   "registerPhoneNumberOnlyDigits": "Only numbers are allowed",
   "registerPhoneNumberTooShort": "Phone number is too short",
   "registrationFailed": "Registration failed:\n${message}",
+  "registrationForwardingFailed": "Registration accepted, but forwarding to the company is delayed. We will retry automatically.",
   "registrationRequired": "Registration required",
   "registrationRequiredDescription": "To purchase RealUnit tokens, you must register once.",
   "reset": "Reset",

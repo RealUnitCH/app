@@ -53,6 +53,7 @@ void main() {
     when(() => registrationSubmitCubit.state).thenReturn(KycRegistrationSubmitInitial());
     when(() => kycCubit.state).thenReturn(const KycInitial());
     when(() => kycCubit.checkKyc()).thenAnswer((_) => Future.value());
+    when(() => kycCubit.markRegistrationSignProduced()).thenReturn(null);
   });
 
   void setupDependencyInjection() {
@@ -138,8 +139,72 @@ void main() {
       await tester.pumpApp(buildSubject(const KycRegistrationView()));
       await tester.pump();
 
+      verify(() => kycCubit.markRegistrationSignProduced()).called(1);
       verify(() => kycCubit.checkKyc()).called(1);
     });
+
+    testWidgets(
+      'marks sign produced + triggers checkKyc on Success(alreadyRegistered)',
+      (tester) async {
+        // Wave 3.2 regression guard: the API now emits a structured
+        // `Success(alreadyRegistered)` instead of a swallowed
+        // ApiException, and the listener must treat it identically to
+        // `completed` — the EIP-712 sign has already happened, so the
+        // sign gate must be lifted and the KYC step refreshed.
+        whenListen(
+          registrationSubmitCubit,
+          Stream.fromIterable([
+            const KycRegistrationSubmitSuccess(RegistrationStatus.alreadyRegistered),
+          ]),
+          initialState: KycRegistrationSubmitInitial(),
+        );
+
+        await tester.pumpApp(buildSubject(const KycRegistrationView()));
+        await tester.pump();
+
+        verify(() => kycCubit.markRegistrationSignProduced()).called(1);
+        verify(() => kycCubit.checkKyc()).called(1);
+      },
+    );
+
+    testWidgets(
+      'marks sign produced + triggers checkKyc on Success(pendingReview)',
+      (tester) async {
+        whenListen(
+          registrationSubmitCubit,
+          Stream.fromIterable([
+            const KycRegistrationSubmitSuccess(RegistrationStatus.pendingReview),
+          ]),
+          initialState: KycRegistrationSubmitInitial(),
+        );
+
+        await tester.pumpApp(buildSubject(const KycRegistrationView()));
+        await tester.pump();
+
+        verify(() => kycCubit.markRegistrationSignProduced()).called(1);
+        verify(() => kycCubit.checkKyc()).called(1);
+      },
+    );
+
+    testWidgets(
+      'shows SnackBar AND lifts the sign gate on Success(forwardingFailed)',
+      (tester) async {
+        whenListen(
+          registrationSubmitCubit,
+          Stream.fromIterable([
+            const KycRegistrationSubmitSuccess(RegistrationStatus.forwardingFailed),
+          ]),
+          initialState: KycRegistrationSubmitInitial(),
+        );
+
+        await tester.pumpApp(buildSubject(const KycRegistrationView()));
+        await tester.pump();
+
+        verify(() => kycCubit.markRegistrationSignProduced()).called(1);
+        verify(() => kycCubit.checkKyc()).called(1);
+        expect(find.byType(SnackBar), findsOne);
+      },
+    );
 
     testWidgets('shows SnackBar if submitting fails', (tester) async {
       whenListen(
