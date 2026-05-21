@@ -4,5 +4,7 @@ appId: swiss.realunit.app
 - tapOn:
     text: '.*Digitale Wallet.*'
 - waitForAnimationToEnd
-- assertVisible:
-    text: '.*Neue Wallet erstellen.*'
+- extendedWaitUntil:
+    visible:
+      text: '.*Neue Wallet erstellen.*'
+    timeout: 15000

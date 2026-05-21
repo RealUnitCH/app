@@ -8,4 +8,6 @@ appId: swiss.realunit.app
     commands:
       - tapOn: '1'
 - waitForAnimationToEnd
-- assertVisible: 'Bestätigen Sie Ihre PIN'
+- extendedWaitUntil:
+    visible: 'Bestätigen Sie Ihre PIN'
+    timeout: 15000

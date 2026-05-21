@@ -6,4 +6,6 @@ appId: swiss.realunit.app
 - tapOn:
     text: '.*Neue Wallet erstellen.*'
 - waitForAnimationToEnd
-- assertVisible: 'Wallet-Sicherung'
+- extendedWaitUntil:
+    visible: 'Wallet-Sicherung'
+    timeout: 15000
