@@ -1,8 +1,22 @@
 # Captures docs/handbook/screenshots/03-software-wallet-terms.png
+#
+# The tap is gated on the next screen not yet showing and re-tapped if it
+# was silently dropped (Maestro/XCUITest tap-loss on Apple Silicon + iOS 26,
+# mobile-dev-inc/maestro#3137). The gate stops the loop the instant the
+# screen changes, so surplus iterations no-op.
 appId: swiss.realunit.app
 ---
-- tapOn:
-    text: '.*Digitale Wallet.*'
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              text: '.*Neue Wallet erstellen.*'
+          commands:
+            - tapOn:
+                text: '.*Digitale Wallet.*'
+                optional: true
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
