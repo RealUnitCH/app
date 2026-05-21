@@ -35,6 +35,12 @@ class WalletService {
   /// even if a caller forgets to release.
   int _activeUnlockHolders = 0;
 
+  /// Shared future for the currently-in-flight unlock, so two overlapping
+  /// [ensureCurrentWalletUnlocked] calls reuse the same DB read + AES-GCM
+  /// decrypt instead of triggering it twice. Cleared in `finally` so the
+  /// next post-lock ensure starts a fresh unlock.
+  Future<SoftwareWallet>? _unlockInFlight;
+
   WalletService(
     this._bitboxService,
     this._repository,
@@ -141,7 +147,16 @@ class WalletService {
   Future<void> ensureCurrentWalletUnlocked() async {
     _activeUnlockHolders++;
     if (_appStore.wallet is SoftwareViewWallet) {
-      _appStore.wallet = await unlockCurrentWallet();
+      // Coalesce overlapping unlocks onto a single in-flight future so we
+      // don't hammer the DB and re-run AES-GCM for every concurrent caller.
+      final inFlight = _unlockInFlight ??= unlockCurrentWallet();
+      try {
+        _appStore.wallet = await inFlight;
+      } finally {
+        // Only the caller that started the unlock clears the slot; later
+        // joiners observe the field already nulled and skip the clear.
+        if (identical(_unlockInFlight, inFlight)) _unlockInFlight = null;
+      }
     }
     // Safety net: if a caller forgets to call lockCurrentWallet() after the
     // sign, drop the mnemonic anyway once the post-unlock window elapses. The

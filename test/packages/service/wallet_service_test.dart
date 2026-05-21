@@ -429,6 +429,35 @@ void main() {
         expect(stored.last, isA<SoftwareViewWallet>(),
             reason: 'final holder release flips back to view wallet');
       });
+
+      // Two overlapping ensures must coalesce onto a single DB read +
+      // AES-GCM decrypt, not trigger the repository twice. Functionally
+      // both versions would land on the same SoftwareWallet, but the
+      // extra decrypt is wasteful.
+      test('two parallel ensures dedupe the repository decrypt', () async {
+        final stored = <AWallet>[SoftwareViewWallet(7, 'Main', _debugAddress)];
+        when(() => appStore.wallet).thenAnswer((_) => stored.last);
+        when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
+          final newWallet = inv.positionalArguments.single as AWallet;
+          stored.add(newWallet);
+          return newWallet;
+        });
+        when(() => settings.currentWalletId).thenReturn(7);
+
+        final gate = Completer<WalletInfo>();
+        when(() => repo.getUnlockedWalletById(7)).thenAnswer((_) => gate.future);
+
+        final ensureA = service.ensureCurrentWalletUnlocked();
+        final ensureB = service.ensureCurrentWalletUnlocked();
+
+        gate.complete(
+          _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
+        );
+        await Future.wait([ensureA, ensureB]);
+
+        verify(() => repo.getUnlockedWalletById(7)).called(1);
+        expect(stored.last, isA<SoftwareWallet>());
+      });
     });
   });
 }
