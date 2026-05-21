@@ -16,18 +16,18 @@ class SettingsContactLoading extends SettingsContactState {
 }
 
 class SettingsContactSuccess extends SettingsContactState {
-  final bool emailSet;
+  final bool supportAvailable;
 
-  const SettingsContactSuccess({this.emailSet = false});
+  const SettingsContactSuccess({this.supportAvailable = false});
 
-  SettingsContactSuccess copyWith({bool? emailSet}) {
+  SettingsContactSuccess copyWith({bool? supportAvailable}) {
     return SettingsContactSuccess(
-      emailSet: emailSet ?? this.emailSet,
+      supportAvailable: supportAvailable ?? this.supportAvailable,
     );
   }
 
   @override
-  List<Object?> get props => [emailSet];
+  List<Object?> get props => [supportAvailable];
 }
 
 class SettingsContactFailure extends SettingsContactState {

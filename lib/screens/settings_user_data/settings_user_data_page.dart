@@ -44,7 +44,7 @@ class SettingsUserDataView extends StatelessWidget {
         padding: const .symmetric(horizontal: 20.0, vertical: 12.0),
         child: BlocBuilder<SettingsUserDataCubit, SettingsUserDataState>(
           builder: (context, state) => switch (state) {
-            SettingsUserDataSuccess(:final userData, :final email, :final pendingSteps) =>
+            SettingsUserDataSuccess(:final userData, :final email, :final pendingSteps, :final capabilities) =>
               userData != null
                   ? SingleChildScrollView(
                       child: Padding(
@@ -64,14 +64,16 @@ class SettingsUserDataView extends StatelessWidget {
                                 statusLabel: pendingSteps.contains(KycStepName.nameChange)
                                     ? S.of(context).changeInReview
                                     : null,
-                                onEdit: () async {
-                                  final isEdited = await context.pushNamed<bool>(
-                                    SettingsRoutes.editName,
-                                  );
-                                  if (isEdited == true && context.mounted) {
-                                    context.read<SettingsUserDataCubit>().getUserData();
-                                  }
-                                },
+                                onEdit: capabilities.canEditName
+                                    ? () async {
+                                        final isEdited = await context.pushNamed<bool>(
+                                          SettingsRoutes.editName,
+                                        );
+                                        if (isEdited == true && context.mounted) {
+                                          context.read<SettingsUserDataCubit>().getUserData();
+                                        }
+                                      }
+                                    : null,
                               ),
                               _UserDataRow(
                                 label: S.of(context).birthday,
@@ -85,14 +87,16 @@ class SettingsUserDataView extends StatelessWidget {
                               _UserDataRow(
                                 label: S.of(context).phoneNumber,
                                 value: userData.phoneNumber,
-                                onEdit: () async {
-                                  final isEdited = await context.pushNamed<bool>(
-                                    SettingsRoutes.editPhone,
-                                  );
-                                  if (isEdited == true && context.mounted) {
-                                    context.read<SettingsUserDataCubit>().getUserData();
-                                  }
-                                },
+                                onEdit: capabilities.canEditPhone
+                                    ? () async {
+                                        final isEdited = await context.pushNamed<bool>(
+                                          SettingsRoutes.editPhone,
+                                        );
+                                        if (isEdited == true && context.mounted) {
+                                          context.read<SettingsUserDataCubit>().getUserData();
+                                        }
+                                      }
+                                    : null,
                               ),
                               _UserDataRow(
                                 label: S.of(context).residence,
@@ -101,14 +105,16 @@ class SettingsUserDataView extends StatelessWidget {
                                 statusLabel: pendingSteps.contains(KycStepName.addressChange)
                                     ? S.of(context).changeInReview
                                     : null,
-                                onEdit: () async {
-                                  final isEdited = await context.pushNamed<bool>(
-                                    SettingsRoutes.editAddress,
-                                  );
-                                  if (isEdited == true && context.mounted) {
-                                    context.read<SettingsUserDataCubit>().getUserData();
-                                  }
-                                },
+                                onEdit: capabilities.canEditAddress
+                                    ? () async {
+                                        final isEdited = await context.pushNamed<bool>(
+                                          SettingsRoutes.editAddress,
+                                        );
+                                        if (isEdited == true && context.mounted) {
+                                          context.read<SettingsUserDataCubit>().getUserData();
+                                        }
+                                      }
+                                    : null,
                               ),
                             ],
                           ),
@@ -236,7 +242,11 @@ class _UserDataRow extends StatelessWidget {
             ),
           ],
         ),
-        if (onEdit != null && statusLabel == null)
+        // `onEdit == null` is now the authoritative signal: the cubit only
+        // wires it up when `UserCapabilitiesDto.canEdit*` is true. The
+        // status label (e.g. "Change in review") stays as an informational
+        // badge alongside the Edit button — no extra gating here.
+        if (onEdit != null)
           IconButton.filledTonal(
             onPressed: onEdit,
             icon: const Icon(Icons.edit_outlined),

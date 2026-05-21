@@ -108,7 +108,23 @@ void main() {
     );
 
     blocTest<KycRegistrationSubmitCubit, KycRegistrationSubmitState>(
-      'treats ApiException after sign as Success(completed) (account-exists / merge path)',
+      'emits Success(alreadyRegistered) when the API reports already-registered (was: silent ApiException swallow)',
+      setUp: () {
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.completeRegistration(any())).thenAnswer(
+          (_) async => RegistrationStatus.alreadyRegistered,
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => _submitFromRegistration(cubit, _registration()),
+      expect: () => [
+        KycRegistrationSubmitLoading(),
+        const KycRegistrationSubmitSuccess(RegistrationStatus.alreadyRegistered),
+      ],
+    );
+
+    blocTest<KycRegistrationSubmitCubit, KycRegistrationSubmitState>(
+      'emits Failure on backend ApiException (account-exists no longer silently masked)',
       setUp: () {
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
         when(() => registrationService.completeRegistration(any())).thenThrow(
@@ -123,7 +139,7 @@ void main() {
       act: (cubit) => _submitFromRegistration(cubit, _registration()),
       expect: () => [
         KycRegistrationSubmitLoading(),
-        const KycRegistrationSubmitSuccess(RegistrationStatus.completed),
+        isA<KycRegistrationSubmitFailure>(),
       ],
     );
 
