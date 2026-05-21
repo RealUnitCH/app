@@ -14,10 +14,21 @@ void main() {
   late _MockWalletService service;
   late SoftwareWallet wallet;
 
+  setUpAll(() {
+    // Needed for the `commitGeneratedWallet(any())` matcher.
+    registerFallbackValue(SoftwareWallet(0, 'fallback', _testMnemonic));
+  });
+
   setUp(() {
     service = _MockWalletService();
-    wallet = SoftwareWallet(1, 'Main', _testMnemonic);
+    // The cubit receives an uncommitted draft from `CreateWalletCubit`
+    // (id == 0). `verify` is what lands the row, via
+    // `WalletService.commitGeneratedWallet`. Mirror that contract here.
+    wallet = SoftwareWallet(0, 'Main', _testMnemonic);
     when(() => service.setCurrentWallet(any())).thenAnswer((_) async {});
+    when(() => service.commitGeneratedWallet(any())).thenAnswer(
+      (_) async => SoftwareWallet(42, 'Main', _testMnemonic),
+    );
   });
 
   group('$VerifySeedCubit', () {
@@ -71,7 +82,8 @@ void main() {
       expect(fresh.state.hasError, isFalse);
     });
 
-    test('verify returns true and marks the wallet current when all words match', () async {
+    test('verify returns true and marks the COMMITTED wallet current when all words match',
+        () async {
       final cubit = VerifySeedCubit(wallet, service);
 
       final result = await cubit.verify();
@@ -79,10 +91,36 @@ void main() {
       expect(result, isTrue);
       expect(cubit.state.isVerified, isTrue);
       expect(cubit.state.hasError, isFalse);
-      verify(() => service.setCurrentWallet(wallet.id)).called(1);
+      // The current wallet id must be the COMMITTED id (42), not the
+      // uncommitted draft's `0` sentinel. Closes the regression where a
+      // future refactor passes `_wallet.id` directly to `setCurrentWallet`
+      // and silently routes onboarding to a non-existent wallet row.
+      verify(() => service.setCurrentWallet(42)).called(1);
+      verifyNever(() => service.setCurrentWallet(0));
     });
 
-    test('verify returns false, sets hasError, and does NOT mark current on a wrong word', () async {
+    // Pin the ordering: commit must precede setCurrentWallet so the row
+    // exists before any downstream `getCurrentWallet` call can resolve it.
+    test('verify commits the draft BEFORE marking it current', () async {
+      final calls = <String>[];
+      when(() => service.commitGeneratedWallet(any())).thenAnswer((inv) async {
+        calls.add('commit');
+        return SoftwareWallet(99, 'Main', _testMnemonic);
+      });
+      when(() => service.setCurrentWallet(any())).thenAnswer((inv) async {
+        calls.add('setCurrent(${inv.positionalArguments.single})');
+      });
+
+      final cubit = VerifySeedCubit(wallet, service);
+      await cubit.verify();
+
+      expect(calls, ['commit', 'setCurrent(99)'],
+          reason: 'commit must land the row before `setCurrentWallet` points '
+              'the settings repository at it');
+    });
+
+    test('verify returns false, sets hasError, and does NOT commit or mark current on a wrong word',
+        () async {
       final cubit = VerifySeedCubit(wallet, service);
       cubit.updateWord(0, 'definitely-not-a-seed-word');
 
@@ -91,6 +129,10 @@ void main() {
       expect(result, isFalse);
       expect(cubit.state.hasError, isTrue);
       expect(cubit.state.isVerified, isFalse);
+      // The disk-side guarantee for failure paths: no `walletInfos` row
+      // is written for a rejected verification. Pairs with the
+      // CreateWalletCubit "zero commits across regenerates" pin.
+      verifyNever(() => service.commitGeneratedWallet(any()));
       verifyNever(() => service.setCurrentWallet(any()));
     });
   });

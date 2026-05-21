@@ -48,9 +48,40 @@ class WalletService {
     this._appStore,
   );
 
-  Future<SoftwareWallet> createSeedWallet(String name) async {
+  /// Generates a fresh bip39 mnemonic and returns a [SoftwareWallet] that
+  /// is **not yet persisted** — `id` is the `0` sentinel and no row has
+  /// been written to `walletInfos`. Pair with [commitGeneratedWallet] once
+  /// the user has confirmed the seed (e.g. via the verify-seed quiz) so the
+  /// encrypted mnemonic only lands on disk for seeds the user has actually
+  /// kept. Prevents N+1 encrypted-seed rows from accumulating when the
+  /// onboarding cubit regenerates the mnemonic on every `hidden` cycle.
+  Future<SoftwareWallet> generateUncommittedSeedWallet(String name) async {
     final mnemonic = bip39.generateMnemonic();
-    return _persistSoftwareWallet(name, mnemonic);
+    return SoftwareWallet(0, name, mnemonic);
+  }
+
+  /// Persists a [draft] [SoftwareWallet] returned from
+  /// [generateUncommittedSeedWallet] into `walletInfos` (encrypted seed +
+  /// cached address) and returns a new [SoftwareWallet] carrying the
+  /// DB-assigned id. The draft is expected to carry the `0` sentinel id; a
+  /// different id indicates a misuse (commit called on an already-persisted
+  /// wallet) — surfaced via [assert] in dev and tolerated in release by
+  /// re-using the draft's seed.
+  Future<SoftwareWallet> commitGeneratedWallet(SoftwareWallet draft) async {
+    assert(draft.id == 0,
+        'commitGeneratedWallet expects an uncommitted draft (id == 0); '
+        'got id=${draft.id} — likely double-commit or wrong caller.');
+    return _persistSoftwareWallet(draft.name, draft.seed);
+  }
+
+  /// Generate-and-commit convenience for callers that persist immediately
+  /// (e.g. [restoreWallet]). Onboarding callers should NOT use this — they
+  /// must call [generateUncommittedSeedWallet] and defer [commitGeneratedWallet]
+  /// until the user has confirmed the seed, otherwise every regenerate on
+  /// `hidden` writes an undeletable encrypted-seed row to `walletInfos`.
+  Future<SoftwareWallet> createSeedWallet(String name) async {
+    final draft = await generateUncommittedSeedWallet(name);
+    return commitGeneratedWallet(draft);
   }
 
   Future<BitboxWallet> createBitboxWallet(String name) async {
@@ -60,6 +91,10 @@ class WalletService {
     return BitboxWallet(walletId, name, address, _bitboxService);
   }
 
+  /// Persists a user-supplied seed phrase immediately — the user typed an
+  /// existing mnemonic, so there is no verify-seed quiz to gate the write
+  /// behind. Deferring would not help: the seed is already known and the
+  /// user expects to land on the dashboard on `restore` success.
   Future<SoftwareWallet> restoreWallet(String name, String seed) async {
     final wallet = await _persistSoftwareWallet(name, seed);
     await _settingsRepository.saveCurrentWalletId(wallet.id);
@@ -146,23 +181,44 @@ class WalletService {
   /// don't tear the unlocked state out from under each other.
   Future<void> ensureCurrentWalletUnlocked() async {
     _activeUnlockHolders++;
+    // Tracks whether THIS call's unlock landed in [AppStore.wallet]. When
+    // the lock-during-flight invalidates the slot, the write is skipped and
+    // arming the post-unlock timer would just point at a [SoftwareViewWallet]
+    // — `_lockWalletInPlace` would safely no-op via `is! SoftwareWallet`, so
+    // it's dead work, not a correctness bug. Skip the arm in that case.
+    var landedInStore = false;
     if (_appStore.wallet is SoftwareViewWallet) {
       // Coalesce overlapping unlocks onto a single in-flight future so we
       // don't hammer the DB and re-run AES-GCM for every concurrent caller.
       final inFlight = _unlockInFlight ??= unlockCurrentWallet();
       try {
-        _appStore.wallet = await inFlight;
+        final unlocked = await inFlight;
+        // If [lockCurrentWallet] fired while this unlock was in flight, it
+        // invalidates the slot (`_unlockInFlight = null`). Skip the write
+        // so the mnemonic doesn't resurface in [AppStore.wallet] after the
+        // user has already covered the app — closes the `_onHidden` race.
+        if (identical(_unlockInFlight, inFlight)) {
+          _appStore.wallet = unlocked;
+          landedInStore = true;
+        }
       } finally {
         // Only the caller that started the unlock clears the slot; later
         // joiners observe the field already nulled and skip the clear.
         if (identical(_unlockInFlight, inFlight)) _unlockInFlight = null;
       }
+    } else {
+      // Wallet was already unlocked (a previous holder's write is still in
+      // place). Re-arming the safety net is the right call — extends the
+      // 60 s window for the joining holder.
+      landedInStore = true;
     }
     // Safety net: if a caller forgets to call lockCurrentWallet() after the
     // sign, drop the mnemonic anyway once the post-unlock window elapses. The
-    // reviewer flagged "user sells once then leaves the app foregrounded" —
-    // that path now caps at [_postUnlockLockTimeout].
-    _schedulePostUnlockLock();
+    // reviewer flagged "user signs once then leaves the app foregrounded" —
+    // that path now caps at [_postUnlockLockTimeout]. Skip the arm when the
+    // intervening lock invalidated our write: the timer would just fire
+    // against a view-wallet (no-op) and we'd be doing dead work.
+    if (landedInStore) _schedulePostUnlockLock();
   }
 
   /// Replaces the in-memory [SoftwareWallet] with its lock-screen-safe
@@ -184,6 +240,12 @@ class WalletService {
 
     if (_activeUnlockHolders > 0) _activeUnlockHolders--;
     if (_activeUnlockHolders > 0) return;
+    // Invalidate any in-flight unlock so its resolution doesn't write the
+    // unlocked [SoftwareWallet] back into [AppStore.wallet] after this lock —
+    // the race the 60s safety net used to catch as defence-in-depth, now
+    // closed at the source.
+    _unlockInFlight?.ignore();
+    _unlockInFlight = null;
     _postUnlockLockTimer?.cancel();
     _postUnlockLockTimer = null;
     _lockWalletInPlace();

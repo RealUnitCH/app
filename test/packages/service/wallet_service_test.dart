@@ -58,8 +58,86 @@ void main() {
   });
 
   group('$WalletService', () {
+    group('generateUncommittedSeedWallet', () {
+      test('returns an in-memory SoftwareWallet with the id=0 sentinel and a valid bip39 mnemonic',
+          () async {
+        final draft = await service.generateUncommittedSeedWallet('Main');
+
+        expect(draft, isA<SoftwareWallet>());
+        expect(draft.id, 0,
+            reason: 'uncommitted drafts use the 0 sentinel until commitGeneratedWallet lands the row');
+        expect(draft.name, 'Main');
+        expect(service.validateSeed(draft.seed), isTrue);
+      });
+
+      test('does NOT write to the repository — the encrypted seed must not land on disk', () async {
+        await service.generateUncommittedSeedWallet('Main');
+
+        // Pin the disk-side guarantee: nothing flows into `walletInfos` until
+        // a separate `commitGeneratedWallet` call. Without this, every
+        // `_dropMnemonic` regenerate in `CreateWalletCubit` would persist a
+        // fresh encrypted-seed row, and `WalletStorage.deleteWallet` only
+        // touches `walletAccountInfos`, so those rows would accumulate
+        // undeletable.
+        verifyNever(() => repo.createWallet(any(), any(), any(), any()));
+        verifyNever(() => settings.saveCurrentWalletId(any()));
+      });
+
+      test('two consecutive calls produce distinct mnemonics (entropy not pinned by the API)',
+          () async {
+        final a = await service.generateUncommittedSeedWallet('Main');
+        final b = await service.generateUncommittedSeedWallet('Main');
+
+        expect(a.seed, isNot(equals(b.seed)),
+            reason: 'each call must produce a fresh mnemonic — pinning entropy would '
+                'silently break the "regenerate on hidden" contract');
+      });
+    });
+
+    group('commitGeneratedWallet', () {
+      test('persists the draft seed and returns a SoftwareWallet carrying the DB-assigned id',
+          () async {
+        when(() => repo.createWallet(any(), any(), any(), any())).thenAnswer((_) async => 42);
+
+        final draft = await service.generateUncommittedSeedWallet('Main');
+        final committed = await service.commitGeneratedWallet(draft);
+
+        expect(committed.id, 42);
+        expect(committed.name, 'Main');
+        expect(committed.seed, draft.seed,
+            reason: 'commit must preserve the draft mnemonic — no silent re-generation');
+        final expectedAddress = committed.currentAccount.primaryAddress.address.hexEip55;
+        verify(
+          () => repo.createWallet('Main', WalletType.software, draft.seed, expectedAddress),
+        ).called(1);
+      });
+
+      test('writes exactly one row per call (no implicit dedup at this layer)', () async {
+        // Pin the disk-side contract: each commit call is one row. The dedup
+        // lives at the cubit layer (`VerifySeedCubit.verify` is invoked once
+        // per successful quiz). Surfaces a regression where commit silently
+        // dedups and a follow-up caller assumes idempotence.
+        when(() => repo.createWallet(any(), any(), any(), any())).thenAnswer((_) async => 1);
+
+        final draft = await service.generateUncommittedSeedWallet('Main');
+        await service.commitGeneratedWallet(draft);
+
+        verify(() => repo.createWallet(any(), any(), any(), any())).called(1);
+      });
+
+      test('does not set the wallet as current (caller is responsible)', () async {
+        when(() => repo.createWallet(any(), any(), any(), any())).thenAnswer((_) async => 7);
+
+        final draft = await service.generateUncommittedSeedWallet('Main');
+        await service.commitGeneratedWallet(draft);
+
+        verifyNever(() => settings.saveCurrentWalletId(any()));
+      });
+    });
+
     group('createSeedWallet', () {
-      test('returns a SoftwareWallet with the generated mnemonic and address persisted', () async {
+      test('generate+commit convenience — persists a freshly generated mnemonic in one call',
+          () async {
         when(() => repo.createWallet(any(), any(), any(), any())).thenAnswer((_) async => 42);
 
         final wallet = await service.createSeedWallet('Main');
@@ -501,6 +579,62 @@ void main() {
         await service.lockCurrentWallet();
         expect(stored.last, isA<SoftwareViewWallet>(),
             reason: 'final holder release flips back to view wallet');
+      });
+
+      // The `_onHidden` race: a single sign-flow ensure is still mid-unlock
+      // when `lockCurrentWallet` fires from the app-lifecycle hidden hook.
+      // Without invalidating the in-flight unlock, its resolution would
+      // write the unlocked [SoftwareWallet] back to [AppStore.wallet]
+      // AFTER the lock — resurfacing the mnemonic in memory until either
+      // the 60s safety net or the sign-flow `finally lock` clears it
+      // again. The 60s window is best-effort under iOS isolate suspension
+      // (the gap #485 set out to close in the first place), so the fix
+      // closes it at the source: the lock invalidates `_unlockInFlight`
+      // and the ensure skips its write.
+      test('lock during a single in-flight unlock does not resurface the mnemonic',
+          () async {
+        final stored = <AWallet>[SoftwareViewWallet(7, 'Main', _debugAddress)];
+        when(() => appStore.wallet).thenAnswer((_) => stored.last);
+        when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
+          final newWallet = inv.positionalArguments.single as AWallet;
+          stored.add(newWallet);
+          return newWallet;
+        });
+        when(() => settings.currentWalletId).thenReturn(7);
+
+        // Pin the unlock mid-flight so we can fire `lockCurrentWallet`
+        // exactly between the ensure starting and its DB read resolving.
+        final gate = Completer<WalletInfo>();
+        when(() => repo.getUnlockedWalletById(7)).thenAnswer((_) => gate.future);
+
+        // Sign-flow ensure starts, counter=1, blocks on gated read.
+        final ensure = service.ensureCurrentWalletUnlocked();
+
+        // App-lifecycle hidden fires — counter goes to 0, lock would
+        // normally no-op (wallet still SoftwareViewWallet) and let the
+        // pending unlock leak through.
+        await service.lockCurrentWallet();
+        expect(stored.last, isA<SoftwareViewWallet>(),
+            reason: 'lock observed the still-view wallet — nothing to flip');
+
+        // Release the gated DB read so the in-flight ensure resolves.
+        gate.complete(
+          _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
+        );
+        await ensure;
+
+        // The fix: the post-resolve write is gated on the in-flight token
+        // still matching, which the lock invalidated. So the mnemonic
+        // never lands in [AppStore.wallet] after the user covered the app.
+        expect(stored.last, isA<SoftwareViewWallet>(),
+            reason: 'in-flight unlock invalidated by intervening lock must not '
+                'resurface the mnemonic');
+        // Pin the mechanism, not just the outcome: the `_unlockInFlight`
+        // gate must suppress the post-resolve write — never let a future
+        // refactor pass this test by tolerating the write and clearing it
+        // again from somewhere else (which would still expose the mnemonic
+        // to any code path observing `AppStore.wallet` between the writes).
+        verifyNever(() => appStore.wallet = any(that: isA<SoftwareWallet>()));
       });
 
       // Two overlapping ensures must coalesce onto a single DB read +
