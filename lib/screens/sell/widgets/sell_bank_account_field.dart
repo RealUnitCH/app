@@ -39,9 +39,13 @@ class BankAccountFieldView extends StatelessWidget {
       listenWhen: (previous, current) => previous.accounts.length != current.accounts.length,
       listener: (context, state) {
         if (state.accounts.isNotEmpty) {
-          context.read<SellSelectedBankAccountCubit>().selectBankAccount(
-            state.accounts.lastWhereOrNull((account) => account.isActive),
-          );
+          // Prefer the backend-tagged default account; fall back to the most
+          // recently added active one if no default is set. The API is the
+          // authority on which account is the user's preferred one.
+          final preferred =
+              state.accounts.firstWhereOrNull((a) => a.isDefault) ??
+              state.accounts.lastWhereOrNull((a) => a.isActive);
+          context.read<SellSelectedBankAccountCubit>().selectBankAccount(preferred);
         }
       },
       builder: (context, state) => Column(
