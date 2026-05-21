@@ -9,6 +9,10 @@
 # two-line sentence ("Mit der Nutzung dieser App akzeptieren Sie die
 # Nutzungsbedingungen dieser Software.") wraps so the highlighted word leads
 # the second line just above the Start button — tapped here by coordinate.
+# The closing assertion targets the document H1 "Nutzungsbedingungen der
+# RealUnit Wallet App", which is unique to the terms page — the bare word
+# also appears on the splash, so asserting it alone would pass even if the
+# coordinate tap missed.
 appId: swiss.realunit.app
 ---
 - launchApp:
@@ -22,5 +26,6 @@ appId: swiss.realunit.app
     point: 35%,80%
 - waitForAnimationToEnd
 - extendedWaitUntil:
-    visible: 'Nutzungsbedingungen'
+    visible:
+      text: '.*Nutzungsbedingungen der RealUnit Wallet App.*'
     timeout: 30000

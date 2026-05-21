@@ -2,7 +2,7 @@
 # Continues from 21-settings-aktionariat-documents. Tap back to
 # SettingsLegalDocumentsPage, then open the "Dokumente der DFX AG" entry
 # -> SettingsDfxDocumentsPage. The settle target is "Allgemeine
-# Geschaeftsbedingungen", the DFX terms tile, which is unique to this sub-page.
+# Geschäftsbedingungen", the DFX terms tile, which is unique to this sub-page.
 appId: swiss.realunit.app
 ---
 - tapOn:

@@ -100,7 +100,7 @@ Column meaning:
   `terms`); `VerifyPinPage` backs two (`pinGate`, `verifyPin`) via different
   constructors. Handbook screenshot `17` shows `VerifyPinPage` in its `pinGate`
   use; the `verifyPin` app-lock use is not separately documented.
-- **Handbook numbering.** The 19 handbook screenshots are each the output of a
+- **Handbook numbering.** The 24 handbook screenshots are each the output of a
   Maestro Tier-3 flow (`.maestro/handbook/NN-*.yaml`). Screenshot
   `10-biometric-prompt` documents the `EnableBiometricBottomSheet` modal — not a
   routed screen — so the table has no `10`.

@@ -168,11 +168,12 @@ fi
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-# Per-attempt retry budget for the upstream driver-hang class. The full
-# suite overruns a tight CI envelope; the onboarding flows (01-06) tend
-# to dominate. The per-flow / per-attempt timing logged below is the data
-# to size the workflow's `timeout-minutes` (see tier3-handbook.yaml) and
-# to target a real speed-up.
+# Per-attempt retry budget for the upstream driver-hang class. The per-flow
+# / per-attempt timing logged below is the data to size the workflow's
+# `timeout-minutes` (see tier3-handbook.yaml) and to target a real speed-up.
+# Worst-case the entire suite is 3 × 24 × ~1 min plus 3 × ~6 min
+# driver-startup-timeout per failed attempt, which still fits inside
+# the workflow's 60 min envelope.
 MAESTRO_MAX_ATTEMPTS="${MAESTRO_MAX_ATTEMPTS:-3}"
 
 # Maestro's `--debug-output` writes per-attempt view-hierarchy.json +
