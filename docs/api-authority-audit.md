@@ -312,8 +312,9 @@ Pair-PRs landed against the rule, in dependency order:
 | W1.3+1.4 | — | [#496](https://github.com/DFXswiss/realunit-app/pull/496) | V12, V13 — currency + language from API |
 | W2 | [api#3732](https://github.com/DFXswiss/api/pull/3732) | [#494](https://github.com/DFXswiss/realunit-app/pull/494) | V1, V2, V3, V5 — **closes the 2026-05-21 ident-misroute** |
 | W3 | [api#3733](https://github.com/DFXswiss/api/pull/3733) | [#497](https://github.com/DFXswiss/realunit-app/pull/497) | V6a, V6b, V9 + structured ALREADY_REGISTERED status |
+| W4 | [api#3734](https://github.com/DFXswiss/api/pull/3734) | [#499](https://github.com/DFXswiss/realunit-app/pull/499) | V14, V17, V18 — legal-document + company-info + country.displayOrder |
 
-All as Draft per DFXswiss convention. Every PR has full test coverage; `flutter test` and `npm test` clean across all branches. The W2 pair specifically closes the 2026-05-21 incident report (user_data 338759 ident-misroute).
+PRs #491 and #492 are already merged. The remaining 9 are Draft per DFXswiss convention. Every PR has full test coverage; `flutter test` and `npm test` clean across all branches. The W2 pair specifically closes the 2026-05-21 incident report (user_data 338759 ident-misroute).
 
 ## Outstanding — next phase
 
@@ -325,12 +326,9 @@ Items not shipped in the 2026-05-21 batch, in priority order:
 - V16 (sell_button isBitbox routing) — re-evaluated: BitBox vs software-wallet is a device-local fact the API cannot substitute for. Treat as documented exception unless a future `supportedSignMethods` API field changes the picture.
 - V20 (auto-register email at level<10) — the cubit still owns this branch; backend-side auto-registration would close it. Spec'd for Wave 5.
 
-**Wave 4 (P2, new backend modules):**
-- V17 (`/v1/legal-document` module — entity + migration + admin endpoint)
-- V18 (`/v1/company-info` module)
-- V14 + V19 (country priority + recommended language)
-
-All three are spec'd in detail in [`api-authority-plan.md`](api-authority-plan.md) Wave 4. Estimated effort: ~3.5 dev-days. No user is blocked today by any of these — they are P2 cleanup, not regressions.
+**Wave 4 follow-ups (post-merge):**
+- V19 (recommended language per region) — not part of W4's initial scope; spec'd for a follow-up alongside V20.
+- WebDocumentConfig hardcodes (5 entries in `legal_documents_config.dart`: EU prospectus pages, CH stock-exchange prospectus, articles of association, investment regulations) — these point at marketing-managed download pages, not versioned PDFs; documented exception.
 
 **P1 / P2 long tail:**
 - V21, V22 — local session gates whose *position* should be API-driven (separate follow-up after W4).
