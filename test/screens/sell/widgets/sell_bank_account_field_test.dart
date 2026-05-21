@@ -36,6 +36,12 @@ void main() {
     isActive: true,
     isDefault: true,
   );
+  const accountDefaultSecond = BankAccount(
+    id: 5,
+    iban: 'CH0000000000000000005',
+    isActive: true,
+    isDefault: true,
+  );
   const accountInactive = BankAccount(
     id: 4,
     iban: 'CH0000000000000000004',
@@ -115,6 +121,33 @@ void main() {
         await tester.pump();
 
         verify(() => selectedCubit.selectBankAccount(null)).called(1);
+      },
+    );
+
+    testWidgets(
+      'picks the first default when multiple defaults are flagged',
+      (tester) async {
+        // Plan W1.2 acceptance: "If multiple defaults (shouldn't happen) →
+        // first wins." Pins `firstWhereOrNull` ordering so a future switch to
+        // `lastWhereOrNull` (or any reverse iteration) is caught by CI.
+        whenListen(
+          accountsCubit,
+          Stream.fromIterable(const [
+            SellBankAccountsInitial(),
+            SellBankAccountsSuccess([
+              accountActiveNonDefault1,
+              accountDefault,
+              accountDefaultSecond,
+            ]),
+          ]),
+          initialState: const SellBankAccountsInitial(),
+        );
+
+        await pumpView(tester);
+        await tester.pump();
+
+        verify(() => selectedCubit.selectBankAccount(accountDefault)).called(1);
+        verifyNever(() => selectedCubit.selectBankAccount(accountDefaultSecond));
       },
     );
 
