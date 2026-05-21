@@ -85,6 +85,7 @@ jobs:
       # check), and silent failures upstream would invalidate that signal.
       - name: Filter coverage to README scope
         run: |
+          set -euo pipefail
           if [ ! -f coverage/lcov.info ]; then
             echo "::warning::coverage/lcov.info not found — skipping coverage filter"
             exit 0
@@ -99,9 +100,86 @@ jobs:
             --ignore-errors unused,empty
           lcov --summary coverage/lcov.info | tee coverage/lcov.summary
 
+      # Hard-fails the job when scoped coverage drops below the committed floor.
+      # Two flat repo-root files hold the integers: `.coverage-floor-lines` and
+      # `.coverage-floor-functions`. They are diffable, grep-able, and require
+      # no `yq`/JSON tooling in the runner — same rationale as the rest of this
+      # workflow: keep the gate readable in a `git blame`, not buried in YAML.
+      #
+      # Ratchet protocol (also documented under README "Coverage infrastructure
+      # roadmap"):
+      #   * Raising the floor is encouraged on every PR that raises measured
+      #     coverage — bump the file in the same commit and the gate moves up.
+      #   * Lowering the floor needs a reviewer's explicit OK. PR convention is
+      #     the `coverage:lower-floor` label so the regression is visible at
+      #     a glance in the PR list rather than being smuggled in.
+      #
+      # Why pure bash + awk instead of `lcov --fail-under-*`:
+      #   the `--fail-under-lines` flag arrived in lcov 2.0 and earlier macOS
+      #   runner images may still pull 1.x out of homebrew-core. Comparing
+      #   `52.9` against `51` with awk sidesteps that and stays portable.
+      #
+      # On the "no data found" path for the functions metric:
+      #   `flutter test --coverage` emits LF/LH (line execution) and BRF/BRH
+      #   (branch) records, but not FN/FNF/FNH (function execution) — that's a
+      #   Flutter limitation, not a repo bug. When the summary reports
+      #   "no data found" for functions, the gate emits a workflow warning
+      #   instead of comparing against an empty value. This is intentionally
+      #   NOT a silent skip: the warning surfaces in the run summary so a
+      #   future Flutter release adding FN records doesn't go unnoticed (and
+      #   the floor file stays committed so the gate activates the moment
+      #   real data appears).
+      #
+      # On the missing `coverage/lcov.summary` path:
+      #   mirrors the defensive style of the previous step — if the upstream
+      #   filter exited 0 with a warning (e.g. lcov.info missing), there's
+      #   nothing to gate on and we don't manufacture a synthetic failure.
+      #   The floor files themselves are still required to exist; their
+      #   absence is a misconfigured repo, not a transient miss, and the
+      #   step fails loudly so the reviewer notices on the very first run.
+      - name: Enforce coverage floor
+        run: |
+          set -euo pipefail
+          if [ ! -f coverage/lcov.summary ]; then
+            echo "::warning::coverage/lcov.summary not found — skipping coverage floor gate"
+            exit 0
+          fi
+          if [ ! -f .coverage-floor-lines ] || [ ! -f .coverage-floor-functions ]; then
+            echo "::error::missing .coverage-floor-lines or .coverage-floor-functions at repo root"
+            exit 1
+          fi
+          LINES_FLOOR="$(cat .coverage-floor-lines)"
+          FUNCS_FLOOR="$(cat .coverage-floor-functions)"
+          # Lenient anchored match: `\s*lines\.+:\s*52.9%` and the functions
+          # equivalent. lcov varies the number of dots between releases, so
+          # the `\.+` repetition is load-bearing. Captures the bare number,
+          # no `%` suffix. `sed -E` is portable across BSD (macOS runners)
+          # and GNU sed — gawk's 3-arg `match()` is not, so we stick to sed.
+          LINES_NOW="$(sed -nE 's/^[[:space:]]*lines\.+:[[:space:]]*([0-9.]+)%.*/\1/p' coverage/lcov.summary | head -n1)"
+          FUNCS_NOW="$(sed -nE 's/^[[:space:]]*functions\.+:[[:space:]]*([0-9.]+)%.*/\1/p' coverage/lcov.summary | head -n1)"
+          echo "lines:     measured=${LINES_NOW:-<none>}%  floor=${LINES_FLOOR}%"
+          echo "functions: measured=${FUNCS_NOW:-<none>}%  floor=${FUNCS_FLOOR}%"
+          if [ -z "${LINES_NOW}" ]; then
+            echo "::error::could not parse lines coverage from coverage/lcov.summary"
+            exit 1
+          fi
+          if ! awk -v now="${LINES_NOW}" -v floor="${LINES_FLOOR}" 'BEGIN { exit !(now+0 >= floor+0) }'; then
+            echo "::error::lines coverage ${LINES_NOW}% below floor ${LINES_FLOOR}% — see README \"Coverage infrastructure roadmap\""
+            exit 1
+          fi
+          if [ -z "${FUNCS_NOW}" ]; then
+            echo "::warning::functions coverage not reported by lcov (Flutter does not emit FN records) — floor ${FUNCS_FLOOR}% retained for when upstream adds support"
+          else
+            if ! awk -v now="${FUNCS_NOW}" -v floor="${FUNCS_FLOOR}" 'BEGIN { exit !(now+0 >= floor+0) }'; then
+              echo "::error::functions coverage ${FUNCS_NOW}% below floor ${FUNCS_FLOOR}% — see README \"Coverage infrastructure roadmap\""
+              exit 1
+            fi
+          fi
+
       - name: Report coverage summary
         if: always()
         run: |
+          set -euo pipefail
           if [ ! -f coverage/lcov.summary ]; then
             exit 0
           fi
@@ -114,7 +192,7 @@ jobs:
             cat coverage/lcov.summary
             echo '```'
             echo
-            echo "_Threshold enforcement is not yet wired — see README \"Coverage infrastructure roadmap\"._"
+            echo "_Floor gate active (see \`.coverage-floor-lines\` / \`.coverage-floor-functions\`). README \"Coverage infrastructure roadmap\" documents the ratchet protocol._"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload coverage report
@@ -148,6 +226,7 @@ jobs:
       - name: Run bitbox-audit
         continue-on-error: true
         run: |
+          set -euo pipefail
           "$(go env GOPATH)/bin/bitbox-audit" \
             --repo . \
             --format markdown \
@@ -157,6 +236,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
+          set -euo pipefail
           if [ -f bitbox-audit-report.md ]; then
             cat bitbox-audit-report.md >> "$GITHUB_STEP_SUMMARY"
           else

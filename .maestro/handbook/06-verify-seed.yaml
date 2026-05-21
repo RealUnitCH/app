@@ -7,4 +7,6 @@ appId: swiss.realunit.app
 ---
 - tapOn: 'Ich habe es gesichert'
 - waitForAnimationToEnd
-- assertVisible: 'Sicherung überprüfen'
+- extendedWaitUntil:
+    visible: 'Sicherung überprüfen'
+    timeout: 30000

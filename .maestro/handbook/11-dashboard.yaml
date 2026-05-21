@@ -1,11 +1,20 @@
 # Captures docs/handbook/screenshots/11-dashboard.png
-# Skip biometric prompt; land on dashboard. Backend calls (portfolio, price,
-# history) may still be in-flight; we use the Empfangen action button as the
-# readiness signal — once the action bar is rendered, the page layout is final.
+# Skip biometric prompt if visible; land on dashboard. Backend calls
+# (portfolio, price, history) may still be in-flight; we use the
+# "RealUnit kaufen" action button as the readiness signal — once it
+# renders, the page layout is final. The skip tap is conditional
+# because the biometric prompt only appears with Face ID enrolled on
+# the simulator (see 10-biometric-prompt.yaml header). On CI runners
+# without enrollment the app jumps straight to the dashboard and
+# there is no "Überspringen" button to tap.
 appId: swiss.realunit.app
 ---
-- tapOn: 'Überspringen'
-- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: 'Überspringen'
+    commands:
+      - tapOn: 'Überspringen'
+      - waitForAnimationToEnd
 - extendedWaitUntil:
     visible: 'RealUnit kaufen'
-    timeout: 15000
+    timeout: 30000

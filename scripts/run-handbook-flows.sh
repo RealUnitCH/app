@@ -18,6 +18,26 @@
 #     --simulator --debug` then `xcrun simctl install booted ...Runner.app`)
 #   * maestro CLI on PATH (or at $HOME/.maestro/bin/maestro)
 #
+# Locale:
+#   The booted simulator's locale is pinned to de_CH because the handbook
+#   flows assert on German UI strings (e.g. "Digitale Wallet", "Erstellen
+#   Sie Ihre PIN", "Einstellungen"). Local devs running this script will
+#   have their simulator locale temporarily overridden; `simctl erase` on
+#   the next run brings it back to defaults. CI runners default to en_US
+#   without this pin and would fail the first German-string assertion.
+#
+# Retry strategy:
+#   The Maestro version is pinned by `.maestro-version` (read by the
+#   workflow's install step). Historically Maestro 2.3.x–2.5.x had
+#   intermittent driver-hang AND silent-tap-loss issues on Apple
+#   Silicon + iOS 26.x (see mobile-dev-inc/maestro#3137); the pin
+#   targets a known-good release. The retry remains as a safety net
+#   for residual Apple-XCTest crashes (~10 % per the #3137 thread):
+#   each flow is retried up to MAESTRO_MAX_ATTEMPTS times (default 3)
+#   when the failure log contains `IOSDriverTimeoutException`.
+#   Assertion failures are NEVER retried — those are real regressions
+#   and must surface as red CI checks.
+#
 # Usage:  scripts/run-handbook-flows.sh
 
 set -euo pipefail
@@ -74,6 +94,19 @@ xcrun simctl erase "$UDID"
 xcrun simctl boot "$UDID"
 xcrun simctl bootstatus "$UDID" -b >/dev/null
 
+# Pin simulator locale to de_CH. The handbook flows assert on German UI
+# strings (e.g. "Digitale Wallet", "Erstellen Sie Ihre PIN", "Einstellungen")
+# because the app's default locale is de_CH. CI runners boot iOS simulators
+# in en_US by default, which would fail every German-string assertion on
+# the very first flow that has one. Local developers usually have their
+# simulator in de_CH already, so re-captures locally and on CI now match.
+# Run after `bootstatus -b` so the device is guaranteed ready for
+# `simctl spawn`, and use `spawn` so the defaults land in the booted
+# device's domain, not the host's NSGlobalDomain.
+echo "Pinning simulator locale to de_CH"
+xcrun simctl spawn "$UDID" defaults write -g AppleLanguages -array de_CH
+xcrun simctl spawn "$UDID" defaults write -g AppleLocale -string de_CH
+
 echo "Installing $APP_ID from $APP_BUNDLE"
 xcrun simctl install "$UDID" "$APP_BUNDLE"
 
@@ -93,13 +126,65 @@ unset IFS
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
+# Worst-case the entire suite is 3 × 19 × ~1 min plus 3 × ~6 min
+# driver-startup-timeout per failed attempt, which still fits inside
+# the workflow's 30 min envelope.
+MAESTRO_MAX_ATTEMPTS="${MAESTRO_MAX_ATTEMPTS:-3}"
+
+# Maestro's `--debug-output` writes per-attempt view-hierarchy.json +
+# screenshot + maestro.log into the given directory. On flow failure
+# these are the only forensic data that show what was actually on the
+# screen at the assertion point — much more useful than a `simctl io
+# screenshot` taken after the flow exited (which captures whatever
+# screen the failure left the app on, not the moment of failure).
+MAESTRO_DEBUG_ROOT="$TMP_DIR/maestro-debug"
+mkdir -p "$MAESTRO_DEBUG_ROOT"
+
 for flow in "${flows[@]}"; do
   base="$(basename "$flow" .yaml)"
   tmp_png="$TMP_DIR/$base.png"
   png="$SCREENS_DIR/$base.png"
   echo
   echo "▶ $base"
-  "$MAESTRO" test "$flow"
+
+  attempt=0
+  while : ; do
+    attempt=$((attempt + 1))
+    flow_log="$TMP_DIR/$base.attempt-$attempt.log"
+    debug_dir="$MAESTRO_DEBUG_ROOT/$base-attempt-$attempt"
+    if "$MAESTRO" test --debug-output "$debug_dir" --flatten-debug-output "$flow" 2>&1 | tee "$flow_log"; then
+      [ "$attempt" -gt 1 ] && echo "  passed on attempt $attempt"
+      break
+    fi
+    # Only retry the upstream driver-hang class. Assertion failures
+    # are real regressions and must surface red — never retry them.
+    if grep -q 'IOSDriverTimeoutException' "$flow_log" && \
+       [ "$attempt" -lt "$MAESTRO_MAX_ATTEMPTS" ]; then
+      echo "  driver hang on attempt $attempt of $MAESTRO_MAX_ATTEMPTS; restarting simulator and retrying"
+      xcrun simctl shutdown "$UDID" || true
+      xcrun simctl boot "$UDID"
+      xcrun simctl bootstatus "$UDID" -b >/dev/null
+      continue
+    fi
+    # Real failure OR retries exhausted: post-mortem + exit.
+    echo "--- POST-MORTEM: TCP loopback listeners ---"
+    /usr/sbin/lsof -iTCP -sTCP:LISTEN -nP 2>/dev/null | grep -E 'IPv[46]|java|xctest|XCT|maestro' || true
+    echo "--- POST-MORTEM: live maestro / XCT / xcodebuild processes ---"
+    ps -A 2>/dev/null | grep -E 'maestro|XCT|xcodebuild' | grep -v grep || true
+    echo "--- POST-MORTEM: simulator log (last 2 min) ---"
+    xcrun simctl spawn "$UDID" log show \
+      --predicate 'process == "XCTRunner" OR process CONTAINS "swiss.realunit.app"' \
+      --last 2m --style compact 2>/dev/null | tail -200 || true
+    echo "--- POST-MORTEM: copy Maestro debug-output for failure to screenshots dir ---"
+    if [ -d "$debug_dir" ]; then
+      # Surface the failure screenshot + view hierarchy in the
+      # uploaded artifact so a reviewer can see what was on screen
+      # at the assertion point without re-running locally.
+      cp -R "$debug_dir" "$SCREENS_DIR/_debug-$base-attempt-$attempt" || true
+    fi
+    exit 1
+  done
+
   xcrun simctl io booted screenshot "$tmp_png" >/dev/null
   mv "$tmp_png" "$png"
   echo "  captured → ${png#$REPO_ROOT/}"

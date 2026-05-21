@@ -4,4 +4,6 @@ appId: swiss.realunit.app
 ---
 - tapOn: 'Weiter'
 - waitForAnimationToEnd
-- assertVisible: 'Erstellen Sie Ihre PIN'
+- extendedWaitUntil:
+    visible: 'Erstellen Sie Ihre PIN'
+    timeout: 30000

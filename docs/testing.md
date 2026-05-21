@@ -7,7 +7,7 @@ RealUnit's tests are organised into five tiers (see [#314](https://github.com/DF
 | 0 | Pure Dart logic — cubits, services, signers, parsers | None | ✅ `flutter test --coverage` |
 | 1 | Cubit / widget + SDK-boundary fake — sign ceremonies via `FakeBitboxCredentials`; HTTP via `MockClient` | None | ✅ `flutter test --coverage` |
 | 2 | Real BitBox firmware-simulator over TCP (`bitbox_flutter` TCP transport) | Docker, no device | 🟡 Deferred — Phase 2 of #314 |
-| 3 | Real BitBox02 hardware via Maestro YAML flows | iPhone + BitBox02 Nova | 🟡 Deferred — Phase 3 of #314 |
+| 3 | Maestro YAML flows on an iOS Simulator (handbook capture) · real BitBox02 hardware variant deferred | iPhone simulator (handbook) · iPhone + BitBox02 Nova (hardware) | 🟢 Handbook flows automated · 🟡 hardware variant deferred — Phase 3 of #314 |
 | 4 | BLE traffic capture / replay | Capture on hardware, replay anywhere | 🟡 Stretch — Phase 4 of #314 |
 
 ## When to pick which tier
@@ -228,9 +228,25 @@ flutter test integration_test/ --dart-define=BITBOX_HOST=localhost:15423
 
 Does **not** exercise iOS BLE — the simulator is USB-style framing only. Tier 3 stays the only validation for the BLE transport.
 
-## Tier 3 — Maestro on real hardware (deferred)
+## Tier 3 — Maestro flows
 
-YAML flows under `.maestro/` driven by [`maestro`](https://maestro.mobile.dev). Required pre-release for security-sensitive flows. Status: deferred — Phase 3 of #314.
+YAML flows under `.maestro/` driven by [`maestro`](https://maestro.mobile.dev).
+
+Status: the handbook subset (`.maestro/handbook/*.yaml`) is automated on PRs labelled `tier3:full` and on every push to `develop` — see `.github/workflows/tier3-handbook.yaml`. The workflow resolves and boots an `iPhone 17` device on the highest available iOS 26 runtime; `scripts/run-handbook-flows.sh` then shuts the device down, `simctl erase`s it (Keychain wipes are the only reliable way to start on the welcome flow — see the script for the rationale), pins the simulator locale to `de_CH` so German handbook assertions pass on the `en_US`-default runner, reinstalls the debug `Runner.app`, replays every flow back-to-back, and the workflow uploads `docs/handbook/screenshots/` as a build artifact so reviewers can spot visual drift before merge.
+
+The Maestro version is pinned in `.maestro-version` (today `2.0.10`).
+Maestro 2.3.x–2.5.x has documented intermittent failures on Apple
+Silicon + iOS 26.x — both driver-hang and silent tap-loss — tracked
+upstream as [mobile-dev-inc/maestro#3137](https://github.com/mobile-dev-inc/maestro/issues/3137).
+The pinned version is the workaround the upstream issue closed with.
+`scripts/run-handbook-flows.sh` retries the residual driver-hang
+class up to three times per flow as a safety net, and Tier 3 is
+opt-in via the `tier3:full` label rather than a required status
+check on `develop` until the reliability is proven on the pinned
+version over time. See realunit-app#487 Hard Risk 2b for the
+hardening track.
+
+The real-hardware variant (BitBox02 Nova) stays deferred — Phase 3 of #314 — and is the entry point for any PR that adds a `bitbox:full` label later.
 
 ## Tier 4 — VCR / replay (stretch)
 

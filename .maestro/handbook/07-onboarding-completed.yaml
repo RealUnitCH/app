@@ -4,4 +4,6 @@ appId: swiss.realunit.app
 ---
 - tapOn: 'Bestätigen'
 - waitForAnimationToEnd
-- assertVisible: 'Weiter'
+- extendedWaitUntil:
+    visible: 'Weiter'
+    timeout: 30000

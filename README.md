@@ -14,7 +14,7 @@ A Flutter wallet for Real Unit investors. Multi-chain, BitBox02-ready, KYC-aware
 
 **Coverage scope:** `lib/packages/**` (services, repositories, signers, utils) and the `cubits/` + `bloc/` directories under each `lib/screens/<feature>/`. Widget files (`lib/screens/<feature>/<feature>_page.dart` and `lib/widgets/**`) are exercised via `testWidgets` specs and excluded from the line-coverage gate — widget tests count as `widget` coverage in the feature matrix, not as line %.
 
-The four-tier testing model (Tier 0 Cubit unit · Tier 1 FakeBitbox integration · Tier 2 firmware simulator · Tier 3 Maestro hardware) is tracked in [#314](https://github.com/DFXswiss/realunit-app/issues/314). New BitBox-touching PRs are expected to add tests at the appropriate tier(s).
+The four-tier testing model (Tier 0 Cubit unit · Tier 1 FakeBitbox integration · Tier 2 firmware simulator · Tier 3 Maestro flows (handbook simulator + deferred BitBox02 hardware)) is tracked in [#314](https://github.com/DFXswiss/realunit-app/issues/314). New BitBox-touching PRs are expected to add tests at the appropriate tier(s).
 
 ## Coverage infrastructure roadmap
 
@@ -22,10 +22,14 @@ The 100% rule above is the target state. Until the items below land, it is aspir
 
 - [x] `flutter test --coverage` step in `.github/workflows/pull-request.yaml`
 - [x] lcov filter narrowed to the activated surface (`lib/packages/**` + `lib/screens/**/cubit(s)/**` + `lib/screens/**/bloc/**`) and a per-run summary posted to the workflow step summary
-- [ ] lcov threshold check (e.g. via `very_good_cli` or a custom `lcov` parser) failing the build below 100% on the scope above
+- [x] lcov threshold check failing the build below a committed floor on the scope above
 - [ ] GitHub branch protection on `develop` requiring the coverage check
 - [ ] Build-time feature-flag mechanism (analogous to `EXPO_PUBLIC_ENABLE_*` in `dfx-wallet`) so non-MVP features can be gated out of the activated surface — required before the 100% rule is realistic across all feature areas
 - [ ] Inline `// coverage:ignore-*` annotations on truly unreachable paths, each with a one-line reason
+
+**Ratchet protocol.** The committed floor lives in two flat files at the repo root: `.coverage-floor-lines` and `.coverage-floor-functions` (integer percent, no `%` suffix). CI fails the build when scoped coverage drops below either value. Raising the floor is encouraged on every PR that raises measured coverage — bump the file in the same commit and the gate moves up. Lowering the floor requires explicit reviewer sign-off; PR convention is the `coverage:lower-floor` label so the regression is visible in the PR list rather than smuggled in. The functions floor is parked at a placeholder today because `flutter test --coverage` does not emit `FN` records — the gate warns instead of failing on that metric until upstream adds support.
+
+> **Before first use:** two PR labels are referenced by this tooling but are not auto-created. Run `gh label create tier3:full` once on the repo to enable per-PR opt-in for the Tier 3 handbook workflow — without the label the workflow's `if:` gate never matches and the job silently skips on PRs. Run `gh label create coverage:lower-floor` once to make floor-lowering PRs grep-able; the coverage floor gate itself runs unconditionally on every PR, this label is a review-convention marker only and is not read by any workflow.
 
 Three PRs already in flight close the largest gaps for KYC + BitBox logic: [#319](https://github.com/DFXswiss/realunit-app/pull/319) (Tier 0 cubit tests), [#320](https://github.com/DFXswiss/realunit-app/pull/320) (Tier 1 FakeBitbox integration), [#321](https://github.com/DFXswiss/realunit-app/pull/321) (dashboard buy actions + auth service tests).
 
@@ -124,7 +128,8 @@ Features tagged `mvp` whose current test coverage is insufficient — these bloc
 - **Tier 0 — Cubit unit tests** (`bloc_test` + `mocktail`). Fast, no platform, no BitBox. Covers every state transition.
 - **Tier 1 — FakeBitbox integration tests** (`integration_test/` + `FakeBitboxCredentials`). Drives full app flow without hardware. Phase landing in [#320](https://github.com/DFXswiss/realunit-app/pull/320).
 - **Tier 2 — Firmware simulator** (TCP transport + Docker `bitbox02-firmware/simulator`). End-to-end with real crypto, no hardware. Planned.
-- **Tier 3 — Maestro hardware flows** (`.maestro/*.yaml`). Real BitBox device. Manually triggered before each release.
+- **Tier 3a — Maestro handbook flows** (`.maestro/handbook/*.yaml`). Software-only flows run on a fresh iOS Simulator. Automated via [`tier3-handbook.yaml`](.github/workflows/tier3-handbook.yaml) — opt-in on PRs via the `tier3:full` label (an upstream Maestro driver-hang regression on `macos-latest` runners makes intermittent first-attempt failures expected; `scripts/run-handbook-flows.sh` retries the driver-hang class up to 3× per flow; tracked in [#487](https://github.com/DFXswiss/realunit-app/issues/487)), always runs on push to `develop`.
+- **Tier 3b — Maestro hardware flows** (`.maestro/*.yaml`, BitBox02 device). Status: deferred — still manually triggered before each release.
 
 Non-BitBox code only needs Tier 0 + widget tests; Tier 1+ are reserved for hardware-coupled paths.
 
@@ -133,16 +138,17 @@ Non-BitBox code only needs Tier 0 + widget tests; Tier 1+ are reserved for hardw
 | Stack    | Command                   | What it covers                                                                                                                                                                                            |
 | -------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Flutter  | `flutter test`            | Unit + widget specs under `test/**` (pure-Dart `test` and `testWidgets`)                                                                                                                                  |
-| Coverage | `flutter test --coverage` | Writes `coverage/lcov.info`. CI filters out `lib/generated/**` and `lib/main.dart` so the figure reflects the activated surface. Threshold enforcement is not yet wired — see "Coverage infrastructure roadmap" above. |
+| Coverage | `flutter test --coverage` | Writes `coverage/lcov.info`. CI narrows it to the activated surface and hard-fails when scoped coverage drops below the floor in `.coverage-floor-lines` / `.coverage-floor-functions`. See "Coverage infrastructure roadmap" above for the ratchet protocol. |
 | Analyzer | `flutter analyze`         | Dart static analysis per `analysis_options.yaml`                                                                                                                                                          |
 
-Tier 1 (`integration_test/`) and Tier 3 (`.maestro/`) runners are tracked under "Testing tiers" above but not yet committed.
+Tier 1 (`integration_test/`) is tracked under "Testing tiers" above but not yet committed. Tier 3a (Maestro handbook flows on iOS Simulator) is wired via [`tier3-handbook.yaml`](.github/workflows/tier3-handbook.yaml); Tier 3b (BitBox02 real-hardware variant) remains deferred.
 
 ## CI/CD
 
 | Workflow                     | Trigger                                                       | Action                                                                                  |
 | ---------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `pull-request.yaml`          | PR to `develop` / `main` · manual                             | `flutter analyze` + `flutter test --coverage`, filter generated files, upload lcov artifact |
+| `pull-request.yaml`          | PR to `develop` / `main` · manual                             | `flutter analyze` + `flutter test --coverage`, scope lcov to the activated surface, fail below the committed floor, upload lcov artifact |
+| `tier3-handbook.yaml`        | PR to `develop` with label `tier3:full` · push `develop` · manual | Runs every `.maestro/handbook/*.yaml` flow on a fresh iOS Simulator (`iPhone 17`) and uploads captured screenshots (Tier 3) |
 | `bitbox-simulator.yml`       | PR touching `lib/packages/hardware_wallet/**` or `wallet/**`  | Runs the BitBox02 firmware simulator with `bitbox-testkit` baselines (Tier 2)           |
 | `bitbox-simulator-slash.yml` | `/bitbox-simulator` comment on any PR                         | Same engine as above, on-demand per PR (variants: default / `ref=main`)                 |
 | `auto-release-pr.yaml`       | Push `develop` · manual                                       | Opens Release PR `develop` → `main`                                                     |
