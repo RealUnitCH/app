@@ -113,12 +113,13 @@ jobs:
       github.event_name != 'pull_request'
       || contains(github.event.pull_request.labels.*.name, 'tier3:full')
     runs-on: macos-latest
-    # ~12 min setup (Flutter + tooling, build, sim erase/boot/install) plus
-    # ~20-25 min for the 19 handbook flows — each flow restarts the XCUITest
-    # driver (~40-60 s). A full run lands around 32-37 min, so the former
-    # 30 min envelope was too tight and flaked into the job timeout; 45 min
-    # gives headroom for runner-speed variance and the per-flow retry budget.
-    timeout-minutes: 45
+    # The handbook suite overruns a tight envelope: an observed run was
+    # still on flow 8 of 19 at a 30 min cap, with the onboarding flows
+    # (01-06) alone burning ~21 min. 75 min is deliberate headroom so a
+    # data-gathering run completes all 19 flows — run-handbook-flows.sh now
+    # logs per-flow / per-attempt wall-clock. Once that data lands, speed
+    # the suite up and bring this back down.
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
 
@@ -132,6 +133,23 @@ jobs:
       - run: dart run tool/generate_localization.dart
       - run: dart run tool/generate_release_info.dart
       - run: flutter pub run build_runner build
+
+      # Cache iOS DerivedData (compiled Flutter modules) + Pods (Cocoapods
+      # dependencies). On a cache hit, `flutter build ios --simulator
+      # --debug` reuses the cached objects and the build time drops from
+      # ~5-6 min to ~2-3 min. Cache-Key invalidates on pubspec.lock or
+      # Podfile.lock changes — i.e. any dependency bump forces a clean
+      # build. The restore-keys fallback allows partial cache reuse if
+      # the lock files moved but the SDK is unchanged.
+      - name: Cache iOS DerivedData + Pods
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Developer/Xcode/DerivedData
+            ios/Pods
+          key: ios-derived-data-${{ runner.os }}-${{ hashFiles('pubspec.lock', 'ios/Podfile.lock') }}
+          restore-keys: |
+            ios-derived-data-${{ runner.os }}-
 
       - name: Build iOS simulator app
         run: flutter build ios --simulator --debug
