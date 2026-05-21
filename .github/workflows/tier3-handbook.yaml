@@ -176,14 +176,9 @@ jobs:
           xcrun simctl bootstatus "$UDID" -b
 
       - name: Install Maestro CLI
-        env:
-          # Pin Maestro to a known version so a silent intraday upstream
-          # release cannot flip behaviour mid-iteration. 2.5.1 is the
-          # latest stable as of 30 Apr 2026. The install.sh installer
-          # reads $MAESTRO_VERSION and pulls cli-$MAESTRO_VERSION/maestro.zip.
-          MAESTRO_VERSION: "2.5.1"
         run: |
           set -euo pipefail
+          export MAESTRO_VERSION="$(cat .maestro-version)"
           curl -fsSL "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
