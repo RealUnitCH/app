@@ -127,6 +127,15 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 # the workflow's 30 min envelope.
 MAESTRO_MAX_ATTEMPTS="${MAESTRO_MAX_ATTEMPTS:-3}"
 
+# Maestro's `--debug-output` writes per-attempt view-hierarchy.json +
+# screenshot + maestro.log into the given directory. On flow failure
+# these are the only forensic data that show what was actually on the
+# screen at the assertion point — much more useful than a `simctl io
+# screenshot` taken after the flow exited (which captures whatever
+# screen the failure left the app on, not the moment of failure).
+MAESTRO_DEBUG_ROOT="$TMP_DIR/maestro-debug"
+mkdir -p "$MAESTRO_DEBUG_ROOT"
+
 for flow in "${flows[@]}"; do
   base="$(basename "$flow" .yaml)"
   tmp_png="$TMP_DIR/$base.png"
@@ -138,7 +147,8 @@ for flow in "${flows[@]}"; do
   while : ; do
     attempt=$((attempt + 1))
     flow_log="$TMP_DIR/$base.attempt-$attempt.log"
-    if "$MAESTRO" test "$flow" 2>&1 | tee "$flow_log"; then
+    debug_dir="$MAESTRO_DEBUG_ROOT/$base-attempt-$attempt"
+    if "$MAESTRO" test --debug-output "$debug_dir" --flatten-debug-output "$flow" 2>&1 | tee "$flow_log"; then
       [ "$attempt" -gt 1 ] && echo "  passed on attempt $attempt"
       break
     fi
@@ -161,6 +171,13 @@ for flow in "${flows[@]}"; do
     xcrun simctl spawn "$UDID" log show \
       --predicate 'process == "XCTRunner" OR process CONTAINS "swiss.realunit.app"' \
       --last 2m --style compact 2>/dev/null | tail -200 || true
+    echo "--- POST-MORTEM: copy Maestro debug-output for failure to screenshots dir ---"
+    if [ -d "$debug_dir" ]; then
+      # Surface the failure screenshot + view hierarchy in the
+      # uploaded artifact so a reviewer can see what was on screen
+      # at the assertion point without re-running locally.
+      cp -R "$debug_dir" "$SCREENS_DIR/_debug-$base-attempt-$attempt" || true
+    fi
     exit 1
   done
 
