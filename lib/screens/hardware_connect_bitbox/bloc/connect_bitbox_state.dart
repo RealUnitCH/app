@@ -24,6 +24,18 @@ class BitboxPairing extends BitboxFound {
   BitboxPairing(super.device);
 }
 
+class BitboxCapturingSignature extends BitboxConnectionState {
+  final BitboxWallet wallet;
+
+  BitboxCapturingSignature(this.wallet);
+}
+
+class BitboxSignatureFailed extends BitboxConnectionState {
+  final BitboxWallet wallet;
+
+  BitboxSignatureFailed(this.wallet);
+}
+
 class BitboxConnected extends BitboxConnectionState {
   final BitboxWallet wallet;
 

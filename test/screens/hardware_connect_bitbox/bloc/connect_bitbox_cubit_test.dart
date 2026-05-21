@@ -79,7 +79,7 @@ void main() {
   }
 
   group('$ConnectBitboxCubit', () {
-    test('reaches BitboxConnected when device, hash, init, verify all succeed', () async {
+    test('reaches BitboxConnected via BitboxCapturingSignature when all succeed', () async {
       final initCompleter = Completer<bool>();
       var pollCount = 0;
 
@@ -94,6 +94,10 @@ void main() {
       final cubit = makeCubit();
       addTearDown(cubit.close);
 
+      final emitted = <BitboxConnectionState>[];
+      final sub = cubit.stream.listen(emitted.add);
+      addTearDown(sub.cancel);
+
       await waitForState<BitboxCheckHash>(cubit);
       expect((cubit.state as BitboxCheckHash).channelHash, 'ABC123DEF456');
 
@@ -105,8 +109,103 @@ void main() {
       await confirmFut;
 
       expect(cubit.state, isA<BitboxConnected>());
+      // The signature is captured as an awaited step before BitboxConnected.
+      expect(emitted.whereType<BitboxCapturingSignature>(), isNotEmpty);
       verify(() => service.confirmPairing()).called(1);
       verify(() => walletService.createBitboxWallet(any())).called(1);
+      verify(() => authService.ensureSignatureFor(any())).called(1);
+    });
+
+    test('emits BitboxSignatureFailed when the signature capture throws', () async {
+      var pollCount = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 3 ? '' : 'HASH-ok';
+      });
+      when(() => service.confirmPairing()).thenAnswer((_) async {});
+      when(() => authService.ensureSignatureFor(any())).thenThrow(Exception('sign boom'));
+
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      final emitted = <BitboxConnectionState>[];
+      final sub = cubit.stream.listen(emitted.add);
+      addTearDown(sub.cancel);
+
+      await waitForState<BitboxCheckHash>(cubit);
+      await cubit.confirmPairing();
+
+      expect(cubit.state, isA<BitboxSignatureFailed>());
+      expect(emitted.whereType<BitboxCapturingSignature>(), isNotEmpty);
+    });
+
+    test('retrySignatureCapture recovers from BitboxSignatureFailed to BitboxConnected',
+        () async {
+      var pollCount = 0;
+      var signCalls = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 3 ? '' : 'HASH-ok';
+      });
+      when(() => service.confirmPairing()).thenAnswer((_) async {});
+      when(() => authService.ensureSignatureFor(any())).thenAnswer((_) async {
+        signCalls++;
+        if (signCalls == 1) throw Exception('sign boom');
+      });
+
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      await waitForState<BitboxCheckHash>(cubit);
+      await cubit.confirmPairing();
+      expect(cubit.state, isA<BitboxSignatureFailed>());
+
+      await cubit.retrySignatureCapture();
+      expect(cubit.state, isA<BitboxConnected>());
+      verify(() => authService.ensureSignatureFor(any())).called(2);
+    });
+
+    test('retrySignatureCapture is a no-op when not in BitboxSignatureFailed', () async {
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      await cubit.retrySignatureCapture();
+      expect(cubit.state, isA<BitboxNotConnected>());
+    });
+
+    test('continueWithoutSignature transitions BitboxSignatureFailed to BitboxConnected',
+        () async {
+      var pollCount = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 3 ? '' : 'HASH-ok';
+      });
+      when(() => service.confirmPairing()).thenAnswer((_) async {});
+      when(() => authService.ensureSignatureFor(any())).thenThrow(Exception('sign boom'));
+
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      await waitForState<BitboxCheckHash>(cubit);
+      await cubit.confirmPairing();
+      expect(cubit.state, isA<BitboxSignatureFailed>());
+
+      cubit.continueWithoutSignature();
+      expect(cubit.state, isA<BitboxConnected>());
+    });
+
+    test('continueWithoutSignature is a no-op when not in BitboxSignatureFailed', () async {
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      cubit.continueWithoutSignature();
+      expect(cubit.state, isA<BitboxNotConnected>());
     });
 
     test('finishSetup transitions BitboxConnected to BitboxFinishSetup', () async {
