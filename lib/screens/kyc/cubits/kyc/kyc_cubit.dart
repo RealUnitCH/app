@@ -176,9 +176,11 @@ class KycCubit extends Cubit<KycState> {
       emit(const KycCompleted());
     } on ApiException catch (e) {
       if (isClosed || generation != _runGeneration) return;
-      // API returns 403 / code TFA_REQUIRED when 2FA verification is required
-      // before proceeding.
-      if (e.statusCode == 403 || e.code == 'TFA_REQUIRED') {
+      // The body `code` is the authoritative signal — `TfaRequiredException`
+      // on the API sets `{code: 'TFA_REQUIRED', level, message}` and happens
+      // to use HTTP 403 as transport. Matching on status alone would also
+      // capture unrelated forbidden errors and misroute them to 2FA.
+      if (e.code == 'TFA_REQUIRED') {
         emit(const KycSuccess(currentStep: KycStep.twoFa));
       } else {
         rethrow;
