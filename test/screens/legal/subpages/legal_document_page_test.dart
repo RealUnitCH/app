@@ -6,73 +6,82 @@ void main() {
     const apiUrls = {
       'de': 'https://api.test/de.pdf',
       'en': 'https://api.test/en.pdf',
-    };
-    const fallback = {
-      'de': 'https://fallback.test/de.pdf',
-      'en': 'https://fallback.test/en.pdf',
+      'fr': 'https://api.test/fr.pdf',
     };
 
-    test('prefers API URL when API responded with the requested language', () {
-      final url = resolveLegalDocumentPdfUrl(
-        apiUrls: apiUrls,
-        fallbackUrls: fallback,
-        languageCode: 'de',
+    test('exakter Sprach-Match gewinnt', () {
+      expect(
+        resolveLegalDocumentPdfUrl(apiUrls: apiUrls, languageCode: 'de'),
+        'https://api.test/de.pdf',
       );
-      expect(url, 'https://api.test/de.pdf');
+      expect(
+        resolveLegalDocumentPdfUrl(apiUrls: apiUrls, languageCode: 'en'),
+        'https://api.test/en.pdf',
+      );
     });
 
-    test('prefers API but degrades to first API URL when language missing', () {
-      final url = resolveLegalDocumentPdfUrl(
-        apiUrls: const {'en': 'https://api.test/en.pdf'},
-        fallbackUrls: fallback,
-        languageCode: 'de',
+    test('fehlt languageCode in apiUrls ⇒ deterministisch en > de > erste', () {
+      // 'it' fehlt → en kommt zuerst nach languageCode
+      expect(
+        resolveLegalDocumentPdfUrl(apiUrls: apiUrls, languageCode: 'it'),
+        'https://api.test/en.pdf',
       );
-      expect(url, 'https://api.test/en.pdf');
+      // ohne en → de
+      expect(
+        resolveLegalDocumentPdfUrl(
+          apiUrls: const {
+            'de': 'https://api.test/de.pdf',
+            'fr': 'https://api.test/fr.pdf',
+          },
+          languageCode: 'it',
+        ),
+        'https://api.test/de.pdf',
+      );
+      // ohne en und de → erster Insertion-Order-Eintrag (stabil für API-
+      // Antworten, dokumentiert als letzte Eskalation, nicht produktiv
+      // verwendet, weil API immer mindestens en oder de liefert).
+      expect(
+        resolveLegalDocumentPdfUrl(
+          apiUrls: const {
+            'fr': 'https://api.test/fr.pdf',
+            'it': 'https://api.test/it.pdf',
+          },
+          languageCode: 'es',
+        ),
+        'https://api.test/fr.pdf',
+      );
     });
 
-    test('falls back to bundled map when API returned no entries', () {
-      final url = resolveLegalDocumentPdfUrl(
-        apiUrls: const {},
-        fallbackUrls: fallback,
-        languageCode: 'de',
+    test('Reihenfolge en vor de ist stabil unabhängig von Insertion-Order', () {
+      // de zuerst, en zweitens → Resolver nimmt en
+      expect(
+        resolveLegalDocumentPdfUrl(
+          apiUrls: const {
+            'de': 'https://api.test/de.pdf',
+            'en': 'https://api.test/en.pdf',
+          },
+          languageCode: 'pt',
+        ),
+        'https://api.test/en.pdf',
       );
-      expect(url, 'https://fallback.test/de.pdf');
+      // en zuerst, de zweitens → trotzdem en
+      expect(
+        resolveLegalDocumentPdfUrl(
+          apiUrls: const {
+            'en': 'https://api.test/en.pdf',
+            'de': 'https://api.test/de.pdf',
+          },
+          languageCode: 'pt',
+        ),
+        'https://api.test/en.pdf',
+      );
     });
 
-    test('falls back to bundled map when API load not yet finished', () {
-      final url = resolveLegalDocumentPdfUrl(
-        apiUrls: null,
-        fallbackUrls: fallback,
-        languageCode: 'en',
+    test('leere apiUrls ⇒ null (kein hardcoded Fallback, audit V17)', () {
+      expect(
+        resolveLegalDocumentPdfUrl(apiUrls: const {}, languageCode: 'de'),
+        isNull,
       );
-      expect(url, 'https://fallback.test/en.pdf');
-    });
-
-    test('returns null when neither API nor fallback have URLs', () {
-      final url = resolveLegalDocumentPdfUrl(
-        apiUrls: const {},
-        fallbackUrls: const {},
-        languageCode: 'de',
-      );
-      expect(url, isNull);
-    });
-
-    test('returns null when fallback is null and API empty', () {
-      final url = resolveLegalDocumentPdfUrl(
-        apiUrls: const {},
-        fallbackUrls: null,
-        languageCode: 'de',
-      );
-      expect(url, isNull);
-    });
-
-    test('falls back to first fallback URL when language missing in fallback', () {
-      final url = resolveLegalDocumentPdfUrl(
-        apiUrls: null,
-        fallbackUrls: const {'en': 'https://fallback.test/en.pdf'},
-        languageCode: 'de',
-      );
-      expect(url, 'https://fallback.test/en.pdf');
     });
   });
 }

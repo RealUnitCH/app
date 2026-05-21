@@ -25,14 +25,16 @@ class LegalDocumentConfig implements DocumentConfig {
   bool get isExternal => false;
   final String Function(BuildContext context) _title;
   final String assetBaseName;
-  final Map<String, String>? pdfUrls;
+  // Wenn gesetzt, holt die Seite die PDF-URL aus `/v1/legal-document?type=`.
+  // Es gibt keinen hardcoded Fallback mehr — schlägt die API fehl oder
+  // liefert sie keinen Eintrag, rendert die Seite einen
+  // "PDF nicht verfügbar"-Zustand mit Retry (closes audit V17).
   final String? legalDocumentType;
 
   const LegalDocumentConfig({
     required this.icon,
     required String Function(BuildContext context) title,
     required this.assetBaseName,
-    this.pdfUrls,
     this.legalDocumentType,
   }) : _title = title;
 
@@ -45,7 +47,6 @@ class LegalDocumentConfig implements DocumentConfig {
     extra: LegalDocumentParams(
       title: title(context),
       assetBaseName: assetBaseName,
-      pdfUrls: pdfUrls,
       legalDocumentType: legalDocumentType,
     ),
   );
@@ -70,13 +71,6 @@ class LegalDocumentsConfig {
     _investmentRegulations,
   ];
 
-  static const _registrationAgreementPdfUrls = {
-    'de':
-        'https://realunit.ch/wp-content/uploads/2026/03/260303_RegV_DE_RealUnit_Schweiz_AG_signiert.pdf',
-    'en':
-        'https://realunit.ch/wp-content/uploads/2026/03/260303_RegV_EN_RealUnit_Schweiz_AG_signiert.pdf',
-  };
-
   static final _privacyPolicy = LegalDocumentConfig(
     icon: Icons.shield_outlined,
     title: (context) => S.of(context).legalDisclaimerCheckboxPrivacyPolicy,
@@ -87,9 +81,10 @@ class LegalDocumentsConfig {
     icon: Icons.description_outlined,
     title: (context) => S.of(context).legalDisclaimerCheckboxRegistrationAgreement,
     assetBaseName: 'registration_agreement',
-    // The hardcoded map remains as a last-resort fallback if `/v1/legal-document`
-    // is unreachable. The screen prefers the API-sourced URLs (closes V17).
-    pdfUrls: _registrationAgreementPdfUrls,
+    // PDF-URL stammt ausschliesslich aus `/v1/legal-document` — kein
+    // hardcoded Fallback, sonst zeigt die App nach einem Backend-Update
+    // weiterhin die alte signierte Version bis zum nächsten App-Release
+    // (audit V17).
     legalDocumentType: LegalDocumentType.registrationAgreement,
   );
 

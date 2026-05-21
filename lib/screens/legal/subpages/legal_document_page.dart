@@ -13,39 +13,29 @@ import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
-// Prefers API-sourced URLs when present; falls back to the bundled map
-// otherwise. Within either map, prefers an exact language-code match
-// and degrades to the first available URL. Exposed at top-level so it
-// can be unit-tested without spinning up the full page widget.
+// Wählt aus den API-Sprachvarianten deterministisch die passende PDF-URL:
+// exakter Sprach-Match → 'en' → 'de' → erste verfügbare. Es gibt keinen
+// hardcoded Fallback mehr — leerer Input ⇒ `null` (closes audit V17).
 @visibleForTesting
 String? resolveLegalDocumentPdfUrl({
-  required Map<String, String>? apiUrls,
-  required Map<String, String>? fallbackUrls,
+  required Map<String, String> apiUrls,
   required String languageCode,
 }) {
-  if (apiUrls != null && apiUrls.isNotEmpty) {
-    return apiUrls[languageCode] ?? apiUrls.values.first;
-  }
-  if (fallbackUrls == null || fallbackUrls.isEmpty) return null;
-  return fallbackUrls[languageCode] ?? fallbackUrls.values.first;
+  if (apiUrls.isEmpty) return null;
+  return apiUrls[languageCode] ?? apiUrls['en'] ?? apiUrls['de'] ?? apiUrls.values.first;
 }
 
 class LegalDocumentParams {
   final String title;
   final String assetBaseName;
-  // Fallback PDF URLs (language → url). Used only if the API does not
-  // return any URLs for [legalDocumentType] — the API is the source of
-  // truth (closes audit V17), the local map is a last-resort fallback.
-  final Map<String, String>? pdfUrls;
-  // Maps to `LegalDocumentType` on the API. When set, the page fetches
-  // current URLs from `/v1/legal-document?type=<this>` and prefers them
-  // over the bundled [pdfUrls] map.
+  // Bildet auf `LegalDocumentType` der API ab. Wenn gesetzt, lädt die Seite
+  // `/v1/legal-document?type=<this>` und rendert die zurückgegebene URL als
+  // "Original PDF"-Button. Es gibt keinen hardcoded Fallback (audit V17).
   final String? legalDocumentType;
 
   const LegalDocumentParams({
     required this.title,
     required this.assetBaseName,
-    this.pdfUrls,
     this.legalDocumentType,
   });
 }
@@ -58,6 +48,13 @@ class LegalDocumentPage extends StatefulWidget {
   @override
   State<LegalDocumentPage> createState() => _LegalDocumentPageState();
 }
+
+// PDF-Ladezustand für die "Original PDF"-Sektion.
+// `loading` ⇒ API-Call läuft noch, Skeleton-Button.
+// `available` ⇒ URL vorhanden, klickbarer Button.
+// `unavailable` ⇒ API beantwortet/fehlgeschlagen ohne passende URL,
+// Retry-Button.
+enum _PdfStatus { loading, available, unavailable }
 
 class _LegalDocumentPageState extends State<LegalDocumentPage> {
   String? _markdownContent;
@@ -88,6 +85,13 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
   Future<void> _loadApiPdfUrls() async {
     final type = widget.params.legalDocumentType;
     if (type == null) return;
+    // Beim Retry-Tap (Status "unavailable" → "loading") muss `_apiPdfUrls`
+    // zurück auf `null` springen, damit der Button kurzzeitig den
+    // Loading-Spinner zeigt. `_apiPdfUrls != null` impliziert, dass der
+    // erste Build durchgelaufen ist, also ist setState hier sicher.
+    if (mounted && _apiPdfUrls != null) {
+      setState(() => _apiPdfUrls = null);
+    }
     try {
       final docs = await getIt<DfxLegalDocumentService>().getDocuments(type: type);
       final urls = <String, String>{
@@ -101,11 +105,27 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
     }
   }
 
-  String? get _pdfUrl => resolveLegalDocumentPdfUrl(
-    apiUrls: _apiPdfUrls,
-    fallbackUrls: widget.params.pdfUrls,
-    languageCode: context.read<SettingsBloc>().state.language.code,
-  );
+  _PdfStatus get _pdfStatus {
+    // Kein API-Typ konfiguriert ⇒ keine PDF-Sektion. Wird im build()
+    // über `params.legalDocumentType == null` ausgeblendet.
+    if (widget.params.legalDocumentType == null) return _PdfStatus.unavailable;
+    final urls = _apiPdfUrls;
+    if (urls == null) return _PdfStatus.loading;
+    final resolved = resolveLegalDocumentPdfUrl(
+      apiUrls: urls,
+      languageCode: context.read<SettingsBloc>().state.language.code,
+    );
+    return resolved == null ? _PdfStatus.unavailable : _PdfStatus.available;
+  }
+
+  String? get _pdfUrl {
+    final urls = _apiPdfUrls;
+    if (urls == null) return null;
+    return resolveLegalDocumentPdfUrl(
+      apiUrls: urls,
+      languageCode: context.read<SettingsBloc>().state.language.code,
+    );
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -133,28 +153,48 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
                   },
                 ),
               ),
-              if (_pdfUrl != null)
+              if (widget.params.legalDocumentType != null)
                 SafeArea(
                   top: false,
                   child: Padding(
                     padding: const .all(20.0),
-                    child: AppFilledButton(
-                      variant: .secondary,
-                      onPressed: () => context.pushNamed(
-                        AppRoutes.webView,
-                        extra: WebViewRouteParams(
-                          title: S.of(context).originalPdf,
-                          url: Uri.parse(_pdfUrl!),
-                          showExternalBrowserButton: true,
-                        ),
-                      ),
-                      icon: Icons.picture_as_pdf_outlined,
-                      label: S.of(context).originalPdf,
-                    ),
+                    child: _buildPdfButton(context),
                   ),
                 ),
             ],
           )
         : const SizedBox.shrink(),
   );
+
+  Widget _buildPdfButton(BuildContext context) {
+    switch (_pdfStatus) {
+      case _PdfStatus.loading:
+        return AppFilledButton(
+          variant: .secondary,
+          state: .loading,
+          label: S.of(context).pdfLoading,
+        );
+      case _PdfStatus.unavailable:
+        return AppFilledButton(
+          variant: .secondary,
+          onPressed: _loadApiPdfUrls,
+          icon: Icons.refresh,
+          label: S.of(context).pdfNotAvailable,
+        );
+      case _PdfStatus.available:
+        return AppFilledButton(
+          variant: .secondary,
+          onPressed: () => context.pushNamed(
+            AppRoutes.webView,
+            extra: WebViewRouteParams(
+              title: S.of(context).originalPdf,
+              url: Uri.parse(_pdfUrl!),
+              showExternalBrowserButton: true,
+            ),
+          ),
+          icon: Icons.picture_as_pdf_outlined,
+          label: S.of(context).originalPdf,
+        );
+    }
+  }
 }
