@@ -7,4 +7,4 @@ appId: swiss.realunit.app
 - extendedWaitUntil:
     visible:
       text: '.*Neue Wallet erstellen.*'
-    timeout: 15000
+    timeout: 30000

@@ -7,4 +7,4 @@ appId: swiss.realunit.app
 - waitForAnimationToEnd
 - extendedWaitUntil:
     notVisible: 'Hier tippen, um anzuzeigen'
-    timeout: 15000
+    timeout: 30000

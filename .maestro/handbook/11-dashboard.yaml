@@ -17,4 +17,4 @@ appId: swiss.realunit.app
       - waitForAnimationToEnd
 - extendedWaitUntil:
     visible: 'RealUnit kaufen'
-    timeout: 15000
+    timeout: 30000

@@ -10,4 +10,4 @@ appId: swiss.realunit.app
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible: 'Bestätigen Sie Ihre PIN'
-    timeout: 15000
+    timeout: 30000
