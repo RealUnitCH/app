@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/legal_document/dto/dfx_legal_document_dto.dart';
 import 'package:realunit_wallet/screens/legal/subpages/legal_document_page.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
@@ -25,12 +26,14 @@ class LegalDocumentConfig implements DocumentConfig {
   final String Function(BuildContext context) _title;
   final String assetBaseName;
   final Map<String, String>? pdfUrls;
+  final String? legalDocumentType;
 
   const LegalDocumentConfig({
     required this.icon,
     required String Function(BuildContext context) title,
     required this.assetBaseName,
     this.pdfUrls,
+    this.legalDocumentType,
   }) : _title = title;
 
   @override
@@ -43,6 +46,7 @@ class LegalDocumentConfig implements DocumentConfig {
       title: title(context),
       assetBaseName: assetBaseName,
       pdfUrls: pdfUrls,
+      legalDocumentType: legalDocumentType,
     ),
   );
 }
@@ -83,7 +87,10 @@ class LegalDocumentsConfig {
     icon: Icons.description_outlined,
     title: (context) => S.of(context).legalDisclaimerCheckboxRegistrationAgreement,
     assetBaseName: 'registration_agreement',
+    // The hardcoded map remains as a last-resort fallback if `/v1/legal-document`
+    // is unreachable. The screen prefers the API-sourced URLs (closes V17).
     pdfUrls: _registrationAgreementPdfUrls,
+    legalDocumentType: LegalDocumentType.registrationAgreement,
   );
 
   static final _euSecuritiesProspectusBearerShares = WebDocumentConfig(
