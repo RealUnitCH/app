@@ -234,6 +234,13 @@ YAML flows under `.maestro/` driven by [`maestro`](https://maestro.mobile.dev).
 
 Status: the handbook subset (`.maestro/handbook/*.yaml`) is automated on PRs labelled `tier3:full` and on every push to `develop` — see `.github/workflows/tier3-handbook.yaml`. The workflow resolves and boots an `iPhone 17` device on the highest available iOS 26 runtime; `scripts/run-handbook-flows.sh` then shuts the device down, `simctl erase`s it (Keychain wipes are the only reliable way to start on the welcome flow — see the script for the rationale), pins the simulator locale to `de_CH` so German handbook assertions pass on the `en_US`-default runner, reinstalls the debug `Runner.app`, replays every flow back-to-back, and the workflow uploads `docs/handbook/screenshots/` as a build artifact so reviewers can spot visual drift before merge.
 
+The current Maestro 2.5.1 + iOS 26.x combination on `macos-latest` has a
+known upstream driver-hang regression (mobile-dev-inc/maestro#3137) that
+causes intermittent first-attempt failures; `scripts/run-handbook-flows.sh`
+retries the driver-hang class up to three times per flow, and Tier 3 is
+therefore opt-in via the `tier3:full` label rather than a required
+status check on `develop`. See realunit-app#487 for the hardening track.
+
 The real-hardware variant (BitBox02 Nova) stays deferred — Phase 3 of #314 — and is the entry point for any PR that adds a `bitbox:full` label later.
 
 ## Tier 4 — VCR / replay (stretch)
