@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:http/http.dart' as http;
 import 'package:realunit_wallet/packages/config/api_config.dart';
@@ -7,6 +8,30 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
+
+/// Fire-and-forget pre-warm of the auth signature, shared by every onboarding
+/// flow (create / restore / BitBox-pair). The lazy path in
+/// [DFXAuthService.getSignature] is still the safety net — this just primes
+/// the cache so the first authenticated call doesn't have to round-trip
+/// through the hardware wallet again. Failures surface at SEVERE so support
+/// has a debug-log breadcrumb when a fresh BitBox confirmation pops up
+/// unexpectedly on the next call.
+Future<void> warmAuthSignature(
+  DFXAuthService authService,
+  AWalletAccount account, {
+  required String loggerName,
+}) async {
+  try {
+    await authService.ensureSignatureFor(account);
+  } catch (e) {
+    developer.log(
+      'initial signature capture failed — next authenticated call '
+      'will trigger a fresh signature request: $e',
+      name: loggerName,
+      level: 1000, // SEVERE
+    );
+  }
+}
 
 abstract class DFXAuthService {
   static const walletName = 'RealUnit';

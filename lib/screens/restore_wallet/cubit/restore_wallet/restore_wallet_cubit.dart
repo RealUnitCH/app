@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -25,7 +24,13 @@ class RestoreWalletCubit extends Cubit<RestoreWalletState> {
     // Fire-and-forget the auth-signature capture so a 20 s HTTP timeout doesn't
     // block the wallet-restore UI. The lazy path in DFXAuthService.getSignature
     // is the safety net.
-    unawaited(_warmAuthSignature(wallet));
+    unawaited(
+      warmAuthSignature(
+        _authService,
+        wallet.currentAccount,
+        loggerName: '$RestoreWalletCubit',
+      ),
+    );
 
     emit(
       RestoreWalletState(
@@ -33,16 +38,5 @@ class RestoreWalletCubit extends Cubit<RestoreWalletState> {
         wallet: wallet,
       ),
     );
-  }
-
-  Future<void> _warmAuthSignature(SoftwareWallet wallet) async {
-    try {
-      await _authService.ensureSignatureFor(wallet.currentAccount);
-    } catch (e) {
-      developer.log(
-        'initial signature capture failed: $e',
-        name: '$RestoreWalletCubit',
-      );
-    }
   }
 }
