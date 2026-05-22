@@ -17,22 +17,17 @@ class SettingsContactLoading extends SettingsContactState {
 
 class SettingsContactSuccess extends SettingsContactState {
   final bool supportAvailable;
-  // Backend-driven contact info for the current brand. The page renders
-  // its phone / email / website / imprint from this DTO instead of
-  // shipping them hardcoded.
-  final DfxCompanyInfoDto? companyInfo;
 
-  const SettingsContactSuccess({this.supportAvailable = false, this.companyInfo});
+  const SettingsContactSuccess({this.supportAvailable = false});
 
-  SettingsContactSuccess copyWith({bool? supportAvailable, DfxCompanyInfoDto? companyInfo}) {
+  SettingsContactSuccess copyWith({bool? supportAvailable}) {
     return SettingsContactSuccess(
       supportAvailable: supportAvailable ?? this.supportAvailable,
-      companyInfo: companyInfo ?? this.companyInfo,
     );
   }
 
   @override
-  List<Object?> get props => [supportAvailable, companyInfo];
+  List<Object?> get props => [supportAvailable];
 }
 
 class SettingsContactFailure extends SettingsContactState {

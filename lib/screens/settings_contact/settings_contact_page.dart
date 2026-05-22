@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_company_info_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/screens/settings_contact/cubit/settings_contact_cubit.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
@@ -22,7 +21,6 @@ class SettingsContactPage extends StatelessWidget {
     return BlocProvider(
       create: (context) => SettingsContactCubit(
         getIt<DfxKycService>(),
-        getIt<DfxCompanyInfoService>(),
       ),
       child: const SettingsContactView(),
     );
@@ -74,105 +72,68 @@ class SettingsContactView extends StatelessWidget {
                       _ => const SizedBox.shrink(),
                     },
                   ),
-                  BlocBuilder<SettingsContactCubit, SettingsContactState>(
-                    builder: (context, state) {
-                      final info = state is SettingsContactSuccess ? state.companyInfo : null;
-                      if (info == null) return const SizedBox.shrink();
-                      return Column(
-                        spacing: 12.0,
-                        children: [
-                          if (info.phone != null)
-                            OutlinedTile(
-                              leading: const Icon(
-                                Icons.phone_outlined,
-                                color: RealUnitColors.realUnitBlue,
-                                size: 24,
-                              ),
-                              title: S.of(context).phone,
-                              subtitle: info.phone!,
-                              onTap: () => launchUrl(
-                                Uri.parse('tel:${info.phone!.replaceAll(RegExp(r'[^+\d]'), '')}'),
-                              ),
-                              trailingIcon: Icons.open_in_new_outlined,
-                            ),
-                          if (info.email != null)
-                            OutlinedTile(
-                              leading: const Icon(
-                                Icons.email_outlined,
-                                color: RealUnitColors.realUnitBlue,
-                                size: 24,
-                              ),
-                              title: S.of(context).email,
-                              subtitle: info.email!,
-                              onTap: () => launchUrl(Uri.parse('mailto:${info.email}')),
-                              trailingIcon: Icons.open_in_new_outlined,
-                            ),
-                          if (info.website != null)
-                            OutlinedTile(
-                              leading: const Icon(
-                                Icons.language_outlined,
-                                color: RealUnitColors.realUnitBlue,
-                                size: 24,
-                              ),
-                              title: S.of(context).website,
-                              subtitle: info.website!,
-                              onTap: () => context.pushNamed(
-                                AppRoutes.webView,
-                                extra: WebViewRouteParams(
-                                  title: S.of(context).website,
-                                  url: Uri.parse(
-                                    info.website!.startsWith('http')
-                                        ? info.website!
-                                        : 'https://${info.website}',
-                                  ),
-                                ),
-                              ),
-                              trailingIcon: Icons.open_in_new_outlined,
-                            ),
-                        ],
-                      );
-                    },
+                  OutlinedTile(
+                    leading: const Icon(
+                      Icons.phone_outlined,
+                      color: RealUnitColors.realUnitBlue,
+                      size: 24,
+                    ),
+                    title: S.of(context).phone,
+                    subtitle: '+41 41 761 00 90',
+                    onTap: () => launchUrl(Uri.parse('tel:+41417610090')),
+                    trailingIcon: Icons.open_in_new_outlined,
+                  ),
+                  OutlinedTile(
+                    leading: const Icon(
+                      Icons.email_outlined,
+                      color: RealUnitColors.realUnitBlue,
+                      size: 24,
+                    ),
+                    title: S.of(context).email,
+                    subtitle: 'info@realunit.ch',
+                    onTap: () => launchUrl(Uri.parse('mailto:info@realunit.ch')),
+                    trailingIcon: Icons.open_in_new_outlined,
+                  ),
+                  OutlinedTile(
+                    leading: const Icon(
+                      Icons.language_outlined,
+                      color: RealUnitColors.realUnitBlue,
+                      size: 24,
+                    ),
+                    title: S.of(context).website,
+                    subtitle: 'realunit.ch',
+                    onTap: () => context.pushNamed(
+                      AppRoutes.webView,
+                      extra: WebViewRouteParams(
+                        title: S.of(context).website,
+                        url: Uri.parse('https://realunit.ch'),
+                      ),
+                    ),
+                    trailingIcon: Icons.open_in_new_outlined,
                   ),
                 ],
               ),
-              BlocBuilder<SettingsContactCubit, SettingsContactState>(
-                builder: (context, state) {
-                  final info = state is SettingsContactSuccess ? state.companyInfo : null;
-                  if (info == null) return const SizedBox.shrink();
-                  final address = info.address;
-                  final subtitleLines = <String>[];
-                  if (address?.street != null) subtitleLines.add(address!.street!);
-                  if (address?.zip != null || address?.city != null || address?.country != null) {
-                    final secondLine = [
-                      address?.zip,
-                      address?.city,
-                      address?.country,
-                    ].whereType<String>().join(' ');
-                    if (secondLine.trim().isNotEmpty) subtitleLines.add(secondLine);
-                  }
-                  return Column(
-                    crossAxisAlignment: .start,
-                    spacing: 12.0,
-                    children: [
-                      Text(
-                        S.of(context).imprint,
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontSize: 18,
-                          height: 24 / 18,
-                        ),
-                      ),
-                      OutlinedTile(
-                        leading: const Icon(
-                          Icons.business_outlined,
-                          color: RealUnitColors.realUnitBlue,
-                          size: 24,
-                        ),
-                        title: info.name,
-                        subtitle: subtitleLines.isEmpty ? '' : subtitleLines.join('\n'),
-                      ),
-                    ],
-                  );
-                },
+              Column(
+                crossAxisAlignment: .start,
+                spacing: 12.0,
+                children: [
+                  Text(
+                    S.of(context).imprint,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontSize: 18,
+                      height: 24 / 18,
+                    ),
+                  ),
+                  const OutlinedTile(
+                    leading: Icon(
+                      Icons.business_outlined,
+                      color: RealUnitColors.realUnitBlue,
+                      size: 24,
+                    ),
+                    title: 'RealUnit Schweiz AG',
+                    subtitle: 'Schochenmühlestrasse 6\n6340 Baar, Schweiz',
+                  ),
+                ],
               ),
             ],
           ),
