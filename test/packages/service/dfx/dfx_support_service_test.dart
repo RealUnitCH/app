@@ -192,4 +192,14 @@ void main() {
       );
     });
   });
+
+  group('malformed JSON responses', () {
+    test('getTickets with non-JSON 200 throws FormatException', () {
+      final client = MockClient((_) async => http.Response('not json', 200));
+      expect(
+        () => build(client).getTickets(),
+        throwsA(isA<FormatException>()),
+      );
+    });
+  });
 }

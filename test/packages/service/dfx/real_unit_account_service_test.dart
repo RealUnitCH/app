@@ -106,4 +106,14 @@ void main() {
       expect(points, isEmpty);
     });
   });
+
+  group('malformed JSON responses', () {
+    test('getPortfolioHistory with non-JSON 200 throws FormatException', () {
+      final client = MockClient((_) async => http.Response('not json', 200));
+      expect(
+        () => build(client).getPortfolioHistory(Currency.chf),
+        throwsA(isA<FormatException>()),
+      );
+    });
+  });
 }

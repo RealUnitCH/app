@@ -232,4 +232,14 @@ void main() {
       });
     });
   });
+
+  group('malformed JSON responses', () {
+    test('getUser with non-JSON 200 throws FormatException', () {
+      final client = MockClient((_) async => http.Response('not json', 200));
+      expect(
+        () => build(client).getUser(),
+        throwsA(isA<FormatException>()),
+      );
+    });
+  });
 }

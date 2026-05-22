@@ -198,4 +198,18 @@ void main() {
       });
     });
   });
+
+  group('malformed JSON responses', () {
+    test('getBalanceReport with non-JSON 200 throws FormatException', () {
+      final client = MockClient((_) async => http.Response('not json', 200));
+      expect(
+        () => build(client).getBalanceReport(
+          date: DateTime(2025, 12, 31),
+          currency: Currency.chf,
+          language: Language.de,
+        ),
+        throwsA(isA<FormatException>()),
+      );
+    });
+  });
 }
