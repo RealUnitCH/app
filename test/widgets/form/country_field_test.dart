@@ -17,42 +17,37 @@ Country _country({
   required int id,
   required String symbol,
   required String name,
-  required bool nationalityAllowed,
-  required bool locationAllowed,
+  required bool kycAllowed,
 }) => Country(
   id: id,
   symbol: symbol,
   name: name,
-  nationalityAllowed: nationalityAllowed,
-  locationAllowed: locationAllowed,
+  kycAllowed: kycAllowed,
 );
 
 void main() {
   late _MockDfxCountryService countryService;
 
-  // Switzerland: valid as both nationality and residence.
+  // KYC-allowed: shown for residence and for nationality.
   final ch = _country(
     id: 41,
     symbol: 'CH',
     name: 'Switzerland',
-    nationalityAllowed: true,
-    locationAllowed: true,
+    kycAllowed: true,
   );
-  // Nationality-only: must appear for nationality, hidden for residence.
-  final natOnly = _country(
+  // Also KYC-allowed: a second allowed country.
+  final allowed = _country(
     id: 1,
     symbol: 'NA',
     name: 'Nationland',
-    nationalityAllowed: true,
-    locationAllowed: false,
+    kycAllowed: true,
   );
-  // Residence-only: must appear for residence, hidden for nationality.
-  final resOnly = _country(
+  // Not KYC-allowed: hidden for residence, still shown for nationality.
+  final notAllowed = _country(
     id: 2,
     symbol: 'RE',
     name: 'Resland',
-    nationalityAllowed: false,
-    locationAllowed: true,
+    kycAllowed: false,
   );
 
   setUp(() {
@@ -72,22 +67,24 @@ void main() {
   }
 
   group('$CountryFieldPurpose', () {
-    test('nationality reads nationalityAllowed', () {
-      expect(CountryFieldPurpose.nationality.allows(natOnly), isTrue);
-      expect(CountryFieldPurpose.nationality.allows(resOnly), isFalse);
+    test('nationality allows every country regardless of kycAllowed', () {
+      expect(CountryFieldPurpose.nationality.allows(ch), isTrue);
+      expect(CountryFieldPurpose.nationality.allows(notAllowed), isTrue);
     });
 
-    test('residence reads locationAllowed', () {
-      expect(CountryFieldPurpose.residence.allows(resOnly), isTrue);
-      expect(CountryFieldPurpose.residence.allows(natOnly), isFalse);
+    test('residence reads kycAllowed', () {
+      expect(CountryFieldPurpose.residence.allows(ch), isTrue);
+      expect(CountryFieldPurpose.residence.allows(notAllowed), isFalse);
     });
   });
 
   group('$CountryField filtering', () {
-    testWidgets('nationality purpose hides countries with nationalityAllowed false', (
+    testWidgets('nationality purpose shows every country, including non-KYC ones', (
       tester,
     ) async {
-      when(() => countryService.getAllCountries()).thenAnswer((_) async => [ch, natOnly, resOnly]);
+      when(
+        () => countryService.getAllCountries(),
+      ).thenAnswer((_) async => [ch, allowed, notAllowed]);
 
       await tester.pumpApp(
         host(
@@ -105,11 +102,13 @@ void main() {
 
       expect(find.text('Switzerland'), findsWidgets);
       expect(find.text('Nationland'), findsWidgets);
-      expect(find.text('Resland'), findsNothing);
+      expect(find.text('Resland'), findsWidgets);
     });
 
-    testWidgets('residence purpose hides countries with locationAllowed false', (tester) async {
-      when(() => countryService.getAllCountries()).thenAnswer((_) async => [ch, natOnly, resOnly]);
+    testWidgets('residence purpose hides countries with kycAllowed false', (tester) async {
+      when(
+        () => countryService.getAllCountries(),
+      ).thenAnswer((_) async => [ch, allowed, notAllowed]);
 
       await tester.pumpApp(
         host(
@@ -126,14 +125,14 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Switzerland'), findsWidgets);
-      expect(find.text('Resland'), findsWidgets);
-      expect(find.text('Nationland'), findsNothing);
+      expect(find.text('Nationland'), findsWidgets);
+      expect(find.text('Resland'), findsNothing);
     });
   });
 
   group('$CountryField no auto-selection', () {
     testWidgets('does not preselect a country and does not fire onChanged', (tester) async {
-      when(() => countryService.getAllCountries()).thenAnswer((_) async => [ch, natOnly]);
+      when(() => countryService.getAllCountries()).thenAnswer((_) async => [ch, allowed]);
       Country? picked;
 
       await tester.pumpApp(
@@ -153,7 +152,7 @@ void main() {
     });
 
     testWidgets('an untouched field makes the surrounding Form invalid', (tester) async {
-      when(() => countryService.getAllCountries()).thenAnswer((_) async => [ch, natOnly]);
+      when(() => countryService.getAllCountries()).thenAnswer((_) async => [ch, allowed]);
       final formKey = GlobalKey<FormState>();
 
       await tester.pumpApp(

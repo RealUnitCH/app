@@ -106,22 +106,19 @@ void main() {
         id: 41,
         symbol: 'CH',
         name: 'Switzerland',
-        nationalityAllowed: true,
-        locationAllowed: true,
+        kycAllowed: true,
       );
       const b = Country(
         id: 41,
         symbol: 'XX',
         name: 'Different',
-        nationalityAllowed: true,
-        locationAllowed: true,
+        kycAllowed: true,
       );
       const c = Country(
         id: 49,
         symbol: 'DE',
         name: 'Germany',
-        nationalityAllowed: true,
-        locationAllowed: true,
+        kycAllowed: true,
       );
 
       expect(a, b);

@@ -21,8 +21,7 @@ const _country = Country(
   id: 41,
   symbol: 'CH',
   name: 'Switzerland',
-  nationalityAllowed: true,
-  locationAllowed: true,
+  kycAllowed: true,
 );
 
 Registration _registration() => const Registration(

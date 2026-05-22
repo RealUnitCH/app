@@ -24,15 +24,13 @@ const _ch = Country(
   id: 41,
   symbol: 'CH',
   name: 'Switzerland',
-  nationalityAllowed: true,
-  locationAllowed: true,
+  kycAllowed: true,
 );
 const _de = Country(
   id: 49,
   symbol: 'DE',
   name: 'Germany',
-  nationalityAllowed: true,
-  locationAllowed: true,
+  kycAllowed: true,
 );
 
 const _address = KycAddress(

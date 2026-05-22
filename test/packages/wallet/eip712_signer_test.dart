@@ -58,8 +58,7 @@ void main() {
         id: 41,
         symbol: 'CH',
         name: 'Switzerland',
-        nationalityAllowed: true,
-        locationAllowed: true,
+        kycAllowed: true,
       );
       addressStreet = 'Teststrasse';
       addressStreetNumber = '1';
@@ -69,8 +68,7 @@ void main() {
         id: 41,
         symbol: 'CH',
         name: 'Switzerland',
-        nationalityAllowed: true,
-        locationAllowed: true,
+        kycAllowed: true,
       );
       swissTaxResidence = true;
       registrationDate = '2025-12-17';

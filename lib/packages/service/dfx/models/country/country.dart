@@ -6,17 +6,16 @@ class Country extends Equatable {
   final String symbol;
   final String name;
   final String? foreignName;
-  // Whether the backend accepts this country as a person's nationality.
-  final bool nationalityAllowed;
-  // Whether the backend accepts this country as a residence/address country.
-  final bool locationAllowed;
+  // Whether the backend accepts this country as a KYC address/residence
+  // country (DTO alias `kycAllowed`, backed by `dfxEnable`). A non-allowed
+  // address country is rejected with HTTP 400 on registration submit.
+  final bool kycAllowed;
 
   const Country({
     required this.id,
     required this.symbol,
     required this.name,
-    required this.nationalityAllowed,
-    required this.locationAllowed,
+    required this.kycAllowed,
     this.foreignName,
   });
 
@@ -31,8 +30,7 @@ extension DfxCountryDtoMapper on DfxCountryDto {
       symbol: symbol,
       name: name,
       foreignName: foreignName,
-      nationalityAllowed: nationalityAllowed,
-      locationAllowed: locationAllowed,
+      kycAllowed: kycAllowed,
     );
   }
 }

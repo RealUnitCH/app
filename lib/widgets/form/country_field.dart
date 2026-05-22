@@ -7,15 +7,18 @@ import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/form/dropdown_field.dart';
 
-/// Selects which backend allow-flag gates the country list for a given field.
+/// Selects how a [CountryField] gates its country list.
 enum CountryFieldPurpose {
   nationality,
   residence
   ;
 
   bool allows(Country country) => switch (this) {
-    CountryFieldPurpose.nationality => country.nationalityAllowed,
-    CountryFieldPurpose.residence => country.locationAllowed,
+    // Nationality is a fact, not a permission: the backend routes a
+    // disallowed nationality to manual review instead of rejecting it,
+    // so the picker must offer every country.
+    CountryFieldPurpose.nationality => true,
+    CountryFieldPurpose.residence => country.kycAllowed,
   };
 }
 

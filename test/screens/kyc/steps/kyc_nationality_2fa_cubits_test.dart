@@ -35,8 +35,7 @@ void main() {
           id: 41,
           symbol: 'CH',
           name: 'Switzerland',
-          nationalityAllowed: true,
-          locationAllowed: true,
+          kycAllowed: true,
         ),
       ),
       expect: () => [
@@ -62,8 +61,7 @@ void main() {
           id: 41,
           symbol: 'CH',
           name: 'Switzerland',
-          nationalityAllowed: true,
-          locationAllowed: true,
+          kycAllowed: true,
         ),
       ),
       expect: () => [

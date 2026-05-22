@@ -5,18 +5,17 @@ import 'package:realunit_wallet/packages/service/dfx/models/country/dto/dfx_coun
 Map<String, dynamic> _wire({
   String? foreignName,
   bool ibanAllowed = true,
-  bool locationAllowed = true,
-  bool nationalityAllowed = true,
+  bool kycAllowed = true,
 }) => {
   'id': 41,
   'symbol': 'CH',
   'name': 'Switzerland',
   'foreignName': foreignName,
-  'locationAllowed': locationAllowed,
+  'locationAllowed': true,
   'ibanAllowed': ibanAllowed,
-  'kycAllowed': true,
+  'kycAllowed': kycAllowed,
   'kycOrganizationAllowed': true,
-  'nationalityAllowed': nationalityAllowed,
+  'nationalityAllowed': true,
   'bankAllowed': true,
   'cardAllowed': true,
   'cryptoAllowed': true,
@@ -55,7 +54,7 @@ void main() {
   });
 
   group('DfxCountryDtoMapper.toCountry', () {
-    test('keeps id / symbol / name / foreignName and the purpose allow-flags', () {
+    test('keeps id / symbol / name / foreignName and kycAllowed', () {
       final country = DfxCountryDto.fromJson(_wire(foreignName: 'Schweiz')).toCountry();
 
       expect(country, isA<Country>());
@@ -63,17 +62,13 @@ void main() {
       expect(country.symbol, 'CH');
       expect(country.name, 'Switzerland');
       expect(country.foreignName, 'Schweiz');
-      expect(country.nationalityAllowed, isTrue);
-      expect(country.locationAllowed, isTrue);
+      expect(country.kycAllowed, isTrue);
     });
 
-    test('passes false allow-flags through unchanged', () {
-      final country = DfxCountryDto.fromJson(
-        _wire(nationalityAllowed: false, locationAllowed: false),
-      ).toCountry();
+    test('passes kycAllowed false through unchanged', () {
+      final country = DfxCountryDto.fromJson(_wire(kycAllowed: false)).toCountry();
 
-      expect(country.nationalityAllowed, isFalse);
-      expect(country.locationAllowed, isFalse);
+      expect(country.kycAllowed, isFalse);
     });
   });
 
@@ -83,16 +78,14 @@ void main() {
         id: 41,
         symbol: 'CH',
         name: 'Switzerland',
-        nationalityAllowed: true,
-        locationAllowed: true,
+        kycAllowed: true,
       );
       const b = Country(
         id: 41,
         symbol: 'XX',
         name: 'Different name',
         foreignName: 'F',
-        nationalityAllowed: false,
-        locationAllowed: false,
+        kycAllowed: false,
       );
 
       // Equality only on id (props returns [id]).
@@ -104,15 +97,13 @@ void main() {
         id: 41,
         symbol: 'CH',
         name: 'Switzerland',
-        nationalityAllowed: true,
-        locationAllowed: true,
+        kycAllowed: true,
       );
       const b = Country(
         id: 49,
         symbol: 'DE',
         name: 'Germany',
-        nationalityAllowed: true,
-        locationAllowed: true,
+        kycAllowed: true,
       );
 
       expect(a, isNot(equals(b)));
