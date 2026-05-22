@@ -139,5 +139,78 @@ void main() {
 
       expect(highlightedSpan.recognizer, isNull);
     });
+
+    testWidgets(
+      'renders highlighted substring as Semantics(identifier:) when '
+      'highlightedSemanticsId + onHighlightedTap are given',
+      (tester) async {
+        var taps = 0;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: TextSubstringHighlighting(
+                text: 'I accept the Terms here',
+                highlightedText: 'Terms',
+                highlightedSemanticsId: 'home-terms-link',
+                onHighlightedTap: () => taps++,
+              ),
+            ),
+          ),
+        );
+
+        // The highlighted chunk is now a WidgetSpan-hosted Semantics node,
+        // not a TextSpan with a TapGestureRecognizer. Note: the inner
+        // `Text('Terms')` widget also renders its own RichText, so we pick
+        // the outer one (descendant of the TextSubstringHighlighting widget
+        // with a children-bearing TextSpan).
+        final richFinder = find.descendant(
+          of: find.byType(TextSubstringHighlighting),
+          matching: find.byType(RichText),
+        );
+        final RichText rich = tester
+            .widgetList<RichText>(richFinder)
+            .firstWhere((r) => (r.text as TextSpan).children != null);
+        final children = (rich.text as TextSpan).children!;
+        expect(children[1], isA<WidgetSpan>());
+
+        // The WidgetSpan's child must be a Semantics with the expected
+        // identifier (this is what Maestro's `tapOn: id:` matches against
+        // via Flutter -> iOS accessibility bridge).
+        final widgetSpan = children[1] as WidgetSpan;
+        expect(widgetSpan.child, isA<Semantics>());
+        final spanSemantics = widgetSpan.child as Semantics;
+        expect(spanSemantics.properties.identifier, 'home-terms-link');
+        expect(spanSemantics.properties.button, isTrue);
+
+        // The wrapped GestureDetector still fires the callback.
+        await tester.tap(find.text('Terms'));
+        expect(taps, 1);
+      },
+    );
+
+    testWidgets(
+      'falls back to TextSpan + recognizer when highlightedSemanticsId is '
+      'set but onHighlightedTap is null',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: TextSubstringHighlighting(
+                text: 'I accept the Terms here',
+                highlightedText: 'Terms',
+                highlightedSemanticsId: 'home-terms-link',
+              ),
+            ),
+          ),
+        );
+
+        // Without a tap callback there's nothing meaningful to attach the
+        // Semantics node to, so the original TextSpan path is used.
+        final rich = tester.widget<RichText>(find.byType(RichText));
+        final children = (rich.text as TextSpan).children!;
+        expect(children[1], isA<TextSpan>());
+        expect((children[1] as TextSpan).recognizer, isNull);
+      },
+    );
   });
 }

@@ -15,7 +15,7 @@ Column meaning:
 - **Handbook** — the handbook screenshot number(s) (`docs/handbook/screenshots/NN-*.png`)
   that document the screen, or `—` if it is not in the handbook. The handbook
   covers the new-user onboarding journey (sign-up → dashboard) plus the settings
-  screens reachable from it: 19 screenshots, **14 of the 40 routed screens**.
+  screens reachable from it: 26 screenshots, **20 of the 40 routed screens**.
   See `docs/handbook/README.md`.
 
 | Area | Widget | Route | Path | Handbook |
@@ -24,7 +24,7 @@ Column meaning:
 | Onboarding | `WelcomePage` | `welcome` | `/welcome` | `02`, `03` |
 | Onboarding | `CreateWalletPage` | `createWallet` | `/createWallet` | `04`, `05` |
 | Onboarding | `VerifySeedPage` | `verifySeed` | `/verifySeed` | `06` |
-| Onboarding | `RestoreWalletPage` | `restoreWallet` | `/restoreWallet` | — |
+| Onboarding | `RestoreWalletPage` | `restoreWallet` | `/restoreWallet` | `25` |
 | Onboarding | `OnboardingCompletedPage` | `onboardingCompleted` | `/onboardingComplete` | `07` |
 | Onboarding | `DebugAuthPage` | `debugAuth` | `/debugAuth` | — |
 | PIN & lock | `VerifyPinPage` | `pinGate` | `/pinGate` | `17` |
@@ -40,18 +40,18 @@ Column meaning:
 | Dashboard & trading | `WebViewPage` | `webView` | `/webView` | — |
 | Legal | `LegalDisclaimerPage` | `legalDisclaimer` | `/legalDisclaimer` | — |
 | Legal | `LegalDocumentPage` | `legalDocument` | `/legalDocument` | — |
-| Legal | `LegalDocumentPage` | `terms` | `/termsOfUse` | — |
+| Legal | `LegalDocumentPage` | `terms` | `/termsOfUse` | `26` |
 | Legal | `LegalDisclaimerStep` | — | — | — |
 | Legal | `LegalDfxStep` | — | — | — |
 | Legal | `LegalAktionariatStep` | — | — | — |
 | Legal | `LegalDocumentsStep` | — | — | — |
 | Settings | `SettingsPage` | `settings` | `/settings` | `12` |
-| Settings | `SettingsAktionariatDocumentsPage` | `settingsAktionariatDocuments` | `/settings/aktionariatDocuments` | — |
-| Settings | `SettingsContactPage` | `settingsContact` | `/settings/contact` | — |
+| Settings | `SettingsAktionariatDocumentsPage` | `settingsAktionariatDocuments` | `/settings/aktionariatDocuments` | `21` |
+| Settings | `SettingsContactPage` | `settingsContact` | `/settings/contact` | `23` |
 | Settings | `SettingsCurrenciesPage` | `settingsCurrencies` | `/settings/currencies` | `14` |
-| Settings | `SettingsDfxDocumentsPage` | `settingsDfxDocuments` | `/settings/dfxDocuments` | — |
+| Settings | `SettingsDfxDocumentsPage` | `settingsDfxDocuments` | `/settings/dfxDocuments` | `22` |
 | Settings | `SettingsLanguagePage` | `settingsLanguages` | `/settings/languages` | `13` |
-| Settings | `SettingsLegalDocumentsPage` | `settingsLegalDocuments` | `/settings/legalDocuments` | — |
+| Settings | `SettingsLegalDocumentsPage` | `settingsLegalDocuments` | `/settings/legalDocuments` | `20` |
 | Settings | `SettingsNetworkPage` | `settingsNetwork` | `/settings/network` | `15` |
 | Settings | `SettingsTaxReportPage` | `settingsTaxReport` | `/settings/taxReport` | — |
 | Settings | `SettingsSeedPage` | `settingsSeed` | `/settings/seed` | `18`, `19` |
@@ -100,7 +100,7 @@ Column meaning:
   `terms`); `VerifyPinPage` backs two (`pinGate`, `verifyPin`) via different
   constructors. Handbook screenshot `17` shows `VerifyPinPage` in its `pinGate`
   use; the `verifyPin` app-lock use is not separately documented.
-- **Handbook numbering.** The 19 handbook screenshots are each the output of a
+- **Handbook numbering.** The 26 handbook screenshots are each the output of a
   Maestro Tier-3 flow (`.maestro/handbook/NN-*.yaml`). Screenshot
   `10-biometric-prompt` documents the `EnableBiometricBottomSheet` modal — not a
   routed screen — so the table has no `10`.

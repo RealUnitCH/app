@@ -84,6 +84,12 @@ name: Tier 3 — Handbook flows
 # Cross-reference: README "CI/CD" table + `docs/testing.md` Tier 3 entry.
 on:
   workflow_dispatch:
+    inputs:
+      flows:
+        description: "Space-separated flow-name glob patterns to run (empty = all flows)"
+        required: false
+        default: ""
+        type: string
   push:
     branches: [develop]
   pull_request:
@@ -113,13 +119,11 @@ jobs:
       github.event_name != 'pull_request'
       || contains(github.event.pull_request.labels.*.name, 'tier3:full')
     runs-on: macos-latest
-    # The handbook suite overruns a tight envelope: an observed run was
-    # still on flow 8 of 19 at a 30 min cap, with the onboarding flows
-    # (01-06) alone burning ~21 min. 75 min is deliberate headroom so a
-    # data-gathering run completes all 19 flows — run-handbook-flows.sh now
-    # logs per-flow / per-attempt wall-clock. Once that data lands, speed
-    # the suite up and bring this back down.
-    timeout-minutes: 75
+    # ~12 min setup (Flutter + tooling, build, sim erase/boot/install) plus
+    # ~26-33 min for the 24 handbook flows — each flow restarts the XCUITest
+    # driver (~40-60 s). A full run lands around 40-46 min; 60 min gives
+    # headroom for runner-speed variance and the per-flow retry budget.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
 
@@ -258,7 +262,13 @@ jobs:
         env:
           MAESTRO_DRIVER_STARTUP_TIMEOUT: "300000"
           MAESTRO_CLI_NO_ANALYTICS: "1"
-        run: scripts/run-handbook-flows.sh
+          HANDBOOK_FLOWS: ${{ inputs.flows }}
+        run: |
+          # set -f: keep word-splitting (multiple patterns) but disable this
+          # shell's filename expansion, so a pattern like `2*` reaches the
+          # script literally instead of being glob-expanded against the cwd.
+          set -f
+          scripts/run-handbook-flows.sh $HANDBOOK_FLOWS
 
       - name: Upload captured screenshots
         if: always()

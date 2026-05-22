@@ -1,0 +1,101 @@
+# Captures docs/handbook/screenshots/25-restore-wallet.png
+# Continues from 24-settings-delete-wallet (no clearState): the
+# SettingsConfirmLogoutWalletSheet modal is showing. We complete the
+# termination here — tick the "Ich habe meine Wiederherstellungsphrase
+# gesichert." checkbox (which enables the disabled "Abmelden" button), then
+# tap "Abmelden". Confirming the logout wipes the wallet and drops the app
+# back to onboarding (welcome).
+#
+# From there we walk the restore path: from the HomePage splash tap "Start"
+# -> WelcomePage, tap the "Digitale Wallet (App)" card to flip the welcome
+# toggle to step 2, then tap the "Wallet wiederherstellen" card
+# -> RestoreWalletPage. The settle target is the seed-entry description text,
+# which is unique to RestoreWalletView (the "Wallet wiederherstellen" heading
+# shares its string with the welcome card and would match too early).
+#
+# The checkbox is now wrapped in `Semantics(identifier:
+# 'wallet-logout-confirm-checkbox', toggled: …)` with a row-wide opaque
+# GestureDetector (see
+# lib/screens/settings/widgets/settings_confirm_logout_wallet_sheet.dart)
+# so Maestro can target it deterministically via `tapOn: id:` instead of the
+# previous wrap-sensitive `leftOf:` coordinate-tap that XCUITest silently
+# dropped on Apple Silicon + iOS 26 (mobile-dev-inc/maestro#3137) — that
+# silent loss is what caused the prior run to never check the box, leaving
+# "Abmelden" disabled and every downstream step a no-op against the still
+# visible modal. We tap the checkbox once by id (a single deterministic
+# Semantics target with a full-row tap surface), then gate the "Abmelden"
+# button tap on the modal still being visible — if "Abmelden" was silently
+# dropped we re-tap until the modal closes. We deliberately do not loop the
+# checkbox itself: tapping it twice would toggle it back off again, since
+# the underlying `setState(() => isChecked = !isChecked)` is not idempotent.
+# If the checkbox tap is the one that's silently dropped, the next
+# `extendedWaitUntil notVisible "Aus REALU Wallet abmelden"` (with the
+# Abmelden button still disabled) fails loudly rather than passing silently
+# downstream — and the same Semantics-id strategy that fixed flow 24's
+# Nutzungsbedingungen-link tap has been reliable enough since.
+#
+# All tap-leading steps (Abmelden, Start, Digitale Wallet, Wallet
+# wiederherstellen) are gated on their target not yet showing and re-tapped
+# if one was silently dropped. Each gate stops its loop the instant the
+# screen changes, so surplus iterations no-op.
+appId: swiss.realunit.app
+---
+- tapOn:
+    id: 'wallet-logout-confirm-checkbox'
+- waitForAnimationToEnd
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            visible:
+              text: '.*Aus REALU Wallet abmelden.*'
+          commands:
+            - tapOn:
+                text: 'Abmelden'
+                optional: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    notVisible:
+      text: '.*Aus REALU Wallet abmelden.*'
+    timeout: 15000
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              text: '.*Digitale Wallet.*'
+          commands:
+            - tapOn:
+                text: 'Start'
+                optional: true
+- waitForAnimationToEnd
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              text: '.*Neue Wallet erstellen.*'
+          commands:
+            - tapOn:
+                text: '.*Digitale Wallet.*'
+                optional: true
+- waitForAnimationToEnd
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              text: '.*Wiederherstellungs-Wörter.*'
+          commands:
+            - tapOn:
+                text: '.*Wallet wiederherstellen.*'
+                optional: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: '.*Wiederherstellungs-Wörter.*'
+    timeout: 30000

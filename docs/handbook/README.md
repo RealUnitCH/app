@@ -38,6 +38,30 @@ Der Filename des Flows ist auch der Filename des PNG. Vor jedem Lauf macht
 das Skript `simctl erase` + reinstall, damit das iOS-Keychain (Wallet + PIN)
 frisch ist — sonst landen Folgeläufe direkt auf dem App-Lock-Screen.
 
+## Selektive Läufe (Teilmenge)
+
+`scripts/run-handbook-flows.sh` akzeptiert optionale Argumente: Glob-Muster auf
+die Flow-Namen. Ohne Argument laufen alle Flows, mit Argument nur die passende
+Teilmenge:
+
+```bash
+# Nur diesen einen Flow
+scripts/run-handbook-flows.sh 23-restore-wallet
+
+# Die ganze 20er-Serie (20..24)
+scripts/run-handbook-flows.sh '2*'
+```
+
+Achtung: Die handbook-Flows sind eine **sequentielle Kette** und teilen sich den
+App-State — jeder Flow greift den Zustand auf, wo der vorherige ihn hingelegt
+hat. Ein Flow aus der Mitte der Kette schlägt einzeln fehl, sofern er nicht
+selbst mit einem `launchApp` beginnt. Die Flows `23-restore-wallet` und
+`24-terms` sind **eigenständig** (eigener `launchApp`) und können daher gefahrlos
+allein laufen.
+
+Auch der Tier-3-GitHub-Workflow hat dafür einen `flows`-`workflow_dispatch`-Input
+— so lässt sich in der CI gezielt eine Teilmenge der Flows neu generieren.
+
 ## Einen neuen Flow hinzufügen
 
 1. Anlegen: `.maestro/handbook/NN-<name>.yaml`.
