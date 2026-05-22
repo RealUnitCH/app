@@ -72,7 +72,7 @@ class HomePage extends StatelessWidget {
                             // link as its own Semantics node so Maestro can
                             // target it deterministically via `tapOn: id:`
                             // instead of a flaky coordinate tap on the
-                            // surrounding RichText (handbook flow 24).
+                            // surrounding RichText (handbook flow 26).
                             highlightedSemanticsId: 'home-terms-link',
                             onHighlightedTap: () => context.pushNamed(LegalRoutes.terms),
                           ),

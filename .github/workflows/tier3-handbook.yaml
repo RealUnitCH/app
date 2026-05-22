@@ -120,7 +120,7 @@ jobs:
       || contains(github.event.pull_request.labels.*.name, 'tier3:full')
     runs-on: macos-latest
     # ~12 min setup (Flutter + tooling, build, sim erase/boot/install) plus
-    # ~26-33 min for the 24 handbook flows — each flow restarts the XCUITest
+    # ~26-33 min for the 26 handbook flows — each flow restarts the XCUITest
     # driver (~40-60 s). A full run lands around 40-46 min; 60 min gives
     # headroom for runner-speed variance and the per-flow retry budget.
     timeout-minutes: 60
