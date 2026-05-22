@@ -1,0 +1,58 @@
+# Captures docs/handbook/screenshots/23-settings-contact.png
+# Continues from 22-settings-dfx-documents (no clearState). The DFX-documents
+# sub-page is pushed on top of SettingsLegalDocumentsPage, which in turn sits
+# on the Settings menu. We tap back twice to return to the Settings menu, then
+# open "Kontakt" -> SettingsContactPage. The settle target is the support
+# email "info@realunit.ch", which is unique to the contact page.
+#
+# The first back tap gates on "Dokumente der Aktionariat AG" — that tile lives
+# on SettingsLegalDocumentsPage but not on the DFX sub-page, so it cleanly
+# marks arrival at the legal-documents list. ("Dokumente der DFX AG" would not
+# work here: it is also the title of the DFX sub-page we are leaving.)
+#
+# All three taps (back to the legal-documents list, back to the Settings menu,
+# then into the contact screen) are gated on their target not yet showing and
+# re-tapped if one was silently dropped (Maestro/XCUITest tap-loss on Apple
+# Silicon + iOS 26, mobile-dev-inc/maestro#3137). Each gate stops its loop the
+# instant the screen changes, so surplus iterations no-op.
+appId: swiss.realunit.app
+---
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              text: '.*Dokumente der Aktionariat AG.*'
+          commands:
+            - tapOn:
+                point: 8%,8%
+                optional: true
+- waitForAnimationToEnd
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible: 'Einstellungen'
+          commands:
+            - tapOn:
+                point: 8%,8%
+                optional: true
+- waitForAnimationToEnd
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              text: '.*info@realunit.ch.*'
+          commands:
+            - tapOn:
+                text: 'Kontakt'
+                optional: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: '.*info@realunit.ch.*'
+    timeout: 30000

@@ -1,4 +1,4 @@
-# Captures docs/handbook/screenshots/24-terms.png
+# Captures docs/handbook/screenshots/26-terms.png
 # Self-contained: launches fresh with clearState. On the HomePage splash the
 # copy above the Start button is a TextSubstringHighlighting rich-text widget
 # (lib/widgets/text_substring_highlighting.dart). The highlighted substring

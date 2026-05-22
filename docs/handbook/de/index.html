@@ -506,7 +506,7 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/DFXswiss/realunit-app">DFXswiss/realunit-app</a></span>
-            <span>🧪 <b>Tests:</b> ~1100 (Tier 0/1) · 24 Tier-3 screens</span>
+            <span>🧪 <b>Tests:</b> ~1100 (Tier 0/1) · 26 Tier-3 screens</span>
           </div>
         </section>
 
@@ -539,7 +539,7 @@
 
           <div class="callout info">
             <p>
-              <b>Pipeline:</b> 24 Flows in <code>.maestro/handbook/</code>, alphabetisch
+              <b>Pipeline:</b> 26 Flows in <code>.maestro/handbook/</code>, alphabetisch
               durchlaufen. Maestro übernimmt Navigation und Assertions; der eigentliche
               Screenshot kommt von
               <code>xcrun simctl io booted screenshot</code> — Flutters
@@ -931,10 +931,10 @@
             <div class="spec-head">
               <div class="lhs">
                 <h2><span class="num">06</span>Einstellungen</h2>
-                <div class="file">.maestro/handbook/12..16,20..22-*.yaml</div>
+                <div class="file">.maestro/handbook/12..16,20..24-*.yaml</div>
               </div>
               <div class="rhs">
-                <b>8 Screens</b>
+                <b>10 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/DFXswiss/realunit-app/tree/develop/.maestro/handbook"
@@ -1093,6 +1093,44 @@
                 KYC). Jeder Eintrag öffnet das Dokument im <code>LegalDocumentPage</code>-Viewer.
               </div>
             </div>
+            <div class="test">
+              <div class="head">
+                <span class="name">23-settings-contact</span>
+                <span class="src">23-settings-contact.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/23-settings-contact.png"
+                  alt="Kontakt"
+                />
+              </div>
+              <div class="desc">
+                Die <b>Kontakt</b>-Seite in den Einstellungen bündelt die Support- und
+                Kontaktwege: ein Link zum <b>Support</b> (FAQ, Tickets &amp; Chat) sowie
+                Telefonnummer, E-Mail und Website des Anbieters. Darunter steht das
+                <b>Impressum</b> mit Firmenname und Adresse. Die Firmendaten kommen vom
+                <code>DfxCompanyInfoService</code>.
+              </div>
+            </div>
+            <div class="test">
+              <div class="head">
+                <span class="name">24-settings-delete-wallet</span>
+                <span class="src">24-settings-delete-wallet.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/24-settings-delete-wallet.png"
+                  alt="Geschäftsbeziehung beenden — Bestätigung"
+                />
+              </div>
+              <div class="desc">
+                Das Bestätigungs-Sheet <b>„Aus REALU Wallet abmelden"</b>, ausgelöst über
+                den Einstellungs-Eintrag <b>Geschäftsbeziehung beenden</b>. Der User muss
+                per Checkbox bestätigen, dass er seine Wiederherstellungsphrase gesichert
+                hat — erst dann wird der <b>Abmelden</b>-Button aktiv. Abmelden löscht die
+                Wallet vom Gerät und führt zurück ins Onboarding.
+              </div>
+            </div>
           </div>
         </details>
 
@@ -1189,7 +1227,7 @@
             <div class="spec-head">
               <div class="lhs">
                 <h2><span class="num">08</span>Wiederherstellung &amp; Rechtliches</h2>
-                <div class="file">.maestro/handbook/23..24-*.yaml</div>
+                <div class="file">.maestro/handbook/25..26-*.yaml</div>
               </div>
               <div class="rhs">
                 <b>2 Screens</b>
@@ -1212,12 +1250,12 @@
           <div class="tests cols-2">
             <div class="test">
               <div class="head">
-                <span class="name">23-restore-wallet</span>
-                <span class="src">23-restore-wallet.yaml</span>
+                <span class="name">25-restore-wallet</span>
+                <span class="src">25-restore-wallet.yaml</span>
               </div>
               <div class="img">
                 <img
-                  src="../screenshots/23-restore-wallet.png"
+                  src="../screenshots/25-restore-wallet.png"
                   alt="Wallet wiederherstellen"
                 />
               </div>
@@ -1231,12 +1269,12 @@
             </div>
             <div class="test">
               <div class="head">
-                <span class="name">24-terms</span>
-                <span class="src">24-terms.yaml</span>
+                <span class="name">26-terms</span>
+                <span class="src">26-terms.yaml</span>
               </div>
               <div class="img">
                 <img
-                  src="../screenshots/24-terms.png"
+                  src="../screenshots/26-terms.png"
                   alt="Nutzungsbedingungen"
                 />
               </div>
