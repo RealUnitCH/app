@@ -139,7 +139,7 @@ class KycCubit extends Cubit<KycState> {
           // `KycUnsupportedStepFailure` so the user gets an explicit error
           // instead of a silent dashboard handoff.
           final pending = kycStatus.kycSteps.firstWhereOrNull(
-            (s) => s.isRequired,
+            (s) => s.isRequired && s.status != KycStepStatus.completed,
           );
           if (pending == null) {
             emit(const KycUnsupportedStepFailure(null));
