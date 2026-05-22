@@ -1,29 +1,26 @@
 # Captures docs/handbook/screenshots/24-terms.png
 # Self-contained: launches fresh with clearState. On the HomePage splash the
 # copy above the Start button is a TextSubstringHighlighting rich-text widget
-# (lib/widgets/text_substring_highlighting.dart). Its highlighted substring
-# "Nutzungsbedingungen" carries a TapGestureRecognizer that routes to
-# LegalRoutes.terms -> LegalDocumentPage. The whole paragraph is a single
-# RichText / a11y node, and "Nutzungsbedingungen" also appears as the page
-# title on LegalDocumentPage, so the closing assertion targets the document
-# H1 "Nutzungsbedingungen der RealUnit Wallet App", which is unique to the
-# terms page (the bare word also appears on the splash, so asserting it
-# alone would pass even if the tap missed).
+# (lib/widgets/text_substring_highlighting.dart). The highlighted substring
+# "Nutzungsbedingungen" is rendered through a WidgetSpan wrapped in
+# `Semantics(identifier: 'home-terms-link', button: true)` so Maestro can
+# target it deterministically by id on iOS — Flutter's Semantics `identifier`
+# is what `tapOn: id:` matches against on the iOS accessibility tree.
 #
-# Tap strategy: the RichText is bracketed top-and-bottom by stable anchors
-# ("Mit der Nutzung dieser App" and the "Start" button below). Before tapping
-# we wait for the full paragraph text to be rasterised, then tap by relative
-# coordinate inside the RichText body. The coordinate sits roughly mid-line
-# of the second wrapped line on iPhone 17 — where "Nutzungsbedingungen" lands
-# because of how the German copy wraps in `softwareTermsText`. The closing
-# extendedWaitUntil is the actual correctness check; if the tap missed, the
-# H1 assertion fails loudly with the document not opening rather than passing
-# silently.
+# We previously coordinate-tapped a relative point inside the RichText body
+# because the bare RichText + TapGestureRecognizer collapses into a single
+# StaticText node that Maestro couldn't pick up by text. That tap was
+# wrap-sensitive and got dropped by XCUITest on Apple Silicon + iOS 26
+# (mobile-dev-inc/maestro#3137). With the dedicated Semantics node the tap
+# is by id, so word-wrap variations no longer matter.
 #
-# The coordinate tap is gated on the terms document not yet showing and
-# re-tapped if it was silently dropped (Maestro/XCUITest tap-loss on Apple
-# Silicon + iOS 26, mobile-dev-inc/maestro#3137). The gate stops the loop the
-# instant the document opens, so surplus iterations no-op.
+# The closing assertion targets the LegalDocumentPage H1 "Nutzungsbedingungen
+# der RealUnit Wallet App" — the bare word "Nutzungsbedingungen" also shows
+# on the splash, so asserting it alone would pass even if the tap missed.
+#
+# The id-tap is still gated on the terms document not yet showing and re-tapped
+# if it was silently dropped. The gate stops the loop the instant the document
+# opens, so surplus iterations no-op.
 appId: swiss.realunit.app
 ---
 - launchApp:
@@ -34,9 +31,8 @@ appId: swiss.realunit.app
     visible: 'Start'
     timeout: 30000
 # Anchor that the full splash paragraph (not just the Start button) is on
-# screen before the coordinate tap — without this guard Maestro can fire the
-# tap during the splash-image fade-in while the RichText is still painting,
-# missing the highlighted substring.
+# screen before the id-tap — without this guard Maestro can fire during the
+# splash-image fade-in while the RichText is still painting.
 - extendedWaitUntil:
     visible:
       text: '.*Mit der Nutzung dieser App.*'
@@ -50,7 +46,7 @@ appId: swiss.realunit.app
               text: '.*Nutzungsbedingungen der RealUnit Wallet App.*'
           commands:
             - tapOn:
-                point: 35%,80%
+                id: 'home-terms-link'
                 optional: true
 - waitForAnimationToEnd
 - extendedWaitUntil:
