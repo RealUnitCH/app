@@ -7,6 +7,7 @@ import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_address/cubit/settings_edit_address_cubit.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_address/settings_edit_address_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_failure_page.dart';
@@ -28,16 +29,27 @@ class MockDfxCountryService extends Mock implements DfxCountryService {}
 
 void main() {
   late SettingsEditAddressCubit settingsEditAddressCubit;
+  late MockDfxCountryService countryService;
+
+  const country = Country(
+    id: 41,
+    symbol: 'CH',
+    name: 'Switzerland',
+    nationalityAllowed: true,
+    locationAllowed: true,
+  );
 
   setUp(() {
     settingsEditAddressCubit = MockSettingsEditAddressCubit();
     when(() => settingsEditAddressCubit.state).thenReturn(const SettingsEditAddressInitial());
+    when(() => countryService.getAllCountries()).thenAnswer((_) async => [country]);
   });
 
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
+    countryService = MockDfxCountryService();
     getIt.registerSingleton<DfxKycService>(MockDfxKycService());
-    getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
+    getIt.registerSingleton<DfxCountryService>(countryService);
   }
 
   setUpAll(() {
@@ -96,6 +108,8 @@ void main() {
       when(() => settingsEditAddressCubit.state).thenReturn(const SettingsEditAddressReady('url'));
 
       await tester.pumpApp(buildSubject(const SettingsEditAddressView()));
+      // Let the CountryField's country-list future resolve.
+      await tester.pumpAndSettle();
 
       expect(find.byType(LabeledTextField), findsNWidgets(4));
       expect(find.byType(CountryField), findsOne);
@@ -110,6 +124,9 @@ void main() {
       ).thenReturn(const SettingsEditAddressSubmitting('url'));
 
       await tester.pumpApp(buildSubject(const SettingsEditAddressView()));
+      // Flush the CountryField's country-list future. pumpAndSettle is unusable
+      // here: the submitting state shows a perpetually-animating spinner.
+      await tester.pump();
 
       expect(find.byType(LabeledTextField), findsNWidgets(4));
       expect(find.byType(CountryField), findsOne);

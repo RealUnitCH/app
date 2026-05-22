@@ -51,7 +51,7 @@ class _KycNationalityViewState extends State<KycNationalityView> {
           if (state is KycNationalityFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Set Nationality failed:\n${state.message}'),
+                content: Text(S.of(context).setNationalityFailed(state.message)),
                 backgroundColor: RealUnitColors.status.red600,
               ),
             );
@@ -70,11 +70,8 @@ class _KycNationalityViewState extends State<KycNationalityView> {
                   children: [
                     CountryField(
                       label: S.of(context).registerCitizenship,
+                      purpose: CountryFieldPurpose.nationality,
                       onChanged: (country) => nationalityCtrl.value = country,
-                      validator: (value) {
-                        if (value == null) return '';
-                        return null;
-                      },
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16.0),

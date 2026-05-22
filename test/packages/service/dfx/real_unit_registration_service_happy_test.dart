@@ -31,8 +31,7 @@ class _MockCacheRepository extends Mock implements CacheRepository {}
 
 class _MockWalletService extends Mock implements WalletService {}
 
-const _testPrivateKeyHex =
-    'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
+const _testPrivateKeyHex = 'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
 
 final _privKey = EthPrivateKey.fromHex(_testPrivateKeyHex);
 
@@ -51,8 +50,7 @@ void main() {
     session = SessionCache(_MockCacheRepository());
     session.setAuthToken('jwt-1');
 
-    when(() => appStore.apiConfig)
-        .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+    when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
     when(() => appStore.sessionCache).thenReturn(session);
     when(() => appStore.wallet).thenReturn(wallet);
     when(() => wallet.primaryAccount).thenReturn(account);
@@ -67,50 +65,62 @@ void main() {
   }
 
   Registration buildRegistration() => const Registration(
-        type: RegistrationUserType.human,
-        email: 'AdA@ExAmPlE.COM',
-        // Diacritics → must be ASCII-transliterated (ä→ae, ü→ue) for the
-        // BitBox-safe wire envelope; the test asserts the transliteration
-        // round-trip below.
-        firstName: 'Adä',
-        lastName: 'Loveläce',
-        phoneNumber: '+41 79 000 00 00',
-        birthday: '1815-12-10',
-        nationality: Country(id: 41, symbol: 'CH', name: 'Switzerland'),
-        addressStreet: 'Bahnhofstraße',
-        addressStreetNumber: '1',
-        addressPostalCode: '8000',
-        addressCity: 'Zürich',
-        addressCountry: Country(id: 41, symbol: 'CH', name: 'Switzerland'),
-        swissTaxResidence: true,
-      );
+    type: RegistrationUserType.human,
+    email: 'AdA@ExAmPlE.COM',
+    // Diacritics → must be ASCII-transliterated (ä→ae, ü→ue) for the
+    // BitBox-safe wire envelope; the test asserts the transliteration
+    // round-trip below.
+    firstName: 'Adä',
+    lastName: 'Loveläce',
+    phoneNumber: '+41 79 000 00 00',
+    birthday: '1815-12-10',
+    nationality: Country(
+      id: 41,
+      symbol: 'CH',
+      name: 'Switzerland',
+      nationalityAllowed: true,
+      locationAllowed: true,
+    ),
+    addressStreet: 'Bahnhofstraße',
+    addressStreetNumber: '1',
+    addressPostalCode: '8000',
+    addressCity: 'Zürich',
+    addressCountry: Country(
+      id: 41,
+      symbol: 'CH',
+      name: 'Switzerland',
+      nationalityAllowed: true,
+      locationAllowed: true,
+    ),
+    swissTaxResidence: true,
+  );
 
   RealUnitUserDataDto buildUserData() => const RealUnitUserDataDto(
-        email: 'a@b.com',
-        name: 'Ada Lovelace',
-        type: 'HUMAN',
-        phoneNumber: '+41 79 000 00 00',
-        birthday: '1815-12-10',
-        nationality: 'CH',
-        addressStreet: 'Bahnhofstrasse 1',
-        addressPostalCode: '8000',
-        addressCity: 'Zurich',
-        addressCountry: 'CH',
-        swissTaxResidence: true,
-        lang: 'de',
-        kycData: KycPersonalData(
-          accountType: KycAccountType.personal,
-          firstName: 'Ada',
-          lastName: 'Lovelace',
-          phone: '+41 79 000 00 00',
-          address: KycAddress(
-            street: 'Bahnhofstrasse',
-            zip: '8000',
-            city: 'Zurich',
-            country: 41,
-          ),
-        ),
-      );
+    email: 'a@b.com',
+    name: 'Ada Lovelace',
+    type: 'HUMAN',
+    phoneNumber: '+41 79 000 00 00',
+    birthday: '1815-12-10',
+    nationality: 'CH',
+    addressStreet: 'Bahnhofstrasse 1',
+    addressPostalCode: '8000',
+    addressCity: 'Zurich',
+    addressCountry: 'CH',
+    swissTaxResidence: true,
+    lang: 'de',
+    kycData: KycPersonalData(
+      accountType: KycAccountType.personal,
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      phone: '+41 79 000 00 00',
+      address: KycAddress(
+        street: 'Bahnhofstrasse',
+        zip: '8000',
+        city: 'Zurich',
+        country: 41,
+      ),
+    ),
+  );
 
   group('completeRegistration happy path', () {
     test(

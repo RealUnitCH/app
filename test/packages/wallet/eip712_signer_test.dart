@@ -54,12 +54,24 @@ void main() {
       lastName = 'Direct';
       phoneNumber = '+41791234567';
       birthday = '1990-01-15';
-      nationality = const Country(id: 41, symbol: 'CH', name: 'Switzerland');
+      nationality = const Country(
+        id: 41,
+        symbol: 'CH',
+        name: 'Switzerland',
+        nationalityAllowed: true,
+        locationAllowed: true,
+      );
       addressStreet = 'Teststrasse';
       addressStreetNumber = '1';
       addressPostalCode = '8000';
       addressCity = 'Zurich';
-      addressCountry = const Country(id: 41, symbol: 'CH', name: 'Switzerland');
+      addressCountry = const Country(
+        id: 41,
+        symbol: 'CH',
+        name: 'Switzerland',
+        nationalityAllowed: true,
+        locationAllowed: true,
+      );
       swissTaxResidence = true;
       registrationDate = '2025-12-17';
 

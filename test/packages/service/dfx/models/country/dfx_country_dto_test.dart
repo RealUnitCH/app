@@ -2,20 +2,25 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/dto/dfx_country_dto.dart';
 
-Map<String, dynamic> _wire({String? foreignName, bool ibanAllowed = true}) => {
-      'id': 41,
-      'symbol': 'CH',
-      'name': 'Switzerland',
-      'foreignName': foreignName,
-      'locationAllowed': true,
-      'ibanAllowed': ibanAllowed,
-      'kycAllowed': true,
-      'kycOrganizationAllowed': true,
-      'nationalityAllowed': true,
-      'bankAllowed': true,
-      'cardAllowed': true,
-      'cryptoAllowed': true,
-    };
+Map<String, dynamic> _wire({
+  String? foreignName,
+  bool ibanAllowed = true,
+  bool locationAllowed = true,
+  bool nationalityAllowed = true,
+}) => {
+  'id': 41,
+  'symbol': 'CH',
+  'name': 'Switzerland',
+  'foreignName': foreignName,
+  'locationAllowed': locationAllowed,
+  'ibanAllowed': ibanAllowed,
+  'kycAllowed': true,
+  'kycOrganizationAllowed': true,
+  'nationalityAllowed': nationalityAllowed,
+  'bankAllowed': true,
+  'cardAllowed': true,
+  'cryptoAllowed': true,
+};
 
 void main() {
   group('$DfxCountryDto.fromJson', () {
@@ -50,7 +55,7 @@ void main() {
   });
 
   group('DfxCountryDtoMapper.toCountry', () {
-    test('keeps id / symbol / name / foreignName, drops the *_allowed flags', () {
+    test('keeps id / symbol / name / foreignName and the purpose allow-flags', () {
       final country = DfxCountryDto.fromJson(_wire(foreignName: 'Schweiz')).toCountry();
 
       expect(country, isA<Country>());
@@ -58,21 +63,57 @@ void main() {
       expect(country.symbol, 'CH');
       expect(country.name, 'Switzerland');
       expect(country.foreignName, 'Schweiz');
+      expect(country.nationalityAllowed, isTrue);
+      expect(country.locationAllowed, isTrue);
+    });
+
+    test('passes false allow-flags through unchanged', () {
+      final country = DfxCountryDto.fromJson(
+        _wire(nationalityAllowed: false, locationAllowed: false),
+      ).toCountry();
+
+      expect(country.nationalityAllowed, isFalse);
+      expect(country.locationAllowed, isFalse);
     });
   });
 
   group('$Country equality', () {
     test('two Country instances with the same id are ==', () {
-      const a = Country(id: 41, symbol: 'CH', name: 'Switzerland');
-      const b = Country(id: 41, symbol: 'XX', name: 'Different name', foreignName: 'F');
+      const a = Country(
+        id: 41,
+        symbol: 'CH',
+        name: 'Switzerland',
+        nationalityAllowed: true,
+        locationAllowed: true,
+      );
+      const b = Country(
+        id: 41,
+        symbol: 'XX',
+        name: 'Different name',
+        foreignName: 'F',
+        nationalityAllowed: false,
+        locationAllowed: false,
+      );
 
       // Equality only on id (props returns [id]).
       expect(a, equals(b));
     });
 
     test('different ids → different equality', () {
-      const a = Country(id: 41, symbol: 'CH', name: 'Switzerland');
-      const b = Country(id: 49, symbol: 'DE', name: 'Germany');
+      const a = Country(
+        id: 41,
+        symbol: 'CH',
+        name: 'Switzerland',
+        nationalityAllowed: true,
+        locationAllowed: true,
+      );
+      const b = Country(
+        id: 49,
+        symbol: 'DE',
+        name: 'Germany',
+        nationalityAllowed: true,
+        locationAllowed: true,
+      );
 
       expect(a, isNot(equals(b)));
     });

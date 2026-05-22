@@ -96,11 +96,8 @@ class KycRegistrationPersonalStep extends StatelessWidget {
                 ),
                 CountryField(
                   label: S.of(context).registerCitizenship,
+                  purpose: CountryFieldPurpose.nationality,
                   onChanged: (country) => nationalityCtrl.value = country,
-                  validator: (value) {
-                    if (value == null) return '';
-                    return null;
-                  },
                 ),
                 Padding(
                   padding: const .symmetric(vertical: 16.0),

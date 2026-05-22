@@ -6,11 +6,17 @@ class Country extends Equatable {
   final String symbol;
   final String name;
   final String? foreignName;
+  // Whether the backend accepts this country as a person's nationality.
+  final bool nationalityAllowed;
+  // Whether the backend accepts this country as a residence/address country.
+  final bool locationAllowed;
 
   const Country({
     required this.id,
     required this.symbol,
     required this.name,
+    required this.nationalityAllowed,
+    required this.locationAllowed,
     this.foreignName,
   });
 
@@ -25,6 +31,8 @@ extension DfxCountryDtoMapper on DfxCountryDto {
       symbol: symbol,
       name: name,
       foreignName: foreignName,
+      nationalityAllowed: nationalityAllowed,
+      locationAllowed: locationAllowed,
     );
   }
 }
