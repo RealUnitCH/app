@@ -1,10 +1,23 @@
 # Captures docs/handbook/screenshots/04-seed-hidden.png
 # Seed-backup screen with the SeedBlurCard still covered. BackdropFilter screen —
 # Maestro's own takeScreenshot would render black; xcrun captures correctly.
+#
+# The tap is gated on the seed-backup screen not yet showing and re-tapped if
+# it was silently dropped (Maestro/XCUITest tap-loss on Apple Silicon + iOS 26,
+# mobile-dev-inc/maestro#3137). The gate stops the loop the instant the
+# screen changes, so surplus iterations no-op.
 appId: swiss.realunit.app
 ---
-- tapOn:
-    text: '.*Neue Wallet erstellen.*'
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible: 'Wallet-Sicherung'
+          commands:
+            - tapOn:
+                text: '.*Neue Wallet erstellen.*'
+                optional: true
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible: 'Wallet-Sicherung'

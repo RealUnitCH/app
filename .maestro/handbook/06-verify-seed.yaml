@@ -3,9 +3,23 @@
 # generated seed, so the input fields are visibly pre-populated. The screenshot
 # documents the verify step UI; the user-facing flow asks the user to type
 # the words manually in release builds.
+#
+# The tap is gated on the verify screen not yet showing and re-tapped if it
+# was silently dropped (Maestro/XCUITest tap-loss on Apple Silicon + iOS 26,
+# mobile-dev-inc/maestro#3137). The gate stops the loop the instant the
+# screen changes, so surplus iterations no-op.
 appId: swiss.realunit.app
 ---
-- tapOn: 'Ich habe es gesichert'
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible: 'Sicherung überprüfen'
+          commands:
+            - tapOn:
+                text: 'Ich habe es gesichert'
+                optional: true
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible: 'Sicherung überprüfen'

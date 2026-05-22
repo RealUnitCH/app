@@ -1,13 +1,36 @@
 # Captures docs/handbook/screenshots/17-settings-backup-pin.png
 # Tapping "Wallet-Sicherung" routes through the PIN gate before showing the
 # recovery phrase. The numeric keypad re-appears with the verify-PIN copy.
+#
+# Both taps (back to the settings list, then into the wallet-backup PIN gate)
+# are gated on their target not yet showing and re-tapped if one was silently
+# dropped (Maestro/XCUITest tap-loss on Apple Silicon + iOS 26,
+# mobile-dev-inc/maestro#3137). Each gate stops its loop the instant the
+# screen changes, so surplus iterations no-op.
 appId: swiss.realunit.app
 ---
-- tapOn:
-    point: 8%,8%
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible: 'Einstellungen'
+          commands:
+            - tapOn:
+                point: 8%,8%
+                optional: true
 - waitForAnimationToEnd
-- tapOn:
-    text: '.*Wallet-Sicherung.*'
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              text: '.*PIN.*'
+          commands:
+            - tapOn:
+                text: '.*Wallet-Sicherung.*'
+                optional: true
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:

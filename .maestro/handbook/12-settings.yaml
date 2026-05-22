@@ -1,10 +1,23 @@
 # Captures docs/handbook/screenshots/12-settings.png
 # Tap the top-right hamburger icon. It's an IconButton(Icons.menu) with no
 # tooltip/semantic label, so we tap by coordinate.
+#
+# The tap is gated on the settings screen not yet showing and re-tapped if it
+# was silently dropped (Maestro/XCUITest tap-loss on Apple Silicon + iOS 26,
+# mobile-dev-inc/maestro#3137). The gate stops the loop the instant the
+# screen changes, so surplus iterations no-op.
 appId: swiss.realunit.app
 ---
-- tapOn:
-    point: 91%,10%
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible: 'Einstellungen'
+          commands:
+            - tapOn:
+                point: 91%,10%
+                optional: true
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible: 'Einstellungen'
