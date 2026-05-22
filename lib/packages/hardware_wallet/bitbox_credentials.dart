@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
-import 'dart:typed_data';
 
 import 'package:bitbox_flutter/bitbox_manager.dart';
 import 'package:convert/convert.dart' as convert;
+import 'package:flutter/foundation.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
@@ -16,12 +16,34 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
 
   static const _defaultDerivationPath = "m/44'/60'/0'/0/0";
 
+  /// Upper bound on how long a single sign may hold the [_signQueue] slot.
+  ///
+  /// If a native sign hangs (e.g. an Android USB read with no transport
+  /// timeout) the queue must not stay poisoned forever — every subsequent
+  /// sign chains off it and would deadlock. This guard is deliberately well
+  /// above the caller-side [DFXAuthService] sign timeout (3 minutes) so a
+  /// legitimately slow on-device confirmation is never cut short; it only
+  /// trips on a genuine hang.
+  static const signQueueTimeout = Duration(minutes: 5);
+
   final String _address;
 
   BitboxManager? bitboxManager;
   String? derivationPath;
 
   BitboxCredentials(this._address);
+
+  /// Re-seeds the static sign queue with a freshly-completed future.
+  ///
+  /// Production code never needs this — the queue self-heals via
+  /// [signQueueTimeout]. It exists so a `fakeAsync` test starts each case
+  /// with a queue head completed inside the test's own zone; a future
+  /// completed in a previous test's zone would not deliver its `.then`
+  /// continuations under `fakeAsync` and would wedge the chain.
+  @visibleForTesting
+  static void resetSignQueue() {
+    _signQueue = Future.value();
+  }
 
   static Future<T> _synchronizeSign<T>(Future<T> Function() sign) {
     final previous = _signQueue;
@@ -33,6 +55,26 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
         return await sign();
       } finally {
         completer.complete();
+      }
+    });
+  }
+
+  /// Runs [sign] under the queue slot but bounds it with [signQueueTimeout].
+  ///
+  /// A hung native sign would otherwise leave [_signQueue] permanently
+  /// pending and deadlock every later sign. On timeout the device is treated
+  /// as lost: [clearBitbox] nulls out [bitboxManager] so subsequent signs hit
+  /// the `manager == null` guard and fail fast with
+  /// [BitboxNotConnectedException] instead of racing the still-in-flight
+  /// native op on the shared noise cipher. The caller re-pairs to get a fresh
+  /// noise channel.
+  Future<T> _synchronizeBoundedSign<T>(Future<T> Function() sign) {
+    return _synchronizeSign(() async {
+      try {
+        return await sign().timeout(signQueueTimeout);
+      } on TimeoutException {
+        clearBitbox();
+        throw const BitboxNotConnectedException();
       }
     });
   }
@@ -64,7 +106,7 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
     int? chainId,
     bool isEIP1559 = false,
   }) {
-    return _synchronizeSign(() async {
+    return _synchronizeBoundedSign(() async {
       // Snapshot the manager + path up-front so an observer-driven null-out
       // between the connection check and the sign call doesn't NoSuchMethod.
       final manager = bitboxManager;
@@ -115,7 +157,7 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
 
   @override
   Future<Uint8List> signPersonalMessage(Uint8List payload, {int? chainId}) {
-    return _synchronizeSign(() async {
+    return _synchronizeBoundedSign(() async {
       final manager = bitboxManager;
       final path = derivationPath;
       if (manager == null || path == null) {
@@ -133,7 +175,7 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
       throw UnimplementedError('EvmLedgerCredentials.signPersonalMessageToUint8List');
 
   Future<String> signTypedDataV4(int chainId, String jsonData) {
-    return _synchronizeSign(() async {
+    return _synchronizeBoundedSign(() async {
       final manager = bitboxManager;
       final path = derivationPath;
       if (manager == null || path == null) {

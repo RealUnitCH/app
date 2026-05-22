@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bitbox_flutter/bitbox_flutter.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
@@ -20,6 +22,9 @@ void main() {
   });
 
   setUp(() {
+    // The sign queue is a process-wide static; reset it so a hung-sign test
+    // cannot leak a pending (or wrong-zone) queue head into the next test.
+    BitboxCredentials.resetSignQueue();
     manager = _MockBitboxManager();
     // _runOrThrowDisconnect probes manager.devices to distinguish a real
     // disconnect from a sign-internal failure. Tests below that expect the
@@ -283,6 +288,133 @@ void main() {
         expect(c.isConnected, isFalse, reason: 'clearBitbox must have run on lost device');
       },
     );
+
+    // A hung native sign must not poison the static queue forever. After
+    // `signQueueTimeout` the queue slot frees and the hung sign surfaces as
+    // BitboxNotConnectedException to its caller.
+    test('a never-completing sign resolves within signQueueTimeout', () {
+      fakeAsync((async) {
+        // Seed the queue head inside this zone (see resetSignQueue doc).
+        BitboxCredentials.resetSignQueue();
+        async.flushMicrotasks();
+
+        // Native sign that never returns — simulates an Android USB hang.
+        when(() => manager.signETHTypedMessage(any(), any(), any()))
+            .thenAnswer((_) => Completer<Uint8List>().future);
+
+        final c = connected();
+        Object? thrown;
+        c.signTypedDataV4(1, '{"primaryType":"A"}').catchError((Object e) {
+          thrown = e;
+          return '';
+        });
+
+        // Just before the bound: still pending.
+        async.elapse(BitboxCredentials.signQueueTimeout - const Duration(seconds: 1));
+        expect(thrown, isNull);
+
+        // Past the bound: the hung sign surfaces as a typed exception.
+        async.elapse(const Duration(seconds: 2));
+        expect(thrown, isA<BitboxNotConnectedException>());
+      });
+    });
+
+    // The whole point of the bug fix: one hung sign must not deadlock every
+    // later sign chained off the static queue.
+    test('a sign issued after a hung sign is not deadlocked', () {
+      fakeAsync((async) {
+        BitboxCredentials.resetSignQueue();
+        async.flushMicrotasks();
+
+        var call = 0;
+        when(() => manager.signETHTypedMessage(any(), any(), any())).thenAnswer((_) async {
+          call++;
+          if (call == 1) return Completer<Uint8List>().future; // first sign hangs
+          return Uint8List.fromList([0x42]);
+        });
+
+        final c = connected();
+        Object? firstThrown;
+        c.signTypedDataV4(1, '{"primaryType":"A"}').catchError((Object e) {
+          firstThrown = e;
+          return '';
+        });
+
+        String? secondResult;
+        Object? secondThrown;
+        c.signTypedDataV4(1, '{"primaryType":"B"}').then((v) {
+          secondResult = v;
+        }).catchError((Object e) {
+          secondThrown = e;
+        });
+
+        // Drain past the queue guard so the hung slot frees.
+        async.elapse(BitboxCredentials.signQueueTimeout + const Duration(seconds: 1));
+        async.flushMicrotasks();
+
+        expect(firstThrown, isA<BitboxNotConnectedException>());
+        // The second sign must NOT hang — but since the device was cleared by
+        // the timed-out first sign, it fails fast rather than racing the
+        // device.
+        expect(secondResult, isNull);
+        expect(secondThrown, isA<BitboxNotConnectedException>());
+      });
+    });
+
+    // Requirement 3: a timed-out sign clears the device so a subsequent sign
+    // cannot talk to a device whose native op may still be in flight — it hits
+    // the `manager == null` guard and fails fast without touching the device.
+    test('device is cleared after a hung sign so the next sign fails fast', () {
+      fakeAsync((async) {
+        BitboxCredentials.resetSignQueue();
+        async.flushMicrotasks();
+
+        // First sign hangs forever; later signs would otherwise hit the mock.
+        when(() => manager.signETHTypedMessage(any(), any(), any()))
+            .thenAnswer((_) => Completer<Uint8List>().future);
+
+        final c = connected();
+        expect(c.isConnected, isTrue);
+
+        c.signTypedDataV4(1, '{"primaryType":"A"}').catchError((Object _) => '');
+        async.elapse(BitboxCredentials.signQueueTimeout + const Duration(seconds: 1));
+        async.flushMicrotasks();
+
+        expect(c.isConnected, isFalse, reason: 'clearBitbox must run on a timed-out sign');
+
+        // The next sign hits the manager == null guard: it fails fast with a
+        // typed exception and never invokes the device sign mock again.
+        Object? nextThrown;
+        c.signTypedDataV4(1, '{"primaryType":"B"}').catchError((Object e) {
+          nextThrown = e;
+          return '';
+        });
+        async.flushMicrotasks();
+
+        expect(nextThrown, isA<BitboxNotConnectedException>());
+        verify(() => manager.signETHTypedMessage(any(), any(), any())).called(1);
+      });
+    });
+
+    // Requirement 5: the normal path must stay serialised and in order.
+    test('normal serialised signing completes in order', () async {
+      final order = <String>[];
+      when(() => manager.signETHTypedMessage(any(), any(), any())).thenAnswer((invocation) async {
+        final data = invocation.positionalArguments[2] as Uint8List;
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        order.add(String.fromCharCodes(data));
+        return Uint8List.fromList([0x01]);
+      });
+
+      final c = connected();
+      await Future.wait([
+        c.signTypedDataV4(1, 'A'),
+        c.signTypedDataV4(1, 'B'),
+        c.signTypedDataV4(1, 'C'),
+      ]);
+
+      expect(order, ['A', 'B', 'C']);
+    });
 
     test('sign on cleared credentials throws BitboxNotConnectedException, not NoSuchMethod',
         () async {
