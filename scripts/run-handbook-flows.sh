@@ -185,6 +185,31 @@ MAESTRO_MAX_ATTEMPTS="${MAESTRO_MAX_ATTEMPTS:-3}"
 MAESTRO_DEBUG_ROOT="$TMP_DIR/maestro-debug"
 mkdir -p "$MAESTRO_DEBUG_ROOT"
 
+# XCUITest-driver reuse across the per-flow `maestro test` invocations.
+#
+# Each `maestro test` invocation otherwise pays the full XCUITest-runner
+# lifecycle: by default Maestro 2.0.10 *uninstalls* the runner on session
+# close, so the next invocation finds nothing alive and has to
+# uninstall/install/start it again from scratch — the Maestro log line
+# `Restarting XCTest Runner (uninstalling, installing and starting)` + a
+# fresh `xcodebuild test-without-building`. Across 19 flows that one-time
+# ~5 min build is effectively paid 19×.
+#
+# `--reinstall-driver=false` (Maestro 2.0.10 TestCommand option, default
+# `true`) skips the uninstall step both at session start AND at session
+# close. So invocation 1 installs+starts the runner and then *leaves it
+# running*; invocations 2-19 hit Maestro's `isChannelAlive()` early-return
+# (`UI Test runner already running, returning`) and reuse it — no
+# reinstall, no rebuild. The first run on a freshly `simctl erase`-d
+# device has nothing to uninstall, so passing the flag there is harmless.
+#
+# Exception: the IOSDriverTimeoutException retry path below reboots the
+# simulator, which kills the running runner. After a reboot the next
+# attempt MUST do a full reinstall (a clean driver is exactly the recovery
+# the retry exists for), so `reinstall_driver` is flipped back to `true`
+# for that one attempt and reset to `false` afterwards.
+reinstall_driver=false
+
 # Whole-second duration → `Nm SSs`. Drives the per-attempt / per-flow /
 # suite timing lines below — the data for sizing the CI envelope and
 # finding which flows to speed up.
@@ -209,8 +234,12 @@ for flow in "${flows[@]}"; do
     attempt_start=$(date +%s)
     flow_log="$TMP_DIR/$base.attempt-$attempt.log"
     debug_dir="$MAESTRO_DEBUG_ROOT/$base-attempt-$attempt"
-    if "$MAESTRO" test --debug-output "$debug_dir" --flatten-debug-output "$flow" 2>&1 | tee "$flow_log"; then
+    if "$MAESTRO" test --reinstall-driver="$reinstall_driver" \
+         --debug-output "$debug_dir" --flatten-debug-output "$flow" 2>&1 | tee "$flow_log"; then
       echo "  attempt $attempt passed in $(fmt_duration $(( $(date +%s) - attempt_start )))"
+      # Driver is up after a successful invocation — keep reusing it
+      # (a prior retry may have flipped this to true for a reinstall).
+      reinstall_driver=false
       break
     fi
     # Only retry the upstream driver-hang class. Assertion failures
@@ -221,6 +250,10 @@ for flow in "${flows[@]}"; do
       xcrun simctl shutdown "$UDID" || true
       xcrun simctl boot "$UDID"
       xcrun simctl bootstatus "$UDID" -b >/dev/null
+      # The reboot killed the XCUITest runner. Force a full reinstall on
+      # the retry attempt so it recovers from a clean driver state; the
+      # successful-attempt branch above resets this back to false.
+      reinstall_driver=true
       continue
     fi
     # Real failure OR retries exhausted: post-mortem + exit.
