@@ -1,12 +1,13 @@
 import 'package:http/http.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
+import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
 class AppStore {
   final ApiConfig Function() getApiConfig;
   final SessionCache sessionCache;
-  final httpClient = Client();
+  final Client httpClient = RealUnitApiClient();
 
   AWallet? _wallet;
 
