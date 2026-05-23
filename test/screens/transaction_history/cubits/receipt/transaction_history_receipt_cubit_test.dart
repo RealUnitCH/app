@@ -26,6 +26,9 @@ class _FakeDocumentsDirectoryPort implements DocumentsDirectoryPort {
     calls++;
     return directory;
   }
+
+  @override
+  Future<Directory> getApplicationDocumentsDirectory() async => directory;
 }
 
 void main() {
