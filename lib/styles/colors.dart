@@ -4,7 +4,7 @@ class RealUnitColors {
   static final basic = _Basic();
   static final status = _Status();
 
-  static const realUnitBlue = Color.fromARGB(255, 50, 136, 198);
+  static const realUnitBlue = Color.fromARGB(255, 25, 136, 198);
   static const realUnitBlack = Color.fromARGB(255, 52, 50, 51);
   static const brand200 = Color(0xFFD1E6F5);
   static const brand700 = Color.fromARGB(255, 236, 243, 249);
