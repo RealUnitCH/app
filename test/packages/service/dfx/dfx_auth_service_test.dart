@@ -1,15 +1,23 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
+import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
+import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
 // ---------------------------------------------------------------------------
@@ -18,13 +26,18 @@ import 'package:web3dart/web3dart.dart';
 
 class _MockAppStore extends Mock implements AppStore {}
 
+class _MockAWallet extends Mock implements AWallet {}
+
+class _MockAWalletAccount extends Mock implements AWalletAccount {}
+
 class _MockSessionCache extends Mock implements SessionCache {}
 
 class _MockWalletService extends Mock implements WalletService {}
 
 class _StubWalletAccount extends AWalletAccount {
-  _StubWalletAccount(this._signature)
-    : super(
+  _StubWalletAccount(this._signature, {String? address})
+    : _addressOverride = address,
+      super(
         0,
         EthPrivateKey.fromHex(
           'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612',
@@ -32,13 +45,80 @@ class _StubWalletAccount extends AWalletAccount {
       );
 
   final String _signature;
+  final String? _addressOverride;
   int signCallCount = 0;
+
+  @override
+  CredentialsWithKnownAddress get primaryAddress {
+    if (_addressOverride != null) {
+      return _StubCredentials(_addressOverride);
+    }
+    return super.primaryAddress;
+  }
 
   @override
   Future<String> signMessage(String message, {int addressIndex = 0}) async {
     signCallCount++;
     return _signature;
   }
+}
+
+class _StubCredentials extends CredentialsWithKnownAddress {
+  _StubCredentials(String hexAddress) : _address = EthereumAddress.fromHex(hexAddress);
+
+  final EthereumAddress _address;
+
+  @override
+  EthereumAddress get address => _address;
+
+  @override
+  MsgSignature signToEcSignature(
+    Uint8List payload, {
+    int? chainId,
+    bool isEIP1559 = false,
+  }) => throw UnimplementedError();
+
+  @override
+  Future<MsgSignature> signToSignature(
+    Uint8List payload, {
+    int? chainId,
+    bool isEIP1559 = false,
+  }) => throw UnimplementedError();
+}
+
+class _HangingWalletAccount extends AWalletAccount {
+  _HangingWalletAccount()
+    : super(
+        0,
+        EthPrivateKey.fromHex(
+          'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612',
+        ),
+      );
+
+  @override
+  Future<String> signMessage(String message, {int addressIndex = 0}) {
+    // Returns a future that never completes — caller's `.timeout(...)` must
+    // surface a TimeoutException for the test to pass.
+    return Completer<String>().future;
+  }
+}
+
+class _RecordingAuthService implements DFXAuthService {
+  _RecordingAuthService({this.throwOnEnsure = false});
+
+  final bool throwOnEnsure;
+  int ensureCalls = 0;
+
+  @override
+  Future<void> ensureSignatureFor(AWalletAccount account) async {
+    ensureCalls++;
+    if (throwOnEnsure) {
+      throw StateError('simulated BitBox cancel');
+    }
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _SignatureTestAuthService extends DFXAuthService {
@@ -119,8 +199,7 @@ void main() {
       walletService = _MockWalletService();
 
       when(() => appStore.sessionCache).thenReturn(sessionCache);
-      when(() => walletService.ensureCurrentWalletUnlocked())
-          .thenAnswer((_) async {});
+      when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
       when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
       when(() => sessionCache.signature).thenReturn(null);
       when(() => sessionCache.signatureAddress).thenReturn(null);
@@ -225,60 +304,64 @@ void main() {
       expect(service.refreshAuthTokenCalls, 1);
     });
 
-    test('authenticatedPost retries once with a refreshed token on 401 and resends the body',
-        () async {
-      final seenAuthHeaders = <String?>[];
-      final seenBodies = <String>[];
-      final client = MockClient((request) async {
-        seenAuthHeaders.add(request.headers['Authorization']);
-        seenBodies.add(request.body);
+    test(
+      'authenticatedPost retries once with a refreshed token on 401 and resends the body',
+      () async {
+        final seenAuthHeaders = <String?>[];
+        final seenBodies = <String>[];
+        final client = MockClient((request) async {
+          seenAuthHeaders.add(request.headers['Authorization']);
+          seenBodies.add(request.body);
 
-        if (seenAuthHeaders.length == 1) {
-          return http.Response('{"message":"Unauthorized"}', 401);
-        }
-        return http.Response('{"ok":true}', 201);
-      });
-      final service = _RetryTestAuthService(_RetryTestAppStore(client), _MockWalletService());
+          if (seenAuthHeaders.length == 1) {
+            return http.Response('{"message":"Unauthorized"}', 401);
+          }
+          return http.Response('{"ok":true}', 201);
+        });
+        final service = _RetryTestAuthService(_RetryTestAppStore(client), _MockWalletService());
 
-      final response = await service.authenticatedPost(
-        Uri.parse('https://api.example.test/v1/resource'),
-        headers: {'Content-Type': 'application/json'},
-        body: '{"value":1}',
-      );
+        final response = await service.authenticatedPost(
+          Uri.parse('https://api.example.test/v1/resource'),
+          headers: {'Content-Type': 'application/json'},
+          body: '{"value":1}',
+        );
 
-      expect(response.statusCode, 201);
-      expect(seenAuthHeaders, ['Bearer expired-token', 'Bearer fresh-token']);
-      // Same body resent on retry — no truncation, no double-encoding.
-      expect(seenBodies, ['{"value":1}', '{"value":1}']);
-      expect(service.refreshAuthTokenCalls, 1);
-    });
+        expect(response.statusCode, 201);
+        expect(seenAuthHeaders, ['Bearer expired-token', 'Bearer fresh-token']);
+        // Same body resent on retry — no truncation, no double-encoding.
+        expect(seenBodies, ['{"value":1}', '{"value":1}']);
+        expect(service.refreshAuthTokenCalls, 1);
+      },
+    );
 
-    test('authenticatedPut retries once with a refreshed token on 401 and resends the body',
-        () async {
-      final seenAuthHeaders = <String?>[];
-      final seenBodies = <String>[];
-      final client = MockClient((request) async {
-        seenAuthHeaders.add(request.headers['Authorization']);
-        seenBodies.add(request.body);
+    test(
+      'authenticatedPut retries once with a refreshed token on 401 and resends the body',
+      () async {
+        final seenAuthHeaders = <String?>[];
+        final seenBodies = <String>[];
+        final client = MockClient((request) async {
+          seenAuthHeaders.add(request.headers['Authorization']);
+          seenBodies.add(request.body);
 
-        if (seenAuthHeaders.length == 1) {
-          return http.Response('{"message":"Unauthorized"}', 401);
-        }
-        return http.Response('{"ok":true}', 200);
-      });
-      final service = _RetryTestAuthService(_RetryTestAppStore(client), _MockWalletService());
+          if (seenAuthHeaders.length == 1) {
+            return http.Response('{"message":"Unauthorized"}', 401);
+          }
+          return http.Response('{"ok":true}', 200);
+        });
+        final service = _RetryTestAuthService(_RetryTestAppStore(client), _MockWalletService());
 
-      final response = await service.authenticatedPut(
-        Uri.parse('https://api.example.test/v1/resource'),
-        headers: {'Content-Type': 'application/json'},
-        body: '{"value":1}',
-      );
+        final response = await service.authenticatedPut(
+          Uri.parse('https://api.example.test/v1/resource'),
+          headers: {'Content-Type': 'application/json'},
+          body: '{"value":1}',
+        );
 
-      expect(response.statusCode, 200);
-      expect(seenAuthHeaders, ['Bearer expired-token', 'Bearer fresh-token']);
-      expect(seenBodies, ['{"value":1}', '{"value":1}']);
-      expect(service.refreshAuthTokenCalls, 1);
-    });
+        expect(response.statusCode, 200);
+        expect(seenAuthHeaders, ['Bearer expired-token', 'Bearer fresh-token']);
+        expect(seenBodies, ['{"value":1}', '{"value":1}']);
+        expect(service.refreshAuthTokenCalls, 1);
+      },
+    );
 
     test('does not retry a third time when the refreshed token also yields 401', () async {
       var calls = 0;
@@ -299,12 +382,13 @@ void main() {
       expect(service.refreshAuthTokenCalls, 1);
     });
 
-    test('propagates exceptions thrown by refreshAuthToken without swallowing them',
-        () async {
-      final client = MockClient((_) async => http.Response(
-            '{"message":"Unauthorized"}',
-            401,
-          ));
+    test('propagates exceptions thrown by refreshAuthToken without swallowing them', () async {
+      final client = MockClient(
+        (_) async => http.Response(
+          '{"message":"Unauthorized"}',
+          401,
+        ),
+      );
       final service = _ThrowingRefreshAuthService(_RetryTestAppStore(client), _MockWalletService());
 
       await expectLater(
@@ -314,6 +398,481 @@ void main() {
       expect(service.refreshAuthTokenCalls, 1);
     });
   });
+
+  // -------------------------------------------------------------------------
+  // ensureSignatureFor — BitBox-pairing pre-warm path.
+  // -------------------------------------------------------------------------
+
+  group('$DFXAuthService ensureSignatureFor', () {
+    late _MockAppStore appStore;
+    late _MockSessionCache sessionCache;
+    late _MockWalletService walletService;
+    late _StubWalletAccount account;
+
+    // EIP-55 requires either mixed-case checksum OR all lowercase / all
+    // uppercase. We use all-lowercase here so the address can be fed into
+    // `EthereumAddress.fromHex` without recomputing the case-map.
+    const accountAddress = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+    final accountAddressEip55 = EthereumAddress.fromHex(accountAddress).hexEip55;
+    const stubSignature = '0xfeedface';
+
+    setUp(() {
+      appStore = _MockAppStore();
+      sessionCache = _MockSessionCache();
+      walletService = _MockWalletService();
+      account = _StubWalletAccount(stubSignature, address: accountAddress);
+
+      when(() => appStore.sessionCache).thenReturn(sessionCache);
+      when(() => appStore.httpClient).thenReturn(
+        MockClient((_) async => http.Response('{"message":"unused"}', 200)),
+      );
+      when(() => sessionCache.loadSignature()).thenAnswer((_) async {});
+      when(() => sessionCache.signature).thenReturn(null);
+      when(() => sessionCache.signatureAddress).thenReturn(null);
+      when(() => sessionCache.saveSignature(any(), any())).thenAnswer((_) async {});
+      when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
+      when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
+    });
+
+    _SignatureTestAuthService buildService({String? walletAddressOverride}) {
+      when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+      return _SignatureTestAuthService(
+        appStore,
+        walletService,
+        account,
+        walletAddressOverride ?? accountAddress,
+      );
+    }
+
+    test('short-circuits when the cache already holds the address signature', () async {
+      when(() => sessionCache.signature).thenReturn(stubSignature);
+      when(() => sessionCache.signatureAddress).thenReturn(accountAddressEip55);
+
+      await buildService().ensureSignatureFor(account);
+
+      // No sign ceremony, no save — the cached entry already matches.
+      expect(account.signCallCount, 0);
+      verifyNever(() => sessionCache.saveSignature(any(), any()));
+    });
+
+    test('fetches a sign message, signs, and persists when the cache is cold', () async {
+      String? capturedPath;
+      String? capturedAddrParam;
+      final client = MockClient((request) async {
+        capturedPath = request.url.path;
+        capturedAddrParam = request.url.queryParameters['address'];
+        return http.Response(jsonEncode({'message': 'please sign'}), 200);
+      });
+      when(() => appStore.httpClient).thenReturn(client);
+
+      await buildService().ensureSignatureFor(account);
+
+      expect(capturedPath, '/v1/auth/signMessage');
+      // Address query param is the account's address (EIP-55 checksummed),
+      // not the service's active wallet address — this is the BitBox-pairing
+      // entry point.
+      expect(capturedAddrParam, accountAddressEip55);
+      expect(account.signCallCount, 1);
+      verify(() => sessionCache.saveSignature(accountAddressEip55, stubSignature)).called(1);
+    });
+
+    test('signs again when the cached entry belongs to a different address', () async {
+      when(() => sessionCache.signature).thenReturn(stubSignature);
+      when(() => sessionCache.signatureAddress).thenReturn(
+        EthereumAddress.fromHex('0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb').hexEip55,
+      );
+      when(() => appStore.httpClient).thenReturn(
+        MockClient(
+          (_) async => http.Response(jsonEncode({'message': 'm'}), 200),
+        ),
+      );
+
+      await buildService().ensureSignatureFor(account);
+
+      expect(account.signCallCount, 1);
+      verify(() => sessionCache.saveSignature(accountAddressEip55, stubSignature)).called(1);
+    });
+
+    for (final empty in const ['', '0x']) {
+      test('throws SigningCancelledException when the device returns "$empty"', () async {
+        account = _StubWalletAccount(empty, address: accountAddress);
+        when(() => appStore.httpClient).thenReturn(
+          MockClient(
+            (_) async => http.Response(jsonEncode({'message': 'm'}), 200),
+          ),
+        );
+
+        expect(
+          () => buildService().ensureSignatureFor(account),
+          throwsA(isA<SigningCancelledException>()),
+        );
+      });
+    }
+
+    test('propagates the HTTP error when the sign-message endpoint is non-200', () async {
+      when(() => appStore.httpClient).thenReturn(
+        MockClient(
+          (_) async => http.Response('upstream broken', 502),
+        ),
+      );
+
+      expect(
+        () => buildService().ensureSignatureFor(account),
+        throwsA(isA<Exception>()),
+      );
+      // No sign ceremony triggered when the message fetch fails.
+      expect(account.signCallCount, 0);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // warmAuthSignature — never throws, swallows-to-log on failure.
+  // -------------------------------------------------------------------------
+
+  group('warmAuthSignature', () {
+    test('delegates to ensureSignatureFor on the happy path', () async {
+      final auth = _RecordingAuthService();
+      final account = _StubWalletAccount(
+        '0xfeedface',
+        address: '0xcccccccccccccccccccccccccccccccccccccccc',
+      );
+
+      await warmAuthSignature(auth, account, loggerName: 'test');
+
+      expect(auth.ensureCalls, 1);
+    });
+
+    test('swallows exceptions thrown by ensureSignatureFor', () async {
+      final auth = _RecordingAuthService(throwOnEnsure: true);
+      final account = _StubWalletAccount(
+        '0xfeedface',
+        address: '0xcccccccccccccccccccccccccccccccccccccccc',
+      );
+
+      // Crucially: no `throwsA`. The contract is "log + return", so the
+      // onboarding flow can keep going even if the BitBox pre-warm pops
+      // an unexpected confirmation on the next call.
+      await warmAuthSignature(auth, account, loggerName: 'test');
+
+      expect(auth.ensureCalls, 1);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // getSignMessage / getAuthResponse / getAuthToken / refreshAuthToken /
+  // invalidateAuthToken — the wire-shape on the `/v1/auth*` endpoints.
+  // -------------------------------------------------------------------------
+
+  group('$DFXAuthService auth wire surface', () {
+    late _MockAppStore appStore;
+    late SessionCache sessionCache;
+    late _MockCacheRepository cacheRepo;
+    late _MockWalletService walletService;
+    late _StubWalletAccount account;
+
+    const walletAddress = '0xdddddddddddddddddddddddddddddddddddddddd';
+    const validSignature = '0xfeedface';
+
+    setUp(() {
+      appStore = _MockAppStore();
+      cacheRepo = _MockCacheRepository();
+      // The SessionCache writes the signature back to disk on every
+      // saveSignature call — stub the repo so the helper future resolves.
+      when(() => cacheRepo.read(any())).thenAnswer((_) async => null);
+      when(() => cacheRepo.write(any(), any())).thenAnswer((_) async => 1);
+      when(() => cacheRepo.delete(any())).thenAnswer((_) async {});
+      sessionCache = SessionCache(cacheRepo);
+      walletService = _MockWalletService();
+      account = _StubWalletAccount(validSignature, address: walletAddress);
+
+      when(() => appStore.sessionCache).thenReturn(sessionCache);
+      when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+      when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
+      when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
+    });
+
+    _SignatureTestAuthService buildService(http.Client client) {
+      when(() => appStore.httpClient).thenReturn(client);
+      return _SignatureTestAuthService(appStore, walletService, account, walletAddress);
+    }
+
+    test('getSignMessage GETs /v1/auth/signMessage with the wallet address', () async {
+      String? capturedPath;
+      String? capturedAddr;
+      final client = MockClient((request) async {
+        capturedPath = request.url.path;
+        capturedAddr = request.url.queryParameters['address'];
+        return http.Response(jsonEncode({'message': 'please sign me'}), 200);
+      });
+
+      final message = await buildService(client).getSignMessage();
+
+      expect(message, 'please sign me');
+      expect(capturedPath, '/v1/auth/signMessage');
+      expect(capturedAddr, walletAddress);
+    });
+
+    test('getSignMessage throws on non-200', () async {
+      final client = MockClient((_) async => http.Response('boom', 500));
+
+      expect(
+        () => buildService(client).getSignMessage(),
+        throwsA(isA<Exception>()),
+      );
+    });
+
+    test(
+      'getAuthResponse POSTs /v1/auth with wallet + address + signature, returns the parsed 201',
+      () async {
+        Map<String, dynamic>? sentBody;
+        String? sentMethod;
+        String? sentPath;
+        Map<String, String>? sentHeaders;
+        var seq = 0;
+        final client = MockClient((request) async {
+          seq++;
+          if (request.method == 'GET') {
+            // /v1/auth/signMessage round-trip.
+            return http.Response(jsonEncode({'message': 'please sign'}), 200);
+          }
+          sentMethod = request.method;
+          sentPath = request.url.path;
+          sentHeaders = request.headers;
+          sentBody = jsonDecode(request.body) as Map<String, dynamic>;
+          return http.Response(jsonEncode({'accessToken': 'jwt-fresh'}), 201);
+        });
+
+        final body = await buildService(client).getAuthResponse();
+
+        expect(body['accessToken'], 'jwt-fresh');
+        expect(sentMethod, 'POST');
+        expect(sentPath, '/v1/auth');
+        expect(sentHeaders!['content-type'], contains('application/json'));
+        expect(sentBody!['wallet'], 'RealUnit');
+        expect(sentBody!['address'], walletAddress);
+        expect(sentBody!['signature'], validSignature);
+        // Two HTTP calls: sign-message + auth.
+        expect(seq, 2);
+      },
+    );
+
+    test('getAuthResponse omits walletName when sendWalletName=false', () async {
+      Map<String, dynamic>? sentBody;
+      final client = MockClient((request) async {
+        if (request.method == 'GET') {
+          return http.Response(jsonEncode({'message': 'm'}), 200);
+        }
+        sentBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(jsonEncode({'accessToken': 'jwt'}), 201);
+      });
+
+      await buildService(client).getAuthResponse(false);
+
+      expect(sentBody!.containsKey('wallet'), isFalse);
+      expect(sentBody!['address'], walletAddress);
+      expect(sentBody!['signature'], validSignature);
+    });
+
+    test('getAuthResponse surfaces the 403 message when present', () async {
+      final client = MockClient((request) async {
+        if (request.method == 'GET') {
+          return http.Response(jsonEncode({'message': 'm'}), 200);
+        }
+        return http.Response(
+          jsonEncode({'statusCode': 403, 'message': 'country-blocked'}),
+          403,
+        );
+      });
+
+      await expectLater(
+        buildService(client).getAuthResponse(),
+        throwsA(
+          isA<Exception>().having(
+            (e) => e.toString(),
+            'toString()',
+            contains('country-blocked'),
+          ),
+        ),
+      );
+    });
+
+    test('getAuthResponse falls back to the canned 403 message when the body has none', () async {
+      final client = MockClient((request) async {
+        if (request.method == 'GET') {
+          return http.Response(jsonEncode({'message': 'm'}), 200);
+        }
+        return http.Response(jsonEncode({'statusCode': 403}), 403);
+      });
+
+      await expectLater(
+        buildService(client).getAuthResponse(),
+        throwsA(
+          isA<Exception>().having(
+            (e) => e.toString(),
+            'toString()',
+            contains('Service unavailable in your country'),
+          ),
+        ),
+      );
+    });
+
+    test('getAuthResponse throws on an arbitrary non-201/403 status', () async {
+      final client = MockClient((request) async {
+        if (request.method == 'GET') {
+          return http.Response(jsonEncode({'message': 'm'}), 200);
+        }
+        return http.Response('upstream broken', 502);
+      });
+
+      expect(
+        () => buildService(client).getAuthResponse(),
+        throwsA(isA<Exception>()),
+      );
+    });
+
+    test(
+      'getAuthToken hits the sign-then-auth round-trip on a cold cache and caches the token',
+      () async {
+        var authCalls = 0;
+        final client = MockClient((request) async {
+          if (request.method == 'GET') {
+            return http.Response(jsonEncode({'message': 'm'}), 200);
+          }
+          authCalls++;
+          return http.Response(jsonEncode({'accessToken': 'jwt-1'}), 201);
+        });
+
+        final service = buildService(client);
+
+        final first = await service.getAuthToken();
+        // Second call must short-circuit on the cached JWT — no extra POST.
+        final second = await service.getAuthToken();
+
+        expect(first, 'jwt-1');
+        expect(second, 'jwt-1');
+        expect(authCalls, 1);
+        expect(sessionCache.authToken, 'jwt-1');
+      },
+    );
+
+    test('invalidateAuthToken clears the cached JWT', () {
+      sessionCache.setAuthToken('to-be-cleared');
+
+      buildService(MockClient((_) async => http.Response('', 200))).invalidateAuthToken();
+
+      expect(sessionCache.authToken, isNull);
+    });
+
+    test('refreshAuthToken clears the cache and forces a fresh /v1/auth round-trip', () async {
+      sessionCache.setAuthToken('stale-jwt');
+      var authCalls = 0;
+      final client = MockClient((request) async {
+        if (request.method == 'GET') {
+          return http.Response(jsonEncode({'message': 'm'}), 200);
+        }
+        authCalls++;
+        return http.Response(jsonEncode({'accessToken': 'jwt-fresh'}), 201);
+      });
+
+      final service = buildService(client);
+      final refreshed = await service.refreshAuthToken();
+
+      expect(refreshed, 'jwt-fresh');
+      // Cache was cleared → exactly one auth round-trip.
+      expect(authCalls, 1);
+      expect(sessionCache.authToken, 'jwt-fresh');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Base-class getters — `wallet` and `walletAddress` delegate to the
+  // currently-loaded account on `appStore.wallet`. The other groups override
+  // them in test subclasses to stay focused on individual code paths; this
+  // group pins the default behaviour.
+  // -------------------------------------------------------------------------
+
+  group('$DFXAuthService base getters', () {
+    test('wallet returns appStore.wallet.currentAccount; walletAddress is its EIP-55 hex', () {
+      final appStore = _MockAppStore();
+      final mockWallet = _MockAWallet();
+      final mockAccount = _MockAWalletAccount();
+      final creds = _StubCredentials('0x9F5713DEacB8e9CAB6c2d3FaE1AFc2715F8D2D71');
+
+      when(() => appStore.wallet).thenReturn(mockWallet);
+      when(() => mockWallet.currentAccount).thenReturn(mockAccount);
+      when(() => mockAccount.primaryAddress).thenReturn(creds);
+      when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+      when(() => appStore.sessionCache).thenReturn(SessionCache(_MockCacheRepository()));
+      when(() => appStore.httpClient).thenReturn(
+        MockClient((_) async => http.Response('', 200)),
+      );
+
+      final service = _BaseGetterAuthService(appStore, _MockWalletService());
+
+      expect(identical(service.wallet, mockAccount), isTrue);
+      // The address is checksummed via EIP-55 — matches the format other
+      // endpoints (KYC, user-data) expect.
+      expect(service.walletAddress, creds.address.hexEip55);
+      // `host` proxies the apiConfig getter.
+      expect(service.host, 'api.dfx.swiss');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // _signMessageTimeout — 3 min cap on the sign ceremony.
+  //
+  // Exercised via getSignature (cache-miss path). `fake_async` lets us assert
+  // the bound without burning a wall-clock 3 min on every CI run.
+  // -------------------------------------------------------------------------
+
+  group('$DFXAuthService sign-message timeout', () {
+    test('getSignature throws TimeoutException after the 3-minute cap', () {
+      fakeAsync((async) {
+        final appStore = _MockAppStore();
+        final sessionCache = _MockSessionCache();
+        final walletService = _MockWalletService();
+        final account = _HangingWalletAccount();
+
+        when(() => appStore.sessionCache).thenReturn(sessionCache);
+        when(() => sessionCache.signature).thenReturn(null);
+        when(() => sessionCache.signatureAddress).thenReturn(null);
+        when(() => sessionCache.saveSignature(any(), any())).thenAnswer((_) async {});
+        when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
+        when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
+
+        final service = _SignatureTestAuthService(
+          appStore,
+          walletService,
+          account,
+          '0xEeEeEeEeEeEeEeEeEeEeEeEeEeEeEeEeEeEeEeEe',
+        );
+
+        Object? caught;
+        service.getSignature('msg').catchError((Object e) {
+          caught = e;
+          return '';
+        });
+
+        // Just under the cap: still pending.
+        async.elapse(const Duration(minutes: 2, seconds: 59));
+        expect(caught, isNull);
+
+        // Crossing the cap surfaces a TimeoutException.
+        async.elapse(const Duration(seconds: 2));
+        expect(caught, isA<TimeoutException>());
+        // ensureCurrentWalletUnlocked is called once; lockCurrentWallet runs
+        // in the `finally` even when the sign hangs out.
+        verify(() => walletService.lockCurrentWallet()).called(1);
+      });
+    });
+  });
+}
+
+/// Concrete subclass that does NOT override `wallet` / `walletAddress` so we
+/// can pin the base-class getter chain (`appStore.wallet.currentAccount` →
+/// `.primaryAddress.address.hexEip55`).
+class _BaseGetterAuthService extends DFXAuthService {
+  _BaseGetterAuthService(super.appStore, super.walletService);
 }
 
 class _ThrowingRefreshAuthService extends DFXAuthService {
