@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/legal_document/dto/dfx_legal_document_dto.dart';
 import 'package:realunit_wallet/screens/legal/subpages/legal_document_page.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
@@ -25,17 +24,13 @@ class LegalDocumentConfig implements DocumentConfig {
   bool get isExternal => false;
   final String Function(BuildContext context) _title;
   final String assetBaseName;
-  // Wenn gesetzt, holt die Seite die PDF-URL aus `/v1/legal-document?type=`.
-  // Es gibt keinen hardcoded Fallback mehr — schlägt die API fehl oder
-  // liefert sie keinen Eintrag, rendert die Seite einen
-  // "PDF nicht verfügbar"-Zustand mit Retry (closes audit V17).
-  final String? legalDocumentType;
+  final Map<String, String>? pdfUrls;
 
   const LegalDocumentConfig({
     required this.icon,
     required String Function(BuildContext context) title,
     required this.assetBaseName,
-    this.legalDocumentType,
+    this.pdfUrls,
   }) : _title = title;
 
   @override
@@ -47,7 +42,7 @@ class LegalDocumentConfig implements DocumentConfig {
     extra: LegalDocumentParams(
       title: title(context),
       assetBaseName: assetBaseName,
-      legalDocumentType: legalDocumentType,
+      pdfUrls: pdfUrls,
     ),
   );
 }
@@ -71,6 +66,13 @@ class LegalDocumentsConfig {
     _investmentRegulations,
   ];
 
+  static const _registrationAgreementPdfUrls = {
+    'de':
+        'https://realunit.ch/wp-content/uploads/2026/03/260303_RegV_DE_RealUnit_Schweiz_AG_signiert.pdf',
+    'en':
+        'https://realunit.ch/wp-content/uploads/2026/03/260303_RegV_EN_RealUnit_Schweiz_AG_signiert.pdf',
+  };
+
   static final _privacyPolicy = LegalDocumentConfig(
     icon: Icons.shield_outlined,
     title: (context) => S.of(context).legalDisclaimerCheckboxPrivacyPolicy,
@@ -81,11 +83,7 @@ class LegalDocumentsConfig {
     icon: Icons.description_outlined,
     title: (context) => S.of(context).legalDisclaimerCheckboxRegistrationAgreement,
     assetBaseName: 'registration_agreement',
-    // PDF-URL stammt ausschliesslich aus `/v1/legal-document` — kein
-    // hardcoded Fallback, sonst zeigt die App nach einem Backend-Update
-    // weiterhin die alte signierte Version bis zum nächsten App-Release
-    // (audit V17).
-    legalDocumentType: LegalDocumentType.registrationAgreement,
+    pdfUrls: _registrationAgreementPdfUrls,
   );
 
   static final _euSecuritiesProspectusBearerShares = WebDocumentConfig(
