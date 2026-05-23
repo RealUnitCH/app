@@ -179,22 +179,39 @@ Services with a `Timer`, an observer/subscription loop, or a platform/`MethodCha
 Time-bound assertions must drive time via `package:fake_async`. Wall-clock `Future.delayed` is not acceptable: it makes tests slow and flaky.
 
 ```dart
+import 'package:bitbox_flutter/testing.dart';
+import 'package:bitbox_flutter/usb/bitbox_usb_platform_interface.dart';
+import 'package:fake_async/fake_async.dart';
+
 late BitboxUsbPlatform previousPlatform;
+late SimulatedBitboxPlatform platform;
 
 setUp(() {
   previousPlatform = BitboxUsbPlatform.instance;
-  BitboxUsbPlatform.instance = _FakePlatform();
+  platform = installSimulatedBitboxPlatform();
 });
 tearDown(() {
   BitboxUsbPlatform.instance = previousPlatform;
 });
 
-test('observer fires after the configured interval', () {
+test('observer releases USB transport when device vanishes', () {
   fakeAsync((async) {
-    final service = BitboxService(); // real instance, not a mock
-    service.start();
-    async.elapse(const Duration(seconds: 30));
-    expect(service.didTick, isTrue);
+    final service = BitboxService(
+      connectionStatusInterval: const Duration(milliseconds: 50),
+    ); // real instance, not a mock
+    // … pair the service inside the fakeAsync zone …
+
+    platform.when(
+      SimulatedBitboxMethod.getDevices,
+      (_) async => const <BitboxDevice>[],
+    );
+    service.startConnectionStatusObserver();
+    async.elapse(const Duration(milliseconds: 150));
+
+    expect(
+      platform.count(SimulatedBitboxMethod.close),
+      greaterThanOrEqualTo(1),
+    );
   });
 });
 ```
