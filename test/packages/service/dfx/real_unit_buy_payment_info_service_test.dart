@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -7,9 +9,11 @@ import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
+import 'package:realunit_wallet/styles/currency.dart';
 
 class MockApiConfig extends Mock implements ApiConfig {}
 
@@ -25,6 +29,48 @@ class TestAppStore extends AppStore {
 
   @override
   http.Client get httpClient => client;
+}
+
+Map<String, dynamic> _buyPaymentInfoJson({
+  int id = 42,
+  bool isValid = true,
+  String? error,
+}) {
+  return {
+    'id': id,
+    'routeId': 99,
+    'timestamp': '2026-05-23T10:00:00Z',
+    'iban': 'CH9300762011623852957',
+    'bic': 'POFICHBEXXX',
+    'name': 'DFX AG',
+    'street': 'Bahnhofstrasse',
+    'number': '7',
+    'zip': '6300',
+    'city': 'Zug',
+    'country': 'CH',
+    'amount': 500.0,
+    'currency': 'CHF',
+    'fees': {
+      'rate': 0.01,
+      'fixed': 0.5,
+      'network': 0,
+      'min': 1,
+      'dfx': 0.25,
+      'total': 1.76,
+    },
+    'minVolume': 100.0,
+    'maxVolume': 100000.0,
+    'minVolumeTarget': 100.0,
+    'maxVolumeTarget': 100000.0,
+    'exchangeRate': 1.1,
+    'rate': 1.05,
+    'priceSteps': <Map<String, dynamic>>[],
+    'estimatedAmount': 480.0,
+    'paymentRequest': 'bcr:?query',
+    'remittanceInfo': 'REALU-$id',
+    'isValid': isValid,
+    if (error != null) 'error': error,
+  };
 }
 
 void main() {
@@ -47,6 +93,145 @@ void main() {
   }
 
   group('$RealUnitBuyPaymentInfoService', () {
+    group('getPaymentInfo', () {
+      test('PUTs /v1/realunit/buy with the buy DTO and maps the 200 response', () async {
+        String? capturedMethod;
+        String? capturedPath;
+        Map<String, String>? capturedHeaders;
+        Map<String, dynamic>? capturedBody;
+        final appStore = buildAppStore((request) async {
+          capturedMethod = request.method;
+          capturedPath = request.url.path;
+          capturedHeaders = request.headers;
+          capturedBody = jsonDecode(request.body) as Map<String, dynamic>;
+          return http.Response(jsonEncode(_buyPaymentInfoJson()), 200);
+        });
+
+        final service = RealUnitBuyPaymentInfoService(appStore, walletService);
+        final info = await service.getPaymentInfo(500, currency: Currency.eur);
+
+        expect(capturedMethod, 'PUT');
+        expect(capturedPath, '/v1/realunit/buy');
+        expect(capturedHeaders!['content-type'], contains('application/json'));
+        expect(capturedHeaders!['Authorization'], 'Bearer test-auth-token');
+        expect(capturedBody!['amount'], 500);
+        expect(capturedBody!['currency'], 'EUR');
+
+        // The service contracts the DTO down to a leaner BuyPaymentInfo —
+        // pin the fields the UI / cubits actually consume so a wire-shape
+        // drift breaks the test instead of leaking into the buy flow.
+        expect(info.id, 42);
+        expect(info.iban, 'CH9300762011623852957');
+        expect(info.bic, 'POFICHBEXXX');
+        expect(info.name, 'DFX AG');
+        expect(info.street, 'Bahnhofstrasse');
+        expect(info.number, '7');
+        expect(info.zip, '6300');
+        expect(info.city, 'Zug');
+        expect(info.country, 'CH');
+        expect(info.currency, Currency.chf);
+        expect(info.paymentRequest, 'bcr:?query');
+        expect(info.remittanceInfo, 'REALU-42');
+        expect(info.isValid, isTrue);
+        expect(info.minVolume, 100.0);
+        expect(info.maxVolume, 100000.0);
+        expect(info.error, isNull);
+      });
+
+      test('defaults the currency to CHF when the caller omits it', () async {
+        Map<String, dynamic>? capturedBody;
+        final appStore = buildAppStore((request) async {
+          capturedBody = jsonDecode(request.body) as Map<String, dynamic>;
+          return http.Response(jsonEncode(_buyPaymentInfoJson()), 200);
+        });
+
+        final service = RealUnitBuyPaymentInfoService(appStore, walletService);
+        await service.getPaymentInfo(1000);
+
+        expect(capturedBody!['currency'], 'CHF');
+      });
+
+      test('propagates the `error` + invalid flag from the API response', () async {
+        final appStore = buildAppStore(
+          (request) async => http.Response(
+            jsonEncode(
+              _buyPaymentInfoJson(
+                isValid: false,
+                error: 'AMOUNT_BELOW_MIN',
+              ),
+            ),
+            200,
+          ),
+        );
+
+        final service = RealUnitBuyPaymentInfoService(appStore, walletService);
+        final info = await service.getPaymentInfo(1);
+
+        expect(info.isValid, isFalse);
+        expect(info.error, 'AMOUNT_BELOW_MIN');
+      });
+
+      test('throws ApiException with the upstream status on 403', () async {
+        final appStore = buildAppStore(
+          (_) async => http.Response(
+            jsonEncode({'statusCode': 403, 'code': 'COUNTRY_NOT_ALLOWED', 'message': 'blocked'}),
+            403,
+          ),
+        );
+
+        final service = RealUnitBuyPaymentInfoService(appStore, walletService);
+
+        await expectLater(
+          service.getPaymentInfo(500),
+          throwsA(
+            isA<ApiException>()
+                .having((e) => e.statusCode, 'statusCode', 403)
+                .having((e) => e.code, 'code', 'COUNTRY_NOT_ALLOWED'),
+          ),
+        );
+      });
+
+      test('promotes the 403 to KycLevelRequiredException when code matches', () async {
+        final appStore = buildAppStore(
+          (_) async => http.Response(
+            jsonEncode({
+              'statusCode': 403,
+              'code': 'KYC_LEVEL_REQUIRED',
+              'message': 'KYC level 30 required',
+              'requiredLevel': 30,
+              'currentLevel': 0,
+            }),
+            403,
+          ),
+        );
+
+        final service = RealUnitBuyPaymentInfoService(appStore, walletService);
+
+        await expectLater(
+          service.getPaymentInfo(500),
+          throwsA(isA<KycLevelRequiredException>()),
+        );
+      });
+
+      test('throws ApiException on a 500 / non-2xx path', () async {
+        final appStore = buildAppStore(
+          (_) async => http.Response(
+            jsonEncode({'statusCode': 500, 'code': 'X', 'message': 'boom'}),
+            500,
+          ),
+        );
+
+        final service = RealUnitBuyPaymentInfoService(appStore, walletService);
+
+        await expectLater(
+          service.getPaymentInfo(500),
+          throwsA(
+            isA<ApiException>().having((e) => e.statusCode, 'statusCode', 500),
+          ),
+        );
+      });
+    });
+
     group('confirmPayment', () {
       test('sends PUT request to correct endpoint', () async {
         String? capturedUrl;
