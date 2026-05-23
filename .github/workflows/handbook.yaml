@@ -3,9 +3,10 @@ name: Handbook reusable CI/CD
 # Reusable workflow that builds the handbook nginx image, publishes it to
 # Docker Hub, and tells the target server to pull + recreate the container.
 #
-# Callers (handbook-dev.yaml, handbook-prd.yaml) provide the per-environment
-# parameters (tag, smoke URL, deploy secrets) so the deploy logic itself
-# lives in exactly one place.
+# Caller (handbook-deploy.yaml) provides the per-environment parameters
+# (tag, smoke URL, deploy secrets) so the deploy logic itself lives in
+# exactly one place. The caller fans this workflow out to DEV first and
+# then PRD with `needs:` ordering.
 #
 # Mirrors infrastructure/templates/ssh-deploy-*.yaml from DFXServer/server.
 
@@ -116,10 +117,11 @@ jobs:
       # check and surfaces the regression in CI. Mirrors the pattern
       # from zkcoins/server `deploy-dev.yaml`.
       #
-      # Probes the canonical root URL with `curl -L` so the default-locale
-      # redirect (`/` → `/de/`) is followed end to end: nginx up, root
-      # routing intact, locale `index.html` served. Pinning a specific
-      # locale path would re-rot if the locale layout ever changes.
+      # Callers point smoke_url at the unauthenticated /healthz endpoint
+      # so the test stays trivial (200 without password) — handbook
+      # content itself sits behind Basic Auth and the credentials must
+      # never land in this public workflow file. The handbook nginx
+      # config keeps /healthz outside auth_basic specifically for this.
       - name: Smoke test public endpoint
         env:
           SMOKE_URL: ${{ inputs.smoke_url }}
