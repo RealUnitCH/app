@@ -5,7 +5,8 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import 'package:realunit_wallet/packages/io/documents_directory_port.dart';
+import 'package:realunit_wallet/packages/io/path_provider_adapter.dart';
 import 'package:realunit_wallet/packages/storage/asset_storage.dart';
 import 'package:realunit_wallet/packages/storage/balance_storage.dart';
 import 'package:realunit_wallet/packages/storage/dfx_transaction_storage.dart';
@@ -81,19 +82,21 @@ class AppDatabase extends _$AppDatabase {
     },
   );
 
-  // The helpers below open the production database file via path_provider
-  // and SQLCipher. They are unreachable from `flutter test` because
-  // path_provider has no in-process implementation outside the embedder and
-  // SQLCipher requires the native sqlite3 build the app links against at
-  // runtime. The `forTesting` constructor exists precisely to skip this
-  // path, so the lines below are pinned with `coverage:ignore-line`.
-  // coverage:ignore-start
-  static Future<String> getDatabasePath() async {
-    final path = await getApplicationDocumentsDirectory();
+  /// Resolves the on-disk path of the SQLCipher database file.
+  ///
+  /// Routes through [DocumentsDirectoryPort] so unit tests can substitute a
+  /// writable temp-dir fake instead of going through `path_provider`'s
+  /// platform channel (which has no in-process implementation under
+  /// `flutter test`). Production calls pass nothing; the
+  /// [PathProviderAdapter] default forwards 1:1 to
+  /// `path_provider.getApplicationDocumentsDirectory`, so runtime behaviour
+  /// is unchanged.
+  static Future<String> getDatabasePath([
+    DocumentsDirectoryPort directory = const PathProviderAdapter(),
+  ]) async {
+    final path = await directory.getApplicationDocumentsDirectory();
     return p.join(path.path, _databaseFileName);
   }
-
-  // coverage:ignore-end
 }
 
 // coverage:ignore-start
