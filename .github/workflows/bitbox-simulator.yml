@@ -29,11 +29,14 @@ name: bitbox-simulator
 
 on:
   pull_request:
-    # Fires on every PR regardless of target branch — stacked PRs
+    # Fires on every PR except those targeting `main` — stacked PRs
     # (feature → integration → develop) need their own firmware-simulator
     # run so a BitBox regression is caught at the lowest possible level,
     # not only after the stack has been collapsed to a develop PR. The
-    # `paths:` filter below is the real cost control.
+    # release lane (develop → main) is skipped because the same SHA
+    # already ran on the develop PR. The `paths:` filter below is the
+    # real cost control on top of that.
+    branches-ignore: [main]
     paths:
       - 'lib/packages/hardware_wallet/**'
       - 'lib/packages/wallet/**'

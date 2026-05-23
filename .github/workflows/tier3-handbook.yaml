@@ -98,6 +98,10 @@ on:
   push:
     branches: [develop]
   pull_request:
+    # Every PR target except `main` (the release lane is already
+    # covered by `push: develop` on the same SHA — see the longer
+    # rationale in `pull-request.yaml`).
+    branches-ignore: [main]
     types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
 
 concurrency:

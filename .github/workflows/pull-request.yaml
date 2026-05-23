@@ -1,13 +1,16 @@
 name: RealUnit Build
 
 # Trigger model:
-#  - `pull_request` fires on every PR regardless of target branch.
-#    Stacked PRs (feature → integration → develop) need their own CI
-#    run so a regression is caught at the lowest possible level, not
-#    only after the stack has been collapsed to a develop PR. The
-#    extra macOS-runner cost is bounded by the draft-gate (`if:`
-#    below) and the concurrency group, which cancels obsolete runs
-#    for the same PR.
+#  - `pull_request` fires on every PR regardless of target branch,
+#    EXCEPT PRs targeting `main`. Stacked PRs (feature → integration
+#    → develop) need their own CI run so a regression is caught at
+#    the lowest possible level, not only after the stack has been
+#    collapsed to a develop PR. Release PRs (develop → main, opened
+#    automatically by `auto-release-pr.yaml`) are deliberately
+#    excluded: `push: develop` already covered the same SHA when the
+#    commit landed, and concurrency groups don't dedupe across
+#    push-vs-pull_request events, so allowing both would double
+#    macOS-runner load on the release lane for no signal.
 #  - `ready_for_review` makes the workflow fire the moment a draft PR
 #    is marked ready — drafts themselves skip via the `if:` guard
 #    below (saves macOS-runner minutes while work is still in progress).
@@ -23,6 +26,7 @@ on:
   push:
     branches: [develop]
   pull_request:
+    branches-ignore: [main]
     types: [opened, synchronize, reopened, ready_for_review]
 
 # Group by PR number so a new push to the same PR cancels the
