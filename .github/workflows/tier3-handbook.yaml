@@ -22,14 +22,14 @@ name: Tier 3 — Handbook flows
 #     run; removing it cancels via the concurrency block below.
 #
 # Concurrency:
-#   Same trick as `pull-request.yaml`: group by `pull_request.number`
+#   Same pattern as `pull-request.yaml`: group by `pull_request.number`
 #   (or `github.ref` for push/dispatch) so a new push to the same PR
 #   cancels the in-flight run. Grouping by SHA (the previous approach)
 #   put every commit in its own group, which meant no cancellation
 #   ever happened and back-to-back pushes queued sequentially on the
 #   scarce macOS runner. The exception: `labeled` / `unlabeled` events
-#   get their own `tier3-label-<run_id>` group so a label toggle does
-#   NOT kill an already-running ~15-minute flow execution — the user
+#   get their own `ci-<workflow>-label-<run_id>` group so a label toggle
+#   does NOT kill an already-running ~15-minute flow execution — the user
 #   experience of "I added the label, the previous run died" is worse
 #   than the cost of one extra runner-minute.
 #
@@ -102,8 +102,8 @@ concurrency:
   group: >-
     ${{
       (github.event.action == 'labeled' || github.event.action == 'unlabeled')
-        && format('tier3-label-{0}', github.run_id)
-        || format('tier3-{0}', github.event.pull_request.number || github.ref)
+        && format('ci-{0}-label-{1}', github.workflow, github.run_id)
+        || format('ci-{0}-{1}', github.workflow, github.event.pull_request.number || github.ref)
     }}
   cancel-in-progress: true
 

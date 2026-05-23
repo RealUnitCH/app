@@ -5,9 +5,10 @@ name: RealUnit Build
 #    (develop → main) is opened automatically by `auto-release-pr.yaml`,
 #    so we deliberately do NOT include `main` in `pull_request.branches`:
 #    every push to develop would otherwise fire a second `pull_request`
-#    run on the release PR for the same SHA, and the concurrency block
-#    below would cancel one of them and surface a red "cancelled" check
-#    on the release PR.
+#    run on the release PR for the same SHA, doubling macOS-runner load
+#    on a check that already runs via `push: develop`. (The concurrency
+#    block below would not deduplicate them — `push: develop` and the
+#    release PR land in different groups under PR-number grouping.)
 #  - `ready_for_review` makes the workflow fire the moment a draft PR
 #    is marked ready — drafts themselves skip via the `if:` guard
 #    below (saves macOS-runner minutes while work is still in progress).
