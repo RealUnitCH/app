@@ -104,20 +104,30 @@ Handbook-Deploy läuft automatisch (DEV → PRD).
 
 ### Lokal regenerieren
 
-Mit beiden Repos nebeneinander ausgecheckt:
+Mit beiden Repos nebeneinander ausgecheckt — alle Befehle laufen im
+realunit-app-Root. Wir installieren handlebars **isoliert** in einen scratch
+Prefix (`_handlebars-only/`), genau wie der CI-Step in `handbook.yaml`. So
+bleiben `package.json` und `package-lock.json` im api-Klon unangetastet
+(sonst wäre `git status` im api-Repo nach dem Repro dreckig).
 
 ```bash
-# Einmalig: handlebars in den api-Klon installieren (falls noch nicht da)
-cd ../api && npm install handlebars
+# 1. handlebars isoliert installieren (idempotent — kann beliebig oft laufen)
+npm install --prefix ./_handlebars-only --no-save --no-audit --no-fund handlebars
 
-# Generieren + ins Handbook übernehmen
-node ../api/scripts/generate-realunit-previews.js
+# 2. Generator aus dem api-Repo ausführen (NODE_PATH zeigt auf den scratch-Install)
+NODE_PATH="./_handlebars-only/node_modules" \
+  node ../api/scripts/generate-realunit-previews.js
+
+# 3. Ergebnis ins Handbook übernehmen
 mkdir -p docs/handbook/mails
 cp ../api/scripts/email-previews/realunit/*.html docs/handbook/mails/
 cp docs/handbook/mails/00_index.html docs/handbook/mails/index.html
 
-# Lokal ansehen
+# 4. Lokal ansehen
 open docs/handbook/mails/index.html
+
+# 5. Scratch-Dir aufräumen (in .gitignore — aber sauber ist sauber)
+rm -rf ./_handlebars-only
 ```
 
 (Den finalen Build-Step macht aber immer der CI — lokale Files sind nur fürs

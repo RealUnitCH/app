@@ -59,3 +59,10 @@ app.*.map.json
 # (see .github/workflows/handbook.yaml — step "Generate RealUnit mail previews
 # from api repo"). Never commit; source of truth is the api repo.
 docs/handbook/mails/
+
+# Scratch directories produced when reproducing the handbook CI's
+# mail-preview generation locally (see docs/handbook/README.md → "E-Mail
+# Previews → Lokal regenerieren"). Mirrors the names the CI uses so a
+# `git status` after a local repro stays clean.
+_api-checkout/
+_handlebars-only/
