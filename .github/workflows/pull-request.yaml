@@ -64,7 +64,14 @@ jobs:
       - run: dart run tool/generate_release_info.dart
       - run: flutter pub run build_runner build
       - run: flutter analyze
-      - run: flutter test --coverage
+      # Excludes the `golden` tag: visual-regression tests live under
+      # `test/goldens/` and are validated on the dfx01 self-hosted runner
+      # in the parallel `golden-tests` job (Hardware-Determinismus, see
+      # `docs/visual-regression-tests.md`). Running them here too would
+      # both duplicate work and erroneously red this job on macos-latest
+      # where the Skia/font-rendering does not match the committed
+      # baselines.
+      - run: flutter test --coverage --exclude-tags golden
 
       # Narrow the coverage report to the README-defined activated surface:
       #   lib/packages/**             — services, repositories, signers, utils
@@ -260,6 +267,48 @@ jobs:
               exit 1
             fi
           fi
+
+  # Visual regression tests on the dfx01 self-hosted runner. Goldens live
+  # under `test/goldens/` and are validated pixel-for-pixel against committed
+  # baselines under `test/goldens/screens/**/goldens/macos/`. The Mac Studio
+  # M3 Ultra is the authoritative render target — its baselines are committed,
+  # and PRs that drift from them fail this job. Bootstrap and re-generation
+  # is documented in `docs/visual-regression-tests.md`.
+  #
+  # Runs parallel to `build` (which uses GitHub-hosted macos-latest). The
+  # separation is intentional:
+  #  * `build` covers analyze + unit/widget tests + coverage — needs no
+  #    hardware determinism.
+  #  * `golden-tests` covers pixel-exact rendering — must run on dfx01 so
+  #    baselines and validation use identical Skia/font-rendering state.
+  #
+  # On dfx01 outage: temporarily flip `runs-on:` to `macos-15` and regenerate
+  # baselines in the same PR (see `docs/visual-regression-tests.md`).
+  golden-tests:
+    name: Visual Regression
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: [self-hosted, macOS, ARM64, m3-ultra, realunit-app]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.6"
+          channel: "stable"
+          cache: true
+      - run: flutter pub get
+      - run: dart run tool/generate_localization.dart
+      - run: dart run tool/generate_release_info.dart
+      - run: flutter pub run build_runner build
+      - name: Run visual regression tests
+        run: flutter test test/goldens
+      - name: Upload golden diff on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-diffs
+          path: test/goldens/**/failures/**
+          if-no-files-found: ignore
 
   # Runs the bitbox-audit CLI from DFXswiss/bitbox-testkit to surface which
   # of the documented BitBox firmware quirks are statically detected in this
