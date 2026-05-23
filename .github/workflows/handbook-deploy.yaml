@@ -24,15 +24,6 @@ on:
       - ".github/workflows/handbook-deploy.yaml"
       - ".github/workflows/handbook.yaml"
   workflow_dispatch:
-  # The api repo triggers this workflow whenever the RealUnit mail templates,
-  # the German i18n strings, or the generator script change on its develop
-  # branch (see DFXswiss/api/.github/workflows/notify-handbook-on-mail-change.yaml).
-  # The handbook reusable workflow re-pulls api@develop at build time and
-  # bakes the freshly generated mail previews into the image, so a change
-  # over there flows into both DEV and PRD handbook deployments without a
-  # manual sync PR. Single source of truth = api repo.
-  repository_dispatch:
-    types: [mails-updated]
 
 permissions:
   contents: read
