@@ -29,11 +29,11 @@ name: bitbox-simulator
 
 on:
   pull_request:
-    # Match the rest of the repo: pull_request workflows only listen to
-    # PRs targeting `develop`. The release lane (develop → main) is
-    # produced by `auto-release-pr.yaml` and doesn't need a second
-    # firmware simulator run on the same SHA.
-    branches: [develop]
+    # Fires on every PR regardless of target branch — stacked PRs
+    # (feature → integration → develop) need their own firmware-simulator
+    # run so a BitBox regression is caught at the lowest possible level,
+    # not only after the stack has been collapsed to a develop PR. The
+    # `paths:` filter below is the real cost control.
     paths:
       - 'lib/packages/hardware_wallet/**'
       - 'lib/packages/wallet/**'
