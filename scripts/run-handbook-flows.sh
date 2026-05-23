@@ -40,8 +40,8 @@
 #
 # Usage:
 #   scripts/run-handbook-flows.sh                    # run ALL handbook flows
-#   scripts/run-handbook-flows.sh 23-restore-wallet  # run only matching flows
-#   scripts/run-handbook-flows.sh '2*' 30-settings   # multiple glob patterns
+#   scripts/run-handbook-flows.sh 25-restore-wallet  # run only matching flows
+#   scripts/run-handbook-flows.sh '2*' 12-settings   # multiple glob patterns
 #
 #   With no arguments every flow in .maestro/handbook/*.yaml runs (the
 #   default, full-suite behaviour). With one or more positional arguments,
@@ -143,7 +143,7 @@ unset IFS
 # arguments every flow runs (full suite). With arguments, keep only the
 # flows whose basename (filename without `.yaml`) matches at least one
 # pattern. Matching uses bash's `[[ == ]]` glob — NEVER `eval` — so
-# patterns like `2*` or `23-restore-wallet` work without shell injection.
+# patterns like `2*` or `25-restore-wallet` work without shell injection.
 if [ "$#" -gt 0 ]; then
   patterns=("$@")
   selected=()
@@ -171,7 +171,7 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 # Per-attempt retry budget for the upstream driver-hang class. The per-flow
 # / per-attempt timing logged below is the data to size the workflow's
 # `timeout-minutes` (see tier3-handbook.yaml) and to target a real speed-up.
-# Worst-case the entire suite is 3 × 24 × ~1 min plus 3 × ~6 min
+# Worst-case the entire suite is 3 × 26 × ~1 min plus 3 × ~6 min
 # driver-startup-timeout per failed attempt, which still fits inside
 # the workflow's 60 min envelope.
 MAESTRO_MAX_ATTEMPTS="${MAESTRO_MAX_ATTEMPTS:-3}"
@@ -192,13 +192,13 @@ mkdir -p "$MAESTRO_DEBUG_ROOT"
 # close, so the next invocation finds nothing alive and has to
 # uninstall/install/start it again from scratch — the Maestro log line
 # `Restarting XCTest Runner (uninstalling, installing and starting)` + a
-# fresh `xcodebuild test-without-building`. Across 19 flows that one-time
-# ~5 min build is effectively paid 19×.
+# fresh `xcodebuild test-without-building`. Across 26 flows that one-time
+# ~5 min build is effectively paid 26×.
 #
 # `--reinstall-driver=false` (Maestro 2.0.10 TestCommand option, default
 # `true`) skips the uninstall step both at session start AND at session
 # close. So invocation 1 installs+starts the runner and then *leaves it
-# running*; invocations 2-19 hit Maestro's `isChannelAlive()` early-return
+# running*; invocations 2-26 hit Maestro's `isChannelAlive()` early-return
 # (`UI Test runner already running, returning`) and reuse it — no
 # reinstall, no rebuild. The first run on a freshly `simctl erase`-d
 # device has nothing to uninstall, so passing the flag there is harmless.

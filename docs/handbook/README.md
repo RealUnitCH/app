@@ -46,18 +46,17 @@ Teilmenge:
 
 ```bash
 # Nur diesen einen Flow
-scripts/run-handbook-flows.sh 23-restore-wallet
+scripts/run-handbook-flows.sh 25-restore-wallet
 
-# Die ganze 20er-Serie (20..24)
+# Die ganze 20er-Serie (20..26)
 scripts/run-handbook-flows.sh '2*'
 ```
 
 Achtung: Die handbook-Flows sind eine **sequentielle Kette** und teilen sich den
 App-State — jeder Flow greift den Zustand auf, wo der vorherige ihn hingelegt
 hat. Ein Flow aus der Mitte der Kette schlägt einzeln fehl, sofern er nicht
-selbst mit einem `launchApp` beginnt. Die Flows `23-restore-wallet` und
-`24-terms` sind **eigenständig** (eigener `launchApp`) und können daher gefahrlos
-allein laufen.
+selbst mit einem `launchApp` beginnt. Der Flow `26-terms` ist **eigenständig**
+(eigener `launchApp`) und kann daher gefahrlos allein laufen.
 
 Auch der Tier-3-GitHub-Workflow hat dafür einen `flows`-`workflow_dispatch`-Input
 — so lässt sich in der CI gezielt eine Teilmenge der Flows neu generieren.
