@@ -15,6 +15,9 @@ name: Handbook Build Check
 
 on:
   pull_request:
+    # Include ready_for_review so PRs flipped from Draft to Ready also
+    # trigger this check (default trigger list misses that event).
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "docs/handbook/**"
       - "scripts/assemble-handbook-screenshots.sh"
