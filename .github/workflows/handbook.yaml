@@ -3,9 +3,10 @@ name: Handbook reusable CI/CD
 # Reusable workflow that builds the handbook nginx image, publishes it to
 # Docker Hub, and tells the target server to pull + recreate the container.
 #
-# Callers (handbook-dev.yaml, handbook-prd.yaml) provide the per-environment
-# parameters (tag, smoke URL, deploy secrets) so the deploy logic itself
-# lives in exactly one place.
+# Caller (handbook-deploy.yaml) provides the per-environment parameters
+# (tag, smoke URL, deploy secrets) so the deploy logic itself lives in
+# exactly one place. The caller fans this workflow out to DEV first and
+# then PRD with `needs:` ordering.
 #
 # Mirrors infrastructure/templates/ssh-deploy-*.yaml from DFXServer/server.
 
