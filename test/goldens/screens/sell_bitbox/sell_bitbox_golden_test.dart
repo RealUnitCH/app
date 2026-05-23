@@ -76,6 +76,9 @@ void main() {
     goldenTest(
       'checking eth initial step',
       fileName: 'sell_bitbox_page_default',
+      // CupertinoActivityIndicator never settles; pump once to capture the
+      // initial frame instead of letting pumpAndSettle hang.
+      pumpBeforeTest: pumpOnce,
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
       builder: () => wrapForGolden(buildSubject()),
     );

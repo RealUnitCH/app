@@ -12,6 +12,9 @@ void main() {
     goldenTest(
       'default loading state',
       fileName: 'kyc_financial_data_loading_page_default',
+      // CircularProgressIndicator never settles; pump once to capture the
+      // initial frame instead of letting pumpAndSettle hang.
+      pumpBeforeTest: pumpOnce,
       constraints: phoneConstraints,
       builder: () => wrapForGolden(const KycFinancialDataLoadingPage()),
     );

@@ -1,6 +1,7 @@
 import 'package:alchemist/alchemist.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -43,6 +44,14 @@ void main() {
   });
 
   setUpAll(() {
+    // Stub the no_screenshot plugin's MethodChannel so screenshotOff/On calls
+    // do not throw MissingPluginException in headless tests.
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('com.flutterplaza.no_screenshot_methods'),
+      (call) async => true,
+    );
+
     final getIt = GetIt.instance;
     getIt.registerSingleton<AppStore>(appStore);
     getIt.registerSingleton<WalletService>(walletService);
