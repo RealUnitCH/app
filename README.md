@@ -76,8 +76,8 @@ The transport is USB on Android and Bluetooth on iOS; the original BitBox 02 has
 
 | Feature | Status | Triage | Tests |
 | --- | --- | --- | --- |
-| Dashboard — asset list + total balance | always | mvp | widget (`home/home_page_test.dart`); no hook/service test |
-| Receive — address + QR code | always | mvp | — |
+| Dashboard — asset list + total balance | always | mvp | cubit/bloc (`dashboard/dashboard_bloc_test.dart`, `dashboard/balance_cubit_test.dart`, `dashboard/portfolio_chart_cubit_test.dart`, `dashboard/price_chart_cubit_test.dart`, `dashboard/pending_transactions_cubit_test.dart`, `dashboard/dashboard_transaction_history_cubit_test.dart`) + widget (`dashboard/widgets/**`) |
+| Receive — address + QR code | always | mvp | widget (`receive/widgets/qr_address_widget_test.dart`) |
 | Transaction history | always | mvp | widget (`transaction_history/transaction_history_page_test.dart`) |
 | Sell to BitBox (on-chain transfer) | hardware | defer | — |
 
@@ -126,12 +126,11 @@ The transport is USB on Android and Bluetooth on iOS; the original BitBox 02 has
 Features tagged `mvp` whose current test coverage is insufficient — these block "100% on activated features":
 
 - **Create wallet — BitBox** — covered by the integration test added in [#320](https://github.com/DFXswiss/realunit-app/pull/320); verify the spec still maps to the current `create_wallet` flow when in doubt
-- **Receive** — no test for the address/QR screen
 - **Biometric unlock** — no test (`biometric_service.dart` has no unit spec; no widget spec asserts the unlock surface)
 - **Legal disclaimer gate** — widget exists, cubit transition not directly tested
 - **KYC cubit + sign-flow logic** — widget tests cover individual pages, but state transitions (`KycCubit`, `KycRegistrationSubmitCubit`, `Eip712Signer` guard paths) land in [#319](https://github.com/DFXswiss/realunit-app/pull/319) + [#320](https://github.com/DFXswiss/realunit-app/pull/320)
 - **DFX backend services** — `DFXAuthService`, `real_unit_registration_service`, `real_unit_pdf_service`, `dfx_kyc_service`, `dfx_price_service`, `dfx_widget_service`, `dfx_brokerbot_service`, `dfx_bank_account_service`, `dfx_blockchain_api_service`, `dfx_country_service`, `dfx_faucet_service`, `dfx_support_service`, `transaction_history_service`, `wallet_service`, `price_service`, `session_cache`, `settings_service`, `app_store`, `biometric_service`, `debug_auth_service` — partially covered after [#319](https://github.com/DFXswiss/realunit-app/pull/319) (`DFXAuthService`) and [#321](https://github.com/DFXswiss/realunit-app/pull/321) (`real_unit_buy_payment_info_service`); most other services still lack a unit spec
-- **Hook / screen state tests** — `home_page` widget renders but the underlying balance/price hook has no spec; same for `dashboard` bloc and most screen-level cubits
+- **Remaining KYC-step cubits without a spec** — `kyc/steps/2fa/cubits`, `kyc/steps/nationality/cubit`, and `kyc/steps/ident/cubits` (the Ident cubit is the Sumsub-SDK wrapper listed under "Surface that needs infra work" in `docs/testing.md`; the other two are unblocked)
 
 ## Testing tiers
 
@@ -140,8 +139,7 @@ Features tagged `mvp` whose current test coverage is insufficient — these bloc
 - **Tier 0 — Cubit unit tests** (`bloc_test` + `mocktail`). Fast, no platform, no BitBox. Covers every state transition.
 - **Tier 1 — FakeBitbox integration tests** (`FakeBitboxCredentials` at the BitBox boundary, runs under `flutter test --coverage`). Drives multi-layer flows without hardware. Specs live under `test/integration/`.
 - **Tier 2 — Firmware simulator** (TCP transport + Docker `bitbox02-firmware/simulator`). End-to-end with real crypto, no hardware. Planned.
-- **Tier 3a — Maestro handbook flows** (`.maestro/handbook/*.yaml`). Software-only flows run on a fresh iOS Simulator. Automated via [`tier3-handbook.yaml`](.github/workflows/tier3-handbook.yaml) — opt-in on PRs via the `tier3:full` label (an upstream Maestro driver-hang regression on `macos-latest` runners makes intermittent first-attempt failures expected; `scripts/run-handbook-flows.sh` retries the driver-hang class up to 3× per flow; tracked in [#487](https://github.com/DFXswiss/realunit-app/issues/487)), always runs on push to `develop`.
-- **Tier 3b — Maestro hardware flows** (`.maestro/*.yaml`, BitBox02 device). Status: deferred — still manually triggered before each release.
+- **Tier 3 — Maestro flows** (`.maestro/handbook/*.yaml` for software-only flows; the BitBox02-hardware variant is deferred and has no flow files committed yet). The handbook flows run on a fresh iOS Simulator, automated via [`tier3-handbook.yaml`](.github/workflows/tier3-handbook.yaml) — opt-in on PRs via the `tier3:full` label, always runs on push to `develop`. An upstream Maestro driver-hang regression on `macos-latest` runners makes intermittent first-attempt failures expected; `scripts/run-handbook-flows.sh` retries the driver-hang class up to 3× per flow (CI-hardening work originally tracked in [#487](https://github.com/DFXswiss/realunit-app/issues/487), now closed). The hardware variant remains manually triggered before each release until Phase 3 of [#314](https://github.com/DFXswiss/realunit-app/issues/314) lands.
 - **Tier 4 — BLE VCR / replay** (capture on hardware once, replay deterministically). Stretch — most of its value is covered by Tier 2 + Tier 3 in tandem.
 
 Non-BitBox code only needs Tier 0 + widget tests; Tier 1+ are reserved for hardware-coupled paths.
@@ -154,21 +152,21 @@ Non-BitBox code only needs Tier 0 + widget tests; Tier 1+ are reserved for hardw
 | Coverage | `flutter test --coverage` | Writes `coverage/lcov.info`. CI narrows it to the activated surface and hard-fails when scoped coverage drops below the floor in `.coverage-floor-lines` / `.coverage-floor-functions`. See "Coverage infrastructure roadmap" above for the ratchet protocol. |
 | Analyzer | `flutter analyze`         | Dart static analysis per `analysis_options.yaml`                                                                                                                                                          |
 
-Tier 1 specs live under `test/integration/**` and run inside the same `flutter test --coverage` invocation as Tier 0 — no separate `integration_test/` harness today (that Flutter-convention directory is reserved for on-device runs that are not yet wired up). Tier 3a (Maestro handbook flows on iOS Simulator) is wired via [`tier3-handbook.yaml`](.github/workflows/tier3-handbook.yaml); Tier 3b (BitBox02 real-hardware variant) remains deferred.
+Tier 1 specs live under `test/integration/**` and run inside the same `flutter test --coverage` invocation as Tier 0 — no separate `integration_test/` harness today (that Flutter-convention directory is reserved for on-device runs that are not yet wired up). Tier 3 handbook flows (iOS Simulator) are wired via [`tier3-handbook.yaml`](.github/workflows/tier3-handbook.yaml); the BitBox02 hardware variant remains deferred.
 
 ## CI/CD
 
 | Workflow                     | Trigger                                                       | Action                                                                                  |
 | ---------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `pull-request.yaml`          | PR to `develop` / `main` · manual                             | `flutter analyze` + `flutter test --coverage`, scope lcov to the activated surface, fail below the committed floor, upload lcov artifact |
+| `pull-request.yaml`          | PR to `develop` · push `develop` · manual                     | `flutter analyze` + `flutter test --coverage`, scope lcov to the activated surface, fail below the committed floor, upload lcov artifact. Jobs: `Analyze & Test`, `Coverage Floor Gate`, `BitBox quirks audit`. |
 | `tier3-handbook.yaml`        | PR to `develop` with label `tier3:full` · push `develop` · manual | Runs every `.maestro/handbook/*.yaml` flow on a fresh iOS Simulator (`iPhone 17`) and uploads captured screenshots (Tier 3) |
-| `bitbox-simulator.yml`       | PR touching `lib/packages/hardware_wallet/**` or `wallet/**`  | Runs the BitBox02 firmware simulator with `bitbox-testkit` baselines (Tier 2)           |
+| `bitbox-simulator.yml`       | PR to `develop` touching `lib/packages/hardware_wallet/**`, `lib/packages/wallet/**`, `lib/screens/hardware_connect_bitbox/**`, their test mirrors, `pubspec.yaml`, or the workflow itself · manual | Runs the BitBox02 firmware simulator with `bitbox-testkit` baselines (Tier 2)           |
 | `bitbox-simulator-slash.yml` | `/bitbox-simulator` comment on any PR                         | Same engine as above, on-demand per PR (variants: default / `ref=main`)                 |
 | `auto-release-pr.yaml`       | Push `develop` · manual                                       | Opens Release PR `develop` → `main`                                                     |
 | `auto-tag.yaml`              | Push `develop`                                                | Creates the next `vX.Y.Z` patch tag (PATCH = previous + 1, MINOR/MAJOR from pubspec floor) |
 | `release.yaml`               | Tag `v*` · manual                                             | Single store-release pipeline. Guard job routes by PATCH: `vX.Y.0` → production candidate (GitHub release, prerelease: false); `vX.Y.Z` (Z >= 1) → internal release (GitHub pre-release). Both lanes deploy Android + iOS to Play Internal + TestFlight; production promotion stays manual in the store backends. |
-| `handbook-dev.yaml`          | Push `develop` under `docs/handbook/**` · manual              | Builds `dfxswiss/realunit-app-handbook:beta`, redeploys the handbook DEV container      |
-| `handbook-prd.yaml`          | Push `main` under `docs/handbook/**` · manual                 | Builds `dfxswiss/realunit-app-handbook:latest`, redeploys the handbook PRD container    |
+| `handbook-deploy.yaml`       | Push `develop` under `docs/handbook/**`, `Dockerfile.handbook`, `handbook.nginx.conf`, `handbook.htpasswd`, or the workflow files · manual | Builds the handbook image once and rolls it out to DEV (`:beta`) then PRD (`:latest`) sequentially via the reusable `handbook.yaml` — PRD only runs after DEV is green |
+| `handbook.yaml`              | Called by `handbook-deploy.yaml` (`workflow_call`)            | Reusable build → Docker Hub push → server pull/recreate → smoke check, parameterised per environment |
 
 ## Release versioning
 

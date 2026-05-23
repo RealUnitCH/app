@@ -94,7 +94,8 @@ jobs:
       # exhaust the server's MaxAuthTries before reaching deploy_key,
       # producing intermittent "Permission denied … Too many
       # authentication failures" on otherwise-healthy runs (root cause
-      # for the apparent smoke-test flakiness tracked in #487 Item 4).
+      # for the apparent smoke-test flakiness originally tracked in
+      # #487, now closed).
       - name: Deploy to server
         run: |
           set -euo pipefail
