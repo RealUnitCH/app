@@ -104,6 +104,16 @@ jobs:
             'lib/screens/*/bloc/*' \
             --output-file coverage/lcov.info \
             --ignore-errors unused,empty
+          # Strip code-generator output from the scoped tracefile. Today
+          # only `*.g.dart` (Drift schema mirror) is generated and lives
+          # under `lib/packages/**` — there are no `*.freezed.dart` or
+          # `*.mocks.dart` files in the tree, so we deliberately keep
+          # the pattern list narrow. Add the others here the day a
+          # generator starts emitting them.
+          lcov --remove coverage/lcov.info \
+            '*.g.dart' \
+            --output-file coverage/lcov.info \
+            --ignore-errors unused,empty
           lcov --summary coverage/lcov.info | tee coverage/lcov.summary
 
       - name: Report coverage summary
