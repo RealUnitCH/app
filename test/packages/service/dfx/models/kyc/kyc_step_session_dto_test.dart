@@ -168,5 +168,50 @@ void main() {
 
       expect(dto.currentStep, isNull);
     });
+
+    test('processStatus absent on the wire → defaults to inProgress', () {
+      // The default exists because pre-PR session payloads omit the
+      // processStatus key entirely. Pinning the default branch keeps the
+      // `if (processStatus != null) … else inProgress` ternary covered
+      // and prevents a regression that would swallow the field as null.
+      final dto = KycSessionDto.fromJson({
+        'kycLevel': 0,
+        'kycSteps': <Map<String, dynamic>>[],
+      });
+
+      expect(dto.processStatus, KycProcessStatus.inProgress);
+    });
+
+    test('processStatus present on the wire → resolved via fromValue', () {
+      // The non-default branch of the ternary. Pinned so a rename of the
+      // wire string (e.g. PendingReview → InReview) gets caught here
+      // before flowing into the routing logic.
+      final dto = KycSessionDto.fromJson({
+        'kycLevel': 20,
+        'kycSteps': <Map<String, dynamic>>[],
+        'processStatus': 'PendingReview',
+      });
+
+      expect(dto.processStatus, KycProcessStatus.pendingReview);
+    });
+  });
+
+  group('$KycStepSessionDto.fromJson reason branch', () {
+    test('reason on the wire is resolved to its enum value', () {
+      // The `json['reason'] != null` ternary in the session-step factory
+      // is otherwise only exercised through the null path above. Pin
+      // the populated branch as well so a typo in the reason mapping is
+      // caught immediately.
+      final dto = KycStepSessionDto.fromJson({
+        'session': {'url': 'https://x', 'type': 'Browser'},
+        'name': 'NameChange',
+        'status': 'OnHold',
+        'reason': 'AccountMergeRequested',
+        'sequenceNumber': 3,
+        'isCurrent': true,
+      });
+
+      expect(dto.reason, KycStepReason.accountMergeRequested);
+    });
   });
 }
