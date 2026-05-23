@@ -12,8 +12,7 @@ import 'package:realunit_wallet/screens/settings_seed/settings_seed_view.dart';
 
 import '../../../helper/helper.dart';
 
-class _MockSettingsSeedCubit extends MockCubit<SettingsSeedState>
-    implements SettingsSeedCubit {}
+class _MockSettingsSeedCubit extends MockCubit<SettingsSeedState> implements SettingsSeedCubit {}
 
 class _MockWalletService extends Mock implements WalletService {}
 
@@ -58,6 +57,23 @@ void main() {
           child: const SettingsSeedView(),
         ),
       ),
+    );
+
+    goldenTest(
+      'revealed state with visible seed',
+      fileName: 'settings_seed_page_revealed',
+      constraints: phoneConstraints,
+      builder: () {
+        when(
+          () => settingsSeedCubit.state,
+        ).thenReturn(const SettingsSeedState(seed, showSeed: true));
+        return wrapForGolden(
+          BlocProvider<SettingsSeedCubit>.value(
+            value: settingsSeedCubit,
+            child: const SettingsSeedView(),
+          ),
+        );
+      },
     );
   });
 }
