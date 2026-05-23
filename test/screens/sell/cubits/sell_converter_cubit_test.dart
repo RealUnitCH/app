@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
@@ -196,6 +198,26 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 250));
 
       verifyNever(() => service.getSellShares(any(), any()));
+    });
+
+    test('does not emit after close', () async {
+      final completer = Completer<BrokerbotSellSharesDto>();
+      when(() => service.getSellShares(any(), any()))
+          .thenAnswer((_) => completer.future);
+
+      final cubit = SellConverterCubit(service);
+      await cubit.onFiatChanged('100');
+      // Let the debounce timer fire.
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      await cubit.close();
+      completer.complete(BrokerbotSellSharesDto(
+        targetAmount: 100,
+        shares: 1,
+        pricePerShare: 100,
+        currency: 'CHF',
+      ));
+
+      // If emit fires after close, StateError is thrown by the framework.
     });
   });
 }

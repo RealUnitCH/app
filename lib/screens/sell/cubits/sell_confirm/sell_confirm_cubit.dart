@@ -16,8 +16,10 @@ class SellConfirmCubit extends Cubit<SellConfirmState> {
     try {
       emit(SellConfirmLoading());
       await _sellPaymentInfoService.confirmPayment(paymentInfo);
+      if (isClosed) return;
       emit(SellConfirmSuccess());
     } catch (e) {
+      if (isClosed) return;
       emit(SellConfirmFailure(e.toString()));
     }
   }

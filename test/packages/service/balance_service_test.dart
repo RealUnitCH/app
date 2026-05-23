@@ -142,6 +142,17 @@ void main() {
 
         verifyNever(() => balanceRepository.saveBalance(any()));
       });
+
+      test('updateBalance with malformed JSON body does not crash', () async {
+        final appStore = buildAppStore(
+          (_) async => http.Response('not json', 200),
+        );
+
+        final service = BalanceService(balanceRepository, appStore);
+        await service.updateBalance('0xTestAddress');
+
+        verifyNever(() => balanceRepository.saveBalance(any()));
+      });
     });
 
     test('getBalance delegates to BalanceRepository.getBalance', () async {

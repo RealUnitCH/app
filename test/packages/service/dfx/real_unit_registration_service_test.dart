@@ -182,4 +182,15 @@ void main() {
       );
     });
   });
+
+  group('malformed JSON responses', () {
+    test('registerEmail with non-JSON 201 throws FormatException', () async {
+      final client = MockClient((_) async => http.Response('not json', 201));
+
+      expect(
+        () => build(client).registerEmail('a@b.com'),
+        throwsA(isA<FormatException>()),
+      );
+    });
+  });
 }

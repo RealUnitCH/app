@@ -146,6 +146,24 @@ void main() {
         // IV is 12 bytes → base64 length 16 (with padding).
         expect(parts[0], hasLength(16));
       });
+
+      test('decryptSeed with missing colon separator throws', () {
+        final key = aesKey();
+
+        expect(
+          () => SecureStorage.decryptSeed(key, 'noColonHere'),
+          throwsA(anything),
+        );
+      });
+
+      test('decryptSeed with empty string throws', () {
+        final key = aesKey();
+
+        expect(
+          () => SecureStorage.decryptSeed(key, ''),
+          throwsA(anything),
+        );
+      });
     });
   });
 }

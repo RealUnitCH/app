@@ -112,5 +112,16 @@ void main() {
         expect(bloc.state.hideAmounts, isTrue);
       },
     );
+
+    // hideAmounts is intentionally session-only (SettingsRepository has no field for it).
+    test('ToggleHideAmountEvent flips state without persisting (session-only by design)', () async {
+      final bloc = build();
+
+      bloc.add(const ToggleHideAmountEvent());
+      await bloc.stream.firstWhere((s) => s.hideAmounts == true);
+
+      expect(bloc.state.hideAmounts, isTrue);
+      verifyNever(() => repo.language = any()); // proxy: no repo call at all
+    });
   });
 }

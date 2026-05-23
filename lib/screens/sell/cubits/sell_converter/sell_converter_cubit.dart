@@ -22,10 +22,12 @@ class SellConverterCubit extends Cubit<SellConverterState> {
 
     _fiatDebounce?.cancel();
     _fiatDebounce = Timer(const Duration(milliseconds: 100), () async {
+      if (isClosed) return;
       emit(state.copyWith(loading: true));
 
       try {
         final result = await _brokerbotService.getSellShares(value, currency);
+        if (isClosed) return;
         emit(
           state.copyWith(
             sharesText: result.shares.toString(),
@@ -34,6 +36,7 @@ class SellConverterCubit extends Cubit<SellConverterState> {
         );
       } catch (e) {
         developer.log(e.toString());
+        if (isClosed) return;
         emit(state.copyWith(loading: false));
       }
     });
@@ -45,10 +48,12 @@ class SellConverterCubit extends Cubit<SellConverterState> {
 
     _sharesDebounce?.cancel();
     _sharesDebounce = Timer(const Duration(milliseconds: 100), () async {
+      if (isClosed) return;
       emit(state.copyWith(loading: true));
 
       try {
         final result = await _brokerbotService.getSellPrice(value, currency);
+        if (isClosed) return;
         emit(
           state.copyWith(
             fiatText: result.estimatedAmount.toStringAsFixed(_fractionDigits(value)),
@@ -57,6 +62,7 @@ class SellConverterCubit extends Cubit<SellConverterState> {
         );
       } catch (e) {
         developer.log(e.toString());
+        if (isClosed) return;
         emit(state.copyWith(loading: false));
       }
     });
@@ -66,6 +72,7 @@ class SellConverterCubit extends Cubit<SellConverterState> {
     emit(state.copyWith(loading: true));
     try {
       final result = await _brokerbotService.getBuyPrice(state.sharesText, currency);
+      if (isClosed) return;
       emit(
         state.copyWith(
           fiatText: result.totalCost.toStringAsFixed(_fractionDigits(state.sharesText)),
@@ -75,6 +82,7 @@ class SellConverterCubit extends Cubit<SellConverterState> {
       );
     } catch (e) {
       developer.log(e.toString());
+      if (isClosed) return;
       emit(
         state.copyWith(
           loading: false,

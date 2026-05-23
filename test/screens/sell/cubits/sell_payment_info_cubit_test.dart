@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
@@ -201,6 +203,35 @@ void main() {
       final f = cubit.state as SellPaymentInfoFailure;
       expect(f.error, PaymentInfoError.unknown);
       expect(f.message, contains('network'));
+    });
+
+    test('negative amount is sent to service (UI prevents this via digitsOnly formatter)', () async {
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => _info());
+
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '-100', iban: 'CH56');
+
+      verify(() => service.getPaymentInfo(-100, 'CH56', currency: Currency.chf)).called(1);
+    });
+
+    test('comma decimal in getPaymentInfo throws (UI converter rejects commas first in practice)', () async {
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '100,50', iban: 'CH56');
+
+      expect(cubit.state, isA<SellPaymentInfoFailure>());
+      verifyNever(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')));
+    });
+
+    test('does not emit after close', () async {
+      final completer = Completer<SellPaymentInfo>();
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer((_) => completer.future);
+
+      final cubit = build();
+      unawaited(cubit.getPaymentInfo(amount: '100', iban: 'CH56'));
+      await cubit.close();
+      completer.complete(_info());
     });
   });
 }

@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
@@ -173,6 +176,28 @@ void main() {
 
       final f = cubit.state as BuyPaymentInfoFailure;
       expect(f.error, PaymentInfoError.unknown);
+    });
+
+    test('BitboxNotConnectedException → Failure(bitboxDisconnected)', () async {
+      when(() => service.getPaymentInfo(any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => throw const BitboxNotConnectedException());
+
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '300');
+
+      final f = cubit.state as BuyPaymentInfoFailure;
+      expect(f.error, PaymentInfoError.bitboxDisconnected);
+    });
+
+    test('does not emit after close', () async {
+      final completer = Completer<BuyPaymentInfo>();
+      when(() => service.getPaymentInfo(any(), currency: any(named: 'currency')))
+          .thenAnswer((_) => completer.future);
+
+      final cubit = build();
+      unawaited(cubit.getPaymentInfo(amount: '300'));
+      await cubit.close();
+      completer.complete(_info());
     });
   });
 }

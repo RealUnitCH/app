@@ -70,5 +70,14 @@ void main() {
 
       expect(fromZero, isNot(fromOne));
     });
+
+    test('signMessage with non-ASCII characters succeeds (regression for #289)', () async {
+      final account = WalletAccount(_testRoot(), 0);
+
+      final sig = await account.signMessage('Grüße 🚀');
+
+      expect(sig, startsWith('0x'));
+      expect(sig.length, 132);
+    });
   });
 }

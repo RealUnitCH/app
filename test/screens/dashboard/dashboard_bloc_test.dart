@@ -79,6 +79,39 @@ void main() {
       verify(() => accountService.getPortfolioHistory(Currency.chf)).called(1);
     });
 
+    test('refresh survives priceService failure without crashing', () async {
+      when(() => priceService.getPriceOfAsset(any(), any()))
+          .thenThrow(Exception('503'));
+
+      final bloc = build();
+      // If the handler crashes without try-catch, an unhandled error propagates.
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      // The bloc should still be usable — priceChart and portfolioHistory
+      // were fetched independently.
+      expect(bloc.state.currency, Currency.chf);
+    });
+
+    test('refresh survives priceChart failure without crashing', () async {
+      when(() => priceService.getPriceChart(any(), any()))
+          .thenThrow(Exception('timeout'));
+
+      final bloc = build();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      expect(bloc.state.currency, Currency.chf);
+    });
+
+    test('refresh survives portfolioHistory failure without crashing', () async {
+      when(() => accountService.getPortfolioHistory(any()))
+          .thenThrow(Exception('network'));
+
+      final bloc = build();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      expect(bloc.state.currency, Currency.chf);
+    });
+
     test('CurrencyChangedEvent updates state and re-fetches all three datasets', () async {
       final bloc = build();
       // Drain the initial refresh.
