@@ -1,0 +1,59 @@
+name: Handbook CI/CD
+
+# Single deploy pipeline for the handbook image: every push to `develop`
+# (with handbook-relevant paths) builds the image once and rolls it out
+# to BOTH the DEV and PRD endpoints sequentially. PRD only runs when DEV
+# finishes green, so a broken handbook can't reach production.
+#
+# This is a deliberate dev/prd-coupling exception scoped to the handbook
+# alone — the wallet app itself still follows the strict develop→main
+# separation.
+#
+# All build/deploy/smoke logic lives in the reusable workflow
+# .github/workflows/handbook.yaml. This file only wires the per-env
+# parameters and the DEV-must-pass ordering.
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "docs/handbook/**"
+      - "Dockerfile.handbook"
+      - "handbook.nginx.conf"
+      - "handbook.htpasswd"
+      - ".github/workflows/handbook-deploy.yaml"
+      - ".github/workflows/handbook.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-dev:
+    uses: ./.github/workflows/handbook.yaml
+    with:
+      environment: DEV
+      docker_tag: dfxswiss/realunit-app-handbook:beta
+      smoke_url: https://dev-handbook.realunit.app/healthz
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_DEV_SSH_KEY }}
+      DEPLOY_SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_DEV_SSH_KNOWN_HOSTS }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_DEV_USER }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_DEV_HOST }}
+
+  deploy-prd:
+    needs: deploy-dev
+    uses: ./.github/workflows/handbook.yaml
+    with:
+      environment: PRD
+      docker_tag: dfxswiss/realunit-app-handbook:beta
+      smoke_url: https://handbook.realunit.app/healthz
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_PRD_SSH_KEY }}
+      DEPLOY_SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_PRD_SSH_KNOWN_HOSTS }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_PRD_USER }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_PRD_HOST }}

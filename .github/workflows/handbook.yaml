@@ -116,10 +116,11 @@ jobs:
       # check and surfaces the regression in CI. Mirrors the pattern
       # from zkcoins/server `deploy-dev.yaml`.
       #
-      # Probes the canonical root URL with `curl -L` so the default-locale
-      # redirect (`/` → `/de/`) is followed end to end: nginx up, root
-      # routing intact, locale `index.html` served. Pinning a specific
-      # locale path would re-rot if the locale layout ever changes.
+      # Callers point smoke_url at the unauthenticated /healthz endpoint
+      # so the test stays trivial (200 without password) — handbook
+      # content itself sits behind Basic Auth and the credentials must
+      # never land in this public workflow file. The handbook nginx
+      # config keeps /healthz outside auth_basic specifically for this.
       - name: Smoke test public endpoint
         env:
           SMOKE_URL: ${{ inputs.smoke_url }}
