@@ -61,9 +61,6 @@ jobs:
       DEPLOY_SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_DEV_SSH_KNOWN_HOSTS }}
       DEPLOY_USER: ${{ secrets.DEPLOY_DEV_USER }}
       DEPLOY_HOST: ${{ secrets.DEPLOY_DEV_HOST }}
-      # Needed to clone DFXswiss/api at build time for the mail-preview
-      # generation step in handbook.yaml.
-      API_REPO_TOKEN: ${{ secrets.API_REPO_TOKEN }}
 
   deploy-prd:
     needs: deploy-dev
@@ -79,6 +76,3 @@ jobs:
       DEPLOY_SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_PRD_SSH_KNOWN_HOSTS }}
       DEPLOY_USER: ${{ secrets.DEPLOY_PRD_USER }}
       DEPLOY_HOST: ${{ secrets.DEPLOY_PRD_HOST }}
-      # Needed to clone DFXswiss/api at build time for the mail-preview
-      # generation step in handbook.yaml.
-      API_REPO_TOKEN: ${{ secrets.API_REPO_TOKEN }}
