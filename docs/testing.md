@@ -366,7 +366,7 @@ The workflow runs three jobs:
 - **`Coverage Floor Gate`** — downloads `coverage-summary` and fails the build when scoped line/function coverage drops below the integers committed to `.coverage-floor-lines` and `.coverage-floor-functions`. The job is wire-up-ready as a separately required check, but the `develop` branch ruleset currently only requires `Analyze & Test` — see the `Coverage infrastructure roadmap` in `README.md` for the open item. The ratchet protocol is documented there too.
 - **`BitBox quirks audit`** — runs `bitbox-audit` against the diff and inlines its report into the workflow run summary; uploaded as `bitbox-audit-report`.
 
-Tier 3 runs separately under `tier3-handbook.yaml` (push to `develop`, manual, or PRs with the `tier3:full` label). Coverage is uploaded as an artifact (see [#323](https://github.com/DFXswiss/realunit-app/pull/323)). The repo holds a [100 % coverage rule](https://github.com/DFXswiss/realunit-app/pull/322) for new code — drop the threshold only with reviewer sign-off and a written reason.
+Tier 3 runs separately under `tier3-handbook.yaml` (push to `develop`, manual, or any PR labelled `tier3:full` except PRs targeting `main`). Coverage is uploaded as an artifact (see [#323](https://github.com/DFXswiss/realunit-app/pull/323)). The repo holds a [100 % coverage rule](https://github.com/DFXswiss/realunit-app/pull/322) for new code — drop the threshold only with reviewer sign-off and a written reason.
 
 ## Surface that needs infra work before it can be unit-tested
 
