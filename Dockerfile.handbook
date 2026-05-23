@@ -5,6 +5,12 @@
 #
 # Built independently of the Flutter app: no Flutter toolchain, no app code.
 # Build context is the repo root; only docs/handbook/ is copied in.
+#
+# Note: docs/handbook/mails/ is git-ignored and populated at CI build time
+# by the "Generate RealUnit mail previews from api repo" step in
+# .github/workflows/handbook.yaml — DFXswiss/api is the single source of
+# truth for those previews. The COPY below picks them up automatically as
+# part of the docs/handbook/ tree.
 
 FROM nginx:1.27.5-alpine
 

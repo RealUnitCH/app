@@ -54,3 +54,8 @@ app.*.map.json
 # FVM Version Cache
 .fvm/
 .fvmrc
+
+# Auto-generated at handbook build time from DFXswiss/api
+# (see .github/workflows/handbook.yaml — step "Generate RealUnit mail previews
+# from api repo"). Never commit; source of truth is the api repo.
+docs/handbook/mails/

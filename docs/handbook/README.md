@@ -78,6 +78,51 @@ Auch der Tier-3-GitHub-Workflow hat dafür einen `flows`-`workflow_dispatch`-Inp
 4. Nur bei einem neuen Thema: eine neue `<details id="spec-NN" class="spec">`
    anlegen und den Anker `#spec-NN` in `<nav class="toc">` ergänzen.
 
+## E-Mail Previews
+
+Die HTML-Vorschauen aller vom Backend an Endkunden versendeten Mails liegen
+**nicht in diesem Repo**. Quelle ist `DFXswiss/api`:
+
+- Generator: `scripts/generate-realunit-previews.js`
+- Vorlage: `src/subdomains/supporting/notification/templates/realunit.hbs`
+- Übersetzungen: `src/shared/i18n/de/mail-realunit.json` (RealUnit-Texte) mit
+  Fallback auf `src/shared/i18n/de/mail.json` (DFX-Defaults)
+
+Der Handbook-CI-Build (`.github/workflows/handbook.yaml`) checkt das api-Repo
+zur Build-Zeit aus, führt den Generator aus und kopiert das Ergebnis nach
+`docs/handbook/mails/`, bevor das Docker-Image gebaut wird. `docs/handbook/mails/`
+ist in `.gitignore` — der Inhalt darf nie ins Repo eingecheckt werden, sonst
+divergieren Image-Stand und Source-of-Truth.
+
+### Trigger
+
+Ändert sich im api-Repo eine Mail-Vorlage, eine Übersetzung oder das
+Generator-Skript, schickt
+`DFXswiss/api/.github/workflows/notify-handbook-on-mail-change.yaml` ein
+`repository_dispatch (mails-updated)` an dieses Repo und der
+Handbook-Deploy läuft automatisch (DEV → PRD).
+
+### Lokal regenerieren
+
+Mit beiden Repos nebeneinander ausgecheckt:
+
+```bash
+# Einmalig: handlebars in den api-Klon installieren (falls noch nicht da)
+cd ../api && npm install handlebars
+
+# Generieren + ins Handbook übernehmen
+node ../api/scripts/generate-realunit-previews.js
+mkdir -p docs/handbook/mails
+cp ../api/scripts/email-previews/realunit/*.html docs/handbook/mails/
+cp docs/handbook/mails/00_index.html docs/handbook/mails/index.html
+
+# Lokal ansehen
+open docs/handbook/mails/index.html
+```
+
+(Den finalen Build-Step macht aber immer der CI — lokale Files sind nur fürs
+Vorab-Anschauen während eines Template-Refactors.)
+
 ## Beziehung zu den Tier-0/Tier-1-Tests
 
 Tier 0/1 (Unit + Widget + integration-mit-FakeBitboxCredentials) prüfen

@@ -24,6 +24,15 @@ on:
       - ".github/workflows/handbook-deploy.yaml"
       - ".github/workflows/handbook.yaml"
   workflow_dispatch:
+  # The api repo triggers this workflow whenever the RealUnit mail templates,
+  # the German i18n strings, or the generator script change on its develop
+  # branch (see DFXswiss/api/.github/workflows/notify-handbook-on-mail-change.yaml).
+  # The handbook reusable workflow re-pulls api@develop at build time and
+  # bakes the freshly generated mail previews into the image, so a change
+  # over there flows into both DEV and PRD handbook deployments without a
+  # manual sync PR. Single source of truth = api repo.
+  repository_dispatch:
+    types: [mails-updated]
 
 permissions:
   contents: read
@@ -52,6 +61,9 @@ jobs:
       DEPLOY_SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_DEV_SSH_KNOWN_HOSTS }}
       DEPLOY_USER: ${{ secrets.DEPLOY_DEV_USER }}
       DEPLOY_HOST: ${{ secrets.DEPLOY_DEV_HOST }}
+      # Needed to clone DFXswiss/api at build time for the mail-preview
+      # generation step in handbook.yaml.
+      API_REPO_TOKEN: ${{ secrets.API_REPO_TOKEN }}
 
   deploy-prd:
     needs: deploy-dev
@@ -67,3 +79,6 @@ jobs:
       DEPLOY_SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_PRD_SSH_KNOWN_HOSTS }}
       DEPLOY_USER: ${{ secrets.DEPLOY_PRD_USER }}
       DEPLOY_HOST: ${{ secrets.DEPLOY_PRD_HOST }}
+      # Needed to clone DFXswiss/api at build time for the mail-preview
+      # generation step in handbook.yaml.
+      API_REPO_TOKEN: ${{ secrets.API_REPO_TOKEN }}

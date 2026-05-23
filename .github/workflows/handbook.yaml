@@ -38,6 +38,12 @@ on:
         required: true
       DEPLOY_HOST:
         required: true
+      # PAT (classic, scope: repo) for reading DFXswiss/api at build time.
+      # DFXswiss/api is private — GITHUB_TOKEN of THIS repo cannot reach it,
+      # so we need a dedicated cross-repo token. Used only by the mail-preview
+      # generation step below.
+      API_REPO_TOKEN:
+        required: true
 
 # Reusable workflows do NOT inherit `permissions` from the caller — GITHUB_TOKEN
 # scopes are resolved per-workflow. Mirror the `contents: read` floor that both
@@ -56,6 +62,95 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # RealUnit mail previews are the single source of truth in DFXswiss/api
+      # (scripts/generate-realunit-previews.js). We pull them in at build time
+      # instead of checking them into this repo, so a change to a template or
+      # i18n string in the api repo flows into the handbook image on the next
+      # build without a manual sync PR. The api repo triggers this workflow
+      # via repository_dispatch (see handbook-deploy.yaml + the api repo's
+      # .github/workflows/notify-handbook-on-mail-change.yaml).
+      - name: Check out DFXswiss/api at develop into _api-checkout/
+        uses: actions/checkout@v4
+        with:
+          # DFXswiss/api is a separate private repo; the runner's default
+          # GITHUB_TOKEN is scoped to THIS repo only, so we need an explicit
+          # cross-repo PAT (stored as API_REPO_TOKEN).
+          repository: DFXswiss/api
+          ref: develop
+          token: ${{ secrets.API_REPO_TOKEN }}
+          path: _api-checkout
+
+      - name: Set up Node.js for mail-preview generator
+        uses: actions/setup-node@v4
+        with:
+          # api repo currently does not pin a node version in package.json#engines
+          # or .nvmrc — its CI workflows use NODE_VERSION='20.x' (see
+          # DFXswiss/api/.github/workflows/api-pr.yaml). Mirror that.
+          node-version: '20'
+
+      - name: Generate RealUnit mail previews from api repo
+        env:
+          API_DIR: _api-checkout
+          HANDLEBARS_PREFIX: _handlebars-only
+        run: |
+          set -euo pipefail
+
+          # The generator script only requires 'handlebars' at runtime (verified
+          # via `grep require ${API_DIR}/scripts/generate-realunit-previews.js`).
+          # We deliberately AVOID `npm ci` against the api package-lock — that
+          # would install ~2400 packages (5+ min wall-clock) just to run a
+          # single 600-line script. Installing handlebars into an isolated
+          # prefix outside the api tree keeps `_api-checkout/` clean (its
+          # package.json/lockfile must remain untouched so a future
+          # `git status` on the api checkout would still be "clean") and the
+          # NODE_PATH override below makes `require('handlebars')` resolve
+          # against the isolated install.
+          npm install --prefix "./${HANDLEBARS_PREFIX}" --no-save --no-audit --no-fund handlebars
+
+          # Run the generator. Output goes to ${API_DIR}/scripts/email-previews/realunit/
+          # (path baked into the script).
+          NODE_PATH="./${HANDLEBARS_PREFIX}/node_modules" node "${API_DIR}/scripts/generate-realunit-previews.js"
+
+          # Verify: the script generates one index + N mails. As of writing
+          # there are 24 mails (25 files total). Lower bound 25 catches the
+          # "script silently produced nothing" failure mode without being so
+          # tight that adding a new mail breaks CI (any growth is fine, any
+          # shrink to <25 is suspicious and fails fast here).
+          OUT_DIR="${API_DIR}/scripts/email-previews/realunit"
+          HTML_COUNT=$(ls "${OUT_DIR}"/*.html 2>/dev/null | wc -l | tr -d ' ')
+          if [ "${HTML_COUNT}" -lt 25 ]; then
+            echo "::error::Expected at least 25 mail preview HTML files in ${OUT_DIR}, got ${HTML_COUNT}"
+            exit 1
+          fi
+          if [ ! -s "${OUT_DIR}/00_index.html" ]; then
+            echo "::error::Mail preview index ${OUT_DIR}/00_index.html is missing or empty"
+            exit 1
+          fi
+
+          # Stage the generated files into docs/handbook/mails/ so the Docker
+          # build context picks them up (Dockerfile.handbook does
+          # `COPY docs/handbook/ /usr/share/nginx/html/`).
+          mkdir -p docs/handbook/mails
+          cp "${OUT_DIR}"/*.html docs/handbook/mails/
+
+          # nginx has `index index.html` (handbook.nginx.conf line 15) and
+          # `try_files $uri $uri/ =404` (line 82). A request for /mails/ would
+          # therefore look up /mails/index.html and 404 because the generator
+          # names its index `00_index.html` (so it sorts first in a directory
+          # listing). Duplicating the index as `index.html` lets `/mails/`
+          # resolve directly without adding a per-location nginx rule.
+          cp docs/handbook/mails/00_index.html docs/handbook/mails/index.html
+
+          # Drop the api checkout BEFORE the Docker build. Otherwise the build
+          # context (`.`) sends the entire api repo to the BuildKit daemon,
+          # bloating the layer cache and slowing every subsequent build, even
+          # though COPY only references docs/handbook/.
+          rm -rf "./${API_DIR}" "./${HANDLEBARS_PREFIX}"
+
+          # Final verify (visible in CI log so a future regression is grepable).
+          ls -la docs/handbook/mails/ | head -40
+          echo "Generated $(ls docs/handbook/mails/*.html | wc -l | tr -d ' ') mail preview files"
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
