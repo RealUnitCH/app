@@ -22,6 +22,13 @@ class SecureStorage {
 
   const SecureStorage() : _secureStorage = const FlutterSecureStorage();
 
+  /// Test-only constructor that injects a [FlutterSecureStorage] (typically a
+  /// mock or the platform-interface-backed `TestFlutterSecureStoragePlatform`).
+  /// Lets unit tests exercise every instance method without booting a real
+  /// platform channel — the production code path stays untouched.
+  @visibleForTesting
+  const SecureStorage.withStorage(this._secureStorage);
+
   // Database
 
   static String getNewEncryptionKey({int keySize = 32}) {

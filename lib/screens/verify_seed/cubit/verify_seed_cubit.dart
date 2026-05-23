@@ -36,10 +36,18 @@ class VerifySeedCubit extends Cubit<VerifySeedState> {
     emit(
       state.copyWith(
         wordIndices: sortedIndices,
+        // `flutter test` always runs in `kDebugMode == true`, so the
+        // release-mode branch below cannot be exercised from a unit test
+        // without forking the test process into a release VM (which the
+        // coverage tool does not collect from). The two branches differ
+        // only in the seed value of `enteredWords` — release ships empty
+        // slots, debug pre-fills them so devs can tap through quickly.
+        // Marking the release branch as `coverage:ignore-line` keeps the
+        // file at 100 % of the lines that unit tests can actually reach.
         enteredWords:
             kDebugMode // Pre-fill words in debug mode
             ? sortedIndices.map((i) => _wallet.seed.seedWords[i]).toList()
-            : List.filled(4, ''),
+            : List.filled(4, ''), // coverage:ignore-line
       ),
     );
   }

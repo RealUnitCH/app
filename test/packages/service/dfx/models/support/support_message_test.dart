@@ -78,4 +78,52 @@ void main() {
       expect(msg.isFromSupport, isFalse);
     });
   });
+
+  group('$SupportMessage equality (Equatable props)', () {
+    // Conversation rendering compares messages to dedupe and to detect
+    // edits — the props list must cover every wire field, not just `id`.
+    SupportMessage build({
+      int id = 1,
+      String? author = 'alice',
+      DateTime? created,
+      String? message = 'hello',
+      String? fileName,
+    }) {
+      return SupportMessage(
+        id: id,
+        author: author,
+        created: created ?? DateTime.utc(2026, 1, 1),
+        message: message,
+        fileName: fileName,
+      );
+    }
+
+    test('two messages with identical fields compare equal', () {
+      expect(build(), equals(build()));
+      expect(build().hashCode, build().hashCode);
+    });
+
+    test('each field independently breaks equality when changed', () {
+      final base = build();
+
+      expect(base, isNot(equals(build(id: 2))));
+      expect(base, isNot(equals(build(author: 'bob'))));
+      expect(base, isNot(equals(build(created: DateTime.utc(2026, 2, 1)))));
+      expect(base, isNot(equals(build(message: 'other'))));
+      expect(base, isNot(equals(build(fileName: 'x.pdf'))));
+    });
+
+    test('props exposes [id, author, created, message, fileName] in order', () {
+      final created = DateTime.utc(2026, 5, 1);
+      final msg = build(
+        id: 9,
+        author: 'alice',
+        created: created,
+        message: 'hi',
+        fileName: 'a.pdf',
+      );
+
+      expect(msg.props, [9, 'alice', created, 'hi', 'a.pdf']);
+    });
+  });
 }

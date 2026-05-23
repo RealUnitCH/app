@@ -141,8 +141,7 @@ void main() {
       expect(emitted.whereType<BitboxCapturingSignature>(), isNotEmpty);
     });
 
-    test('retrySignatureCapture recovers from BitboxSignatureFailed to BitboxConnected',
-        () async {
+    test('retrySignatureCapture recovers from BitboxSignatureFailed to BitboxConnected', () async {
       var pollCount = 0;
       var signCalls = 0;
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
@@ -177,8 +176,7 @@ void main() {
       expect(cubit.state, isA<BitboxNotConnected>());
     });
 
-    test('continueWithoutSignature transitions BitboxSignatureFailed to BitboxConnected',
-        () async {
+    test('continueWithoutSignature transitions BitboxSignatureFailed to BitboxConnected', () async {
       var pollCount = 0;
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
       when(() => service.init(any())).thenAnswer((_) async => true);
@@ -267,6 +265,27 @@ void main() {
     test('falls back to NotConnected when init throws', () async {
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
       when(() => service.init(any())).thenThrow(Exception('boom'));
+      when(() => service.getChannelHash()).thenAnswer((_) async => '');
+
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      await cubit.stream
+          .firstWhere((s) => s is BitboxNotConnected)
+          .timeout(const Duration(seconds: 3));
+      expect(cubit.state, isA<BitboxNotConnected>());
+    });
+
+    test('falls back to NotConnected when init resolves with an async error', () async {
+      // The above test makes `init` throw synchronously, which short-circuits
+      // before the `.then`/`.catchError` chain attached on `_pendingInit` is
+      // exercised. To cover the catchError branch (the host-side init future
+      // resolving with an error after the call returned) we hand back a
+      // future that completes with an error asynchronously.
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(
+        () => service.init(any()),
+      ).thenAnswer((_) => Future<bool>.error(Exception('async init boom')));
       when(() => service.getChannelHash()).thenAnswer((_) async => '');
 
       final cubit = makeCubit();

@@ -30,8 +30,7 @@ void main() {
     walletService = _MockWalletService();
     sessionCache = SessionCache(_MockCacheRepository());
     when(() => appStore.sessionCache).thenReturn(sessionCache);
-    when(() => appStore.apiConfig)
-        .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+    when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
     when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
     when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
   });
@@ -96,16 +95,18 @@ void main() {
 
       test('throws for Infinity input (UI prevents this via digitsOnly formatter)', () {
         expect(
-          () => build(MockClient((_) async => http.Response('{}', 200)))
-              .getBuyPrice('Infinity', Currency.chf),
+          () => build(
+            MockClient((_) async => http.Response('{}', 200)),
+          ).getBuyPrice('Infinity', Currency.chf),
           throwsException,
         );
       });
 
       test('throws for NaN input (UI prevents this via digitsOnly formatter)', () {
         expect(
-          () => build(MockClient((_) async => http.Response('{}', 200)))
-              .getBuyPrice('NaN', Currency.chf),
+          () => build(
+            MockClient((_) async => http.Response('{}', 200)),
+          ).getBuyPrice('NaN', Currency.chf),
           throwsException,
         );
       });
@@ -136,6 +137,18 @@ void main() {
         expect(() => build(client).getBuyShares('hi', Currency.chf), throwsException);
         expect(() => build(client).getBuyShares('0', Currency.chf), throwsException);
         expect(() => build(client).getBuyShares('-1.5', Currency.chf), throwsException);
+      });
+
+      test('throws when the server returns a non-200', () async {
+        // Coverage pin for the `if (res.statusCode != 200) throw …` branch on
+        // the unauthenticated /buyShares path. The other three brokerbot
+        // endpoints already exercise their respective non-2xx paths.
+        final client = MockClient((_) async => http.Response('boom', 503));
+
+        expect(
+          () => build(client).getBuyShares('100', Currency.chf),
+          throwsException,
+        );
       });
     });
 
@@ -168,10 +181,12 @@ void main() {
 
       test('throws ApiException with the JSON body on non-200', () async {
         sessionCache.setAuthToken('jwt-1');
-        final client = MockClient((_) async => http.Response(
-              jsonEncode({'statusCode': 422, 'message': 'no'}),
-              422,
-            ));
+        final client = MockClient(
+          (_) async => http.Response(
+            jsonEncode({'statusCode': 422, 'message': 'no'}),
+            422,
+          ),
+        );
 
         expect(
           () => build(client).getSellPrice('5', Currency.chf),
@@ -219,10 +234,12 @@ void main() {
 
       test('throws ApiException on non-200', () async {
         sessionCache.setAuthToken('jwt-2');
-        final client = MockClient((_) async => http.Response(
-              jsonEncode({'statusCode': 503, 'message': 'broker offline'}),
-              503,
-            ));
+        final client = MockClient(
+          (_) async => http.Response(
+            jsonEncode({'statusCode': 503, 'message': 'broker offline'}),
+            503,
+          ),
+        );
 
         expect(
           () => build(client).getSellShares('100', Currency.eur),
@@ -257,8 +274,7 @@ void main() {
       walletService = _MockWalletService();
       sessionCache = SessionCache(_MockCacheRepository());
       when(() => appStore.sessionCache).thenReturn(sessionCache);
-      when(() => appStore.apiConfig)
-          .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+      when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
       when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
       when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
     });

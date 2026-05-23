@@ -1,21 +1,27 @@
 import 'dart:developer' as developer;
 
-import 'package:local_auth/local_auth.dart';
+import 'package:realunit_wallet/packages/service/biometric/biometric_port.dart';
+import 'package:realunit_wallet/packages/service/biometric/biometric_service_adapter.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 
 /// Service for handling biometric authentication.
+///
+/// All platform-channel work goes through a [BiometricPort]; production wiring
+/// defaults to [BiometricServiceAdapter] (which talks to `local_auth`), tests
+/// inject a fake.
 class BiometricService {
-  final LocalAuthentication _auth = LocalAuthentication();
-
-  BiometricService(
-    SecureStorage secureStorage,
-  ) : _secureStorage = secureStorage;
-
+  final BiometricPort _biometric;
   final SecureStorage _secureStorage;
 
+  BiometricService(
+    SecureStorage secureStorage, {
+    BiometricPort? biometric,
+  }) : _secureStorage = secureStorage,
+       _biometric = biometric ?? BiometricServiceAdapter();
+
   Future<bool> isAvailable() async {
-    final canCheck = await _auth.canCheckBiometrics;
-    final isSupported = await _auth.isDeviceSupported();
+    final canCheck = await _biometric.canCheckBiometrics();
+    final isSupported = await _biometric.isDeviceSupported();
     return canCheck && isSupported;
   }
 
@@ -25,7 +31,7 @@ class BiometricService {
 
   Future<bool> authenticate() async {
     try {
-      return await _auth.authenticate(
+      return await _biometric.authenticate(
         localizedReason: 'Authenticate to unlock your wallet',
         biometricOnly: true,
         persistAcrossBackgrounding: true,

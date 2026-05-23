@@ -102,10 +102,16 @@ void main() {
         service.startConnectionStatusObserver();
         async.elapse(observerSettleTime);
 
-        expect(credentials.isConnected, isFalse,
-            reason: 'observer must clear the credentials on device-loss');
-        expect(platform.count(SimulatedBitboxMethod.close), greaterThanOrEqualTo(1),
-            reason: 'observer must release the USB transport on device-loss');
+        expect(
+          credentials.isConnected,
+          isFalse,
+          reason: 'observer must clear the credentials on device-loss',
+        );
+        expect(
+          platform.count(SimulatedBitboxMethod.close),
+          greaterThanOrEqualTo(1),
+          reason: 'observer must release the USB transport on device-loss',
+        );
       });
     });
 
@@ -178,8 +184,11 @@ void main() {
         service.startConnectionStatusObserver();
         async.elapse(observerSettleTime);
 
-        expect(credentials.isConnected, isFalse,
-            reason: 'clearBitbox must still run even when close() throws');
+        expect(
+          credentials.isConnected,
+          isFalse,
+          reason: 'clearBitbox must still run even when close() throws',
+        );
       });
     });
 
@@ -249,13 +258,22 @@ void main() {
         service.startConnectionStatusObserver();
         async.elapse(observerSettleTime);
 
-        expect(credentials.isConnected, isTrue,
-            reason: 'a throw must not trigger the device-loss path');
-        expect(platform.count(SimulatedBitboxMethod.close), 0,
-            reason: 'no transport close on a transient probe failure');
+        expect(
+          credentials.isConnected,
+          isTrue,
+          reason: 'a throw must not trigger the device-loss path',
+        );
+        expect(
+          platform.count(SimulatedBitboxMethod.close),
+          0,
+          reason: 'no transport close on a transient probe failure',
+        );
         final ticksUnderError = platform.count(SimulatedBitboxMethod.getDevices);
-        expect(ticksUnderError, greaterThanOrEqualTo(1),
-            reason: 'the observer must have at least attempted one probe');
+        expect(
+          ticksUnderError,
+          greaterThanOrEqualTo(1),
+          reason: 'the observer must have at least attempted one probe',
+        );
 
         // Recovery: probe stops throwing. The next tick must fire — proving
         // the observer survived the prior exception instead of dying silent.
@@ -267,8 +285,11 @@ void main() {
           greaterThan(ticksUnderError),
           reason: 'observer must keep probing after a transient error',
         );
-        expect(credentials.isConnected, isTrue,
-            reason: 'devices are present again — connection must stay alive');
+        expect(
+          credentials.isConnected,
+          isTrue,
+          reason: 'devices are present again — connection must stay alive',
+        );
 
         service.stopConnectionStatusObserver();
       });
@@ -296,35 +317,141 @@ void main() {
         });
         async.flushMicrotasks();
 
-        expect(caught, isA<Exception>(),
-            reason: 'init() must throw when initBitBox returns false');
-        expect(preInit.isConnected, isFalse,
-            reason: 'failed init must not promote pre-existing credentials');
+        expect(caught, isA<Exception>(), reason: 'init() must throw when initBitBox returns false');
+        expect(
+          preInit.isConnected,
+          isFalse,
+          reason: 'failed init must not promote pre-existing credentials',
+        );
 
         final postInit = service.getCredentials(knownAddress);
-        expect(postInit.isConnected, isFalse,
-            reason: 'failed init must leave _isConnected false for future hand-outs');
+        expect(
+          postInit.isConnected,
+          isFalse,
+          reason: 'failed init must leave _isConnected false for future hand-outs',
+        );
       });
     });
 
-    test('getCredentials called twice with the same address while connected returns equally-connected instances', () {
-      // Defensive pin: post-#472 the service caches BitboxCredentials in a
-      // map keyed by lowercased address, and the disconnect observer iterates
-      // every entry to call clearBitbox(). So callers must always see the
-      // same canonical instance for a given address — a refactor that hands
-      // out a fresh instance per call would let the observer clear an
-      // orphaned reference instead of the one the caller is still holding.
+    // The three thin pass-through wrappers below — startScan, getChannelHash,
+    // confirmPairing — used to be coverage-blind because no test ever drove
+    // them via the simulator. They are the BitBox pairing handshake the UI
+    // walks the user through, so a typo or method-name flip would only
+    // surface at pairing time on real hardware. Pin them through the same
+    // simulator the other lifecycle tests use.
+    test('startScan forwards to BitboxManager.startScan via the simulator', () {
+      // startScan is the first call in the BitBox pairing UI — it triggers
+      // the BLE/USB device probe on Android. With no devices wired into the
+      // call yet, we just need to prove the wrapper round-trips through the
+      // platform interface and returns the simulator's configured result.
+      fakeAsync((async) {
+        platform.when(
+          SimulatedBitboxMethod.startScan,
+          (_) async => true,
+        );
+
+        final service = BitboxService(connectionStatusInterval: fastInterval);
+        bool? result;
+        service.startScan().then((value) => result = value);
+        async.flushMicrotasks();
+
+        expect(result, isTrue);
+        expect(platform.count(SimulatedBitboxMethod.startScan), 1);
+      });
+    });
+
+    test('getChannelHash returns the hash the device emits during pairing', () {
+      // Channel hash is the short fingerprint the user compares on-screen
+      // vs. on-device during the U2F-style pairing dance. Production code
+      // is a single line, but a typo on the SDK method name would break the
+      // pairing flow entirely.
       fakeAsync((async) {
         final service = pairedServiceSync(async);
+        platform.when(
+          SimulatedBitboxMethod.getChannelHash,
+          (_) async => 'abcd-1234-deadbeef',
+        );
 
-        final first = service.getCredentials(knownAddress);
-        final second = service.getCredentials(knownAddress);
+        String? hash;
+        service.getChannelHash().then((value) => hash = value);
+        async.flushMicrotasks();
 
-        expect(first.isConnected, isTrue);
-        expect(second.isConnected, isTrue);
-        expect(second, same(first),
-            reason: 'getCredentials must return the cached instance for a given address');
+        expect(hash, 'abcd-1234-deadbeef');
+        expect(platform.count(SimulatedBitboxMethod.getChannelHash), 1);
       });
     });
+
+    test('confirmPairing returns normally on a verified channel', () {
+      // Happy path: user pressed the on-device button.
+      fakeAsync((async) {
+        final service = pairedServiceSync(async);
+        platform.when(
+          SimulatedBitboxMethod.channelHashVerify,
+          (_) async => true,
+        );
+
+        Object? caught;
+        service.confirmPairing().catchError((Object e) {
+          caught = e;
+        });
+        async.flushMicrotasks();
+
+        expect(caught, isNull);
+        expect(platform.count(SimulatedBitboxMethod.channelHashVerify), 1);
+      });
+    });
+
+    test('confirmPairing throws when the device rejects the channel hash', () {
+      // Pairing rejection path: production guards the failure with an
+      // explicit `throw Exception('Failed to verify')` so the UI can surface
+      // a retry prompt instead of silently proceeding. Without this pin the
+      // throw branch is dead code from coverage's POV.
+      fakeAsync((async) {
+        final service = pairedServiceSync(async);
+        platform.when(
+          SimulatedBitboxMethod.channelHashVerify,
+          (_) async => false,
+        );
+
+        Object? caught;
+        service.confirmPairing().catchError((Object e) {
+          caught = e;
+          return null;
+        });
+        async.flushMicrotasks();
+
+        expect(
+          caught,
+          isA<Exception>(),
+          reason: 'a rejected pairing must throw, not return silently',
+        );
+      });
+    });
+
+    test(
+      'getCredentials called twice with the same address while connected returns equally-connected instances',
+      () {
+        // Defensive pin: post-#472 the service caches BitboxCredentials in a
+        // map keyed by lowercased address, and the disconnect observer iterates
+        // every entry to call clearBitbox(). So callers must always see the
+        // same canonical instance for a given address — a refactor that hands
+        // out a fresh instance per call would let the observer clear an
+        // orphaned reference instead of the one the caller is still holding.
+        fakeAsync((async) {
+          final service = pairedServiceSync(async);
+
+          final first = service.getCredentials(knownAddress);
+          final second = service.getCredentials(knownAddress);
+
+          expect(first.isConnected, isTrue);
+          expect(second.isConnected, isTrue);
+          expect(
+            second,
+            same(first),
+            reason: 'getCredentials must return the cached instance for a given address',
+          );
+        });
+      },
+    );
   });
 }

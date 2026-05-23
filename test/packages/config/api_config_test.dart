@@ -40,6 +40,16 @@ void main() {
         expect(config.zchfAssetId, ethereumZchfAssetId);
       });
     });
+
+    test('non-const constructor exercises the field initializer at runtime', () {
+      // The other groups in this file only invoke `const ApiConfig(...)` —
+      // `dart`'s constant evaluator folds those away at compile time, so
+      // line-coverage instrumentation never marks the constructor body as
+      // executed. This test pins the runtime path so coverage stays honest.
+      // ignore: prefer_const_constructors
+      final runtime = ApiConfig(networkMode: NetworkMode.mainnet);
+      expect(runtime.networkMode, NetworkMode.mainnet);
+    });
   });
 
   group('buildUri', () {

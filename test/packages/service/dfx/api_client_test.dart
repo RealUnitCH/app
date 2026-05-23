@@ -37,5 +37,46 @@ void main() {
 
       expect(sent['X-Client'], 'custom-client');
     });
+
+    test('close() delegates to the wrapped inner client', () {
+      // The wrapper owns no resources of its own, so close() must hand
+      // off cleanly to whatever Client was injected. A regression that
+      // forgets to forward close() would leak the underlying socket pool
+      // (and silently swallow `inner.close()` semantics in tests that
+      // rely on it).
+      var closed = false;
+      final inner = _CloseTrackingClient(() => closed = true);
+      final client = RealUnitApiClient(inner);
+
+      client.close();
+
+      expect(closed, isTrue);
+    });
+
+    test('default constructor instantiates its own inner Client', () {
+      // The optional-argument branch (`inner ?? Client()`) is otherwise
+      // never exercised by the injecting tests above. close() must
+      // still work — it would throw if the default branch were broken
+      // (e.g. `null!` dereference).
+      final client = RealUnitApiClient();
+      expect(() => client.close(), returnsNormally);
+    });
   });
+}
+
+class _CloseTrackingClient extends http.BaseClient {
+  _CloseTrackingClient(this._onClose);
+
+  final void Function() _onClose;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    throw UnimplementedError('not used in close() test');
+  }
+
+  @override
+  void close() {
+    _onClose();
+    super.close();
+  }
 }

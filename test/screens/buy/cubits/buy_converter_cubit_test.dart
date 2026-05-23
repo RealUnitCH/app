@@ -73,8 +73,9 @@ void main() {
     });
 
     test('onFiatChanged keeps state intact when the service throws', () async {
-      when(() => service.getBuyShares(any(), any()))
-          .thenAnswer((_) async => throw Exception('bad input'));
+      when(
+        () => service.getBuyShares(any(), any()),
+      ).thenAnswer((_) async => throw Exception('bad input'));
 
       final cubit = BuyConverterCubit(service);
       await cubit.onFiatChanged('-1');
@@ -85,22 +86,41 @@ void main() {
       expect(cubit.state.loading, isFalse);
     });
 
-    test('onSharesChanged debounces, then writes the converted fiat with matching fractional digits', () async {
-      when(() => service.getBuyPrice(any(), any())).thenAnswer(
-        (_) async => BrokerbotBuyPriceDto(
-          totalCost: 125.5,
-          pricePerShare: 25.1,
-          availableShares: 100,
-        ),
-      );
+    test(
+      'onSharesChanged debounces, then writes the converted fiat with matching fractional digits',
+      () async {
+        when(() => service.getBuyPrice(any(), any())).thenAnswer(
+          (_) async => BrokerbotBuyPriceDto(
+            totalCost: 125.5,
+            pricePerShare: 25.1,
+            availableShares: 100,
+          ),
+        );
+
+        final cubit = BuyConverterCubit(service);
+        // Input has 3 fractional digits → output has 3.
+        await cubit.onSharesChanged('5.000');
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+
+        expect(cubit.state.sharesText, '5.000');
+        expect(cubit.state.fiatText, '125.500');
+      },
+    );
+
+    test('onSharesChanged keeps state intact when the service throws', () async {
+      // Mirror of the `onFiatChanged` throw guard: the sell-side debounce
+      // body must not leak a state.loading=true when getBuyPrice fails.
+      when(
+        () => service.getBuyPrice(any(), any()),
+      ).thenAnswer((_) async => throw Exception('throttle'));
 
       final cubit = BuyConverterCubit(service);
-      // Input has 3 fractional digits → output has 3.
-      await cubit.onSharesChanged('5.000');
+      await cubit.onSharesChanged('5');
       await Future<void>.delayed(const Duration(milliseconds: 250));
 
-      expect(cubit.state.sharesText, '5.000');
-      expect(cubit.state.fiatText, '125.500');
+      expect(cubit.state.sharesText, '5');
+      expect(cubit.state.fiatText, '');
+      expect(cubit.state.loading, isFalse);
     });
 
     test('onSharesChanged uses 2 fractional digits when input has no dot', () async {
@@ -119,27 +139,31 @@ void main() {
       expect(cubit.state.fiatText, '125.50');
     });
 
-    test('onCurrencyChanged refetches shares with the new currency and emits both fields', () async {
-      when(() => service.getBuyShares(any(), any())).thenAnswer(
-        (_) async => BrokerbotBuySharesDto(
-          shares: 3,
-          pricePerShare: 10,
-          availableShares: 100,
-        ),
-      );
+    test(
+      'onCurrencyChanged refetches shares with the new currency and emits both fields',
+      () async {
+        when(() => service.getBuyShares(any(), any())).thenAnswer(
+          (_) async => BrokerbotBuySharesDto(
+            shares: 3,
+            pricePerShare: 10,
+            availableShares: 100,
+          ),
+        );
 
-      final cubit = BuyConverterCubit(service);
-      await cubit.onCurrencyChanged(Currency.eur);
+        final cubit = BuyConverterCubit(service);
+        await cubit.onCurrencyChanged(Currency.eur);
 
-      expect(cubit.state.currency, Currency.eur);
-      expect(cubit.state.sharesText, '3');
-      expect(cubit.state.loading, isFalse);
-      verify(() => service.getBuyShares('', Currency.eur)).called(1);
-    });
+        expect(cubit.state.currency, Currency.eur);
+        expect(cubit.state.sharesText, '3');
+        expect(cubit.state.loading, isFalse);
+        verify(() => service.getBuyShares('', Currency.eur)).called(1);
+      },
+    );
 
     test('onCurrencyChanged still flips currency even on service error', () async {
-      when(() => service.getBuyShares(any(), any()))
-          .thenAnswer((_) async => throw Exception('throttle'));
+      when(
+        () => service.getBuyShares(any(), any()),
+      ).thenAnswer((_) async => throw Exception('throttle'));
 
       final cubit = BuyConverterCubit(service);
       await cubit.onCurrencyChanged(Currency.eur);
@@ -168,18 +192,19 @@ void main() {
 
     test('does not emit after close', () async {
       final completer = Completer<BrokerbotBuySharesDto>();
-      when(() => service.getBuyShares(any(), any()))
-          .thenAnswer((_) => completer.future);
+      when(() => service.getBuyShares(any(), any())).thenAnswer((_) => completer.future);
 
       final cubit = BuyConverterCubit(service);
       await cubit.onFiatChanged('100');
       await Future<void>.delayed(const Duration(milliseconds: 150));
       await cubit.close();
-      completer.complete(BrokerbotBuySharesDto(
-        shares: 1,
-        pricePerShare: 100,
-        availableShares: 100,
-      ));
+      completer.complete(
+        BrokerbotBuySharesDto(
+          shares: 1,
+          pricePerShare: 100,
+          availableShares: 100,
+        ),
+      );
     });
   });
 }
