@@ -45,18 +45,24 @@
         // absolute deep-link to the clipboard, updates the URL bar to that
         // anchor, and flashes a checkmark for 1.2s. Falls back to the
         // textarea+execCommand trick on browsers without async clipboard.
+        // Original label is captured per-button at wire-up time (not per
+        // click) so a rapid second click while the "✓ Kopiert" state is
+        // still showing can't lock the label in the flashed state.
         document.querySelectorAll('.copy-link').forEach(function (btn) {
+          var origText = btn.textContent;
+          var resetTimer = null;
           btn.addEventListener('click', function () {
             var target = btn.dataset.target;
             if (!target) return;
             var url = location.origin + location.pathname + '#' + target;
             var done = function () {
-              var orig = btn.textContent;
               btn.textContent = '✓ Kopiert';
               btn.dataset.copied = 'true';
-              setTimeout(function () {
-                btn.textContent = orig;
+              if (resetTimer) clearTimeout(resetTimer);
+              resetTimer = setTimeout(function () {
+                btn.textContent = origText;
                 btn.removeAttribute('data-copied');
+                resetTimer = null;
               }, 1200);
               if (location.hash !== '#' + target) location.hash = target;
             };
