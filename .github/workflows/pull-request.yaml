@@ -5,9 +5,10 @@ name: RealUnit Build
 #    (develop → main) is opened automatically by `auto-release-pr.yaml`,
 #    so we deliberately do NOT include `main` in `pull_request.branches`:
 #    every push to develop would otherwise fire a second `pull_request`
-#    run on the release PR for the same SHA, and the concurrency block
-#    below would cancel one of them and surface a red "cancelled" check
-#    on the release PR.
+#    run on the release PR for the same SHA, doubling macOS-runner load
+#    on a check that `push: develop` already covers. (Under PR-number
+#    grouping the two runs land in different concurrency groups, so the
+#    block below would not deduplicate them.)
 #  - `ready_for_review` makes the workflow fire the moment a draft PR
 #    is marked ready — drafts themselves skip via the `if:` guard
 #    below (saves macOS-runner minutes while work is still in progress).
@@ -25,13 +26,17 @@ on:
     branches: [develop]
     types: [opened, synchronize, reopened, ready_for_review]
 
-# Group by SHA so a new push cancels the in-flight run for the
-# outdated commit. macOS runners are scarce — letting an obsolete
-# run finish wastes ~10 minutes per push. Falls back to `github.sha`
-# for `push` and `workflow_dispatch` events (where there is no
-# `pull_request.head.sha`).
+# Group by PR number so a new push to the same PR cancels the
+# in-flight run for the outdated commit. macOS runners are scarce —
+# letting an obsolete run finish wastes ~10 minutes per push. Grouping
+# by SHA (the previous approach) put every commit in its own group,
+# which meant no cancellation ever happened and back-to-back pushes
+# queued sequentially.
+# Falls back to `github.ref` for `push` and `workflow_dispatch` events
+# (where there is no `pull_request.number`): `refs/heads/develop` for
+# post-merge runs, the dispatched ref for manual triggers.
 concurrency:
-  group: ci-${{ github.event.pull_request.head.sha || github.sha }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
