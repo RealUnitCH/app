@@ -32,6 +32,14 @@ anders).
 
 Baselines landen unter `test/goldens/screens/<feature>/goldens/macos/*.png`.
 
+### Skipped: `web_view_page.dart`
+
+The one `skip: true` in the suite. `InAppWebView` from `flutter_inappwebview` is a platform-view, not a regular widget — its rendering happens via the iOS/Android view-embedding API and has no headless representation in `flutter_test`.
+
+Method-channel stubbing alone is **not enough**: the widget's first build asserts that `InAppWebViewPlatform.instance` is set, and that interface declares five abstract `createPlatform…` methods (controller, widget, cookie manager, etc.) — each returning another platform-view-bound class. A working stub would need ~50 lines of mock subclasses and would still render the body as a blank rectangle.
+
+For a one-page edge case the cost/benefit doesn't justify it. The test is committed with `skip: true` and reactivates the moment someone wires up a full `InAppWebViewPlatform` mock — preferably published as a separate test-only package so other Flutter apps can reuse it.
+
 ## Initial bootstrap
 
 The very first baseline set has to come from dfx01 itself. The pattern:
