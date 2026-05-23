@@ -179,14 +179,23 @@ Services with a `Timer`, an observer/subscription loop, or a platform/`MethodCha
 Time-bound assertions must drive time via `package:fake_async`. Wall-clock `Future.delayed` is not acceptable: it makes tests slow and flaky.
 
 ```dart
-fakeAsync((async) {
-  final service = BitboxService(); // real instance
-  addTearDown(() => BitboxUsbPlatform.instance = _realPlatform);
-  BitboxUsbPlatform.instance = _FakePlatform();
+late BitboxUsbPlatform previousPlatform;
 
-  service.start();
-  async.elapse(const Duration(seconds: 30));
-  expect(service.didTick, isTrue);
+setUp(() {
+  previousPlatform = BitboxUsbPlatform.instance;
+  BitboxUsbPlatform.instance = _FakePlatform();
+});
+tearDown(() {
+  BitboxUsbPlatform.instance = previousPlatform;
+});
+
+test('observer fires after the configured interval', () {
+  fakeAsync((async) {
+    final service = BitboxService(); // real instance, not a mock
+    service.start();
+    async.elapse(const Duration(seconds: 30));
+    expect(service.didTick, isTrue);
+  });
 });
 ```
 
