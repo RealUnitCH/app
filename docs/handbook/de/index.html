@@ -9,24 +9,22 @@
       content="RealUnit Wallet — Handbuch und Test-Dokumentation. Jeder Screenshot ist eine Maestro-Tier-3-Aufnahme; die App-Variante, die auf realer Hardware exakt diese Screens produziert, ist die spezifizierte."
     />
     <script>
-      // Auto-open the <details> for the hash anchor (e.g. /handbook/de#spec-04).
+      // Auto-open the enclosing <details> and scroll to the hash target
+      // (e.g. /de/#spec-04 lands on the spec card, /de/#01-welcome lands
+      // on the specific test card inside spec-01 and forces its details
+      // open). getElementById tolerates digit-prefixed IDs like "01-welcome"
+      // which would break document.querySelector(hash) since CSS
+      // identifiers can't start with a digit.
       function openHashTarget() {
         var hash = location.hash;
         if (!hash || hash.length < 2) return;
-        var el;
-        try {
-          el = document.querySelector(hash);
-        } catch (e) {
-          return;
-        }
+        var el = document.getElementById(decodeURIComponent(hash.slice(1)));
         if (!el) return;
         var det = el.tagName === 'DETAILS' ? el : el.closest('details');
-        if (det) {
-          det.open = true;
-          requestAnimationFrame(function () {
-            det.scrollIntoView({ behavior: 'instant', block: 'start' });
-          });
-        }
+        if (det) det.open = true;
+        requestAnimationFrame(function () {
+          el.scrollIntoView({ behavior: 'instant', block: 'start' });
+        });
       }
       window.addEventListener('hashchange', openHashTarget);
       document.addEventListener('DOMContentLoaded', openHashTarget);
@@ -42,6 +40,55 @@
             if (det) det.open = true;
           });
         });
+
+        // Copy-link buttons next to each flow name: one click copies the
+        // absolute deep-link to the clipboard, updates the URL bar to that
+        // anchor, and flashes a checkmark for 1.2s. Falls back to the
+        // textarea+execCommand trick on browsers without async clipboard.
+        // Original label is captured per-button at wire-up time (not per
+        // click) so a rapid second click while the "✓ Kopiert" state is
+        // still showing can't lock the label in the flashed state.
+        document.querySelectorAll('.copy-link').forEach(function (btn) {
+          var origText = btn.textContent;
+          var resetTimer = null;
+          btn.addEventListener('click', function () {
+            var target = btn.dataset.target;
+            if (!target) return;
+            var url = location.origin + location.pathname + '#' + target;
+            var done = function () {
+              btn.textContent = '✓ Kopiert';
+              btn.dataset.copied = 'true';
+              if (resetTimer) clearTimeout(resetTimer);
+              resetTimer = setTimeout(function () {
+                btn.textContent = origText;
+                btn.removeAttribute('data-copied');
+                resetTimer = null;
+              }, 1200);
+              if (location.hash !== '#' + target) location.hash = target;
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(url).then(done, function () {
+                fallbackCopy(url);
+                done();
+              });
+            } else {
+              fallbackCopy(url);
+              done();
+            }
+          });
+        });
+        function fallbackCopy(text) {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            document.execCommand('copy');
+          } catch (e) {}
+          document.body.removeChild(ta);
+        }
 
         // Expand/collapse-all toggle in the sidebar.
         var toggle = document.getElementById('spec-toggle-all');
@@ -351,20 +398,64 @@
         border: 1px solid var(--line);
         border-radius: 8px;
         overflow: hidden;
+        /* Buffer for browser-driven scrollIntoView when landed via
+           direct-link (#<flow-name>) so the card title isn't flush
+           against the viewport top edge. */
+        scroll-margin-top: 20px;
+      }
+      .test:target {
+        outline: 2px solid var(--brand);
+        outline-offset: -1px;
       }
       .test .head {
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        gap: 8px;
         padding: 10px 14px;
         border-bottom: 1px solid var(--line);
         background: var(--surface-2);
+      }
+      .test .head .src {
+        margin-left: auto;
       }
       .test .name {
         font-family: 'SF Mono', Menlo, Consolas, monospace;
         font-size: 12.5px;
         font-weight: 600;
         color: var(--ink);
+      }
+      a.permalink.name {
+        text-decoration: none;
+      }
+      a.permalink.name:hover {
+        text-decoration: underline;
+        color: var(--brand);
+      }
+      .copy-link {
+        appearance: none;
+        background: transparent;
+        border: 1px solid transparent;
+        padding: 2px 6px;
+        font: inherit;
+        font-size: 11.5px;
+        line-height: 1;
+        color: var(--ink-4);
+        cursor: pointer;
+        border-radius: 4px;
+        transition:
+          color 120ms ease,
+          background 120ms ease,
+          border-color 120ms ease;
+      }
+      .copy-link:hover {
+        color: var(--brand);
+        background: var(--surface);
+        border-color: var(--line);
+      }
+      .copy-link[data-copied='true'] {
+        color: var(--brand);
+        background: var(--surface);
+        border-color: var(--brand);
       }
       .test .src {
         font-family: 'SF Mono', Menlo, Consolas, monospace;
@@ -580,9 +671,10 @@
           </p>
 
           <div class="tests cols-2">
-            <div class="test">
+            <div class="test" id="01-welcome">
               <div class="head">
-                <span class="name">01-welcome</span>
+                <a class="name permalink" href="#01-welcome">01-welcome</a>
+                <button class="copy-link" type="button" data-target="01-welcome" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">01-welcome.yaml</span>
               </div>
               <div class="img">
@@ -598,9 +690,10 @@
                 der App die Annahme der <em>Nutzungsbedingungen</em> impliziert.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="02-create-vs-restore">
               <div class="head">
-                <span class="name">02-create-vs-restore</span>
+                <a class="name permalink" href="#02-create-vs-restore">02-create-vs-restore</a>
+                <button class="copy-link" type="button" data-target="02-create-vs-restore" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">02-create-vs-restore.yaml</span>
               </div>
               <div class="img">
@@ -616,9 +709,10 @@
                 Subtitle-Text + Icon und tappen weiter in den jeweiligen Onboarding-Pfad.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="03-software-wallet-terms">
               <div class="head">
-                <span class="name">03-software-wallet-terms</span>
+                <a class="name permalink" href="#03-software-wallet-terms">03-software-wallet-terms</a>
+                <button class="copy-link" type="button" data-target="03-software-wallet-terms" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">03-software-wallet-terms.yaml</span>
               </div>
               <div class="img">
@@ -676,9 +770,10 @@
           </div>
 
           <div class="tests cols-2">
-            <div class="test">
+            <div class="test" id="04-seed-hidden">
               <div class="head">
-                <span class="name">04-seed-hidden</span>
+                <a class="name permalink" href="#04-seed-hidden">04-seed-hidden</a>
+                <button class="copy-link" type="button" data-target="04-seed-hidden" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">04-seed-hidden.yaml</span>
               </div>
               <div class="img">
@@ -695,9 +790,10 @@
                 ist disabled, bis der User mindestens einmal die Phrase aufgedeckt hat.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="05-seed-revealed">
               <div class="head">
-                <span class="name">05-seed-revealed</span>
+                <a class="name permalink" href="#05-seed-revealed">05-seed-revealed</a>
+                <button class="copy-link" type="button" data-target="05-seed-revealed" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">05-seed-revealed.yaml</span>
               </div>
               <div class="img">
@@ -713,9 +809,10 @@
                 automatisch zurück in den verschleierten Zustand.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="06-verify-seed">
               <div class="head">
-                <span class="name">06-verify-seed</span>
+                <a class="name permalink" href="#06-verify-seed">06-verify-seed</a>
+                <button class="copy-link" type="button" data-target="06-verify-seed" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">06-verify-seed.yaml</span>
               </div>
               <div class="img">
@@ -762,9 +859,10 @@
           </p>
 
           <div class="tests cols-2">
-            <div class="test">
+            <div class="test" id="07-onboarding-completed">
               <div class="head">
-                <span class="name">07-onboarding-completed</span>
+                <a class="name permalink" href="#07-onboarding-completed">07-onboarding-completed</a>
+                <button class="copy-link" type="button" data-target="07-onboarding-completed" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">07-onboarding-completed.yaml</span>
               </div>
               <div class="img">
@@ -813,9 +911,10 @@
           </p>
 
           <div class="tests cols-2">
-            <div class="test">
+            <div class="test" id="08-pin-setup">
               <div class="head">
-                <span class="name">08-pin-setup</span>
+                <a class="name permalink" href="#08-pin-setup">08-pin-setup</a>
+                <button class="copy-link" type="button" data-target="08-pin-setup" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">08-pin-setup.yaml</span>
               </div>
               <div class="img">
@@ -830,9 +929,10 @@
                 Der zentrale State ist <code>SetupPinCubit.create</code>.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="09-pin-confirm">
               <div class="head">
-                <span class="name">09-pin-confirm</span>
+                <a class="name permalink" href="#09-pin-confirm">09-pin-confirm</a>
+                <button class="copy-link" type="button" data-target="09-pin-confirm" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">09-pin-confirm.yaml</span>
               </div>
               <div class="img">
@@ -849,9 +949,10 @@
                 und zurück in <code>create</code> springen.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="10-biometric-prompt">
               <div class="head">
-                <span class="name">10-biometric-prompt</span>
+                <a class="name permalink" href="#10-biometric-prompt">10-biometric-prompt</a>
+                <button class="copy-link" type="button" data-target="10-biometric-prompt" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">10-biometric-prompt.yaml</span>
               </div>
               <div class="img">
@@ -902,9 +1003,10 @@
           </p>
 
           <div class="tests cols-1">
-            <div class="test">
+            <div class="test" id="11-dashboard">
               <div class="head">
-                <span class="name">11-dashboard</span>
+                <a class="name permalink" href="#11-dashboard">11-dashboard</a>
+                <button class="copy-link" type="button" data-target="11-dashboard" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">11-dashboard.yaml</span>
               </div>
               <div class="img">
@@ -952,9 +1054,10 @@
           </p>
 
           <div class="tests cols-2">
-            <div class="test">
+            <div class="test" id="12-settings">
               <div class="head">
-                <span class="name">12-settings</span>
+                <a class="name permalink" href="#12-settings">12-settings</a>
+                <button class="copy-link" type="button" data-target="12-settings" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">12-settings.yaml</span>
               </div>
               <div class="img">
@@ -970,9 +1073,10 @@
                 werden inline als trailing Text rechts angezeigt.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="13-settings-languages">
               <div class="head">
-                <span class="name">13-settings-languages</span>
+                <a class="name permalink" href="#13-settings-languages">13-settings-languages</a>
+                <button class="copy-link" type="button" data-target="13-settings-languages" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">13-settings-languages.yaml</span>
               </div>
               <div class="img">
@@ -988,9 +1092,10 @@
                 <code>assets/languages/strings_*.arb</code>.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="14-settings-currency">
               <div class="head">
-                <span class="name">14-settings-currency</span>
+                <a class="name permalink" href="#14-settings-currency">14-settings-currency</a>
+                <button class="copy-link" type="button" data-target="14-settings-currency" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">14-settings-currency.yaml</span>
               </div>
               <div class="img">
@@ -1005,9 +1110,10 @@
                 im <code>DashboardBloc</code>, das Kursdaten in der neuen Währung nachlädt.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="15-settings-network">
               <div class="head">
-                <span class="name">15-settings-network</span>
+                <a class="name permalink" href="#15-settings-network">15-settings-network</a>
+                <button class="copy-link" type="button" data-target="15-settings-network" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">15-settings-network.yaml</span>
               </div>
               <div class="img">
@@ -1023,9 +1129,10 @@
                 interne Tests und Aktionariat-Demo-Flows gedacht.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="16-settings-wallet-address">
               <div class="head">
-                <span class="name">16-settings-wallet-address</span>
+                <a class="name permalink" href="#16-settings-wallet-address">16-settings-wallet-address</a>
+                <button class="copy-link" type="button" data-target="16-settings-wallet-address" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">16-settings-wallet-address.yaml</span>
               </div>
               <div class="img">
@@ -1042,9 +1149,10 @@
                 ohne EIP-681-Payload.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="20-settings-legal-documents">
               <div class="head">
-                <span class="name">20-settings-legal-documents</span>
+                <a class="name permalink" href="#20-settings-legal-documents">20-settings-legal-documents</a>
+                <button class="copy-link" type="button" data-target="20-settings-legal-documents" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">20-settings-legal-documents.yaml</span>
               </div>
               <div class="img">
@@ -1059,9 +1167,10 @@
                 <b>DFX</b> — die jeweils auf eine eigene Unterseite führen.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="21-settings-aktionariat-documents">
               <div class="head">
-                <span class="name">21-settings-aktionariat-documents</span>
+                <a class="name permalink" href="#21-settings-aktionariat-documents">21-settings-aktionariat-documents</a>
+                <button class="copy-link" type="button" data-target="21-settings-aktionariat-documents" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">21-settings-aktionariat-documents.yaml</span>
               </div>
               <div class="img">
@@ -1076,9 +1185,10 @@
                 Eintrag öffnet das Dokument im <code>LegalDocumentPage</code>-Viewer.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="22-settings-dfx-documents">
               <div class="head">
-                <span class="name">22-settings-dfx-documents</span>
+                <a class="name permalink" href="#22-settings-dfx-documents">22-settings-dfx-documents</a>
+                <button class="copy-link" type="button" data-target="22-settings-dfx-documents" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">22-settings-dfx-documents.yaml</span>
               </div>
               <div class="img">
@@ -1093,9 +1203,10 @@
                 KYC). Jeder Eintrag öffnet das Dokument im <code>LegalDocumentPage</code>-Viewer.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="23-settings-contact">
               <div class="head">
-                <span class="name">23-settings-contact</span>
+                <a class="name permalink" href="#23-settings-contact">23-settings-contact</a>
+                <button class="copy-link" type="button" data-target="23-settings-contact" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">23-settings-contact.yaml</span>
               </div>
               <div class="img">
@@ -1112,9 +1223,10 @@
                 <code>DfxCompanyInfoService</code>.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="24-settings-delete-wallet">
               <div class="head">
-                <span class="name">24-settings-delete-wallet</span>
+                <a class="name permalink" href="#24-settings-delete-wallet">24-settings-delete-wallet</a>
+                <button class="copy-link" type="button" data-target="24-settings-delete-wallet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">24-settings-delete-wallet.yaml</span>
               </div>
               <div class="img">
@@ -1162,9 +1274,10 @@
           </p>
 
           <div class="tests cols-2">
-            <div class="test">
+            <div class="test" id="17-settings-backup-pin">
               <div class="head">
-                <span class="name">17-settings-backup-pin</span>
+                <a class="name permalink" href="#17-settings-backup-pin">17-settings-backup-pin</a>
+                <button class="copy-link" type="button" data-target="17-settings-backup-pin" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">17-settings-backup-pin.yaml</span>
               </div>
               <div class="img">
@@ -1181,9 +1294,10 @@
                 führt aktuell zurück in den Restore-Flow.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="18-settings-seed-hidden">
               <div class="head">
-                <span class="name">18-settings-seed-hidden</span>
+                <a class="name permalink" href="#18-settings-seed-hidden">18-settings-seed-hidden</a>
+                <button class="copy-link" type="button" data-target="18-settings-seed-hidden" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">18-settings-seed-hidden.yaml</span>
               </div>
               <div class="img">
@@ -1199,9 +1313,10 @@
                 landet, kann die Phrase neu sichern, ohne die Wallet zurückzusetzen.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="19-settings-seed-revealed">
               <div class="head">
-                <span class="name">19-settings-seed-revealed</span>
+                <a class="name permalink" href="#19-settings-seed-revealed">19-settings-seed-revealed</a>
+                <button class="copy-link" type="button" data-target="19-settings-seed-revealed" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">19-settings-seed-revealed.yaml</span>
               </div>
               <div class="img">
@@ -1248,9 +1363,10 @@
           </p>
 
           <div class="tests cols-2">
-            <div class="test">
+            <div class="test" id="25-restore-wallet">
               <div class="head">
-                <span class="name">25-restore-wallet</span>
+                <a class="name permalink" href="#25-restore-wallet">25-restore-wallet</a>
+                <button class="copy-link" type="button" data-target="25-restore-wallet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">25-restore-wallet.yaml</span>
               </div>
               <div class="img">
@@ -1267,9 +1383,10 @@
                 Neuinstallation.
               </div>
             </div>
-            <div class="test">
+            <div class="test" id="26-terms">
               <div class="head">
-                <span class="name">26-terms</span>
+                <a class="name permalink" href="#26-terms">26-terms</a>
+                <button class="copy-link" type="button" data-target="26-terms" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">26-terms.yaml</span>
               </div>
               <div class="img">
