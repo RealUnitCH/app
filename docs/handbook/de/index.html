@@ -41,6 +41,49 @@
           });
         });
 
+        // Copy-link buttons next to each flow name: one click copies the
+        // absolute deep-link to the clipboard, updates the URL bar to that
+        // anchor, and flashes a checkmark for 1.2s. Falls back to the
+        // textarea+execCommand trick on browsers without async clipboard.
+        document.querySelectorAll('.copy-link').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var target = btn.dataset.target;
+            if (!target) return;
+            var url = location.origin + location.pathname + '#' + target;
+            var done = function () {
+              var orig = btn.textContent;
+              btn.textContent = '✓ Kopiert';
+              btn.dataset.copied = 'true';
+              setTimeout(function () {
+                btn.textContent = orig;
+                btn.removeAttribute('data-copied');
+              }, 1200);
+              if (location.hash !== '#' + target) location.hash = target;
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(url).then(done, function () {
+                fallbackCopy(url);
+                done();
+              });
+            } else {
+              fallbackCopy(url);
+              done();
+            }
+          });
+        });
+        function fallbackCopy(text) {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            document.execCommand('copy');
+          } catch (e) {}
+          document.body.removeChild(ta);
+        }
+
         // Expand/collapse-all toggle in the sidebar.
         var toggle = document.getElementById('spec-toggle-all');
         if (!toggle) return;
@@ -360,11 +403,14 @@
       }
       .test .head {
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        gap: 8px;
         padding: 10px 14px;
         border-bottom: 1px solid var(--line);
         background: var(--surface-2);
+      }
+      .test .head .src {
+        margin-left: auto;
       }
       .test .name {
         font-family: 'SF Mono', Menlo, Consolas, monospace;
@@ -378,6 +424,32 @@
       a.permalink.name:hover {
         text-decoration: underline;
         color: var(--brand);
+      }
+      .copy-link {
+        appearance: none;
+        background: transparent;
+        border: 1px solid transparent;
+        padding: 2px 6px;
+        font: inherit;
+        font-size: 11.5px;
+        line-height: 1;
+        color: var(--ink-4);
+        cursor: pointer;
+        border-radius: 4px;
+        transition:
+          color 120ms ease,
+          background 120ms ease,
+          border-color 120ms ease;
+      }
+      .copy-link:hover {
+        color: var(--brand);
+        background: var(--surface);
+        border-color: var(--line);
+      }
+      .copy-link[data-copied='true'] {
+        color: var(--brand);
+        background: var(--surface);
+        border-color: var(--brand);
       }
       .test .src {
         font-family: 'SF Mono', Menlo, Consolas, monospace;
@@ -596,6 +668,7 @@
             <div class="test" id="01-welcome">
               <div class="head">
                 <a class="name permalink" href="#01-welcome">01-welcome</a>
+                <button class="copy-link" type="button" data-target="01-welcome" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">01-welcome.yaml</span>
               </div>
               <div class="img">
@@ -614,6 +687,7 @@
             <div class="test" id="02-create-vs-restore">
               <div class="head">
                 <a class="name permalink" href="#02-create-vs-restore">02-create-vs-restore</a>
+                <button class="copy-link" type="button" data-target="02-create-vs-restore" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">02-create-vs-restore.yaml</span>
               </div>
               <div class="img">
@@ -632,6 +706,7 @@
             <div class="test" id="03-software-wallet-terms">
               <div class="head">
                 <a class="name permalink" href="#03-software-wallet-terms">03-software-wallet-terms</a>
+                <button class="copy-link" type="button" data-target="03-software-wallet-terms" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">03-software-wallet-terms.yaml</span>
               </div>
               <div class="img">
@@ -692,6 +767,7 @@
             <div class="test" id="04-seed-hidden">
               <div class="head">
                 <a class="name permalink" href="#04-seed-hidden">04-seed-hidden</a>
+                <button class="copy-link" type="button" data-target="04-seed-hidden" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">04-seed-hidden.yaml</span>
               </div>
               <div class="img">
@@ -711,6 +787,7 @@
             <div class="test" id="05-seed-revealed">
               <div class="head">
                 <a class="name permalink" href="#05-seed-revealed">05-seed-revealed</a>
+                <button class="copy-link" type="button" data-target="05-seed-revealed" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">05-seed-revealed.yaml</span>
               </div>
               <div class="img">
@@ -729,6 +806,7 @@
             <div class="test" id="06-verify-seed">
               <div class="head">
                 <a class="name permalink" href="#06-verify-seed">06-verify-seed</a>
+                <button class="copy-link" type="button" data-target="06-verify-seed" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">06-verify-seed.yaml</span>
               </div>
               <div class="img">
@@ -778,6 +856,7 @@
             <div class="test" id="07-onboarding-completed">
               <div class="head">
                 <a class="name permalink" href="#07-onboarding-completed">07-onboarding-completed</a>
+                <button class="copy-link" type="button" data-target="07-onboarding-completed" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">07-onboarding-completed.yaml</span>
               </div>
               <div class="img">
@@ -829,6 +908,7 @@
             <div class="test" id="08-pin-setup">
               <div class="head">
                 <a class="name permalink" href="#08-pin-setup">08-pin-setup</a>
+                <button class="copy-link" type="button" data-target="08-pin-setup" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">08-pin-setup.yaml</span>
               </div>
               <div class="img">
@@ -846,6 +926,7 @@
             <div class="test" id="09-pin-confirm">
               <div class="head">
                 <a class="name permalink" href="#09-pin-confirm">09-pin-confirm</a>
+                <button class="copy-link" type="button" data-target="09-pin-confirm" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">09-pin-confirm.yaml</span>
               </div>
               <div class="img">
@@ -865,6 +946,7 @@
             <div class="test" id="10-biometric-prompt">
               <div class="head">
                 <a class="name permalink" href="#10-biometric-prompt">10-biometric-prompt</a>
+                <button class="copy-link" type="button" data-target="10-biometric-prompt" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">10-biometric-prompt.yaml</span>
               </div>
               <div class="img">
@@ -918,6 +1000,7 @@
             <div class="test" id="11-dashboard">
               <div class="head">
                 <a class="name permalink" href="#11-dashboard">11-dashboard</a>
+                <button class="copy-link" type="button" data-target="11-dashboard" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">11-dashboard.yaml</span>
               </div>
               <div class="img">
@@ -968,6 +1051,7 @@
             <div class="test" id="12-settings">
               <div class="head">
                 <a class="name permalink" href="#12-settings">12-settings</a>
+                <button class="copy-link" type="button" data-target="12-settings" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">12-settings.yaml</span>
               </div>
               <div class="img">
@@ -986,6 +1070,7 @@
             <div class="test" id="13-settings-languages">
               <div class="head">
                 <a class="name permalink" href="#13-settings-languages">13-settings-languages</a>
+                <button class="copy-link" type="button" data-target="13-settings-languages" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">13-settings-languages.yaml</span>
               </div>
               <div class="img">
@@ -1004,6 +1089,7 @@
             <div class="test" id="14-settings-currency">
               <div class="head">
                 <a class="name permalink" href="#14-settings-currency">14-settings-currency</a>
+                <button class="copy-link" type="button" data-target="14-settings-currency" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">14-settings-currency.yaml</span>
               </div>
               <div class="img">
@@ -1021,6 +1107,7 @@
             <div class="test" id="15-settings-network">
               <div class="head">
                 <a class="name permalink" href="#15-settings-network">15-settings-network</a>
+                <button class="copy-link" type="button" data-target="15-settings-network" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">15-settings-network.yaml</span>
               </div>
               <div class="img">
@@ -1039,6 +1126,7 @@
             <div class="test" id="16-settings-wallet-address">
               <div class="head">
                 <a class="name permalink" href="#16-settings-wallet-address">16-settings-wallet-address</a>
+                <button class="copy-link" type="button" data-target="16-settings-wallet-address" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">16-settings-wallet-address.yaml</span>
               </div>
               <div class="img">
@@ -1058,6 +1146,7 @@
             <div class="test" id="20-settings-legal-documents">
               <div class="head">
                 <a class="name permalink" href="#20-settings-legal-documents">20-settings-legal-documents</a>
+                <button class="copy-link" type="button" data-target="20-settings-legal-documents" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">20-settings-legal-documents.yaml</span>
               </div>
               <div class="img">
@@ -1075,6 +1164,7 @@
             <div class="test" id="21-settings-aktionariat-documents">
               <div class="head">
                 <a class="name permalink" href="#21-settings-aktionariat-documents">21-settings-aktionariat-documents</a>
+                <button class="copy-link" type="button" data-target="21-settings-aktionariat-documents" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">21-settings-aktionariat-documents.yaml</span>
               </div>
               <div class="img">
@@ -1092,6 +1182,7 @@
             <div class="test" id="22-settings-dfx-documents">
               <div class="head">
                 <a class="name permalink" href="#22-settings-dfx-documents">22-settings-dfx-documents</a>
+                <button class="copy-link" type="button" data-target="22-settings-dfx-documents" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">22-settings-dfx-documents.yaml</span>
               </div>
               <div class="img">
@@ -1109,6 +1200,7 @@
             <div class="test" id="23-settings-contact">
               <div class="head">
                 <a class="name permalink" href="#23-settings-contact">23-settings-contact</a>
+                <button class="copy-link" type="button" data-target="23-settings-contact" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">23-settings-contact.yaml</span>
               </div>
               <div class="img">
@@ -1128,6 +1220,7 @@
             <div class="test" id="24-settings-delete-wallet">
               <div class="head">
                 <a class="name permalink" href="#24-settings-delete-wallet">24-settings-delete-wallet</a>
+                <button class="copy-link" type="button" data-target="24-settings-delete-wallet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">24-settings-delete-wallet.yaml</span>
               </div>
               <div class="img">
@@ -1178,6 +1271,7 @@
             <div class="test" id="17-settings-backup-pin">
               <div class="head">
                 <a class="name permalink" href="#17-settings-backup-pin">17-settings-backup-pin</a>
+                <button class="copy-link" type="button" data-target="17-settings-backup-pin" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">17-settings-backup-pin.yaml</span>
               </div>
               <div class="img">
@@ -1197,6 +1291,7 @@
             <div class="test" id="18-settings-seed-hidden">
               <div class="head">
                 <a class="name permalink" href="#18-settings-seed-hidden">18-settings-seed-hidden</a>
+                <button class="copy-link" type="button" data-target="18-settings-seed-hidden" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">18-settings-seed-hidden.yaml</span>
               </div>
               <div class="img">
@@ -1215,6 +1310,7 @@
             <div class="test" id="19-settings-seed-revealed">
               <div class="head">
                 <a class="name permalink" href="#19-settings-seed-revealed">19-settings-seed-revealed</a>
+                <button class="copy-link" type="button" data-target="19-settings-seed-revealed" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">19-settings-seed-revealed.yaml</span>
               </div>
               <div class="img">
@@ -1264,6 +1360,7 @@
             <div class="test" id="25-restore-wallet">
               <div class="head">
                 <a class="name permalink" href="#25-restore-wallet">25-restore-wallet</a>
+                <button class="copy-link" type="button" data-target="25-restore-wallet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">25-restore-wallet.yaml</span>
               </div>
               <div class="img">
@@ -1283,6 +1380,7 @@
             <div class="test" id="26-terms">
               <div class="head">
                 <a class="name permalink" href="#26-terms">26-terms</a>
+                <button class="copy-link" type="button" data-target="26-terms" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
                 <span class="src">26-terms.yaml</span>
               </div>
               <div class="img">
