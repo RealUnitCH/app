@@ -42,7 +42,7 @@ User-facing functions, their activation status, and the tests that cover them. I
 
 **Triage legend** (MVP testing decision): `mvp` = in MVP scope, must reach full test coverage before launch · `defer` = ships but does not block MVP coverage (coverage required eventually, no hard deadline) · `planned` = not in scope for MVP.
 
-**Tests legend:** `widget` = `testWidgets` spec under `test/screens/**` · `unit` = pure-Dart `test/packages/**` spec · `cubit` = `bloc_test`-style spec for a Bloc/Cubit · `integration` = `test/integration/**` spec crossing ≥ 2 production layers with `FakeBitboxCredentials` · `e2e` = Maestro YAML flow on real hardware · `—` = no test exists.
+**Tests legend:** `widget` = `testWidgets` spec under `test/screens/**` · `golden` = visual-regression spec under `test/goldens/**` (pixel-exact baseline rendered on the dfx01 self-hosted runner, see [`docs/visual-regression-tests.md`](docs/visual-regression-tests.md)) · `unit` = pure-Dart `test/packages/**` spec · `cubit` = `bloc_test`-style spec for a Bloc/Cubit · `integration` = `test/integration/**` spec crossing ≥ 2 production layers with `FakeBitboxCredentials` · `e2e` = Maestro YAML flow on real hardware · `—` = no test exists.
 
 > Per-feature line-coverage % is not surfaced in this table. The repo-wide scoped coverage is enforced by the `Coverage Floor Gate` CI job against `.coverage-floor-lines` / `.coverage-floor-functions`; the lcov artifact attached to every PR run holds the per-file breakdown.
 
@@ -61,39 +61,39 @@ The transport is USB on Android and Bluetooth on iOS; the original BitBox 02 has
 
 | Feature | Status | Triage | Tests |
 | --- | --- | --- | --- |
-| Welcome screen | always | mvp | widget (`welcome_page_test.dart`, `welcome/widgets/welcome_card_test.dart`) |
-| Create wallet — software (generate seed) | always | mvp | widget (`create_wallet/create_wallet_page_test.dart`); no cubit/service test |
-| Create wallet — BitBox (hardware connect) | hardware | mvp | — (integration test added via [#320](https://github.com/DFXswiss/realunit-app/pull/320)) |
-| Restore wallet — software seed phrase | always | mvp | widget (`restore_wallet/restore_wallet_page_test.dart`) |
-| Verify seed phrase (3-word challenge) | always | mvp | widget (`verify_seed/verify_seed_page_test.dart`) |
-| Setup PIN | always | mvp | widget (`pin/setup_pin_page_test.dart`) |
-| Verify PIN (unlock) | always | mvp | widget (`pin/verify_pin_page_test.dart`) |
+| Welcome screen | always | mvp | widget (`welcome_page_test.dart`, `welcome/widgets/welcome_card_test.dart`) + golden (`welcome/welcome_golden_test.dart`) |
+| Create wallet — software (generate seed) | always | mvp | widget (`create_wallet/create_wallet_page_test.dart`) + golden (`create_wallet/create_wallet_golden_test.dart`); no cubit/service test |
+| Create wallet — BitBox (hardware connect) | hardware | mvp | golden (`hardware_connect_bitbox/connect_bitbox_golden_test.dart`); integration test added via [#320](https://github.com/DFXswiss/realunit-app/pull/320) |
+| Restore wallet — software seed phrase | always | mvp | widget (`restore_wallet/restore_wallet_page_test.dart`) + golden (`restore_wallet/restore_wallet_golden_test.dart`) |
+| Verify seed phrase (3-word challenge) | always | mvp | widget (`verify_seed/verify_seed_page_test.dart`) + golden (`verify_seed/verify_seed_golden_test.dart`) |
+| Setup PIN | always | mvp | widget (`pin/setup_pin_page_test.dart`) + golden (`pin/setup_pin_golden_test.dart`) |
+| Verify PIN (unlock) | always | mvp | widget (`pin/verify_pin_page_test.dart`) + golden (`pin/verify_pin_golden_test.dart`) |
 | Biometric unlock (Face ID / Touch ID / fingerprint) | always | mvp | — |
-| Legal disclaimer (post-onboarding gate) | always | mvp | — (cubit transition covered in [#319](https://github.com/DFXswiss/realunit-app/pull/319)) |
-| Onboarding completion | always | mvp | widget (`onboarding/onboarding_completed_page_test.dart`) |
+| Legal disclaimer (post-onboarding gate) | always | mvp | golden (`legal/legal_disclaimer_golden_test.dart`, `legal/legal_document_golden_test.dart`); cubit transition covered in [#319](https://github.com/DFXswiss/realunit-app/pull/319) |
+| Onboarding completion | always | mvp | widget (`onboarding/onboarding_completed_page_test.dart`) + golden (`onboarding/onboarding_completed_golden_test.dart`) |
 
 ### Wallet actions
 
 | Feature | Status | Triage | Tests |
 | --- | --- | --- | --- |
-| Dashboard — asset list + total balance | always | mvp | cubit/bloc (`dashboard/dashboard_bloc_test.dart`, `dashboard/balance_cubit_test.dart`, `dashboard/portfolio_chart_cubit_test.dart`, `dashboard/price_chart_cubit_test.dart`, `dashboard/pending_transactions_cubit_test.dart`, `dashboard/dashboard_transaction_history_cubit_test.dart`) + widget (`dashboard/widgets/**`) |
-| Receive — address + QR code | always | mvp | widget (`receive/widgets/qr_address_widget_test.dart`) |
-| Transaction history | always | mvp | widget (`transaction_history/transaction_history_page_test.dart`) |
-| Sell to BitBox (on-chain transfer) | hardware | defer | — |
+| Dashboard — asset list + total balance | always | mvp | cubit/bloc (`dashboard/dashboard_bloc_test.dart`, `dashboard/balance_cubit_test.dart`, `dashboard/portfolio_chart_cubit_test.dart`, `dashboard/price_chart_cubit_test.dart`, `dashboard/pending_transactions_cubit_test.dart`, `dashboard/dashboard_transaction_history_cubit_test.dart`) + widget (`dashboard/widgets/**`) + golden (`dashboard/dashboard_golden_test.dart`) |
+| Receive — address + QR code | always | mvp | widget (`receive/widgets/qr_address_widget_test.dart`) + golden (`receive/receive_golden_test.dart`) |
+| Transaction history | always | mvp | widget (`transaction_history/transaction_history_page_test.dart`) + golden (`transaction_history/transaction_history_golden_test.dart`) |
+| Sell to BitBox (on-chain transfer) | hardware | defer | golden (`sell_bitbox/sell_bitbox_golden_test.dart`) |
 
 ### DFX backend integration
 
 | Feature | Status | Triage | Tests |
 | --- | --- | --- | --- |
-| Buy — DFX fiat on-ramp (SEPA) | always | mvp | widget (`buy/buy_page_test.dart`) + unit (`real_unit_buy_payment_info_service_test.dart`); added via [#321](https://github.com/DFXswiss/realunit-app/pull/321) |
-| Sell — DFX fiat off-ramp (IBAN) | always | mvp | widget (`sell/sell_page_test.dart`); added via [#321](https://github.com/DFXswiss/realunit-app/pull/321) |
-| KYC: Email + 2FA gate | always | mvp | widget (`kyc_email_page_test.dart`, `kyc_2fa_page_test.dart`); cubit added via [#319](https://github.com/DFXswiss/realunit-app/pull/319) |
-| KYC: Registration + BitBox EIP-712 sign | always | mvp | widget (`kyc_registration_page_test.dart`) + unit (`eip712_signer_test.dart`); cubit / `registration_submit` / sign-flow integration tests added via [#319](https://github.com/DFXswiss/realunit-app/pull/319) + [#320](https://github.com/DFXswiss/realunit-app/pull/320) |
-| KYC: Nationality | always | mvp | widget (`kyc_nationality_page_test.dart`) |
-| KYC: Financial data | always | mvp | widget (`kyc_financial_data_page_test.dart`) |
-| KYC: Ident | always | mvp | widget (`kyc_ident_page_test.dart`) |
-| KYC: Pending / Completed / Failure | always | mvp | widget (`kyc/subpages/kyc_*_page_test.dart`) |
-| KYC: AccountMergeRequested / UnsupportedStepFailure | always | mvp | — (cubit paths added via [#319](https://github.com/DFXswiss/realunit-app/pull/319)) |
+| Buy — DFX fiat on-ramp (SEPA) | always | mvp | widget (`buy/buy_page_test.dart`) + golden (`buy/buy_golden_test.dart`) + unit (`real_unit_buy_payment_info_service_test.dart`); added via [#321](https://github.com/DFXswiss/realunit-app/pull/321) |
+| Sell — DFX fiat off-ramp (IBAN) | always | mvp | widget (`sell/sell_page_test.dart`) + golden (`sell/sell_golden_test.dart`, `sell/sell_bank_account_selection_golden_test.dart`); added via [#321](https://github.com/DFXswiss/realunit-app/pull/321) |
+| KYC: Email + 2FA gate | always | mvp | widget (`kyc_email_page_test.dart`, `kyc_2fa_page_test.dart`) + golden (`kyc/kyc_email_golden_test.dart`, `kyc/kyc_email_verification_golden_test.dart`, `kyc/kyc_2fa_golden_test.dart`); cubit added via [#319](https://github.com/DFXswiss/realunit-app/pull/319) |
+| KYC: Registration + BitBox EIP-712 sign | always | mvp | widget (`kyc_registration_page_test.dart`) + golden (`kyc/kyc_registration_golden_test.dart`) + unit (`eip712_signer_test.dart`); cubit / `registration_submit` / sign-flow integration tests added via [#319](https://github.com/DFXswiss/realunit-app/pull/319) + [#320](https://github.com/DFXswiss/realunit-app/pull/320) |
+| KYC: Nationality | always | mvp | widget (`kyc_nationality_page_test.dart`) + golden (`kyc/kyc_nationality_golden_test.dart`) |
+| KYC: Financial data | always | mvp | widget (`kyc_financial_data_page_test.dart`) + golden (`kyc/kyc_financial_data_golden_test.dart`, `kyc/kyc_financial_data_failure_golden_test.dart`, `kyc/kyc_financial_data_loading_golden_test.dart`, `kyc/kyc_financial_data_questions_golden_test.dart`) |
+| KYC: Ident | always | mvp | widget (`kyc_ident_page_test.dart`) + golden (`kyc/kyc_ident_golden_test.dart`) |
+| KYC: Pending / Completed / Failure | always | mvp | widget (`kyc/subpages/kyc_*_page_test.dart`) + golden (`kyc/kyc_pending_golden_test.dart`, `kyc/kyc_completed_golden_test.dart`, `kyc/kyc_failure_golden_test.dart`, `kyc/kyc_loading_golden_test.dart`) |
+| KYC: AccountMergeRequested / UnsupportedStepFailure | always | mvp | golden (`kyc/kyc_account_merge_golden_test.dart`); cubit paths added via [#319](https://github.com/DFXswiss/realunit-app/pull/319) |
 | `DFXAuthService` (lazy auth + 401 retry) | always | mvp | — (unit tests added via [#319](https://github.com/DFXswiss/realunit-app/pull/319) + [#321](https://github.com/DFXswiss/realunit-app/pull/321)) |
 | `balance_service` (balance fetch + cache) | always | mvp | unit (`balance_service_test.dart`) |
 | `format_fixed` / `parse_fixed` (decimal helpers) | always | mvp | unit (`format_fixed_test.dart`, `parse_fixed_test.dart`) |
@@ -104,22 +104,24 @@ The transport is USB on Android and Bluetooth on iOS; the original BitBox 02 has
 
 | Feature | Status | Triage | Tests |
 | --- | --- | --- | --- |
-| Wallet address (export) | always | defer | widget (`settings_wallet_address/settings_wallet_address_page_test.dart`) |
-| User data — overview | always | defer | widget (`settings_user_data/settings_user_data_page_test.dart`) |
-| User data — edit name / address / phone | always | defer | widget (3 subpage specs under `settings_user_data/subpages/`) |
-| Show seed phrase | always | defer | widget (`settings_seed/settings_seed_page_test.dart`) |
-| Legal documents | always | defer | widget (`settings_legal_documents/settings_legal_documents_page_test.dart`) |
-| Currencies / Languages / Network | always | defer | — |
-| Tax report | always | defer | — |
-| Contact | always | defer | — |
+| Settings — root (sections list) | always | defer | golden (`settings/settings_golden_test.dart`) |
+| Wallet address (export) | always | defer | widget (`settings_wallet_address/settings_wallet_address_page_test.dart`) + golden (`settings_wallet_address/settings_wallet_address_golden_test.dart`) |
+| User data — overview | always | defer | widget (`settings_user_data/settings_user_data_page_test.dart`) + golden (`settings_user_data/settings_user_data_golden_test.dart`) |
+| User data — edit name / address / phone | always | defer | widget (3 subpage specs under `settings_user_data/subpages/`) + golden (`settings_user_data/settings_edit_name_golden_test.dart`, `settings_user_data/settings_edit_address_golden_test.dart`, `settings_user_data/settings_edit_phone_number_golden_test.dart`, `settings_user_data/settings_edit_loading_golden_test.dart`, `settings_user_data/settings_edit_failure_golden_test.dart`, `settings_user_data/settings_edit_pending_golden_test.dart`) |
+| Show seed phrase | always | defer | widget (`settings_seed/settings_seed_page_test.dart`) + golden (`settings_seed/settings_seed_golden_test.dart`) |
+| Legal documents | always | defer | widget (`settings_legal_documents/settings_legal_documents_page_test.dart`) + golden (`settings_legal_documents/settings_legal_documents_golden_test.dart`, `settings_legal_documents/settings_aktionariat_documents_golden_test.dart`, `settings_legal_documents/settings_dfx_documents_golden_test.dart`) |
+| Currencies / Languages / Network | always | defer | golden (`settings_currencies/settings_currencies_golden_test.dart`, `settings_languages/settings_languages_golden_test.dart`, `settings_network/settings_network_golden_test.dart`) |
+| Tax report | always | defer | golden (`settings_tax_report/settings_tax_report_golden_test.dart`) |
+| Contact | always | defer | golden (`settings_contact/settings_contact_golden_test.dart`) |
 
 ### Support
 
 | Feature | Status | Triage | Tests |
 | --- | --- | --- | --- |
-| Support — chat | always | defer | widget (`support/support_chat_page_test.dart`) |
-| Support — create ticket | always | defer | widget (`support/support_create_ticket_page_test.dart`) |
-| Support — tickets list | always | defer | widget (`support/support_tickets_page_test.dart`) |
+| Support — root (chat / create / list buttons) | always | defer | golden (`support/support_golden_test.dart`) |
+| Support — chat | always | defer | widget (`support/support_chat_page_test.dart`) + golden (`support/support_chat_golden_test.dart`) |
+| Support — create ticket | always | defer | widget (`support/support_create_ticket_page_test.dart`) + golden (`support/support_create_ticket_golden_test.dart`) |
+| Support — tickets list | always | defer | widget (`support/support_tickets_page_test.dart`) + golden (`support/support_tickets_golden_test.dart`) |
 
 ## Triage gaps
 
@@ -128,6 +130,7 @@ The activated surface (see "Coverage scope" above) is at **100 % scoped line cov
 Out of scope of the gate and tracked elsewhere:
 
 - **Widget render paths** — measured separately via `testWidgets` specs, not in the line-coverage gate (deliberate; see `docs/testing.md` "Tier 0" rationale).
+- **Visual regression (goldens)** — every `lib/screens/**/*_page.dart` has a `test/goldens/**/*_golden_test.dart` companion, validated pixel-exact on the dfx01 self-hosted runner by the `Visual Regression` CI job. Not folded into the line-coverage gate. The one exception is `lib/screens/web_view/web_view_page.dart` — `InAppWebView` is a platform-view that has no headless render in `flutter_test`, the spec is committed with `skip: true`. See [`docs/visual-regression-tests.md`](docs/visual-regression-tests.md).
 - **Tier 2 (firmware simulator)** — runs in `bitbox-simulator.yml`, not folded into the scoped coverage number.
 - **Tier 3 (Maestro handbook flows)** — runs in `tier3-handbook.yaml`, not folded in.
 - **`lib/widgets/chain_asset_icon.dart`** and **`lib/widgets/image_picker_sheet.dart`** — `Image.asset` / `ImagePicker` platform-channel paths, see "Surface that needs infra work" in `docs/testing.md`.
@@ -158,7 +161,7 @@ Tier 1 specs live under `test/integration/**` and run inside the same `flutter t
 
 | Workflow                     | Trigger                                                       | Action                                                                                  |
 | ---------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `pull-request.yaml`          | PR to `develop` · push `develop` · manual                     | `flutter analyze` + `flutter test --coverage`, scope lcov to the activated surface, fail below the committed floor, upload lcov artifact. Jobs: `Analyze & Test`, `Coverage Floor Gate`, `BitBox quirks audit`. |
+| `pull-request.yaml`          | PR to `develop` · push `develop` · manual                     | `flutter analyze` + `flutter test --coverage --exclude-tags golden`, scope lcov to the activated surface, fail below the committed floor, upload lcov artifact. In parallel, the `Visual Regression` job runs `flutter test test/goldens` on the dfx01 self-hosted runner against the committed pixel baselines under `test/goldens/**/goldens/macos/` and uploads diff PNGs on failure. Jobs: `Analyze & Test`, `Coverage Floor Gate`, `Visual Regression`, `BitBox quirks audit`. |
 | `tier3-handbook.yaml`        | PR to `develop` with label `tier3:full` · push `develop` · manual | Runs every `.maestro/handbook/*.yaml` flow on a fresh iOS Simulator (`iPhone 17`) and uploads captured screenshots (Tier 3) |
 | `bitbox-simulator.yml`       | PR to `develop` touching `lib/packages/hardware_wallet/**`, `lib/packages/wallet/**`, `lib/screens/hardware_connect_bitbox/**`, their test mirrors, `pubspec.yaml`, or the workflow itself · manual | Runs the BitBox02 firmware simulator with `bitbox-testkit` baselines (Tier 2)           |
 | `bitbox-simulator-slash.yml` | `/bitbox-simulator` comment on any PR                         | Same engine as above, on-demand per PR (variants: default / `ref=main`)                 |
