@@ -102,9 +102,24 @@ void main() {
 
   group('$Country', () {
     test('equality is by id only', () {
-      const a = Country(id: 41, symbol: 'CH', name: 'Switzerland');
-      const b = Country(id: 41, symbol: 'XX', name: 'Different');
-      const c = Country(id: 49, symbol: 'DE', name: 'Germany');
+      const a = Country(
+        id: 41,
+        symbol: 'CH',
+        name: 'Switzerland',
+        kycAllowed: true,
+      );
+      const b = Country(
+        id: 41,
+        symbol: 'XX',
+        name: 'Different',
+        kycAllowed: true,
+      );
+      const c = Country(
+        id: 49,
+        symbol: 'DE',
+        name: 'Germany',
+        kycAllowed: true,
+      );
 
       expect(a, b);
       expect(a, isNot(c));
@@ -208,29 +223,29 @@ void main() {
 }
 
 Map<String, dynamic> _userDataJson() => {
-      'email': 'a@b.com',
-      'name': 'Ada Lovelace',
-      'type': 'HUMAN',
-      'phoneNumber': '+41 79 000 00 00',
-      'birthday': '1815-12-10',
-      'nationality': 'CH',
-      'addressStreet': 'Bahnhofstrasse 1',
-      'addressPostalCode': '8000',
-      'addressCity': 'Zurich',
-      'addressCountry': 'CH',
-      'swissTaxResidence': true,
-      'lang': 'de',
-      'kycData': {
-        'accountType': 'Personal',
-        'firstName': 'Ada',
-        'lastName': 'Lovelace',
-        'phone': '+41 79 000 00 00',
-        'address': {
-          'street': 'Bahnhofstrasse',
-          'houseNumber': '1',
-          'zip': '8000',
-          'city': 'Zurich',
-          'country': {'id': 41},
-        },
-      },
-    };
+  'email': 'a@b.com',
+  'name': 'Ada Lovelace',
+  'type': 'HUMAN',
+  'phoneNumber': '+41 79 000 00 00',
+  'birthday': '1815-12-10',
+  'nationality': 'CH',
+  'addressStreet': 'Bahnhofstrasse 1',
+  'addressPostalCode': '8000',
+  'addressCity': 'Zurich',
+  'addressCountry': 'CH',
+  'swissTaxResidence': true,
+  'lang': 'de',
+  'kycData': {
+    'accountType': 'Personal',
+    'firstName': 'Ada',
+    'lastName': 'Lovelace',
+    'phone': '+41 79 000 00 00',
+    'address': {
+      'street': 'Bahnhofstrasse',
+      'houseNumber': '1',
+      'zip': '8000',
+      'city': 'Zurich',
+      'country': {'id': 41},
+    },
+  },
+};

@@ -55,11 +55,21 @@ void main() {
       type: RegistrationUserType.human,
       phoneNumber: '+41',
       birthday: DateTime.utc(1815, 12, 10),
-      nationality: const Country(id: 41, symbol: 'CH', name: 'Switzerland'),
+      nationality: const Country(
+        id: 41,
+        symbol: 'CH',
+        name: 'Switzerland',
+        kycAllowed: true,
+      ),
       addressStreet: 'S',
       addressPostalCode: '8000',
       addressCity: 'Zurich',
-      addressCountry: const Country(id: 41, symbol: 'CH', name: 'Switzerland'),
+      addressCountry: const Country(
+        id: 41,
+        symbol: 'CH',
+        name: 'Switzerland',
+        kycAllowed: true,
+      ),
       swissTaxResidence: true,
       lang: 'de',
     );

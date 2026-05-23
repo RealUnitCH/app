@@ -31,7 +31,12 @@ void main() {
       build: () => KycNationalityCubit(service),
       act: (c) => c.registerNationality(
         url: 'https://kyc/nat',
-        nationality: const Country(id: 41, symbol: 'CH', name: 'Switzerland'),
+        nationality: const Country(
+          id: 41,
+          symbol: 'CH',
+          name: 'Switzerland',
+          kycAllowed: true,
+        ),
       ),
       expect: () => [
         isA<KycNationalityLoading>(),
@@ -46,17 +51,22 @@ void main() {
 
     blocTest<KycNationalityCubit, KycNationalityState>(
       'failure: setData throws → emits Loading then Failure carrying e.toString()',
-      setUp: () => when(() => service.setData(any(), any()))
-          .thenAnswer((_) async => throw Exception('boom')),
+      setUp: () => when(
+        () => service.setData(any(), any()),
+      ).thenAnswer((_) async => throw Exception('boom')),
       build: () => KycNationalityCubit(service),
       act: (c) => c.registerNationality(
         url: 'https://kyc/nat',
-        nationality: const Country(id: 41, symbol: 'CH', name: 'Switzerland'),
+        nationality: const Country(
+          id: 41,
+          symbol: 'CH',
+          name: 'Switzerland',
+          kycAllowed: true,
+        ),
       ),
       expect: () => [
         isA<KycNationalityLoading>(),
-        isA<KycNationalityFailure>()
-            .having((s) => s.message, 'message', contains('boom')),
+        isA<KycNationalityFailure>().having((s) => s.message, 'message', contains('boom')),
       ],
     );
   });
@@ -79,14 +89,18 @@ void main() {
 
     blocTest<Kyc2FaCubit, Kyc2FaState>(
       'failure: request2FaCode throws → Loading → Failure(errorMessage)',
-      setUp: () => when(() => service.request2FaCode())
-          .thenAnswer((_) async => throw Exception('rate limited')),
+      setUp: () => when(
+        () => service.request2FaCode(),
+      ).thenAnswer((_) async => throw Exception('rate limited')),
       build: () => Kyc2FaCubit(service),
       act: (c) => c.requestCode(),
       expect: () => [
         isA<Kyc2FaLoading>(),
-        isA<Kyc2FaFailure>()
-            .having((s) => s.errorMessage, 'errorMessage', contains('rate limited')),
+        isA<Kyc2FaFailure>().having(
+          (s) => s.errorMessage,
+          'errorMessage',
+          contains('rate limited'),
+        ),
       ],
     );
   });
@@ -110,14 +124,18 @@ void main() {
 
     blocTest<Kyc2FaVerifyCubit, Kyc2FaVerifyState>(
       'failure: verify2FaCode throws → Loading → Failure(errorMessage)',
-      setUp: () => when(() => service.verify2FaCode(any()))
-          .thenAnswer((_) async => throw Exception('wrong code')),
+      setUp: () => when(
+        () => service.verify2FaCode(any()),
+      ).thenAnswer((_) async => throw Exception('wrong code')),
       build: () => Kyc2FaVerifyCubit(service),
       act: (c) => c.verifyCode('000000'),
       expect: () => [
         isA<Kyc2FaVerifyLoading>(),
-        isA<Kyc2FaVerifyFailure>()
-            .having((s) => s.errorMessage, 'errorMessage', contains('wrong code')),
+        isA<Kyc2FaVerifyFailure>().having(
+          (s) => s.errorMessage,
+          'errorMessage',
+          contains('wrong code'),
+        ),
       ],
     );
   });

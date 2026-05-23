@@ -49,8 +49,7 @@ void main() {
     session = SessionCache(_MockCacheRepository());
     session.setAuthToken('jwt-1');
 
-    when(() => appStore.apiConfig)
-        .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+    when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
     when(() => appStore.sessionCache).thenReturn(session);
     when(() => appStore.wallet).thenReturn(wallet);
     when(() => wallet.primaryAccount).thenReturn(account);
@@ -84,10 +83,12 @@ void main() {
     });
 
     test('accepts a 202 Accepted response as success', () async {
-      final client = MockClient((_) async => http.Response(
-            jsonEncode({'status': 'merge_requested'}),
-            202,
-          ));
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({'status': 'merge_requested'}),
+          202,
+        ),
+      );
 
       final status = await build(client).registerEmail('a@b.com');
 
@@ -111,26 +112,35 @@ void main() {
 
   group('$RealUnitRegistrationService.completeRegistration', () {
     Registration buildRegistration() => const Registration(
-          type: RegistrationUserType.human,
-          email: 'a@b.com',
-          firstName: 'Ada',
-          lastName: 'Lovelace',
-          phoneNumber: '+41 79 000 00 00',
-          birthday: '1815-12-10',
-          nationality: Country(id: 41, symbol: 'CH', name: 'Switzerland'),
-          addressStreet: 'Bahnhofstrasse',
-          addressStreetNumber: '1',
-          addressPostalCode: '8000',
-          addressCity: 'Zurich',
-          addressCountry: Country(id: 41, symbol: 'CH', name: 'Switzerland'),
-          swissTaxResidence: true,
-        );
+      type: RegistrationUserType.human,
+      email: 'a@b.com',
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      phoneNumber: '+41 79 000 00 00',
+      birthday: '1815-12-10',
+      nationality: Country(
+        id: 41,
+        symbol: 'CH',
+        name: 'Switzerland',
+        kycAllowed: true,
+      ),
+      addressStreet: 'Bahnhofstrasse',
+      addressStreetNumber: '1',
+      addressPostalCode: '8000',
+      addressCity: 'Zurich',
+      addressCountry: Country(
+        id: 41,
+        symbol: 'CH',
+        name: 'Switzerland',
+        kycAllowed: true,
+      ),
+      swissTaxResidence: true,
+    );
 
     test('throws BitboxNotConnectedException when the BitBox is disconnected', () async {
       // Disconnected fake → isConnected = false.
       when(() => account.primaryAddress).thenReturn(
-        FakeBitboxCredentials(behavior: FakeBitboxBehavior.disconnect)
-          ..bitboxManager = null,
+        FakeBitboxCredentials(behavior: FakeBitboxBehavior.disconnect)..bitboxManager = null,
       );
       final client = MockClient((_) async => http.Response('{}', 201));
 
@@ -143,36 +153,35 @@ void main() {
 
   group('$RealUnitRegistrationService.registerWallet', () {
     RealUnitUserDataDto buildUserData() => const RealUnitUserDataDto(
-          email: 'a@b.com',
-          name: 'Ada Lovelace',
-          type: 'HUMAN',
-          phoneNumber: '+41 79 000 00 00',
-          birthday: '1815-12-10',
-          nationality: 'CH',
-          addressStreet: 'Bahnhofstrasse 1',
-          addressPostalCode: '8000',
-          addressCity: 'Zurich',
-          addressCountry: 'CH',
-          swissTaxResidence: true,
-          lang: 'de',
-          kycData: KycPersonalData(
-            accountType: KycAccountType.personal,
-            firstName: 'Ada',
-            lastName: 'Lovelace',
-            phone: '+41 79 000 00 00',
-            address: KycAddress(
-              street: 'Bahnhofstrasse',
-              zip: '8000',
-              city: 'Zurich',
-              country: 41,
-            ),
-          ),
-        );
+      email: 'a@b.com',
+      name: 'Ada Lovelace',
+      type: 'HUMAN',
+      phoneNumber: '+41 79 000 00 00',
+      birthday: '1815-12-10',
+      nationality: 'CH',
+      addressStreet: 'Bahnhofstrasse 1',
+      addressPostalCode: '8000',
+      addressCity: 'Zurich',
+      addressCountry: 'CH',
+      swissTaxResidence: true,
+      lang: 'de',
+      kycData: KycPersonalData(
+        accountType: KycAccountType.personal,
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        phone: '+41 79 000 00 00',
+        address: KycAddress(
+          street: 'Bahnhofstrasse',
+          zip: '8000',
+          city: 'Zurich',
+          country: 41,
+        ),
+      ),
+    );
 
     test('throws BitboxNotConnectedException when the BitBox is disconnected', () async {
       when(() => account.primaryAddress).thenReturn(
-        FakeBitboxCredentials(behavior: FakeBitboxBehavior.disconnect)
-          ..bitboxManager = null,
+        FakeBitboxCredentials(behavior: FakeBitboxBehavior.disconnect)..bitboxManager = null,
       );
       final client = MockClient((_) async => http.Response('{}', 201));
 

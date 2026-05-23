@@ -20,8 +20,18 @@ class _MockCountryService extends Mock implements DfxCountryService {}
 
 class _MockKycService extends Mock implements DfxKycService {}
 
-const _ch = Country(id: 41, symbol: 'CH', name: 'Switzerland');
-const _de = Country(id: 49, symbol: 'DE', name: 'Germany');
+const _ch = Country(
+  id: 41,
+  symbol: 'CH',
+  name: 'Switzerland',
+  kycAllowed: true,
+);
+const _de = Country(
+  id: 49,
+  symbol: 'DE',
+  name: 'Germany',
+  kycAllowed: true,
+);
 
 const _address = KycAddress(
   street: 'Teststrasse',
@@ -42,30 +52,28 @@ const _kycData = KycPersonalData(
 RealUnitUserDataDto _userData({
   String nationality = 'CH',
   String addressCountry = 'CH',
-}) =>
-    RealUnitUserDataDto(
-      email: 'a@b.com',
-      name: 'Test User',
-      type: 'HUMAN',
-      phoneNumber: '+41790000000',
-      birthday: '1990-01-15',
-      nationality: nationality,
-      addressStreet: 'Teststrasse 1',
-      addressPostalCode: '8000',
-      addressCity: 'Zurich',
-      addressCountry: addressCountry,
-      swissTaxResidence: true,
-      lang: 'de',
-      kycData: _kycData,
-    );
+}) => RealUnitUserDataDto(
+  email: 'a@b.com',
+  name: 'Test User',
+  type: 'HUMAN',
+  phoneNumber: '+41790000000',
+  birthday: '1990-01-15',
+  nationality: nationality,
+  addressStreet: 'Teststrasse 1',
+  addressPostalCode: '8000',
+  addressCity: 'Zurich',
+  addressCountry: addressCountry,
+  swissTaxResidence: true,
+  lang: 'de',
+  kycData: _kycData,
+);
 
-KycStepDto _step(KycStepName name, KycStepStatus status, {int seq = 0}) =>
-    KycStepDto(
-      name: name,
-      status: status,
-      sequenceNumber: seq,
-      isCurrent: false,
-    );
+KycStepDto _step(KycStepName name, KycStepStatus status, {int seq = 0}) => KycStepDto(
+  name: name,
+  status: status,
+  sequenceNumber: seq,
+  isCurrent: false,
+);
 
 void main() {
   late _MockWalletService walletService;
@@ -79,10 +87,10 @@ void main() {
   });
 
   SettingsUserDataCubit build() => SettingsUserDataCubit(
-        walletService: walletService,
-        countryService: countryService,
-        kycService: kycService,
-      );
+    walletService: walletService,
+    countryService: countryService,
+    kycService: kycService,
+  );
 
   // Cubit fires getUserData() in its constructor; we assert the final
   // state via stream.firstWhere rather than the full sequence.
@@ -101,7 +109,11 @@ void main() {
         (_) async => const UserDto(
           mail: 'a@b.com',
           kyc: UserKycDto(hash: 'h', level: KycLevel.level20, dataComplete: true),
-          capabilities: UserCapabilitiesDto(canEditName: true, canEditAddress: true, canEditPhone: true),
+          capabilities: UserCapabilitiesDto(
+            canEditName: true,
+            canEditAddress: true,
+            canEditPhone: true,
+          ),
         ),
       );
       when(() => countryService.getCountryBySymbol('CH')).thenAnswer((_) async => _ch);
@@ -182,8 +194,9 @@ void main() {
     });
 
     test('Failure when walletService.getWalletStatus throws', () async {
-      when(() => walletService.getWalletStatus())
-          .thenAnswer((_) async => throw Exception('network'));
+      when(
+        () => walletService.getWalletStatus(),
+      ).thenAnswer((_) async => throw Exception('network'));
       when(() => kycService.getKycStatus()).thenAnswer(
         (_) async => const KycLevelDto(kycLevel: KycLevel.level0, kycSteps: []),
       );
@@ -216,8 +229,9 @@ void main() {
           kyc: UserKycDto(hash: 'h', level: KycLevel.level20, dataComplete: true),
         ),
       );
-      when(() => countryService.getCountryBySymbol(any()))
-          .thenAnswer((_) async => throw Exception('unknown country'));
+      when(
+        () => countryService.getCountryBySymbol(any()),
+      ).thenAnswer((_) async => throw Exception('unknown country'));
 
       final cubit = build();
       await cubit.stream.firstWhere((s) => s is SettingsUserDataFailure);
@@ -226,8 +240,9 @@ void main() {
     });
 
     test('BitboxDisconnected when BitboxNotConnectedException thrown', () async {
-      when(() => walletService.getWalletStatus())
-          .thenAnswer((_) async => throw const BitboxNotConnectedException());
+      when(
+        () => walletService.getWalletStatus(),
+      ).thenAnswer((_) async => throw const BitboxNotConnectedException());
       when(() => kycService.getKycStatus()).thenAnswer(
         (_) async => const KycLevelDto(kycLevel: KycLevel.level0, kycSteps: []),
       );

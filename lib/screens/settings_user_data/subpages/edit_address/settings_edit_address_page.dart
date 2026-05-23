@@ -160,11 +160,8 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                                 ),
                                 CountryField(
                                   label: S.of(context).country,
+                                  purpose: CountryFieldPurpose.residence,
                                   onChanged: (country) => _countryCtrl.value = country,
-                                  validator: (value) {
-                                    if (value == null) return '';
-                                    return null;
-                                  },
                                 ),
                                 FilePickerField(
                                   label: S.of(context).proofDocument,

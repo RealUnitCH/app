@@ -17,7 +17,12 @@ class _MockDfxKycService extends Mock implements DfxKycService {}
 
 class _MockRealUnitRegistrationService extends Mock implements RealUnitRegistrationService {}
 
-const _country = Country(id: 41, symbol: 'CH', name: 'Switzerland');
+const _country = Country(
+  id: 41,
+  symbol: 'CH',
+  name: 'Switzerland',
+  kycAllowed: true,
+);
 
 Registration _registration() => const Registration(
   type: RegistrationUserType.human,

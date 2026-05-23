@@ -6,6 +6,7 @@ import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/nationality/cubit/kyc_nationality/kyc_nationality_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/nationality/kyc_nationality_page.dart';
@@ -25,7 +26,15 @@ class MockDfxCountryService extends Mock implements DfxCountryService {}
 void main() {
   late KycNationalityCubit kycNationalityCubit;
   late KycCubit kycCubit;
+  late MockDfxCountryService countryService;
   final String url = 'https://example.com';
+
+  const country = Country(
+    id: 41,
+    symbol: 'CH',
+    name: 'Switzerland',
+    kycAllowed: true,
+  );
 
   setUp(() {
     kycNationalityCubit = MockKycNationalityCubit();
@@ -34,12 +43,14 @@ void main() {
     when(() => kycNationalityCubit.state).thenReturn(const KycNationalityInitial());
     when(() => kycCubit.state).thenReturn(const KycInitial());
     when(() => kycCubit.checkKyc()).thenAnswer((_) => Future.value());
+    when(() => countryService.getAllCountries()).thenAnswer((_) async => [country]);
   });
 
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
+    countryService = MockDfxCountryService();
     getIt.registerSingleton<DfxKycService>(MockDfxKycService());
-    getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
+    getIt.registerSingleton<DfxCountryService>(countryService);
   }
 
   setUpAll(() {
