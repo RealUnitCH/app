@@ -1,11 +1,15 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
+import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 
-const _testMnemonic =
-    'test test test test test test test test test test test junk';
+class _MockBitboxService extends Mock implements BitboxService {}
+
+const _testMnemonic = 'test test test test test test test test test test test junk';
 
 // Why every sign path on a SoftwareViewWallet throws an Error subtype: in
 // debug builds the assert(false) fires first and surfaces as an
@@ -107,6 +111,125 @@ void main() {
       expect(
         () => wallet.primaryAccount.signMessage('payload'),
         throwsA(isA<UnsupportedError>()),
+      );
+    });
+
+    // The DebugWallet's credentials must reject every sign path with a typed
+    // UnsupportedError — surfaces a regression where a future refactor wires
+    // the debug-view wallet onto a real signing backend. The four entry
+    // points (signToEcSignature, signToSignature, signPersonalMessage,
+    // signPersonalMessageToUint8List) cover the synchronous AND the async
+    // variants the web3dart `Credentials` interface exposes.
+    test('credentials.signToEcSignature throws UnsupportedError', () {
+      final wallet = DebugWallet(1, 'Debug', address);
+
+      expect(
+        () => wallet.primaryAccount.primaryAddress.signToEcSignature(Uint8List(0)),
+        throwsA(isA<UnsupportedError>()),
+      );
+    });
+
+    test('credentials.signToSignature throws UnsupportedError', () {
+      final wallet = DebugWallet(1, 'Debug', address);
+
+      expect(
+        () => wallet.primaryAccount.primaryAddress.signToSignature(Uint8List(0)),
+        throwsA(isA<UnsupportedError>()),
+      );
+    });
+
+    test('credentials.signPersonalMessage throws UnsupportedError', () {
+      final wallet = DebugWallet(1, 'Debug', address);
+
+      expect(
+        () => wallet.primaryAccount.primaryAddress.signPersonalMessage(Uint8List(0)),
+        throwsA(isA<UnsupportedError>()),
+      );
+    });
+
+    test('credentials.signPersonalMessageToUint8List throws UnsupportedError', () {
+      final wallet = DebugWallet(1, 'Debug', address);
+
+      expect(
+        () => wallet.primaryAccount.primaryAddress.signPersonalMessageToUint8List(Uint8List(0)),
+        throwsA(isA<UnsupportedError>()),
+      );
+    });
+
+    test('credentials expose the configured address through the credentials interface', () {
+      final wallet = DebugWallet(1, 'Debug', address);
+
+      expect(
+        wallet.primaryAccount.primaryAddress.address.hex.toLowerCase(),
+        address.toLowerCase(),
+        reason:
+            'the address must round-trip through CredentialsWithKnownAddress '
+            'so downstream consumers (e.g. UI / tx-history) read the same value',
+      );
+    });
+
+    test('id and name are preserved from the constructor', () {
+      final wallet = DebugWallet(7, 'Debug-7', address);
+
+      expect(wallet.id, 7);
+      expect(wallet.name, 'Debug-7');
+      expect(wallet.address, address);
+    });
+  });
+
+  group('$BitboxWallet', () {
+    // Wires BitboxService into the wallet without actually talking to USB / BLE.
+    // The credentials object is just a typed handle stored on the account —
+    // the actual native sign call happens inside BitboxCredentials.signPersonalMessage
+    // which is exercised by the bitbox_credentials suite.
+    const address = '0x0000000000000000000000000000000000000002';
+    late _MockBitboxService bitboxService;
+
+    setUp(() {
+      bitboxService = _MockBitboxService();
+      when(() => bitboxService.getCredentials(any())).thenReturn(BitboxCredentials(address));
+    });
+
+    test('exposes walletType == bitbox', () {
+      final wallet = BitboxWallet(1, 'Hardware', address, bitboxService);
+
+      expect(wallet.walletType, WalletType.bitbox);
+    });
+
+    test('primaryAccount is a BitboxWalletAccount derived at account index 0', () {
+      final wallet = BitboxWallet(1, 'Hardware', address, bitboxService);
+
+      expect(wallet.primaryAccount, isA<BitboxWalletAccount>());
+      expect(wallet.primaryAccount.accountIndex, 0);
+    });
+
+    test('currentAccount starts equal to primaryAccount', () {
+      final wallet = BitboxWallet(1, 'Hardware', address, bitboxService);
+
+      expect(identical(wallet.primaryAccount, wallet.currentAccount), isTrue);
+    });
+
+    test('forwards the address through BitboxService.getCredentials', () {
+      BitboxWallet(1, 'Hardware', address, bitboxService);
+
+      // The constructor must hand the raw address to the service so the
+      // service's lowercase-keyed cache hits regardless of EIP-55 casing.
+      verify(() => bitboxService.getCredentials(address)).called(1);
+    });
+
+    test('id and name are preserved from the constructor', () {
+      final wallet = BitboxWallet(42, 'Treasury', address, bitboxService);
+
+      expect(wallet.id, 42);
+      expect(wallet.name, 'Treasury');
+    });
+
+    test('credentials carry the configured address', () {
+      final wallet = BitboxWallet(1, 'Hardware', address, bitboxService);
+
+      expect(
+        wallet.primaryAccount.primaryAddress.address.hex.toLowerCase(),
+        address.toLowerCase(),
       );
     });
   });
