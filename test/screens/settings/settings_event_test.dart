@@ -94,4 +94,27 @@ void main() {
       expect(toggle, isNot(equals(setEn)));
     });
   });
+
+  group('SettingsEvent (runtime constructor exercise)', () {
+    // The other groups use compile-time `const` constructors which don't
+    // count as runtime-executed lines for the coverage report. Instantiate
+    // every subclass non-const here so each constructor body is hit.
+    test('runtime ctors equal their const counterparts', () {
+      // ignore_for_file: prefer_const_constructors
+      final lang = SetLanguageEvent(Language.de);
+      final cur = SetCurrencyEvent(Currency.eur);
+      final net = SetNetworkModeEvent(NetworkMode.mainnet);
+      final toggle = ToggleHideAmountEvent();
+
+      expect(lang, equals(const SetLanguageEvent(Language.de)));
+      expect(cur, equals(const SetCurrencyEvent(Currency.eur)));
+      expect(net, equals(const SetNetworkModeEvent(NetworkMode.mainnet)));
+      expect(toggle, equals(const ToggleHideAmountEvent()));
+
+      expect(lang.props, [Language.de]);
+      expect(cur.props, [Currency.eur]);
+      expect(net.props, [NetworkMode.mainnet]);
+      expect(toggle.props, isEmpty);
+    });
+  });
 }
