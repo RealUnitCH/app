@@ -335,25 +335,24 @@ void main() {
         timestamp: DateTime.utc(2025, 1, 1),
       );
 
+      // Drive the stream deterministically: wait for the first emission
+      // that matches the post-insert shape. expectLater pumps the event
+      // queue itself, so no wall-clock delay is needed.
       final stream = repo.watchTransactions();
-      final emissions = <List<Transaction>>[];
-      final sub = stream.listen(emissions.add);
+      final settled = expectLater(
+        stream,
+        emitsThrough(
+          predicate<List<Transaction>>(
+            (list) =>
+                list.length == 1 &&
+                list.single is DfxTransaction &&
+                (list.single as DfxTransaction).dfxId == 7,
+          ),
+        ),
+      );
 
-      await Future<void>.delayed(Duration.zero);
       await repo.insertDfxTransaction(dfxTx);
-
-      // Two distinct microtasks: one to surface the empty initial state,
-      // one to settle the post-insert emission and let the async
-      // handleData finish.
-      await Future<void>.delayed(const Duration(milliseconds: 10));
-
-      expect(emissions, isNotEmpty);
-      final last = emissions.last;
-      expect(last, hasLength(1));
-      expect(last.single, isA<DfxTransaction>());
-      expect((last.single as DfxTransaction).dfxId, 7);
-
-      await sub.cancel();
+      await settled;
     });
 
     test(
