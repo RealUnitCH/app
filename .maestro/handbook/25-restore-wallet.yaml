@@ -31,7 +31,7 @@
 # If the checkbox tap is the one that's silently dropped, the next
 # `extendedWaitUntil notVisible "Aus REALU Wallet abmelden"` (with the
 # Abmelden button still disabled) fails loudly rather than passing silently
-# downstream — and the same Semantics-id strategy that fixed flow 24's
+# downstream — and the same Semantics-id strategy that fixed flow 26's
 # Nutzungsbedingungen-link tap has been reliable enough since.
 #
 # All tap-leading steps (Abmelden, Start, Digitale Wallet, Wallet

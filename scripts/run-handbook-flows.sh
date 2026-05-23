@@ -192,13 +192,13 @@ mkdir -p "$MAESTRO_DEBUG_ROOT"
 # close, so the next invocation finds nothing alive and has to
 # uninstall/install/start it again from scratch — the Maestro log line
 # `Restarting XCTest Runner (uninstalling, installing and starting)` + a
-# fresh `xcodebuild test-without-building`. Across 19 flows that one-time
-# ~5 min build is effectively paid 19×.
+# fresh `xcodebuild test-without-building`. Across 26 flows that one-time
+# ~5 min build is effectively paid 26×.
 #
 # `--reinstall-driver=false` (Maestro 2.0.10 TestCommand option, default
 # `true`) skips the uninstall step both at session start AND at session
 # close. So invocation 1 installs+starts the runner and then *leaves it
-# running*; invocations 2-19 hit Maestro's `isChannelAlive()` early-return
+# running*; invocations 2-26 hit Maestro's `isChannelAlive()` early-return
 # (`UI Test runner already running, returning`) and reuse it — no
 # reinstall, no rebuild. The first run on a freshly `simctl erase`-d
 # device has nothing to uninstall, so passing the flag there is harmless.
