@@ -28,6 +28,16 @@ on:
 permissions:
   contents: read
 
+# Serialize handbook deploys so a manual workflow_dispatch can't race a
+# concurrent develop push: both would build :beta in parallel, the later
+# build would win on Docker Hub, and dfxdev / dfxprd could end up pulling
+# different images depending on timing. cancel-in-progress is false so a
+# mid-rollout deploy is never killed (we'd otherwise risk leaving DEV
+# halfway through and PRD never started).
+concurrency:
+  group: handbook-deploy
+  cancel-in-progress: false
+
 jobs:
   deploy-dev:
     uses: ./.github/workflows/handbook.yaml
