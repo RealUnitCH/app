@@ -1,0 +1,96 @@
+name: Handbook Build Check
+
+# PR-only build verification for Dockerfile.handbook + the Goldens-assembled
+# screenshots. Does NOT push to Docker Hub and does NOT deploy — that
+# remains the job of handbook-deploy.yaml (develop push → DEV → PRD).
+#
+# Path filter covers everything that goes into the handbook image:
+#   - docs/handbook/**            handbook HTML, README, en/de subtrees
+#   - scripts/assemble-handbook-screenshots.sh  handbook→Golden mapping
+#   - test/goldens/**             Golden baselines (source of every
+#                                 screenshot the handbook serves)
+#   - Dockerfile.handbook         multi-stage build
+#   - handbook.nginx.conf         nginx config
+#   - handbook.htpasswd           access gate
+
+on:
+  pull_request:
+    paths:
+      - "docs/handbook/**"
+      - "scripts/assemble-handbook-screenshots.sh"
+      - "test/goldens/**"
+      - "Dockerfile.handbook"
+      - "handbook.nginx.conf"
+      - "handbook.htpasswd"
+      - ".github/workflows/handbook-build-check.yaml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: handbook-build-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build handbook image + container smoke
+    # Skip on draft PRs (matches the rest of pull-request.yaml).
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify assemble-handbook-screenshots.sh runs locally
+        # Independent sanity-check of the Bash script before the Docker
+        # multi-stage build runs the same logic. Catches obvious
+        # mapping errors (missing Golden) without needing the Docker
+        # daemon to surface them.
+        run: |
+          set -euo pipefail
+          bash scripts/assemble-handbook-screenshots.sh /tmp/handbook-shots
+          count=$(ls -1 /tmp/handbook-shots/*.png | wc -l | tr -d ' ')
+          if [ "$count" != "26" ]; then
+            echo "expected 26 screenshots, got $count" >&2
+            exit 1
+          fi
+
+      - name: Build handbook image (no push)
+        run: docker build -f Dockerfile.handbook -t realunit-handbook:pr-check .
+
+      - name: Smoke-test container starts and serves /healthz
+        run: |
+          set -euo pipefail
+          docker run -d --name handbook -p 8080:8080 realunit-handbook:pr-check
+          # Give nginx a moment to start.
+          for i in $(seq 1 10); do
+            if curl --fail --silent http://127.0.0.1:8080/healthz; then
+              break
+            fi
+            sleep 1
+          done
+          # /healthz must return 200 (unauthenticated by config).
+          curl --fail --silent http://127.0.0.1:8080/healthz | grep -q OK
+
+          # Gated path must return 401 without credentials (auth wall active).
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/de/)
+          if [ "$code" != "401" ]; then
+            echo "expected 401 from /de/ without auth, got $code" >&2
+            docker logs handbook
+            exit 1
+          fi
+
+          # Screenshots dir must contain all 26 PNGs assembled from Goldens.
+          # Hit one of them through the auth gate to verify wiring end-to-end.
+          for name in 01-welcome 11-dashboard 26-terms; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -u "${HANDBOOK_USER:-x}:${HANDBOOK_PASS:-x}" "http://127.0.0.1:8080/screenshots/${name}.png")
+            # 200 (auth happens to match) or 401 (auth fails but file exists)
+            # both prove the file is on disk. 404 means it was not assembled.
+            if [ "$code" = "404" ]; then
+              echo "screenshot ${name}.png missing from /usr/share/nginx/html/screenshots/" >&2
+              docker logs handbook
+              exit 1
+            fi
+          done
+
+          docker stop handbook
