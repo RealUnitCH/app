@@ -57,6 +57,164 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # RealUnit mail previews are the single source of truth in DFXswiss/api
+      # (scripts/generate-realunit-previews.js). We pull them in at build time
+      # instead of checking them into this repo, so a change to a template or
+      # i18n string in the api repo flows into the handbook image on the next
+      # build without a manual sync PR. A handbook-relevant push to develop
+      # (or a manual workflow_dispatch on handbook-deploy.yaml in this repo)
+      # rebuilds the image and re-pulls api@develop here — so mail-template
+      # changes in the api repo only flow in after such a push/dispatch in
+      # this repo. There is NO auto-dispatch from the api repo.
+      - name: Check out DFXswiss/api at develop into _api-checkout/
+        uses: actions/checkout@v4
+        with:
+          # DFXswiss/api is a PUBLIC repo, so the runner's default GITHUB_TOKEN
+          # is sufficient to clone it — no cross-repo PAT setup needed. If the
+          # api repo is ever flipped to private, this step will start failing
+          # with HTTP 404 on checkout; the fix is then to add a PAT secret on
+          # the realunit-app repo and pass it through as `token:` here (and
+          # through the secrets: block of this reusable workflow + the
+          # handbook-deploy.yaml caller).
+          repository: DFXswiss/api
+          ref: develop
+          path: _api-checkout
+
+      - name: Set up Node.js for mail-preview generator
+        uses: actions/setup-node@v4
+        with:
+          # api repo currently does not pin a node version in package.json#engines
+          # or .nvmrc — its CI workflows use NODE_VERSION='20.x' (see
+          # DFXswiss/api/.github/workflows/api-pr.yaml). Mirror that exact string
+          # so a future api-side bump (e.g. to '22.x') stays a one-place change
+          # to track.
+          node-version: '20.x'
+
+      - name: Generate RealUnit mail previews from api repo
+        env:
+          API_DIR: _api-checkout
+          HANDLEBARS_PREFIX: _handlebars-only
+          # Exact expected mail-preview file count: 24 mails + 1 index = 25.
+          # `-ne` below makes ANY drift (drop OR addition) fail the build —
+          # adding a new mail upstream therefore requires an explicit edit
+          # here, which is the whole point: a silently-added (or silently-
+          # removed) mail must never reach the handbook image undetected.
+          # When you legitimately add/remove a mail in
+          # DFXswiss/api/scripts/generate-realunit-previews.js, bump this
+          # number in the SAME PR as the api-side change-PR (or its
+          # follow-up). The exact count is computed as:
+          #   N(add() calls in the generator)
+          #   + N(pendingTypes entries the for-loop expands)
+          #   + 1 (00_index.html)
+          EXPECTED_HTML_COUNT: 25
+        run: |
+          set -euo pipefail
+
+          # The generator script only requires 'handlebars' at runtime (verified
+          # via `grep require ${API_DIR}/scripts/generate-realunit-previews.js`).
+          # We deliberately AVOID `npm ci` against the api package-lock — that
+          # would install ~2400 packages (5+ min wall-clock) just to run a
+          # single 600-line script. Installing handlebars into an isolated
+          # prefix outside the api tree keeps `_api-checkout/` clean (its
+          # package.json/lockfile must remain untouched so a future
+          # `git status` on the api checkout would still be "clean") and the
+          # NODE_PATH override below makes `require('handlebars')` resolve
+          # against the isolated install.
+          npm install --prefix "./${HANDLEBARS_PREFIX}" --no-save --no-audit --no-fund handlebars
+
+          # Defensive cleanup of any prior staging dir (no-op on ephemeral CI
+          # runners, but matters when this step is reproduced locally — see
+          # docs/handbook/README.md → "E-Mail Previews → Lokal regenerieren").
+          # Without this, a stale html in docs/handbook/mails/ from a previous
+          # run would survive into the build context and end up shipped in the
+          # image even though the upstream generator no longer produces it.
+          rm -rf docs/handbook/mails
+          mkdir -p docs/handbook/mails
+
+          # Run the generator. Output goes to ${API_DIR}/scripts/email-previews/realunit/
+          # (path baked into the script). We `tee` stdout+stderr into a log so the
+          # next step can grep for the script's own `console.warn` output —
+          # specifically the "[trigger] Missing explanation for ..." warning,
+          # which the script emits (NOT throws) when a mail file stem has no
+          # entry in the `triggers` map. The script lives in the api repo and
+          # we cannot upgrade that warning to a throw from here, so the grep
+          # below is our only line of defence against silently shipping the
+          # handbook with mails that have no trigger-explanation card.
+          #
+          # `pipefail` is already on from `set -euo pipefail`, so a non-zero
+          # exit from `node` here fails the step — `tee` does not mask it.
+          LOG_FILE="$(mktemp)"
+          NODE_PATH="./${HANDLEBARS_PREFIX}/node_modules" \
+            node "${API_DIR}/scripts/generate-realunit-previews.js" 2>&1 \
+            | tee "${LOG_FILE}"
+
+          # Cross-repo coupling check: the generator only warns; we promote it
+          # to an error so the build fails fast. Anchor `^` so a future log
+          # line that happens to contain the substring "[trigger] Missing"
+          # somewhere mid-line does not trip the check.
+          if grep -q '^\[trigger\] Missing' "${LOG_FILE}"; then
+            echo "::error::Generator emitted a '[trigger] Missing explanation for …' warning — see log above. Add the missing entry to the triggers map in DFXswiss/api/scripts/generate-realunit-previews.js."
+            exit 1
+          fi
+
+          OUT_DIR="${API_DIR}/scripts/email-previews/realunit"
+
+          # Explicit existence check for OUT_DIR so we emit a friendly
+          # `::error::` annotation pointing at the generator, instead of dying
+          # one line later with a raw bash pipeline-failure trace from
+          # `ls "${OUT_DIR}"/*.html | wc -l | tr -d ' '` when the directory is
+          # missing. The count check below would also catch this, but this
+          # early-exit gives a clearer signal in the CI log.
+          if [ ! -d "${OUT_DIR}" ]; then
+            echo "::error::Generator did not create ${OUT_DIR} — it likely crashed before writing any output. See generator log above."
+            exit 1
+          fi
+
+          # Exact-match check (see EXPECTED_HTML_COUNT comment at env: above).
+          HTML_COUNT=$(ls "${OUT_DIR}"/*.html 2>/dev/null | wc -l | tr -d ' ')
+          if [ "${HTML_COUNT}" -ne "${EXPECTED_HTML_COUNT}" ]; then
+            echo "::error::Expected exactly ${EXPECTED_HTML_COUNT} mail preview HTML files in ${OUT_DIR}, got ${HTML_COUNT}. If this drift is intentional (mail added/removed upstream), update EXPECTED_HTML_COUNT in this workflow in the same PR."
+            exit 1
+          fi
+          if [ ! -s "${OUT_DIR}/00_index.html" ]; then
+            echo "::error::Mail preview index ${OUT_DIR}/00_index.html is missing or empty"
+            exit 1
+          fi
+
+          # Stage the generated files into docs/handbook/mails/ so the Docker
+          # build context picks them up (Dockerfile.handbook does
+          # `COPY docs/handbook/ /usr/share/nginx/html/`).
+          cp "${OUT_DIR}"/*.html docs/handbook/mails/
+
+          # nginx has `index index.html` (handbook.nginx.conf line 15) and
+          # `try_files $uri $uri/ =404` (line 82). A request for /mails/ would
+          # therefore look up /mails/index.html and 404 because the generator
+          # names its index `00_index.html` (so it sorts first in a directory
+          # listing). Duplicating the index as `index.html` lets `/mails/`
+          # resolve directly without adding a per-location nginx rule.
+          cp docs/handbook/mails/00_index.html docs/handbook/mails/index.html
+
+          # Final verify (visible in CI log so a future regression is grepable).
+          ls -la docs/handbook/mails/ | head -40
+          echo "Generated $(ls docs/handbook/mails/*.html | wc -l | tr -d ' ') mail preview files"
+
+      # Cleanup runs even when the generator step above (or any other step
+      # between staging and `docker build`) fails. Without `if: always()`, a
+      # crash mid-pipeline would leave _api-checkout/ + _handlebars-only/
+      # in the workspace, and the subsequent `docker build` (context: .)
+      # would ship them to BuildKit — bloating the build context with
+      # ~hundreds of MB of api source the image does not need (Dockerfile
+      # only `COPY docs/handbook/`, so the files would not enter the image
+      # itself, but they'd still slow every cached/uncached build).
+      - name: Drop api checkout + handlebars install from build context
+        if: always()
+        env:
+          API_DIR: _api-checkout
+          HANDLEBARS_PREFIX: _handlebars-only
+        run: |
+          set -euo pipefail
+          rm -rf "./${API_DIR}" "./${HANDLEBARS_PREFIX}"
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:

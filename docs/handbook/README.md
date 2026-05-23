@@ -78,6 +78,79 @@ Auch der Tier-3-GitHub-Workflow hat dafür einen `flows`-`workflow_dispatch`-Inp
 4. Nur bei einem neuen Thema: eine neue `<details id="spec-NN" class="spec">`
    anlegen und den Anker `#spec-NN` in `<nav class="toc">` ergänzen.
 
+## E-Mail Previews
+
+Die HTML-Vorschauen aller vom Backend an Endkunden versendeten Mails liegen
+**nicht in diesem Repo**. Quelle ist `DFXswiss/api`:
+
+- Generator: `scripts/generate-realunit-previews.js`
+- Vorlage: `src/subdomains/supporting/notification/templates/realunit.hbs`
+- Übersetzungen: `src/shared/i18n/de/mail-realunit.json` (RealUnit-Texte) mit
+  Fallback auf `src/shared/i18n/de/mail.json` (DFX-Defaults)
+
+Der Handbook-CI-Build (`.github/workflows/handbook.yaml`) checkt das api-Repo
+zur Build-Zeit aus, führt den Generator aus und kopiert das Ergebnis nach
+`docs/handbook/mails/`, bevor das Docker-Image gebaut wird. `docs/handbook/mails/`
+ist in `.gitignore` — der Inhalt darf nie ins Repo eingecheckt werden, sonst
+divergieren Image-Stand und Source-of-Truth.
+
+### Trigger
+
+Der Handbook-Deploy läuft bei einem `push` auf `develop` mit Änderungen
+unter handbook-relevanten Pfaden (siehe `handbook-deploy.yaml`) oder bei
+einem manuellen `workflow_dispatch` auf `handbook-deploy.yaml` in
+**diesem** Repo. Eine reine Mail-Template-, i18n- oder Generator-Änderung
+im api-Repo löst **keinen** automatischen Rebuild aus — sie fliesst erst
+mit dem nächsten Handbook-Deploy hier rein.
+
+Wer eine reine Mail-Änderung sofort live haben will, hat zwei Optionen
+im realunit-app-Repo:
+
+```bash
+# Variante A: No-op-Touch unter einem handbook-relevanten Pfad,
+# damit der path-Filter von handbook-deploy.yaml zieht. `--allow-empty`
+# alleine reicht NICHT — der Push muss eine Datei unter docs/handbook/
+# (oder Dockerfile.handbook / handbook.nginx.conf / handbook.htpasswd /
+# einen der beiden handbook-Workflows) tatsächlich anfassen.
+touch docs/handbook/.sync && git add docs/handbook/.sync \
+  && git commit -m "chore(handbook): pull latest mail templates from api" \
+  && git push origin develop
+
+# Variante B: manuell dispatchen (kein Commit nötig)
+gh workflow run handbook-deploy.yaml --ref develop
+```
+
+### Lokal regenerieren
+
+Mit beiden Repos nebeneinander ausgecheckt — alle Befehle laufen im
+realunit-app-Root. Wir installieren handlebars **isoliert** in einen scratch
+Prefix (`_handlebars-only/`), genau wie der CI-Step in `handbook.yaml`. So
+bleiben `package.json` und `package-lock.json` im api-Klon unangetastet
+(sonst wäre `git status` im api-Repo nach dem Repro dreckig).
+
+```bash
+# 1. handlebars isoliert installieren (idempotent — kann beliebig oft laufen)
+npm install --prefix ./_handlebars-only --no-save --no-audit --no-fund handlebars
+
+# 2. Generator aus dem api-Repo ausführen (NODE_PATH zeigt auf den scratch-Install)
+NODE_PATH="./_handlebars-only/node_modules" \
+  node ../api/scripts/generate-realunit-previews.js
+
+# 3. Ergebnis ins Handbook übernehmen
+mkdir -p docs/handbook/mails
+cp ../api/scripts/email-previews/realunit/*.html docs/handbook/mails/
+cp docs/handbook/mails/00_index.html docs/handbook/mails/index.html
+
+# 4. Lokal ansehen
+open docs/handbook/mails/index.html
+
+# 5. Scratch-Dir aufräumen (in .gitignore — aber sauber ist sauber)
+rm -rf ./_handlebars-only
+```
+
+(Den finalen Build-Step macht aber immer der CI — lokale Files sind nur fürs
+Vorab-Anschauen während eines Template-Refactors.)
+
 ## Beziehung zu den Tier-0/Tier-1-Tests
 
 Tier 0/1 (Unit + Widget + integration-mit-FakeBitboxCredentials) prüfen
