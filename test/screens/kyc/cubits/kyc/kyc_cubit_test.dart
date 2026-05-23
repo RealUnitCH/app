@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
@@ -441,6 +442,38 @@ void main() {
       expect: () => [const KycLoading(), isA<KycFailure>()],
     );
 
+    // `KycLevel.terminated` is internally mapped to value -10, which lands in
+    // the `level < 10` auto-register branch before reaching the
+    // `processStatus.failed` switch. A real `Failed` from the backend ships
+    // with a non-negative level (the user got far enough for compliance to
+    // terminate them). Pin that branch explicitly.
+    blocTest<KycCubit, KycState>(
+      'emits "KYC terminated" KycFailure when level>=10 and processStatus=Failed',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level20,
+            processStatus: KycProcessStatus.failed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        cubit.markRegistrationSignProduced();
+        await cubit.checkKyc();
+      },
+      verify: (cubit) {
+        final state = cubit.state as KycFailure;
+        expect(state.message, 'KYC terminated');
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycFailure('KYC terminated'),
+      ],
+    );
+
     blocTest<KycCubit, KycState>(
       'returning user at completed processStatus still routes through the sign gate first',
       setUp: () {
@@ -597,6 +630,36 @@ void main() {
       build: buildCubit,
       act: (cubit) => cubit.checkKyc(),
       expect: () => [const KycLoading(), isA<KycFailure>()],
+    );
+
+    // The outer 30s timeout on `_runCheckKyc` is the watchdog that surfaces
+    // a "did not respond in time" failure when the backend never resolves —
+    // distinct from the inner `TimeoutException`-from-the-service path
+    // above. fake_async lets us advance virtual time past the 30s budget
+    // without a wallclock sleep.
+    test(
+      'emits "did not respond in time" KycFailure when _runCheckKyc exceeds the 30s outer timeout',
+      () {
+        fakeAsync((async) {
+          when(() => kycService.getKycStatus()).thenAnswer((_) => Completer<KycLevelDto>().future);
+          when(() => kycService.getUser()).thenAnswer((_) async => _user());
+
+          final cubit = buildCubit();
+          final states = <KycState>[];
+          final sub = cubit.stream.listen(states.add);
+
+          unawaited(cubit.checkKyc());
+          async.elapse(const Duration(seconds: 31));
+
+          expect(states, [
+            const KycLoading(),
+            const KycFailure('KYC backend did not respond in time'),
+          ]);
+
+          sub.cancel();
+          cubit.close();
+        });
+      },
     );
   });
 
