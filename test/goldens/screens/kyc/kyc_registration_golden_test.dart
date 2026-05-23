@@ -1,6 +1,5 @@
 import 'package:alchemist/alchemist.dart';
 import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -22,10 +21,7 @@ class _MockKycRegistrationSubmitCubit
 
 class _MockKycCubit extends MockCubit<KycState> implements KycCubit {}
 
-class _MockDfxCountryService extends Mock implements DfxCountryService {}
-
 void main() {
-  const phoneConstraints = BoxConstraints.tightFor(width: 390, height: 844);
 
   late _MockKycRegistrationStepCubit registrationStepCubit;
   late _MockKycRegistrationSubmitCubit registrationSubmitCubit;
@@ -51,7 +47,7 @@ void main() {
   });
 
   setUpAll(() {
-    final countryService = _MockDfxCountryService();
+    final countryService = MockDfxCountryService();
     when(() => countryService.getAllCountries()).thenAnswer((_) async => const []);
     GetIt.instance.registerSingleton<DfxCountryService>(countryService);
   });

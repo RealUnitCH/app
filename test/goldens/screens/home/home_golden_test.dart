@@ -1,5 +1,4 @@
 import 'package:alchemist/alchemist.dart';
-import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,13 +8,11 @@ import 'package:realunit_wallet/screens/home/home_page.dart';
 
 import '../../../helper/helper.dart';
 
-class _MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
-
 void main() {
-  late _MockHomeBloc homeBloc;
+  late MockHomeBloc homeBloc;
 
   setUp(() {
-    homeBloc = _MockHomeBloc();
+    homeBloc = MockHomeBloc();
     when(() => homeBloc.state).thenReturn(const HomeState());
   });
 

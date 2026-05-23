@@ -1,6 +1,5 @@
 import 'package:alchemist/alchemist.dart';
 import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -16,20 +15,16 @@ class _MockKycIdentCubit extends MockCubit<KycIdentState>
 
 class _MockKycCubit extends MockCubit<KycState> implements KycCubit {}
 
-class _MockSettingsBloc extends MockBloc<SettingsEvent, SettingsState>
-    implements SettingsBloc {}
-
 void main() {
-  const phoneConstraints = BoxConstraints.tightFor(width: 390, height: 844);
 
   late _MockKycIdentCubit kycIdentCubit;
   late _MockKycCubit kycCubit;
-  late _MockSettingsBloc settingsBloc;
+  late MockSettingsBloc settingsBloc;
 
   setUp(() {
     kycIdentCubit = _MockKycIdentCubit();
     kycCubit = _MockKycCubit();
-    settingsBloc = _MockSettingsBloc();
+    settingsBloc = MockSettingsBloc();
 
     when(() => kycIdentCubit.state).thenReturn(const KycIdentInitial());
     when(() => kycCubit.state).thenReturn(const KycInitial());

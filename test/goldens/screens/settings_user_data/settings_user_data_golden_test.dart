@@ -1,6 +1,5 @@
 import 'package:alchemist/alchemist.dart';
 import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -21,12 +20,9 @@ class _MockSettingsUserDataCubit extends MockCubit<SettingsUserDataState>
 
 class _MockRealUnitWalletService extends Mock implements RealUnitWalletService {}
 
-class _MockDfxCountryService extends Mock implements DfxCountryService {}
-
 class _MockDfxKycService extends Mock implements DfxKycService {}
 
 void main() {
-  const phoneConstraints = BoxConstraints.tightFor(width: 390, height: 844);
 
   late _MockSettingsUserDataCubit cubit;
 
@@ -65,7 +61,7 @@ void main() {
   setUpAll(() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<RealUnitWalletService>(_MockRealUnitWalletService());
-    getIt.registerSingleton<DfxCountryService>(_MockDfxCountryService());
+    getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
     getIt.registerSingleton<DfxKycService>(_MockDfxKycService());
   });
 

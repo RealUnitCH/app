@@ -8,12 +8,10 @@ import 'package:realunit_wallet/screens/receive/receive_page.dart';
 
 import '../../../helper/helper.dart';
 
-class _MockAppStore extends Mock implements AppStore {}
-
 void main() {
   setUpAll(() {
     final getIt = GetIt.instance;
-    final appStore = _MockAppStore();
+    final appStore = MockAppStore();
     when(() => appStore.primaryAddress)
         .thenReturn('0xcabd3f4b10a7089986e708d19140bfc98e5880c0');
     getIt.registerSingleton<AppStore>(appStore);

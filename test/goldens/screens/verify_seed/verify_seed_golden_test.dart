@@ -13,15 +13,13 @@ import '../../../helper/helper.dart';
 class _MockVerifySeedCubit extends MockCubit<VerifySeedState>
     implements VerifySeedCubit {}
 
-class _MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
-
 void main() {
   late _MockVerifySeedCubit verifySeedCubit;
-  late _MockHomeBloc homeBloc;
+  late MockHomeBloc homeBloc;
 
   setUp(() {
     verifySeedCubit = _MockVerifySeedCubit();
-    homeBloc = _MockHomeBloc();
+    homeBloc = MockHomeBloc();
     when(() => verifySeedCubit.state).thenReturn(
       const VerifySeedState(
         wordIndices: [1, 3, 5, 7],

@@ -1,6 +1,5 @@
 import 'package:alchemist/alchemist.dart';
 import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -16,12 +15,9 @@ import '../../../helper/helper.dart';
 class _MockSettingsEditAddressCubit extends MockCubit<SettingsEditAddressState>
     implements SettingsEditAddressCubit {}
 
-class _MockDfxCountryService extends Mock implements DfxCountryService {}
-
 class _MockDfxKycService extends Mock implements DfxKycService {}
 
 void main() {
-  const phoneConstraints = BoxConstraints.tightFor(width: 390, height: 844);
   const country = Country(
     id: 41,
     symbol: 'CH',
@@ -30,11 +26,11 @@ void main() {
   );
 
   late _MockSettingsEditAddressCubit cubit;
-  late _MockDfxCountryService countryService;
+  late MockDfxCountryService countryService;
 
   setUp(() {
     cubit = _MockSettingsEditAddressCubit();
-    countryService = _MockDfxCountryService();
+    countryService = MockDfxCountryService();
     when(() => cubit.state).thenReturn(const SettingsEditAddressReady('url'));
     when(() => countryService.getAllCountries())
         .thenAnswer((_) async => const [country]);
