@@ -1,4 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
@@ -96,6 +97,31 @@ void main() {
           ..onAppResumed();
 
         expect(cubit.state.isPinVerified, isTrue);
+      },
+    );
+
+    test(
+      'long hide → resume flips isPinVerified back to false (elapsed >= lockoutDuration)',
+      () {
+        // The lockout branch reads wallclock `DateTime.now()`, so we drive
+        // virtual time with fake_async to step past the 5-minute threshold
+        // deterministically — no sleeps, no flakiness.
+        fakeAsync((async) {
+          final cubit = build()..onPinSetupComplete();
+          expect(cubit.state.isPinVerified, isTrue);
+
+          cubit.onAppHidden();
+          async.elapse(lockoutDuration + const Duration(seconds: 1));
+          cubit.onAppResumed();
+
+          expect(cubit.state.isPinVerified, isFalse);
+          // Background timestamp is consumed: a second hide→resume cycle is
+          // a no-op until a new `onAppHidden()` lands.
+          cubit.onAppResumed();
+          expect(cubit.state.isPinVerified, isFalse);
+
+          cubit.close();
+        });
       },
     );
 
