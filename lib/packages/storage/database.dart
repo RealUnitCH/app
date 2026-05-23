@@ -18,6 +18,11 @@ part 'database.g.dart';
 
 const _databaseFileName = 'wallet.db.enc';
 
+// `tryOpeningDatabase` constructs the production AppDatabase, which goes
+// through `_openDatabase` → SQLCipher + path_provider. Neither is available
+// under `flutter test`, so this function cannot be exercised in unit tests;
+// it is covered by the integration / device test layer.
+// coverage:ignore-start
 Future<bool> tryOpeningDatabase(String encryptionPassword) async {
   final database = AppDatabase(encryptionPassword);
   try {
@@ -36,6 +41,7 @@ Future<bool> tryOpeningDatabase(String encryptionPassword) async {
   }
   return false;
 }
+// coverage:ignore-end
 
 @DriftDatabase(
   tables: [
@@ -50,7 +56,11 @@ Future<bool> tryOpeningDatabase(String encryptionPassword) async {
   ],
 )
 class AppDatabase extends _$AppDatabase {
+  // Production constructor — opens the on-disk SQLCipher database. Only
+  // reachable from the embedder; tests use `AppDatabase.forTesting`.
+  // coverage:ignore-start
   AppDatabase(String encryptionPassword) : super(_openDatabase(encryptionPassword));
+  // coverage:ignore-end
 
   /// In-memory database for unit tests. Bypasses SQLCipher and path_provider.
   @visibleForTesting
@@ -71,12 +81,22 @@ class AppDatabase extends _$AppDatabase {
     },
   );
 
+  // The helpers below open the production database file via path_provider
+  // and SQLCipher. They are unreachable from `flutter test` because
+  // path_provider has no in-process implementation outside the embedder and
+  // SQLCipher requires the native sqlite3 build the app links against at
+  // runtime. The `forTesting` constructor exists precisely to skip this
+  // path, so the lines below are pinned with `coverage:ignore-line`.
+  // coverage:ignore-start
   static Future<String> getDatabasePath() async {
     final path = await getApplicationDocumentsDirectory();
     return p.join(path.path, _databaseFileName);
   }
+
+  // coverage:ignore-end
 }
 
+// coverage:ignore-start
 QueryExecutor _openDatabase(String encryptionPassword) {
   return LazyDatabase(() async {
     final path = await AppDatabase.getDatabasePath();
@@ -93,3 +113,5 @@ QueryExecutor _openDatabase(String encryptionPassword) {
     );
   });
 }
+
+// coverage:ignore-end
