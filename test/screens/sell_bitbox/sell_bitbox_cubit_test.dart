@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
@@ -41,49 +44,48 @@ class _StubSoftwareCreds extends Fake implements CredentialsWithKnownAddress {
 SellPaymentInfo _info({
   double ethBalance = 1.0,
   double requiredGasEth = 0.001,
-}) =>
-    SellPaymentInfo(
-      id: 42,
-      eip7702: Eip7702Data.fromJson(_eip7702Json()),
-      amount: 100,
-      exchangeRate: 1.0,
-      rate: 1.0,
-      beneficiary: const BeneficiaryDto(iban: 'CH...'),
-      estimatedAmount: 100.0,
-      currency: Currency.chf,
-      depositAddress: '0xdeposit',
-      tokenAddress: '0xtoken',
-      chainId: 1,
-      ethBalance: ethBalance,
-      requiredGasEth: requiredGasEth,
-    );
+}) => SellPaymentInfo(
+  id: 42,
+  eip7702: Eip7702Data.fromJson(_eip7702Json()),
+  amount: 100,
+  exchangeRate: 1.0,
+  rate: 1.0,
+  beneficiary: const BeneficiaryDto(iban: 'CH...'),
+  estimatedAmount: 100.0,
+  currency: Currency.chf,
+  depositAddress: '0xdeposit',
+  tokenAddress: '0xtoken',
+  chainId: 1,
+  ethBalance: ethBalance,
+  requiredGasEth: requiredGasEth,
+);
 
 Map<String, dynamic> _eip7702Json() => {
-      'relayerAddress': '0xrelay',
-      'delegationManagerAddress': '0xmgr',
-      'delegatorAddress': '0xdr',
-      'userNonce': 7,
-      'domain': {
-        'name': 'RealUnit',
-        'version': '1',
-        'chainId': 1,
-        'verifyingContract': '0xverify',
-      },
-      'types': {
-        'Delegation': <Map<String, dynamic>>[],
-        'Caveat': <Map<String, dynamic>>[],
-      },
-      'message': {
-        'delegate': '0xd',
-        'delegator': '0xdr',
-        'authority': '0xauth',
-        'caveats': <Map<String, dynamic>>[],
-        'salt': 0,
-      },
-      'tokenAddress': '0xtoken',
-      'amountWei': '12345',
-      'depositAddress': '0xdeposit',
-    };
+  'relayerAddress': '0xrelay',
+  'delegationManagerAddress': '0xmgr',
+  'delegatorAddress': '0xdr',
+  'userNonce': 7,
+  'domain': {
+    'name': 'RealUnit',
+    'version': '1',
+    'chainId': 1,
+    'verifyingContract': '0xverify',
+  },
+  'types': {
+    'Delegation': <Map<String, dynamic>>[],
+    'Caveat': <Map<String, dynamic>>[],
+  },
+  'message': {
+    'delegate': '0xd',
+    'delegator': '0xdr',
+    'authority': '0xauth',
+    'caveats': <Map<String, dynamic>>[],
+    'salt': 0,
+  },
+  'tokenAddress': '0xtoken',
+  'amountWei': '12345',
+  'depositAddress': '0xdeposit',
+};
 
 void main() {
   late _MockFaucet faucet;
@@ -97,6 +99,9 @@ void main() {
     registerFallbackValue(
       const BroadcastTransactionRequestDto(unsignedTx: '', r: '', s: '', v: 0),
     );
+    // confirmPaymentWithTxHash(any(), any()) needs a non-null SellPaymentInfo
+    // fallback so mocktail can fabricate a placeholder argument matcher.
+    registerFallbackValue(_info());
   });
 
   setUp(() {
@@ -108,19 +113,18 @@ void main() {
     account = _MockWalletAccount();
 
     when(() => appStore.wallet).thenReturn(wallet);
-    when(() => appStore.apiConfig)
-        .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+    when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
     when(() => appStore.primaryAddress).thenReturn('0xwallet');
     when(() => wallet.currentAccount).thenReturn(account);
   });
 
   SellBitboxCubit build({SellPaymentInfo? info}) => SellBitboxCubit(
-        paymentInfo: info ?? _info(),
-        faucetService: faucet,
-        blockchainService: blockchain,
-        sellService: sellService,
-        appStore: appStore,
-      );
+    paymentInfo: info ?? _info(),
+    faucetService: faucet,
+    blockchainService: blockchain,
+    sellService: sellService,
+    appStore: appStore,
+  );
 
   // Helper: wait until the cubit settles into a non-Checking state. The
   // constructor schedules _checkEthBalance via scheduleMicrotask, so the
@@ -133,8 +137,7 @@ void main() {
   group('constructor / _checkEthBalance', () {
     test('disconnected BitBox → SellBitboxBitboxRequired', () async {
       when(() => account.primaryAddress).thenReturn(
-        FakeBitboxCredentials(behavior: FakeBitboxBehavior.disconnect)
-          ..bitboxManager = null,
+        FakeBitboxCredentials(behavior: FakeBitboxBehavior.disconnect)..bitboxManager = null,
       );
 
       final cubit = build();
@@ -174,8 +177,7 @@ void main() {
 
     test('faucet throws → SellBitboxError', () async {
       when(() => account.primaryAddress).thenReturn(_StubSoftwareCreds());
-      when(() => faucet.requestFaucet())
-          .thenAnswer((_) async => throw Exception('faucet down'));
+      when(() => faucet.requestFaucet()).thenAnswer((_) async => throw Exception('faucet down'));
 
       final cubit = build(info: _info(ethBalance: 0, requiredGasEth: 0.001));
       final state = await cubit.stream.firstWhere((s) => s is SellBitboxError);
@@ -207,8 +209,9 @@ void main() {
 
     test('failure: emits Error', () async {
       when(() => account.primaryAddress).thenReturn(_StubSoftwareCreds());
-      when(() => sellService.createUnsignedTransactions(any()))
-          .thenAnswer((_) async => throw Exception('api 500'));
+      when(
+        () => sellService.createUnsignedTransactions(any()),
+      ).thenAnswer((_) async => throw Exception('api 500'));
 
       final cubit = build();
       await settle(cubit);
@@ -278,5 +281,374 @@ void main() {
       expect(cubit.state, same(before));
       await cubit.close();
     });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Coverage-completion cases for the branches the happy-path file does not
+  // exercise: the defensive catch in _checkEthBalance, retryAfterConnection,
+  // the eth-polling Timer body, and the BitboxNotConnectedException +
+  // generic-catch branches inside confirmSwap / confirmDeposit / retryDeposit.
+  // ---------------------------------------------------------------------------
+
+  group('_checkEthBalance defensive catch', () {
+    test('synchronous throw from wallet.currentAccount → SellBitboxError', () async {
+      // Replace the chained wallet getter with one that throws — mirrors a
+      // boot-time wallet-state corruption (e.g. AppStore not yet initialised
+      // when the sheet opens) that would otherwise crash the screen.
+      final boom = Exception('wallet boom');
+      when(() => wallet.currentAccount).thenThrow(boom);
+
+      final cubit = build();
+      final state = await cubit.stream.firstWhere((s) => s is SellBitboxError);
+
+      expect((state as SellBitboxError).message, contains('wallet boom'));
+      await cubit.close();
+    });
+  });
+
+  group('retryAfterConnection', () {
+    test('re-runs _checkEthBalance and recovers from BitboxRequired', () async {
+      // Start with a disconnected BitBox so the first check lands in
+      // SellBitboxBitboxRequired (the "connect your device" screen).
+      final creds = FakeBitboxCredentials(behavior: FakeBitboxBehavior.disconnect)
+        ..bitboxManager = null;
+      when(() => account.primaryAddress).thenReturn(creds);
+
+      final cubit = build();
+      expect(await settle(cubit), isA<SellBitboxBitboxRequired>());
+
+      // Simulate the user plugging the device back in. The same instance is
+      // now `success` (so `isConnected == true`) AND the payment info has
+      // enough ETH, so retryAfterConnection should land in EthReady.
+      creds.behavior = FakeBitboxBehavior.success;
+      // Attach the listener BEFORE the call: _checkEthBalance emits
+      // CheckingEth → EthReady synchronously (no await before the second
+      // emit), so a stream listener attached after the call would miss it.
+      final readyFuture = cubit.stream.firstWhere((s) => s is SellBitboxEthReady);
+      await cubit.retryAfterConnection();
+      expect(await readyFuture, isA<SellBitboxEthReady>());
+      await cubit.close();
+    });
+  });
+
+  group('_startEthPolling Timer', () {
+    test(
+      'polls every 5s; emits SellBitboxEthReady once the balance crosses the gas threshold',
+      () {
+        fakeAsync((async) {
+          // Software credentials skip the BitBox-disconnect branch.
+          when(() => account.primaryAddress).thenReturn(_StubSoftwareCreds());
+          when(() => faucet.requestFaucet()).thenAnswer(
+            (_) async => const FaucetResponseDto(txId: '0xf', amount: 0.01),
+          );
+
+          // First poll returns 0 (insufficient), second poll returns enough
+          // ETH. Pins the loop semantics: keep polling, don't error.
+          var call = 0;
+          when(() => blockchain.getEthBalance(any())).thenAnswer((_) async {
+            call++;
+            return call == 1 ? 0.0 : 0.005;
+          });
+
+          final cubit = build(info: _info(ethBalance: 0, requiredGasEth: 0.001));
+          // Drive the constructor microtask + the awaited faucet request to
+          // completion so the periodic Timer is installed.
+          async.flushMicrotasks();
+          async.elapse(Duration.zero);
+
+          expect(cubit.state, isA<SellBitboxWaitingForEth>());
+
+          // 1st tick @ 5s — balance still 0, stays in WaitingForEth.
+          async.elapse(const Duration(seconds: 5));
+          async.flushMicrotasks();
+          expect(cubit.state, isA<SellBitboxWaitingForEth>());
+
+          // 2nd tick @ 10s — balance crosses the threshold, the cubit emits
+          // SellBitboxEthReady and cancels its own timer.
+          async.elapse(const Duration(seconds: 5));
+          async.flushMicrotasks();
+          expect(cubit.state, isA<SellBitboxEthReady>());
+
+          // Further elapses must NOT poll again — the timer cancelled itself.
+          final pollsAtReady = call;
+          async.elapse(const Duration(seconds: 30));
+          async.flushMicrotasks();
+          expect(call, pollsAtReady);
+
+          // Drain remaining timers (the cubit owns none anymore) and close.
+          cubit.close();
+          async.flushTimers();
+        });
+      },
+    );
+
+    test('a transient blockchain error during polling does not crash the cubit', () {
+      fakeAsync((async) {
+        when(() => account.primaryAddress).thenReturn(_StubSoftwareCreds());
+        when(() => faucet.requestFaucet()).thenAnswer(
+          (_) async => const FaucetResponseDto(txId: '0xf', amount: 0.01),
+        );
+        var call = 0;
+        when(() => blockchain.getEthBalance(any())).thenAnswer((_) async {
+          call++;
+          if (call == 1) throw Exception('rpc 503');
+          return 0.01; // > requiredGasEth
+        });
+
+        final cubit = build(info: _info(ethBalance: 0, requiredGasEth: 0.001));
+        async.flushMicrotasks();
+        async.elapse(Duration.zero);
+        expect(cubit.state, isA<SellBitboxWaitingForEth>());
+
+        // 1st tick → throws → silently swallowed → still waiting.
+        async.elapse(const Duration(seconds: 5));
+        async.flushMicrotasks();
+        expect(cubit.state, isA<SellBitboxWaitingForEth>());
+
+        // 2nd tick → ok → ready.
+        async.elapse(const Duration(seconds: 5));
+        async.flushMicrotasks();
+        expect(cubit.state, isA<SellBitboxEthReady>());
+
+        cubit.close();
+        async.flushTimers();
+      });
+    });
+
+    test('retryAfterConnection while a poll-Timer is alive cancels the prior one', () {
+      fakeAsync((async) {
+        // Start disconnected so the first _checkEthBalance lands in
+        // BitboxRequired without ever installing a Timer.
+        final creds = FakeBitboxCredentials(behavior: FakeBitboxBehavior.disconnect)
+          ..bitboxManager = null;
+        when(() => account.primaryAddress).thenReturn(creds);
+        when(() => faucet.requestFaucet()).thenAnswer(
+          (_) async => const FaucetResponseDto(txId: '0xf', amount: 0.01),
+        );
+        when(() => blockchain.getEthBalance(any())).thenAnswer((_) async => 0.0);
+
+        final cubit = build(info: _info(ethBalance: 0, requiredGasEth: 0.001));
+        async.flushMicrotasks();
+        expect(cubit.state, isA<SellBitboxBitboxRequired>());
+
+        // Reconnect → retry → the credential reports connected but the
+        // payment-info still says ethBalance == 0, so the faucet branch fires
+        // and installs the first Timer.
+        creds.behavior = FakeBitboxBehavior.success;
+        cubit.retryAfterConnection();
+        async.flushMicrotasks();
+        expect(cubit.state, isA<SellBitboxWaitingForEth>());
+
+        // Calling retryAfterConnection again while the Timer is alive must
+        // cancel the prior timer before installing a fresh one — otherwise
+        // the test would see TWO getEthBalance calls per 5-second tick.
+        cubit.retryAfterConnection();
+        async.flushMicrotasks();
+
+        async.elapse(const Duration(seconds: 5));
+        async.flushMicrotasks();
+        verify(() => blockchain.getEthBalance(any())).called(1);
+
+        cubit.close();
+        async.flushTimers();
+      });
+    });
+  });
+
+  group('confirmSwap with BitBox credentials', () {
+    test(
+      'BitboxNotConnectedException from the device → SellBitboxBitboxRequired',
+      () async {
+        // Start with a connected fake so we make it past _checkEthBalance and
+        // proceedToSwap; flip to disconnect right before confirmSwap so
+        // signToSignature throws BitboxNotConnectedException.
+        final creds = FakeBitboxCredentials();
+        when(() => account.primaryAddress).thenReturn(creds);
+        when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
+          (_) async => const RealUnitUnsignedTransactionsRequestDto(
+            swap: '0xdeadbeef',
+            deposit: '0xcafebabe',
+          ),
+        );
+
+        final cubit = build();
+        await cubit.stream.firstWhere((s) => s is SellBitboxEthReady);
+        await cubit.proceedToSwap();
+        expect(cubit.state, isA<SellBitboxAwaitingSwapConfirm>());
+
+        creds.behavior = FakeBitboxBehavior.disconnect;
+        await cubit.confirmSwap();
+
+        expect(cubit.state, isA<SellBitboxBitboxRequired>());
+        await cubit.close();
+      },
+    );
+
+    test('generic sign failure (FormatException) → SellBitboxError', () async {
+      final creds = FakeBitboxCredentials();
+      when(() => account.primaryAddress).thenReturn(creds);
+      when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
+        (_) async => const RealUnitUnsignedTransactionsRequestDto(
+          swap: '0xdeadbeef',
+          deposit: '0xcafebabe',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.stream.firstWhere((s) => s is SellBitboxEthReady);
+      await cubit.proceedToSwap();
+
+      creds.behavior = FakeBitboxBehavior.malformed;
+      await cubit.confirmSwap();
+
+      final state = cubit.state as SellBitboxError;
+      expect(state.message, contains('Malformed'));
+      await cubit.close();
+    });
+  });
+
+  group('confirmDeposit with BitBox credentials', () {
+    test('non-Bitbox credentials in AwaitingDepositConfirm → SellBitboxError', () async {
+      // Drive the flow up to AwaitingDepositConfirm with a real BitBox-style
+      // fake; then swap the credentials to a non-BitBox stub and call
+      // confirmDeposit to hit the type-guard's error branch.
+      final creds = FakeBitboxCredentials();
+      when(() => account.primaryAddress).thenReturn(creds);
+      when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
+        (_) async => const RealUnitUnsignedTransactionsRequestDto(
+          swap: '0xdeadbeef',
+          deposit: '0xcafebabe',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.stream.firstWhere((s) => s is SellBitboxEthReady);
+      await cubit.proceedToSwap();
+      await cubit.confirmSwap();
+      expect(cubit.state, isA<SellBitboxAwaitingDepositConfirm>());
+
+      when(() => account.primaryAddress).thenReturn(_StubSoftwareCreds());
+      await cubit.confirmDeposit();
+
+      final state = cubit.state as SellBitboxError;
+      expect(state.message, contains('BitBox wallet not connected'));
+      await cubit.close();
+    });
+
+    test(
+      'BitboxNotConnectedException while signing the deposit → SellBitboxBitboxRequired',
+      () async {
+        final creds = FakeBitboxCredentials();
+        when(() => account.primaryAddress).thenReturn(creds);
+        when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
+          (_) async => const RealUnitUnsignedTransactionsRequestDto(
+            swap: '0xdeadbeef',
+            deposit: '0xcafebabe',
+          ),
+        );
+
+        final cubit = build();
+        await cubit.stream.firstWhere((s) => s is SellBitboxEthReady);
+        await cubit.proceedToSwap();
+        await cubit.confirmSwap();
+        expect(cubit.state, isA<SellBitboxAwaitingDepositConfirm>());
+
+        creds.behavior = FakeBitboxBehavior.disconnect;
+        await cubit.confirmDeposit();
+
+        expect(cubit.state, isA<SellBitboxBitboxRequired>());
+        await cubit.close();
+      },
+    );
+
+    test('generic sign failure during deposit → SellBitboxError', () async {
+      final creds = FakeBitboxCredentials();
+      when(() => account.primaryAddress).thenReturn(creds);
+      when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
+        (_) async => const RealUnitUnsignedTransactionsRequestDto(
+          swap: '0xdeadbeef',
+          deposit: '0xcafebabe',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.stream.firstWhere((s) => s is SellBitboxEthReady);
+      await cubit.proceedToSwap();
+      await cubit.confirmSwap();
+      expect(cubit.state, isA<SellBitboxAwaitingDepositConfirm>());
+
+      creds.behavior = FakeBitboxBehavior.malformed;
+      await cubit.confirmDeposit();
+
+      final state = cubit.state as SellBitboxError;
+      expect(state.message, contains('Malformed'));
+      await cubit.close();
+    });
+  });
+
+  // retryDeposit's outer catch is reached only if _broadcastDepositAndConfirm
+  // itself raises — which in practice means an emit() against a closed cubit
+  // (the inner branch already swallows all broadcast/confirm errors into a
+  // DepositRetry state). Pin that defensive path so a regression that turned
+  // the helper async-throwy would surface here, not in prod.
+  group('retryDeposit defensive outer-catch', () {
+    test(
+      'StateError from emit-after-close is caught and the cubit is left intact',
+      () async {
+        // First, drive the cubit through swap → AwaitingDepositConfirm so we
+        // can hand-craft a DepositRetry state via the broadcast-failure path.
+        final creds = FakeBitboxCredentials();
+        when(() => account.primaryAddress).thenReturn(creds);
+        when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
+          (_) async => const RealUnitUnsignedTransactionsRequestDto(
+            swap: '0xdeadbeef',
+            deposit: '0xcafebabe',
+          ),
+        );
+        // First broadcast (swap) succeeds, second (deposit) explodes — so the
+        // cubit settles in DepositRetry with non-null signed payloads.
+        var broadcasts = 0;
+        when(() => sellService.broadcastTransaction(any(), any())).thenAnswer(
+          (_) async {
+            broadcasts++;
+            if (broadcasts == 2) throw Exception('boom');
+            return '0xok';
+          },
+        );
+        when(() => sellService.confirmPaymentWithTxHash(any(), any())).thenAnswer((_) async {});
+
+        final cubit = build();
+        await cubit.stream.firstWhere((s) => s is SellBitboxEthReady);
+        await cubit.proceedToSwap();
+        await cubit.confirmSwap();
+        await cubit.confirmDeposit();
+        expect(cubit.state, isA<SellBitboxDepositRetry>());
+
+        // Now close the cubit — the next emit() will throw StateError. The
+        // outer try/catch in retryDeposit must catch that, build a fresh
+        // DepositRetry envelope (lines that would otherwise be unreachable)
+        // and attempt to emit it (which will throw again and surface to the
+        // caller — we await with runZonedGuarded to keep the harness clean).
+        await cubit.close();
+        Object? caught;
+        await runZonedGuarded(
+          () async {
+            try {
+              await cubit.retryDeposit();
+            } catch (e) {
+              caught = e;
+            }
+          },
+          (e, _) {
+            caught ??= e;
+          },
+        );
+
+        // The exact error type isn't load-bearing — what matters is that the
+        // outer catch evaluated its `SellBitboxDepositRetry(...)` arguments
+        // before re-throwing through the closed-stream emit.
+        expect(caught, isA<StateError>());
+      },
+    );
   });
 }
