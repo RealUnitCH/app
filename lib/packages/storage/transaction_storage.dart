@@ -134,23 +134,33 @@ extension TransactionStorage on AppDatabase {
       (select(transactions)..where((row) => row.txId.equals(txId))).getSingleOrNull();
 }
 
+// The schema getters below are read by `drift_dev` at codegen time and the
+// resulting column metadata is consumed via the generated mirror class —
+// they are not invoked at runtime, so line-coverage instrumentation never
+// marks them as executed. The same coverage gap exists on every Drift
+// table in the repo. `// coverage:ignore-line` keeps the file at the
+// surface the test suite can actually reach.
 @DataClassName('TransactionData')
 class Transactions extends Table {
-  // The schema getters below are read by `drift_dev` at codegen time and the
-  // resulting column metadata is consumed via the generated mirror class —
-  // they are not invoked at runtime, so line-coverage instrumentation never
-  // marks them as executed. The same coverage gap exists on every Drift
-  // table in the repo. `// coverage:ignore-line` keeps the file at 100% on
-  // the surface the test suite can actually reach.
   IntColumn get height => integer()(); // coverage:ignore-line
+
   TextColumn get txId => text().unique()(); // coverage:ignore-line
+
   IntColumn get chainId => integer()(); // coverage:ignore-line
+
   TextColumn get senderAddress => text()(); // coverage:ignore-line
+
   TextColumn get receiverAddress => text()(); // coverage:ignore-line
+
   TextColumn get amount => text()(); // coverage:ignore-line
+
   IntColumn get asset => integer()(); // coverage:ignore-line
+
   IntColumn get type => integer()(); // coverage:ignore-line
+
   TextColumn get note => text()(); // coverage:ignore-line
+
   TextColumn get data => text()(); // coverage:ignore-line
+
   DateTimeColumn get timeStamp => dateTime()(); // coverage:ignore-line
 }

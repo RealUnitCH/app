@@ -4,10 +4,10 @@ import 'package:realunit_wallet/screens/dashboard/bloc/portfolio_chart/portfolio
 import 'package:realunit_wallet/screens/dashboard/models/time_period.dart';
 
 PortfolioValuePoint _pt(DateTime time, int rappen) => PortfolioValuePoint(
-      value: BigInt.from(rappen),
-      balance: BigInt.one,
-      time: time,
-    );
+  value: BigInt.from(rappen),
+  balance: BigInt.one,
+  time: time,
+);
 
 void main() {
   group('$PortfolioChartCubit', () {
@@ -20,6 +20,26 @@ void main() {
       expect(cubit.state.minY, 0);
       expect(cubit.state.maxY, 1);
       expect(cubit.state.horizontalLineValues, isEmpty);
+    });
+
+    test('empty input keeps zero-window after selectPeriod to oneMonth', () async {
+      // Guards the empty-input early-return branch when period changes.
+      final cubit = PortfolioChartCubit(const []);
+      final emitted = <PortfolioChartState>[];
+      final sub = cubit.stream.listen(emitted.add);
+
+      cubit.selectPeriod(TimePeriod.oneMonth);
+      await Future<void>.delayed(Duration.zero);
+      await sub.cancel();
+
+      expect(cubit.state.selectedPeriod, TimePeriod.oneMonth);
+      expect(cubit.state.visibleSpots, isEmpty);
+      expect(cubit.state.horizontalLineValues, isEmpty);
+      // Cubit emits the period change; the subsequent zero-window re-emit
+      // from `_calculateChartData` is deduped by `Equatable` because the
+      // zero-window state is unchanged. Only the period flip is observable.
+      expect(emitted, hasLength(1));
+      expect(emitted.single.selectedPeriod, TimePeriod.oneMonth);
     });
 
     test('all-period populates visibleSpots scaled by 100', () {
@@ -62,9 +82,26 @@ void main() {
       expect(cubit.state.maxY, 104.0);
     });
 
+    test('zero-average flat series collapses horizontal lines to a single value', () {
+      // Guards the `deviation <= 0` branch in _calculateHorizontalLines:
+      // when value == 0 the average is 0 and the 5% floor is 0, so the
+      // padded deviation is 0 → all 6 lines fall on `average`.
+      final points = [
+        _pt(DateTime.utc(2026, 1, 1), 0),
+        _pt(DateTime.utc(2026, 2, 1), 0),
+      ];
+
+      final cubit = PortfolioChartCubit(points);
+
+      expect(cubit.state.horizontalLineValues, hasLength(6));
+      expect(cubit.state.horizontalLineValues.every((v) => v == 0.0), isTrue);
+      expect(cubit.state.minY, 0.0);
+      expect(cubit.state.maxY, 0.0);
+    });
+
     test('selectPeriod to the same period is a no-op (no emit)', () async {
       final cubit = PortfolioChartCubit([_pt(DateTime.utc(2026, 1, 1), 5000)]);
-      final emitted = [];
+      final emitted = <PortfolioChartState>[];
       final sub = cubit.stream.listen(emitted.add);
 
       cubit.selectPeriod(TimePeriod.all);
@@ -85,6 +122,78 @@ void main() {
       expect(cubit.state.selectedPeriod, TimePeriod.oneWeek);
       expect(cubit.state.visibleSpots, hasLength(1));
       expect(cubit.state.visibleSpots.single.y, 60.0);
+    });
+
+    test('selectPeriod to oneMonth narrows visibleSpots to the 1-month window', () {
+      final now = DateTime.now();
+      final old = _pt(now.subtract(const Duration(days: 120)), 5000);
+      final recent = _pt(now.subtract(const Duration(days: 10)), 7000);
+
+      final cubit = PortfolioChartCubit([old, recent]);
+      cubit.selectPeriod(TimePeriod.oneMonth);
+
+      expect(cubit.state.selectedPeriod, TimePeriod.oneMonth);
+      expect(cubit.state.visibleSpots, hasLength(1));
+      expect(cubit.state.visibleSpots.single.y, 70.0);
+    });
+
+    test('selectPeriod to threeMonths narrows visibleSpots to the 3-month window', () {
+      final now = DateTime.now();
+      final old = _pt(now.subtract(const Duration(days: 200)), 5000);
+      final recent = _pt(now.subtract(const Duration(days: 30)), 8000);
+
+      final cubit = PortfolioChartCubit([old, recent]);
+      cubit.selectPeriod(TimePeriod.threeMonths);
+
+      expect(cubit.state.selectedPeriod, TimePeriod.threeMonths);
+      expect(cubit.state.visibleSpots, hasLength(1));
+      expect(cubit.state.visibleSpots.single.y, 80.0);
+    });
+
+    test('selectPeriod to oneYear narrows visibleSpots to the 1-year window', () {
+      final now = DateTime.now();
+      final old = _pt(now.subtract(const Duration(days: 730)), 5000);
+      final recent = _pt(now.subtract(const Duration(days: 100)), 9000);
+
+      final cubit = PortfolioChartCubit([old, recent]);
+      cubit.selectPeriod(TimePeriod.oneYear);
+
+      expect(cubit.state.selectedPeriod, TimePeriod.oneYear);
+      expect(cubit.state.visibleSpots, hasLength(1));
+      expect(cubit.state.visibleSpots.single.y, 90.0);
+    });
+
+    test('minX is clamped to first price time even when the period predates it', () {
+      // Guards `math.max(startDate, firstPriceX)`: when all data is recent
+      // and the period window starts before the first price, minX must be
+      // the first price's time, not the window start.
+      final now = DateTime.now();
+      final p1 = _pt(now.subtract(const Duration(days: 3)), 5000);
+      final p2 = _pt(now.subtract(const Duration(days: 1)), 6000);
+
+      final cubit = PortfolioChartCubit([p1, p2]);
+      cubit.selectPeriod(TimePeriod.oneYear);
+
+      expect(
+        cubit.state.minX,
+        p1.time.millisecondsSinceEpoch.toDouble(),
+      );
+    });
+
+    test('large-magnitude flat series uses the 5% floor with a larger nice-number interval', () {
+      // average 10000 → floor 500 → rawInterval 200 → niceNumber 200 →
+      // centerLine 10000 → bottomLine 10000 - 600 = 9400.
+      final points = [
+        _pt(DateTime.utc(2026, 1, 1), 1000000),
+        _pt(DateTime.utc(2026, 2, 1), 1000000),
+      ];
+
+      final cubit = PortfolioChartCubit(points);
+
+      expect(
+        cubit.state.horizontalLineValues,
+        [9400.0, 9600.0, 9800.0, 10000.0, 10200.0, 10400.0],
+      );
     });
   });
 }
