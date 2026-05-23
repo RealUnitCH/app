@@ -1,0 +1,43 @@
+name: Golden Bootstrap
+
+# Temporary workflow for generating baselines for the 6 new handbook-gap
+# Golden tests added in this PR (gaps 03, 09, 10, 11, 17, 26 — see
+# docs/visual-regression-tests.md and PR description). Triggered by push to
+# the gaps-2 branch. Uploads the regenerated PNGs as an artifact; the
+# operator downloads the artifact, extracts the files into
+# `test/goldens/screens/**/goldens/macos/`, and commits them as the
+# authoritative baseline. This file is removed in the same PR once the
+# new baselines are committed.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/handbook-gaps-2]
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap:
+    name: Generate golden baselines
+    runs-on: [self-hosted, macOS, ARM64, m3-ultra, realunit-app]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.6"
+          channel: "stable"
+          cache: true
+      - run: flutter pub get
+      - run: dart run tool/generate_localization.dart
+      - run: dart run tool/generate_release_info.dart
+      - run: flutter pub run build_runner build
+      - name: Generate goldens
+        run: flutter test test/goldens --update-goldens
+      - name: Upload golden baselines
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-baselines
+          path: test/goldens/**/goldens/**/*.png
+          if-no-files-found: error

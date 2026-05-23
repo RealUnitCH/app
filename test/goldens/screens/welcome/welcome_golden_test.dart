@@ -7,7 +7,6 @@ import 'package:realunit_wallet/styles/themes.dart';
 import '../../../helper/helper.dart';
 
 void main() {
-
   group('$WelcomePage', () {
     goldenTest(
       'on iOS',
@@ -26,6 +25,18 @@ void main() {
       builder: () => wrapForGolden(
         const WelcomePage(),
         theme: realUnitTheme.copyWith(platform: TargetPlatform.android),
+      ),
+    );
+
+    // The second-step UI is driven by private setState inside _WelcomePageState.
+    // Bypass that via the @visibleForTesting `initialShowSecondStep` flag so
+    // the golden captures the static layout deterministically without taps.
+    goldenTest(
+      'second step with create-vs-restore choice',
+      fileName: 'welcome_page_second_step',
+      constraints: phoneConstraints,
+      builder: () => wrapForGolden(
+        const WelcomePage(initialShowSecondStep: true),
       ),
     );
   });

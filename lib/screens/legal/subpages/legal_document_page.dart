@@ -24,7 +24,16 @@ class LegalDocumentParams {
 class LegalDocumentPage extends StatefulWidget {
   final LegalDocumentParams params;
 
-  const LegalDocumentPage({super.key, required this.params});
+  /// Pre-loaded markdown content for golden tests. When provided, skips the
+  /// rootBundle asset load so the page renders the loaded state synchronously.
+  @visibleForTesting
+  final String? initialMarkdownContent;
+
+  const LegalDocumentPage({
+    super.key,
+    required this.params,
+    this.initialMarkdownContent,
+  });
 
   @override
   State<LegalDocumentPage> createState() => _LegalDocumentPageState();
@@ -36,7 +45,11 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
   @override
   void initState() {
     super.initState();
-    _loadMarkdown();
+    if (widget.initialMarkdownContent != null) {
+      _markdownContent = widget.initialMarkdownContent;
+    } else {
+      _loadMarkdown();
+    }
   }
 
   Future<void> _loadMarkdown() async {

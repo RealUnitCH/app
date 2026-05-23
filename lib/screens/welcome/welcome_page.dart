@@ -12,14 +12,19 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
 
 class WelcomePage extends StatefulWidget {
-  const WelcomePage({super.key});
+  /// Pre-sets the second-step state for golden testing the create-vs-restore
+  /// choice screen without driving a tap through the first-step Card.
+  @visibleForTesting
+  final bool initialShowSecondStep;
+
+  const WelcomePage({super.key, this.initialShowSecondStep = false});
 
   @override
   State<WelcomePage> createState() => _WelcomePageState();
 }
 
 class _WelcomePageState extends State<WelcomePage> {
-  bool showSecondStep = false;
+  late bool showSecondStep = widget.initialShowSecondStep;
 
   @override
   Widget build(BuildContext context) => Scaffold(
