@@ -26,8 +26,8 @@ name: Tier 3 — Handbook flows
 #   (or `github.ref` for push/dispatch) so a new push to the same PR
 #   cancels the in-flight run. Grouping by SHA (the previous approach)
 #   put every commit in its own group, which meant no cancellation
-#   ever happened and back-to-back pushes queued sequentially on the
-#   scarce macOS runner. The exception: `labeled` / `unlabeled` events
+#   ever happened and back-to-back pushes queued sequentially on
+#   scarce macOS runners. The exception: `labeled` / `unlabeled` events
 #   get their own `ci-<workflow>-label-<run_id>` group so a label toggle
 #   does NOT kill an already-running ~15-minute flow execution — the user
 #   experience of "I added the label, the previous run died" is worse
