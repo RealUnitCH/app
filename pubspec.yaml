@@ -95,6 +95,10 @@ dev_dependencies:
   #  web3dart_builders: ^0.1.0
 
   mocktail: ^1.0.4
+  # Used by test/packages/config/legal_documents_config_test.dart to swap in a
+  # recording fake for url_launcher without touching the platform channel.
+  plugin_platform_interface: ^2.1.8
+  url_launcher_platform_interface: ^2.3.2
 
 dependency_overrides:
   analyzer: ^10.0.0
