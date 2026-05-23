@@ -29,21 +29,20 @@ Map<String, dynamic> _txJson({
   String state = 'Processing',
   String? source = _wallet,
   String? target,
-}) =>
-    {
-      'id': id,
-      'type': 'Buy',
-      'state': state,
-      'rate': 1.0,
-      'inputAmount': 100.0,
-      'inputAsset': 'CHF',
-      'inputTxId': null,
-      'outputAmount': 1.0,
-      'outputAsset': 'REALU',
-      'outputTxId': null,
-      'sourceAccount': source,
-      'targetAccount': target,
-    };
+}) => {
+  'id': id,
+  'type': 'Buy',
+  'state': state,
+  'rate': 1.0,
+  'inputAmount': 100.0,
+  'inputAsset': 'CHF',
+  'inputTxId': null,
+  'outputAmount': 1.0,
+  'outputAsset': 'REALU',
+  'outputTxId': null,
+  'sourceAccount': source,
+  'targetAccount': target,
+};
 
 void main() {
   late _MockAppStore appStore;
@@ -57,8 +56,7 @@ void main() {
     sessionCache = SessionCache(_MockCacheRepository());
     txRepo = _MockTransactionRepository();
     when(() => appStore.sessionCache).thenReturn(sessionCache);
-    when(() => appStore.apiConfig)
-        .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+    when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
     when(() => appStore.primaryAddress).thenReturn(_wallet);
     when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
     when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
@@ -104,16 +102,18 @@ void main() {
 
       test('filters out completed transactions (isPending=false)', () async {
         sessionCache.setAuthToken('jwt-1');
-        final client = MockClient((_) async => http.Response(
-              jsonEncode([
-                _txJson(id: 1, state: 'Processing'),
-                _txJson(id: 2, state: 'Completed'),
-                _txJson(id: 3, state: 'Failed'),
-                _txJson(id: 4, state: 'Returned'),
-                _txJson(id: 5, state: 'CheckPending'),
-              ]),
-              200,
-            ));
+        final client = MockClient(
+          (_) async => http.Response(
+            jsonEncode([
+              _txJson(id: 1, state: 'Processing'),
+              _txJson(id: 2, state: 'Completed'),
+              _txJson(id: 3, state: 'Failed'),
+              _txJson(id: 4, state: 'Returned'),
+              _txJson(id: 5, state: 'CheckPending'),
+            ]),
+            200,
+          ),
+        );
 
         final list = await build(client).fetchPendingTransactions();
 
@@ -122,14 +122,16 @@ void main() {
 
       test('filters out transactions that do not belong to the current wallet', () async {
         sessionCache.setAuthToken('jwt-1');
-        final client = MockClient((_) async => http.Response(
-              jsonEncode([
-                _txJson(id: 1, source: _wallet),
-                _txJson(id: 2, source: _other, target: _other),
-                _txJson(id: 3, source: null, target: _wallet),
-              ]),
-              200,
-            ));
+        final client = MockClient(
+          (_) async => http.Response(
+            jsonEncode([
+              _txJson(id: 1, source: _wallet),
+              _txJson(id: 2, source: _other, target: _other),
+              _txJson(id: 3, source: null, target: _wallet),
+            ]),
+            200,
+          ),
+        );
 
         final list = await build(client).fetchPendingTransactions();
 
@@ -140,15 +142,40 @@ void main() {
       test('wallet match is case-insensitive', () async {
         sessionCache.setAuthToken('jwt-1');
         when(() => appStore.primaryAddress).thenReturn(_wallet.toUpperCase());
-        final client = MockClient((_) async => http.Response(
-              jsonEncode([_txJson(id: 1, source: _wallet)]),
-              200,
-            ));
+        final client = MockClient(
+          (_) async => http.Response(
+            jsonEncode([_txJson(id: 1, source: _wallet)]),
+            200,
+          ),
+        );
 
         final list = await build(client).fetchPendingTransactions();
 
         expect(list, hasLength(1));
       });
+    });
+  });
+
+  // The two String extensions live in the same file as the service and are
+  // used by tx-detail UI to render addresses + shortened txids. Without the
+  // pins below they remain dead-code from coverage's point of view, even
+  // though screens depend on them.
+  group('ToEpiAddress', () {
+    test('asHexEip55 round-trips through EthereumAddress.fromHex', () {
+      // Lowercase hex in → EIP-55 mixed-case out. EthereumAddress.fromHex
+      // would throw on an invalid 40-hex address, so the round-trip also
+      // documents that the extension is a thin alias, not a parser.
+      const lower = '0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed';
+      expect(lower.asHexEip55, '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed');
+    });
+
+    test('asShortTxId trims long txids to 0xHEAD…TAIL', () {
+      const txid = '0x1234567890abcdefdeadbeefcafef00d1234567890abcdefdeadbeefcafef00d';
+      // Production format keeps the first 10 chars (0x + 8 hex) and the
+      // last 10 chars; the rest collapses to "..." for compactness.
+      expect(txid.asShortTxId, '0x12345678...efcafef00d');
+      expect(txid.asShortTxId.contains('...'), isTrue);
+      expect(txid.asShortTxId.length, 23); // 10 + 3 + 10
     });
   });
 }

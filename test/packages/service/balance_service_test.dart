@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -163,8 +164,7 @@ void main() {
         balance: BigInt.from(42),
         asset: realUnitAsset,
       );
-      when(() => balanceRepository.getBalance(any(), any()))
-          .thenAnswer((_) async => expected);
+      when(() => balanceRepository.getBalance(any(), any())).thenAnswer((_) async => expected);
 
       final appStore = buildAppStore((_) async => http.Response('{}', 200));
       final service = BalanceService(balanceRepository, appStore);
@@ -172,8 +172,7 @@ void main() {
       final result = await service.getBalance(realUnitAsset, '0xAnyAddress');
 
       expect(result, same(expected));
-      verify(() => balanceRepository.getBalance(realUnitAsset, '0xAnyAddress'))
-          .called(1);
+      verify(() => balanceRepository.getBalance(realUnitAsset, '0xAnyAddress')).called(1);
     });
 
     test('cancelSync is a safe no-op before startSync has run', () {
@@ -182,6 +181,102 @@ void main() {
 
       // Should not throw.
       service.cancelSync();
+    });
+
+    // startSync installs a 10-second Timer.periodic and is otherwise dead-code
+    // from coverage's POV. fake_async drives virtual time so we can assert the
+    // tick cadence without a wall-clock sleep that would flake CI.
+    group('startSync', () {
+      test('runs updateBalance once per 10-second tick of the periodic timer', () {
+        // Each tick must hit the network with the same address — proves the
+        // periodic body is bound to the address arg passed to startSync, not
+        // to an arbitrary captured one.
+        fakeAsync((async) {
+          final addresses = <String>[];
+          final appStore = buildAppStore((request) async {
+            addresses.add(request.url.pathSegments.last);
+            return http.Response(jsonEncode({'balance': '7'}), 200);
+          });
+          final service = BalanceService(balanceRepository, appStore);
+
+          service.startSync('0xPeriodic');
+
+          // Just before the first tick — no network call yet (Timer.periodic
+          // does not fire on T+0).
+          async.elapse(const Duration(seconds: 9));
+          expect(addresses, isEmpty);
+
+          // One tick lands at T=10.
+          async.elapse(const Duration(seconds: 1));
+          async.flushMicrotasks();
+          expect(addresses, ['0xPeriodic']);
+
+          // Two more ticks at T=20 and T=30.
+          async.elapse(const Duration(seconds: 20));
+          async.flushMicrotasks();
+          expect(addresses, ['0xPeriodic', '0xPeriodic', '0xPeriodic']);
+
+          // Cancel so the fake_async zone doesn't complain about pending timers.
+          service.cancelSync();
+        });
+      });
+
+      test('a second startSync cancels the previous periodic before installing the new one', () {
+        // Without the `cancelSync()` inside startSync, both periodics would
+        // fire and we'd see calls for both addresses every interval. The pin
+        // here is the absence of '0xOld' calls after the second startSync.
+        fakeAsync((async) {
+          final addresses = <String>[];
+          final appStore = buildAppStore((request) async {
+            addresses.add(request.url.pathSegments.last);
+            return http.Response(jsonEncode({'balance': '0'}), 200);
+          });
+          final service = BalanceService(balanceRepository, appStore);
+
+          service.startSync('0xOld');
+          async.elapse(const Duration(seconds: 5));
+          service.startSync('0xNew');
+
+          // From T=5 the only active periodic targets 0xNew, so the next tick
+          // — at T=15 from the new periodic's start at T=5 — fires for 0xNew.
+          async.elapse(const Duration(seconds: 30));
+          async.flushMicrotasks();
+
+          expect(
+            addresses,
+            everyElement('0xNew'),
+            reason:
+                'the previous periodic must have been cancelled, '
+                'so no 0xOld probes leak through',
+          );
+          expect(addresses, isNotEmpty);
+
+          service.cancelSync();
+        });
+      });
+
+      test('cancelSync stops the periodic and prevents further ticks', () {
+        fakeAsync((async) {
+          var calls = 0;
+          final appStore = buildAppStore((_) async {
+            calls++;
+            return http.Response(jsonEncode({'balance': '1'}), 200);
+          });
+          final service = BalanceService(balanceRepository, appStore);
+
+          service.startSync('0xCancelMe');
+          async.elapse(const Duration(seconds: 10));
+          async.flushMicrotasks();
+          final callsAtCancel = calls;
+          expect(callsAtCancel, 1);
+
+          service.cancelSync();
+          async.elapse(const Duration(minutes: 5));
+          async.flushMicrotasks();
+
+          expect(calls, callsAtCancel, reason: 'cancelled timer must not tick again');
+        });
+      });
     });
   });
 }
