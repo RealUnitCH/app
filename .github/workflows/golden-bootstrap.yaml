@@ -1,0 +1,40 @@
+name: Golden Bootstrap
+
+# Temporary workflow for regenerating visual-regression baselines on the
+# dfx01 self-hosted runner. Used here to bootstrap the scaled set of
+# goldens for the remaining 50+ pages. Removed in the same PR that adds
+# the baselines — see `docs/visual-regression-tests.md` for the full
+# pattern.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/visual-regression-scale]
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap:
+    name: Generate golden baselines
+    runs-on: [self-hosted, macOS, ARM64, m3-ultra, realunit-app]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.6"
+          channel: "stable"
+          cache: true
+      - run: flutter pub get
+      - run: dart run tool/generate_localization.dart
+      - run: dart run tool/generate_release_info.dart
+      - run: flutter pub run build_runner build
+      - name: Generate goldens
+        run: flutter test test/goldens --update-goldens
+      - name: Upload golden baselines
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-baselines
+          path: test/goldens/**/goldens/**/*.png
+          if-no-files-found: error
