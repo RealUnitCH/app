@@ -34,7 +34,22 @@ If you can write a Tier 0 test, do that. Drop down only when a Tier 0 test would
 
 ## Tier 0 — pure Dart
 
-Test layout mirrors `lib/`. Stack: [`flutter_test`](https://pub.dev/packages/flutter_test), [`bloc_test`](https://pub.dev/packages/bloc_test), [`mocktail`](https://pub.dev/packages/mocktail) (NOT mockito).
+Test layout mirrors `lib/`. Stack: [`flutter_test`](https://pub.dev/packages/flutter_test), [`bloc_test`](https://pub.dev/packages/bloc_test), [`mocktail`](https://pub.dev/packages/mocktail) (NOT mockito), [`fake_async`](https://pub.dev/packages/fake_async) for time-bound assertions. Versions are pinned in `pubspec.yaml`.
+
+### Where things go under `test/`
+
+| Path | What goes here |
+|---|---|
+| `test/packages/**` | Pure-Dart services, signers, parsers, exceptions (mirrors `lib/packages/**`) |
+| `test/screens/<feature>/cubit(s)/**` and `test/screens/<feature>/bloc/**` | Cubit/Bloc state-transition specs (in the activated surface for line-coverage) |
+| `test/screens/<feature>/**/*_page_test.dart` | `testWidgets` view specs (cover the page, not the cubit logic) |
+| `test/integration/` | Cross-layer Tier-1 specs using `FakeBitboxCredentials` (e.g. `kyc_sign_flow_test.dart`) |
+| `test/helper/` | Shared test infra: [`pump_app.dart`](../test/helper/pump_app.dart), [`fake_bitbox_credentials.dart`](../test/helper/fake_bitbox_credentials.dart) |
+| `test/models/` | DTO / marshalling specs (`asset_test.dart`, `balance_test.dart`, `transaction_test.dart`, …) |
+| `test/setup/` | App lifecycle / bootstrap specs (`lifecycle_initializer_test.dart`) |
+| `test/styles/` | Currency / language fixtures (`currency_test.dart`, `language_test.dart`) |
+| `test/tool/` | Specs for the Dart scripts under `tool/` (`generate_release_info_test.dart`) |
+| `test/widgets/` | Shared widget specs that are not bound to one feature screen |
 
 ### Cubit / Bloc
 
@@ -248,6 +263,8 @@ Platform-specific paths (USB transports, BLE lifecycle, secure storage, biometri
 rg "^//\s*@no-integration-test:" lib/
 ```
 
+As of today there are 0 annotations in `lib/` — the convention is in place but no platform-coupled path has needed it yet (the Tier 1 `test/integration/` specs cover the BitBox boundary via `FakeBitboxCredentials`, and the other platform surfaces above are not yet referenced from `lib/` in a way that would trip the rule). The block of files listed under "Surface that needs infra work" below is the practical near-term target.
+
 Unit tests with mocked platform channels cannot catch real-device regressions (permission prompts, OS-level lifecycle, transport quirks); the annotation makes the absence of an integration test a deliberate, reviewable decision rather than a silent gap.
 
 ## Tier 1 — cubit / widget + SDK-boundary fake
@@ -321,8 +338,9 @@ The pinned version is the workaround the upstream issue closed with.
 class up to three times per flow as a safety net, and Tier 3 is
 opt-in via the `tier3:full` label rather than a required status
 check on `develop` until the reliability is proven on the pinned
-version over time. See realunit-app#487 Hard Risk 2b for the
-hardening track.
+version over time. The CI-hardening track that landed this guard
+was [#487](https://github.com/DFXswiss/realunit-app/issues/487)
+(now closed).
 
 The real-hardware variant (BitBox02 Nova) stays deferred — Phase 3 of #314 — and is the entry point for any PR that adds a `bitbox:full` label later.
 
@@ -345,7 +363,7 @@ flutter test --coverage
 The workflow runs three jobs:
 
 - **`Analyze & Test`** — the block above, plus a `lcov --extract` step that narrows `coverage/lcov.info` to the activated surface (`lib/packages/**`, `lib/screens/**/cubit(s)/**`, `lib/screens/**/bloc/**`) and uploads both the filtered tracefile (`coverage-lcov`) and a one-line summary (`coverage-summary`) as artifacts.
-- **`Coverage Floor Gate`** — downloads `coverage-summary` and fails the build when scoped line/function coverage drops below the integers committed to `.coverage-floor-lines` and `.coverage-floor-functions`. This job is the required status check on `develop`; the ratchet protocol is documented in `README.md`.
+- **`Coverage Floor Gate`** — downloads `coverage-summary` and fails the build when scoped line/function coverage drops below the integers committed to `.coverage-floor-lines` and `.coverage-floor-functions`. The job is wire-up-ready as a separately required check, but the `develop` branch ruleset currently only requires `Analyze & Test` — see the `Coverage infrastructure roadmap` in `README.md` for the open item. The ratchet protocol is documented there too.
 - **`BitBox quirks audit`** — runs `bitbox-audit` against the diff and inlines its report into the workflow run summary; uploaded as `bitbox-audit-report`.
 
 Tier 3 runs separately under `tier3-handbook.yaml` (push to `develop`, manual, or PRs with the `tier3:full` label). Coverage is uploaded as an artifact (see [#323](https://github.com/DFXswiss/realunit-app/pull/323)). The repo holds a [100 % coverage rule](https://github.com/DFXswiss/realunit-app/pull/322) for new code — drop the threshold only with reviewer sign-off and a written reason.

@@ -2,7 +2,7 @@ name: Tier 3 — Handbook flows
 
 # Drives every `.maestro/handbook/*.yaml` flow against a freshly-erased iOS
 # Simulator and uploads the captured PNGs as a build artifact. Tier 3 in the
-# four-tier model defined in `docs/testing.md`: real BitBox hardware is
+# five-tier model defined in `docs/testing.md`: real BitBox hardware is
 # explicitly out of scope here — the handbook flows only need the software
 # wallet path, so a hosted macOS runner is enough.
 #
@@ -62,8 +62,8 @@ name: Tier 3 — Handbook flows
 #   `IOSDriverTimeoutException` — assertion failures are never
 #   retried. The post-mortem block (lsof / ps / simctl log + Maestro
 #   `--debug-output`) captures failure state so future regressions
-#   can be diagnosed forensically. Reliability tracking lives in
-#   DFXswiss/realunit-app#487 Hard Risk 2b.
+#   can be diagnosed forensically. The CI-hardening track that landed
+#   this guard was DFXswiss/realunit-app#487 (now closed).
 #
 # Why no pixel-diff in v1:
 #   Font antialiasing differs between runner image versions and a strict

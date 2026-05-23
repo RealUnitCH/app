@@ -19,7 +19,7 @@ name: bitbox-simulator
 # FIRMWARE side of the protocol; the Dart consumer side is exercised
 # by Tier 1 (SDK-boundary fake, cross-layer tests under
 # `test/integration/`) and ultimately by Tier 3 Maestro flows on
-# real hardware. See `docs/testing.md` for the four-tier model and
+# real hardware. See `docs/testing.md` for the five-tier model and
 # issue #314 for the rollout plan. The pinned bitbox_flutter version
 # lives in `pubspec.yaml`.
 #

@@ -135,11 +135,13 @@ jobs:
 
       # The scoped summary is the input to the `coverage-floor` gate job.
       # `if-no-files-found: error` (not `warn`) is load-bearing: the floor
-      # gate is a required status check on `develop`, and a missing summary
-      # MUST surface as a red upload here rather than reach the gate job as
-      # a silent "nothing to compare against". Pairs with the hard `exit 1`
-      # on the gate job's download path — together they make the gate
-      # fail-closed instead of the previous fail-open (silent `exit 0`).
+      # gate is wire-up-ready as a required status check on `develop`
+      # (the ruleset switch is the open roadmap item in README.md), and
+      # a missing summary MUST surface as a red upload here rather than
+      # reach the gate job as a silent "nothing to compare against".
+      # Pairs with the hard `exit 1` on the gate job's download path —
+      # together they make the gate fail-closed instead of the previous
+      # fail-open (silent `exit 0`).
       - name: Upload coverage summary
         if: always()
         uses: actions/upload-artifact@v4
