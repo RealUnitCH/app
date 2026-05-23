@@ -172,9 +172,87 @@ final privKey = EthPrivateKey.fromHex(_testPrivateKeyHex);
 
 Sharing the key lets cross-layer tests assert on a single recovered signer address — and means any envelope encoded by `FakeBitboxCredentials(success)` round-trips through `Eip712Signer.signRegistration` to the same byte sequence.
 
+### Service lifecycle (fake_async)
+
+Services with a `Timer`, an observer/subscription loop, or a platform/`MethodChannel` dependency must have a lifecycle test that instantiates the real class — never a mock of the service-under-test. Mocking the service hides timer leaks, unsubscribed listeners, and double-init bugs.
+
+Time-bound assertions must drive time via `package:fake_async`. Wall-clock `Future.delayed` is not acceptable: it makes tests slow and flaky.
+
+```dart
+import 'package:bitbox_flutter/bitbox_flutter.dart';
+import 'package:bitbox_flutter/testing.dart';
+import 'package:bitbox_flutter/usb/bitbox_usb_platform_interface.dart';
+import 'package:fake_async/fake_async.dart';
+
+late BitboxUsbPlatform previousPlatform;
+late SimulatedBitboxPlatform platform;
+
+setUp(() {
+  previousPlatform = BitboxUsbPlatform.instance;
+  platform = installSimulatedBitboxPlatform();
+});
+tearDown(() {
+  BitboxUsbPlatform.instance = previousPlatform;
+});
+
+// Pairing must run inside the fakeAsync zone so the periodic timer the
+// service installs is bound to the fake clock — otherwise `async.elapse`
+// will not pump it.
+BitboxService pairedServiceSync(FakeAsync async) {
+  final service = BitboxService(
+    connectionStatusInterval: const Duration(milliseconds: 50),
+  );
+  late List<BitboxDevice> devices;
+  service.getAllUsbDevices().then((d) => devices = d);
+  async.flushMicrotasks();
+  service.init(devices.single);
+  async.flushMicrotasks();
+  return service;
+}
+
+test('observer releases USB transport when device vanishes', () {
+  fakeAsync((async) {
+    final service = pairedServiceSync(async); // real instance, not a mock
+
+    platform.when(
+      SimulatedBitboxMethod.getDevices,
+      (_) async => const <BitboxDevice>[],
+    );
+    service.startConnectionStatusObserver();
+    async.elapse(const Duration(milliseconds: 150));
+
+    expect(
+      platform.count(SimulatedBitboxMethod.close),
+      greaterThanOrEqualTo(1),
+    );
+  });
+});
+```
+
+See `test/packages/hardware_wallet/bitbox_service_test.dart`. The rule is also documented in `CONTRIBUTING.md` ("Service-lifecycle tests are mandatory").
+
+### Exception surface
+
+Every typed exception in `lib/` (any class that `implements Exception` or `extends Exception`) must:
+
+1. Override `toString()` so the rendered string is non-empty and does not contain `Instance of '...'`.
+2. Be enumerated in `test/packages/service/dfx/exceptions/exception_surface_test.dart` in the same PR that introduces it.
+
+Exceptions surface in logs, Sentry, and user-facing error states — the Dart default `Instance of '...'` is useless for debugging and unfriendly for users. The surface test catches drift the moment a new exception is added without an enumeration entry.
+
+### Platform-coupled code without an integration test
+
+Platform-specific paths (USB transports, BLE lifecycle, secure storage, biometric prompts, deep links) must either ship a Tier 2/3 counterpart that exercises the real plugin (firmware simulator) or the real transport (Maestro on a device/simulator), or carry an inline `// @no-integration-test: <reason>` annotation. Today the simulator/Maestro counterpart is the long-term option but no `integration_test/` harness is wired up yet (see `CONTRIBUTING.md` footnote on the Tier-1 integration-test slot), so in practice the annotation is the documenting form on every new platform-coupled path. The annotation works at file level (as a dartdoc comment) or immediately above the function/method declaration. Grep current annotations with:
+
+```bash
+rg "^//\s*@no-integration-test:" lib/
+```
+
+Unit tests with mocked platform channels cannot catch real-device regressions (permission prompts, OS-level lifecycle, transport quirks); the annotation makes the absence of an integration test a deliberate, reviewable decision rather than a silent gap.
+
 ## Tier 1 — cubit / widget + SDK-boundary fake
 
-Tier 1 reuses the same `flutter_test` runner but swaps in [`FakeBitboxCredentials`](../lib/packages/hardware_wallet/fake_bitbox_credentials.dart) at the BitBox boundary. The fake `is BitboxCredentials`, so every production type guard (e.g. the `BitboxNotConnectedException` check in `RealUnitRegistrationService`) treats it identically to a real device.
+Tier 1 reuses the same `flutter_test` runner but swaps in [`FakeBitboxCredentials`](../test/helper/fake_bitbox_credentials.dart) at the BitBox boundary. The fake `is BitboxCredentials`, so every production type guard (e.g. the `BitboxNotConnectedException` check in `RealUnitRegistrationService`) treats it identically to a real device.
 
 `FakeBitboxBehavior` covers the five real-world ceremony outcomes:
 
@@ -254,7 +332,7 @@ Capture iOS BLE traffic once on hardware, replay it deterministically thereafter
 
 ## CI
 
-Every PR runs Tier 0 and Tier 1 via the `RealUnit Build` workflow:
+Every PR runs Tier 0 and Tier 1 via the `RealUnit Build` workflow (`.github/workflows/pull-request.yaml`):
 
 ```bash
 flutter pub get
@@ -264,7 +342,13 @@ flutter analyze
 flutter test --coverage
 ```
 
-Coverage is uploaded as an artifact (see [#323](https://github.com/DFXswiss/realunit-app/pull/323)). The repo holds a [100 % coverage rule](https://github.com/DFXswiss/realunit-app/pull/322) for new code — drop the threshold only with reviewer sign-off and a written reason.
+The workflow runs three jobs:
+
+- **`Analyze & Test`** — the block above, plus a `lcov --extract` step that narrows `coverage/lcov.info` to the activated surface (`lib/packages/**`, `lib/screens/**/cubit(s)/**`, `lib/screens/**/bloc/**`) and uploads both the filtered tracefile (`coverage-lcov`) and a one-line summary (`coverage-summary`) as artifacts.
+- **`Coverage Floor Gate`** — downloads `coverage-summary` and fails the build when scoped line/function coverage drops below the integers committed to `.coverage-floor-lines` and `.coverage-floor-functions`. This job is the required status check on `develop`; the ratchet protocol is documented in `README.md`.
+- **`BitBox quirks audit`** — runs `bitbox-audit` against the diff and inlines its report into the workflow run summary; uploaded as `bitbox-audit-report`.
+
+Tier 3 runs separately under `tier3-handbook.yaml` (push to `develop`, manual, or PRs with the `tier3:full` label). Coverage is uploaded as an artifact (see [#323](https://github.com/DFXswiss/realunit-app/pull/323)). The repo holds a [100 % coverage rule](https://github.com/DFXswiss/realunit-app/pull/322) for new code — drop the threshold only with reviewer sign-off and a written reason.
 
 ## Surface that needs infra work before it can be unit-tested
 
@@ -272,10 +356,10 @@ Some files are deliberately uncovered today because exercising them would change
 
 | Area | Why it's not unit-tested | What it would take |
 |---|---|---|
-| `lib/packages/repository/*` (Drift wrappers) | `AppDatabase(String encryptionPassword)` builds a native SQLCipher executor; no in-memory injection point | Add `AppDatabase.forTesting(QueryExecutor e) : super(e)` and let tests pass `NativeDatabase.memory()` |
+| `lib/packages/repository/*` (Drift wrappers) | `AppDatabase(String encryptionPassword)` builds a native SQLCipher executor; the in-memory injection point exists (`AppDatabase.forTesting`, `database.dart`), but the wrapper specs are not written yet | Write repository unit tests that pass `NativeDatabase.memory()` into `AppDatabase.forTesting` |
 | `lib/screens/*/`-Page widgets that call `getIt<X>()` directly (Dashboard, Receive, Settings sub-pages) | Service locator usage inside `build` makes the cubits the page wires up impossible to swap | Move the `BlocProvider(create: (_) => Cubit(getIt<X>()))` lookup up one layer so tests can `BlocProvider.value` a mock |
 | `transaction_history_*receipt_cubit`, `settings_tax_report_cubit` | Call `getApplicationDocumentsDirectory()` from `path_provider` directly | Inject the path lookup (or use [`path_provider_platform_interface`](https://pub.dev/packages/path_provider_platform_interface) with a fake) |
-| `lib/screens/kyc/steps/ident/cubits/kyc_ident_cubit.dart` | Drives the Sumsub `flutter_idensic_mobile_sdk_plugin` directly | Move the SDK call behind a port the cubit takes via constructor injection |
+| `lib/screens/kyc/steps/ident/cubits/kyc_ident/kyc_ident_cubit.dart` | Drives the Sumsub `flutter_idensic_mobile_sdk_plugin` directly | Move the SDK call behind a port the cubit takes via constructor injection |
 | `lib/widgets/chain_asset_icon.dart`, `lib/widgets/image_picker_sheet.dart` | `Image.asset` / `ImagePicker` need a real asset bundle / platform channel | Mock the asset loader / use the platform-interface fake |
 
 When you find yourself wanting to test one of these, do the infra PR first and document the new injection point in this file.

@@ -14,7 +14,7 @@ A Flutter wallet for Real Unit investors. Multi-chain, BitBox-ready, KYC-aware.
 
 **Coverage scope:** `lib/packages/**` (services, repositories, signers, utils) and the `cubits/` + `bloc/` directories under each `lib/screens/<feature>/`. Widget files (`lib/screens/<feature>/<feature>_page.dart` and `lib/widgets/**`) are exercised via `testWidgets` specs and excluded from the line-coverage gate — widget tests count as `widget` coverage in the feature matrix, not as line %.
 
-The four-tier testing model (Tier 0 Cubit unit · Tier 1 FakeBitbox integration · Tier 2 firmware simulator · Tier 3 Maestro flows (handbook simulator + deferred BitBox02 hardware)) is tracked in [#314](https://github.com/DFXswiss/realunit-app/issues/314). New BitBox-touching PRs are expected to add tests at the appropriate tier(s).
+The five-tier testing model (Tier 0 Cubit unit · Tier 1 FakeBitbox integration · Tier 2 firmware simulator · Tier 3 Maestro flows (handbook simulator + deferred BitBox02 hardware) · Tier 4 BLE VCR/replay stretch) is tracked in [#314](https://github.com/DFXswiss/realunit-app/issues/314). See [`docs/testing.md`](docs/testing.md) for the full tier picker. New BitBox-touching PRs are expected to add tests at the appropriate tier(s).
 
 ## Coverage infrastructure roadmap
 
@@ -32,7 +32,7 @@ The 100% rule above is the target state. Until the items below land, it is aspir
 
 > **Before first use:** two PR labels are referenced by this tooling but are not auto-created. Run `gh label create tier3:full` once on the repo to enable per-PR opt-in for the Tier 3 handbook workflow — without the label the workflow's `if:` gate never matches and the job silently skips on PRs. Run `gh label create coverage:lower-floor` once to make floor-lowering PRs grep-able; the coverage floor gate itself runs unconditionally on every PR, this label is a review-convention marker only and is not read by any workflow.
 
-Three PRs already in flight close the largest gaps for KYC + BitBox logic: [#319](https://github.com/DFXswiss/realunit-app/pull/319) (Tier 0 cubit tests), [#320](https://github.com/DFXswiss/realunit-app/pull/320) (Tier 1 FakeBitbox integration), [#321](https://github.com/DFXswiss/realunit-app/pull/321) (dashboard buy actions + auth service tests).
+Three PRs have closed the largest gaps for KYC + BitBox logic: [#319](https://github.com/DFXswiss/realunit-app/pull/319) (Tier 0 cubit tests), [#320](https://github.com/DFXswiss/realunit-app/pull/320) (Tier 1 FakeBitbox integration), [#321](https://github.com/DFXswiss/realunit-app/pull/321) (dashboard buy actions + auth service tests).
 
 ## Features
 
@@ -42,9 +42,9 @@ User-facing functions, their activation status, and the tests that cover them. I
 
 **Triage legend** (MVP testing decision): `mvp` = in MVP scope, must reach full test coverage before launch · `defer` = ships but does not block MVP coverage (coverage required eventually, no hard deadline) · `planned` = not in scope for MVP.
 
-**Tests legend:** `widget` = `testWidgets` spec under `test/screens/**` · `unit` = pure-Dart `test/packages/**` spec · `cubit` = `bloc_test`-style spec for a Bloc/Cubit · `integration` = `integration_test/**` spec driving the full app with `FakeBitboxCredentials` · `e2e` = Maestro YAML flow on real hardware · `—` = no test exists.
+**Tests legend:** `widget` = `testWidgets` spec under `test/screens/**` · `unit` = pure-Dart `test/packages/**` spec · `cubit` = `bloc_test`-style spec for a Bloc/Cubit · `integration` = `test/integration/**` spec crossing ≥ 2 production layers with `FakeBitboxCredentials` · `e2e` = Maestro YAML flow on real hardware · `—` = no test exists.
 
-> Per-feature line-coverage % is omitted today because `--coverage` is not yet wired into CI. Once roadmap items 1 + 2 land, this column will be populated automatically.
+> Per-feature line-coverage % is not surfaced in this table. The repo-wide scoped coverage is enforced by the `Coverage Floor Gate` CI job against `.coverage-floor-lines` / `.coverage-floor-functions`; the lcov artifact attached to every PR run holds the per-file breakdown.
 
 ### Supported hardware wallets
 
@@ -63,7 +63,7 @@ The transport is USB on Android and Bluetooth on iOS; the original BitBox 02 has
 | --- | --- | --- | --- |
 | Welcome screen | always | mvp | widget (`welcome_page_test.dart`, `welcome/widgets/welcome_card_test.dart`) |
 | Create wallet — software (generate seed) | always | mvp | widget (`create_wallet/create_wallet_page_test.dart`); no cubit/service test |
-| Create wallet — BitBox (hardware connect) | hardware | mvp | — (integration test landing in [#320](https://github.com/DFXswiss/realunit-app/pull/320)) |
+| Create wallet — BitBox (hardware connect) | hardware | mvp | — (integration test added via [#320](https://github.com/DFXswiss/realunit-app/pull/320)) |
 | Restore wallet — software seed phrase | always | mvp | widget (`restore_wallet/restore_wallet_page_test.dart`) |
 | Verify seed phrase (3-word challenge) | always | mvp | widget (`verify_seed/verify_seed_page_test.dart`) |
 | Setup PIN | always | mvp | widget (`pin/setup_pin_page_test.dart`) |
@@ -85,16 +85,16 @@ The transport is USB on Android and Bluetooth on iOS; the original BitBox 02 has
 
 | Feature | Status | Triage | Tests |
 | --- | --- | --- | --- |
-| Buy — DFX fiat on-ramp (SEPA) | always | mvp | widget (`buy/buy_page_test.dart`) + unit (`real_unit_buy_payment_info_service_test.dart`); extended in [#321](https://github.com/DFXswiss/realunit-app/pull/321) |
-| Sell — DFX fiat off-ramp (IBAN) | always | mvp | widget (`sell/sell_page_test.dart`); extended in [#321](https://github.com/DFXswiss/realunit-app/pull/321) |
-| KYC: Email + 2FA gate | always | mvp | widget (`kyc_email_page_test.dart`, `kyc_2fa_page_test.dart`); cubit landing in [#319](https://github.com/DFXswiss/realunit-app/pull/319) |
-| KYC: Registration + BitBox EIP-712 sign | always | mvp | widget (`kyc_registration_page_test.dart`) + unit (`eip712_signer_test.dart`); cubit / `registration_submit` / sign-flow integration tests landing in [#319](https://github.com/DFXswiss/realunit-app/pull/319) + [#320](https://github.com/DFXswiss/realunit-app/pull/320) |
+| Buy — DFX fiat on-ramp (SEPA) | always | mvp | widget (`buy/buy_page_test.dart`) + unit (`real_unit_buy_payment_info_service_test.dart`); added via [#321](https://github.com/DFXswiss/realunit-app/pull/321) |
+| Sell — DFX fiat off-ramp (IBAN) | always | mvp | widget (`sell/sell_page_test.dart`); added via [#321](https://github.com/DFXswiss/realunit-app/pull/321) |
+| KYC: Email + 2FA gate | always | mvp | widget (`kyc_email_page_test.dart`, `kyc_2fa_page_test.dart`); cubit added via [#319](https://github.com/DFXswiss/realunit-app/pull/319) |
+| KYC: Registration + BitBox EIP-712 sign | always | mvp | widget (`kyc_registration_page_test.dart`) + unit (`eip712_signer_test.dart`); cubit / `registration_submit` / sign-flow integration tests added via [#319](https://github.com/DFXswiss/realunit-app/pull/319) + [#320](https://github.com/DFXswiss/realunit-app/pull/320) |
 | KYC: Nationality | always | mvp | widget (`kyc_nationality_page_test.dart`) |
 | KYC: Financial data | always | mvp | widget (`kyc_financial_data_page_test.dart`) |
 | KYC: Ident | always | mvp | widget (`kyc_ident_page_test.dart`) |
 | KYC: Pending / Completed / Failure | always | mvp | widget (`kyc/subpages/kyc_*_page_test.dart`) |
-| KYC: AccountMergeRequested / UnsupportedStepFailure | always | mvp | — (cubit paths landing in [#319](https://github.com/DFXswiss/realunit-app/pull/319)) |
-| `DFXAuthService` (lazy auth + 401 retry) | always | mvp | — (unit tests landing in [#319](https://github.com/DFXswiss/realunit-app/pull/319) + [#321](https://github.com/DFXswiss/realunit-app/pull/321)) |
+| KYC: AccountMergeRequested / UnsupportedStepFailure | always | mvp | — (cubit paths added via [#319](https://github.com/DFXswiss/realunit-app/pull/319)) |
+| `DFXAuthService` (lazy auth + 401 retry) | always | mvp | — (unit tests added via [#319](https://github.com/DFXswiss/realunit-app/pull/319) + [#321](https://github.com/DFXswiss/realunit-app/pull/321)) |
 | `balance_service` (balance fetch + cache) | always | mvp | unit (`balance_service_test.dart`) |
 | `format_fixed` / `parse_fixed` (decimal helpers) | always | mvp | unit (`format_fixed_test.dart`, `parse_fixed_test.dart`) |
 | `ApiException` mapping | always | mvp | unit (`exceptions/api_exception_test.dart`) |
@@ -125,23 +125,24 @@ The transport is USB on Android and Bluetooth on iOS; the original BitBox 02 has
 
 Features tagged `mvp` whose current test coverage is insufficient — these block "100% on activated features":
 
-- **Create wallet — BitBox** — no test today; integration test landing in [#320](https://github.com/DFXswiss/realunit-app/pull/320)
+- **Create wallet — BitBox** — covered by the integration test added in [#320](https://github.com/DFXswiss/realunit-app/pull/320); verify the spec still maps to the current `create_wallet` flow when in doubt
 - **Receive** — no test for the address/QR screen
 - **Biometric unlock** — no test (`biometric_service.dart` has no unit spec; no widget spec asserts the unlock surface)
 - **Legal disclaimer gate** — widget exists, cubit transition not directly tested
 - **KYC cubit + sign-flow logic** — widget tests cover individual pages, but state transitions (`KycCubit`, `KycRegistrationSubmitCubit`, `Eip712Signer` guard paths) land in [#319](https://github.com/DFXswiss/realunit-app/pull/319) + [#320](https://github.com/DFXswiss/realunit-app/pull/320)
-- **DFX backend services** — `DFXAuthService`, `real_unit_registration_service`, `real_unit_pdf_service`, `dfx_kyc_service`, `dfx_price_service`, `dfx_widget_service`, `dfx_brokerbot_service`, `dfx_bank_account_service`, `dfx_blockchain_api_service`, `dfx_country_service`, `dfx_faucet_service`, `dfx_support_service`, `transaction_history_service`, `wallet_service`, `price_service`, `session_cache`, `settings_service`, `app_store`, `biometric_service`, `debug_auth_service` — none have a unit spec today; in flight via [#319](https://github.com/DFXswiss/realunit-app/pull/319) (`DFXAuthService`) and [#321](https://github.com/DFXswiss/realunit-app/pull/321) (`real_unit_buy_payment_info_service`)
+- **DFX backend services** — `DFXAuthService`, `real_unit_registration_service`, `real_unit_pdf_service`, `dfx_kyc_service`, `dfx_price_service`, `dfx_widget_service`, `dfx_brokerbot_service`, `dfx_bank_account_service`, `dfx_blockchain_api_service`, `dfx_country_service`, `dfx_faucet_service`, `dfx_support_service`, `transaction_history_service`, `wallet_service`, `price_service`, `session_cache`, `settings_service`, `app_store`, `biometric_service`, `debug_auth_service` — partially covered after [#319](https://github.com/DFXswiss/realunit-app/pull/319) (`DFXAuthService`) and [#321](https://github.com/DFXswiss/realunit-app/pull/321) (`real_unit_buy_payment_info_service`); most other services still lack a unit spec
 - **Hook / screen state tests** — `home_page` widget renders but the underlying balance/price hook has no spec; same for `dashboard` bloc and most screen-level cubits
 
 ## Testing tiers
 
-[#314](https://github.com/DFXswiss/realunit-app/issues/314) defines a 4-tier model for BitBox-touching code:
+[#314](https://github.com/DFXswiss/realunit-app/issues/314) defines a 5-tier model for BitBox-touching code:
 
 - **Tier 0 — Cubit unit tests** (`bloc_test` + `mocktail`). Fast, no platform, no BitBox. Covers every state transition.
-- **Tier 1 — FakeBitbox integration tests** (`integration_test/` + `FakeBitboxCredentials`). Drives full app flow without hardware. Phase landing in [#320](https://github.com/DFXswiss/realunit-app/pull/320).
+- **Tier 1 — FakeBitbox integration tests** (`FakeBitboxCredentials` at the BitBox boundary, runs under `flutter test --coverage`). Drives multi-layer flows without hardware. Specs live under `test/integration/`.
 - **Tier 2 — Firmware simulator** (TCP transport + Docker `bitbox02-firmware/simulator`). End-to-end with real crypto, no hardware. Planned.
 - **Tier 3a — Maestro handbook flows** (`.maestro/handbook/*.yaml`). Software-only flows run on a fresh iOS Simulator. Automated via [`tier3-handbook.yaml`](.github/workflows/tier3-handbook.yaml) — opt-in on PRs via the `tier3:full` label (an upstream Maestro driver-hang regression on `macos-latest` runners makes intermittent first-attempt failures expected; `scripts/run-handbook-flows.sh` retries the driver-hang class up to 3× per flow; tracked in [#487](https://github.com/DFXswiss/realunit-app/issues/487)), always runs on push to `develop`.
 - **Tier 3b — Maestro hardware flows** (`.maestro/*.yaml`, BitBox02 device). Status: deferred — still manually triggered before each release.
+- **Tier 4 — BLE VCR / replay** (capture on hardware once, replay deterministically). Stretch — most of its value is covered by Tier 2 + Tier 3 in tandem.
 
 Non-BitBox code only needs Tier 0 + widget tests; Tier 1+ are reserved for hardware-coupled paths.
 
@@ -153,7 +154,7 @@ Non-BitBox code only needs Tier 0 + widget tests; Tier 1+ are reserved for hardw
 | Coverage | `flutter test --coverage` | Writes `coverage/lcov.info`. CI narrows it to the activated surface and hard-fails when scoped coverage drops below the floor in `.coverage-floor-lines` / `.coverage-floor-functions`. See "Coverage infrastructure roadmap" above for the ratchet protocol. |
 | Analyzer | `flutter analyze`         | Dart static analysis per `analysis_options.yaml`                                                                                                                                                          |
 
-Tier 1 (`integration_test/`) is tracked under "Testing tiers" above but not yet committed. Tier 3a (Maestro handbook flows on iOS Simulator) is wired via [`tier3-handbook.yaml`](.github/workflows/tier3-handbook.yaml); Tier 3b (BitBox02 real-hardware variant) remains deferred.
+Tier 1 specs live under `test/integration/**` and run inside the same `flutter test --coverage` invocation as Tier 0 — no separate `integration_test/` harness today (that Flutter-convention directory is reserved for on-device runs that are not yet wired up). Tier 3a (Maestro handbook flows on iOS Simulator) is wired via [`tier3-handbook.yaml`](.github/workflows/tier3-handbook.yaml); Tier 3b (BitBox02 real-hardware variant) remains deferred.
 
 ## CI/CD
 
