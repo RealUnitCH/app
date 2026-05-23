@@ -96,11 +96,29 @@ divergieren Image-Stand und Source-of-Truth.
 
 ### Trigger
 
-Ändert sich im api-Repo eine Mail-Vorlage, eine Übersetzung oder das
-Generator-Skript, schickt
-`DFXswiss/api/.github/workflows/notify-handbook-on-mail-change.yaml` ein
-`repository_dispatch (mails-updated)` an dieses Repo und der
-Handbook-Deploy läuft automatisch (DEV → PRD).
+Der Handbook-Deploy läuft bei einem `push` auf `develop` mit Änderungen
+unter handbook-relevanten Pfaden (siehe `handbook-deploy.yaml`) oder bei
+einem manuellen `workflow_dispatch` auf `handbook-deploy.yaml` in
+**diesem** Repo. Eine reine Mail-Template-, i18n- oder Generator-Änderung
+im api-Repo löst **keinen** automatischen Rebuild aus — sie fliesst erst
+mit dem nächsten Handbook-Deploy hier rein.
+
+Wer eine reine Mail-Änderung sofort live haben will, hat zwei Optionen
+im realunit-app-Repo:
+
+```bash
+# Variante A: No-op-Touch unter einem handbook-relevanten Pfad,
+# damit der path-Filter von handbook-deploy.yaml zieht. `--allow-empty`
+# alleine reicht NICHT — der Push muss eine Datei unter docs/handbook/
+# (oder Dockerfile.handbook / handbook.nginx.conf / handbook.htpasswd /
+# einen der beiden handbook-Workflows) tatsächlich anfassen.
+touch docs/handbook/.sync && git add docs/handbook/.sync \
+  && git commit -m "chore(handbook): pull latest mail templates from api" \
+  && git push origin develop
+
+# Variante B: manuell dispatchen (kein Commit nötig)
+gh workflow run handbook-deploy.yaml --ref develop
+```
 
 ### Lokal regenerieren
 

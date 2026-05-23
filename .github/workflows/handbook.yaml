@@ -61,9 +61,11 @@ jobs:
       # (scripts/generate-realunit-previews.js). We pull them in at build time
       # instead of checking them into this repo, so a change to a template or
       # i18n string in the api repo flows into the handbook image on the next
-      # build without a manual sync PR. The api repo triggers this workflow
-      # via repository_dispatch (see handbook-deploy.yaml + the api repo's
-      # .github/workflows/notify-handbook-on-mail-change.yaml).
+      # build without a manual sync PR. A handbook-relevant push to develop
+      # (or a manual workflow_dispatch on handbook-deploy.yaml in this repo)
+      # rebuilds the image and re-pulls api@develop here — so mail-template
+      # changes in the api repo only flow in after such a push/dispatch in
+      # this repo. There is NO auto-dispatch from the api repo.
       - name: Check out DFXswiss/api at develop into _api-checkout/
         uses: actions/checkout@v4
         with:

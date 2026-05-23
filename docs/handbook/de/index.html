@@ -1329,11 +1329,13 @@
           </div>
 
           <p>
-            Bei Änderung einer Mail-Vorlage, einer i18n-Übersetzung oder des
-            Generator-Skripts im api-Repo wird dieser Handbook-Deploy
-            automatisch angestossen (via <code>repository_dispatch</code> aus
-            <code>DFXswiss/api</code>), sodass die Vorschauen hier nie
-            asynchron zur Produktion sind.
+            Eine Änderung an Mail-Vorlage, i18n-Übersetzung oder
+            Generator-Skript im api-Repo löst hier <b>keinen</b> automatischen
+            Rebuild aus. Die neue Version wird mit dem nächsten
+            Handbook-Deploy (Push auf <code>develop</code> mit
+            handbook-relevanten Pfaden oder manueller
+            <code>workflow_dispatch</code> auf <code>handbook-deploy.yaml</code>
+            im realunit-app-Repo) reingezogen.
           </p>
         </details>
       </main>
