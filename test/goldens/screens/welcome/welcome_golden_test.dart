@@ -7,7 +7,6 @@ import 'package:realunit_wallet/styles/themes.dart';
 import '../../../helper/helper.dart';
 
 void main() {
-  const phoneConstraints = BoxConstraints.tightFor(width: 390, height: 844);
 
   group('$WelcomePage', () {
     goldenTest(

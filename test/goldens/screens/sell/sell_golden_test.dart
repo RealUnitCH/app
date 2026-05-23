@@ -16,7 +16,6 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/bank_account/bank_account.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
-import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_balance/sell_balance_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_converter/sell_converter_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
@@ -53,10 +52,6 @@ class _MockSupportedFiatRepository extends Mock implements SupportedFiatReposito
 
 class _MockApiConfig extends Mock implements ApiConfig {}
 
-class _MockAppStore extends Mock implements AppStore {}
-
-class _MockWallet extends Mock implements SoftwareWallet {}
-
 void main() {
   late _MockSellConverterCubit converterCubit;
   late _MockSellPaymentInfoCubit paymentInfoCubit;
@@ -78,9 +73,9 @@ void main() {
     final getIt = GetIt.instance;
     final apiConfig = _MockApiConfig();
     when(() => apiConfig.asset).thenReturn(realUnitAsset);
-    final appStore = _MockAppStore();
+    final appStore = MockAppStore();
     when(() => appStore.apiConfig).thenReturn(apiConfig);
-    when(() => appStore.wallet).thenReturn(_MockWallet());
+    when(() => appStore.wallet).thenReturn(MockSoftwareWallet());
     when(() => appStore.primaryAddress).thenReturn(
       '0x0000000000000000000000000000000000000000',
     );

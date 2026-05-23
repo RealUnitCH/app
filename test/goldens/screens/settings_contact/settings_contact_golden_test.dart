@@ -1,6 +1,5 @@
 import 'package:alchemist/alchemist.dart';
 import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -17,7 +16,6 @@ class _MockSettingsContactCubit extends MockCubit<SettingsContactState>
 class _MockDfxKycService extends Mock implements DfxKycService {}
 
 void main() {
-  const phoneConstraints = BoxConstraints.tightFor(width: 390, height: 844);
 
   late _MockSettingsContactCubit contactCubit;
 

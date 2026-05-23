@@ -24,14 +24,11 @@ class _MockBalanceCubit extends MockCubit<Balance> implements BalanceCubit {}
 class _MockPendingTransactionsCubit extends MockCubit<List<TransactionDto>>
     implements PendingTransactionsCubit {}
 
-class _MockSettingsBloc extends MockBloc<SettingsEvent, SettingsState>
-    implements SettingsBloc {}
-
 void main() {
   late _MockDashboardBloc dashboardBloc;
   late _MockBalanceCubit balanceCubit;
   late _MockPendingTransactionsCubit pendingTxCubit;
-  late _MockSettingsBloc settingsBloc;
+  late MockSettingsBloc settingsBloc;
 
   Balance zeroBalance() => Balance(
         chainId: realUnitAsset.chainId,
@@ -52,7 +49,7 @@ void main() {
     dashboardBloc = _MockDashboardBloc();
     balanceCubit = _MockBalanceCubit();
     pendingTxCubit = _MockPendingTransactionsCubit();
-    settingsBloc = _MockSettingsBloc();
+    settingsBloc = MockSettingsBloc();
 
     when(() => dashboardBloc.state).thenReturn(emptyDashboardState());
     when(() => balanceCubit.state).thenReturn(zeroBalance());

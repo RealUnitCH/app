@@ -1,5 +1,4 @@
 import 'package:alchemist/alchemist.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
@@ -17,7 +16,6 @@ class _MockSupportedFiatRepository extends Mock implements SupportedFiatReposito
 class _MockSettingsRepository extends Mock implements SettingsRepository {}
 
 void main() {
-  const phoneConstraints = BoxConstraints.tightFor(width: 390, height: 844);
 
   late _MockSupportedFiatRepository fiatRepo;
   late _MockSettingsRepository settingsRepo;

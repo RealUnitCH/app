@@ -1,11 +1,9 @@
 import 'package:alchemist/alchemist.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/create_wallet/bloc/create_wallet_cubit.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_view.dart';
 
@@ -14,24 +12,16 @@ import '../../../helper/helper.dart';
 class _MockCreateWalletCubit extends MockCubit<CreateWalletState>
     implements CreateWalletCubit {}
 
-class _MockWallet extends Mock implements SoftwareWallet {}
-
 void main() {
   late _MockCreateWalletCubit cubit;
 
   setUpAll(() {
-    // Stub the no_screenshot plugin's MethodChannel so screenshotOff/On calls
-    // do not throw MissingPluginException in headless tests.
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(
-      const MethodChannel('com.flutterplaza.no_screenshot_methods'),
-      (call) async => true,
-    );
+    stubNoScreenshotChannel();
   });
 
   setUp(() {
     cubit = _MockCreateWalletCubit();
-    final wallet = _MockWallet();
+    final wallet = MockSoftwareWallet();
     when(() => wallet.seed).thenReturn(
       'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
     );

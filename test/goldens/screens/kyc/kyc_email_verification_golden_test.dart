@@ -1,6 +1,5 @@
 import 'package:alchemist/alchemist.dart';
 import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -13,17 +12,14 @@ import '../../../helper/helper.dart';
 class _MockKycEmailVerificationCubit extends MockCubit<KycEmailVerificationState>
     implements KycEmailVerificationCubit {}
 
-class _MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
-
 void main() {
-  const phoneConstraints = BoxConstraints.tightFor(width: 390, height: 844);
 
   late _MockKycEmailVerificationCubit verificationCubit;
-  late _MockHomeBloc homeBloc;
+  late MockHomeBloc homeBloc;
 
   setUp(() {
     verificationCubit = _MockKycEmailVerificationCubit();
-    homeBloc = _MockHomeBloc();
+    homeBloc = MockHomeBloc();
 
     when(() => verificationCubit.state).thenReturn(
       const KycEmailVerificationInitial(),

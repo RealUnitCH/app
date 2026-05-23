@@ -18,9 +18,6 @@ import 'package:realunit_wallet/screens/transaction_history/transaction_history_
 
 import '../../../helper/helper.dart';
 
-class _MockSettingsBloc extends MockBloc<SettingsEvent, SettingsState>
-    implements SettingsBloc {}
-
 class _MockTransactionHistoryFilterCubit
     extends MockCubit<TransactionHistoryFilterState>
     implements TransactionHistoryFilterCubit {}
@@ -33,16 +30,14 @@ class _MockTransactionRepository extends Mock implements TransactionRepository {
 
 class _MockRealUnitPdfService extends Mock implements RealUnitPdfService {}
 
-class _MockAppStore extends Mock implements AppStore {}
-
 class _MockApiConfig extends Mock implements ApiConfig {}
 
 void main() {
-  late _MockSettingsBloc settingsBloc;
+  late MockSettingsBloc settingsBloc;
   late _MockTransactionHistoryFilterCubit filterCubit;
   late _MockTransactionHistoryReceiptCubit receiptCubit;
   final transactionRepository = _MockTransactionRepository();
-  final appStore = _MockAppStore();
+  final appStore = MockAppStore();
   final apiConfig = _MockApiConfig();
   const walletAddress = '0xcabd3f4b10a7089986e708d19140bfc98e5880c0';
 
@@ -59,7 +54,7 @@ void main() {
   });
 
   setUp(() {
-    settingsBloc = _MockSettingsBloc();
+    settingsBloc = MockSettingsBloc();
     filterCubit = _MockTransactionHistoryFilterCubit();
     receiptCubit = _MockTransactionHistoryReceiptCubit();
     when(() => settingsBloc.state).thenReturn(const SettingsState());

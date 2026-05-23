@@ -17,17 +17,15 @@ class _MockRestoreWalletCubit extends MockCubit<RestoreWalletState>
 class _MockValidateSeedCubit extends MockCubit<ValidateSeedState>
     implements ValidateSeedCubit {}
 
-class _MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
-
 void main() {
   late _MockRestoreWalletCubit restoreWalletCubit;
   late _MockValidateSeedCubit validateSeedCubit;
-  late _MockHomeBloc homeBloc;
+  late MockHomeBloc homeBloc;
 
   setUp(() {
     restoreWalletCubit = _MockRestoreWalletCubit();
     validateSeedCubit = _MockValidateSeedCubit();
-    homeBloc = _MockHomeBloc();
+    homeBloc = MockHomeBloc();
     when(() => restoreWalletCubit.state).thenReturn(const RestoreWalletState());
     when(() => validateSeedCubit.state).thenReturn(ValidateSeedState.uncomplete);
     when(() => homeBloc.state).thenReturn(const HomeState());

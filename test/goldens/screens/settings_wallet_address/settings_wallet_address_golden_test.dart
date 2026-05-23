@@ -1,5 +1,4 @@
 import 'package:alchemist/alchemist.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
@@ -8,12 +7,9 @@ import 'package:realunit_wallet/screens/settings_wallet_address/settings_wallet_
 
 import '../../../helper/helper.dart';
 
-class _MockAppStore extends Mock implements AppStore {}
-
 void main() {
-  const phoneConstraints = BoxConstraints.tightFor(width: 390, height: 844);
 
-  final _MockAppStore appStore = _MockAppStore();
+  final MockAppStore appStore = MockAppStore();
 
   setUp(() {
     when(() => appStore.primaryAddress)
