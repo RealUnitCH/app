@@ -9,14 +9,15 @@ extension DfxTransactionStorage on AppDatabase {
     String? rate,
     String? inputTxId,
     String? outputTxId,
-  }) =>
-      into(dfxTransactionDetails).insert(DfxTransactionDetailsCompanion.insert(
-        txId: txId,
-        dfxId: dfxId,
-        rate: Value.absentIfNull(rate),
-        inputTxId: Value.absentIfNull(inputTxId),
-        outputTxId: Value.absentIfNull(outputTxId),
-      ));
+  }) => into(dfxTransactionDetails).insert(
+    DfxTransactionDetailsCompanion.insert(
+      txId: txId,
+      dfxId: dfxId,
+      rate: Value.absentIfNull(rate),
+      inputTxId: Value.absentIfNull(inputTxId),
+      outputTxId: Value.absentIfNull(outputTxId),
+    ),
+  );
 
   Future<int> updateDfxTransactionDetails({
     required String txId,
@@ -24,15 +25,14 @@ extension DfxTransactionStorage on AppDatabase {
     String? rate,
     String? inputTxId,
     String? outputTxId,
-  }) =>
-      (update(dfxTransactionDetails)..where((row) => row.txId.equals(txId))).write(
-        DfxTransactionDetailsCompanion(
-          dfxId: Value.absentIfNull(dfxId),
-          rate: Value.absentIfNull(rate),
-          inputTxId: Value.absentIfNull(inputTxId),
-          outputTxId: Value.absentIfNull(outputTxId),
-        ),
-      );
+  }) => (update(dfxTransactionDetails)..where((row) => row.txId.equals(txId))).write(
+    DfxTransactionDetailsCompanion(
+      dfxId: Value.absentIfNull(dfxId),
+      rate: Value.absentIfNull(rate),
+      inputTxId: Value.absentIfNull(inputTxId),
+      outputTxId: Value.absentIfNull(outputTxId),
+    ),
+  );
 
   Future<DfxTransactionDetailsData?> getDfxTransactionDetails(String txId) =>
       (select(dfxTransactionDetails)..where((row) => row.txId.equals(txId))).getSingleOrNull();
@@ -47,15 +47,21 @@ extension DfxTransactionStorage on AppDatabase {
       dfxTransactionDetails.all().get();
 }
 
+// The schema getters below are read by `drift_dev` at codegen time and the
+// resulting column metadata is consumed via the generated mirror class —
+// they are not invoked at runtime, so line-coverage instrumentation never
+// marks them as executed. The same coverage gap exists on every Drift
+// table in the repo. `// coverage:ignore-line` keeps the file at the
+// surface the test suite can actually reach.
 @DataClassName('DfxTransactionDetailsData')
 class DfxTransactionDetails extends Table {
-  TextColumn get txId => text().unique().references(Transactions, #txId)();
+  TextColumn get txId => text().unique().references(Transactions, #txId)(); // coverage:ignore-line
 
-  IntColumn get dfxId => integer().unique()();
+  IntColumn get dfxId => integer().unique()(); // coverage:ignore-line
 
-  TextColumn get rate => text().nullable()();
+  TextColumn get rate => text().nullable()(); // coverage:ignore-line
 
-  TextColumn get inputTxId => text().nullable()();
+  TextColumn get inputTxId => text().nullable()(); // coverage:ignore-line
 
-  TextColumn get outputTxId => text().nullable()();
+  TextColumn get outputTxId => text().nullable()(); // coverage:ignore-line
 }
