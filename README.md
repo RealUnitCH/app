@@ -32,7 +32,7 @@ The 100% rule above is the target state. Until the items below land, it is aspir
 
 > **Before first use:** two PR labels are referenced by this tooling but are not auto-created. Run `gh label create tier3:full` once on the repo to enable per-PR opt-in for the Tier 3 handbook workflow — without the label the workflow's `if:` gate never matches and the job silently skips on PRs. Run `gh label create coverage:lower-floor` once to make floor-lowering PRs grep-able; the coverage floor gate itself runs unconditionally on every PR, this label is a review-convention marker only and is not read by any workflow.
 
-Three PRs already in flight close the largest gaps for KYC + BitBox logic: [#319](https://github.com/DFXswiss/realunit-app/pull/319) (Tier 0 cubit tests), [#320](https://github.com/DFXswiss/realunit-app/pull/320) (Tier 1 FakeBitbox integration), [#321](https://github.com/DFXswiss/realunit-app/pull/321) (dashboard buy actions + auth service tests).
+Three PRs have closed the largest gaps for KYC + BitBox logic: [#319](https://github.com/DFXswiss/realunit-app/pull/319) (Tier 0 cubit tests), [#320](https://github.com/DFXswiss/realunit-app/pull/320) (Tier 1 FakeBitbox integration), [#321](https://github.com/DFXswiss/realunit-app/pull/321) (dashboard buy actions + auth service tests).
 
 ## Features
 
@@ -63,7 +63,7 @@ The transport is USB on Android and Bluetooth on iOS; the original BitBox 02 has
 | --- | --- | --- | --- |
 | Welcome screen | always | mvp | widget (`welcome_page_test.dart`, `welcome/widgets/welcome_card_test.dart`) |
 | Create wallet — software (generate seed) | always | mvp | widget (`create_wallet/create_wallet_page_test.dart`); no cubit/service test |
-| Create wallet — BitBox (hardware connect) | hardware | mvp | — (integration test landing in [#320](https://github.com/DFXswiss/realunit-app/pull/320)) |
+| Create wallet — BitBox (hardware connect) | hardware | mvp | — (integration test added via [#320](https://github.com/DFXswiss/realunit-app/pull/320)) |
 | Restore wallet — software seed phrase | always | mvp | widget (`restore_wallet/restore_wallet_page_test.dart`) |
 | Verify seed phrase (3-word challenge) | always | mvp | widget (`verify_seed/verify_seed_page_test.dart`) |
 | Setup PIN | always | mvp | widget (`pin/setup_pin_page_test.dart`) |
@@ -85,16 +85,16 @@ The transport is USB on Android and Bluetooth on iOS; the original BitBox 02 has
 
 | Feature | Status | Triage | Tests |
 | --- | --- | --- | --- |
-| Buy — DFX fiat on-ramp (SEPA) | always | mvp | widget (`buy/buy_page_test.dart`) + unit (`real_unit_buy_payment_info_service_test.dart`); extended in [#321](https://github.com/DFXswiss/realunit-app/pull/321) |
-| Sell — DFX fiat off-ramp (IBAN) | always | mvp | widget (`sell/sell_page_test.dart`); extended in [#321](https://github.com/DFXswiss/realunit-app/pull/321) |
-| KYC: Email + 2FA gate | always | mvp | widget (`kyc_email_page_test.dart`, `kyc_2fa_page_test.dart`); cubit landing in [#319](https://github.com/DFXswiss/realunit-app/pull/319) |
-| KYC: Registration + BitBox EIP-712 sign | always | mvp | widget (`kyc_registration_page_test.dart`) + unit (`eip712_signer_test.dart`); cubit / `registration_submit` / sign-flow integration tests landing in [#319](https://github.com/DFXswiss/realunit-app/pull/319) + [#320](https://github.com/DFXswiss/realunit-app/pull/320) |
+| Buy — DFX fiat on-ramp (SEPA) | always | mvp | widget (`buy/buy_page_test.dart`) + unit (`real_unit_buy_payment_info_service_test.dart`); added via [#321](https://github.com/DFXswiss/realunit-app/pull/321) |
+| Sell — DFX fiat off-ramp (IBAN) | always | mvp | widget (`sell/sell_page_test.dart`); added via [#321](https://github.com/DFXswiss/realunit-app/pull/321) |
+| KYC: Email + 2FA gate | always | mvp | widget (`kyc_email_page_test.dart`, `kyc_2fa_page_test.dart`); cubit added via [#319](https://github.com/DFXswiss/realunit-app/pull/319) |
+| KYC: Registration + BitBox EIP-712 sign | always | mvp | widget (`kyc_registration_page_test.dart`) + unit (`eip712_signer_test.dart`); cubit / `registration_submit` / sign-flow integration tests added via [#319](https://github.com/DFXswiss/realunit-app/pull/319) + [#320](https://github.com/DFXswiss/realunit-app/pull/320) |
 | KYC: Nationality | always | mvp | widget (`kyc_nationality_page_test.dart`) |
 | KYC: Financial data | always | mvp | widget (`kyc_financial_data_page_test.dart`) |
 | KYC: Ident | always | mvp | widget (`kyc_ident_page_test.dart`) |
 | KYC: Pending / Completed / Failure | always | mvp | widget (`kyc/subpages/kyc_*_page_test.dart`) |
-| KYC: AccountMergeRequested / UnsupportedStepFailure | always | mvp | — (cubit paths landing in [#319](https://github.com/DFXswiss/realunit-app/pull/319)) |
-| `DFXAuthService` (lazy auth + 401 retry) | always | mvp | — (unit tests landing in [#319](https://github.com/DFXswiss/realunit-app/pull/319) + [#321](https://github.com/DFXswiss/realunit-app/pull/321)) |
+| KYC: AccountMergeRequested / UnsupportedStepFailure | always | mvp | — (cubit paths added via [#319](https://github.com/DFXswiss/realunit-app/pull/319)) |
+| `DFXAuthService` (lazy auth + 401 retry) | always | mvp | — (unit tests added via [#319](https://github.com/DFXswiss/realunit-app/pull/319) + [#321](https://github.com/DFXswiss/realunit-app/pull/321)) |
 | `balance_service` (balance fetch + cache) | always | mvp | unit (`balance_service_test.dart`) |
 | `format_fixed` / `parse_fixed` (decimal helpers) | always | mvp | unit (`format_fixed_test.dart`, `parse_fixed_test.dart`) |
 | `ApiException` mapping | always | mvp | unit (`exceptions/api_exception_test.dart`) |
@@ -125,12 +125,12 @@ The transport is USB on Android and Bluetooth on iOS; the original BitBox 02 has
 
 Features tagged `mvp` whose current test coverage is insufficient — these block "100% on activated features":
 
-- **Create wallet — BitBox** — no test today; integration test landing in [#320](https://github.com/DFXswiss/realunit-app/pull/320)
+- **Create wallet — BitBox** — covered by the integration test added in [#320](https://github.com/DFXswiss/realunit-app/pull/320); verify the spec still maps to the current `create_wallet` flow when in doubt
 - **Receive** — no test for the address/QR screen
 - **Biometric unlock** — no test (`biometric_service.dart` has no unit spec; no widget spec asserts the unlock surface)
 - **Legal disclaimer gate** — widget exists, cubit transition not directly tested
 - **KYC cubit + sign-flow logic** — widget tests cover individual pages, but state transitions (`KycCubit`, `KycRegistrationSubmitCubit`, `Eip712Signer` guard paths) land in [#319](https://github.com/DFXswiss/realunit-app/pull/319) + [#320](https://github.com/DFXswiss/realunit-app/pull/320)
-- **DFX backend services** — `DFXAuthService`, `real_unit_registration_service`, `real_unit_pdf_service`, `dfx_kyc_service`, `dfx_price_service`, `dfx_widget_service`, `dfx_brokerbot_service`, `dfx_bank_account_service`, `dfx_blockchain_api_service`, `dfx_country_service`, `dfx_faucet_service`, `dfx_support_service`, `transaction_history_service`, `wallet_service`, `price_service`, `session_cache`, `settings_service`, `app_store`, `biometric_service`, `debug_auth_service` — none have a unit spec today; in flight via [#319](https://github.com/DFXswiss/realunit-app/pull/319) (`DFXAuthService`) and [#321](https://github.com/DFXswiss/realunit-app/pull/321) (`real_unit_buy_payment_info_service`)
+- **DFX backend services** — `DFXAuthService`, `real_unit_registration_service`, `real_unit_pdf_service`, `dfx_kyc_service`, `dfx_price_service`, `dfx_widget_service`, `dfx_brokerbot_service`, `dfx_bank_account_service`, `dfx_blockchain_api_service`, `dfx_country_service`, `dfx_faucet_service`, `dfx_support_service`, `transaction_history_service`, `wallet_service`, `price_service`, `session_cache`, `settings_service`, `app_store`, `biometric_service`, `debug_auth_service` — partially covered after [#319](https://github.com/DFXswiss/realunit-app/pull/319) (`DFXAuthService`) and [#321](https://github.com/DFXswiss/realunit-app/pull/321) (`real_unit_buy_payment_info_service`); most other services still lack a unit spec
 - **Hook / screen state tests** — `home_page` widget renders but the underlying balance/price hook has no spec; same for `dashboard` bloc and most screen-level cubits
 
 ## Testing tiers

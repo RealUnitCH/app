@@ -179,6 +179,7 @@ Services with a `Timer`, an observer/subscription loop, or a platform/`MethodCha
 Time-bound assertions must drive time via `package:fake_async`. Wall-clock `Future.delayed` is not acceptable: it makes tests slow and flaky.
 
 ```dart
+import 'package:bitbox_flutter/bitbox_flutter.dart';
 import 'package:bitbox_flutter/testing.dart';
 import 'package:bitbox_flutter/usb/bitbox_usb_platform_interface.dart';
 import 'package:fake_async/fake_async.dart';
@@ -194,12 +195,24 @@ tearDown(() {
   BitboxUsbPlatform.instance = previousPlatform;
 });
 
+// Pairing must run inside the fakeAsync zone so the periodic timer the
+// service installs is bound to the fake clock — otherwise `async.elapse`
+// will not pump it.
+BitboxService pairedServiceSync(FakeAsync async) {
+  final service = BitboxService(
+    connectionStatusInterval: const Duration(milliseconds: 50),
+  );
+  late List<BitboxDevice> devices;
+  service.getAllUsbDevices().then((d) => devices = d);
+  async.flushMicrotasks();
+  service.init(devices.single);
+  async.flushMicrotasks();
+  return service;
+}
+
 test('observer releases USB transport when device vanishes', () {
   fakeAsync((async) {
-    final service = BitboxService(
-      connectionStatusInterval: const Duration(milliseconds: 50),
-    ); // real instance, not a mock
-    // … pair the service inside the fakeAsync zone …
+    final service = pairedServiceSync(async); // real instance, not a mock
 
     platform.when(
       SimulatedBitboxMethod.getDevices,
@@ -229,7 +242,7 @@ Exceptions surface in logs, Sentry, and user-facing error states — the Dart de
 
 ### Platform-coupled code without an integration test
 
-Platform-specific paths (USB transports, BLE lifecycle, secure storage, biometric prompts, deep links) must either ship a Tier 1/2 counterpart that exercises the real plugin (or vendor simulator), or carry an inline `// @no-integration-test: <reason>` annotation. The annotation works at file level (as a dartdoc comment) or immediately above the function/method declaration. Grep current annotations with:
+Platform-specific paths (USB transports, BLE lifecycle, secure storage, biometric prompts, deep links) must either ship a Tier 2/3 counterpart that exercises the real plugin (firmware simulator) or the real transport (Maestro on a device/simulator), or carry an inline `// @no-integration-test: <reason>` annotation. Today the simulator/Maestro counterpart is the long-term option but no `integration_test/` harness is wired up yet (see `CONTRIBUTING.md` footnote on the Tier-1 integration-test slot), so in practice the annotation is the documenting form on every new platform-coupled path. The annotation works at file level (as a dartdoc comment) or immediately above the function/method declaration. Grep current annotations with:
 
 ```bash
 rg "^//\s*@no-integration-test:" lib/
