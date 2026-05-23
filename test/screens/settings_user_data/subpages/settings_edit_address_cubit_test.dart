@@ -40,8 +40,9 @@ void main() {
 
   group('$SettingsEditAddressCubit', () {
     test('reaches Ready with the session URL', () async {
-      when(() => kyc.startStep(KycStepName.addressChange))
-          .thenAnswer((_) async => _session(stepStatus: KycStepStatus.notStarted));
+      when(
+        () => kyc.startStep(KycStepName.addressChange),
+      ).thenAnswer((_) async => _session(stepStatus: KycStepStatus.notStarted));
 
       final cubit = SettingsEditAddressCubit(kycService: kyc);
       await cubit.stream.firstWhere((s) => s is SettingsEditAddressReady);
@@ -52,8 +53,9 @@ void main() {
     test(
       'reaches Pending only when the session returns no URL (W3.2: inReview-gating moved upstream to canEditAddress)',
       () async {
-        when(() => kyc.startStep(KycStepName.addressChange))
-            .thenAnswer((_) async => _session(stepStatus: KycStepStatus.inReview, url: null));
+        when(
+          () => kyc.startStep(KycStepName.addressChange),
+        ).thenAnswer((_) async => _session(stepStatus: KycStepStatus.inReview, url: null));
 
         final cubit = SettingsEditAddressCubit(kycService: kyc);
         await cubit.stream.firstWhere((s) => s is SettingsEditAddressPending);
@@ -63,8 +65,7 @@ void main() {
     );
 
     test('reaches Failure on API throw', () async {
-      when(() => kyc.startStep(any()))
-          .thenAnswer((_) async => throw Exception('throttle'));
+      when(() => kyc.startStep(any())).thenAnswer((_) async => throw Exception('throttle'));
 
       final cubit = SettingsEditAddressCubit(kycService: kyc);
       await cubit.stream.firstWhere((s) => s is SettingsEditAddressFailure);
@@ -79,8 +80,9 @@ void main() {
       // The session lacking a URL is now interpreted as "still in some
       // pending review state" rather than a hard failure — the upstream
       // capability gate stops this branch from being reached in practice.
-      when(() => kyc.startStep(KycStepName.addressChange))
-          .thenAnswer((_) async => _session(stepStatus: KycStepStatus.notStarted, url: null));
+      when(
+        () => kyc.startStep(KycStepName.addressChange),
+      ).thenAnswer((_) async => _session(stepStatus: KycStepStatus.notStarted, url: null));
 
       final cubit = SettingsEditAddressCubit(kycService: kyc);
       await cubit.stream.firstWhere((s) => s is SettingsEditAddressPending);
@@ -89,8 +91,7 @@ void main() {
     });
 
     test('submitAddress is a no-op when not in Ready state', () async {
-      when(() => kyc.startStep(any()))
-          .thenAnswer((_) async => throw Exception('boom'));
+      when(() => kyc.startStep(any())).thenAnswer((_) async => throw Exception('boom'));
       final cubit = SettingsEditAddressCubit(kycService: kyc);
       await cubit.stream.firstWhere((s) => s is SettingsEditAddressFailure);
 
@@ -108,8 +109,9 @@ void main() {
     });
 
     test('submitAddress sends the structured payload and emits Success', () async {
-      when(() => kyc.startStep(KycStepName.addressChange))
-          .thenAnswer((_) async => _session(stepStatus: KycStepStatus.notStarted));
+      when(
+        () => kyc.startStep(KycStepName.addressChange),
+      ).thenAnswer((_) async => _session(stepStatus: KycStepStatus.notStarted));
       when(() => kyc.setData(any(), any())).thenAnswer((_) async {});
 
       final cubit = SettingsEditAddressCubit(kycService: kyc);
@@ -126,22 +128,25 @@ void main() {
       );
 
       expect(cubit.state, isA<SettingsEditAddressSuccess>());
-      verify(() => kyc.setData(any(), {
-            'file': 'ZmFrZQ==',
-            'fileName': 'utility.pdf',
-            'address': {
-              'street': 'Bahnhofstrasse',
-              'houseNumber': '12',
-              'zip': '8001',
-              'city': 'Zurich',
-              'country': {'id': 41},
-            },
-          })).called(1);
+      verify(
+        () => kyc.setData(any(), {
+          'file': 'ZmFrZQ==',
+          'fileName': 'utility.pdf',
+          'address': {
+            'street': 'Bahnhofstrasse',
+            'houseNumber': '12',
+            'zip': '8001',
+            'city': 'Zurich',
+            'country': {'id': 41},
+          },
+        }),
+      ).called(1);
     });
 
     test('submitAddress omits houseNumber from address payload when empty', () async {
-      when(() => kyc.startStep(KycStepName.addressChange))
-          .thenAnswer((_) async => _session(stepStatus: KycStepStatus.notStarted));
+      when(
+        () => kyc.startStep(KycStepName.addressChange),
+      ).thenAnswer((_) async => _session(stepStatus: KycStepStatus.notStarted));
       Map<String, dynamic>? captured;
       when(() => kyc.setData(any(), any())).thenAnswer((invocation) async {
         captured = invocation.positionalArguments[1] as Map<String, dynamic>;
@@ -165,11 +170,40 @@ void main() {
       expect(address['street'], 'Hauptstrasse');
     });
 
+    test('refresh re-runs the start-step flow and re-emits Ready', () async {
+      // The Failure state in this cubit has no built-in retry — `refresh()`
+      // is the only way back to Ready after a transient `startStep` error.
+      // We make the first call throw, then a second call succeed, and pin
+      // the cubit lands at Ready with the freshly returned URL.
+      var attempts = 0;
+      when(() => kyc.startStep(KycStepName.addressChange)).thenAnswer(
+        (_) async {
+          attempts++;
+          if (attempts == 1) throw Exception('throttle');
+          return _session(stepStatus: KycStepStatus.notStarted);
+        },
+      );
+
+      final cubit = SettingsEditAddressCubit(kycService: kyc);
+      await cubit.stream.firstWhere((s) => s is SettingsEditAddressFailure);
+
+      cubit.refresh();
+      await cubit.stream.firstWhere((s) => s is SettingsEditAddressReady);
+
+      expect(
+        (cubit.state as SettingsEditAddressReady).url,
+        contains('edit-address'),
+      );
+      verify(() => kyc.startStep(KycStepName.addressChange)).called(2);
+    });
+
     test('submitAddress emits Failure if setData throws', () async {
-      when(() => kyc.startStep(KycStepName.addressChange))
-          .thenAnswer((_) async => _session(stepStatus: KycStepStatus.notStarted));
-      when(() => kyc.setData(any(), any()))
-          .thenAnswer((_) async => throw Exception('400 bad request'));
+      when(
+        () => kyc.startStep(KycStepName.addressChange),
+      ).thenAnswer((_) async => _session(stepStatus: KycStepStatus.notStarted));
+      when(
+        () => kyc.setData(any(), any()),
+      ).thenAnswer((_) async => throw Exception('400 bad request'));
 
       final cubit = SettingsEditAddressCubit(kycService: kyc);
       await cubit.stream.firstWhere((s) => s is SettingsEditAddressReady);

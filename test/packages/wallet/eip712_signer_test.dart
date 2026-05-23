@@ -2,10 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:web3dart/web3dart.dart';
 
 class _MockBitboxCredentials extends Mock implements BitboxCredentials {}
@@ -125,5 +127,144 @@ void main() {
         expect(() => _signWith(credentials), throwsA(isA<SigningCancelledException>()));
       });
     }
+
+    // The switch in _signTypedData routes BitboxCredentials and EthPrivateKey
+    // explicitly; every other CredentialsWithKnownAddress subtype hits the
+    // `_ => throw UnsupportedError` default arm. SoftwareViewWallet's
+    // `_LockedCredentials` is exactly such a subtype that lives in
+    // production code, so it doubles as a regression check that the locked
+    // sentinel does not get routed to a sign backend by accident.
+    test('throws UnsupportedError for an unknown credentials subtype', () async {
+      final viewWallet = SoftwareViewWallet(
+        1,
+        'View',
+        '0x0000000000000000000000000000000000000001',
+      );
+
+      expect(
+        () => Eip712Signer.signRegistration(
+          credentials: viewWallet.primaryAccount.primaryAddress,
+          chainId: 1,
+          type: RegistrationUserType.human.jsonName,
+          email: 'unsupported@dfx.swiss',
+          name: 'Unsupported',
+          phoneNumber: '+41790000000',
+          birthday: '1990-01-01',
+          nationality: 'CH',
+          addressStreet: 'Teststrasse 1',
+          addressPostalCode: '8000',
+          addressCity: 'Zurich',
+          addressCountry: 'CH',
+          swissTaxResidence: true,
+          registrationDate: '2026-05-12',
+        ),
+        throwsA(isA<UnsupportedError>()),
+      );
+    });
+
+    group('signDelegation', () {
+      // Minimal but realistic Eip7702Data: empty type lists and an empty
+      // caveats list are valid inputs the backend already returns for a
+      // bare delegation. Anything heavier would only re-test the JSON
+      // serialiser of eip7702_data_dto.
+      const delegationData = Eip7702Data(
+        relayerAddress: '0x0000000000000000000000000000000000000010',
+        delegationManagerAddress: '0x0000000000000000000000000000000000000011',
+        delegatorAddress: '0x0000000000000000000000000000000000000012',
+        userNonce: 0,
+        domain: Eip7702Domain(
+          name: 'RealUnitDelegation',
+          version: '1',
+          chainId: 1,
+          verifyingContract: '0x0000000000000000000000000000000000000013',
+        ),
+        types: Eip7702Types(delegation: [], caveat: []),
+        message: Eip7702Message(
+          delegate: '0x0000000000000000000000000000000000000014',
+          delegator: '0x0000000000000000000000000000000000000015',
+          authority: '0x0000000000000000000000000000000000000016',
+          caveats: [],
+          salt: 0,
+        ),
+        tokenAddress: '0x0000000000000000000000000000000000000017',
+        amountWei: '0',
+        depositAddress: '0x0000000000000000000000000000000000000018',
+      );
+
+      test('signs the EIP-7702 typed data with a software EthPrivateKey', () async {
+        // Same well-known private key as the registration happy-path test
+        // so the produced signature is deterministic and a future
+        // accidental schema change in signDelegation surfaces as a mismatch.
+        final credentials = EthPrivateKey.fromHex(
+          'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612',
+        );
+
+        final signature = await Eip712Signer.signDelegation(
+          credentials: credentials,
+          eip7702Data: delegationData,
+        );
+
+        // 0x prefix + 65 bytes * 2 hex chars = 132 chars.
+        expect(signature, startsWith('0x'));
+        expect(signature.length, 132);
+      });
+
+      test('signature is deterministic for the same delegation payload', () async {
+        final credentials = EthPrivateKey.fromHex(
+          'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612',
+        );
+
+        final first = await Eip712Signer.signDelegation(
+          credentials: credentials,
+          eip7702Data: delegationData,
+        );
+        final second = await Eip712Signer.signDelegation(
+          credentials: credentials,
+          eip7702Data: delegationData,
+        );
+
+        expect(first, second);
+      });
+
+      test('routes BitboxCredentials through signTypedDataV4 with the domain chainId', () async {
+        final credentials = _MockBitboxCredentials();
+        when(
+          () => credentials.address,
+        ).thenReturn(EthereumAddress.fromHex('0x0000000000000000000000000000000000000019'));
+        when(
+          () => credentials.signTypedDataV4(any(), any()),
+        ).thenAnswer((_) async => '0xdeadbeef');
+
+        final signature = await Eip712Signer.signDelegation(
+          credentials: credentials,
+          eip7702Data: delegationData,
+        );
+
+        expect(signature, '0xdeadbeef');
+        // The chainId argument must come from eip7702Data.domain.chainId, not
+        // a hardcoded value — verifies the parameter wiring.
+        verify(
+          () => credentials.signTypedDataV4(delegationData.domain.chainId, any()),
+        ).called(1);
+      });
+
+      test('throws SigningCancelledException when BitBox returns an empty signature', () async {
+        final credentials = _MockBitboxCredentials();
+        when(
+          () => credentials.address,
+        ).thenReturn(EthereumAddress.fromHex('0x0000000000000000000000000000000000000019'));
+        when(
+          () => credentials.signTypedDataV4(any(), any()),
+        ).thenAnswer((_) async => '0x');
+
+        expect(
+          () => Eip712Signer.signDelegation(
+            credentials: credentials,
+            eip7702Data: delegationData,
+          ),
+          throwsA(isA<SigningCancelledException>()),
+        );
+      });
+    });
   });
 }

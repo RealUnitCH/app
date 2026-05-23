@@ -91,8 +91,9 @@ void main() {
     });
 
     test('onFiatChanged leaves state stable on service error', () async {
-      when(() => service.getSellShares(any(), any()))
-          .thenAnswer((_) async => throw Exception('throttle'));
+      when(
+        () => service.getSellShares(any(), any()),
+      ).thenAnswer((_) async => throw Exception('throttle'));
 
       final cubit = SellConverterCubit(service);
       await cubit.onFiatChanged('5');
@@ -120,6 +121,23 @@ void main() {
 
       expect(cubit.state.sharesText, '10.000');
       expect(cubit.state.fiatText, '125.500');
+    });
+
+    test('onSharesChanged leaves state stable on service error', () async {
+      // Symmetry guard: the `onFiatChanged` throw path is already pinned;
+      // the shares-side debounce body must also reset `loading=false`
+      // instead of stranding the UI on a spinner.
+      when(
+        () => service.getSellPrice(any(), any()),
+      ).thenAnswer((_) async => throw Exception('throttle'));
+
+      final cubit = SellConverterCubit(service);
+      await cubit.onSharesChanged('5');
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+
+      expect(cubit.state.sharesText, '5');
+      expect(cubit.state.fiatText, '');
+      expect(cubit.state.loading, isFalse);
     });
 
     test('onSharesChanged defaults to 2 fractional digits when input has no dot', () async {
@@ -172,8 +190,9 @@ void main() {
     });
 
     test('onCurrencyChanged flips currency even when getBuyPrice throws', () async {
-      when(() => service.getBuyPrice(any(), any()))
-          .thenAnswer((_) async => throw Exception('throttle'));
+      when(
+        () => service.getBuyPrice(any(), any()),
+      ).thenAnswer((_) async => throw Exception('throttle'));
 
       final cubit = SellConverterCubit(service);
       await cubit.onCurrencyChanged(Currency.eur);
@@ -202,20 +221,21 @@ void main() {
 
     test('does not emit after close', () async {
       final completer = Completer<BrokerbotSellSharesDto>();
-      when(() => service.getSellShares(any(), any()))
-          .thenAnswer((_) => completer.future);
+      when(() => service.getSellShares(any(), any())).thenAnswer((_) => completer.future);
 
       final cubit = SellConverterCubit(service);
       await cubit.onFiatChanged('100');
       // Let the debounce timer fire.
       await Future<void>.delayed(const Duration(milliseconds: 150));
       await cubit.close();
-      completer.complete(BrokerbotSellSharesDto(
-        targetAmount: 100,
-        shares: 1,
-        pricePerShare: 100,
-        currency: 'CHF',
-      ));
+      completer.complete(
+        BrokerbotSellSharesDto(
+          targetAmount: 100,
+          shares: 1,
+          pricePerShare: 100,
+          currency: 'CHF',
+        ),
+      );
 
       // If emit fires after close, StateError is thrown by the framework.
     });

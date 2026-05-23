@@ -82,28 +82,35 @@ class _LockedCredentials extends CredentialsWithKnownAddress {
   @override
   EthereumAddress get address => _address;
 
+  // The `throw StateError(...)` lines below are defensive fallthroughs: in
+  // debug builds the `assert(false, ...)` above already trips and surfaces an
+  // AssertionError, so the throw is unreachable. In release the assert is
+  // stripped and the throw becomes the live signal, but the test suite runs
+  // in debug — line-coverage instrumentation never marks the throws as
+  // executed. `// coverage:ignore-line` reflects that without hiding the
+  // behavioural contract (still exercised via `throwsA(isA<Error>())`).
   @override
   MsgSignature signToEcSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) {
     assert(false, _viewWalletProgrammerError);
-    throw StateError(_viewWalletProgrammerError);
+    throw StateError(_viewWalletProgrammerError); // coverage:ignore-line
   }
 
   @override
   Future<MsgSignature> signToSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) {
     assert(false, _viewWalletProgrammerError);
-    throw StateError(_viewWalletProgrammerError);
+    throw StateError(_viewWalletProgrammerError); // coverage:ignore-line
   }
 
   @override
   Future<Uint8List> signPersonalMessage(Uint8List payload, {int? chainId}) {
     assert(false, _viewWalletProgrammerError);
-    throw StateError(_viewWalletProgrammerError);
+    throw StateError(_viewWalletProgrammerError); // coverage:ignore-line
   }
 
   @override
   Uint8List signPersonalMessageToUint8List(Uint8List payload, {int? chainId}) {
     assert(false, _viewWalletProgrammerError);
-    throw StateError(_viewWalletProgrammerError);
+    throw StateError(_viewWalletProgrammerError); // coverage:ignore-line
   }
 }
 
@@ -117,13 +124,22 @@ class SoftwareViewWalletAccount extends AWalletAccount {
   // Programmer error: callers must await WalletService.ensureCurrentWalletUnlocked
   // before signing. The locked credentials on this account already assert on the
   // same path, so this method is reachable only when the caller bypasses the
-  // wallet's primaryAddress and calls signMessage directly.
+  // wallet's primaryAddress and calls signMessage directly. The `throw
+  // StateError(...)` below is the release-mode fallthrough — debug builds trip
+  // the assert(false) first, so line-coverage in test (debug) never reaches it.
   @override
   Future<String> signMessage(String message, {int addressIndex = 0}) {
-    assert(false, 'SoftwareViewWalletAccount.signMessage called without first '
-        'awaiting WalletService.ensureCurrentWalletUnlocked()');
-    throw StateError('SoftwareViewWalletAccount cannot sign while the mnemonic '
-        'is locked — call WalletService.ensureCurrentWalletUnlocked() first.');
+    assert(
+      false,
+      'SoftwareViewWalletAccount.signMessage called without first '
+      'awaiting WalletService.ensureCurrentWalletUnlocked()',
+    );
+    // coverage:ignore-start
+    throw StateError(
+      'SoftwareViewWalletAccount cannot sign while the mnemonic '
+      'is locked — call WalletService.ensureCurrentWalletUnlocked() first.',
+    );
+    // coverage:ignore-end
   }
 }
 

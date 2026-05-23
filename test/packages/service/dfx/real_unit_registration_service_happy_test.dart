@@ -8,6 +8,7 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
@@ -163,6 +164,70 @@ void main() {
         expect((body!['signature'] as String).length, 132);
         expect(body!['lang'], 'DE');
         expect(body!['type'], 'HUMAN');
+      },
+    );
+  });
+
+  group('completeRegistration error path', () {
+    test(
+      'a 4xx response is rewrapped as ApiException carrying the backend status',
+      () async {
+        // Coverage pin for the `if (response.statusCode != 201 && != 202)`
+        // branch in `_completeRegistration`. The disconnect test in the
+        // sibling file short-circuits before the HTTP call, so the wire
+        // error path stays uncovered without this.
+        var calls = 0;
+        final client = MockClient((_) async {
+          calls++;
+          return http.Response(
+            jsonEncode({
+              'statusCode': 422,
+              'code': 'KYC_DECLINED',
+              'message': 'kyc declined',
+            }),
+            422,
+          );
+        });
+
+        await expectLater(
+          () => build(client).completeRegistration(buildRegistration()),
+          throwsA(isA<ApiException>()),
+        );
+        // wallet must be unlocked → ceremony → re-locked, even when the API
+        // rejects the registration. The finally-block in completeRegistration
+        // owes the relock.
+        expect(calls, 1);
+        verify(() => walletService.ensureCurrentWalletUnlocked()).called(1);
+        verify(() => walletService.lockCurrentWallet()).called(1);
+      },
+    );
+  });
+
+  group('registerWallet error path', () {
+    test(
+      'a 4xx response is rewrapped as ApiException carrying the backend status',
+      () async {
+        // Coverage pin for the matching branch in `_registerWallet`.
+        var calls = 0;
+        final client = MockClient((_) async {
+          calls++;
+          return http.Response(
+            jsonEncode({
+              'statusCode': 409,
+              'code': 'WALLET_TAKEN',
+              'message': 'wallet already registered',
+            }),
+            409,
+          );
+        });
+
+        await expectLater(
+          () => build(client).registerWallet(buildUserData()),
+          throwsA(isA<ApiException>()),
+        );
+        expect(calls, 1);
+        verify(() => walletService.ensureCurrentWalletUnlocked()).called(1);
+        verify(() => walletService.lockCurrentWallet()).called(1);
       },
     );
   });

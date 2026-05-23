@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_email_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_email_response_dto.dart';
@@ -8,6 +9,8 @@ import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
+
+import '../../../../../helper/pump_app.dart';
 
 void main() {
   group('$RegistrationEmailStatus.fromString', () {
@@ -74,6 +77,45 @@ void main() {
         () => RegistrationUserType.fromName('alien'),
         throwsA(isA<ArgumentError>()),
       );
+    });
+  });
+
+  // `name(BuildContext)` is a switch over the two enum values that
+  // resolves a localized label via `S.of(context)`. Both arms must hit
+  // a non-empty distinct string so the registration screen does not show
+  // "Human" for corporations or vice versa.
+  group('$RegistrationUserType.name(BuildContext)', () {
+    testWidgets('human resolves to a non-empty localized label', (tester) async {
+      String? label;
+      await tester.pumpApp(
+        Builder(
+          builder: (context) {
+            label = RegistrationUserType.human.name(context);
+            return const SizedBox.shrink();
+          },
+        ),
+      );
+
+      expect(label, isNotNull);
+      expect(label!, isNotEmpty);
+    });
+
+    testWidgets('corporation resolves to a non-empty label distinct from human', (tester) async {
+      String? human;
+      String? corporation;
+      await tester.pumpApp(
+        Builder(
+          builder: (context) {
+            human = RegistrationUserType.human.name(context);
+            corporation = RegistrationUserType.corporation.name(context);
+            return const SizedBox.shrink();
+          },
+        ),
+      );
+
+      expect(corporation, isNotNull);
+      expect(corporation!, isNotEmpty);
+      expect(corporation, isNot(equals(human)));
     });
   });
 
@@ -191,10 +233,12 @@ void main() {
     });
 
     test('includes countryAndTINs when provided', () {
-      final json = build(tins: const [
-        CountryAndTin(country: 'CH', tin: '111'),
-        CountryAndTin(country: 'DE', tin: '222'),
-      ]).toJson();
+      final json = build(
+        tins: const [
+          CountryAndTin(country: 'CH', tin: '111'),
+          CountryAndTin(country: 'DE', tin: '222'),
+        ],
+      ).toJson();
 
       final tins = json['countryAndTINs'] as List<dynamic>;
       expect(tins, hasLength(2));

@@ -169,6 +169,25 @@ void main() {
       expect(body!.containsKey('active'), isFalse);
     });
 
+    test('updateBankAccount propagates isActive as `active` on the wire', () async {
+      // Coverage pin for the `if (isActive != null) 'active': isActive` branch
+      // — none of the existing assertions pass `isActive`, so the wire-payload
+      // key for de/re-activation would silently regress without this guard.
+      Map<String, dynamic>? body;
+      final client = MockClient((request) async {
+        body = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(jsonEncode(_bankAccount(id: 5, isActive: false)), 200);
+      });
+
+      final updated = await build(client).updateBankAccount(id: 5, isActive: false);
+
+      expect(updated.isActive, isFalse);
+      expect(body!['active'], isFalse);
+      // `default` and `label` must be omitted when the caller did not pass them.
+      expect(body!.containsKey('default'), isFalse);
+      expect(body!.containsKey('label'), isFalse);
+    });
+
     test('updateBankAccount throws ApiException on non-2xx', () async {
       final client = MockClient(
         (_) async => http.Response(
