@@ -277,7 +277,7 @@ Tier 1 reuses the same `flutter_test` runner but swaps in [`FakeBitboxCredential
 |---|---|---|
 | `success` | Deterministic EIP-712 / personal-message signature from an embedded test private key | User confirms on device |
 | `cancel` | Returns `'0x'` | iOS bridge cancel signal |
-| `disconnect` | Throws `SigningCancelledException`; `isConnected == false` | BLE link drop |
+| `disconnect` | Throws `BitboxNotConnectedException`; `isConnected == false` | BLE link drop |
 | `timeout` | Never resolves; caller imposes its own outer timeout | Device hangs |
 | `malformed` | Returns non-hex data | Frame-desync regression (`bitbox_flutter` PR #11) |
 
