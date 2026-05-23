@@ -376,8 +376,6 @@ Some files are deliberately uncovered today because exercising them would change
 |---|---|---|
 | `lib/packages/repository/*` (Drift wrappers) | `AppDatabase(String encryptionPassword)` builds a native SQLCipher executor; the in-memory injection point exists (`AppDatabase.forTesting`, `database.dart`), but the wrapper specs are not written yet | Write repository unit tests that pass `NativeDatabase.memory()` into `AppDatabase.forTesting` |
 | `lib/screens/*/`-Page widgets that call `getIt<X>()` directly (Dashboard, Receive, Settings sub-pages) | Service locator usage inside `build` makes the cubits the page wires up impossible to swap | Move the `BlocProvider(create: (_) => Cubit(getIt<X>()))` lookup up one layer so tests can `BlocProvider.value` a mock |
-| `transaction_history_*receipt_cubit`, `settings_tax_report_cubit` | Call `getApplicationDocumentsDirectory()` from `path_provider` directly | Inject the path lookup (or use [`path_provider_platform_interface`](https://pub.dev/packages/path_provider_platform_interface) with a fake) |
-| `lib/screens/kyc/steps/ident/cubits/kyc_ident/kyc_ident_cubit.dart` | Drives the Sumsub `flutter_idensic_mobile_sdk_plugin` directly | Move the SDK call behind a port the cubit takes via constructor injection |
 | `lib/widgets/chain_asset_icon.dart`, `lib/widgets/image_picker_sheet.dart` | `Image.asset` / `ImagePicker` need a real asset bundle / platform channel | Mock the asset loader / use the platform-interface fake |
 
 When you find yourself wanting to test one of these, do the infra PR first and document the new injection point in this file.
