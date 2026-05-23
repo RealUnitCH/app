@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 
 void main() {
   group('$KycAddress', () {
@@ -169,6 +170,50 @@ void main() {
 
     test('throws on an unknown value', () {
       expect(() => KycAccountType.fromString('NPO'), throwsException);
+    });
+  });
+
+  // `fromUserType` bridges the legacy registration-level enum
+  // (HUMAN/CORPORATION) into the KYC-side `KycAccountType` enum. Both
+  // arms must be pinned because the mapping is asymmetric: a `human`
+  // registers as a `personal` KYC account, never as
+  // `soleProprietorship`, even though both could legally describe an
+  // individual.
+  group('$KycAccountType.fromUserType', () {
+    test('human → personal', () {
+      expect(
+        KycAccountType.fromUserType(RegistrationUserType.human),
+        KycAccountType.personal,
+      );
+    });
+
+    test('corporation → organization', () {
+      expect(
+        KycAccountType.fromUserType(RegistrationUserType.corporation),
+        KycAccountType.organization,
+      );
+    });
+  });
+
+  group('$KycAccountType jsonName', () {
+    // Pin per-case so the wire strings shipped to the API cannot change
+    // without a deliberate test update.
+    test('personal → "Personal"', () {
+      expect(KycAccountType.personal.jsonName, 'Personal');
+    });
+
+    test('organization → "Organization"', () {
+      expect(KycAccountType.organization.jsonName, 'Organization');
+    });
+
+    test('soleProprietorship → "SoleProprietorship"', () {
+      expect(KycAccountType.soleProprietorship.jsonName, 'SoleProprietorship');
+    });
+
+    test('values has exactly three entries', () {
+      // Catches accidental additions that would silently bypass every
+      // switch-on-account-type call site.
+      expect(KycAccountType.values, hasLength(3));
     });
   });
 }

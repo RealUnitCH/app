@@ -27,7 +27,12 @@ Uri buildUri(
   String path, [
   Map<String, dynamic>? queryParams,
 ]) {
+  // `_localTesting` is a file-private dev hint that is always `false` in the
+  // shipped source. The `Uri.http(...)` branch only fires when a developer
+  // flips the constant locally to point the app at a local backend — it is
+  // not reachable from any production or test path, so line-coverage cannot
+  // mark it as executed.
   return _localTesting
-      ? Uri.http(authority, path, queryParams)
+      ? Uri.http(authority, path, queryParams) // coverage:ignore-line
       : Uri.https(authority, path, queryParams);
 }
