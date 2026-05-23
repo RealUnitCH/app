@@ -1,21 +1,23 @@
-import 'dart:developer';
-
 import 'package:equatable/equatable.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_idensic_mobile_sdk_plugin/flutter_idensic_mobile_sdk_plugin.dart';
+import 'package:realunit_wallet/screens/kyc/steps/ident/cubits/kyc_ident/sumsub_ident_port.dart';
 
 part 'kyc_ident_state.dart';
 
 enum FailureStatus { error, finallyRejected, temporarilyDeclined, failed }
 
 class KycIdentCubit extends Cubit<KycIdentState> {
-  KycIdentCubit() : super(const KycIdentInitial());
+  KycIdentCubit({required SumsubIdentPort identPort})
+    : _identPort = identPort,
+      super(const KycIdentInitial());
+
+  final SumsubIdentPort _identPort;
 
   Future<void> startIdent(String token, {String localeCode = 'en'}) async {
     try {
       emit(const KycIdentLoading());
-      var result = await _launchSDK(token, localeCode);
+      final result = await _identPort.launch(token: token, localeCode: localeCode);
       switch (result.status) {
         case SNSMobileSDKStatus.Approved:
           // Equivalent to web: reviewAnswer === GREEN
@@ -68,27 +70,5 @@ class KycIdentCubit extends Cubit<KycIdentState> {
         ),
       );
     }
-  }
-
-  Future<SNSMobileSDKResult> _launchSDK(String token, String locale) async {
-    // The access token has a limited lifespan and when it's expired, you must provide another one.
-    Future<String> onTokenExpiration() async {
-      throw Exception('Token expired. Please open a new ident session to get a new token.');
-    }
-
-    onStatusChanged(SNSMobileSDKStatus newStatus, SNSMobileSDKStatus prevStatus) {
-      log('The SDK status was changed: $prevStatus -> $newStatus');
-    }
-
-    final snsMobileSDK = SNSMobileSDK.init(token, onTokenExpiration)
-        .withHandlers(onStatusChanged: onStatusChanged)
-        .withLocale(
-          Locale(locale),
-        )
-        .build();
-
-    final SNSMobileSDKResult result = await snsMobileSDK.launch();
-    log('Completed with result: $result');
-    return result;
   }
 }
