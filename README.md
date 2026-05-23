@@ -14,7 +14,7 @@ A Flutter wallet for Real Unit investors. Multi-chain, BitBox-ready, KYC-aware.
 
 **Coverage scope:** `lib/packages/**` (services, repositories, signers, utils) and the `cubits/` + `bloc/` directories under each `lib/screens/<feature>/`. Widget files (`lib/screens/<feature>/<feature>_page.dart` and `lib/widgets/**`) are exercised via `testWidgets` specs and excluded from the line-coverage gate — widget tests count as `widget` coverage in the feature matrix, not as line %.
 
-The four-tier testing model (Tier 0 Cubit unit · Tier 1 FakeBitbox integration · Tier 2 firmware simulator · Tier 3 Maestro flows (handbook simulator + deferred BitBox02 hardware)) is tracked in [#314](https://github.com/DFXswiss/realunit-app/issues/314). New BitBox-touching PRs are expected to add tests at the appropriate tier(s).
+The five-tier testing model (Tier 0 Cubit unit · Tier 1 FakeBitbox integration · Tier 2 firmware simulator · Tier 3 Maestro flows (handbook simulator + deferred BitBox02 hardware) · Tier 4 BLE VCR/replay stretch) is tracked in [#314](https://github.com/DFXswiss/realunit-app/issues/314). See [`docs/testing.md`](docs/testing.md) for the full tier picker. New BitBox-touching PRs are expected to add tests at the appropriate tier(s).
 
 ## Coverage infrastructure roadmap
 
@@ -42,9 +42,9 @@ User-facing functions, their activation status, and the tests that cover them. I
 
 **Triage legend** (MVP testing decision): `mvp` = in MVP scope, must reach full test coverage before launch · `defer` = ships but does not block MVP coverage (coverage required eventually, no hard deadline) · `planned` = not in scope for MVP.
 
-**Tests legend:** `widget` = `testWidgets` spec under `test/screens/**` · `unit` = pure-Dart `test/packages/**` spec · `cubit` = `bloc_test`-style spec for a Bloc/Cubit · `integration` = `integration_test/**` spec driving the full app with `FakeBitboxCredentials` · `e2e` = Maestro YAML flow on real hardware · `—` = no test exists.
+**Tests legend:** `widget` = `testWidgets` spec under `test/screens/**` · `unit` = pure-Dart `test/packages/**` spec · `cubit` = `bloc_test`-style spec for a Bloc/Cubit · `integration` = `test/integration/**` spec crossing ≥ 2 production layers with `FakeBitboxCredentials` · `e2e` = Maestro YAML flow on real hardware · `—` = no test exists.
 
-> Per-feature line-coverage % is omitted today because `--coverage` is not yet wired into CI. Once roadmap items 1 + 2 land, this column will be populated automatically.
+> Per-feature line-coverage % is not surfaced in this table. The repo-wide scoped coverage is enforced by the `Coverage Floor Gate` CI job against `.coverage-floor-lines` / `.coverage-floor-functions`; the lcov artifact attached to every PR run holds the per-file breakdown.
 
 ### Supported hardware wallets
 
@@ -135,13 +135,14 @@ Features tagged `mvp` whose current test coverage is insufficient — these bloc
 
 ## Testing tiers
 
-[#314](https://github.com/DFXswiss/realunit-app/issues/314) defines a 4-tier model for BitBox-touching code:
+[#314](https://github.com/DFXswiss/realunit-app/issues/314) defines a 5-tier model for BitBox-touching code:
 
 - **Tier 0 — Cubit unit tests** (`bloc_test` + `mocktail`). Fast, no platform, no BitBox. Covers every state transition.
-- **Tier 1 — FakeBitbox integration tests** (`integration_test/` + `FakeBitboxCredentials`). Drives full app flow without hardware. Phase landing in [#320](https://github.com/DFXswiss/realunit-app/pull/320).
+- **Tier 1 — FakeBitbox integration tests** (`FakeBitboxCredentials` at the BitBox boundary, runs under `flutter test --coverage`). Drives multi-layer flows without hardware. Specs live under `test/integration/`.
 - **Tier 2 — Firmware simulator** (TCP transport + Docker `bitbox02-firmware/simulator`). End-to-end with real crypto, no hardware. Planned.
 - **Tier 3a — Maestro handbook flows** (`.maestro/handbook/*.yaml`). Software-only flows run on a fresh iOS Simulator. Automated via [`tier3-handbook.yaml`](.github/workflows/tier3-handbook.yaml) — opt-in on PRs via the `tier3:full` label (an upstream Maestro driver-hang regression on `macos-latest` runners makes intermittent first-attempt failures expected; `scripts/run-handbook-flows.sh` retries the driver-hang class up to 3× per flow; tracked in [#487](https://github.com/DFXswiss/realunit-app/issues/487)), always runs on push to `develop`.
 - **Tier 3b — Maestro hardware flows** (`.maestro/*.yaml`, BitBox02 device). Status: deferred — still manually triggered before each release.
+- **Tier 4 — BLE VCR / replay** (capture on hardware once, replay deterministically). Stretch — most of its value is covered by Tier 2 + Tier 3 in tandem.
 
 Non-BitBox code only needs Tier 0 + widget tests; Tier 1+ are reserved for hardware-coupled paths.
 
@@ -153,7 +154,7 @@ Non-BitBox code only needs Tier 0 + widget tests; Tier 1+ are reserved for hardw
 | Coverage | `flutter test --coverage` | Writes `coverage/lcov.info`. CI narrows it to the activated surface and hard-fails when scoped coverage drops below the floor in `.coverage-floor-lines` / `.coverage-floor-functions`. See "Coverage infrastructure roadmap" above for the ratchet protocol. |
 | Analyzer | `flutter analyze`         | Dart static analysis per `analysis_options.yaml`                                                                                                                                                          |
 
-Tier 1 (`integration_test/`) is tracked under "Testing tiers" above but not yet committed. Tier 3a (Maestro handbook flows on iOS Simulator) is wired via [`tier3-handbook.yaml`](.github/workflows/tier3-handbook.yaml); Tier 3b (BitBox02 real-hardware variant) remains deferred.
+Tier 1 specs live under `test/integration/**` and run inside the same `flutter test --coverage` invocation as Tier 0 — no separate `integration_test/` harness today (that Flutter-convention directory is reserved for on-device runs that are not yet wired up). Tier 3a (Maestro handbook flows on iOS Simulator) is wired via [`tier3-handbook.yaml`](.github/workflows/tier3-handbook.yaml); Tier 3b (BitBox02 real-hardware variant) remains deferred.
 
 ## CI/CD
 
