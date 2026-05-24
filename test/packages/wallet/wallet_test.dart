@@ -1,3 +1,10 @@
+// Post-Initiative-IV tests for the handle-shaped `SoftwareWallet` +
+// the supporting `SoftwareViewWallet` / `DebugWallet` / `SeedDraft`.
+// The `SoftwareWallet` constructor now takes a `WalletIsolate`; we
+// spawn a real one per group so the round-trip tests exercise the
+// production IPC path (no mocks above Tier 0 for this kind of
+// cryptographic boundary).
+
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -5,7 +12,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
-import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
+import 'package:realunit_wallet/packages/wallet/wallet_isolate.dart';
 
 class _MockBitboxService extends Mock implements BitboxService {}
 
@@ -20,22 +27,33 @@ const _viewWalletErrorRationale =
     'assert(false) in debug → AssertionError, StateError in release — both Error subtypes';
 
 void main() {
-  group('$SoftwareWallet', () {
+  group('$SoftwareWallet (handle)', () {
+    late WalletIsolate isolate;
+    late String primaryAddress;
+
+    setUp(() async {
+      isolate = await WalletIsolate.spawn();
+      primaryAddress = await isolate.adoptPlaintext(1, _testMnemonic);
+    });
+
+    tearDown(() async {
+      await isolate.dispose();
+    });
+
     test('exposes walletType == software', () {
-      final wallet = SoftwareWallet(1, 'Main', _testMnemonic);
+      final wallet = SoftwareWallet(1, 'Main', primaryAddress, isolate);
 
       expect(wallet.walletType, WalletType.software);
     });
 
-    test('primaryAccount is derived at BIP-44 account index 0', () {
-      final wallet = SoftwareWallet(1, 'Main', _testMnemonic);
+    test('primaryAccount carries account index 0', () {
+      final wallet = SoftwareWallet(1, 'Main', primaryAddress, isolate);
 
-      expect(wallet.primaryAccount, isA<WalletAccount>());
       expect(wallet.primaryAccount.accountIndex, 0);
     });
 
     test('currentAccount starts equal to primaryAccount', () {
-      final wallet = SoftwareWallet(1, 'Main', _testMnemonic);
+      final wallet = SoftwareWallet(1, 'Main', primaryAddress, isolate);
 
       expect(
         wallet.currentAccount.primaryAddress.address.hex,
@@ -43,41 +61,63 @@ void main() {
       );
     });
 
-    test('selectAccount switches currentAccount to a different derivation', () {
-      final wallet = SoftwareWallet(1, 'Main', _testMnemonic);
-      final firstAddress = wallet.currentAccount.primaryAddress.address.hex;
+    test('primaryAddress matches the isolate-derived EIP-55 address', () {
+      final wallet = SoftwareWallet(1, 'Main', primaryAddress, isolate);
 
-      wallet.selectAccount(1);
+      // The first test-mnemonic Ethereum address is the well-known
+      // Hardhat / Foundry account #0.
+      const expected = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
+      expect(wallet.primaryAccount.primaryAddress.address.hexEip55, expected);
+    });
+
+    test('selectAccount switches currentAccount to a different derivation', () async {
+      final wallet = SoftwareWallet(1, 'Main', primaryAddress, isolate);
+      final addressAtOne = await isolate.deriveAddress(1, 1, 0);
+
+      wallet.selectAccount(1, addressAtOne);
 
       expect(wallet.currentAccount.accountIndex, 1);
       expect(
-        wallet.currentAccount.primaryAddress.address.hex,
-        isNot(firstAddress),
+        wallet.currentAccount.primaryAddress.address.hexEip55,
+        isNot(primaryAddress),
       );
     });
 
-    test('selectAccount does not alter primaryAccount', () {
-      final wallet = SoftwareWallet(1, 'Main', _testMnemonic);
-      final primary = wallet.primaryAccount.primaryAddress.address.hex;
+    test('selectAccount does not alter primaryAccount', () async {
+      final wallet = SoftwareWallet(1, 'Main', primaryAddress, isolate);
+      final addressAtTwo = await isolate.deriveAddress(1, 2, 0);
 
-      wallet.selectAccount(2);
+      wallet.selectAccount(2, addressAtTwo);
 
-      expect(wallet.primaryAccount.primaryAddress.address.hex, primary);
+      expect(
+        wallet.primaryAccount.primaryAddress.address.hexEip55,
+        primaryAddress,
+      );
     });
 
     test('id and name are preserved from the constructor', () {
-      final wallet = SoftwareWallet(42, 'Savings', _testMnemonic);
+      final wallet = SoftwareWallet(42, 'Savings', primaryAddress, isolate);
 
       expect(wallet.id, 42);
       expect(wallet.name, 'Savings');
     });
 
     test('name field is mutable (set after construction)', () {
-      final wallet = SoftwareWallet(1, 'Old', _testMnemonic);
+      final wallet = SoftwareWallet(1, 'Old', primaryAddress, isolate);
 
       wallet.name = 'New';
 
       expect(wallet.name, 'New');
+    });
+
+    test('signMessage runs through the isolate and returns a 65-byte hex', () async {
+      final wallet = SoftwareWallet(1, 'Main', primaryAddress, isolate);
+
+      final signature = await wallet.currentAccount.signMessage('hello');
+
+      // 0x prefix + 65 bytes * 2 hex chars = 132 chars.
+      expect(signature, startsWith('0x'));
+      expect(signature.length, 132);
     });
   });
 
@@ -304,6 +344,40 @@ void main() {
         () => wallet.primaryAccount.primaryAddress.signToEcSignature(Uint8List(0)),
         throwsA(isA<Error>()), // see _viewWalletErrorRationale
       );
+    });
+  });
+
+  group('$SeedDraft', () {
+    test('exposes the mnemonic and its split-words form', () {
+      final draft = SeedDraft(_testMnemonic, name: 'Onboarding');
+
+      expect(draft.mnemonic, _testMnemonic);
+      expect(draft.seedWords, hasLength(12));
+      expect(draft.name, 'Onboarding');
+      expect(draft.isDisposed, isFalse);
+    });
+
+    test('dispose() overwrites the mnemonic and flips isDisposed', () {
+      final draft = SeedDraft(_testMnemonic);
+      expect(draft.isDisposed, isFalse);
+
+      draft.dispose();
+
+      expect(draft.isDisposed, isTrue);
+      expect(
+        () => draft.mnemonic,
+        throwsA(isA<StateError>()),
+        reason: 'post-dispose reads must throw — silently returning the '
+            'space-filled placeholder would let the UI render a fake seed',
+      );
+    });
+
+    test('dispose() is idempotent', () {
+      final draft = SeedDraft(_testMnemonic);
+      draft.dispose();
+
+      expect(() => draft.dispose(), returnsNormally);
+      expect(draft.isDisposed, isTrue);
     });
   });
 }

@@ -8,6 +8,7 @@ final class VerifySeedState extends Equatable {
     this.isVerifying = false,
     this.isVerified = false,
     this.commitFailed = false,
+    this.aborted = false,
     this.committedWallet,
   });
 
@@ -29,6 +30,14 @@ final class VerifySeedState extends Equatable {
   /// that is neither success nor a visible error.
   final bool commitFailed;
 
+  /// The cubit's [SeedDraft] was disposed mid-verify — either because
+  /// the user backgrounded the app (BL-023) or because the draft was
+  /// already gone when the cubit was constructed. The view should
+  /// route back to the create-wallet entry point; re-attempting verify
+  /// from this state is impossible because the mnemonic is no longer
+  /// in memory.
+  final bool aborted;
+
   /// The wallet returned by `commitGeneratedWallet` — the persisted row
   /// with its real id. Only ever set together with [isVerified] `== true`;
   /// `null` until then. Passed to `LoadWalletEvent` so `HomeBloc` flips
@@ -44,6 +53,7 @@ final class VerifySeedState extends Equatable {
     bool? isVerifying,
     bool? isVerified,
     bool? commitFailed,
+    bool? aborted,
     SoftwareWallet? committedWallet,
   }) => VerifySeedState(
     wordIndices: wordIndices ?? this.wordIndices,
@@ -52,6 +62,7 @@ final class VerifySeedState extends Equatable {
     isVerifying: isVerifying ?? this.isVerifying,
     isVerified: isVerified ?? this.isVerified,
     commitFailed: commitFailed ?? this.commitFailed,
+    aborted: aborted ?? this.aborted,
     committedWallet: committedWallet ?? this.committedWallet,
   );
 
@@ -63,6 +74,7 @@ final class VerifySeedState extends Equatable {
     isVerifying,
     isVerified,
     commitFailed,
+    aborted,
     committedWallet,
   ];
 }

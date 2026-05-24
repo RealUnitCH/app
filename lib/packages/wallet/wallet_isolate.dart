@@ -197,12 +197,32 @@ class _ErrorResponse extends _IsolateResponse {
 /// Main-isolate handle to the spawned wallet isolate. Holds the
 /// `SendPort`, a request-id counter, and a map of pending Completers
 /// so concurrent callers can multiplex over the single channel.
+///
+/// Most methods are non-final so test doubles ([WalletIsolate] is the
+/// production path; a `FakeWalletIsolate` in tests can override the
+/// IPC methods directly without spawning a real isolate). Production
+/// callers go through [spawn] and pay the spawn cost once per process.
 class WalletIsolate {
   WalletIsolate._(
     this._sendPort,
     this._receivePort,
     this._isolate,
   );
+
+  /// Test constructor — produces a handle whose IPC methods are
+  /// expected to be overridden in a subclass. Calling any unoverridden
+  /// IPC method on the instance throws because the underlying isolate
+  /// is closed immediately. Production code goes through [spawn].
+  WalletIsolate.forTesting()
+      : _sendPort = ReceivePort().sendPort,
+        _receivePort = ReceivePort(),
+        _isolate = Isolate.current {
+    _receivePort.close();
+    // Disposed is left false so override-callers can still issue
+    // their own state. Disposing here would cause `_send` to error
+    // on a base-class call, which is the right shape for "not
+    // overridden in this test".
+  }
 
   final SendPort _sendPort;
   final ReceivePort _receivePort;

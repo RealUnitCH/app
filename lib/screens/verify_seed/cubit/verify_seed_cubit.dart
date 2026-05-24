@@ -3,33 +3,53 @@ import 'dart:math';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
-import 'package:realunit_wallet/widgets/mnemonic_field.dart';
 
 part 'verify_seed_state.dart';
 
-class VerifySeedCubit extends Cubit<VerifySeedState> {
-  VerifySeedCubit(SoftwareWallet wallet, WalletService walletService)
-    : _wallet = wallet,
+class VerifySeedCubit extends Cubit<VerifySeedState> with WidgetsBindingObserver {
+  VerifySeedCubit(SeedDraft draft, WalletService walletService)
+    : _draft = draft,
       _walletService = walletService,
       super(const VerifySeedState()) {
+    // Lifecycle observer for BL-023 — when the user backgrounds the
+    // app mid-verify, the SeedDraft is disposed and the cubit emits
+    // `VerifySeedAborted` so the screen can route back to the create
+    // flow on resume. The legacy behaviour leaked the mnemonic for the
+    // full duration of the verify-seed screen even after app hide;
+    // post-Initiative-IV the draft is gone within one event-loop turn
+    // of `hidden`.
+    WidgetsBinding.instance.addObserver(this);
     _initVerification();
   }
 
-  /// The draft wallet handed in by `CreateWalletCubit`. Until [verify]
-  /// succeeds and `WalletService.commitGeneratedWallet` lands the row, the
-  /// id is the `0` sentinel — it must NOT be passed to
-  /// `setCurrentWallet` directly; commit first, use the returned id.
-  SoftwareWallet _wallet;
+  /// The transient seed-bearing value handed in by `CreateWalletCubit`.
+  /// Held only for the verify-quiz window; disposed on successful
+  /// commit (the commit path adopts the plaintext into the wallet
+  /// isolate) or on app-hidden via [didChangeAppLifecycleState].
+  ///
+  /// SECURITY: BIP39 lifetime — see BL-018. The draft's mnemonic is
+  /// the only main-isolate `String` carrying the user's seed while the
+  /// quiz is on screen; disposing it removes the only reachable
+  /// reference outside the isolate.
+  final SeedDraft _draft;
   final WalletService _walletService;
 
   void _initVerification() {
     final indices = <int>{};
-    final seedLength = _wallet.seed.seedWords.length;
+    if (_draft.isDisposed) {
+      // Cubit was constructed against a draft that has already been
+      // disposed (e.g. by a parallel lifecycle handler). Surface as
+      // aborted so the view doesn't attempt to render an empty quiz.
+      emit(state.copyWith(aborted: true));
+      return;
+    }
+    final words = _draft.seedWords;
     while (indices.length < 4) {
-      indices.add(Random().nextInt(seedLength));
+      indices.add(Random().nextInt(words.length));
     }
     final sortedIndices = indices.toList()..sort();
 
@@ -67,11 +87,15 @@ class VerifySeedCubit extends Cubit<VerifySeedState> {
     // Re-entrancy guard. The button's `onPressed` is fire-and-forget, so a
     // second tap can land while the first commit is still in flight (or
     // already done). A second commit would also trip
-    // `commitGeneratedWallet`'s `assert(draft.id == 0)` on the now-committed
-    // `_wallet`. Bail out and let the first call own the transition.
-    if (state.isVerifying || state.isVerified) return false;
+    // `commitGeneratedWallet`'s draft-disposed assertion. Bail out and
+    // let the first call own the transition.
+    if (state.isVerifying || state.isVerified || state.aborted) return false;
+    if (_draft.isDisposed) {
+      emit(state.copyWith(aborted: true));
+      return false;
+    }
 
-    final seedWords = _wallet.seed.seedWords;
+    final seedWords = _draft.seedWords;
 
     for (int i = 0; i < state.wordIndices.length; i++) {
       final expectedWord = seedWords[state.wordIndices.elementAt(i)].toLowerCase();
@@ -83,17 +107,20 @@ class VerifySeedCubit extends Cubit<VerifySeedState> {
       }
     }
 
-    // Commit the draft mnemonic to disk BEFORE marking it current — the
-    // wallet handed in by `CreateWalletCubit` is the in-memory-only draft
-    // produced by `WalletService.generateUncommittedSeedWallet` (id == 0).
+    // Commit the draft mnemonic to disk BEFORE marking it current —
+    // the draft handed in by `CreateWalletCubit` is the in-memory-only
+    // value produced by `WalletService.generateUncommittedSeedDraft`.
     // Persisting at confirm time means a regenerate triggered by an
-    // app-hidden cycle in the create flow never leaves an orphan row in
-    // `walletInfos`. The user only reaches this branch by typing the four
-    // requested words correctly, so the seed they kept is the seed we
-    // store.
+    // app-hidden cycle in the create flow never leaves an orphan row
+    // in `walletInfos`. The user only reaches this branch by typing
+    // the four requested words correctly, so the seed they kept is the
+    // seed we store. `commitGeneratedWallet` adopts the plaintext into
+    // the wallet isolate as part of the commit and disposes the
+    // draft, so by the time this method returns the only string copy
+    // of the mnemonic outside the isolate is gone.
     emit(state.copyWith(isVerifying: true, commitFailed: false));
     try {
-      final committed = await _walletService.commitGeneratedWallet(_wallet);
+      final committed = await _walletService.commitGeneratedWallet(_draft);
       // Async-tail guard: the AppBar back button on the verify-seed screen
       // stays enabled while `isVerifying` is true, so the user can pop the
       // page (closing the cubit) before the commit resolves. A post-close
@@ -103,7 +130,6 @@ class VerifySeedCubit extends Cubit<VerifySeedState> {
       // dropping the success emission is acceptable; the user simply
       // restarts onboarding and re-uses the existing wallet.
       if (isClosed) return false;
-      _wallet = committed;
       await _walletService.setCurrentWallet(committed.id);
       if (isClosed) return false;
       emit(
@@ -128,5 +154,31 @@ class VerifySeedCubit extends Cubit<VerifySeedState> {
       emit(state.copyWith(isVerifying: false, commitFailed: true));
       return false;
     }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // BL-023: drop the draft as soon as the user backgrounds the app.
+    // `hidden` fires before `paused` on every platform; using `hidden`
+    // gives the earliest reaction window, which matters for the iOS
+    // app-suspend snapshot (taken on transition to inactive/paused).
+    if (state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.paused) {
+      _disposeDraft();
+    }
+  }
+
+  void _disposeDraft() {
+    if (_draft.isDisposed) return;
+    _draft.dispose();
+    if (isClosed) return;
+    emit(state.copyWith(aborted: true));
+  }
+
+  @override
+  Future<void> close() {
+    WidgetsBinding.instance.removeObserver(this);
+    _disposeDraft();
+    return super.close();
   }
 }
