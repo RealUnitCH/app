@@ -4,12 +4,14 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
+import 'package:realunit_wallet/packages/wallet/error_mapper.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_verification/kyc_email_verification_cubit.dart';
 
 class _MockAuthService extends Mock implements DFXAuthService {}
@@ -73,10 +75,14 @@ void main() {
     when(() => auth.invalidateAuthToken()).thenReturn(null);
   });
 
-  KycEmailVerificationCubit build() => KycEmailVerificationCubit(
+  KycEmailVerificationCubit build({
+    void Function()? onSignProduced,
+  }) =>
+      KycEmailVerificationCubit(
         dfxService: auth,
         walletService: walletService,
         registrationService: registrationService,
+        onSignProduced: onSignProduced,
       );
 
   group('initial state', () {
@@ -221,6 +227,214 @@ void main() {
       verify: (_) {
         verify(() => registrationService.registerWallet(_userData)).called(1);
       },
+    );
+  });
+
+  group('BL-006: BitBox disconnect mid-sign routes to BitboxRequired', () {
+    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
+      'registerWallet throws BitboxNotConnectedException → '
+      'KycEmailVerificationBitboxRequired (legacy exception path)',
+      setUp: () {
+        final tokens = [_fakeJwt(1), _fakeJwt(2)];
+        var i = 0;
+        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
+        when(() => walletService.getWalletStatus()).thenAnswer(
+          (_) async => RealUnitWalletStatusDto(
+            isRegistered: true,
+            realUnitUserDataDto: _userData,
+          ),
+        );
+        when(() => registrationService.registerWallet(any())).thenAnswer(
+          (_) async => throw const BitboxNotConnectedException(),
+        );
+      },
+      build: build,
+      act: (c) => c.checkEmailVerification(),
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationBitboxRequired>(),
+      ],
+      verify: (_) =>
+          verify(() => registrationService.registerWallet(_userData)).called(1),
+    );
+
+    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
+      'registerWallet throws BitboxNotConnectedSignException → '
+      'KycEmailVerificationBitboxRequired (typed pipeline path)',
+      setUp: () {
+        final tokens = [_fakeJwt(1), _fakeJwt(2)];
+        var i = 0;
+        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
+        when(() => walletService.getWalletStatus()).thenAnswer(
+          (_) async => RealUnitWalletStatusDto(
+            isRegistered: true,
+            realUnitUserDataDto: _userData,
+          ),
+        );
+        when(() => registrationService.registerWallet(any())).thenAnswer(
+          (_) async => throw const BitboxNotConnectedSignException(),
+        );
+      },
+      build: build,
+      act: (c) => c.checkEmailVerification(),
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationBitboxRequired>(),
+      ],
+      verify: (_) =>
+          verify(() => registrationService.registerWallet(_userData)).called(1),
+    );
+
+    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
+      'reconnect after BitboxNotConnected → second call re-runs the JWT '
+      'account-id check (latch reset). Without the reset, the second call '
+      'would skip the auth-side step and emit Failure on the same-account-id '
+      'guard.',
+      setUp: () {
+        // First call: account changes 1→2, sign fails with BitBox disconnect.
+        // Second call (after reconnect): user re-taps; expects the auth-side
+        // check to run AGAIN. We feed (2, 2) so the same-account-id guard
+        // would emit Failure if the latch were NOT reset; the test asserts
+        // the latch DID reset by observing Failure (not Success) on the
+        // retry — proving the merge-detected short-circuit is gone.
+        final tokens = [_fakeJwt(1), _fakeJwt(2), _fakeJwt(2), _fakeJwt(2)];
+        var i = 0;
+        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
+        when(() => walletService.getWalletStatus()).thenAnswer(
+          (_) async => RealUnitWalletStatusDto(
+            isRegistered: true,
+            realUnitUserDataDto: _userData,
+          ),
+        );
+        var registerCallCount = 0;
+        when(() => registrationService.registerWallet(any())).thenAnswer(
+          (_) async {
+            registerCallCount++;
+            if (registerCallCount == 1) {
+              throw const BitboxNotConnectedException();
+            }
+            return RegistrationStatus.completed;
+          },
+        );
+      },
+      build: build,
+      act: (c) async {
+        await c.checkEmailVerification();
+        await c.checkEmailVerification();
+      },
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationBitboxRequired>(),
+        isA<KycEmailVerificationLoading>(),
+        // Latch reset means the second call hits the same-account-id
+        // guard and emits Failure (token compare: 2 == 2) rather than
+        // proceeding straight to registerWallet on the stale latch.
+        // BL-006 invariant pinned: the auth-side check IS re-run.
+        isA<KycEmailVerificationFailure>(),
+      ],
+    );
+  });
+
+  group('BL-006: sign-gate flips from inside the cubit on success', () {
+    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
+      'on Success → onSignProduced callback is invoked',
+      setUp: () {
+        final tokens = [_fakeJwt(1), _fakeJwt(2)];
+        var i = 0;
+        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
+        when(() => walletService.getWalletStatus()).thenAnswer(
+          (_) async => RealUnitWalletStatusDto(
+            isRegistered: true,
+            realUnitUserDataDto: _userData,
+          ),
+        );
+        when(() => registrationService.registerWallet(any()))
+            .thenAnswer((_) async => RegistrationStatus.completed);
+      },
+      build: () {
+        var callCount = 0;
+        final cubit = build(onSignProduced: () => callCount++);
+        // Stash the callback's invocation count on the cubit via a
+        // sentinel state-listener so the verify block can assert it.
+        addTearDown(() {
+          expect(callCount, 1, reason: 'sign-gate flip must fire exactly once on Success');
+        });
+        return cubit;
+      },
+      act: (c) => c.checkEmailVerification(),
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationSuccess>(),
+      ],
+    );
+
+    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
+      'on RegistrationFailure → onSignProduced is NOT invoked',
+      setUp: () {
+        final tokens = [_fakeJwt(1), _fakeJwt(2)];
+        var i = 0;
+        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
+        when(() => walletService.getWalletStatus()).thenAnswer(
+          (_) async => RealUnitWalletStatusDto(
+            isRegistered: true,
+            realUnitUserDataDto: _userData,
+          ),
+        );
+        when(() => registrationService.registerWallet(any()))
+            .thenAnswer((_) async => throw Exception('boom'));
+      },
+      build: () {
+        var callCount = 0;
+        final cubit = build(onSignProduced: () => callCount++);
+        addTearDown(() {
+          expect(
+            callCount,
+            0,
+            reason: 'sign-gate must NOT flip if registerWallet failed',
+          );
+        });
+        return cubit;
+      },
+      act: (c) => c.checkEmailVerification(),
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationRegistrationFailure>(),
+      ],
+    );
+
+    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
+      'on BitboxRequired → onSignProduced is NOT invoked',
+      setUp: () {
+        final tokens = [_fakeJwt(1), _fakeJwt(2)];
+        var i = 0;
+        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
+        when(() => walletService.getWalletStatus()).thenAnswer(
+          (_) async => RealUnitWalletStatusDto(
+            isRegistered: true,
+            realUnitUserDataDto: _userData,
+          ),
+        );
+        when(() => registrationService.registerWallet(any())).thenAnswer(
+          (_) async => throw const BitboxNotConnectedException(),
+        );
+      },
+      build: () {
+        var callCount = 0;
+        final cubit = build(onSignProduced: () => callCount++);
+        addTearDown(() {
+          expect(
+            callCount,
+            0,
+            reason: 'sign-gate must NOT flip on a BitBox disconnect',
+          );
+        });
+        return cubit;
+      },
+      act: (c) => c.checkEmailVerification(),
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationBitboxRequired>(),
+      ],
     );
   });
 
