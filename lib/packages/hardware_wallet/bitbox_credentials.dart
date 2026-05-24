@@ -28,10 +28,18 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
 
   final String _address;
 
+  /// Optional callback the service wires up in [BitboxService.getCredentials]
+  /// so a sign-queue timeout in this credentials instance can flip the
+  /// service-level state to `Lost(signQueueTimeout)`. Stored as a closure to
+  /// keep the dependency uni-directional — credentials never reach back
+  /// through a singleton getter.
+  // ignore: unused_field
+  final void Function()? _onSignQueueTimeout;
+
   BitboxManager? bitboxManager;
   String? derivationPath;
 
-  BitboxCredentials(this._address);
+  BitboxCredentials(this._address, [this._onSignQueueTimeout]);
 
   /// Re-seeds the static sign queue with a freshly-completed future.
   ///

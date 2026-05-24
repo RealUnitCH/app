@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:bitbox_flutter/bitbox_flutter.dart';
 import 'package:bitbox_flutter/testing.dart';
 import 'package:bitbox_flutter/usb/bitbox_usb_platform_interface.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
+import 'package:realunit_wallet/packages/hardware_wallet/bitbox_connection_status.dart';
 
 // Service-lifecycle suite. Drives the official bitbox_flutter simulator
 // (installed at the BitboxUsbPlatform.instance seam) so the tests exercise
@@ -313,7 +316,10 @@ void main() {
         Object? caught;
         service.init(devices.single).catchError((Object e) {
           caught = e;
-          return false;
+          // init() returns BitboxConnectionStatus post-Initiative-I; surface
+          // a typed Disconnected as the fallback so the catchError contract
+          // is honoured without leaking a bool into the FutureOr<T> signature.
+          return const Disconnected() as BitboxConnectionStatus;
         });
         async.flushMicrotasks();
 
@@ -328,7 +334,7 @@ void main() {
         expect(
           postInit.isConnected,
           isFalse,
-          reason: 'failed init must leave _isConnected false for future hand-outs',
+          reason: 'failed init must leave the service in Disconnected for future hand-outs',
         );
       });
     });
@@ -494,39 +500,32 @@ void main() {
           final firstInit = service.init(devices.single);
           final secondInit = service.init(devices.single);
 
-          firstInit.catchError((_) => false);
-          secondInit.catchError((_) => false);
+          firstInit.catchError(
+            (_) => const Disconnected() as BitboxConnectionStatus,
+          );
+          secondInit.catchError(
+            (_) => const Disconnected() as BitboxConnectionStatus,
+          );
 
           // Drain past the 20ms `open` delay AND the post-open hops.
           async.elapse(const Duration(milliseconds: 100));
           async.flushMicrotasks();
 
           final openCount = platform.count(SimulatedBitboxMethod.open);
+          // POST-INITIATIVE-I CONTRACT (BL-014 landed): the `_pendingInit`
+          // shared-future guard funnels every concurrent init() onto a single
+          // bitboxManager.connect() — exactly one `open` per concurrent
+          // batch. A future refactor that splits the funnel is a NEW
+          // regression and must be caught here.
           expect(
             openCount,
-            greaterThanOrEqualTo(1),
-            reason: 'at least one open() must reach the platform',
-          );
-          // POST-INITIATIVE-I CONTRACT (flip-to-pass marker):
-          // expect(openCount, 1, reason: 'concurrent init() must funnel through one connect()');
-          // The expectation above is the post-Initiative-I invariant; today
-          // the second concurrent init() can still issue a parallel open()
-          // (F-007). The assertion below documents the CURRENT bound so a
-          // refactor that worsens it (e.g. one-open-per-caller fan-out
-          // beyond two) trips immediately.
-          expect(
-            openCount,
-            lessThanOrEqualTo(2),
+            1,
             reason:
-                'pre-Initiative-I: concurrent init() may issue parallel open(); '
-                'a fan-out beyond 2 is a NEW regression and must be caught here',
+                'Initiative I post-condition: concurrent init() must funnel '
+                'through one connect() (property pin)',
           );
         });
       },
-      // Skip the strict 1-invocation assertion until BL-014 lands the
-      // `_pendingInit` guard described in OPUS_BITBOX_MANDATE.md §5.1
-      // Deliverable 3. The bounded-to-2 sub-assertion above runs today.
-      skip: false,
     );
 
     test(
@@ -559,11 +558,12 @@ void main() {
           service.getAllUsbDevices().then((d) => devices = d);
           async.flushMicrotasks();
 
-          bool? initResolved;
+          BitboxConnectionStatus? initResolved;
           service.init(devices.single).then((v) => initResolved = v);
           async.flushMicrotasks();
 
-          expect(initResolved, isTrue, reason: 'init() must have resolved within microtasks');
+          expect(initResolved, isA<Paired>(),
+              reason: 'init() must resolve to Paired within microtasks');
           expect(
             preInitA.isConnected,
             isTrue,
@@ -750,28 +750,28 @@ void main() {
     );
 
     test(
-      'BitboxService has no dispose() today; this pin will flip after Initiative I (F-033)',
-      () {
-        // F-033 / OPUS_BITBOX_MANDATE.md §5.1 Deliverable 3.5:
-        // `Future<void> dispose()` is to be added so test-bleed and
-        // hot-restart leave a clean state. Today the call does not exist.
-        // We pin the ABSENCE of dispose via a runtime-introspection check
-        // so the refactor must explicitly remove THIS test (or flip it)
-        // when adding the API.
+      'BitboxService.dispose() emits a final Disconnected and rejects post-dispose init() (F-033)',
+      () async {
+        // F-033 / OPUS_BITBOX_MANDATE.md §5.1 Deliverable 3.5: `dispose()` is
+        // the hot-restart / end-of-app cleanup. Post-`dispose()` calls to
+        // `init()` throw StateError; subscribers receive the final
+        // Disconnected and an `onDone` signal. The test below pins all three.
         final service = BitboxService(connectionStatusInterval: fastInterval);
-        expect(service, isA<BitboxService>(), reason: 'sanity: the service exists');
-        // If a `dispose` getter or method is ever added, this will throw
-        // NoSuchMethodError and the test will fail — at which point the
-        // Initiative-I implementer flips this to a real lifecycle test.
-        //
-        // dynamic dispatch is intentional: we are probing for the ABSENCE
-        // of a method, not type-checking against the static surface.
-        final dynamic d = service;
+
+        final observed = <BitboxConnectionStatus>[];
+        final done = Completer<void>();
+        service.status.listen(observed.add, onDone: done.complete);
+
+        final devices = await service.getAllUsbDevices();
+        await service.dispose();
+        await done.future.timeout(const Duration(seconds: 1));
+
+        expect(observed.last, equals(const Disconnected()),
+            reason: 'dispose() must surface a final Disconnected emission');
         expect(
-          () => d.dispose(),
-          throwsA(isA<NoSuchMethodError>()),
-          reason: 'pre-Initiative-I: dispose() is intentionally absent. '
-              'Flip this to a real lifecycle assertion when BL-014 lands.',
+          () => service.init(devices.single),
+          throwsA(isA<StateError>()),
+          reason: 'init() after dispose() must throw StateError',
         );
       },
     );

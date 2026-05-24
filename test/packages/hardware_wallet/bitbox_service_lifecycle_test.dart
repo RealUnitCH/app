@@ -193,19 +193,16 @@ void main() {
             .then(results.add)
             .catchError((Object e) {
           firstError = e;
-          return const Disconnected() as BitboxConnectionStatus;
         });
         service.init(devices.single)
             .then(results.add)
             .catchError((Object e) {
           secondError = e;
-          return const Disconnected() as BitboxConnectionStatus;
         });
         service.init(devices.single)
             .then(results.add)
             .catchError((Object e) {
           thirdError = e;
-          return const Disconnected() as BitboxConnectionStatus;
         });
         async.flushMicrotasks();
 
