@@ -156,7 +156,9 @@ void main() {
     });
 
     testWidgets(
-      'marks registration sign produced and re-runs checkKyc after merge confirm pops with true',
+      're-runs checkKyc after merge confirm pops with true (BL-006: sign-gate '
+      'flip moved into KycEmailVerificationCubit success branch, no longer '
+      'fired speculatively from the page-listener on pop)',
       (tester) async {
         whenListen(
           kycEmailStepCubit,
@@ -184,7 +186,11 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        verify(() => kycCubit.markRegistrationSignProduced()).called(1);
+        // The sign-gate is no longer flipped from the page listener on
+        // pop — KycEmailVerificationCubit owns it now, see
+        // test/screens/kyc/steps/email/kyc_email_verification_cubit_test.dart
+        // for the gate-flip contract.
+        verifyNever(() => kycCubit.markRegistrationSignProduced());
         verify(() => kycCubit.checkKyc()).called(1);
       },
     );
