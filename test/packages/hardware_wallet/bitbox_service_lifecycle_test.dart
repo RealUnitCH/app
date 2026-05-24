@@ -567,4 +567,118 @@ void main() {
       });
     });
   });
+
+  group('multi-subscriber + cancel semantics', () {
+    test('two simultaneous subscribers receive the same traversal', () {
+      // Broadcast contract: every active subscription sees every transition
+      // in the same order. Without this, a sub-Cubit could miss a Lost the
+      // parent Cubit observed and continue to treat the device as live.
+      fakeAsync((async) {
+        final service = BitboxService(connectionStatusInterval: fastInterval);
+        addTearDown(service.dispose);
+        final a = observe(service);
+        final b = observe(service);
+        pairServiceSync(async, service);
+        service.signalDeviceLost(LostReason.signQueueTimeout);
+        async.flushMicrotasks();
+        service.clear();
+        async.flushMicrotasks();
+
+        final aTypes = a.map((s) => s.runtimeType).toList();
+        final bTypes = b.map((s) => s.runtimeType).toList();
+        expect(aTypes, equals(bTypes),
+            reason: 'broadcast subscribers must observe identical traversals');
+        expect(aTypes, containsAllInOrder(<Type>[
+          Paired,
+          Lost,
+          Disconnecting,
+          Disconnected,
+        ]));
+      });
+    });
+
+    test('cancelled subscriptions stop receiving transitions', () {
+      // Subscription leak guard: a cubit's `close()` must let go of its
+      // status subscription. After `cancel()` no further events should
+      // reach the closed-over collector.
+      fakeAsync((async) {
+        final service = BitboxService(connectionStatusInterval: fastInterval);
+        addTearDown(service.dispose);
+
+        final received = <BitboxConnectionStatus>[];
+        final sub = service.status.listen(received.add);
+        async.flushMicrotasks();
+        final countBeforeCancel = received.length;
+
+        sub.cancel();
+        pairServiceSync(async, service);
+        service.clear();
+        async.flushMicrotasks();
+
+        expect(received.length, countBeforeCancel,
+            reason: 'cancelled subscriptions must not accrue events');
+      });
+    });
+  });
+
+  group('clear() observable post-conditions', () {
+    test('clear() empties _credentialsByAddress (next getCredentials is fresh)', () {
+      fakeAsync((async) {
+        final service = BitboxService(connectionStatusInterval: fastInterval);
+        addTearDown(service.dispose);
+        pairServiceSync(async, service);
+
+        final original = service.getCredentials(
+          '0x000000000000000000000000000000000000dead',
+        );
+        expect(original.isConnected, isTrue);
+
+        service.clear();
+        async.flushMicrotasks();
+
+        final after = service.getCredentials(
+          '0x000000000000000000000000000000000000dead',
+        );
+        expect(identical(after, original), isFalse,
+            reason: 'clear() drops cached credentials');
+        expect(after.isConnected, isFalse,
+            reason: 'fresh credentials before re-init are detached');
+      });
+    });
+
+    test('clear() detaches the BitboxManager from every credentials in the map', () {
+      fakeAsync((async) {
+        final service = BitboxService(connectionStatusInterval: fastInterval);
+        addTearDown(service.dispose);
+        pairServiceSync(async, service);
+
+        final a = service.getCredentials(
+          '0x000000000000000000000000000000000000dead',
+        );
+        final b = service.getCredentials(
+          '0x000000000000000000000000000000000000beef',
+        );
+        expect(a.isConnected, isTrue);
+        expect(b.isConnected, isTrue);
+
+        service.clear();
+        async.flushMicrotasks();
+
+        expect(a.isConnected, isFalse,
+            reason: 'clear() must null-out the manager on every credentials');
+        expect(b.isConnected, isFalse);
+      });
+    });
+
+    test('clear() final status is Disconnected (terminal of the walk)', () {
+      fakeAsync((async) {
+        final service = BitboxService(connectionStatusInterval: fastInterval);
+        addTearDown(service.dispose);
+        pairServiceSync(async, service);
+        service.clear();
+        async.flushMicrotasks();
+        expect(service.currentStatus, equals(const Disconnected()));
+      });
+    });
+  });
 }
