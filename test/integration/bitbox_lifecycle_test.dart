@@ -15,10 +15,12 @@
 // refactor of the Stream contract must keep these traversals legal.
 
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:bitbox_flutter/bitbox_flutter.dart';
 import 'package:bitbox_flutter/testing.dart';
 import 'package:bitbox_flutter/usb/bitbox_usb_platform_interface.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_connection_status.dart';
@@ -317,5 +319,158 @@ void main() {
       reason: 'init() after dispose() must throw',
     );
   });
+
+  // ---------------------------------------------------------------------
+  // Coverage-gap fillers — exercise the remaining surface that the higher
+  // level integration tests don't naturally touch but that ADR 0001 still
+  // requires to be observable from the test boundary.
+  // ---------------------------------------------------------------------
+
+  test('startScan delegates to BitboxManager and surfaces its boolean', () async {
+    final service = BitboxService(connectionStatusInterval: interval);
+    addTearDown(service.dispose);
+    final ok = await service.startScan();
+    expect(ok, isTrue,
+        reason: 'simulated platform reports scan success by default');
+    expect(platform.count(SimulatedBitboxMethod.startScan), 1);
+  });
+
+  test('init() failure inside `connect` walks Connecting → Disconnected via the catch arm',
+      () async {
+    // Drives the catch-arm inside `_runInit` that re-emits Disconnected
+    // when an exception escapes the connect path. Achieved by making the
+    // simulator's `open` throw (the SDK call site rethrows the original).
+    platform.throwOn(SimulatedBitboxMethod.open, Exception('USB busy'));
+
+    final service = BitboxService(connectionStatusInterval: interval);
+    addTearDown(service.dispose);
+    final observed = <BitboxConnectionStatus>[];
+    final sub = service.status.listen(observed.add);
+    addTearDown(sub.cancel);
+
+    final devices = await service.getAllUsbDevices();
+    await expectLater(
+      () => service.init(devices.single),
+      throwsA(isA<Exception>()),
+    );
+    // Drain any pending broadcast events so the post-throw Disconnected
+    // lands in `observed` before we assert.
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+
+    // Drop the replayed initial Disconnected so the assertion describes
+    // only the transitions caused by init().
+    final transitions = observed
+        .skipWhile((s) => s is Disconnected)
+        .toList(growable: false);
+    expect(
+      transitions.map((s) => s.runtimeType).toList(),
+      containsAllInOrder(<Type>[Connecting, Disconnected]),
+      reason: 'failure in connect must walk Connecting → Disconnected',
+    );
+  });
+
+  test('getChannelHash and confirmPairing delegate to the SDK', () async {
+    final service = await pair();
+    addTearDown(service.dispose);
+
+    final hash = await service.getChannelHash();
+    expect(hash, isNotEmpty,
+        reason: 'simulator returns its default channel hash');
+
+    await service.confirmPairing();
+    expect(platform.count(SimulatedBitboxMethod.channelHashVerify), 1);
+  });
+
+  test('confirmPairing throws when the SDK reports verify failure', () async {
+    // Drives the !didVerify branch.
+    platform.when(
+      SimulatedBitboxMethod.channelHashVerify,
+      (_) async => false,
+    );
+
+    final service = await pair();
+    addTearDown(service.dispose);
+
+    await expectLater(
+      service.confirmPairing(),
+      throwsA(isA<Exception>()),
+    );
+  });
+
+  test(
+    '_onCredentialsSignQueueTimeout: a hung credentials sign routes to service-Lost via the wired closure',
+    () {
+      // End-to-end pin of the wired closure inside BitboxService.
+      // `getCredentials` injects `_onCredentialsSignQueueTimeout` into every
+      // BitboxCredentials it constructs, and a `_synchronizeBoundedSign`
+      // timeout calls the closure. The closure forwards to
+      // `signalDeviceLost(LostReason.signQueueTimeout)`. We drive the
+      // production timeout inside fakeAsync so the 5-minute wall-clock wait
+      // collapses to virtual time, AND we assert the post-condition on the
+      // service stream — proving the closure was actually wired (a missing
+      // wire would surface as an absent Lost emission).
+      fakeAsync((async) {
+        // Seed the sign queue inside this zone.
+        BitboxCredentials.resetSignQueue();
+        async.flushMicrotasks();
+
+        // Native sign hangs — exactly the failure mode the bounded queue
+        // exists to bound. `setDelay` would re-arm wall-clock; instead we
+        // stub the simulator to return a never-completing future for the
+        // native call.
+        platform.when(
+          SimulatedBitboxMethod.signETHTypedMessage,
+          (_) => Completer<Uint8List>().future,
+        );
+
+        final service = BitboxService(connectionStatusInterval: interval);
+        late List<BitboxDevice> devices;
+        service.getAllUsbDevices().then((d) => devices = d);
+        async.flushMicrotasks();
+        BitboxConnectionStatus? initStatus;
+        service.init(devices.single).then((s) => initStatus = s);
+        async.flushMicrotasks();
+        expect(initStatus, isA<Paired>(),
+            reason: 'fakeAsync init must reach Paired');
+
+        final observed = <BitboxConnectionStatus>[];
+        final sub = service.status.listen(observed.add);
+
+        // Issue a sign through the service-handed credentials. The native
+        // call hangs; the queue-bound timeout fires after `signQueueTimeout`
+        // and the closure inside the credentials calls back into the
+        // service.
+        final credentials = service.getCredentials(knownAddress);
+        Object? thrown;
+        credentials.signTypedDataV4(1, '{"primaryType":"Hang"}').catchError(
+          (Object e) {
+            thrown = e;
+            return '';
+          },
+        );
+
+        // Drain past the queue-bound timeout.
+        async.elapse(
+          BitboxCredentials.signQueueTimeout + const Duration(seconds: 2),
+        );
+        async.flushMicrotasks();
+
+        expect(thrown, isA<BitboxNotConnectedException>(),
+            reason: 'queue-bound timeout must surface the typed exception');
+
+        // The closure fired Lost(signQueueTimeout) on the stream BEFORE the
+        // exception reached the caller.
+        final losts = observed.whereType<Lost>().toList();
+        expect(losts, isNotEmpty,
+            reason: 'sign-queue timeout must reach the service-level stream');
+        expect(losts.last.reason, equals(LostReason.signQueueTimeout));
+
+        sub.cancel();
+      });
+    },
+  );
 }
+
+// fakeAsync requires Uint8List for the typed-data return; pulled in via
+// bitbox_flutter export above. Keep the test file dependency-clean.
 
