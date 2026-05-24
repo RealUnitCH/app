@@ -6,6 +6,7 @@ import 'package:bitbox_flutter/bitbox_manager.dart';
 import 'package:convert/convert.dart' as convert;
 import 'package:flutter/foundation.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
+import 'package:realunit_wallet/packages/wallet/error_mapper.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -132,6 +133,17 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
     int? chainId,
     bool isEIP1559 = false,
   }) {
+    // F-040 — refuse to strip the leading type byte unless it is
+    // actually the EIP-2718 `0x02` envelope. Run BEFORE the
+    // connection check so a caller that mislabels a legacy transaction
+    // as EIP-1559 is told the truth (type-byte mismatch) rather than
+    // the unrelated truth (BitBox not connected). The assertion is
+    // structural input validation, not a runtime-dependent check.
+    if (isEIP1559 && (payload.isEmpty || payload[0] != 0x02)) {
+      throw Eip1559TypeMismatchException(
+        actualByte: payload.isEmpty ? null : payload[0],
+      );
+    }
     return _synchronizeBoundedSign(() async {
       // Snapshot the manager + path up-front so an observer-driven null-out
       // between the connection check and the sign call doesn't NoSuchMethod.
