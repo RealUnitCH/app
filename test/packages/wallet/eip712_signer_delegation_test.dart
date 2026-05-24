@@ -25,9 +25,8 @@ import 'package:realunit_wallet/packages/wallet/error_mapper.dart';
 import 'package:web3dart/web3dart.dart';
 
 const _privateKeyHex = 'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
-// Derived address of the test private key — keep in sync with
-// FakeBitboxCredentials._testPrivateKeyHex.
-const _testAddress = '0x9F5713dEAcb8e9CaB6c2D3FaE1aFc2715F8D2D71';
+// Derived from _privateKeyHex via EthPrivateKey.fromHex(...).address.hexEip55.
+const _testAddress = '0xD29C323DfD441E5157F5a05ccE6c74aC94c57aAd';
 const _verifyingContract = '0xdb9b1e94b5b69df7e401ddbede43491141047db3';
 const _relayer = '0x0000000000000000000000000000000000000abc';
 
