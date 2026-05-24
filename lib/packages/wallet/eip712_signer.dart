@@ -148,7 +148,7 @@ class Eip712Signer {
     required String expectedDelegator,
     required BigInt expectedAmount,
     Eip7702DelegationSchema schema = const Eip7702DelegationSchema(),
-  }) {
+  }) async {
     // Pinned-parameter validation FIRST — refuse to construct the
     // envelope if the backend has shifted any of the trusted parameters.
     if (eip7702Data.domain.verifyingContract.toLowerCase() !=
