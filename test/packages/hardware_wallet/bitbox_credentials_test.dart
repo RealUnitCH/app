@@ -433,6 +433,66 @@ void main() {
     });
 
     // -----------------------------------------------------------------------
+    // Defensive pins for the pre-existing surface (kept covered so a future
+    // refactor that ports these to real implementations also lands its tests).
+    // -----------------------------------------------------------------------
+
+    test('address derives from the constructor-supplied hex', () {
+      final c = BitboxCredentials('0x000000000000000000000000000000000000dead');
+      expect(
+        c.address.hexEip55,
+        equals('0x000000000000000000000000000000000000dEaD'),
+      );
+    });
+
+    test('signToEcSignature throws UnimplementedError (intentionally unsupported)', () {
+      final c = connected();
+      expect(
+        () => c.signToEcSignature(Uint8List(32)),
+        throwsA(isA<UnimplementedError>()),
+      );
+    });
+
+    test(
+      'signPersonalMessageToUint8List throws UnimplementedError (intentionally unsupported)',
+      () {
+        final c = connected();
+        expect(
+          () => c.signPersonalMessageToUint8List(Uint8List(32)),
+          throwsA(isA<UnimplementedError>()),
+        );
+      },
+    );
+
+    test('signToSignature truncates a >32-bit chainId before EIP-155 parity match', () async {
+      // chainId well past 2^32 forces the truncation while-loop to iterate.
+      // The truncated chainId then becomes the EIP-155 target; we mock a
+      // matching v so the parity-0 branch resolves.
+      final hugeChainId = 0x1234567890; // 41 bits
+      // After truncation by `>>= 8` repeated while bitLength > 32, the
+      // result fits in 32 bits and produces a deterministic truncTarget.
+      var trunc = hugeChainId;
+      while (trunc.bitLength > 32) {
+        trunc >>= 8;
+      }
+      final truncTarget = trunc * 2 + 35; // EIP-155 parity-0
+      final fakeSig = Uint8List.fromList(
+        List<int>.filled(32, 0x11) + List<int>.filled(32, 0x22) + [truncTarget & 0xff],
+      );
+      when(
+        () => manager.signETHRLPTransaction(any(), any(), any(), any()),
+      ).thenAnswer((_) async => fakeSig);
+
+      final sig = await connected().signToSignature(
+        Uint8List.fromList([0xDE]),
+        chainId: hugeChainId,
+      );
+      // chainIdV = parity + (chainId * 2 + 35). Parity must be 0 because we
+      // crafted truncTarget to match v exactly.
+      expect(sig.v, 0 + (hugeChainId * 2 + 35));
+    });
+
+    // -----------------------------------------------------------------------
     // Initiative I (ADR 0001) — sign-queue timeout propagation.
     //
     // Pre-Initiative-I, a timed-out sign cleared credentials but left
