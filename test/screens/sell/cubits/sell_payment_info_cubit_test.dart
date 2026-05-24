@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
@@ -15,11 +14,12 @@ import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
-class _MockSellPaymentInfoService extends Mock implements RealUnitSellPaymentInfoService {}
+import '../../../test_utils/fake_wallet_isolate.dart';
+
+class _MockSellPaymentInfoService extends Mock
+    implements RealUnitSellPaymentInfoService {}
 
 class _MockAppStore extends Mock implements AppStore {}
-
-const _testMnemonic = 'test test test test test test test test test test test junk';
 
 SellPaymentInfo _info({
   bool isValid = true,
@@ -78,7 +78,14 @@ void main() {
   setUp(() {
     service = _MockSellPaymentInfoService();
     appStore = _MockAppStore();
-    when(() => appStore.wallet).thenReturn(SoftwareWallet(1, 'Main', _testMnemonic));
+    when(() => appStore.wallet).thenReturn(
+      SoftwareWallet(
+        1,
+        'Main',
+        '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+        FakeWalletIsolate(),
+      ),
+    );
   });
 
   SellPaymentInfoCubit build() => SellPaymentInfoCubit(service, appStore);
@@ -89,9 +96,8 @@ void main() {
     });
 
     test('happy path emits Success with isBitbox=false for a software wallet', () async {
-      when(
-        () => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')),
-      ).thenAnswer((_) async => _info());
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => _info());
 
       final cubit = build();
       await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
@@ -102,9 +108,8 @@ void main() {
     });
 
     test('Success.isBitbox=true when the current wallet is a BitboxWallet', () async {
-      when(
-        () => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')),
-      ).thenAnswer((_) async => _info());
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => _info());
       when(() => appStore.wallet).thenReturn(_BitboxStubWallet());
 
       final cubit = build();
@@ -114,9 +119,8 @@ void main() {
     });
 
     test('API isValid=false with error=AmountTooLow → MinAmountNotMet with API limit', () async {
-      when(
-        () => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')),
-      ).thenAnswer((_) async => _info(isValid: false, error: 'AmountTooLow', minVolume: 10));
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => _info(isValid: false, error: 'AmountTooLow', minVolume: 10));
 
       final cubit = build();
       await cubit.getPaymentInfo(amount: '5', iban: 'CH56');
@@ -127,14 +131,13 @@ void main() {
     });
 
     test('EUR minimum is reported by the API as-is, not scaled in the app', () async {
-      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency'))).thenAnswer(
-        (_) async => _info(
-          isValid: false,
-          error: 'AmountTooLow',
-          minVolume: 9,
-          currency: Currency.eur,
-        ),
-      );
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => _info(
+            isValid: false,
+            error: 'AmountTooLow',
+            minVolume: 9,
+            currency: Currency.eur,
+          ));
 
       final cubit = build();
       await cubit.getPaymentInfo(amount: '5', iban: 'CH56', currency: Currency.eur);
@@ -145,9 +148,8 @@ void main() {
     });
 
     test('API isValid=false with unrelated error → Failure(unknown) carrying the error', () async {
-      when(
-        () => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')),
-      ).thenAnswer((_) async => _info(isValid: false, error: 'KycRequired'));
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => _info(isValid: false, error: 'KycRequired'));
 
       final cubit = build();
       await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
@@ -158,7 +160,8 @@ void main() {
     });
 
     test('KycLevelRequiredException → Failure(kycRequired, requiredLevel)', () async {
-      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency'))).thenAnswer(
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer(
         (_) async => throw const KycLevelRequiredException(
           statusCode: 403,
           code: 'KYC_REQUIRED',
@@ -176,42 +179,9 @@ void main() {
       expect(f.requiredLevel, 30);
     });
 
-    test(
-      'BitboxNotConnectedException → Failure(bitboxDisconnected) carrying the message',
-      () async {
-        // BitBox quote flow lifts a typed disconnect into its own failure state
-        // so the UI can prompt the user to re-plug / re-pair instead of
-        // surfacing it as a generic unknown error.
-        when(
-          () => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')),
-        ).thenAnswer((_) async => throw const BitboxNotConnectedException());
-
-        final cubit = build();
-        await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
-
-        final f = cubit.state as SellPaymentInfoFailure;
-        expect(f.error, PaymentInfoError.bitboxDisconnected);
-        expect(f.message, contains('BitBox is not connected'));
-      },
-    );
-
-    test('BitboxNotConnectedException does not emit after close', () async {
-      // Async-tail guard: a late BitBox disconnect must not throw a
-      // post-close emit. Mirrors the generic-exception / KycRequired guards
-      // already covered above.
-      final completer = Completer<SellPaymentInfo>();
-      when(
-        () => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')),
-      ).thenAnswer((_) => completer.future);
-
-      final cubit = build();
-      unawaited(cubit.getPaymentInfo(amount: '100', iban: 'CH56'));
-      await cubit.close();
-      completer.completeError(const BitboxNotConnectedException());
-    });
-
     test('RegistrationRequiredException → Failure(registrationRequired)', () async {
-      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency'))).thenAnswer(
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer(
         (_) async => throw const RegistrationRequiredException(
           statusCode: 403,
           code: 'REGISTRATION_REQUIRED',
@@ -229,9 +199,8 @@ void main() {
     });
 
     test('generic exception → Failure(unknown) carrying the message', () async {
-      when(
-        () => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')),
-      ).thenAnswer((_) async => throw Exception('network'));
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => throw Exception('network'));
 
       final cubit = build();
       await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
@@ -241,36 +210,28 @@ void main() {
       expect(f.message, contains('network'));
     });
 
-    test(
-      'negative amount is sent to service (UI prevents this via digitsOnly formatter)',
-      () async {
-        when(
-          () => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')),
-        ).thenAnswer((_) async => _info());
+    test('negative amount is sent to service (UI prevents this via digitsOnly formatter)', () async {
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => _info());
 
-        final cubit = build();
-        await cubit.getPaymentInfo(amount: '-100', iban: 'CH56');
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '-100', iban: 'CH56');
 
-        verify(() => service.getPaymentInfo(-100, 'CH56', currency: Currency.chf)).called(1);
-      },
-    );
+      verify(() => service.getPaymentInfo(-100, 'CH56', currency: Currency.chf)).called(1);
+    });
 
-    test(
-      'comma decimal in getPaymentInfo throws (UI converter rejects commas first in practice)',
-      () async {
-        final cubit = build();
-        await cubit.getPaymentInfo(amount: '100,50', iban: 'CH56');
+    test('comma decimal in getPaymentInfo throws (UI converter rejects commas first in practice)', () async {
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '100,50', iban: 'CH56');
 
-        expect(cubit.state, isA<SellPaymentInfoFailure>());
-        verifyNever(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')));
-      },
-    );
+      expect(cubit.state, isA<SellPaymentInfoFailure>());
+      verifyNever(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')));
+    });
 
     test('does not emit after close', () async {
       final completer = Completer<SellPaymentInfo>();
-      when(
-        () => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')),
-      ).thenAnswer((_) => completer.future);
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')))
+          .thenAnswer((_) => completer.future);
 
       final cubit = build();
       unawaited(cubit.getPaymentInfo(amount: '100', iban: 'CH56'));

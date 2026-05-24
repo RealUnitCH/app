@@ -11,7 +11,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:bip39/bip39.dart' as bip39;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pointycastle/api.dart';
 import 'package:pointycastle/block/aes.dart';
