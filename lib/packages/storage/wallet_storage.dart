@@ -25,8 +25,43 @@ extension WalletStorage on AppDatabase {
   Future<List<WalletAccountInfo>> getWalletAccounts(int walletId) =>
       (select(walletAccountInfos)..where((row) => row.wallet.equals(walletId))).get();
 
-  Future<int> deleteWallet(int walletId) =>
-      (delete(walletAccountInfos)..where((row) => row.wallet.equals(walletId))).go();
+  /// Number of `walletInfos` rows currently on disk. Callers use this to
+  /// detect "this was the last wallet" so wallet-delete can chain into a
+  /// `SecureStorage.deleteMnemonicEncryptionKey` if the opt-in setting is
+  /// enabled — without that count, the chain has no way to tell.
+  Future<int> countWallets() async => (await select(walletInfos).get()).length;
+
+  /// Deletes the wallet row identified by [walletId] and its dependent
+  /// `walletAccountInfos` rows. The delete order matters — the FK on
+  /// `walletAccountInfos.wallet` references `walletInfos.id`, so we drop
+  /// the dependent rows first to avoid a FK-violation when sqlite enforces
+  /// integrity. The pre-Initiative-IV implementation only deleted from
+  /// `walletAccountInfos`, leaving the encrypted seed row in `walletInfos`
+  /// on disk forever — see F-001 / BL-004. The encryption key still lives
+  /// in Keychain, but defence-in-depth says we don't keep encrypted seeds
+  /// past wallet-delete.
+  ///
+  /// Returns the row counts deleted so the caller can audit (e.g. a Tier-1
+  /// integration test verifying the cleanup chain). Both counts are
+  /// expected to be non-negative; a count of 0 on either is legitimate (a
+  /// freshly-created wallet may have no account rows yet, or a partial
+  /// previous delete may have left the account rows behind).
+  Future<({int accountRows, int walletRows})> deleteWallet(int walletId) async {
+    // Run as a single transaction so the FK ordering invariant holds even
+    // under concurrent writers — without this, a parallel `insertWallet`
+    // could land between the two deletes and a SQLite trigger snapshot
+    // would see a partial state. drift's `transaction` is an explicit
+    // unit-of-work; the deletes inside it are isolated from outside reads.
+    return transaction(() async {
+      final accountRows = await (delete(walletAccountInfos)
+            ..where((row) => row.wallet.equals(walletId)))
+          .go();
+      final walletRows = await (delete(walletInfos)
+            ..where((row) => row.id.equals(walletId)))
+          .go();
+      return (accountRows: accountRows, walletRows: walletRows);
+    });
+  }
 
   Future<bool> get hasWallet => select(walletInfos).get().then((result) => result.isNotEmpty);
 }

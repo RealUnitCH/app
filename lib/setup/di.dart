@@ -129,6 +129,7 @@ void setupServices() {
       getIt<WalletRepository>(),
       getIt<SettingsRepository>(),
       getIt<AppStore>(),
+      getIt<SecureStorage>(),
     ),
   );
   getIt.registerFactory(
