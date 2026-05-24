@@ -11,6 +11,7 @@ import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/storage/database.dart';
+import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
 class _MockWalletRepository extends Mock implements WalletRepository {}
@@ -23,7 +24,10 @@ class _MockBitboxManager extends Mock implements BitboxManager {}
 
 class _MockAppStore extends Mock implements AppStore {}
 
-const _testMnemonic = 'test test test test test test test test test test test junk';
+class _MockSecureStorage extends Mock implements SecureStorage {}
+
+const _testMnemonic =
+    'test test test test test test test test test test test junk';
 const _debugAddress = '0x0000000000000000000000000000000000000001';
 
 WalletInfo _info({
@@ -39,6 +43,7 @@ void main() {
   late _MockSettingsRepository settings;
   late _MockBitboxService bitbox;
   late _MockAppStore appStore;
+  late _MockSecureStorage secureStorage;
   late WalletService service;
 
   setUpAll(() {
@@ -52,12 +57,18 @@ void main() {
     settings = _MockSettingsRepository();
     bitbox = _MockBitboxService();
     appStore = _MockAppStore();
-    service = WalletService(bitbox, repo, settings, appStore);
+    secureStorage = _MockSecureStorage();
+    service = WalletService(bitbox, repo, settings, appStore, secureStorage);
 
     when(() => settings.saveCurrentWalletId(any())).thenAnswer((_) async => true);
     when(() => settings.removeCurrentWalletId()).thenAnswer((_) async => true);
-    when(() => repo.deleteWallet(any())).thenAnswer((_) async {});
+    when(() => repo.deleteWallet(any()))
+        .thenAnswer((_) async => (accountRows: 0, walletRows: 1));
+    when(() => repo.isLastWallet()).thenAnswer((_) async => false);
     when(() => repo.updateAddress(any(), any())).thenAnswer((_) async {});
+    when(() => settings.deleteMnemonicKeyOnLastWalletDelete).thenReturn(false);
+    when(() => secureStorage.deleteMnemonicEncryptionKey())
+        .thenAnswer((_) async {});
   });
 
   group('$WalletService', () {
@@ -438,10 +449,52 @@ void main() {
       test('deletes the wallet and clears the current-id setting', () async {
         when(() => settings.currentWalletId).thenReturn(8);
 
-        await service.deleteCurrentWallet();
+        final result = await service.deleteCurrentWallet();
 
         verify(() => repo.deleteWallet(8)).called(1);
         verify(() => settings.removeCurrentWalletId()).called(1);
+        expect(result.walletRows, 1,
+            reason: 'BL-004: the walletInfos row count must be surfaced so '
+                'the cleanup chain can be audited end-to-end');
+      });
+
+      test('does NOT touch the mnemonic encryption key when the opt-in is off',
+          () async {
+        when(() => settings.currentWalletId).thenReturn(8);
+        when(() => repo.isLastWallet()).thenAnswer((_) async => true);
+        when(() => settings.deleteMnemonicKeyOnLastWalletDelete).thenReturn(false);
+
+        final result = await service.deleteCurrentWallet();
+
+        verifyNever(() => secureStorage.deleteMnemonicEncryptionKey());
+        expect(result.mnemonicKeyDeleted, isFalse);
+      });
+
+      test('does NOT touch the mnemonic encryption key when other wallets remain',
+          () async {
+        when(() => settings.currentWalletId).thenReturn(8);
+        when(() => repo.isLastWallet()).thenAnswer((_) async => false);
+        when(() => settings.deleteMnemonicKeyOnLastWalletDelete).thenReturn(true);
+
+        final result = await service.deleteCurrentWallet();
+
+        verifyNever(() => secureStorage.deleteMnemonicEncryptionKey(),
+            );
+        expect(result.mnemonicKeyDeleted, isFalse,
+            reason: 'opt-in flag fires only on last-wallet-delete — the '
+                'key must survive while other encrypted seeds still need it');
+      });
+
+      test('wipes the mnemonic encryption key on a last-wallet-delete when opted in',
+          () async {
+        when(() => settings.currentWalletId).thenReturn(8);
+        when(() => repo.isLastWallet()).thenAnswer((_) async => true);
+        when(() => settings.deleteMnemonicKeyOnLastWalletDelete).thenReturn(true);
+
+        final result = await service.deleteCurrentWallet();
+
+        verify(() => secureStorage.deleteMnemonicEncryptionKey()).called(1);
+        expect(result.mnemonicKeyDeleted, isTrue);
       });
     });
 
