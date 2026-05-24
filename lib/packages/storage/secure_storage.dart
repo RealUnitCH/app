@@ -243,6 +243,20 @@ class SecureStorage {
   Future<void> deleteMnemonicEncryptionKey() =>
       _secureStorage.delete(key: _mnemonicEncryptionKey);
 
+  /// Read the biometric-CryptoObject sentinel under [key]. Called by
+  /// `BiometricService.authenticate` AFTER a successful biometric
+  /// prompt — the native CryptoObject binding gates the underlying
+  /// Keychain / Keystore read on the biometric. See BL-049 / ADR 0004
+  /// §"Biometric CryptoObject binding".
+  Future<String?> readBiometricCryptoSentinel(String key) =>
+      _secureStorage.read(key: key);
+
+  /// Write the biometric-CryptoObject sentinel. Called on first
+  /// `BiometricService.enable()` so subsequent unwraps have something
+  /// to read.
+  Future<void> writeBiometricCryptoSentinel(String key, String value) =>
+      _secureStorage.write(key: key, value: value);
+
   static String encryptSeed(Uint8List key, String plaintext) {
     final iv = _secureRandomBytes(12);
     final cipher = GCMBlockCipher(AESEngine())

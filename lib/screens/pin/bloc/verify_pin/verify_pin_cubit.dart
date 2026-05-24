@@ -73,8 +73,12 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
 
     final canUse = await _biometricService.canUse();
     if (canUse) {
-      final success = await _biometricService.authenticate();
-      if (success) {
+      // BL-049: gate on the cryptographic unwrap, not the UI bool. A
+      // patched-return-true `local_auth` on a rooted device can flip
+      // `result.success` true without actually producing a key; the
+      // `unwrappedSecret` field is the cryptographic floor.
+      final result = await _biometricService.authenticate();
+      if (result.success && result.unwrappedSecret != null) {
         if (enableLockout) await _secureStorage.resetPinLockout();
         emit(const VerifyPinSuccess());
       }
