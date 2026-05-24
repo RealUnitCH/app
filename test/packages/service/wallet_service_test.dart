@@ -1,11 +1,9 @@
 import 'dart:async';
+import 'dart:typed_data';
 
-import 'package:bitbox_flutter/bitbox_manager.dart';
-import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
-import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
@@ -14,13 +12,13 @@ import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
+import '../../test_utils/fake_wallet_isolate.dart';
+
 class _MockWalletRepository extends Mock implements WalletRepository {}
 
 class _MockSettingsRepository extends Mock implements SettingsRepository {}
 
 class _MockBitboxService extends Mock implements BitboxService {}
-
-class _MockBitboxManager extends Mock implements BitboxManager {}
 
 class _MockAppStore extends Mock implements AppStore {}
 
@@ -29,6 +27,7 @@ class _MockSecureStorage extends Mock implements SecureStorage {}
 const _testMnemonic =
     'test test test test test test test test test test test junk';
 const _debugAddress = '0x0000000000000000000000000000000000000001';
+final _testKeyBytes = Uint8List.fromList(List.generate(32, (i) => i));
 
 WalletInfo _info({
   int id = 1,
@@ -36,7 +35,8 @@ WalletInfo _info({
   String seed = '',
   String address = '',
   required WalletType type,
-}) => WalletInfo(id: id, name: name, seed: seed, address: address, type: type.index);
+}) =>
+    WalletInfo(id: id, name: name, seed: seed, address: address, type: type.index);
 
 void main() {
   late _MockWalletRepository repo;
@@ -45,11 +45,13 @@ void main() {
   late _MockAppStore appStore;
   late _MockSecureStorage secureStorage;
   late WalletService service;
+  late FakeWalletIsolate isolate;
 
   setUpAll(() {
     // mocktail needs a default for non-primitive types used with `any()`.
     registerFallbackValue(WalletType.software);
     registerFallbackValue(SoftwareViewWallet(0, '_fallback', _debugAddress) as AWallet);
+    registerFallbackValue(Uint8List(0));
   });
 
   setUp(() {
@@ -59,6 +61,8 @@ void main() {
     appStore = _MockAppStore();
     secureStorage = _MockSecureStorage();
     service = WalletService(bitbox, repo, settings, appStore, secureStorage);
+    isolate = FakeWalletIsolate();
+    service.debugInjectWalletIsolate(isolate);
 
     when(() => settings.saveCurrentWalletId(any())).thenAnswer((_) async => true);
     when(() => settings.removeCurrentWalletId()).thenAnswer((_) async => true);
@@ -69,237 +73,126 @@ void main() {
     when(() => settings.deleteMnemonicKeyOnLastWalletDelete).thenReturn(false);
     when(() => secureStorage.deleteMnemonicEncryptionKey())
         .thenAnswer((_) async {});
+    when(() => secureStorage.getOrCreateMnemonicKey())
+        .thenAnswer((_) async => _testKeyBytes);
   });
 
   group('$WalletService', () {
-    group('generateUncommittedSeedWallet', () {
-      test(
-        'returns an in-memory SoftwareWallet with the id=0 sentinel and a valid bip39 mnemonic',
-        () async {
-          final draft = await service.generateUncommittedSeedWallet('Main');
+    group('generateUncommittedSeedDraft', () {
+      test('returns a SeedDraft with a valid bip39 mnemonic and the given name',
+          () async {
+        final draft = await service.generateUncommittedSeedDraft('Main');
 
-          expect(draft, isA<SoftwareWallet>());
-          expect(
-            draft.id,
-            0,
-            reason:
-                'uncommitted drafts use the 0 sentinel until commitGeneratedWallet lands the row',
-          );
-          expect(draft.name, 'Main');
-          expect(service.validateSeed(draft.seed), isTrue);
-        },
-      );
+        expect(draft, isA<SeedDraft>());
+        expect(draft.name, 'Main');
+        expect(service.validateSeed(draft.mnemonic), isTrue);
+        expect(draft.isDisposed, isFalse);
+      });
 
-      test('does NOT write to the repository — the encrypted seed must not land on disk', () async {
-        await service.generateUncommittedSeedWallet('Main');
+      test('does NOT write to the repository — the encrypted seed must not land on disk',
+          () async {
+        await service.generateUncommittedSeedDraft('Main');
 
-        // Pin the disk-side guarantee: nothing flows into `walletInfos` until
-        // a separate `commitGeneratedWallet` call. Without this, every
-        // `_dropMnemonic` regenerate in `CreateWalletCubit` would persist a
-        // fresh encrypted-seed row, and `WalletStorage.deleteWallet` only
-        // touches `walletAccountInfos`, so those rows would accumulate
-        // undeletable.
+        // Pin the disk-side guarantee: nothing flows into `walletInfos`
+        // until a separate `commitGeneratedWallet` call. Without this,
+        // every `_dropMnemonic` regenerate in `CreateWalletCubit`
+        // would persist a fresh encrypted-seed row.
         verifyNever(() => repo.createWallet(any(), any(), any(), any()));
         verifyNever(() => settings.saveCurrentWalletId(any()));
       });
 
-      test(
-        'two consecutive calls produce distinct mnemonics (entropy not pinned by the API)',
-        () async {
-          final a = await service.generateUncommittedSeedWallet('Main');
-          final b = await service.generateUncommittedSeedWallet('Main');
+      test('two consecutive calls produce distinct mnemonics (entropy not pinned by the API)',
+          () async {
+        final a = await service.generateUncommittedSeedDraft('Main');
+        final b = await service.generateUncommittedSeedDraft('Main');
 
-          expect(
-            a.seed,
-            isNot(equals(b.seed)),
-            reason:
-                'each call must produce a fresh mnemonic — pinning entropy would '
-                'silently break the "regenerate on hidden" contract',
-          );
-        },
-      );
+        expect(a.mnemonic, isNot(equals(b.mnemonic)),
+            reason: 'each call must produce a fresh mnemonic — pinning entropy '
+                'would silently break the "regenerate on hidden" contract');
+      });
     });
 
     group('commitGeneratedWallet', () {
-      test(
-        'persists the draft seed and returns a SoftwareWallet carrying the DB-assigned id',
-        () async {
-          when(() => repo.createWallet(any(), any(), any(), any())).thenAnswer((_) async => 42);
+      test('persists the draft seed via the isolate, returns a SoftwareWallet handle, '
+          'and disposes the draft', () async {
+        when(() => repo.createWallet(any(), any(), any(), any()))
+            .thenAnswer((_) async => 42);
+        const fakeAddress = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
+        isolate.defaultAddress = fakeAddress;
 
-          final draft = await service.generateUncommittedSeedWallet('Main');
-          final committed = await service.commitGeneratedWallet(draft);
+        final draft = SeedDraft(_testMnemonic, name: 'Main');
+        final committed = await service.commitGeneratedWallet(draft);
 
-          expect(committed.id, 42);
-          expect(committed.name, 'Main');
-          expect(
-            committed.seed,
-            draft.seed,
-            reason: 'commit must preserve the draft mnemonic — no silent re-generation',
-          );
-          final expectedAddress = committed.currentAccount.primaryAddress.address.hexEip55;
-          verify(
-            () => repo.createWallet('Main', WalletType.software, draft.seed, expectedAddress),
-          ).called(1);
-        },
-      );
-
-      test('writes exactly one row per call (no implicit dedup at this layer)', () async {
-        // Pin the disk-side contract: each commit call is one row. The dedup
-        // lives at the cubit layer (`VerifySeedCubit.verify` is invoked once
-        // per successful quiz). Surfaces a regression where commit silently
-        // dedups and a follow-up caller assumes idempotence.
-        when(() => repo.createWallet(any(), any(), any(), any())).thenAnswer((_) async => 1);
-
-        final draft = await service.generateUncommittedSeedWallet('Main');
-        await service.commitGeneratedWallet(draft);
-
-        verify(() => repo.createWallet(any(), any(), any(), any())).called(1);
+        expect(committed.id, 42);
+        expect(committed.name, 'Main');
+        expect(committed.address, fakeAddress);
+        expect(draft.isDisposed, isTrue,
+            reason: 'BL-018: the draft must be disposed after commit so the '
+                'mnemonic is no longer reachable through the cubit-side holder');
+        verify(() => repo.createWallet('Main', WalletType.software, _testMnemonic, ''))
+            .called(1);
+        verify(() => repo.updateAddress(42, fakeAddress)).called(1);
+        expect(isolate.adoptCallCount, 1,
+            reason: 'the plaintext must cross into the isolate exactly once');
       });
 
-      test('does not set the wallet as current (caller is responsible)', () async {
-        when(() => repo.createWallet(any(), any(), any(), any())).thenAnswer((_) async => 7);
-
-        final draft = await service.generateUncommittedSeedWallet('Main');
-        await service.commitGeneratedWallet(draft);
-
-        verifyNever(() => settings.saveCurrentWalletId(any()));
-      });
-
-      // The `assert(draft.id == 0)` is a dev-only invariant guarding against
-      // double-commit / wrong-caller — surfaces loudly in tests so a future
-      // refactor can't silently regress the precondition. In release the
-      // assert is stripped and the draft's seed is re-used; this test pins
-      // the dev behaviour, not the release behaviour.
-      test('asserts that the draft carries the id=0 sentinel', () async {
-        final draft = SoftwareWallet(99, 'Main', _testMnemonic);
+      test('throws when called on a disposed draft', () async {
+        final draft = SeedDraft(_testMnemonic);
+        draft.dispose();
 
         expect(
           () => service.commitGeneratedWallet(draft),
-          throwsA(isA<AssertionError>()),
-          reason:
-              'committing a draft that already carries a non-zero id is a '
-              'programmer error (double-commit / wrong caller)',
+          throwsA(isA<StateError>()),
         );
       });
-    });
-
-    group('createSeedWallet', () {
-      test(
-        'generate+commit convenience — persists a freshly generated mnemonic in one call',
-        () async {
-          when(() => repo.createWallet(any(), any(), any(), any())).thenAnswer((_) async => 42);
-
-          final wallet = await service.createSeedWallet('Main');
-
-          expect(wallet, isA<SoftwareWallet>());
-          expect(wallet.id, 42);
-          expect(wallet.name, 'Main');
-          // Generated mnemonic must be valid bip39.
-          expect(service.validateSeed(wallet.seed), isTrue);
-          // Address from the wallet must match what was stored in the repo.
-          final expectedAddress = wallet.currentAccount.primaryAddress.address.hexEip55;
-          verify(
-            () => repo.createWallet('Main', WalletType.software, wallet.seed, expectedAddress),
-          ).called(1);
-        },
-      );
 
       test('does not set the wallet as current (caller is responsible)', () async {
-        when(() => repo.createWallet(any(), any(), any(), any())).thenAnswer((_) async => 42);
+        when(() => repo.createWallet(any(), any(), any(), any()))
+            .thenAnswer((_) async => 7);
 
-        await service.createSeedWallet('Main');
+        final draft = SeedDraft(_testMnemonic, name: 'Main');
+        await service.commitGeneratedWallet(draft);
 
         verifyNever(() => settings.saveCurrentWalletId(any()));
       });
     });
 
     group('restoreWallet', () {
-      test('persists the provided seed and marks the wallet as current', () async {
-        when(() => repo.createWallet(any(), any(), any(), any())).thenAnswer((_) async => 7);
+      test('persists the provided seed via the isolate and marks it current',
+          () async {
+        when(() => repo.createWallet(any(), any(), any(), any()))
+            .thenAnswer((_) async => 7);
 
         final wallet = await service.restoreWallet('Restored', _testMnemonic);
 
         expect(wallet.id, 7);
         expect(wallet.name, 'Restored');
-        expect(wallet.seed, _testMnemonic);
-        final expectedAddress = wallet.currentAccount.primaryAddress.address.hexEip55;
-        verify(
-          () => repo.createWallet('Restored', WalletType.software, _testMnemonic, expectedAddress),
-        ).called(1);
+        verify(() => repo.createWallet('Restored', WalletType.software, _testMnemonic, ''))
+            .called(1);
         verify(() => settings.saveCurrentWalletId(7)).called(1);
-      });
-    });
-
-    group('createBitboxWallet', () {
-      // Drives the BitBox-pairing happy path end-to-end at this layer: derive
-      // the EIP-55 address from the device, persist a view-row in `walletInfos`
-      // (encrypted-seed column is `null` for hardware wallets), mark the row
-      // current, and return a typed BitboxWallet so the caller can immediately
-      // request a signature in the same flow.
-      late _MockBitboxManager manager;
-
-      setUp(() {
-        manager = _MockBitboxManager();
-        when(() => bitbox.bitboxManager).thenReturn(manager);
-      });
-
-      test('derives the BIP-44 ETH address from the device and persists a view row', () async {
-        when(
-          () => manager.getETHAddress(1, "m/44'/60'/0'/0/0"),
-        ).thenAnswer((_) async => _debugAddress);
-        when(() => repo.createViewWallet(any(), any(), any())).thenAnswer((_) async => 11);
-        // BitboxWallet ctor pulls credentials from the service — return a
-        // fake handle so the test exercises the WalletService logic and not
-        // the credentials-cache plumbing (covered by the bitbox suite).
-        when(() => bitbox.getCredentials(any())).thenReturn(BitboxCredentials(_debugAddress));
-
-        final wallet = await service.createBitboxWallet('Hardware');
-
-        expect(wallet, isA<BitboxWallet>());
-        expect(wallet.id, 11);
-        expect(wallet.name, 'Hardware');
-        // The BitBox keypath is non-negotiable: chainId 1 + ETH's canonical
-        // BIP-44 path. A drifting keypath would silently quote a different
-        // address than the rest of the app expects.
-        verify(() => manager.getETHAddress(1, "m/44'/60'/0'/0/0")).called(1);
-        verify(
-          () => repo.createViewWallet('Hardware', WalletType.bitbox, _debugAddress),
-        ).called(1);
-        // BitBox flow must persist the wallet as current so the next reload
-        // lands on the dashboard rather than the onboarding chooser.
-        verify(() => settings.saveCurrentWalletId(11)).called(1);
-      });
-
-      test('propagates a BitBox derivation failure without writing to the repo', () async {
-        when(
-          () => manager.getETHAddress(any(), any()),
-        ).thenThrow(Exception('USB transport dropped'));
-
-        expect(
-          () => service.createBitboxWallet('Hardware'),
-          throwsA(isA<Exception>()),
-        );
-        verifyNever(() => repo.createViewWallet(any(), any(), any()));
-        verifyNever(() => settings.saveCurrentWalletId(any()));
+        expect(isolate.adoptCallCount, 1);
       });
     });
 
     group('createDebugWallet', () {
       test('persists a view wallet and marks it current', () async {
-        when(() => repo.createViewWallet(any(), any(), any())).thenAnswer((_) async => 99);
+        when(() => repo.createViewWallet(any(), any(), any()))
+            .thenAnswer((_) async => 99);
 
         final wallet = await service.createDebugWallet(_debugAddress);
 
         expect(wallet, isA<DebugWallet>());
         expect(wallet.id, 99);
         expect(wallet.address, _debugAddress);
-        verify(() => repo.createViewWallet('Debug', WalletType.debug, _debugAddress)).called(1);
+        verify(() => repo.createViewWallet('Debug', WalletType.debug, _debugAddress))
+            .called(1);
         verify(() => settings.saveCurrentWalletId(99)).called(1);
       });
     });
 
     group('getWalletById', () {
-      test('returns SoftwareViewWallet (address only) for cached-address software rows', () async {
+      test('returns SoftwareViewWallet (address only) for cached-address software rows',
+          () async {
         when(() => repo.getWalletInfo(1)).thenAnswer(
           (_) async => _info(
             id: 1,
@@ -312,51 +205,6 @@ void main() {
         final wallet = await service.getWalletById(1);
 
         expect(wallet, isA<SoftwareViewWallet>());
-        verifyNever(() => repo.getUnlockedWalletById(any()));
-      });
-
-      test(
-        'falls back to unlocked SoftwareWallet for legacy rows and backfills the address',
-        () async {
-          when(() => repo.getWalletInfo(1)).thenAnswer(
-            (_) async => _info(id: 1, name: 'Main', type: WalletType.software),
-          );
-          when(() => repo.getUnlockedWalletById(1)).thenAnswer(
-            (_) async => _info(id: 1, name: 'Main', seed: _testMnemonic, type: WalletType.software),
-          );
-
-          final wallet = await service.getWalletById(1);
-
-          expect(wallet, isA<SoftwareWallet>());
-          expect((wallet as SoftwareWallet).seed, _testMnemonic);
-          // The next load takes the fast path because the address has been
-          // backfilled into the row.
-          verify(
-            () => repo.updateAddress(1, wallet.currentAccount.primaryAddress.address.hexEip55),
-          ).called(1);
-        },
-      );
-
-      test('returns a BitboxWallet for bitbox type — never decrypts a seed', () async {
-        when(() => repo.getWalletInfo(3)).thenAnswer(
-          (_) async => _info(
-            id: 3,
-            name: 'Hardware',
-            address: _debugAddress,
-            type: WalletType.bitbox,
-          ),
-        );
-        when(() => bitbox.getCredentials(any())).thenReturn(BitboxCredentials(_debugAddress));
-        // Pin the contract: a hardware-wallet row never goes through the
-        // mnemonic-decrypt path. If a future refactor accidentally routes
-        // a bitbox row through `getUnlockedWalletById`, this verifyNever
-        // catches it.
-        final wallet = await service.getWalletById(3);
-
-        expect(wallet, isA<BitboxWallet>());
-        expect(wallet.id, 3);
-        expect(wallet.name, 'Hardware');
-        verifyNever(() => repo.getUnlockedWalletById(any()));
       });
 
       test('returns DebugWallet for debug type', () async {
@@ -378,23 +226,58 @@ void main() {
     });
 
     group('unlockWalletById', () {
-      test('returns a fully unlocked SoftwareWallet', () async {
-        when(() => repo.getUnlockedWalletById(1)).thenAnswer(
-          (_) async => _info(id: 1, name: 'Main', seed: _testMnemonic, type: WalletType.software),
+      test('returns a SoftwareWallet handle and seats the isolate slot', () async {
+        when(() => repo.getWalletInfo(1)).thenAnswer(
+          (_) async => _info(
+            id: 1,
+            name: 'Main',
+            seed: '<encrypted-blob>',
+            address: _debugAddress,
+            type: WalletType.software,
+          ),
         );
 
         final wallet = await service.unlockWalletById(1);
 
         expect(wallet, isA<SoftwareWallet>());
-        expect(wallet.seed, _testMnemonic);
+        expect(wallet.id, 1);
+        expect(isolate.unlockCallCount, 1,
+            reason: 'unlock must round-trip the ciphertext + key into the isolate');
+        expect(isolate.slots.containsKey(1), isTrue);
       });
 
       test('throws for non-software wallet types', () async {
-        when(() => repo.getUnlockedWalletById(2)).thenAnswer(
-          (_) async => _info(id: 2, name: 'BBox', address: _debugAddress, type: WalletType.bitbox),
+        when(() => repo.getWalletInfo(2)).thenAnswer(
+          (_) async =>
+              _info(id: 2, name: 'BBox', address: _debugAddress, type: WalletType.bitbox),
         );
 
         expect(() => service.unlockWalletById(2), throwsA(isA<StateError>()));
+      });
+    });
+
+    group('revealCurrentSeed', () {
+      test('returns a SeedDraft with the isolate-side mnemonic', () async {
+        when(() => settings.currentWalletId).thenReturn(1);
+        when(() => repo.getWalletInfo(1)).thenAnswer(
+          (_) async => _info(
+            id: 1,
+            name: 'Main',
+            address: _debugAddress,
+            type: WalletType.software,
+          ),
+        );
+        // Seed the isolate slot directly so reveal has something to
+        // return — production flow does this via `unlockWalletById`.
+        await isolate.adoptPlaintext(1, _testMnemonic);
+
+        final draft = await service.revealCurrentSeed();
+
+        expect(draft.mnemonic, _testMnemonic);
+        expect(draft.name, 'Main');
+        expect(draft.isDisposed, isFalse,
+            reason: 'reveal returns an undisposed draft — the caller is '
+                'responsible for dispose() after rendering');
       });
     });
 
@@ -403,98 +286,6 @@ void main() {
         await service.setCurrentWallet(5);
 
         verify(() => settings.saveCurrentWalletId(5)).called(1);
-      });
-    });
-
-    group('getCurrentWallet', () {
-      test('reads the current id and resolves it through getWalletById', () async {
-        when(() => settings.currentWalletId).thenReturn(3);
-        when(() => repo.getWalletInfo(3)).thenAnswer(
-          (_) async => _info(
-            id: 3,
-            name: 'Saved',
-            address: _debugAddress,
-            type: WalletType.software,
-          ),
-        );
-
-        final wallet = await service.getCurrentWallet();
-
-        expect(wallet.id, 3);
-        expect(wallet.name, 'Saved');
-      });
-
-      test('throws when no current id is set', () async {
-        when(() => settings.currentWalletId).thenReturn(null);
-
-        expect(() => service.getCurrentWallet(), throwsA(isA<TypeError>()));
-      });
-    });
-
-    group('unlockCurrentWallet', () {
-      test('reads the current id and resolves it through unlockWalletById', () async {
-        when(() => settings.currentWalletId).thenReturn(3);
-        when(() => repo.getUnlockedWalletById(3)).thenAnswer(
-          (_) async => _info(id: 3, name: 'Saved', seed: _testMnemonic, type: WalletType.software),
-        );
-
-        final wallet = await service.unlockCurrentWallet();
-
-        expect(wallet, isA<SoftwareWallet>());
-        expect(wallet.seed, _testMnemonic);
-      });
-    });
-
-    group('deleteCurrentWallet', () {
-      test('deletes the wallet and clears the current-id setting', () async {
-        when(() => settings.currentWalletId).thenReturn(8);
-
-        final result = await service.deleteCurrentWallet();
-
-        verify(() => repo.deleteWallet(8)).called(1);
-        verify(() => settings.removeCurrentWalletId()).called(1);
-        expect(result.walletRows, 1,
-            reason: 'BL-004: the walletInfos row count must be surfaced so '
-                'the cleanup chain can be audited end-to-end');
-      });
-
-      test('does NOT touch the mnemonic encryption key when the opt-in is off',
-          () async {
-        when(() => settings.currentWalletId).thenReturn(8);
-        when(() => repo.isLastWallet()).thenAnswer((_) async => true);
-        when(() => settings.deleteMnemonicKeyOnLastWalletDelete).thenReturn(false);
-
-        final result = await service.deleteCurrentWallet();
-
-        verifyNever(() => secureStorage.deleteMnemonicEncryptionKey());
-        expect(result.mnemonicKeyDeleted, isFalse);
-      });
-
-      test('does NOT touch the mnemonic encryption key when other wallets remain',
-          () async {
-        when(() => settings.currentWalletId).thenReturn(8);
-        when(() => repo.isLastWallet()).thenAnswer((_) async => false);
-        when(() => settings.deleteMnemonicKeyOnLastWalletDelete).thenReturn(true);
-
-        final result = await service.deleteCurrentWallet();
-
-        verifyNever(() => secureStorage.deleteMnemonicEncryptionKey(),
-            );
-        expect(result.mnemonicKeyDeleted, isFalse,
-            reason: 'opt-in flag fires only on last-wallet-delete — the '
-                'key must survive while other encrypted seeds still need it');
-      });
-
-      test('wipes the mnemonic encryption key on a last-wallet-delete when opted in',
-          () async {
-        when(() => settings.currentWalletId).thenReturn(8);
-        when(() => repo.isLastWallet()).thenAnswer((_) async => true);
-        when(() => settings.deleteMnemonicKeyOnLastWalletDelete).thenReturn(true);
-
-        final result = await service.deleteCurrentWallet();
-
-        verify(() => secureStorage.deleteMnemonicEncryptionKey()).called(1);
-        expect(result.mnemonicKeyDeleted, isTrue);
       });
     });
 
@@ -526,14 +317,15 @@ void main() {
       });
 
       test('rejects a mnemonic with a wrong checksum word', () {
-        // Replace the final checksum word with a different valid bip39 word.
-        const broken = 'test test test test test test test test test test test ability';
+        const broken =
+            'test test test test test test test test test test test ability';
         expect(service.validateSeed(broken), isFalse);
       });
     });
 
     group('ensureCurrentWalletUnlocked', () {
-      test('promotes a SoftwareViewWallet to a SoftwareWallet', () async {
+      test('promotes a SoftwareViewWallet to a SoftwareWallet via the isolate',
+          () async {
         final view = SoftwareViewWallet(7, 'Main', _debugAddress);
         final stored = <AWallet>[view];
         when(() => appStore.wallet).thenAnswer((_) => stored.last);
@@ -543,35 +335,42 @@ void main() {
           return newWallet;
         });
         when(() => settings.currentWalletId).thenReturn(7);
-        when(() => repo.getUnlockedWalletById(7)).thenAnswer(
-          (_) async => _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
+        when(() => repo.getWalletInfo(7)).thenAnswer(
+          (_) async => _info(
+            id: 7,
+            name: 'Main',
+            seed: '<enc>',
+            address: _debugAddress,
+            type: WalletType.software,
+          ),
         );
 
         await service.ensureCurrentWalletUnlocked();
 
         expect(stored.last, isA<SoftwareWallet>());
-        expect((stored.last as SoftwareWallet).seed, _testMnemonic);
+        expect(isolate.unlockCallCount, 1);
       });
 
-      test('is a no-op when the current wallet is not a SoftwareViewWallet', () async {
-        final unlocked = SoftwareWallet(7, 'Main', _testMnemonic);
+      test('is a no-op when the current wallet is not a SoftwareViewWallet',
+          () async {
+        final unlocked = SoftwareWallet(7, 'Main', _debugAddress, isolate);
         when(() => appStore.wallet).thenReturn(unlocked);
 
         await service.ensureCurrentWalletUnlocked();
 
-        verifyNever(() => repo.getUnlockedWalletById(any()));
+        expect(isolate.unlockCallCount, 0,
+            reason: 'no view-wallet to promote — the isolate must not be touched');
       });
     });
 
     group('lockCurrentWallet', () {
-      // Tests in this group assume a loaded wallet — the "no wallet loaded
-      // yet" path is explicitly tested below by overriding to false.
       setUp(() {
         when(() => appStore.isWalletLoaded).thenReturn(true);
       });
 
-      test('replaces an unlocked SoftwareWallet with its SoftwareViewWallet counterpart', () async {
-        final unlocked = SoftwareWallet(9, 'Main', _testMnemonic);
+      test('replaces an unlocked SoftwareWallet with its SoftwareViewWallet counterpart '
+          'and locks the isolate slot', () async {
+        final unlocked = SoftwareWallet(9, 'Main', _debugAddress, isolate);
         AWallet? written;
         when(() => appStore.wallet).thenReturn(unlocked);
         when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
@@ -579,150 +378,58 @@ void main() {
           written = newWallet;
           return newWallet;
         });
+        // Seed a slot so we can verify the lock drops it.
+        await isolate.adoptPlaintext(9, _testMnemonic);
+        isolate.lockCallCount = 0;
 
         await service.lockCurrentWallet();
 
         expect(written, isA<SoftwareViewWallet>());
         expect(written!.id, 9);
         expect(written!.name, 'Main');
+        expect(isolate.lockCallCount, 1,
+            reason: 'BL-022: lock must propagate to the isolate so the '
+                'decrypted slot is released, not just to the AppStore');
+        expect(isolate.slots.containsKey(9), isFalse);
       });
 
-      test('is a no-op when the wallet is already locked / not software', () async {
+      test('is a no-op when the wallet is already locked / not software',
+          () async {
         when(() => appStore.wallet).thenReturn(
           SoftwareViewWallet(9, 'Main', _debugAddress),
         );
 
         await service.lockCurrentWallet();
 
-        // No write happened.
         verifyNever(() => appStore.wallet = any(that: isA<AWallet>()));
+        expect(isolate.lockCallCount, 0,
+            reason: 'a view wallet has no isolate slot — lock must skip the IPC');
       });
 
-      // Pre-load guard: the app-lifecycle `hidden` hook fires the first time
-      // the user backgrounds the app, which can happen during onboarding
-      // before HomeBloc has populated AppStore.wallet. The early-return on
-      // !isWalletLoaded keeps the lifecycle caller a one-liner — no try/catch
-      // around an "expected" Exception('No Wallet set') from appStore.wallet.
       test('is a no-op when no wallet has been loaded yet', () async {
         when(() => appStore.isWalletLoaded).thenReturn(false);
 
         await service.lockCurrentWallet();
 
-        // Never even reaches the wallet getter — no MissingStubError, no
-        // write, no exception leaking to the unawaited caller.
         verifyNever(() => appStore.wallet);
         verifyNever(() => appStore.wallet = any(that: isA<AWallet>()));
+        expect(isolate.lockCallCount, 0);
       });
     });
 
-    group('ensure/lock reentrancy', () {
-      // Tests in this group exercise lockCurrentWallet end-to-end, so the
-      // pre-load guard expects a positive isWalletLoaded.
+    group('lock cancels in-flight decrypt (BL-022)', () {
+      // BL-022: pre-Initiative-IV `lockCurrentWallet` called
+      // `_unlockInFlight?.ignore()` which detached the future but did
+      // NOT cancel the underlying isolate work. Post-Initiative-IV
+      // the isolate slot is dropped via `lock()` so the decrypted
+      // seed is released even if the awaiting future is never
+      // observed.
       setUp(() {
         when(() => appStore.isWalletLoaded).thenReturn(true);
       });
 
-      // App-lifecycle hidden fires an unpaired lockCurrentWallet — i.e. one
-      // without a matching prior ensureCurrentWalletUnlocked. Sequence:
-      //   flow X ensure → counter 1, wallet unlocked
-      //   _onHidden lock → counter 0, wallet flipped to view
-      //   flow X finally lock → counter still 0 (underflow guard), _lockWalletInPlace
-      //     no-ops because the wallet is already the view form.
-      // The 1:1 ensure↔lock invariant is technically broken by the unpaired
-      // lifecycle call, but the underflow guard + `is! SoftwareWallet` guard
-      // keep the state consistent. This test pins that contract.
-      test('unpaired lock from lifecycle leaves the holder counter at 0, never below', () async {
-        final stored = <AWallet>[SoftwareViewWallet(7, 'Main', _debugAddress)];
-        when(() => appStore.wallet).thenAnswer((_) => stored.last);
-        when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
-          final newWallet = inv.positionalArguments.single as AWallet;
-          stored.add(newWallet);
-          return newWallet;
-        });
-        when(() => settings.currentWalletId).thenReturn(7);
-        when(() => repo.getUnlockedWalletById(7)).thenAnswer(
-          (_) async => _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
-        );
-
-        // Sign flow opens the contract.
-        await service.ensureCurrentWalletUnlocked();
-        expect(stored.last, isA<SoftwareWallet>(), reason: 'sign flow unlocked the wallet');
-
-        // App-lifecycle hidden fires concurrently — drops to view wallet.
-        await service.lockCurrentWallet();
-        expect(
-          stored.last,
-          isA<SoftwareViewWallet>(),
-          reason: 'lifecycle lock flipped the wallet to its view form',
-        );
-
-        // Sign flow finally — counter is already 0, must NOT underflow and
-        // must NOT crash on _lockWalletInPlace reading the (now view) wallet.
-        await service.lockCurrentWallet();
-        expect(
-          stored.last,
-          isA<SoftwareViewWallet>(),
-          reason: 'finally lock is idempotent — counter stays at 0',
-        );
-
-        // A subsequent ensure must still produce a usable unlocked wallet —
-        // i.e. the counter didn't drift negative and break the next cycle.
-        await service.ensureCurrentWalletUnlocked();
-        expect(
-          stored.last,
-          isA<SoftwareWallet>(),
-          reason: 'next ensure starts cleanly from counter == 0',
-        );
-      });
-
-      // Race: flow A and flow B both call ensureCurrentWalletUnlocked while
-      // the wallet is locked. A finishes its sign + lock first; B is still
-      // mid-sign and must see an unlocked wallet. Without the holder counter
-      // A's lock would tear the mnemonic out from under B and the next
-      // sign call would hit _LockedCredentials → UnsupportedError.
-      test('two parallel ensures + one lock leave the wallet unlocked', () async {
-        final stored = <AWallet>[SoftwareViewWallet(7, 'Main', _debugAddress)];
-        when(() => appStore.wallet).thenAnswer((_) => stored.last);
-        when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
-          final newWallet = inv.positionalArguments.single as AWallet;
-          stored.add(newWallet);
-          return newWallet;
-        });
-        when(() => settings.currentWalletId).thenReturn(7);
-        when(() => repo.getUnlockedWalletById(7)).thenAnswer(
-          (_) async => _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
-        );
-
-        // Flow A: ensure + lock (e.g. confirmPayment finishing first).
-        await service.ensureCurrentWalletUnlocked();
-        // Flow B enters its ensure while A is still holding the contract.
-        await service.ensureCurrentWalletUnlocked();
-        // Flow A releases — B still holds, so the wallet must stay unlocked.
-        await service.lockCurrentWallet();
-
-        expect(
-          stored.last,
-          isA<SoftwareWallet>(),
-          reason: 'second holder must keep the wallet unlocked',
-        );
-
-        // Flow B releases — now the wallet locks back to the view form.
-        await service.lockCurrentWallet();
-        expect(
-          stored.last,
-          isA<SoftwareViewWallet>(),
-          reason: 'last holder release flips back to view wallet',
-        );
-      });
-
-      // Genuine concurrency race: both ensures are pending on the DB read
-      // when the lock fires between them. Without the holder counter the
-      // lock would observe the (mid-unlock) view wallet, no-op, and the
-      // second ensure would then complete and write the unlocked wallet —
-      // which then never gets locked back because lockCurrentWallet
-      // already returned. With the counter, the lock decrements but does
-      // not flip the wallet because two ensures are still in flight.
-      test('lock between two in-flight ensures preserves the unlocked wallet', () async {
+      test('lock during a single in-flight unlock locks the isolate slot afterwards',
+          () async {
         final stored = <AWallet>[SoftwareViewWallet(7, 'Main', _debugAddress)];
         when(() => appStore.wallet).thenAnswer((_) => stored.last);
         when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
@@ -732,258 +439,107 @@ void main() {
         });
         when(() => settings.currentWalletId).thenReturn(7);
 
-        // Gate the repository read so we can interleave concurrent calls.
         final gate = Completer<WalletInfo>();
-        when(() => repo.getUnlockedWalletById(7)).thenAnswer((_) => gate.future);
+        when(() => repo.getWalletInfo(7)).thenAnswer((_) => gate.future);
 
-        // Fire two ensures without awaiting — both block on the gated read.
-        final ensureA = service.ensureCurrentWalletUnlocked();
-        final ensureB = service.ensureCurrentWalletUnlocked();
-
-        // Flow A releases its hold while both unlocks are still pending.
-        // The counter must keep the wallet from being flipped back to a
-        // view wallet because flow B is still holding the contract.
-        await service.lockCurrentWallet();
-
-        // Release the gated read so both ensures can complete.
-        gate.complete(
-          _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
-        );
-        await Future.wait([ensureA, ensureB]);
-
-        expect(
-          stored.last,
-          isA<SoftwareWallet>(),
-          reason: 'lock fired mid-unlock must not shadow the in-flight unlock',
-        );
-
-        // Drain the remaining holders. Two more locks: one to match the
-        // second ensure's release, one to confirm the counter clamps at 0
-        // and doesn't go negative.
-        await service.lockCurrentWallet();
-        await service.lockCurrentWallet();
-        expect(
-          stored.last,
-          isA<SoftwareViewWallet>(),
-          reason: 'final holder release flips back to view wallet',
-        );
-      });
-
-      // The `_onHidden` race: a single sign-flow ensure is still mid-unlock
-      // when `lockCurrentWallet` fires from the app-lifecycle hidden hook.
-      // Without invalidating the in-flight unlock, its resolution would
-      // write the unlocked [SoftwareWallet] back to [AppStore.wallet]
-      // AFTER the lock — resurfacing the mnemonic in memory until either
-      // the 60s safety net or the sign-flow `finally lock` clears it
-      // again. The 60s window is best-effort under iOS isolate suspension
-      // (the gap #485 set out to close in the first place), so the fix
-      // closes it at the source: the lock invalidates `_unlockInFlight`
-      // and the ensure skips its write.
-      test('lock during a single in-flight unlock does not resurface the mnemonic', () async {
-        final stored = <AWallet>[SoftwareViewWallet(7, 'Main', _debugAddress)];
-        when(() => appStore.wallet).thenAnswer((_) => stored.last);
-        when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
-          final newWallet = inv.positionalArguments.single as AWallet;
-          stored.add(newWallet);
-          return newWallet;
-        });
-        when(() => settings.currentWalletId).thenReturn(7);
-
-        // Pin the unlock mid-flight so we can fire `lockCurrentWallet`
-        // exactly between the ensure starting and its DB read resolving.
-        final gate = Completer<WalletInfo>();
-        when(() => repo.getUnlockedWalletById(7)).thenAnswer((_) => gate.future);
-
-        // Sign-flow ensure starts, counter=1, blocks on gated read.
         final ensure = service.ensureCurrentWalletUnlocked();
-
-        // App-lifecycle hidden fires — counter goes to 0, lock would
-        // normally no-op (wallet still SoftwareViewWallet) and let the
-        // pending unlock leak through.
         await service.lockCurrentWallet();
-        expect(
-          stored.last,
-          isA<SoftwareViewWallet>(),
-          reason: 'lock observed the still-view wallet — nothing to flip',
-        );
 
-        // Release the gated DB read so the in-flight ensure resolves.
         gate.complete(
-          _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
+          _info(
+            id: 7,
+            name: 'Main',
+            seed: '<enc>',
+            address: _debugAddress,
+            type: WalletType.software,
+          ),
         );
         await ensure;
 
-        // The fix: the post-resolve write is gated on the in-flight token
-        // still matching, which the lock invalidated. So the mnemonic
-        // never lands in [AppStore.wallet] after the user covered the app.
-        expect(
-          stored.last,
-          isA<SoftwareViewWallet>(),
-          reason:
-              'in-flight unlock invalidated by intervening lock must not '
-              'resurface the mnemonic',
-        );
-        // Pin the mechanism, not just the outcome: the `_unlockInFlight`
-        // gate must suppress the post-resolve write — never let a future
-        // refactor pass this test by tolerating the write and clearing it
-        // again from somewhere else (which would still expose the mnemonic
-        // to any code path observing `AppStore.wallet` between the writes).
+        // After the chained lock + ensure resolves, the AppStore must
+        // still be on the view wallet — the in-flight unlock must
+        // not resurface the mnemonic. The new mechanism is the
+        // isolate-side slot drop AND the main-side _unlockInFlight
+        // gate; both must hold.
+        expect(stored.last, isA<SoftwareViewWallet>(),
+            reason: 'BL-022: in-flight unlock invalidated by intervening '
+                'lock must not resurface the mnemonic in AppStore');
         verifyNever(() => appStore.wallet = any(that: isA<SoftwareWallet>()));
       });
+    });
 
-      // The 60s safety net is the hard cap on the in-memory mnemonic
-      // lifetime — it bypasses [_activeUnlockHolders] so a stuck holder
-      // can't keep the key resident past the safety window. fake_async
-      // drives the wall-clock so we don't actually wait 60s; no
-      // Future.delayed in the test.
-      test('post-unlock timer force-locks after 60s even with a holder still open', () {
-        fakeAsync((async) {
-          final stored = <AWallet>[SoftwareViewWallet(7, 'Main', _debugAddress)];
-          when(() => appStore.wallet).thenAnswer((_) => stored.last);
-          when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
-            final newWallet = inv.positionalArguments.single as AWallet;
-            stored.add(newWallet);
-            return newWallet;
-          });
-          when(() => settings.currentWalletId).thenReturn(7);
-          when(() => repo.getUnlockedWalletById(7)).thenAnswer(
-            (_) async => _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
-          );
+    group('deleteCurrentWallet', () {
+      test('deletes the wallet and clears the current-id setting', () async {
+        when(() => settings.currentWalletId).thenReturn(8);
 
-          // Open a holder — no matching lockCurrentWallet, so the counter
-          // stays at 1. Only the 60s timer can flip back to view-wallet.
-          service.ensureCurrentWalletUnlocked();
-          async.flushMicrotasks();
-          expect(
-            stored.last,
-            isA<SoftwareWallet>(),
-            reason: 'sign-flow ensure must land an unlocked wallet first',
-          );
+        final result = await service.deleteCurrentWallet();
 
-          // Just shy of the timeout — still unlocked.
-          async.elapse(const Duration(seconds: 59));
-          expect(
-            stored.last,
-            isA<SoftwareWallet>(),
-            reason: 'safety net must not fire before its window elapses',
-          );
-
-          // Cross the timeout — _forceLock bypasses the counter and flips
-          // the wallet back to view form regardless of the open holder.
-          async.elapse(const Duration(seconds: 2));
-          expect(
-            stored.last,
-            isA<SoftwareViewWallet>(),
-            reason: '_forceLock must zero the holder counter and drop the mnemonic',
-          );
-
-          // After the force-lock, the next ensure must still work — the
-          // counter was reset to 0, not left dangling at some intermediate
-          // value that would break the next cycle.
-          service.ensureCurrentWalletUnlocked();
-          async.flushMicrotasks();
-          expect(
-            stored.last,
-            isA<SoftwareWallet>(),
-            reason:
-                'force-lock must leave the holder counter at 0 so the next '
-                'unlock cycle starts cleanly',
-          );
-
-          // Drain the safety-net timer that the second ensure armed —
-          // otherwise the fakeAsync `pendingTimers` assertion below would
-          // flag a leak.
-          async.elapse(const Duration(seconds: 61));
-        });
+        verify(() => repo.deleteWallet(8)).called(1);
+        verify(() => settings.removeCurrentWalletId()).called(1);
+        expect(result.walletRows, 1,
+            reason: 'BL-004: the walletInfos row count must be surfaced so '
+                'the cleanup chain can be audited end-to-end');
       });
 
-      // Each ensure re-arms the safety-net timer; the timeout window
-      // extends to "60s after the latest ensure" rather than "60s after
-      // the first ensure". Without re-arming, a long-running sign that
-      // briefly re-checks the wallet would be cut off mid-flight.
-      test('a second ensure re-arms the post-unlock timer', () {
-        fakeAsync((async) {
-          final stored = <AWallet>[SoftwareViewWallet(7, 'Main', _debugAddress)];
-          when(() => appStore.wallet).thenAnswer((_) => stored.last);
-          when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
-            final newWallet = inv.positionalArguments.single as AWallet;
-            stored.add(newWallet);
-            return newWallet;
-          });
-          when(() => settings.currentWalletId).thenReturn(7);
-          when(() => repo.getUnlockedWalletById(7)).thenAnswer(
-            (_) async => _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
-          );
+      test('drops the isolate slot before deleting the row', () async {
+        when(() => settings.currentWalletId).thenReturn(8);
+        await isolate.adoptPlaintext(8, _testMnemonic);
+        isolate.lockCallCount = 0;
 
-          // First ensure arms the timer at t=0.
-          service.ensureCurrentWalletUnlocked();
-          async.flushMicrotasks();
-          expect(stored.last, isA<SoftwareWallet>());
+        await service.deleteCurrentWallet();
 
-          // At t=40s, a second ensure must re-arm the timer to fire at t=100s.
-          async.elapse(const Duration(seconds: 40));
-          service.ensureCurrentWalletUnlocked();
-          async.flushMicrotasks();
-
-          // At t=80s the original timer would have fired (40s+60s=100s for
-          // the rearmed one; original would have fired at t=60s). Verify the
-          // wallet is still unlocked, i.e. the original timer was cancelled.
-          async.elapse(const Duration(seconds: 40));
-          expect(
-            stored.last,
-            isA<SoftwareWallet>(),
-            reason:
-                'second ensure must cancel the original timer and re-arm '
-                'for another 60s — otherwise long-running signs would be cut off',
-          );
-
-          // At t=110s the re-armed timer (set at t=40s) has fired.
-          async.elapse(const Duration(seconds: 30));
-          expect(
-            stored.last,
-            isA<SoftwareViewWallet>(),
-            reason:
-                'the re-armed timer eventually fires at +60s from the '
-                'most-recent ensure',
-          );
-        });
+        expect(isolate.lockCallCount, 1,
+            reason: 'the decrypted seed (if any) must be released before '
+                'the row goes — defensive against an unlocked-without-lock '
+                'cycle leaving a stale slot');
+        expect(isolate.slots.containsKey(8), isFalse);
       });
 
-      // Two overlapping ensures must coalesce onto a single DB read +
-      // AES-GCM decrypt, not trigger the repository twice. Functionally
-      // both versions would land on the same SoftwareWallet, but the
-      // extra decrypt is wasteful.
-      test('two parallel ensures dedupe the repository decrypt', () async {
-        final stored = <AWallet>[SoftwareViewWallet(7, 'Main', _debugAddress)];
-        when(() => appStore.wallet).thenAnswer((_) => stored.last);
-        when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
-          final newWallet = inv.positionalArguments.single as AWallet;
-          stored.add(newWallet);
-          return newWallet;
-        });
-        when(() => settings.currentWalletId).thenReturn(7);
+      test('does NOT touch the mnemonic encryption key when the opt-in is off',
+          () async {
+        when(() => settings.currentWalletId).thenReturn(8);
+        when(() => repo.isLastWallet()).thenAnswer((_) async => true);
+        when(() => settings.deleteMnemonicKeyOnLastWalletDelete).thenReturn(false);
 
-        final gate = Completer<WalletInfo>();
-        when(() => repo.getUnlockedWalletById(7)).thenAnswer((_) => gate.future);
+        final result = await service.deleteCurrentWallet();
 
-        final ensureA = service.ensureCurrentWalletUnlocked();
-        final ensureB = service.ensureCurrentWalletUnlocked();
+        verifyNever(() => secureStorage.deleteMnemonicEncryptionKey());
+        expect(result.mnemonicKeyDeleted, isFalse);
+      });
 
-        gate.complete(
-          _info(id: 7, name: 'Main', seed: _testMnemonic, type: WalletType.software),
-        );
-        await Future.wait([ensureA, ensureB]);
+      test('does NOT touch the mnemonic encryption key when other wallets remain',
+          () async {
+        when(() => settings.currentWalletId).thenReturn(8);
+        when(() => repo.isLastWallet()).thenAnswer((_) async => false);
+        when(() => settings.deleteMnemonicKeyOnLastWalletDelete).thenReturn(true);
 
-        verify(() => repo.getUnlockedWalletById(7)).called(1);
-        expect(stored.last, isA<SoftwareWallet>());
+        final result = await service.deleteCurrentWallet();
+
+        verifyNever(() => secureStorage.deleteMnemonicEncryptionKey());
+        expect(result.mnemonicKeyDeleted, isFalse,
+            reason: 'opt-in flag fires only on last-wallet-delete — the '
+                'key must survive while other encrypted seeds still need it');
+      });
+
+      test('wipes the mnemonic encryption key on a last-wallet-delete when opted in',
+          () async {
+        when(() => settings.currentWalletId).thenReturn(8);
+        when(() => repo.isLastWallet()).thenAnswer((_) async => true);
+        when(() => settings.deleteMnemonicKeyOnLastWalletDelete).thenReturn(true);
+
+        final result = await service.deleteCurrentWallet();
+
+        verify(() => secureStorage.deleteMnemonicEncryptionKey()).called(1);
+        expect(result.mnemonicKeyDeleted, isTrue);
       });
     });
 
     group('persistence failure resilience', () {
       test('commitGeneratedWallet propagates repository exception', () async {
-        when(() => repo.createWallet(any(), any(), any(), any())).thenThrow(Exception('disk full'));
+        when(() => repo.createWallet(any(), any(), any(), any()))
+            .thenThrow(Exception('disk full'));
 
-        final draft = await service.generateUncommittedSeedWallet('Main');
+        final draft = SeedDraft(_testMnemonic, name: 'Main');
 
         expect(
           () => service.commitGeneratedWallet(draft),
@@ -992,8 +548,10 @@ void main() {
         verifyNever(() => settings.saveCurrentWalletId(any()));
       });
 
-      test('restoreWallet propagates repository exception without setting current', () async {
-        when(() => repo.createWallet(any(), any(), any(), any())).thenThrow(Exception('disk full'));
+      test('restoreWallet propagates repository exception without setting current',
+          () async {
+        when(() => repo.createWallet(any(), any(), any(), any()))
+            .thenThrow(Exception('disk full'));
 
         expect(
           () => service.restoreWallet('Restored', _testMnemonic),
