@@ -161,6 +161,16 @@ class BiometricAuthResult {
     required this.unwrappedSecret,
   });
 
+  /// Test-only constructor. Production code goes through the
+  /// service's `authenticate()` method; this is a hook for the
+  /// verify-pin-cubit tests that pin BL-049's success-without-unwrap
+  /// behaviour. Marked with the `forTesting` convention so a refactor
+  /// can grep for unauthorised usage.
+  const BiometricAuthResult.forTesting({
+    required this.success,
+    required this.unwrappedSecret,
+  });
+
   /// `true` if the UI-level biometric prompt resolved positively.
   /// Insufficient on its own — see [unwrappedSecret] for the
   /// cryptographic gate.

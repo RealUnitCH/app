@@ -17,21 +17,22 @@ import 'package:realunit_wallet/widgets/seed_blur_card.dart';
 
 import '../../helper/pump_app.dart';
 
+class _FakeWalletAccount extends Fake implements AWalletAccount {}
+
 class MockCreateWalletCubit extends MockCubit<CreateWalletState> implements CreateWalletCubit {}
 
 class MockWalletService extends Mock implements WalletService {}
 
 class MockDfxKycService extends Mock implements DfxKycService {}
 
-class MockWallet extends Mock implements SoftwareWallet {}
-
-class MockWalletAccount extends Mock implements WalletAccount {}
+const _testMnemonic =
+    'cheese trigger cannon mention judge hire snack sustain annual predict illness celery';
 
 void main() {
   late CreateWalletCubit createWalletCubit;
 
   setUpAll(() {
-    registerFallbackValue(MockWalletAccount());
+    registerFallbackValue(_FakeWalletAccount());
   });
 
   setUp(() {
@@ -43,18 +44,9 @@ void main() {
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
     final walletService = MockWalletService();
-    // The cubit reads wallet.currentAccount synchronously to pass into the
-    // top-level warmAuthSignature helper, so the mock has to surface a real
-    // account or the unstubbed null trips the cast.
-    final stubbedWallet = MockWallet();
-    when(() => stubbedWallet.currentAccount).thenReturn(MockWalletAccount());
-    when(() => walletService.generateUncommittedSeedWallet(any()))
-        .thenAnswer((_) async => stubbedWallet);
+    when(() => walletService.generateUncommittedSeedDraft(any()))
+        .thenAnswer((_) async => SeedDraft(_testMnemonic));
     getIt.registerSingleton<WalletService>(walletService);
-    // CreateWalletCubit now depends on DFXAuthService (via DfxKycService — the
-    // smallest registered subclass) to pre-warm the auth signature on
-    // pairing. The page is what triggers the cubit, so the page-level test
-    // needs the same DI surface.
     final kyc = MockDfxKycService();
     when(() => kyc.ensureSignatureFor(any())).thenAnswer((_) async {});
     getIt.registerSingleton<DfxKycService>(kyc);
@@ -90,12 +82,9 @@ void main() {
       expect(find.byType(CupertinoActivityIndicator), findsOne);
     });
 
-    testWidgets('is rendered correctly when wallet available', (tester) async {
-      final wallet = MockWallet();
-      when(() => wallet.seed).thenReturn(
-        'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
-      );
-      when(() => createWalletCubit.state).thenReturn(CreateWalletState(wallet: wallet));
+    testWidgets('is rendered correctly when draft is available', (tester) async {
+      final draft = SeedDraft(_testMnemonic);
+      when(() => createWalletCubit.state).thenReturn(CreateWalletState(draft: draft));
 
       await tester.pumpApp(buildSubject(const CreateWalletView()));
 
@@ -109,13 +98,10 @@ void main() {
 
     group('$SeedBlurCard', () {
       testWidgets('is blurred', (tester) async {
-        final wallet = MockWallet();
-        when(() => wallet.seed).thenReturn(
-          'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
-        );
+        final draft = SeedDraft(_testMnemonic);
         when(
           () => createWalletCubit.state,
-        ).thenReturn(CreateWalletState(wallet: wallet, hideSeed: true));
+        ).thenReturn(CreateWalletState(draft: draft, hideSeed: true));
 
         await tester.pumpApp(buildSubject(const CreateWalletView()));
 
@@ -125,13 +111,10 @@ void main() {
     });
 
     testWidgets('is unblurred', (tester) async {
-      final wallet = MockWallet();
-      when(() => wallet.seed).thenReturn(
-        'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
-      );
+      final draft = SeedDraft(_testMnemonic);
       when(
         () => createWalletCubit.state,
-      ).thenReturn(CreateWalletState(wallet: wallet, hideSeed: false));
+      ).thenReturn(CreateWalletState(draft: draft, hideSeed: false));
 
       await tester.pumpApp(buildSubject(const CreateWalletView()));
 

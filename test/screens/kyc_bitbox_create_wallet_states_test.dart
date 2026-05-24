@@ -67,18 +67,18 @@ void main() {
   });
 
   group('$CreateWalletState defaults + copyWith', () {
-    test('defaults: hideSeed=true, wallet=null', () {
+    test('defaults: hideSeed=true, draft=null', () {
       const state = CreateWalletState();
       expect(state.hideSeed, isTrue);
-      expect(state.wallet, isNull);
+      expect(state.draft, isNull);
     });
 
     test('copyWith preserves untouched fields', () {
-      final wallet = SoftwareWallet(1, 'test', _testSeed);
-      final base = CreateWalletState(wallet: wallet);
+      final draft = SeedDraft(_testSeed);
+      final base = CreateWalletState(draft: draft);
       final next = base.copyWith(hideSeed: false);
       expect(next.hideSeed, isFalse);
-      expect(next.wallet, wallet);
+      expect(next.draft, draft);
     });
   });
 }

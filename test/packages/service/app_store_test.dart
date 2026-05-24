@@ -7,10 +7,9 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
-class _MockCacheRepository extends Mock implements CacheRepository {}
+import '../../test_utils/fake_wallet_isolate.dart';
 
-const _testMnemonic =
-    'test test test test test test test test test test test junk';
+class _MockCacheRepository extends Mock implements CacheRepository {}
 
 void main() {
   late SessionCache sessionCache;
@@ -29,7 +28,7 @@ void main() {
     });
 
     test('wallet getter returns the wallet once set', () {
-      final wallet = SoftwareWallet(1, 'Main', _testMnemonic);
+      final wallet = SoftwareWallet(1, 'Main', '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266', FakeWalletIsolate());
 
       store.wallet = wallet;
 
@@ -37,7 +36,7 @@ void main() {
     });
 
     test('primaryAddress proxies the current account address (hex)', () {
-      final wallet = SoftwareWallet(1, 'Main', _testMnemonic);
+      final wallet = SoftwareWallet(1, 'Main', '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266', FakeWalletIsolate());
       store.wallet = wallet;
 
       // Hardhat account #0 derived from the test mnemonic.
@@ -48,11 +47,15 @@ void main() {
     });
 
     test('primaryAddress updates when selectAccount changes the current account', () {
-      final wallet = SoftwareWallet(1, 'Main', _testMnemonic);
+      final wallet = SoftwareWallet(1, 'Main', '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266', FakeWalletIsolate());
       store.wallet = wallet;
       final firstAddress = store.primaryAddress;
 
-      wallet.selectAccount(1);
+      // Post-Initiative-IV selectAccount takes a pre-derived address
+      // (the BIP32 derivation lives in the isolate). A different
+      // string is sufficient to verify primaryAddress reflects the
+      // change.
+      wallet.selectAccount(1, '0x000000000000000000000000000000000000beef');
 
       expect(store.primaryAddress, isNot(firstAddress));
     });
@@ -81,7 +84,7 @@ void main() {
     test('isWalletLoaded flips to true once a wallet is set', () {
       expect(store.isWalletLoaded, isFalse);
 
-      store.wallet = SoftwareWallet(1, 'Main', _testMnemonic);
+      store.wallet = SoftwareWallet(1, 'Main', '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266', FakeWalletIsolate());
 
       expect(store.isWalletLoaded, isTrue);
     });

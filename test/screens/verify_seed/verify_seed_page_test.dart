@@ -15,6 +15,7 @@ import 'package:realunit_wallet/screens/verify_seed/widgets/verify_seed_input_fi
 import 'package:realunit_wallet/styles/colors.dart';
 
 import '../../helper/pump_app.dart';
+import '../../test_utils/fake_wallet_isolate.dart';
 
 class MockVerifySeedCubit extends MockCubit<VerifySeedState> implements VerifySeedCubit {}
 
@@ -58,13 +59,12 @@ void main() {
 
   group('$VerifySeedPage', () {
     testWidgets('renders $VerifySeedView', (tester) async {
-      final wallet = MockWallet();
-      when(() => wallet.seed).thenReturn(
+      final draft = SeedDraft(
         'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
       );
 
       await tester.pumpApp(
-        VerifySeedPage(wallet: wallet),
+        VerifySeedPage(draft: draft),
       );
 
       expect(find.byType(VerifySeedView), findsOne);
@@ -190,7 +190,8 @@ void main() {
         final committed = SoftwareWallet(
           42,
           'Main',
-          'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
+          '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+          FakeWalletIsolate(),
         );
         whenListen(
           verifySeedCubit,

@@ -4,8 +4,7 @@ import 'package:realunit_wallet/screens/restore_wallet/cubit/restore_wallet/rest
 import 'package:realunit_wallet/screens/restore_wallet/cubit/validate_seed/validate_seed_cubit.dart';
 import 'package:realunit_wallet/screens/verify_seed/cubit/verify_seed_cubit.dart';
 
-const _seed =
-    'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
+import '../test_utils/fake_wallet_isolate.dart';
 
 void main() {
   group('$ValidateSeedState', () {
@@ -27,7 +26,12 @@ void main() {
     });
 
     test('Equatable props pin (isLoading, wallet)', () {
-      final wallet = SoftwareWallet(1, 'Test', _seed);
+      final wallet = SoftwareWallet(
+        1,
+        'Test',
+        '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+        FakeWalletIsolate(),
+      );
       expect(
         const RestoreWalletState(),
         const RestoreWalletState(),

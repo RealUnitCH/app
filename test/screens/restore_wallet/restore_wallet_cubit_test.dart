@@ -6,6 +6,8 @@ import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/screens/restore_wallet/cubit/restore_wallet/restore_wallet_cubit.dart';
 
+import '../../test_utils/fake_wallet_isolate.dart';
+
 class _MockWalletService extends Mock implements WalletService {}
 
 class _MockAuthService extends Mock implements DFXAuthService {}
@@ -38,7 +40,12 @@ void main() {
     });
 
     test('restoreWallet normalises whitespace before delegating to the service', () async {
-      final restored = SoftwareWallet(1, 'Obi-Wallet-Kenobi', _testMnemonic);
+      final restored = SoftwareWallet(
+        1,
+        'Obi-Wallet-Kenobi',
+        '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+        FakeWalletIsolate(),
+      );
       when(() => service.restoreWallet(any(), any())).thenAnswer((_) async => restored);
       final cubit = RestoreWalletCubit(service, authService);
 
@@ -54,7 +61,12 @@ void main() {
     });
 
     test('restoreWallet emits an interim isLoading=true state', () async {
-      final restored = SoftwareWallet(1, 'W', _testMnemonic);
+      final restored = SoftwareWallet(
+        1,
+        'W',
+        '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+        FakeWalletIsolate(),
+      );
       when(() => service.restoreWallet(any(), any())).thenAnswer((_) async => restored);
       final cubit = RestoreWalletCubit(service, authService);
       final loadingFuture = cubit.stream.firstWhere((s) => s.isLoading);
