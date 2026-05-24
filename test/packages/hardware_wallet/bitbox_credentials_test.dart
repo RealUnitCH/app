@@ -431,5 +431,204 @@ void main() {
         throwsA(isA<BitboxNotConnectedException>()),
       );
     });
+
+    // -----------------------------------------------------------------------
+    // Initiative I (ADR 0001) — sign-queue timeout propagation.
+    //
+    // Pre-Initiative-I, a timed-out sign cleared credentials but left
+    // BitboxService thinking we were still Paired. The consuming cubit had to
+    // poll currentStatus to discover the loss. The fix wires an
+    // `_onSignQueueTimeout` closure that the service installs via
+    // `getCredentials`, and the timeout branch calls it before throwing
+    // BitboxNotConnectedException.
+    //
+    // The tests below pin BOTH effects (clearBitbox AND the closure call) so
+    // a future refactor that drops one half flips the assertion immediately.
+    // -----------------------------------------------------------------------
+
+    test(
+      'a hung sign fires the _onSignQueueTimeout callback once AND clears credentials',
+      () {
+        fakeAsync((async) {
+          BitboxCredentials.resetSignQueue();
+          async.flushMicrotasks();
+
+          when(() => manager.signETHTypedMessage(any(), any(), any()))
+              .thenAnswer((_) => Completer<Uint8List>().future);
+
+          var timeoutCalls = 0;
+          final c = BitboxCredentials(
+            '0x000000000000000000000000000000000000dead',
+            () => timeoutCalls++,
+          )..setBitbox(manager);
+
+          c.signTypedDataV4(1, '{"primaryType":"A"}').catchError(
+            (Object _) => '',
+          );
+
+          // Before the bound the callback has NOT fired.
+          async.elapse(
+            BitboxCredentials.signQueueTimeout - const Duration(seconds: 1),
+          );
+          async.flushMicrotasks();
+          expect(timeoutCalls, 0, reason: 'callback must not fire pre-timeout');
+
+          // Past the bound the callback fires exactly once, and credentials
+          // are cleared.
+          async.elapse(const Duration(seconds: 2));
+          async.flushMicrotasks();
+          expect(timeoutCalls, 1,
+              reason: 'sign-queue timeout must invoke the closure exactly once');
+          expect(c.isConnected, isFalse,
+              reason: 'sign-queue timeout must clear local credentials');
+        });
+      },
+    );
+
+    test(
+      'a successful sign does NOT invoke the _onSignQueueTimeout callback',
+      () async {
+        // Negative pin: the callback is strictly a timeout signal; a normal
+        // sign-success path must not flip the service to Lost.
+        var timeoutCalls = 0;
+        when(() => manager.signETHTypedMessage(any(), any(), any()))
+            .thenAnswer((_) async => Uint8List.fromList([0x42]));
+
+        final c = BitboxCredentials(
+          '0x000000000000000000000000000000000000dead',
+          () => timeoutCalls++,
+        )..setBitbox(manager);
+
+        await c.signTypedDataV4(1, '{"primaryType":"OK"}');
+        expect(timeoutCalls, 0);
+        expect(c.isConnected, isTrue,
+            reason: 'a successful sign keeps the credentials attached');
+      },
+    );
+
+    test(
+      'a sign that throws (non-timeout) does NOT invoke _onSignQueueTimeout',
+      () async {
+        // Distinguish the timeout path from generic native-error paths.
+        // A native sign-error must surface as its own exception; only the
+        // queue-timeout flips the service-level state to Lost.
+        var timeoutCalls = 0;
+        when(() => manager.signETHTypedMessage(any(), any(), any()))
+            .thenThrow(_ParseError());
+
+        final c = BitboxCredentials(
+          '0x000000000000000000000000000000000000dead',
+          () => timeoutCalls++,
+        )..setBitbox(manager);
+
+        await expectLater(
+          c.signTypedDataV4(1, '{"primaryType":"A"}'),
+          throwsA(isA<_ParseError>()),
+        );
+        expect(timeoutCalls, 0,
+            reason: 'native-error path must not trigger the service-Lost flow');
+      },
+    );
+
+    test(
+      'omitting the callback keeps the timeout path safe (no NPE)',
+      () {
+        // Defensive guard: the callback parameter is optional. A test or
+        // construction-site that never wires the closure must still see the
+        // timeout path complete — the closure call is null-aware.
+        fakeAsync((async) {
+          BitboxCredentials.resetSignQueue();
+          async.flushMicrotasks();
+
+          when(() => manager.signETHTypedMessage(any(), any(), any()))
+              .thenAnswer((_) => Completer<Uint8List>().future);
+
+          final c = BitboxCredentials(
+            '0x000000000000000000000000000000000000dead',
+          )..setBitbox(manager);
+
+          Object? thrown;
+          c.signTypedDataV4(1, '{"primaryType":"A"}').catchError(
+            (Object e) {
+              thrown = e;
+              return '';
+            },
+          );
+          async.elapse(
+            BitboxCredentials.signQueueTimeout + const Duration(seconds: 1),
+          );
+          async.flushMicrotasks();
+
+          expect(thrown, isA<BitboxNotConnectedException>(),
+              reason: 'no callback wired still surfaces the typed exception');
+        });
+      },
+    );
+
+    test(
+      'property: across a sequence with mid-timeout, callback fires exactly once before any subsequent sign',
+      () {
+        // Property pin (hand-rolled loop): for every mid-sign timeout in a
+        // sequence of K signs, the callback must fire exactly once and the
+        // remaining signs must observe `isConnected == false` (post-timeout)
+        // BEFORE they reach the device. Iterates over K in [1..6] so an
+        // off-by-one in the queue-slot release surfaces.
+        for (var totalSigns = 1; totalSigns <= 6; totalSigns++) {
+          fakeAsync((async) {
+            BitboxCredentials.resetSignQueue();
+            async.flushMicrotasks();
+
+            var nativeCalls = 0;
+            when(() => manager.signETHTypedMessage(any(), any(), any()))
+                .thenAnswer((_) {
+              nativeCalls++;
+              // Every native call hangs; the queue-timeout must clean up.
+              return Completer<Uint8List>().future;
+            });
+
+            var timeoutCalls = 0;
+            final c = BitboxCredentials(
+              '0x000000000000000000000000000000000000dead',
+              () => timeoutCalls++,
+            )..setBitbox(manager);
+
+            // Issue K signs. After the first one hits the timeout, every
+            // subsequent sign must fail fast (manager == null guard) without
+            // ever reaching the native mock.
+            final thrown = <Object?>[];
+            for (var i = 0; i < totalSigns; i++) {
+              c.signTypedDataV4(1, '{"primaryType":"P$i"}').catchError(
+                (Object e) {
+                  thrown.add(e);
+                  return '';
+                },
+              );
+            }
+
+            async.elapse(
+              BitboxCredentials.signQueueTimeout +
+                  const Duration(seconds: 2),
+            );
+            async.flushMicrotasks();
+
+            expect(timeoutCalls, 1,
+                reason: 'totalSigns=$totalSigns: callback must fire exactly once');
+            expect(c.isConnected, isFalse);
+            // Native mock must have been called exactly once — the first
+            // sign — and never again because subsequent signs see the
+            // detached manager and fail fast at the snapshot null-check.
+            expect(nativeCalls, 1,
+                reason:
+                    'totalSigns=$totalSigns: post-timeout signs must NOT reach the device');
+            // Every sign in the batch must observe the typed exception.
+            for (final t in thrown) {
+              expect(t, isA<BitboxNotConnectedException>());
+            }
+            expect(thrown.length, totalSigns,
+                reason: 'all signs must terminate with a typed exception');
+          });
+        }
+      },
+    );
   });
 }
