@@ -1,3 +1,12 @@
+// Tier-0 tests for the surviving `AWalletAccount` abstraction post
+// Initiative IV. The legacy main-isolate `WalletAccount` (which held
+// a BIP32 root locally) is gone — its replacement lives in
+// `lib/packages/wallet/wallet.dart` and runs every sign through the
+// dedicated `WalletIsolate`. The end-to-end behaviour of the new
+// account is covered by `wallet_isolate_test.dart`; this file pins
+// the format of `getDerivationPath` so a refactor of the base class
+// cannot quietly break the BIP-44 path convention.
+
 import 'dart:typed_data';
 
 import 'package:bip32/bip32.dart';
@@ -7,83 +16,54 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
+import 'package:web3dart/credentials.dart';
+import 'package:web3dart/crypto.dart';
 
 class _MockBitboxManager extends Mock implements BitboxManager {}
 
 const _testMnemonic = 'test test test test test test test test test test test junk';
 
-BIP32 _testRoot() => BIP32.fromSeed(bip39.mnemonicToSeed(_testMnemonic));
+class _StubCredentials extends CredentialsWithKnownAddress {
+  _StubCredentials(this._address);
+  final EthereumAddress _address;
+
+  @override
+  EthereumAddress get address => _address;
+
+  @override
+  MsgSignature signToEcSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) =>
+      throw UnimplementedError('stub');
+
+  @override
+  Future<MsgSignature> signToSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) =>
+      throw UnimplementedError('stub');
+}
+
+class _StubAccount extends AWalletAccount {
+  _StubAccount(super.accountIndex, super.primaryAddress);
+
+  @override
+  Future<String> signMessage(String message, {int addressIndex = 0}) async =>
+      throw UnimplementedError('stub — not exercised in this test');
+}
 
 void main() {
-  group('$WalletAccount', () {
-    test('getDerivationPath uses the BIP-44 Ethereum format', () {
-      final account = WalletAccount(_testRoot(), 0);
+  final stubAddress =
+      _StubCredentials(EthereumAddress.fromHex('0x0000000000000000000000000000000000000001'));
+
+  group('$AWalletAccount.getDerivationPath', () {
+    test('uses the BIP-44 Ethereum format with account index zero', () {
+      final account = _StubAccount(0, stubAddress);
 
       expect(account.getDerivationPath(0), "m/44'/60'/0'/0/0");
       expect(account.getDerivationPath(5), "m/44'/60'/0'/0/5");
     });
 
-    test('derivation path includes the account index', () {
-      final account = WalletAccount(_testRoot(), 3);
+    test('threads the account index through the third path segment', () {
+      final account = _StubAccount(3, stubAddress);
 
       expect(account.getDerivationPath(0), "m/44'/60'/3'/0/0");
-    });
-
-    test('primaryAddress is derived deterministically from the seed', () {
-      // The first test-mnemonic Ethereum address is the well-known
-      // Hardhat / Foundry account #0.
-      const expected = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
-
-      final account = WalletAccount(_testRoot(), 0);
-
-      expect(
-        account.primaryAddress.address.hexEip55,
-        expected,
-      );
-    });
-
-    test('different account indices derive different addresses', () {
-      final a = WalletAccount(_testRoot(), 0).primaryAddress.address.hex;
-      final b = WalletAccount(_testRoot(), 1).primaryAddress.address.hex;
-
-      expect(a, isNot(b));
-    });
-
-    test('signMessage produces a 65-byte hex signature', () async {
-      final account = WalletAccount(_testRoot(), 0);
-
-      final signature = await account.signMessage('hello');
-
-      // 0x prefix + 65 bytes * 2 hex chars = 132 chars.
-      expect(signature, startsWith('0x'));
-      expect(signature.length, 132);
-    });
-
-    test('signMessage is deterministic for the same input', () async {
-      final account = WalletAccount(_testRoot(), 0);
-
-      final first = await account.signMessage('payload');
-      final second = await account.signMessage('payload');
-
-      expect(first, second);
-    });
-
-    test('signMessage with a different addressIndex yields a different signature', () async {
-      final account = WalletAccount(_testRoot(), 0);
-
-      final fromZero = await account.signMessage('payload', addressIndex: 0);
-      final fromOne = await account.signMessage('payload', addressIndex: 1);
-
-      expect(fromZero, isNot(fromOne));
-    });
-
-    test('signMessage with non-ASCII characters succeeds (regression for #289)', () async {
-      final account = WalletAccount(_testRoot(), 0);
-
-      final sig = await account.signMessage('Grüße 🚀');
-
-      expect(sig, startsWith('0x'));
-      expect(sig.length, 132);
+      expect(account.getDerivationPath(2), "m/44'/60'/3'/0/2");
     });
   });
 

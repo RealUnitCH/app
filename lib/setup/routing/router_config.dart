@@ -79,7 +79,7 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: OnboardingRoutes.verifySeed,
       path: '/verifySeed',
-      builder: (_, state) => VerifySeedPage(wallet: state.extra as SoftwareWallet),
+      builder: (_, state) => VerifySeedPage(draft: state.extra as SeedDraft),
     ),
 
     GoRoute(
