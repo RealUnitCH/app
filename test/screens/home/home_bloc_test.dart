@@ -397,7 +397,7 @@ void main() {
         when(() => bitboxService.clear()).thenAnswer((_) async {});
         when(
           () => walletService.deleteCurrentWallet(),
-        ).thenAnswer((_) async {});
+        ).thenAnswer((_) async => (accountRows: 0, walletRows: 1, mnemonicKeyDeleted: false));
         when(() => appStore.sessionCache).thenReturn(sessionCache);
       });
 
