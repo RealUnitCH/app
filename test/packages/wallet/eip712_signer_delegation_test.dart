@@ -307,4 +307,36 @@ void main() {
       );
     });
   });
+
+  group('Eip712Signer.signKycEnvelope (NEW-19 future path)', () {
+    test('happy path: produces a non-empty signature', () async {
+      final sig = await signer.signKycEnvelope(
+        credentials: credentials,
+        chainId: 1,
+        verifyingContract: _verifyingContract,
+        accountType: 'PERSONAL',
+        firstName: 'Test',
+        lastName: 'User',
+        phone: '+41790000000',
+        addressStreet: 'Teststrasse',
+        addressHouseNumber: '1',
+        addressZip: '8000',
+        addressCity: 'Zurich',
+        addressCountry: 41,
+        registrationDate: '2026-05-23',
+      );
+      expect(sig, startsWith('0x'));
+      expect(sig.length, 132);
+    });
+  });
+
+  group('Eip712Signer.signDelegation static legacy wrapper', () {
+    test('delegates to the instance signer; produces a non-empty signature', () async {
+      final sig = await Eip712Signer.signDelegation(
+        credentials: credentials,
+        eip7702Data: _validResponse(),
+      );
+      expect(sig, startsWith('0x'));
+    });
+  });
 }

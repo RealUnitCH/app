@@ -274,5 +274,82 @@ void main() {
       expect(ex.toString(), contains('eip7702-delegation/v1'));
       expect(ex.toString(), contains('extra field secretApproval'));
     });
+
+    test('toString + hashCode exercise every typed exception (coverage pin)', () {
+      // Each typed exception's toString / hashCode / operator == /
+      // arbKey is part of the SignException contract. Exercising them
+      // here ensures the coverage gate stays green when a refactor
+      // forgets to wire one of the boilerplate overrides.
+      for (final ex in allKnownSignExceptions()) {
+        expect(ex.toString(), isNotEmpty);
+        expect(ex.hashCode, isA<int>());
+        // identical() short-circuit
+        // ignore: unrelated_type_equality_checks
+        expect(ex == ex, isTrue);
+        // not-equal to a non-SignException
+        expect(ex == Object(), isFalse);
+        expect(ex.arbKey, isNotEmpty);
+      }
+    });
+
+    test('value equality on every reference-equality exception', () {
+      // Singleton-style typed exceptions have value equality even
+      // though they carry no fields.
+      expect(
+        const BitboxUserAbortException(),
+        const BitboxUserAbortException(),
+      );
+      expect(
+        const BitboxChannelHashMismatchException(),
+        const BitboxChannelHashMismatchException(),
+      );
+      expect(
+        const BitboxTimeoutException(),
+        const BitboxTimeoutException(),
+      );
+      expect(
+        const BitboxNotConnectedSignException(),
+        const BitboxNotConnectedSignException(),
+      );
+      expect(
+        const Eip7702NotSupportedException(),
+        const Eip7702NotSupportedException(),
+      );
+      expect(
+        const SigningCancelledSignException(),
+        const SigningCancelledSignException(),
+      );
+    });
+
+    test('Eip712SchemaDriftException value equality', () {
+      const a = Eip712SchemaDriftException(
+        driftedField: 'X',
+        schemaVersion: 'v1',
+        reason: 'r',
+      );
+      const b = Eip712SchemaDriftException(
+        driftedField: 'X',
+        schemaVersion: 'v1',
+        reason: 'r',
+      );
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      const c = Eip712SchemaDriftException(
+        driftedField: 'Y',
+        schemaVersion: 'v1',
+        reason: 'r',
+      );
+      expect(a, isNot(c));
+    });
+
+    test('BtcPsbtInvalidException value equality + toString', () {
+      const a = BtcPsbtInvalidException('empty');
+      const b = BtcPsbtInvalidException('empty');
+      const c = BtcPsbtInvalidException('wrong magic');
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      expect(a, isNot(c));
+      expect(a.toString(), contains('empty'));
+    });
   });
 }
