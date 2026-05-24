@@ -32,7 +32,6 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:realunit_wallet/packages/wallet/error_mapper.dart';
-import 'package:realunit_wallet/packages/wallet/schemas/btc_psbt_schema.dart';
 import 'package:realunit_wallet/packages/wallet/schemas/registration_schema.dart';
 import 'package:realunit_wallet/packages/wallet/sign_pipeline.dart';
 import 'package:web3dart/web3dart.dart';
@@ -118,12 +117,12 @@ Eip7702Data _validEip7702Data({
         Eip7702TypeField(name: 'terms', type: 'bytes'),
       ],
     ),
-    message: Eip7702Message(
+    message: const Eip7702Message(
       delegate: '0x0000000000000000000000000000000000000abc',
       delegator: _testAddress,
       authority:
           '0x0000000000000000000000000000000000000000000000000000000000000000',
-      caveats: const [],
+      caveats: [],
       salt: 0,
     ),
     tokenAddress: '0x0000000000000000000000000000000000000aaa',
@@ -388,6 +387,46 @@ void main() {
         pipeline.sign(req),
         throwsA(isA<Eip7702ExpectedParamsMismatchException>()),
       );
+    });
+  });
+
+  group('swissTaxResidence flows from request → envelope → dto (BL-002)', () {
+    test('swissTaxResidence=true appears as true in BOTH envelope and dto', () async {
+      final result = await pipeline.sign(
+        _registrationReq(swissTaxResidence: true),
+      );
+      final typed = result as TypedDataSignResult;
+      final envelope = jsonDecode(typed.envelopeJson) as Map<String, dynamic>;
+      final envMessage = envelope['message'] as Map<String, dynamic>;
+      final dto = jsonDecode(typed.dtoJson) as Map<String, dynamic>;
+      expect(envMessage['swissTaxResidence'], true);
+      expect(dto['swissTaxResidence'], true);
+    });
+
+    test('swissTaxResidence=false appears as false in BOTH envelope and dto', () async {
+      final result = await pipeline.sign(
+        _registrationReq(swissTaxResidence: false),
+      );
+      final typed = result as TypedDataSignResult;
+      final envelope = jsonDecode(typed.envelopeJson) as Map<String, dynamic>;
+      final envMessage = envelope['message'] as Map<String, dynamic>;
+      final dto = jsonDecode(typed.dtoJson) as Map<String, dynamic>;
+      expect(envMessage['swissTaxResidence'], false);
+      expect(dto['swissTaxResidence'], false);
+    });
+
+    test('signatures differ between swissTaxResidence=true and false', () async {
+      // Pin: the value is a SIGNED field (it lives in the EIP-712
+      // message), not metadata. A change in the user's tick MUST
+      // change the signature so the backend can't be fooled into
+      // treating an old (false) signature as a new (true) attestation.
+      final sigTrue = (await pipeline.sign(
+        _registrationReq(swissTaxResidence: true),
+      ) as TypedDataSignResult).signature;
+      final sigFalse = (await pipeline.sign(
+        _registrationReq(swissTaxResidence: false),
+      ) as TypedDataSignResult).signature;
+      expect(sigTrue, isNot(equals(sigFalse)));
     });
   });
 
