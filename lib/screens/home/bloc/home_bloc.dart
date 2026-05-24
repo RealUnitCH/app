@@ -87,6 +87,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     _bitboxService.stopConnectionStatusObserver();
     await _appStore.sessionCache.clear();
     if (_walletService.hasWallet()) {
+      // The Initiative IV deleteCurrentWallet returns row counts +
+      // mnemonic-key-deleted flag; the home-bloc flow doesn't surface
+      // them to the UI, but the typed tuple is preserved for tests and a
+      // future settings-screen "show last delete summary" affordance.
       await _walletService.deleteCurrentWallet();
       _settingsService.setTermsAccepted(false);
     }

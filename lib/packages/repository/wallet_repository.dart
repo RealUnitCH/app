@@ -42,7 +42,19 @@ class WalletRepository {
     return _decryptWalletInfo(info);
   }
 
-  Future<void> deleteWallet(int id) => _appDatabase.deleteWallet(id);
+  /// Deletes the wallet row + its dependent account rows. Returns the row
+  /// counts so callers can audit the cleanup (e.g. integration tests
+  /// pinning the F-001 / BL-004 fix). See
+  /// `WalletStorage.deleteWallet` for the FK-order rationale.
+  Future<({int accountRows, int walletRows})> deleteWallet(int id) =>
+      _appDatabase.deleteWallet(id);
+
+  /// `true` after deleting the wallet identified by [id], `false` if other
+  /// wallet rows remain. Callers use this to gate the optional
+  /// `SecureStorage.deleteMnemonicEncryptionKey()` on a last-wallet-delete
+  /// without paying for an extra round trip — the count is read inside the
+  /// same transaction-adjacent window.
+  Future<bool> isLastWallet() async => (await _appDatabase.countWallets()) == 0;
 
   Future<WalletInfo> _decryptWalletInfo(WalletInfo info) async {
     final key = await _secureStorage.getOrCreateMnemonicKey();

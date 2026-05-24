@@ -165,6 +165,15 @@ class SecureStorage {
     return key;
   }
 
+  /// Removes the Keychain-stored mnemonic encryption key. Called on the
+  /// last-wallet-delete path when the user has opted in via
+  /// `SettingsRepository.deleteMnemonicKeyOnLastWalletDelete`. Defensive
+  /// no-op semantics: a missing key is not an error — the caller may have
+  /// already cleared it, or the key may never have been written (a fresh
+  /// install that only ever held view wallets).
+  Future<void> deleteMnemonicEncryptionKey() =>
+      _secureStorage.delete(key: _mnemonicEncryptionKey);
+
   static String encryptSeed(Uint8List key, String plaintext) {
     final iv = _secureRandomBytes(12);
     final cipher = GCMBlockCipher(AESEngine())

@@ -5,6 +5,7 @@ import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
 class WalletService {
@@ -12,6 +13,7 @@ class WalletService {
   final SettingsRepository _settingsRepository;
   final BitboxService _bitboxService;
   final AppStore _appStore;
+  final SecureStorage _secureStorage;
 
   /// Auto-lock 60 s after each unlock, regardless of subsequent activity. The
   /// timer is armed in [ensureCurrentWalletUnlocked] and is NOT reset by user
@@ -46,6 +48,7 @@ class WalletService {
     this._repository,
     this._settingsRepository,
     this._appStore,
+    this._secureStorage,
   );
 
   /// Generates a fresh bip39 mnemonic and returns a [SoftwareWallet] that
@@ -272,10 +275,37 @@ class WalletService {
     _appStore.wallet = SoftwareViewWallet(current.id, current.name, address);
   }
 
-  Future<void> deleteCurrentWallet() async {
+  /// Deletes the current wallet end-to-end:
+  ///   1. Drops the `walletAccountInfos` rows + `walletInfos` row via
+  ///      `WalletRepository.deleteWallet` (BL-004 chain).
+  ///   2. If this was the last wallet on the device AND the user opted in
+  ///      via [SettingsRepository.deleteMnemonicKeyOnLastWalletDelete],
+  ///      removes the Keychain-stored mnemonic encryption key as well.
+  ///      The default is opted-out — see the ADR for the trade-off.
+  ///   3. Clears the `currentWalletId` setting so the next launch routes
+  ///      back through onboarding instead of a no-wallet crash.
+  ///
+  /// Returns the row counts from the underlying delete so callers (and
+  /// integration tests) can audit the cleanup. The third tuple field
+  /// signals whether the mnemonic key was actually removed — only true
+  /// when both the opt-in flag was set AND the deleted wallet was the
+  /// last one.
+  Future<({int accountRows, int walletRows, bool mnemonicKeyDeleted})>
+      deleteCurrentWallet() async {
     final id = _settingsRepository.currentWalletId!;
-    await _repository.deleteWallet(id);
+    final counts = await _repository.deleteWallet(id);
+    final isLast = await _repository.isLastWallet();
+    final shouldDeleteKey =
+        isLast && _settingsRepository.deleteMnemonicKeyOnLastWalletDelete;
+    if (shouldDeleteKey) {
+      await _secureStorage.deleteMnemonicEncryptionKey();
+    }
     await _settingsRepository.removeCurrentWalletId();
+    return (
+      accountRows: counts.accountRows,
+      walletRows: counts.walletRows,
+      mnemonicKeyDeleted: shouldDeleteKey,
+    );
   }
 
   bool hasWallet() => _settingsRepository.currentWalletId != null;
