@@ -80,15 +80,13 @@ class _KycEmailFormState extends State<KycEmailForm> {
               ),
             );
             if (isConfirmed == true && context.mounted) {
-              // A successful merge confirmation produced the EIP-712
-              // registration signature via
-              // `KycEmailVerificationCubit._completeRegistration` →
-              // `RealUnitRegistrationService.registerWallet`. The verification
-              // page only pops with `true` when that succeeded, so the sign
-              // gate is safe to mark — without this, existing DFX customers
-              // would be misrouted back to the empty registration form after
-              // the disclaimer step.
-              context.read<KycCubit>().markRegistrationSignProduced();
+              // BL-006 — the sign-gate flip is now owned by
+              // KycEmailVerificationCubit's success branch (via the
+              // `onSignProduced` callback wired in
+              // KycEmailVerificationPage). The page-on-pop listener
+              // continues to drive the rest of the KYC step rotation
+              // via `checkKyc()`, but the gate is no longer flipped
+              // speculatively from here.
               context.read<KycCubit>().checkKyc();
             }
           }

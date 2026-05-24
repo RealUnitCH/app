@@ -3,9 +3,11 @@ import 'dart:developer' as developer;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/packages/utils/jwt_decoder.dart';
+import 'package:realunit_wallet/packages/wallet/error_mapper.dart';
 
 part 'kyc_email_verification_state.dart';
 
@@ -13,6 +15,12 @@ class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
   final DFXAuthService _dfxService;
   final RealUnitWalletService _walletService;
   final RealUnitRegistrationService _registrationService;
+
+  /// Invoked when registerWallet succeeded. Closes BL-006 by moving the
+  /// sign-gate flip from the page-listener-on-pop into the cubit's own
+  /// success branch — the gate is no longer flipped speculatively if
+  /// the user dismisses the page mid-flow.
+  final void Function()? _onSignProduced;
 
   // `Future.timeout` does not cancel the underlying work, so a late HTTP
   // response from an earlier call can still resume after a retry. Each
@@ -30,15 +38,22 @@ class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
   // race is `getWalletStatus` propagation on the user-data side, so a retry
   // after a `RegistrationFailure` should skip the auth-side check and go
   // straight to `_completeRegistration`.
+  //
+  // BL-006 invariant: on [BitboxNotConnectedException] we RESET this latch
+  // so that after the user reconnects the BitBox and retries, the JWT
+  // account-id check runs again. Without the reset a reconnect-then-retry
+  // would skip the auth-side step and fail mysteriously on a backend race.
   bool _mergeDetected = false;
 
   KycEmailVerificationCubit({
     required DFXAuthService dfxService,
     required RealUnitWalletService walletService,
     required RealUnitRegistrationService registrationService,
+    void Function()? onSignProduced,
   }) : _dfxService = dfxService,
        _walletService = walletService,
        _registrationService = registrationService,
+       _onSignProduced = onSignProduced,
        super(const KycEmailVerificationInitial());
 
   Future<void> checkEmailVerification() async {
@@ -67,16 +82,22 @@ class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
     // new wallet with the merged user via the EIP-712 registration signature.
     if (await _completeRegistration(generation)) {
       if (isClosed || generation != _runGeneration) return;
+      // Sign succeeded — flip the sign-gate from inside the cubit so the
+      // outer page-listener can drop its speculative
+      // `markRegistrationSignProduced()` on pop (closes BL-006).
+      _onSignProduced?.call();
       emit(const KycEmailVerificationSuccess());
     }
-    // else: _completeRegistration already emitted RegistrationFailure; we
-    // intentionally do NOT emit Success here so the verification page stays
-    // open and the user can retry without the failure being papered over.
+    // else: _completeRegistration already emitted RegistrationFailure or
+    // KycEmailVerificationBitboxRequired; we intentionally do NOT emit
+    // Success here so the verification page stays open and the user can
+    // retry without the failure being papered over.
   }
 
   /// Returns `true` when the wallet was successfully registered with the
   /// (now-merged) user account. On failure the cubit is already in
-  /// [KycEmailVerificationRegistrationFailure] so the listener can show the
+  /// [KycEmailVerificationRegistrationFailure] or
+  /// [KycEmailVerificationBitboxRequired] so the listener can show the
   /// error to the user.
   Future<bool> _completeRegistration(int generation) async {
     try {
@@ -97,6 +118,26 @@ class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
       await _registrationService.registerWallet(status.realUnitUserDataDto!);
       if (isClosed || generation != _runGeneration) return false;
       return true;
+    } on BitboxNotConnectedException {
+      // BL-006 — the BitBox dropped mid-sign. Route to the typed
+      // BitboxRequired state so the page can open the reconnect sheet
+      // instead of showing a generic "Registration failed" snackbar.
+      // Reset `_mergeDetected` so the post-reconnect retry re-runs the
+      // auth-side JWT account check (the backend may have rotated tokens
+      // during the reconnect window).
+      if (isClosed || generation != _runGeneration) return false;
+      _mergeDetected = false;
+      emit(const KycEmailVerificationBitboxRequired());
+      return false;
+    } on BitboxNotConnectedSignException {
+      // Same as above but via the typed-pipeline path (post-Initiative
+      // II migration). Kept distinct so a refactor that drops the
+      // legacy exception import still routes through the typed
+      // hierarchy. Resets `_mergeDetected` for the same reason.
+      if (isClosed || generation != _runGeneration) return false;
+      _mergeDetected = false;
+      emit(const KycEmailVerificationBitboxRequired());
+      return false;
     } catch (e) {
       if (isClosed || generation != _runGeneration) return false;
       developer.log('registerWallet failed: $e');

@@ -7,7 +7,9 @@ import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
+import 'package:realunit_wallet/screens/hardware_connect_bitbox/show_bitbox_reconnect_sheet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_verification/kyc_email_verification_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -18,11 +20,21 @@ class KycEmailVerificationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Keep a stable reference to the KycCubit owned by the route that
+    // pushed this page — the cubit lives one route up the tree so we
+    // resolve it before the BlocProvider below shadows nothing.
+    final kycCubit = context.read<KycCubit>();
     return BlocProvider(
       create: (context) => KycEmailVerificationCubit(
         dfxService: getIt<DfxWidgetService>(),
         walletService: getIt<RealUnitWalletService>(),
         registrationService: getIt<RealUnitRegistrationService>(),
+        // BL-006 — sign-gate flip moves from the outer page listener
+        // (kyc_email_page.dart on pop) into the cubit's success branch.
+        // The callback hands the existing KycCubit reference so the
+        // flip happens exactly when the EIP-712 sign succeeded, not
+        // speculatively on a `true` pop.
+        onSignProduced: kycCubit.markRegistrationSignProduced,
       ),
       child: const KycEmailVerificationView(),
     );
@@ -35,7 +47,7 @@ class KycEmailVerificationView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocListener<KycEmailVerificationCubit, KycEmailVerificationState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is KycEmailVerificationFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -56,6 +68,21 @@ class KycEmailVerificationView extends StatelessWidget {
         }
         if (state is KycEmailVerificationSuccess) {
           context.pop(true);
+        }
+        if (state is KycEmailVerificationBitboxRequired) {
+          // BL-006 — surface the reconnect sheet instead of a generic
+          // "Registration failed" snackbar. On successful reconnect,
+          // immediately re-run the verification flow; the cubit's
+          // `_mergeDetected` latch was reset on the disconnect so the
+          // JWT account check runs again.
+          //
+          // Capture the cubit reference up front so the post-await
+          // re-run does not depend on the still-mounted BuildContext.
+          final cubit = context.read<KycEmailVerificationCubit>();
+          final reconnected = await showBitboxReconnectSheet(context);
+          if (reconnected && !cubit.isClosed) {
+            await cubit.checkEmailVerification();
+          }
         }
       },
       child: Scaffold(
