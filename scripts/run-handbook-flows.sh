@@ -1,12 +1,19 @@
 #!/usr/bin/env bash
 #
-# Re-capture every handbook screenshot from a running iOS Simulator.
+# Tier-3 navigation smoke for the 26 .maestro/handbook/*.yaml flows.
 #
-# For each flow in .maestro/handbook/*.yaml (alphabetical order):
-#   1. run the Maestro flow — navigates to the screen we want to document
-#   2. take a screenshot via `xcrun simctl io booted screenshot`
+# For each flow (alphabetical order):
+#   1. run the Maestro flow — navigates the real built app to the target
+#      screen and asserts the expected UI state is reachable
+#   2. take a diagnostic screenshot via `xcrun simctl io booted screenshot`,
+#      written to build/handbook-captures/ so CI can attach it as an
+#      artifact for forensic inspection on assertion failures
 #
-# Why not Maestro's built-in `takeScreenshot`?
+# NOT the source of `handbook.realunit.app` screenshots — those are the
+# visual-regression Golden baselines under test/goldens/screens/, mapped
+# by scripts/assemble-handbook-screenshots.sh. See docs/handbook/README.md.
+#
+# Why xcrun rather than Maestro's built-in `takeScreenshot`?
 #   Maestro screenshots go through XCUITest, which renders the view-hierarchy
 #   bitmap. Flutter screens that use `BackdropFilter` (e.g. SeedBlurCard on
 #   the seed-backup pages) live on a GPU layer outside that bitmap and come
@@ -63,9 +70,9 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MAESTRO="${MAESTRO:-$HOME/.maestro/bin/maestro}"
 FLOWS_DIR="$REPO_ROOT/.maestro/handbook"
-SCREENS_DIR="$REPO_ROOT/docs/handbook/screenshots"
+CAPTURES_DIR="$REPO_ROOT/build/handbook-captures"
 
-mkdir -p "$SCREENS_DIR"
+mkdir -p "$CAPTURES_DIR"
 
 if [ ! -x "$MAESTRO" ] && ! command -v maestro >/dev/null 2>&1; then
   echo "error: maestro CLI not found (expected at $MAESTRO or on PATH)" >&2
@@ -223,7 +230,7 @@ timings=()
 for flow in "${flows[@]}"; do
   base="$(basename "$flow" .yaml)"
   tmp_png="$TMP_DIR/$base.png"
-  png="$SCREENS_DIR/$base.png"
+  png="$CAPTURES_DIR/$base.png"
   echo
   echo "▶ $base"
   flow_start=$(date +%s)
@@ -265,12 +272,12 @@ for flow in "${flows[@]}"; do
     xcrun simctl spawn "$UDID" log show \
       --predicate 'process == "XCTRunner" OR process CONTAINS "swiss.realunit.app"' \
       --last 2m --style compact 2>/dev/null | tail -200 || true
-    echo "--- POST-MORTEM: copy Maestro debug-output for failure to screenshots dir ---"
+    echo "--- POST-MORTEM: copy Maestro debug-output for failure to captures dir ---"
     if [ -d "$debug_dir" ]; then
       # Surface the failure screenshot + view hierarchy in the
       # uploaded artifact so a reviewer can see what was on screen
       # at the assertion point without re-running locally.
-      cp -R "$debug_dir" "$SCREENS_DIR/_debug-$base-attempt-$attempt" || true
+      cp -R "$debug_dir" "$CAPTURES_DIR/_debug-$base-attempt-$attempt" || true
     fi
     exit 1
   done
@@ -291,5 +298,5 @@ printf '%s\n' "${timings[@]}" | sort -t'|' -k2 -rn | while IFS='|' read -r name 
   printf '  %-34s %9s  (%s attempt(s))\n' "$name" "$(fmt_duration "$secs")" "$att"
 done
 echo
-echo "Screenshots in $SCREENS_DIR:"
-ls -1 "$SCREENS_DIR"
+echo "Captures in $CAPTURES_DIR:"
+ls -1 "$CAPTURES_DIR"

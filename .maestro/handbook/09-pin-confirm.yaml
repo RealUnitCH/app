@@ -1,4 +1,6 @@
-# Captures docs/handbook/screenshots/09-pin-confirm.png
+# Tier-3 navigation smoke. The handbook screenshot for this flow is the
+# visual-regression Golden mapped in scripts/assemble-handbook-screenshots.sh;
+# this flow's diagnostic capture lands in build/handbook-captures/09-pin-confirm.png.
 # After entering six 1s, the same screen flips to confirm mode with the title
 # "Bestätigen Sie Ihre PIN" (single SetupPinPage with create/confirm states).
 #

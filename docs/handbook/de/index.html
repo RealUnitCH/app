@@ -6,7 +6,7 @@
     <title>RealUnit Wallet — Handbuch &amp; Test-Dokumentation</title>
     <meta
       name="description"
-      content="RealUnit Wallet — Handbuch und Test-Dokumentation. Jeder Screenshot ist eine Maestro-Tier-3-Aufnahme; die App-Variante, die auf realer Hardware exakt diese Screens produziert, ist die spezifizierte."
+      content="RealUnit Wallet — Handbuch und Test-Dokumentation. Jeder Screenshot ist eine Visual-Regression-Golden-Baseline; die App-Version, die auf realer Hardware exakt diese Screens produziert, ist die spezifizierte."
     />
     <script>
       // Auto-open the enclosing <details> and scroll to the hash target
@@ -590,57 +590,64 @@
         <section class="hero" id="intro">
           <h1>RealUnit Wallet — Handbook</h1>
           <p class="lede">
-            User-Doku und Test-Doku in einem. Jeder Screenshot auf dieser Seite ist die Ausgabe
-            eines Maestro-Tier-3-Flows
-            (<code>.maestro/&lt;spec&gt;.yaml</code>), der auf einem iOS-Simulator gegen das
-            Debug-Bundle der App läuft. Wenn das Handbook aktuell aussieht, ist die App es auch —
+            User-Doku und Test-Doku in einem. Jeder Screenshot auf dieser Seite ist eine
+            Visual-Regression-Golden-Baseline aus <code>test/goldens/screens/</code> — eine
+            pixel-genaue Aufnahme des Page-Widgets, validiert vor jedem Merge auf dem
+            dfx01 Hardware-Runner. Wenn das Handbook aktuell aussieht, ist die App es auch —
             und umgekehrt.
           </p>
           <div class="meta">
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/DFXswiss/realunit-app">DFXswiss/realunit-app</a></span>
-            <span>🧪 <b>Tests:</b> ~1100 (Tier 0/1) · 26 Tier-3 screens</span>
+            <span>🧪 <b>Tests:</b> ~1100 (Tier 0/1) · 57 Visual-Regression Goldens · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die Flows liegen in <code>.maestro/*.yaml</code> und sind mit
-            <code>tags: [handbook]</code> markiert. Reproduzieren:
+            Die 26 Bilder dieser Seite sind ausgewählte Goldens aus
+            <code>test/goldens/screens/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
+            Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
+            <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
+            <code>Dockerfile.handbook</code> assembliert sie in einem Multi-Stage-Build in
+            das deployte nginx-Image — das committee Repo enthält keine Handbook-PNG-Kopien
+            mehr.
+          </p>
+
+          <p>
+            Lokale Vorschau:
           </p>
 
           <div class="callout info">
             <p>
-              <code>flutter build ios --simulator --debug</code><br />
-              <code>xcrun simctl install booted build/ios/iphonesimulator/Runner.app</code><br />
-              <code>scripts/run-handbook-flows.sh</code>
+              <code>bash scripts/assemble-handbook-screenshots.sh docs/handbook/screenshots</code><br />
+              <code>open docs/handbook/de/index.html</code>
             </p>
           </div>
 
           <p>
-            Das Skript führt alle handbook-Flows aus und legt die Screenshots in
-            <code>docs/handbook/screenshots/</code> ab. Die HTML-Seite linkt jedes Bild aus
-            diesem Verzeichnis — neu generieren = Handbook ist aktuell.
+            <code>docs/handbook/screenshots/</code> ist gitignored — das Verzeichnis wird
+            lokal nur transient für die Vorschau befüllt. Im deployten Image macht
+            <code>Dockerfile.handbook</code> exakt denselben Assembly-Schritt.
           </p>
 
           <p>
             Die fünf Test-Tiers sind in <a href="../../testing.md">docs/testing.md</a>
-            dokumentiert. Tier 3 (Maestro auf echter Hardware) ist offiziell deferred — dieses
-            Handbook nutzt den Simulator-Weg, der heute schon funktioniert.
+            dokumentiert. Tier 3 (Maestro Navigation-Smoke) läuft daneben unter
+            <a href="../../visual-regression-tests.md">visual-regression-tests.md</a>
+            und fängt das, was Goldens nicht sehen: kaputtes Tap-Routing, fehlende
+            Navigation, Locale-Probleme, iOS-Build-/Install-Fehler.
           </p>
 
           <div class="callout info">
             <p>
-              <b>Pipeline:</b> 26 Flows in <code>.maestro/handbook/</code>, alphabetisch
-              durchlaufen. Maestro übernimmt Navigation und Assertions; der eigentliche
-              Screenshot kommt von
-              <code>xcrun simctl io booted screenshot</code> — Flutters
-              <code>BackdropFilter</code> rendert auf einem GPU-Layer, der von
-              <code>takeScreenshot</code> (XCUITest) nicht erfasst wird. Vor jedem Run macht
-              der Wrapper <code>simctl erase</code>, damit das iOS-Keychain (Wallet + PIN)
-              frisch ist.
+              <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/screens/&lt;feature&gt;</code>
+              auf dfx01 (Hardware-Determinismus) → neue Baseline committen → Push auf
+              <code>develop</code> triggert <code>handbook-deploy.yaml</code> → Docker-Build
+              assembliert die 26 Slots aus <code>test/goldens/screens/</code> → DEV-Image,
+              dann PRD-Image, beide via Cloudflare Tunnel.
             </p>
           </div>
         </section>

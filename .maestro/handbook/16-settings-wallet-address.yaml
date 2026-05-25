@@ -1,4 +1,6 @@
-# Captures docs/handbook/screenshots/16-settings-wallet-address.png
+# Tier-3 navigation smoke. The handbook screenshot for this flow is the
+# visual-regression Golden mapped in scripts/assemble-handbook-screenshots.sh;
+# this flow's diagnostic capture lands in build/handbook-captures/16-settings-wallet-address.png.
 # Receive equivalent — shows the wallet's EVM address + QR code.
 #
 # Both taps (back to the settings list, then into the wallet-address screen)

@@ -278,10 +278,10 @@ jobs:
           set -f
           scripts/run-handbook-flows.sh $HANDBOOK_FLOWS
 
-      - name: Upload captured screenshots
+      - name: Upload Tier-3 navigation-smoke captures
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: handbook-captures
-          path: docs/handbook/screenshots/
+          path: build/handbook-captures/
           if-no-files-found: warn
