@@ -46,5 +46,26 @@ void main() {
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
       builder: () => wrapForGolden(buildSubject()),
     );
+
+    goldenTest(
+      'valid seed entered',
+      fileName: 'restore_wallet_page_valid',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        when(() => validateSeedCubit.state).thenReturn(ValidateSeedState.valid);
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'invalid seed entered',
+      fileName: 'restore_wallet_page_invalid',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        when(() => validateSeedCubit.state)
+            .thenReturn(ValidateSeedState.invalid);
+        return wrapForGolden(buildSubject());
+      },
+    );
   });
 }
