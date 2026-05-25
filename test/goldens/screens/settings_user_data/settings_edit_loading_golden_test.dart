@@ -1,4 +1,3 @@
-import 'package:alchemist/alchemist.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_loading_page.dart';
 

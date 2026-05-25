@@ -1,4 +1,3 @@
-import 'package:alchemist/alchemist.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_failure_page.dart';
 
