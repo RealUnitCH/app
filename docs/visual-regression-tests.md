@@ -40,29 +40,38 @@ Method-channel stubbing alone is **not enough**: the widget's first build assert
 
 For a one-page edge case the cost/benefit doesn't justify it. The test is committed with `skip: true` and reactivates the moment someone wires up a full `InAppWebViewPlatform` mock — preferably published as a separate test-only package so other Flutter apps can reuse it.
 
-## Initial bootstrap
+## Regenerating baselines
 
-The very first baseline set has to come from dfx01 itself. The pattern:
+Permanent on-demand workflow `.github/workflows/golden-regenerate.yaml`
+runs `flutter test test/goldens --update-goldens` on dfx01 and commits
+the regenerated PNGs back to the dispatched branch as
+`github-actions[bot]`. One command:
 
-1. Open this PR as **Draft**. The `golden-tests` CI job will be red on the
-   first push — no baselines exist yet.
-2. Run the temporary `golden-bootstrap.yaml` workflow via
-   `gh workflow run golden-bootstrap.yaml --ref feat/visual-regression-pilot -R DFXswiss/realunit-app`.
-3. Wait for the run to complete; download the `golden-baselines` artifact:
-   ```bash
-   RUN_ID=$(gh run list --workflow=golden-bootstrap.yaml --limit 1 --json databaseId --jq '.[0].databaseId')
-   gh run download "$RUN_ID" -n golden-baselines -D /tmp/baselines
-   ```
-4. Copy the PNGs into the repo, commit, push:
-   ```bash
-   rsync -a /tmp/baselines/ test/goldens/
-   git add test/goldens/screens/**/goldens/
-   git commit -m "test(goldens): commit initial baselines generated on dfx01"
-   git push
-   ```
-5. Verify the `golden-tests` job goes green on the next CI run.
-6. Delete `.github/workflows/golden-bootstrap.yaml` in the same PR before
-   marking ready-for-review.
+```bash
+gh workflow run golden-regenerate.yaml --ref <feature-branch>
+```
+
+When the run finishes green, the new baselines are already on the
+branch — pull and continue. No download / rsync / manual commit step.
+
+The workflow is `workflow_dispatch`-only, runs on the same
+`[self-hosted, macOS, ARM64, m3-ultra, realunit-app]` labels as
+`golden-tests`, and uses concurrency `golden-regenerate-<ref>` so two
+back-to-back dispatches on the same branch don't race each other.
+
+On a protected ref (`develop`, `main`) the push fails by design — no
+force-push, no bypass. In that case the regenerated PNGs are still
+uploaded as the `golden-baselines` artifact; download and rsync them
+onto a feature branch:
+
+```bash
+RUN_ID=$(gh run list --workflow=golden-regenerate.yaml --limit 1 --json databaseId --jq '.[0].databaseId')
+gh run download "$RUN_ID" -n golden-baselines -D /tmp/baselines
+rsync -a /tmp/baselines/ test/goldens/
+git add test/goldens/
+git commit -m "test(goldens): regenerate baselines on dfx01"
+git push
+```
 
 ## Day-to-day workflow
 
@@ -72,19 +81,20 @@ The very first baseline set has to come from dfx01 itself. The pattern:
    Reuse the mock pattern from the existing pilot tests.
 2. Open a Draft PR. The `golden-tests` job will be red because the new
    test has no committed baseline.
-3. Trigger a one-off bootstrap on the branch — same flow as the initial
-   bootstrap above, just generate, download, commit. Or, when the
-   `golden-bootstrap.yaml` workflow has already been deleted from develop:
-   reintroduce it on the branch and remove it again in the same PR.
+3. Run `gh workflow run golden-regenerate.yaml --ref <branch>`. The
+   workflow regenerates on dfx01 and pushes the PNGs back to the
+   branch as `github-actions[bot]`. Pull and verify `golden-tests`
+   goes green.
 
 ### Reacting to a CI drift
 
 CI shows the `Run visual regression tests` step red and an artifact
 `golden-diffs` is uploaded. Open the artifact and inspect the diff PNG:
 
-* **Intentional change** (you redesigned the UI): regenerate baselines on
-  dfx01 (see "Adding a new golden test" above) and commit the new PNGs in
-  the same PR as the UI change.
+* **Intentional change** (you redesigned the UI): regenerate baselines via
+  `gh workflow run golden-regenerate.yaml --ref <branch>` (see
+  "Regenerating baselines" above) and let the bot commit the new PNGs
+  onto the branch.
 * **Regression** (UI shouldn't have moved): fix the code; CI returns to
   green when pixels match again.
 
@@ -94,26 +104,29 @@ visually first.
 ### Flutter SDK bumps
 
 A Flutter bump (`flutter-version` in `.github/workflows/*.yaml`) changes
-Skia's text shaper or layout subtly. Goldens become stale. The bump PR
-must regenerate all baselines:
+Skia's text shaper or layout subtly. Goldens become stale. On the bump
+branch, dispatch the regenerate workflow:
 
 ```bash
-# On the bump branch, on dfx01 (or via golden-bootstrap.yaml workflow):
-flutter test test/goldens --update-goldens
-git add test/goldens/screens/**/goldens/
-git commit -m "test(goldens): regenerate after Flutter <new-version> bump"
+gh workflow run golden-regenerate.yaml --ref <bump-branch>
 ```
+
+The bot pushes `test(goldens): regenerate baselines on dfx01` onto the
+branch; rename or amend the commit message locally if a more specific
+"regenerate after Flutter X.Y.Z bump" note is useful.
 
 ### dfx01 outage fallback
 
 If dfx01 is down (power, macOS update, service maintenance) and a PR is
 blocked on `golden-tests`:
 
-1. Switch `runs-on:` in `pull-request.yaml` for the `golden-tests` job
-   from `[self-hosted, ..., realunit-app]` to `macos-15`.
-2. Regenerate all baselines on `macos-15` in the same PR.
-3. Merge. When dfx01 is back up, regenerate baselines on it in a separate
-   PR and switch `runs-on:` back.
+1. Switch `runs-on:` in `pull-request.yaml` for the `golden-tests` job —
+   and in `golden-regenerate.yaml` — from `[self-hosted, ..., realunit-app]`
+   to `macos-15`.
+2. Dispatch the regenerate workflow on the branch to refresh all baselines
+   on `macos-15`.
+3. Merge. When dfx01 is back up, flip `runs-on:` back in both workflows
+   and regenerate baselines on dfx01 in a separate PR.
 
 This path is intentionally manual — it's a notfall, not a routine. The
 flipping of baselines between two hosts incurs a mass-PNG-change PR each

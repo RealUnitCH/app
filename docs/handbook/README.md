@@ -25,17 +25,18 @@ Es gibt keinen separaten Regeneration-Schritt: Die 26 Handbook-Screenshots
 sind direkt die Golden-Baselines unter `test/goldens/screens/` (gemappt in
 `scripts/assemble-handbook-screenshots.sh`). Eine UI-Änderung an einer der
 gemappten Pages produziert beim `flutter test test/goldens` einen Diff —
-diesen mit `flutter test --update-goldens test/goldens/...` übernehmen, und
-der nächste Handbook-Deploy zeigt das aktualisierte Bild.
+diesen via `golden-regenerate.yaml` auf dfx01 regenerieren lassen, und der
+nächste Handbook-Deploy zeigt das aktualisierte Bild.
 
 Workflow:
 
 1. Page in `lib/screens/**/*_page.dart` ändern
 2. `flutter test test/goldens/screens/<feature>` läuft rot mit Diff-Artefakt
-3. Lokal `flutter test --update-goldens test/goldens/screens/<feature>` (auf
-   dfx01 oder gleichwertiger Hardware-pinned Umgebung — siehe
+3. `gh workflow run golden-regenerate.yaml --ref <branch>` — der Workflow
+   regeneriert auf dfx01 und committet die neuen PNGs als
+   `github-actions[bot]` zurück auf den Branch (siehe
    [`../visual-regression-tests.md`](../visual-regression-tests.md))
-4. Neuen PNG-Baseline committen → Handbook-Deploy pickt sie beim nächsten
+4. Pullen → Handbook-Deploy pickt die neue Baseline beim nächsten
    develop-Push automatisch auf.
 
 ## Selektive Läufe (Teilmenge)
