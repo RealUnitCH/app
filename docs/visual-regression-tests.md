@@ -20,17 +20,14 @@ Baselines werden ausschliesslich auf dfx01 generiert und validiert. Lokales
 (unterschiedliche Mac-Hardware/macOS-Versionen rendern Sub-Pixel-AA leicht
 anders).
 
-## Pilot scope
+## Layout
 
-| Screen | Tests | File |
-|---|---|---|
-| Welcome | 2 (iOS, Android theme variant) | `test/goldens/screens/welcome/welcome_golden_test.dart` |
-| Dashboard | 1 (empty balance) | `test/goldens/screens/dashboard/dashboard_golden_test.dart` |
-| Settings | 1 (default, no open wallet) | `test/goldens/screens/settings/settings_golden_test.dart` |
-| Buy | 2 (initial, payment-info-loaded) | `test/goldens/screens/buy/buy_golden_test.dart` |
-| Sell | 2 (no account zero balance, with balance) | `test/goldens/screens/sell/sell_golden_test.dart` |
-
-Baselines landen unter `test/goldens/screens/<feature>/goldens/macos/*.png`.
+One test file per `lib/screens/<feature>/<feature>_page.dart` under
+`test/goldens/screens/<feature>/<feature>_golden_test.dart`. Some pages
+have multiple state variants (e.g. Welcome has iOS + Android theme,
+Buy has initial + payment-info-loaded, Settings has default +
+confirm-logout-sheet) — those produce more than one PNG each. All
+baselines live under `test/goldens/screens/<feature>/goldens/macos/*.png`.
 
 ### Skipped: `web_view_page.dart`
 

@@ -64,10 +64,12 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Narrow add: only the baseline PNG tree. `test/goldens/` also
-          # holds transient `failures/` dirs that alchemist writes on
-          # mismatch — those are diagnostic artefacts, never commit.
-          git add 'test/goldens/screens/*/goldens/'
+          # Narrow add: only the baseline PNG tree. The `**/goldens/**`
+          # pattern matches the symmetric artifact path on line 92 — and
+          # excludes alchemist's transient `failures/` directories, which
+          # alchemist writes one level up (`<feature>/failures/...`), not
+          # inside `goldens/`.
+          git add 'test/goldens/screens/**/goldens/**'
           if git diff --cached --quiet; then
             echo "No baseline changes detected — nothing to commit."
             exit 0
