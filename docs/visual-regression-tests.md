@@ -77,7 +77,7 @@ git push
 ### Adding a new golden test
 
 1. Add a `*_golden_test.dart` under `test/goldens/screens/<feature>/`.
-   Reuse the mock pattern from the existing pilot tests.
+   Reuse the mock pattern from the existing golden tests.
 2. Open a Draft PR. The `golden-tests` job will be red because the new
    test has no committed baseline.
 3. Run `gh workflow run golden-regenerate.yaml --ref <branch>`. The
