@@ -1,0 +1,95 @@
+name: Golden Regenerate
+
+# On-demand visual-regression baseline regeneration on the dfx01 self-hosted
+# runner. Replaces the previous pattern of introducing/removing a temporary
+# `golden-bootstrap.yaml` per regen cycle.
+#
+# Usage:
+#   gh workflow run golden-regenerate.yaml --ref <feature-branch>
+#
+# The workflow checks out the dispatched ref, runs `flutter test
+# test/goldens --update-goldens` on dfx01, then commits the regenerated PNGs
+# back to that same ref as `github-actions[bot]`. If the ref is protected
+# (e.g. `develop`/`main`), the push fails cleanly — by design, no force-push
+# or bypass. In that case the regenerated baselines are still uploaded as a
+# `golden-baselines` artifact so the user can rsync them onto a feature
+# branch manually.
+#
+# Setup steps mirror the `golden-tests` job in `pull-request.yaml` 1:1.
+# Keep them in sync — a divergence here would mean the regenerated
+# baselines render under a different toolchain than the one that validates
+# them on PRs, defeating the whole hardware-determinism story.
+on:
+  workflow_dispatch:
+
+# Two parallel dispatches on the same ref would race each other's push.
+# Cancel the in-flight one so only the newest dispatch's baselines land.
+concurrency:
+  group: golden-regenerate-${{ github.ref }}
+  cancel-in-progress: true
+
+# `contents: write` is load-bearing: the auto-commit step pushes back to
+# the dispatched branch. The default `GITHUB_TOKEN` permission is `read`.
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    name: Regenerate golden baselines
+    runs-on: [self-hosted, macOS, ARM64, m3-ultra, realunit-app]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Explicit token so the later `git push` is authenticated. Without
+          # this, checkout still works but the remote is configured with no
+          # credential helper and the push fails with HTTP 403.
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.6"
+          channel: "stable"
+          cache: true
+      - run: flutter pub get
+      - run: dart run tool/generate_localization.dart
+      - run: dart run tool/generate_release_info.dart
+      - run: flutter pub run build_runner build
+
+      - name: Regenerate goldens
+        run: flutter test test/goldens --update-goldens
+
+      - name: Commit and push regenerated baselines
+        id: commit
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Narrow add: only the baseline PNG tree. The `**/goldens/**`
+          # pattern matches the symmetric artifact path on line 92 — and
+          # excludes alchemist's transient `failures/` directories, which
+          # alchemist writes one level up (`<feature>/failures/...`), not
+          # inside `goldens/`.
+          git add 'test/goldens/screens/**/goldens/**'
+          if git diff --cached --quiet; then
+            echo "No baseline changes detected — nothing to commit."
+            exit 0
+          fi
+          git commit -m "test(goldens): regenerate baselines on dfx01"
+          # On protected branches (develop/main) this fails by design.
+          # The next step uploads the PNGs as an artifact so the user can
+          # still recover the regen output.
+          git push
+
+      # Runs only if the push step failed. Uploads the regenerated PNGs so
+      # the user can rsync them locally onto a feature branch and commit
+      # there — same recovery path the temporary `golden-bootstrap.yaml`
+      # used to provide.
+      - name: Upload baselines as fallback artifact
+        if: failure() && steps.commit.conclusion == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-baselines
+          path: test/goldens/screens/**/goldens/**
+          # The fallback only runs because the push failed. An empty
+          # artifact here would silently strand the user — fail loud.
+          if-no-files-found: error
