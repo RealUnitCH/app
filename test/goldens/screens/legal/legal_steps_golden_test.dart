@@ -17,7 +17,7 @@ void main() {
         const Scaffold(
           body: Padding(
             padding: EdgeInsets.all(16),
-            child: LegalDisclaimerStep(step: 0),
+            child: SingleChildScrollView(child: LegalDisclaimerStep(step: 0)),
           ),
         ),
       ),
@@ -31,7 +31,7 @@ void main() {
         const Scaffold(
           body: Padding(
             padding: EdgeInsets.all(16),
-            child: LegalDisclaimerStep(step: 1),
+            child: SingleChildScrollView(child: LegalDisclaimerStep(step: 1)),
           ),
         ),
       ),
