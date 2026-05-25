@@ -10,11 +10,10 @@
 # The 26 screenshots (`screenshots/NN-name.png`) are assembled from the
 # visual-regression Golden baselines under `test/goldens/screens/` via
 # scripts/assemble-handbook-screenshots.sh — one Golden per handbook
-# flow, see the mapping in that script. The legacy Maestro-captured
-# `docs/handbook/screenshots/` directory is still copied as part of the
-# `docs/handbook/` COPY below (so e.g. README.md and any future de/en
-# split survive); the assembled-from-goldens screenshots in the second
-# COPY replace it whole.
+# entry, see the mapping in that script. `docs/handbook/screenshots/` is
+# git-ignored (the directory holds the assembly output for local previews
+# only); the second COPY below populates it inside the image from the
+# multi-stage assembly result.
 #
 # Note: docs/handbook/mails/ is git-ignored and populated at CI build time
 # by the "Generate RealUnit mail previews from api repo" step in

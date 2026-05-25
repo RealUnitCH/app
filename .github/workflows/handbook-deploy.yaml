@@ -18,6 +18,8 @@ on:
     branches: [develop]
     paths:
       - "docs/handbook/**"
+      - "test/goldens/screens/**"
+      - "scripts/assemble-handbook-screenshots.sh"
       - "Dockerfile.handbook"
       - "handbook.nginx.conf"
       - "handbook.htpasswd"
