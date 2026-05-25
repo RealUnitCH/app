@@ -58,6 +58,10 @@ void main() {
         'loading',
         fileName: 'settings_tax_report_page_loading',
         constraints: phoneConstraints,
+        // Loading state shows a CircularProgressIndicator that never
+        // settles. See buy_golden_test.dart `payment info loading` for
+        // the same workaround.
+        pumpBeforeTest: pumpOnce,
         builder: () {
           when(() => taxReportCubit.state)
               .thenReturn(const SettingsTaxReportLoading());

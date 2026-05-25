@@ -131,6 +131,10 @@ void main() {
       'payment info loading',
       fileName: 'buy_payment_info_loading',
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      // Loading state renders a CircularProgressIndicator — its animation
+      // never settles, so pumpAndSettle (default in precacheImages) hits
+      // its timeout. pumpOnce captures the first frame without waiting.
+      pumpBeforeTest: pumpOnce,
       builder: () {
         when(() => paymentInfoCubit.state)
             .thenReturn(const BuyPaymentInfoLoading());
