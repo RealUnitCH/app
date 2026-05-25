@@ -1,7 +1,9 @@
 name: Tier 3 — Handbook flows
 
 # Drives every `.maestro/handbook/*.yaml` flow against a freshly-erased iOS
-# Simulator and uploads the captured PNGs as a build artifact. Tier 3 in the
+# Simulator and uploads the per-flow diagnostic captures as a build artifact
+# for forensic inspection on assertion failure (pixel drift is owned by the
+# Visual Regression job — see "Why no pixel-diff here" below). Tier 3 in the
 # five-tier model defined in `docs/testing.md`: real BitBox hardware is
 # explicitly out of scope here — the handbook flows only need the software
 # wallet path, so a hosted macOS runner is enough.

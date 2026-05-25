@@ -600,7 +600,7 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/DFXswiss/realunit-app">DFXswiss/realunit-app</a></span>
-            <span>🧪 <b>Tests:</b> ~1100 (Tier 0/1) · 57 Visual-Regression Goldens · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> ~1100 (Tier 0/1) · 68 Visual-Regression Goldens · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
@@ -635,10 +635,11 @@
 
           <p>
             Die fünf Test-Tiers sind in <a href="../../testing.md">docs/testing.md</a>
-            dokumentiert. Tier 3 (Maestro Navigation-Smoke) läuft daneben unter
+            dokumentiert. Tier 3 (Maestro Navigation-Smoke) läuft daneben und fängt
+            das, was Goldens nicht sehen: kaputtes Tap-Routing, fehlende Navigation,
+            Locale-Probleme, iOS-Build-/Install-Fehler. Die Goldens-Side ist unter
             <a href="../../visual-regression-tests.md">visual-regression-tests.md</a>
-            und fängt das, was Goldens nicht sehen: kaputtes Tap-Routing, fehlende
-            Navigation, Locale-Probleme, iOS-Build-/Install-Fehler.
+            dokumentiert.
           </p>
 
           <div class="callout info">
