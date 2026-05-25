@@ -11,8 +11,8 @@ class TransactionHistoryFilterState {
     this.filtered = const [],
     DateTime? startDate,
     DateTime? endDate,
-  }) : startDate = startDate ?? DateTime.now().subtract(const Duration(days: 365)),
-       endDate = endDate ?? DateTime.now();
+  }) : startDate = startDate ?? clock.now().subtract(const Duration(days: 365)),
+       endDate = endDate ?? clock.now();
 
   TransactionHistoryFilterState copyWith({
     List<Transaction>? all,

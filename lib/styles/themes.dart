@@ -57,7 +57,10 @@ ThemeData get realUnitTheme => ThemeData(
         .symmetric(vertical: 14.0, horizontal: 20.0),
       ),
       textStyle: WidgetStatePropertyAll(
-        RealUnitTextStyle.body.base.copyWith(fontWeight: .w600),
+        RealUnitTextStyle.body.base.copyWith(
+          fontFamily: RealUnitTextStyle.fontFamily,
+          fontWeight: .w600,
+        ),
       ),
     ),
   ),
@@ -79,7 +82,10 @@ ThemeData get realUnitTheme => ThemeData(
         return RealUnitColors.basic.white;
       }),
       textStyle: WidgetStatePropertyAll(
-        RealUnitTextStyle.body.base.copyWith(fontWeight: .w600),
+        RealUnitTextStyle.body.base.copyWith(
+          fontFamily: RealUnitTextStyle.fontFamily,
+          fontWeight: .w600,
+        ),
       ),
     ),
   ),

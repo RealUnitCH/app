@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
@@ -71,7 +72,7 @@ class SettingsTaxReportView extends StatelessWidget {
                   return DatePickerField(
                     initialDate: _datePickerModel.value,
                     firstDate: DateTime(2025),
-                    lastDate: DateTime.now(),
+                    lastDate: clock.now(),
                     onDateSelected: (date) => _datePickerModel.setDate(date),
                   );
                 },
@@ -99,7 +100,7 @@ class SettingsTaxReportView extends StatelessWidget {
 }
 
 class _DatePickerModel extends ValueNotifier<DateTime> {
-  _DatePickerModel() : super(DateTime.now());
+  _DatePickerModel() : super(clock.now());
 
   void setDate(DateTime date) => value = date;
 }

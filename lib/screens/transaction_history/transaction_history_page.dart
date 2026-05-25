@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -32,7 +33,7 @@ class TransactionHistoryPage extends StatelessWidget {
 class TransactionHistoryView extends StatelessWidget {
   TransactionHistoryView({super.key, required this.walletAddress});
 
-  static final _todaysDate = DateTime.now();
+  static DateTime get _todaysDate => clock.now();
   final _endDateModel = _DatePickerModel(_todaysDate);
   final _startDateModel = _DatePickerModel(
     _todaysDate.subtract(const Duration(days: 365)),
