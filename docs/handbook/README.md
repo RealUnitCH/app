@@ -2,7 +2,7 @@
 
 User-Guide + Test-Doku in einem. Jeder Screenshot ist eine Visual-Regression-
 Golden-Baseline aus `test/goldens/screens/`; das Handbook bleibt nur dann
-visuell korrekt, wenn die App es auch ist — eine Drift im echten Page-Render
+visuell korrekt, wenn die App es auch ist — eine Drift im echten Seitenrendering
 flippt den entsprechenden Golden-Test rot, bevor das Handbook-Image gebaut wird.
 
 ## Lokal lesen

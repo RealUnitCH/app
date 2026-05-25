@@ -68,23 +68,26 @@ name: Tier 3 — Handbook flows
 #   can be diagnosed forensically. The CI-hardening track that landed
 #   this guard was DFXswiss/realunit-app#487 (now closed).
 #
-# Why no pixel-diff in v1:
-#   Font antialiasing differs between runner image versions and a strict
-#   pixel match would be flakier than the regressions it catches. The
-#   per-flow `assertVisible` / `extendedWaitUntil` already covers the
-#   most common drift modes (page removed, label changed, navigation
-#   reordered). Pixel-diff against `handbook.realunit.app` is tracked as
-#   a follow-up — see `docs/testing.md` Tier 3 section.
+# Why no pixel-diff here:
+#   Pixel drift on the page renders is owned by the Visual Regression job
+#   in `pull-request.yaml` (alchemist Goldens on the dfx01 hardware-pinned
+#   runner). Tier-3 catches the regressions Goldens cannot see — broken
+#   tap routing, missing navigation, locale/`Intl` problems, iOS-build
+#   and `simctl install` failures. The per-flow `assertVisible` /
+#   `extendedWaitUntil` covers those structural modes; the diagnostic
+#   captures under `build/handbook-captures/` are forensic artefacts for
+#   assertion failures, not a screenshot baseline.
 #
 # Why `iPhone 17` specifically:
-#   The `.maestro/handbook/*.yaml` flows were authored against this device
-#   class and `docs/handbook/screenshots/` was captured on it. Any other
-#   device shifts the safe-area insets and re-flows the cards — flow
-#   assertions would still pass but the screenshots would no longer match
-#   the live handbook. When the macOS runner image stops shipping iPhone
-#   17 by default, bump this here AND re-capture the screenshots in the
-#   same PR (run `scripts/run-handbook-flows.sh` locally on the new device
-#   and commit the diff).
+#   The `.maestro/handbook/*.yaml` flows use absolute tap points (e.g.
+#   `point: 50%,65%`) and assertions on text that sits inside the
+#   iPhone-17 safe-area layout. Any other device class would either
+#   reflow elements out of the tap-coordinate path or shift safe-area
+#   insets in a way that breaks the assertions. When the macOS runner
+#   image stops shipping iPhone 17 by default, bump this here AND
+#   re-verify all 26 flows on the new device (run
+#   `scripts/run-handbook-flows.sh` locally; assertion failures point
+#   at flows that need their coordinates / waits updated).
 #
 # Cross-reference: README "CI/CD" table + `docs/testing.md` Tier 3 entry.
 on:

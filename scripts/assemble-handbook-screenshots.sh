@@ -2,7 +2,8 @@
 #
 # Assemble the 26 handbook screenshots from the visual-regression Golden
 # baselines. The flat `NN-name.png` output layout matches what
-# docs/handbook/de/index.html links to (`<img src="screenshots/NN-name.png">`).
+# docs/handbook/de/index.html links to (`<img src="../screenshots/NN-name.png">`
+# — the relative path resolves to `docs/handbook/screenshots/NN-name.png`).
 #
 # Usage:
 #   scripts/assemble-handbook-screenshots.sh <output-dir>
