@@ -64,7 +64,11 @@ void main() {
     when(() => apiConfig.asset).thenReturn(realUnitAsset);
     when(() => appStore.apiConfig).thenReturn(apiConfig);
     when(() => appStore.primaryAddress).thenReturn('0x0');
-    when(() => transactionRepository.watchTransactionsOfAssets(any(), any()))
+    when(() => transactionRepository.watchTransactionsOfAssets(
+              any(),
+              any(),
+              any(),
+            ))
         .thenAnswer((_) => const Stream<List<Transaction>>.empty());
     getIt.registerSingleton<AppStore>(appStore);
     getIt.registerSingleton<RealUnitPdfService>(_MockRealUnitPdfService());
