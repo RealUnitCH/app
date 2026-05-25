@@ -366,7 +366,7 @@ The workflow runs three jobs:
 - **`Coverage Floor Gate`** — downloads `coverage-summary` and fails the build when scoped line/function coverage drops below the integers committed to `.coverage-floor-lines` and `.coverage-floor-functions`. Required status check on `develop` + `main` (ruleset `PRs` / id `11317379`) alongside `Analyze & Test` and `Visual Regression` — a coverage regression blocks the merge. Ratchet protocol is documented in `README.md`.
 - **`BitBox quirks audit`** — runs `bitbox-audit` against the diff and inlines its report into the workflow run summary; uploaded as `bitbox-audit-report`.
 
-Tier 3 runs separately under `tier3-handbook.yaml` (push to `develop`, manual, or any PR labelled `tier3:full` except PRs targeting `main`). Coverage is uploaded as an artifact (see [#323](https://github.com/DFXswiss/realunit-app/pull/323)). The repo holds a [100 % coverage rule](https://github.com/DFXswiss/realunit-app/pull/322) for new code — drop the threshold only with reviewer sign-off and a written reason.
+Tier 3 runs separately under `tier3-handbook.yaml` (push to `develop`, manual, or any PR labelled `tier3:full` except PRs targeting `main`). The Tier 3 job uploads `handbook-captures` (per-flow diagnostic recordings) as its only artifact; the Tier 0/1 coverage artifacts (`coverage-lcov`, `coverage-summary`) are emitted by the `Analyze & Test` job in `pull-request.yaml` (see [#323](https://github.com/DFXswiss/realunit-app/pull/323)) and consumed by the `Coverage Floor Gate`. The repo holds a [100 % coverage rule](https://github.com/DFXswiss/realunit-app/pull/322) for new code on the activated surface; the committed floor lives in `.coverage-floor-lines` and `.coverage-floor-functions` and is ratcheted upward per PR — drop the threshold only with reviewer sign-off and a written reason (`coverage:lower-floor` label).
 
 ## Surface that needs infra work before it can be unit-tested
 
@@ -374,9 +374,10 @@ Some files are deliberately uncovered today because exercising them would change
 
 | Area | Why it's not unit-tested | What it would take |
 |---|---|---|
-| `lib/packages/repository/*` (Drift wrappers) | `AppDatabase(String encryptionPassword)` builds a native SQLCipher executor; the in-memory injection point exists (`AppDatabase.forTesting`, `database.dart`), but the wrapper specs are not written yet | Write repository unit tests that pass `NativeDatabase.memory()` into `AppDatabase.forTesting` |
 | `lib/screens/*/`-Page widgets that call `getIt<X>()` directly (Dashboard, Receive, Settings sub-pages) | Service locator usage inside `build` makes the cubits the page wires up impossible to swap | Move the `BlocProvider(create: (_) => Cubit(getIt<X>()))` lookup up one layer so tests can `BlocProvider.value` a mock |
 | `lib/widgets/chain_asset_icon.dart`, `lib/widgets/image_picker_sheet.dart` | `Image.asset` / `ImagePicker` need a real asset bundle / platform channel | Mock the asset loader / use the platform-interface fake |
+
+The `lib/packages/repository/*` (Drift wrappers) infra row that used to live here is resolved: `AppDatabase.forTesting` (`lib/packages/storage/database.dart`) lets repository tests run against `NativeDatabase.memory()`, and `test/packages/repository/{asset,balance,cache,transaction,wallet}_repository_test.dart` cover every Drift-backed repository today. The SharedPreferences-backed `SettingsRepository` and the service-backed `SupportedFiat`/`SupportedLanguage` repositories also have specs alongside them.
 
 The Sumsub `flutter_idensic_mobile_sdk_plugin` boundary previously listed here is now abstracted via `SumsubIdentPort` (interface under `lib/screens/kyc/steps/ident/cubits/kyc_ident/sumsub_ident_port.dart`, real implementation `SumsubIdentSdkAdapter` outside the cubit folder). The cubit takes the port via constructor injection and is covered by `test/screens/kyc/steps/ident/cubits/kyc_ident/kyc_ident_cubit_test.dart` with an inline `_FakeSumsubIdentPort`. The SDK adapter itself carries the `@no-integration-test` annotation and is intentionally outside the cubit coverage scope.
 
