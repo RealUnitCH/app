@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 #
 # Assemble the 26 handbook screenshots from the visual-regression Golden
-# baselines. Output layout matches the legacy `docs/handbook/screenshots/`
-# directory so handbook HTML links (`<img src="../screenshots/NN-name.png">`)
-# keep working unchanged.
+# baselines. The flat `NN-name.png` output layout matches what
+# docs/handbook/de/index.html links to (`<img src="../screenshots/NN-name.png">`
+# — the relative path resolves to `docs/handbook/screenshots/NN-name.png`).
 #
 # Usage:
 #   scripts/assemble-handbook-screenshots.sh <output-dir>
 #
-# Used both by:
-#   - the Dockerfile.handbook build (multi-stage, copies the output dir
-#     into /usr/share/nginx/html/screenshots/)
-#   - local previews (`scripts/assemble-handbook-screenshots.sh /tmp/h && ls /tmp/h`)
+# Used by:
+#   - Dockerfile.handbook (multi-stage build → /usr/share/nginx/html/screenshots/)
+#   - local previews (`scripts/assemble-handbook-screenshots.sh docs/handbook/screenshots`
+#     before opening docs/handbook/de/index.html; the target dir is git-ignored)
 #
 # Source of truth for every handbook page is one Golden PNG under
 # `test/goldens/screens/<screen>/goldens/macos/<file>.png`. The mapping

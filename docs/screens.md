@@ -12,10 +12,12 @@ Column meaning:
 - **Route** / **Path** — the `GoRoute` name and path. `—` means the screen is
   **not a route**: it is shown inside a parent route (KYC steps, status
   sub-pages, disclaimer steps).
-- **Handbook** — the handbook screenshot number(s) (`docs/handbook/screenshots/NN-*.png`)
-  that document the screen, or `—` if it is not in the handbook. The handbook
-  covers the new-user onboarding journey (sign-up → dashboard) plus the settings
-  screens reachable from it: 26 screenshots, **20 of the 40 routed screens**.
+- **Handbook** — the handbook screenshot slot number(s) that document the
+  screen, or `—` if it is not in the handbook. Each slot is a Visual-Regression
+  Golden under `test/goldens/screens/`, mapped to its handbook position by
+  `scripts/assemble-handbook-screenshots.sh`. The handbook covers the
+  new-user onboarding journey (sign-up → dashboard) plus the settings screens
+  reachable from it: 26 slots, **20 of the 40 routed screens**.
   See `docs/handbook/README.md`.
 
 | Area | Widget | Route | Path | Handbook |
@@ -100,10 +102,13 @@ Column meaning:
   `terms`); `VerifyPinPage` backs two (`pinGate`, `verifyPin`) via different
   constructors. Handbook screenshot `17` shows `VerifyPinPage` in its `pinGate`
   use; the `verifyPin` app-lock use is not separately documented.
-- **Handbook numbering.** The 26 handbook screenshots are each the output of a
-  Maestro Tier-3 flow (`.maestro/handbook/NN-*.yaml`). Screenshot
-  `10-biometric-prompt` documents the `EnableBiometricBottomSheet` modal — not a
-  routed screen — so the table has no `10`.
+- **Handbook numbering.** Each of the 26 handbook slots is a Visual-Regression
+  Golden under `test/goldens/screens/`, mapped to its handbook position by
+  `scripts/assemble-handbook-screenshots.sh`. A parallel Tier-3 Maestro flow
+  (`.maestro/handbook/NN-*.yaml`) covers the same screen for navigation/
+  tap-routing smoke but does not produce the handbook image. Slot
+  `10-biometric-prompt` documents the `EnableBiometricBottomSheet` modal — not
+  a routed screen — so the table has no `10`.
 - **`*Page` / `*View` pattern.** Several screens split into a `*Page` widget
   (provides the bloc/cubit) and a `*View` widget (builds the `Scaffold`):
   `CreateWalletView`, `RestoreWalletView`, `SettingsSeedView`, `DebugAuthView`.

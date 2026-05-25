@@ -1,4 +1,6 @@
-# Captures docs/handbook/screenshots/25-restore-wallet.png
+# Tier-3 navigation smoke. The handbook screenshot for this flow is the
+# visual-regression Golden mapped in scripts/assemble-handbook-screenshots.sh;
+# this flow's diagnostic capture lands in build/handbook-captures/25-restore-wallet.png.
 # Continues from 24-settings-delete-wallet (no clearState): the
 # SettingsConfirmLogoutWalletSheet modal is showing. We complete the
 # termination here — tick the "Ich habe meine Wiederherstellungsphrase

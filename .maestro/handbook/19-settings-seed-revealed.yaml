@@ -1,4 +1,6 @@
-# Captures docs/handbook/screenshots/19-settings-seed-revealed.png
+# Tier-3 navigation smoke. The handbook screenshot for this flow is the
+# visual-regression Golden mapped in scripts/assemble-handbook-screenshots.sh;
+# this flow's diagnostic capture lands in build/handbook-captures/19-settings-seed-revealed.png.
 # Same BIP-39 grid as 05-seed-revealed; lives behind the PIN gate inside Settings.
 #
 # The tap is gated on the reveal prompt still showing and re-tapped if it was

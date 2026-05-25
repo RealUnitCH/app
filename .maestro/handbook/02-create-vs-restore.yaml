@@ -1,4 +1,6 @@
-# Captures docs/handbook/screenshots/02-create-vs-restore.png
+# Tier-3 navigation smoke. The handbook screenshot for this flow is the
+# visual-regression Golden mapped in scripts/assemble-handbook-screenshots.sh;
+# this flow's diagnostic capture lands in build/handbook-captures/02-create-vs-restore.png.
 # Depends on 01-welcome being the previous flow (no clearState, continues from Start screen).
 #
 # The tap is gated on the next screen not yet showing and re-tapped if it

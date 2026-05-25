@@ -1,4 +1,6 @@
-# Captures docs/handbook/screenshots/08-pin-setup.png
+# Tier-3 navigation smoke. The handbook screenshot for this flow is the
+# visual-regression Golden mapped in scripts/assemble-handbook-screenshots.sh;
+# this flow's diagnostic capture lands in build/handbook-captures/08-pin-setup.png.
 # Empty PIN setup numpad — "Erstellen Sie Ihre PIN".
 #
 # The tap is gated on the PIN numpad not yet showing and re-tapped if it was
