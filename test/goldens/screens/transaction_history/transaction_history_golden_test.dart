@@ -82,6 +82,45 @@ void main() {
         constraints: phoneConstraints,
         builder: () => wrapForGolden(buildSubject()),
       );
+
+      goldenTest(
+        'with transaction list',
+        fileName: 'transaction_history_page_with_transactions',
+        constraints: phoneConstraints,
+        builder: () {
+          final transactions = [
+            Transaction(
+              height: 100,
+              txId: '0xaaa1111',
+              chainId: 1,
+              senderAddress: walletAddress,
+              receiverAddress: '0x1234567890abcdef1234567890abcdef12345678',
+              amount: BigInt.from(2000000000000000000),
+              asset: realUnitAsset,
+              type: TransactionTypes.tokenTransfer,
+              note: null,
+              data: null,
+              timestamp: DateTime.utc(2026, 5, 20, 10, 30),
+            ),
+            Transaction(
+              height: 101,
+              txId: '0xbbb2222',
+              chainId: 1,
+              senderAddress: '0xabcdef1234567890abcdef1234567890abcdef12',
+              receiverAddress: walletAddress,
+              amount: BigInt.from(5000000000000000000),
+              asset: realUnitAsset,
+              type: TransactionTypes.tokenTransfer,
+              note: null,
+              data: null,
+              timestamp: DateTime.utc(2026, 5, 18, 14, 0),
+            ),
+          ];
+          when(() => transactionRepository.watchTransactionsOfAssets(any(), any()))
+              .thenAnswer((_) => Stream.value(transactions));
+          return wrapForGolden(buildSubject());
+        },
+      );
     });
   });
 }
