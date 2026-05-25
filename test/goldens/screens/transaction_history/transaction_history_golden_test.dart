@@ -1,6 +1,7 @@
 import 'package:alchemist/alchemist.dart';
 import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter/material.dart';
+import 'package:clock/clock.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -75,11 +76,13 @@ void main() {
       );
 
   group('$TransactionHistoryView', () {
-    goldenTest(
-      'empty filter state',
-      fileName: 'transaction_history_page_default',
-      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
-      builder: () => wrapForGolden(buildSubject()),
-    );
+    withClock(Clock.fixed(DateTime.utc(2026, 5, 23)), () {
+      goldenTest(
+        'empty filter state',
+        fileName: 'transaction_history_page_default',
+        constraints: phoneConstraints,
+        builder: () => wrapForGolden(buildSubject()),
+      );
+    });
   });
 }

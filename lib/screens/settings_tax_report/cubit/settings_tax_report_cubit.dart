@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:clock/clock.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -60,7 +61,7 @@ class SettingsTaxReportCubit extends Cubit<SettingsTaxReportState> {
 
   /// If today's date use current time minus 1 minute, for past dates use end of day
   DateTime _getDateWithLatestTime(DateTime selectedDate) {
-    final now = DateTime.now();
+    final now = clock.now();
     final today = DateTime(now.year, now.month, now.day);
     final selected = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
 

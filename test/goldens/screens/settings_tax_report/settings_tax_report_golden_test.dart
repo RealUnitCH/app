@@ -1,5 +1,6 @@
 import 'package:alchemist/alchemist.dart';
 import 'package:bloc_test/bloc_test.dart';
+import 'package:clock/clock.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -38,19 +39,21 @@ void main() {
   });
 
   group('$SettingsTaxReportPage', () {
-    goldenTest(
-      'default state',
-      fileName: 'settings_tax_report_page_default',
-      constraints: phoneConstraints,
-      builder: () => wrapForGolden(
-        MultiBlocProvider(
-          providers: [
-            BlocProvider<SettingsBloc>.value(value: settingsBloc),
-            BlocProvider<SettingsTaxReportCubit>.value(value: taxReportCubit),
-          ],
-          child: SettingsTaxReportView(),
+    withClock(Clock.fixed(DateTime.utc(2026, 5, 23)), () {
+      goldenTest(
+        'default state',
+        fileName: 'settings_tax_report_page_default',
+        constraints: phoneConstraints,
+        builder: () => wrapForGolden(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<SettingsBloc>.value(value: settingsBloc),
+              BlocProvider<SettingsTaxReportCubit>.value(value: taxReportCubit),
+            ],
+            child: SettingsTaxReportView(),
+          ),
         ),
-      ),
-    );
+      );
+    });
   });
 }
