@@ -23,8 +23,8 @@ The 100% rule above is the target state. Until the items below land, it is aspir
 - [x] `flutter test --coverage` step in `.github/workflows/pull-request.yaml`
 - [x] lcov filter narrowed to the activated surface (`lib/packages/**` + `lib/screens/**/cubit(s)/**` + `lib/screens/**/bloc/**`) and a per-run summary posted to the workflow step summary
 - [x] lcov threshold check failing the build below a committed floor on the scope above
-- [x] Floor gate lives in its own CI job (`Coverage Floor Gate`) so it is wire-up-ready as a separately required status check
-- [ ] GitHub branch protection on `develop` requiring the `Coverage Floor Gate` check (ruleset `PRs` / id `11317379`)
+- [x] Floor gate lives in its own CI job (`Coverage Floor Gate`), wired up as a required status check on `develop` + `main`
+- [x] GitHub branch protection on `develop` requiring the `Coverage Floor Gate` check (ruleset `PRs` / id `11317379`)
 - [x] Inline `// coverage:ignore-*` annotations on truly unreachable paths, each with a one-line reason — applied to Drift schema getters across `lib/packages/storage/`, defensive `assert(false) → throw StateError` fallthroughs in `wallet.dart`, `BitboxCredentials` sync entry points that only exist to satisfy the web3dart interface, the platform-channel forwarders in `PathProviderAdapter` and `BiometricServiceAdapter`, and the `_localTesting` dev-only `Uri.http` branch in `api_config.dart`
 
 **Ratchet protocol.** The committed floor lives in two flat files at the repo root: `.coverage-floor-lines` and `.coverage-floor-functions` (integer percent, no `%` suffix). CI fails the build when scoped coverage drops below either value. Raising the floor is encouraged on every PR that raises measured coverage — bump the file in the same commit and the gate moves up. Lowering the floor requires explicit reviewer sign-off; PR convention is the `coverage:lower-floor` label so the regression is visible in the PR list rather than smuggled in. The functions floor is parked at a placeholder today because `flutter test --coverage` does not emit `FN` records — the gate warns instead of failing on that metric until upstream adds support.
