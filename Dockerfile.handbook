@@ -4,17 +4,35 @@
 # and dev-handbook.realunit.app (DEV) via Cloudflare Tunnel.
 #
 # Built independently of the Flutter app: no Flutter toolchain, no app code.
-# Build context is the repo root; only docs/handbook/ is copied in.
+# Build context is the repo root; only docs/handbook/, scripts/, and
+# test/goldens/ are copied in.
+#
+# The 26 screenshots (`screenshots/NN-name.png`) are assembled from the
+# visual-regression Golden baselines under `test/goldens/screens/` via
+# scripts/assemble-handbook-screenshots.sh — one Golden per handbook
+# flow, see the mapping in that script. The legacy Maestro-captured
+# `docs/handbook/screenshots/` directory is still copied as part of the
+# `docs/handbook/` COPY below (so e.g. README.md and any future de/en
+# split survive); the assembled-from-goldens screenshots in the second
+# COPY replace it whole.
 #
 # Note: docs/handbook/mails/ is git-ignored and populated at CI build time
 # by the "Generate RealUnit mail previews from api repo" step in
 # .github/workflows/handbook.yaml — DFXswiss/api is the single source of
-# truth for those previews. The COPY below picks them up automatically as
+# truth for those previews. The first COPY picks them up automatically as
 # part of the docs/handbook/ tree.
+
+FROM alpine:3.20 AS screenshots-builder
+WORKDIR /work
+RUN apk add --no-cache bash coreutils
+COPY scripts/assemble-handbook-screenshots.sh ./scripts/
+COPY test/goldens/screens/ ./test/goldens/screens/
+RUN bash ./scripts/assemble-handbook-screenshots.sh /out
 
 FROM nginx:1.27.5-alpine
 
 COPY docs/handbook/ /usr/share/nginx/html/
+COPY --from=screenshots-builder /out/ /usr/share/nginx/html/screenshots/
 COPY handbook.nginx.conf /etc/nginx/conf.d/default.conf
 COPY handbook.htpasswd /etc/nginx/handbook.htpasswd
 

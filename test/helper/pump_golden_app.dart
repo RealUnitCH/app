@@ -6,7 +6,7 @@ import 'package:realunit_wallet/styles/themes.dart';
 Widget wrapForGolden(
   Widget child, {
   ThemeData? theme,
-  Locale locale = const Locale('en'),
+  Locale locale = const Locale('de'),
 }) {
   return MaterialApp(
     theme: theme ?? realUnitTheme,
