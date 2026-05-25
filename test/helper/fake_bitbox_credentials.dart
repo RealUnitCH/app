@@ -41,8 +41,14 @@ enum FakeBitboxBehavior {
 const String _testPrivateKeyHex =
     'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
 
-/// In-test stand-in for a real BitBox-backed [BitboxCredentials]. Replaces
-/// the BLE/USB-driven `BitboxManager` calls with a controllable outcome.
+/// In-test stand-in for a RealUnit app credential object that behaves like a
+/// BitBox-backed [BitboxCredentials] at the signing boundary. This fake is for
+/// app-level signing flows after credentials already exist; it does not replace
+/// the `bitbox_flutter` transport/platform layer.
+///
+/// Use `bitbox_flutter/testing.dart`'s `SimulatedBitboxPlatform` when a test
+/// needs to exercise pairing, BLE/USB lifecycle, channel-hash verification, or
+/// platform call history.
 ///
 /// `is BitboxCredentials` continues to hold so all production code paths that
 /// special-case the hardware wallet (e.g. the BitboxNotConnectedException

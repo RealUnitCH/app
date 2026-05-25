@@ -76,16 +76,12 @@ dependencies:
   url_launcher: ^6.3.1
   web3dart: ^2.7.1
   # The following adds the Cupertino Icons font to your application.
-  # TODO: revert to pubspec_lock pin (v0.0.7 or successor tag) once the
-  # bitbox_flutter joshua/i3-fake-inject-points branch lands.
-  # See OPUS_BITBOX_MANDATE.md §3.9.C — this temporary git ref pulls the
-  # FakeBitboxCredentials inject-point work in for cross-repo Tier-1
-  # integration tests. Must NOT merge to develop while the ref points at
-  # an unmerged branch.
+  # Pin to an existing DFX remote tag so clean CI checkouts can resolve the
+  # BitBox simulator/testkit APIs without relying on local .dart_tool state.
   bitbox_flutter:
     git:
-      url: https://github.com/joshuakrueger-dfx/bitbox_flutter.git
-      ref: joshua/i3-fake-inject-points
+      url: https://github.com/DFXswiss/bitbox_flutter.git
+      ref: v0.0.7
 
 dev_dependencies:
   flutter_test:

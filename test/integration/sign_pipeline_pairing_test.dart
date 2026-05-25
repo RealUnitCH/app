@@ -9,49 +9,54 @@
 //
 // This test pins that pre-condition end-to-end through the real
 // `BitboxService` + `BitboxManager` + the platform-level
-// `FakeBitboxCredentials` with `injectChannelHashMismatch()`.
+// `SimulatedBitboxPlatform` from `bitbox_flutter/testing.dart`.
 
 import 'package:bitbox_flutter/testing.dart';
 import 'package:bitbox_flutter/usb/bitbox_usb_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
-import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 
 void main() {
   late BitboxUsbPlatform previousPlatform;
-  late FakeBitboxCredentials fake;
+  late SimulatedBitboxPlatform platform;
+  late bool rejectNextPairing;
 
   setUp(() {
     previousPlatform = BitboxUsbPlatform.instance;
-    fake = FakeBitboxCredentials()..install();
-    BitboxCredentials.resetSignQueue();
+    rejectNextPairing = false;
+    platform = installSimulatedBitboxPlatform(
+      behaviors: <String, SimulatedBitboxBehavior>{
+        SimulatedBitboxMethod.channelHashVerify: (_) {
+          if (rejectNextPairing) {
+            rejectNextPairing = false;
+            return false;
+          }
+          return true;
+        },
+      },
+    );
   });
 
   tearDown(() {
     BitboxUsbPlatform.instance = previousPlatform;
-    BitboxCredentials.resetSignQueue();
   });
 
   test(
     'injectChannelHashMismatch during pair → confirmPairing throws; consumer must NOT proceed to sign',
     () async {
-      fake.injectChannelHashMismatch();
-
-      final mismatchEvents = <FakeBitboxChannelHashMismatch>[];
-      final sub = fake.events.listen((e) {
-        if (e is FakeBitboxChannelHashMismatch) mismatchEvents.add(e);
-      });
+      rejectNextPairing = true;
 
       final service = BitboxService(
         connectionStatusInterval: const Duration(milliseconds: 25),
       );
+      addTearDown(service.dispose);
       await service.init((await service.getAllUsbDevices()).single);
 
       // Production code path: ConnectBitboxCubit calls
       // service.getChannelHash() to show the hash to the user, then
       // service.confirmPairing() which delegates to
-      // manager.channelHashVerify(). When the fake's
-      // injectChannelHashMismatch is active, verify returns false and
+      // manager.channelHashVerify(). When the simulator is instructed to
+      // reject the next pairing, verify returns false and
       // confirmPairing's `if (!didVerify) throw` fires.
       await service.getChannelHash();
       await expectLater(
@@ -61,31 +66,34 @@ void main() {
       );
 
       await Future<void>.delayed(Duration.zero);
-      expect(mismatchEvents, hasLength(1));
+      expect(
+        platform.count(SimulatedBitboxMethod.channelHashVerify),
+        1,
+        reason: 'pairing mismatch must be observed at the platform seam',
+      );
 
       // The consumer must NOT issue any sign call after the
-      // mismatch. recordedInteractions confirms zero sign* calls.
-      final signCalls = fake.recordedInteractions
-          .where((i) => i.method.startsWith('sign'))
+      // mismatch. Platform call history confirms zero sign* calls.
+      final signCalls = platform.calls
+          .where((call) => call.method.startsWith('sign'))
           .toList();
       expect(
         signCalls,
         isEmpty,
         reason: 'consumer must abort after channel-hash mismatch',
       );
-
-      await sub.cancel();
     },
   );
 
   test(
     'after a mismatch consumed, a fresh pair succeeds — injection is single-shot',
     () async {
-      fake.injectChannelHashMismatch();
+      rejectNextPairing = true;
 
       final service = BitboxService(
         connectionStatusInterval: const Duration(milliseconds: 25),
       );
+      addTearDown(service.dispose);
       await service.init((await service.getAllUsbDevices()).single);
       await service.getChannelHash();
 
@@ -96,10 +104,6 @@ void main() {
       );
 
       // Second verify succeeds (injection consumed).
-      // Reset the signQueue between attempts so the assertion is
-      // independent of any in-flight sign that might have leaked
-      // into the queue (none here, but defensive).
-      BitboxCredentials.resetSignQueue();
       await service.confirmPairing();
 
       // No throw is the assertion — confirmPairing returns void.
@@ -118,6 +122,7 @@ void main() {
       final service = BitboxService(
         connectionStatusInterval: const Duration(milliseconds: 25),
       );
+      addTearDown(service.dispose);
       await service.init((await service.getAllUsbDevices()).single);
 
       final h1 = await service.getChannelHash();
