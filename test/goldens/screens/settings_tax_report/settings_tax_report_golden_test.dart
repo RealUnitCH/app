@@ -53,6 +53,47 @@ void main() {
           ),
         ),
       );
+
+      goldenTest(
+        'loading',
+        fileName: 'settings_tax_report_page_loading',
+        constraints: phoneConstraints,
+        builder: () {
+          when(() => taxReportCubit.state)
+              .thenReturn(const SettingsTaxReportLoading());
+          return wrapForGolden(
+            MultiBlocProvider(
+              providers: [
+                BlocProvider<SettingsBloc>.value(value: settingsBloc),
+                BlocProvider<SettingsTaxReportCubit>.value(value: taxReportCubit),
+              ],
+              child: SettingsTaxReportView(),
+            ),
+          );
+        },
+      );
+
+      goldenTest(
+        'failure',
+        fileName: 'settings_tax_report_page_failure',
+        constraints: phoneConstraints,
+        builder: () {
+          when(() => taxReportCubit.state).thenReturn(
+            const SettingsTaxReportFailure(
+              'Konnte Steuerausweis nicht generieren.',
+            ),
+          );
+          return wrapForGolden(
+            MultiBlocProvider(
+              providers: [
+                BlocProvider<SettingsBloc>.value(value: settingsBloc),
+                BlocProvider<SettingsTaxReportCubit>.value(value: taxReportCubit),
+              ],
+              child: SettingsTaxReportView(),
+            ),
+          );
+        },
+      );
     });
   });
 }
