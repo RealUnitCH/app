@@ -43,5 +43,20 @@ void main() {
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
       builder: () => wrapForGolden(buildSubject()),
     );
+
+    goldenTest(
+      'all words entered',
+      fileName: 'verify_seed_page_all_entered',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        when(() => verifySeedCubit.state).thenReturn(
+          const VerifySeedState(
+            wordIndices: [1, 3, 5, 7],
+            enteredWords: ['abandon', 'ability', 'about', 'above'],
+          ),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
   });
 }
