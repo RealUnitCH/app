@@ -51,6 +51,10 @@ void main() {
       'valid seed entered',
       fileName: 'restore_wallet_page_valid',
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      // The valid + invalid states pulse a status banner/icon — the
+      // animation never settles, so pumpAndSettle hits its timeout.
+      // pumpOnce captures the first frame.
+      pumpBeforeTest: pumpOnce,
       builder: () {
         when(() => validateSeedCubit.state).thenReturn(ValidateSeedState.valid);
         return wrapForGolden(buildSubject());
@@ -61,6 +65,7 @@ void main() {
       'invalid seed entered',
       fileName: 'restore_wallet_page_invalid',
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      pumpBeforeTest: pumpOnce,
       builder: () {
         when(() => validateSeedCubit.state)
             .thenReturn(ValidateSeedState.invalid);
