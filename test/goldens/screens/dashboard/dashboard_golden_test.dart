@@ -74,5 +74,23 @@ void main() {
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
       builder: () => wrapForGolden(buildSubject()),
     );
+
+    goldenTest(
+      'with balance, no transactions',
+      fileName: 'dashboard_with_balance',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(
+          Balance(
+            chainId: realUnitAsset.chainId,
+            contractAddress: realUnitAsset.address,
+            walletAddress: '0x0',
+            balance: BigInt.from(5000000000000000000),
+            asset: realUnitAsset,
+          ),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
   });
 }
