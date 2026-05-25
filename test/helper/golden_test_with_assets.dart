@@ -5,15 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 // Re-export the alchemist symbols that golden tests in this repo actually
 // reference, so the direct `package:alchemist/alchemist.dart` import could be
 // removed from each test file. Trimmed to actually-used symbols — extend only
-// if a test starts using something else.
-export 'package:alchemist/alchemist.dart'
-    show
-        PumpAction,
-        PumpWidget,
-        pumpOnce,
-        pumpNTimes,
-        onlyPumpWidget,
-        precacheImages;
+// if a test starts using something else. The wrapper itself uses the rest
+// via the qualified `alchemist.` prefix and does not need re-exports.
+export 'package:alchemist/alchemist.dart' show pumpOnce;
 
 /// Drop-in replacement for alchemist's [alchemist.goldenTest] that defaults
 /// [pumpBeforeTest] to [alchemist.precacheImages] so that any [Image.asset],
