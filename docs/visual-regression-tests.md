@@ -1,9 +1,9 @@
 # Visual Regression Tests
 
-Pixel-exact baseline tests for selected screens. The pilot covers 5 screens
-(Welcome, Dashboard, Settings, Buy, Sell) with 8 baseline PNGs. Skalierung auf
-alle 57 Page-Files ist das Folge-Ziel — wird in separaten PRs nachgezogen,
-nicht in diesem Pilot-PR.
+Pixel-exact baseline tests for every page in the app. 57 `lib/screens/**/*_page.dart`
+files mapped to 68 Golden PNGs under `test/goldens/screens/`, validated on
+each PR by the `Visual Regression` job (required status check on
+`develop` + `main`).
 
 ## Stack
 
@@ -60,9 +60,11 @@ The workflow is `workflow_dispatch`-only, runs on the same
 back-to-back dispatches on the same branch don't race each other.
 
 On a protected ref (`develop`, `main`) the push fails by design — no
-force-push, no bypass. In that case the regenerated PNGs are still
-uploaded as the `golden-baselines` artifact; download and rsync them
-onto a feature branch:
+force-push, no bypass. The same artifact-fallback also kicks in if a
+parallel human push raced the bot (non-fast-forward); the workflow
+does not retry-rebase. In either case the regenerated PNGs are uploaded
+as the `golden-baselines` artifact; download and rsync them onto a
+feature branch:
 
 ```bash
 RUN_ID=$(gh run list --workflow=golden-regenerate.yaml --limit 1 --json databaseId --jq '.[0].databaseId')
