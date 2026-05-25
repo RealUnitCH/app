@@ -161,6 +161,9 @@ See the README's "Release versioning" section for the full table and the typical
     ```bash
     rg "^//\s*@no-integration-test:" lib/
     ```
+- Visual-regression Goldens under `test/goldens/screens/` are also the source of the 26 screenshots served at `handbook.realunit.app`. When you add a handbook page, you MUST add a matching Golden test AND a row in the mapping table at `scripts/assemble-handbook-screenshots.sh` — the handbook will not pick up a Maestro-captured PNG anymore. The `Handbook Build Check` workflow on every PR runs the assembly script and fails loudly if a mapped Golden is missing.
+  - Why: single source of truth — a UI regression that breaks a Golden also breaks the handbook image before either ships; eliminates the previous "two pipelines, two truths" problem.
+  - See: [`docs/visual-regression-tests.md`](docs/visual-regression-tests.md) section "Handbook screenshots are sourced from Goldens".
 
 [^integration-test]: Activates once an `integration_test/` directory exists in the repo; until then, treat option 1 as N/A and the `// @no-integration-test:` annotation as the documenting form.
 
