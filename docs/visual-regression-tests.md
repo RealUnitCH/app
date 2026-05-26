@@ -1,9 +1,11 @@
 # Visual Regression Tests
 
 Pixel-exact baseline tests for every page in the app. 57 `lib/screens/**/*_page.dart`
-files mapped to 68 Golden PNGs under `test/goldens/screens/`, validated on
-each PR by the `Visual Regression` job (required status check on
-`develop` + `main`).
+files mapped to 94 Golden PNGs under `test/goldens/screens/` (page renderings
+plus state variants: Buy/Sell error banners, KYC loading/failure, Dashboard
+with-balance, RestoreWallet valid/invalid, Legal-Disclaimer steps, etc.),
+validated on each PR by the `Visual Regression` job (required status check
+on `develop` + `main`).
 
 ## Stack
 
