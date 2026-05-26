@@ -74,53 +74,57 @@ void main() {
         child: TransactionHistoryView(walletAddress: walletAddress),
       );
 
-  group('$TransactionHistoryView', () {
-    withClock(Clock.fixed(DateTime.utc(2026, 5, 23)), () {
-      goldenTest(
-        'empty filter state',
-        fileName: 'transaction_history_page_default',
-        constraints: phoneConstraints,
-        builder: () => wrapForGolden(buildSubject()),
-      );
+  // `TransactionHistoryView._todaysDate` resolves `clock.now()` when the
+  // widget mounts (inside alchemist's builder/test zone, NOT in the outer
+  // `withClock` scope). Pin the clock per-builder so the date-range filter
+  // chip renders deterministically. Same issue + fix as settings_tax_report.
+  final pinnedClock = Clock.fixed(DateTime.utc(2026, 5, 23));
 
-      goldenTest(
-        'with transaction list',
-        fileName: 'transaction_history_page_with_transactions',
-        constraints: phoneConstraints,
-        builder: () {
-          final transactions = [
-            Transaction(
-              height: 100,
-              txId: '0xaaa1111',
-              chainId: 1,
-              senderAddress: walletAddress,
-              receiverAddress: '0x1234567890abcdef1234567890abcdef12345678',
-              amount: BigInt.from(2000000000000000000),
-              asset: realUnitAsset,
-              type: TransactionTypes.tokenTransfer,
-              note: null,
-              data: null,
-              timestamp: DateTime.utc(2026, 5, 20, 10, 30),
-            ),
-            Transaction(
-              height: 101,
-              txId: '0xbbb2222',
-              chainId: 1,
-              senderAddress: '0xabcdef1234567890abcdef1234567890abcdef12',
-              receiverAddress: walletAddress,
-              amount: BigInt.from(5000000000000000000),
-              asset: realUnitAsset,
-              type: TransactionTypes.tokenTransfer,
-              note: null,
-              data: null,
-              timestamp: DateTime.utc(2026, 5, 18, 14, 0),
-            ),
-          ];
-          when(() => transactionRepository.watchTransactionsOfAssets(any(), any()))
-              .thenAnswer((_) => Stream.value(transactions));
-          return wrapForGolden(buildSubject());
-        },
-      );
-    });
+  group('$TransactionHistoryView', () {
+    goldenTest(
+      'empty filter state',
+      fileName: 'transaction_history_page_default',
+      constraints: phoneConstraints,
+      builder: () => withClock(pinnedClock, () => wrapForGolden(buildSubject())),
+    );
+
+    goldenTest(
+      'with transaction list',
+      fileName: 'transaction_history_page_with_transactions',
+      constraints: phoneConstraints,
+      builder: () {
+        final transactions = [
+          Transaction(
+            height: 100,
+            txId: '0xaaa1111',
+            chainId: 1,
+            senderAddress: walletAddress,
+            receiverAddress: '0x1234567890abcdef1234567890abcdef12345678',
+            amount: BigInt.from(2000000000000000000),
+            asset: realUnitAsset,
+            type: TransactionTypes.tokenTransfer,
+            note: null,
+            data: null,
+            timestamp: DateTime.utc(2026, 5, 20, 10, 30),
+          ),
+          Transaction(
+            height: 101,
+            txId: '0xbbb2222',
+            chainId: 1,
+            senderAddress: '0xabcdef1234567890abcdef1234567890abcdef12',
+            receiverAddress: walletAddress,
+            amount: BigInt.from(5000000000000000000),
+            asset: realUnitAsset,
+            type: TransactionTypes.tokenTransfer,
+            note: null,
+            data: null,
+            timestamp: DateTime.utc(2026, 5, 18, 14, 0),
+          ),
+        ];
+        when(() => transactionRepository.watchTransactionsOfAssets(any(), any()))
+            .thenAnswer((_) => Stream.value(transactions));
+        return withClock(pinnedClock, () => wrapForGolden(buildSubject()));
+      },
+    );
   });
 }
