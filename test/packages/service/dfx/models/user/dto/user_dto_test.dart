@@ -117,6 +117,83 @@ void main() {
       expect(dto.canEditPhone, isFalse);
       expect(dto.canEditAddress, isFalse);
     });
+
+    test('preserves all four flags when wire still ships supportAvailable=true', () {
+      // PR #588 removed `supportAvailable` from the DTO while the backend
+      // still ships the field. The contract is two-sided: the obsolete
+      // field is dropped AND the four real flags continue to parse
+      // correctly alongside it. Asserting both means the App-PR can ship
+      // before the API-PR (DFXswiss/api#3761) without a coordinated cutover.
+      final dto = UserCapabilitiesDto.fromJson({
+        'canEditName': true,
+        'canEditMail': true,
+        'canEditPhone': true,
+        'canEditAddress': true,
+        'supportAvailable': true,
+      });
+
+      expect(dto.canEditName, isTrue);
+      expect(dto.canEditMail, isTrue);
+      expect(dto.canEditPhone, isTrue);
+      expect(dto.canEditAddress, isTrue);
+    });
+
+    test('preserves all four flags when wire still ships supportAvailable=false', () {
+      // Same deploy-order guard, exercising the opposite boolean — the
+      // obsolete field must be silently dropped (not coerced into any
+      // remaining flag), and the four real flags must still round-trip.
+      final dto = UserCapabilitiesDto.fromJson({
+        'canEditName': false,
+        'canEditMail': false,
+        'canEditPhone': false,
+        'canEditAddress': false,
+        'supportAvailable': false,
+      });
+
+      expect(dto.canEditName, isFalse);
+      expect(dto.canEditMail, isFalse);
+      expect(dto.canEditPhone, isFalse);
+      expect(dto.canEditAddress, isFalse);
+    });
+
+    test('preserves all four flags when wire still ships supportAvailable=null', () {
+      // Some API versions encoded the absence of the value as an explicit
+      // null. Covered separately because `as bool? ?? false` and an
+      // unknown-key path have different failure modes — the four real
+      // flags must round-trip through both.
+      final dto = UserCapabilitiesDto.fromJson({
+        'canEditName': true,
+        'canEditMail': false,
+        'canEditPhone': true,
+        'canEditAddress': false,
+        'supportAvailable': null,
+      });
+
+      expect(dto.canEditName, isTrue);
+      expect(dto.canEditMail, isFalse);
+      expect(dto.canEditPhone, isTrue);
+      expect(dto.canEditAddress, isFalse);
+    });
+
+    test('preserves all four flags when wire ships arbitrary unknown future keys', () {
+      // Generalises the supportAvailable case: every future field the API
+      // adds before the app catches up must round-trip without throwing,
+      // and the four real flags must continue to parse correctly alongside.
+      final dto = UserCapabilitiesDto.fromJson({
+        'canEditName': true,
+        'canEditMail': false,
+        'canEditPhone': true,
+        'canEditAddress': false,
+        'futureFlagWeAddInOneMonth': 'foo',
+        'anotherNumberFlag': 42,
+        'nestedObject': {'a': 1},
+      });
+
+      expect(dto.canEditName, isTrue);
+      expect(dto.canEditMail, isFalse);
+      expect(dto.canEditPhone, isTrue);
+      expect(dto.canEditAddress, isFalse);
+    });
   });
 
   group('$UserDto.fromJson', () {
