@@ -30,39 +30,35 @@ void main() {
   });
 
   group('$UserCapabilitiesDto.fromJson', () {
-    test('reads all five flags when the API sends them as true', () {
+    test('reads all four flags when the API sends them as true', () {
       // Authoritative shape from the API. Every flag false→true flip
-      // enables a different UI affordance (Edit name/mail/phone/address
-      // and Support entrypoint).
+      // enables a different UI edit affordance (name / mail / phone /
+      // address).
       final dto = UserCapabilitiesDto.fromJson({
         'canEditName': true,
         'canEditMail': true,
         'canEditPhone': true,
         'canEditAddress': true,
-        'supportAvailable': true,
       });
 
       expect(dto.canEditName, isTrue);
       expect(dto.canEditMail, isTrue);
       expect(dto.canEditPhone, isTrue);
       expect(dto.canEditAddress, isTrue);
-      expect(dto.supportAvailable, isTrue);
     });
 
-    test('reads all five flags when the API sends them as false', () {
+    test('reads all four flags when the API sends them as false', () {
       final dto = UserCapabilitiesDto.fromJson({
         'canEditName': false,
         'canEditMail': false,
         'canEditPhone': false,
         'canEditAddress': false,
-        'supportAvailable': false,
       });
 
       expect(dto.canEditName, isFalse);
       expect(dto.canEditMail, isFalse);
       expect(dto.canEditPhone, isFalse);
       expect(dto.canEditAddress, isFalse);
-      expect(dto.supportAvailable, isFalse);
     });
 
     test('missing flag falls back to false (conservative default)', () {
@@ -75,7 +71,6 @@ void main() {
       expect(dto.canEditMail, isFalse);
       expect(dto.canEditPhone, isFalse);
       expect(dto.canEditAddress, isFalse);
-      expect(dto.supportAvailable, isFalse);
     });
 
     test('null flag on the wire falls back to false', () {
@@ -87,14 +82,12 @@ void main() {
         'canEditMail': null,
         'canEditPhone': null,
         'canEditAddress': null,
-        'supportAvailable': null,
       });
 
       expect(dto.canEditName, isFalse);
       expect(dto.canEditMail, isFalse);
       expect(dto.canEditPhone, isFalse);
       expect(dto.canEditAddress, isFalse);
-      expect(dto.supportAvailable, isFalse);
     });
 
     test('flags are independent (true/false mix is preserved per field)', () {
@@ -106,14 +99,12 @@ void main() {
         'canEditMail': false,
         'canEditPhone': true,
         'canEditAddress': false,
-        'supportAvailable': true,
       });
 
       expect(dto.canEditName, isTrue);
       expect(dto.canEditMail, isFalse);
       expect(dto.canEditPhone, isTrue);
       expect(dto.canEditAddress, isFalse);
-      expect(dto.supportAvailable, isTrue);
     });
 
     test('const default constructor yields all-false capabilities', () {
@@ -125,7 +116,6 @@ void main() {
       expect(dto.canEditMail, isFalse);
       expect(dto.canEditPhone, isFalse);
       expect(dto.canEditAddress, isFalse);
-      expect(dto.supportAvailable, isFalse);
     });
   });
 
@@ -145,7 +135,6 @@ void main() {
           'canEditMail': false,
           'canEditPhone': true,
           'canEditAddress': false,
-          'supportAvailable': true,
         },
       });
 
@@ -155,7 +144,6 @@ void main() {
       expect(dto.kyc.dataComplete, isTrue);
       expect(dto.capabilities.canEditName, isTrue);
       expect(dto.capabilities.canEditMail, isFalse);
-      expect(dto.capabilities.supportAvailable, isTrue);
     });
 
     test('mail is optional (null on the wire stays null)', () {
@@ -170,8 +158,7 @@ void main() {
     test('capabilities absent → falls back to all-false default', () {
       // Branch 1 of the ternary: `json['capabilities'] == null`. Old API
       // backends do not ship capabilities yet — the app must still parse
-      // without throwing and render every edit/support action as
-      // disabled.
+      // without throwing and render every edit action as disabled.
       final dto = UserDto.fromJson({
         'mail': 'a@b.com',
         'kyc': kycJson(),
@@ -182,7 +169,6 @@ void main() {
       expect(dto.capabilities.canEditMail, isFalse);
       expect(dto.capabilities.canEditPhone, isFalse);
       expect(dto.capabilities.canEditAddress, isFalse);
-      expect(dto.capabilities.supportAvailable, isFalse);
     });
 
     test('capabilities explicitly null → falls back to all-false default', () {
@@ -194,7 +180,6 @@ void main() {
       });
 
       expect(dto.capabilities.canEditName, isFalse);
-      expect(dto.capabilities.supportAvailable, isFalse);
     });
 
     test('capabilities present → parses via $UserCapabilitiesDto.fromJson', () {
@@ -207,7 +192,6 @@ void main() {
           'canEditMail': true,
           'canEditPhone': false,
           'canEditAddress': true,
-          'supportAvailable': false,
         },
       });
 
@@ -215,7 +199,6 @@ void main() {
       expect(dto.capabilities.canEditMail, isTrue);
       expect(dto.capabilities.canEditPhone, isFalse);
       expect(dto.capabilities.canEditAddress, isTrue);
-      expect(dto.capabilities.supportAvailable, isFalse);
     });
   });
 }
