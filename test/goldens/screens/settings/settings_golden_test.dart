@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings/settings_page.dart';
@@ -12,13 +13,16 @@ import '../../../helper/helper.dart';
 void main() {
   late MockSettingsBloc settingsBloc;
   late MockHomeBloc homeBloc;
+  late MockSoftwareWallet wallet;
 
   setUp(() {
     settingsBloc = MockSettingsBloc();
     homeBloc = MockHomeBloc();
+    wallet = MockSoftwareWallet();
 
+    when(() => wallet.walletType).thenReturn(WalletType.software);
     when(() => settingsBloc.state).thenReturn(const SettingsState());
-    when(() => homeBloc.state).thenReturn(const HomeState());
+    when(() => homeBloc.state).thenReturn(HomeState(openWallet: wallet));
   });
 
   setUpAll(() {
@@ -31,7 +35,7 @@ void main() {
 
   group('$SettingsPage', () {
     goldenTest(
-      'default state, no open wallet',
+      'default state, software wallet open',
       fileName: 'settings_page_default',
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
       builder: () {
