@@ -18,12 +18,16 @@ Column meaning:
   `scripts/assemble-handbook-screenshots.sh`. The handbook covers the
   new-user onboarding journey (sign-up → dashboard) plus the settings screens
   reachable from it plus the financial-state variants of Buy/Sell/Dashboard/
-  TransactionHistory and the legal/KYC step widgets: 52 slots in total —
-  the table below pins the **20 routed-screen anchors** (slots 01–26), and
-  the remaining 32 slots (27–52) are state variants of those same screens
-  (Buy/Sell error banners, KYC loading/failure, Dashboard with-balance,
-  Legal-Disclaimer steps, etc.) referenced from `docs/handbook/de/index.html`.
-  See `docs/handbook/README.md`.
+  TransactionHistory and the legal/KYC step widgets: **52 slots in total**,
+  spread across **20 distinct routed pages**. The table below indexes only
+  the 20 anchors; the remaining 32 slots are state-variant renderings of
+  those same screens (a few inline in the 01–26 range — e.g. slot 05 is
+  `CreateWalletPage` with the seed revealed and slot 09 is `SetupPinPage`
+  in confirm mode — plus the full 27–52 range: Buy/Sell error banners,
+  KYC loading/failure, Dashboard with-balance, Legal-Disclaimer steps,
+  etc.). Slot ↔ Golden mapping in
+  `scripts/assemble-handbook-screenshots.sh`, slot ↔ HTML block in
+  `docs/handbook/de/index.html`. See `docs/handbook/README.md`.
 
 | Area | Widget | Route | Path | Handbook |
 |---|---|---|---|---|
