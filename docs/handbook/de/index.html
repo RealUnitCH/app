@@ -733,10 +733,13 @@
                 />
               </div>
               <div class="desc">
-                Innerhalb des App-Wallet-Zweigs gibt es drei Optionen: <b>Neue Wallet erstellen</b>
-                (frische BIP-39-Mnemonic), <b>Wallet wiederherstellen</b> (Import einer
-                bestehenden Phrase, z.B. von Aktionariat), und <b>Adresse + Signatur</b> als
-                Debug-Pfad für die Backend-Integration.
+                Innerhalb des App-Wallet-Zweigs gibt es für End-User zwei Optionen:
+                <b>Neue Wallet erstellen</b> (frische BIP-39-Mnemonic) und
+                <b>Wallet wiederherstellen</b> (Import einer bestehenden Phrase, z.B. von
+                Aktionariat). Im Debug-Build (<code>kDebugMode</code>) erscheint zusätzlich
+                eine dritte Kachel <b>Adresse + Signatur</b> als Debug-Pfad für die
+                Backend-Integration — in Release-Builds ist diese Option für End-User
+                <em>nie</em> sichtbar.
               </div>
             </div>
           </div>
