@@ -94,6 +94,20 @@ class PortfolioChartCubit extends Cubit<PortfolioChartState> {
         )
         .toList();
 
+    if (visibleSpots.isEmpty) {
+      emit(
+        state.copyWith(
+          visibleSpots: [],
+          minX: minX,
+          maxX: maxX,
+          minY: 0,
+          maxY: 1,
+          horizontalLineValues: [],
+        ),
+      );
+      return;
+    }
+
     // Calculate minY and maxY from the visible spots
     var min = visibleSpots.first.y;
     var max = visibleSpots.first.y;

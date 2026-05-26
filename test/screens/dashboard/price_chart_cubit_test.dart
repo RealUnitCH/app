@@ -53,6 +53,7 @@ void main() {
       ];
 
       final cubit = PriceChartCubit(prices);
+      cubit.selectPeriod(TimePeriod.all);
 
       expect(cubit.state.visibleSpots, hasLength(3));
       expect(cubit.state.visibleSpots.first.y, 100.0);
@@ -67,7 +68,7 @@ void main() {
       final emitted = <PriceChartState>[];
       final sub = cubit.stream.listen(emitted.add);
 
-      cubit.selectPeriod(TimePeriod.all);
+      cubit.selectPeriod(cubit.state.selectedPeriod);
       await Future<void>.delayed(Duration.zero);
       await sub.cancel();
 
@@ -134,6 +135,7 @@ void main() {
       final cubit = PriceChartCubit([
         _pp(DateTime.utc(2026, 1, 1), 4200),
       ]);
+      cubit.selectPeriod(TimePeriod.all);
 
       expect(cubit.state.visibleSpots, hasLength(1));
       expect(cubit.state.minY, 42.0);
@@ -146,8 +148,25 @@ void main() {
       final cubit = PriceChartCubit([
         _pp(DateTime.utc(2026, 1, 1), 12345),
       ]);
+      cubit.selectPeriod(TimePeriod.all);
 
       expect(cubit.state.visibleSpots.single.y, 123.45);
+    });
+
+    test('non-empty prices but all outside the selected window yield an empty visible chart', () {
+      // Regression: PriceChartCubit used to crash with `Bad state: No
+      // element` when every price fell outside the selected window. With the
+      // default switched to threeMonths, that's a realistic state for any
+      // user whose only data points are older than 90 days.
+      final cubit = PriceChartCubit([
+        _pp(DateTime.utc(2020, 1, 1), 1000),
+        _pp(DateTime.utc(2020, 2, 1), 2000),
+      ]);
+      cubit.selectPeriod(TimePeriod.oneWeek);
+
+      expect(cubit.state.visibleSpots, isEmpty);
+      expect(cubit.state.minY, 0);
+      expect(cubit.state.maxY, 1);
     });
   });
 }
