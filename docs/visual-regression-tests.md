@@ -171,7 +171,7 @@ public repos are free even for macOS minutes.
 
 ## Handbook screenshots are sourced from Goldens
 
-The 26 PNGs the handbook serves at `handbook.realunit.app/screenshots/`
+The 52 PNGs the handbook serves at `handbook.realunit.app/screenshots/`
 are assembled from the Golden baselines at docker-build time. One
 Golden → one handbook page, via the explicit mapping in
 `scripts/assemble-handbook-screenshots.sh`. The handbook does **not**

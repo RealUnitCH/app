@@ -17,7 +17,10 @@ Column meaning:
   Golden under `test/goldens/screens/`, mapped to its handbook position by
   `scripts/assemble-handbook-screenshots.sh`. The handbook covers the
   new-user onboarding journey (sign-up → dashboard) plus the settings screens
-  reachable from it: 26 slots, **20 of the 40 routed screens**.
+  reachable from it plus the financial-state variants of Buy/Sell/Dashboard/
+  TransactionHistory and the legal/KYC step widgets: 52 slots, covering
+  every routed onboarding/settings screen plus the visually-distinct error
+  banners on the money-moving pages.
   See `docs/handbook/README.md`.
 
 | Area | Widget | Route | Path | Handbook |
@@ -102,7 +105,7 @@ Column meaning:
   `terms`); `VerifyPinPage` backs two (`pinGate`, `verifyPin`) via different
   constructors. Handbook screenshot `17` shows `VerifyPinPage` in its `pinGate`
   use; the `verifyPin` app-lock use is not separately documented.
-- **Handbook numbering.** Each of the 26 handbook slots is a Visual-Regression
+- **Handbook numbering.** Each of the 52 handbook slots is a Visual-Regression
   Golden under `test/goldens/screens/`, mapped to its handbook position by
   `scripts/assemble-handbook-screenshots.sh`. A parallel Tier-3 Maestro flow
   (`.maestro/handbook/NN-*.yaml`) covers the same screen for navigation/
