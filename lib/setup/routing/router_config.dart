@@ -35,6 +35,7 @@ import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_phone_n
 import 'package:realunit_wallet/screens/settings_wallet_address/settings_wallet_address_page.dart';
 import 'package:realunit_wallet/screens/support/subpages/support_chat_page.dart';
 import 'package:realunit_wallet/screens/support/subpages/support_create_ticket_page.dart';
+import 'package:realunit_wallet/screens/support/subpages/support_email_capture_page.dart';
 import 'package:realunit_wallet/screens/support/subpages/support_tickets_page.dart';
 import 'package:realunit_wallet/screens/support/support_page.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
@@ -283,6 +284,11 @@ final GoRouter routerConfig = GoRouter(
           name: SupportRoutes.createTicket,
           path: 'create',
           builder: (_, _) => const SupportCreateTicketPage(),
+        ),
+        GoRoute(
+          name: SupportRoutes.emailCapture,
+          path: 'email',
+          builder: (_, _) => const SupportEmailCapturePage(),
         ),
         GoRoute(
           name: SupportRoutes.chat,
