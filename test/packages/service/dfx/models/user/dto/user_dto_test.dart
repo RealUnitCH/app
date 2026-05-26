@@ -116,6 +116,132 @@ void main() {
       expect(dto.canEditMail, isFalse);
       expect(dto.canEditPhone, isFalse);
       expect(dto.canEditAddress, isFalse);
+      expect(dto.createSupportTicket, isNull);
+    });
+
+    test('createSupportTicket present + available true → parses with no prerequisite', () {
+      // Happy path. User has a registered email — the API tells the
+      // app it can open a Support ticket directly.
+      final dto = UserCapabilitiesDto.fromJson({
+        'canEditName': true,
+        'canEditMail': true,
+        'canEditPhone': true,
+        'canEditAddress': true,
+        'createSupportTicket': {'available': true},
+      });
+
+      expect(dto.createSupportTicket, isNotNull);
+      expect(dto.createSupportTicket!.available, isTrue);
+      expect(dto.createSupportTicket!.missingPrerequisite, isNull);
+    });
+
+    test('createSupportTicket present + available false + Email prerequisite parses', () {
+      // Routing-relevant: the page must dispatch on
+      // missingPrerequisite to push the email-capture flow.
+      final dto = UserCapabilitiesDto.fromJson({
+        'canEditName': false,
+        'canEditMail': false,
+        'canEditPhone': false,
+        'canEditAddress': false,
+        'createSupportTicket': {
+          'available': false,
+          'missingPrerequisite': 'Email',
+        },
+      });
+
+      expect(dto.createSupportTicket, isNotNull);
+      expect(dto.createSupportTicket!.available, isFalse);
+      expect(
+        dto.createSupportTicket!.missingPrerequisite,
+        MissingPrerequisite.email,
+      );
+    });
+
+    test('createSupportTicket absent (legacy backend) → null', () {
+      // Pre-3772 backends ship `capabilities` without the new field.
+      // The app must treat this as "no information available" and
+      // fall back to a direct push.
+      final dto = UserCapabilitiesDto.fromJson({
+        'canEditName': true,
+        'canEditMail': true,
+        'canEditPhone': true,
+        'canEditAddress': true,
+      });
+
+      expect(dto.createSupportTicket, isNull);
+    });
+
+    test('createSupportTicket explicitly null → null', () {
+      // Same default branch via an explicit JSON null.
+      final dto = UserCapabilitiesDto.fromJson({
+        'canEditName': true,
+        'canEditMail': true,
+        'canEditPhone': true,
+        'canEditAddress': true,
+        'createSupportTicket': null,
+      });
+
+      expect(dto.createSupportTicket, isNull);
+    });
+  });
+
+  group('$CreateSupportTicketCapabilityDto.fromJson', () {
+    test('available true with no missingPrerequisite parses cleanly', () {
+      final dto = CreateSupportTicketCapabilityDto.fromJson({'available': true});
+
+      expect(dto.available, isTrue);
+      expect(dto.missingPrerequisite, isNull);
+    });
+
+    test('available false with Email prerequisite parses to enum value', () {
+      final dto = CreateSupportTicketCapabilityDto.fromJson({
+        'available': false,
+        'missingPrerequisite': 'Email',
+      });
+
+      expect(dto.available, isFalse);
+      expect(dto.missingPrerequisite, MissingPrerequisite.email);
+    });
+
+    test('missing `available` field defaults to false (conservative)', () {
+      // Defensive parsing: a malformed payload that omits `available`
+      // must not silently expose the flow.
+      final dto = CreateSupportTicketCapabilityDto.fromJson(
+        <String, dynamic>{},
+      );
+
+      expect(dto.available, isFalse);
+      expect(dto.missingPrerequisite, isNull);
+    });
+
+    test('unknown missingPrerequisite string degrades to MissingPrerequisite.unknown', () {
+      // Open enum: a future additive value the app does not yet
+      // recognise must NOT break /v2/user parsing for unrelated
+      // callers (KYC, settings, etc.). We degrade to `unknown` and
+      // the page falls back to a direct Support push.
+      final dto = CreateSupportTicketCapabilityDto.fromJson({
+        'available': false,
+        'missingPrerequisite': 'Phone',
+      });
+      expect(dto.available, isFalse);
+      expect(dto.missingPrerequisite, MissingPrerequisite.unknown);
+    });
+  });
+
+  group('$MissingPrerequisite.fromString', () {
+    test('maps backend "Email" PascalCase to the lowercase enum member', () {
+      expect(MissingPrerequisite.fromString('Email'), MissingPrerequisite.email);
+    });
+
+    test('unknown value maps to MissingPrerequisite.unknown', () {
+      // Forward-compat: additive backend changes (new prerequisite
+      // types) must not break the user fetch. The page treats
+      // `unknown` as a graceful direct-push fallback.
+      expect(MissingPrerequisite.fromString('Phone'), MissingPrerequisite.unknown);
+    });
+
+    test('empty string also maps to MissingPrerequisite.unknown', () {
+      expect(MissingPrerequisite.fromString(''), MissingPrerequisite.unknown);
     });
   });
 
