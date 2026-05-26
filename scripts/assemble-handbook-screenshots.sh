@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Assemble the 26 handbook screenshots from the visual-regression Golden
+# Assemble the 52 handbook screenshots from the visual-regression Golden
 # baselines. The flat `NN-name.png` output layout matches what
 # docs/handbook/de/index.html links to (`<img src="../screenshots/NN-name.png">`
 # — the relative path resolves to `docs/handbook/screenshots/NN-name.png`).
@@ -61,6 +61,32 @@ MAPPING=(
   "24-settings-delete-wallet=settings/goldens/macos/settings_confirm_logout_wallet_sheet_default.png"
   "25-restore-wallet=restore_wallet/goldens/macos/restore_wallet_page_default.png"
   "26-terms=legal/goldens/macos/legal_document_page_terms_loaded.png"
+  "27-software-wallet-disclaimer-step-0=legal/goldens/macos/legal_disclaimer_step_0.png"
+  "28-software-wallet-disclaimer-step-1=legal/goldens/macos/legal_disclaimer_step_1.png"
+  "29-legal-documents-step=legal/goldens/macos/legal_documents_step_default.png"
+  "30-legal-aktionariat-step=legal/goldens/macos/legal_aktionariat_step_default.png"
+  "31-legal-dfx-step=legal/goldens/macos/legal_dfx_step_default.png"
+  "32-restore-wallet-valid=restore_wallet/goldens/macos/restore_wallet_page_valid.png"
+  "33-restore-wallet-invalid=restore_wallet/goldens/macos/restore_wallet_page_invalid.png"
+  "34-verify-seed-completed=verify_seed/goldens/macos/verify_seed_page_all_entered.png"
+  "35-dashboard-with-balance=dashboard/goldens/macos/dashboard_with_balance.png"
+  "36-transaction-history=transaction_history/goldens/macos/transaction_history_page_with_transactions.png"
+  "37-kyc-email-loading=kyc/goldens/macos/kyc_email_page_loading.png"
+  "38-kyc-email-mismatch=kyc/goldens/macos/kyc_email_page_does_not_match.png"
+  "39-kyc-email-error=kyc/goldens/macos/kyc_email_page_unknown_error.png"
+  "40-kyc-registration-personal=kyc/goldens/macos/kyc_registration_personal_step_default.png"
+  "41-kyc-registration-address=kyc/goldens/macos/kyc_registration_address_step_default.png"
+  "42-settings-tax-report-loading=settings_tax_report/goldens/macos/settings_tax_report_page_loading.png"
+  "43-settings-tax-report-failure=settings_tax_report/goldens/macos/settings_tax_report_page_failure.png"
+  "44-buy-loading=buy/goldens/macos/buy_payment_info_loading.png"
+  "45-buy-registration-required=buy/goldens/macos/buy_registration_required.png"
+  "46-buy-kyc-required=buy/goldens/macos/buy_kyc_required.png"
+  "47-buy-min-amount=buy/goldens/macos/buy_min_amount_not_met.png"
+  "48-buy-unknown-error=buy/goldens/macos/buy_unknown_error.png"
+  "49-sell-loading=sell/goldens/macos/sell_payment_info_loading.png"
+  "50-sell-kyc-required=sell/goldens/macos/sell_kyc_required.png"
+  "51-sell-min-amount=sell/goldens/macos/sell_min_amount_not_met.png"
+  "52-sell-unknown-error=sell/goldens/macos/sell_unknown_error.png"
 )
 
 missing=()
