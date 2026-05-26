@@ -22,6 +22,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
+import 'package:realunit_wallet/packages/hardware_wallet/bitbox_connection_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -299,8 +300,8 @@ void main() {
         );
         final devices = await service.getAllUsbDevices();
         expect(devices, hasLength(1));
-        final initOk = await service.init(devices.single);
-        expect(initOk, isTrue);
+        final initStatus = await service.init(devices.single);
+        expect(initStatus, isA<Paired>());
 
         expect(
           credentials.isConnected,
