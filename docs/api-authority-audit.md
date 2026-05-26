@@ -79,6 +79,7 @@ the 2026-05-21 ident-misroute report that triggered this audit).
   - **API change needed:** API exposes a `category: 'changeRequest'` (or similar) flag on `KycStepDto`, app filters by it
 - **V9** — `lib/screens/settings_contact/settings_contact_page.dart:54-67` (the page reads `emailSet`) + `lib/screens/settings_contact/cubit/settings_contact_cubit.dart:22` (the cubit computes `emailSet: userDto.mail != null` from the user DTO) — "Contact Support" only shown if email is set
   - **API change needed:** API exposes `support.available: bool` (or always allow it through the support endpoint and the API returns 400 if not eligible)
+  - **Closed by:** [api#3772](https://github.com/DFXswiss/api/pull/3772) (`createSupportTicket: { available, missingPrerequisite? }` on `UserCapabilitiesDto`) + companion app PR. Path was non-linear — see the Wave-3 lessons-learned in [`api-authority-plan.md`](api-authority-plan.md#lessons-learned--wave-3-reset-2026-05-26) for the six-PR history that landed the final shape.
 - **V13b** — `lib/screens/settings/settings_page.dart:100` — "Wallet Backup" only shown if `walletType == WalletType.software`
   - **Boundary case:** wallet-type is a device-local fact (BitBox cannot expose its seed); this one is **defensible** as a UI capability. **Accepted as documented exception** (see *Documented exceptions* in `api-authority-plan.md`). Tagged for completeness.
 

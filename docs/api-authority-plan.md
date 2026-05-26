@@ -380,4 +380,44 @@ Once this plan is executed:
 
 ---
 
-*Generated 2026-05-21. Companion to [`api-authority-audit.md`](api-authority-audit.md) and the rule definition in [`CONTRIBUTING.md`](../CONTRIBUTING.md#api-as-decision-authority--critical).*
+## Lessons learned — Wave 3 reset (2026-05-26)
+
+Wave 3 went through four iterations before landing in a stable shape. The pattern is generalisable to every future capability we add — if you're tempted to expose anything richer than a bool flag, read this section first.
+
+### The PR sequence
+
+| PR | Direction | Outcome | Why |
+|---|---|---|---|
+| [api#3733](https://github.com/DFXswiss/api/pull/3733) | API: `+supportAvailable: bool` | merged | First Wave-3 cut — added a bool to `UserCapabilitiesDto` per the original plan |
+| [app#497](https://github.com/DFXswiss/realunit-app/pull/497) | App: consume `supportAvailable` bool | merged | Companion app PR; tile-visibility tied to the bool |
+| [app#588](https://github.com/DFXswiss/realunit-app/pull/588) | App: unconditional Support tile | merged | UX feedback: tile must stay visible pre-signin for discoverability, hiding it on `!supportAvailable` was wrong |
+| [api#3761](https://github.com/DFXswiss/api/pull/3761) | API: `-supportAvailable: bool` | merged | After #588 the bool had no consumer; deleted backend-side |
+| [api#3767](https://github.com/DFXswiss/api/pull/3767) | API: `+ActionCapability` tree (4 DTOs, HttpMethod enum, 170 LOC) | **closed without merge** | First attempt at the structured replacement; @davidleomay correctly flagged the over-engineering — static endpoint paths don't belong in dynamic responses |
+| [api#3772](https://github.com/DFXswiss/api/pull/3772) | API: `+createSupportTicket: { available, missingPrerequisite? }` (91 LOC) | merged | Minimum compromise — per-user runtime info only, static paths stay in Swagger via `@ApiBadRequestResponse` |
+
+Net result: V9 closed end-to-end with **less LOC than the original bool-only path** plus the proper discoverable UX. But it took five days and six PRs.
+
+### What we'd do differently next time
+
+1. **Specify the UX requirement before designing the capability shape.** The bool was correct *for the original UX* (tile hides when unavailable). The UX changed (tile must stay visible) and we didn't re-derive the schema from the new requirement — we just deleted the bool. Re-deriving would have produced the discriminator shape directly.
+2. **Push back on capability complexity at PR time, not after merge.** David's review on #3767 caught the over-engineering before merge — that's the model. If a capability shape isn't justified by the UX requirement, the reviewer flags it; reductions are easier than rollbacks.
+3. **Static info goes in Swagger.** This is the most important takeaway. `@ApiBadRequestResponse` decorators let the API document the remediation path without shipping it on every request. The `createSupportTicket` capability ships **only** the per-user runtime state (`available` + the prerequisite discriminator) — paths are documented, not transmitted.
+
+### The eight binding rules
+
+Both repos now document the eight rules synthesised from this exercise. Read them before adding any new capability:
+
+- API side: [`DFXswiss/api:CONTRIBUTING.md`](https://github.com/DFXswiss/api/blob/develop/CONTRIBUTING.md) → "API Capability Design".
+- App side: [`CONTRIBUTING.md`](../CONTRIBUTING.md) → "Consuming API capabilities — eight rules" inside the "API as Decision Authority" section.
+
+Rules 2 (static info in Swagger), 3 (YAGNI for enum members), 6 (pair-PR with documented trade-off), and 8 (reduction before extension) are directly attributable to @davidleomay's review pressure on this Wave.
+
+### Forward — what this means for Waves 4 and 5
+
+- Wave 4 (`legal-document`, `company-info`, `support-issue-types`, country priority) is mostly **list / config endpoints** — these don't need capability shapes. Plain DTOs.
+- Wave 5 (JWT merge, polling, transaction state, account bounds, asset config) has at least one discoverable-action shape (account-merge-on-email-conflict) — that one should use the `{ available, missingPrerequisite? }` pattern from Wave 3, not invent a new shape.
+- Future capabilities not yet planned: default to the heterogeneous rule — `bool` for hide-able, struct only when the user must be guided through a prerequisite.
+
+---
+
+*Generated 2026-05-21. Companion to [`api-authority-audit.md`](api-authority-audit.md) and the rule definition in [`CONTRIBUTING.md`](../CONTRIBUTING.md#api-as-decision-authority--critical). Wave-3 lessons-learned added 2026-05-27.*
