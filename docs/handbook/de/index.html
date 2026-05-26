@@ -580,6 +580,33 @@
               <a href="#spec-08"><span class="spec-num">08</span>Wiederherstellung &amp; Rechtliches</a>
             </li>
             <li>
+              <a href="#spec-09"><span class="spec-num">09</span>Software-Wallet Terms — Details</a>
+            </li>
+            <li>
+              <a href="#spec-10"><span class="spec-num">10</span>Wallet-Wiederherstellung — States</a>
+            </li>
+            <li>
+              <a href="#spec-11"><span class="spec-num">11</span>Seed-Verifizierung — Details</a>
+            </li>
+            <li>
+              <a href="#spec-12"><span class="spec-num">12</span>Dashboard mit Bestand</a>
+            </li>
+            <li>
+              <a href="#spec-13"><span class="spec-num">13</span>Transaktionshistorie</a>
+            </li>
+            <li>
+              <a href="#spec-14"><span class="spec-num">14</span>KYC — Registrierung &amp; E-Mail</a>
+            </li>
+            <li>
+              <a href="#spec-15"><span class="spec-num">15</span>Steuerbericht — States</a>
+            </li>
+            <li>
+              <a href="#spec-16"><span class="spec-num">16</span>Kaufen — States</a>
+            </li>
+            <li>
+              <a href="#spec-17"><span class="spec-num">17</span>Verkaufen — States</a>
+            </li>
+            <li>
               <a href="#spec-mails"><span class="spec-num">M</span>E-Mails</a>
             </li>
           </ol>
@@ -607,7 +634,7 @@
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 26 Bilder dieser Seite sind ausgewählte Goldens aus
+            Die 52 Bilder dieser Seite sind ausgewählte Goldens aus
             <code>test/goldens/screens/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -647,7 +674,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/screens/&lt;feature&gt;</code>
               auf dfx01 (Hardware-Determinismus) → neue Baseline committen → Push auf
               <code>develop</code> triggert <code>handbook-deploy.yaml</code> → Docker-Build
-              assembliert die 26 Slots aus <code>test/goldens/screens/</code> → DEV-Image,
+              assembliert die 52 Slots aus <code>test/goldens/screens/</code> → DEV-Image,
               dann PRD-Image, beide via Cloudflare Tunnel.
             </p>
           </div>
@@ -1410,6 +1437,697 @@
                 Die <b>Nutzungsbedingungen</b> als Dokumentseite, geöffnet über den
                 i18n-Disclaimer-Link auf dem Splash-Screen. Gerendert vom
                 <code>LegalDocumentPage</code>-Viewer in seiner <code>terms</code>-Variante.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-09" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">09</span>Software-Wallet Terms — Details</h2>
+                <div class="file">test/goldens/screens/legal/</div>
+              </div>
+              <div class="rhs">
+                <b>5 Screens</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Innerhalb des App-Wallet-Zweigs durchläuft der User mehrere rechtliche Schritte:
+            zuerst einen zweistufigen <em>Disclaimer</em>, dann die Zustimmung zu den
+            <em>Rechtsdokumenten</em> in zwei Gruppen (Aktionariat und DFX). Erst nach
+            Bestätigung aller Schritte geht es weiter in die Seed-Generierung.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="27-software-wallet-disclaimer-step-0">
+              <div class="head">
+                <a class="name permalink" href="#27-software-wallet-disclaimer-step-0">27-software-wallet-disclaimer-step-0</a>
+                <button class="copy-link" type="button" data-target="27-software-wallet-disclaimer-step-0" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">legal_disclaimer_step_0.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/27-software-wallet-disclaimer-step-0.png"
+                  alt="Disclaimer — Schritt 1"
+                />
+              </div>
+              <div class="desc">
+                Erste Stufe des Software-Wallet-Disclaimers. Macht klar, dass der User
+                seine Wiederherstellungs-Wörter selbst verwahren muss und im Verlust-Fall
+                kein Zugriff mehr auf die Wallet möglich ist.
+              </div>
+            </div>
+            <div class="test" id="28-software-wallet-disclaimer-step-1">
+              <div class="head">
+                <a class="name permalink" href="#28-software-wallet-disclaimer-step-1">28-software-wallet-disclaimer-step-1</a>
+                <button class="copy-link" type="button" data-target="28-software-wallet-disclaimer-step-1" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">legal_disclaimer_step_1.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/28-software-wallet-disclaimer-step-1.png"
+                  alt="Disclaimer — Schritt 2"
+                />
+              </div>
+              <div class="desc">
+                Zweite Stufe des Disclaimers. Zusätzlicher Hinweis auf das Risiko bei
+                Verlust des Geräts und die Verantwortung des Users für die sichere
+                Aufbewahrung der Recovery-Phrase.
+              </div>
+            </div>
+            <div class="test" id="29-legal-documents-step">
+              <div class="head">
+                <a class="name permalink" href="#29-legal-documents-step">29-legal-documents-step</a>
+                <button class="copy-link" type="button" data-target="29-legal-documents-step" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">legal_documents_step_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/29-legal-documents-step.png"
+                  alt="Rechtsdokumente — Onboarding-Schritt"
+                />
+              </div>
+              <div class="desc">
+                Übersichtsschritt im Onboarding mit beiden Dokument-Gruppen
+                (<b>Aktionariat</b> und <b>DFX</b>). Der User muss beide einzeln öffnen
+                und akzeptieren, bevor der Weiter-CTA aktiv wird.
+              </div>
+            </div>
+            <div class="test" id="30-legal-aktionariat-step">
+              <div class="head">
+                <a class="name permalink" href="#30-legal-aktionariat-step">30-legal-aktionariat-step</a>
+                <button class="copy-link" type="button" data-target="30-legal-aktionariat-step" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">legal_aktionariat_step_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/30-legal-aktionariat-step.png"
+                  alt="Aktionariat-Dokumente — Zustimmung"
+                />
+              </div>
+              <div class="desc">
+                Onboarding-Schritt mit den <b>Aktionariat</b>-Aktionärsdokumenten. Liste
+                der zu akzeptierenden Unterlagen rund um die RealUnit-Aktie. Checkbox
+                aktiviert den Weiter-CTA.
+              </div>
+            </div>
+            <div class="test" id="31-legal-dfx-step">
+              <div class="head">
+                <a class="name permalink" href="#31-legal-dfx-step">31-legal-dfx-step</a>
+                <button class="copy-link" type="button" data-target="31-legal-dfx-step" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">legal_dfx_step_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/31-legal-dfx-step.png"
+                  alt="DFX-Dokumente — Zustimmung"
+                />
+              </div>
+              <div class="desc">
+                Onboarding-Schritt mit den <b>DFX</b>-Rechtsdokumenten (AGB und
+                Datenschutz für Buy/Sell und KYC). Checkbox aktiviert den Weiter-CTA und
+                schliesst den Legal-Block des Onboardings ab.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-10" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">10</span>Wallet-Wiederherstellung — States</h2>
+                <div class="file">test/goldens/screens/restore_wallet/</div>
+              </div>
+              <div class="rhs">
+                <b>2 Screens</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Zustände der Seed-Eingabe auf der <code>RestoreWalletPage</code>. Der
+            Validierungs-Cubit prüft die eingegebenen 12 Wörter gegen die BIP-39-Wortliste
+            und die Checksum — der Submit-Button ist erst aktiv, wenn die Eingabe gültig
+            ist. Bei ungültiger Eingabe wird der Fehler inline angezeigt.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="32-restore-wallet-valid">
+              <div class="head">
+                <a class="name permalink" href="#32-restore-wallet-valid">32-restore-wallet-valid</a>
+                <button class="copy-link" type="button" data-target="32-restore-wallet-valid" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">restore_wallet_page_valid.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/32-restore-wallet-valid.png"
+                  alt="Recovery-Phrase — gültig"
+                />
+              </div>
+              <div class="desc">
+                Alle 12 Wörter sind eingegeben, BIP-39-Validierung erfolgreich. Der
+                <b>Wiederherstellen</b>-CTA ist aktiv. Im Tap-Anschluss generiert die App
+                das Wallet aus der Phrase und navigiert in den PIN-Setup-Schritt.
+              </div>
+            </div>
+            <div class="test" id="33-restore-wallet-invalid">
+              <div class="head">
+                <a class="name permalink" href="#33-restore-wallet-invalid">33-restore-wallet-invalid</a>
+                <button class="copy-link" type="button" data-target="33-restore-wallet-invalid" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">restore_wallet_page_invalid.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/33-restore-wallet-invalid.png"
+                  alt="Recovery-Phrase — ungültig"
+                />
+              </div>
+              <div class="desc">
+                Eingabe enthält ein Wort ausserhalb der BIP-39-Liste oder die Checksum
+                ist falsch. Der CTA bleibt disabled, der Inline-Fehler weist den User
+                darauf hin, seine Eingabe zu korrigieren.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-11" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">11</span>Seed-Verifizierung — Details</h2>
+                <div class="file">test/goldens/screens/verify_seed/</div>
+              </div>
+              <div class="rhs">
+                <b>1 Screen</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Zusatzzustand zu <a href="#06-verify-seed"><code>06-verify-seed</code></a>:
+            alle vier Verifikations-Wörter sind eingetragen und der Submit-CTA ist aktiv.
+            Im Onboarding-Flow folgt darauf der Wechsel in den <em>Onboarding
+            abgeschlossen</em>-Screen.
+          </p>
+
+          <div class="tests cols-1">
+            <div class="test" id="34-verify-seed-completed">
+              <div class="head">
+                <a class="name permalink" href="#34-verify-seed-completed">34-verify-seed-completed</a>
+                <button class="copy-link" type="button" data-target="34-verify-seed-completed" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">verify_seed_page_all_entered.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/34-verify-seed-completed.png"
+                  alt="Seed-Verifikation — alle Wörter eingetragen"
+                />
+              </div>
+              <div class="desc">
+                Alle vier zufällig ausgewählten Verifikations-Wörter sind eingetragen.
+                Der <b>Weiter</b>-CTA ist aktiv. Tap löst die Validierung im
+                <code>VerifySeedCubit</code> aus — bei Übereinstimmung mit der
+                ursprünglichen Phrase folgt der Onboarding-Abschluss-Screen.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-12" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">12</span>Dashboard mit Bestand</h2>
+                <div class="file">test/goldens/screens/dashboard/</div>
+              </div>
+              <div class="rhs">
+                <b>1 Screen</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Variante des Dashboards mit aktiver Position. Spiegelt
+            <a href="#11-dashboard"><code>11-dashboard</code></a>, aber mit gefülltem
+            Portfolio-Bereich statt Empty-State.
+          </p>
+
+          <div class="tests cols-1">
+            <div class="test" id="35-dashboard-with-balance">
+              <div class="head">
+                <a class="name permalink" href="#35-dashboard-with-balance">35-dashboard-with-balance</a>
+                <button class="copy-link" type="button" data-target="35-dashboard-with-balance" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">dashboard_with_balance.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/35-dashboard-with-balance.png"
+                  alt="Dashboard mit Bestand"
+                />
+              </div>
+              <div class="desc">
+                Aktienkurs und Performance-Chart oben, darunter die eigene RealUnit-Position
+                mit Anzahl Aktien, Gegenwert in der Anzeigewährung und Performance seit
+                Kauf. Verlinkt auf Buy/Sell sowie die Transaktionshistorie.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-13" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">13</span>Transaktionshistorie</h2>
+                <div class="file">test/goldens/screens/transaction_history/</div>
+              </div>
+              <div class="rhs">
+                <b>1 Screen</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Liste der bisherigen Käufe und Verkäufe der RealUnit-Aktie. Erreichbar aus
+            dem Dashboard und aus den Einstellungen. Jeder Eintrag zeigt Datum,
+            Richtung (Kauf/Verkauf), Aktien-Menge, Preis und Status.
+          </p>
+
+          <div class="tests cols-1">
+            <div class="test" id="36-transaction-history">
+              <div class="head">
+                <a class="name permalink" href="#36-transaction-history">36-transaction-history</a>
+                <button class="copy-link" type="button" data-target="36-transaction-history" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">transaction_history_page_with_transactions.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/36-transaction-history.png"
+                  alt="Transaktionshistorie mit Einträgen"
+                />
+              </div>
+              <div class="desc">
+                Die Transaktionsliste mit mehreren Einträgen. Jede Zeile bündelt Richtung,
+                Betrag in Aktien, Gegenwert in der Anzeigewährung sowie den Status (z.B.
+                <em>Abgeschlossen</em>, <em>In Bearbeitung</em>). Tap auf eine Zeile öffnet
+                die Detailansicht der jeweiligen Transaktion.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-14" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">14</span>KYC — Registrierung &amp; E-Mail</h2>
+                <div class="file">test/goldens/screens/kyc/</div>
+              </div>
+              <div class="rhs">
+                <b>5 Screens</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            KYC-Onboarding für Buy/Sell — Pflicht ab definierten Volumen-Schwellen. Zwei
+            Stammdaten-Schritte (persönlich + Adresse) sowie ein E-Mail-Verifizierungs-Schritt
+            mit den Fehler-States <em>Loading</em>, <em>Mismatch</em> (eingegebener Code
+            stimmt nicht) und <em>Unknown Error</em> (Backend-Fehler).
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="37-kyc-email-loading">
+              <div class="head">
+                <a class="name permalink" href="#37-kyc-email-loading">37-kyc-email-loading</a>
+                <button class="copy-link" type="button" data-target="37-kyc-email-loading" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_email_page_loading.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/37-kyc-email-loading.png"
+                  alt="KYC E-Mail — Loading"
+                />
+              </div>
+              <div class="desc">
+                Ladezustand der E-Mail-Verifizierung. Der vom User eingegebene Code wird
+                gegen das DFX-Backend geprüft, die Eingabefelder sind während des Calls
+                disabled.
+              </div>
+            </div>
+            <div class="test" id="38-kyc-email-mismatch">
+              <div class="head">
+                <a class="name permalink" href="#38-kyc-email-mismatch">38-kyc-email-mismatch</a>
+                <button class="copy-link" type="button" data-target="38-kyc-email-mismatch" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_email_page_does_not_match.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/38-kyc-email-mismatch.png"
+                  alt="KYC E-Mail — Code stimmt nicht"
+                />
+              </div>
+              <div class="desc">
+                Der eingegebene Bestätigungs-Code stimmt nicht mit dem per E-Mail
+                gesendeten überein. Inline-Fehler unter dem Eingabefeld, der User kann
+                den Code erneut eingeben oder eine neue Mail anfordern.
+              </div>
+            </div>
+            <div class="test" id="39-kyc-email-error">
+              <div class="head">
+                <a class="name permalink" href="#39-kyc-email-error">39-kyc-email-error</a>
+                <button class="copy-link" type="button" data-target="39-kyc-email-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_email_page_unknown_error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/39-kyc-email-error.png"
+                  alt="KYC E-Mail — unbekannter Fehler"
+                />
+              </div>
+              <div class="desc">
+                Generischer Fehler-State, wenn das Backend keinen verwertbaren Statuscode
+                liefert (z.B. Netzwerk-Timeout, 5xx). Der User wird gebeten, es später
+                noch einmal zu probieren.
+              </div>
+            </div>
+            <div class="test" id="40-kyc-registration-personal">
+              <div class="head">
+                <a class="name permalink" href="#40-kyc-registration-personal">40-kyc-registration-personal</a>
+                <button class="copy-link" type="button" data-target="40-kyc-registration-personal" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_personal_step_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/40-kyc-registration-personal.png"
+                  alt="KYC Registrierung — Persönliche Daten"
+                />
+              </div>
+              <div class="desc">
+                Eingabe-Schritt für die persönlichen Stammdaten (Anrede, Vorname,
+                Nachname, Geburtsdatum, Nationalität). Pflichtfelder werden inline
+                validiert, der Weiter-CTA ist disabled bis die Eingabe vollständig ist.
+              </div>
+            </div>
+            <div class="test" id="41-kyc-registration-address">
+              <div class="head">
+                <a class="name permalink" href="#41-kyc-registration-address">41-kyc-registration-address</a>
+                <button class="copy-link" type="button" data-target="41-kyc-registration-address" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_address_step_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/41-kyc-registration-address.png"
+                  alt="KYC Registrierung — Adresse"
+                />
+              </div>
+              <div class="desc">
+                Adress-Schritt der KYC-Registrierung (Strasse, PLZ, Ort, Land). Bei
+                erfolgreichem Submit wird die KYC-Anfrage an das DFX-Backend übermittelt
+                und der User durchläuft anschliessend die Identitätsverifikation.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-15" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">15</span>Steuerbericht — States</h2>
+                <div class="file">test/goldens/screens/settings_tax_report/</div>
+              </div>
+              <div class="rhs">
+                <b>2 Screens</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Steuerbericht-Export aus den Einstellungen. Das Backend generiert den
+            Report on-demand — daher gibt es einen sichtbaren Loading-State und einen
+            Failure-State, falls die Generierung scheitert (z.B. Backend-Fehler oder
+            fehlende KYC).
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="42-settings-tax-report-loading">
+              <div class="head">
+                <a class="name permalink" href="#42-settings-tax-report-loading">42-settings-tax-report-loading</a>
+                <button class="copy-link" type="button" data-target="42-settings-tax-report-loading" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">settings_tax_report_page_loading.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/42-settings-tax-report-loading.png"
+                  alt="Steuerbericht — Loading"
+                />
+              </div>
+              <div class="desc">
+                Ladezustand während das Backend den Steuerbericht generiert. Spinner
+                und Hinweistext informieren den User, dass die Erstellung einige
+                Sekunden dauern kann.
+              </div>
+            </div>
+            <div class="test" id="43-settings-tax-report-failure">
+              <div class="head">
+                <a class="name permalink" href="#43-settings-tax-report-failure">43-settings-tax-report-failure</a>
+                <button class="copy-link" type="button" data-target="43-settings-tax-report-failure" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">settings_tax_report_page_failure.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/43-settings-tax-report-failure.png"
+                  alt="Steuerbericht — Fehler"
+                />
+              </div>
+              <div class="desc">
+                Fehler-State, wenn die Generierung scheitert. Der User erhält eine
+                erklärende Meldung und einen Retry-CTA. Häufigste Ursachen sind
+                Backend-Timeouts oder noch nicht abgeschlossene KYC.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-16" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">16</span>Kaufen — States</h2>
+                <div class="file">test/goldens/screens/buy/</div>
+              </div>
+              <div class="rhs">
+                <b>5 Screens</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Zustände des Kauf-Flows. Der Buy-Cubit unterscheidet zwischen
+            <em>Loading</em> (Zahlungsinfos werden vom Backend geholt), den Pflicht-Gates
+            <em>Registration Required</em> und <em>KYC Required</em>, dem
+            Validierungs-Fehler <em>Min Amount Not Met</em> sowie dem generischen
+            <em>Unknown Error</em>.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="44-buy-loading">
+              <div class="head">
+                <a class="name permalink" href="#44-buy-loading">44-buy-loading</a>
+                <button class="copy-link" type="button" data-target="44-buy-loading" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">buy_payment_info_loading.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/44-buy-loading.png"
+                  alt="Kaufen — Zahlungsinfo lädt"
+                />
+              </div>
+              <div class="desc">
+                Loading-State während die Zahlungsinformationen (Bank-Verbindung,
+                Referenz, IBAN) vom DFX-Backend geholt werden. CTA disabled, Spinner
+                zentral.
+              </div>
+            </div>
+            <div class="test" id="45-buy-registration-required">
+              <div class="head">
+                <a class="name permalink" href="#45-buy-registration-required">45-buy-registration-required</a>
+                <button class="copy-link" type="button" data-target="45-buy-registration-required" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">buy_registration_required.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/45-buy-registration-required.png"
+                  alt="Kaufen — Registrierung nötig"
+                />
+              </div>
+              <div class="desc">
+                Hinweis-State, wenn der User noch nicht beim DFX-Backend registriert
+                ist. CTA führt in den Registrierungs-Flow, danach kann der Kauf
+                wiederholt werden.
+              </div>
+            </div>
+            <div class="test" id="46-buy-kyc-required">
+              <div class="head">
+                <a class="name permalink" href="#46-buy-kyc-required">46-buy-kyc-required</a>
+                <button class="copy-link" type="button" data-target="46-buy-kyc-required" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">buy_kyc_required.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/46-buy-kyc-required.png"
+                  alt="Kaufen — KYC nötig"
+                />
+              </div>
+              <div class="desc">
+                Hinweis-State, wenn die geplante Kauf-Summe das Volumen ohne KYC
+                überschreitet. Der CTA verlinkt in den KYC-Flow (siehe Spec 14).
+              </div>
+            </div>
+            <div class="test" id="47-buy-min-amount">
+              <div class="head">
+                <a class="name permalink" href="#47-buy-min-amount">47-buy-min-amount</a>
+                <button class="copy-link" type="button" data-target="47-buy-min-amount" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">buy_min_amount_not_met.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/47-buy-min-amount.png"
+                  alt="Kaufen — Mindestbetrag nicht erreicht"
+                />
+              </div>
+              <div class="desc">
+                Validierungs-Fehler, wenn der eingegebene Betrag unter der vom Backend
+                vorgegebenen Mindest-Kaufsumme liegt. Inline-Fehler unter dem
+                Eingabefeld.
+              </div>
+            </div>
+            <div class="test" id="48-buy-unknown-error">
+              <div class="head">
+                <a class="name permalink" href="#48-buy-unknown-error">48-buy-unknown-error</a>
+                <button class="copy-link" type="button" data-target="48-buy-unknown-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">buy_unknown_error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/48-buy-unknown-error.png"
+                  alt="Kaufen — unbekannter Fehler"
+                />
+              </div>
+              <div class="desc">
+                Generischer Fehler-State, wenn das Backend keinen spezifischen Statuscode
+                liefert. Retry-CTA und kurze Erklärung — keine technischen Details für
+                den User.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-17" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">17</span>Verkaufen — States</h2>
+                <div class="file">test/goldens/screens/sell/</div>
+              </div>
+              <div class="rhs">
+                <b>4 Screens</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Zustände des Verkauf-Flows. Spiegelbildlich zu Spec 16, ohne separaten
+            <em>Registration Required</em>-State — der Verkauf ist nur für bereits
+            registrierte User aufrufbar.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="49-sell-loading">
+              <div class="head">
+                <a class="name permalink" href="#49-sell-loading">49-sell-loading</a>
+                <button class="copy-link" type="button" data-target="49-sell-loading" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">sell_payment_info_loading.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/49-sell-loading.png"
+                  alt="Verkaufen — Zahlungsinfo lädt"
+                />
+              </div>
+              <div class="desc">
+                Loading-State während die Auszahlungs-Informationen (Bank-Verbindung
+                des Users) vom DFX-Backend geholt werden. CTA disabled, Spinner
+                zentral.
+              </div>
+            </div>
+            <div class="test" id="50-sell-kyc-required">
+              <div class="head">
+                <a class="name permalink" href="#50-sell-kyc-required">50-sell-kyc-required</a>
+                <button class="copy-link" type="button" data-target="50-sell-kyc-required" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">sell_kyc_required.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/50-sell-kyc-required.png"
+                  alt="Verkaufen — KYC nötig"
+                />
+              </div>
+              <div class="desc">
+                Hinweis-State, wenn die geplante Verkauf-Summe das Volumen ohne KYC
+                überschreitet. CTA verlinkt in den KYC-Flow (siehe Spec 14).
+              </div>
+            </div>
+            <div class="test" id="51-sell-min-amount">
+              <div class="head">
+                <a class="name permalink" href="#51-sell-min-amount">51-sell-min-amount</a>
+                <button class="copy-link" type="button" data-target="51-sell-min-amount" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">sell_min_amount_not_met.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/51-sell-min-amount.png"
+                  alt="Verkaufen — Mindestbetrag nicht erreicht"
+                />
+              </div>
+              <div class="desc">
+                Validierungs-Fehler, wenn die eingegebene Verkauf-Menge unter der vom
+                Backend vorgegebenen Mindest-Summe liegt. Inline-Fehler unter dem
+                Eingabefeld.
+              </div>
+            </div>
+            <div class="test" id="52-sell-unknown-error">
+              <div class="head">
+                <a class="name permalink" href="#52-sell-unknown-error">52-sell-unknown-error</a>
+                <button class="copy-link" type="button" data-target="52-sell-unknown-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">sell_unknown_error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/52-sell-unknown-error.png"
+                  alt="Verkaufen — unbekannter Fehler"
+                />
+              </div>
+              <div class="desc">
+                Generischer Fehler-State, wenn das Backend keinen spezifischen Statuscode
+                liefert. Retry-CTA und kurze Erklärung — keine technischen Details für
+                den User.
               </div>
             </div>
           </div>
