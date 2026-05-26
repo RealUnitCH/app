@@ -66,7 +66,7 @@ class VerifySeedCubit extends Cubit<VerifySeedState> with WidgetsBindingObserver
         // file at 100 % of the lines that unit tests can actually reach.
         enteredWords:
             kDebugMode // Pre-fill words in debug mode
-            ? sortedIndices.map((i) => _wallet.seed.seedWords[i]).toList()
+            ? sortedIndices.map((i) => words[i]).toList()
             : List.filled(4, ''), // coverage:ignore-line
       ),
     );
