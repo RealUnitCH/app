@@ -58,6 +58,24 @@ The workflow is `workflow_dispatch`-only, runs on the same
 `golden-tests`, and uses concurrency `golden-regenerate-<ref>` so two
 back-to-back dispatches on the same branch don't race each other.
 
+**Gotcha — bot push does not trigger PR-CI.** GitHub Actions
+deliberately suppresses workflow runs for pushes made by the default
+`GITHUB_TOKEN` (the credential the bot uses), to avoid recursion loops.
+Consequence: after the bot lands the regenerated baselines, the latest
+SHA on the PR has **zero status checks** and `mergeStateStatus` flips
+to `CLEAN` because no required checks remain to wait for — even though
+`Analyze & Test` / `Visual Regression` / `Coverage Floor Gate` never
+ran against the new baselines. To re-arm the CI, push an empty commit
+signed by your own user:
+
+```bash
+git commit --allow-empty -m "ci: trigger workflows on bot regen"
+git push
+```
+
+The required checks now run against the bot's baselines for real.
+Without this step the merge button is misleading.
+
 On a protected ref (`develop`, `main`) the push fails by design — no
 force-push, no bypass. The same artifact-fallback also kicks in if a
 parallel human push raced the bot (non-fast-forward); the workflow
