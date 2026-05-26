@@ -1,9 +1,11 @@
 # Visual Regression Tests
 
 Pixel-exact baseline tests for every page in the app. 57 `lib/screens/**/*_page.dart`
-files mapped to 68 Golden PNGs under `test/goldens/screens/`, validated on
-each PR by the `Visual Regression` job (required status check on
-`develop` + `main`).
+files mapped to 94 Golden PNGs under `test/goldens/screens/` (page renderings
+plus state variants: Buy/Sell error banners, KYC loading/failure, Dashboard
+with-balance, RestoreWallet valid/invalid, Legal-Disclaimer steps, etc.),
+validated on each PR by the `Visual Regression` job (required status check
+on `develop` + `main`).
 
 ## Stack
 
@@ -55,6 +57,24 @@ The workflow is `workflow_dispatch`-only, runs on the same
 `[self-hosted, macOS, ARM64, m3-ultra, realunit-app]` labels as
 `golden-tests`, and uses concurrency `golden-regenerate-<ref>` so two
 back-to-back dispatches on the same branch don't race each other.
+
+**Gotcha — bot push does not trigger PR-CI.** GitHub Actions
+deliberately suppresses workflow runs for pushes made by the default
+`GITHUB_TOKEN` (the credential the bot uses), to avoid recursion loops.
+Consequence: after the bot lands the regenerated baselines, the latest
+SHA on the PR has **zero status checks** and `mergeStateStatus` flips
+to `CLEAN` because no required checks remain to wait for — even though
+`Analyze & Test` / `Visual Regression` / `Coverage Floor Gate` never
+ran against the new baselines. To re-arm the CI, push an empty commit
+signed by your own user:
+
+```bash
+git commit --allow-empty -m "ci: trigger workflows on bot regen"
+git push
+```
+
+The required checks now run against the bot's baselines for real.
+Without this step the merge button is misleading.
 
 On a protected ref (`develop`, `main`) the push fails by design — no
 force-push, no bypass. The same artifact-fallback also kicks in if a
@@ -171,7 +191,7 @@ public repos are free even for macOS minutes.
 
 ## Handbook screenshots are sourced from Goldens
 
-The 26 PNGs the handbook serves at `handbook.realunit.app/screenshots/`
+The 52 PNGs the handbook serves at `handbook.realunit.app/screenshots/`
 are assembled from the Golden baselines at docker-build time. One
 Golden → one handbook page, via the explicit mapping in
 `scripts/assemble-handbook-screenshots.sh`. The handbook does **not**

@@ -1,5 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:clock/clock.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -37,22 +38,59 @@ void main() {
     await GetIt.instance.reset();
   });
 
-  group('$SettingsTaxReportPage', () {
-    withClock(Clock.fixed(DateTime.utc(2026, 5, 23)), () {
-      goldenTest(
-        'default state',
-        fileName: 'settings_tax_report_page_default',
-        constraints: phoneConstraints,
-        builder: () => wrapForGolden(
-          MultiBlocProvider(
-            providers: [
-              BlocProvider<SettingsBloc>.value(value: settingsBloc),
-              BlocProvider<SettingsTaxReportCubit>.value(value: taxReportCubit),
-            ],
-            child: SettingsTaxReportView(),
-          ),
+  // `SettingsTaxReportView` field-initializes `_DatePickerModel` which calls
+  // `clock.now()`. The constructor runs inside the alchemist `builder`
+  // callback, which executes in alchemist's test zone — *not* in the outer
+  // `withClock`-scope. To pin the date deterministically the `withClock`
+  // wrapper has to live inside the builder, so it wraps the widget-tree
+  // construction.
+  final pinnedClock = Clock.fixed(DateTime.utc(2026, 5, 23));
+
+  Widget buildSubject() => wrapForGolden(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<SettingsTaxReportCubit>.value(value: taxReportCubit),
+          ],
+          child: SettingsTaxReportView(),
         ),
       );
-    });
+
+  group('$SettingsTaxReportPage', () {
+    goldenTest(
+      'default state',
+      fileName: 'settings_tax_report_page_default',
+      constraints: phoneConstraints,
+      builder: () => withClock(pinnedClock, buildSubject),
+    );
+
+    goldenTest(
+      'loading',
+      fileName: 'settings_tax_report_page_loading',
+      constraints: phoneConstraints,
+      // Loading state shows a CircularProgressIndicator that never
+      // settles. See buy_golden_test.dart `payment info loading` for
+      // the same workaround.
+      pumpBeforeTest: pumpOnce,
+      builder: () {
+        when(() => taxReportCubit.state)
+            .thenReturn(const SettingsTaxReportLoading());
+        return withClock(pinnedClock, buildSubject);
+      },
+    );
+
+    goldenTest(
+      'failure',
+      fileName: 'settings_tax_report_page_failure',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => taxReportCubit.state).thenReturn(
+          const SettingsTaxReportFailure(
+            'Konnte Steuerausweis nicht generieren.',
+          ),
+        );
+        return withClock(pinnedClock, buildSubject);
+      },
+    );
   });
 }

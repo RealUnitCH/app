@@ -11,6 +11,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
@@ -114,6 +115,107 @@ void main() {
               currency: Currency.chf,
             ),
           ),
+        );
+        when(() => converterCubit.state).thenReturn(
+          const BuyConverterState(
+            fiatText: '100',
+            sharesText: '1.00',
+            currency: Currency.chf,
+          ),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'payment info loading',
+      fileName: 'buy_payment_info_loading',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      // Loading state renders a CircularProgressIndicator — its animation
+      // never settles, so pumpAndSettle (default in precacheImages) hits
+      // its timeout. pumpOnce captures the first frame without waiting.
+      pumpBeforeTest: pumpOnce,
+      builder: () {
+        when(() => paymentInfoCubit.state)
+            .thenReturn(const BuyPaymentInfoLoading());
+        when(() => converterCubit.state).thenReturn(
+          const BuyConverterState(
+            fiatText: '100',
+            sharesText: '1.00',
+            currency: Currency.chf,
+          ),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'kyc required failure',
+      fileName: 'buy_kyc_required',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        when(() => paymentInfoCubit.state).thenReturn(
+          const BuyPaymentInfoFailure(PaymentInfoError.kycRequired),
+        );
+        when(() => converterCubit.state).thenReturn(
+          const BuyConverterState(
+            fiatText: '100',
+            sharesText: '1.00',
+            currency: Currency.chf,
+          ),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'registration required failure',
+      fileName: 'buy_registration_required',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        when(() => paymentInfoCubit.state).thenReturn(
+          const BuyPaymentInfoFailure(PaymentInfoError.registrationRequired),
+        );
+        when(() => converterCubit.state).thenReturn(
+          const BuyConverterState(
+            fiatText: '100',
+            sharesText: '1.00',
+            currency: Currency.chf,
+          ),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'min amount not met failure',
+      fileName: 'buy_min_amount_not_met',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        when(() => paymentInfoCubit.state).thenReturn(
+          const BuyPaymentInfoMinAmountNotMetFailure(
+            PaymentInfoError.minAmountNotMet,
+            minAmount: 10,
+          ),
+        );
+        when(() => converterCubit.state).thenReturn(
+          const BuyConverterState(
+            fiatText: '1',
+            sharesText: '0.01',
+            currency: Currency.chf,
+          ),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'unknown error failure',
+      fileName: 'buy_unknown_error',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        when(() => paymentInfoCubit.state).thenReturn(
+          const BuyPaymentInfoFailure(PaymentInfoError.unknown),
         );
         when(() => converterCubit.state).thenReturn(
           const BuyConverterState(
