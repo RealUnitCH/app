@@ -285,6 +285,7 @@
   "street": "Strasse",
   "supportBugReport": "Fehlerbericht",
   "supportChat": "Support Chat",
+  "supportChatSupportLabel": "Support",
   "supportCreateTicket": "Neues Ticket erstellen",
   "supportCreateTicketDescription": "Erstellen Sie ein neues Support-Ticket",
   "supportEnterMessage": "Nachricht eingeben",
