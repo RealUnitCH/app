@@ -43,7 +43,7 @@ class UserKycDto {
 }
 
 // Mirror of `UserCapabilitiesDto` on the API. Authoritative per-action
-// gating — the app renders Edit / Support affordances from these flags
+// edit gating — the app renders Edit affordances from these flags
 // instead of inferring them from KYC step status. Defaults are
 // conservative (everything `false`) so pre-PR backends do not silently
 // expose actions the API isn't yet ready to handle.
@@ -52,14 +52,12 @@ class UserCapabilitiesDto {
   final bool canEditMail;
   final bool canEditPhone;
   final bool canEditAddress;
-  final bool supportAvailable;
 
   const UserCapabilitiesDto({
     this.canEditName = false,
     this.canEditMail = false,
     this.canEditPhone = false,
     this.canEditAddress = false,
-    this.supportAvailable = false,
   });
 
   factory UserCapabilitiesDto.fromJson(Map<String, dynamic> json) {
@@ -68,7 +66,6 @@ class UserCapabilitiesDto {
       canEditMail: json['canEditMail'] as bool? ?? false,
       canEditPhone: json['canEditPhone'] as bool? ?? false,
       canEditAddress: json['canEditAddress'] as bool? ?? false,
-      supportAvailable: json['supportAvailable'] as bool? ?? false,
     );
   }
 }

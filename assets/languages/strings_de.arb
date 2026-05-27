@@ -300,6 +300,7 @@
   "supportTicketCreated": "Ticket erstellt",
   "supportTransactionIssue": "Transaktionsproblem",
   "supportTypeMessage": "Beschreiben Sie Ihr Anliegen",
+  "swissPaymentTextInvalid": "Nur in der Schweiz gültige Buchstaben und Zeichen sind erlaubt",
   "tapHereToView": "Hier tippen, um anzuzeigen",
   "taxReport": "Steuerbericht",
   "taxReportDescription": "Hier können Sie Ihren Steuerbericht für ein spezifisches Datum generieren.",
