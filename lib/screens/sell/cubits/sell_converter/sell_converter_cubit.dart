@@ -16,18 +16,29 @@ class SellConverterCubit extends Cubit<SellConverterState> {
   Timer? _fiatDebounce;
   Timer? _sharesDebounce;
 
+  // Monotonic counter for the latest user intent. Every user-triggered
+  // method (onFiatChanged / onSharesChanged / onCurrencyChanged) increments
+  // it and captures its own value via closure; the async body drops its
+  // emit if `_seq` has moved on. Prevents the timer-cancel-vs-running-body
+  // race where a debounced timer's body has already started its API call
+  // by the time the user types another character — without this guard the
+  // older in-flight response can win last-write-wins and overwrite the
+  // newer result.
+  int _seq = 0;
+
   /// User changed fiat → convert to shares
   Future<void> onFiatChanged(String value, {Currency currency = Currency.chf}) async {
     emit(state.copyWith(fiatText: value));
 
     _fiatDebounce?.cancel();
+    final mySeq = ++_seq;
     _fiatDebounce = Timer(const Duration(milliseconds: 100), () async {
-      if (isClosed) return;
+      if (isClosed || mySeq != _seq) return;
       emit(state.copyWith(loading: true));
 
       try {
         final result = await _brokerbotService.getSellShares(value, currency);
-        if (isClosed) return;
+        if (isClosed || mySeq != _seq) return;
         emit(
           state.copyWith(
             sharesText: result.shares.toString(),
@@ -36,7 +47,7 @@ class SellConverterCubit extends Cubit<SellConverterState> {
         );
       } catch (e) {
         developer.log(e.toString());
-        if (isClosed) return;
+        if (isClosed || mySeq != _seq) return;
         emit(state.copyWith(loading: false));
       }
     });
@@ -47,13 +58,14 @@ class SellConverterCubit extends Cubit<SellConverterState> {
     emit(state.copyWith(sharesText: value));
 
     _sharesDebounce?.cancel();
+    final mySeq = ++_seq;
     _sharesDebounce = Timer(const Duration(milliseconds: 100), () async {
-      if (isClosed) return;
+      if (isClosed || mySeq != _seq) return;
       emit(state.copyWith(loading: true));
 
       try {
         final result = await _brokerbotService.getSellPrice(value, currency);
-        if (isClosed) return;
+        if (isClosed || mySeq != _seq) return;
         emit(
           state.copyWith(
             fiatText: result.estimatedAmount.toStringAsFixed(_fractionDigits(value)),
@@ -62,33 +74,31 @@ class SellConverterCubit extends Cubit<SellConverterState> {
         );
       } catch (e) {
         developer.log(e.toString());
-        if (isClosed) return;
+        if (isClosed || mySeq != _seq) return;
         emit(state.copyWith(loading: false));
       }
     });
   }
 
   Future<void> onCurrencyChanged(Currency currency) async {
-    emit(state.copyWith(loading: true));
+    final mySeq = ++_seq;
+    // Flip currency immediately so the picker reflects the user choice
+    // even if an in-flight conversion arrives later and gets dropped by
+    // the seq guard.
+    emit(state.copyWith(loading: true, currency: currency));
     try {
       final result = await _brokerbotService.getBuyPrice(state.sharesText, currency);
-      if (isClosed) return;
+      if (isClosed || mySeq != _seq) return;
       emit(
         state.copyWith(
           fiatText: result.totalCost.toStringAsFixed(_fractionDigits(state.sharesText)),
           loading: false,
-          currency: currency,
         ),
       );
     } catch (e) {
       developer.log(e.toString());
-      if (isClosed) return;
-      emit(
-        state.copyWith(
-          loading: false,
-          currency: currency,
-        ),
-      );
+      if (isClosed || mySeq != _seq) return;
+      emit(state.copyWith(loading: false));
     }
   }
 
