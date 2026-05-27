@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
@@ -13,6 +14,8 @@ class MockSettingsBloc extends MockBloc<SettingsEvent, SettingsState> implements
 class MockAppStore extends Mock implements AppStore {}
 
 class MockDfxCountryService extends Mock implements DfxCountryService {}
+
+class MockRealUnitWalletService extends Mock implements RealUnitWalletService {}
 
 class MockSoftwareWallet extends Mock implements SoftwareWallet {}
 

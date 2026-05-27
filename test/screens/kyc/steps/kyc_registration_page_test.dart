@@ -7,7 +7,9 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/kyc_registration_step_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_submit/kyc_registration_submit_cubit.dart';
@@ -30,6 +32,8 @@ class MockRealUnitRegistrationService extends Mock implements RealUnitRegistrati
 class MockDfxCountryService extends Mock implements DfxCountryService {}
 
 class MockDfxKycService extends Mock implements DfxKycService {}
+
+class MockRealUnitWalletService extends Mock implements RealUnitWalletService {}
 
 void main() {
   late KycRegistrationStepCubit registrationStepCubit;
@@ -61,6 +65,11 @@ void main() {
     getIt.registerSingleton<RealUnitRegistrationService>(MockRealUnitRegistrationService());
     getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
     getIt.registerSingleton<DfxKycService>(MockDfxKycService());
+    final walletService = MockRealUnitWalletService();
+    when(() => walletService.getWalletStatus()).thenAnswer(
+      (_) async => RealUnitWalletStatusDto(isRegistered: false, realUnitUserDataDto: null),
+    );
+    getIt.registerSingleton<RealUnitWalletService>(walletService);
   }
 
   setUpAll(() {
@@ -100,6 +109,8 @@ void main() {
       when(() => registrationStepCubit.state).thenReturn(state);
 
       await tester.pumpApp(buildSubject(const KycRegistrationView()));
+      // initState kicks off a prefill fetch; settle so the loading overlay clears.
+      await tester.pumpAndSettle();
 
       (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
       await tester.pump();
@@ -118,6 +129,7 @@ void main() {
       when(() => registrationStepCubit.state).thenReturn(state);
 
       await tester.pumpApp(buildSubject(const KycRegistrationView()));
+      await tester.pumpAndSettle();
 
       (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
       await tester.pump();

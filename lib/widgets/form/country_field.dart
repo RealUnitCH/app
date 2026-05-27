@@ -25,12 +25,14 @@ enum CountryFieldPurpose {
 class CountryField extends StatefulWidget {
   final String label;
   final CountryFieldPurpose purpose;
+  final Country? initialValue;
   final void Function(Country?)? onChanged;
 
   const CountryField({
     super.key,
     required this.label,
     required this.purpose,
+    this.initialValue,
     this.onChanged,
   });
 
@@ -41,6 +43,7 @@ class CountryField extends StatefulWidget {
 class _CountryFieldState extends State<CountryField> {
   final DfxCountryService countryService = getIt<DfxCountryService>();
   late Future<List<Country>> _countriesFuture;
+  bool _initialValuePropagated = false;
 
   @override
   void initState() {
@@ -85,12 +88,22 @@ class _CountryFieldState extends State<CountryField> {
         }
 
         final countries = snapshot.data!.where(widget.purpose.allows).toList();
+        final initial = widget.initialValue != null && countries.contains(widget.initialValue)
+            ? widget.initialValue
+            : null;
+
+        // DropdownButtonFormField doesn't fire onChanged for initialValue, so push it once
+        // after countries load to keep the parent's controller in sync with what's displayed.
+        if (initial != null && !_initialValuePropagated) {
+          _initialValuePropagated = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) => widget.onChanged?.call(initial));
+        }
 
         return DropdownField<Country>(
           hintText: 'Schweiz',
           label: widget.label,
           items: countries.map((c) => DropdownMenuItem(value: c, child: Text(c.name))).toList(),
-          initialValue: null,
+          initialValue: initial,
           onChanged: widget.onChanged,
           validator: (value) => value == null ? '' : null,
         );

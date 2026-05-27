@@ -12,6 +12,7 @@ class KycRegistrationAddressStep extends StatelessWidget {
   final TextEditingController postalCodeCtrl;
   final TextEditingController cityCtrl;
   final ValueNotifier<Country?> countryCtrl;
+  final Country? initialCountry;
   final Future<void> Function() onSubmit;
 
   KycRegistrationAddressStep({
@@ -22,6 +23,7 @@ class KycRegistrationAddressStep extends StatelessWidget {
     required this.cityCtrl,
     required this.countryCtrl,
     required this.onSubmit,
+    this.initialCountry,
   });
   final _formKey = GlobalKey<FormState>();
 
@@ -110,6 +112,7 @@ class KycRegistrationAddressStep extends StatelessWidget {
                 CountryField(
                   label: S.of(context).country,
                   purpose: CountryFieldPurpose.residence,
+                  initialValue: initialCountry,
                   onChanged: (country) => countryCtrl.value = country,
                 ),
                 Padding(

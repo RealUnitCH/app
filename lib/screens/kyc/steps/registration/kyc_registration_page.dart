@@ -1,15 +1,18 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
@@ -67,6 +70,10 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   final cityCtrl = TextEditingController();
   final countryCtrl = ValueNotifier<Country?>(null);
 
+  bool _prefillLoading = true;
+  Country? _initialNationality;
+  Country? _initialAddressCountry;
+
   @override
   void initState() {
     super.initState();
@@ -77,6 +84,48 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
         curve: Curves.easeOut,
       );
     });
+    unawaited(_prefillFromBackend());
+  }
+
+  // Pulls already-known personal data from the API so the form starts pre-filled instead of
+  // forcing the user to retype values that must match the backend record byte-for-byte.
+  // Any failure degrades gracefully to a blank form — same UX as before the fetch.
+  Future<void> _prefillFromBackend() async {
+    try {
+      final walletStatus = await getIt<RealUnitWalletService>().getWalletStatus();
+      final dto = walletStatus.realUnitUserDataDto;
+      if (dto == null) {
+        if (mounted) setState(() => _prefillLoading = false);
+        return;
+      }
+
+      final countryService = getIt<DfxCountryService>();
+      final countries = await Future.wait([
+        countryService.getCountryBySymbol(dto.nationality),
+        countryService.getCountryBySymbol(dto.addressCountry),
+      ]);
+
+      if (!mounted) return;
+      setState(() {
+        typeCtrl.value = RegistrationUserType.fromName(dto.type);
+        firstnameCtrl.text = dto.kycData.firstName;
+        lastnameCtrl.text = dto.kycData.lastName;
+        phoneCtrl.value = dto.phoneNumber;
+        birthdayCtrl.value = dto.birthday;
+        nationalityCtrl.value = countries[0];
+        _initialNationality = countries[0];
+        addressStreetCtrl.text = dto.kycData.address.street;
+        addressStreetNumberCtrl.text = dto.kycData.address.houseNumber ?? '';
+        postalCodeCtrl.text = dto.kycData.address.zip;
+        cityCtrl.text = dto.kycData.address.city;
+        countryCtrl.value = countries[1];
+        _initialAddressCountry = countries[1];
+        _prefillLoading = false;
+      });
+    } catch (e) {
+      developer.log('Failed to prefill RealUnit registration form: $e');
+      if (mounted) setState(() => _prefillLoading = false);
+    }
   }
 
   @override
@@ -153,28 +202,30 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
           spacing: 20.0,
           children: [
             Expanded(
-              child: Stack(
-                children: [
-                  PageView(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: KycRegistrationStep.values.map(_buildStep).toList(),
-                  ),
-                  BlocBuilder<KycRegistrationSubmitCubit, KycRegistrationSubmitState>(
-                    builder: (context, state) {
-                      if (state is KycRegistrationSubmitLoading) {
-                        return Container(
-                          color: RealUnitColors.basic.white,
-                          child: const Center(
-                            child: CupertinoActivityIndicator(),
-                          ),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-                ],
-              ),
+              child: _prefillLoading
+                  ? const Center(child: CupertinoActivityIndicator())
+                  : Stack(
+                      children: [
+                        PageView(
+                          controller: _pageController,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: KycRegistrationStep.values.map(_buildStep).toList(),
+                        ),
+                        BlocBuilder<KycRegistrationSubmitCubit, KycRegistrationSubmitState>(
+                          builder: (context, state) {
+                            if (state is KycRegistrationSubmitLoading) {
+                              return Container(
+                                color: RealUnitColors.basic.white,
+                                child: const Center(
+                                  child: CupertinoActivityIndicator(),
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
+                      ],
+                    ),
             ),
           ],
         ),
@@ -192,6 +243,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
           nationalityCtrl: nationalityCtrl,
           phoneCtrl: phoneCtrl,
           birthdayCtrl: birthdayCtrl,
+          initialNationality: _initialNationality,
         );
 
       case KycRegistrationStep.address:
@@ -201,6 +253,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
           postalCodeCtrl: postalCodeCtrl,
           cityCtrl: cityCtrl,
           countryCtrl: countryCtrl,
+          initialCountry: _initialAddressCountry,
           onSubmit: _onSubmit,
         );
     }
