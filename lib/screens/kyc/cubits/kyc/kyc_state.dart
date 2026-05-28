@@ -40,10 +40,21 @@ class KycSuccess extends KycState {
   final KycStep currentStep;
   final String? urlOrToken;
 
-  const KycSuccess({required this.currentStep, this.urlOrToken});
+  /// Server-side user record attached to the routing decision. Populated when
+  /// `RealUnitWalletService.getWalletStatus()` returns userData alongside the
+  /// state (`AddWallet` always, `NewRegistration` when the backend has fallback
+  /// data). The cubit forwards the DTO so downstream pages do not need to
+  /// re-fetch — see CONTRIBUTING.md "Single round-trip per decision".
+  final RealUnitUserDataDto? realUnitUserData;
+
+  const KycSuccess({
+    required this.currentStep,
+    this.urlOrToken,
+    this.realUnitUserData,
+  });
 
   @override
-  List<Object?> get props => [currentStep, urlOrToken];
+  List<Object?> get props => [currentStep, urlOrToken, realUnitUserData];
 }
 
 class KycCompleted extends KycState {
@@ -71,4 +82,13 @@ class KycFailure extends KycState {
 
   @override
   List<Object?> get props => [message];
+}
+
+/// Emitted when `getWalletStatus()` reports `kycRequired` — i.e. the wallet
+/// cannot be added without first completing the identity verification flow.
+/// Distinct from `KycUnsupportedStepFailure` so the user sees a tailored
+/// "complete your verification" message instead of the generic
+/// "step (-) cannot be completed" fallback.
+class KycRequiredFailure extends KycState {
+  const KycRequiredFailure();
 }

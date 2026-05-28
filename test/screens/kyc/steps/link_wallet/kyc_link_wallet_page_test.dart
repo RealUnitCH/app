@@ -9,7 +9,6 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/link_wallet/cubits/kyc_link_wallet_cubit.dart';
@@ -23,8 +22,6 @@ class _MockKycLinkWalletCubit extends MockCubit<KycLinkWalletState>
 class _MockKycCubit extends MockCubit<KycState> implements KycCubit {}
 
 class _MockAppStore extends Mock implements AppStore {}
-
-class _MockRealUnitWalletService extends Mock implements RealUnitWalletService {}
 
 class _MockRealUnitRegistrationService extends Mock implements RealUnitRegistrationService {}
 
@@ -65,7 +62,6 @@ void main() {
     final appStore = _MockAppStore();
     when(() => appStore.wallet).thenReturn(DebugWallet(1, 'Test', _debugAddress));
     getIt.registerSingleton<AppStore>(appStore);
-    getIt.registerSingleton<RealUnitWalletService>(_MockRealUnitWalletService());
     getIt.registerSingleton<RealUnitRegistrationService>(
       _MockRealUnitRegistrationService(),
     );
@@ -76,11 +72,10 @@ void main() {
   setUp(() {
     linkCubit = _MockKycLinkWalletCubit();
     kycCubit = _MockKycCubit();
-    when(() => linkCubit.state).thenReturn(const KycLinkWalletInitial());
+    when(() => linkCubit.state).thenReturn(const KycLinkWalletReady(_userData));
     when(() => kycCubit.state).thenReturn(const KycInitial());
     when(() => kycCubit.checkKyc()).thenAnswer((_) async {});
     when(() => linkCubit.submit(any())).thenAnswer((_) async {});
-    when(() => linkCubit.loadUserData()).thenAnswer((_) async {});
   });
 
   Widget buildSubject() => MultiBlocProvider(
@@ -92,14 +87,6 @@ void main() {
   );
 
   group('$KycLinkWalletView', () {
-    testWidgets('shows CupertinoActivityIndicator while loading', (tester) async {
-      when(() => linkCubit.state).thenReturn(const KycLinkWalletLoading());
-
-      await tester.pumpApp(buildSubject());
-
-      expect(find.byType(CupertinoActivityIndicator), findsOne);
-    });
-
     testWidgets('renders the userData name and the current wallet address in Ready', (tester) async {
       when(() => linkCubit.state).thenReturn(const KycLinkWalletReady(_userData));
 
@@ -161,5 +148,28 @@ void main() {
 
       expect(find.byType(SnackBar), findsOne);
     });
+  });
+
+  group('$KycLinkWalletPage with missing userData', () {
+    testWidgets(
+      'renders defensive page with a retry button when no userData is supplied',
+      (tester) async {
+        // The parent cubit is provided so the retry button can resolve
+        // `KycCubit` from the widget tree.
+        await tester.pumpApp(
+          BlocProvider<KycCubit>.value(
+            value: kycCubit,
+            child: const KycLinkWalletPage(),
+          ),
+        );
+
+        // The fallback page must not spin up the cubit (no provider
+        // available) and must surface a retry control.
+        expect(find.byType(CupertinoActivityIndicator), findsNothing);
+        await tester.tap(find.byType(FilledButton));
+        await tester.pump();
+        verify(() => kycCubit.checkKyc()).called(1);
+      },
+    );
   });
 }

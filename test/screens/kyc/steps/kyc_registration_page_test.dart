@@ -7,10 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/kyc_registration_step_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_submit/kyc_registration_submit_cubit.dart';
@@ -33,8 +30,6 @@ class MockRealUnitRegistrationService extends Mock implements RealUnitRegistrati
 class MockDfxCountryService extends Mock implements DfxCountryService {}
 
 class MockDfxKycService extends Mock implements DfxKycService {}
-
-class MockRealUnitWalletService extends Mock implements RealUnitWalletService {}
 
 void main() {
   late KycRegistrationStepCubit registrationStepCubit;
@@ -60,19 +55,15 @@ void main() {
     when(() => kycCubit.checkKyc()).thenAnswer((_) => Future.value());
   });
 
+  // The page no longer reads from `RealUnitWalletService` directly — the parent
+  // `KycCubit` propagates the `RealUnitUserDataDto` via constructor. We still
+  // need the country/kyc/registration services for the BlocProvider inside
+  // `KycRegistrationPage` (they are looked up via `getIt`).
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<RealUnitRegistrationService>(MockRealUnitRegistrationService());
     getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
     getIt.registerSingleton<DfxKycService>(MockDfxKycService());
-    final walletService = MockRealUnitWalletService();
-    when(() => walletService.getWalletStatus()).thenAnswer(
-      (_) async => RealUnitWalletStatusDto(
-        state: RealUnitRegistrationState.newRegistration,
-        realUnitUserDataDto: null,
-      ),
-    );
-    getIt.registerSingleton<RealUnitWalletService>(walletService);
   }
 
   setUpAll(() {
@@ -93,7 +84,7 @@ void main() {
   }
 
   group('$KycRegistrationPage', () {
-    testWidgets('renders $KycRegistrationView', (tester) async {
+    testWidgets('renders $KycRegistrationView with null initialUserData', (tester) async {
       await tester.pumpApp(const KycRegistrationPage());
 
       expect(find.byType(KycRegistrationView), findsOne);
@@ -112,8 +103,9 @@ void main() {
       when(() => registrationStepCubit.state).thenReturn(state);
 
       await tester.pumpApp(buildSubject(const KycRegistrationView()));
-      // initState kicks off a prefill fetch; settle so the loading overlay clears.
-      await tester.pumpAndSettle();
+      // No prefill round-trip: the form is rendered synchronously. A single
+      // pump is enough to settle initial frames.
+      await tester.pump();
 
       (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
       await tester.pump();
@@ -132,7 +124,7 @@ void main() {
       when(() => registrationStepCubit.state).thenReturn(state);
 
       await tester.pumpApp(buildSubject(const KycRegistrationView()));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
       await tester.pump();

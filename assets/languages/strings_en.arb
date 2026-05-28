@@ -120,6 +120,7 @@
   "kycLinkWalletTitle": "Add wallet",
   "kycPending": "Data is being verified",
   "kycPendingDescription": "Your next step is currently being reviewed: ${step}. Please be patient and check back later.",
+  "kycRequiredFailureMessage": "Please complete your identity verification first.",
   "kycUnsupportedStepDescription": "The current KYC step (${step}) cannot be completed in this app. Please contact support.",
   "label": "Label",
   "languageEnglish": "English",

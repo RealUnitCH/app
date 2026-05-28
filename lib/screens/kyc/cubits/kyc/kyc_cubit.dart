@@ -7,6 +7,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
@@ -113,13 +114,29 @@ class KycCubit extends Cubit<KycState> {
           // gate is satisfied and the user proceeds to the next KYC step.
           break;
         case RealUnitRegistrationState.addWallet:
-          emit(const KycSuccess(currentStep: KycStep.linkWallet));
+          // Forward the server-supplied userData so `KycLinkWalletPage` does
+          // not have to re-fetch — see CONTRIBUTING.md "Single round-trip per
+          // decision". The backend always populates this for `AddWallet`.
+          emit(
+            KycSuccess(
+              currentStep: KycStep.linkWallet,
+              realUnitUserData: walletStatus.realUnitUserDataDto,
+            ),
+          );
           return;
         case RealUnitRegistrationState.newRegistration:
-          emit(const KycSuccess(currentStep: KycStep.registration));
+          // userData may be `null` for first-time registrations (no prior
+          // record to pre-fill from); `KycRegistrationPage` renders an empty
+          // form in that case.
+          emit(
+            KycSuccess(
+              currentStep: KycStep.registration,
+              realUnitUserData: walletStatus.realUnitUserDataDto,
+            ),
+          );
           return;
         case RealUnitRegistrationState.kycRequired:
-          emit(const KycUnsupportedStepFailure(null));
+          emit(const KycRequiredFailure());
           return;
       }
 

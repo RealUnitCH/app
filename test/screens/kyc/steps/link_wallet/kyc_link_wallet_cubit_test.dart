@@ -5,13 +5,8 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/kyc/steps/link_wallet/cubits/kyc_link_wallet_cubit.dart';
-
-class _MockWalletService extends Mock implements RealUnitWalletService {}
 
 class _MockRegistrationService extends Mock implements RealUnitRegistrationService {}
 
@@ -40,7 +35,6 @@ const _userData = RealUnitUserDataDto(
 );
 
 void main() {
-  late _MockWalletService walletService;
   late _MockRegistrationService registrationService;
 
   setUpAll(() {
@@ -48,60 +42,19 @@ void main() {
   });
 
   setUp(() {
-    walletService = _MockWalletService();
     registrationService = _MockRegistrationService();
   });
 
-  KycLinkWalletCubit build() => KycLinkWalletCubit(walletService, registrationService);
+  // Constructor seeds the userData straight into `Ready` — no fetch round-trip
+  // is performed by the cubit. The parent `KycCubit` has already produced this
+  // value as part of its routing decision.
+  KycLinkWalletCubit build() => KycLinkWalletCubit(registrationService, _userData);
 
-  group('loadUserData', () {
-    blocTest<KycLinkWalletCubit, KycLinkWalletState>(
-      'AddWallet + userData → Ready(userData)',
-      setUp: () {
-        when(() => walletService.getWalletStatus()).thenAnswer(
-          (_) async => RealUnitWalletStatusDto(
-            state: RealUnitRegistrationState.addWallet,
-            realUnitUserDataDto: _userData,
-          ),
-        );
-      },
-      build: build,
-      act: (c) => c.loadUserData(),
-      expect: () => [
-        const KycLinkWalletLoading(),
-        const KycLinkWalletReady(_userData),
-      ],
-    );
-
-    blocTest<KycLinkWalletCubit, KycLinkWalletState>(
-      'wallet status with no userData → Failure',
-      setUp: () {
-        when(() => walletService.getWalletStatus()).thenAnswer(
-          (_) async => RealUnitWalletStatusDto(
-            state: RealUnitRegistrationState.alreadyRegistered,
-          ),
-        );
-      },
-      build: build,
-      act: (c) => c.loadUserData(),
-      expect: () => [
-        const KycLinkWalletLoading(),
-        isA<KycLinkWalletFailure>(),
-      ],
-    );
-
-    blocTest<KycLinkWalletCubit, KycLinkWalletState>(
-      'getWalletStatus throws → Failure',
-      setUp: () {
-        when(() => walletService.getWalletStatus()).thenThrow(Exception('boom'));
-      },
-      build: build,
-      act: (c) => c.loadUserData(),
-      expect: () => [
-        const KycLinkWalletLoading(),
-        isA<KycLinkWalletFailure>(),
-      ],
-    );
+  group('initial state', () {
+    test('cubit starts in Ready(userData) with whatever the parent handed in', () {
+      final cubit = build();
+      expect(cubit.state, const KycLinkWalletReady(_userData));
+    });
   });
 
   group('submit', () {

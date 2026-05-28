@@ -5,7 +5,6 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/link_wallet/cubits/kyc_link_wallet_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
@@ -13,15 +12,25 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 class KycLinkWalletPage extends StatelessWidget {
-  const KycLinkWalletPage({super.key});
+  /// Server-supplied user data the parent `KycCubit` already fetched as part
+  /// of its routing decision. The backend always populates this for
+  /// `AddWallet`, so `null` is treated as an unexpected state — the page
+  /// surfaces a retry button that re-fires the parent cubit's `checkKyc()`.
+  final RealUnitUserDataDto? userData;
+
+  const KycLinkWalletPage({super.key, this.userData});
 
   @override
   Widget build(BuildContext context) {
+    final data = userData;
+    if (data == null) {
+      return const _LinkWalletMissingUserDataPage();
+    }
     return BlocProvider(
       create: (_) => KycLinkWalletCubit(
-        getIt<RealUnitWalletService>(),
         getIt<RealUnitRegistrationService>(),
-      )..loadUserData(),
+        data,
+      ),
       child: const KycLinkWalletView(),
     );
   }
@@ -55,9 +64,6 @@ class KycLinkWalletView extends StatelessWidget {
           }
         },
         builder: (context, state) => switch (state) {
-          KycLinkWalletInitial() ||
-          KycLinkWalletLoading() => const Center(child: CupertinoActivityIndicator()),
-          KycLinkWalletFailure(:final message) => _LinkWalletErrorBody(message: message),
           KycLinkWalletReady(:final userData) => _LinkWalletBody(
             userData: userData,
             isSubmitting: false,
@@ -149,31 +155,36 @@ class _LinkWalletInfoRow extends StatelessWidget {
   }
 }
 
-class _LinkWalletErrorBody extends StatelessWidget {
-  const _LinkWalletErrorBody({required this.message});
-
-  final String message;
+/// Defensive surface when the parent `KycCubit` routed to `linkWallet` but
+/// did not supply userData. In practice the backend always pairs `AddWallet`
+/// with userData, so this is a hard edge case — the user retries the routing
+/// decision rather than re-fetching the wallet status from the page itself.
+class _LinkWalletMissingUserDataPage extends StatelessWidget {
+  const _LinkWalletMissingUserDataPage();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: SafeArea(
-        child: Column(
-          spacing: 16.0,
-          children: [
-            const Spacer(),
-            Text(
-              message,
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-            AppFilledButton(
-              onPressed: () => context.read<KycLinkWalletCubit>().loadUserData(),
-              label: S.of(context).refresh,
-            ),
-            const Spacer(),
-          ],
+    return Scaffold(
+      appBar: AppBar(title: Text(S.of(context).kycLinkWalletTitle)),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: SafeArea(
+          child: Column(
+            spacing: 16.0,
+            children: [
+              const Spacer(),
+              Text(
+                S.of(context).kycFailure,
+                style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              AppFilledButton(
+                onPressed: () => context.read<KycCubit>().checkKyc(),
+                label: S.of(context).refresh,
+              ),
+              const Spacer(),
+            ],
+          ),
         ),
       ),
     );

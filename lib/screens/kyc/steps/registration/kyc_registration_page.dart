@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer' as developer;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -11,8 +10,8 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
@@ -25,7 +24,14 @@ import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class KycRegistrationPage extends StatelessWidget {
-  const KycRegistrationPage({super.key});
+  /// Server-supplied user data the parent `KycCubit` already fetched as part
+  /// of its routing decision. Passed in via constructor so the page does not
+  /// re-issue `getWalletStatus()` — there is one round-trip per decision.
+  /// `null` for first-time registrations with no prior record on the backend
+  /// (the form renders empty in that case).
+  final RealUnitUserDataDto? initialUserData;
+
+  const KycRegistrationPage({super.key, this.initialUserData});
 
   @override
   Widget build(BuildContext context) {
@@ -41,13 +47,15 @@ class KycRegistrationPage extends StatelessWidget {
           create: (_) => KycRegistrationStepCubit(),
         ),
       ],
-      child: const KycRegistrationView(),
+      child: KycRegistrationView(initialUserData: initialUserData),
     );
   }
 }
 
 class KycRegistrationView extends StatefulWidget {
-  const KycRegistrationView({super.key});
+  final RealUnitUserDataDto? initialUserData;
+
+  const KycRegistrationView({super.key, this.initialUserData});
 
   @override
   State<KycRegistrationView> createState() => _KycRegistrationViewState();
@@ -70,7 +78,6 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   final cityCtrl = TextEditingController();
   final countryCtrl = ValueNotifier<Country?>(null);
 
-  bool _prefillLoading = true;
   Country? _initialNationality;
   Country? _initialAddressCountry;
 
@@ -84,47 +91,49 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
         curve: Curves.easeOut,
       );
     });
-    unawaited(_prefillFromBackend());
+
+    // Seed the form synchronously from whatever the parent cubit handed in.
+    // The non-country scalars are available immediately; the two country
+    // lookups still need the country service (the DTO only carries 2-letter
+    // symbols), but the form is rendered straight away — country fields just
+    // populate when the lookup resolves. No loading gate, no re-fetch of the
+    // wallet status.
+    final dto = widget.initialUserData;
+    if (dto != null) {
+      typeCtrl.value = RegistrationUserType.fromName(dto.type);
+      firstnameCtrl.text = dto.kycData.firstName;
+      lastnameCtrl.text = dto.kycData.lastName;
+      phoneCtrl.value = dto.phoneNumber;
+      birthdayCtrl.value = dto.birthday;
+      addressStreetCtrl.text = dto.kycData.address.street;
+      addressStreetNumberCtrl.text = dto.kycData.address.houseNumber ?? '';
+      postalCodeCtrl.text = dto.kycData.address.zip;
+      cityCtrl.text = dto.kycData.address.city;
+      unawaited(_resolveInitialCountries(dto.nationality, dto.addressCountry));
+    }
   }
 
-  // Pulls already-known personal data from the API so the form starts pre-filled instead of
-  // forcing the user to retype values that must match the backend record byte-for-byte.
-  // Any failure degrades gracefully to a blank form — same UX as before the fetch.
-  Future<void> _prefillFromBackend() async {
+  Future<void> _resolveInitialCountries(
+    String nationalitySymbol,
+    String addressCountrySymbol,
+  ) async {
     try {
-      final walletStatus = await getIt<RealUnitWalletService>().getWalletStatus();
-      final dto = walletStatus.realUnitUserDataDto;
-      if (dto == null) {
-        if (mounted) setState(() => _prefillLoading = false);
-        return;
-      }
-
       final countryService = getIt<DfxCountryService>();
       final countries = await Future.wait([
-        countryService.getCountryBySymbol(dto.nationality),
-        countryService.getCountryBySymbol(dto.addressCountry),
+        countryService.getCountryBySymbol(nationalitySymbol),
+        countryService.getCountryBySymbol(addressCountrySymbol),
       ]);
-
       if (!mounted) return;
       setState(() {
-        typeCtrl.value = RegistrationUserType.fromName(dto.type);
-        firstnameCtrl.text = dto.kycData.firstName;
-        lastnameCtrl.text = dto.kycData.lastName;
-        phoneCtrl.value = dto.phoneNumber;
-        birthdayCtrl.value = dto.birthday;
         nationalityCtrl.value = countries[0];
         _initialNationality = countries[0];
-        addressStreetCtrl.text = dto.kycData.address.street;
-        addressStreetNumberCtrl.text = dto.kycData.address.houseNumber ?? '';
-        postalCodeCtrl.text = dto.kycData.address.zip;
-        cityCtrl.text = dto.kycData.address.city;
         countryCtrl.value = countries[1];
         _initialAddressCountry = countries[1];
-        _prefillLoading = false;
       });
-    } catch (e) {
-      developer.log('Failed to prefill RealUnit registration form: $e');
-      if (mounted) setState(() => _prefillLoading = false);
+    } catch (_) {
+      // Country lookup failed (unknown symbol or network error): degrade
+      // gracefully to the empty country fields — the user can pick manually
+      // and the form still submits.
     }
   }
 
@@ -201,30 +210,28 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
           spacing: 20.0,
           children: [
             Expanded(
-              child: _prefillLoading
-                  ? const Center(child: CupertinoActivityIndicator())
-                  : Stack(
-                      children: [
-                        PageView(
-                          controller: _pageController,
-                          physics: const NeverScrollableScrollPhysics(),
-                          children: KycRegistrationStep.values.map(_buildStep).toList(),
-                        ),
-                        BlocBuilder<KycRegistrationSubmitCubit, KycRegistrationSubmitState>(
-                          builder: (context, state) {
-                            if (state is KycRegistrationSubmitLoading) {
-                              return Container(
-                                color: RealUnitColors.basic.white,
-                                child: const Center(
-                                  child: CupertinoActivityIndicator(),
-                                ),
-                              );
-                            }
-                            return const SizedBox.shrink();
-                          },
-                        ),
-                      ],
-                    ),
+              child: Stack(
+                children: [
+                  PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: KycRegistrationStep.values.map(_buildStep).toList(),
+                  ),
+                  BlocBuilder<KycRegistrationSubmitCubit, KycRegistrationSubmitState>(
+                    builder: (context, state) {
+                      if (state is KycRegistrationSubmitLoading) {
+                        return Container(
+                          color: RealUnitColors.basic.white,
+                          child: const Center(
+                            child: CupertinoActivityIndicator(),
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                ],
+              ),
             ),
           ],
         ),

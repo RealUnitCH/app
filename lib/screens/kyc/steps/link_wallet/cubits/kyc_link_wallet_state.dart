@@ -7,14 +7,6 @@ abstract class KycLinkWalletState extends Equatable {
   List<Object?> get props => [];
 }
 
-class KycLinkWalletInitial extends KycLinkWalletState {
-  const KycLinkWalletInitial();
-}
-
-class KycLinkWalletLoading extends KycLinkWalletState {
-  const KycLinkWalletLoading();
-}
-
 class KycLinkWalletReady extends KycLinkWalletState {
   final RealUnitUserDataDto userData;
 

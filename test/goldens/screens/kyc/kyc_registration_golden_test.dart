@@ -4,9 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/kyc_registration_step_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_submit/kyc_registration_submit_cubit.dart';
@@ -48,19 +45,14 @@ void main() {
     when(() => kycCubit.state).thenReturn(const KycInitial());
   });
 
+  // The page no longer reads `RealUnitWalletService` directly — the parent
+  // `KycCubit` passes the (possibly null) `RealUnitUserDataDto` via
+  // constructor. The default golden uses `initialUserData: null` so it asserts
+  // on the empty-form render, which is the first-time-registration path.
   setUpAll(() {
     final countryService = MockDfxCountryService();
     when(() => countryService.getAllCountries()).thenAnswer((_) async => const []);
     GetIt.instance.registerSingleton<DfxCountryService>(countryService);
-
-    final walletService = MockRealUnitWalletService();
-    when(() => walletService.getWalletStatus()).thenAnswer(
-      (_) async => RealUnitWalletStatusDto(
-        state: RealUnitRegistrationState.newRegistration,
-        realUnitUserDataDto: null,
-      ),
-    );
-    GetIt.instance.registerSingleton<RealUnitWalletService>(walletService);
   });
 
   tearDownAll(() async => GetIt.instance.reset());

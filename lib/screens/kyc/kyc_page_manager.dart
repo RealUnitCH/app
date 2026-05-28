@@ -46,28 +46,32 @@ class KycViewManager extends StatelessWidget {
       builder: (context, state) => switch (state) {
         KycLoading() => const KycLoadingPage(),
         KycFailure(:final message) => KycFailurePage(message: message),
+        KycRequiredFailure() => KycFailurePage(
+          message: S.of(context).kycRequiredFailureMessage,
+        ),
         KycUnsupportedStepFailure(:final stepName) => KycFailurePage(
           message: S.of(context).kycUnsupportedStepDescription(stepName?.value ?? '-'),
         ),
         KycAccountMergeRequested() => const KycAccountMergePage(),
         KycPending(:final pendingStep) => KycPendingPage(pendingStep: pendingStep),
         KycCompleted() => const KycCompletedPage(),
-        KycSuccess(:final currentStep, :final urlOrToken) => switch (currentStep) {
-          KycStep.email => const KycEmailPage(),
-          KycStep.legalDisclaimer => LegalDisclaimerPage(
-            onCompleted: () {
-              context.read<KycCubit>().markLegalDisclaimerAccepted();
-              context.read<KycCubit>().checkKyc();
-            },
-          ),
-          KycStep.registration => const KycRegistrationPage(),
-          KycStep.linkWallet => const KycLinkWalletPage(),
-          KycStep.nationality => KycNationalityPage(url: urlOrToken ?? ''),
-          KycStep.twoFa => const Kyc2FaPage(),
-          KycStep.ident => KycIdentPage(accessToken: urlOrToken ?? ''),
-          KycStep.financialData => KycFinancialDataPage(url: urlOrToken ?? ''),
-          (_) => const Scaffold(),
-        },
+        KycSuccess(:final currentStep, :final urlOrToken, :final realUnitUserData) =>
+          switch (currentStep) {
+            KycStep.email => const KycEmailPage(),
+            KycStep.legalDisclaimer => LegalDisclaimerPage(
+              onCompleted: () {
+                context.read<KycCubit>().markLegalDisclaimerAccepted();
+                context.read<KycCubit>().checkKyc();
+              },
+            ),
+            KycStep.registration => KycRegistrationPage(initialUserData: realUnitUserData),
+            KycStep.linkWallet => KycLinkWalletPage(userData: realUnitUserData),
+            KycStep.nationality => KycNationalityPage(url: urlOrToken ?? ''),
+            KycStep.twoFa => const Kyc2FaPage(),
+            KycStep.ident => KycIdentPage(accessToken: urlOrToken ?? ''),
+            KycStep.financialData => KycFinancialDataPage(url: urlOrToken ?? ''),
+            (_) => const Scaffold(),
+          },
         KycState() => const Scaffold(),
       },
     );
