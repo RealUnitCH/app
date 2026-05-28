@@ -20,6 +20,7 @@ class KycRegistrationAddressStep extends StatefulWidget {
   /// they sign on the BitBox.
   final ValueNotifier<bool> swissTaxResidenceCtrl;
 
+  final Country? initialCountry;
   final Future<void> Function() onSubmit;
 
   const KycRegistrationAddressStep({
@@ -31,15 +32,14 @@ class KycRegistrationAddressStep extends StatefulWidget {
     required this.countryCtrl,
     required this.swissTaxResidenceCtrl,
     required this.onSubmit,
+    this.initialCountry,
   });
 
   @override
-  State<KycRegistrationAddressStep> createState() =>
-      _KycRegistrationAddressStepState();
+  State<KycRegistrationAddressStep> createState() => _KycRegistrationAddressStepState();
 }
 
-class _KycRegistrationAddressStepState
-    extends State<KycRegistrationAddressStep> {
+class _KycRegistrationAddressStepState extends State<KycRegistrationAddressStep> {
   final _formKey = GlobalKey<FormState>();
 
   /// Tracks whether the user has explicitly interacted with the
@@ -100,7 +100,9 @@ class _KycRegistrationAddressStepState
                         textCapitalization: TextCapitalization.words,
                         validator: (value) {
                           if (value == null || value.isEmpty) return '';
-                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
+                          if (!isSwissPaymentText(value)) {
+                            return S.of(context).swissPaymentTextInvalid;
+                          }
                           return null;
                         },
                       ),
@@ -113,7 +115,9 @@ class _KycRegistrationAddressStepState
                         keyboardType: TextInputType.streetAddress,
                         validator: (value) {
                           if (value == null || value.isEmpty) return '';
-                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
+                          if (!isSwissPaymentText(value)) {
+                            return S.of(context).swissPaymentTextInvalid;
+                          }
                           return null;
                         },
                       ),
@@ -133,7 +137,9 @@ class _KycRegistrationAddressStepState
                         keyboardType: TextInputType.number,
                         validator: (value) {
                           if (value == null || value.isEmpty) return '';
-                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
+                          if (!isSwissPaymentText(value)) {
+                            return S.of(context).swissPaymentTextInvalid;
+                          }
                           return null;
                         },
                       ),
@@ -148,7 +154,9 @@ class _KycRegistrationAddressStepState
                         textCapitalization: TextCapitalization.words,
                         validator: (value) {
                           if (value == null || value.isEmpty) return '';
-                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
+                          if (!isSwissPaymentText(value)) {
+                            return S.of(context).swissPaymentTextInvalid;
+                          }
                           return null;
                         },
                       ),
@@ -158,6 +166,7 @@ class _KycRegistrationAddressStepState
                 CountryField(
                   label: S.of(context).country,
                   purpose: CountryFieldPurpose.residence,
+                  initialValue: widget.initialCountry,
                   onChanged: (country) => widget.countryCtrl.value = country,
                 ),
                 ValueListenableBuilder<bool>(

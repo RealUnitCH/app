@@ -8,25 +8,19 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_info_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/error_mapper.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_verification/kyc_email_verification_cubit.dart';
 
 class _MockAuthService extends Mock implements DFXAuthService {}
 
-class _MockWalletService extends Mock implements RealUnitWalletService {}
-
 class _MockRegistrationService extends Mock implements RealUnitRegistrationService {}
 
 String _fakeJwt(int accountId) {
-  final header = base64Url
-      .encode(utf8.encode('{"alg":"HS256"}'))
-      .replaceAll('=', '');
-  final payload = base64Url
-      .encode(utf8.encode('{"account":$accountId}'))
-      .replaceAll('=', '');
+  final header = base64Url.encode(utf8.encode('{"alg":"HS256"}')).replaceAll('=', '');
+  final payload = base64Url.encode(utf8.encode('{"account":$accountId}')).replaceAll('=', '');
   return '$header.$payload.signature';
 }
 
@@ -59,9 +53,16 @@ const _userData = RealUnitUserDataDto(
   kycData: _kycData,
 );
 
+RealUnitRegistrationInfoDto _registrationInfo({
+  RealUnitRegistrationState state = RealUnitRegistrationState.addWallet,
+  RealUnitUserDataDto? userData = _userData,
+}) => RealUnitRegistrationInfoDto(
+  state: state,
+  realUnitUserDataDto: userData,
+);
+
 void main() {
   late _MockAuthService auth;
-  late _MockWalletService walletService;
   late _MockRegistrationService registrationService;
 
   setUpAll(() {
@@ -70,7 +71,6 @@ void main() {
 
   setUp(() {
     auth = _MockAuthService();
-    walletService = _MockWalletService();
     registrationService = _MockRegistrationService();
     when(() => auth.invalidateAuthToken()).thenReturn(null);
   });
@@ -78,18 +78,16 @@ void main() {
   KycEmailVerificationCubit build({
     void Function()? onSignProduced,
     bool initialMergeDetected = false,
-    int walletStatusRetries = 1,
-    Duration walletStatusRetryDelay = Duration.zero,
-  }) =>
-      KycEmailVerificationCubit(
-        dfxService: auth,
-        walletService: walletService,
-        registrationService: registrationService,
-        onSignProduced: onSignProduced,
-        initialMergeDetected: initialMergeDetected,
-        walletStatusRetries: walletStatusRetries,
-        walletStatusRetryDelay: walletStatusRetryDelay,
-      );
+    int registrationInfoRetries = 1,
+    Duration registrationInfoRetryDelay = Duration.zero,
+  }) => KycEmailVerificationCubit(
+    dfxService: auth,
+    registrationService: registrationService,
+    onSignProduced: onSignProduced,
+    initialMergeDetected: initialMergeDetected,
+    registrationInfoRetries: registrationInfoRetries,
+    registrationInfoRetryDelay: registrationInfoRetryDelay,
+  );
 
   group('initial state', () {
     test('emits $KycEmailVerificationInitial', () {
@@ -122,14 +120,12 @@ void main() {
         final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        when(() => walletService.getWalletStatus()).thenAnswer(
-          (_) async => RealUnitWalletStatusDto(
-            isRegistered: true,
-            realUnitUserDataDto: _userData,
-          ),
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _registrationInfo(),
         );
-        when(() => registrationService.registerWallet(any()))
-            .thenAnswer((_) async => RegistrationStatus.completed);
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenAnswer((_) async => RegistrationStatus.completed);
       },
       build: build,
       act: (c) => c.checkEmailVerification(),
@@ -144,14 +140,12 @@ void main() {
       'initialMergeDetected (re-entrant resume) skips the one-shot account-id '
       'check and goes straight to registerWallet → Success',
       setUp: () {
-        when(() => walletService.getWalletStatus()).thenAnswer(
-          (_) async => RealUnitWalletStatusDto(
-            isRegistered: true,
-            realUnitUserDataDto: _userData,
-          ),
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _registrationInfo(),
         );
-        when(() => registrationService.registerWallet(any()))
-            .thenAnswer((_) async => RegistrationStatus.completed);
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenAnswer((_) async => RegistrationStatus.completed);
       },
       build: () => build(initialMergeDetected: true),
       act: (c) => c.checkEmailVerification(),
@@ -174,10 +168,10 @@ void main() {
         final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        when(() => walletService.getWalletStatus()).thenAnswer(
-          (_) async => RealUnitWalletStatusDto(
-            isRegistered: false,
-            realUnitUserDataDto: null,
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _registrationInfo(
+            state: RealUnitRegistrationState.newRegistration,
+            userData: null,
           ),
         );
       },
@@ -193,35 +187,33 @@ void main() {
     );
 
     blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
-      'changed account id retries wallet status propagation before registering',
+      'changed account id retries registration info propagation before registering',
       setUp: () {
         final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        var walletStatusCallCount = 0;
-        when(() => walletService.getWalletStatus()).thenAnswer((_) async {
-          walletStatusCallCount++;
-          return walletStatusCallCount == 1
-              ? RealUnitWalletStatusDto(
-                  isRegistered: false,
-                  realUnitUserDataDto: null,
+        var registrationInfoCallCount = 0;
+        when(() => registrationService.getRegistrationInfo()).thenAnswer((_) async {
+          registrationInfoCallCount++;
+          return registrationInfoCallCount == 1
+              ? _registrationInfo(
+                  state: RealUnitRegistrationState.newRegistration,
+                  userData: null,
                 )
-              : RealUnitWalletStatusDto(
-                  isRegistered: true,
-                  realUnitUserDataDto: _userData,
-                );
+              : _registrationInfo();
         });
-        when(() => registrationService.registerWallet(any()))
-            .thenAnswer((_) async => RegistrationStatus.completed);
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenAnswer((_) async => RegistrationStatus.completed);
       },
-      build: () => build(walletStatusRetries: 2),
+      build: () => build(registrationInfoRetries: 2),
       act: (c) => c.checkEmailVerification(),
       expect: () => [
         isA<KycEmailVerificationLoading>(),
         isA<KycEmailVerificationSuccess>(),
       ],
       verify: (_) {
-        verify(() => walletService.getWalletStatus()).called(2);
+        verify(() => registrationService.getRegistrationInfo()).called(2);
         verify(() => registrationService.registerWallet(_userData)).called(1);
       },
     );
@@ -234,14 +226,12 @@ void main() {
         final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        when(() => walletService.getWalletStatus()).thenAnswer(
-          (_) async => RealUnitWalletStatusDto(
-            isRegistered: true,
-            realUnitUserDataDto: _userData,
-          ),
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _registrationInfo(),
         );
-        when(() => registrationService.registerWallet(any()))
-            .thenAnswer((_) async => throw Exception('boom'));
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenAnswer((_) async => throw Exception('boom'));
       },
       build: build,
       act: (c) => c.checkEmailVerification(),
@@ -264,21 +254,19 @@ void main() {
         final tokens = [_fakeJwt(1), _fakeJwt(2), _fakeJwt(2), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        var walletStatusCallCount = 0;
-        when(() => walletService.getWalletStatus()).thenAnswer((_) async {
-          walletStatusCallCount++;
-          return walletStatusCallCount == 1
-              ? RealUnitWalletStatusDto(
-                  isRegistered: false,
-                  realUnitUserDataDto: null,
+        var registrationInfoCallCount = 0;
+        when(() => registrationService.getRegistrationInfo()).thenAnswer((_) async {
+          registrationInfoCallCount++;
+          return registrationInfoCallCount == 1
+              ? _registrationInfo(
+                  state: RealUnitRegistrationState.newRegistration,
+                  userData: null,
                 )
-              : RealUnitWalletStatusDto(
-                  isRegistered: true,
-                  realUnitUserDataDto: _userData,
-                );
+              : _registrationInfo();
         });
-        when(() => registrationService.registerWallet(any()))
-            .thenAnswer((_) async => RegistrationStatus.completed);
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenAnswer((_) async => RegistrationStatus.completed);
       },
       build: build,
       act: (c) async {
@@ -305,11 +293,8 @@ void main() {
         final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        when(() => walletService.getWalletStatus()).thenAnswer(
-          (_) async => RealUnitWalletStatusDto(
-            isRegistered: true,
-            realUnitUserDataDto: _userData,
-          ),
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _registrationInfo(),
         );
         when(() => registrationService.registerWallet(any())).thenAnswer(
           (_) async => throw const BitboxNotConnectedException(),
@@ -321,8 +306,7 @@ void main() {
         isA<KycEmailVerificationLoading>(),
         isA<KycEmailVerificationBitboxRequired>(),
       ],
-      verify: (_) =>
-          verify(() => registrationService.registerWallet(_userData)).called(1),
+      verify: (_) => verify(() => registrationService.registerWallet(_userData)).called(1),
     );
 
     blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
@@ -332,11 +316,8 @@ void main() {
         final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        when(() => walletService.getWalletStatus()).thenAnswer(
-          (_) async => RealUnitWalletStatusDto(
-            isRegistered: true,
-            realUnitUserDataDto: _userData,
-          ),
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _registrationInfo(),
         );
         when(() => registrationService.registerWallet(any())).thenAnswer(
           (_) async => throw const BitboxNotConnectedSignException(),
@@ -348,8 +329,7 @@ void main() {
         isA<KycEmailVerificationLoading>(),
         isA<KycEmailVerificationBitboxRequired>(),
       ],
-      verify: (_) =>
-          verify(() => registrationService.registerWallet(_userData)).called(1),
+      verify: (_) => verify(() => registrationService.registerWallet(_userData)).called(1),
     );
 
     blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
@@ -367,11 +347,8 @@ void main() {
         final tokens = [_fakeJwt(1), _fakeJwt(2), _fakeJwt(2), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        when(() => walletService.getWalletStatus()).thenAnswer(
-          (_) async => RealUnitWalletStatusDto(
-            isRegistered: true,
-            realUnitUserDataDto: _userData,
-          ),
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _registrationInfo(),
         );
         var registerCallCount = 0;
         when(() => registrationService.registerWallet(any())).thenAnswer(
@@ -402,21 +379,19 @@ void main() {
     );
   });
 
-  group('BL-006: sign-gate flips from inside the cubit on success', () {
+  group('success callback fires only after registerWallet', () {
     blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
       'on Success → onSignProduced callback is invoked',
       setUp: () {
         final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        when(() => walletService.getWalletStatus()).thenAnswer(
-          (_) async => RealUnitWalletStatusDto(
-            isRegistered: true,
-            realUnitUserDataDto: _userData,
-          ),
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _registrationInfo(),
         );
-        when(() => registrationService.registerWallet(any()))
-            .thenAnswer((_) async => RegistrationStatus.completed);
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenAnswer((_) async => RegistrationStatus.completed);
       },
       build: () {
         var callCount = 0;
@@ -424,7 +399,7 @@ void main() {
         // Stash the callback's invocation count on the cubit via a
         // sentinel state-listener so the verify block can assert it.
         addTearDown(() {
-          expect(callCount, 1, reason: 'sign-gate flip must fire exactly once on Success');
+          expect(callCount, 1, reason: 'success callback must fire exactly once on Success');
         });
         return cubit;
       },
@@ -441,14 +416,12 @@ void main() {
         final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        when(() => walletService.getWalletStatus()).thenAnswer(
-          (_) async => RealUnitWalletStatusDto(
-            isRegistered: true,
-            realUnitUserDataDto: _userData,
-          ),
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _registrationInfo(),
         );
-        when(() => registrationService.registerWallet(any()))
-            .thenAnswer((_) async => throw Exception('boom'));
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenAnswer((_) async => throw Exception('boom'));
       },
       build: () {
         var callCount = 0;
@@ -457,7 +430,7 @@ void main() {
           expect(
             callCount,
             0,
-            reason: 'sign-gate must NOT flip if registerWallet failed',
+            reason: 'success callback must NOT fire if registerWallet failed',
           );
         });
         return cubit;
@@ -475,11 +448,8 @@ void main() {
         final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        when(() => walletService.getWalletStatus()).thenAnswer(
-          (_) async => RealUnitWalletStatusDto(
-            isRegistered: true,
-            realUnitUserDataDto: _userData,
-          ),
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _registrationInfo(),
         );
         when(() => registrationService.registerWallet(any())).thenAnswer(
           (_) async => throw const BitboxNotConnectedException(),
@@ -492,7 +462,7 @@ void main() {
           expect(
             callCount,
             0,
-            reason: 'sign-gate must NOT flip on a BitBox disconnect',
+            reason: 'success callback must NOT fire on a BitBox disconnect',
           );
         });
         return cubit;

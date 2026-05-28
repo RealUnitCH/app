@@ -151,6 +151,10 @@ See the README's "Release versioning" section for the full table and the typical
 - **Cubit**: For simpler state. States extend `Equatable` — use `copyWith` or distinct state classes depending on the use case.
 - State files are separate from bloc/cubit files.
 
+## Wallet Modes
+
+The app supports three wallet modes (`software`, `bitbox`, `debug`) with different signing capabilities. Any feature that needs an EIP-712 signature must gate on `getIt<AppStore>().wallet.walletType` and surface a dedicated failure state for modes that cannot sign (today: `debug`). See [`docs/wallet-modes.md`](docs/wallet-modes.md) for the full table and the `KycSignatureUnsupportedFailure` precedent.
+
 ## DTOs & Models
 
 - DTOs live in `lib/packages/service/dfx/models/{resource}/dto/`

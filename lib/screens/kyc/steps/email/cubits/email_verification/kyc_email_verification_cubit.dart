@@ -5,8 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/packages/utils/jwt_decoder.dart';
 import 'package:realunit_wallet/packages/wallet/error_mapper.dart';
 
@@ -14,13 +12,11 @@ part 'kyc_email_verification_state.dart';
 
 class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
   final DFXAuthService _dfxService;
-  final RealUnitWalletService _walletService;
   final RealUnitRegistrationService _registrationService;
 
-  /// Invoked when registerWallet succeeded. Closes BL-006 by moving the
-  /// sign-gate flip from the page-listener-on-pop into the cubit's own
-  /// success branch — the gate is no longer flipped speculatively if
-  /// the user dismisses the page mid-flow.
+  /// Invoked only after registerWallet succeeded. This keeps success
+  /// notifications tied to the actual EIP-712 round-trip instead of a
+  /// speculative page pop.
   final void Function()? _onSignProduced;
 
   // `Future.timeout` does not cancel the underlying work, so a late HTTP
@@ -36,7 +32,7 @@ class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
   // is settled — re-running the account-id comparison on a retry would just
   // emit `Failure` ("email not yet confirmed") because `getAuthToken` keeps
   // returning the new (merged) account. The remaining work that can still
-  // race is `getWalletStatus` propagation on the user-data side, so a retry
+  // race is `getRegistrationInfo` propagation on the user-data side, so a retry
   // after a `RegistrationFailure` should skip the auth-side check and go
   // straight to `_completeRegistration`.
   //
@@ -55,7 +51,6 @@ class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
 
   KycEmailVerificationCubit({
     required DFXAuthService dfxService,
-    required RealUnitWalletService walletService,
     required RealUnitRegistrationService registrationService,
     void Function()? onSignProduced,
     // Re-entrant resume path: when the merge was already confirmed on the
@@ -66,16 +61,15 @@ class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
     // Bounded auto-retry for the post-merge user-data propagation race.
     // Injectable so tests can drive the immediate-fail contract (retries: 1,
     // zero delay) without waiting on real timers.
-    int walletStatusRetries = 4,
-    Duration walletStatusRetryDelay = const Duration(seconds: 2),
+    int registrationInfoRetries = 4,
+    Duration registrationInfoRetryDelay = const Duration(seconds: 2),
   }) : _dfxService = dfxService,
-       _walletService = walletService,
        _registrationService = registrationService,
        _onSignProduced = onSignProduced,
        _mergeDetected = initialMergeDetected,
        _initialMergeDetected = initialMergeDetected,
-       _walletStatusRetries = walletStatusRetries,
-       _walletStatusRetryDelay = walletStatusRetryDelay,
+       _registrationInfoRetries = registrationInfoRetries,
+       _registrationInfoRetryDelay = registrationInfoRetryDelay,
        super(const KycEmailVerificationInitial());
 
   Future<void> checkEmailVerification() async {
@@ -104,9 +98,7 @@ class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
     // new wallet with the merged user via the EIP-712 registration signature.
     if (await _completeRegistration(generation)) {
       if (isClosed || generation != _runGeneration) return;
-      // Sign succeeded — flip the sign-gate from inside the cubit so the
-      // outer page-listener can drop its speculative
-      // `markRegistrationSignProduced()` on pop (closes BL-006).
+      // Sign succeeded — notify only from inside the cubit's success branch.
       _onSignProduced?.call();
       emit(const KycEmailVerificationSuccess());
     }
@@ -122,12 +114,12 @@ class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
   /// [KycEmailVerificationBitboxRequired] so the listener can show the
   /// error to the user.
   // Bounded auto-retry budget for the post-merge user-data propagation race.
-  // getWalletStatus is a side-effect-free GET, so polling it a few times is
-  // safe; this absorbs the common "auth merged, user-data not propagated yet"
-  // window without forcing the user to tap retry manually. Injected so tests
-  // run without real delays.
-  final int _walletStatusRetries;
-  final Duration _walletStatusRetryDelay;
+  // getRegistrationInfo is a side-effect-free GET, so polling it a few times
+  // is safe; this absorbs the common "auth merged, user-data not propagated
+  // yet" window without forcing the user to tap retry manually. Injected so
+  // tests run without real delays.
+  final int _registrationInfoRetries;
+  final Duration _registrationInfoRetryDelay;
 
   Future<bool> _completeRegistration(int generation) async {
     try {
@@ -138,24 +130,25 @@ class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
       // retry. The `_mergeDetected` latch already guarantees a later manual
       // retry skips the auth-side check, so a final failure here is still
       // recoverable.
-      RealUnitWalletStatusDto? status;
-      for (var attempt = 0; attempt < _walletStatusRetries; attempt++) {
-        status = await _walletService.getWalletStatus();
+      var info = await _registrationService.getRegistrationInfo();
+      for (var attempt = 0; attempt < _registrationInfoRetries; attempt++) {
         if (isClosed || generation != _runGeneration) return false;
-        if (status.realUnitUserDataDto != null) break;
-        if (attempt < _walletStatusRetries - 1) {
-          await Future<void>.delayed(_walletStatusRetryDelay);
+        if (info.realUnitUserDataDto != null) break;
+        if (attempt < _registrationInfoRetries - 1) {
+          await Future<void>.delayed(_registrationInfoRetryDelay);
           if (isClosed || generation != _runGeneration) return false;
+          info = await _registrationService.getRegistrationInfo();
         }
       }
-      if (status?.realUnitUserDataDto == null) {
+      final userData = info.realUnitUserDataDto;
+      if (userData == null) {
         developer.log(
-          'getWalletStatus still null after $_walletStatusRetries attempts',
+          'getRegistrationInfo still null after $_registrationInfoRetries attempts',
         );
         emit(const KycEmailVerificationRegistrationFailure());
         return false;
       }
-      await _registrationService.registerWallet(status!.realUnitUserDataDto!);
+      await _registrationService.registerWallet(userData);
       if (isClosed || generation != _runGeneration) return false;
       return true;
     } on BitboxNotConnectedException {

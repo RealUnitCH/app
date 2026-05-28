@@ -19,6 +19,7 @@ class KycRegistrationPersonalStep extends StatelessWidget {
   final ValueNotifier<String?> birthdayCtrl;
   final ValueNotifier<String?> phoneCtrl;
   final ValueNotifier<Country?> nationalityCtrl;
+  final Country? initialNationality;
 
   KycRegistrationPersonalStep({
     super.key,
@@ -28,6 +29,7 @@ class KycRegistrationPersonalStep extends StatelessWidget {
     required this.phoneCtrl,
     required this.nationalityCtrl,
     required this.birthdayCtrl,
+    this.initialNationality,
   });
 
   final _formKey = GlobalKey<FormState>();
@@ -100,6 +102,7 @@ class KycRegistrationPersonalStep extends StatelessWidget {
                 CountryField(
                   label: S.of(context).registerCitizenship,
                   purpose: CountryFieldPurpose.nationality,
+                  initialValue: initialNationality,
                   onChanged: (country) => nationalityCtrl.value = country,
                 ),
                 Padding(

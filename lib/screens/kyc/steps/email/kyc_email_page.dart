@@ -77,9 +77,9 @@ class _KycEmailFormState extends State<KycEmailForm> {
             // ancestor of THIS page but NOT of a route pushed onto the
             // Navigator. Capture it here (where it resolves) and re-provide it
             // into the pushed route via BlocProvider.value so
-            // KycEmailVerificationPage can wire its onSignProduced callback
-            // without a `Provider<KycCubit> not found` crash. `.value` does
-            // not own the cubit, so popping the route never closes it.
+            // KycEmailVerificationPage can advance the parent KYC flow without
+            // a `Provider<KycCubit> not found` crash. `.value` does not own the
+            // cubit, so popping the route never closes it.
             final kycCubit = context.read<KycCubit>();
             final isConfirmed = await Navigator.push<bool>(
               context,
@@ -91,13 +91,12 @@ class _KycEmailFormState extends State<KycEmailForm> {
               ),
             );
             if (isConfirmed == true && context.mounted) {
-              // BL-006 — the sign-gate flip is now owned by
-              // KycEmailVerificationCubit's success branch (via the
-              // `onSignProduced` callback wired in
-              // KycEmailVerificationPage). The page-on-pop listener
-              // continues to drive the rest of the KYC step rotation
-              // via `checkKyc()`, but the gate is no longer flipped
-              // speculatively from here.
+              // A successful merge confirmation already registered this
+              // wallet via `KycEmailVerificationCubit._completeRegistration`
+              // → `RealUnitRegistrationService.registerWallet`. The next
+              // `checkKyc()` re-fetches `getRegistrationInfo`, sees
+              // `AlreadyRegistered`, and routes forward — no local sign-gate
+              // flag needed.
               context.read<KycCubit>().checkKyc();
             }
           }

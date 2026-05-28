@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
@@ -22,7 +24,14 @@ import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class KycRegistrationPage extends StatelessWidget {
-  const KycRegistrationPage({super.key});
+  /// Server-supplied user data the parent `KycCubit` already fetched as part
+  /// of its routing decision. Passed in via constructor so the page does not
+  /// re-issue `getRegistrationInfo()` — there is one round-trip per decision.
+  /// `null` for first-time registrations with no prior record on the backend
+  /// (the form renders empty in that case).
+  final RealUnitUserDataDto? initialUserData;
+
+  const KycRegistrationPage({super.key, this.initialUserData});
 
   @override
   Widget build(BuildContext context) {
@@ -38,13 +47,15 @@ class KycRegistrationPage extends StatelessWidget {
           create: (_) => KycRegistrationStepCubit(),
         ),
       ],
-      child: const KycRegistrationView(),
+      child: KycRegistrationView(initialUserData: initialUserData),
     );
   }
 }
 
 class KycRegistrationView extends StatefulWidget {
-  const KycRegistrationView({super.key});
+  final RealUnitUserDataDto? initialUserData;
+
+  const KycRegistrationView({super.key, this.initialUserData});
 
   @override
   State<KycRegistrationView> createState() => _KycRegistrationViewState();
@@ -75,6 +86,9 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   // residence on top of their primary address.
   final swissTaxResidenceCtrl = ValueNotifier<bool>(false);
 
+  Country? _initialNationality;
+  Country? _initialAddressCountry;
+
   @override
   void initState() {
     super.initState();
@@ -85,6 +99,50 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
         curve: Curves.easeOut,
       );
     });
+
+    // Seed the form synchronously from whatever the parent cubit handed in.
+    // The non-country scalars are available immediately; the two country
+    // lookups still need the country service (the DTO only carries 2-letter
+    // symbols), but the form is rendered straight away — country fields just
+    // populate when the lookup resolves. No loading gate, no re-fetch of the
+    // wallet status.
+    final dto = widget.initialUserData;
+    if (dto != null) {
+      typeCtrl.value = RegistrationUserType.fromName(dto.type);
+      firstnameCtrl.text = dto.kycData.firstName;
+      lastnameCtrl.text = dto.kycData.lastName;
+      phoneCtrl.value = dto.phoneNumber;
+      birthdayCtrl.value = dto.birthday;
+      addressStreetCtrl.text = dto.kycData.address.street;
+      addressStreetNumberCtrl.text = dto.kycData.address.houseNumber ?? '';
+      postalCodeCtrl.text = dto.kycData.address.zip;
+      cityCtrl.text = dto.kycData.address.city;
+      unawaited(_resolveInitialCountries(dto.nationality, dto.addressCountry));
+    }
+  }
+
+  Future<void> _resolveInitialCountries(
+    String nationalitySymbol,
+    String addressCountrySymbol,
+  ) async {
+    try {
+      final countryService = getIt<DfxCountryService>();
+      final countries = await Future.wait([
+        countryService.getCountryBySymbol(nationalitySymbol),
+        countryService.getCountryBySymbol(addressCountrySymbol),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        nationalityCtrl.value = countries[0];
+        _initialNationality = countries[0];
+        countryCtrl.value = countries[1];
+        _initialAddressCountry = countries[1];
+      });
+    } catch (_) {
+      // Country lookup failed (unknown symbol or network error): degrade
+      // gracefully to the empty country fields — the user can pick manually
+      // and the form still submits.
+    }
   }
 
   @override
@@ -114,10 +172,9 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
             // The submit cubit only emits Success after a successful EIP-712
             // sign through `_signEip712`, regardless of the resulting backend
             // status (completed, pendingReview, forwardingFailed,
-            // alreadyRegistered). The sign gate is therefore satisfied for
-            // every Success branch — mark it produced and let `checkKyc`
-            // resolve the next KYC step from the API.
-            context.read<KycCubit>().markRegistrationSignProduced();
+            // alreadyRegistered). The backend now reflects the new wallet,
+            // so re-fetching `getRegistrationInfo` in `_runCheckKyc` will return
+            // `AlreadyRegistered` and dispatch the next KYC step.
             context.read<KycCubit>().checkKyc();
 
             if (state.status == RegistrationStatus.forwardingFailed) {
@@ -200,6 +257,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
           nationalityCtrl: nationalityCtrl,
           phoneCtrl: phoneCtrl,
           birthdayCtrl: birthdayCtrl,
+          initialNationality: _initialNationality,
         );
 
       case KycRegistrationStep.address:
@@ -210,6 +268,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
           cityCtrl: cityCtrl,
           countryCtrl: countryCtrl,
           swissTaxResidenceCtrl: swissTaxResidenceCtrl,
+          initialCountry: _initialAddressCountry,
           onSubmit: _onSubmit,
         );
     }
