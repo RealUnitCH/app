@@ -193,6 +193,40 @@ void main() {
     );
 
     blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
+      'changed account id retries wallet status propagation before registering',
+      setUp: () {
+        final tokens = [_fakeJwt(1), _fakeJwt(2)];
+        var i = 0;
+        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
+        var walletStatusCallCount = 0;
+        when(() => walletService.getWalletStatus()).thenAnswer((_) async {
+          walletStatusCallCount++;
+          return walletStatusCallCount == 1
+              ? RealUnitWalletStatusDto(
+                  isRegistered: false,
+                  realUnitUserDataDto: null,
+                )
+              : RealUnitWalletStatusDto(
+                  isRegistered: true,
+                  realUnitUserDataDto: _userData,
+                );
+        });
+        when(() => registrationService.registerWallet(any()))
+            .thenAnswer((_) async => RegistrationStatus.completed);
+      },
+      build: () => build(walletStatusRetries: 2),
+      act: (c) => c.checkEmailVerification(),
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationSuccess>(),
+      ],
+      verify: (_) {
+        verify(() => walletService.getWalletStatus()).called(2);
+        verify(() => registrationService.registerWallet(_userData)).called(1);
+      },
+    );
+
+    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
       'registerWallet throws → RegistrationFailure, no Success '
       '(failure is surfaced so the user can retry instead of proceeding '
       'with a wallet that is not actually registered)',
