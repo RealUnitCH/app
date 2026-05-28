@@ -175,6 +175,14 @@ void main() {
         expect(result.success, isFalse);
         expect(result.unwrappedSecret, isNull);
       });
+
+      test('authenticateBoolean bridges to authenticate().success', () async {
+        final port = _FakeBiometricPort(authenticateResult: true);
+        final service = BiometricService(storage, biometric: port);
+
+        expect(await service.authenticateBoolean(), isTrue);
+        expect(port.authenticateCalls, 1);
+      });
     });
 
     group('enable', () {
@@ -186,6 +194,19 @@ void main() {
         final service = BiometricService(storage, biometric: port);
 
         expect(await service.enable(), isTrue);
+        verify(() => storage.setIsBiometricEnabled(enabled: true)).called(1);
+      });
+
+      test('seats a sentinel before persisting when none exists yet', () async {
+        when(() => storage.readBiometricCryptoSentinel(any())).thenAnswer((_) async => null);
+        when(
+          () => storage.setIsBiometricEnabled(enabled: any(named: 'enabled')),
+        ).thenAnswer((_) async {});
+        final port = _FakeBiometricPort(authenticateResult: true);
+        final service = BiometricService(storage, biometric: port);
+
+        expect(await service.enable(), isTrue);
+        verify(() => storage.writeBiometricCryptoSentinel(any(), any())).called(1);
         verify(() => storage.setIsBiometricEnabled(enabled: true)).called(1);
       });
 
@@ -224,6 +245,17 @@ void main() {
       // need a real device to do anything, but the constructor itself stays
       // pure.
       expect(BiometricService(storage), isNotNull);
+    });
+
+    test('BiometricAuthResult.forTesting exposes the provided payload', () {
+      // ignore: prefer_const_constructors
+      final result = BiometricAuthResult.forTesting(
+        success: true,
+        unwrappedSecret: 'test-secret',
+      );
+
+      expect(result.success, isTrue);
+      expect(result.unwrappedSecret, 'test-secret');
     });
   });
 }

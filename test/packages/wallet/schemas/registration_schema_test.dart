@@ -14,6 +14,7 @@
 // hash diverges from what the new client signs and renewals break. The
 // test below uses `serialise()`-style JSON of the schema for stability;
 // it does NOT use Object.hashCode (which is salted per VM).
+// ignore_for_file: prefer_const_constructors
 
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,6 +22,14 @@ import 'package:realunit_wallet/packages/wallet/exceptions/eip712_schema_drift_e
 import 'package:realunit_wallet/packages/wallet/schemas/registration_schema.dart';
 
 void main() {
+  test('runtime constructors expose the pinned schema versions', () {
+    final v1 = RegistrationSchemaV1();
+    final v0 = RegistrationSchemaV0();
+
+    expect(v1.schemaVersion, 'registration/v1');
+    expect(v0.schemaVersion, 'registration/v0-legacy');
+  });
+
   group('RegistrationSchemaV1', () {
     const schema = RegistrationSchemaV1();
 

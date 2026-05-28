@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
@@ -207,6 +208,26 @@ void main() {
         expect(wallet, isA<SoftwareViewWallet>());
       });
 
+      test('falls back to unlock + address backfill for legacy software rows',
+          () async {
+        when(() => repo.getWalletInfo(1)).thenAnswer(
+          (_) async => _info(
+            id: 1,
+            name: 'Main',
+            seed: '<encrypted-blob>',
+            address: '',
+            type: WalletType.software,
+          ),
+        );
+
+        final wallet = await service.getWalletById(1);
+
+        expect(wallet, isA<SoftwareWallet>());
+        expect((wallet as SoftwareWallet).address, isolate.defaultAddress);
+        expect(isolate.unlockCallCount, 1);
+        verify(() => repo.updateAddress(1, isolate.defaultAddress)).called(1);
+      });
+
       test('returns DebugWallet for debug type', () async {
         when(() => repo.getWalletInfo(2)).thenAnswer(
           (_) async => _info(id: 2, name: 'Debug', address: _debugAddress, type: WalletType.debug),
@@ -286,6 +307,26 @@ void main() {
         await service.setCurrentWallet(5);
 
         verify(() => settings.saveCurrentWalletId(5)).called(1);
+      });
+    });
+
+    group('getCurrentWallet', () {
+      test('reads the current id and resolves it through getWalletById',
+          () async {
+        when(() => settings.currentWalletId).thenReturn(2);
+        when(() => repo.getWalletInfo(2)).thenAnswer(
+          (_) async => _info(
+            id: 2,
+            name: 'Debug',
+            address: _debugAddress,
+            type: WalletType.debug,
+          ),
+        );
+
+        final wallet = await service.getCurrentWallet();
+
+        expect(wallet, isA<DebugWallet>());
+        verify(() => repo.getWalletInfo(2)).called(1);
       });
     });
 
@@ -414,6 +455,56 @@ void main() {
         verifyNever(() => appStore.wallet);
         verifyNever(() => appStore.wallet = any(that: isA<AWallet>()));
         expect(isolate.lockCallCount, 0);
+      });
+
+      test('post-unlock timer force-locks after 60s even with a holder still open',
+          () {
+        fakeAsync((async) {
+          final stored = <AWallet>[SoftwareViewWallet(7, 'Main', _debugAddress)];
+          when(() => appStore.wallet).thenAnswer((_) => stored.last);
+          when(() => appStore.wallet = any(that: isA<AWallet>())).thenAnswer((inv) {
+            final newWallet = inv.positionalArguments.single as AWallet;
+            stored.add(newWallet);
+            return newWallet;
+          });
+          when(() => settings.currentWalletId).thenReturn(7);
+          when(() => repo.getWalletInfo(7)).thenAnswer(
+            (_) async => _info(
+              id: 7,
+              name: 'Main',
+              seed: '<enc>',
+              address: _debugAddress,
+              type: WalletType.software,
+            ),
+          );
+
+          service.ensureCurrentWalletUnlocked();
+          async.flushMicrotasks();
+
+          expect(stored.last, isA<SoftwareWallet>());
+          expect(isolate.unlockCallCount, 1);
+
+          async.elapse(const Duration(seconds: 59));
+          async.flushMicrotasks();
+          expect(stored.last, isA<SoftwareWallet>());
+
+          async.elapse(const Duration(seconds: 2));
+          async.flushMicrotasks();
+
+          expect(stored.last, isA<SoftwareViewWallet>());
+          expect(isolate.lockCallCount, 1);
+
+          service.ensureCurrentWalletUnlocked();
+          async.flushMicrotasks();
+          expect(
+            stored.last,
+            isA<SoftwareWallet>(),
+            reason: 'force-lock must reset holder count so the next unlock cycle works',
+          );
+
+          async.elapse(const Duration(seconds: 61));
+          async.flushMicrotasks();
+        });
       });
     });
 

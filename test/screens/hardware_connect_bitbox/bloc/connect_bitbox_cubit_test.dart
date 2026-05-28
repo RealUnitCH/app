@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bitbox_flutter/bitbox_flutter.dart' as sdk;
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -176,6 +177,28 @@ void main() {
 
       await cubit.retrySignatureCapture();
       expect(cubit.state, isA<BitboxNotConnected>());
+    });
+
+    test('service Lost restarts polling for a fresh device', () {
+      fakeAsync((async) {
+        final status = StreamController<BitboxConnectionStatus>.broadcast();
+        when(() => service.status).thenAnswer((_) => status.stream);
+
+        final cubit = makeCubit();
+        addTearDown(cubit.close);
+        addTearDown(status.close);
+        async.flushMicrotasks();
+        clearInteractions(service);
+
+        status.add(const Lost(LostReason.signQueueTimeout));
+        async.flushMicrotasks();
+
+        expect(cubit.state, isA<BitboxNotConnected>());
+        async.elapse(const Duration(milliseconds: 500));
+        async.flushMicrotasks();
+
+        verify(() => service.getAllUsbDevices()).called(1);
+      });
     });
 
     test('continueWithoutSignature transitions BitboxSignatureFailed to BitboxConnected', () async {

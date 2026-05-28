@@ -37,7 +37,8 @@ Map<String, dynamic> _readArb(String path) {
 
 void main() {
   group('ErrorMapper.mapBitboxCode', () {
-    const mapper = ErrorMapper();
+    // ignore: prefer_const_constructors
+    final mapper = ErrorMapper();
 
     test('101 ErrInvalidInput → BitboxInvalidInputException with detail', () {
       final result = mapper.mapBitboxCode(101, message: 'non-ASCII char');
@@ -89,18 +90,22 @@ void main() {
       }
     });
 
-    test('codes outside knownCodes (negative, zero, very large) all surface as BitboxUnknownException', () {
-      for (final code in <int>[-1, 0, 1, 500, 9999, 0x7FFFFFFF]) {
-        if (ErrorMapper.knownCodes.contains(code)) continue;
-        final result = mapper.mapBitboxCode(code);
-        expect(result, isA<BitboxUnknownException>(), reason: 'code $code');
-        expect((result as BitboxUnknownException).rawCode, code);
-      }
-    });
+    test(
+      'codes outside knownCodes (negative, zero, very large) all surface as BitboxUnknownException',
+      () {
+        for (final code in <int>[-1, 0, 1, 500, 9999, 0x7FFFFFFF]) {
+          if (ErrorMapper.knownCodes.contains(code)) continue;
+          final result = mapper.mapBitboxCode(code);
+          expect(result, isA<BitboxUnknownException>(), reason: 'code $code');
+          expect((result as BitboxUnknownException).rawCode, code);
+        }
+      },
+    );
   });
 
   group('ErrorMapper.mapCause', () {
-    const mapper = ErrorMapper();
+    // ignore: prefer_const_constructors
+    final mapper = ErrorMapper();
 
     test('a SignException is returned as-is (identity)', () {
       const original = BitboxUserAbortException();
@@ -145,21 +150,24 @@ void main() {
       // fails. The names are the canonical list of typed exceptions the
       // pipeline can emit; cubits switch on these types.
       final classNames = exceptions.map((e) => e.runtimeType.toString()).toSet();
-      expect(classNames, containsAll(<String>{
-        'BitboxInvalidInputException',
-        'BitboxUserAbortException',
-        'BitboxChannelHashMismatchException',
-        'BitboxTimeoutException',
-        'BitboxNotConnectedSignException',
-        'BitboxUnknownException',
-        'Eip712SchemaDriftException',
-        'Eip7702NotSupportedException',
-        'Eip1559TypeMismatchException',
-        'Eip7702ExpectedParamsMismatchException',
-        'SignRequestValidationException',
-        'SigningCancelledSignException',
-        'BtcPsbtInvalidException',
-      }));
+      expect(
+        classNames,
+        containsAll(<String>{
+          'BitboxInvalidInputException',
+          'BitboxUserAbortException',
+          'BitboxChannelHashMismatchException',
+          'BitboxTimeoutException',
+          'BitboxNotConnectedSignException',
+          'BitboxUnknownException',
+          'Eip712SchemaDriftException',
+          'Eip7702NotSupportedException',
+          'Eip1559TypeMismatchException',
+          'Eip7702ExpectedParamsMismatchException',
+          'SignRequestValidationException',
+          'SigningCancelledSignException',
+          'BtcPsbtInvalidException',
+        }),
+      );
     });
 
     test('every typed SignException has a non-empty ARB key', () {
@@ -252,6 +260,126 @@ void main() {
       );
     });
 
+    test('parametric equality uses every diagnostic field for non-const instances', () {
+      final mismatch = Eip7702ExpectedParamsMismatchException(
+        parameter: 'amountWei',
+        expected: String.fromCharCodes([49]),
+        actual: String.fromCharCodes([50]),
+      );
+      expect(
+        mismatch,
+        Eip7702ExpectedParamsMismatchException(
+          parameter: 'amountWei',
+          expected: String.fromCharCodes([49]),
+          actual: String.fromCharCodes([50]),
+        ),
+      );
+      expect(
+        mismatch,
+        isNot(
+          Eip7702ExpectedParamsMismatchException(
+            parameter: 'chainId',
+            expected: String.fromCharCodes([49]),
+            actual: String.fromCharCodes([50]),
+          ),
+        ),
+      );
+      expect(
+        mismatch,
+        isNot(
+          Eip7702ExpectedParamsMismatchException(
+            parameter: 'amountWei',
+            expected: String.fromCharCodes([0x31, 0x65, 0x38]),
+            actual: String.fromCharCodes([50]),
+          ),
+        ),
+      );
+      expect(
+        mismatch,
+        isNot(
+          Eip7702ExpectedParamsMismatchException(
+            parameter: 'amountWei',
+            expected: String.fromCharCodes([49]),
+            actual: String.fromCharCodes([51]),
+          ),
+        ),
+      );
+
+      final validation = SignRequestValidationException(
+        field: 'email',
+        reason: String.fromCharCodes([0x65, 0x6d, 0x70, 0x74, 0x79]),
+      );
+      expect(
+        validation,
+        SignRequestValidationException(
+          field: 'email',
+          reason: String.fromCharCodes([0x65, 0x6d, 0x70, 0x74, 0x79]),
+        ),
+      );
+      expect(
+        validation,
+        isNot(
+          SignRequestValidationException(
+            field: 'name',
+            reason: String.fromCharCodes([0x65, 0x6d, 0x70, 0x74, 0x79]),
+          ),
+        ),
+      );
+      expect(
+        validation,
+        isNot(
+          SignRequestValidationException(
+            field: 'email',
+            reason: String.fromCharCodes([0x62, 0x6c, 0x61, 0x6e, 0x6b]),
+          ),
+        ),
+      );
+
+      final drift = Eip712SchemaDriftException(
+        driftedField: 'Delegation[3].type',
+        schemaVersion: String.fromCharCodes([0x76, 0x31]),
+        reason: 'wrong type',
+      );
+      expect(
+        drift,
+        Eip712SchemaDriftException(
+          driftedField: 'Delegation[3].type',
+          schemaVersion: String.fromCharCodes([0x76, 0x31]),
+          reason: 'wrong type',
+        ),
+      );
+      expect(
+        drift,
+        isNot(
+          Eip712SchemaDriftException(
+            driftedField: 'Delegation[4].type',
+            schemaVersion: String.fromCharCodes([0x76, 0x31]),
+            reason: 'wrong type',
+          ),
+        ),
+      );
+      expect(
+        drift,
+        isNot(
+          Eip712SchemaDriftException(
+            driftedField: 'Delegation[3].type',
+            schemaVersion: String.fromCharCodes([0x76, 0x32]),
+            reason: 'wrong type',
+          ),
+        ),
+      );
+      expect(
+        drift,
+        isNot(
+          Eip712SchemaDriftException(
+            driftedField: 'Delegation[3].type',
+            schemaVersion: String.fromCharCodes([0x76, 0x31]),
+            reason: 'extra field',
+          ),
+        ),
+      );
+    });
+
     test('toString includes the raw code for unknown exceptions (telemetry)', () {
       const ex = BitboxUnknownException(987, message: 'firmware says no');
       expect(ex.toString(), contains('987'));
@@ -262,6 +390,11 @@ void main() {
       const ex = Eip1559TypeMismatchException(actualByte: 0x01);
       expect(ex.toString(), contains('0x1'));
       expect(ex.toString(), contains('0x02'));
+    });
+
+    test('legacy SigningCancelledException has a stable diagnostic string', () {
+      const ex = SigningCancelledException();
+      expect(ex.toString(), 'SigningCancelledException');
     });
 
     test('toString of Eip712SchemaDriftException carries field/version/reason', () {

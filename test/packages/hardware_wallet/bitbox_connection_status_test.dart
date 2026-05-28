@@ -8,21 +8,25 @@ import 'package:realunit_wallet/packages/hardware_wallet/bitbox_connection_statu
 // so the test surface is deliberately exhaustive — every variant gets an
 // equality, an inequality, and a toString debug-print pin.
 void main() {
-  BitboxDevice device(String id) =>
-      BitboxDevice.fromIdentifier(id);
+  BitboxDevice device(String id) => BitboxDevice.fromIdentifier(id);
 
   group('$BitboxConnectionStatus equality', () {
     test('Disconnected instances are equal', () {
       expect(const Disconnected(), equals(const Disconnected()));
+      expect(const Disconnected().props, isEmpty);
       // Distinct identities deliberately — the controller must dedupe on
       // value, not on reference, when a transient transition lands back on
       // the same terminal status.
-      expect(identical(const Disconnected(), const Disconnected()), isTrue,
-          reason: 'const Disconnected() is canonicalised');
+      expect(
+        identical(const Disconnected(), const Disconnected()),
+        isTrue,
+        reason: 'const Disconnected() is canonicalised',
+      );
     });
 
     test('Disconnecting instances are equal', () {
       expect(const Disconnecting(), equals(const Disconnecting()));
+      expect(const Disconnecting().props, isEmpty);
     });
 
     test('Connecting equality keys on device identifier', () {
@@ -148,13 +152,16 @@ void main() {
       // coordinated update everywhere this enum is switched on. The test
       // pins the current set so an accidental rename or removal is caught
       // before it ships.
-      expect(LostReason.values.map((r) => r.name).toSet(), equals({
-        'signQueueTimeout',
-        'staticPubkeyMismatch',
-        'manualDisconnect',
-        'deviceUnreachable',
-        'factoryResetDetected',
-      }));
+      expect(
+        LostReason.values.map((r) => r.name).toSet(),
+        equals({
+          'signQueueTimeout',
+          'staticPubkeyMismatch',
+          'manualDisconnect',
+          'deviceUnreachable',
+          'factoryResetDetected',
+        }),
+      );
     });
   });
 
@@ -180,14 +187,16 @@ void main() {
       expect(nameOf(Connecting(device('x'))), 'connecting');
       expect(nameOf(Paired(device('x'))), 'paired');
       expect(
-        nameOf(InUse(
-          device('x'),
-          const SignContext(
-            address: '0xdead',
-            derivationPath: "m/44'/60'/0'/0/0",
-            kind: 'eip712',
+        nameOf(
+          InUse(
+            device('x'),
+            const SignContext(
+              address: '0xdead',
+              derivationPath: "m/44'/60'/0'/0/0",
+              kind: 'eip712',
+            ),
           ),
-        )),
+        ),
         'inUse',
       );
       expect(nameOf(const Lost(LostReason.signQueueTimeout)), 'lost');
@@ -197,12 +206,14 @@ void main() {
 
   group('$SignContext equality', () {
     test('same (address, path, kind) compares equal', () {
-      const a = SignContext(
+      // ignore: prefer_const_constructors
+      final a = SignContext(
         address: '0xdead',
         derivationPath: "m/44'/60'/0'/0/0",
         kind: 'eip712',
       );
-      const b = SignContext(
+      // ignore: prefer_const_constructors
+      final b = SignContext(
         address: '0xdead',
         derivationPath: "m/44'/60'/0'/0/0",
         kind: 'eip712',

@@ -5,6 +5,7 @@
 //      the pipeline can iterate over a uniform schema set)
 //   2. pre-flight the raw PSBT bytes — empty / too-short / wrong-magic —
 //      with a typed exception before they reach the BitBox plugin.
+// ignore_for_file: prefer_const_constructors
 
 import 'dart:typed_data';
 
@@ -15,6 +16,13 @@ const _schema = BtcPsbtSchema();
 
 void main() {
   group('BtcPsbtSchema', () {
+    test('runtime constructor exposes an empty typed-data map', () {
+      final schema = BtcPsbtSchema();
+
+      expect(schema.schemaVersion, 'btc-psbt/v1');
+      expect(schema.types, isEmpty);
+    });
+
     test('schemaVersion + primaryType are pinned', () {
       // Version is the migration hook for PSBT-v2 / Schnorr rollout. The
       // testkit's `BtcPsbtMultiInputSign` scenario references this exact
@@ -75,8 +83,7 @@ void main() {
       // The fifth byte must be 0xff per BIP-174. A 0x00 here is a clear
       // protocol mismatch — surface the exact offset for triage.
       expect(
-        () =>
-            _schema.validatePsbt(Uint8List.fromList([0x70, 0x73, 0x62, 0x74, 0x00, 0x00, 0x00])),
+        () => _schema.validatePsbt(Uint8List.fromList([0x70, 0x73, 0x62, 0x74, 0x00, 0x00, 0x00])),
         throwsA(
           isA<BtcPsbtInvalidException>().having(
             (e) => e.reason,

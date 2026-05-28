@@ -11,8 +11,7 @@ import '../../../test_utils/fake_wallet_isolate.dart';
 
 class _MockWalletService extends Mock implements WalletService {}
 
-const _testMnemonic =
-    'test test test test test test test test test test test junk';
+const _testMnemonic = 'test test test test test test test test test test test junk';
 const _hardhatZero = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
 
 SoftwareWallet _committedWallet({int id = 42, String name = 'Main'}) =>
@@ -36,6 +35,14 @@ void main() {
   });
 
   group('$VerifySeedCubit', () {
+    test('constructing with an already disposed draft starts aborted', () {
+      draft.dispose();
+
+      final cubit = VerifySeedCubit(draft, service);
+
+      expect(cubit.state.aborted, isTrue);
+    });
+
     test('picks 4 distinct ascending word indices within seed length on init', () {
       final cubit = VerifySeedCubit(draft, service);
 
@@ -70,21 +77,23 @@ void main() {
       expect(cubit.state.canVerify, isTrue);
     });
 
-    test('verify returns true and marks the COMMITTED wallet current when all words match',
-        () async {
-      final cubit = VerifySeedCubit(draft, service);
+    test(
+      'verify returns true and marks the COMMITTED wallet current when all words match',
+      () async {
+        final cubit = VerifySeedCubit(draft, service);
 
-      final result = await cubit.verify();
+        final result = await cubit.verify();
 
-      expect(result, isTrue);
-      expect(cubit.state.isVerified, isTrue);
-      expect(cubit.state.isVerifying, isFalse);
-      expect(cubit.state.hasError, isFalse);
-      expect(cubit.state.commitFailed, isFalse);
-      // The current wallet id must be the COMMITTED id (42), not 0.
-      verify(() => service.setCurrentWallet(42)).called(1);
-      verifyNever(() => service.setCurrentWallet(0));
-    });
+        expect(result, isTrue);
+        expect(cubit.state.isVerified, isTrue);
+        expect(cubit.state.isVerifying, isFalse);
+        expect(cubit.state.hasError, isFalse);
+        expect(cubit.state.commitFailed, isFalse);
+        // The current wallet id must be the COMMITTED id (42), not 0.
+        verify(() => service.setCurrentWallet(42)).called(1);
+        verifyNever(() => service.setCurrentWallet(0));
+      },
+    );
 
     test('verify exposes the COMMITTED wallet on the success state', () async {
       final cubit = VerifySeedCubit(draft, service);
@@ -95,15 +104,17 @@ void main() {
       expect(cubit.state.committedWallet!.id, 42);
     });
 
-    test('verify calls commitGeneratedWallet and setCurrentWallet exactly once on success',
-        () async {
-      final cubit = VerifySeedCubit(draft, service);
+    test(
+      'verify calls commitGeneratedWallet and setCurrentWallet exactly once on success',
+      () async {
+        final cubit = VerifySeedCubit(draft, service);
 
-      await cubit.verify();
+        await cubit.verify();
 
-      verify(() => service.commitGeneratedWallet(any())).called(1);
-      verify(() => service.setCurrentWallet(any())).called(1);
-    });
+        verify(() => service.commitGeneratedWallet(any())).called(1);
+        verify(() => service.setCurrentWallet(any())).called(1);
+      },
+    );
 
     test('verify commits the draft BEFORE marking it current', () async {
       final calls = <String>[];
@@ -118,13 +129,16 @@ void main() {
       final cubit = VerifySeedCubit(draft, service);
       await cubit.verify();
 
-      expect(calls, ['commit', 'setCurrent(99)'],
-          reason: 'commit must land the row before `setCurrentWallet` points '
-              'the settings repository at it');
+      expect(
+        calls,
+        ['commit', 'setCurrent(99)'],
+        reason:
+            'commit must land the row before `setCurrentWallet` points '
+            'the settings repository at it',
+      );
     });
 
-    test('verify returns false, sets hasError, and does NOT commit on a wrong word',
-        () async {
+    test('verify returns false, sets hasError, and does NOT commit on a wrong word', () async {
       final cubit = VerifySeedCubit(draft, service);
       cubit.updateWord(0, 'definitely-not-a-seed-word');
 
@@ -139,10 +153,8 @@ void main() {
       verifyNever(() => service.setCurrentWallet(any()));
     });
 
-    test('verify ends in commitFailed (NOT hung, NOT verified) when the commit throws',
-        () async {
-      when(() => service.commitGeneratedWallet(any()))
-          .thenThrow(StateError('disk write failed'));
+    test('verify ends in commitFailed (NOT hung, NOT verified) when the commit throws', () async {
+      when(() => service.commitGeneratedWallet(any())).thenThrow(StateError('disk write failed'));
 
       final cubit = VerifySeedCubit(draft, service);
       final result = await cubit.verify();
@@ -155,27 +167,26 @@ void main() {
       verifyNever(() => service.setCurrentWallet(any()));
     });
 
-    test('verify ends in commitFailed when setCurrentWallet throws after a successful commit',
-        () async {
-      when(() => service.setCurrentWallet(any()))
-          .thenThrow(StateError('settings write failed'));
+    test(
+      'verify ends in commitFailed when setCurrentWallet throws after a successful commit',
+      () async {
+        when(() => service.setCurrentWallet(any())).thenThrow(StateError('settings write failed'));
 
-      final cubit = VerifySeedCubit(draft, service);
-      final result = await cubit.verify();
+        final cubit = VerifySeedCubit(draft, service);
+        final result = await cubit.verify();
 
-      expect(result, isFalse);
-      expect(cubit.state.commitFailed, isTrue);
-      expect(cubit.state.isVerifying, isFalse);
-      expect(cubit.state.isVerified, isFalse);
-    });
+        expect(result, isFalse);
+        expect(cubit.state.commitFailed, isTrue);
+        expect(cubit.state.isVerifying, isFalse);
+        expect(cubit.state.isVerified, isFalse);
+      },
+    );
 
-    test('verify is re-entrancy-safe: a second rapid call commits exactly once',
-        () async {
+    test('verify is re-entrancy-safe: a second rapid call commits exactly once', () async {
       // Make the commit slow so the second `verify()` lands while the first
       // is still in flight.
       final completer = Completer<SoftwareWallet>();
-      when(() => service.commitGeneratedWallet(any()))
-          .thenAnswer((_) => completer.future);
+      when(() => service.commitGeneratedWallet(any())).thenAnswer((_) => completer.future);
 
       final cubit = VerifySeedCubit(draft, service);
       final first = cubit.verify();
@@ -203,8 +214,7 @@ void main() {
 
     test('verify does not emit after the cubit is closed mid-commit', () async {
       final completer = Completer<SoftwareWallet>();
-      when(() => service.commitGeneratedWallet(any()))
-          .thenAnswer((_) => completer.future);
+      when(() => service.commitGeneratedWallet(any())).thenAnswer((_) => completer.future);
 
       final cubit = VerifySeedCubit(draft, service);
       final pending = cubit.verify();
@@ -223,8 +233,7 @@ void main() {
       // full duration of the verify-seed screen. BL-023 wires a
       // lifecycle observer that disposes the draft on `hidden`.
 
-      testWidgets('hidden mid-verify disposes the draft and emits aborted',
-          (tester) async {
+      testWidgets('hidden mid-verify disposes the draft and emits aborted', (tester) async {
         final cubit = VerifySeedCubit(draft, service);
         expect(cubit.state.aborted, isFalse);
         expect(draft.isDisposed, isFalse);
@@ -235,19 +244,26 @@ void main() {
         tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
         await tester.pump();
 
-        expect(draft.isDisposed, isTrue,
-            reason: 'BL-023: backgrounded mid-verify must dispose the draft '
-                'within one event-loop turn so the mnemonic is not in the '
-                'iOS app-suspend snapshot');
-        expect(cubit.state.aborted, isTrue,
-            reason: 'the cubit must surface an aborted state so the view '
-                'can route back to the create-wallet entry point on resume');
+        expect(
+          draft.isDisposed,
+          isTrue,
+          reason:
+              'BL-023: backgrounded mid-verify must dispose the draft '
+              'within one event-loop turn so the mnemonic is not in the '
+              'iOS app-suspend snapshot',
+        );
+        expect(
+          cubit.state.aborted,
+          isTrue,
+          reason:
+              'the cubit must surface an aborted state so the view '
+              'can route back to the create-wallet entry point on resume',
+        );
 
         await cubit.close();
       });
 
-      testWidgets('paused (after hidden on platforms that emit both) disposes too',
-          (tester) async {
+      testWidgets('paused (after hidden on platforms that emit both) disposes too', (tester) async {
         final cubit = VerifySeedCubit(draft, service);
 
         tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
@@ -271,16 +287,19 @@ void main() {
         verifyNever(() => service.commitGeneratedWallet(any()));
       });
 
-      test('close() disposes the draft even without an explicit lifecycle event',
-          () async {
+      test('close() disposes the draft even without an explicit lifecycle event', () async {
         final cubit = VerifySeedCubit(draft, service);
         expect(draft.isDisposed, isFalse);
 
         await cubit.close();
 
-        expect(draft.isDisposed, isTrue,
-            reason: 'navigation away (close()) must also drop the mnemonic — '
-                'lifecycle events only fire on app-level transitions');
+        expect(
+          draft.isDisposed,
+          isTrue,
+          reason:
+              'navigation away (close()) must also drop the mnemonic — '
+              'lifecycle events only fire on app-level transitions',
+        );
       });
     });
   });

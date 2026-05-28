@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -15,6 +16,39 @@ const _secondaryAddress = '0x0000000000000000000000000000000000000002';
 
 class _FakeWalletIsolate extends WalletIsolate {
   _FakeWalletIsolate() : super.forTesting();
+
+  int? lastWalletId;
+  String? lastDerivationPath;
+  Uint8List? lastPayload;
+  int? lastChainId;
+
+  @override
+  Future<({BigInt r, BigInt s, int v})> signDigest(
+    int walletId,
+    String derivationPath,
+    Uint8List digest, {
+    int? chainId,
+  }) async {
+    lastWalletId = walletId;
+    lastDerivationPath = derivationPath;
+    lastPayload = digest;
+    lastChainId = chainId;
+    return (r: BigInt.one, s: BigInt.two, v: 27);
+  }
+
+  @override
+  Future<Uint8List> signPersonalMessage(
+    int walletId,
+    String derivationPath,
+    Uint8List payload, {
+    int? chainId,
+  }) async {
+    lastWalletId = walletId;
+    lastDerivationPath = derivationPath;
+    lastPayload = payload;
+    lastChainId = chainId;
+    return Uint8List.fromList([0x00, 0x01, 0x02, 0xff]);
+  }
 }
 
 SoftwareWallet _softwareWallet({
@@ -32,6 +66,28 @@ const _viewWalletErrorRationale =
     'assert(false) in debug → AssertionError, StateError in release — both Error subtypes';
 
 void main() {
+  group('$SeedDraft', () {
+    test('throws if the mnemonic is read after dispose', () {
+      final draft = SeedDraft('test test junk');
+
+      draft.dispose();
+
+      expect(draft.isDisposed, isTrue);
+      expect(
+        () => draft.mnemonic,
+        throwsA(isA<StateError>()),
+      );
+      expect(() => draft.dispose(), returnsNormally);
+    });
+
+    test('seedWords trims repeated whitespace before disposal', () {
+      final draft = SeedDraft('  test   test\njunk  ');
+
+      expect(draft.mnemonic, '  test   test\njunk  ');
+      expect(draft.seedWords, ['test', 'test', 'junk']);
+    });
+  });
+
   group('$SoftwareWallet', () {
     test('exposes walletType == software', () {
       final wallet = _softwareWallet();
@@ -90,6 +146,79 @@ void main() {
       wallet.name = 'New';
 
       expect(wallet.name, 'New');
+    });
+
+    test(
+      'isolate credentials signToSignature delegates digest signing with the account path',
+      () async {
+        final isolate = _FakeWalletIsolate();
+        final wallet = SoftwareWallet(7, 'Main', _primaryAddress, isolate);
+        final digest = Uint8List.fromList([0xaa, 0xbb]);
+
+        final signature = await wallet.primaryAccount.primaryAddress.signToSignature(
+          digest,
+          chainId: 11,
+        );
+
+        expect(signature.r, BigInt.one);
+        expect(signature.s, BigInt.two);
+        expect(signature.v, 27);
+        expect(isolate.lastWalletId, 7);
+        expect(isolate.lastDerivationPath, "m/44'/60'/0'/0/0");
+        expect(isolate.lastPayload, digest);
+        expect(isolate.lastChainId, 11);
+      },
+    );
+
+    test(
+      'isolate credentials signPersonalMessage delegates through the selected account path',
+      () async {
+        final isolate = _FakeWalletIsolate();
+        final wallet = SoftwareWallet(7, 'Main', _primaryAddress, isolate);
+        final payload = Uint8List.fromList([0x01, 0x02, 0x03]);
+
+        wallet.selectAccount(2, _secondaryAddress);
+        final signature = await wallet.currentAccount.primaryAddress.signPersonalMessage(
+          payload,
+          chainId: 1,
+        );
+
+        expect(signature, [0x00, 0x01, 0x02, 0xff]);
+        expect(isolate.lastWalletId, 7);
+        expect(isolate.lastDerivationPath, "m/44'/60'/2'/0/0");
+        expect(isolate.lastPayload, payload);
+        expect(isolate.lastChainId, 1);
+      },
+    );
+
+    test('WalletAccount.signMessage UTF-8 encodes and hex-encodes isolate signatures', () async {
+      final isolate = _FakeWalletIsolate();
+      final wallet = SoftwareWallet(7, 'Main', _primaryAddress, isolate);
+
+      final signature = await wallet.primaryAccount.signMessage(
+        'Gruezi',
+        addressIndex: 3,
+      );
+
+      expect(signature, '0x000102ff');
+      expect(isolate.lastWalletId, 7);
+      expect(isolate.lastDerivationPath, "m/44'/60'/0'/0/3");
+      expect(isolate.lastPayload, utf8.encode('Gruezi'));
+    });
+
+    test('sync isolate credential entrypoints reject async-only signing', () {
+      final wallet = _softwareWallet();
+
+      expect(
+        () => wallet.primaryAccount.primaryAddress.signToEcSignature(Uint8List(32)),
+        throwsA(isA<UnsupportedError>()),
+      );
+      expect(
+        () => wallet.primaryAccount.primaryAddress.signPersonalMessageToUint8List(
+          Uint8List(32),
+        ),
+        throwsA(isA<UnsupportedError>()),
+      );
     });
   });
 

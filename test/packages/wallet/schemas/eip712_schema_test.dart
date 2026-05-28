@@ -17,6 +17,7 @@
 // The schema below is a deliberately minimal test fixture so the asserts
 // stay focused on the comparator. Real-world schemas (registration,
 // EIP-7702, KYC) inherit the same comparator via `Eip712Schema`.
+// ignore_for_file: prefer_const_constructors
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/eip712_schema_drift_exception.dart';
@@ -58,6 +59,19 @@ Map<String, dynamic> _matching() => {
 };
 
 void main() {
+  group('$Eip712FieldSpec', () {
+    test('value equality, hashCode, and diagnostics include name and type', () {
+      final spec = Eip712FieldSpec('alpha', 'string');
+
+      expect(spec, Eip712FieldSpec('alpha', 'string'));
+      expect(spec.hashCode, Eip712FieldSpec('alpha', 'string').hashCode);
+      expect(spec, isNot(Eip712FieldSpec('beta', 'string')));
+      expect(spec, isNot(Eip712FieldSpec('alpha', 'uint256')));
+      expect(spec, isNot(Object()));
+      expect(spec.toString(), '{alpha: string}');
+    });
+  });
+
   group('Eip712Schema.validate', () {
     test('accepts a byte-equal map (control case)', () {
       // The baseline: backend response equals the pinned schema. validate()
@@ -276,8 +290,9 @@ void main() {
         final fields = _schema.types[groupName]!;
         for (var fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {
           final mutated = _matching();
-          final list =
-              (mutated[groupName] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+          final list = (mutated[groupName] as List)
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
           // Flip the `name` of the field at (groupIndex, fieldIndex).
           list[fieldIndex] = {
             'name': '${list[fieldIndex]['name']}_MUTATED',

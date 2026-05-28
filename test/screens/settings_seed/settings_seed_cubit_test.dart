@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
@@ -33,8 +36,9 @@ void main() {
     walletService = _MockWalletService();
     when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
     when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
-    when(() => walletService.revealCurrentSeed())
-        .thenAnswer((_) async => SeedDraft(_testSeed, name: 'Test'));
+    when(
+      () => walletService.revealCurrentSeed(),
+    ).thenAnswer((_) async => SeedDraft(_testSeed, name: 'Test'));
     when(() => appStore.wallet).thenReturn(wallet);
   });
 
@@ -63,6 +67,38 @@ void main() {
 
       verify(() => walletService.lockCurrentWallet()).called(1);
     });
+
+    test('late reveal is disposed when the cubit closes before it resolves', () async {
+      final completer = Completer<SeedDraft>();
+      final draft = SeedDraft(_testSeed, name: 'Late');
+      when(() => walletService.revealCurrentSeed()).thenAnswer((_) => completer.future);
+
+      final cubit = SettingsSeedCubit(appStore, walletService);
+      await Future<void>.delayed(Duration.zero);
+      await cubit.close();
+
+      completer.complete(draft);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(draft.isDisposed, isTrue);
+    });
+
+    for (final lifecycleState in <AppLifecycleState>[
+      AppLifecycleState.hidden,
+      AppLifecycleState.paused,
+    ]) {
+      test('${lifecycleState.name} disposes the draft and clears rendered seed', () async {
+        final cubit = SettingsSeedCubit(appStore, walletService);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+        expect(cubit.state.seed, _testSeed);
+
+        cubit.didChangeAppLifecycleState(lifecycleState);
+
+        expect(cubit.state.seed, isEmpty);
+        await cubit.close();
+      });
+    }
 
     blocTest<SettingsSeedCubit, SettingsSeedState>(
       'toggleShowSeed flips showSeed and keeps seed unchanged',
