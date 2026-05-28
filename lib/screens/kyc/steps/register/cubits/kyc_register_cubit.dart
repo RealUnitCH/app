@@ -38,10 +38,19 @@ class KycRegisterCubit extends Cubit<KycRegisterState> {
   /// small number of accounts with partial DFX KYC data can slip through —
   /// rather than 400-ing during signature submit, surface a terminal info
   /// state so the user can complete their profile via a separate flow.
+  ///
+  /// `email` and `address.country` are checked alongside the other required
+  /// fields: `email` flows into the EIP-712 envelope built by
+  /// `RealUnitRegistrationService.completeRegistration` and a server-side
+  /// validation would reject an empty value; `address.country` is an `int`
+  /// whose unset default is `0` (a prefill arriving with `country: 0`
+  /// otherwise bypasses the guard and triggers a server 400 instead of
+  /// routing to the profile-incomplete surface).
   static bool _isProfileComplete(RealUnitUserDataDto u) {
     final kyc = u.kycData;
     final address = kyc.address;
-    return u.name.isNotEmpty &&
+    return u.email.trim().isNotEmpty &&
+        u.name.isNotEmpty &&
         u.phoneNumber.isNotEmpty &&
         u.birthday.isNotEmpty &&
         u.nationality.isNotEmpty &&
@@ -54,7 +63,8 @@ class KycRegisterCubit extends Cubit<KycRegisterState> {
         kyc.phone.isNotEmpty &&
         address.street.isNotEmpty &&
         address.city.isNotEmpty &&
-        address.zip.isNotEmpty;
+        address.zip.isNotEmpty &&
+        address.country != 0;
   }
 
   Future<void> submit(RealUnitUserDataDto userData) async {
@@ -92,10 +102,22 @@ class KycRegisterCubit extends Cubit<KycRegisterState> {
       );
       await _registrationService.completeRegistration(registration);
       emit(const KycRegisterSuccess());
-    } on BitboxNotConnectedException catch (e) {
-      emit(KycRegisterFailure(e.toString(), cause: e));
+    } on BitboxNotConnectedException {
+      // Recoverable: the page listens for this state and surfaces the
+      // existing `showBitboxReconnectSheet` so the user can re-pair and
+      // retry — the registration ceremony is a one-time, heavyweight legal
+      // disclaimer + EIP-712 sign, so collapsing a transient BLE drop into
+      // a SnackBar would force the user to start over.
+      emit(KycRegisterBitboxRequired(userData));
     } catch (e) {
       emit(KycRegisterFailure(e.toString(), cause: e));
     }
+  }
+
+  /// Reverts to the interactive Ready surface after the user cancels the
+  /// reconnect sheet without re-pairing. Kept separate from `submit` so the
+  /// page never has to construct a transient state by hand.
+  void revertToReady(RealUnitUserDataDto userData) {
+    emit(KycRegisterReady(userData));
   }
 }

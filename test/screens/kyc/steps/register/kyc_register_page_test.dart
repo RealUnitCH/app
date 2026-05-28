@@ -76,6 +76,7 @@ void main() {
     when(() => kycCubit.state).thenReturn(const KycInitial());
     when(() => kycCubit.checkKyc()).thenAnswer((_) async {});
     when(() => registerCubit.submit(any())).thenAnswer((_) async {});
+    when(() => registerCubit.revertToReady(any())).thenAnswer((_) {});
   });
 
   Widget buildSubject() => MultiBlocProvider(
@@ -147,6 +148,74 @@ void main() {
 
       expect(find.byType(SnackBar), findsOne);
     });
+
+    testWidgets(
+      'BitboxRequired opens the reconnect sheet and retries submit on success',
+      (tester) async {
+        var sheetCalls = 0;
+        // Stub the reconnect sheet so we don't need the full BitBox/HomeBloc
+        // chain — the page-level wiring is the unit under test.
+        Future<bool> reconnect(BuildContext _) async {
+          sheetCalls += 1;
+          return true;
+        }
+
+        whenListen(
+          registerCubit,
+          Stream.fromIterable([const KycRegisterBitboxRequired(_userData)]),
+          initialState: const KycRegisterReady(_userData),
+        );
+
+        await tester.pumpApp(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<KycCubit>.value(value: kycCubit),
+              BlocProvider<KycRegisterCubit>.value(value: registerCubit),
+            ],
+            child: KycRegisterView(reconnectSheet: reconnect),
+          ),
+        );
+        // Drive the async listener: one frame for the listener to fire,
+        // another for the awaited reconnect future to settle.
+        await tester.pump();
+        await tester.pump();
+
+        expect(sheetCalls, 1);
+        verify(() => registerCubit.submit(_userData)).called(1);
+      },
+    );
+
+    testWidgets(
+      'BitboxRequired with cancelled sheet reverts to Ready (no retry)',
+      (tester) async {
+        when(() => registerCubit.revertToReady(any())).thenAnswer((_) {});
+        // Sheet returns false → user dismissed without re-pairing. The page
+        // must revert to Ready so the user can re-tap submit themselves, and
+        // must NOT auto-retry the heavyweight ceremony.
+        Future<bool> reconnect(BuildContext _) async => false;
+
+        whenListen(
+          registerCubit,
+          Stream.fromIterable([const KycRegisterBitboxRequired(_userData)]),
+          initialState: const KycRegisterReady(_userData),
+        );
+
+        await tester.pumpApp(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<KycCubit>.value(value: kycCubit),
+              BlocProvider<KycRegisterCubit>.value(value: registerCubit),
+            ],
+            child: KycRegisterView(reconnectSheet: reconnect),
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+
+        verify(() => registerCubit.revertToReady(_userData)).called(1);
+        verifyNever(() => registerCubit.submit(any()));
+      },
+    );
 
     testWidgets('ProfileIncomplete renders the info message and no submit button', (tester) async {
       when(() => registerCubit.state).thenReturn(const KycRegisterProfileIncomplete());

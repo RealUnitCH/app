@@ -5,11 +5,18 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/screens/hardware_connect_bitbox/show_bitbox_reconnect_sheet.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/register/cubits/kyc_register_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
+
+/// Type for the BitBox reconnect-sheet opener. Injectable so widget tests
+/// can stub the sheet (the real `showBitboxReconnectSheet` opens
+/// `ConnectBitboxPage`, which carries a full chain of DI-resolved hardware
+/// services that aren't relevant to the page-level wiring under test).
+typedef BitboxReconnectSheet = Future<bool> Function(BuildContext context);
 
 class KycRegisterPage extends StatelessWidget {
   /// Server-supplied user data the parent `KycCubit` already fetched as part
@@ -18,7 +25,14 @@ class KycRegisterPage extends StatelessWidget {
   /// surfaces a retry button that re-fires the parent cubit's `checkKyc()`.
   final RealUnitUserDataDto? userData;
 
-  const KycRegisterPage({super.key, this.userData});
+  /// Optional override for the BitBox reconnect sheet opener. Production
+  /// callers leave this `null` and the page wires up
+  /// `showBitboxReconnectSheet`; widget tests inject a stub so the page-level
+  /// recovery logic can be asserted without standing up the full BitBox
+  /// hardware chain.
+  final BitboxReconnectSheet? reconnectSheet;
+
+  const KycRegisterPage({super.key, this.userData, this.reconnectSheet});
 
   @override
   Widget build(BuildContext context) {
@@ -31,22 +45,28 @@ class KycRegisterPage extends StatelessWidget {
         getIt<RealUnitRegistrationService>(),
         data,
       ),
-      child: const KycRegisterView(),
+      child: KycRegisterView(reconnectSheet: reconnectSheet),
     );
   }
 }
 
 class KycRegisterView extends StatelessWidget {
-  const KycRegisterView({super.key});
+  const KycRegisterView({super.key, this.reconnectSheet});
+
+  /// See `KycRegisterPage.reconnectSheet`.
+  final BitboxReconnectSheet? reconnectSheet;
 
   @override
   Widget build(BuildContext context) {
+    final openReconnectSheet = reconnectSheet ?? showBitboxReconnectSheet;
     return Scaffold(
       appBar: AppBar(title: Text(S.of(context).kycRegisterTitle)),
       body: BlocConsumer<KycRegisterCubit, KycRegisterState>(
         listenWhen: (_, current) =>
-            current is KycRegisterSuccess || current is KycRegisterFailure,
-        listener: (context, state) {
+            current is KycRegisterSuccess ||
+            current is KycRegisterFailure ||
+            current is KycRegisterBitboxRequired,
+        listener: (context, state) async {
           if (state is KycRegisterSuccess) {
             // Re-fetch routing state from the API. The wallet is now in the
             // Aktionariat share register, so `getRegistrationInfo` will return
@@ -62,6 +82,20 @@ class KycRegisterView extends StatelessWidget {
               ),
             );
           }
+          if (state is KycRegisterBitboxRequired) {
+            // Mirror of the sell / settings-edit recovery: re-open the
+            // pairing sheet, and on a successful re-pair retry the
+            // registration in place. If the user dismisses the sheet without
+            // re-pairing, revert to Ready so the page is interactive again
+            // — the user can re-tap submit once the device is back.
+            final cubit = context.read<KycRegisterCubit>();
+            final reconnected = await openReconnectSheet(context);
+            if (reconnected) {
+              await cubit.submit(state.userData);
+            } else {
+              cubit.revertToReady(state.userData);
+            }
+          }
         },
         builder: (context, state) => switch (state) {
           KycRegisterReady(:final userData) => _RegisterBody(
@@ -69,6 +103,12 @@ class KycRegisterView extends StatelessWidget {
             isSubmitting: false,
           ),
           KycRegisterSubmitting(:final userData) => _RegisterBody(
+            userData: userData,
+            isSubmitting: true,
+          ),
+          // Render the disabled body underneath the reconnect sheet so the
+          // user keeps their place — the listener above drives the recovery.
+          KycRegisterBitboxRequired(:final userData) => _RegisterBody(
             userData: userData,
             isSubmitting: true,
           ),

@@ -64,6 +64,53 @@ const _userDataMissingPhone = RealUnitUserDataDto(
   kycData: _kycDataMissingPhone,
 );
 
+// Same shape as `_userData`, but with the address country set to its int
+// default (0). Prefills that arrive this way previously bypassed the
+// profile-complete guard and produced a server 400 on submit — the cubit
+// must now route to ProfileIncomplete.
+const _kycDataCountryZero = KycPersonalData(
+  accountType: KycAccountType.personal,
+  firstName: 'Ada',
+  lastName: 'Lovelace',
+  phone: '+41790000000',
+  address: KycAddress(street: 'S', zip: '8000', city: 'Zurich', country: 0),
+);
+
+const _userDataCountryZero = RealUnitUserDataDto(
+  email: 'ada@example.com',
+  name: 'Ada Lovelace',
+  type: 'HUMAN',
+  phoneNumber: '+41790000000',
+  birthday: '1815-12-10',
+  nationality: 'CH',
+  addressStreet: 'S',
+  addressPostalCode: '8000',
+  addressCity: 'Zurich',
+  addressCountry: 'CH',
+  swissTaxResidence: true,
+  lang: 'de',
+  kycData: _kycDataCountryZero,
+);
+
+// Empty email — flows into the EIP-712 envelope, so a server validation
+// would reject it. The cubit must route to ProfileIncomplete instead of
+// submitting and 400-ing.
+const _userDataMissingEmail = RealUnitUserDataDto(
+  email: '',
+  name: 'Ada Lovelace',
+  type: 'HUMAN',
+  phoneNumber: '+41790000000',
+  birthday: '1815-12-10',
+  nationality: 'CH',
+  addressStreet: 'S',
+  addressPostalCode: '8000',
+  addressCity: 'Zurich',
+  addressCountry: 'CH',
+  swissTaxResidence: true,
+  lang: 'de',
+  kycData: _kycData,
+);
+
 void main() {
   late _MockRegistrationService registrationService;
 
@@ -91,6 +138,22 @@ void main() {
       final cubit = build(_userDataMissingPhone);
       expect(cubit.state, const KycRegisterProfileIncomplete());
     });
+
+    test('cubit starts in ProfileIncomplete when address.country is the unset int default (0)', () {
+      // Previously bypassed the guard because the predicate only checked
+      // the addressCountry string field. Drives the new `address.country
+      // != 0` branch.
+      final cubit = build(_userDataCountryZero);
+      expect(cubit.state, const KycRegisterProfileIncomplete());
+    });
+
+    test('cubit starts in ProfileIncomplete when email is empty', () {
+      // Email is part of the EIP-712 envelope; an empty value used to
+      // submit and 400 on the server. Drives the new `email.trim()
+      // .isNotEmpty` branch.
+      final cubit = build(_userDataMissingEmail);
+      expect(cubit.state, const KycRegisterProfileIncomplete());
+    });
   });
 
   group('submit', () {
@@ -114,16 +177,20 @@ void main() {
     );
 
     blocTest<KycRegisterCubit, KycRegisterState>(
-      'completeRegistration throws BitboxNotConnectedException → Failure',
+      'completeRegistration throws BitboxNotConnectedException → BitboxRequired (recoverable)',
       setUp: () {
         when(() => registrationService.completeRegistration(any()))
             .thenThrow(const BitboxNotConnectedException());
       },
       build: () => build(_userData),
       act: (c) => c.submit(_userData),
+      // The page listens for `KycRegisterBitboxRequired` and surfaces the
+      // existing reconnect sheet — collapsing this into `KycRegisterFailure`
+      // would force the user to restart a one-time heavyweight ceremony
+      // (legal disclaimer + EIP-712 sign) on any BLE link drop.
       expect: () => [
         const KycRegisterSubmitting(_userData),
-        isA<KycRegisterFailure>(),
+        const KycRegisterBitboxRequired(_userData),
       ],
     );
 
@@ -138,6 +205,26 @@ void main() {
       expect: () => [
         const KycRegisterSubmitting(_userData),
         isA<KycRegisterFailure>(),
+      ],
+    );
+  });
+
+  group('revertToReady', () {
+    blocTest<KycRegisterCubit, KycRegisterState>(
+      'BitboxRequired → revertToReady → Ready (cancel-without-reconnect path)',
+      setUp: () {
+        when(() => registrationService.completeRegistration(any()))
+            .thenThrow(const BitboxNotConnectedException());
+      },
+      build: () => build(_userData),
+      act: (c) async {
+        await c.submit(_userData);
+        c.revertToReady(_userData);
+      },
+      expect: () => [
+        const KycRegisterSubmitting(_userData),
+        const KycRegisterBitboxRequired(_userData),
+        const KycRegisterReady(_userData),
       ],
     );
   });
