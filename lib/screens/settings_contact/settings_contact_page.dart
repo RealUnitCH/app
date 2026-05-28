@@ -36,13 +36,13 @@ class SettingsContactView extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.symmetric(
+          padding: const .symmetric(
             horizontal: 20.0,
             vertical: 16.0,
           ),
           child: Column(
             spacing: 20.0,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: .start,
             children: [
               Column(
                 spacing: 12.0,
@@ -104,7 +104,7 @@ class SettingsContactView extends StatelessWidget {
                 ],
               ),
               Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: .start,
                 spacing: 12.0,
                 children: [
                   Text(

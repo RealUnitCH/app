@@ -75,18 +75,18 @@ class _SupportEmailCaptureFormState extends State<SupportEmailCaptureForm> {
         }
       },
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const .symmetric(horizontal: 20),
         child: SafeArea(
           child: GestureDetector(
             onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
             child: Form(
               key: _formKey,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: .start,
                 spacing: 16,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(top: 16),
+                    padding: const .only(top: 16),
                     child: Text(
                       S.of(context).supportEmailCaptureDescription,
                       style: Theme.of(context).textTheme.bodyMedium,
@@ -112,8 +112,8 @@ class _SupportEmailCaptureFormState extends State<SupportEmailCaptureForm> {
                     builder: (context, state) {
                       return AppFilledButton(
                         state: state is SupportEmailCaptureLoading
-                            ? FilledButtonState.loading
-                            : FilledButtonState.idle,
+                            ? .loading
+                            : .idle,
                         onPressed: () {
                           FocusManager.instance.primaryFocus?.unfocus();
                           if (_formKey.currentState?.validate() ?? false) {
