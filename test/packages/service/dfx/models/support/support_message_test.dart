@@ -54,28 +54,58 @@ void main() {
       expect(msg.fileName, dto.fileName);
     });
 
-    test('isFromSupport is true when author is null', () {
+    // The API constant `CustomerAuthor` is the single value that marks a
+    // customer-authored message. Everything else (agent name, AutoResponder,
+    // legacy null) renders as support.
+    test('isFromCustomer is true for author == "Customer"', () {
       final msg = SupportMessage.fromDto(
         SupportMessageDto(
           id: 1,
+          author: 'Customer',
           created: DateTime.utc(2026, 1, 1),
-          // author absent → from support (server side)
         ),
       );
 
+      expect(msg.isFromCustomer, isTrue);
+      expect(msg.isFromSupport, isFalse);
+    });
+
+    test('isFromSupport is true for an agent name', () {
+      final msg = SupportMessage.fromDto(
+        SupportMessageDto(
+          id: 1,
+          author: 'Robin',
+          created: DateTime.utc(2026, 1, 1),
+        ),
+      );
+
+      expect(msg.isFromCustomer, isFalse);
       expect(msg.isFromSupport, isTrue);
     });
 
-    test('isFromSupport is false when author is set', () {
+    test('isFromSupport is true for the AutoResponder bot', () {
       final msg = SupportMessage.fromDto(
         SupportMessageDto(
           id: 1,
-          author: 'alice',
+          author: 'AutoResponder',
           created: DateTime.utc(2026, 1, 1),
         ),
       );
 
-      expect(msg.isFromSupport, isFalse);
+      expect(msg.isFromCustomer, isFalse);
+      expect(msg.isFromSupport, isTrue);
+    });
+
+    test('isFromSupport is true when author is null (defensive)', () {
+      final msg = SupportMessage.fromDto(
+        SupportMessageDto(
+          id: 1,
+          created: DateTime.utc(2026, 1, 1),
+        ),
+      );
+
+      expect(msg.isFromCustomer, isFalse);
+      expect(msg.isFromSupport, isTrue);
     });
   });
 
