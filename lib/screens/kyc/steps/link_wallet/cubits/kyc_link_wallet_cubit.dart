@@ -9,9 +9,9 @@ part 'kyc_link_wallet_state.dart';
 /// Drives the streamlined "Add this wallet" page. The userData is supplied by
 /// the parent `KycCubit` (which already fetched it via `getRegistrationInfo()` as
 /// part of its routing decision) — this cubit never re-fetches. On submit,
-/// calls `RealUnitRegistrationService.registerWallet`. Mirror of
-/// `KycRegistrationSubmitCubit` for the AddWallet branch — distinct state
-/// shape because the page collects no input.
+/// calls `RealUnitRegistrationService.registerWallet`. Parallel to
+/// `KycRegisterCubit` for the AddWallet branch — distinct because the wire
+/// call is `/register/wallet` instead of `/register/complete`.
 class KycLinkWalletCubit extends Cubit<KycLinkWalletState> {
   final RealUnitRegistrationService _registrationService;
 

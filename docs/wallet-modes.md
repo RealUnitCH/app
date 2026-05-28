@@ -26,8 +26,11 @@ enum WalletType { software, bitbox, debug }
 The RealUnit registration flow signs an EIP-712 envelope so the backend can
 prove the user owns the wallet. Two API-driven sub-flows reach the signer:
 
-- `RealUnitRegistrationState.newRegistration` — full registration form,
-  `KycRegistrationPage`
+- `RealUnitRegistrationState.newRegistration` — one-tap "Sign and register"
+  page, `KycRegisterPage`. The page consumes the same DFX-KYC-prefilled
+  `RealUnitUserDataDto` the API supplies and forwards it to
+  `completeRegistration` unchanged (there is no editable form — the server
+  enforces a byte-for-byte match anyway).
 - `RealUnitRegistrationState.addWallet` — one-tap "Add this wallet" page,
   `KycLinkWalletPage`
 
