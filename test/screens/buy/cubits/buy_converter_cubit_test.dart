@@ -172,6 +172,129 @@ void main() {
       expect(cubit.state.loading, isFalse);
     });
 
+    test(
+      'fiat race: stale in-flight response is dropped when user typed further',
+      () async {
+        // Reproduces the production bug: user types fast enough that the
+        // debounce timer for an intermediate value (e.g. "460") has already
+        // fired and started its API call by the time they type the last
+        // digit ("4600"). Both API calls are now in flight; without the
+        // seq guard, the slower response wins last-write-wins — exactly
+        // the "4600 CHF → 321 shares (=460/1.43)" observation in v1.0.67.
+        final c460 = Completer<BrokerbotBuySharesDto>();
+        final c4600 = Completer<BrokerbotBuySharesDto>();
+        when(() => service.getBuyShares('460', any())).thenAnswer((_) => c460.future);
+        when(() => service.getBuyShares('4600', any())).thenAnswer((_) => c4600.future);
+
+        final cubit = BuyConverterCubit(service);
+
+        await cubit.onFiatChanged('460');
+        await Future<void>.delayed(const Duration(milliseconds: 150)); // timer fires → API_460 in flight
+        await cubit.onFiatChanged('4600');
+        await Future<void>.delayed(const Duration(milliseconds: 150)); // timer fires → API_4600 in flight
+
+        // Pathological response order: the NEWER request resolves first…
+        c4600.complete(BrokerbotBuySharesDto(
+          shares: 3216,
+          pricePerShare: 1.43,
+          availableShares: 100,
+        ));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        expect(cubit.state.sharesText, '3216');
+
+        // …and the OLDER request resolves later. Without the seq guard,
+        // this would overwrite sharesText with '321'.
+        c460.complete(BrokerbotBuySharesDto(
+          shares: 321,
+          pricePerShare: 1.43,
+          availableShares: 100,
+        ));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        expect(
+          cubit.state.sharesText,
+          '3216',
+          reason: 'stale seq=1 response for "460" must NOT overwrite seq=2 result for "4600"',
+        );
+      },
+    );
+
+    test(
+      'shares race: stale in-flight response is dropped when user typed further',
+      () async {
+        // Symmetric pin for the onSharesChanged debounce path.
+        final c5 = Completer<BrokerbotBuyPriceDto>();
+        final c50 = Completer<BrokerbotBuyPriceDto>();
+        when(() => service.getBuyPrice('5', any())).thenAnswer((_) => c5.future);
+        when(() => service.getBuyPrice('50', any())).thenAnswer((_) => c50.future);
+
+        final cubit = BuyConverterCubit(service);
+
+        await cubit.onSharesChanged('5');
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+        await cubit.onSharesChanged('50');
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+
+        c50.complete(BrokerbotBuyPriceDto(
+          totalCost: 71.50,
+          pricePerShare: 1.43,
+          availableShares: 100,
+        ));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        expect(cubit.state.fiatText, '71.50');
+
+        c5.complete(BrokerbotBuyPriceDto(
+          totalCost: 7.15,
+          pricePerShare: 1.43,
+          availableShares: 100,
+        ));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        expect(
+          cubit.state.fiatText,
+          '71.50',
+          reason: 'stale in-flight onSharesChanged response must not overwrite newer one',
+        );
+      },
+    );
+
+    test(
+      'onCurrencyChanged: superseded in-flight response is dropped, but the currency flip survives',
+      () async {
+        // User changes currency to EUR, then quickly types a new fiat
+        // amount before the EUR conversion returns. The EUR-conversion
+        // shares result must not land; but the currency picker must
+        // already reflect EUR because we flip it eagerly before the await.
+        final cEur = Completer<BrokerbotBuySharesDto>();
+        when(() => service.getBuyShares(any(), Currency.eur)).thenAnswer((_) => cEur.future);
+        when(() => service.getBuyShares('1000', Currency.eur)).thenAnswer(
+          (_) async => BrokerbotBuySharesDto(
+            shares: 700,
+            pricePerShare: 1.43,
+            availableShares: 100,
+          ),
+        );
+
+        final cubit = BuyConverterCubit(service);
+        // ignore: unawaited_futures
+        cubit.onCurrencyChanged(Currency.eur);
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        expect(cubit.state.currency, Currency.eur, reason: 'currency flips immediately');
+
+        await cubit.onFiatChanged('1000');
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+
+        cEur.complete(BrokerbotBuySharesDto(
+          shares: 0,
+          pricePerShare: 1.43,
+          availableShares: 100,
+        ));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        expect(cubit.state.currency, Currency.eur);
+        expect(cubit.state.sharesText, '700',
+            reason: 'the superseded onCurrencyChanged response (shares=0) must be dropped');
+      },
+    );
+
     test('close() cancels pending debounce timers', () async {
       when(() => service.getBuyShares(any(), any())).thenAnswer(
         (_) async => BrokerbotBuySharesDto(

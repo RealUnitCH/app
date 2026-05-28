@@ -201,6 +201,87 @@ void main() {
       expect(cubit.state.loading, isFalse);
     });
 
+    test(
+      'fiat race: stale in-flight response is dropped when user typed further',
+      () async {
+        // Symmetric pin to BuyConverterCubit: prevents the timer-cancel-vs-
+        // running-body race where an older API call resolves after a newer
+        // one and overwrites the result via last-write-wins.
+        final c5 = Completer<BrokerbotSellSharesDto>();
+        final c50 = Completer<BrokerbotSellSharesDto>();
+        when(() => service.getSellShares('5', any())).thenAnswer((_) => c5.future);
+        when(() => service.getSellShares('50', any())).thenAnswer((_) => c50.future);
+
+        final cubit = SellConverterCubit(service);
+
+        await cubit.onFiatChanged('5');
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+        await cubit.onFiatChanged('50');
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+
+        c50.complete(BrokerbotSellSharesDto(
+          targetAmount: 50,
+          shares: 35,
+          pricePerShare: 1.43,
+          currency: 'CHF',
+        ));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        expect(cubit.state.sharesText, '35');
+
+        c5.complete(BrokerbotSellSharesDto(
+          targetAmount: 5,
+          shares: 3,
+          pricePerShare: 1.43,
+          currency: 'CHF',
+        ));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        expect(
+          cubit.state.sharesText,
+          '35',
+          reason: 'stale seq=1 response must NOT overwrite seq=2 result',
+        );
+      },
+    );
+
+    test(
+      'shares race: stale in-flight response is dropped when user typed further',
+      () async {
+        final c5 = Completer<BrokerbotSellPriceDto>();
+        final c50 = Completer<BrokerbotSellPriceDto>();
+        when(() => service.getSellPrice('5', any())).thenAnswer((_) => c5.future);
+        when(() => service.getSellPrice('50', any())).thenAnswer((_) => c50.future);
+
+        final cubit = SellConverterCubit(service);
+
+        await cubit.onSharesChanged('5');
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+        await cubit.onSharesChanged('50');
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+
+        c50.complete(BrokerbotSellPriceDto(
+          shares: 50,
+          estimatedAmount: 71.50,
+          pricePerShare: 1.43,
+          currency: 'CHF',
+        ));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        expect(cubit.state.fiatText, '71.50');
+
+        c5.complete(BrokerbotSellPriceDto(
+          shares: 5,
+          estimatedAmount: 7.15,
+          pricePerShare: 1.43,
+          currency: 'CHF',
+        ));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        expect(
+          cubit.state.fiatText,
+          '71.50',
+          reason: 'stale in-flight onSharesChanged response must not overwrite newer one',
+        );
+      },
+    );
+
     test('close() cancels pending debounce timers', () async {
       when(() => service.getSellShares(any(), any())).thenAnswer(
         (_) async => BrokerbotSellSharesDto(

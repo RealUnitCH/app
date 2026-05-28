@@ -1,6 +1,11 @@
 import 'package:equatable/equatable.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/support/dto/support_message_dto.dart';
 
+// Mirrors the API constant in `support-message.entity.ts`. Customer-authored
+// messages carry this exact author value; anything else (agent name,
+// `AutoResponder`, …) is rendered as support.
+const String customerAuthor = 'Customer';
+
 class SupportMessage extends Equatable {
   final int id;
   final String? author;
@@ -16,7 +21,8 @@ class SupportMessage extends Equatable {
     this.fileName,
   });
 
-  bool get isFromSupport => author == null;
+  bool get isFromCustomer => author == customerAuthor;
+  bool get isFromSupport => !isFromCustomer;
 
   factory SupportMessage.fromDto(SupportMessageDto dto) {
     return SupportMessage(
