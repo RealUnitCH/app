@@ -13,6 +13,9 @@ class KycRegistrationAddressStep extends StatelessWidget {
   final TextEditingController cityCtrl;
   final ValueNotifier<Country?> countryCtrl;
   final Country? initialCountry;
+  final ValueNotifier<bool> swissTaxResidenceCtrl;
+  final ValueNotifier<Country?> taxCountryCtrl;
+  final TextEditingController tinCtrl;
   final Future<void> Function() onSubmit;
 
   KycRegistrationAddressStep({
@@ -22,6 +25,9 @@ class KycRegistrationAddressStep extends StatelessWidget {
     required this.postalCodeCtrl,
     required this.cityCtrl,
     required this.countryCtrl,
+    required this.swissTaxResidenceCtrl,
+    required this.taxCountryCtrl,
+    required this.tinCtrl,
     required this.onSubmit,
     this.initialCountry,
   });
@@ -120,8 +126,37 @@ class KycRegistrationAddressStep extends StatelessWidget {
                   initialValue: initialCountry,
                   onChanged: (country) => countryCtrl.value = country,
                 ),
+                _SwissTaxResidenceToggle(controller: swissTaxResidenceCtrl),
+                ValueListenableBuilder<bool>(
+                  valueListenable: swissTaxResidenceCtrl,
+                  builder: (context, isSwiss, _) {
+                    if (isSwiss) return const SizedBox.shrink();
+                    return Column(
+                      spacing: 16,
+                      children: [
+                        CountryField(
+                          label: S.of(context).taxResidenceCountry,
+                          purpose: CountryFieldPurpose.nationality,
+                          onChanged: (country) => taxCountryCtrl.value = country,
+                        ),
+                        LabeledTextField(
+                          hintText: S.of(context).tinHint,
+                          controller: tinCtrl,
+                          label: S.of(context).taxIdentificationNumber,
+                          keyboardType: TextInputType.text,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return S.of(context).tinRequired;
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                ),
                 Padding(
-                  padding: const .symmetric(vertical: 16.0),
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: AppFilledButton(
                     onPressed: () async {
                       FocusManager.instance.primaryFocus?.unfocus();
@@ -137,6 +172,38 @@ class KycRegistrationAddressStep extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SwissTaxResidenceToggle extends StatelessWidget {
+  const _SwissTaxResidenceToggle({required this.controller});
+
+  final ValueNotifier<bool> controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: controller,
+      builder: (context, value, _) {
+        return Row(
+          children: [
+            Expanded(
+              child: Text(
+                S.of(context).swissTaxResidence,
+                style: const TextStyle(
+                  fontSize: 14,
+                  height: 20 / 14,
+                ),
+              ),
+            ),
+            Switch(
+              value: value,
+              onChanged: (next) => controller.value = next,
+            ),
+          ],
+        );
+      },
     );
   }
 }
