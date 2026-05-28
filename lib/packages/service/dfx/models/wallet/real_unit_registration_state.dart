@@ -1,5 +1,5 @@
 /// Mirror of the server-side `RealUnitRegistrationState` returned on
-/// `GET /v1/realunit/wallet/status`. The API decides the full registration
+/// `GET /v1/realunit/registration`. The API decides the full registration
 /// routing for a wallet; the app renders it 1:1 — see CONTRIBUTING.md
 /// "API as Decision Authority".
 enum RealUnitRegistrationState {
