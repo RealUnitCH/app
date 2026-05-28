@@ -63,6 +63,35 @@ Extend the API, then change the app. **Do not add app-side workarounds.** Open a
 
 A full audit of current violations lives in [`docs/api-authority-audit.md`](docs/api-authority-audit.md). New PRs must not add to it; ideally they reduce it.
 
+### Consuming API capabilities — eight rules
+
+When the API exposes a capability (boolean flag or struct on `UserCapabilitiesDto` / similar), the app's consumer code follows the rules below. The mirror — the rules for how the API exposes capabilities — lives in [`DFXswiss/api:CONTRIBUTING.md`](https://github.com/DFXswiss/api/blob/develop/CONTRIBUTING.md) under "API Capability Design". Both sets were synthesised from the `#3733 → #3761 → #3767(closed) → #3772(merged 2026-05-26)` review sequence with @davidleomay.
+
+1. **Read the capability shape, don't reconstruct it.** If the API ships `canEditName: bool`, the page binds `onPressed` to `canEditName`. If it ships `createSupportTicket: { available, missingPrerequisite? }`, the tap handler routes on the discriminator. Never `if (user.mail == null)` or `if (user.kyc.level >= 30)` as a stand-in.
+
+2. **Tile/button visibility for discoverable actions is unconditional.** Tiles that gate prerequisites (Support, KYC, etc.) stay visible regardless of capability state — the user discovers the action even pre-signin. The capability struct's `available` field controls only the **tap outcome** (push the target page vs. push the prerequisite capture page), not the **visibility**.
+
+3. **Map prerequisite types to UI components, not to business rules.** When the capability says `missingPrerequisite: 'Email'`, the app pushes the email capture page. It does NOT contain a comment like "this means mail is required because support needs it" — the rule is on the backend. The app's switch is a UI dispatch, not domain logic.
+
+4. **Legacy backend tolerance — capability optional, sane fallback.** All new capability fields are nullable in the Dart DTO (`createSupportTicket?: CreateSupportTicketCapabilityDto`). On pre-rollout backends the field is null; the consumer falls back to the unprotected direct-push. The behaviour is identical to today's behaviour (pre-capability), so the user is no worse off — the capability just adds the smarter path when the backend supports it.
+
+5. **No reactive 400-handling for what a capability could pre-tell.** If the backend exposes a pre-tap capability, the app must consume it. Attempting the action and reacting to a typed `BadRequestException` post-submit is a regression — the user loses form data, the error-body parsing is brittle, the navigation choreography is fragile. Reactive errors are only for things the capability can't predict (network failures, transient backend issues, race conditions).
+
+6. **Pair-PR discipline.** App-side capability adoption happens in the same PR that deletes the local logic the capability replaces. PR title: `refactor(<scope>): consume <Capability>`. PR body cites the V-ID from `docs/api-authority-audit.md` and the API-side commit. The PR is opened **after** the API PR has merged on `develop` — running ahead of the API merge means the consumer sees null forever in DEV and the change effectively dead-codes itself.
+
+7. **Tests pin the contract, not the implementation.** Cubit tests assert that `init()` with `capability == null` emits the legacy-fallback success state; with `available: true` emits the available state; with `available: false, missingPrerequisite: Email` emits the prerequisite-required state. Widget tests assert that taps in each state push the correct route. Don't test "if mail == null, the tile state is unavailable" — that ties the test to the backend rule, exactly what we're trying to decouple.
+
+8. **Push back on capability shape that's over-engineered.** Capabilities should be the minimum dynamic info to fulfil a UX requirement. Endpoint paths, HTTP methods, and i18n strings belong in Swagger / the client respectively. If a proposed API field looks like it duplicates static information, comment on the API PR asking for the minimum surface. Reference template: <https://github.com/DFXswiss/api/pull/3772#issuecomment-4549147861>.
+
+#### Concrete pattern — Support ticket flow
+
+The first capability that follows this design lives end-to-end across these PRs:
+
+- API: [DFXswiss/api#3772](https://github.com/DFXswiss/api/pull/3772) — adds `createSupportTicket: { available, missingPrerequisite? }`.
+- App: companion PR on this repo consuming the field — `SettingsContactPage` keeps the tile unconditional, `SettingsContactCubit` hydrates the capability from `/v2/user`, the tap handler in the view routes on `capability.available` / `capability.missingPrerequisite`.
+
+Future capabilities follow the same shape: bool for hide-able, `{ available, missingPrerequisite? }` for discoverable. The closed `MissingPrerequisite` enum grows additively as new prerequisite gates appear server-side.
+
 ## Project Architecture
 
 ```
