@@ -29,6 +29,13 @@ class KycCubit extends Cubit<KycState> {
   // before sensitive steps and stale sessions cannot be re-used.
   bool _registrationSignProduced = false;
 
+  // `/v2/user.addresses` is a best-effort backend hint, not the KYC routing
+  // authority. Use it at most once per KYC entry to recover an interrupted
+  // merge, and never after this cubit has observed a successful registerWallet
+  // sign; otherwise stale/empty address propagation can trap the user in the
+  // re-entrant verification page.
+  bool _walletRegistrationResumeAttempted = false;
+
   // `Future.timeout` does not cancel the underlying work, so a late HTTP
   // response from an earlier call can still resume and emit state after a
   // retry. Each `checkKyc()` captures its own generation; the run body and
@@ -77,21 +84,8 @@ class KycCubit extends Cubit<KycState> {
         return;
       }
 
-      // Re-entrant merge-completion gate (BL — see ADR / PR notes). The email
-      // is set, so the email step (which is where a merge is normally
-      // detected and the verification page pushed) is skipped. If the active
-      // wallet address is NOT yet in the account's registered `addresses`,
-      // an earlier merge was interrupted before `registerWallet` completed —
-      // route into the verification page in re-entrant mode to finish it,
-      // instead of dropping the user into a fresh KYC step.
-      //
-      // ASSUMPTION (must be verified end-to-end): the backend lists the
-      // wallet address under `/v2/user.addresses` only AFTER `registerWallet`
-      // succeeds. If it appears earlier (on the auth-side merge), this gate
-      // never fires and the gap persists; if it never appears, this loops —
-      // hence the explicit verification call-out in the PR.
-      final walletAddress = _registrationService.walletAddress.toLowerCase();
-      if (!user.addresses.contains(walletAddress)) {
+      if (_shouldResumeWalletRegistration(user)) {
+        _walletRegistrationResumeAttempted = true;
         emit(const KycWalletRegistrationRequired());
         return;
       }
@@ -202,6 +196,14 @@ class KycCubit extends Cubit<KycState> {
   /// new-registration form submit and the existing-customer merge confirm.
   void markRegistrationSignProduced() {
     _registrationSignProduced = true;
+  }
+
+  bool _shouldResumeWalletRegistration(UserDto user) {
+    if (_registrationSignProduced || _walletRegistrationResumeAttempted) return false;
+    if (user.addresses.isEmpty) return false;
+
+    final walletAddress = _registrationService.walletAddress.toLowerCase();
+    return !user.addresses.contains(walletAddress);
   }
 
   /// should only be called after realunit registration was completed

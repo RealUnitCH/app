@@ -6,11 +6,9 @@ class UserDto {
   final UserCapabilitiesDto capabilities;
 
   /// Lowercased blockchain addresses currently associated with this user
-  /// account (the `addresses[].address` list from `/v2/user`). Used to detect
-  /// whether the locally-active wallet is already registered with the account
-  /// — the stable, restart-survivable signal for resuming an incomplete
-  /// merge/registration (the JWT account-id delta is a one-shot signal that
-  /// cannot be re-derived after the auth-side merge has settled).
+  /// account (the `addresses[].address` list from `/v2/user`). This is a
+  /// best-effort hint: absent/empty data is treated as unknown by callers, not
+  /// as proof that the locally-active wallet is unregistered.
   final List<String> addresses;
 
   const UserDto({
@@ -27,8 +25,11 @@ class UserDto {
       capabilities: json['capabilities'] != null
           ? UserCapabilitiesDto.fromJson(json['capabilities'] as Map<String, dynamic>)
           : const UserCapabilitiesDto(),
-      addresses: (json['addresses'] as List<dynamic>?)
-              ?.map((a) => ((a as Map<String, dynamic>)['address'] as String).toLowerCase())
+      addresses:
+          (json['addresses'] as List<dynamic>?)
+              ?.map((a) => a is Map<String, dynamic> ? a['address'] : null)
+              .whereType<String>()
+              .map((address) => address.toLowerCase())
               .toList() ??
           const [],
     );

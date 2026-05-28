@@ -39,28 +39,29 @@ void main() {
       expect(
         () => credentials.signToSignature(payload, chainId: 1, isEIP1559: true),
         throwsA(
-          isA<Eip1559TypeMismatchException>()
-              .having((e) => e.actualByte, 'actualByte', 0x01),
+          isA<Eip1559TypeMismatchException>().having((e) => e.actualByte, 'actualByte', 0x01),
         ),
       );
     });
 
-    test('payload empty and isEIP1559=true → Eip1559TypeMismatchException(actualByte=null)', () async {
-      final credentials = BitboxCredentials(
-        '0x0000000000000000000000000000000000000001',
-      );
-      expect(
-        () => credentials.signToSignature(
-          Uint8List(0),
-          chainId: 1,
-          isEIP1559: true,
-        ),
-        throwsA(
-          isA<Eip1559TypeMismatchException>()
-              .having((e) => e.actualByte, 'actualByte', null),
-        ),
-      );
-    });
+    test(
+      'payload empty and isEIP1559=true → Eip1559TypeMismatchException(actualByte=null)',
+      () async {
+        final credentials = BitboxCredentials(
+          '0x0000000000000000000000000000000000000001',
+        );
+        expect(
+          () => credentials.signToSignature(
+            Uint8List(0),
+            chainId: 1,
+            isEIP1559: true,
+          ),
+          throwsA(
+            isA<Eip1559TypeMismatchException>().having((e) => e.actualByte, 'actualByte', null),
+          ),
+        );
+      },
+    );
 
     test('payload[0] == 0x02 and isEIP1559=true passes the assert', () async {
       // Without a connected BitboxManager the sign throws
@@ -107,8 +108,7 @@ void main() {
       await expectLater(
         pipeline.sign(request),
         throwsA(
-          isA<Eip1559TypeMismatchException>()
-              .having((e) => e.actualByte, 'actualByte', 0x01),
+          isA<Eip1559TypeMismatchException>().having((e) => e.actualByte, 'actualByte', 0x01),
         ),
       );
     });
@@ -143,4 +143,3 @@ void main() {
     });
   });
 }
-
