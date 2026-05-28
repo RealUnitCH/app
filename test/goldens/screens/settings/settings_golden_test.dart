@@ -33,25 +33,39 @@ void main() {
     await GetIt.instance.reset();
   });
 
+  Widget buildSubject() {
+    // Re-register the per-test mock into GetIt so the BlocBuilder picks up
+    // the state defined in setUp(). setUpAll() only registers once.
+    if (GetIt.instance.isRegistered<SettingsBloc>()) {
+      GetIt.instance.unregister<SettingsBloc>();
+    }
+    GetIt.instance.registerSingleton<SettingsBloc>(settingsBloc);
+
+    return wrapForGolden(
+      BlocProvider<HomeBloc>.value(
+        value: homeBloc,
+        child: const SettingsPage(),
+      ),
+    );
+  }
+
   group('$SettingsPage', () {
     goldenTest(
       'default state, software wallet open',
       fileName: 'settings_page_default',
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
-      builder: () {
-        // Re-register the per-test mock into GetIt so the BlocBuilder picks up
-        // the state defined in setUp(). setUpAll() only registers once.
-        if (GetIt.instance.isRegistered<SettingsBloc>()) {
-          GetIt.instance.unregister<SettingsBloc>();
-        }
-        GetIt.instance.registerSingleton<SettingsBloc>(settingsBloc);
+      builder: buildSubject,
+    );
 
-        return wrapForGolden(
-          BlocProvider<HomeBloc>.value(
-            value: homeBloc,
-            child: const SettingsPage(),
-          ),
-        );
+    goldenTest(
+      'bitbox wallet open hides the Wallet-Sicherung tile',
+      fileName: 'settings_page_bitbox',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        final bitbox = MockBitboxWallet();
+        when(() => bitbox.walletType).thenReturn(WalletType.bitbox);
+        when(() => homeBloc.state).thenReturn(HomeState(openWallet: bitbox));
+        return buildSubject();
       },
     );
   });

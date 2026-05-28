@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/packages/utils/swiss_payment_text.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/form/country_field.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
@@ -51,6 +52,7 @@ class KycRegistrationAddressStep extends StatelessWidget {
                         textCapitalization: TextCapitalization.words,
                         validator: (value) {
                           if (value == null || value.isEmpty) return '';
+                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
                           return null;
                         },
                       ),
@@ -63,6 +65,7 @@ class KycRegistrationAddressStep extends StatelessWidget {
                         keyboardType: TextInputType.streetAddress,
                         validator: (value) {
                           if (value == null || value.isEmpty) return '';
+                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
                           return null;
                         },
                       ),
@@ -82,6 +85,7 @@ class KycRegistrationAddressStep extends StatelessWidget {
                         keyboardType: TextInputType.number,
                         validator: (value) {
                           if (value == null || value.isEmpty) return '';
+                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
                           return null;
                         },
                       ),
@@ -96,6 +100,7 @@ class KycRegistrationAddressStep extends StatelessWidget {
                         textCapitalization: TextCapitalization.words,
                         validator: (value) {
                           if (value == null || value.isEmpty) return '';
+                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
                           return null;
                         },
                       ),
