@@ -314,6 +314,7 @@
   "supportTicketCreated": "Ticket erstellt",
   "supportTransactionIssue": "Transaktionsproblem",
   "supportTypeMessage": "Beschreiben Sie Ihr Anliegen",
+  "swissPaymentTextInvalid": "Nur in der Schweiz gültige Buchstaben und Zeichen sind erlaubt",
   "swissTaxResidence": "Ich bin in der Schweiz steuerpflichtig",
   "swissTaxResidenceDescription": "Aktivieren, falls Ihr primärer Steuerwohnsitz die Schweiz ist. Erforderlich für FATCA / CRS-Meldungen.",
   "tapHereToView": "Hier tippen, um anzuzeigen",

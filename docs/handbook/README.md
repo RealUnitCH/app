@@ -21,7 +21,7 @@ deployten Image (`handbook.realunit.app` / `dev-handbook.realunit.app`).
 
 ## Screenshots regenerieren
 
-Es gibt keinen separaten Regeneration-Schritt: Die 26 Handbook-Screenshots
+Es gibt keinen separaten Regeneration-Schritt: Die 52 Handbook-Screenshots
 sind direkt die Golden-Baselines unter `test/goldens/screens/` (gemappt in
 `scripts/assemble-handbook-screenshots.sh`). Eine UI-Änderung an einer der
 gemappten Pages produziert beim `flutter test test/goldens` einen Diff —

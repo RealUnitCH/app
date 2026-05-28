@@ -13,7 +13,7 @@ class PortfolioChartCubit extends Cubit<PortfolioChartState> {
   PortfolioChartCubit(this._prices)
     : super(
         const PortfolioChartState(
-          selectedPeriod: TimePeriod.all,
+          selectedPeriod: TimePeriod.threeMonths,
           visibleSpots: [],
           minX: 0,
           maxX: 0,
@@ -93,6 +93,20 @@ class PortfolioChartCubit extends Cubit<PortfolioChartState> {
           ),
         )
         .toList();
+
+    if (visibleSpots.isEmpty) {
+      emit(
+        state.copyWith(
+          visibleSpots: [],
+          minX: minX,
+          maxX: maxX,
+          minY: 0,
+          maxY: 1,
+          horizontalLineValues: [],
+        ),
+      );
+      return;
+    }
 
     // Calculate minY and maxY from the visible spots
     var min = visibleSpots.first.y;

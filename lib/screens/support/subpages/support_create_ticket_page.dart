@@ -94,19 +94,9 @@ class SupportCreateTicketView extends StatelessWidget {
                                       Icons.bug_report_outlined,
                                     ),
                                     (
-                                      SupportIssueType.transactionIssue,
-                                      S.of(context).supportTransactionIssue,
-                                      Icons.swap_horiz,
-                                    ),
-                                    (
                                       SupportIssueType.kycIssue,
                                       S.of(context).supportKycIssue,
                                       Icons.verified_user_outlined,
-                                    ),
-                                    (
-                                      SupportIssueType.limitRequest,
-                                      S.of(context).supportLimitRequest,
-                                      Icons.trending_up,
                                     ),
                                   ],
                                   selected: state.selectedType,

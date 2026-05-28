@@ -20,6 +20,7 @@ import 'package:realunit_wallet/screens/sell/cubits/sell_converter/sell_converte
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_selected_bank_account/sell_selected_bank_account_cubit.dart';
 import 'package:realunit_wallet/screens/sell/sell_page.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -146,6 +147,96 @@ void main() {
             balance: BigInt.from(1000000000000000000),
             asset: realUnitAsset,
           ),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'payment info loading',
+      fileName: 'sell_payment_info_loading',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      // Loading state renders a CircularProgressIndicator — its animation
+      // never settles, so pumpAndSettle (default in precacheImages) hits
+      // its timeout. pumpOnce captures the first frame without waiting.
+      pumpBeforeTest: pumpOnce,
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(
+          Balance(
+            chainId: 1,
+            contractAddress: '0x0',
+            walletAddress: '0x0',
+            balance: BigInt.from(1000000000000000000),
+            asset: realUnitAsset,
+          ),
+        );
+        when(() => paymentInfoCubit.state)
+            .thenReturn(const SellPaymentInfoLoading());
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'kyc required failure',
+      fileName: 'sell_kyc_required',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(
+          Balance(
+            chainId: 1,
+            contractAddress: '0x0',
+            walletAddress: '0x0',
+            balance: BigInt.from(1000000000000000000),
+            asset: realUnitAsset,
+          ),
+        );
+        when(() => paymentInfoCubit.state).thenReturn(
+          const SellPaymentInfoFailure(PaymentInfoError.kycRequired),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'min amount not met failure',
+      fileName: 'sell_min_amount_not_met',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(
+          Balance(
+            chainId: 1,
+            contractAddress: '0x0',
+            walletAddress: '0x0',
+            balance: BigInt.from(1000000000000000000),
+            asset: realUnitAsset,
+          ),
+        );
+        when(() => paymentInfoCubit.state).thenReturn(
+          const SellPaymentInfoMinAmountNotMet(
+            minAmount: 10,
+            currency: Currency.chf,
+          ),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'unknown error failure',
+      fileName: 'sell_unknown_error',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(
+          Balance(
+            chainId: 1,
+            contractAddress: '0x0',
+            walletAddress: '0x0',
+            balance: BigInt.from(1000000000000000000),
+            asset: realUnitAsset,
+          ),
+        );
+        when(() => paymentInfoCubit.state).thenReturn(
+          const SellPaymentInfoFailure(PaymentInfoError.unknown),
         );
         return wrapForGolden(buildSubject());
       },
