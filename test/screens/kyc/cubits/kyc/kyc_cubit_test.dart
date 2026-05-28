@@ -4,6 +4,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
@@ -14,17 +15,19 @@ import 'package:realunit_wallet/packages/service/dfx/models/registration/registr
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_info_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 
 class _MockDfxKycService extends Mock implements DfxKycService {}
 
 class _MockRealUnitRegistrationService extends Mock implements RealUnitRegistrationService {}
 
-class _MockRealUnitWalletService extends Mock implements RealUnitWalletService {}
+class _MockAppStore extends Mock implements AppStore {}
+
+class _MockAWallet extends Mock implements AWallet {}
 
 UserKycDto _kycHeader({KycLevel level = KycLevel.level0}) =>
     UserKycDto(hash: 'h', level: level, dataComplete: false);
@@ -85,10 +88,10 @@ KycStepSessionDto _currentStep(
   isCurrent: true,
 );
 
-RealUnitWalletStatusDto _walletStatus(
+RealUnitRegistrationInfoDto _walletStatus(
   RealUnitRegistrationState state, {
   RealUnitUserDataDto? userData,
-}) => RealUnitWalletStatusDto(state: state, realUnitUserDataDto: userData);
+}) => RealUnitRegistrationInfoDto(state: state, realUnitUserDataDto: userData);
 
 const _kycPersonalData = KycPersonalData(
   accountType: KycAccountType.personal,
@@ -117,20 +120,26 @@ const _fixtureUserData = RealUnitUserDataDto(
 void main() {
   late DfxKycService kycService;
   late RealUnitRegistrationService registrationService;
-  late RealUnitWalletService walletService;
+  late AppStore appStore;
+  late AWallet wallet;
 
   setUp(() {
     kycService = _MockDfxKycService();
     registrationService = _MockRealUnitRegistrationService();
-    walletService = _MockRealUnitWalletService();
+    appStore = _MockAppStore();
+    wallet = _MockAWallet();
+    when(() => appStore.wallet).thenReturn(wallet);
+    // Default: software wallet — most tests don't care about the signing
+    // capability gate.
+    when(() => wallet.walletType).thenReturn(WalletType.software);
     // Default: AlreadyRegistered — most tests don't care about the wallet
     // status branch and want to fall through to the processStatus dispatch.
-    when(() => walletService.getWalletStatus()).thenAnswer(
+    when(() => registrationService.getRegistrationInfo()).thenAnswer(
       (_) async => _walletStatus(RealUnitRegistrationState.alreadyRegistered),
     );
   });
 
-  KycCubit buildCubit() => KycCubit(kycService, registrationService, walletService);
+  KycCubit buildCubit() => KycCubit(kycService, registrationService, appStore);
 
   group('$KycCubit checkKyc', () {
     blocTest<KycCubit, KycState>(
@@ -188,9 +197,9 @@ void main() {
     );
 
     // Wave 3 — server-side registration state drives routing. The cubit
-    // re-fetches `getWalletStatus()` after the disclaimer gate and dispatches
+    // re-fetches `getRegistrationInfo()` after the disclaimer gate and dispatches
     // on its `state` field, with no local sign-produced flag. The DTO that
-    // came back from `getWalletStatus` is forwarded on the emitted state so
+    // came back from `getRegistrationInfo` is forwarded on the emitted state so
     // downstream pages do not have to re-fetch.
     blocTest<KycCubit, KycState>(
       'emits KycSuccess(registration) with propagated userData when wallet status reports NewRegistration',
@@ -199,7 +208,7 @@ void main() {
           (_) async => _kycStatus(level: KycLevel.level20),
         );
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
-        when(() => walletService.getWalletStatus()).thenAnswer(
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
           (_) async => _walletStatus(
             RealUnitRegistrationState.newRegistration,
             userData: _fixtureUserData,
@@ -227,7 +236,7 @@ void main() {
           (_) async => _kycStatus(level: KycLevel.level20),
         );
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
-        when(() => walletService.getWalletStatus()).thenAnswer(
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
           (_) async => _walletStatus(RealUnitRegistrationState.newRegistration),
         );
       },
@@ -249,7 +258,7 @@ void main() {
           (_) async => _kycStatus(level: KycLevel.level20),
         );
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
-        when(() => walletService.getWalletStatus()).thenAnswer(
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
           (_) async => _walletStatus(
             RealUnitRegistrationState.addWallet,
             userData: _fixtureUserData,
@@ -280,7 +289,7 @@ void main() {
           (_) async => _kycStatus(level: KycLevel.level20),
         );
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
-        when(() => walletService.getWalletStatus()).thenAnswer(
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
           (_) async => _walletStatus(RealUnitRegistrationState.kycRequired),
         );
       },
@@ -295,18 +304,103 @@ void main() {
       ],
     );
 
+    // Wallet-mode signing-capability gate: the address+signature debug
+    // wallet cannot produce an EIP-712 signature. The cubit must surface
+    // `KycSignatureUnsupportedFailure` BEFORE emitting `KycSuccess` for any
+    // state that would require signing (`NewRegistration` / `AddWallet`).
+    // States that don't require signing (`AlreadyRegistered`, `KycRequired`)
+    // still flow through normally.
+    blocTest<KycCubit, KycState>(
+      'emits KycSignatureUnsupportedFailure when debug wallet + NewRegistration',
+      setUp: () {
+        when(() => wallet.walletType).thenReturn(WalletType.debug);
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(level: KycLevel.level20),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(
+            RealUnitRegistrationState.newRegistration,
+            userData: _fixtureUserData,
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        await cubit.checkKyc();
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycSignatureUnsupportedFailure(),
+      ],
+    );
+
+    blocTest<KycCubit, KycState>(
+      'emits KycSignatureUnsupportedFailure when debug wallet + AddWallet',
+      setUp: () {
+        when(() => wallet.walletType).thenReturn(WalletType.debug);
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(level: KycLevel.level20),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(
+            RealUnitRegistrationState.addWallet,
+            userData: _fixtureUserData,
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        await cubit.checkKyc();
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycSignatureUnsupportedFailure(),
+      ],
+    );
+
+    blocTest<KycCubit, KycState>(
+      'debug wallet + AlreadyRegistered passes through (no signing needed)',
+      setUp: () {
+        when(() => wallet.walletType).thenReturn(WalletType.debug);
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        // Default already maps to AlreadyRegistered — make it explicit here.
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(RealUnitRegistrationState.alreadyRegistered),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        await cubit.checkKyc();
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycCompleted(),
+      ],
+    );
+
     // Failure-path coverage for the wallet-status round-trip: if
-    // `getWalletStatus()` itself throws, the outer `catch` in `_runCheckKyc`
+    // `getRegistrationInfo()` itself throws, the outer `catch` in `_runCheckKyc`
     // must surface a `KycFailure` rather than leaking the exception through
     // the disclaimer-passed gate or wedging the state machine.
     blocTest<KycCubit, KycState>(
-      'emits KycFailure when getWalletStatus throws',
+      'emits KycFailure when getRegistrationInfo throws',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
           (_) async => _kycStatus(level: KycLevel.level20),
         );
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
-        when(() => walletService.getWalletStatus()).thenThrow(
+        when(() => registrationService.getRegistrationInfo()).thenThrow(
           Exception('network error'),
         );
       },
@@ -738,7 +832,7 @@ void main() {
         });
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
 
-        final cubit = KycCubit(kycService, registrationService, walletService)
+        final cubit = KycCubit(kycService, registrationService, appStore)
           ..markLegalDisclaimerAccepted();
 
         final states = <KycState>[];

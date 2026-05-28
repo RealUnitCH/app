@@ -10,8 +10,8 @@ import 'package:realunit_wallet/packages/service/dfx/models/fees/dfx_fees_data.d
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_info_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 
 void main() {
   group('$BrokerbotBuyPriceDto.fromJson', () {
@@ -174,9 +174,9 @@ void main() {
     });
   });
 
-  group('$RealUnitWalletStatusDto.fromJson', () {
+  group('$RealUnitRegistrationInfoDto.fromJson', () {
     test('parses AddWallet + userData branch', () {
-      final dto = RealUnitWalletStatusDto.fromJson({
+      final dto = RealUnitRegistrationInfoDto.fromJson({
         'state': 'AddWallet',
         'userData': _userDataJson(),
       });
@@ -187,7 +187,7 @@ void main() {
     });
 
     test('parses AlreadyRegistered with null userData', () {
-      final dto = RealUnitWalletStatusDto.fromJson({
+      final dto = RealUnitRegistrationInfoDto.fromJson({
         'state': 'AlreadyRegistered',
         'userData': null,
       });
@@ -197,7 +197,7 @@ void main() {
     });
 
     test('parses NewRegistration with pre-fill userData', () {
-      final dto = RealUnitWalletStatusDto.fromJson({
+      final dto = RealUnitRegistrationInfoDto.fromJson({
         'state': 'NewRegistration',
         'userData': _userDataJson(),
       });
@@ -207,7 +207,7 @@ void main() {
     });
 
     test('parses KycRequired with null userData (edge case)', () {
-      final dto = RealUnitWalletStatusDto.fromJson({
+      final dto = RealUnitRegistrationInfoDto.fromJson({
         'state': 'KycRequired',
         'userData': null,
       });
@@ -218,7 +218,7 @@ void main() {
 
     test('throws ArgumentError on unknown state', () {
       expect(
-        () => RealUnitWalletStatusDto.fromJson({
+        () => RealUnitRegistrationInfoDto.fromJson({
           'state': 'Bogus',
           'userData': null,
         }),

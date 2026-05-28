@@ -8,7 +8,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/user_data.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/settings_user_data/cubit/settings_user_data_cubit.dart';
 import 'package:realunit_wallet/screens/settings_user_data/settings_user_data_page.dart';
 
@@ -17,7 +17,7 @@ import '../../../helper/helper.dart';
 class _MockSettingsUserDataCubit extends MockCubit<SettingsUserDataState>
     implements SettingsUserDataCubit {}
 
-class _MockRealUnitWalletService extends Mock implements RealUnitWalletService {}
+class _MockRealUnitRegistrationService extends Mock implements RealUnitRegistrationService {}
 
 class _MockDfxKycService extends Mock implements DfxKycService {}
 
@@ -59,7 +59,7 @@ void main() {
 
   setUpAll(() {
     final getIt = GetIt.instance;
-    getIt.registerSingleton<RealUnitWalletService>(_MockRealUnitWalletService());
+    getIt.registerSingleton<RealUnitRegistrationService>(_MockRealUnitRegistrationService());
     getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
     getIt.registerSingleton<DfxKycService>(_MockDfxKycService());
   });

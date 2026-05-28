@@ -1,7 +1,7 @@
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
 
-class RealUnitWalletStatusDto {
+class RealUnitRegistrationInfoDto {
   /// API-side routing decision for this wallet. Drives KYC dispatch in
   /// `KycCubit._runCheckKyc` — see CONTRIBUTING.md "API as Decision
   /// Authority". `userData` is populated for `addWallet` (prior payload)
@@ -10,13 +10,13 @@ class RealUnitWalletStatusDto {
   final RealUnitRegistrationState state;
   final RealUnitUserDataDto? realUnitUserDataDto;
 
-  RealUnitWalletStatusDto({
+  RealUnitRegistrationInfoDto({
     required this.state,
     this.realUnitUserDataDto,
   });
 
-  factory RealUnitWalletStatusDto.fromJson(Map<String, dynamic> json) {
-    return RealUnitWalletStatusDto(
+  factory RealUnitRegistrationInfoDto.fromJson(Map<String, dynamic> json) {
+    return RealUnitRegistrationInfoDto(
       state: RealUnitRegistrationState.fromJson(json['state'] as String),
       realUnitUserDataDto: json['userData'] != null
           ? RealUnitUserDataDto.fromJson(json['userData'] as Map<String, dynamic>)

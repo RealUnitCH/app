@@ -26,7 +26,7 @@ import 'package:realunit_wallet/styles/colors.dart';
 class KycRegistrationPage extends StatelessWidget {
   /// Server-supplied user data the parent `KycCubit` already fetched as part
   /// of its routing decision. Passed in via constructor so the page does not
-  /// re-issue `getWalletStatus()` — there is one round-trip per decision.
+  /// re-issue `getRegistrationInfo()` — there is one round-trip per decision.
   /// `null` for first-time registrations with no prior record on the backend
   /// (the form renders empty in that case).
   final RealUnitUserDataDto? initialUserData;
@@ -165,7 +165,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
             // sign through `_signEip712`, regardless of the resulting backend
             // status (completed, pendingReview, forwardingFailed,
             // alreadyRegistered). The backend now reflects the new wallet,
-            // so re-fetching `getWalletStatus` in `_runCheckKyc` will return
+            // so re-fetching `getRegistrationInfo` in `_runCheckKyc` will return
             // `AlreadyRegistered` and dispatch the next KYC step.
             context.read<KycCubit>().checkKyc();
 

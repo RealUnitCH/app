@@ -57,7 +57,7 @@ Use `blocTest` from `bloc_test`. Mock the services it depends on with `mocktail.
 
 ```dart
 class _MockDfxKycService extends Mock implements DfxKycService {}
-class _MockRealUnitWalletService extends Mock implements RealUnitWalletService {}
+class _MockRealUnitRegistrationService extends Mock implements RealUnitRegistrationService {}
 
 blocTest<KycCubit, KycState>(
   'emits KycCompleted when level >= required and gates have passed',
@@ -65,13 +65,13 @@ blocTest<KycCubit, KycState>(
     when(() => kycService.getKycStatus())
         .thenAnswer((_) async => _kycStatus(level: KycLevel.level30));
     when(() => kycService.getUser()).thenAnswer((_) async => _user());
-    // The cubit re-fetches the server-side wallet status after the
+    // The cubit re-fetches the server-side registration info after the
     // disclaimer gate and dispatches on its `state` field. Seed
     // `AlreadyRegistered` to fall through to the `processStatus` dispatch
     // below — the same path the production server walks for a returning
     // shareholder.
-    when(() => walletService.getWalletStatus()).thenAnswer(
-      (_) async => RealUnitWalletStatusDto(
+    when(() => registrationService.getRegistrationInfo()).thenAnswer(
+      (_) async => RealUnitRegistrationInfoDto(
         state: RealUnitRegistrationState.alreadyRegistered,
       ),
     );

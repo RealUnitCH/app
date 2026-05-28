@@ -14,17 +14,39 @@ import 'package:realunit_wallet/packages/service/dfx/models/registration/registr
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_info_dto.dart';
 import 'package:realunit_wallet/packages/utils/ascii_transliterate.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
 
 class RealUnitRegistrationService extends DFXAuthService {
   RealUnitRegistrationService(super.appStore, super.walletService);
 
+  static const _registrationInfoPath = '/v1/realunit/registration';
   static const _registerEmailPath = '/v1/realunit/register/email';
   static const _registerCompletionPath = '/v1/realunit/register/complete';
   static const _registerWalletPath = '/v1/realunit/register/wallet';
 
   int get _chainId => appStore.apiConfig.asset.chainId;
+
+  /// Fetches the API-side registration routing decision for the current
+  /// wallet. The backend computes whether this wallet needs a full
+  /// registration form, a one-tap "add wallet" confirmation, is already
+  /// registered, or is blocked on KYC — see `RealUnitRegistrationState`.
+  /// Renamed from the deprecated `/v1/realunit/wallet/status` mirror.
+  Future<RealUnitRegistrationInfoDto> getRegistrationInfo() async {
+    final uri = buildUri(host, _registrationInfoPath);
+    final response = await authenticatedGet(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode != 200) {
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
+    }
+
+    return RealUnitRegistrationInfoDto.fromJson(jsonDecode(response.body));
+  }
 
   /// registers an email on the wallet. Should always be called first when registering
   Future<RegistrationEmailStatus> registerEmail(String email) async {

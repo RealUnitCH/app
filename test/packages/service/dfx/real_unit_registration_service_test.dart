@@ -12,6 +12,7 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.da
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
@@ -105,6 +106,67 @@ void main() {
 
       expect(
         () => build(client).registerEmail('a@b.com'),
+        throwsA(isA<ApiException>()),
+      );
+    });
+  });
+
+  // Canonical replacement for the deprecated `GET /v1/realunit/wallet/status`
+  // endpoint. The per-service wiring is verified implicitly by the "Bearer
+  // JWT" assertion below — the header can only land on the request if it
+  // routes through `authenticatedGet`. 401-retry plumbing is covered
+  // exhaustively in `dfx_auth_service_test.dart`.
+  group('$RealUnitRegistrationService.getRegistrationInfo', () {
+    test('GETs /v1/realunit/registration with the Bearer JWT', () async {
+      String? path;
+      String? auth;
+      String? method;
+      final client = MockClient((request) async {
+        path = request.url.path;
+        auth = request.headers['Authorization'];
+        method = request.method;
+        return http.Response(
+          jsonEncode({'state': 'NewRegistration', 'userData': null}),
+          200,
+        );
+      });
+
+      final info = await build(client).getRegistrationInfo();
+
+      expect(info.state, RealUnitRegistrationState.newRegistration);
+      expect(info.realUnitUserDataDto, isNull);
+      expect(method, 'GET');
+      expect(path, '/v1/realunit/registration');
+      expect(auth, 'Bearer jwt-1');
+    });
+
+    test('parses state=AlreadyRegistered with null userData', () async {
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({'state': 'AlreadyRegistered', 'userData': null}),
+          200,
+        ),
+      );
+
+      final info = await build(client).getRegistrationInfo();
+
+      expect(info.state, RealUnitRegistrationState.alreadyRegistered);
+      expect(info.realUnitUserDataDto, isNull);
+    });
+
+    test('throws ApiException on a non-2xx response', () async {
+      // Non-401 — bypasses the refresh-on-401 retry path and is surfaced to
+      // the caller directly. The 401-retry behaviour is covered exhaustively
+      // in dfx_auth_service_test.dart.
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({'statusCode': 500, 'message': 'oops'}),
+          500,
+        ),
+      );
+
+      expect(
+        () => build(client).getRegistrationInfo(),
         throwsA(isA<ApiException>()),
       );
     });

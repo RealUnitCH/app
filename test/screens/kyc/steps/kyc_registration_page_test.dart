@@ -55,7 +55,7 @@ void main() {
     when(() => kycCubit.checkKyc()).thenAnswer((_) => Future.value());
   });
 
-  // The page no longer reads from `RealUnitWalletService` directly — the parent
+  // The page no longer reads from `RealUnitRegistrationService` directly — the parent
   // `KycCubit` propagates the `RealUnitUserDataDto` via constructor. We still
   // need the country/kyc/registration services for the BlocProvider inside
   // `KycRegistrationPage` (they are looked up via `getIt`).

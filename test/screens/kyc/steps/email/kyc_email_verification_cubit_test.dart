@@ -7,15 +7,12 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_info_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_verification/kyc_email_verification_cubit.dart';
 
 class _MockAuthService extends Mock implements DFXAuthService {}
-
-class _MockWalletService extends Mock implements RealUnitWalletService {}
 
 class _MockRegistrationService extends Mock implements RealUnitRegistrationService {}
 
@@ -60,7 +57,6 @@ const _userData = RealUnitUserDataDto(
 
 void main() {
   late _MockAuthService auth;
-  late _MockWalletService walletService;
   late _MockRegistrationService registrationService;
 
   setUpAll(() {
@@ -69,14 +65,12 @@ void main() {
 
   setUp(() {
     auth = _MockAuthService();
-    walletService = _MockWalletService();
     registrationService = _MockRegistrationService();
     when(() => auth.invalidateAuthToken()).thenReturn(null);
   });
 
   KycEmailVerificationCubit build() => KycEmailVerificationCubit(
         dfxService: auth,
-        walletService: walletService,
         registrationService: registrationService,
       );
 
@@ -111,8 +105,8 @@ void main() {
         final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        when(() => walletService.getWalletStatus()).thenAnswer(
-          (_) async => RealUnitWalletStatusDto(
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => RealUnitRegistrationInfoDto(
             state: RealUnitRegistrationState.addWallet,
             realUnitUserDataDto: _userData,
           ),
@@ -136,8 +130,8 @@ void main() {
         final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        when(() => walletService.getWalletStatus()).thenAnswer(
-          (_) async => RealUnitWalletStatusDto(
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => RealUnitRegistrationInfoDto(
             state: RealUnitRegistrationState.newRegistration,
             realUnitUserDataDto: null,
           ),
@@ -162,8 +156,8 @@ void main() {
         final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        when(() => walletService.getWalletStatus()).thenAnswer(
-          (_) async => RealUnitWalletStatusDto(
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => RealUnitRegistrationInfoDto(
             state: RealUnitRegistrationState.addWallet,
             realUnitUserDataDto: _userData,
           ),
@@ -193,14 +187,14 @@ void main() {
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
         var walletStatusCallCount = 0;
-        when(() => walletService.getWalletStatus()).thenAnswer((_) async {
+        when(() => registrationService.getRegistrationInfo()).thenAnswer((_) async {
           walletStatusCallCount++;
           return walletStatusCallCount == 1
-              ? RealUnitWalletStatusDto(
+              ? RealUnitRegistrationInfoDto(
                   state: RealUnitRegistrationState.newRegistration,
                   realUnitUserDataDto: null,
                 )
-              : RealUnitWalletStatusDto(
+              : RealUnitRegistrationInfoDto(
                   state: RealUnitRegistrationState.addWallet,
                   realUnitUserDataDto: _userData,
                 );

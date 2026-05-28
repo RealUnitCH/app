@@ -49,7 +49,7 @@ class KycLinkWalletView extends StatelessWidget {
         listener: (context, state) {
           if (state is KycLinkWalletSuccess) {
             // Re-fetch routing state from the API. The wallet is now in the
-            // Aktionariat share register, so `getWalletStatus` will return
+            // Aktionariat share register, so `getRegistrationInfo` will return
             // `AlreadyRegistered` and `_runCheckKyc` will dispatch the next
             // KYC step.
             context.read<KycCubit>().checkKyc();

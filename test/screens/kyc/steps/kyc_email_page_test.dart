@@ -9,7 +9,6 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_step/kyc_email_step_cubit.dart';
@@ -25,8 +24,6 @@ class MockKycCubit extends MockCubit<KycState> implements KycCubit {}
 class MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
 
 class MockRealUnitRegistrationService extends Mock implements RealUnitRegistrationService {}
-
-class MockRealUnitWalletService extends Mock implements RealUnitWalletService {}
 
 class MockDfxWidgetService extends Mock implements DfxWidgetService {}
 
@@ -76,7 +73,6 @@ void main() {
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<RealUnitRegistrationService>(MockRealUnitRegistrationService());
-    getIt.registerSingleton<RealUnitWalletService>(MockRealUnitWalletService());
     getIt.registerSingleton<DfxWidgetService>(MockDfxWidgetService());
   }
 

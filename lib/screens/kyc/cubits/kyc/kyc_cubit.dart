@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
@@ -11,7 +12,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_u
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
 part 'kyc_state.dart';
 
@@ -20,7 +21,7 @@ class KycCubit extends Cubit<KycState> {
 
   final DfxKycService _kycService;
   final RealUnitRegistrationService _registrationService;
-  final RealUnitWalletService _walletService;
+  final AppStore _appStore;
 
   bool _legalDisclaimerAccepted = false;
   bool _emailRegistrationAttempted = false;
@@ -35,10 +36,10 @@ class KycCubit extends Cubit<KycState> {
   KycCubit(
     DfxKycService kycService,
     RealUnitRegistrationService registrationService,
-    RealUnitWalletService walletService,
+    AppStore appStore,
   ) : _kycService = kycService,
       _registrationService = registrationService,
-      _walletService = walletService,
+      _appStore = appStore,
       super(const KycInitial());
 
   Future<void> checkKyc() async {
@@ -106,9 +107,23 @@ class KycCubit extends Cubit<KycState> {
       // the previous client-side `_registrationSignProduced` flag — the cubit
       // re-fetches state after every successful registration round-trip and
       // routes from whatever the API now reports.
-      final walletStatus = await _walletService.getWalletStatus();
+      final registrationInfo = await _registrationService.getRegistrationInfo();
       if (isClosed || generation != _runGeneration) return;
-      switch (walletStatus.state) {
+
+      // Signing capability is a physical property of the wallet implementation
+      // (debug mode is address-only, cannot produce EIP-712 signatures) and
+      // cannot be derived from the server — see CONTRIBUTING.md "API as
+      // Decision Authority" exception list for "physical security boundary"
+      // gates. Surface a tailored failure instead of letting the sign call
+      // throw `UnsupportedError` deep inside the registration flow.
+      if (_appStore.wallet.walletType == WalletType.debug &&
+          (registrationInfo.state == RealUnitRegistrationState.newRegistration ||
+              registrationInfo.state == RealUnitRegistrationState.addWallet)) {
+        emit(const KycSignatureUnsupportedFailure());
+        return;
+      }
+
+      switch (registrationInfo.state) {
         case RealUnitRegistrationState.alreadyRegistered:
           // Fall through to the processStatus dispatch below — the sign
           // gate is satisfied and the user proceeds to the next KYC step.
@@ -120,7 +135,7 @@ class KycCubit extends Cubit<KycState> {
           emit(
             KycSuccess(
               currentStep: KycStep.linkWallet,
-              realUnitUserData: walletStatus.realUnitUserDataDto,
+              realUnitUserData: registrationInfo.realUnitUserDataDto,
             ),
           );
           return;
@@ -131,7 +146,7 @@ class KycCubit extends Cubit<KycState> {
           emit(
             KycSuccess(
               currentStep: KycStep.registration,
-              realUnitUserData: walletStatus.realUnitUserDataDto,
+              realUnitUserData: registrationInfo.realUnitUserDataDto,
             ),
           );
           return;

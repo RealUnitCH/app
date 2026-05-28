@@ -7,7 +7,7 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_serv
 part 'kyc_link_wallet_state.dart';
 
 /// Drives the streamlined "Add this wallet" page. The userData is supplied by
-/// the parent `KycCubit` (which already fetched it via `getWalletStatus()` as
+/// the parent `KycCubit` (which already fetched it via `getRegistrationInfo()` as
 /// part of its routing decision) — this cubit never re-fetches. On submit,
 /// calls `RealUnitRegistrationService.registerWallet`. Mirror of
 /// `KycRegistrationSubmitCubit` for the AddWallet branch — distinct state
