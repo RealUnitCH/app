@@ -10,6 +10,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/fees/dfx_fees_data.d
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 
 void main() {
@@ -174,25 +175,55 @@ void main() {
   });
 
   group('$RealUnitWalletStatusDto.fromJson', () {
-    test('parses the registered + userData branch', () {
+    test('parses AddWallet + userData branch', () {
       final dto = RealUnitWalletStatusDto.fromJson({
-        'isRegistered': true,
+        'state': 'AddWallet',
         'userData': _userDataJson(),
       });
 
-      expect(dto.isRegistered, isTrue);
+      expect(dto.state, RealUnitRegistrationState.addWallet);
       expect(dto.realUnitUserDataDto, isNotNull);
       expect(dto.realUnitUserDataDto!.email, 'a@b.com');
     });
 
-    test('parses the unregistered / null userData branch', () {
+    test('parses AlreadyRegistered with null userData', () {
       final dto = RealUnitWalletStatusDto.fromJson({
-        'isRegistered': false,
+        'state': 'AlreadyRegistered',
         'userData': null,
       });
 
-      expect(dto.isRegistered, isFalse);
+      expect(dto.state, RealUnitRegistrationState.alreadyRegistered);
       expect(dto.realUnitUserDataDto, isNull);
+    });
+
+    test('parses NewRegistration with pre-fill userData', () {
+      final dto = RealUnitWalletStatusDto.fromJson({
+        'state': 'NewRegistration',
+        'userData': _userDataJson(),
+      });
+
+      expect(dto.state, RealUnitRegistrationState.newRegistration);
+      expect(dto.realUnitUserDataDto, isNotNull);
+    });
+
+    test('parses KycRequired with null userData (edge case)', () {
+      final dto = RealUnitWalletStatusDto.fromJson({
+        'state': 'KycRequired',
+        'userData': null,
+      });
+
+      expect(dto.state, RealUnitRegistrationState.kycRequired);
+      expect(dto.realUnitUserDataDto, isNull);
+    });
+
+    test('throws ArgumentError on unknown state', () {
+      expect(
+        () => RealUnitWalletStatusDto.fromJson({
+          'state': 'Bogus',
+          'userData': null,
+        }),
+        throwsA(isA<ArgumentError>()),
+      );
     });
   });
 

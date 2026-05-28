@@ -7,6 +7,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
@@ -112,7 +113,7 @@ void main() {
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
         when(() => walletService.getWalletStatus()).thenAnswer(
           (_) async => RealUnitWalletStatusDto(
-            isRegistered: true,
+            state: RealUnitRegistrationState.addWallet,
             realUnitUserDataDto: _userData,
           ),
         );
@@ -137,7 +138,7 @@ void main() {
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
         when(() => walletService.getWalletStatus()).thenAnswer(
           (_) async => RealUnitWalletStatusDto(
-            isRegistered: false,
+            state: RealUnitRegistrationState.newRegistration,
             realUnitUserDataDto: null,
           ),
         );
@@ -163,7 +164,7 @@ void main() {
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
         when(() => walletService.getWalletStatus()).thenAnswer(
           (_) async => RealUnitWalletStatusDto(
-            isRegistered: true,
+            state: RealUnitRegistrationState.addWallet,
             realUnitUserDataDto: _userData,
           ),
         );
@@ -196,11 +197,11 @@ void main() {
           walletStatusCallCount++;
           return walletStatusCallCount == 1
               ? RealUnitWalletStatusDto(
-                  isRegistered: false,
+                  state: RealUnitRegistrationState.newRegistration,
                   realUnitUserDataDto: null,
                 )
               : RealUnitWalletStatusDto(
-                  isRegistered: true,
+                  state: RealUnitRegistrationState.addWallet,
                   realUnitUserDataDto: _userData,
                 );
         });

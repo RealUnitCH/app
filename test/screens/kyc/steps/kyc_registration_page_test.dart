@@ -7,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
@@ -57,7 +58,6 @@ void main() {
     when(() => registrationSubmitCubit.state).thenReturn(KycRegistrationSubmitInitial());
     when(() => kycCubit.state).thenReturn(const KycInitial());
     when(() => kycCubit.checkKyc()).thenAnswer((_) => Future.value());
-    when(() => kycCubit.markRegistrationSignProduced()).thenReturn(null);
   });
 
   void setupDependencyInjection() {
@@ -67,7 +67,10 @@ void main() {
     getIt.registerSingleton<DfxKycService>(MockDfxKycService());
     final walletService = MockRealUnitWalletService();
     when(() => walletService.getWalletStatus()).thenAnswer(
-      (_) async => RealUnitWalletStatusDto(isRegistered: false, realUnitUserDataDto: null),
+      (_) async => RealUnitWalletStatusDto(
+        state: RealUnitRegistrationState.newRegistration,
+        realUnitUserDataDto: null,
+      ),
     );
     getIt.registerSingleton<RealUnitWalletService>(walletService);
   }
@@ -151,18 +154,17 @@ void main() {
       await tester.pumpApp(buildSubject(const KycRegistrationView()));
       await tester.pump();
 
-      verify(() => kycCubit.markRegistrationSignProduced()).called(1);
       verify(() => kycCubit.checkKyc()).called(1);
     });
 
     testWidgets(
-      'marks sign produced + triggers checkKyc on Success(alreadyRegistered)',
+      'triggers checkKyc on Success(alreadyRegistered)',
       (tester) async {
         // Wave 3.2 regression guard: the API now emits a structured
         // `Success(alreadyRegistered)` instead of a swallowed
         // ApiException, and the listener must treat it identically to
-        // `completed` — the EIP-712 sign has already happened, so the
-        // sign gate must be lifted and the KYC step refreshed.
+        // `completed` — call `checkKyc` so the cubit re-fetches the
+        // server-side registration state and dispatches the next step.
         whenListen(
           registrationSubmitCubit,
           Stream.fromIterable([
@@ -174,13 +176,12 @@ void main() {
         await tester.pumpApp(buildSubject(const KycRegistrationView()));
         await tester.pump();
 
-        verify(() => kycCubit.markRegistrationSignProduced()).called(1);
         verify(() => kycCubit.checkKyc()).called(1);
       },
     );
 
     testWidgets(
-      'marks sign produced + triggers checkKyc on Success(pendingReview)',
+      'triggers checkKyc on Success(pendingReview)',
       (tester) async {
         whenListen(
           registrationSubmitCubit,
@@ -193,13 +194,12 @@ void main() {
         await tester.pumpApp(buildSubject(const KycRegistrationView()));
         await tester.pump();
 
-        verify(() => kycCubit.markRegistrationSignProduced()).called(1);
         verify(() => kycCubit.checkKyc()).called(1);
       },
     );
 
     testWidgets(
-      'shows SnackBar AND lifts the sign gate on Success(forwardingFailed)',
+      'shows SnackBar AND triggers checkKyc on Success(forwardingFailed)',
       (tester) async {
         whenListen(
           registrationSubmitCubit,
@@ -212,7 +212,6 @@ void main() {
         await tester.pumpApp(buildSubject(const KycRegistrationView()));
         await tester.pump();
 
-        verify(() => kycCubit.markRegistrationSignProduced()).called(1);
         verify(() => kycCubit.checkKyc()).called(1);
         expect(find.byType(SnackBar), findsOne);
       },

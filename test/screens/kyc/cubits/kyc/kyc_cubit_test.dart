@@ -12,12 +12,17 @@ import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_step_dto
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 
 class _MockDfxKycService extends Mock implements DfxKycService {}
 
 class _MockRealUnitRegistrationService extends Mock implements RealUnitRegistrationService {}
+
+class _MockRealUnitWalletService extends Mock implements RealUnitWalletService {}
 
 UserKycDto _kycHeader({KycLevel level = KycLevel.level0}) =>
     UserKycDto(hash: 'h', level: level, dataComplete: false);
@@ -78,16 +83,26 @@ KycStepSessionDto _currentStep(
   isCurrent: true,
 );
 
+RealUnitWalletStatusDto _walletStatus(RealUnitRegistrationState state) =>
+    RealUnitWalletStatusDto(state: state);
+
 void main() {
   late DfxKycService kycService;
   late RealUnitRegistrationService registrationService;
+  late RealUnitWalletService walletService;
 
   setUp(() {
     kycService = _MockDfxKycService();
     registrationService = _MockRealUnitRegistrationService();
+    walletService = _MockRealUnitWalletService();
+    // Default: AlreadyRegistered — most tests don't care about the wallet
+    // status branch and want to fall through to the processStatus dispatch.
+    when(() => walletService.getWalletStatus()).thenAnswer(
+      (_) async => _walletStatus(RealUnitRegistrationState.alreadyRegistered),
+    );
   });
 
-  KycCubit buildCubit() => KycCubit(kycService, registrationService);
+  KycCubit buildCubit() => KycCubit(kycService, registrationService, walletService);
 
   group('$KycCubit checkKyc', () {
     blocTest<KycCubit, KycState>(
@@ -144,13 +159,19 @@ void main() {
       ],
     );
 
+    // Wave 3 — server-side registration state drives routing. The cubit
+    // re-fetches `getWalletStatus()` after the disclaimer gate and dispatches
+    // on its `state` field, with no local sign-produced flag.
     blocTest<KycCubit, KycState>(
-      'emits KycSuccess(registration) when disclaimer accepted but registration sign not yet produced',
+      'emits KycSuccess(registration) when wallet status reports NewRegistration',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
           (_) async => _kycStatus(level: KycLevel.level20),
         );
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => walletService.getWalletStatus()).thenAnswer(
+          (_) async => _walletStatus(RealUnitRegistrationState.newRegistration),
+        );
       },
       build: buildCubit,
       act: (cubit) async {
@@ -160,6 +181,50 @@ void main() {
       expect: () => [
         const KycLoading(),
         const KycSuccess(currentStep: KycStep.registration),
+      ],
+    );
+
+    blocTest<KycCubit, KycState>(
+      'emits KycSuccess(linkWallet) when wallet status reports AddWallet',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(level: KycLevel.level20),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => walletService.getWalletStatus()).thenAnswer(
+          (_) async => _walletStatus(RealUnitRegistrationState.addWallet),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        await cubit.checkKyc();
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycSuccess(currentStep: KycStep.linkWallet),
+      ],
+    );
+
+    blocTest<KycCubit, KycState>(
+      'emits KycUnsupportedStepFailure when wallet status reports KycRequired',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(level: KycLevel.level20),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => walletService.getWalletStatus()).thenAnswer(
+          (_) async => _walletStatus(RealUnitRegistrationState.kycRequired),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        await cubit.checkKyc();
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycUnsupportedStepFailure(null),
       ],
     );
 
@@ -182,7 +247,6 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [
@@ -208,7 +272,6 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [const KycLoading(), const KycCompleted()],
@@ -231,7 +294,6 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [const KycLoading(), const KycPending(KycStep.ident)],
@@ -257,7 +319,6 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [
@@ -291,7 +352,6 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [
@@ -317,7 +377,6 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [const KycLoading(), const KycPending(KycStep.dfxApproval)],
@@ -347,7 +406,6 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [
@@ -380,7 +438,6 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [
@@ -413,7 +470,6 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [
@@ -436,7 +492,6 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       expect: () => [const KycLoading(), isA<KycFailure>()],
@@ -461,7 +516,6 @@ void main() {
       build: buildCubit,
       act: (cubit) async {
         cubit.markLegalDisclaimerAccepted();
-        cubit.markRegistrationSignProduced();
         await cubit.checkKyc();
       },
       verify: (cubit) {
@@ -475,7 +529,7 @@ void main() {
     );
 
     blocTest<KycCubit, KycState>(
-      'returning user at completed processStatus still routes through the sign gate first',
+      'returning user at completed processStatus still routes through the disclaimer first',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
           (_) async => _kycStatus(
@@ -487,12 +541,11 @@ void main() {
       },
       build: buildCubit,
       act: (cubit) async {
-        cubit.markLegalDisclaimerAccepted();
         await cubit.checkKyc();
       },
       expect: () => [
         const KycLoading(),
-        const KycSuccess(currentStep: KycStep.registration),
+        const KycSuccess(currentStep: KycStep.legalDisclaimer),
       ],
     );
 
@@ -592,9 +645,8 @@ void main() {
         });
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
 
-        final cubit = KycCubit(kycService, registrationService)
-          ..markLegalDisclaimerAccepted()
-          ..markRegistrationSignProduced();
+        final cubit = KycCubit(kycService, registrationService, walletService)
+          ..markLegalDisclaimerAccepted();
 
         final states = <KycState>[];
         final sub = cubit.stream.listen(states.add);
@@ -663,9 +715,9 @@ void main() {
     );
   });
 
-  group('$KycCubit markLegalDisclaimerAccepted / markRegistrationSignProduced', () {
+  group('$KycCubit markLegalDisclaimerAccepted', () {
     blocTest<KycCubit, KycState>(
-      'progresses past the sign gate once both marks are set',
+      'progresses through disclaimer gate and lets API drive the next routing decision',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
           (_) async => _kycStatus(
@@ -679,15 +731,11 @@ void main() {
       act: (cubit) async {
         await cubit.checkKyc(); // expects legalDisclaimer
         cubit.markLegalDisclaimerAccepted();
-        await cubit.checkKyc(); // expects registration (sign gate)
-        cubit.markRegistrationSignProduced();
-        await cubit.checkKyc(); // expects KycCompleted
+        await cubit.checkKyc(); // expects KycCompleted (AlreadyRegistered + processStatus=Completed)
       },
       expect: () => [
         const KycLoading(),
         const KycSuccess(currentStep: KycStep.legalDisclaimer),
-        const KycLoading(),
-        const KycSuccess(currentStep: KycStep.registration),
         const KycLoading(),
         const KycCompleted(),
       ],

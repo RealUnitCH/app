@@ -155,10 +155,9 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
             // The submit cubit only emits Success after a successful EIP-712
             // sign through `_signEip712`, regardless of the resulting backend
             // status (completed, pendingReview, forwardingFailed,
-            // alreadyRegistered). The sign gate is therefore satisfied for
-            // every Success branch — mark it produced and let `checkKyc`
-            // resolve the next KYC step from the API.
-            context.read<KycCubit>().markRegistrationSignProduced();
+            // alreadyRegistered). The backend now reflects the new wallet,
+            // so re-fetching `getWalletStatus` in `_runCheckKyc` will return
+            // `AlreadyRegistered` and dispatch the next KYC step.
             context.read<KycCubit>().checkKyc();
 
             if (state.status == RegistrationStatus.forwardingFailed) {

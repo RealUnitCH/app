@@ -70,7 +70,6 @@ void main() {
     when(() => kycEmailStepCubit.state).thenReturn(const KycEmailStepInitial());
     when(() => kycCubit.state).thenReturn(const KycInitial());
     when(() => kycCubit.checkKyc()).thenAnswer((_) => Future.value());
-    when(() => kycCubit.markRegistrationSignProduced()).thenAnswer((_) {});
     when(() => homeBloc.state).thenReturn(const HomeState());
   });
 
@@ -156,7 +155,7 @@ void main() {
     });
 
     testWidgets(
-      'marks registration sign produced and re-runs checkKyc after merge confirm pops with true',
+      're-runs checkKyc after merge confirm pops with true',
       (tester) async {
         whenListen(
           kycEmailStepCubit,
@@ -184,13 +183,12 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        verify(() => kycCubit.markRegistrationSignProduced()).called(1);
         verify(() => kycCubit.checkKyc()).called(1);
       },
     );
 
     testWidgets(
-      'does NOT mark registration sign produced when merge confirm pops with false / null',
+      'does NOT call checkKyc when merge confirm pops with false / null',
       (tester) async {
         whenListen(
           kycEmailStepCubit,
@@ -216,7 +214,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        verifyNever(() => kycCubit.markRegistrationSignProduced());
         verifyNever(() => kycCubit.checkKyc());
       },
     );

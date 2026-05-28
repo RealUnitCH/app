@@ -9,6 +9,7 @@ import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
@@ -57,30 +58,30 @@ void main() {
         auth = request.headers['Authorization'];
         method = request.method;
         return http.Response(
-          jsonEncode({'isRegistered': false, 'userData': null}),
+          jsonEncode({'state': 'NewRegistration', 'userData': null}),
           200,
         );
       });
 
       final status = await build(client).getWalletStatus();
 
-      expect(status.isRegistered, isFalse);
+      expect(status.state, RealUnitRegistrationState.newRegistration);
       expect(status.realUnitUserDataDto, isNull);
       expect(method, 'GET');
       expect(path, '/v1/realunit/wallet/status');
       expect(auth, 'Bearer jwt-1');
     });
 
-    test('getWalletStatus parses isRegistered=true with null userData', () async {
+    test('getWalletStatus parses state=AlreadyRegistered with null userData', () async {
       sessionCache.setAuthToken('jwt-1');
       final client = MockClient((_) async => http.Response(
-            jsonEncode({'isRegistered': true, 'userData': null}),
+            jsonEncode({'state': 'AlreadyRegistered', 'userData': null}),
             200,
           ));
 
       final status = await build(client).getWalletStatus();
 
-      expect(status.isRegistered, isTrue);
+      expect(status.state, RealUnitRegistrationState.alreadyRegistered);
       expect(status.realUnitUserDataDto, isNull);
     });
 

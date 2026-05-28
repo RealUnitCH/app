@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
@@ -54,7 +55,10 @@ void main() {
 
     final walletService = MockRealUnitWalletService();
     when(() => walletService.getWalletStatus()).thenAnswer(
-      (_) async => RealUnitWalletStatusDto(isRegistered: false, realUnitUserDataDto: null),
+      (_) async => RealUnitWalletStatusDto(
+        state: RealUnitRegistrationState.newRegistration,
+        realUnitUserDataDto: null,
+      ),
     );
     GetIt.instance.registerSingleton<RealUnitWalletService>(walletService);
   });
