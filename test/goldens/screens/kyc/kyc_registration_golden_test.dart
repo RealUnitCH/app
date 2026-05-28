@@ -45,6 +45,10 @@ void main() {
     when(() => kycCubit.state).thenReturn(const KycInitial());
   });
 
+  // The page no longer reads `RealUnitRegistrationService` directly — the parent
+  // `KycCubit` passes the (possibly null) `RealUnitUserDataDto` via
+  // constructor. The default golden uses `initialUserData: null` so it asserts
+  // on the empty-form render, which is the first-time-registration path.
   setUpAll(() {
     final countryService = MockDfxCountryService();
     when(() => countryService.getAllCountries()).thenAnswer((_) async => const []);

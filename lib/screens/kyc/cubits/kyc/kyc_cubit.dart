@@ -3,12 +3,16 @@ import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
 part 'kyc_state.dart';
 
@@ -17,17 +21,10 @@ class KycCubit extends Cubit<KycState> {
 
   final DfxKycService _kycService;
   final RealUnitRegistrationService _registrationService;
+  final AppStore _appStore;
 
   bool _legalDisclaimerAccepted = false;
   bool _emailRegistrationAttempted = false;
-
-  // Tracks whether the EIP-712 registration signature has been produced in
-  // *this* KYC entry. Wallet-agnostic — for software wallets the sign is a
-  // silent local operation, for BitBox it is the visible 13-step ceremony.
-  // Per-cubit-instance by design: `KycPageManager` creates a fresh `KycCubit`
-  // via `BlocProvider(create:)`, so every `/kyc` entry forces a fresh sign
-  // before sensitive steps and stale sessions cannot be re-used.
-  bool _registrationSignProduced = false;
 
   // `Future.timeout` does not cancel the underlying work, so a late HTTP
   // response from an earlier call can still resume and emit state after a
@@ -39,8 +36,10 @@ class KycCubit extends Cubit<KycState> {
   KycCubit(
     DfxKycService kycService,
     RealUnitRegistrationService registrationService,
+    AppStore appStore,
   ) : _kycService = kycService,
       _registrationService = registrationService,
+      _appStore = appStore,
       super(const KycInitial());
 
   Future<void> checkKyc() async {
@@ -93,18 +92,67 @@ class KycCubit extends Cubit<KycState> {
         return;
       }
 
-      // Disclaimer + EIP-712 registration sign are local session gates that
-      // must precede every sensitive call. They do not encode business
-      // routing — the API does — they just enforce a per-session security
-      // ceremony on this device before the cubit forwards anything that
-      // requires a signed user identity.
+      // Disclaimer is a local session gate that must precede every sensitive
+      // call. It does not encode business routing — the API does — it just
+      // enforces a per-session ceremony on this device before the cubit
+      // forwards anything that requires a signed user identity.
       if (!_legalDisclaimerAccepted) {
         emit(const KycSuccess(currentStep: KycStep.legalDisclaimer));
         return;
       }
-      if (!_registrationSignProduced) {
-        emit(const KycSuccess(currentStep: KycStep.registration));
+
+      // The server-side registration state is the single source of truth for
+      // whether this wallet needs a full registration form, a one-tap
+      // "add wallet" confirmation, or can skip the step entirely. Replaces
+      // the previous client-side `_registrationSignProduced` flag — the cubit
+      // re-fetches state after every successful registration round-trip and
+      // routes from whatever the API now reports.
+      final registrationInfo = await _registrationService.getRegistrationInfo();
+      if (isClosed || generation != _runGeneration) return;
+
+      // Signing capability is a physical property of the wallet implementation
+      // (debug mode is address-only, cannot produce EIP-712 signatures) and
+      // cannot be derived from the server — see CONTRIBUTING.md "API as
+      // Decision Authority" exception list for "physical security boundary"
+      // gates. Surface a tailored failure instead of letting the sign call
+      // throw `UnsupportedError` deep inside the registration flow.
+      if (_appStore.wallet.walletType == WalletType.debug &&
+          (registrationInfo.state == RealUnitRegistrationState.newRegistration ||
+              registrationInfo.state == RealUnitRegistrationState.addWallet)) {
+        emit(const KycSignatureUnsupportedFailure());
         return;
+      }
+
+      switch (registrationInfo.state) {
+        case RealUnitRegistrationState.alreadyRegistered:
+          // Fall through to the processStatus dispatch below — the sign
+          // gate is satisfied and the user proceeds to the next KYC step.
+          break;
+        case RealUnitRegistrationState.addWallet:
+          // Forward the server-supplied userData so `KycLinkWalletPage` does
+          // not have to re-fetch — see CONTRIBUTING.md "Single round-trip per
+          // decision". The backend always populates this for `AddWallet`.
+          emit(
+            KycSuccess(
+              currentStep: KycStep.linkWallet,
+              realUnitUserData: registrationInfo.realUnitUserDataDto,
+            ),
+          );
+          return;
+        case RealUnitRegistrationState.newRegistration:
+          // userData may be `null` for first-time registrations (no prior
+          // record to pre-fill from); `KycRegistrationPage` renders an empty
+          // form in that case.
+          emit(
+            KycSuccess(
+              currentStep: KycStep.registration,
+              realUnitUserData: registrationInfo.realUnitUserDataDto,
+            ),
+          );
+          return;
+        case RealUnitRegistrationState.kycRequired:
+          emit(const KycRequiredFailure());
+          return;
       }
 
       // Account-merge invitation is still surfaced from the step list because
@@ -175,14 +223,6 @@ class KycCubit extends Cubit<KycState> {
 
   void markLegalDisclaimerAccepted() {
     _legalDisclaimerAccepted = true;
-  }
-
-  /// Records that the EIP-712 registration signature has been produced in
-  /// this session, so subsequent [checkKyc] calls pass the sign gate.
-  /// Callers: any code path that triggers the sign — currently the
-  /// new-registration form submit and the existing-customer merge confirm.
-  void markRegistrationSignProduced() {
-    _registrationSignProduced = true;
   }
 
   /// should only be called after realunit registration was completed

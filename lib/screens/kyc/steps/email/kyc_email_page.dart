@@ -80,15 +80,12 @@ class _KycEmailFormState extends State<KycEmailForm> {
               ),
             );
             if (isConfirmed == true && context.mounted) {
-              // A successful merge confirmation produced the EIP-712
-              // registration signature via
-              // `KycEmailVerificationCubit._completeRegistration` →
-              // `RealUnitRegistrationService.registerWallet`. The verification
-              // page only pops with `true` when that succeeded, so the sign
-              // gate is safe to mark — without this, existing DFX customers
-              // would be misrouted back to the empty registration form after
-              // the disclaimer step.
-              context.read<KycCubit>().markRegistrationSignProduced();
+              // A successful merge confirmation already registered this
+              // wallet via `KycEmailVerificationCubit._completeRegistration`
+              // → `RealUnitRegistrationService.registerWallet`. The next
+              // `checkKyc()` re-fetches `getRegistrationInfo`, sees
+              // `AlreadyRegistered`, and routes forward — no local sign-gate
+              // flag needed.
               context.read<KycCubit>().checkKyc();
             }
           }

@@ -3,6 +3,7 @@ part of 'kyc_cubit.dart';
 enum KycStep {
   email,
   registration,
+  linkWallet,
   legalDisclaimer,
   nationality,
   twoFa,
@@ -39,10 +40,22 @@ class KycSuccess extends KycState {
   final KycStep currentStep;
   final String? urlOrToken;
 
-  const KycSuccess({required this.currentStep, this.urlOrToken});
+  /// Server-side user record attached to the routing decision. Populated when
+  /// `RealUnitRegistrationService.getRegistrationInfo()` returns userData
+  /// alongside the state (`AddWallet` always, `NewRegistration` when the
+  /// backend has fallback data). The cubit forwards the DTO so downstream
+  /// pages do not need to re-fetch — see CONTRIBUTING.md "Single round-trip
+  /// per decision".
+  final RealUnitUserDataDto? realUnitUserData;
+
+  const KycSuccess({
+    required this.currentStep,
+    this.urlOrToken,
+    this.realUnitUserData,
+  });
 
   @override
-  List<Object?> get props => [currentStep, urlOrToken];
+  List<Object?> get props => [currentStep, urlOrToken, realUnitUserData];
 }
 
 class KycCompleted extends KycState {
@@ -70,4 +83,22 @@ class KycFailure extends KycState {
 
   @override
   List<Object?> get props => [message];
+}
+
+/// Emitted when `getRegistrationInfo()` reports `kycRequired` — i.e. the
+/// wallet cannot be added without first completing the identity verification
+/// flow. Distinct from `KycUnsupportedStepFailure` so the user sees a
+/// tailored "complete your verification" message instead of the generic
+/// "step (-) cannot be completed" fallback.
+class KycRequiredFailure extends KycState {
+  const KycRequiredFailure();
+}
+
+/// Emitted when the wallet currently in use cannot produce EIP-712 signatures
+/// (today: the address+signature debug wallet) and the API has routed the
+/// user to a state (`NewRegistration` / `AddWallet`) that would require one.
+/// Signing capability is a physical property of the wallet — see
+/// `docs/wallet-modes.md` for the full table.
+class KycSignatureUnsupportedFailure extends KycState {
+  const KycSignatureUnsupportedFailure();
 }

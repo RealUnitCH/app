@@ -53,9 +53,12 @@ void main() {
     when(() => registrationSubmitCubit.state).thenReturn(KycRegistrationSubmitInitial());
     when(() => kycCubit.state).thenReturn(const KycInitial());
     when(() => kycCubit.checkKyc()).thenAnswer((_) => Future.value());
-    when(() => kycCubit.markRegistrationSignProduced()).thenReturn(null);
   });
 
+  // The page no longer reads from `RealUnitRegistrationService` directly — the parent
+  // `KycCubit` propagates the `RealUnitUserDataDto` via constructor. We still
+  // need the country/kyc/registration services for the BlocProvider inside
+  // `KycRegistrationPage` (they are looked up via `getIt`).
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<RealUnitRegistrationService>(MockRealUnitRegistrationService());
@@ -81,7 +84,7 @@ void main() {
   }
 
   group('$KycRegistrationPage', () {
-    testWidgets('renders $KycRegistrationView', (tester) async {
+    testWidgets('renders $KycRegistrationView with null initialUserData', (tester) async {
       await tester.pumpApp(const KycRegistrationPage());
 
       expect(find.byType(KycRegistrationView), findsOne);
@@ -100,6 +103,9 @@ void main() {
       when(() => registrationStepCubit.state).thenReturn(state);
 
       await tester.pumpApp(buildSubject(const KycRegistrationView()));
+      // No prefill round-trip: the form is rendered synchronously. A single
+      // pump is enough to settle initial frames.
+      await tester.pump();
 
       (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
       await tester.pump();
@@ -118,6 +124,7 @@ void main() {
       when(() => registrationStepCubit.state).thenReturn(state);
 
       await tester.pumpApp(buildSubject(const KycRegistrationView()));
+      await tester.pump();
 
       (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
       await tester.pump();
@@ -139,18 +146,17 @@ void main() {
       await tester.pumpApp(buildSubject(const KycRegistrationView()));
       await tester.pump();
 
-      verify(() => kycCubit.markRegistrationSignProduced()).called(1);
       verify(() => kycCubit.checkKyc()).called(1);
     });
 
     testWidgets(
-      'marks sign produced + triggers checkKyc on Success(alreadyRegistered)',
+      'triggers checkKyc on Success(alreadyRegistered)',
       (tester) async {
         // Wave 3.2 regression guard: the API now emits a structured
         // `Success(alreadyRegistered)` instead of a swallowed
         // ApiException, and the listener must treat it identically to
-        // `completed` — the EIP-712 sign has already happened, so the
-        // sign gate must be lifted and the KYC step refreshed.
+        // `completed` — call `checkKyc` so the cubit re-fetches the
+        // server-side registration state and dispatches the next step.
         whenListen(
           registrationSubmitCubit,
           Stream.fromIterable([
@@ -162,13 +168,12 @@ void main() {
         await tester.pumpApp(buildSubject(const KycRegistrationView()));
         await tester.pump();
 
-        verify(() => kycCubit.markRegistrationSignProduced()).called(1);
         verify(() => kycCubit.checkKyc()).called(1);
       },
     );
 
     testWidgets(
-      'marks sign produced + triggers checkKyc on Success(pendingReview)',
+      'triggers checkKyc on Success(pendingReview)',
       (tester) async {
         whenListen(
           registrationSubmitCubit,
@@ -181,13 +186,12 @@ void main() {
         await tester.pumpApp(buildSubject(const KycRegistrationView()));
         await tester.pump();
 
-        verify(() => kycCubit.markRegistrationSignProduced()).called(1);
         verify(() => kycCubit.checkKyc()).called(1);
       },
     );
 
     testWidgets(
-      'shows SnackBar AND lifts the sign gate on Success(forwardingFailed)',
+      'shows SnackBar AND triggers checkKyc on Success(forwardingFailed)',
       (tester) async {
         whenListen(
           registrationSubmitCubit,
@@ -200,7 +204,6 @@ void main() {
         await tester.pumpApp(buildSubject(const KycRegistrationView()));
         await tester.pump();
 
-        verify(() => kycCubit.markRegistrationSignProduced()).called(1);
         verify(() => kycCubit.checkKyc()).called(1);
         expect(find.byType(SnackBar), findsOne);
       },

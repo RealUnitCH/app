@@ -9,7 +9,6 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_email_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_step/kyc_email_step_cubit.dart';
@@ -25,8 +24,6 @@ class MockKycCubit extends MockCubit<KycState> implements KycCubit {}
 class MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
 
 class MockRealUnitRegistrationService extends Mock implements RealUnitRegistrationService {}
-
-class MockRealUnitWalletService extends Mock implements RealUnitWalletService {}
 
 class MockDfxWidgetService extends Mock implements DfxWidgetService {}
 
@@ -70,14 +67,12 @@ void main() {
     when(() => kycEmailStepCubit.state).thenReturn(const KycEmailStepInitial());
     when(() => kycCubit.state).thenReturn(const KycInitial());
     when(() => kycCubit.checkKyc()).thenAnswer((_) => Future.value());
-    when(() => kycCubit.markRegistrationSignProduced()).thenAnswer((_) {});
     when(() => homeBloc.state).thenReturn(const HomeState());
   });
 
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<RealUnitRegistrationService>(MockRealUnitRegistrationService());
-    getIt.registerSingleton<RealUnitWalletService>(MockRealUnitWalletService());
     getIt.registerSingleton<DfxWidgetService>(MockDfxWidgetService());
   }
 
@@ -156,7 +151,7 @@ void main() {
     });
 
     testWidgets(
-      'marks registration sign produced and re-runs checkKyc after merge confirm pops with true',
+      're-runs checkKyc after merge confirm pops with true',
       (tester) async {
         whenListen(
           kycEmailStepCubit,
@@ -184,13 +179,12 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        verify(() => kycCubit.markRegistrationSignProduced()).called(1);
         verify(() => kycCubit.checkKyc()).called(1);
       },
     );
 
     testWidgets(
-      'does NOT mark registration sign produced when merge confirm pops with false / null',
+      'does NOT call checkKyc when merge confirm pops with false / null',
       (tester) async {
         whenListen(
           kycEmailStepCubit,
@@ -216,7 +210,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        verifyNever(() => kycCubit.markRegistrationSignProduced());
         verifyNever(() => kycCubit.checkKyc());
       },
     );

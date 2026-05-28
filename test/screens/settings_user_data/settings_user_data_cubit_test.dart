@@ -10,11 +10,12 @@ import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_info_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/settings_user_data/cubit/settings_user_data_cubit.dart';
 
-class _MockWalletService extends Mock implements RealUnitWalletService {}
+class _MockRegistrationService extends Mock implements RealUnitRegistrationService {}
 
 class _MockCountryService extends Mock implements DfxCountryService {}
 
@@ -76,18 +77,18 @@ KycStepDto _step(KycStepName name, KycStepStatus status, {int seq = 0}) => KycSt
 );
 
 void main() {
-  late _MockWalletService walletService;
+  late _MockRegistrationService registrationService;
   late _MockCountryService countryService;
   late _MockKycService kycService;
 
   setUp(() {
-    walletService = _MockWalletService();
+    registrationService = _MockRegistrationService();
     countryService = _MockCountryService();
     kycService = _MockKycService();
   });
 
   SettingsUserDataCubit build() => SettingsUserDataCubit(
-    walletService: walletService,
+    registrationService: registrationService,
     countryService: countryService,
     kycService: kycService,
   );
@@ -96,9 +97,9 @@ void main() {
   // state via stream.firstWhere rather than the full sequence.
   group('$SettingsUserDataCubit', () {
     test('full Success when userData is present and no change steps are pending', () async {
-      when(() => walletService.getWalletStatus()).thenAnswer(
-        (_) async => RealUnitWalletStatusDto(
-          isRegistered: true,
+      when(() => registrationService.getRegistrationInfo()).thenAnswer(
+        (_) async => RealUnitRegistrationInfoDto(
+          state: RealUnitRegistrationState.addWallet,
           realUnitUserDataDto: _userData(addressCountry: 'DE'),
         ),
       );
@@ -132,9 +133,9 @@ void main() {
     });
 
     test('Success surfaces pending change steps that are inReview', () async {
-      when(() => walletService.getWalletStatus()).thenAnswer(
-        (_) async => RealUnitWalletStatusDto(
-          isRegistered: true,
+      when(() => registrationService.getRegistrationInfo()).thenAnswer(
+        (_) async => RealUnitRegistrationInfoDto(
+          state: RealUnitRegistrationState.addWallet,
           realUnitUserDataDto: _userData(),
         ),
       );
@@ -166,8 +167,8 @@ void main() {
     });
 
     test('userData null + getUser returns mail → Success(email)', () async {
-      when(() => walletService.getWalletStatus()).thenAnswer(
-        (_) async => RealUnitWalletStatusDto(isRegistered: false),
+      when(() => registrationService.getRegistrationInfo()).thenAnswer(
+        (_) async => RealUnitRegistrationInfoDto(state: RealUnitRegistrationState.newRegistration),
       );
       when(() => kycService.getKycStatus()).thenAnswer(
         (_) async => const KycLevelDto(kycLevel: KycLevel.level0, kycSteps: []),
@@ -193,9 +194,9 @@ void main() {
       verifyNever(() => countryService.getCountryBySymbol(any()));
     });
 
-    test('Failure when walletService.getWalletStatus throws', () async {
+    test('Failure when registrationService.getRegistrationInfo throws', () async {
       when(
-        () => walletService.getWalletStatus(),
+        () => registrationService.getRegistrationInfo(),
       ).thenAnswer((_) async => throw Exception('network'));
       when(() => kycService.getKycStatus()).thenAnswer(
         (_) async => const KycLevelDto(kycLevel: KycLevel.level0, kycSteps: []),
@@ -214,9 +215,9 @@ void main() {
     });
 
     test('Failure when countryService.getCountryBySymbol throws', () async {
-      when(() => walletService.getWalletStatus()).thenAnswer(
-        (_) async => RealUnitWalletStatusDto(
-          isRegistered: true,
+      when(() => registrationService.getRegistrationInfo()).thenAnswer(
+        (_) async => RealUnitRegistrationInfoDto(
+          state: RealUnitRegistrationState.addWallet,
           realUnitUserDataDto: _userData(),
         ),
       );
@@ -241,7 +242,7 @@ void main() {
 
     test('BitboxDisconnected when BitboxNotConnectedException thrown', () async {
       when(
-        () => walletService.getWalletStatus(),
+        () => registrationService.getRegistrationInfo(),
       ).thenAnswer((_) async => throw const BitboxNotConnectedException());
       when(() => kycService.getKycStatus()).thenAnswer(
         (_) async => const KycLevelDto(kycLevel: KycLevel.level0, kycSteps: []),

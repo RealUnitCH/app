@@ -7,7 +7,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/show_bitbox_reconnect_sheet.dart';
 import 'package:realunit_wallet/screens/settings_user_data/cubit/settings_user_data_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
@@ -22,7 +22,7 @@ class SettingsUserDataPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => SettingsUserDataCubit(
-        walletService: getIt<RealUnitWalletService>(),
+        registrationService: getIt<RealUnitRegistrationService>(),
         countryService: getIt<DfxCountryService>(),
         kycService: getIt<DfxKycService>(),
       ),

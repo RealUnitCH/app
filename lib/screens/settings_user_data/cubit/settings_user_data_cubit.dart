@@ -10,8 +10,8 @@ import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/user_data.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_wallet_status_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_info_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 
 part 'settings_user_data_state.dart';
 
@@ -22,15 +22,15 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
     KycStepName.phoneChange,
   };
 
-  final RealUnitWalletService _walletService;
+  final RealUnitRegistrationService _registrationService;
   final DfxCountryService _countryService;
   final DfxKycService _kycService;
 
   SettingsUserDataCubit({
-    required RealUnitWalletService walletService,
+    required RealUnitRegistrationService registrationService,
     required DfxCountryService countryService,
     required DfxKycService kycService,
-  }) : _walletService = walletService,
+  }) : _registrationService = registrationService,
        _countryService = countryService,
        _kycService = kycService,
        super(const SettingsUserDataInitial()) {
@@ -42,12 +42,12 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
       emit(const SettingsUserDataLoading());
 
       final results = await Future.wait([
-        _walletService.getWalletStatus(),
+        _registrationService.getRegistrationInfo(),
         _kycService.getKycStatus(),
         _kycService.getUser(),
       ]);
 
-      final result = results.elementAt(0) as RealUnitWalletStatusDto;
+      final result = results.elementAt(0) as RealUnitRegistrationInfoDto;
       final kycStatus = results.elementAt(1) as KycLevelDto;
       final user = results.elementAt(2) as UserDto;
       final userDataDto = result.realUnitUserDataDto;

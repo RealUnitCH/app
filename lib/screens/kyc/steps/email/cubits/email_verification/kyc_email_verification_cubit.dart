@@ -4,14 +4,12 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/packages/utils/jwt_decoder.dart';
 
 part 'kyc_email_verification_state.dart';
 
 class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
   final DFXAuthService _dfxService;
-  final RealUnitWalletService _walletService;
   final RealUnitRegistrationService _registrationService;
 
   // `Future.timeout` does not cancel the underlying work, so a late HTTP
@@ -27,17 +25,15 @@ class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
   // is settled — re-running the account-id comparison on a retry would just
   // emit `Failure` ("email not yet confirmed") because `getAuthToken` keeps
   // returning the new (merged) account. The remaining work that can still
-  // race is `getWalletStatus` propagation on the user-data side, so a retry
-  // after a `RegistrationFailure` should skip the auth-side check and go
-  // straight to `_completeRegistration`.
+  // race is `getRegistrationInfo` propagation on the user-data side, so a
+  // retry after a `RegistrationFailure` should skip the auth-side check and
+  // go straight to `_completeRegistration`.
   bool _mergeDetected = false;
 
   KycEmailVerificationCubit({
     required DFXAuthService dfxService,
-    required RealUnitWalletService walletService,
     required RealUnitRegistrationService registrationService,
   }) : _dfxService = dfxService,
-       _walletService = walletService,
        _registrationService = registrationService,
        super(const KycEmailVerificationInitial());
 
@@ -80,21 +76,21 @@ class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
   /// error to the user.
   Future<bool> _completeRegistration(int generation) async {
     try {
-      final status = await _walletService.getWalletStatus();
+      final info = await _registrationService.getRegistrationInfo();
       if (isClosed || generation != _runGeneration) return false;
-      if (status.realUnitUserDataDto == null) {
+      if (info.realUnitUserDataDto == null) {
         // Backend race: the auth service reports the merged account while the
         // user-data service hasn't propagated yet. Surface as a recoverable
         // failure so the user can retry by tapping the confirmation button
         // again — by then propagation will usually have completed, and the
         // retry path skips the auth-side check thanks to `_mergeDetected`.
         developer.log(
-          'getWalletStatus returned null realUnitUserDataDto after merge',
+          'getRegistrationInfo returned null realUnitUserDataDto after merge',
         );
         emit(const KycEmailVerificationRegistrationFailure());
         return false;
       }
-      await _registrationService.registerWallet(status.realUnitUserDataDto!);
+      await _registrationService.registerWallet(info.realUnitUserDataDto!);
       if (isClosed || generation != _runGeneration) return false;
       return true;
     } catch (e) {
