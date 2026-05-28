@@ -10,6 +10,7 @@ import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
@@ -65,17 +66,20 @@ void main() {
     return RealUnitRegistrationService(appStore, walletService);
   }
 
-  Registration buildRegistration() => const Registration(
+  Registration buildRegistration({
+    bool swissTaxResidence = true,
+    List<CountryAndTin>? countryAndTINs,
+  }) => Registration(
     type: RegistrationUserType.human,
     email: 'AdA@ExAmPlE.COM',
-    // Diacritics → must be ASCII-transliterated (ä→ae, ü→ue) for the
+    // Diacritics -> must be ASCII-transliterated (ä->ae, ü->ue) for the
     // BitBox-safe wire envelope; the test asserts the transliteration
     // round-trip below.
     firstName: 'Adä',
     lastName: 'Loveläce',
     phoneNumber: '+41 79 000 00 00',
     birthday: '1815-12-10',
-    nationality: Country(
+    nationality: const Country(
       id: 41,
       symbol: 'CH',
       name: 'Switzerland',
@@ -85,13 +89,14 @@ void main() {
     addressStreetNumber: '1',
     addressPostalCode: '8000',
     addressCity: 'Zürich',
-    addressCountry: Country(
+    addressCountry: const Country(
       id: 41,
       symbol: 'CH',
       name: 'Switzerland',
       kycAllowed: true,
     ),
-    swissTaxResidence: true,
+    swissTaxResidence: swissTaxResidence,
+    countryAndTINs: countryAndTINs,
   );
 
   RealUnitUserDataDto buildUserData() => const RealUnitUserDataDto(
@@ -164,6 +169,43 @@ void main() {
         expect((body!['signature'] as String).length, 132);
         expect(body!['lang'], 'DE');
         expect(body!['type'], 'HUMAN');
+      },
+    );
+
+    test(
+      'POSTs countryAndTINs for non-Swiss tax residence at the registration boundary',
+      () async {
+        Uri? sentUri;
+        Map<String, dynamic>? body;
+        final client = MockClient((request) async {
+          sentUri = request.url;
+          body = jsonDecode(request.body) as Map<String, dynamic>;
+          return http.Response(jsonEncode({'status': 'completed'}), 201);
+        });
+
+        final status = await build(client).completeRegistration(
+          buildRegistration(
+            swissTaxResidence: false,
+            countryAndTINs: const [
+              CountryAndTin(country: 'DE', tin: '12 345 678 901'),
+            ],
+          ),
+        );
+
+        expect(status, RegistrationStatus.completed);
+        expect(sentUri!.path, '/v1/realunit/register/complete');
+        expect(body!['swissTaxResidence'], isFalse);
+        expect(
+          body!['countryAndTINs'],
+          [
+            {'country': 'DE', 'tin': '12 345 678 901'},
+          ],
+        );
+        expect(body!['email'], 'ada@example.com');
+        expect(body!['name'], 'Adae Lovelaece');
+        expect(body!['addressCountry'], 'CH');
+        expect(body!['walletAddress'], _privKey.address.hexEip55);
+        expect((body!['signature'] as String).length, 132);
       },
     );
   });
