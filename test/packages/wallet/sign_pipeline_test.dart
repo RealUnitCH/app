@@ -32,7 +32,6 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:realunit_wallet/packages/wallet/error_mapper.dart';
-import 'package:realunit_wallet/packages/wallet/schemas/btc_psbt_schema.dart';
 import 'package:realunit_wallet/packages/wallet/schemas/registration_schema.dart';
 import 'package:realunit_wallet/packages/wallet/sign_pipeline.dart';
 import 'package:web3dart/web3dart.dart';
@@ -118,12 +117,11 @@ Eip7702Data _validEip7702Data({
         Eip7702TypeField(name: 'terms', type: 'bytes'),
       ],
     ),
-    message: Eip7702Message(
+    message: const Eip7702Message(
       delegate: '0x0000000000000000000000000000000000000abc',
       delegator: _testAddress,
-      authority:
-          '0x0000000000000000000000000000000000000000000000000000000000000000',
-      caveats: const [],
+      authority: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      caveats: [],
       salt: 0,
     ),
     tokenAddress: '0x0000000000000000000000000000000000000aaa',
@@ -160,8 +158,7 @@ BtcPsbtSignRequest _psbtReq({Uint8List? bytes}) {
   // pipeline only enforces the magic-byte pre-flight here.
   return BtcPsbtSignRequest(
     credentials: _credentials(),
-    psbtBytes:
-        bytes ?? Uint8List.fromList([0x70, 0x73, 0x62, 0x74, 0xff, 0x00]),
+    psbtBytes: bytes ?? Uint8List.fromList([0x70, 0x73, 0x62, 0x74, 0xff, 0x00]),
   );
 }
 
@@ -284,8 +281,7 @@ void main() {
         final result = await pipeline.sign(
           _registrationReq(name: s, addressCity: s),
         );
-        final dto = jsonDecode((result as TypedDataSignResult).dtoJson)
-            as Map<String, dynamic>;
+        final dto = jsonDecode((result as TypedDataSignResult).dtoJson) as Map<String, dynamic>;
         expect(
           (dto['name'] as String).codeUnits.every((u) => u < 128),
           isTrue,
@@ -405,13 +401,15 @@ void main() {
   });
 
   group('SignResult shape: envelope and dto carry the post-romanise canonical bytes', () {
-    test('registration: dto JSON has the romanised name and the walletAddress is unchanged', () async {
-      final result = await pipeline.sign(_registrationReq(name: 'Müller'));
-      final dto = jsonDecode((result as TypedDataSignResult).dtoJson)
-          as Map<String, dynamic>;
-      expect(dto['name'], 'Mueller');
-      expect(dto['walletAddress'], _testAddress);
-    });
+    test(
+      'registration: dto JSON has the romanised name and the walletAddress is unchanged',
+      () async {
+        final result = await pipeline.sign(_registrationReq(name: 'Müller'));
+        final dto = jsonDecode((result as TypedDataSignResult).dtoJson) as Map<String, dynamic>;
+        expect(dto['name'], 'Mueller');
+        expect(dto['walletAddress'], _testAddress);
+      },
+    );
 
     test('schemaVersion is reflected in the envelope primaryType', () async {
       const schema = RegistrationSchemaV1();
@@ -434,8 +432,8 @@ void main() {
         schema: schema,
       );
       final result = await pipeline.sign(req);
-      final envelope = jsonDecode((result as TypedDataSignResult).envelopeJson)
-          as Map<String, dynamic>;
+      final envelope =
+          jsonDecode((result as TypedDataSignResult).envelopeJson) as Map<String, dynamic>;
       expect(envelope['primaryType'], schema.primaryType);
     });
   });
