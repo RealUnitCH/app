@@ -27,12 +27,24 @@ class BuyPaymentInfoSuccess extends BuyPaymentInfoState {
 class BuyPaymentInfoFailure extends BuyPaymentInfoState {
   final PaymentInfoError error;
   final int? requiredLevel;
+
+  /// KYC routing context forwarded as `extra` when the failure routes the user
+  /// into the KYC flow (see `payment_additional_action_needed_button.dart`).
   final String? context;
 
-  const BuyPaymentInfoFailure(this.error, {this.requiredLevel, this.context});
+  /// Human-readable backend error text (e.g. the raw API message), surfaced in
+  /// the failure UI. Empty when the failure carries no message.
+  final String message;
+
+  const BuyPaymentInfoFailure(
+    this.error, {
+    this.requiredLevel,
+    this.context,
+    this.message = '',
+  });
 
   @override
-  List<Object?> get props => [error, requiredLevel, context];
+  List<Object?> get props => [error, requiredLevel, context, message];
 }
 
 class BuyPaymentInfoMinAmountNotMetFailure extends BuyPaymentInfoFailure {

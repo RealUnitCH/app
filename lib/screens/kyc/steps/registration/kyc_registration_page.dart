@@ -78,6 +78,14 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   final cityCtrl = TextEditingController();
   final countryCtrl = ValueNotifier<Country?>(null);
 
+  // BL-002: was hardcoded `true` at the page-layer submit call. Now a
+  // form input wired into the address step's CheckboxListTile. The
+  // default `false` lets the country listener flip it on once
+  // Switzerland is selected (the common case) while leaving users in
+  // other countries able to explicitly tick if they have a CH tax
+  // residence on top of their primary address.
+  final swissTaxResidenceCtrl = ValueNotifier<bool>(false);
+
   Country? _initialNationality;
   Country? _initialAddressCountry;
 
@@ -259,6 +267,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
           postalCodeCtrl: postalCodeCtrl,
           cityCtrl: cityCtrl,
           countryCtrl: countryCtrl,
+          swissTaxResidenceCtrl: swissTaxResidenceCtrl,
           initialCountry: _initialAddressCountry,
           onSubmit: _onSubmit,
         );
@@ -277,7 +286,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
     addressPostalCode: postalCodeCtrl.text.trim(),
     addressCity: cityCtrl.text.trim(),
     addressCountry: countryCtrl.value!,
-    swissTaxResidence: true,
+    swissTaxResidence: swissTaxResidenceCtrl.value,
   );
 
   @override
@@ -294,6 +303,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
     postalCodeCtrl.dispose();
     cityCtrl.dispose();
     countryCtrl.dispose();
+    swissTaxResidenceCtrl.dispose();
     super.dispose();
   }
 }

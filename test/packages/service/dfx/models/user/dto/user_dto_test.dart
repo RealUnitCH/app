@@ -252,7 +252,7 @@ void main() {
       'dataComplete': true,
     };
 
-    test('parses the full shape with mail + kyc + capabilities', () {
+    test('parses the full shape with mail + kyc + capabilities + addresses', () {
       final dto = UserDto.fromJson({
         'mail': 'user@example.com',
         'kyc': kycJson(),
@@ -262,6 +262,10 @@ void main() {
           'canEditPhone': true,
           'canEditAddress': false,
         },
+        'addresses': [
+          {'address': '0xABCDEF'},
+          {'address': '0x123456'},
+        ],
       });
 
       expect(dto.mail, 'user@example.com');
@@ -270,6 +274,7 @@ void main() {
       expect(dto.kyc.dataComplete, isTrue);
       expect(dto.capabilities.canEditName, isTrue);
       expect(dto.capabilities.canEditMail, isFalse);
+      expect(dto.addresses, ['0xabcdef', '0x123456']);
     });
 
     test('mail is optional (null on the wire stays null)', () {
@@ -295,6 +300,26 @@ void main() {
       expect(dto.capabilities.canEditMail, isFalse);
       expect(dto.capabilities.canEditPhone, isFalse);
       expect(dto.capabilities.canEditAddress, isFalse);
+    });
+
+    test('addresses absent or malformed entries parse as an empty/filtered hint', () {
+      final absent = UserDto.fromJson({
+        'mail': 'a@b.com',
+        'kyc': kycJson(),
+      });
+      final filtered = UserDto.fromJson({
+        'mail': 'a@b.com',
+        'kyc': kycJson(),
+        'addresses': [
+          null,
+          {'address': null},
+          {'address': 123},
+          {'address': '0xABC'},
+        ],
+      });
+
+      expect(absent.addresses, isEmpty);
+      expect(filtered.addresses, ['0xabc']);
     });
 
     test('capabilities explicitly null → falls back to all-false default', () {

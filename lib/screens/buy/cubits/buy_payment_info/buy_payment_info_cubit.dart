@@ -65,12 +65,16 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
             minAmount: paymentInfo.minVolume!,
           );
         }
-        return const BuyPaymentInfoFailure(PaymentInfoError.unknown);
+        return BuyPaymentInfoFailure(
+          PaymentInfoError.unknown,
+          message: paymentInfo.error ?? '',
+        );
       }
       return BuyPaymentInfoSuccess(paymentInfo);
     } on KycLevelRequiredException catch (e) {
       return BuyPaymentInfoFailure(
         PaymentInfoError.kycRequired,
+        message: e.toString(),
         requiredLevel: e.requiredLevel,
         context: e.context,
       );
@@ -78,9 +82,13 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
       return BuyPaymentInfoFailure(
         PaymentInfoError.registrationRequired,
         context: e.context,
+        message: e.toString(),
       );
-    } on BitboxNotConnectedException {
-      return const BuyPaymentInfoFailure(PaymentInfoError.bitboxDisconnected);
+    } on BitboxNotConnectedException catch (e) {
+      return BuyPaymentInfoFailure(
+        PaymentInfoError.bitboxDisconnected,
+        message: e.toString(),
+      );
     } on ApiException catch (e) {
       // 503 / PRICE_SOURCE_UNAVAILABLE means the external price provider
       // (Aktionariat) is down, so no quote can be built — surface that
@@ -93,7 +101,10 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
       return const BuyPaymentInfoFailure(PaymentInfoError.unknown);
     } catch (e) {
       developer.log(e.toString());
-      return const BuyPaymentInfoFailure(PaymentInfoError.unknown);
+      return BuyPaymentInfoFailure(
+        PaymentInfoError.unknown,
+        message: e.toString(),
+      );
     }
   }
 

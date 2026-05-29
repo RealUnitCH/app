@@ -75,11 +75,15 @@ class KycViewManager extends StatelessWidget {
             KycStep.financialData => KycFinancialDataPage(url: urlOrToken ?? ''),
             // Exhaustive over KycStep so a new value is a compile error here
             // (forced handling) rather than a silent blank Scaffold. dfxApproval
-            // was the missing case that fell through to the old blank fallback.
-            KycStep.dfxApproval =>
-              const KycPendingPage(pendingStep: KycStep.dfxApproval),
+            // is a backend-side manual review step with no user action: render
+            // the pending/review screen instead of the old blank fallback.
+            KycStep.dfxApproval => const KycPendingPage(pendingStep: KycStep.dfxApproval),
           },
-        KycState() => const Scaffold(),
+        // Never render a blank grey Scaffold — surface the unhandled state so
+        // it is diagnosable on-device instead of looking like a hang.
+        KycState() => KycFailurePage(
+          message: 'Unhandled KYC state: ${state.runtimeType}',
+        ),
       },
     );
   }
