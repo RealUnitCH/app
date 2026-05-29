@@ -58,6 +58,22 @@ Map<String, dynamic> _matching() => {
 };
 
 void main() {
+  group('Eip712FieldSpec', () {
+    test('value equality, hashCode and diagnostics include name and type', () {
+      final amount = ['amount'].single;
+      final recipient = ['recipient'].single;
+      final uint256 = ['uint256'].single;
+      final address = ['address'].single;
+      final a = Eip712FieldSpec(amount, uint256);
+      final b = Eip712FieldSpec(amount, uint256);
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      expect(a, isNot(Eip712FieldSpec(recipient, uint256)));
+      expect(a, isNot(Eip712FieldSpec(amount, address)));
+      expect(a.toString(), '{amount: uint256}');
+    });
+  });
+
   group('Eip712Schema.validate', () {
     test('accepts a byte-equal map (control case)', () {
       // The baseline: backend response equals the pinned schema. validate()
@@ -276,8 +292,9 @@ void main() {
         final fields = _schema.types[groupName]!;
         for (var fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {
           final mutated = _matching();
-          final list =
-              (mutated[groupName] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+          final list = (mutated[groupName] as List)
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
           // Flip the `name` of the field at (groupIndex, fieldIndex).
           list[fieldIndex] = {
             'name': '${list[fieldIndex]['name']}_MUTATED',

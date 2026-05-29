@@ -25,6 +25,9 @@ void main() {
     const schema = RegistrationSchemaV1();
 
     test('exposes the EIP-712 RealUnitUser primary type', () {
+      final schemaFactory = RegistrationSchemaV1.new;
+      final runtimeSchema = schemaFactory();
+      expect(runtimeSchema.schemaVersion, 'registration/v1');
       expect(schema.primaryType, 'RealUnitUser');
       expect(schema.schemaVersion, 'registration/v1');
     });
@@ -130,6 +133,13 @@ void main() {
 
   group('RegistrationSchemaV0 (legacy fallback)', () {
     const schema = RegistrationSchemaV0();
+
+    test('exposes the legacy RealUnitUser primary type and schema version', () {
+      final schemaFactory = RegistrationSchemaV0.new;
+      final runtimeSchema = schemaFactory();
+      expect(runtimeSchema.primaryType, 'RealUnitUser');
+      expect(runtimeSchema.schemaVersion, 'registration/v0-legacy');
+    });
 
     test('domain has no chainId / verifyingContract', () {
       // V0 = pre-F-041 backend; kept available behind an explicit opt-in

@@ -19,6 +19,9 @@ void main() {
       // Version is the migration hook for PSBT-v2 / Schnorr rollout. The
       // testkit's `BtcPsbtMultiInputSign` scenario references this exact
       // string so the coverage-honesty CI knows which version it covers.
+      final schemaFactory = BtcPsbtSchema.new;
+      final runtimeSchema = schemaFactory();
+      expect(runtimeSchema.types, isEmpty);
       expect(_schema.schemaVersion, 'btc-psbt/v1');
       expect(_schema.primaryType, 'BTC_PSBT');
     });
@@ -75,8 +78,7 @@ void main() {
       // The fifth byte must be 0xff per BIP-174. A 0x00 here is a clear
       // protocol mismatch — surface the exact offset for triage.
       expect(
-        () =>
-            _schema.validatePsbt(Uint8List.fromList([0x70, 0x73, 0x62, 0x74, 0x00, 0x00, 0x00])),
+        () => _schema.validatePsbt(Uint8List.fromList([0x70, 0x73, 0x62, 0x74, 0x00, 0x00, 0x00])),
         throwsA(
           isA<BtcPsbtInvalidException>().having(
             (e) => e.reason,

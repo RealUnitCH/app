@@ -39,6 +39,11 @@ void main() {
   group('ErrorMapper.mapBitboxCode', () {
     const mapper = ErrorMapper();
 
+    test('constructor can be instantiated at runtime', () {
+      final mapperFactory = ErrorMapper.new;
+      expect(mapperFactory(), isA<ErrorMapper>());
+    });
+
     test('101 ErrInvalidInput → BitboxInvalidInputException with detail', () {
       final result = mapper.mapBitboxCode(101, message: 'non-ASCII char');
       expect(result, isA<BitboxInvalidInputException>());
@@ -89,14 +94,17 @@ void main() {
       }
     });
 
-    test('codes outside knownCodes (negative, zero, very large) all surface as BitboxUnknownException', () {
-      for (final code in <int>[-1, 0, 1, 500, 9999, 0x7FFFFFFF]) {
-        if (ErrorMapper.knownCodes.contains(code)) continue;
-        final result = mapper.mapBitboxCode(code);
-        expect(result, isA<BitboxUnknownException>(), reason: 'code $code');
-        expect((result as BitboxUnknownException).rawCode, code);
-      }
-    });
+    test(
+      'codes outside knownCodes (negative, zero, very large) all surface as BitboxUnknownException',
+      () {
+        for (final code in <int>[-1, 0, 1, 500, 9999, 0x7FFFFFFF]) {
+          if (ErrorMapper.knownCodes.contains(code)) continue;
+          final result = mapper.mapBitboxCode(code);
+          expect(result, isA<BitboxUnknownException>(), reason: 'code $code');
+          expect((result as BitboxUnknownException).rawCode, code);
+        }
+      },
+    );
   });
 
   group('ErrorMapper.mapCause', () {
@@ -145,21 +153,24 @@ void main() {
       // fails. The names are the canonical list of typed exceptions the
       // pipeline can emit; cubits switch on these types.
       final classNames = exceptions.map((e) => e.runtimeType.toString()).toSet();
-      expect(classNames, containsAll(<String>{
-        'BitboxInvalidInputException',
-        'BitboxUserAbortException',
-        'BitboxChannelHashMismatchException',
-        'BitboxTimeoutException',
-        'BitboxNotConnectedSignException',
-        'BitboxUnknownException',
-        'Eip712SchemaDriftException',
-        'Eip7702NotSupportedException',
-        'Eip1559TypeMismatchException',
-        'Eip7702ExpectedParamsMismatchException',
-        'SignRequestValidationException',
-        'SigningCancelledSignException',
-        'BtcPsbtInvalidException',
-      }));
+      expect(
+        classNames,
+        containsAll(<String>{
+          'BitboxInvalidInputException',
+          'BitboxUserAbortException',
+          'BitboxChannelHashMismatchException',
+          'BitboxTimeoutException',
+          'BitboxNotConnectedSignException',
+          'BitboxUnknownException',
+          'Eip712SchemaDriftException',
+          'Eip7702NotSupportedException',
+          'Eip1559TypeMismatchException',
+          'Eip7702ExpectedParamsMismatchException',
+          'SignRequestValidationException',
+          'SigningCancelledSignException',
+          'BtcPsbtInvalidException',
+        }),
+      );
     });
 
     test('every typed SignException has a non-empty ARB key', () {
@@ -252,6 +263,69 @@ void main() {
       );
     });
 
+    test('parametric equality compares each EIP-7702 mismatch field', () {
+      final chainId = ['chainId'].single;
+      final delegator = ['delegator'].single;
+      final mainnet = ['1'].single;
+      final polygon = ['137'].single;
+      final optimism = ['5'].single;
+      final a = Eip7702ExpectedParamsMismatchException(
+        parameter: chainId,
+        expected: mainnet,
+        actual: optimism,
+      );
+      final b = Eip7702ExpectedParamsMismatchException(
+        parameter: chainId,
+        expected: mainnet,
+        actual: optimism,
+      );
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      expect(
+        a,
+        isNot(
+          Eip7702ExpectedParamsMismatchException(
+            parameter: delegator,
+            expected: mainnet,
+            actual: optimism,
+          ),
+        ),
+      );
+      expect(
+        a,
+        isNot(
+          Eip7702ExpectedParamsMismatchException(
+            parameter: chainId,
+            expected: polygon,
+            actual: optimism,
+          ),
+        ),
+      );
+      expect(
+        a,
+        isNot(
+          Eip7702ExpectedParamsMismatchException(
+            parameter: chainId,
+            expected: mainnet,
+            actual: polygon,
+          ),
+        ),
+      );
+    });
+
+    test('parametric equality compares each validation field', () {
+      final email = ['email'].single;
+      final name = ['name'].single;
+      final empty = ['empty'].single;
+      final blank = ['blank'].single;
+      final a = SignRequestValidationException(field: email, reason: empty);
+      final b = SignRequestValidationException(field: email, reason: empty);
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      expect(a, isNot(SignRequestValidationException(field: name, reason: empty)));
+      expect(a, isNot(SignRequestValidationException(field: email, reason: blank)));
+    });
+
     test('toString includes the raw code for unknown exceptions (telemetry)', () {
       const ex = BitboxUnknownException(987, message: 'firmware says no');
       expect(ex.toString(), contains('987'));
@@ -322,24 +396,42 @@ void main() {
     });
 
     test('Eip712SchemaDriftException value equality', () {
-      const a = Eip712SchemaDriftException(
-        driftedField: 'X',
-        schemaVersion: 'v1',
-        reason: 'r',
+      final fieldX = ['X'].single;
+      final fieldY = ['Y'].single;
+      final version1 = ['v1'].single;
+      final version2 = ['v2'].single;
+      final reasonR = ['r'].single;
+      final reasonS = ['s'].single;
+      final a = Eip712SchemaDriftException(
+        driftedField: fieldX,
+        schemaVersion: version1,
+        reason: reasonR,
       );
-      const b = Eip712SchemaDriftException(
-        driftedField: 'X',
-        schemaVersion: 'v1',
-        reason: 'r',
+      final b = Eip712SchemaDriftException(
+        driftedField: fieldX,
+        schemaVersion: version1,
+        reason: reasonR,
       );
       expect(a, b);
       expect(a.hashCode, b.hashCode);
-      const c = Eip712SchemaDriftException(
-        driftedField: 'Y',
-        schemaVersion: 'v1',
-        reason: 'r',
+      final c = Eip712SchemaDriftException(
+        driftedField: fieldY,
+        schemaVersion: version1,
+        reason: reasonR,
       );
       expect(a, isNot(c));
+      final d = Eip712SchemaDriftException(
+        driftedField: fieldX,
+        schemaVersion: version2,
+        reason: reasonR,
+      );
+      expect(a, isNot(d));
+      final e = Eip712SchemaDriftException(
+        driftedField: fieldX,
+        schemaVersion: version1,
+        reason: reasonS,
+      );
+      expect(a, isNot(e));
     });
 
     test('BtcPsbtInvalidException value equality + toString', () {

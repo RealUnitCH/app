@@ -30,10 +30,13 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:realunit_wallet/packages/wallet/error_mapper.dart';
+import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/packages/wallet/schemas/registration_schema.dart';
 import 'package:realunit_wallet/packages/wallet/sign_pipeline.dart';
+import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
 const _privateKeyHex = 'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
@@ -90,18 +93,23 @@ KycSignRequest _kycReq({String firstName = 'Pipeline', String lastName = 'User'}
 
 Eip7702Data _validEip7702Data({
   List<Eip7702TypeField>? delegation,
+  Eip7702Domain? domain,
+  Eip7702Message? message,
+  String amountWei = '1000000000000000000',
 }) {
   return Eip7702Data(
     relayerAddress: '0x0000000000000000000000000000000000000abc',
     delegationManagerAddress: _verifyingContract,
     delegatorAddress: _testAddress,
     userNonce: 0,
-    domain: const Eip7702Domain(
-      name: 'DelegationManager',
-      version: '1',
-      chainId: 1,
-      verifyingContract: _verifyingContract,
-    ),
+    domain:
+        domain ??
+        const Eip7702Domain(
+          name: 'DelegationManager',
+          version: '1',
+          chainId: 1,
+          verifyingContract: _verifyingContract,
+        ),
     types: Eip7702Types(
       delegation:
           delegation ??
@@ -117,15 +125,17 @@ Eip7702Data _validEip7702Data({
         Eip7702TypeField(name: 'terms', type: 'bytes'),
       ],
     ),
-    message: const Eip7702Message(
-      delegate: '0x0000000000000000000000000000000000000abc',
-      delegator: _testAddress,
-      authority: '0x0000000000000000000000000000000000000000000000000000000000000000',
-      caveats: [],
-      salt: 0,
-    ),
+    message:
+        message ??
+        const Eip7702Message(
+          delegate: '0x0000000000000000000000000000000000000abc',
+          delegator: _testAddress,
+          authority: '0x0000000000000000000000000000000000000000000000000000000000000000',
+          caveats: [],
+          salt: 0,
+        ),
     tokenAddress: '0x0000000000000000000000000000000000000aaa',
-    amountWei: '1000000000000000000',
+    amountWei: amountWei,
     depositAddress: '0x0000000000000000000000000000000000000bbb',
   );
 }
@@ -166,15 +176,49 @@ EthTransferSignRequest _ethReq({
   bool isEIP1559 = true,
   List<int>? payload,
   int chainId = 1,
+  CredentialsWithKnownAddress? credentials,
 }) {
   return EthTransferSignRequest(
-    credentials: _credentials(),
+    credentials: credentials ?? _credentials(),
     payload: Uint8List.fromList(
       payload ?? [if (isEIP1559) 0x02, 0xaa, 0xbb, 0xcc, 0xdd],
     ),
     chainId: chainId,
     isEIP1559: isEIP1559,
   );
+}
+
+class _ThrowingCredentials extends CredentialsWithKnownAddress {
+  final Object error;
+
+  _ThrowingCredentials(this.error);
+
+  @override
+  EthereumAddress get address => EthereumAddress.fromHex(_testAddress);
+
+  @override
+  MsgSignature signToEcSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<MsgSignature> signToSignature(
+    Uint8List payload, {
+    int? chainId,
+    bool isEIP1559 = false,
+  }) {
+    return Future<MsgSignature>.error(error);
+  }
+
+  @override
+  Future<Uint8List> signPersonalMessage(Uint8List payload, {int? chainId}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Uint8List signPersonalMessageToUint8List(Uint8List payload, {int? chainId}) {
+    throw UnimplementedError();
+  }
 }
 
 void main() {
@@ -383,6 +427,104 @@ void main() {
       await expectLater(
         pipeline.sign(req),
         throwsA(isA<Eip7702ExpectedParamsMismatchException>()),
+      );
+    });
+
+    test('EIP-7702 wrong verifyingContract rejects before signing', () async {
+      final req = _eip7702Req(
+        data: _validEip7702Data(
+          domain: const Eip7702Domain(
+            name: 'DelegationManager',
+            version: '1',
+            chainId: 1,
+            verifyingContract: '0x0000000000000000000000000000000000000001',
+          ),
+        ),
+      );
+      await expectLater(
+        pipeline.sign(req),
+        throwsA(
+          isA<Eip7702ExpectedParamsMismatchException>()
+              .having((e) => e.parameter, 'parameter', 'verifyingContract')
+              .having((e) => e.actual, 'actual', '0x0000000000000000000000000000000000000001'),
+        ),
+      );
+    });
+
+    test('EIP-7702 wrong delegator rejects before signing', () async {
+      final req = _eip7702Req(
+        data: _validEip7702Data(
+          message: const Eip7702Message(
+            delegate: '0x0000000000000000000000000000000000000abc',
+            delegator: '0x0000000000000000000000000000000000000002',
+            authority: '0x0000000000000000000000000000000000000000000000000000000000000000',
+            caveats: [],
+            salt: 0,
+          ),
+        ),
+      );
+      await expectLater(
+        pipeline.sign(req),
+        throwsA(
+          isA<Eip7702ExpectedParamsMismatchException>()
+              .having((e) => e.parameter, 'parameter', 'delegator')
+              .having((e) => e.actual, 'actual', '0x0000000000000000000000000000000000000002'),
+        ),
+      );
+    });
+
+    test('EIP-7702 wrong amount rejects before signing', () async {
+      final req = _eip7702Req(data: _validEip7702Data(amountWei: '2'));
+      await expectLater(
+        pipeline.sign(req),
+        throwsA(
+          isA<Eip7702ExpectedParamsMismatchException>()
+              .having((e) => e.parameter, 'parameter', 'amountWei')
+              .having((e) => e.actual, 'actual', '2'),
+        ),
+      );
+    });
+
+    test('EIP-7702 unparsable amount rejects before signing', () async {
+      final req = _eip7702Req(data: _validEip7702Data(amountWei: 'not-a-number'));
+      await expectLater(
+        pipeline.sign(req),
+        throwsA(
+          isA<Eip7702ExpectedParamsMismatchException>()
+              .having((e) => e.parameter, 'parameter', 'amountWei')
+              .having((e) => e.actual, 'actual', 'not-a-number'),
+        ),
+      );
+    });
+  });
+
+  group('Error boundary', () {
+    test('legacy SigningCancelledException is mapped to a typed sign exception', () async {
+      await expectLater(
+        pipeline.sign(
+          _ethReq(credentials: _ThrowingCredentials(const SigningCancelledException())),
+        ),
+        throwsA(isA<SigningCancelledSignException>()),
+      );
+    });
+
+    test('legacy BitboxNotConnectedException is mapped to a typed sign exception', () async {
+      await expectLater(
+        pipeline.sign(
+          _ethReq(credentials: _ThrowingCredentials(const BitboxNotConnectedException())),
+        ),
+        throwsA(isA<BitboxNotConnectedSignException>()),
+      );
+    });
+
+    test('unknown plugin exception is mapped to BitboxUnknownException', () async {
+      await expectLater(
+        pipeline.sign(_ethReq(credentials: _ThrowingCredentials(const FormatException('bad sig')))),
+        throwsA(
+          isA<BitboxUnknownException>()
+              .having((e) => e.rawCode, 'rawCode', -1)
+              .having((e) => e.message, 'message', contains('bad sig')),
+        ),
       );
     });
   });
