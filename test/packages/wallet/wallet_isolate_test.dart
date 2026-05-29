@@ -19,8 +19,7 @@ import 'package:realunit_wallet/packages/wallet/wallet_isolate.dart';
 import 'package:web3dart/credentials.dart';
 import 'package:web3dart/crypto.dart';
 
-const _testMnemonic =
-    'test test test test test test test test test test test junk';
+const _testMnemonic = 'test test test test test test test test test test test junk';
 
 // Hardhat / Foundry test account #0 — the canonical "address derived
 // from the test mnemonic at m/44'/60'/0'/0/0" value. If a refactor of
@@ -29,6 +28,26 @@ const _testMnemonic =
 const _hardhatAccountZero = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
 
 void main() {
+  group('$WalletIsolate diagnostics', () {
+    test('exceptions carry readable messages', () {
+      expect(
+        WalletIsolateException('boom').toString(),
+        'WalletIsolateException: boom',
+      );
+      expect(
+        WalletIsolateCancelledException().toString(),
+        'WalletIsolateException: request cancelled',
+      );
+    });
+
+    test('forTesting constructor creates a non-disposed override handle', () {
+      final isolate = WalletIsolate.forTesting();
+
+      expect(isolate.isDisposed, isFalse);
+      expect(isolate.cachedPrimaryAddress(1), isNull);
+    });
+  });
+
   group('$WalletIsolate.spawn + adoptPlaintext + deriveAddress', () {
     late WalletIsolate isolate;
 
@@ -43,23 +62,30 @@ void main() {
     test('adoptPlaintext returns the BIP-44 account-zero address', () async {
       final address = await isolate.adoptPlaintext(1, _testMnemonic);
 
-      expect(address, _hardhatAccountZero,
-          reason: 'BL-018: the unlock path must return the canonical '
-              'Hardhat-style address derived inside the isolate, with '
-              'no main-side BIP32 derivation along the way');
+      expect(
+        address,
+        _hardhatAccountZero,
+        reason:
+            'BL-018: the unlock path must return the canonical '
+            'Hardhat-style address derived inside the isolate, with '
+            'no main-side BIP32 derivation along the way',
+      );
     });
 
-    test('cachedPrimaryAddress is populated post-adopt + cleared post-lock',
-        () async {
+    test('cachedPrimaryAddress is populated post-adopt + cleared post-lock', () async {
       expect(isolate.cachedPrimaryAddress(1), isNull);
 
       await isolate.adoptPlaintext(1, _testMnemonic);
       expect(isolate.cachedPrimaryAddress(1), _hardhatAccountZero);
 
       await isolate.lock(1);
-      expect(isolate.cachedPrimaryAddress(1), isNull,
-          reason: 'the cache is invalidated alongside the isolate slot — '
-              'a stale entry would resurface the address after a lock');
+      expect(
+        isolate.cachedPrimaryAddress(1),
+        isNull,
+        reason:
+            'the cache is invalidated alongside the isolate slot — '
+            'a stale entry would resurface the address after a lock',
+      );
     });
 
     test('deriveAddress for account 1 returns a different address', () async {
@@ -69,8 +95,7 @@ void main() {
       final at1 = await isolate.deriveAddress(7, 1, 0);
 
       expect(at0, _hardhatAccountZero);
-      expect(at1, isNot(at0),
-          reason: 'BIP-44 account index 1 must yield a distinct address');
+      expect(at1, isNot(at0), reason: 'BIP-44 account index 1 must yield a distinct address');
     });
 
     test('deriveAddress without unlock errors out as NotUnlocked', () async {
@@ -94,23 +119,23 @@ void main() {
     });
 
     test('signPersonalMessage returns a 65-byte signature', () async {
-      final sig = await isolate.signPersonalMessage(
-          1, "m/44'/60'/0'/0/0", utf8.encode('hello'));
+      final sig = await isolate.signPersonalMessage(1, "m/44'/60'/0'/0/0", utf8.encode('hello'));
 
       expect(sig, isA<Uint8List>());
-      expect(sig.length, 65,
-          reason: 'EIP-191 personal_sign signatures are 65 bytes (r||s||v)');
+      expect(sig.length, 65, reason: 'EIP-191 personal_sign signatures are 65 bytes (r||s||v)');
     });
 
     test('signPersonalMessage is deterministic for the same input', () async {
-      final a = await isolate.signPersonalMessage(
-          1, "m/44'/60'/0'/0/0", utf8.encode('payload'));
-      final b = await isolate.signPersonalMessage(
-          1, "m/44'/60'/0'/0/0", utf8.encode('payload'));
+      final a = await isolate.signPersonalMessage(1, "m/44'/60'/0'/0/0", utf8.encode('payload'));
+      final b = await isolate.signPersonalMessage(1, "m/44'/60'/0'/0/0", utf8.encode('payload'));
 
-      expect(a, b,
-          reason: 'web3dart personal_sign is deterministic — a hex compare '
-              'against the same payload + path must match exactly');
+      expect(
+        a,
+        b,
+        reason:
+            'web3dart personal_sign is deterministic — a hex compare '
+            'against the same payload + path must match exactly',
+      );
     });
 
     test('signPersonalMessage with non-ASCII payload does not throw', () async {
@@ -118,21 +143,18 @@ void main() {
       // on non-ASCII because the BIP32 path didn't pre-normalise. The
       // isolate signs the bytes as given; the caller's encoding is
       // its problem.
-      final sig = await isolate.signPersonalMessage(
-          1, "m/44'/60'/0'/0/0", utf8.encode('Grüße'));
+      final sig = await isolate.signPersonalMessage(1, "m/44'/60'/0'/0/0", utf8.encode('Grüße'));
       expect(sig.length, 65);
     });
 
-    test('signDigest returns (r, s, v) and is verifiable by the public key',
-        () async {
+    test('signDigest returns (r, s, v) and is verifiable by the public key', () async {
       // Build a 32-byte digest from a known message. The isolate
       // signs the digest as-is; we don't expect the caller's intent
       // to be EIP-191 / EIP-712 / raw — that's a SignPipeline
       // concern.
       final digest = keccak256(Uint8List.fromList(utf8.encode('hello')));
 
-      final result =
-          await isolate.signDigest(1, "m/44'/60'/0'/0/0", digest, chainId: 1);
+      final result = await isolate.signDigest(1, "m/44'/60'/0'/0/0", digest, chainId: 1);
 
       // r,s must be 32-byte BigInts; v must be a small int (27/28 or
       // chain-id-encoded).
@@ -141,13 +163,24 @@ void main() {
       expect(result.v, greaterThanOrEqualTo(0));
     });
 
-    test('signPersonalMessage with no unlocked slot errors out cleanly',
-        () async {
+    test('signDigest with no unlocked slot errors out cleanly', () async {
       await isolate.lock(1);
 
       await expectLater(
-        isolate.signPersonalMessage(
-            1, "m/44'/60'/0'/0/0", utf8.encode('payload')),
+        isolate.signDigest(
+          1,
+          "m/44'/60'/0'/0/0",
+          keccak256(Uint8List.fromList(utf8.encode('payload'))),
+        ),
+        throwsA(isA<WalletIsolateNotUnlockedException>()),
+      );
+    });
+
+    test('signPersonalMessage with no unlocked slot errors out cleanly', () async {
+      await isolate.lock(1);
+
+      await expectLater(
+        isolate.signPersonalMessage(1, "m/44'/60'/0'/0/0", utf8.encode('payload')),
         throwsA(isA<WalletIsolateNotUnlockedException>()),
       );
     });
@@ -172,23 +205,24 @@ void main() {
       await isolate.lock(1);
       final addressAgain = await isolate.adoptPlaintext(1, _testMnemonic);
 
-      expect(addressAgain, _hardhatAccountZero,
-          reason: 'BL-018: lock + re-adopt must produce the same address — '
-              'the slot is keyed by walletId, not by a fresh nonce');
+      expect(
+        addressAgain,
+        _hardhatAccountZero,
+        reason:
+            'BL-018: lock + re-adopt must produce the same address — '
+            'the slot is keyed by walletId, not by a fresh nonce',
+      );
     });
   });
 
   group('$WalletIsolate.unlock from encrypted seed', () {
-    test('decrypts a SecureStorage-shaped ciphertext and returns the address',
-        () async {
+    test('decrypts a SecureStorage-shaped ciphertext and returns the address', () async {
       // Mirror SecureStorage.encryptSeed inline so the test does not
       // depend on the secure_storage module (which pulls Flutter
       // bindings). The cipher state matches AES-GCM/128 over a 32-byte
       // key and a 12-byte IV.
-      final key = Uint8List.fromList(
-          List.generate(32, (i) => (i * 7) & 0xff));
-      final iv = Uint8List.fromList(
-          List.generate(12, (i) => (i * 13) & 0xff));
+      final key = Uint8List.fromList(List.generate(32, (i) => (i * 7) & 0xff));
+      final iv = Uint8List.fromList(List.generate(12, (i) => (i * 13) & 0xff));
       final cipher = GCMBlockCipher(AESEngine())
         ..init(true, AEADParameters(KeyParameter(key), 128, iv, Uint8List(0)));
       final ct = cipher.process(Uint8List.fromList(utf8.encode(_testMnemonic)));
@@ -199,10 +233,39 @@ void main() {
 
       final address = await isolate.unlock(1, encoded, key);
 
-      expect(address, _hardhatAccountZero,
-          reason: 'BL-018: the encrypted-seed path must round-trip through '
-              'AES-GCM inside the isolate and return the same Hardhat-zero '
-              'address as the plaintext adopt path');
+      expect(
+        address,
+        _hardhatAccountZero,
+        reason:
+            'BL-018: the encrypted-seed path must round-trip through '
+            'AES-GCM inside the isolate and return the same Hardhat-zero '
+            'address as the plaintext adopt path',
+      );
+    });
+
+    test('invalid ciphertext surfaces as a typed isolate exception', () async {
+      final isolate = await WalletIsolate.spawn();
+      addTearDown(() => isolate.dispose());
+
+      await expectLater(
+        isolate.unlock(1, 'not-a-secure-storage-seed', Uint8List(32)),
+        throwsA(
+          isA<WalletIsolateException>().having(
+            (e) => e.toString(),
+            'message',
+            contains('WalletIsolateException'),
+          ),
+        ),
+      );
+    });
+  });
+
+  group('$WalletIsolate.cancel', () {
+    test('cancel request is acknowledged even for an already-finished id', () async {
+      final isolate = await WalletIsolate.spawn();
+      addTearDown(() => isolate.dispose());
+
+      await expectLater(isolate.cancel(12345), completes);
     });
   });
 
@@ -215,10 +278,14 @@ void main() {
 
       final revealed = await isolate.reveal(1);
 
-      expect(revealed, _testMnemonic,
-          reason: 'the reveal path is the Law-6-scoped seed-display flow — '
-              'verify-seed quiz + settings-seed both rely on this exact byte '
-              'identity');
+      expect(
+        revealed,
+        _testMnemonic,
+        reason:
+            'the reveal path is the Law-6-scoped seed-display flow — '
+            'verify-seed quiz + settings-seed both rely on this exact byte '
+            'identity',
+      );
     });
 
     test('reveal without a slot errors out as NotUnlocked', () async {
@@ -261,8 +328,7 @@ void main() {
     // `test/integration/crypto_hygiene_test.dart`; this is the
     // narrowest assertion we can make through the public API: after
     // lock, reveal() throws.
-    test('lock() drops the slot — reveal() afterwards is NotUnlocked',
-        () async {
+    test('lock() drops the slot — reveal() afterwards is NotUnlocked', () async {
       final isolate = await WalletIsolate.spawn();
       addTearDown(() => isolate.dispose());
 
@@ -275,14 +341,14 @@ void main() {
       await expectLater(
         isolate.reveal(1),
         throwsA(isA<WalletIsolateNotUnlockedException>()),
-        reason: 'post-lock the slot must be gone — a slot that survived '
+        reason:
+            'post-lock the slot must be gone — a slot that survived '
             'lock would leak the mnemonic to any subsequent reveal',
       );
     });
   });
 
-  group('$WalletIsolate.signPersonalMessage matches a main-side public key',
-      () {
+  group('$WalletIsolate.signPersonalMessage matches a main-side public key', () {
     // End-to-end check: the isolate-signed personal message recovers
     // to the canonical Hardhat-zero address. Pins both the
     // EthPrivateKey shape AND the EIP-191 envelope.
@@ -293,8 +359,7 @@ void main() {
       await isolate.adoptPlaintext(1, _testMnemonic);
 
       final payload = Uint8List.fromList(utf8.encode('hello'));
-      final sig = await isolate.signPersonalMessage(
-          1, "m/44'/60'/0'/0/0", payload);
+      final sig = await isolate.signPersonalMessage(1, "m/44'/60'/0'/0/0", payload);
 
       // EIP-191 prefix
       final prefix = utf8.encode('Ethereum Signed Message:\n${payload.length}');
@@ -307,9 +372,13 @@ void main() {
       final recoveredPub = ecRecover(digest, MsgSignature(r, s, v));
       final recoveredAddress = EthereumAddress.fromPublicKey(recoveredPub);
 
-      expect(recoveredAddress.hexEip55, _hardhatAccountZero,
-          reason: 'ec-recover of the isolate-produced signature must yield '
-              'the same address the isolate returned at adopt time');
+      expect(
+        recoveredAddress.hexEip55,
+        _hardhatAccountZero,
+        reason:
+            'ec-recover of the isolate-produced signature must yield '
+            'the same address the isolate returned at adopt time',
+      );
     });
   });
 }

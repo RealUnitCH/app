@@ -120,6 +120,46 @@ void main() {
       expect(signature, startsWith('0x'));
       expect(signature.length, 132);
     });
+
+    test('async credentials sign digest through the isolate', () async {
+      final wallet = SoftwareWallet(1, 'Main', primaryAddress, isolate);
+      final digest = Uint8List.fromList(List.generate(32, (i) => i));
+
+      final signature = await wallet.primaryAccount.primaryAddress.signToSignature(
+        digest,
+        chainId: 1,
+      );
+
+      expect(signature.r.bitLength, lessThanOrEqualTo(256));
+      expect(signature.s.bitLength, lessThanOrEqualTo(256));
+      expect(signature.v, greaterThanOrEqualTo(0));
+    });
+
+    test('async credentials sign personal messages through the isolate', () async {
+      final wallet = SoftwareWallet(1, 'Main', primaryAddress, isolate);
+
+      final signature = await wallet.primaryAccount.primaryAddress.signPersonalMessage(
+        Uint8List.fromList([1, 2, 3]),
+        chainId: 1,
+      );
+
+      expect(signature, hasLength(65));
+    });
+
+    test('sync credential entrypoints reject the isolate-backed wallet', () {
+      final wallet = SoftwareWallet(1, 'Main', primaryAddress, isolate);
+
+      expect(
+        () => wallet.primaryAccount.primaryAddress.signToEcSignature(Uint8List(32)),
+        throwsA(isA<UnsupportedError>()),
+      );
+      expect(
+        () => wallet.primaryAccount.primaryAddress.signPersonalMessageToUint8List(
+          Uint8List(0),
+        ),
+        throwsA(isA<UnsupportedError>()),
+      );
+    });
   });
 
   group('$DebugWallet', () {

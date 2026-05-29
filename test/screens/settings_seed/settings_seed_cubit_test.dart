@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
@@ -33,8 +36,9 @@ void main() {
     walletService = _MockWalletService();
     when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
     when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
-    when(() => walletService.revealCurrentSeed())
-        .thenAnswer((_) async => SeedDraft(_testSeed, name: 'Test'));
+    when(
+      () => walletService.revealCurrentSeed(),
+    ).thenAnswer((_) async => SeedDraft(_testSeed, name: 'Test'));
     when(() => appStore.wallet).thenReturn(wallet);
   });
 
@@ -62,6 +66,45 @@ void main() {
       await cubit.close();
 
       verify(() => walletService.lockCurrentWallet()).called(1);
+    });
+
+    test('close during reveal disposes the late SeedDraft instead of emitting', () async {
+      final completer = Completer<SeedDraft>();
+      final lateDraft = SeedDraft(_testSeed, name: 'Test');
+      when(() => walletService.revealCurrentSeed()).thenAnswer((_) => completer.future);
+
+      final cubit = SettingsSeedCubit(appStore, walletService);
+      await Future<void>.delayed(Duration.zero);
+
+      await cubit.close();
+      completer.complete(lateDraft);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(lateDraft.isDisposed, isTrue);
+    });
+
+    test('hidden lifecycle state disposes the draft and clears the rendered seed', () async {
+      final cubit = SettingsSeedCubit(appStore, walletService);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      expect(cubit.state.seed, _testSeed);
+
+      cubit.didChangeAppLifecycleState(AppLifecycleState.hidden);
+
+      expect(cubit.state.seed, '');
+      await cubit.close();
+    });
+
+    test('paused lifecycle state follows the same seed-wipe path', () async {
+      final cubit = SettingsSeedCubit(appStore, walletService);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      expect(cubit.state.seed, _testSeed);
+
+      cubit.didChangeAppLifecycleState(AppLifecycleState.paused);
+
+      expect(cubit.state.seed, '');
+      await cubit.close();
     });
 
     blocTest<SettingsSeedCubit, SettingsSeedState>(
