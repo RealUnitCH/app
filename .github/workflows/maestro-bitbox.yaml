@@ -16,9 +16,11 @@ name: Tier 3 — Maestro BitBox flows
 #   `.maestro/bitbox/RUNNER.md`.
 #
 # TRIGGER MODEL:
-#   * `pull_request: develop` with the `tier3:bitbox` label gate -- the
-#     PR-gate subset (M-1 / M-3 / M-5 / M-6) runs. Hardware time is
-#     scarce; reviewers opt-in by label.
+#   * `workflow_dispatch` on a PR branch with `flow=pr-gate` -- the
+#     PR-gate subset (M-1 / M-3 / M-5 / M-6) runs on demand while this
+#     workflow is introduced. A `pull_request` label gate can be enabled
+#     after the workflow exists on `develop`; adding it in the same PR
+#     leaves GitHub with a pending check and no jobs.
 #   * `push: develop` -- the PR-gate subset runs unconditionally as
 #     post-merge truth check.
 #   * `schedule: '0 2 * * *'` -- the daily/full subset (M-2 / M-4 /
@@ -62,9 +64,6 @@ on:
           - M-7
   push:
     branches: [develop]
-  pull_request:
-    branches: [develop]
-    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
   schedule:
     # 02:00 UTC -- avoids overlapping with the macos-latest hosted
     # tier3-handbook.yaml's typical run windows.
