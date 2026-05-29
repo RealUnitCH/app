@@ -457,6 +457,7 @@ void main() {
       final cubit = makeCubit();
       addTearDown(cubit.close);
       await waitForState<BitboxCheckHash>(cubit);
+      clearInteractions(service);
 
       // Service flips to Lost mid-flow. Cubit must observe the transition
       // and route back to BitboxNotConnected.
@@ -465,6 +466,10 @@ void main() {
           .firstWhere((s) => s is BitboxNotConnected)
           .timeout(const Duration(seconds: 2));
       expect(cubit.state, isA<BitboxNotConnected>());
+      await Future<void>.delayed(const Duration(milliseconds: 650));
+      verify(
+        () => service.getAllUsbDevices(),
+      ).called(greaterThanOrEqualTo(1));
     });
 
     test('non-Lost transitions on the status stream do NOT spuriously bounce', () async {
