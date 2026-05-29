@@ -299,7 +299,11 @@ void main() {
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
       when(
         () => service.init(any()),
-      ).thenAnswer((_) => Future<bool>.error(Exception('async init boom')));
+      ).thenAnswer(
+        (_) => Future<BitboxConnectionStatus>.error(
+          Exception('async init boom'),
+        ),
+      );
       when(() => service.getChannelHash()).thenAnswer((_) async => '');
 
       final cubit = makeCubit();
@@ -340,8 +344,7 @@ void main() {
       // failure path back to BitboxNotConnected.
       var pollCount = 0;
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
-      when(() => service.init(any()))
-          .thenAnswer((_) => Completer<BitboxConnectionStatus>().future);
+      when(() => service.init(any())).thenAnswer((_) => Completer<BitboxConnectionStatus>().future);
       when(() => service.getChannelHash()).thenAnswer((_) async {
         pollCount++;
         return pollCount < 3 ? '' : 'HASH-ok';
@@ -431,12 +434,14 @@ void main() {
       addTearDown(cubit.close);
 
       verify(() => service.status).called(1);
-      expect(statusController.hasListener, isTrue,
-          reason: 'cubit must hold a live subscription after construction');
+      expect(
+        statusController.hasListener,
+        isTrue,
+        reason: 'cubit must hold a live subscription after construction',
+      );
     });
 
-    test('service-emitted Lost bounces an in-progress pairing back to NotConnected',
-        () async {
+    test('service-emitted Lost bounces an in-progress pairing back to NotConnected', () async {
       // Mid-flow scenario: cubit has reached BitboxCheckHash, sign-queue
       // timeout fires on the service side and emits Lost. The cubit must
       // bounce to BitboxNotConnected and re-arm the scan timer without
@@ -462,8 +467,7 @@ void main() {
       expect(cubit.state, isA<BitboxNotConnected>());
     });
 
-    test('non-Lost transitions on the status stream do NOT spuriously bounce',
-        () async {
+    test('non-Lost transitions on the status stream do NOT spuriously bounce', () async {
       // Defensive: emitting Paired or Connecting from the service must not
       // flip the cubit's UX state. Only Lost is load-bearing.
       final cubit = makeCubit();
@@ -484,8 +488,7 @@ void main() {
       );
     });
 
-    test('close() cancels the status subscription (no leak after close)',
-        () async {
+    test('close() cancels the status subscription (no leak after close)', () async {
       final cubit = makeCubit();
       expect(statusController.hasListener, isTrue);
       await cubit.close();

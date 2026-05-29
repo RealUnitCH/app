@@ -48,8 +48,7 @@ void main() {
     final service = BitboxService(connectionStatusInterval: interval);
     final devices = await service.getAllUsbDevices();
     final status = await service.init(devices.single);
-    expect(status, isA<Paired>(),
-        reason: 'integration setup requires a successful pair');
+    expect(status, isA<Paired>(), reason: 'integration setup requires a successful pair');
     return service;
   }
 
@@ -60,8 +59,7 @@ void main() {
       addTearDown(service.dispose);
 
       final credentials = service.getCredentials(knownAddress);
-      expect(credentials.isConnected, isTrue,
-          reason: 'credentials must be live after pair');
+      expect(credentials.isConnected, isTrue, reason: 'credentials must be live after pair');
 
       // sign via the typed-message path so the credentials hit
       // signETHTypedMessage on the simulator and we observe the full
@@ -158,8 +156,11 @@ void main() {
       expect(status, isA<Paired>(), reason: 're-init must succeed');
 
       final reAcquired = service.getCredentials(knownAddress);
-      expect(reAcquired.isConnected, isTrue,
-          reason: 're-acquired credentials are attached to the new pairing');
+      expect(
+        reAcquired.isConnected,
+        isTrue,
+        reason: 're-acquired credentials are attached to the new pairing',
+      );
       // The signature must succeed via the re-attached manager.
       final sig = await reAcquired.signTypedDataV4(
         1,
@@ -214,11 +215,13 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 10));
 
       final losts = transitions.whereType<Lost>().toList();
-      expect(losts, isNotEmpty,
-          reason: 'sign-queue propagation must emit Lost on the stream');
+      expect(losts, isNotEmpty, reason: 'sign-queue propagation must emit Lost on the stream');
       expect(losts.last.reason, equals(LostReason.signQueueTimeout));
-      expect(credentials.isConnected, isFalse,
-          reason: 'signalDeviceLost must detach every credentials');
+      expect(
+        credentials.isConnected,
+        isFalse,
+        reason: 'signalDeviceLost must detach every credentials',
+      );
     },
   );
 
@@ -246,10 +249,16 @@ void main() {
         expect(sig, isNotEmpty);
 
         await service.clear();
-        expect(service.currentStatus, equals(const Disconnected()),
-            reason: 'cycle $i: clear must terminate at Disconnected');
-        expect(credentials.isConnected, isFalse,
-            reason: 'cycle $i: clear must detach the credentials');
+        expect(
+          service.currentStatus,
+          equals(const Disconnected()),
+          reason: 'cycle $i: clear must terminate at Disconnected',
+        );
+        expect(
+          credentials.isConnected,
+          isFalse,
+          reason: 'cycle $i: clear must detach the credentials',
+        );
       }
 
       expect(
@@ -330,52 +339,50 @@ void main() {
     final service = BitboxService(connectionStatusInterval: interval);
     addTearDown(service.dispose);
     final ok = await service.startScan();
-    expect(ok, isTrue,
-        reason: 'simulated platform reports scan success by default');
+    expect(ok, isTrue, reason: 'simulated platform reports scan success by default');
     expect(platform.count(SimulatedBitboxMethod.startScan), 1);
   });
 
-  test('init() failure inside `connect` walks Connecting → Disconnected via the catch arm',
-      () async {
-    // Drives the catch-arm inside `_runInit` that re-emits Disconnected
-    // when an exception escapes the connect path. Achieved by making the
-    // simulator's `open` throw (the SDK call site rethrows the original).
-    platform.throwOn(SimulatedBitboxMethod.open, Exception('USB busy'));
+  test(
+    'init() failure inside `connect` walks Connecting → Disconnected via the catch arm',
+    () async {
+      // Drives the catch-arm inside `_runInit` that re-emits Disconnected
+      // when an exception escapes the connect path. Achieved by making the
+      // simulator's `open` throw (the SDK call site rethrows the original).
+      platform.throwOn(SimulatedBitboxMethod.open, Exception('USB busy'));
 
-    final service = BitboxService(connectionStatusInterval: interval);
-    addTearDown(service.dispose);
-    final observed = <BitboxConnectionStatus>[];
-    final sub = service.status.listen(observed.add);
-    addTearDown(sub.cancel);
+      final service = BitboxService(connectionStatusInterval: interval);
+      addTearDown(service.dispose);
+      final observed = <BitboxConnectionStatus>[];
+      final sub = service.status.listen(observed.add);
+      addTearDown(sub.cancel);
 
-    final devices = await service.getAllUsbDevices();
-    await expectLater(
-      () => service.init(devices.single),
-      throwsA(isA<Exception>()),
-    );
-    // Drain any pending broadcast events so the post-throw Disconnected
-    // lands in `observed` before we assert.
-    await Future<void>.delayed(const Duration(milliseconds: 10));
+      final devices = await service.getAllUsbDevices();
+      await expectLater(
+        () => service.init(devices.single),
+        throwsA(isA<Exception>()),
+      );
+      // Drain any pending broadcast events so the post-throw Disconnected
+      // lands in `observed` before we assert.
+      await Future<void>.delayed(const Duration(milliseconds: 10));
 
-    // Drop the replayed initial Disconnected so the assertion describes
-    // only the transitions caused by init().
-    final transitions = observed
-        .skipWhile((s) => s is Disconnected)
-        .toList(growable: false);
-    expect(
-      transitions.map((s) => s.runtimeType).toList(),
-      containsAllInOrder(<Type>[Connecting, Disconnected]),
-      reason: 'failure in connect must walk Connecting → Disconnected',
-    );
-  });
+      // Drop the replayed initial Disconnected so the assertion describes
+      // only the transitions caused by init().
+      final transitions = observed.skipWhile((s) => s is Disconnected).toList(growable: false);
+      expect(
+        transitions.map((s) => s.runtimeType).toList(),
+        containsAllInOrder(<Type>[Connecting, Disconnected]),
+        reason: 'failure in connect must walk Connecting → Disconnected',
+      );
+    },
+  );
 
   test('getChannelHash and confirmPairing delegate to the SDK', () async {
     final service = await pair();
     addTearDown(service.dispose);
 
     final hash = await service.getChannelHash();
-    expect(hash, isNotEmpty,
-        reason: 'simulator returns its default channel hash');
+    expect(hash, isNotEmpty, reason: 'simulator returns its default channel hash');
 
     await service.confirmPairing();
     expect(platform.count(SimulatedBitboxMethod.channelHashVerify), 1);
@@ -430,8 +437,7 @@ void main() {
         BitboxConnectionStatus? initStatus;
         service.init(devices.single).then((s) => initStatus = s);
         async.flushMicrotasks();
-        expect(initStatus, isA<Paired>(),
-            reason: 'fakeAsync init must reach Paired');
+        expect(initStatus, isA<Paired>(), reason: 'fakeAsync init must reach Paired');
 
         final observed = <BitboxConnectionStatus>[];
         final sub = service.status.listen(observed.add);
@@ -455,14 +461,16 @@ void main() {
         );
         async.flushMicrotasks();
 
-        expect(thrown, isA<BitboxNotConnectedException>(),
-            reason: 'queue-bound timeout must surface the typed exception');
+        expect(
+          thrown,
+          isA<BitboxNotConnectedException>(),
+          reason: 'queue-bound timeout must surface the typed exception',
+        );
 
         // The closure fired Lost(signQueueTimeout) on the stream BEFORE the
         // exception reached the caller.
         final losts = observed.whereType<Lost>().toList();
-        expect(losts, isNotEmpty,
-            reason: 'sign-queue timeout must reach the service-level stream');
+        expect(losts, isNotEmpty, reason: 'sign-queue timeout must reach the service-level stream');
         expect(losts.last.reason, equals(LostReason.signQueueTimeout));
 
         sub.cancel();
@@ -473,4 +481,3 @@ void main() {
 
 // fakeAsync requires Uint8List for the typed-data return; pulled in via
 // bitbox_flutter export above. Keep the test file dependency-clean.
-

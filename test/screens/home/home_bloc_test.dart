@@ -29,7 +29,6 @@ class _FakeWallet extends Fake implements AWallet {}
 const _debugAddress = '0x0000000000000000000000000000000000000001';
 const _primary = '0x00000000000000000000000000000000deadbeef';
 
-
 void main() {
   late _MockWalletService walletService;
   late _MockBalanceService balanceService;
@@ -67,6 +66,7 @@ void main() {
     when(() => balanceService.startSync(any())).thenReturn(null);
     when(() => transactionHistoryService.apiBasedSync()).thenAnswer((_) async {});
     when(() => bitboxService.stopConnectionStatusObserver()).thenReturn(null);
+    when(() => bitboxService.clear()).thenAnswer((_) async {});
   });
 
   HomeBloc build() => HomeBloc(
@@ -401,8 +401,7 @@ void main() {
         when(() => appStore.sessionCache).thenReturn(sessionCache);
       });
 
-      test('calls BitboxService.clear() in addition to stopConnectionStatusObserver',
-          () async {
+      test('calls BitboxService.clear() in addition to stopConnectionStatusObserver', () async {
         when(() => walletService.hasWallet()).thenReturn(true);
         when(() => settingsService.isTermsAccepted).thenReturn(true);
 
