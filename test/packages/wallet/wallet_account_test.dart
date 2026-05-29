@@ -9,8 +9,6 @@
 
 import 'dart:typed_data';
 
-import 'package:bip32/bip32.dart';
-import 'package:bip39/bip39.dart' as bip39;
 import 'package:bitbox_flutter/bitbox_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -20,8 +18,6 @@ import 'package:web3dart/credentials.dart';
 import 'package:web3dart/crypto.dart';
 
 class _MockBitboxManager extends Mock implements BitboxManager {}
-
-const _testMnemonic = 'test test test test test test test test test test test junk';
 
 class _StubCredentials extends CredentialsWithKnownAddress {
   _StubCredentials(this._address);
@@ -48,8 +44,9 @@ class _StubAccount extends AWalletAccount {
 }
 
 void main() {
-  final stubAddress =
-      _StubCredentials(EthereumAddress.fromHex('0x0000000000000000000000000000000000000001'));
+  final stubAddress = _StubCredentials(
+    EthereumAddress.fromHex('0x0000000000000000000000000000000000000001'),
+  );
 
   group('$AWalletAccount.getDerivationPath', () {
     test('uses the BIP-44 Ethereum format with account index zero', () {

@@ -62,6 +62,8 @@ void main() {
 
   setUp(() {
     storage = _MockSecureStorage();
+    when(() => storage.readBiometricCryptoSentinel(any())).thenAnswer((_) async => 'sentinel');
+    when(() => storage.writeBiometricCryptoSentinel(any(), any())).thenAnswer((_) async {});
   });
 
   group('$BiometricService', () {
@@ -142,7 +144,10 @@ void main() {
         final port = _FakeBiometricPort(authenticateResult: true);
         final service = BiometricService(storage, biometric: port);
 
-        expect(await service.authenticate(), isTrue);
+        final result = await service.authenticate();
+
+        expect(result.success, isTrue);
+        expect(result.unwrappedSecret, 'sentinel');
         expect(port.authenticateCalls, 1);
         expect(port.lastReason, 'Authenticate to unlock your wallet');
         expect(port.lastBiometricOnly, isTrue);
@@ -153,7 +158,10 @@ void main() {
         final port = _FakeBiometricPort(authenticateResult: false);
         final service = BiometricService(storage, biometric: port);
 
-        expect(await service.authenticate(), isFalse);
+        final result = await service.authenticate();
+
+        expect(result.success, isFalse);
+        expect(result.unwrappedSecret, isNull);
       });
 
       test('returns false and swallows when the platform throws', () async {
@@ -162,18 +170,43 @@ void main() {
         );
         final service = BiometricService(storage, biometric: port);
 
-        expect(await service.authenticate(), isFalse);
+        final result = await service.authenticate();
+
+        expect(result.success, isFalse);
+        expect(result.unwrappedSecret, isNull);
+      });
+
+      test('authenticateBoolean bridges to authenticate().success', () async {
+        final port = _FakeBiometricPort(authenticateResult: true);
+        final service = BiometricService(storage, biometric: port);
+
+        expect(await service.authenticateBoolean(), isTrue);
+        expect(port.authenticateCalls, 1);
       });
     });
 
     group('enable', () {
       test('persists the flag and returns true when authenticate succeeds', () async {
-        when(() => storage.setIsBiometricEnabled(enabled: any(named: 'enabled')))
-            .thenAnswer((_) async {});
+        when(
+          () => storage.setIsBiometricEnabled(enabled: any(named: 'enabled')),
+        ).thenAnswer((_) async {});
         final port = _FakeBiometricPort(authenticateResult: true);
         final service = BiometricService(storage, biometric: port);
 
         expect(await service.enable(), isTrue);
+        verify(() => storage.setIsBiometricEnabled(enabled: true)).called(1);
+      });
+
+      test('seats a sentinel before persisting when none exists yet', () async {
+        when(() => storage.readBiometricCryptoSentinel(any())).thenAnswer((_) async => null);
+        when(
+          () => storage.setIsBiometricEnabled(enabled: any(named: 'enabled')),
+        ).thenAnswer((_) async {});
+        final port = _FakeBiometricPort(authenticateResult: true);
+        final service = BiometricService(storage, biometric: port);
+
+        expect(await service.enable(), isTrue);
+        verify(() => storage.writeBiometricCryptoSentinel(any(), any())).called(1);
         verify(() => storage.setIsBiometricEnabled(enabled: true)).called(1);
       });
 
@@ -196,8 +229,9 @@ void main() {
 
     group('disable', () {
       test('clears the secure-storage flag', () async {
-        when(() => storage.setIsBiometricEnabled(enabled: any(named: 'enabled')))
-            .thenAnswer((_) async {});
+        when(
+          () => storage.setIsBiometricEnabled(enabled: any(named: 'enabled')),
+        ).thenAnswer((_) async {});
         final service = BiometricService(storage, biometric: _FakeBiometricPort());
 
         await service.disable();
@@ -211,6 +245,17 @@ void main() {
       // need a real device to do anything, but the constructor itself stays
       // pure.
       expect(BiometricService(storage), isNotNull);
+    });
+
+    test('BiometricAuthResult.forTesting exposes the provided payload', () {
+      // ignore: prefer_const_constructors
+      final result = BiometricAuthResult.forTesting(
+        success: true,
+        unwrappedSecret: 'test-secret',
+      );
+
+      expect(result.success, isTrue);
+      expect(result.unwrappedSecret, 'test-secret');
     });
   });
 }

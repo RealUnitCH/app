@@ -24,7 +24,7 @@ class SecureStorage {
   /// of the FlutterSecureStorage call sites cannot quietly drop the
   /// constraint; the snapshot test in
   /// `test/packages/storage/secure_storage_options_test.dart` will
-  /// fail if this value changes. See BL-050 / ADR 0004 §"flutter_secure_storage
+  /// fail if this value changes. See BL-050 / ADR 0003 §"flutter_secure_storage
   /// hardening".
   static const iosOptions = IOSOptions(
     accessibility: KeychainAccessibility.first_unlock_this_device,
@@ -160,7 +160,7 @@ class SecureStorage {
   ///   - 600k (current target) — fast path, accepted without rehash.
   ///   - 250k / 100k — accepted as legacy, immediately re-derived at
   ///     600k and the stored hash is overwritten. Atomic: a single
-  ///     secure-storage write per ADR 0004 §"Rehash atomicity"; if
+  ///     secure-storage write per ADR 0003 §"Rehash atomicity"; if
   ///     the write fails the old legacy hash remains and the next
   ///     unlock takes the same path.
   ///   - 10k — NOT accepted (BL-045 removed it). A PIN at this
@@ -246,7 +246,7 @@ class SecureStorage {
   /// Read the biometric-CryptoObject sentinel under [key]. Called by
   /// `BiometricService.authenticate` AFTER a successful biometric
   /// prompt — the native CryptoObject binding gates the underlying
-  /// Keychain / Keystore read on the biometric. See BL-049 / ADR 0004
+  /// Keychain / Keystore read on the biometric. See BL-049 / ADR 0003
   /// §"Biometric CryptoObject binding".
   Future<String?> readBiometricCryptoSentinel(String key) =>
       _secureStorage.read(key: key);

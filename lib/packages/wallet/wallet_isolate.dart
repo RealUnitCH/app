@@ -26,7 +26,7 @@
 /// reaches the isolate and prevents the decrypted seed from being
 /// pinned in the unlocked-slots map.
 ///
-/// See `docs/adr/0004-crypto-hygiene-boundaries.md` for the threat
+/// See `docs/adr/0003-crypto-hygiene-boundaries.md` for the threat
 /// model, the alternatives considered, and the rationale for the
 /// long-lived single-isolate shape (versus per-sign spawn).
 library;
@@ -242,7 +242,7 @@ class WalletIsolate {
 
   /// Spawns the dedicated isolate and returns the handle. The
   /// per-process lifetime is intentional — spawning a fresh isolate per
-  /// sign was rejected in ADR 0004 (60ms spawn cost; 13-page EIP-712
+  /// sign was rejected in ADR 0003 (60ms spawn cost; 13-page EIP-712
   /// ceremony would pay ~780ms in spawn overhead alone).
   static Future<WalletIsolate> spawn() async {
     final receivePort = ReceivePort();

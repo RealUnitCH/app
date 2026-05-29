@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 
-import 'package:local_auth/local_auth.dart';
+import 'package:realunit_wallet/packages/service/biometric/biometric_port.dart';
+import 'package:realunit_wallet/packages/service/biometric/biometric_service_adapter.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 
 /// Service for handling biometric authentication.
@@ -28,19 +29,18 @@ import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 ///   `kSecAttrAccessControl = SecAccessControlCreateWithFlags(.biometryAny)`
 ///   is stored in the Keychain. Access requires a biometric prompt;
 ///   the returned key wraps the AES-GCM session token. Trade-off
-///   documented in ADR 0004 §"Biometric CryptoObject binding": we
+///   documented in ADR 0003 §"Biometric CryptoObject binding": we
 ///   pick `biometryAny` because `biometryCurrentSet` requires
 ///   re-enrol on every Face-ID-template addition, and an attacker
 ///   who can enrol their face has already breached the device
 ///   unlock.
 class BiometricService {
-  final LocalAuthentication _auth = LocalAuthentication();
-
-  BiometricService(
-    SecureStorage secureStorage,
-  ) : _secureStorage = secureStorage;
+  BiometricService(SecureStorage secureStorage, {BiometricPort? biometric})
+    : _secureStorage = secureStorage,
+      _biometric = biometric ?? BiometricServiceAdapter();
 
   final SecureStorage _secureStorage;
+  final BiometricPort _biometric;
 
   /// Internal key under which the biometric-bound token lives in
   /// secure storage. Reading this key from the Keychain / Keystore
@@ -52,8 +52,8 @@ class BiometricService {
   static const _biometricCryptoSentinelKey = 'biometric.cryptoObject.sentinel';
 
   Future<bool> isAvailable() async {
-    final canCheck = await _auth.canCheckBiometrics;
-    final isSupported = await _auth.isDeviceSupported();
+    final canCheck = await _biometric.canCheckBiometrics();
+    final isSupported = await _biometric.isDeviceSupported();
     return canCheck && isSupported;
   }
 
@@ -73,7 +73,7 @@ class BiometricService {
   /// sentinel; the sentinel field is the cryptographic floor.
   Future<BiometricAuthResult> authenticate() async {
     try {
-      final ok = await _auth.authenticate(
+      final ok = await _biometric.authenticate(
         localizedReason: 'Authenticate to unlock your wallet',
         biometricOnly: true,
         persistAcrossBackgrounding: true,

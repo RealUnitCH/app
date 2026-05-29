@@ -12,6 +12,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
+import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_isolate.dart';
 
 class _MockBitboxService extends Mock implements BitboxService {}
@@ -367,7 +368,8 @@ void main() {
       expect(
         () => draft.mnemonic,
         throwsA(isA<StateError>()),
-        reason: 'post-dispose reads must throw — silently returning the '
+        reason:
+            'post-dispose reads must throw — silently returning the '
             'space-filled placeholder would let the UI render a fake seed',
       );
     });

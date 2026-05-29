@@ -66,7 +66,7 @@ class VerifySeedCubit extends Cubit<VerifySeedState> with WidgetsBindingObserver
         // file at 100 % of the lines that unit tests can actually reach.
         enteredWords:
             kDebugMode // Pre-fill words in debug mode
-            ? sortedIndices.map((i) => _wallet.seed.seedWords[i]).toList()
+            ? sortedIndices.map((i) => words[i]).toList()
             : List.filled(4, ''), // coverage:ignore-line
       ),
     );
@@ -162,8 +162,7 @@ class VerifySeedCubit extends Cubit<VerifySeedState> with WidgetsBindingObserver
     // `hidden` fires before `paused` on every platform; using `hidden`
     // gives the earliest reaction window, which matters for the iOS
     // app-suspend snapshot (taken on transition to inactive/paused).
-    if (state == AppLifecycleState.hidden ||
-        state == AppLifecycleState.paused) {
+    if (state == AppLifecycleState.hidden || state == AppLifecycleState.paused) {
       _disposeDraft();
     }
   }

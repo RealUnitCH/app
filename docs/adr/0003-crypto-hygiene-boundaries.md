@@ -1,4 +1,4 @@
-# ADR 0004 — Crypto Hygiene Boundaries
+# ADR 0003 — Crypto Hygiene Boundaries
 
 Status: Proposed
 Date: 2026-05-23

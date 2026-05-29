@@ -265,7 +265,9 @@ void main() {
     group('DeleteCurrentWalletEvent', () {
       test('with wallet present → clears wallet, terms, session cache', () async {
         when(() => walletService.hasWallet()).thenReturn(true);
-        when(() => walletService.deleteCurrentWallet()).thenAnswer((_) async {});
+        when(() => walletService.deleteCurrentWallet()).thenAnswer(
+          (_) async => (accountRows: 0, walletRows: 1, mnemonicKeyDeleted: false),
+        );
 
         final bloc = build();
         await bloc.stream.firstWhere((s) => s.hasWallet);
