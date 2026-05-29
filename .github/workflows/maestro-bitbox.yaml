@@ -333,7 +333,10 @@ jobs:
       - m3-multi-page-ble-toggle
       - m5-channel-hash-mismatch
       - m6-factory-reset
-    runs-on: [self-hosted, macOS, arm64, bitbox]
+    # The summary only inspects GitHub's recorded job results. Keep it on a
+    # hosted runner so an unlabelled PR can complete the workflow immediately
+    # instead of waiting for scarce BitBox hardware just to report "skipped".
+    runs-on: ubuntu-latest
     steps:
       - name: Aggregate outcomes
         run: |
