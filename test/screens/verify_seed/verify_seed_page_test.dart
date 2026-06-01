@@ -1,5 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -180,6 +181,36 @@ void main() {
           findsOne,
         );
       });
+    });
+
+    // Regression for issue #612 S1: the verify-seed screen (where the user
+    // re-enters real seed words) had no screenshot protection, unlike the
+    // sibling seed screens. It must disable screenshots on init and re-enable
+    // on dispose so it never lands in the app-switcher snapshot / a recording.
+    testWidgets('disables screenshots on init and re-enables on dispose',
+        (tester) async {
+      const channel = MethodChannel('com.flutterplaza.no_screenshot_methods');
+      final calls = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        channel,
+        (call) async {
+          calls.add(call.method);
+          return true;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, null),
+      );
+
+      await tester.pumpApp(buildSubject(const VerifySeedView()));
+      expect(calls, contains('screenshotOff'),
+          reason: 'seed screen must block screenshots on init');
+
+      // Replace the screen so VerifySeedView is disposed.
+      await tester.pumpApp(buildSubject(const SizedBox.shrink()));
+      expect(calls, contains('screenshotOn'),
+          reason: 'leaving the seed screen must re-enable screenshots');
     });
 
     group('$BlocListener', () {
