@@ -1,4 +1,4 @@
-git_url("git@github.com:DFXswiss/fastlane-certificates.git")
+git_url("git@github.com:RealUnitCH/fastlane-certificates.git")
 
 storage_mode("git")
 
