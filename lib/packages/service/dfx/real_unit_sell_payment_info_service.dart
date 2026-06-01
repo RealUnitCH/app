@@ -132,9 +132,11 @@ class RealUnitSellPaymentInfoService extends DFXAuthService {
             authorization: Eip7702AuthorizationDto(
               chainId: paymentInfo.eip7702.domain.chainId,
               address: paymentInfo.eip7702.delegatorAddress,
-              // uint64 nonce as a decimal string (DTO accepts number-or-string)
-              // so a large value is never truncated on the way to the backend.
-              nonce: paymentInfo.eip7702.userNonce.toString(),
+              // Echo the authorization nonce as a JSON number (the backend
+              // contract). The exact uint64 is preserved on the security-
+              // critical path — signAuthorization signs the full BigInt; this
+              // is just the metadata echo the backend cross-checks.
+              nonce: paymentInfo.eip7702.userNonce.toInt(),
               // r/s zero-padded to 32 bytes (64 hex chars): an ECDSA component
               // with leading zero bytes must not be sent short to the backend.
               r: '0x${authorizationSignature.r.toRadixString(16).padLeft(64, '0')}',

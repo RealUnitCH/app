@@ -42,9 +42,15 @@ final _walletAddress = _privKey.address.hexEip55.toLowerCase();
 
 const _metaMaskDelegator = '0x63c0c19a282a1b52b07dd5a65b58948a07dae32b';
 const _delegationManager = '0xdb9b1e94b5b69df7e401ddbede43491141047db3';
+// Now that confirmPayment signs through the schema-pinned envelope, the typed
+// EIP-712 message is actually ABI-encoded — so address/bytes32 fields must be
+// real hex (a 20-byte relayer and a 32-byte authority), not placeholders.
+const _relayer = '0x0000000000000000000000000000000000000abc';
+const _authority =
+    '0x0000000000000000000000000000000000000000000000000000000000000000';
 
 Map<String, dynamic> _validEip7702Json() => {
-      'relayerAddress': '0xrelay',
+      'relayerAddress': _relayer,
       'delegationManagerAddress': _delegationManager,
       'delegatorAddress': _metaMaskDelegator,
       'userNonce': 7,
@@ -54,14 +60,27 @@ Map<String, dynamic> _validEip7702Json() => {
         'chainId': 1,
         'verifyingContract': _delegationManager,
       },
+      // Canonical MetaMask Delegation Framework v1.3.0 type set. confirmPayment
+      // now signs through the schema-pinned signDelegationEnvelope, which
+      // rejects any deviation from this set — so the fixture must carry the
+      // real types (matching test/integration/eip7702_delegation_bitbox_test).
       'types': {
-        'Delegation': <Map<String, dynamic>>[],
-        'Caveat': <Map<String, dynamic>>[],
+        'Delegation': <Map<String, dynamic>>[
+          {'name': 'delegate', 'type': 'address'},
+          {'name': 'delegator', 'type': 'address'},
+          {'name': 'authority', 'type': 'bytes32'},
+          {'name': 'caveats', 'type': 'Caveat[]'},
+          {'name': 'salt', 'type': 'uint256'},
+        ],
+        'Caveat': <Map<String, dynamic>>[
+          {'name': 'enforcer', 'type': 'address'},
+          {'name': 'terms', 'type': 'bytes'},
+        ],
       },
       'message': {
-        'delegate': '0xrelay',
+        'delegate': _relayer,
         'delegator': _walletAddress,
-        'authority': '0xauth',
+        'authority': _authority,
         'caveats': <Map<String, dynamic>>[],
         'salt': 0,
       },
@@ -143,9 +162,9 @@ void main() {
       final authorization = envelope['authorization'] as Map<String, dynamic>;
 
       // Delegation block mirrors the eip7702 data + carries a real signature.
-      expect(delegation['delegate'], '0xrelay');
+      expect(delegation['delegate'], _relayer);
       expect(delegation['delegator'], _walletAddress);
-      expect(delegation['authority'], '0xauth');
+      expect(delegation['authority'], _authority);
       expect(delegation['salt'], '0');
       expect((delegation['signature'] as String).startsWith('0x'), isTrue);
       // 65-byte EIP-712 signature → 0x + 130 hex chars.
