@@ -29,7 +29,10 @@ jobs:
           ssh-private-key: ${{ secrets.TAG_DEPLOY_KEY }}
 
       - name: Configure Git for SSH
-        run: git remote set-url origin git@github.com:DFXswiss/realunit-app.git
+        # `${{ github.repository }}` resolves to `<owner>/<repo>` for the
+        # currently running workflow — keeps the remote correct if the repo
+        # is renamed or transferred between orgs, without a follow-up edit.
+        run: git remote set-url origin git@github.com:${{ github.repository }}.git
 
       - name: Get latest tag
         id: get-tag
