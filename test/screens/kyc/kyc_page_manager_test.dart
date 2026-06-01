@@ -84,9 +84,9 @@ void main() {
     );
   });
 
-  // Regression for issue #613 K1: an in-progress `dfxApproval` step used to land
-  // on a blank white Scaffold (the `(_) => const Scaffold()` fallback in
-  // KycViewManager). It must render the existing pending page instead.
+  // An in-progress `dfxApproval` step used to land on a blank white Scaffold
+  // (the `(_) => const Scaffold()` fallback in KycViewManager). It must render
+  // the existing pending page instead.
   testWidgets(
     'KycSuccess(dfxApproval) renders KycPendingPage, not a blank Scaffold',
     (tester) async {
