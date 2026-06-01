@@ -151,22 +151,35 @@ jobs:
       - run: dart run tool/generate_release_info.dart
       - run: flutter pub run build_runner build
 
+      # Bind the iOS cache key to the active Xcode / iOS-SDK version so
+      # cached `.pcm` module files are not reused across an SDK rev. Without
+      # this, the cache key matched on `runner.os + lock files` only and
+      # restored a cached `SwiftShims-*.pcm` whose `module.modulemap` mtime
+      # no longer matched the SDK on disk — Swift then rejected the cached
+      # module and the build failed with "module file ... was built: mtime
+      # changed". Pinning the cache to `xcodebuild -version` invalidates the
+      # cache the moment the runner image upgrades Xcode.
+      - name: Resolve Xcode version
+        id: xcode
+        run: echo "version=$(xcodebuild -version | tr '\n' '-' | sed 's/[^A-Za-z0-9.-]//g; s/-$//')" >> "$GITHUB_OUTPUT"
+
       # Cache iOS DerivedData (compiled Flutter modules) + Pods (Cocoapods
       # dependencies). On a cache hit, `flutter build ios --simulator
       # --debug` reuses the cached objects and the build time drops from
       # ~5-6 min to ~2-3 min. Cache-Key invalidates on pubspec.lock or
       # Podfile.lock changes — i.e. any dependency bump forces a clean
-      # build. The restore-keys fallback allows partial cache reuse if
-      # the lock files moved but the SDK is unchanged.
+      # build — and additionally on Xcode version (see step above). The
+      # restore-keys fallback allows partial cache reuse if the lock files
+      # moved but the SDK is unchanged.
       - name: Cache iOS DerivedData + Pods
         uses: actions/cache@v4
         with:
           path: |
             ~/Library/Developer/Xcode/DerivedData
             ios/Pods
-          key: ios-derived-data-${{ runner.os }}-${{ hashFiles('pubspec.lock', 'ios/Podfile.lock') }}
+          key: ios-derived-data-${{ runner.os }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('pubspec.lock', 'ios/Podfile.lock') }}
           restore-keys: |
-            ios-derived-data-${{ runner.os }}-
+            ios-derived-data-${{ runner.os }}-${{ steps.xcode.outputs.version }}-
 
       - name: Build iOS simulator app
         run: flutter build ios --simulator --debug
