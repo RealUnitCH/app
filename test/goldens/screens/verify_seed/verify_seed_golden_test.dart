@@ -1,5 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -16,6 +17,12 @@ void main() {
   late _MockVerifySeedCubit verifySeedCubit;
   late MockHomeBloc homeBloc;
 
+  // VerifySeedView toggles screenshot protection in initState/dispose via the
+  // no_screenshot method channel. Stub it so the render does not throw a
+  // MissingPluginException in the headless golden harness.
+  const noScreenshotChannel =
+      MethodChannel('com.flutterplaza.no_screenshot_methods');
+
   setUp(() {
     verifySeedCubit = _MockVerifySeedCubit();
     homeBloc = MockHomeBloc();
@@ -26,6 +33,13 @@ void main() {
       ),
     );
     when(() => homeBloc.state).thenReturn(const HomeState());
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(noScreenshotChannel, (_) async => true);
+  });
+
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(noScreenshotChannel, null);
   });
 
   Widget buildSubject() => MultiBlocProvider(
