@@ -13,6 +13,20 @@ flutter analyze                             # lint check
 
 After changing ARB files, always regenerate: `dart run tool/generate_localization.dart`
 
+## Branch Flow
+
+Three branches participate in the release lane:
+
+- `staging` — integration branch. **All feature PRs target `staging`**, not `develop`. Same protections as `develop`: 1 approval + `Analyze & Test` + `Visual Regression` + `Coverage Floor Gate`.
+- `develop` — pre-release. Receives changes via [`auto-staging-pr.yaml`](.github/workflows/auto-staging-pr.yaml), which opens a `staging → develop` PR on every push to `staging`.
+- `main` — production. Receives changes via [`auto-release-pr.yaml`](.github/workflows/auto-release-pr.yaml), which opens a `develop → main` PR on every push to `develop`.
+
+```
+feature/* ──(PR)──> staging ──(auto-PR)──> develop ──(auto-PR)──> main
+```
+
+The auto-opened promotion PRs are idempotent — only one is open per branch pair at any time. Each one waits for the same review + CI gates as the underlying branch. Tagged releases (`v*`) trigger after the relevant branch receives the commit; see the Release Versioning workflow table in the README for details.
+
 ## API Access — CRITICAL
 
 - The app is **only allowed to talk to the DFX API**: `api.dfx.swiss` (mainnet) and `dev.api.dfx.swiss` (testnet/Sepolia). No other hosts.
