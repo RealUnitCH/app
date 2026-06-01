@@ -16,15 +16,19 @@ name: RealUnit Build
 #    below (saves macOS-runner minutes while work is still in progress).
 #  - `labeled` / `unlabeled` are intentionally omitted: realunit-app has
 #    no label-gated heavy job here (Tier 3 has its own workflow).
-#  - `push: develop` keeps post-merge verification as an authoritative
-#    source of truth, independent of any PR state. Other branches do
-#    not need a post-push check — the PR-event already covers them.
+#  - `push: develop` and `push: staging` keep post-merge verification
+#    as an authoritative source of truth, independent of any PR state.
+#    `staging` participates because feature → staging merges land an
+#    integration commit whose verification cannot be deferred to the
+#    auto-opened staging → develop PR (the gate must be authoritative
+#    at the moment the commit lands on staging). Other branches do not
+#    need a post-push check — the PR-event already covers them.
 #  - `workflow_dispatch` is kept as a manual override and is NOT
 #    draft-gated (see the job `if:` guard below).
 on:
   workflow_dispatch:
   push:
-    branches: [develop]
+    branches: [develop, staging]
   pull_request:
     branches-ignore: [main]
     types: [opened, synchronize, reopened, ready_for_review]
