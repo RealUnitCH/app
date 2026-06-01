@@ -147,8 +147,8 @@ void main() {
     });
 
     test('purgeWallet removes the walletInfos seed row AND the mnemonic key', () async {
-      // Regression for #612 S2: the user-facing delete must leave no
-      // recoverable seed material — neither the encrypted row nor the AES key.
+      // The user-facing delete must leave no recoverable seed material —
+      // neither the encrypted row nor the AES key.
       when(() => secureStorage.deleteMnemonicKey()).thenAnswer((_) async {});
 
       final walletId = await repo.createWallet(walletName, WalletType.software, seed, address);

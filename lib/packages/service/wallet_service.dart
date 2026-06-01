@@ -274,8 +274,8 @@ class WalletService {
 
   Future<void> deleteCurrentWallet() async {
     final id = _settingsRepository.currentWalletId!;
-    // Full purge (seed row + mnemonic key), not the account-only deleteWallet
-    // used by onboarding-regenerate — so no recoverable seed survives delete.
+    // Full purge (seed row + mnemonic key), not an account-only delete — so no
+    // recoverable seed survives delete.
     await _repository.purgeWallet(id);
     await _settingsRepository.removeCurrentWalletId();
   }

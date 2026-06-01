@@ -441,8 +441,8 @@ void main() {
 
         await service.deleteCurrentWallet();
 
-        // User-facing delete must fully purge (seed row + mnemonic key), not the
-        // account-only deleteWallet used by onboarding-regenerate (#612 S2).
+        // User-facing delete must fully purge (seed row + mnemonic key), not
+        // the account-only delete.
         verify(() => repo.purgeWallet(8)).called(1);
         verifyNever(() => repo.deleteWallet(any()));
         verify(() => settings.removeCurrentWalletId()).called(1);

@@ -30,9 +30,7 @@ extension WalletStorage on AppDatabase {
 
   /// Deletes the `walletInfos` row itself (the encrypted-seed record) after
   /// clearing its dependent `walletAccountInfos` rows (FK in
-  /// [WalletAccountInfos.wallet]). Distinct from [deleteWallet], which clears
-  /// only accounts and deliberately leaves the seed row for the
-  /// onboarding-regenerate flow.
+  /// [WalletAccountInfos.wallet]).
   Future<void> deleteWalletCompletely(int walletId) => transaction(() async {
     await (delete(walletAccountInfos)..where((row) => row.wallet.equals(walletId))).go();
     await (delete(walletInfos)..where((row) => row.id.equals(walletId))).go();

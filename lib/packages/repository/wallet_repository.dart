@@ -46,7 +46,7 @@ class WalletRepository {
 
   /// Full purge for the user-facing delete: removes the encrypted-seed row AND
   /// the AES-GCM mnemonic key, so no recoverable seed material remains on
-  /// device. [deleteWallet] (account-only) is preserved for onboarding regen.
+  /// device.
   Future<void> purgeWallet(int id) async {
     await _appDatabase.deleteWalletCompletely(id);
     await _secureStorage.deleteMnemonicKey();
