@@ -44,6 +44,38 @@ class KycFinancialDataLoadedSuccess extends KycFinancialDataState {
   List<Object?> get props => [allQuestions, visibleQuestions, responses, currentIndex, url];
 }
 
+/// Submit failed but the collected answers are retained so the user can retry
+/// instead of being stranded on a dead-end failure page (issue #613 K2).
+/// Subclasses LoadedSuccess so the page keeps rendering the questions UI and
+/// the cubit's `is! KycFinancialDataLoadedSuccess` guards still allow a retry.
+class KycFinancialDataSubmitFailure extends KycFinancialDataLoadedSuccess {
+  final String message;
+
+  const KycFinancialDataSubmitFailure({
+    required this.message,
+    required super.allQuestions,
+    required super.visibleQuestions,
+    required super.responses,
+    required super.currentIndex,
+    required super.url,
+  });
+
+  factory KycFinancialDataSubmitFailure.from(
+    KycFinancialDataLoadedSuccess state,
+    String message,
+  ) => KycFinancialDataSubmitFailure(
+        message: message,
+        allQuestions: state.allQuestions,
+        visibleQuestions: state.visibleQuestions,
+        responses: state.responses,
+        currentIndex: state.currentIndex,
+        url: state.url,
+      );
+
+  @override
+  List<Object?> get props => [...super.props, message];
+}
+
 class KycFinancialDataSubmitting extends KycFinancialDataState {
   const KycFinancialDataSubmitting();
 }

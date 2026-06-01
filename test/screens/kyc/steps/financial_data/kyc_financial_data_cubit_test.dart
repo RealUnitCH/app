@@ -176,8 +176,11 @@ void main() {
       verify: (_) => verify(() => service.setFinancialData('url', any())).called(1),
     );
 
+    // Regression for issue #613 K2: a submit failure must NOT drop the user's
+    // answers onto a dead-end failure page. It keeps the answers (a
+    // LoadedSuccess subtype) so the questions page stays and a retry is possible.
     blocTest<KycFinancialDataCubit, KycFinancialDataState>(
-      'submit failure surfaces a Failure state',
+      'submit failure retains the answers and stays retryable (not a dead-end)',
       setUp: () {
         when(
           () => service.getFinancialData(any(), language: any(named: 'language')),
@@ -190,13 +193,56 @@ void main() {
       build: build,
       act: (c) async {
         await c.loadQuestions('url');
+        c.answerQuestion('q1', 'a');
         await c.submitAndNext();
       },
-      skip: 2,
+      skip: 3, // Loading, LoadedSuccess(load), LoadedSuccess(answer)
       expect: () => [
         isA<KycFinancialDataSubmitting>(),
-        isA<KycFinancialDataFailure>(),
+        isA<KycFinancialDataSubmitFailure>()
+            .having((s) => s.responses, 'responses', {'q1': 'a'})
+            .having((s) => s.message, 'message', contains('network')),
       ],
+      verify: (c) {
+        // Still a LoadedSuccess (questions render, retryable) — not terminal.
+        expect(c.state, isA<KycFinancialDataLoadedSuccess>());
+        expect(c.state, isNot(isA<KycFinancialDataFailure>()));
+      },
+    );
+
+    blocTest<KycFinancialDataCubit, KycFinancialDataState>(
+      'a retry after a submit failure submits the same answers and succeeds',
+      setUp: () {
+        when(
+          () => service.getFinancialData(any(), language: any(named: 'language')),
+        ).thenAnswer(
+          (_) async => const KycFinancialOutData(questions: [_q1], responses: []),
+        );
+        var calls = 0;
+        when(() => service.setFinancialData(any(), any())).thenAnswer((_) async {
+          calls++;
+          if (calls == 1) throw Exception('network');
+        });
+      },
+      build: build,
+      act: (c) async {
+        await c.loadQuestions('url');
+        c.answerQuestion('q1', 'a');
+        await c.submitAndNext(); // fails, answers retained
+        await c.submitAndNext(); // retry succeeds
+      },
+      skip: 3,
+      expect: () => [
+        isA<KycFinancialDataSubmitting>(),
+        isA<KycFinancialDataSubmitFailure>(),
+        isA<KycFinancialDataSubmitting>(),
+        isA<KycFinancialDataSubmitSuccess>(),
+      ],
+      verify: (_) {
+        final captured =
+            verify(() => service.setFinancialData('url', captureAny())).captured;
+        expect(captured.length, 2);
+      },
     );
 
     test('no-ops outside LoadedSuccess', () async {
