@@ -107,7 +107,7 @@ void main() {
         context: 'RealunitBuy',
       );
       expect(a, equals(b));
-      expect(a.props, [PaymentInfoError.kycRequired, 30, 'RealunitBuy']);
+      expect(a.props, [PaymentInfoError.kycRequired, 30, 'RealunitBuy', '']);
     });
 
     test('different context is unequal', () {

@@ -48,6 +48,10 @@ class KycViewManager extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<KycCubit, KycState>(
       builder: (context, state) => switch (state) {
+        // KycInitial is the pre-checkKyc() seed state. Render the loading page
+        // (not the diagnostic catch-all below) so the first build frame never
+        // flashes a raw "Unhandled KYC state: KycInitial" error to the user.
+        KycInitial() => const KycLoadingPage(),
         KycLoading() => const KycLoadingPage(),
         KycFailure(:final message) => KycFailurePage(message: message),
         KycSignatureUnsupportedFailure() => const KycSignatureUnsupportedPage(),

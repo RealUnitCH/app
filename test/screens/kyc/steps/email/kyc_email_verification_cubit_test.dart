@@ -309,20 +309,30 @@ void main() {
     );
 
     blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
-      'reconnect after BitboxNotConnected → second call re-runs the JWT '
-      'account-id check (latch reset). Without the reset, the second call '
-      'would skip the auth-side step and emit Failure on the same-account-id '
-      'guard.',
+      '#610 F1 / BL-006: reconnect after BitboxNotConnected → the merge latch '
+      'STAYS set, so the second call re-attempts the registration SIGN '
+      'instead of re-running the one-shot account-id check.',
       setUp: () {
-        // First call: account changes 1→2, sign fails with BitBox disconnect.
-        // Second call (after reconnect): user re-taps; expects the auth-side
-        // check to run AGAIN. We feed (2, 2) so the same-account-id guard
-        // would emit Failure if the latch were NOT reset; the test asserts
-        // the latch DID reset by observing Failure (not Success) on the
-        // retry — proving the merge-detected short-circuit is gone.
-        final tokens = [_fakeJwt(1), _fakeJwt(2), _fakeJwt(2), _fakeJwt(2)];
+        // First call: account changes 1→2 (merge detected), the sign then fails
+        // with a BitBox disconnect mid-signature. The auth side is now settled.
+        //
+        // The bug (BL-006): the disconnect handler used to reset the latch, so
+        // the post-reconnect retry re-ran the one-shot account-id check. By then
+        // getAuthToken keeps returning the merged account (2), so the
+        // same-account-id guard (2 == 2) dead-ended on Failure ("email not
+        // confirmed") and the user could never finish — even though the BitBox
+        // was reconnected and ready to sign.
+        //
+        // Fixed: the latch stays set, so the second call skips the auth-side
+        // check entirely and goes straight to registerWallet, which now
+        // succeeds on the reconnected device. We feed only the two tokens the
+        // first call's account-id check consumes; if the latch were wrongly
+        // reset the second call would demand a third token and re-run the
+        // (now same-account) guard, surfacing Failure instead of Success.
+        final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
-        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
+        when(() => auth.getAuthToken())
+            .thenAnswer((_) async => tokens[i < tokens.length ? i++ : tokens.length - 1]);
         when(() => registrationService.getRegistrationInfo()).thenAnswer(
           (_) async => _registrationInfo(),
         );
@@ -346,12 +356,15 @@ void main() {
         isA<KycEmailVerificationLoading>(),
         isA<KycEmailVerificationBitboxRequired>(),
         isA<KycEmailVerificationLoading>(),
-        // Latch reset means the second call hits the same-account-id
-        // guard and emits Failure (token compare: 2 == 2) rather than
-        // proceeding straight to registerWallet on the stale latch.
-        // BL-006 invariant pinned: the auth-side check IS re-run.
-        isA<KycEmailVerificationFailure>(),
+        // Latch held → the retry re-signs and completes the merge.
+        isA<KycEmailVerificationSuccess>(),
       ],
+      verify: (_) {
+        // Two sign attempts (failed + succeeded), and the auth-side account-id
+        // check ran only ONCE — not re-run on the retry.
+        verify(() => registrationService.registerWallet(_userData)).called(2);
+        verify(() => auth.getAuthToken()).called(2);
+      },
     );
   });
 

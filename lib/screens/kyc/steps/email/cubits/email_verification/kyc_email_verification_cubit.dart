@@ -35,18 +35,13 @@ class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
   // after a `RegistrationFailure` should skip the auth-side check and go
   // straight to `_completeRegistration`.
   //
-  // BL-006 invariant: on [BitboxNotConnectedException] we RESET this latch
-  // so that after the user reconnects the BitBox and retries, the JWT
-  // account-id check runs again. Without the reset a reconnect-then-retry
-  // would skip the auth-side step and fail mysteriously on a backend race.
+  // BL-006 invariant: once the merge is detected (the one-shot JWT account-id
+  // delta), this latch STAYS set. A mid-sign BitBox drop must NOT reset it —
+  // the merge already happened, so the post-reconnect retry re-attempts the
+  // registration SIGN, not the one-shot account-id check (which would now see
+  // the same merged account twice and dead-end on "email not confirmed").
+  // Seeded from `initialMergeDetected` for the re-entrant resume path.
   bool _mergeDetected;
-
-  // The merge-detected seed for this entry. On a BitBox-drop retry the latch
-  // resets to THIS value (not unconditionally `false`) so the re-entrant
-  // resume path keeps skipping the one-shot account-id check after a
-  // reconnect — re-running it post-merge would falsely report "email not
-  // confirmed" because the account id no longer changes.
-  final bool _initialMergeDetected;
 
   KycEmailVerificationCubit({
     required DFXAuthService dfxService,
@@ -66,7 +61,6 @@ class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
        _registrationService = registrationService,
        _onSignProduced = onSignProduced,
        _mergeDetected = initialMergeDetected,
-       _initialMergeDetected = initialMergeDetected,
        _registrationInfoRetries = registrationInfoRetries,
        _registrationInfoRetryDelay = registrationInfoRetryDelay,
        super(const KycEmailVerificationInitial());
@@ -152,13 +146,13 @@ class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
       return true;
     } on BitboxNotConnectedException {
       // BL-006 — the BitBox dropped mid-sign. Route to the typed
-      // BitboxRequired state so the page can open the reconnect sheet
-      // instead of showing a generic "Registration failed" snackbar.
-      // Reset `_mergeDetected` so the post-reconnect retry re-runs the
-      // auth-side JWT account check (the backend may have rotated tokens
-      // during the reconnect window).
+      // BitboxRequired state so the page can open the reconnect sheet instead
+      // of a generic "Registration failed" snackbar. Keep `_mergeDetected`
+      // set: the merge already happened, so the post-reconnect retry must
+      // re-attempt the registration sign — NOT re-run the one-shot account-id
+      // check, which would now see the same merged account twice and dead-end
+      // on "email not confirmed".
       if (isClosed || generation != _runGeneration) return false;
-      _mergeDetected = _initialMergeDetected;
       emit(const KycEmailVerificationBitboxRequired());
       return false;
     } catch (e) {

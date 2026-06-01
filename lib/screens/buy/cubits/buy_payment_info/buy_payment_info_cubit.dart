@@ -98,7 +98,7 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
         return const BuyPaymentInfoFailure(PaymentInfoError.priceSourceUnavailable);
       }
       developer.log(e.toString());
-      return const BuyPaymentInfoFailure(PaymentInfoError.unknown);
+      return BuyPaymentInfoFailure(PaymentInfoError.unknown, message: e.toString());
     } catch (e) {
       developer.log(e.toString());
       return BuyPaymentInfoFailure(
