@@ -174,4 +174,60 @@ void main() {
       );
     });
   });
+
+  // Regression for issue #615 M1: the EIP-7702 authorization r/s components
+  // must always be serialized as full 32-byte (64 hex char) big-endian values.
+  // `BigInt.toRadixString(16)` drops leading zero bytes, so any signature whose
+  // r or s is < 2^248 used to emit < 64 hex chars (an invalid 32-byte field).
+  // The fix mirrors the BitBox reference (sell_bitbox_cubit.dart:198-199) with
+  // `.padLeft(64, '0')`. This sweep signs across many nonces so at least one
+  // deterministic signature lands on a leading-zero byte, and asserts every
+  // emitted r/s is exactly 64 hex chars.
+  group('confirmPayment EIP-7702 r/s 32-byte padding (#615 M1)', () {
+    SellPaymentInfo infoForNonce(int nonce) {
+      final json = _validEip7702Json()..['userNonce'] = nonce;
+      return SellPaymentInfo(
+        id: 42,
+        eip7702: Eip7702Data.fromJson(json),
+        amount: 100,
+        exchangeRate: 1.0,
+        rate: 1.0,
+        beneficiary: const BeneficiaryDto(iban: 'CH...'),
+        estimatedAmount: 100.0,
+        currency: Currency.chf,
+        depositAddress: '0xdeposit',
+        tokenAddress: '0xtoken',
+        chainId: 1,
+        ethBalance: 0.1,
+        requiredGasEth: 0.001,
+      );
+    }
+
+    test('authorization r and s are always 0x + 64 hex chars across nonces',
+        () async {
+      for (var nonce = 0; nonce < 96; nonce++) {
+        Map<String, dynamic>? body;
+        final client = MockClient((request) async {
+          body = jsonDecode(request.body) as Map<String, dynamic>;
+          return http.Response('{}', 200);
+        });
+
+        await build(client).confirmPayment(infoForNonce(nonce));
+
+        final authorization = (body!['eip7702']
+            as Map<String, dynamic>)['authorization'] as Map<String, dynamic>;
+        final r = authorization['r'] as String;
+        final s = authorization['s'] as String;
+
+        expect(r.startsWith('0x'), isTrue);
+        expect(s.startsWith('0x'), isTrue);
+        expect(r.substring(2).length, 64,
+            reason: 'r must be a full 32-byte component (nonce=$nonce)');
+        expect(s.substring(2).length, 64,
+            reason: 's must be a full 32-byte component (nonce=$nonce)');
+        // Value is unchanged, only left-zero-padded.
+        expect(BigInt.parse(r.substring(2), radix: 16), isA<BigInt>());
+      }
+    });
+  });
 }
