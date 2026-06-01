@@ -34,13 +34,13 @@ SellPaymentInfo _info({
     delegationManagerAddress: '0x2',
     delegatorAddress: '0x3',
     userNonce: BigInt.zero,
-    domain: Eip7702Domain(
+    domain: const Eip7702Domain(
       name: 'RealUnit',
       version: '1',
       chainId: 1,
       verifyingContract: '0x4',
     ),
-    types: Eip7702Types(delegation: [], caveat: []),
+    types: const Eip7702Types(delegation: [], caveat: []),
     message: Eip7702Message(
       delegate: '0x5',
       delegator: '0x6',

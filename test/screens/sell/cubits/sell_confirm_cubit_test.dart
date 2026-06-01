@@ -21,13 +21,13 @@ SellPaymentInfo _stubPaymentInfo() => SellPaymentInfo(
         delegationManagerAddress: '0x2',
         delegatorAddress: '0x3',
         userNonce: BigInt.zero,
-        domain: Eip7702Domain(
+        domain: const Eip7702Domain(
           name: 'RealUnit',
           version: '1',
           chainId: 1,
           verifyingContract: '0x4',
         ),
-        types: Eip7702Types(delegation: [], caveat: []),
+        types: const Eip7702Types(delegation: [], caveat: []),
         message: Eip7702Message(
           delegate: '0x5',
           delegator: '0x6',
@@ -42,7 +42,7 @@ SellPaymentInfo _stubPaymentInfo() => SellPaymentInfo(
       amount: 100,
       exchangeRate: 1.0,
       rate: 1.0,
-      beneficiary: BeneficiaryDto(iban: 'CH56'),
+      beneficiary: const BeneficiaryDto(iban: 'CH56'),
       estimatedAmount: 100,
       currency: Currency.chf,
       depositAddress: '0xA',
