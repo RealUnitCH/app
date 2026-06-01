@@ -167,24 +167,24 @@ void main() {
       // caveats list are valid inputs the backend already returns for a
       // bare delegation. Anything heavier would only re-test the JSON
       // serialiser of eip7702_data_dto.
-      const delegationData = Eip7702Data(
+      final delegationData = Eip7702Data(
         relayerAddress: '0x0000000000000000000000000000000000000010',
         delegationManagerAddress: '0x0000000000000000000000000000000000000011',
         delegatorAddress: '0x0000000000000000000000000000000000000012',
-        userNonce: 0,
-        domain: Eip7702Domain(
+        userNonce: BigInt.zero,
+        domain: const Eip7702Domain(
           name: 'RealUnitDelegation',
           version: '1',
           chainId: 1,
           verifyingContract: '0x0000000000000000000000000000000000000013',
         ),
-        types: Eip7702Types(delegation: [], caveat: []),
+        types: const Eip7702Types(delegation: [], caveat: []),
         message: Eip7702Message(
           delegate: '0x0000000000000000000000000000000000000014',
           delegator: '0x0000000000000000000000000000000000000015',
           authority: '0x0000000000000000000000000000000000000016',
           caveats: [],
-          salt: 0,
+          salt: BigInt.zero,
         ),
         tokenAddress: '0x0000000000000000000000000000000000000017',
         amountWei: '0',

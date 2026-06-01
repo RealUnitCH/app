@@ -29,11 +29,11 @@ SellPaymentInfo _info({
   Currency currency = Currency.chf,
 }) => SellPaymentInfo(
   id: 1,
-  eip7702: const Eip7702Data(
+  eip7702: Eip7702Data(
     relayerAddress: '0x1',
     delegationManagerAddress: '0x2',
     delegatorAddress: '0x3',
-    userNonce: 0,
+    userNonce: BigInt.zero,
     domain: Eip7702Domain(
       name: 'RealUnit',
       version: '1',
@@ -46,7 +46,7 @@ SellPaymentInfo _info({
       delegator: '0x6',
       authority: '0x7',
       caveats: [],
-      salt: 0,
+      salt: BigInt.zero,
     ),
     tokenAddress: '0x8',
     amountWei: '0',

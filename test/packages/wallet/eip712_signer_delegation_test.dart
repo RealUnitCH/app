@@ -42,7 +42,7 @@ Eip7702Data _validResponse({
     relayerAddress: _relayer,
     delegationManagerAddress: _verifyingContract,
     delegatorAddress: delegator,
-    userNonce: 0,
+    userNonce: BigInt.zero,
     domain: Eip7702Domain(
       name: 'DelegationManager',
       version: '1',
@@ -72,7 +72,7 @@ Eip7702Data _validResponse({
       authority:
           '0x0000000000000000000000000000000000000000000000000000000000000000',
       caveats: const [],
-      salt: 0,
+      salt: BigInt.zero,
     ),
     tokenAddress: '0x0000000000000000000000000000000000000aaa',
     amountWei: amountWei,
@@ -96,6 +96,65 @@ void main() {
       );
       expect(sig, isNotEmpty);
       expect(sig, startsWith('0x'));
+    });
+
+    // #608 F4: the EIP-712 domain `name`/`version` feed the domain separator
+    // the user signs and were previously unvalidated. When the caller pins
+    // them, a backend that swaps either is refused before signing.
+    test('domain.name drift → Eip7702ExpectedParamsMismatchException(domain.name)', () async {
+      await expectLater(
+        signer.signDelegationEnvelope(
+          credentials: credentials,
+          eip7702Data: _validResponse(), // domain.name == 'DelegationManager'
+          expectedVerifyingContract: _verifyingContract,
+          expectedChainId: 1,
+          expectedDelegator: _testAddress,
+          expectedAmount: BigInt.from(10).pow(18),
+          expectedDomainName: 'SomethingElse',
+        ),
+        throwsA(
+          isA<Eip7702ExpectedParamsMismatchException>().having(
+            (e) => e.parameter,
+            'parameter',
+            'domain.name',
+          ),
+        ),
+      );
+    });
+
+    test('domain.version drift → Eip7702ExpectedParamsMismatchException(domain.version)', () async {
+      await expectLater(
+        signer.signDelegationEnvelope(
+          credentials: credentials,
+          eip7702Data: _validResponse(), // domain.version == '1'
+          expectedVerifyingContract: _verifyingContract,
+          expectedChainId: 1,
+          expectedDelegator: _testAddress,
+          expectedAmount: BigInt.from(10).pow(18),
+          expectedDomainVersion: '2',
+        ),
+        throwsA(
+          isA<Eip7702ExpectedParamsMismatchException>().having(
+            (e) => e.parameter,
+            'parameter',
+            'domain.version',
+          ),
+        ),
+      );
+    });
+
+    test('matching pinned domain name + version → signs (no false positive)', () async {
+      final sig = await signer.signDelegationEnvelope(
+        credentials: credentials,
+        eip7702Data: _validResponse(),
+        expectedVerifyingContract: _verifyingContract,
+        expectedChainId: 1,
+        expectedDelegator: _testAddress,
+        expectedAmount: BigInt.from(10).pow(18),
+        expectedDomainName: 'DelegationManager',
+        expectedDomainVersion: '1',
+      );
+      expect(sig, isNotEmpty);
     });
 
     test('verifyingContract drift → Eip7702ExpectedParamsMismatchException', () async {

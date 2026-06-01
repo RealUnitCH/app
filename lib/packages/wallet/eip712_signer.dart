@@ -147,10 +147,33 @@ class Eip712Signer {
     required int expectedChainId,
     required String expectedDelegator,
     required BigInt expectedAmount,
+    // The EIP-712 domain `name` + `version` feed the domain separator that the
+    // user signs. They were previously unchecked, so a MITM/compromised backend
+    // could swap them to bind the signature to a different domain. Pinned when
+    // the caller supplies the expected values; left unvalidated (legacy
+    // behaviour) when null so other callers are unaffected.
+    String? expectedDomainName,
+    String? expectedDomainVersion,
     Eip7702DelegationSchema schema = const Eip7702DelegationSchema(),
   }) async {
     // Pinned-parameter validation FIRST — refuse to construct the
     // envelope if the backend has shifted any of the trusted parameters.
+    if (expectedDomainName != null &&
+        eip7702Data.domain.name != expectedDomainName) {
+      throw Eip7702ExpectedParamsMismatchException(
+        parameter: 'domain.name',
+        expected: expectedDomainName,
+        actual: eip7702Data.domain.name,
+      );
+    }
+    if (expectedDomainVersion != null &&
+        eip7702Data.domain.version != expectedDomainVersion) {
+      throw Eip7702ExpectedParamsMismatchException(
+        parameter: 'domain.version',
+        expected: expectedDomainVersion,
+        actual: eip7702Data.domain.version,
+      );
+    }
     if (eip7702Data.domain.verifyingContract.toLowerCase() !=
         expectedVerifyingContract.toLowerCase()) {
       throw Eip7702ExpectedParamsMismatchException(
@@ -217,7 +240,9 @@ class Eip712Signer {
         'delegator': eip7702Data.message.delegator,
         'authority': eip7702Data.message.authority,
         'caveats': eip7702Data.message.caveats,
-        'salt': eip7702Data.message.salt,
+        // uint256 → decimal string; the typed-data encoder reads it identically
+        // to a JSON number, and a BigInt is not JSON-encodable.
+        'salt': eip7702Data.message.salt.toString(),
       },
     };
 
@@ -392,7 +417,9 @@ class Eip712Signer {
         'delegator': eip7702Data.message.delegator,
         'authority': eip7702Data.message.authority,
         'caveats': eip7702Data.message.caveats,
-        'salt': eip7702Data.message.salt,
+        // uint256 → decimal string; the typed-data encoder reads it identically
+        // to a JSON number, and a BigInt is not JSON-encodable.
+        'salt': eip7702Data.message.salt.toString(),
       },
     };
     return signer.signTypedDataEnvelope(

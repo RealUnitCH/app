@@ -698,7 +698,10 @@ class SignPipeline {
       'delegator': data.message.delegator,
       'authority': data.message.authority,
       'caveats': data.message.caveats,
-      'salt': data.message.salt,
+      // uint256 salt as a decimal string — a BigInt is not JSON-encodable, and
+      // the typed-data encoder reads the string identically to a number. Used
+      // for BOTH the envelope and the dto below, so they stay byte-equal.
+      'salt': data.message.salt.toString(),
     };
     final domain = <String, dynamic>{
       'name': data.domain.name,

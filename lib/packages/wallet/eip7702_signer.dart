@@ -17,7 +17,7 @@ class Eip7702Signer {
     final eip7702.UnsignedAuthorization unsignedAuth = (
       chainId: BigInt.from(eip7702Data.domain.chainId),
       delegateAddress: eip7702Data.delegatorAddress,
-      nonce: BigInt.from(eip7702Data.userNonce),
+      nonce: eip7702Data.userNonce,
     );
     final signer = eip7702.Signer.eth(credentials);
     final authTuple = eip7702.signAuthorization(signer, unsignedAuth);

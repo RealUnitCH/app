@@ -32,6 +32,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
+import 'package:realunit_wallet/packages/utils/ascii_transliterate.dart';
 import 'package:realunit_wallet/packages/wallet/error_mapper.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/packages/wallet/schemas/registration_schema.dart';
@@ -101,7 +102,7 @@ Eip7702Data _validEip7702Data({
     relayerAddress: '0x0000000000000000000000000000000000000abc',
     delegationManagerAddress: _verifyingContract,
     delegatorAddress: _testAddress,
-    userNonce: 0,
+    userNonce: BigInt.zero,
     domain:
         domain ??
         const Eip7702Domain(
@@ -127,12 +128,12 @@ Eip7702Data _validEip7702Data({
     ),
     message:
         message ??
-        const Eip7702Message(
+        Eip7702Message(
           delegate: '0x0000000000000000000000000000000000000abc',
           delegator: _testAddress,
           authority: '0x0000000000000000000000000000000000000000000000000000000000000000',
           caveats: [],
-          salt: 0,
+          salt: BigInt.zero,
         ),
     tokenAddress: '0x0000000000000000000000000000000000000aaa',
     amountWei: amountWei,
@@ -326,12 +327,33 @@ void main() {
           _registrationReq(name: s, addressCity: s),
         );
         final dto = jsonDecode((result as TypedDataSignResult).dtoJson) as Map<String, dynamic>;
+        final romanised = dto['name'] as String;
         expect(
-          (dto['name'] as String).codeUnits.every((u) => u < 128),
+          romanised.codeUnits.every((u) => u < 128),
           isTrue,
-          reason: 'sample "$s" → ${dto['name']} still has non-ASCII',
+          reason: 'sample "$s" → $romanised still has non-ASCII',
+        );
+        // F3: pure-ASCII is necessary but NOT sufficient — the romaniser's
+        // last-resort branch replaces an unmappable rune with '?', which IS
+        // ASCII and so would slip past the check above while silently
+        // destroying the byte the user signs. None of these samples contains a
+        // literal '?', so a '?' in the output can only be placeholder loss.
+        expect(
+          romanised.contains('?'),
+          isFalse,
+          reason: 'sample "$s" → $romanised degraded to the "?" placeholder — '
+              'add its transliteration to ascii_transliterate.dart',
         );
       }
+    });
+
+    test('F3: the "?" placeholder fallback still fires for a genuinely '
+        'unmappable rune — proving the no-"?" assertion above is meaningful',
+        () async {
+      // An emoji has no Latin transliteration, so it must hit the last-resort
+      // branch. This pins the placeholder contract so the sweep's no-"?"
+      // assertion cannot be defeated by accidentally removing the fallback.
+      expect(toBitboxSafeAscii('hi 😀'), 'hi ?');
     });
   });
 
@@ -454,12 +476,12 @@ void main() {
     test('EIP-7702 wrong delegator rejects before signing', () async {
       final req = _eip7702Req(
         data: _validEip7702Data(
-          message: const Eip7702Message(
+          message: Eip7702Message(
             delegate: '0x0000000000000000000000000000000000000abc',
             delegator: '0x0000000000000000000000000000000000000002',
             authority: '0x0000000000000000000000000000000000000000000000000000000000000000',
             caveats: [],
-            salt: 0,
+            salt: BigInt.zero,
           ),
         ),
       );

@@ -64,7 +64,14 @@ class Eip7702Message {
   final String delegator;
   final String authority;
   final List<dynamic> caveats;
-  final int salt;
+
+  // `salt` is a `uint256` (MetaMask Delegation Framework). A 256-bit value
+  // does not fit in a Dart `int` (64-bit, and only 53-bit precision on web),
+  // so parsing it as `int` silently truncates/overflows and the signed salt
+  // no longer matches what the backend issued. Keep it as a `BigInt` and only
+  // collapse to a decimal string at the EIP-712 / DTO boundary, where the
+  // uint256 encoder reads number-or-decimal-string identically.
+  final BigInt salt;
 
   const Eip7702Message({
     required this.delegate,
@@ -80,7 +87,9 @@ class Eip7702Message {
       delegator: json['delegator'] as String,
       authority: json['authority'] as String,
       caveats: json['caveats'] as List<dynamic>,
-      salt: json['salt'] as int,
+      // Accept both a JSON number and a decimal string — the backend may send
+      // a large salt as a string to avoid JSON number-precision loss.
+      salt: BigInt.parse(json['salt'].toString()),
     );
   }
 }
@@ -89,7 +98,10 @@ class Eip7702Data {
   final String relayerAddress;
   final String delegationManagerAddress;
   final String delegatorAddress;
-  final int userNonce;
+  // EIP-7702 authorization nonce is a `uint64`; values above 2^63 overflow a
+  // Dart `int` (and above 2^53 lose precision on web). Hold it as a `BigInt`
+  // so the authorization tuple is signed with the exact nonce.
+  final BigInt userNonce;
   final Eip7702Domain domain;
   final Eip7702Types types;
   final Eip7702Message message;
@@ -115,7 +127,7 @@ class Eip7702Data {
       relayerAddress: json['relayerAddress'] as String,
       delegationManagerAddress: json['delegationManagerAddress'] as String,
       delegatorAddress: json['delegatorAddress'] as String,
-      userNonce: json['userNonce'] as int,
+      userNonce: BigInt.parse(json['userNonce'].toString()),
       domain: Eip7702Domain.fromJson(json['domain'] as Map<String, dynamic>),
       types: Eip7702Types.fromJson(json['types'] as Map<String, dynamic>),
       message: Eip7702Message.fromJson(json['message'] as Map<String, dynamic>),
