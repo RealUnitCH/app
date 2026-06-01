@@ -65,7 +65,7 @@ platform :ios do
       type: "appstore",
       app_identifier: "swiss.realunit.app",
       api_key: get_api_key,
-      git_url: "git@github.com:DFXswiss/fastlane-certificates.git"
+      git_url: "git@github.com:RealUnitCH/fastlane-certificates.git"
     )
 
     # CFBundleShortVersionString must be three integers (App Store ITMS-90060).
