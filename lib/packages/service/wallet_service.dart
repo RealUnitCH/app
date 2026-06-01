@@ -172,10 +172,15 @@ class WalletService {
         // Legacy rows created before address-caching landed have an empty
         // address column — promote them once via an unlock + address
         // back-fill so subsequent loads stay on the fast view-wallet path.
+        // The unlock only needs the address: drop the seed from the isolate
+        // immediately and return a view wallet (matching the fast path), so
+        // the backfill never leaves the mnemonic resident with no auto-lock.
         if (info.address.isEmpty) {
           final wallet = await unlockWalletById(id);
           await _repository.updateAddress(id, wallet.address);
-          return wallet;
+          final isolate = _walletIsolate;
+          if (isolate != null) await isolate.lock(id);
+          return SoftwareViewWallet(id, wallet.name, wallet.address);
         }
         return SoftwareViewWallet(info.id, info.name, info.address);
       case WalletType.bitbox:
@@ -312,14 +317,24 @@ class WalletService {
     if (_activeUnlockHolders > 0) _activeUnlockHolders--;
     if (_activeUnlockHolders > 0) return;
     // Invalidate any in-flight unlock so its resolution doesn't write the
-    // unlocked [SoftwareWallet] back into [AppStore.wallet] after this lock —
-    // the race the 60s safety net used to catch as defence-in-depth, now
-    // closed at the source. The future itself is left running (the isolate
-    // will eventually populate the slot), but we lock-and-clear the slot
-    // below so the decrypted seed doesn't outlive the user's intent.
+    // unlocked [SoftwareWallet] back into [AppStore.wallet] after this lock.
+    final inFlight = _unlockInFlight;
     _unlockInFlight = null;
     _postUnlockLockTimer?.cancel();
     _postUnlockLockTimer = null;
+    // An in-flight unlock still seats the decrypted seed in the isolate slot
+    // AFTER this lock returns, and `_lockWalletInPlace` no-ops here because
+    // `AppStore.wallet` is still a view wallet — so it never reaches
+    // `isolate.lock`. Drop that slot once the unlock settles (without blocking
+    // this lock) so the seed never outlives the user's intent — closing the
+    // leak the dead `WalletIsolate.cancel()` mitigation was meant to handle.
+    if (inFlight != null) {
+      final isolate = _walletIsolate;
+      final id = _appStore.isWalletLoaded ? _appStore.wallet.id : null;
+      if (isolate != null && id != null) {
+        unawaited(inFlight.then((_) => isolate.lock(id)).catchError((_) {}));
+      }
+    }
     await _lockWalletInPlace();
   }
 

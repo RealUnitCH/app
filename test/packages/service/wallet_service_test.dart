@@ -257,8 +257,15 @@ void main() {
 
         final wallet = await service.getWalletById(3);
 
-        expect(wallet, isA<SoftwareWallet>());
+        // The backfill only needs the address: it returns a view wallet and
+        // drops the seed from the isolate (no lingering, uncapped mnemonic).
+        expect(wallet, isA<SoftwareViewWallet>());
         verify(() => repo.updateAddress(3, _debugAddress)).called(1);
+        expect(
+          isolate.slots.containsKey(3),
+          isFalse,
+          reason: '#609 F2: legacy backfill must not leave the seed resident',
+        );
       });
 
       test('returns BitboxWallet for BitBox rows', () async {
@@ -607,6 +614,14 @@ void main() {
               'lock must not resurface the mnemonic in AppStore',
         );
         verifyNever(() => appStore.wallet = any(that: isA<SoftwareWallet>()));
+        // #609 F1: the isolate slot the in-flight unlock seated must be
+        // dropped — the decrypted seed must not stay pinned after the lock.
+        await Future<void>.delayed(Duration.zero);
+        expect(
+          isolate.slots.containsKey(7),
+          isFalse,
+          reason: 'in-flight unlock must not leave the seed pinned in the isolate',
+        );
       });
     });
 
