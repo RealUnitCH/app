@@ -190,7 +190,7 @@ The build number is derived deterministically from the tag by `tool/generate_rel
 - The `+0` build-number sentinel is for local builds — CI always overrides `--build-name` / `--build-number` from the tag. Don't bump the `+N` part manually.
 - The `X.Y.Z` part is a **floor** for MAJOR / MINOR jumps. Patch increments come from the latest tag; pubspec is only consulted to trigger jumps. To start a new MINOR / MAJOR train (e.g. `v1.1.0`), bump pubspec on `develop` and the next auto-tag will pick it up.
 
-Typical patch flow: PR merges into `develop` → `auto-tag.yaml` creates `v1.0.X` → `release.yaml` (internal lane) ships the build to TestFlight + Play Internal.
+Typical patch flow: PR merges into `staging` → `auto-staging-pr.yaml` opens the `staging → develop` PR → after that PR merges, `auto-tag.yaml` creates `v1.0.X` on `develop` → `release.yaml` (internal lane) ships the build to TestFlight + Play Internal.
 
 ## Getting started
 
