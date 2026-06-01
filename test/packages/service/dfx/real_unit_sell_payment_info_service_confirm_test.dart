@@ -175,15 +175,14 @@ void main() {
     });
   });
 
-  // Regression for issue #615 M1: the EIP-7702 authorization r/s components
-  // must always be serialized as full 32-byte (64 hex char) big-endian values.
-  // `BigInt.toRadixString(16)` drops leading zero bytes, so any signature whose
-  // r or s is < 2^248 used to emit < 64 hex chars (an invalid 32-byte field).
-  // The fix mirrors the BitBox reference (sell_bitbox_cubit.dart:198-199) with
-  // `.padLeft(64, '0')`. This sweep signs across many nonces so at least one
-  // deterministic signature lands on a leading-zero byte, and asserts every
-  // emitted r/s is exactly 64 hex chars.
-  group('confirmPayment EIP-7702 r/s 32-byte padding (#615 M1)', () {
+  // The EIP-7702 authorization r/s components must always be serialized as full
+  // 32-byte (64 hex char) big-endian values. `BigInt.toRadixString(16)` drops
+  // leading zero bytes, so any signature whose r or s is < 2^248 used to emit
+  // < 64 hex chars (an invalid 32-byte field). The fix mirrors the BitBox
+  // reference with `.padLeft(64, '0')`. This sweep signs across many nonces so
+  // at least one deterministic signature lands on a leading-zero byte, and
+  // asserts every emitted r/s is exactly 64 hex chars.
+  group('confirmPayment EIP-7702 r/s 32-byte padding', () {
     SellPaymentInfo infoForNonce(int nonce) {
       final json = _validEip7702Json()..['userNonce'] = nonce;
       return SellPaymentInfo(
