@@ -38,9 +38,8 @@ class _VerifySeedViewState extends State<VerifySeedView> {
   @override
   void initState() {
     // Seed words are entered/visible here — block screenshots and the
-    // app-switcher snapshot like the sibling seed screens (create_wallet_view,
-    // settings_seed_view). Re-enabled on dispose so other screens stay
-    // screenshot-able.
+    // app-switcher snapshot like the other seed screens. Re-enabled on dispose
+    // so other screens stay screenshot-able.
     NoScreenshot.instance.screenshotOff();
     super.initState();
   }

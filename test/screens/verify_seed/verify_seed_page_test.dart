@@ -183,10 +183,10 @@ void main() {
       });
     });
 
-    // Regression for issue #612 S1: the verify-seed screen (where the user
-    // re-enters real seed words) had no screenshot protection, unlike the
-    // sibling seed screens. It must disable screenshots on init and re-enable
-    // on dispose so it never lands in the app-switcher snapshot / a recording.
+    // The verify-seed screen (where the user re-enters real seed words) had no
+    // screenshot protection, unlike the sibling seed screens. It must disable
+    // screenshots on init and re-enable on dispose so it never lands in the
+    // app-switcher snapshot / a recording.
     testWidgets('disables screenshots on init and re-enables on dispose',
         (tester) async {
       const channel = MethodChannel('com.flutterplaza.no_screenshot_methods');
