@@ -72,7 +72,11 @@ class KycViewManager extends StatelessWidget {
             KycStep.twoFa => const Kyc2FaPage(),
             KycStep.ident => KycIdentPage(accessToken: urlOrToken ?? ''),
             KycStep.financialData => KycFinancialDataPage(url: urlOrToken ?? ''),
-            (_) => const Scaffold(),
+            // Exhaustive over KycStep so a new value is a compile error here
+            // (forced handling) rather than a silent blank Scaffold. dfxApproval
+            // was the missing case that fell through to the old blank fallback.
+            KycStep.dfxApproval =>
+              const KycPendingPage(pendingStep: KycStep.dfxApproval),
           },
         KycState() => const Scaffold(),
       },
