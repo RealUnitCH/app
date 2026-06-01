@@ -57,6 +57,7 @@ void main() {
     when(() => settings.saveCurrentWalletId(any())).thenAnswer((_) async => true);
     when(() => settings.removeCurrentWalletId()).thenAnswer((_) async => true);
     when(() => repo.deleteWallet(any())).thenAnswer((_) async {});
+    when(() => repo.purgeWallet(any())).thenAnswer((_) async {});
     when(() => repo.updateAddress(any(), any())).thenAnswer((_) async {});
   });
 
@@ -440,7 +441,10 @@ void main() {
 
         await service.deleteCurrentWallet();
 
-        verify(() => repo.deleteWallet(8)).called(1);
+        // User-facing delete must fully purge (seed row + mnemonic key), not the
+        // account-only deleteWallet used by onboarding-regenerate (#612 S2).
+        verify(() => repo.purgeWallet(8)).called(1);
+        verifyNever(() => repo.deleteWallet(any()));
         verify(() => settings.removeCurrentWalletId()).called(1);
       });
     });

@@ -165,6 +165,12 @@ class SecureStorage {
     return key;
   }
 
+  /// Removes the AES-GCM key that decrypts stored seeds. Call only from the
+  /// user-facing wallet delete (purge) — once gone, any surviving encrypted
+  /// seed is permanently undecryptable. The onboarding-regenerate account-only
+  /// delete must NOT call this. A fresh key is lazily minted on next creation.
+  Future<void> deleteMnemonicKey() => _secureStorage.delete(key: _mnemonicEncryptionKey);
+
   static String encryptSeed(Uint8List key, String plaintext) {
     final iv = _secureRandomBytes(12);
     final cipher = GCMBlockCipher(AESEngine())

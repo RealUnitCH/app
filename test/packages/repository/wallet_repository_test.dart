@@ -145,5 +145,34 @@ void main() {
       final afterAccounts = await db.getWalletAccounts(walletId);
       expect(afterAccounts, isEmpty);
     });
+
+    test('purgeWallet removes the walletInfos seed row AND the mnemonic key', () async {
+      // Regression for #612 S2: the user-facing delete must leave no
+      // recoverable seed material — neither the encrypted row nor the AES key.
+      when(() => secureStorage.deleteMnemonicKey()).thenAnswer((_) async {});
+
+      final walletId = await repo.createWallet(walletName, WalletType.software, seed, address);
+      await db.insertWalletAccount(walletId, 'acc-0', 0);
+      expect(await db.getWalletById(walletId), isNotNull);
+
+      await repo.purgeWallet(walletId);
+
+      expect(await db.getWalletById(walletId), isNull); // encrypted seed row gone
+      expect(await db.getWalletAccounts(walletId), isEmpty); // accounts gone
+      verify(() => secureStorage.deleteMnemonicKey()).called(1); // AES key removed
+    });
+
+    test('deleteWallet (account-only) leaves the seed row and mnemonic key intact', () async {
+      // Onboarding-regenerate contract: the account-only primitive must NOT
+      // wipe the seed row or the AES key.
+      final walletId = await repo.createWallet(walletName, WalletType.software, seed, address);
+      await db.insertWalletAccount(walletId, 'acc-0', 0);
+
+      await repo.deleteWallet(walletId);
+
+      expect(await db.getWalletById(walletId), isNotNull); // row survives
+      expect(await db.getWalletAccounts(walletId), isEmpty); // accounts gone
+      verifyNever(() => secureStorage.deleteMnemonicKey()); // key untouched
+    });
   });
 }
