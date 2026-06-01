@@ -88,7 +88,7 @@ class KycFinancialDataCubit extends Cubit<KycFinancialDataState> {
       emit(const KycFinancialDataSubmitSuccess());
     } catch (e) {
       // Keep the answers and stay on the questions UI so the user can retry,
-      // instead of dropping them onto a dead-end failure page (issue #613 K2).
+      // instead of dropping them onto a dead-end failure page.
       emit(KycFinancialDataSubmitFailure.from(current, e.toString()));
     }
   }

@@ -176,9 +176,9 @@ void main() {
       verify: (_) => verify(() => service.setFinancialData('url', any())).called(1),
     );
 
-    // Regression for issue #613 K2: a submit failure must NOT drop the user's
-    // answers onto a dead-end failure page. It keeps the answers (a
-    // LoadedSuccess subtype) so the questions page stays and a retry is possible.
+    // A submit failure must NOT drop the user's answers onto a dead-end failure
+    // page. It keeps the answers (a LoadedSuccess subtype) so the questions page
+    // stays and a retry is possible.
     blocTest<KycFinancialDataCubit, KycFinancialDataState>(
       'submit failure retains the answers and stays retryable (not a dead-end)',
       setUp: () {
