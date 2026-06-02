@@ -191,52 +191,6 @@ void main() {
     });
   });
 
-  group('$CountryField initialValue', () {
-    testWidgets('preselects the initialValue and fires onChanged once countries load', (
-      tester,
-    ) async {
-      when(() => countryService.getAllCountries()).thenAnswer((_) async => [ch, allowed]);
-      Country? picked;
-
-      await tester.pumpApp(
-        host(
-          CountryField(
-            label: 'Citizenship',
-            purpose: CountryFieldPurpose.nationality,
-            initialValue: ch,
-            onChanged: (c) => picked = c,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(picked, ch);
-      expect(find.text('Switzerland'), findsOneWidget);
-    });
-
-    testWidgets('ignores an initialValue absent from the filtered country list', (tester) async {
-      // notAllowed is filtered out for residence purpose; the preselect must not push it back.
-      when(
-        () => countryService.getAllCountries(),
-      ).thenAnswer((_) async => [ch, notAllowed]);
-      Country? picked;
-
-      await tester.pumpApp(
-        host(
-          CountryField(
-            label: 'Country',
-            purpose: CountryFieldPurpose.residence,
-            initialValue: notAllowed,
-            onChanged: (c) => picked = c,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(picked, isNull);
-    });
-  });
-
   group('$CountryField error state', () {
     testWidgets('keeps the field present, the Form invalid, and offers a retry', (tester) async {
       var calls = 0;

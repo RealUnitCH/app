@@ -79,9 +79,7 @@ Column meaning:
 | Support | `SupportCreateTicketPage` | `supportCreateTicket` | `/support/create` | — |
 | Support | `SupportChatPage` | `supportChat` | `/support/chat/:uid` | — |
 | KYC | `KycPageManager` | `kyc` | `/kyc` | — |
-| KYC | `KycRegistrationPage` | — | — | — |
-| KYC | `KycRegistrationPersonalStep` | — | — | — |
-| KYC | `KycRegistrationAddressStep` | — | — | — |
+| KYC | `KycRegisterPage` | — | — | — |
 | KYC | `KycNationalityPage` | — | — | — |
 | KYC | `KycEmailPage` | — | — | — |
 | KYC | `KycEmailVerificationPage` | — | — | — |
@@ -97,15 +95,14 @@ Column meaning:
 | KYC | `KycFailurePage` | — | — | — |
 | KYC | `KycAccountMergePage` | — | — | — |
 
-65 screens — 40 routed (`GoRoute`) + 25 non-routed.
+63 screens — 40 routed (`GoRoute`) + 23 non-routed.
 
 ## Notes
 
 - **Non-routed screens** are driven inside a parent route: the KYC pages are
   orchestrated by `KycPageManager` under `/kyc`; the `*Step` widgets are steps
-  inside a parent (`LegalDisclaimerStep` etc. inside `LegalDisclaimerPage`,
-  `KycRegistration*Step` inside `KycRegistrationPage`); the `*Loading` /
-  `*Pending` / `*Failure` pages are operation-status screens.
+  inside a parent (`LegalDisclaimerStep` etc. inside `LegalDisclaimerPage`);
+  the `*Loading` / `*Pending` / `*Failure` pages are operation-status screens.
 - **`debugAuth`** is registered only in debug builds (`kDebugMode`).
 - **Shared widgets.** `LegalDocumentPage` backs two routes (`legalDocument`,
   `terms`); `VerifyPinPage` backs two (`pinGate`, `verifyPin`) via different

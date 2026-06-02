@@ -141,8 +141,9 @@ class KycCubit extends Cubit<KycState> {
           return;
         case RealUnitRegistrationState.newRegistration:
           // userData may be `null` for first-time registrations (no prior
-          // record to pre-fill from); `KycRegistrationPage` renders an empty
-          // form in that case.
+          // record to pre-fill from); `KycRegisterPage` then surfaces a
+          // defensive retry screen instead of attempting to sign an empty
+          // payload.
           emit(
             KycSuccess(
               currentStep: KycStep.registration,
