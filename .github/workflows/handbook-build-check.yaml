@@ -21,7 +21,7 @@ on:
     paths:
       - "docs/handbook/**"
       - "scripts/assemble-handbook-screenshots.sh"
-      - "scripts/assemble-handbook-store-listing.sh"
+      - "scripts/assemble-handbook-store-listing.py"
       - "scripts/templates/store-listing.html.tmpl"
       - "test/goldens/**"
       # Store-listing section is a derived export of the Fastlane metadata —
@@ -65,6 +65,26 @@ jobs:
             exit 1
           fi
 
+      - name: Verify store-listing HTML sanitizer drops disallowed markup
+        # full_description.txt is rendered unescaped in the handbook (Google
+        # Play allows a small HTML subset), so the generator runs it through an
+        # allowlist sanitizer. Guard that the sanitizer keeps neutralizing
+        # injection: a </details>/<script>/javascript: payload must not survive.
+        run: |
+          python3 - <<'PY'
+          import importlib.util
+          spec = importlib.util.spec_from_file_location("gen", "scripts/assemble-handbook-store-listing.py")
+          gen = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(gen)
+          payload = '</details><script>alert(1)</script><b>ok</b><a href="javascript:alert(1)">x</a>'
+          out = gen.sanitize_play_html(payload)
+          assert "<script" not in out, out
+          assert "</details" not in out, out
+          assert "javascript:" not in out, out
+          assert "<b>ok</b>" in out, out
+          print("sanitizer OK:", out)
+          PY
+
       - name: Verify handbook store-listing section is in sync with metadata
         # The store-listing block in docs/handbook/de/index.html is a derived
         # export of the Fastlane metadata. Re-run the generator; if the working
@@ -72,9 +92,9 @@ jobs:
         # metadata file (or a screenshot) without re-running the generator.
         run: |
           set -euo pipefail
-          python3 scripts/assemble-handbook-store-listing.sh /tmp/store-out
+          python3 scripts/assemble-handbook-store-listing.py /tmp/store-out
           if ! git diff --quiet docs/handbook/de/index.html; then
-            echo "::error::docs/handbook/de/index.html is stale — re-run scripts/assemble-handbook-store-listing.sh and commit."
+            echo "::error::docs/handbook/de/index.html is stale — re-run scripts/assemble-handbook-store-listing.py and commit."
             git diff docs/handbook/de/index.html
             exit 1
           fi

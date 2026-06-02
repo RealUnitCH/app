@@ -45,13 +45,13 @@ RUN bash ./scripts/assemble-handbook-screenshots.sh /out
 FROM alpine:3.20 AS store-listing-builder
 WORKDIR /work
 RUN apk add --no-cache python3
-COPY scripts/assemble-handbook-store-listing.sh ./scripts/
+COPY scripts/assemble-handbook-store-listing.py ./scripts/
 COPY scripts/templates/store-listing.html.tmpl ./scripts/templates/
 COPY ios/fastlane/metadata/ ./ios/fastlane/metadata/
 COPY ios/fastlane/screenshots/ ./ios/fastlane/screenshots/
 COPY android/fastlane/metadata/ ./android/fastlane/metadata/
 COPY docs/handbook/de/index.html ./docs/handbook/de/index.html
-RUN python3 ./scripts/assemble-handbook-store-listing.sh /out && cp ./docs/handbook/de/index.html /out/index.html
+RUN python3 ./scripts/assemble-handbook-store-listing.py /out && cp ./docs/handbook/de/index.html /out/index.html
 
 FROM nginx:1.27.5-alpine
 
