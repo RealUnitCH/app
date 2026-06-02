@@ -34,6 +34,14 @@ RUN bash ./scripts/assemble-handbook-screenshots.sh /out
 # <!-- BEGIN/END:store-listing --> block in docs/handbook/de/index.html in
 # place. Single source of truth is the Fastlane metadata; this handbook
 # section just renders it (same upstream/downstream model as mails/).
+#
+# Note: this stage always renders from the metadata and serves its own
+# rewritten index.html, so the IMAGE is self-consistent even if the
+# committed docs/handbook/de/index.html were stale. Keeping the committed
+# handbook in sync with the metadata is enforced separately by the sync
+# gate in handbook-build-check.yaml (the generator is pure-stdlib and
+# version-stable, so the runner's python3 and this Alpine python3 produce
+# identical output).
 FROM alpine:3.20 AS store-listing-builder
 WORKDIR /work
 RUN apk add --no-cache python3

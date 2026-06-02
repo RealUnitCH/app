@@ -29,34 +29,8 @@ jobs:
     timeout-minutes: 2
     steps:
       - uses: actions/checkout@v5
-      - name: Reject FIXME placeholders
-        run: |
-          matches=$(grep -rE "^FIXME-" ios/fastlane/metadata android/fastlane/metadata 2>/dev/null || true)
-          if [ -n "$matches" ]; then
-            echo "::error::Metadata still contains FIXME placeholders:"
-            echo "$matches"
-            exit 1
-          fi
-      - name: Enforce store-side character limits
-        run: |
-          check() {
-            local file="$1" limit="$2" label="$3"
-            if [ -f "$file" ]; then
-              chars=$(($(wc -m < "$file" | tr -d ' ') - 1))
-              if [ "$chars" -gt "$limit" ]; then
-                echo "::error::$label exceeds $limit chars (got $chars): $file"
-                exit 1
-              fi
-            fi
-          }
-          check ios/fastlane/metadata/de-DE/name.txt 30 "iOS name"
-          check ios/fastlane/metadata/de-DE/subtitle.txt 30 "iOS subtitle"
-          check ios/fastlane/metadata/de-DE/promotional_text.txt 170 "iOS promotional_text"
-          check ios/fastlane/metadata/de-DE/keywords.txt 100 "iOS keywords"
-          check ios/fastlane/metadata/de-DE/description.txt 4000 "iOS description"
-          check android/fastlane/metadata/android/de-DE/title.txt 50 "Android title"
-          check android/fastlane/metadata/android/de-DE/short_description.txt 80 "Android short_description"
-          check android/fastlane/metadata/android/de-DE/full_description.txt 4000 "Android full_description"
+      - name: Reject FIXME placeholders + enforce character limits
+        run: bash scripts/check-store-metadata.sh
 
   ios:
     needs: preflight

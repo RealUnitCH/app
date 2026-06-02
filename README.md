@@ -184,6 +184,8 @@ Tags follow plain SemVer: `vMAJOR.MINOR.PATCH`. There is no pre-release suffix �
 
 A single release workflow (`release.yaml`) listens on the `v*` tag pattern and uses a guard job to route based on the PATCH component: patch tags go through the internal lane (`prerelease: true` on GitHub), MAJOR/MINOR tags through the production-candidate lane (`prerelease: false`). Either way the build lands in the Test tracks first — the App Store / Play Store production track is never updated by a tag push.
 
+The `beta` lanes push the **store listing** (Fastlane metadata + screenshots) to App Store Connect / Play Console alongside every binary, so a tag-driven release keeps the listing in sync with the build (production promotion / final submit stay manual — see `store-metadata.yaml`). Because of that, `release.yaml` runs the same `scripts/check-store-metadata.sh` preflight (FIXME placeholders + character limits) as `store-metadata.yaml` in a gating `store-metadata-preflight` job before either deploy lane runs — a tag can never ship a `FIXME-` placeholder or an oversize field to the live consoles.
+
 The build number is derived deterministically from the tag by `tool/generate_release_info.dart` using `MAJOR * 10_000_000 + MINOR * 100_000 + PATCH * 1_000 + 999`. The fixed `+999` suffix keeps every new build strictly above the legacy beta build codes; the first new build `v1.0.15` lands at `10_015_999`, comfortably above the highest published legacy beta `v1.0.0-beta.14` at `10_000_014`.
 
 `pubspec.yaml`'s `version:` field has two roles:
