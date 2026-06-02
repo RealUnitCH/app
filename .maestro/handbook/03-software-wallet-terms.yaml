@@ -17,7 +17,7 @@ appId: swiss.realunit.app
               text: '.*Neue Wallet erstellen.*'
           commands:
             - tapOn:
-                text: '.*Digitale Wallet.*'
+                text: '.*Software-Wallet.*'
                 optional: true
 - waitForAnimationToEnd
 - extendedWaitUntil:

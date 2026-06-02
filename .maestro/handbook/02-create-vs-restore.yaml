@@ -15,7 +15,7 @@ appId: swiss.realunit.app
       - runFlow:
           when:
             notVisible:
-              text: '.*Digitale Wallet.*'
+              text: '.*Software-Wallet.*'
           commands:
             - tapOn:
                 text: 'Start'
@@ -23,5 +23,5 @@ appId: swiss.realunit.app
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
-      text: '.*Digitale Wallet.*'
+      text: '.*Software-Wallet.*'
     timeout: 30000
