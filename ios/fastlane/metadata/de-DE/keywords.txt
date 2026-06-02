@@ -1,0 +1,1 @@
+RealUnit,Wallet,Token,Aktien,Vermögen,Schweiz,Bitbox,Krypto,Investment,bankenunabhängig

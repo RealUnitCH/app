@@ -94,5 +94,31 @@ platform :ios do
       api_key: get_api_key,
       skip_waiting_for_build_processing: true
     )
+
+    # Push the App Store listing (metadata + screenshots) alongside the binary.
+    # Defaults come from Deliverfile + Appfile.
+    deliver(
+      api_key: get_api_key,
+      metadata_path: "./fastlane/metadata",
+      screenshots_path: "./fastlane/screenshots",
+      skip_binary_upload: true,        # binary already uploaded by upload_to_testflight
+      skip_app_version_update: true,
+      skip_metadata: false,
+      skip_screenshots: false
+    )
+  end
+
+  desc "Upload App Store listing (metadata + screenshots) without a binary"
+  lane :store_metadata do
+    setup_ci
+    deliver(
+      api_key: get_api_key,
+      metadata_path: "./fastlane/metadata",
+      screenshots_path: "./fastlane/screenshots",
+      skip_binary_upload: true,
+      skip_app_version_update: true,
+      skip_metadata: false,
+      skip_screenshots: false
+    )
   end
 end

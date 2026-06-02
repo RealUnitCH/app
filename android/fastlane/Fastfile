@@ -87,5 +87,36 @@ platform :android do
       track: release_track,
       aab: aab_path
     )
+
+    # Push the Play Store listing (metadata + screenshots) alongside the AAB.
+    # Defaults come from Appfile (package_name + json_key_file).
+    upload_to_play_store(
+      metadata_path: "./fastlane/metadata/android",
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_changelogs: false,
+      skip_upload_metadata: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: false,
+      track: release_track
+    )
+  end
+
+  desc "Upload Play Store listing (metadata + screenshots) without a binary"
+  lane :store_metadata do
+    # Hard-pin the metadata-only push to the internal track. The main store
+    # listing is global, but the changelog is per-track — pinning "internal"
+    # (not release_track) guarantees a metadata sync can never write to the
+    # production track even if release_track is ever changed.
+    upload_to_play_store(
+      metadata_path: "./fastlane/metadata/android",
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_changelogs: false,
+      skip_upload_metadata: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: false,
+      track: "internal"
+    )
   end
 end
