@@ -203,6 +203,11 @@ class KycCubit extends Cubit<KycState> {
         case KycProcessStatus.inProgress:
           await _continueKyc(generation);
           return;
+        case KycProcessStatus.mergeProcessing:
+          // The user confirmed a merge and the backend is still processing it.
+          // Render a waiting state; do not treat the polling timeout as failure.
+          emit(const KycMergeProcessing());
+          return;
       }
     } on ApiException catch (e) {
       if (isClosed || generation != _runGeneration) return;

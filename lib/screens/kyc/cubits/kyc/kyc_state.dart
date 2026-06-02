@@ -66,6 +66,13 @@ class KycAccountMergeRequested extends KycState {
   const KycAccountMergeRequested();
 }
 
+/// Emitted when the API reports `KycProcessStatus.mergeProcessing` — the user
+/// confirmed a merge and the backend is still processing it. The app renders a
+/// waiting state instead of interpreting the polling timeout as a failure.
+class KycMergeProcessing extends KycState {
+  const KycMergeProcessing();
+}
+
 class KycUnsupportedStepFailure extends KycState {
   // Null when the backend says `PendingReview` but the step list contains no
   // `isRequired` step we can name — we still surface the failure (never a

@@ -18,6 +18,7 @@ import 'package:realunit_wallet/screens/kyc/subpages/kyc_account_merge_page.dart
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_completed_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_failure_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_loading_page.dart';
+import 'package:realunit_wallet/screens/kyc/subpages/kyc_merge_processing_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_pending_page.dart';
 import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
@@ -55,6 +56,7 @@ class KycViewManager extends StatelessWidget {
           message: S.of(context).kycUnsupportedStepDescription(stepName?.value ?? '-'),
         ),
         KycAccountMergeRequested() => const KycAccountMergePage(),
+        KycMergeProcessing() => const KycMergeProcessingPage(),
         KycPending(:final pendingStep) => KycPendingPage(pendingStep: pendingStep),
         KycCompleted() => const KycCompletedPage(),
         KycSuccess(:final currentStep, :final urlOrToken, :final realUnitUserData) =>
