@@ -22,79 +22,81 @@
     oder Feature Graphic geht ausschliesslich über einen PR auf diese
     Dateien; <code>store-metadata.yaml</code> pusht den neuen Stand an
     beide Konsolen, und der nächste Handbook-Build rendert ihn hier neu.
+    Jedes Feld und jedes Bild unten verlinkt mit <span class="src">↗</span>
+    direkt auf seine Quelldatei im Repo.
   </p>
 
   <!-- iOS section -->
   <h3>Apple App Store (de-DE)</h3>
   <dl class="store-listing">
-    <dt>App-Name (max 30)</dt><dd><code>{{ ios_name }}</code></dd>
-    <dt>Untertitel (max 30)</dt><dd><code>{{ ios_subtitle }}</code></dd>
-    <dt>Beschreibung (max 4000)</dt><dd><pre>{{ ios_description }}</pre></dd>
-    <dt>Schlagwörter (max 100, kommasepariert)</dt><dd><code>{{ ios_keywords }}</code></dd>
-    <dt>Marketing-URL</dt><dd><a href="{{ ios_marketing_url }}">{{ ios_marketing_url }}</a></dd>
-    <dt>Privacy-URL</dt><dd><a href="{{ ios_privacy_url }}">{{ ios_privacy_url }}</a></dd>
-    <dt>Support-URL</dt><dd><a href="{{ ios_support_url }}">{{ ios_support_url }}</a></dd>
-    <dt>Copyright</dt><dd>{{ ios_copyright }}</dd>
-    <dt>Release-Notes</dt><dd>{{ ios_release_notes }}</dd>
+    <dt>App-Name (max 30)</dt><dd><code>{{ ios_name }}</code> <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/metadata/de-DE/name.txt" title="Quelle: name.txt">↗</a></dd>
+    <dt>Untertitel (max 30)</dt><dd><code>{{ ios_subtitle }}</code> <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/metadata/de-DE/subtitle.txt" title="Quelle: subtitle.txt">↗</a></dd>
+    <dt>Beschreibung (max 4000) <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/metadata/de-DE/description.txt" title="Quelle: description.txt">↗</a></dt><dd><pre>{{ ios_description }}</pre></dd>
+    <dt>Schlagwörter (max 100, kommasepariert)</dt><dd><code>{{ ios_keywords }}</code> <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/metadata/de-DE/keywords.txt" title="Quelle: keywords.txt">↗</a></dd>
+    <dt>Marketing-URL</dt><dd><a href="{{ ios_marketing_url }}">{{ ios_marketing_url }}</a> <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/metadata/de-DE/marketing_url.txt" title="Quelle: marketing_url.txt">↗</a></dd>
+    <dt>Privacy-URL</dt><dd><a href="{{ ios_privacy_url }}">{{ ios_privacy_url }}</a> <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/metadata/de-DE/privacy_url.txt" title="Quelle: privacy_url.txt">↗</a></dd>
+    <dt>Support-URL</dt><dd><a href="{{ ios_support_url }}">{{ ios_support_url }}</a> <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/metadata/de-DE/support_url.txt" title="Quelle: support_url.txt">↗</a></dd>
+    <dt>Copyright</dt><dd>{{ ios_copyright }} <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/metadata/de-DE/copyright.txt" title="Quelle: copyright.txt">↗</a></dd>
+    <dt>Release-Notes</dt><dd>{{ ios_release_notes }} <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/metadata/de-DE/release_notes.txt" title="Quelle: release_notes.txt">↗</a></dd>
   </dl>
 
   <h4>Screenshots — iPhone 6.9 Display (1320×2868)</h4>
   <div class="store-screenshots">
-    <figure><img src="../store/ios/iphone-69/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome</figcaption></figure>
-    <figure><img src="../store/ios/iphone-69/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard</figcaption></figure>
-    <figure><img src="../store/ios/iphone-69/03_security.png"  alt="Security"/><figcaption>03_security</figcaption></figure>
-    <figure><img src="../store/ios/iphone-69/04_buy.png"       alt="Buy"/><figcaption>04_buy</figcaption></figure>
-    <figure><img src="../store/ios/iphone-69/05_tax.png"       alt="Tax"/><figcaption>05_tax</figcaption></figure>
+    <figure><img src="../store/ios/iphone-69/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/screenshots/de-DE/iPhone%206.9%20Display/01_welcome.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/iphone-69/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/screenshots/de-DE/iPhone%206.9%20Display/02_dashboard.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/iphone-69/03_security.png"  alt="Security"/><figcaption>03_security <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/screenshots/de-DE/iPhone%206.9%20Display/03_security.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/iphone-69/04_buy.png"       alt="Buy"/><figcaption>04_buy <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/screenshots/de-DE/iPhone%206.9%20Display/04_buy.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/iphone-69/05_tax.png"       alt="Tax"/><figcaption>05_tax <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/screenshots/de-DE/iPhone%206.9%20Display/05_tax.png" title="Quelle">↗</a></figcaption></figure>
   </div>
 
   <h4>Screenshots — iPad Pro 13" Display (2752×2064)</h4>
   <div class="store-screenshots">
-    <figure><img src="../store/ios/ipad-13/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome</figcaption></figure>
-    <figure><img src="../store/ios/ipad-13/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard</figcaption></figure>
-    <figure><img src="../store/ios/ipad-13/03_security.png"  alt="Security"/><figcaption>03_security</figcaption></figure>
-    <figure><img src="../store/ios/ipad-13/04_buy.png"       alt="Buy"/><figcaption>04_buy</figcaption></figure>
-    <figure><img src="../store/ios/ipad-13/05_tax.png"       alt="Tax"/><figcaption>05_tax</figcaption></figure>
+    <figure><img src="../store/ios/ipad-13/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/screenshots/de-DE/iPad%20Pro%20(13%20inch)%20Display/01_welcome.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/ipad-13/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/screenshots/de-DE/iPad%20Pro%20(13%20inch)%20Display/02_dashboard.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/ipad-13/03_security.png"  alt="Security"/><figcaption>03_security <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/screenshots/de-DE/iPad%20Pro%20(13%20inch)%20Display/03_security.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/ipad-13/04_buy.png"       alt="Buy"/><figcaption>04_buy <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/screenshots/de-DE/iPad%20Pro%20(13%20inch)%20Display/04_buy.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/ipad-13/05_tax.png"       alt="Tax"/><figcaption>05_tax <a class="src" href="https://github.com/RealUnitCH/app/blob/main/ios/fastlane/screenshots/de-DE/iPad%20Pro%20(13%20inch)%20Display/05_tax.png" title="Quelle">↗</a></figcaption></figure>
   </div>
 
   <!-- Android section -->
   <h3>Google Play Store (de-DE)</h3>
   <dl class="store-listing">
-    <dt>Titel (max 50)</dt><dd><code>{{ android_title }}</code></dd>
-    <dt>Kurzbeschreibung (max 80)</dt><dd>{{ android_short }}</dd>
-    <dt>Lang-Beschreibung (max 4000, HTML)</dt><dd><div class="rendered-html">{{ android_full_html }}</div></dd>
-    <dt>Changelog</dt><dd>{{ android_changelog }}</dd>
+    <dt>Titel (max 50)</dt><dd><code>{{ android_title }}</code> <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/title.txt" title="Quelle: title.txt">↗</a></dd>
+    <dt>Kurzbeschreibung (max 80)</dt><dd>{{ android_short }} <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/short_description.txt" title="Quelle: short_description.txt">↗</a></dd>
+    <dt>Lang-Beschreibung (max 4000, HTML) <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/full_description.txt" title="Quelle: full_description.txt">↗</a></dt><dd><div class="rendered-html">{{ android_full_html }}</div></dd>
+    <dt>Changelog</dt><dd>{{ android_changelog }} <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/changelogs/default.txt" title="Quelle: changelogs/default.txt">↗</a></dd>
   </dl>
 
   <h4>Feature Graphic (1024×500)</h4>
-  <figure class="store-graphic"><img src="../store/android/featureGraphic.png" alt="Feature Graphic"/></figure>
+  <figure class="store-graphic"><img src="../store/android/featureGraphic.png" alt="Feature Graphic"/><figcaption>featureGraphic <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/images/featureGraphic.png" title="Quelle">↗</a></figcaption></figure>
 
   <h4>Icon (512×512)</h4>
-  <figure class="store-icon"><img src="../store/android/icon.png" alt="App Icon"/></figure>
+  <figure class="store-icon"><img src="../store/android/icon.png" alt="App Icon"/><figcaption>icon <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/images/icon.png" title="Quelle">↗</a></figcaption></figure>
 
   <h4>Phone Screenshots (1350×2400)</h4>
   <div class="store-screenshots">
-    <figure><img src="../store/android/phone/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome</figcaption></figure>
-    <figure><img src="../store/android/phone/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard</figcaption></figure>
-    <figure><img src="../store/android/phone/03_security.png"  alt="Security"/><figcaption>03_security</figcaption></figure>
-    <figure><img src="../store/android/phone/04_buy.png"       alt="Buy"/><figcaption>04_buy</figcaption></figure>
-    <figure><img src="../store/android/phone/05_tax.png"       alt="Tax"/><figcaption>05_tax</figcaption></figure>
+    <figure><img src="../store/android/phone/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/images/phoneScreenshots/01_welcome.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/phone/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/images/phoneScreenshots/02_dashboard.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/phone/03_security.png"  alt="Security"/><figcaption>03_security <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/images/phoneScreenshots/03_security.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/phone/04_buy.png"       alt="Buy"/><figcaption>04_buy <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/images/phoneScreenshots/04_buy.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/phone/05_tax.png"       alt="Tax"/><figcaption>05_tax <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/images/phoneScreenshots/05_tax.png" title="Quelle">↗</a></figcaption></figure>
   </div>
 
   <h4>7" Tablet (1920×1200)</h4>
   <div class="store-screenshots">
-    <figure><img src="../store/android/seven-inch/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome</figcaption></figure>
-    <figure><img src="../store/android/seven-inch/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard</figcaption></figure>
-    <figure><img src="../store/android/seven-inch/03_security.png"  alt="Security"/><figcaption>03_security</figcaption></figure>
-    <figure><img src="../store/android/seven-inch/04_buy.png"       alt="Buy"/><figcaption>04_buy</figcaption></figure>
-    <figure><img src="../store/android/seven-inch/05_tax.png"       alt="Tax"/><figcaption>05_tax</figcaption></figure>
+    <figure><img src="../store/android/seven-inch/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/images/sevenInchScreenshots/01_welcome.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/seven-inch/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/images/sevenInchScreenshots/02_dashboard.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/seven-inch/03_security.png"  alt="Security"/><figcaption>03_security <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/images/sevenInchScreenshots/03_security.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/seven-inch/04_buy.png"       alt="Buy"/><figcaption>04_buy <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/images/sevenInchScreenshots/04_buy.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/seven-inch/05_tax.png"       alt="Tax"/><figcaption>05_tax <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/images/sevenInchScreenshots/05_tax.png" title="Quelle">↗</a></figcaption></figure>
   </div>
 
   <h4>10" Tablet (2560×1440)</h4>
   <div class="store-screenshots">
-    <figure><img src="../store/android/ten-inch/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome</figcaption></figure>
-    <figure><img src="../store/android/ten-inch/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard</figcaption></figure>
-    <figure><img src="../store/android/ten-inch/03_security.png"  alt="Security"/><figcaption>03_security</figcaption></figure>
-    <figure><img src="../store/android/ten-inch/04_buy.png"       alt="Buy"/><figcaption>04_buy</figcaption></figure>
-    <figure><img src="../store/android/ten-inch/05_tax.png"       alt="Tax"/><figcaption>05_tax</figcaption></figure>
+    <figure><img src="../store/android/ten-inch/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/images/tenInchScreenshots/01_welcome.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/ten-inch/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/images/tenInchScreenshots/02_dashboard.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/ten-inch/03_security.png"  alt="Security"/><figcaption>03_security <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/images/tenInchScreenshots/03_security.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/ten-inch/04_buy.png"       alt="Buy"/><figcaption>04_buy <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/images/tenInchScreenshots/04_buy.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/ten-inch/05_tax.png"       alt="Tax"/><figcaption>05_tax <a class="src" href="https://github.com/RealUnitCH/app/blob/main/android/fastlane/metadata/android/de-DE/images/tenInchScreenshots/05_tax.png" title="Quelle">↗</a></figcaption></figure>
   </div>
 </details>
