@@ -123,7 +123,7 @@ class _WelcomePageState extends State<WelcomePage> {
                           identifier: 'welcome-create-wallet',
                           child: WelcomeCard(
                             title: S.of(context).createWallet,
-                            description: S.of(context).softwareWalletSubtitle,
+                            description: S.of(context).newWalletSubtitle,
                             onPressed: () => context.pushNamed(OnboardingRoutes.createWallet),
                             trailing: SvgPicture.asset(
                               'assets/images/illustrations/create_wallet.svg',
