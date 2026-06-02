@@ -9,11 +9,21 @@
 # back to onboarding (welcome).
 #
 # From there we walk the restore path: from the HomePage splash tap "Start"
-# -> WelcomePage, tap the "Digitale Wallet (App)" card to flip the welcome
-# toggle to step 2, then tap the "Wallet wiederherstellen" card
-# -> RestoreWalletPage. The settle target is the seed-entry description text,
-# which is unique to RestoreWalletView (the "Wallet wiederherstellen" heading
-# shares its string with the welcome card and would match too early).
+# -> WelcomePage, tap the Software-Wallet card to flip the welcome toggle
+# to step 2, then tap the Wallet-wiederherstellen card -> RestoreWalletPage.
+# The settle target is the seed-entry description text, which is unique to
+# RestoreWalletView (the "Wallet wiederherstellen" heading shares its string
+# with the welcome card and would match too early).
+#
+# Welcome cards are targeted by Semantics id (see
+# lib/screens/welcome/welcome_page.dart) instead of regex text-matching of
+# their titles. Both step groups stay in the widget tree at all times —
+# AnimatedSlide translates the off-screen group out of view but doesn't
+# remove it from the semantic tree — so regex text checks against card
+# titles match off-screen widgets and break `notVisible` gates. The id
+# targets are stable across copy refreshes and animation half-states, and
+# use the same pattern as the `wallet-logout-confirm-checkbox` and
+# `home-terms-link` Semantics ids elsewhere in the app.
 #
 # The checkbox is now wrapped in `Semantics(identifier:
 # 'wallet-logout-confirm-checkbox', toggled: …)` with a row-wide opaque
@@ -36,7 +46,7 @@
 # downstream — and the same Semantics-id strategy that fixed flow 26's
 # Nutzungsbedingungen-link tap has been reliable enough since.
 #
-# All tap-leading steps (Abmelden, Start, Digitale Wallet, Wallet
+# All tap-leading steps (Abmelden, Start, Software-Wallet, Wallet
 # wiederherstellen) are gated on their target not yet showing and re-tapped
 # if one was silently dropped. Each gate stops its loop the instant the
 # screen changes, so surplus iterations no-op.
@@ -67,7 +77,7 @@ appId: swiss.realunit.app
       - runFlow:
           when:
             notVisible:
-              text: '.*Digitale Wallet.*'
+              id: 'welcome-software-wallet'
           commands:
             - tapOn:
                 text: 'Start'
@@ -79,10 +89,10 @@ appId: swiss.realunit.app
       - runFlow:
           when:
             notVisible:
-              text: '.*Neue Wallet erstellen.*'
+              id: 'welcome-restore-wallet'
           commands:
             - tapOn:
-                text: '.*Digitale Wallet.*'
+                id: 'welcome-software-wallet'
                 optional: true
 - waitForAnimationToEnd
 - repeat:
@@ -94,7 +104,7 @@ appId: swiss.realunit.app
               text: '.*Wiederherstellungs-Wörter.*'
           commands:
             - tapOn:
-                text: '.*Wallet wiederherstellen.*'
+                id: 'welcome-restore-wallet'
                 optional: true
 - waitForAnimationToEnd
 - extendedWaitUntil:
