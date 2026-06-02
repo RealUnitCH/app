@@ -7,6 +7,13 @@
 # was silently dropped (Maestro/XCUITest tap-loss on Apple Silicon + iOS 26,
 # mobile-dev-inc/maestro#3137). The gate stops the loop the instant the
 # screen changes, so surplus iterations no-op.
+#
+# Welcome cards are targeted by Semantics id (see
+# lib/screens/welcome/welcome_page.dart) instead of regex text-matching:
+# both step groups stay in the widget tree at all times (AnimatedSlide
+# translates the off-screen group out of view but doesn't remove it), so
+# regex text checks against card titles are unreliable across copy
+# changes and animation half-states.
 appId: swiss.realunit.app
 ---
 - repeat:
@@ -15,7 +22,7 @@ appId: swiss.realunit.app
       - runFlow:
           when:
             notVisible:
-              text: '.*Software-Wallet.*'
+              id: 'welcome-software-wallet'
           commands:
             - tapOn:
                 text: 'Start'
@@ -23,5 +30,5 @@ appId: swiss.realunit.app
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
-      text: '.*Software-Wallet.*'
+      id: 'welcome-software-wallet'
     timeout: 30000
