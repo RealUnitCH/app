@@ -333,7 +333,18 @@ jobs:
       - m3-multi-page-ble-toggle
       - m5-channel-hash-mismatch
       - m6-factory-reset
-    runs-on: [self-hosted, macOS, arm64, bitbox]
+    # Hosted runner — NOT the self-hosted BitBox pool. This job only reads
+    # the `needs.*.result` outcomes and runs a pure-bash aggregation; it
+    # touches no BLE/USB hardware. Pinning it to `[self-hosted, macOS,
+    # arm64, bitbox]` (as the M-* flow jobs require) was a latent bug: with
+    # `if: always()` the summary runs on EVERY event, including PRs where
+    # all M-* jobs are gated to `skipped`. With no self-hosted runner
+    # online for a plain PR, the job sat queued until GitHub's 24h
+    # max-queue limit auto-cancelled it — surfacing as a red
+    # "Tier-3 Maestro summary" check on the PR ~24h after open. A hosted
+    # runner makes the aggregation start immediately and report the real
+    # result (all-skipped → green).
+    runs-on: ubuntu-latest
     steps:
       - name: Aggregate outcomes
         run: |
