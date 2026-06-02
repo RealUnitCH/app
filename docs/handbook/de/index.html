@@ -531,6 +531,69 @@
         border-color: var(--line-2);
         color: var(--ink);
       }
+      /* Store-listing section (#spec-store-listing) — see
+         scripts/assemble-handbook-store-listing.sh. Uses the handbook palette
+         vars (the scope-extension snippet's --text-secondary/--border/
+         --surface-alt map to --ink-3/--line/--surface-2 here). */
+      dl.store-listing {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 8px 24px;
+        margin: 16px 0 32px;
+      }
+      dl.store-listing dt {
+        font-weight: 600;
+        color: var(--ink-3);
+      }
+      dl.store-listing dd {
+        margin: 0;
+      }
+      dl.store-listing dd pre {
+        white-space: pre-wrap;
+        margin: 0;
+      }
+      .store-screenshots {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+        margin: 0 0 24px;
+      }
+      .store-screenshots figure {
+        margin: 0;
+      }
+      .store-screenshots img {
+        width: 100%;
+        height: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      .store-screenshots figcaption {
+        font-size: 12px;
+        color: var(--ink-3);
+        margin-top: 4px;
+        text-align: center;
+      }
+      figure.store-graphic img,
+      figure.store-icon img {
+        height: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      figure.store-graphic {
+        margin: 0 0 24px;
+        max-width: 512px;
+      }
+      figure.store-graphic img {
+        width: 100%;
+      }
+      figure.store-icon {
+        margin: 0 0 24px;
+      }
+      .rendered-html {
+        padding: 12px;
+        background: var(--surface-2);
+        border-radius: 8px;
+      }
     </style>
   </head>
   <body>
@@ -608,6 +671,9 @@
             </li>
             <li>
               <a href="#spec-mails"><span class="spec-num">M</span>E-Mails</a>
+            </li>
+            <li>
+              <a href="#spec-store-listing"><span class="spec-num">S</span>Store-Listing</a>
             </li>
           </ol>
         </nav>
@@ -2188,6 +2254,147 @@
             im realunit-app-Repo) reingezogen.
           </p>
         </details>
+
+        <!-- BEGIN:store-listing -->
+<details id="spec-store-listing" class="spec" open>
+  <summary>
+    <div class="spec-head">
+      <div class="lhs">
+        <h2><span class="num">S</span>App Store / Play Store Listing</h2>
+        <div class="file">ios/fastlane/metadata · android/fastlane/metadata</div>
+      </div>
+      <div class="rhs">
+        <b>Live aus Repo</b>
+        <div class="links">
+          <a href="https://github.com/RealUnitCH/app/tree/main/ios/fastlane/metadata">iOS metadata ↗</a>
+          ·
+          <a href="https://github.com/RealUnitCH/app/tree/main/android/fastlane/metadata/android">Android metadata ↗</a>
+        </div>
+      </div>
+    </div>
+  </summary>
+
+  <p class="spec-intro">
+    Single source of truth für alles, was an Apple App Store Connect und
+    Google Play Console übermittelt wird. Änderung an Text, Screenshot
+    oder Feature Graphic geht ausschliesslich über einen PR auf diese
+    Dateien; <code>store-metadata.yaml</code> pusht den neuen Stand an
+    beide Konsolen, und der nächste Handbook-Build rendert ihn hier neu.
+  </p>
+
+  <!-- iOS section -->
+  <h3>Apple App Store (de-DE)</h3>
+  <dl class="store-listing">
+    <dt>App-Name (max 30)</dt><dd><code>RealUnit Wallet</code></dd>
+    <dt>Untertitel (max 30)</dt><dd><code>Sicher. Einfach. Unabhängig.</code></dd>
+    <dt>Beschreibung (max 4000)</dt><dd><pre>Die offizielle App der RealUnit Schweiz AG – für den einfachen, sicheren Kauf und die Verwahrung der RealUnit Aktientoken. Ohne Bank. Ohne Gebühren. Direkt in Ihrer Hand.
+
+IHRE VORTEILE AUF EINEN BLICK
+
+Kostenloser Kauf von RealUnit Token
+Bankenunabhängige, sichere Verwahrung Ihrer Token
+Aktueller Aktienkurs und persönliche Vermögensübersicht
+Belege für Handel und Steuern jederzeit abrufbar
+Kompatibel mit der Hardware Wallet Bitbox02 Nova
+
+FÜR WEN IST DIE APP?
+
+Die RealUnit App richtet sich an Anlegerinnen und Anleger, die ihr Vermögen ausserhalb des Bankensystems verwalten möchten – transparent, sicher und selbstbestimmt.
+
+Die RealUnit Schweiz AG ist eine börsenkotierte Investmentgesellschaft, welche breit diversifiziert in Realwerte investiert. Wir verfolgen das Ziel, das uns anvertraute Vermögen bestmöglich vor Krisen und Kaufkraftverlust zu schützen und das Privateigentum zu sichern.
+
+Jetzt herunterladen und Ihre finanzielle Souveränität zurückgewinnen.</pre></dd>
+    <dt>Schlagwörter (max 100, kommasepariert)</dt><dd><code>RealUnit,Wallet,Token,Aktien,Vermögen,Schweiz,Bitbox,Krypto,Investment,bankenunabhängig</code></dd>
+    <dt>Marketing-URL</dt><dd><a href="https://realunit.ch">https://realunit.ch</a></dd>
+    <dt>Privacy-URL</dt><dd><a href="https://realunit.ch/datenschutz/">https://realunit.ch/datenschutz/</a></dd>
+    <dt>Support-URL</dt><dd><a href="https://realunit.ch/kontakt/">https://realunit.ch/kontakt/</a></dd>
+    <dt>Copyright</dt><dd>© 2026 RealUnit Schweiz AG</dd>
+    <dt>Release-Notes</dt><dd>Erste Veröffentlichung der RealUnit Wallet App.</dd>
+  </dl>
+
+  <h4>Screenshots — iPhone 6.9 Display (1320×2868)</h4>
+  <div class="store-screenshots">
+    <figure><img src="../store/ios/iphone-69/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome</figcaption></figure>
+    <figure><img src="../store/ios/iphone-69/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard</figcaption></figure>
+    <figure><img src="../store/ios/iphone-69/03_security.png"  alt="Security"/><figcaption>03_security</figcaption></figure>
+    <figure><img src="../store/ios/iphone-69/04_buy.png"       alt="Buy"/><figcaption>04_buy</figcaption></figure>
+    <figure><img src="../store/ios/iphone-69/05_tax.png"       alt="Tax"/><figcaption>05_tax</figcaption></figure>
+  </div>
+
+  <h4>Screenshots — iPad Pro 13" Display (2752×2064)</h4>
+  <div class="store-screenshots">
+    <figure><img src="../store/ios/ipad-13/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome</figcaption></figure>
+    <figure><img src="../store/ios/ipad-13/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard</figcaption></figure>
+    <figure><img src="../store/ios/ipad-13/03_security.png"  alt="Security"/><figcaption>03_security</figcaption></figure>
+    <figure><img src="../store/ios/ipad-13/04_buy.png"       alt="Buy"/><figcaption>04_buy</figcaption></figure>
+    <figure><img src="../store/ios/ipad-13/05_tax.png"       alt="Tax"/><figcaption>05_tax</figcaption></figure>
+  </div>
+
+  <!-- Android section -->
+  <h3>Google Play Store (de-DE)</h3>
+  <dl class="store-listing">
+    <dt>Titel (max 50)</dt><dd><code>RealUnit Wallet</code></dd>
+    <dt>Kurzbeschreibung (max 80)</dt><dd>RealUnit Token kaufen, verwahren &amp; verwalten – sicher und bankenunabhängig.</dd>
+    <dt>Lang-Beschreibung (max 4000, HTML)</dt><dd><div class="rendered-html">Die offizielle App der RealUnit Schweiz AG – für den einfachen, gebührenfreien Kauf und die sichere Verwahrung der RealUnit Aktientoken. Ohne Bank. Ohne Gebühren. Direkt in Ihrer Hand.
+
+<b>Ihre Vorteile</b>
+
+✔ Kostenloser Kauf von RealUnit Token
+
+✔ Bankenunabhängige, sichere Verwahrung Ihrer Token
+
+✔ Aktueller Aktienkurs und persönliche Vermögensübersicht
+
+✔ Belege für Handel und Steuern jederzeit abrufbar
+
+✔ Kompatibel mit der Hardware Wallet Bitbox02 Nova
+
+<b>Für wen ist die App?</b>
+
+Die RealUnit App richtet sich an Anlegerinnen und Anleger, die ihr Vermögen ausserhalb des Bankensystems verwalten möchten – transparent, sicher und selbstbestimmt.
+
+<b>Über RealUnit Schweiz AG</b>
+
+Die RealUnit Schweiz AG ist eine börsenkotierte Investmentgesellschaft, welche breit diversifiziert in Realwerte investiert. Wir verfolgen das Ziel, das uns anvertraute Vermögen bestmöglich vor Krisen und Kaufkraftverlust zu schützen und das Privateigentum zu sichern.
+
+Jetzt herunterladen und Ihre finanzielle Souveränität zurückgewinnen.</div></dd>
+    <dt>Changelog</dt><dd>Erste Veröffentlichung der RealUnit Wallet App.</dd>
+  </dl>
+
+  <h4>Feature Graphic (1024×500)</h4>
+  <figure class="store-graphic"><img src="../store/android/featureGraphic.png" alt="Feature Graphic"/></figure>
+
+  <h4>Icon (512×512)</h4>
+  <figure class="store-icon"><img src="../store/android/icon.png" alt="App Icon"/></figure>
+
+  <h4>Phone Screenshots (1350×2400)</h4>
+  <div class="store-screenshots">
+    <figure><img src="../store/android/phone/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome</figcaption></figure>
+    <figure><img src="../store/android/phone/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard</figcaption></figure>
+    <figure><img src="../store/android/phone/03_security.png"  alt="Security"/><figcaption>03_security</figcaption></figure>
+    <figure><img src="../store/android/phone/04_buy.png"       alt="Buy"/><figcaption>04_buy</figcaption></figure>
+    <figure><img src="../store/android/phone/05_tax.png"       alt="Tax"/><figcaption>05_tax</figcaption></figure>
+  </div>
+
+  <h4>7" Tablet (1920×1200)</h4>
+  <div class="store-screenshots">
+    <figure><img src="../store/android/seven-inch/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome</figcaption></figure>
+    <figure><img src="../store/android/seven-inch/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard</figcaption></figure>
+    <figure><img src="../store/android/seven-inch/03_security.png"  alt="Security"/><figcaption>03_security</figcaption></figure>
+    <figure><img src="../store/android/seven-inch/04_buy.png"       alt="Buy"/><figcaption>04_buy</figcaption></figure>
+    <figure><img src="../store/android/seven-inch/05_tax.png"       alt="Tax"/><figcaption>05_tax</figcaption></figure>
+  </div>
+
+  <h4>10" Tablet (2560×1440)</h4>
+  <div class="store-screenshots">
+    <figure><img src="../store/android/ten-inch/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome</figcaption></figure>
+    <figure><img src="../store/android/ten-inch/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard</figcaption></figure>
+    <figure><img src="../store/android/ten-inch/03_security.png"  alt="Security"/><figcaption>03_security</figcaption></figure>
+    <figure><img src="../store/android/ten-inch/04_buy.png"       alt="Buy"/><figcaption>04_buy</figcaption></figure>
+    <figure><img src="../store/android/ten-inch/05_tax.png"       alt="Tax"/><figcaption>05_tax</figcaption></figure>
+  </div>
+</details>
+<!-- END:store-listing -->
       </main>
     </div>
   </body>
