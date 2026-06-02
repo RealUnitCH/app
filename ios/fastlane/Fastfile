@@ -95,17 +95,14 @@ platform :ios do
       skip_waiting_for_build_processing: true
     )
 
-    # Push the App Store listing (metadata + screenshots) alongside the binary.
-    # Defaults come from Deliverfile + Appfile.
-    deliver(
-      api_key: get_api_key,
-      metadata_path: "./fastlane/metadata",
-      screenshots_path: "./fastlane/screenshots",
-      skip_binary_upload: true,        # binary already uploaded by upload_to_testflight
-      skip_app_version_update: true,
-      skip_metadata: false,
-      skip_screenshots: false
-    )
+    # NOTE: the App Store listing (metadata + screenshots) is NOT pushed here.
+    # `deliver` can only write to an *editable* App Store version, which does
+    # not exist for a TestFlight-only app — it aborts with "could not find an
+    # editable version for 'IOS'". Unlike Play (where the listing is global and
+    # ships with the AAB), the App Store listing is a separate, human-gated
+    # submission surface. It is driven from git via the dedicated
+    # `store_metadata` lane / store-metadata.yaml once an editable version
+    # exists in App Store Connect — never coupled to an internal TestFlight tag.
   end
 
   desc "Upload App Store listing (metadata + screenshots) without a binary"
