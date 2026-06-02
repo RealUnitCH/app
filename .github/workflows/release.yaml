@@ -63,8 +63,22 @@ jobs:
             echo "is_prerelease=true" >> $GITHUB_OUTPUT
           fi
 
-  android-deploy:
+  store-metadata-preflight:
+    # The beta lanes push the store listing (metadata + screenshots) to the
+    # live consoles alongside the binary, so gate the whole release on the
+    # same FIXME/character-limit checks that store-metadata.yaml enforces —
+    # a tag must never ship a FIXME placeholder or oversize field.
     needs: guard
+    if: needs.guard.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject FIXME placeholders + enforce character limits
+        run: bash scripts/check-store-metadata.sh
+
+  android-deploy:
+    needs: [guard, store-metadata-preflight]
     if: needs.guard.outputs.proceed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -166,7 +180,7 @@ jobs:
           path: build/app/outputs/flutter-apk/realunit-*.apk
 
   ios-deploy:
-    needs: guard
+    needs: [guard, store-metadata-preflight]
     if: needs.guard.outputs.proceed == 'true'
     runs-on: macos-26
     timeout-minutes: 45

@@ -20,6 +20,13 @@ on:
       - "docs/handbook/**"
       - "test/goldens/screens/**"
       - "scripts/assemble-handbook-screenshots.sh"
+      - "scripts/assemble-handbook-store-listing.py"
+      - "scripts/templates/store-listing.html.tmpl"
+      # Store-listing section is baked into the image from the Fastlane
+      # metadata; a metadata- or screenshot-only change must redeploy too.
+      - "ios/fastlane/metadata/**"
+      - "ios/fastlane/screenshots/**"
+      - "android/fastlane/metadata/**"
       - "Dockerfile.handbook"
       - "handbook.nginx.conf"
       - "handbook.htpasswd"
