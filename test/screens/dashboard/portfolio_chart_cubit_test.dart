@@ -65,10 +65,17 @@ void main() {
       // When all values are equal, the cubit floors the padded deviation at
       // `average * 0.05` so the chart still has a visible Y-range instead of
       // collapsing to a single horizontal line.
+      //
+      // Dates are anchored to `DateTime.now()` because the cubit's default
+      // period (`TimePeriod.threeMonths`) clips the visible window relative
+      // to `DateTime.now()`; hardcoded calendar dates would silently fall
+      // outside the window once the calendar moves on and the test would
+      // start asserting on an empty series.
+      final now = DateTime.now();
       final points = [
-        _pt(DateTime.utc(2026, 1, 1), 10000),
-        _pt(DateTime.utc(2026, 2, 1), 10000),
-        _pt(DateTime.utc(2026, 3, 1), 10000),
+        _pt(now.subtract(const Duration(days: 60)), 10000),
+        _pt(now.subtract(const Duration(days: 30)), 10000),
+        _pt(now.subtract(const Duration(days: 1)), 10000),
       ];
 
       final cubit = PortfolioChartCubit(points);
