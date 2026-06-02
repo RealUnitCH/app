@@ -48,7 +48,11 @@ class _PhoneNumberFieldState extends State<PhoneNumberField> {
       case '+49':
         return value.length >= 10 && value.length <= 11;
       default:
-        return false;
+        // Only enforce a length rule for prefixes we have an explicit format
+        // for. Fail open for any other prefix so adding one to [prefixes] (or a
+        // future API-driven list) does not silently reject every number from
+        // that country until this switch is updated.
+        return true;
     }
   }
 

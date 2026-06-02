@@ -115,5 +115,16 @@ void main() {
       expect(harness.controller.value, '+4915123456789');
       expect(isValid, isTrue);
     });
+
+    testWidgets('does not reject a number whose prefix has no explicit length rule', (tester) async {
+      // A prefix without a dedicated case must fail open on length so that
+      // adding a new prefix (or sourcing the list from the API) cannot silently
+      // reject every number from that country until the switch is updated.
+      final harness = await _pumpPhoneField(tester, initialPhoneNumber: '+43');
+
+      final isValid = await _enterAndValidate(tester, harness, '6641234567');
+
+      expect(isValid, isTrue);
+    });
   });
 }
