@@ -154,6 +154,7 @@
   "name": "Name",
   "networkMainnet": "Mainnet",
   "networkTestnet": "Testnet",
+  "newWalletSubtitle": "I want to create a new wallet.",
   "next": "Continue",
   "number": "Number",
   "onboardingCompletedSubtitle": "Congratulations, you have successfully opened a wallet. Next, secure access to this mobile app.",
