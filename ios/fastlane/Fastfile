@@ -96,13 +96,20 @@ platform :ios do
     )
 
     # Push the App Store listing (metadata + screenshots) alongside the binary.
-    # Defaults come from Deliverfile + Appfile.
+    # `skip_app_version_update: false` lets `deliver` create or select the
+    # editable App Store version (named after marketing_version) itself — a
+    # TestFlight-only app has no editable version yet, so without this deliver
+    # aborts with "could not find an editable version for 'IOS'". The
+    # Deliverfile keeps this safe: `force` (no prompts), `submit_for_review false`
+    # and `automatic_release false`, so deliver only *stages* the listing for a
+    # human to submit — it never auto-submits or releases to the public.
     deliver(
       api_key: get_api_key,
+      app_version: marketing_version,
       metadata_path: "./fastlane/metadata",
       screenshots_path: "./fastlane/screenshots",
       skip_binary_upload: true,        # binary already uploaded by upload_to_testflight
-      skip_app_version_update: true,
+      skip_app_version_update: false,  # create/select the editable App Store version
       skip_metadata: false,
       skip_screenshots: false
     )
@@ -111,12 +118,18 @@ platform :ios do
   desc "Upload App Store listing (metadata + screenshots) without a binary"
   lane :store_metadata do
     setup_ci
+    # Metadata-only sync (no binary). skip_app_version_update: false so deliver
+    # targets — and, if none exists yet, creates — the editable App Store
+    # version to attach the listing to. Safe via the Deliverfile
+    # (submit_for_review false + automatic_release false): staged, never
+    # submitted. app_version is read from the project when not given; in
+    # practice the editable version is already present from a prior release.
     deliver(
       api_key: get_api_key,
       metadata_path: "./fastlane/metadata",
       screenshots_path: "./fastlane/screenshots",
       skip_binary_upload: true,
-      skip_app_version_update: true,
+      skip_app_version_update: false,
       skip_metadata: false,
       skip_screenshots: false
     )
