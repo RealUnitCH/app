@@ -79,6 +79,12 @@ void main() {
       ];
 
       final cubit = PortfolioChartCubit(points);
+      // Select the all-time window so these fixed-date points are always inside
+      // the visible range. The default `threeMonths` period filters relative to
+      // DateTime.now(), which silently emptied the series once wall-clock time
+      // moved more than three months past the points (time-dependent failure);
+      // the 5%-floor behaviour under test is period-independent.
+      cubit.selectPeriod(TimePeriod.all);
 
       expect(cubit.state.horizontalLineValues, hasLength(6));
       // average 100 → floor 5 → rawInterval 2 → niceNumber 2 → bottom 94.
