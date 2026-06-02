@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -53,13 +54,14 @@ class SettingsPage extends StatelessWidget {
                   selectedOption: state.currency.code,
                   onTap: () => context.pushNamed(SettingsRoutes.currencies),
                 ),
-                SettingOption(
-                  title: S.of(context).settingsNetwork,
-                  leading: const NodesIcon(size: 24),
-                  trailing: _forwardIcon,
-                  selectedOption: state.networkMode.localizedName(context),
-                  onTap: () => context.pushNamed(SettingsRoutes.network),
-                ),
+                if (kDebugMode)
+                  SettingOption(
+                    title: S.of(context).settingsNetwork,
+                    leading: const NodesIcon(size: 24),
+                    trailing: _forwardIcon,
+                    selectedOption: state.networkMode.localizedName(context),
+                    onTap: () => context.pushNamed(SettingsRoutes.network),
+                  ),
                 SettingOption(
                   title: S.of(context).settingsTaxReport,
                   leading: const DocumentReportIcon(size: 24),

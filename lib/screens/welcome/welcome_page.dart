@@ -71,6 +71,13 @@ class _WelcomePageState extends State<WelcomePage> {
                   ],
                 ),
               ),
+              // Each WelcomeCard is wrapped in a Semantics node with a stable
+              // `identifier` so Maestro can target it via `tapOn: id:` on iOS
+              // (handbook flows 02/03/04/25). Regex text-matching on the card
+              // titles is unsafe here because both step groups stay in the
+              // widget tree at all times (translated off-screen by
+              // AnimatedSlide), so off-screen card titles appear "visible" to
+              // Maestro's semantic-tree probe and break `notVisible` gates.
               Stack(
                 children: [
                   AnimatedSlide(
@@ -80,21 +87,27 @@ class _WelcomePageState extends State<WelcomePage> {
                     child: Column(
                       spacing: 16.0,
                       children: [
-                        WelcomeCard(
-                          title: S.of(context).softwareWallet,
-                          description: S.of(context).softwareWalletSubtitle,
-                          onPressed: () => setState(() => showSecondStep = true),
-                          trailing: SvgPicture.asset(
-                            'assets/images/illustrations/software_wallet.svg',
+                        Semantics(
+                          identifier: 'welcome-software-wallet',
+                          child: WelcomeCard(
+                            title: S.of(context).softwareWallet,
+                            description: S.of(context).softwareWalletSubtitle,
+                            onPressed: () => setState(() => showSecondStep = true),
+                            trailing: SvgPicture.asset(
+                              'assets/images/illustrations/software_wallet.svg',
+                            ),
                           ),
                         ),
-                        WelcomeCard(
-                          title: S.of(context).bitbox,
-                          description: S.of(context).hardwareWalletSubtitle,
-                          trailing: SvgPicture.asset(
-                            'assets/images/illustrations/bitbox.svg',
+                        Semantics(
+                          identifier: 'welcome-bitbox',
+                          child: WelcomeCard(
+                            title: S.of(context).bitbox,
+                            description: S.of(context).hardwareWalletSubtitle,
+                            trailing: SvgPicture.asset(
+                              'assets/images/illustrations/bitbox.svg',
+                            ),
+                            onPressed: () => onBitboxPressed(context),
                           ),
-                          onPressed: () => onBitboxPressed(context),
                         ),
                       ],
                     ),
@@ -106,27 +119,36 @@ class _WelcomePageState extends State<WelcomePage> {
                     child: Column(
                       spacing: 16.0,
                       children: [
-                        WelcomeCard(
-                          title: S.of(context).createWallet,
-                          description: S.of(context).softwareWalletSubtitle,
-                          onPressed: () => context.pushNamed(OnboardingRoutes.createWallet),
-                          trailing: SvgPicture.asset(
-                            'assets/images/illustrations/create_wallet.svg',
+                        Semantics(
+                          identifier: 'welcome-create-wallet',
+                          child: WelcomeCard(
+                            title: S.of(context).createWallet,
+                            description: S.of(context).softwareWalletSubtitle,
+                            onPressed: () => context.pushNamed(OnboardingRoutes.createWallet),
+                            trailing: SvgPicture.asset(
+                              'assets/images/illustrations/create_wallet.svg',
+                            ),
                           ),
                         ),
-                        WelcomeCard(
-                          title: S.of(context).restoreWallet,
-                          description: S.of(context).restoreWalletSubtitle,
-                          onPressed: () => context.pushNamed(OnboardingRoutes.restoreWallet),
-                          trailing: SvgPicture.asset(
-                            'assets/images/illustrations/restore_wallet.svg',
+                        Semantics(
+                          identifier: 'welcome-restore-wallet',
+                          child: WelcomeCard(
+                            title: S.of(context).restoreWallet,
+                            description: S.of(context).restoreWalletSubtitle,
+                            onPressed: () => context.pushNamed(OnboardingRoutes.restoreWallet),
+                            trailing: SvgPicture.asset(
+                              'assets/images/illustrations/restore_wallet.svg',
+                            ),
                           ),
                         ),
                         if (kDebugMode)
-                          WelcomeCard(
-                            title: '${S.of(context).address} + ${S.of(context).signature}',
-                            description: S.of(context).debugWalletDescription,
-                            onPressed: () => context.pushNamed(OnboardingRoutes.debugAuth),
+                          Semantics(
+                            identifier: 'welcome-debug-auth',
+                            child: WelcomeCard(
+                              title: '${S.of(context).address} + ${S.of(context).signature}',
+                              description: S.of(context).debugWalletDescription,
+                              onPressed: () => context.pushNamed(OnboardingRoutes.debugAuth),
+                            ),
                           ),
                       ],
                     ),
