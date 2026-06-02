@@ -65,6 +65,15 @@ handbook flows reliably.
 4. Install the agent as a launchd service so it survives reboots:
    `sudo ./svc.sh install && sudo ./svc.sh start`.
 5. Verify the runner shows "Idle" in Settings → Actions → Runners.
+6. **Enable auto-run:** set the repository variable
+   `BITBOX_RUNNER_ONLINE` to `true` (Settings → Secrets and variables →
+   Actions → Variables → New repository variable). The flow jobs in
+   `.github/workflows/maestro-bitbox.yaml` gate their `push: develop`,
+   `schedule`, and labelled-PR auto-runs on this variable so they skip
+   cleanly while no runner is online instead of queuing until GitHub's
+   24h max-queue limit cancels them (which surfaces as a red check).
+   Leave it unset / `false` whenever the runner is taken offline for
+   maintenance; `workflow_dispatch` still runs on demand regardless.
 
 ## Runner-token rotation procedure
 

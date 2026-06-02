@@ -16,15 +16,33 @@ name: Tier 3 — Maestro BitBox flows
 #   `.maestro/bitbox/RUNNER.md`.
 #
 # TRIGGER MODEL:
-#   * `pull_request: develop` with the `tier3:bitbox` label gate -- the
-#     PR-gate subset (M-1 / M-3 / M-5 / M-6) runs. Hardware time is
-#     scarce; reviewers opt-in by label.
-#   * `push: develop` -- the PR-gate subset runs unconditionally as
-#     post-merge truth check.
+#   * `pull_request: [develop, staging]` with the `tier3:bitbox` label
+#     gate -- the PR-gate subset (M-1 / M-3 / M-5 / M-6) runs. Hardware
+#     time is scarce; reviewers opt-in by label. `staging` is included
+#     because the branch flow is now `staging -> develop -> main` and fix
+#     PRs target `staging`; gating only `develop` left the staging lane
+#     with no pre-merge Tier-3 BitBox signal.
+#   * `push: develop` -- the PR-gate subset runs as post-merge truth
+#     check.
 #   * `schedule: '0 2 * * *'` -- the daily/full subset (M-2 / M-4 /
 #     M-7) runs at 02:00 UTC on the self-hosted runner.
 #   * `workflow_dispatch` -- manual override; the `flow` input picks
-#     which flow to run.
+#     which flow to run. Manual dispatch ALWAYS runs the requested flow
+#     (it bypasses the runner-availability gate below): the operator who
+#     dispatches is asserting the hardware is online.
+#
+# RUNNER-AVAILABILITY GATE (`vars.BITBOX_RUNNER_ONLINE`):
+#   Every flow job below targets the self-hosted `[self-hosted, macOS,
+#   arm64, bitbox]` pool. A job that requests a self-hosted label with no
+#   online runner does NOT fail fast -- GitHub queues it until the 24h
+#   max-queue limit auto-cancels it, which renders as a red check ~24h
+#   later. To avoid silently hanging `push: develop` / `schedule` (and
+#   labelled PRs) when the BitBox runner is not provisioned, the AUTO-RUN
+#   paths are gated on the repository variable `BITBOX_RUNNER_ONLINE`.
+#   Set it to `'true'` (repo Settings -> Secrets and variables ->
+#   Actions -> Variables) once the runner in `.maestro/bitbox/RUNNER.md`
+#   is registered and online; until then the flow jobs skip cleanly
+#   instead of hanging. `workflow_dispatch` is exempt (manual override).
 #
 # CONCURRENCY / HARDWARE MUTEX:
 #   The runner has ONE BitBox 02 Nova. Running two flows in parallel
@@ -63,7 +81,7 @@ on:
   push:
     branches: [develop]
   pull_request:
-    branches: [develop]
+    branches: [develop, staging]
     types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
   schedule:
     # 02:00 UTC -- avoids overlapping with the macos-latest hosted
@@ -96,8 +114,13 @@ jobs:
   m1-happy-path:
     name: M-1 — Happy path
     if: >-
-      github.event_name == 'push'
-      || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'tier3:bitbox'))
+      (
+        vars.BITBOX_RUNNER_ONLINE == 'true'
+        && (
+          github.event_name == 'push'
+          || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'tier3:bitbox'))
+        )
+      )
       || (github.event_name == 'workflow_dispatch' && (inputs.flow == 'M-1' || inputs.flow == 'pr-gate'))
     runs-on: [self-hosted, macOS, arm64, bitbox]
     timeout-minutes: 5
@@ -128,8 +151,13 @@ jobs:
   m3-multi-page-ble-toggle:
     name: M-3 — Multi-page sign w/ BLE toggle (CANONICAL dedup verifier)
     if: >-
-      github.event_name == 'push'
-      || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'tier3:bitbox'))
+      (
+        vars.BITBOX_RUNNER_ONLINE == 'true'
+        && (
+          github.event_name == 'push'
+          || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'tier3:bitbox'))
+        )
+      )
       || (github.event_name == 'workflow_dispatch' && (inputs.flow == 'M-3' || inputs.flow == 'pr-gate'))
     needs: m1-happy-path
     runs-on: [self-hosted, macOS, arm64, bitbox]
@@ -157,8 +185,13 @@ jobs:
   m5-channel-hash-mismatch:
     name: M-5 — Channel-hash mismatch (CANONICAL spoof verifier)
     if: >-
-      github.event_name == 'push'
-      || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'tier3:bitbox'))
+      (
+        vars.BITBOX_RUNNER_ONLINE == 'true'
+        && (
+          github.event_name == 'push'
+          || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'tier3:bitbox'))
+        )
+      )
       || (github.event_name == 'workflow_dispatch' && (inputs.flow == 'M-5' || inputs.flow == 'pr-gate'))
     needs: m1-happy-path
     runs-on: [self-hosted, macOS, arm64, bitbox]
@@ -206,8 +239,13 @@ jobs:
   m6-factory-reset:
     name: M-6 — Factory-reset detection (CANONICAL static-pubkey verifier)
     if: >-
-      github.event_name == 'push'
-      || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'tier3:bitbox'))
+      (
+        vars.BITBOX_RUNNER_ONLINE == 'true'
+        && (
+          github.event_name == 'push'
+          || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'tier3:bitbox'))
+        )
+      )
       || (github.event_name == 'workflow_dispatch' && (inputs.flow == 'M-6' || inputs.flow == 'pr-gate'))
     needs: m1-happy-path
     runs-on: [self-hosted, macOS, arm64, bitbox]
@@ -238,7 +276,7 @@ jobs:
   m2-multi-page-stable-ble:
     name: M-2 — Multi-page sign (stable BLE)
     if: >-
-      github.event_name == 'schedule'
+      (vars.BITBOX_RUNNER_ONLINE == 'true' && github.event_name == 'schedule')
       || (github.event_name == 'workflow_dispatch' && (inputs.flow == 'M-2' || inputs.flow == 'nightly'))
     runs-on: [self-hosted, macOS, arm64, bitbox]
     timeout-minutes: 12
@@ -265,7 +303,7 @@ jobs:
   m4-disconnect-mid-sign:
     name: M-4 — Disconnect mid-sign
     if: >-
-      github.event_name == 'schedule'
+      (vars.BITBOX_RUNNER_ONLINE == 'true' && github.event_name == 'schedule')
       || (github.event_name == 'workflow_dispatch' && (inputs.flow == 'M-4' || inputs.flow == 'nightly'))
     needs: m2-multi-page-stable-ble
     runs-on: [self-hosted, macOS, arm64, bitbox]
@@ -293,7 +331,7 @@ jobs:
   m7-slow-confirm-long-idle:
     name: M-7 — Slow confirm long-idle (Android)
     if: >-
-      github.event_name == 'schedule'
+      (vars.BITBOX_RUNNER_ONLINE == 'true' && github.event_name == 'schedule')
       || (github.event_name == 'workflow_dispatch' && (inputs.flow == 'M-7' || inputs.flow == 'nightly'))
     needs: m2-multi-page-stable-ble
     runs-on: [self-hosted, macOS, arm64, bitbox, android]
