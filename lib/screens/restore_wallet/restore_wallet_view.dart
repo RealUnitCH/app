@@ -30,7 +30,7 @@ class _RestoreWalletViewState extends State<RestoreWalletView> {
         listenWhen: (previous, current) => previous.wallet != current.wallet,
         listener: (context, state) async {
           if (state.wallet != null) {
-            await Future.delayed(const Duration(seconds: 2));
+            await Future<void>.delayed(const Duration(seconds: 2));
             if (context.mounted) context.read<HomeBloc>().add(LoadWalletEvent(state.wallet!));
           }
         },

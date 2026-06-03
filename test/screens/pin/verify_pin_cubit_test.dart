@@ -74,7 +74,7 @@ void main() {
         'deleteDigit on empty pin is a no-op',
         build: build,
         act: (cubit) => cubit.deleteDigit(),
-        expect: () => [],
+        expect: () => <VerifyPinState>[],
       );
 
       blocTest<VerifyPinCubit, VerifyPinState>(
@@ -85,7 +85,7 @@ void main() {
           lockedUntil: DateTime(2030),
         ),
         act: (cubit) => cubit.addDigit(1),
-        expect: () => [],
+        expect: () => <VerifyPinState>[],
       );
 
       blocTest<VerifyPinCubit, VerifyPinState>(
@@ -93,7 +93,7 @@ void main() {
         build: build,
         seed: () => const VerifyPinLocked(failedAttempts: 9),
         act: (cubit) => cubit.addDigit(1),
-        expect: () => [],
+        expect: () => <VerifyPinState>[],
       );
     });
 

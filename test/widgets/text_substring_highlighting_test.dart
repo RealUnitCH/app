@@ -117,7 +117,7 @@ void main() {
       // Fire the recognizer manually since hit-testing a TextSpan in a widget
       // test is fiddly — the gestureRecognizer itself is what would receive
       // the gesture in production.
-      (highlightedSpan.recognizer as TapGestureRecognizer).onTap!();
+      (highlightedSpan.recognizer! as TapGestureRecognizer).onTap!();
       expect(taps, 1);
     });
 

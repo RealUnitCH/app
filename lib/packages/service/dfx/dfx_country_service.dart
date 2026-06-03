@@ -23,9 +23,9 @@ class DfxCountryService {
     final response = await _appStore.httpClient.get(uri);
 
     if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body);
+      final jsonList = jsonDecode(response.body) as List<dynamic>;
       final countries = jsonList
-          .map((json) => DfxCountryDto.fromJson(json))
+          .map((json) => DfxCountryDto.fromJson(json as Map<String, dynamic>))
           .map((dto) => dto.toCountry())
           .toList();
       cachedCountries = countries;

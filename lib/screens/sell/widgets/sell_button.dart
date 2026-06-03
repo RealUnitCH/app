@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -36,11 +37,11 @@ class SellButton extends StatelessWidget {
             final converterCurrency = context.read<SellConverterCubit>().state.currency;
             await showBitboxReconnectSheet(context);
             if (bankAccount != null && amount.isNotEmpty) {
-              paymentInfoCubit.getPaymentInfo(
+              unawaited(paymentInfoCubit.getPaymentInfo(
                 amount: amount,
                 iban: bankAccount!.iban,
                 currency: converterCurrency,
-              );
+              ));
             }
             return;
           }
@@ -55,10 +56,10 @@ class SellButton extends StatelessWidget {
         }
         if (state is SellPaymentInfoSuccess) {
           if (state.isBitbox && context.mounted) {
-            context.pushNamed(AppRoutes.sellBitbox, extra: state.sellPaymentInfo);
+            unawaited(context.pushNamed(AppRoutes.sellBitbox, extra: state.sellPaymentInfo));
             return;
           } else {
-            final bool? confirmedSuccess = await showModalBottomSheet(
+            final bool? confirmedSuccess = await showModalBottomSheet<bool>(
               isScrollControlled: true,
               context: context,
               builder: (_) => SellConfirmSheet(
@@ -67,7 +68,7 @@ class SellButton extends StatelessWidget {
             );
             if (confirmedSuccess ?? false) {
               if (context.mounted) {
-                await showModalBottomSheet(
+                await showModalBottomSheet<void>(
                   context: context,
                   builder: (_) => const SellExecutedSheet(),
                 );

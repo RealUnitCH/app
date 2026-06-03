@@ -24,25 +24,26 @@ class DFXPriceService extends APriceService {
 
     if (response.statusCode != 200) throw Exception(response.body);
 
-    final body = jsonDecode(response.body) as List;
+    final body = jsonDecode(response.body) as List<dynamic>;
 
     final result = <PricePoint>[];
 
-    for (final entry in body) {
+    for (final raw in body) {
+      final entry = raw as Map<String, dynamic>;
       BigInt price;
       switch (currency) {
         case Currency.eur:
-          price = BigInt.from(entry['eur'] * 100);
+          price = BigInt.from((entry['eur'] as num) * 100);
           break;
         case Currency.chf:
-          price = BigInt.from(entry['chf'] * 100);
+          price = BigInt.from((entry['chf'] as num) * 100);
           break;
       }
       result.add(
         PricePoint(
           asset: asset,
           price: price,
-          time: DateTime.parse(entry['timestamp']),
+          time: DateTime.parse(entry['timestamp'] as String),
         ),
       );
     }
@@ -57,13 +58,13 @@ class DFXPriceService extends APriceService {
 
     if (response.statusCode != 200) throw Exception(response.body);
 
-    final body = jsonDecode(response.body);
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
 
     switch (currency) {
       case Currency.eur:
-        return BigInt.from(body['eur'] * 100);
+        return BigInt.from((body['eur'] as num) * 100);
       case Currency.chf:
-        return BigInt.from(body['chf'] * 100);
+        return BigInt.from((body['chf'] as num) * 100);
     }
   }
 
@@ -74,7 +75,7 @@ class DFXPriceService extends APriceService {
 
     if (response.statusCode != 200) throw Exception(response.body);
 
-    final body = jsonDecode(response.body);
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
     final chf = (body['chf'] as num).toDouble();
     final eur = (body['eur'] as num).toDouble();
 

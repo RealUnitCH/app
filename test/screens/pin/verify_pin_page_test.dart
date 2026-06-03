@@ -34,7 +34,7 @@ void main() {
     verifyPinCubit = MockVerifyPinCubit();
 
     when(() => verifyPinCubit.state).thenReturn(const VerifyPinState());
-    when(() => verifyPinCubit.checkBiometricAvailability()).thenAnswer((_) => Future.value());
+    when(() => verifyPinCubit.checkBiometricAvailability()).thenAnswer((_) => Future<void>.value());
   });
 
   void setupDependencyInjection() {
@@ -52,7 +52,7 @@ void main() {
   setUpAll(() {
     pinAuthCubit = MockPinAuthCubit();
     when(() => pinAuthCubit.state).thenReturn(const PinAuthState());
-    when(() => pinAuthCubit.onPinVerified()).thenAnswer((_) => Future.value());
+    when(() => pinAuthCubit.onPinVerified()).thenAnswer((_) => Future<void>.value());
     setupDependencyInjection();
   });
 

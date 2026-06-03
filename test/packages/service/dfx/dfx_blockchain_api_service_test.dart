@@ -66,7 +66,7 @@ void main() {
       expect(capturedBody!['address'], _testAddress);
       // chainId 1 → 'Ethereum'.
       expect(capturedBody!['blockchain'], 'Ethereum');
-      expect(capturedBody!['assetIds'], isA<List>());
+      expect(capturedBody!['assetIds'], isA<List<dynamic>>());
       expect(capturedHeaders!['Authorization'], 'Bearer jwt-abc');
       expect(capturedHeaders!['Content-Type'], 'application/json');
     });
@@ -78,7 +78,7 @@ void main() {
       Map<String, dynamic>? capturedBody;
       final client = MockClient((request) async {
         capturedBody = jsonDecode(request.body) as Map<String, dynamic>;
-        return http.Response(jsonEncode({'balances': []}), 200);
+        return http.Response(jsonEncode({'balances': <dynamic>[]}), 200);
       });
 
       await build(client).getEthBalance(_testAddress);
@@ -89,7 +89,7 @@ void main() {
     test('returns 0.0 when the balances list is empty', () async {
       sessionCache.setAuthToken('jwt-abc');
       final client = MockClient((_) async => http.Response(
-            jsonEncode({'balances': []}),
+            jsonEncode({'balances': <dynamic>[]}),
             200,
           ));
 
