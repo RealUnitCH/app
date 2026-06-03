@@ -53,6 +53,32 @@ COPY android/fastlane/metadata/ ./android/fastlane/metadata/
 COPY docs/handbook/de/index.html ./docs/handbook/de/index.html
 RUN python3 ./scripts/assemble-handbook-store-listing.py /out && cp ./docs/handbook/de/index.html /out/index.html
 
+# Legal-downloads section: derived export of the in-app legal Markdown
+# (assets/legal/*.md). Two separate concerns, by design:
+#   - assemble-handbook-legal.py rewrites the deterministic <!-- BEGIN/END:
+#     legal-downloads --> block in index.html (committed + sync-gated upstream).
+#   - build-legal-downloads.sh renders the NON-deterministic PDF/DOCX via pandoc
+#     (weasyprint PDF engine — no TeX), git-ignored like the screenshots.
+# This stage takes the store-listing-rewritten index.html as input so BOTH the
+# store-listing and the legal-downloads blocks survive into the final image.
+FROM alpine:3.20 AS legal-docs-builder
+WORKDIR /work
+# font-dejavu (+ a rebuilt fontconfig cache) is required: weasyprint renders via
+# Pango, which aborts ("No fonts configured in FontConfig" → "Error producing
+# PDF") on a bare Alpine that ships no font files. DejaVu covers the Latin/German
+# glyphs the legal texts use.
+RUN apk add --no-cache python3 pandoc weasyprint bash font-dejavu \
+ && fc-cache -f
+COPY scripts/assemble-handbook-legal.py ./scripts/
+COPY scripts/build-legal-downloads.sh ./scripts/
+COPY scripts/templates/legal-downloads.html.tmpl ./scripts/templates/
+COPY assets/legal/ ./assets/legal/
+COPY assets/languages/ ./assets/languages/
+COPY --from=store-listing-builder /out/index.html ./docs/handbook/de/index.html
+RUN python3 ./scripts/assemble-handbook-legal.py /out \
+ && bash ./scripts/build-legal-downloads.sh /out \
+ && cp ./docs/handbook/de/index.html /out/index.html
+
 FROM nginx:1.27.5-alpine
 
 COPY docs/handbook/ /usr/share/nginx/html/
@@ -62,6 +88,11 @@ COPY --from=screenshots-builder /out/ /usr/share/nginx/html/screenshots/
 COPY --from=store-listing-builder /out/ios/ /usr/share/nginx/html/store/ios/
 COPY --from=store-listing-builder /out/android/ /usr/share/nginx/html/store/android/
 COPY --from=store-listing-builder /out/index.html /usr/share/nginx/html/de/index.html
+# Legal-downloads PDFs/DOCX + the index.html with BOTH the store-listing and the
+# legal-downloads blocks rewritten (this copy overwrites the store-listing one
+# above, so the legal stage's index.html is the authoritative final version).
+COPY --from=legal-docs-builder /out/legal/ /usr/share/nginx/html/legal/
+COPY --from=legal-docs-builder /out/index.html /usr/share/nginx/html/de/index.html
 COPY handbook.nginx.conf /etc/nginx/conf.d/default.conf
 COPY handbook.htpasswd /etc/nginx/handbook.htpasswd
 
