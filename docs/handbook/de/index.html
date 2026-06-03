@@ -642,6 +642,56 @@
         background: var(--surface);
         border-color: var(--brand);
       }
+      /* Task-overview section (#spec-tasks) — table rendered client-side from
+         tasks.csv, which is mounted into the container at runtime from the
+         private server repo (see issue #662). No task data lives in this repo;
+         only the renderer + a fallback for when no CSV is mounted. Reuses the
+         handbook palette/card chrome. */
+      #spec-tasks .tasks-table-wrap {
+        overflow-x: auto;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      #spec-tasks table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+      }
+      #spec-tasks th,
+      #spec-tasks td {
+        text-align: left;
+        vertical-align: top;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--line);
+      }
+      #spec-tasks thead th {
+        background: var(--surface-2);
+        color: var(--ink);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      #spec-tasks tbody tr:last-child td {
+        border-bottom: none;
+      }
+      #spec-tasks tbody tr:hover {
+        background: var(--surface-2);
+      }
+      #spec-tasks td a {
+        margin-right: 10px;
+        white-space: nowrap;
+      }
+      #spec-tasks td a:last-child {
+        margin-right: 0;
+      }
+      #spec-tasks .tasks-note {
+        margin: 0;
+        color: var(--ink-3);
+        background: var(--surface);
+        border: 1px dashed var(--line-2);
+        border-radius: 8px;
+        padding: 14px 16px;
+      }
     </style>
   </head>
   <body>
@@ -725,6 +775,9 @@
             </li>
             <li>
               <a href="#spec-legal-downloads"><span class="spec-num">L</span>Rechtsdokumente</a>
+            </li>
+            <li>
+              <a href="#spec-tasks"><span class="spec-num">A</span>Aufgaben</a>
             </li>
           </ol>
         </nav>
@@ -2568,6 +2621,227 @@ Jetzt herunterladen und Ihre finanzielle Souveränität zurückgewinnen.</div></
   </div>
 </details>
 <!-- END:legal-downloads -->
+
+        <details id="spec-tasks" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">A</span>Aufgaben — Projektübersicht</h2>
+                <div class="file">tasks.csv</div>
+              </div>
+              <div class="rhs">
+                <b>Live aus privatem Server-Repo</b>
+                <div class="links"><span class="src">CSV-Mount</span></div>
+              </div>
+            </div>
+          </summary>
+
+          <p class="spec-intro">
+            Diese Übersicht ist die laufende Aufgaben- und Statusliste des Projekts. Die
+            Daten werden zur Laufzeit aus einer CSV-Datei geladen, die ausschliesslich im
+            privaten Server-Repository gepflegt und per Mount in den Handbook-Container
+            eingebunden wird — im Handbook-Repo liegen nur Darstellung und Renderer, keine
+            Aufgabendaten. Fehlt der Mount (z.&nbsp;B. lokaler Image-Build), erscheint statt
+            der Tabelle ein Hinweis.
+          </p>
+
+          <div id="tasks-table"></div>
+
+          <script>
+            // Renders the task overview from the CSV that the private server repo
+            // mounts into the container at /de/tasks.csv. The data lives only in
+            // that repo; this handbook ships only the renderer + a graceful 404
+            // fallback for when no CSV is mounted (e.g. local build). See #662.
+            (function () {
+              var MOUNT_ID = 'tasks-table';
+              var CSV_URL = 'tasks.csv'; // relative to /de/ → same-origin /de/tasks.csv
+              var LINKS_HEADER = 'links';
+
+              function showNote(message) {
+                var host = document.getElementById(MOUNT_ID);
+                if (!host) return;
+                host.textContent = '';
+                var p = document.createElement('p');
+                p.className = 'tasks-note';
+                p.textContent = message;
+                host.appendChild(p);
+              }
+
+              // RFC-4180 parser: handles quoted fields containing commas or
+              // newlines and "" escaped quotes; tolerates LF and CRLF endings.
+              function parseCsv(text) {
+                var rows = [];
+                var row = [];
+                var field = '';
+                var inQuotes = false;
+                var i = 0;
+                var n = text.length;
+                function pushField() {
+                  row.push(field);
+                  field = '';
+                }
+                function pushRow() {
+                  pushField();
+                  rows.push(row);
+                  row = [];
+                }
+                while (i < n) {
+                  var c = text.charAt(i);
+                  if (inQuotes) {
+                    if (c === '"') {
+                      if (text.charAt(i + 1) === '"') {
+                        field += '"';
+                        i += 2;
+                        continue;
+                      }
+                      inQuotes = false;
+                      i += 1;
+                      continue;
+                    }
+                    field += c;
+                    i += 1;
+                    continue;
+                  }
+                  if (c === '"') {
+                    inQuotes = true;
+                    i += 1;
+                    continue;
+                  }
+                  if (c === ',') {
+                    pushField();
+                    i += 1;
+                    continue;
+                  }
+                  if (c === '\r') {
+                    i += 1;
+                    continue;
+                  }
+                  if (c === '\n') {
+                    pushRow();
+                    i += 1;
+                    continue;
+                  }
+                  field += c;
+                  i += 1;
+                }
+                // Flush a trailing field/row unless the file ended on a newline.
+                if (field !== '' || row.length > 0) pushRow();
+                return rows;
+              }
+
+              function shortLabel(url) {
+                try {
+                  var u = new URL(url);
+                  var segs = u.pathname.split('/').filter(Boolean);
+                  var last = segs.length ? segs[segs.length - 1] : u.hostname;
+                  return /^\d+$/.test(last) ? '#' + last : last;
+                } catch (e) {
+                  return url;
+                }
+              }
+
+              // The Links column holds 0..n whitespace-separated URLs. Linkify
+              // http(s) tokens (open in a new tab); pass anything else through
+              // as text. textContent / element APIs HTML-escape every value.
+              function fillLinks(td, value) {
+                var tokens = value.split(/\s+/);
+                var count = 0;
+                for (var i = 0; i < tokens.length; i++) {
+                  var token = tokens[i];
+                  if (!token) continue;
+                  if (!/^https?:\/\//i.test(token)) {
+                    td.appendChild(document.createTextNode((count ? ' ' : '') + token));
+                    count += 1;
+                    continue;
+                  }
+                  var a = document.createElement('a');
+                  a.href = token;
+                  a.target = '_blank';
+                  a.rel = 'noopener';
+                  a.textContent = shortLabel(token);
+                  td.appendChild(a);
+                  count += 1;
+                }
+              }
+
+              function renderTable(rows) {
+                var host = document.getElementById(MOUNT_ID);
+                if (!host) return;
+                var header = rows[0];
+                var linksCol = -1;
+                for (var h = 0; h < header.length; h++) {
+                  if (header[h].trim().toLowerCase() === LINKS_HEADER) linksCol = h;
+                }
+
+                var table = document.createElement('table');
+                var thead = document.createElement('thead');
+                var headRow = document.createElement('tr');
+                for (var c = 0; c < header.length; c++) {
+                  var th = document.createElement('th');
+                  th.textContent = header[c];
+                  headRow.appendChild(th);
+                }
+                thead.appendChild(headRow);
+                table.appendChild(thead);
+
+                var tbody = document.createElement('tbody');
+                for (var r = 1; r < rows.length; r++) {
+                  var cells = rows[r];
+                  var tr = document.createElement('tr');
+                  for (var k = 0; k < header.length; k++) {
+                    var td = document.createElement('td');
+                    var value = k < cells.length ? cells[k] : '';
+                    if (k === linksCol) {
+                      fillLinks(td, value);
+                    } else {
+                      td.textContent = value;
+                    }
+                    tr.appendChild(td);
+                  }
+                  tbody.appendChild(tr);
+                }
+                table.appendChild(tbody);
+
+                var wrap = document.createElement('div');
+                wrap.className = 'tasks-table-wrap';
+                wrap.appendChild(table);
+                host.textContent = '';
+                host.appendChild(wrap);
+              }
+
+              function isBlankRow(row) {
+                return row.length === 1 && row[0].trim() === '';
+              }
+
+              function load() {
+                fetch(CSV_URL, { credentials: 'same-origin' })
+                  .then(function (res) {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.text();
+                  })
+                  .then(function (text) {
+                    if (!text || !text.trim()) throw new Error('empty');
+                    var rows = parseCsv(text).filter(function (row) {
+                      return !isBlankRow(row);
+                    });
+                    if (!rows.length) throw new Error('no rows');
+                    renderTable(rows);
+                  })
+                  .catch(function () {
+                    showNote(
+                      'Aufgabenübersicht wird auf dem Server bereitgestellt (kein Mount in dieser Umgebung).'
+                    );
+                  });
+              }
+
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', load);
+              } else {
+                load();
+              }
+            })();
+          </script>
+        </details>
       </main>
     </div>
   </body>
