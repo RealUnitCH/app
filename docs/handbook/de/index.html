@@ -608,6 +608,40 @@
       .store-screenshots .src {
         font-size: 0.85em;
       }
+      /* Legal-downloads section (#spec-legal-downloads) — see
+         scripts/assemble-handbook-legal.py. Reuses the .test card chrome
+         (border + :target highlight) so each (document, language) entry has the
+         same direct-link affordance as the screenshot cards. */
+      .test.legal-doc .downloads {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+      }
+      .test.legal-doc .doc-title {
+        flex-basis: 100%;
+        font-size: 13px;
+        color: var(--ink-2);
+      }
+      a.dl-btn {
+        text-decoration: none;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--brand);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 5px 12px;
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          color 0.15s;
+      }
+      a.dl-btn:hover {
+        background: var(--surface);
+        border-color: var(--brand);
+      }
     </style>
   </head>
   <body>
@@ -688,6 +722,9 @@
             </li>
             <li>
               <a href="#spec-store-listing"><span class="spec-num">S</span>Store-Listing</a>
+            </li>
+            <li>
+              <a href="#spec-legal-downloads"><span class="spec-num">L</span>Rechtsdokumente</a>
             </li>
           </ol>
         </nav>
@@ -2411,6 +2448,126 @@ Jetzt herunterladen und Ihre finanzielle Souveränität zurückgewinnen.</div></
   </div>
 </details>
 <!-- END:store-listing -->
+
+        <!-- BEGIN:legal-downloads -->
+<details id="spec-legal-downloads" class="spec" open>
+  <summary>
+    <div class="spec-head">
+      <div class="lhs">
+        <h2><span class="num">L</span>Rechtsdokumente — Downloads</h2>
+        <div class="file">assets/legal/*.md</div>
+      </div>
+      <div class="rhs">
+        <b>Live aus Repo</b>
+        <div class="links">
+          <a href="https://github.com/RealUnitCH/app/tree/develop/assets/legal">assets/legal ↗</a>
+        </div>
+      </div>
+    </div>
+  </summary>
+
+  <p class="spec-intro">
+    Single source of truth für die App-eigenen Rechtstexte sind die Markdown-Dateien
+    unter <code>assets/legal/*.md</code>. Die In-App-Ansicht (<code>LegalDocumentPage</code>)
+    und die Downloads hier rendern aus denselben Dateien; jede Änderung am Text geht
+    ausschliesslich über einen PR auf diese Markdown-Quellen. Pro Dokument und Sprache
+    gibt es einen <b>PDF</b>- und <b>DOCX</b>-Download (im Handbook-Image via
+    <code>pandoc</code> erzeugt) sowie einen Direkt-Link (🔗) auf den jeweiligen Eintrag
+    und einen <span class="src">↗</span>-Link auf die Markdown-Quelldatei.
+    DFX- und Aktionariat-Dokumente sowie die extern gehosteten Unternehmensdokumente
+    (Prospekte, Statuten) sind <em>nicht</em> Teil dieses Exports — sie haben keine
+    Markdown-Quelle im Repo.
+  </p>
+
+  <h3>Datenschutzbestimmungen <a class="src" href="https://github.com/RealUnitCH/app/tree/develop/assets/legal" title="Quelle: assets/legal/">↗</a></h3>
+  <div class="tests cols-2">
+    <div class="test legal-doc" id="legal-privacy_policy-de">
+      <div class="head">
+        <a class="name permalink" href="#legal-privacy_policy-de">privacy_policy_de</a>
+        <button class="copy-link" type="button" data-target="legal-privacy_policy-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">de</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Datenschutzbestimmungen</span>
+        <a class="dl-btn" href="../legal/privacy_policy_de.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/privacy_policy_de.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/privacy_policy_de.md" title="Quelle: privacy_policy_de.md">Markdown ↗</a>
+      </div>
+    </div>
+    <div class="test legal-doc" id="legal-privacy_policy-en">
+      <div class="head">
+        <a class="name permalink" href="#legal-privacy_policy-en">privacy_policy_en</a>
+        <button class="copy-link" type="button" data-target="legal-privacy_policy-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">en</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Privacy Policy</span>
+        <a class="dl-btn" href="../legal/privacy_policy_en.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/privacy_policy_en.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/privacy_policy_en.md" title="Quelle: privacy_policy_en.md">Markdown ↗</a>
+      </div>
+    </div>
+  </div>
+  <h3>Nutzungsbedingungen <a class="src" href="https://github.com/RealUnitCH/app/tree/develop/assets/legal" title="Quelle: assets/legal/">↗</a></h3>
+  <div class="tests cols-2">
+    <div class="test legal-doc" id="legal-terms_of_use-de">
+      <div class="head">
+        <a class="name permalink" href="#legal-terms_of_use-de">terms_of_use_de</a>
+        <button class="copy-link" type="button" data-target="legal-terms_of_use-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">de</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Nutzungsbedingungen</span>
+        <a class="dl-btn" href="../legal/terms_of_use_de.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/terms_of_use_de.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/terms_of_use_de.md" title="Quelle: terms_of_use_de.md">Markdown ↗</a>
+      </div>
+    </div>
+    <div class="test legal-doc" id="legal-terms_of_use-en">
+      <div class="head">
+        <a class="name permalink" href="#legal-terms_of_use-en">terms_of_use_en</a>
+        <button class="copy-link" type="button" data-target="legal-terms_of_use-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">en</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Terms of use</span>
+        <a class="dl-btn" href="../legal/terms_of_use_en.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/terms_of_use_en.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/terms_of_use_en.md" title="Quelle: terms_of_use_en.md">Markdown ↗</a>
+      </div>
+    </div>
+  </div>
+  <h3>Registrierungsvereinbarung <a class="src" href="https://github.com/RealUnitCH/app/tree/develop/assets/legal" title="Quelle: assets/legal/">↗</a></h3>
+  <div class="tests cols-2">
+    <div class="test legal-doc" id="legal-registration_agreement-de">
+      <div class="head">
+        <a class="name permalink" href="#legal-registration_agreement-de">registration_agreement_de</a>
+        <button class="copy-link" type="button" data-target="legal-registration_agreement-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">de</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Registrierungsvereinbarung</span>
+        <a class="dl-btn" href="../legal/registration_agreement_de.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/registration_agreement_de.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/registration_agreement_de.md" title="Quelle: registration_agreement_de.md">Markdown ↗</a>
+      </div>
+    </div>
+    <div class="test legal-doc" id="legal-registration_agreement-en">
+      <div class="head">
+        <a class="name permalink" href="#legal-registration_agreement-en">registration_agreement_en</a>
+        <button class="copy-link" type="button" data-target="legal-registration_agreement-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">en</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Registration Agreement</span>
+        <a class="dl-btn" href="../legal/registration_agreement_en.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/registration_agreement_en.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/registration_agreement_en.md" title="Quelle: registration_agreement_en.md">Markdown ↗</a>
+      </div>
+    </div>
+  </div>
+</details>
+<!-- END:legal-downloads -->
       </main>
     </div>
   </body>

@@ -120,6 +120,12 @@ void main() {
       verify(() => mockStorage.delete(key: 'pin.salt')).called(1);
     });
 
+    test('deleteMnemonicKey deletes the mnemonic encryption key', () async {
+      await secureStorage.deleteMnemonicKey();
+
+      verify(() => mockStorage.delete(key: 'wallet.mnemonic.encryption.key')).called(1);
+    });
+
     test('getPinSalt returns null when no salt is stored', () async {
       when(
         () => mockStorage.read(key: 'pin.salt'),

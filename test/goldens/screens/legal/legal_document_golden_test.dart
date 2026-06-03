@@ -27,11 +27,15 @@ void main() {
   );
 
   group('$LegalDocumentPage', () {
+    // Empty-content placeholder: renders the empty Markdown body before any
+    // document text is present. Passing an empty string via the
+    // @visibleForTesting hook keeps this deterministic (no async asset load,
+    // so it never races into the new load-error state).
     goldenTest(
-      'initial state before markdown loads',
+      'empty document placeholder',
       fileName: 'legal_document_page_default',
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
-      builder: () => wrapForGolden(buildSubject()),
+      builder: () => wrapForGolden(buildSubject(initialMarkdownContent: '')),
     );
 
     // The page reads its markdown from rootBundle in production; for the
