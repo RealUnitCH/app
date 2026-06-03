@@ -161,7 +161,7 @@ class _VerifyPinViewState extends State<VerifyPinView> {
                               constraints: const BoxConstraints(minHeight: 40.0),
                               child: Text(
                                 switch (state) {
-                                  VerifyPinTemporarilyLocked s =>
+                                  final VerifyPinTemporarilyLocked s =>
                                     S
                                         .of(context)
                                         .pinVerifyLockedTemporarily(
@@ -296,7 +296,7 @@ class _ForgotPinButton extends StatelessWidget {
             builder: (_) => const ForgotPinBottomSheet(),
           );
           if (isReset == true) {
-            await Future.delayed(const Duration(milliseconds: 300));
+            await Future<void>.delayed(const Duration(milliseconds: 300));
             if (context.mounted) {
               await context.read<PinAuthCubit>().reset();
               if (context.mounted) {

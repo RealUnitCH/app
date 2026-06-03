@@ -110,7 +110,7 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: OnboardingRoutes.verifySeed,
       path: '/verifySeed',
-      builder: (_, state) => VerifySeedPage(wallet: state.extra as SoftwareWallet),
+      builder: (_, state) => VerifySeedPage(wallet: state.extra! as SoftwareWallet),
     ),
 
     GoRoute(
@@ -130,7 +130,7 @@ final GoRouter routerConfig = GoRouter(
       name: PinRoutes.gate,
       path: '/pinGate',
       builder: (_, state) {
-        final params = state.extra as VerifyPinParams;
+        final params = state.extra! as VerifyPinParams;
         return VerifyPinPage(
           description: params.description,
           onAuthenticated: params.onAuthenticated,
@@ -200,7 +200,7 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: AppRoutes.sellBitbox,
       path: '/sellBitbox',
-      builder: (_, state) => SellBitboxPage(paymentInfo: state.extra as SellPaymentInfo),
+      builder: (_, state) => SellBitboxPage(paymentInfo: state.extra! as SellPaymentInfo),
     ),
 
     GoRoute(
@@ -235,7 +235,7 @@ final GoRouter routerConfig = GoRouter(
       builder: (_, state) {
         final extra = state.extra;
         return LegalDocumentPage(
-          params: extra as LegalDocumentParams,
+          params: extra! as LegalDocumentParams,
         );
       },
     ),
@@ -431,7 +431,7 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: AppRoutes.webView,
       path: '/webView',
-      builder: (_, state) => WebViewPage(state.extra as WebViewRouteParams),
+      builder: (_, state) => WebViewPage(state.extra! as WebViewRouteParams),
     ),
   ],
 );

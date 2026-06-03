@@ -35,7 +35,7 @@ class TransactionHistoryService extends DFXAuthService {
     ]);
 
     final accountHistory = results.elementAt(0) as AccountHistoryDto?;
-    final transactions = results.elementAt(1) as List<TransactionDto>;
+    final transactions = results.elementAt(1)! as List<TransactionDto>;
 
     if (accountHistory != null) {
       for (final entry in accountHistory.history) {
@@ -206,7 +206,7 @@ class TransactionHistoryService extends DFXAuthService {
     final response = await appStore.httpClient.get(uri);
     if (response.statusCode != 200) return [];
 
-    final List<dynamic> json = jsonDecode(response.body);
+    final json = jsonDecode(response.body) as List<dynamic>;
     return json.map((e) => TransactionDto.fromJson(e as Map<String, dynamic>)).toList();
   }
 
@@ -216,7 +216,7 @@ class TransactionHistoryService extends DFXAuthService {
 
     if (response.statusCode != 200) return [];
 
-    final List<dynamic> json = jsonDecode(response.body);
+    final json = jsonDecode(response.body) as List<dynamic>;
     final transactions = json
         .map((e) => TransactionDto.fromJson(e as Map<String, dynamic>))
         .toList();

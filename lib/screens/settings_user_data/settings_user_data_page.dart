@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -75,7 +76,7 @@ class SettingsUserDataView extends StatelessWidget {
                                           SettingsRoutes.editName,
                                         );
                                         if (isEdited == true && context.mounted) {
-                                          context.read<SettingsUserDataCubit>().getUserData();
+                                          unawaited(context.read<SettingsUserDataCubit>().getUserData());
                                         }
                                       }
                                     : null,
@@ -99,7 +100,7 @@ class SettingsUserDataView extends StatelessWidget {
                                           SettingsRoutes.editPhone,
                                         );
                                         if (isEdited == true && context.mounted) {
-                                          context.read<SettingsUserDataCubit>().getUserData();
+                                          unawaited(context.read<SettingsUserDataCubit>().getUserData());
                                         }
                                       }
                                     : null,
@@ -117,7 +118,7 @@ class SettingsUserDataView extends StatelessWidget {
                                           SettingsRoutes.editAddress,
                                         );
                                         if (isEdited == true && context.mounted) {
-                                          context.read<SettingsUserDataCubit>().getUserData();
+                                          unawaited(context.read<SettingsUserDataCubit>().getUserData());
                                         }
                                       }
                                     : null,

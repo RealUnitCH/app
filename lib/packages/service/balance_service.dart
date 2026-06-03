@@ -60,7 +60,7 @@ class BalanceService {
       if (response.statusCode == 200) {
         if (generation == _syncGeneration) _accountMissing = false;
 
-        final json = jsonDecode(response.body);
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
         final balanceString = json['balance'] as String?;
 
         if (balanceString != null) {

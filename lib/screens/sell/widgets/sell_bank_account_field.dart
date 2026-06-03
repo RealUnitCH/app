@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:collection/collection.dart';
@@ -140,7 +141,7 @@ class BankAccountFieldView extends StatelessWidget {
     final sellSelectedBankAccountCubit = context.read<SellSelectedBankAccountCubit>();
 
     if (sellBankAccountsCubit.state.accounts.isEmpty) {
-      await showModalBottomSheet(
+      await showModalBottomSheet<void>(
         isScrollControlled: true,
         context: context,
         builder: (_) => BlocProvider.value(
@@ -149,7 +150,7 @@ class BankAccountFieldView extends StatelessWidget {
         ),
       );
     } else {
-      Navigator.push(
+      unawaited(Navigator.push(
         context,
         MaterialPageRoute<void>(
           builder: (_) => MultiBlocProvider(
@@ -164,7 +165,7 @@ class BankAccountFieldView extends StatelessWidget {
             child: const SellBankAccountSelectionPage(),
           ),
         ),
-      );
+      ));
     }
   }
 }

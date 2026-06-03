@@ -48,7 +48,7 @@ void main() {
         );
 
         expect(resolved, isNotNull);
-        expect(resolved!, isNotEmpty);
+        expect(resolved, isNotEmpty);
       });
 
       testWidgets('testnet resolves to a non-empty localized string distinct from mainnet', (
@@ -67,7 +67,7 @@ void main() {
         );
 
         expect(testnetText, isNotNull);
-        expect(testnetText!, isNotEmpty);
+        expect(testnetText, isNotEmpty);
         // Pin the per-arm wiring — if both arms accidentally resolved to
         // the same string key, the user would see "Mainnet" on testnet.
         expect(testnetText, isNot(equals(mainnetText)));

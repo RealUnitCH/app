@@ -28,7 +28,7 @@ class RealUnitBuyPaymentInfoService extends DFXAuthService {
     );
 
     if (response.statusCode == 200) {
-      final json = jsonDecode(response.body);
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
       final responseDto = RealUnitBuyPaymentInfoDto.fromJson(json);
 
       return BuyPaymentInfo(

@@ -39,9 +39,9 @@ class DfxLanguageService {
       throw Exception('Failed to fetch languages: ${response.statusCode}');
     }
 
-    final List<dynamic> jsonList = jsonDecode(response.body);
+    final jsonList = jsonDecode(response.body) as List<dynamic>;
     final languages = jsonList
-        .map((json) => DfxLanguageDto.fromJson(json))
+        .map((json) => DfxLanguageDto.fromJson(json as Map<String, dynamic>))
         .toList();
     _cachedLanguages = languages;
     _cachedAt = clock.now();

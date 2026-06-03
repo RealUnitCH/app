@@ -62,7 +62,7 @@ class _VerifySeedViewState extends State<VerifySeedView> {
           child: BlocConsumer<VerifySeedCubit, VerifySeedState>(
             listener: (context, state) async {
               if (state.isVerified) {
-                await Future.delayed(const Duration(seconds: 2));
+                await Future<void>.delayed(const Duration(seconds: 2));
                 if (context.mounted) {
                   // Load the *committed* wallet (`state.committedWallet`), not
                   // the page's draft (`id == 0`). `committedWallet` is only

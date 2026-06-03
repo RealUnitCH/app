@@ -46,7 +46,7 @@ class RealUnitRegistrationService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    return RealUnitRegistrationInfoDto.fromJson(jsonDecode(response.body));
+    return RealUnitRegistrationInfoDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
   /// Fetches the registration date to sign from the API. `registrationDate` is
@@ -97,7 +97,8 @@ class RealUnitRegistrationService extends DFXAuthService {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
-    final responseDto = RealUnitRegistrationEmailResponseDto.fromJson(jsonDecode(response.body));
+    final responseDto =
+        RealUnitRegistrationEmailResponseDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
     return responseDto.status;
   }
 
@@ -220,7 +221,9 @@ class RealUnitRegistrationService extends DFXAuthService {
       throw error;
     }
 
-    return RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
+    return RealUnitRegistrationResponseDto.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   /// registers a wallet and adds the wallet to an existing user
@@ -277,7 +280,8 @@ class RealUnitRegistrationService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
+    final responseDto =
+        RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
     return responseDto.status;
   }
 }

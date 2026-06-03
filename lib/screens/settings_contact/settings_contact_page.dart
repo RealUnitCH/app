@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -171,13 +172,13 @@ class SettingsContactView extends StatelessWidget {
     // / Failure). API is the authority — if the call is not allowed,
     // the Support page surfaces the API error.
     if (capability == null) {
-      context.pushNamed(SupportRoutes.support);
+      unawaited(context.pushNamed(SupportRoutes.support));
       return;
     }
 
     // Branch 2: explicitly available → straight to Support.
     if (capability.available) {
-      context.pushNamed(SupportRoutes.support);
+      unawaited(context.pushNamed(SupportRoutes.support));
       return;
     }
 
@@ -193,7 +194,7 @@ class SettingsContactView extends StatelessWidget {
         // Defensive: API reported `available: false` without a
         // prerequisite this app version routes for. Push Support
         // directly and let the API render the error.
-        context.pushNamed(SupportRoutes.support);
+        unawaited(context.pushNamed(SupportRoutes.support));
     }
   }
 
@@ -214,7 +215,7 @@ class SettingsContactView extends StatelessWidget {
     if (state is! SettingsContactSuccess) return;
     final refreshed = state.capability;
     if (refreshed == null || refreshed.available) {
-      context.pushNamed(SupportRoutes.support);
+      unawaited(context.pushNamed(SupportRoutes.support));
     }
   }
 }

@@ -97,7 +97,7 @@ void main() {
       );
 
       expect(label, isNotNull);
-      expect(label!, isNotEmpty);
+      expect(label, isNotEmpty);
     });
 
     testWidgets('corporation resolves to a non-empty label distinct from human', (tester) async {
@@ -114,7 +114,7 @@ void main() {
       );
 
       expect(corporation, isNotNull);
-      expect(corporation!, isNotEmpty);
+      expect(corporation, isNotEmpty);
       expect(corporation, isNot(equals(human)));
     });
   });

@@ -47,7 +47,7 @@ class AppFilledButton extends StatelessWidget {
         autofocus: autofocus,
         style: style,
         icon: Icon(
-          icon!,
+          icon,
           color: variant == FilledButtonVariant.secondary ? RealUnitColors.realUnitBlack : null,
         ),
         label: Text(
@@ -103,7 +103,7 @@ class AppFilledButton extends StatelessWidget {
           foregroundColor: WidgetStateProperty.all(RealUnitColors.basic.white),
           iconColor: WidgetStateProperty.all(RealUnitColors.basic.white),
         ),
-        icon: Icon(icon!),
+        icon: Icon(icon),
         label: Text(
           label,
           textAlign: .center,
@@ -133,7 +133,7 @@ class AppFilledButton extends StatelessWidget {
           foregroundColor: WidgetStateProperty.all(RealUnitColors.basic.white),
           iconColor: WidgetStateProperty.all(RealUnitColors.basic.white),
         ),
-        icon: Icon(icon!),
+        icon: Icon(icon),
         label: Text(
           label,
           textAlign: .center,
