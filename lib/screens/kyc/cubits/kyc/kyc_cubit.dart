@@ -80,11 +80,16 @@ class KycCubit extends Cubit<KycState> {
     _walletAtCheckStart = getIt.isRegistered<AccountCurrencySync>()
         ? getIt<AccountCurrencySync>().currentWallet
         : null;
+    final wasMergeProcessing = state is KycMergeProcessing;
     final generation = ++_runGeneration;
     try {
       await _runCheckKyc(generation).timeout(_checkKycTimeout);
     } on TimeoutException {
       if (isClosed || generation != _runGeneration) return;
+      if (wasMergeProcessing) {
+        emit(const KycMergeProcessing());
+        return;
+      }
       emit(const KycFailure('KYC backend did not respond in time'));
     } catch (e) {
       if (isClosed || generation != _runGeneration) return;
