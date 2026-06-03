@@ -65,6 +65,7 @@ dependencies:
   http: ^1.1.0
   intl: any
   local_auth: ^3.0.0
+  mobile_scanner: ^5.2.3
   no_screenshot: ^1.1.0
   open_file: ^3.5.11
   path: ^1.9.0

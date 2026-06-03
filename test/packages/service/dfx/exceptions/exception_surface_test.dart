@@ -5,8 +5,7 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/sell_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_rejected_exception.dart';
-import 'package:realunit_wallet/packages/storage/secure_storage.dart';
-import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
+import 'package:realunit_wallet/packages/storage/secure_storage.dart';import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/pay_exceptions.dart';import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 
 // Guard against a recurring failure mode: an Exception subclass without a
 // toString() override gets rendered as `Instance of '...'` whenever a cubit
@@ -31,8 +30,9 @@ void main() {
         currentLevel: 0,
       ),
       const SeedDecryptionException('test'),
-      const AlreadyConfirmedException(code: 'TEST', message: 'test'),
-    ];
+      const AlreadyConfirmedException(code: 'TEST', message: 'test'),      const InvalidPaymentLinkException('test'),
+      const PayUnsupportedEnvironmentException(),
+      const PaySignatureUnsupportedException(),    ];
 
     for (final ex in exceptions) {
       test('${ex.runtimeType} renders a readable string', () {
