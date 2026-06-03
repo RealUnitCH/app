@@ -62,7 +62,7 @@ class PaymentInformationDetailsView extends StatelessWidget {
     return BlocListener<BuyConfirmCubit, BuyConfirmState>(
       listener: (context, state) async {
         if (state is BuyConfirmSuccess) {
-          await showModalBottomSheet(
+          await showModalBottomSheet<void>(
             context: context,
             builder: (_) => PaymentExecutedSheet(reference: state.reference),
           );

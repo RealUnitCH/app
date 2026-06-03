@@ -146,8 +146,9 @@ abstract class DFXAuthService {
       final responseBody = jsonDecode(response.body);
       return responseBody as Map<String, dynamic>;
     } else if (response.statusCode == 403) {
-      final responseBody = jsonDecode(response.body);
-      final message = responseBody['message'] ?? 'Service unavailable in your country';
+      final responseBody = jsonDecode(response.body) as Map<String, dynamic>;
+      final message =
+          responseBody['message'] ?? 'Service unavailable in your country';
       throw Exception(message);
     } else {
       throw Exception('Failed to sign up. Status: ${response.statusCode} ${response.body}');

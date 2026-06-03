@@ -43,7 +43,7 @@ class RealUnitPdfService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    return PdfDto.fromJson(jsonDecode(response.body));
+    return PdfDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
   Future<PdfDto> getTransactionsReceipt(
@@ -64,7 +64,7 @@ class RealUnitPdfService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    return PdfDto.fromJson(jsonDecode(response.body));
+    return PdfDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
   Future<PdfDto> getTransactionReceipt(String id, {Currency currency = Currency.chf}) async {
@@ -82,6 +82,6 @@ class RealUnitPdfService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    return PdfDto.fromJson(jsonDecode(response.body));
+    return PdfDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 }

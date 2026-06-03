@@ -70,7 +70,7 @@ jobs:
       - run: dart run tool/generate_localization.dart
       - run: dart run tool/generate_release_info.dart
       - run: flutter pub run build_runner build
-      - run: flutter analyze
+      - run: flutter analyze --fatal-infos --fatal-warnings
       # Excludes the `golden` tag: visual-regression tests live under
       # `test/goldens/` and are validated on the dfx01 self-hosted runner
       # in the parallel `golden-tests` job (Hardware-Determinismus, see
@@ -78,7 +78,7 @@ jobs:
       # both duplicate work and erroneously red this job on macos-latest
       # where the Skia/font-rendering does not match the committed
       # baselines.
-      - run: flutter test --coverage --exclude-tags golden
+      - run: ulimit -n 16384 && flutter test --coverage --exclude-tags golden
 
       # Narrow the coverage report to the README-defined activated surface:
       #   lib/packages/**             — services, repositories, signers, utils

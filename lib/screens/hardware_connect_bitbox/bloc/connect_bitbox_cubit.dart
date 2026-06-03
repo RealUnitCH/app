@@ -59,7 +59,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     if (devices.isNotEmpty) {
       emit(BitboxFound(devices.first));
       _checkForTimer?.cancel();
-      connectToBitbox(devices.first);
+      unawaited(connectToBitbox(devices.first));
     }
   }
 
@@ -98,7 +98,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
         // First sleep is longer so the SDK can finish setting up its Go-side
         // device pointer before we call into it; subsequent iterations stay
         // tight so the post-PIN handover feels snappy.
-        await Future.delayed(
+        await Future<void>.delayed(
           firstIteration ? const Duration(milliseconds: 500) : const Duration(milliseconds: 100),
         );
         firstIteration = false;

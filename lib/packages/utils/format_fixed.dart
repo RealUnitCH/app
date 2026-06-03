@@ -4,9 +4,9 @@ String formatFixed(BigInt value, int? decimals, {int? fractionalDigits, bool tri
   decimals ??= 0;
   fractionalDigits ??= decimals;
 
-  var multiplier = getMultiplier(decimals);
+  final multiplier = getMultiplier(decimals);
   // Make sure wei is a big number (convert as necessary)
-  var negative = value.isNegative;
+  final negative = value.isNegative;
   if (negative) value = value * BigInt.from(-1);
 
   var fraction =

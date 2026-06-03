@@ -24,14 +24,15 @@ class DFXPriceService extends APriceService {
 
     if (response.statusCode != 200) throw Exception(response.body);
 
-    final body = jsonDecode(response.body) as List;
+    final body = jsonDecode(response.body) as List<dynamic>;
 
     final result = <PricePoint>[];
 
-    for (final entry in body) {
+    for (final raw in body) {
+      final entry = raw as Map<String, dynamic>;
       final rawPrice = switch (currency) {
-        Currency.eur => entry['eur'],
-        Currency.chf => entry['chf'],
+        Currency.eur => entry['eur'] as num?,
+        Currency.chf => entry['chf'] as num?,
       };
       // The API omits the price for points it cannot quote (e.g. the latest
       // point while the quote is unavailable). Skip them instead of throwing,
@@ -41,7 +42,7 @@ class DFXPriceService extends APriceService {
         PricePoint(
           asset: asset,
           price: BigInt.from(rawPrice * 100),
-          time: DateTime.parse(entry['timestamp']),
+          time: DateTime.parse(entry['timestamp'] as String),
         ),
       );
     }
@@ -56,11 +57,11 @@ class DFXPriceService extends APriceService {
 
     if (response.statusCode != 200) throw Exception(response.body);
 
-    final body = jsonDecode(response.body);
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
 
     final rawPrice = switch (currency) {
-      Currency.eur => body['eur'],
-      Currency.chf => body['chf'],
+      Currency.eur => body['eur'] as num?,
+      Currency.chf => body['chf'] as num?,
     };
     // A missing price means the quote is currently unavailable. Return zero so
     // the UI renders "--.--" instead of throwing.
@@ -75,7 +76,7 @@ class DFXPriceService extends APriceService {
 
     if (response.statusCode != 200) throw Exception(response.body);
 
-    final body = jsonDecode(response.body);
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
     final chf = (body['chf'] as num?)?.toDouble() ?? 0;
     final eur = (body['eur'] as num?)?.toDouble() ?? 0;
 

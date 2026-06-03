@@ -36,7 +36,7 @@ class BalanceService {
       final response = await _appStore.httpClient.get(uri);
 
       if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
         final balanceString = json['balance'] as String?;
 
         if (balanceString != null) {

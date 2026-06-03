@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -160,12 +161,12 @@ class _SettingsEditNameViewState extends State<SettingsEditNameView> {
     if ((_formKey.currentState?.validate() ?? false) && _selectedFile != null) {
       final fileBase64 = await _selectedFile!.toBase64DataUri();
       if (mounted) {
-        context.read<SettingsEditNameCubit>().submitName(
+        unawaited(context.read<SettingsEditNameCubit>().submitName(
           firstName: _firstNameCtrl.text,
           lastName: _lastNameCtrl.text,
           fileBase64: fileBase64,
           fileName: _selectedFile!.name,
-        );
+        ));
       }
     }
   }
