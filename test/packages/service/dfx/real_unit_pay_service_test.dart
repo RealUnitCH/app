@@ -153,7 +153,7 @@ void main() {
         (_) async => http.Response(jsonEncode({'statusCode': 400, 'message': 'bad'}), 400),
       );
       expect(
-        () => build(client).getSwapPaymentInfo(const RealUnitSwapDto.fromAmount(10)),
+        () => build(client).getSwapPaymentInfo(const RealUnitSwapDto.fromTargetAmount(95.5)),
         throwsA(isA<ApiException>()),
       );
     });
@@ -306,6 +306,20 @@ void main() {
         ),
         throwsA(isA<ApiException>()),
       );
+    });
+  });
+
+  group('isPaySupportedEnvironment (up-front capability gate)', () {
+    test('is true on mainnet', () {
+      when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+      final client = MockClient((_) async => http.Response('{}', 200));
+      expect(build(client).isPaySupportedEnvironment, isTrue);
+    });
+
+    test('is false on testnet', () {
+      when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.testnet));
+      final client = MockClient((_) async => http.Response('{}', 200));
+      expect(build(client).isPaySupportedEnvironment, isFalse);
     });
   });
 

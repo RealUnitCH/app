@@ -9,13 +9,9 @@ class RealUnitSwapDto {
   /// Target amount in ZCHF (alternative to [amount]).
   final double? targetAmount;
 
-  // Part of the amount-XOR-targetAmount contract. The OCP pay flow always sizes
-  // the swap by ZCHF target (fromTargetAmount); this constructor is exercised
-  // via toJson in unit tests but const-constructed there, so its body never
-  // registers a runtime line hit.
-  const RealUnitSwapDto.fromAmount(int this.amount) // coverage:ignore-line
-    : targetAmount = null;
-
+  // The OCP pay flow always sizes the swap by ZCHF target (fromTargetAmount);
+  // `amount` stays in the body only to document the backend's XOR contract and
+  // is always null on the wire here.
   const RealUnitSwapDto.fromTargetAmount(double this.targetAmount) : amount = null;
 
   Map<String, dynamic> toJson() => {

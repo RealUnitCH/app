@@ -40,6 +40,12 @@ class PayQuoteUnavailable extends PayQuoteState {
   const PayQuoteUnavailable();
 }
 
+/// OCP settlement is unavailable on the current backend environment
+/// (mainnet-only). Surfaced before the swap so it can never run on testnet.
+class PayQuoteUnsupportedEnvironment extends PayQuoteState {
+  const PayQuoteUnsupportedEnvironment();
+}
+
 class PayQuoteError extends PayQuoteState {
   final String message;
 

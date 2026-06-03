@@ -12,11 +12,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_pay
 
 void main() {
   group('RealUnitSwapDto', () {
-    test('fromAmount serialises only amount', () {
-      expect(const RealUnitSwapDto.fromAmount(10).toJson(), {'amount': 10});
-    });
-
-    test('fromTargetAmount serialises only targetAmount', () {
+    test('fromTargetAmount serialises only targetAmount (no amount key)', () {
       expect(
         const RealUnitSwapDto.fromTargetAmount(95.5).toJson(),
         {'targetAmount': 95.5},
@@ -230,7 +226,6 @@ void main() {
   group('LnurlpPaymentDto.fromJson', () {
     test('maps requestedAmount, quote and ZCHF transfer amounts', () {
       final dto = LnurlpPaymentDto.fromJson({
-        'recipient': '0xrecipient',
         'requestedAmount': {'asset': 'CHF', 'amount': 42.5},
         'quote': {'id': 'quote_xyz', 'expiration': '2026-06-03T12:00:00.000Z'},
         'transferAmounts': [
@@ -252,7 +247,6 @@ void main() {
       expect(dto.requestedAmount.asset, 'CHF');
       expect(dto.requestedAmount.amount, 42.5);
       expect(dto.quote.id, 'quote_xyz');
-      expect(dto.recipient, '0xrecipient');
       expect(dto.transferAmounts, hasLength(2));
       expect(dto.transferAmounts.first.method, 'Ethereum');
       expect(dto.transferAmounts.first.assets.first.asset, 'ZCHF');
@@ -266,6 +260,46 @@ void main() {
       });
 
       expect(dto.transferAmounts, isEmpty);
+    });
+
+    test('parses amount-less asset entries (non-priced display path) as null', () {
+      final dto = LnurlpPaymentDto.fromJson({
+        'requestedAmount': {'asset': 'CHF', 'amount': 1.0},
+        'quote': {'id': 'q', 'expiration': '2026-06-03T12:00:00.000Z'},
+        'transferAmounts': [
+          {
+            'method': 'Ethereum',
+            'assets': [
+              // Optional `amount?` omitted by the backend.
+              {'asset': 'ZCHF'},
+            ],
+          },
+        ],
+      });
+
+      expect(dto.transferAmounts.first.assets.first.asset, 'ZCHF');
+      expect(dto.transferAmounts.first.assets.first.amount, isNull);
+    });
+
+    test('ignores the structured recipient object instead of throwing on it', () {
+      // The backend `recipient` is a PaymentLinkRecipientDto object, not a
+      // String; reading the quote must not throw on it (the field is unused).
+      final dto = LnurlpPaymentDto.fromJson({
+        'recipient': {'name': 'Acme GmbH', 'address': 'Bahnhofstrasse 1'},
+        'requestedAmount': {'asset': 'CHF', 'amount': 42.5},
+        'quote': {'id': 'quote_xyz', 'expiration': '2026-06-03T12:00:00.000Z'},
+        'transferAmounts': [
+          {
+            'method': 'Ethereum',
+            'assets': [
+              {'asset': 'ZCHF', 'amount': 42.7},
+            ],
+          },
+        ],
+      });
+
+      expect(dto.quote.id, 'quote_xyz');
+      expect(dto.transferAmounts.first.assets.first.amount, 42.7);
     });
   });
 }

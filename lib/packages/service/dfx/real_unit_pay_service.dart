@@ -13,9 +13,9 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_swap_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_swap_payment_info_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_swap_unsigned_transaction_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_response_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 
 /// Backend client for the Open CryptoPay pay flow (DFXswiss/api #3819, all under
 /// `/v1/realunit/...`). Subclasses [DFXAuthService] for the JWT handshake +
@@ -103,7 +103,7 @@ class RealUnitPayService extends DFXAuthService {
   Future<RealUnitOcpPayUnsignedTransactionDto> createPayUnsignedTransaction(
     RealUnitOcpPayDto dto,
   ) async {
-    _assertPaySupported();
+    assertPaySupported();
     final uri = buildUri(host, _payUnsignedTxPath);
     final response = await authenticatedPut(
       uri,
@@ -120,7 +120,7 @@ class RealUnitPayService extends DFXAuthService {
   }
 
   Future<String> submitPay(RealUnitOcpPaySubmitDto dto) async {
-    _assertPaySupported();
+    assertPaySupported();
     final uri = buildUri(host, _paySubmitPath);
     final response = await authenticatedPut(
       uri,
@@ -148,13 +148,19 @@ class RealUnitPayService extends DFXAuthService {
     );
   }
 
-  /// The OCP payment-link engine settles on mainnet only. On testnet the
-  /// pay/* endpoints fail fast server-side with a 400; we mirror that as a
-  /// typed, surfaced failure before the round-trip rather than parsing the
-  /// backend error body. This is a backend-environment capability gate keyed
-  /// off [ApiConfig], not local business logic.
-  void _assertPaySupported() {
-    if (appStore.apiConfig.networkMode.isTestnet) {
+  /// Whether the current backend environment can settle an OCP payment. The
+  /// payment-link engine is mainnet-only; on testnet the pay/* endpoints fail
+  /// fast server-side with a 400. This is environment-static (keyed off
+  /// [ApiConfig]), so the flow can read it BEFORE the irreversible REALU→ZCHF
+  /// swap and refuse to swap on an environment where the pay leg can never
+  /// settle. Not local business logic — purely a capability gate.
+  bool get isPaySupportedEnvironment => !appStore.apiConfig.networkMode.isTestnet;
+
+  /// Defense-in-depth mirror of [isPaySupportedEnvironment] on the pay/* calls:
+  /// even though the flow gates up-front, surface the typed failure before the
+  /// round-trip rather than parsing the backend error body.
+  void assertPaySupported() {
+    if (!isPaySupportedEnvironment) {
       throw const PayUnsupportedEnvironmentException();
     }
   }

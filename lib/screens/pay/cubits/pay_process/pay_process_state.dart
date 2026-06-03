@@ -10,15 +10,9 @@ enum PayProcessFailureReason {
   /// Not enough ETH to cover gas and the faucet top-up did not arrive.
   insufficientEth,
 
-  /// The OCP quote expired between the swap and the pay step.
-  quoteExpired,
-
-  /// Open CryptoPay settlement failed (rejected by the engine or a terminal
-  /// non-completed status).
-  payFailed,
-
   /// Open CryptoPay settlement is unavailable on the current backend
-  /// environment (mainnet-only; fails fast on testnet).
+  /// environment (mainnet-only; checked BEFORE the swap so it never strands the
+  /// user in ZCHF).
   payUnsupportedEnvironment,
 
   /// The active wallet mode cannot sign transactions (debug wallet).
@@ -29,6 +23,24 @@ enum PayProcessFailureReason {
 
   /// Any other unexpected error.
   generic,
+}
+
+/// Why the pay leg failed AFTER the REALU→ZCHF swap already succeeded. The user
+/// holds ZCHF, so recovery must retry the pay leg ONLY (re-quote + sign +
+/// submit) — never the swap. Each reason maps to a localized message.
+enum PayRetryReason {
+  /// The OCP quote expired between the swap and the pay step. Re-quoting is
+  /// safe — the swapped ZCHF stays in the wallet.
+  quoteExpired,
+
+  /// A transient/network error while re-fetching the quote or settling. Not a
+  /// genuine expiry; retrying the pay leg is the correct recovery.
+  transient,
+
+  /// The freshly re-fetched settlement amount exceeds the ZCHF acquired by the
+  /// swap (price moved more than the swap headroom buffer). Re-quoting may land
+  /// within the held ZCHF; the leftover ZCHF stays in the wallet meanwhile.
+  insufficientZchf,
 }
 
 sealed class PayProcessState extends Equatable {
@@ -74,6 +86,23 @@ class PayProcessAwaitingSettlement extends PayProcessState {
 
 class PayProcessSuccess extends PayProcessState {
   const PayProcessSuccess();
+}
+
+/// The swap succeeded (ZCHF is in the wallet) but the pay leg failed. Recoverable
+/// by retrying the pay leg ONLY — the view calls [PayProcessCubit.retryPay],
+/// which re-quotes + signs + submits without ever re-swapping. This is the key
+/// fund-safety state: a failed pay no longer forces a re-scan → re-swap (which
+/// would double-convert REALU).
+class PayProcessPayRetry extends PayProcessState {
+  final PayRetryReason reason;
+
+  /// Diagnostic detail for logs — not the user-facing copy.
+  final String? message;
+
+  const PayProcessPayRetry(this.reason, {this.message});
+
+  @override
+  List<Object?> get props => [reason, message];
 }
 
 class PayProcessFailure extends PayProcessState {

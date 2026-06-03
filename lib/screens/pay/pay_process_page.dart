@@ -44,6 +44,10 @@ class PayProcessView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<PayProcessCubit, PayProcessState>(
+      listenWhen: (previous, current) =>
+          current is PayProcessSuccess ||
+          current is PayProcessFailure ||
+          current is PayProcessPayRetry,
       listener: (context, state) async {
         if (state is PayProcessSuccess) {
           await _showResultSheet(
@@ -52,6 +56,10 @@ class PayProcessView extends StatelessWidget {
             title: S.of(context).paySuccess,
             description: S.of(context).paySuccessDescription,
           );
+        } else if (state is PayProcessPayRetry) {
+          // The swap already succeeded — offer to retry the PAY leg only. The
+          // ZCHF stays in the wallet; this never re-swaps.
+          await _showRetrySheet(context, state.reason);
         } else if (state is PayProcessFailure) {
           await _showResultSheet(
             context,
@@ -93,19 +101,24 @@ class PayProcessView extends StatelessWidget {
     PayProcessPaying() => S.of(context).payPaying,
     PayProcessAwaitingSettlement() => S.of(context).payAwaitingSettlement,
     PayProcessSuccess() => S.of(context).paySuccess,
+    PayProcessPayRetry() => S.of(context).payRetryTitle,
     PayProcessFailure() => S.of(context).payFailureTitle,
   };
 
   String _failureMessage(BuildContext context, PayProcessFailureReason reason) => switch (reason) {
     PayProcessFailureReason.insufficientZchf => S.of(context).payFailureInsufficientZchf,
     PayProcessFailureReason.insufficientEth => S.of(context).payFailureInsufficientEth,
-    PayProcessFailureReason.quoteExpired => S.of(context).payFailureQuoteExpired,
-    PayProcessFailureReason.payFailed => S.of(context).payFailurePayFailed,
     PayProcessFailureReason.payUnsupportedEnvironment =>
       S.of(context).payFailureUnsupportedEnvironment,
     PayProcessFailureReason.signatureUnsupported => S.of(context).payFailureSignatureUnsupported,
     PayProcessFailureReason.bitboxRequired => S.of(context).payFailureBitboxRequired,
     PayProcessFailureReason.generic => S.of(context).payFailureGeneric,
+  };
+
+  String _retryMessage(BuildContext context, PayRetryReason reason) => switch (reason) {
+    PayRetryReason.quoteExpired => S.of(context).payRetryQuoteExpired,
+    PayRetryReason.transient => S.of(context).payRetryTransient,
+    PayRetryReason.insufficientZchf => S.of(context).payRetryInsufficientZchf,
   };
 
   Future<void> _showResultSheet(
@@ -143,5 +156,59 @@ class PayProcessView extends StatelessWidget {
       ),
     );
     if (context.mounted) Navigator.of(context).pop();
+  }
+
+  /// Recovery sheet shown after a successful swap when the pay leg failed. The
+  /// primary action retries the PAY leg only ([PayProcessCubit.retryPay]) — the
+  /// swap is never redone, so the ZCHF already held is reused. Dismissing leaves
+  /// that ZCHF safely in the wallet.
+  Future<void> _showRetrySheet(BuildContext context, PayRetryReason reason) async {
+    final cubit = context.read<PayProcessCubit>();
+    // The sheet returns true when the user retries (keep the page) and false
+    // when they close (leave the flow); a barrier dismissal yields null.
+    final retry = await showModalBottomSheet<bool>(
+      context: context,
+      isDismissible: false,
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 24,
+            children: [
+              const Icon(Icons.replay_rounded, color: RealUnitColors.realUnitBlue, size: 64),
+              Text(
+                S.of(sheetContext).payRetryTitle,
+                style: Theme.of(sheetContext).textTheme.headlineMedium,
+              ),
+              Text(
+                _retryMessage(sheetContext, reason),
+                textAlign: TextAlign.center,
+                style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
+                  color: RealUnitColors.neutral500,
+                ),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(sheetContext).pop(true),
+                child: Text(S.of(sheetContext).payRetryButton),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(sheetContext).pop(false),
+                child: Text(S.of(sheetContext).close),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (retry == true) {
+      // Retry the PAY leg only — never re-swaps. Keep the page so the next
+      // attempt surfaces its own result.
+      await cubit.retryPay();
+    } else if (context.mounted) {
+      // Closed: leave the flow. The swapped ZCHF stays safely in the wallet.
+      Navigator.of(context).pop();
+    }
   }
 }

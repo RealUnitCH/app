@@ -9,7 +9,6 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
-import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/pay_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/faucet/faucet_response_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/lnurlp_payment_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_ocp_pay_dto.dart';
@@ -78,15 +77,18 @@ SwapPaymentInfo _swap({
   );
 }
 
-LnurlpPaymentDto _details({required DateTime expiration, String quoteId = 'quote_fresh'}) {
+LnurlpPaymentDto _details({
+  required DateTime expiration,
+  String quoteId = 'quote_fresh',
+  double zchf = 42.7,
+}) {
   return LnurlpPaymentDto(
     requestedAmount: const LnurlpRequestedAmountDto(asset: 'CHF', amount: 42.5),
     quote: LnurlpQuoteDto(id: quoteId, expiration: expiration),
-    recipient: '0xrecipient',
-    transferAmounts: const [
+    transferAmounts: [
       LnurlpTransferAmountDto(
         method: 'Ethereum',
-        assets: [LnurlpTransferAssetDto(asset: 'ZCHF', amount: 42.7)],
+        assets: [LnurlpTransferAssetDto(asset: 'ZCHF', amount: zchf)],
       ),
     ],
   );
@@ -111,7 +113,7 @@ void main() {
   late _MockAccount account;
 
   setUpAll(() {
-    registerFallbackValue(const RealUnitSwapDto.fromAmount(1));
+    registerFallbackValue(const RealUnitSwapDto.fromTargetAmount(1));
     registerFallbackValue(const RealUnitOcpPayDto(paymentLinkId: 'pl_abc', quoteId: 'q'));
     registerFallbackValue(
       const BroadcastTransactionRequestDto(unsignedTx: '', r: '', s: '', v: 0),
@@ -139,6 +141,9 @@ void main() {
 
     when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
     when(() => appStore.primaryAddress).thenReturn('0xwallet');
+    // Default: the environment can settle OCP (mainnet). The up-front gate in
+    // start() reads this before any on-chain action.
+    when(() => payService.isPaySupportedEnvironment).thenReturn(true);
     when(() => appStore.wallet).thenReturn(wallet);
     when(() => wallet.walletType).thenReturn(WalletType.software);
     when(() => wallet.currentAccount).thenReturn(account);
@@ -225,8 +230,9 @@ void main() {
 
     // After start() resolves the chain the pay tx has been submitted.
     expect(cubit.state, isA<PayProcessAwaitingSettlement>());
-    // 100 * 1.01 slippage buffer.
-    expect(sentDto!.targetAmount, closeTo(101, 0.0001));
+    // 100 * 1.03 swap headroom buffer (covers ordinary CHF→ZCHF / swap-rate
+    // drift between scan and settle).
+    expect(sentDto!.targetAmount, closeTo(103, 0.0001));
     expect(sentDto!.amount, isNull);
     await cubit.close();
   });
@@ -276,36 +282,40 @@ void main() {
     await cubit.close();
   });
 
-  test('quote expired between swap and pay → quoteExpired', () async {
+  test('quote expired between swap and pay → pay-only retry (no re-scan)', () async {
     wireHappyPath();
     when(() => payService.getPaymentDetails('pl_abc')).thenAnswer(
       (_) async => _details(expiration: DateTime.now().subtract(const Duration(minutes: 1))),
     );
 
     final cubit = build();
-    final failed = cubit.stream.firstWhere((s) => s is PayProcessFailure);
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
     await cubit.start();
-    final state = await failed as PayProcessFailure;
+    final state = await retry as PayProcessPayRetry;
 
-    expect(state.reason, PayProcessFailureReason.quoteExpired);
+    // Genuine expiry surfaces as a retryable state — NOT a terminal failure —
+    // because the swap already ran. The pay leg is never submitted here.
+    expect(state.reason, PayRetryReason.quoteExpired);
     verifyNever(() => payService.createPayUnsignedTransaction(any()));
     await cubit.close();
   });
 
-  test('pay submit failure → payFailed', () async {
+  test('pay submit failure after swap → retry (transient), not terminal', () async {
     wireHappyPath();
     when(() => payService.submitPay(any())).thenThrow(Exception('settlement rejected'));
 
     final cubit = build();
-    final failed = cubit.stream.firstWhere((s) => s is PayProcessFailure);
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
     await cubit.start();
-    final state = await failed as PayProcessFailure;
+    final state = await retry as PayProcessPayRetry;
 
-    expect(state.reason, PayProcessFailureReason.payFailed);
+    // The swap is done; a failed pay must NOT force a re-swap.
+    expect(state.reason, PayRetryReason.transient);
+    expect(cubit.state, isNot(isA<PayProcessFailure>()));
     await cubit.close();
   });
 
-  test('terminal non-completed status (Cancelled) → payFailed', () async {
+  test('terminal non-completed status (Cancelled) → pay-only retry', () async {
     fakeAsync((async) {
       wireHappyPath();
       when(() => payService.getPayStatus('pl_abc')).thenAnswer(
@@ -319,8 +329,10 @@ void main() {
 
       async.elapse(const Duration(seconds: 3));
       drain(async);
-      final state = cubit.state as PayProcessFailure;
-      expect(state.reason, PayProcessFailureReason.payFailed);
+      // A cancelled settlement after the swap leaves the user holding ZCHF — it
+      // is recoverable by retrying the pay leg, not a terminal failure.
+      final state = cubit.state as PayProcessPayRetry;
+      expect(state.reason, PayRetryReason.transient);
 
       cubit.close();
       async.flushTimers();
@@ -471,38 +483,42 @@ void main() {
     await cubit.close();
   });
 
-  test('quote re-fetch failure between swap and pay → quoteExpired', () async {
+  test('transient quote re-fetch failure after swap → retry (not re-scan)', () async {
     wireHappyPath();
     when(() => payService.getPaymentDetails('pl_abc')).thenThrow(Exception('lnurlp 500'));
 
     final cubit = build();
-    final failed = cubit.stream.firstWhere((s) => s is PayProcessFailure);
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
     await cubit.start();
-    final state = await failed as PayProcessFailure;
+    final state = await retry as PayProcessPayRetry;
 
-    expect(state.reason, PayProcessFailureReason.quoteExpired);
+    // A transient fetch error is NOT a genuine expiry — it routes to the
+    // pay-only retry, never to a re-scan → re-swap.
+    expect(state.reason, PayRetryReason.transient);
     await cubit.close();
   });
 
-  test('pay step on testnet (service fail-fast) → payUnsupportedEnvironment', () async {
+  test('unsupported environment → fails BEFORE any swap (no on-chain action)', () async {
     wireHappyPath();
-    when(
-      () => payService.createPayUnsignedTransaction(any()),
-    ).thenThrow(const PayUnsupportedEnvironmentException());
+    when(() => payService.isPaySupportedEnvironment).thenReturn(false);
 
     final cubit = build();
-    final failed = cubit.stream.firstWhere((s) => s is PayProcessFailure);
     await cubit.start();
-    final state = await failed as PayProcessFailure;
 
+    final state = cubit.state as PayProcessFailure;
     expect(state.reason, PayProcessFailureReason.payUnsupportedEnvironment);
+    // The irreversible swap must never run on an unsupported environment.
+    verifyNever(() => payService.getSwapPaymentInfo(any()));
+    verifyNever(() => payService.createSwapUnsignedTransaction(any()));
+    verifyNever(() => payService.broadcastSwapTransaction(any(), any()));
     await cubit.close();
   });
 
-  test('BitBox disconnect during the pay sign → bitboxRequired', () async {
+  test('BitBox disconnect during the pay sign (after swap) → pay-only retry', () async {
     wireHappyPath();
     // First sign (swap) succeeds; the second sign (pay) reports a dropped BLE
-    // link, exercising the pay-step BitboxNotConnectedException branch.
+    // link. Because the swap already happened, this is a retryable pay-leg
+    // failure rather than a terminal one.
     final creds = _CountingSignCreds(
       throwOnCall: 2,
       error: const BitboxNotConnectedException(),
@@ -510,19 +526,86 @@ void main() {
     when(() => account.primaryAddress).thenReturn(creds);
 
     final cubit = build();
-    final failed = cubit.stream.firstWhere((s) => s is PayProcessFailure);
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
     await cubit.start();
-    final state = await failed as PayProcessFailure;
+    final state = await retry as PayProcessPayRetry;
 
     expect(creds.calls, 2);
-    expect(state.reason, PayProcessFailureReason.bitboxRequired);
+    expect(state.reason, PayRetryReason.transient);
     await cubit.close();
   });
 
-  test('non-signing wallet detected only at the pay sign → signatureUnsupported', () async {
+  test('insufficient ZCHF after swap (fresh amount > acquired) → typed retry', () async {
+    wireHappyPath();
+    // Swap acquires estimatedAmount=960 ZCHF, but the fresh quote now demands
+    // 1000 ZCHF — more than was swapped. Surface the typed, retryable state.
+    when(() => payService.getPaymentDetails('pl_abc')).thenAnswer(
+      (_) async => _details(
+        expiration: DateTime.now().add(const Duration(minutes: 5)),
+        zchf: 1000,
+      ),
+    );
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    final state = await retry as PayProcessPayRetry;
+
+    expect(state.reason, PayRetryReason.insufficientZchf);
+    // The pay leg is never attempted — the swapped ZCHF stays in the wallet.
+    verifyNever(() => payService.createPayUnsignedTransaction(any()));
+    await cubit.close();
+  });
+
+  test('retryPay re-runs the pay leg only — never re-swaps', () async {
+    wireHappyPath();
+    // First pass: quote re-fetch throws → PayProcessPayRetry.
+    var detailsCall = 0;
+    when(() => payService.getPaymentDetails('pl_abc')).thenAnswer((_) async {
+      detailsCall++;
+      if (detailsCall == 1) throw Exception('lnurlp 500');
+      return _details(expiration: DateTime.now().add(const Duration(minutes: 5)));
+    });
+    when(() => payService.getPayStatus('pl_abc')).thenAnswer(
+      (_) async => const RealUnitOcpPayStatusDto(status: OcpPaymentStatus.completed),
+    );
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    await retry;
+    expect(cubit.state, isA<PayProcessPayRetry>());
+
+    // Retry the pay leg: it must re-fetch the quote + submit WITHOUT re-swapping.
+    final settled = cubit.stream.firstWhere((s) => s is PayProcessAwaitingSettlement);
+    await cubit.retryPay();
+    await settled;
+
+    expect(cubit.state, isA<PayProcessAwaitingSettlement>());
+    // The swap legs ran EXACTLY ONCE over the whole flow — the retry reused the
+    // already-acquired ZCHF and never re-swapped (the key fund-safety guarantee).
+    verify(() => payService.createSwapUnsignedTransaction(any())).called(1);
+    verify(() => payService.broadcastSwapTransaction(any(), any())).called(1);
+    // The pay leg's submit ran once (only on the successful retry).
+    verify(() => payService.submitPay(any())).called(1);
+    await cubit.close();
+  });
+
+  test('retryPay is a no-op before a swap has completed', () async {
+    wireHappyPath();
+
+    final cubit = build();
+    // Never started → swap not completed → retry must not touch the network.
+    await cubit.retryPay();
+
+    verifyNever(() => payService.getPaymentDetails(any()));
+    await cubit.close();
+  });
+
+  test('non-signing wallet detected only at the pay sign (after swap) → retry', () async {
     wireHappyPath();
     // Swap sign succeeds; the pay sign hits a non-signing credential
-    // (UnsupportedError), exercising the pay-step signatureUnsupported branch.
+    // (UnsupportedError). Post-swap, this is a retryable pay-leg failure.
     final creds = _CountingSignCreds(
       throwOnCall: 2,
       error: UnsupportedError('cannot sign'),
@@ -530,12 +613,12 @@ void main() {
     when(() => account.primaryAddress).thenReturn(creds);
 
     final cubit = build();
-    final failed = cubit.stream.firstWhere((s) => s is PayProcessFailure);
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
     await cubit.start();
-    final state = await failed as PayProcessFailure;
+    final state = await retry as PayProcessPayRetry;
 
     expect(creds.calls, 2);
-    expect(state.reason, PayProcessFailureReason.signatureUnsupported);
+    expect(state.reason, PayRetryReason.transient);
     await cubit.close();
   });
 }

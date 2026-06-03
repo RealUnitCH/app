@@ -16,7 +16,6 @@ LnurlpPaymentDto _details({
   return LnurlpPaymentDto(
     requestedAmount: const LnurlpRequestedAmountDto(asset: 'CHF', amount: 42.5),
     quote: LnurlpQuoteDto(id: 'quote_xyz', expiration: expiration),
-    recipient: '0xrecipient',
     transferAmounts: [
       if (withEthZchf)
         LnurlpTransferAmountDto(
@@ -35,9 +34,25 @@ LnurlpPaymentDto _details({
 void main() {
   late _MockPayService payService;
 
-  setUp(() => payService = _MockPayService());
+  setUp(() {
+    payService = _MockPayService();
+    // Default: the environment can settle OCP (mainnet). load() checks this
+    // up-front before fetching the quote.
+    when(() => payService.isPaySupportedEnvironment).thenReturn(true);
+  });
 
   PayQuoteCubit build() => PayQuoteCubit(payService, 'pl_abc');
+
+  blocTest<PayQuoteCubit, PayQuoteState>(
+    'an unsupported environment emits PayQuoteUnsupportedEnvironment without fetching',
+    build: build,
+    setUp: () {
+      when(() => payService.isPaySupportedEnvironment).thenReturn(false);
+    },
+    act: (cubit) => cubit.load(),
+    expect: () => [isA<PayQuoteLoading>(), isA<PayQuoteUnsupportedEnvironment>()],
+    verify: (_) => verifyNever(() => payService.getPaymentDetails(any())),
+  );
 
   blocTest<PayQuoteCubit, PayQuoteState>(
     'a fresh quote with an Ethereum/ZCHF method emits PayQuoteReady',
