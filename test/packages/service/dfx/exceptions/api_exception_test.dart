@@ -62,6 +62,24 @@ void main() {
         final kyc = exception as KycLevelRequiredException;
         expect(kyc.requiredLevel, 30);
         expect(kyc.currentLevel, 20);
+        expect(kyc.context, isNull);
+      });
+
+      test('creates KycLevelRequiredException with context from JSON', () {
+        final exception = ApiException.fromJson(
+          {
+            'code': 'KYC_LEVEL_REQUIRED',
+            'message': 'KYC level too low',
+            'requiredLevel': 30,
+            'currentLevel': 20,
+            'context': 'RealunitBuy',
+          },
+          httpStatusCode: 403,
+        );
+
+        expect(exception, isA<KycLevelRequiredException>());
+        final kyc = exception as KycLevelRequiredException;
+        expect(kyc.context, 'RealunitBuy');
       });
 
       test('creates RegistrationRequiredException with httpStatusCode', () {
@@ -73,6 +91,22 @@ void main() {
         expect(exception, isA<RegistrationRequiredException>());
         expect(exception.statusCode, 403);
         expect(exception.message, 'Please register first');
+        expect((exception as RegistrationRequiredException).context, isNull);
+      });
+
+      test('creates RegistrationRequiredException with context from JSON', () {
+        final exception = ApiException.fromJson(
+          {
+            'code': 'REGISTRATION_REQUIRED',
+            'message': 'Please register first',
+            'context': 'RealunitSell',
+          },
+          httpStatusCode: 403,
+        );
+
+        expect(exception, isA<RegistrationRequiredException>());
+        final reg = exception as RegistrationRequiredException;
+        expect(reg.context, 'RealunitSell');
       });
     });
   });

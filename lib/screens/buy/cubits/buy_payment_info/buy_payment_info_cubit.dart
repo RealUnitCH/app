@@ -71,9 +71,13 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
       return BuyPaymentInfoFailure(
         PaymentInfoError.kycRequired,
         requiredLevel: e.requiredLevel,
+        context: e.context,
       );
-    } on RegistrationRequiredException {
-      return const BuyPaymentInfoFailure(PaymentInfoError.registrationRequired);
+    } on RegistrationRequiredException catch (e) {
+      return BuyPaymentInfoFailure(
+        PaymentInfoError.registrationRequired,
+        context: e.context,
+      );
     } on BitboxNotConnectedException {
       return const BuyPaymentInfoFailure(PaymentInfoError.bitboxDisconnected);
     } catch (e) {

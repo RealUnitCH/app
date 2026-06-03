@@ -176,6 +176,27 @@ void main() {
       expect(f.requiredLevel, 30);
     });
 
+    test('KycLevelRequiredException with context → Failure carries context', () async {
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency'))).thenAnswer(
+        (_) async => throw const KycLevelRequiredException(
+          statusCode: 403,
+          code: 'KYC_REQUIRED',
+          message: 'KYC required',
+          requiredLevel: 50,
+          currentLevel: 30,
+          context: 'RealunitSell',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
+
+      final f = cubit.state as SellPaymentInfoFailure;
+      expect(f.error, PaymentInfoError.kycRequired);
+      expect(f.requiredLevel, 50);
+      expect(f.context, 'RealunitSell');
+    });
+
     test(
       'BitboxNotConnectedException → Failure(bitboxDisconnected) carrying the message',
       () async {
@@ -226,6 +247,24 @@ void main() {
         (cubit.state as SellPaymentInfoFailure).error,
         PaymentInfoError.registrationRequired,
       );
+    });
+
+    test('RegistrationRequiredException with context → Failure carries context', () async {
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency'))).thenAnswer(
+        (_) async => throw const RegistrationRequiredException(
+          statusCode: 403,
+          code: 'REGISTRATION_REQUIRED',
+          message: 'Sign first',
+          context: 'RealunitSell',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
+
+      final f = cubit.state as SellPaymentInfoFailure;
+      expect(f.error, PaymentInfoError.registrationRequired);
+      expect(f.context, 'RealunitSell');
     });
 
     test('generic exception → Failure(unknown) carrying the message', () async {

@@ -25,6 +25,7 @@ class KycCubit extends Cubit<KycState> {
 
   bool _legalDisclaimerAccepted = false;
   bool _emailRegistrationAttempted = false;
+  String? _kycContext;
 
   // `Future.timeout` does not cancel the underlying work, so a late HTTP
   // response from an earlier call can still resume and emit state after a
@@ -42,7 +43,8 @@ class KycCubit extends Cubit<KycState> {
       _appStore = appStore,
       super(const KycInitial());
 
-  Future<void> checkKyc() async {
+  Future<void> checkKyc({String? context}) async {
+    _kycContext = context ?? _kycContext;
     final generation = ++_runGeneration;
     try {
       await _runCheckKyc(generation).timeout(_checkKycTimeout);
@@ -61,7 +63,7 @@ class KycCubit extends Cubit<KycState> {
       emit(const KycLoading());
 
       final results = await Future.wait([
-        _kycService.getKycStatus(),
+        _kycService.getKycStatus(context: _kycContext),
         _kycService.getUser(),
       ]);
 
@@ -227,7 +229,7 @@ class KycCubit extends Cubit<KycState> {
 
   /// should only be called after realunit registration was completed
   Future<void> _continueKyc(int generation) async {
-    final kycStatus = await _kycService.continueKyc();
+    final kycStatus = await _kycService.continueKyc(context: _kycContext);
     if (isClosed || generation != _runGeneration) return;
 
     // `KycSessionDto.currentStep` is the authoritative source — see
