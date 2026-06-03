@@ -47,5 +47,24 @@ void main() {
       await tester.tap(find.byType(InkWell));
       await tester.pump();
     });
+
+    testWidgets(
+        'renders a short/unexpected address without a RangeError '
+        '(issue #657 P6 regression)', (tester) async {
+      // A too-short subtitle used to crash on the fixed-index substring(6, 21)
+      // etc. — it must now render gracefully on Receive and Settings.
+      await tester.pumpWidget(_host(
+        const QRAddressWidget(uri: '', subtitle: '0x1234'),
+      ));
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('0x1234'), findsAtLeastNWidgets(1));
+
+      // The extreme case: an empty address must also not throw.
+      await tester.pumpWidget(_host(
+        const QRAddressWidget(uri: '', subtitle: ''),
+      ));
+      expect(tester.takeException(), isNull);
+    });
   });
 }

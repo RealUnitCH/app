@@ -39,20 +39,20 @@ class QRAddressWidget extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(
-                      text: subtitle.substring(0, 6),
+                      text: _slice(subtitle, 0, 6),
                       style: const TextStyle(fontWeight: .bold),
                     ),
                     const TextSpan(text: ' '),
                     TextSpan(
-                      text: subtitle.substring(6, 21),
+                      text: _slice(subtitle, 6, 21),
                     ),
                     const TextSpan(text: '\n'),
                     TextSpan(
-                      text: subtitle.substring(21, 36),
+                      text: _slice(subtitle, 21, 36),
                     ),
                     const TextSpan(text: ' '),
                     TextSpan(
-                      text: subtitle.substring(36),
+                      text: _slice(subtitle, 36),
                       style: const TextStyle(fontWeight: .bold),
                     ),
                   ],
@@ -72,4 +72,14 @@ class QRAddressWidget extends StatelessWidget {
   );
 
   Future<void> _copyToClipboard() => Clipboard.setData(ClipboardData(text: subtitle));
+
+  // Length-safe slice: a full 0x-address is grouped into fixed chunks, but a
+  // short or empty address must not crash with a RangeError (issue #657 P6 —
+  // this widget renders on both Receive and Settings). Clamps the bounds to
+  // the string length instead of slicing past the end.
+  static String _slice(String value, int start, [int? end]) {
+    if (start >= value.length) return '';
+    final clampedEnd = end == null || end > value.length ? value.length : end;
+    return value.substring(start, clampedEnd);
+  }
 }
