@@ -100,7 +100,7 @@ void main() {
         requiredLevel: 30,
       );
       expect(a, equals(b));
-      expect(a.props, [PaymentInfoError.kycRequired, 'm', 30]);
+      expect(a.props, [PaymentInfoError.kycRequired, 'm', 30, null]);
     });
 
     test('default message is empty string', () {
@@ -111,6 +111,35 @@ void main() {
     test('different message is unequal', () {
       final a = SellPaymentInfoFailure(PaymentInfoError.kycRequired, message: 'a');
       final b = SellPaymentInfoFailure(PaymentInfoError.kycRequired, message: 'b');
+      expect(a, isNot(equals(b)));
+    });
+
+    test('same error+message+level+context is equal and props match', () {
+      final a = SellPaymentInfoFailure(
+        PaymentInfoError.kycRequired,
+        message: 'm',
+        requiredLevel: 30,
+        context: 'RealunitSell',
+      );
+      final b = SellPaymentInfoFailure(
+        PaymentInfoError.kycRequired,
+        message: 'm',
+        requiredLevel: 30,
+        context: 'RealunitSell',
+      );
+      expect(a, equals(b));
+      expect(a.props, [PaymentInfoError.kycRequired, 'm', 30, 'RealunitSell']);
+    });
+
+    test('different context is unequal', () {
+      final a = SellPaymentInfoFailure(
+        PaymentInfoError.kycRequired,
+        context: 'RealunitBuy',
+      );
+      final b = SellPaymentInfoFailure(
+        PaymentInfoError.kycRequired,
+        context: 'RealunitSell',
+      );
       expect(a, isNot(equals(b)));
     });
   });

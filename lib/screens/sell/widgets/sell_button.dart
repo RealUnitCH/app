@@ -24,11 +24,11 @@ class SellButton extends StatelessWidget {
       listener: (context, state) async {
         if (state is SellPaymentInfoFailure) {
           if (state.error == .kycRequired) {
-            await context.pushNamed(AppRoutes.kyc);
+            await context.pushNamed(AppRoutes.kyc, extra: state.context);
             return;
           }
           if (state.error == .registrationRequired) {
-            await context.pushNamed(AppRoutes.kyc);
+            await context.pushNamed(AppRoutes.kyc, extra: state.context);
             return;
           }
           if (state.error == .bitboxDisconnected) {

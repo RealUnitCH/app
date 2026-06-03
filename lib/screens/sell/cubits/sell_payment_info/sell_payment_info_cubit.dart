@@ -77,6 +77,7 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
           PaymentInfoError.kycRequired,
           message: e.toString(),
           requiredLevel: e.requiredLevel,
+          context: e.context,
         ),
       );
     } on RegistrationRequiredException catch (e) {
@@ -85,6 +86,7 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
         SellPaymentInfoFailure(
           PaymentInfoError.registrationRequired,
           message: e.toString(),
+          context: e.context,
         ),
       );
     } on BitboxNotConnectedException catch (e) {
