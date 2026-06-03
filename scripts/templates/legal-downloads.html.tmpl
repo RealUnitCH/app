@@ -1,0 +1,31 @@
+<details id="spec-legal-downloads" class="spec" open>
+  <summary>
+    <div class="spec-head">
+      <div class="lhs">
+        <h2><span class="num">L</span>Rechtsdokumente — Downloads</h2>
+        <div class="file">assets/legal/*.md</div>
+      </div>
+      <div class="rhs">
+        <b>Live aus Repo</b>
+        <div class="links">
+          <a href="https://github.com/RealUnitCH/app/tree/develop/assets/legal">assets/legal ↗</a>
+        </div>
+      </div>
+    </div>
+  </summary>
+
+  <p class="spec-intro">
+    Single source of truth für die App-eigenen Rechtstexte sind die Markdown-Dateien
+    unter <code>assets/legal/*.md</code>. Die In-App-Ansicht (<code>LegalDocumentPage</code>)
+    und die Downloads hier rendern aus denselben Dateien; jede Änderung am Text geht
+    ausschliesslich über einen PR auf diese Markdown-Quellen. Pro Dokument und Sprache
+    gibt es einen <b>PDF</b>- und <b>DOCX</b>-Download (im Handbook-Image via
+    <code>pandoc</code> erzeugt) sowie einen Direkt-Link (🔗) auf den jeweiligen Eintrag
+    und einen <span class="src">↗</span>-Link auf die Markdown-Quelldatei.
+    DFX- und Aktionariat-Dokumente sowie die extern gehosteten Unternehmensdokumente
+    (Prospekte, Statuten) sind <em>nicht</em> Teil dieses Exports — sie haben keine
+    Markdown-Quelle im Repo.
+  </p>
+
+{{ rows }}
+</details>
