@@ -148,6 +148,8 @@
   "legalDisclaimerTitle": "Important legal notices for investors & confirmation of residence",
   "legalDisclaimerTitle2": "Further legal notices",
   "legalDisclaimerYes": "Agree",
+  "legalDocumentLoadFailed": "Could not load the document",
+  "legalDocumentLoadFailedDescription": "Something went wrong while loading this document. Please try again.",
   "legalDocuments": "Legal documents",
   "location": "Location",
   "logout": "Logout",

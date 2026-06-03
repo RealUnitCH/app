@@ -148,6 +148,8 @@
   "legalDisclaimerTitle": "Wichtige rechtliche Hinweise für Investoren & Bestätigung des Wohnsitzes",
   "legalDisclaimerTitle2": "Weitere rechtliche Hinweise",
   "legalDisclaimerYes": "Zustimmen",
+  "legalDocumentLoadFailed": "Dokument konnte nicht geladen werden",
+  "legalDocumentLoadFailedDescription": "Beim Laden des Dokuments ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
   "legalDocuments": "Rechtsdokumente",
   "location": "Ort",
   "logout": "Abmelden",
