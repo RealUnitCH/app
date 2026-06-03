@@ -61,7 +61,7 @@ void main() {
       final a = BuyPaymentInfoFailure(PaymentInfoError.kycRequired, requiredLevel: 30);
       final b = BuyPaymentInfoFailure(PaymentInfoError.kycRequired, requiredLevel: 30);
       expect(a, equals(b));
-      expect(a.props, [PaymentInfoError.kycRequired, 30]);
+      expect(a.props, [PaymentInfoError.kycRequired, 30, null]);
     });
 
     test('null requiredLevel is allowed and equal across instances', () {
@@ -74,6 +74,33 @@ void main() {
     test('different errors are unequal', () {
       final a = BuyPaymentInfoFailure(PaymentInfoError.kycRequired);
       final b = BuyPaymentInfoFailure(PaymentInfoError.minAmountNotMet);
+      expect(a, isNot(equals(b)));
+    });
+
+    test('same error+level+context is equal and props match', () {
+      final a = BuyPaymentInfoFailure(
+        PaymentInfoError.kycRequired,
+        requiredLevel: 30,
+        context: 'RealunitBuy',
+      );
+      final b = BuyPaymentInfoFailure(
+        PaymentInfoError.kycRequired,
+        requiredLevel: 30,
+        context: 'RealunitBuy',
+      );
+      expect(a, equals(b));
+      expect(a.props, [PaymentInfoError.kycRequired, 30, 'RealunitBuy']);
+    });
+
+    test('different context is unequal', () {
+      final a = BuyPaymentInfoFailure(
+        PaymentInfoError.kycRequired,
+        context: 'RealunitBuy',
+      );
+      final b = BuyPaymentInfoFailure(
+        PaymentInfoError.kycRequired,
+        context: 'RealunitSell',
+      );
       expect(a, isNot(equals(b)));
     });
   });

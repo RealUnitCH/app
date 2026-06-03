@@ -27,11 +27,12 @@ class BuyPaymentInfoSuccess extends BuyPaymentInfoState {
 class BuyPaymentInfoFailure extends BuyPaymentInfoState {
   final PaymentInfoError error;
   final int? requiredLevel;
+  final String? context;
 
-  const BuyPaymentInfoFailure(this.error, {this.requiredLevel});
+  const BuyPaymentInfoFailure(this.error, {this.requiredLevel, this.context});
 
   @override
-  List<Object?> get props => [error, requiredLevel];
+  List<Object?> get props => [error, requiredLevel, context];
 }
 
 class BuyPaymentInfoMinAmountNotMetFailure extends BuyPaymentInfoFailure {
