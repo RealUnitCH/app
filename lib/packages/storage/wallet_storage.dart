@@ -28,6 +28,14 @@ extension WalletStorage on AppDatabase {
   Future<int> deleteWallet(int walletId) =>
       (delete(walletAccountInfos)..where((row) => row.wallet.equals(walletId))).go();
 
+  /// Deletes the `walletInfos` row itself (the encrypted-seed record) after
+  /// clearing its dependent `walletAccountInfos` rows (FK in
+  /// [WalletAccountInfos.wallet]).
+  Future<void> deleteWalletCompletely(int walletId) => transaction(() async {
+    await (delete(walletAccountInfos)..where((row) => row.wallet.equals(walletId))).go();
+    await (delete(walletInfos)..where((row) => row.id.equals(walletId))).go();
+  });
+
   Future<bool> get hasWallet => select(walletInfos).get().then((result) => result.isNotEmpty);
 }
 

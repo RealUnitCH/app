@@ -165,6 +165,14 @@ class SecureStorage {
     return key;
   }
 
+  /// Removes the AES-GCM key that decrypts stored seeds. Once gone, any
+  /// surviving encrypted seed is permanently undecryptable; a fresh key is
+  /// lazily minted on next creation.
+  // @no-integration-test: forwards to FlutterSecureStorage (Android Keystore /
+  // iOS Keychain) over a platform channel; real keystore removal is only
+  // verifiable on-device — the unit test mocks the plugin.
+  Future<void> deleteMnemonicKey() => _secureStorage.delete(key: _mnemonicEncryptionKey);
+
   static String encryptSeed(Uint8List key, String plaintext) {
     final iv = _secureRandomBytes(12);
     final cipher = GCMBlockCipher(AESEngine())
