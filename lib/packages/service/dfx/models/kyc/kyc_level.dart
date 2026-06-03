@@ -4,7 +4,7 @@ enum KycLevel { level0, level10, level20, level30, level40, level50, terminated,
 // (`src/subdomains/generic/kyc/dto/output/kyc-info.dto.ts`). The high-level
 // KYC process state. Defaults to `inProgress` if absent on the wire so
 // pre-PR backends degrade reasonably.
-enum KycProcessStatus { inProgress, pendingReview, completed, failed }
+enum KycProcessStatus { inProgress, pendingReview, completed, failed, mergeProcessing }
 
 extension KycProcessStatusExtension on KycProcessStatus {
   String get value {
@@ -17,6 +17,8 @@ extension KycProcessStatusExtension on KycProcessStatus {
         return 'Completed';
       case KycProcessStatus.failed:
         return 'Failed';
+      case KycProcessStatus.mergeProcessing:
+        return 'MergeProcessing';
     }
   }
 
@@ -39,6 +41,8 @@ extension KycProcessStatusExtension on KycProcessStatus {
         return KycProcessStatus.completed;
       case 'Failed':
         return KycProcessStatus.failed;
+      case 'MergeProcessing':
+        return KycProcessStatus.mergeProcessing;
       default:
         throw ArgumentError('Unsupported KYC process status: $value');
     }

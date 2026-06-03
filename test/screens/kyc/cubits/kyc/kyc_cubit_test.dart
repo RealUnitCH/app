@@ -465,6 +465,25 @@ void main() {
     );
 
     blocTest<KycCubit, KycState>(
+      'emits KycMergeProcessing when API reports processStatus=MergeProcessing',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level20,
+            processStatus: KycProcessStatus.mergeProcessing,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        await cubit.checkKyc();
+      },
+      expect: () => [const KycLoading(), const KycMergeProcessing()],
+    );
+
+    blocTest<KycCubit, KycState>(
       'emits KycPending(ident) when API reports processStatus=PendingReview and ident is the required pending step',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(

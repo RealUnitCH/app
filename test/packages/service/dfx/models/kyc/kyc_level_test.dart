@@ -50,6 +50,7 @@ void main() {
       expect(KycProcessStatus.pendingReview.value, 'PendingReview');
       expect(KycProcessStatus.completed.value, 'Completed');
       expect(KycProcessStatus.failed.value, 'Failed');
+      expect(KycProcessStatus.mergeProcessing.value, 'MergeProcessing');
     });
 
     test('round-trips every enum value through fromValue/value', () {
