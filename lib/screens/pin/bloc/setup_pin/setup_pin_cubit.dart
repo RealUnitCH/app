@@ -19,6 +19,8 @@ class SetupPinCubit extends Cubit<SetupPinState> {
 
   String? _createPin;
 
+  Future<void>? _inflightConfirm;
+
   void addDigit(int digit) {
     if (state.currentPin.length >= pinLength) return;
 
@@ -57,7 +59,13 @@ class SetupPinCubit extends Cubit<SetupPinState> {
     }
   }
 
-  Future<void> _confirmPin(String confirmPin) async {
+  // A confirm re-typed while the slow PBKDF2 hash is still in flight must not
+  // start a second salt+hash round-trip: coalesce onto the first so the
+  // persisted salt and hash always come from one run (never a torn pair).
+  Future<void> _confirmPin(String confirmPin) =>
+      _inflightConfirm ??= _runConfirmPin(confirmPin).whenComplete(() => _inflightConfirm = null);
+
+  Future<void> _runConfirmPin(String confirmPin) async {
     if (confirmPin == _createPin) {
       final salt = SecureStorage.generatePinSalt();
       final hash = await SecureStorage.hashPinAsync(confirmPin, salt);

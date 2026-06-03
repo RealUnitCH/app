@@ -19,6 +19,8 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
   final BiometricService _biometricService;
   final bool enableLockout;
 
+  Future<void>? _inflightCheck;
+
   void addDigit(int digit) {
     if (state is VerifyPinTemporarilyLocked || state is VerifyPinLocked) return;
     if (state.pin.length == pinLength) return;
@@ -32,7 +34,13 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
     emit(state.copyWith(pin: state.pin.substring(0, state.pin.length - 1)));
   }
 
-  Future<void> checkPin() async {
+  // Concurrent checkPin() calls always verify the same submission, so coalesce
+  // them onto one in-flight round-trip: the read-modify-write lockout counter
+  // advances exactly once instead of under-counting on an interleaved race.
+  Future<void> checkPin() =>
+      _inflightCheck ??= _runCheckPin().whenComplete(() => _inflightCheck = null);
+
+  Future<void> _runCheckPin() async {
     final isCorrect = await _secureStorage.verifyPin(state.pin);
     if (isCorrect) {
       if (enableLockout) await _secureStorage.resetPinLockout();

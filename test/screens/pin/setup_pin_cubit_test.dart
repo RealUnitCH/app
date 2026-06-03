@@ -158,5 +158,46 @@ void main() {
       expect(result, isTrue);
       verify(() => biometricService.enable()).called(1);
     });
+
+    group('concurrency (F-09: salt/hash setup race)', () {
+      test('confirm re-typed during the in-flight hash writes one atomic salt+hash', () async {
+        Uint8List? savedSalt;
+        String? savedHash;
+        when(() => secureStorage.setPinSalt(any())).thenAnswer((inv) async {
+          savedSalt = inv.positionalArguments.first as Uint8List;
+        });
+        when(() => secureStorage.setPinHash(any())).thenAnswer((inv) async {
+          savedHash = inv.positionalArguments.first as String;
+        });
+        final cubit = build();
+        final completed = cubit.stream.firstWhere((s) => s.isComplete);
+
+        // Create the pin -> confirm mode (with _createPin set).
+        for (final d in [1, 2, 3, 4, 5, 6]) {
+          cubit.addDigit(d);
+        }
+        // Confirm the pin -> fires _confirmPin #1 (in-flight on the slow PBKDF2
+        // compute()). currentPin stays '123456', so the field still looks full.
+        for (final d in [1, 2, 3, 4, 5, 6]) {
+          cubit.addDigit(d);
+        }
+        // An impatient user backspaces and re-types the last digit while the
+        // hash is still computing -> fires _confirmPin #2 concurrently.
+        cubit.deleteDigit();
+        cubit.addDigit(6);
+
+        await completed.timeout(const Duration(seconds: 30));
+        await pumpEventQueue();
+
+        // Single-effect + atomic: exactly one salt and one hash persisted, and
+        // the persisted hash must be PBKDF2(pin, persisted salt) — i.e. salt and
+        // hash provably come from the SAME run. At HEAD two interleaved runs
+        // write twice and can tear the pair (saltB + hashA) -> RED.
+        verify(() => secureStorage.setPinSalt(any())).called(1);
+        verify(() => secureStorage.setPinHash(any())).called(1);
+        expect(savedSalt, isNotNull);
+        expect(savedHash, SecureStorage.hashPin('123456', savedSalt!));
+      });
+    });
   });
 }

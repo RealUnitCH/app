@@ -262,5 +262,30 @@ void main() {
         verifyNever(() => biometricService.authenticate());
       });
     });
+
+    group('concurrency (F-01: PIN-lockout under-count race)', () {
+      test('two parallel checkPin of one submission advance the counter once', () async {
+        when(() => secureStorage.verifyPin(any())).thenAnswer((_) async => false);
+        when(() => secureStorage.getPinFailedAttempts()).thenAnswer((_) async => 0);
+        final cubit = build();
+
+        // The PIN is fixed for the lifetime of a submission, so concurrent
+        // checkPin() calls always verify the SAME pin — one logical attempt
+        // double-fired. The 6th digit auto-fires checkPin() #1; a second
+        // checkPin() races it against the read-modify-write failure counter.
+        addPin(cubit, '99999');
+        cubit.addDigit(9); // 6th digit -> auto checkPin() #1 (in-flight)
+        final second = cubit.checkPin(); // checkPin() #2, same state.pin
+
+        await second.timeout(const Duration(seconds: 30));
+        await pumpEventQueue();
+
+        // Single-effect: the counter must advance to exactly 1, written once.
+        // At HEAD both reads see 0 and both write 1 -> called twice (RED).
+        verify(() => secureStorage.setPinFailedAttempts(1)).called(1);
+        verifyNever(() => secureStorage.setPinFailedAttempts(2));
+        expect(cubit.state.failedAttempts, 1);
+      });
+    });
   });
 }
