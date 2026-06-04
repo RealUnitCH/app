@@ -234,6 +234,7 @@
   "reset": "Reset",
   "residence": "Residence",
   "restoreWallet": "Restore wallet",
+  "restoreWalletFailed": "Restore failed – tap to retry",
   "restoreWalletFromSeedDescription": "Please enter your 12 recovery words in the correct order to regain access to your wallet.",
   "restoreWalletSubtitle": "I already have a wallet (e.g., Aktionariat) and would like to restore it.",
   "restoreWalletSuccessful": "Wallet restored",

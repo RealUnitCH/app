@@ -53,6 +53,44 @@ void main() {
       expect(cubit.state.isLoading, isFalse);
     });
 
+    test('restoreWallet emits a terminal hasError state (not endless loading) when the '
+        'service throws (issue #657 P1 B1)', () async {
+      when(() => service.restoreWallet(any(), any()))
+          .thenAnswer((_) async => throw Exception('persist failed'));
+      final cubit = RestoreWalletCubit(service, authService);
+
+      cubit.restoreWallet(_testMnemonic);
+      final errorState = await cubit.stream
+          .firstWhere((s) => s.hasError)
+          .timeout(const Duration(seconds: 1));
+
+      // No permanent spinner: loading cleared, error surfaced, no wallet.
+      expect(errorState.hasError, isTrue);
+      expect(errorState.isLoading, isFalse);
+      expect(errorState.wallet, isNull);
+    });
+
+    test('restoreWallet recovers on retry after a failure', () async {
+      final restored = SoftwareWallet(1, 'W', _testMnemonic);
+      var attempts = 0;
+      when(() => service.restoreWallet(any(), any())).thenAnswer((_) async {
+        attempts++;
+        if (attempts == 1) throw Exception('transient');
+        return restored;
+      });
+      final cubit = RestoreWalletCubit(service, authService);
+
+      cubit.restoreWallet(_testMnemonic);
+      await cubit.stream.firstWhere((s) => s.hasError);
+
+      // Retry: the same entry point is called again and now succeeds.
+      cubit.restoreWallet(_testMnemonic);
+      await cubit.stream.firstWhere((s) => s.wallet != null);
+
+      expect(cubit.state.wallet, same(restored));
+      expect(cubit.state.hasError, isFalse);
+    });
+
     test('restoreWallet emits an interim isLoading=true state', () async {
       final restored = SoftwareWallet(1, 'W', _testMnemonic);
       when(() => service.restoreWallet(any(), any())).thenAnswer((_) async => restored);

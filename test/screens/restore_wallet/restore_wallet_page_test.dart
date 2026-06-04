@@ -182,6 +182,29 @@ void main() {
           findsOne,
         );
       });
+
+      testWidgets(
+          'offers a tappable retry (not a dead spinner) when restore failed '
+          '(issue #657 P1 B1)', (tester) async {
+        when(() => validateSeedCubit.state).thenReturn(ValidateSeedState.valid);
+        when(() => restoreWalletCubit.state)
+            .thenReturn(const RestoreWalletState(hasError: true));
+
+        await tester.pumpApp(buildSubject(const RestoreWalletView()));
+
+        final button = find.descendant(
+          of: find.byType(RestoreWalletButton),
+          matching: find.byType(FilledButton),
+        );
+        // Not stuck on the loading spinner; the button is interactive.
+        expect(find.byType(CupertinoActivityIndicator), findsNothing);
+        expect(tester.widget<FilledButton>(button).enabled, isTrue);
+
+        // Tapping it retries the restore.
+        await tester.tap(button);
+        await tester.pump();
+        verify(() => restoreWalletCubit.restoreWallet(any())).called(1);
+      });
     });
 
     group('$RestoreWalletInputField', () {
