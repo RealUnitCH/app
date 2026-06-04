@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
-import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/pay_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/lnurlp_payment_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_ocp_pay_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_ocp_pay_result_dto.dart';
@@ -103,7 +102,6 @@ class RealUnitPayService extends DFXAuthService {
   Future<RealUnitOcpPayUnsignedTransactionDto> createPayUnsignedTransaction(
     RealUnitOcpPayDto dto,
   ) async {
-    assertPaySupported();
     final uri = buildUri(host, _payUnsignedTxPath);
     final response = await authenticatedPut(
       uri,
@@ -120,7 +118,6 @@ class RealUnitPayService extends DFXAuthService {
   }
 
   Future<String> submitPay(RealUnitOcpPaySubmitDto dto) async {
-    assertPaySupported();
     final uri = buildUri(host, _paySubmitPath);
     final response = await authenticatedPut(
       uri,
@@ -146,23 +143,6 @@ class RealUnitPayService extends DFXAuthService {
     return RealUnitOcpPayStatusDto.fromJson(
       jsonDecode(response.body) as Map<String, dynamic>,
     );
-  }
-
-  /// Whether the current backend environment can settle an OCP payment. The
-  /// payment-link engine is mainnet-only; on testnet the pay/* endpoints fail
-  /// fast server-side with a 400. This is environment-static (keyed off
-  /// [ApiConfig]), so the flow can read it BEFORE the irreversible REALU→ZCHF
-  /// swap and refuse to swap on an environment where the pay leg can never
-  /// settle. Not local business logic — purely a capability gate.
-  bool get isPaySupportedEnvironment => !appStore.apiConfig.networkMode.isTestnet;
-
-  /// Defense-in-depth mirror of [isPaySupportedEnvironment] on the pay/* calls:
-  /// even though the flow gates up-front, surface the typed failure before the
-  /// round-trip rather than parsing the backend error body.
-  void assertPaySupported() {
-    if (!isPaySupportedEnvironment) {
-      throw const PayUnsupportedEnvironmentException();
-    }
   }
 
   Never _throwApi(String body, int statusCode) {

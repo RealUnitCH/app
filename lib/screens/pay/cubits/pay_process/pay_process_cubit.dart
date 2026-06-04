@@ -93,15 +93,12 @@ class PayProcessCubit extends Cubit<PayProcessState> {
 
   /// Entry point — called by the view once the user confirms the quote.
   Future<void> start() async {
-    // Environment capability gate — checked BEFORE any on-chain action. The
-    // REALU→ZCHF swap is irreversible; if OCP settlement can never succeed on
-    // this environment (mainnet-only), refuse here so the user is never swapped
-    // into ZCHF and then told "mainnet only". This is environment-static, so it
-    // is safe (and required) to evaluate before the swap is signed/broadcast.
-    if (!_payService.isPaySupportedEnvironment) {
-      emit(const PayProcessFailure(PayProcessFailureReason.payUnsupportedEnvironment));
-      return;
-    }
+    // Capability gate — checked BEFORE any on-chain action: the debug wallet
+    // cannot produce EIP-1559 signatures, so the irreversible REALU→ZCHF swap
+    // must never run on it. The backend settles OCP on every environment
+    // (Sepolia off-PRD, mainnet+L2 on PRD), so there is no environment gate
+    // here — the flow requests the real quote and surfaces a typed backend
+    // error if one ever comes back.
     if (_appStore.wallet.walletType == WalletType.debug) {
       emit(const PayProcessFailure(PayProcessFailureReason.signatureUnsupported));
       return;

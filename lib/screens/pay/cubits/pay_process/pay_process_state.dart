@@ -10,11 +10,6 @@ enum PayProcessFailureReason {
   /// Not enough ETH to cover gas and the faucet top-up did not arrive.
   insufficientEth,
 
-  /// Open CryptoPay settlement is unavailable on the current backend
-  /// environment (mainnet-only; checked BEFORE the swap so it never strands the
-  /// user in ZCHF).
-  payUnsupportedEnvironment,
-
   /// The active wallet mode cannot sign transactions (debug wallet).
   signatureUnsupported,
 

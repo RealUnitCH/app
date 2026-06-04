@@ -36,6 +36,9 @@ void main() {
       ),
     );
 
+    // Real Sepolia OCP capture (DFXswiss/api #3819): a CHF 2.00 payment link
+    // whose Ethereum method settles 2.0 ZCHF. The screen renders the amounts
+    // straight from the quote — the app never computes them.
     goldenTest(
       'ready quote with CHF amount and ZCHF needed',
       fileName: 'pay_quote_page_ready',
@@ -43,28 +46,13 @@ void main() {
       builder: () {
         when(() => quoteCubit.state).thenReturn(
           const PayQuoteReady(
-            paymentLinkId: 'pl_abc',
-            quoteId: 'quote_xyz',
+            paymentLinkId: 'pl_realunit_ocp_sepolia',
+            quoteId: 'plq_realunit_ocp_sepolia',
             fiatAsset: 'CHF',
-            fiatAmount: 42.5,
-            zchfAmount: 42.7,
+            fiatAmount: 2,
+            zchfAmount: 2.0,
           ),
         );
-        return wrapForGolden(
-          BlocProvider<PayQuoteCubit>.value(
-            value: quoteCubit,
-            child: const PayQuoteView(),
-          ),
-        );
-      },
-    );
-
-    goldenTest(
-      'unsupported environment message',
-      fileName: 'pay_quote_page_unsupported_environment',
-      constraints: phoneConstraints,
-      builder: () {
-        when(() => quoteCubit.state).thenReturn(const PayQuoteUnsupportedEnvironment());
         return wrapForGolden(
           BlocProvider<PayQuoteCubit>.value(
             value: quoteCubit,

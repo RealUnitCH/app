@@ -8,14 +8,17 @@ import 'package:realunit_wallet/screens/pay/cubits/pay_quote/pay_quote_cubit.dar
 
 class _MockPayService extends Mock implements RealUnitPayService {}
 
+// Real Sepolia OCP capture (DFXswiss/api #3819): a CHF 2.00 payment link whose
+// Ethereum method settles 2.0 ZCHF. The cubit reads these amounts verbatim from
+// the public lnurlp quote — it never computes them.
 LnurlpPaymentDto _details({
   required DateTime expiration,
   bool withEthZchf = true,
-  double zchf = 42.7,
+  double zchf = 2.0,
 }) {
   return LnurlpPaymentDto(
-    requestedAmount: const LnurlpRequestedAmountDto(asset: 'CHF', amount: 42.5),
-    quote: LnurlpQuoteDto(id: 'quote_xyz', expiration: expiration),
+    requestedAmount: const LnurlpRequestedAmountDto(asset: 'CHF', amount: 2),
+    quote: LnurlpQuoteDto(id: 'plq_realunit_ocp_sepolia', expiration: expiration),
     transferAmounts: [
       if (withEthZchf)
         LnurlpTransferAmountDto(
@@ -36,29 +39,15 @@ void main() {
 
   setUp(() {
     payService = _MockPayService();
-    // Default: the environment can settle OCP (mainnet). load() checks this
-    // up-front before fetching the quote.
-    when(() => payService.isPaySupportedEnvironment).thenReturn(true);
   });
 
-  PayQuoteCubit build() => PayQuoteCubit(payService, 'pl_abc');
-
-  blocTest<PayQuoteCubit, PayQuoteState>(
-    'an unsupported environment emits PayQuoteUnsupportedEnvironment without fetching',
-    build: build,
-    setUp: () {
-      when(() => payService.isPaySupportedEnvironment).thenReturn(false);
-    },
-    act: (cubit) => cubit.load(),
-    expect: () => [isA<PayQuoteLoading>(), isA<PayQuoteUnsupportedEnvironment>()],
-    verify: (_) => verifyNever(() => payService.getPaymentDetails(any())),
-  );
+  PayQuoteCubit build() => PayQuoteCubit(payService, 'pl_realunit_ocp_sepolia');
 
   blocTest<PayQuoteCubit, PayQuoteState>(
     'a fresh quote with an Ethereum/ZCHF method emits PayQuoteReady',
     build: build,
     setUp: () {
-      when(() => payService.getPaymentDetails('pl_abc')).thenAnswer(
+      when(() => payService.getPaymentDetails('pl_realunit_ocp_sepolia')).thenAnswer(
         (_) async => _details(expiration: DateTime.now().add(const Duration(minutes: 5))),
       );
     },
@@ -66,10 +55,10 @@ void main() {
     expect: () => [isA<PayQuoteLoading>(), isA<PayQuoteReady>()],
     verify: (cubit) {
       final state = cubit.state as PayQuoteReady;
-      expect(state.quoteId, 'quote_xyz');
+      expect(state.quoteId, 'plq_realunit_ocp_sepolia');
       expect(state.fiatAsset, 'CHF');
-      expect(state.fiatAmount, 42.5);
-      expect(state.zchfAmount, 42.7);
+      expect(state.fiatAmount, 2);
+      expect(state.zchfAmount, 2.0);
     },
   );
 
@@ -77,7 +66,7 @@ void main() {
     'an expired quote emits PayQuoteExpired',
     build: build,
     setUp: () {
-      when(() => payService.getPaymentDetails('pl_abc')).thenAnswer(
+      when(() => payService.getPaymentDetails('pl_realunit_ocp_sepolia')).thenAnswer(
         (_) async => _details(expiration: DateTime.now().subtract(const Duration(minutes: 1))),
       );
     },
@@ -89,7 +78,7 @@ void main() {
     'a link without an Ethereum/ZCHF method emits PayQuoteUnavailable',
     build: build,
     setUp: () {
-      when(() => payService.getPaymentDetails('pl_abc')).thenAnswer(
+      when(() => payService.getPaymentDetails('pl_realunit_ocp_sepolia')).thenAnswer(
         (_) async => _details(
           expiration: DateTime.now().add(const Duration(minutes: 5)),
           withEthZchf: false,
@@ -104,7 +93,7 @@ void main() {
     'a service error emits PayQuoteError',
     build: build,
     setUp: () {
-      when(() => payService.getPaymentDetails('pl_abc')).thenThrow(
+      when(() => payService.getPaymentDetails('pl_realunit_ocp_sepolia')).thenThrow(
         const ApiException(code: 'X', message: 'boom'),
       );
     },

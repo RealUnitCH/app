@@ -184,7 +184,6 @@
   "payFailureQuoteExpired": "The payment quote expired. Please scan the code again.",
   "payFailureSignatureUnsupported": "This wallet cannot sign transactions. Switch to a software or BitBox wallet.",
   "payFailureTitle": "Payment failed",
-  "payFailureUnsupportedEnvironment": "Open CryptoPay is only available on mainnet.",
   "paymentInformationFailed": "An error occurred while getting the payment information.",
   "paymentInformationFailedDescription": "Please try again later. If the error persists, contact our support team.",
   "payoutAccountAdd": "Add payout account",

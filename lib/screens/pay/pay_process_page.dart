@@ -108,8 +108,6 @@ class PayProcessView extends StatelessWidget {
   String _failureMessage(BuildContext context, PayProcessFailureReason reason) => switch (reason) {
     PayProcessFailureReason.insufficientZchf => S.of(context).payFailureInsufficientZchf,
     PayProcessFailureReason.insufficientEth => S.of(context).payFailureInsufficientEth,
-    PayProcessFailureReason.payUnsupportedEnvironment =>
-      S.of(context).payFailureUnsupportedEnvironment,
     PayProcessFailureReason.signatureUnsupported => S.of(context).payFailureSignatureUnsupported,
     PayProcessFailureReason.bitboxRequired => S.of(context).payFailureBitboxRequired,
     PayProcessFailureReason.generic => S.of(context).payFailureGeneric,

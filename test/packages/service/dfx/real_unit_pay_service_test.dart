@@ -9,7 +9,6 @@ import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
-import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/pay_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_ocp_pay_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_ocp_pay_status_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_ocp_pay_submit_dto.dart';
@@ -220,6 +219,9 @@ void main() {
   });
 
   group('createPayUnsignedTransaction', () {
+    // Real Sepolia OCP capture (DFXswiss/api #3819, ocp_tx_details_sepolia.json):
+    // a CHF 2.00 link settling 2.0 ZCHF (2000000000000000000 wei) to the DFX
+    // deposit recipient on chain 11155111.
     test('PUTs /pay/unsigned-transaction with the payment refs', () async {
       Uri? sentUri;
       Map<String, dynamic>? body;
@@ -228,28 +230,31 @@ void main() {
         body = jsonDecode(request.body) as Map<String, dynamic>;
         return http.Response(
           jsonEncode({
-            'unsignedTx': '0xtx',
-            'tokenAddress': '0xzchf',
-            'recipient': '0xrecipient',
-            'amountWei': '5000000000000000000',
-            'chainId': 1,
+            'unsignedTx':
+                '0x02f87483aa36a782019b8502284a84ae8502284a84ae830186a094d3117681ca462268048f57d106d312ba0b1215ea80b844a9059cbb000000000000000000000000fb2a9731cda8b3fca015723ef40f310c1e48366b0000000000000000000000000000000000000000000000001bc16d674ec80000c0',
+            'tokenAddress': '0xD3117681cA462268048f57D106d312Ba0b1215eA',
+            'recipient': '0xfB2a9731cdA8b3FCa015723EF40f310C1E48366b',
+            'amountWei': '2000000000000000000',
+            'chainId': 11155111,
           }),
           200,
         );
       });
 
       final dto = await build(client).createPayUnsignedTransaction(
-        const RealUnitOcpPayDto(paymentLinkId: 'pl_abc', quoteId: 'q1'),
+        const RealUnitOcpPayDto(paymentLinkId: 'pl_realunit_ocp_sepolia', quoteId: 'q1'),
       );
 
       expect(sentUri!.path, '/v1/realunit/pay/unsigned-transaction');
-      expect(body!['paymentLinkId'], 'pl_abc');
+      expect(body!['paymentLinkId'], 'pl_realunit_ocp_sepolia');
       expect(body!['quoteId'], 'q1');
-      expect(dto.recipient, '0xrecipient');
-      expect(dto.amountWei, '5000000000000000000');
+      expect(dto.recipient, '0xfB2a9731cdA8b3FCa015723EF40f310C1E48366b');
+      expect(dto.tokenAddress, '0xD3117681cA462268048f57D106d312Ba0b1215eA');
+      expect(dto.amountWei, '2000000000000000000');
+      expect(dto.chainId, 11155111);
     });
 
-    test('400 (mainnet-only fail-fast on testnet) → ApiException', () async {
+    test('non-200 → ApiException', () async {
       final client = MockClient(
         (_) async =>
             http.Response(jsonEncode({'statusCode': 400, 'message': 'unsupported method'}), 400),
@@ -306,63 +311,6 @@ void main() {
         ),
         throwsA(isA<ApiException>()),
       );
-    });
-  });
-
-  group('isPaySupportedEnvironment (up-front capability gate)', () {
-    test('is true on mainnet', () {
-      when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
-      final client = MockClient((_) async => http.Response('{}', 200));
-      expect(build(client).isPaySupportedEnvironment, isTrue);
-    });
-
-    test('is false on testnet', () {
-      when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.testnet));
-      final client = MockClient((_) async => http.Response('{}', 200));
-      expect(build(client).isPaySupportedEnvironment, isFalse);
-    });
-  });
-
-  group('testnet fail-fast (mainnet-only OCP settlement)', () {
-    test('createPayUnsignedTransaction throws PayUnsupportedEnvironmentException', () async {
-      when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.testnet));
-      var clientCalled = false;
-      final client = MockClient((_) async {
-        clientCalled = true;
-        return http.Response('{}', 200);
-      });
-
-      await expectLater(
-        build(client).createPayUnsignedTransaction(
-          const RealUnitOcpPayDto(paymentLinkId: 'pl_abc', quoteId: 'q1'),
-        ),
-        throwsA(isA<PayUnsupportedEnvironmentException>()),
-      );
-      expect(clientCalled, isFalse);
-    });
-
-    test('submitPay throws PayUnsupportedEnvironmentException without a round-trip', () async {
-      when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.testnet));
-      var clientCalled = false;
-      final client = MockClient((_) async {
-        clientCalled = true;
-        return http.Response('{}', 200);
-      });
-
-      await expectLater(
-        build(client).submitPay(
-          const RealUnitOcpPaySubmitDto(
-            unsignedTx: '0xtx',
-            r: '0xr',
-            s: '0xs',
-            v: 27,
-            paymentLinkId: 'pl_abc',
-            quoteId: 'q1',
-          ),
-        ),
-        throwsA(isA<PayUnsupportedEnvironmentException>()),
-      );
-      expect(clientCalled, isFalse);
     });
   });
 

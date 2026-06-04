@@ -13,18 +13,6 @@ class InvalidPaymentLinkException implements Exception {
   String toString() => 'InvalidPaymentLinkException: $reason';
 }
 
-/// The Open CryptoPay settlement is not available on the current backend
-/// environment. The payment-link engine is mainnet-only, so `pay/submit` and
-/// `pay/unsigned-transaction` fail fast on dev.api.dfx.swiss (Sepolia).
-class PayUnsupportedEnvironmentException implements Exception {
-  const PayUnsupportedEnvironmentException();
-
-  @override
-  String toString() =>
-      'PayUnsupportedEnvironmentException: Open CryptoPay settlement is only '
-      'available on mainnet';
-}
-
 /// The loaded wallet cannot produce EIP-1559 signatures (today: the debug
 /// wallet). The pay flow needs to sign the swap and pay transactions locally,
 /// so it cannot proceed in this wallet mode.

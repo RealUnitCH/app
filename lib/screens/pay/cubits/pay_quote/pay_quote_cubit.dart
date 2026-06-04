@@ -19,15 +19,6 @@ class PayQuoteCubit extends Cubit<PayQuoteState> {
   Future<void> load() async {
     emit(const PayQuoteLoading());
 
-    // Gate the irreversible flow up-front: if OCP settlement can never succeed
-    // on this environment, surface it now — before the user can confirm a quote
-    // and trigger the REALU→ZCHF swap. The swap must never run where the pay
-    // leg cannot settle.
-    if (!_payService.isPaySupportedEnvironment) {
-      emit(const PayQuoteUnsupportedEnvironment());
-      return;
-    }
-
     try {
       final details = await _payService.getPaymentDetails(_paymentLinkId);
 

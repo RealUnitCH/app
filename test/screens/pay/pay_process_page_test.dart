@@ -44,7 +44,6 @@ void main() {
     // start(). A debug wallet makes start() settle immediately
     // (signatureUnsupported) without touching the chain.
     final payService = _MockPayService();
-    when(() => payService.isPaySupportedEnvironment).thenReturn(true);
     getIt.registerSingleton<RealUnitPayService>(payService);
     getIt.registerSingleton<DfxFaucetService>(_MockFaucetService());
     getIt.registerSingleton<DfxBlockchainApiService>(_MockBlockchainService());
@@ -202,15 +201,6 @@ void main() {
       );
 
       expect(find.text(S.current.payFailureInsufficientEth), findsOne);
-    });
-
-    testWidgets('unsupported-environment failure message', (tester) async {
-      await pumpWithState(
-        tester,
-        const PayProcessFailure(PayProcessFailureReason.payUnsupportedEnvironment),
-      );
-
-      expect(find.text(S.current.payFailureUnsupportedEnvironment), findsOne);
     });
 
     testWidgets('signature-unsupported failure message', (tester) async {

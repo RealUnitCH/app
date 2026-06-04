@@ -7,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
@@ -38,21 +39,26 @@ class _MockWallet extends Mock implements SoftwareWallet {}
 void main() {
   late _MockPayQuoteCubit quoteCubit;
 
+  // Real Sepolia OCP capture (DFXswiss/api #3819): CHF 2.00 → 2.0 ZCHF on the
+  // Ethereum method.
   const ready = PayQuoteReady(
-    paymentLinkId: 'pl_abc',
-    quoteId: 'quote_xyz',
+    paymentLinkId: 'pl_realunit_ocp_sepolia',
+    quoteId: 'plq_realunit_ocp_sepolia',
     fiatAsset: 'CHF',
-    fiatAmount: 42.5,
-    zchfAmount: 42.7,
+    fiatAmount: 2,
+    zchfAmount: 2.0,
   );
 
   setUpAll(() {
     final getIt = GetIt.instance;
 
-    // PayQuotePage resolves the pay service from getIt and calls load(); an
-    // unsupported environment short-circuits load() without any network.
+    // PayQuotePage resolves the pay service from getIt and calls load(); the
+    // load throws a typed error here so the pushed route builds deterministically
+    // (rendering PayQuoteError) without a live backend.
     final payService = _MockPayService();
-    when(() => payService.isPaySupportedEnvironment).thenReturn(false);
+    when(() => payService.getPaymentDetails(any())).thenThrow(
+      const ApiException(code: 'TEST', message: 'no backend in widget test'),
+    );
     getIt.registerSingleton<RealUnitPayService>(payService);
 
     // The confirm button pushes PayProcessPage, which resolves a full service
@@ -103,9 +109,9 @@ void main() {
       when(() => quoteCubit.state).thenReturn(ready);
       await tester.pumpApp(buildSubject());
 
-      expect(find.text(S.current.payQuoteSummary('42.50', 'CHF')), findsOne);
-      expect(find.text('42.50 CHF'), findsOne);
-      expect(find.text('42.70 ZCHF'), findsOne);
+      expect(find.text(S.current.payQuoteSummary('2.00', 'CHF')), findsOne);
+      expect(find.text('2.00 CHF'), findsOne);
+      expect(find.text('2.00 ZCHF'), findsOne);
       expect(find.text(S.current.payConfirmButton), findsOne);
     });
 
@@ -135,13 +141,6 @@ void main() {
       await tester.pumpApp(buildSubject());
 
       expect(find.text(S.current.payQuoteUnavailable), findsOne);
-    });
-
-    testWidgets('unsupported-environment state shows the environment message', (tester) async {
-      when(() => quoteCubit.state).thenReturn(const PayQuoteUnsupportedEnvironment());
-      await tester.pumpApp(buildSubject());
-
-      expect(find.text(S.current.payFailureUnsupportedEnvironment), findsOne);
     });
 
     testWidgets('error state shows the generic failure message', (tester) async {

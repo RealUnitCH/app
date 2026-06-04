@@ -184,7 +184,6 @@
   "payFailureQuoteExpired": "Das Zahlungsangebot ist abgelaufen. Bitte scannen Sie den Code erneut.",
   "payFailureSignatureUnsupported": "Diese Wallet kann keine Transaktionen signieren. Wechseln Sie zu einer Software- oder BitBox-Wallet.",
   "payFailureTitle": "Zahlung fehlgeschlagen",
-  "payFailureUnsupportedEnvironment": "Open CryptoPay ist nur im Mainnet verfügbar.",
   "paymentInformationFailed": "Beim Abrufen der Zahlungsinformationen ist ein Fehler aufgetreten.",
   "paymentInformationFailedDescription": "Bitte versuchen Sie es später erneut. Wenn der Fehler weiterhin besteht, wenden Sie sich an unseren Support.",
   "payoutAccountAdd": "Auszahlungskonto hinzufügen",

@@ -38,9 +38,6 @@ class PayQuoteView extends StatelessWidget {
               PayQuoteReady() => _PayQuoteReadyView(state: state),
               PayQuoteExpired() => _PayQuoteMessage(message: S.of(context).payFailureQuoteExpired),
               PayQuoteUnavailable() => _PayQuoteMessage(message: S.of(context).payQuoteUnavailable),
-              PayQuoteUnsupportedEnvironment() => _PayQuoteMessage(
-                message: S.of(context).payFailureUnsupportedEnvironment,
-              ),
               PayQuoteError() => _PayQuoteMessage(message: S.of(context).payFailureGeneric),
             },
           ),

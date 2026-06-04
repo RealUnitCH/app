@@ -30,9 +30,10 @@ void main() {
         currentLevel: 0,
       ),
       const SeedDecryptionException('test'),
-      const AlreadyConfirmedException(code: 'TEST', message: 'test'),      const InvalidPaymentLinkException('test'),
-      const PayUnsupportedEnvironmentException(),
-      const PaySignatureUnsupportedException(),    ];
+      const AlreadyConfirmedException(code: 'TEST', message: 'test'),
+      const InvalidPaymentLinkException('test'),
+      const PaySignatureUnsupportedException(),
+    ];
 
     for (final ex in exceptions) {
       test('${ex.runtimeType} renders a readable string', () {

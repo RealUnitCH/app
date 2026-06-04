@@ -141,9 +141,6 @@ void main() {
 
     when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
     when(() => appStore.primaryAddress).thenReturn('0xwallet');
-    // Default: the environment can settle OCP (mainnet). The up-front gate in
-    // start() reads this before any on-chain action.
-    when(() => payService.isPaySupportedEnvironment).thenReturn(true);
     when(() => appStore.wallet).thenReturn(wallet);
     when(() => wallet.walletType).thenReturn(WalletType.software);
     when(() => wallet.currentAccount).thenReturn(account);
@@ -495,22 +492,6 @@ void main() {
     // A transient fetch error is NOT a genuine expiry — it routes to the
     // pay-only retry, never to a re-scan → re-swap.
     expect(state.reason, PayRetryReason.transient);
-    await cubit.close();
-  });
-
-  test('unsupported environment → fails BEFORE any swap (no on-chain action)', () async {
-    wireHappyPath();
-    when(() => payService.isPaySupportedEnvironment).thenReturn(false);
-
-    final cubit = build();
-    await cubit.start();
-
-    final state = cubit.state as PayProcessFailure;
-    expect(state.reason, PayProcessFailureReason.payUnsupportedEnvironment);
-    // The irreversible swap must never run on an unsupported environment.
-    verifyNever(() => payService.getSwapPaymentInfo(any()));
-    verifyNever(() => payService.createSwapUnsignedTransaction(any()));
-    verifyNever(() => payService.broadcastSwapTransaction(any(), any()));
     await cubit.close();
   });
 

@@ -6,6 +6,7 @@ import 'package:get_it/get_it.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/lnurl_decoder.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 import 'package:realunit_wallet/screens/pay/cubits/pay_scan/pay_scan_cubit.dart';
@@ -28,11 +29,13 @@ void main() {
     stubMobileScannerChannel();
 
     // The decoded-link navigation pushes PayQuotePage, which resolves the pay
-    // service from getIt and triggers a load(); register a mock so the pushed
-    // route builds. The load is gated off via an unsupported environment so no
-    // network is touched.
+    // service from getIt and triggers a load(); register a mock whose quote
+    // fetch throws so the pushed route builds deterministically (rendering the
+    // PayQuoteError message) without touching a live backend.
     final payService = _MockPayService();
-    when(() => payService.isPaySupportedEnvironment).thenReturn(false);
+    when(() => payService.getPaymentDetails(any())).thenThrow(
+      const ApiException(code: 'TEST', message: 'no backend in widget test'),
+    );
     GetIt.instance.registerSingleton<RealUnitPayService>(payService);
   });
 
