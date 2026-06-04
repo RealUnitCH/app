@@ -36,8 +36,8 @@ Workflow:
    regeneriert auf dfx01 und committet die neuen PNGs als
    `github-actions[bot]` zurück auf den Branch (siehe
    [`../visual-regression-tests.md`](../visual-regression-tests.md))
-4. Pullen → Handbook-Deploy pickt die neue Baseline beim nächsten
-   develop-Push automatisch auf.
+4. Pullen → der nächste Handbook-Deploy zeigt die neue Baseline automatisch
+   (Push auf `staging` → DEV bzw. `develop` → PRD).
 
 ## Selektive Läufe (Teilmenge)
 
@@ -113,12 +113,16 @@ divergieren Image-Stand und Source-of-Truth.
 
 ### Trigger
 
-Der Handbook-Deploy läuft bei einem `push` auf `develop` mit Änderungen
-unter handbook-relevanten Pfaden (siehe `handbook-deploy.yaml`) oder bei
-einem manuellen `workflow_dispatch` auf `handbook-deploy.yaml` in
-**diesem** Repo. Eine reine Mail-Template-, i18n- oder Generator-Änderung
-im api-Repo löst **keinen** automatischen Rebuild aus — sie fliesst erst
-mit dem nächsten Handbook-Deploy hier rein.
+Der Handbook-Deploy läuft pro Branch in genau ein Environment: ein `push`
+auf `staging` deployt nach **DEV** (`dev-handbook.realunit.app`), ein `push`
+auf `develop` nach **PRD** (`handbook.realunit.app`) — jeweils mit Änderungen
+unter handbook-relevanten Pfaden (siehe `handbook-deploy.yaml`) oder per
+manuellem `workflow_dispatch` auf `handbook-deploy.yaml` in **diesem** Repo
+(das Ziel-Environment richtet sich nach dem dispatchten Branch). DEV und PRD
+nutzen getrennte Image-Tags (`:beta` bzw. `:latest`), damit sich staging- und
+develop-Builds nicht gegenseitig überschreiben. Eine reine Mail-Template-,
+i18n- oder Generator-Änderung im api-Repo löst **keinen** automatischen
+Rebuild aus — sie fliesst erst mit dem nächsten Handbook-Deploy hier rein.
 
 Wer eine reine Mail-Änderung sofort live haben will, hat zwei Optionen
 im realunit-app-Repo:
