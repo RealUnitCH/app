@@ -47,20 +47,27 @@ class SellBitboxAwaitingDepositConfirm extends SellBitboxDepositState {
 
 class SellBitboxDepositing extends SellBitboxDepositState {}
 
-// Swap was broadcast successfully but deposit broadcast failed
+// The swap was broadcast; the deposit step then failed. `broadcastTxHash` tells
+// retry which step to resume: null = the deposit was never broadcast (safe to
+// broadcast), non-null = the deposit is already on-chain and only the payment
+// confirmation failed, so retry must confirm ONLY and never re-broadcast it
+// (issue #657 P4 BB1).
 class SellBitboxDepositRetry extends SellBitboxDepositState {
   final BroadcastTransactionRequestDto signedSwapTransaction;
   final BroadcastTransactionRequestDto signedDepositTransaction;
+  final String? broadcastTxHash;
   final String errorMessage;
 
   SellBitboxDepositRetry(
     this.signedSwapTransaction,
     this.signedDepositTransaction,
-    this.errorMessage,
-  );
+    this.errorMessage, {
+    this.broadcastTxHash,
+  });
 
   @override
-  List<Object?> get props => [signedSwapTransaction, signedDepositTransaction, errorMessage];
+  List<Object?> get props =>
+      [signedSwapTransaction, signedDepositTransaction, broadcastTxHash, errorMessage];
 }
 
 class SellBitboxSuccess extends SellBitboxDepositState {}

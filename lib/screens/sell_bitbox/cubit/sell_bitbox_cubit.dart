@@ -148,19 +148,21 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
     final retryState = state;
     if (retryState is! SellBitboxDepositRetry) return;
 
-    try {
-      emit(SellBitboxDepositing());
+    emit(SellBitboxDepositing());
+    final txHash = retryState.broadcastTxHash;
+    if (txHash != null) {
+      // The deposit transaction is already on-chain — only the payment
+      // confirmation failed. Confirm only; re-broadcasting an already-sent tx
+      // is what caused the perpetual retry loop (issue #657 P4 BB1).
+      await _confirmDeposit(
+        retryState.signedSwapTransaction,
+        retryState.signedDepositTransaction,
+        txHash,
+      );
+    } else {
       await _broadcastDepositAndConfirm(
         retryState.signedSwapTransaction,
         retryState.signedDepositTransaction,
-      );
-    } catch (e) {
-      emit(
-        SellBitboxDepositRetry(
-          retryState.signedSwapTransaction,
-          retryState.signedDepositTransaction,
-          e.toString(),
-        ),
       );
     }
   }
@@ -169,15 +171,39 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
     BroadcastTransactionRequestDto signedSwap,
     BroadcastTransactionRequestDto signedDeposit,
   ) async {
+    final String txHash;
     try {
-      final txHash = await _sellService.broadcastTransaction(
+      txHash = await _sellService.broadcastTransaction(
         _paymentInfo.id,
         signedDeposit,
       );
+    } catch (e) {
+      // The broadcast itself failed: the tx is not on-chain, so a retry may
+      // safely broadcast again (broadcastTxHash stays null).
+      emit(SellBitboxDepositRetry(signedSwap, signedDeposit, e.toString()));
+      return;
+    }
+    // From here the deposit tx is broadcast; confirmation must be idempotent.
+    await _confirmDeposit(signedSwap, signedDeposit, txHash);
+  }
+
+  Future<void> _confirmDeposit(
+    BroadcastTransactionRequestDto signedSwap,
+    BroadcastTransactionRequestDto signedDeposit,
+    String txHash,
+  ) async {
+    try {
       await _sellService.confirmPaymentWithTxHash(_paymentInfo, txHash);
       emit(SellBitboxSuccess());
     } catch (e) {
-      emit(SellBitboxDepositRetry(signedSwap, signedDeposit, e.toString()));
+      // Confirmation failed AFTER a successful broadcast: carry the txHash so a
+      // retry confirms the existing tx instead of broadcasting a duplicate.
+      emit(SellBitboxDepositRetry(
+        signedSwap,
+        signedDeposit,
+        e.toString(),
+        broadcastTxHash: txHash,
+      ));
     }
   }
 
