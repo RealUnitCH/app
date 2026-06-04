@@ -14,6 +14,7 @@ import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
 import 'package:realunit_wallet/screens/legal/subpages/legal_document_page.dart';
 import 'package:realunit_wallet/screens/onboarding/onboarding_completed_page.dart';
 import 'package:realunit_wallet/screens/pay/pay_scan_page.dart';
+import 'package:realunit_wallet/screens/send/send_recipient_page.dart';
 import 'package:realunit_wallet/screens/pin/setup_pin_page.dart';
 import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/receive/receive_page.dart';
@@ -179,6 +180,12 @@ final GoRouter routerConfig = GoRouter(
       name: AppRoutes.pay,
       path: '/pay',
       builder: (_, _) => const PayScanPage(),
+    ),
+
+    GoRoute(
+      name: AppRoutes.send,
+      path: '/send',
+      builder: (_, _) => const SendRecipientPage(),
     ),
 
     GoRoute(

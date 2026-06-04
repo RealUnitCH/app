@@ -10,6 +10,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/pay/cubits/pay_scan/pay_scan_cubit.dart';
 import 'package:realunit_wallet/screens/pay/pay_quote_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/scanner/qr_scanner_view.dart';
 
 class PayScanPage extends StatelessWidget {
   const PayScanPage({super.key});
@@ -52,11 +53,8 @@ class PayScanView extends StatelessWidget {
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(title: Text(S.of(context).payScanTitle)),
-          body: MobileScanner(
-            onDetect: (capture) {
-              final raw = capture.barcodes.firstOrNull?.rawValue;
-              if (raw != null) context.read<PayScanCubit>().onCodeDetected(raw);
-            },
+          body: QrScannerView(
+            onDetect: (raw) => context.read<PayScanCubit>().onCodeDetected(raw),
             errorBuilder: (context, error, child) {
               final message = error.errorCode == MobileScannerErrorCode.permissionDenied
                   ? S.of(context).payScanCameraPermissionDenied
