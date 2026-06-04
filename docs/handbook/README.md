@@ -37,7 +37,8 @@ Workflow:
    `github-actions[bot]` zurück auf den Branch (siehe
    [`../visual-regression-tests.md`](../visual-regression-tests.md))
 4. Pullen → Handbook-Deploy pickt die neue Baseline beim nächsten
-   develop-Push automatisch auf.
+   Handbook-Deploy automatisch auf (Push auf `staging` → DEV bzw.
+   `develop` → PRD).
 
 ## Selektive Läufe (Teilmenge)
 
