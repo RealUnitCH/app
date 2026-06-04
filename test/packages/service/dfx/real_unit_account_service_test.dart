@@ -87,7 +87,7 @@ void main() {
       expect(points.single.value, BigInt.from(1150));
     });
 
-    test('getPortfolioHistory treats a null value as 0', () async {
+    test('getPortfolioHistory skips a point whose value is null', () async {
       final client = MockClient((_) async => http.Response(
             jsonEncode(_summary(chf: null)),
             200,
@@ -95,7 +95,57 @@ void main() {
 
       final points = await build(client).getPortfolioHistory(Currency.chf);
 
+      // A null value means "unknown price", not "worth 0" — the point is
+      // dropped so the chart does not crash to zero / show a false -100%.
+      expect(points, isEmpty);
+    });
+
+    test('getPortfolioHistory keeps a genuine 0.0 value (distinct from null)', () async {
+      final client = MockClient((_) async => http.Response(
+            jsonEncode(_summary(chf: 0.0, balance: '0')),
+            200,
+          ));
+
+      final points = await build(client).getPortfolioHistory(Currency.chf);
+
       expect(points.single.value, BigInt.zero);
+    });
+
+    test('getPortfolioHistory drops a trailing null point but keeps earlier valued points', () async {
+      final body = {
+        'address': '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+        'addressType': 0,
+        'balance': '0',
+        'lastUpdated': '2026-01-03T00:00:00Z',
+        'historicalBalances': [
+          {
+            'balance': '1000000',
+            'timestamp': '2026-01-01T00:00:00Z',
+            'valueChf': 12.34,
+            'valueEur': null,
+          },
+          {
+            'balance': '1000000',
+            'timestamp': '2026-01-02T00:00:00Z',
+            'valueChf': 13.00,
+            'valueEur': null,
+          },
+          {
+            // Most recent point: balance still held, but price unavailable.
+            'balance': '1000000',
+            'timestamp': '2026-01-03T00:00:00Z',
+            'valueChf': null,
+            'valueEur': null,
+          },
+        ],
+      };
+      final client = MockClient((_) async => http.Response(jsonEncode(body), 200));
+
+      final points = await build(client).getPortfolioHistory(Currency.chf);
+
+      expect(points, hasLength(2));
+      expect(points.last.value, BigInt.from(1300));
+      expect(points.last.time, DateTime.utc(2026, 1, 2));
     });
 
     test('getPortfolioHistory returns [] on non-200 (does not throw)', () async {
