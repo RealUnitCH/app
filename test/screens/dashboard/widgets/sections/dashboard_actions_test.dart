@@ -14,9 +14,9 @@ void main() {
     pushedRoutes = <String>[];
   });
 
-  // Routes the three action buttons can push. Each target records the
-  // pushed route name so the `onPressed` closures are both executed and
-  // asserted, instead of only painted.
+  // Routes the four action buttons can push. Each target records the pushed
+  // route name so the `onPressed` closures are both executed and asserted,
+  // instead of only painted.
   GoRouter buildRouter() {
     GoRoute target(String name, String path) => GoRoute(
       name: name,
@@ -37,6 +37,7 @@ void main() {
         target(AppRoutes.buy, '/buy'),
         target(AppRoutes.sell, '/sell'),
         target(AppRoutes.pay, '/pay'),
+        target(AppRoutes.send, '/send'),
       ],
     );
   }
@@ -62,15 +63,16 @@ void main() {
   );
 
   group('$DashboardActions', () {
-    testWidgets('renders the buy, sell and pay action buttons', (tester) async {
+    testWidgets('renders the buy, sell, pay and send action buttons', (tester) async {
       await pumpActions(tester);
 
       expect(actionButtonByLabel(S.current.buy), findsOneWidget);
       expect(actionButtonByLabel(S.current.sell), findsOneWidget);
       expect(actionButtonByLabel(S.current.pay), findsOneWidget);
-      // Each button is laid out inside an Expanded so the row divides
-      // the available width into three equal slots.
-      expect(find.byType(Expanded), findsNWidgets(3));
+      expect(actionButtonByLabel(S.current.send), findsOneWidget);
+      // Each button is laid out inside an Expanded so the row divides the
+      // available width into four equal slots.
+      expect(find.byType(Expanded), findsNWidgets(4));
     });
 
     testWidgets('renders the expected icons for each action', (tester) async {
@@ -79,6 +81,7 @@ void main() {
       expect(find.byIcon(Icons.add_circle_rounded), findsOneWidget);
       expect(find.byIcon(Icons.do_not_disturb_on_rounded), findsOneWidget);
       expect(find.byIcon(Icons.qr_code_scanner_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.send_rounded), findsOneWidget);
     });
 
     testWidgets('buy button pushes the buy route', (tester) async {
@@ -106,6 +109,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(pushedRoutes, [AppRoutes.pay]);
+    });
+
+    testWidgets('send button pushes the send route', (tester) async {
+      await pumpActions(tester);
+
+      await tester.tap(actionButtonByLabel(S.current.send));
+      await tester.pumpAndSettle();
+
+      expect(pushedRoutes, [AppRoutes.send]);
     });
   });
 }
