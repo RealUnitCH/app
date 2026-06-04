@@ -122,6 +122,36 @@ void main() {
       verify(() => authService.ensureSignatureFor(any())).called(1);
     });
 
+    test('a late scan tick does not start a second init while one is pending '
+        '(issue #657 P7 F1)', () async {
+      final initCompleter = Completer<bool>();
+      var pollCount = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) => initCompleter.future);
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 2 ? '' : 'HASH-1';
+      });
+
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      // First connect runs init() once and settles in BitboxCheckHash — state
+      // is now past BitboxConnecting while the init future is still pending.
+      await waitForState<BitboxCheckHash>(cubit);
+      verify(() => service.init(any())).called(1);
+
+      // An overlapping/late scan tick re-invokes connectToBitbox.
+      await cubit.connectToBitbox(device);
+
+      // It must coalesce onto the in-flight init, NOT start a second init on
+      // the shared SDK manager (which used to wedge pairing).
+      verifyNever(() => service.init(any()));
+      expect(cubit.state, isA<BitboxCheckHash>());
+
+      initCompleter.complete(true);
+    });
+
     test('emits BitboxSignatureFailed when the signature capture throws', () async {
       var pollCount = 0;
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);

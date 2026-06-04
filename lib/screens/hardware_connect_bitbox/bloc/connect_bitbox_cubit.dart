@@ -89,7 +89,13 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
   }
 
   Future<void> connectToBitbox(sdk.BitboxDevice device) async {
-    if (state is BitboxConnecting) return;
+    // Coalesce overlapping scan ticks onto ONE connect attempt: the state
+    // guard alone is defeated once the flow moves past BitboxConnecting
+    // (e.g. BitboxCheckHash) while the init future is still pending — a late
+    // tick then started a second init() on the shared SDK manager and wedged
+    // pairing (issue #657 P7 F1). `_pendingInit` covers that whole window; it
+    // is cleared on failure, so a genuine retry still passes.
+    if (state is BitboxConnecting || _pendingInit != null) return;
     emit(BitboxConnecting(device));
     try {
       // Snapshot any hash from a prior pairing on the same BitboxService
