@@ -219,7 +219,7 @@ void main() {
   });
 
   group('createPayUnsignedTransaction', () {
-    // Real Sepolia OCP capture (DFXswiss/api #3819, ocp_tx_details_sepolia.json):
+    // Values from the real Sepolia OCP testnet run (DFXswiss/api #3819):
     // a CHF 2.00 link settling 2.0 ZCHF (2000000000000000000 wei) to the DFX
     // deposit recipient on chain 11155111.
     test('PUTs /pay/unsigned-transaction with the payment refs', () async {
