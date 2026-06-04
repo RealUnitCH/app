@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -73,8 +75,10 @@ class _DebugAuthViewState extends State<DebugAuthView> {
                 ),
                 GestureDetector(
                   onTap: () {
-                    Clipboard.setData(
-                      ClipboardData(text: state.signMessage!),
+                    unawaited(
+                      Clipboard.setData(
+                        ClipboardData(text: state.signMessage!),
+                      ),
                     );
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(

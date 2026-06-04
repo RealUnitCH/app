@@ -1,0 +1,17 @@
+# Inherits the repo-root analyzer config (strict casts/inference/raw-types +
+# null/async lints + the hardened gate from PR #663) and relaxes ONLY the
+# `discarded_futures` lint for test code.
+#
+# Rationale: `discarded_futures` flags Future-returning calls in non-`async`
+# functions. In production (`lib/**`) every such site is resolved with an
+# explicit `unawaited(...)`. In tests, fire-and-forget is idiomatic (pumping
+# a widget, kicking a cubit method inside `setUp`/`blocTest` act blocks,
+# `tester.runAsync` callbacks) and wrapping each one adds noise without
+# guarding any production race. `unawaited_futures` (un-awaited futures inside
+# `async` functions) stays active here, so genuinely awaitable calls in async
+# test bodies are still caught.
+include: ../analysis_options.yaml
+
+linter:
+  rules:
+    discarded_futures: false

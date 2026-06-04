@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -27,7 +29,7 @@ class SellPage extends StatelessWidget {
       listener: (context, settingsState) {
         final cubit = context.read<SellConverterCubit>();
         if (cubit.state.currency == settingsState.currency) return;
-        cubit.onCurrencyChanged(settingsState.currency);
+        unawaited(cubit.onCurrencyChanged(settingsState.currency));
       },
       child: const SellView(),
     );
@@ -40,10 +42,14 @@ class SellPage extends StatelessWidget {
           ),
         ),
         BlocProvider(
-          create: (context) => SellConverterCubit(
-            getIt<DfxBrokerbotService>(),
-            currency: settings.currency,
-          )..onSharesChanged('100'),
+          create: (context) {
+            final cubit = SellConverterCubit(
+              getIt<DfxBrokerbotService>(),
+              currency: settings.currency,
+            );
+            unawaited(cubit.onSharesChanged('100'));
+            return cubit;
+          },
         ),
         BlocProvider(
           create: (context) => SellPaymentInfoCubit(

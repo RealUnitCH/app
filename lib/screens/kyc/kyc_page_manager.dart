@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
@@ -34,12 +36,16 @@ class KycPageManager extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => KycCubit(
-        getIt<DfxKycService>(),
-        getIt<RealUnitRegistrationService>(),
-        getIt<RealUnitLegalService>(),
-        getIt<AppStore>(),
-      )..checkKyc(context: kycContext),
+      create: (_) {
+        final cubit = KycCubit(
+          getIt<DfxKycService>(),
+          getIt<RealUnitRegistrationService>(),
+          getIt<RealUnitLegalService>(),
+          getIt<AppStore>(),
+        );
+        unawaited(cubit.checkKyc(context: kycContext));
+        return cubit;
+      },
       child: const KycViewManager(),
     );
   }
@@ -70,7 +76,7 @@ class KycViewManager extends StatelessWidget {
               onCompleted: () {
                 // Records acceptance server-side and re-runs `checkKyc()`
                 // internally, so the API drives the next routing decision.
-                context.read<KycCubit>().acceptLegalDisclaimer();
+                unawaited(context.read<KycCubit>().acceptLegalDisclaimer());
               },
             ),
             KycStep.registration => KycRegistrationPage(initialUserData: realUnitUserData),
@@ -86,8 +92,7 @@ class KycViewManager extends StatelessWidget {
             // Exhaustive over KycStep so a new value is a compile error here
             // (forced handling) rather than a silent blank Scaffold. dfxApproval
             // was the missing case that fell through to the old blank fallback.
-            KycStep.dfxApproval =>
-              const KycPendingPage(pendingStep: KycStep.dfxApproval),
+            KycStep.dfxApproval => const KycPendingPage(pendingStep: KycStep.dfxApproval),
           },
         KycState() => const Scaffold(),
       },

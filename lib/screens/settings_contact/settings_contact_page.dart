@@ -1,7 +1,9 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
@@ -14,7 +16,6 @@ import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/support_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/outlined_tile.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class SettingsContactPage extends StatelessWidget {
   const SettingsContactPage({super.key});
@@ -22,10 +23,14 @@ class SettingsContactPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => SettingsContactCubit(
-        kycService: getIt<DfxKycService>(),
-        registrationService: getIt<RealUnitRegistrationService>(),
-      )..init(),
+      create: (_) {
+        final cubit = SettingsContactCubit(
+          kycService: getIt<DfxKycService>(),
+          registrationService: getIt<RealUnitRegistrationService>(),
+        );
+        unawaited(cubit.init());
+        return cubit;
+      },
       child: const SettingsContactView(),
     );
   }

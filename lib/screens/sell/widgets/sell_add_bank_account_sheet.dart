@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -183,11 +185,13 @@ class _SellAddBankAccountSheetState extends State<SellAddBankAccountSheet> {
                             fullWidth: false,
                             onPressed: () {
                               if (_formKey.currentState?.validate() ?? false) {
-                                context.read<SellBankAccountsCubit>().add(
-                                  iban: _ibanController.text,
-                                  label: _nameController.text.isNotEmpty
-                                      ? _nameController.text
-                                      : null,
+                                unawaited(
+                                  context.read<SellBankAccountsCubit>().add(
+                                    iban: _ibanController.text,
+                                    label: _nameController.text.isNotEmpty
+                                        ? _nameController.text
+                                        : null,
+                                  ),
                                 );
                               }
                             },
