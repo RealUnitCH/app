@@ -277,7 +277,10 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
     addressPostalCode: postalCodeCtrl.text.trim(),
     addressCity: cityCtrl.text.trim(),
     addressCountry: countryCtrl.value!,
-    swissTaxResidence: true,
+    // Derived from the selected residence (address) country instead of the
+    // previous hardcoded `true`, which made every registrant — Swiss or not —
+    // sign an EIP-712 payload asserting Swiss tax residence (issue #657 P5 F6).
+    swissTaxResidence: countryCtrl.value!.symbol == 'CH',
   );
 
   @override

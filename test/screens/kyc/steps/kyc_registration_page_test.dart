@@ -14,8 +14,38 @@ import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registrati
 import 'package:realunit_wallet/screens/kyc/steps/registration/kyc_registration_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_address_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_personal_step.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 import '../../../helper/helper.dart';
+
+const _countryCH = Country(id: 41, symbol: 'CH', name: 'Switzerland', kycAllowed: true);
+const _countryDE = Country(id: 42, symbol: 'DE', name: 'Germany', kycAllowed: true);
+
+RealUnitUserDataDto _userData(String addressCountry) => RealUnitUserDataDto(
+      email: 'ada@example.com',
+      name: 'Ada Lovelace',
+      type: 'HUMAN',
+      phoneNumber: '+41790000000',
+      birthday: '1990-05-15',
+      nationality: 'CH',
+      addressStreet: 'S',
+      addressPostalCode: '8000',
+      addressCity: 'Zurich',
+      addressCountry: addressCountry,
+      swissTaxResidence: true,
+      lang: 'de',
+      kycData: const KycPersonalData(
+        accountType: KycAccountType.personal,
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        phone: '+41790000000',
+        address: KycAddress(street: 'S', houseNumber: '13', zip: '8000', city: 'Zurich', country: 41),
+      ),
+    );
 
 class MockRegistrationStepCubit extends MockCubit<KycRegistrationStepState>
     implements KycRegistrationStepCubit {}
@@ -35,6 +65,7 @@ void main() {
   late KycRegistrationStepCubit registrationStepCubit;
   late KycRegistrationSubmitCubit registrationSubmitCubit;
   late KycCubit kycCubit;
+  late MockDfxCountryService countryService;
 
   setUp(() {
     registrationStepCubit = MockRegistrationStepCubit();
@@ -62,12 +93,15 @@ void main() {
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<RealUnitRegistrationService>(MockRealUnitRegistrationService());
-    getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
+    countryService = MockDfxCountryService();
+    getIt.registerSingleton<DfxCountryService>(countryService);
     getIt.registerSingleton<DfxKycService>(MockDfxKycService());
   }
 
   setUpAll(() {
     setupDependencyInjection();
+    registerFallbackValue(_countryCH);
+    registerFallbackValue(RegistrationUserType.human);
   });
 
   tearDownAll(() async => await GetIt.instance.reset());
@@ -220,6 +254,81 @@ void main() {
       await tester.pump();
 
       expect(find.byType(SnackBar), findsOne);
+    });
+  });
+
+  group('swissTaxResidence (issue #657 P5 F6)', () {
+    Future<bool> submittedSwissTaxResidenceFor(
+      WidgetTester tester,
+      String addressCountrySymbol,
+    ) async {
+      when(() => registrationStepCubit.state).thenReturn(
+        const KycRegistrationStepState(
+          step: KycRegistrationStep.address,
+          steps: [KycRegistrationStep.personal, KycRegistrationStep.address],
+        ),
+      );
+      when(() => countryService.getAllCountries()).thenAnswer((_) async => [_countryCH, _countryDE]);
+      when(() => countryService.getCountryBySymbol('CH')).thenAnswer((_) async => _countryCH);
+      when(() => countryService.getCountryBySymbol('DE')).thenAnswer((_) async => _countryDE);
+      when(() => registrationSubmitCubit.submit(
+            type: any(named: 'type'),
+            firstName: any(named: 'firstName'),
+            lastName: any(named: 'lastName'),
+            phoneNumber: any(named: 'phoneNumber'),
+            birthday: any(named: 'birthday'),
+            nationality: any(named: 'nationality'),
+            addressStreet: any(named: 'addressStreet'),
+            addressStreetNumber: any(named: 'addressStreetNumber'),
+            addressPostalCode: any(named: 'addressPostalCode'),
+            addressCity: any(named: 'addressCity'),
+            addressCountry: any(named: 'addressCountry'),
+            swissTaxResidence: any(named: 'swissTaxResidence'),
+          )).thenAnswer((_) async {});
+
+      await tester.pumpApp(
+        buildSubject(KycRegistrationView(initialUserData: _userData(addressCountrySymbol))),
+      );
+      // Let the async country lookups (_resolveInitialCountries) resolve so the
+      // country fields are populated before submit.
+      await tester.pumpAndSettle();
+
+      (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(1);
+      await tester.pumpAndSettle();
+
+      final completeButton = find.descendant(
+        of: find.byType(KycRegistrationAddressStep),
+        matching: find.byType(AppFilledButton),
+      );
+      await tester.ensureVisible(completeButton);
+      await tester.pumpAndSettle();
+      await tester.tap(completeButton);
+      await tester.pump();
+
+      final captured = verify(() => registrationSubmitCubit.submit(
+            type: any(named: 'type'),
+            firstName: any(named: 'firstName'),
+            lastName: any(named: 'lastName'),
+            phoneNumber: any(named: 'phoneNumber'),
+            birthday: any(named: 'birthday'),
+            nationality: any(named: 'nationality'),
+            addressStreet: any(named: 'addressStreet'),
+            addressStreetNumber: any(named: 'addressStreetNumber'),
+            addressPostalCode: any(named: 'addressPostalCode'),
+            addressCity: any(named: 'addressCity'),
+            addressCountry: any(named: 'addressCountry'),
+            swissTaxResidence: captureAny(named: 'swissTaxResidence'),
+          )).captured;
+      return captured.single as bool;
+    }
+
+    testWidgets('is true when the residence country is Switzerland', (tester) async {
+      expect(await submittedSwissTaxResidenceFor(tester, 'CH'), isTrue);
+    });
+
+    testWidgets('is false for a non-Swiss residence country (was hardcoded true)',
+        (tester) async {
+      expect(await submittedSwissTaxResidenceFor(tester, 'DE'), isFalse);
     });
   });
 }
