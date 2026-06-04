@@ -36,9 +36,8 @@ Workflow:
    regeneriert auf dfx01 und committet die neuen PNGs als
    `github-actions[bot]` zurück auf den Branch (siehe
    [`../visual-regression-tests.md`](../visual-regression-tests.md))
-4. Pullen → Handbook-Deploy pickt die neue Baseline beim nächsten
-   Handbook-Deploy automatisch auf (Push auf `staging` → DEV bzw.
-   `develop` → PRD).
+4. Pullen → der nächste Handbook-Deploy zeigt die neue Baseline automatisch
+   (Push auf `staging` → DEV bzw. `develop` → PRD).
 
 ## Selektive Läufe (Teilmenge)
 
