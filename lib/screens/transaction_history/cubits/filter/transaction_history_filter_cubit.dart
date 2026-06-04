@@ -15,9 +15,11 @@ class TransactionHistoryFilterCubit extends Cubit<TransactionHistoryFilterState>
     required String walletAddress,
     int? limit,
   }) : super(TransactionHistoryFilterState()) {
-    _subscription = _repository.watchTransactionsOfAssets([asset], walletAddress).listen(
-      _onTransactionsUpdated,
-    );
+    _subscription = _repository
+        .watchTransactionsOfAssets([asset], walletAddress)
+        .listen(
+          _onTransactionsUpdated,
+        );
   }
 
   final TransactionRepository _repository;
@@ -65,7 +67,7 @@ class TransactionHistoryFilterCubit extends Cubit<TransactionHistoryFilterState>
 
   @override
   Future<void> close() {
-    _subscription?.cancel();
+    unawaited(_subscription?.cancel());
     return super.close();
   }
 }

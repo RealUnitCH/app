@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -48,7 +50,7 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
 
   @override
   void initState() {
-    context.read<Kyc2FaCubit>().requestCode();
+    unawaited(context.read<Kyc2FaCubit>().requestCode());
     super.initState();
   }
 
@@ -61,7 +63,7 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
           BlocListener<Kyc2FaVerifyCubit, Kyc2FaVerifyState>(
             listener: (context, state) {
               if (state is Kyc2FaVerifySuccess) {
-                context.read<KycCubit>().checkKyc();
+                unawaited(context.read<KycCubit>().checkKyc());
               }
               if (state is Kyc2FaVerifyFailure) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -136,7 +138,9 @@ class _Kyc2FaViewState extends State<Kyc2FaView> {
                               state: state is Kyc2FaVerifyLoading ? .loading : .idle,
                               onPressed: () {
                                 if (_formKey.currentState?.validate() ?? false) {
-                                  context.read<Kyc2FaVerifyCubit>().verifyCode(codeCtrl.text);
+                                  unawaited(
+                                    context.read<Kyc2FaVerifyCubit>().verifyCode(codeCtrl.text),
+                                  );
                                 }
                               },
                               label: S.of(context).next,

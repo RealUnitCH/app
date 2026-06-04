@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -146,9 +148,11 @@ class TransactionHistoryRowView extends StatelessWidget {
                         )
                       : GestureDetector(
                           onTap: () {
-                            context.read<TransactionHistoryReceiptCubit>().generateReceipt(
-                              transaction.txId,
-                              currency: context.read<SettingsBloc>().state.currency,
+                            unawaited(
+                              context.read<TransactionHistoryReceiptCubit>().generateReceipt(
+                                transaction.txId,
+                                currency: context.read<SettingsBloc>().state.currency,
+                              ),
                             );
                           },
                           child: const Icon(

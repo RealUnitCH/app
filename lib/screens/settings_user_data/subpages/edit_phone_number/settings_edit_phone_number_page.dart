@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -108,7 +110,7 @@ class _SettingsEditPhoneNumberViewState extends State<SettingsEditPhoneNumberVie
     if (_formKey.currentState?.validate() ?? false) {
       final phone = _phoneCtrl.value;
       if (phone != null) {
-        context.read<SettingsEditPhoneNumberCubit>().editPhoneNumber(phone);
+        unawaited(context.read<SettingsEditPhoneNumberCubit>().editPhoneNumber(phone));
       }
     }
   }

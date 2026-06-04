@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/biometric_service.dart';
@@ -52,7 +54,7 @@ class SetupPinCubit extends Cubit<SetupPinState> {
         );
         break;
       case SetupPinMode.confirm:
-        _confirmPin(pin);
+        unawaited(_confirmPin(pin));
         break;
     }
   }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -41,7 +43,7 @@ class KycIdentView extends StatelessWidget {
         child: BlocListener<KycIdentCubit, KycIdentState>(
           listener: (context, state) {
             if (state is KycIdentSuccess) {
-              context.read<KycCubit>().checkKyc();
+              unawaited(context.read<KycCubit>().checkKyc());
             }
             if (state is KycIdentFailure) {
               if (state.status == FailureStatus.finallyRejected) {
@@ -121,9 +123,11 @@ class KycIdentView extends StatelessWidget {
                         return AppFilledButton(
                           state: state is KycIdentLoading ? .loading : .idle,
                           onPressed: () {
-                            context.read<KycIdentCubit>().startIdent(
-                              accessToken,
-                              localeCode: context.read<SettingsBloc>().state.language.code,
+                            unawaited(
+                              context.read<KycIdentCubit>().startIdent(
+                                accessToken,
+                                localeCode: context.read<SettingsBloc>().state.language.code,
+                              ),
                             );
                           },
                           label: S.of(context).next,

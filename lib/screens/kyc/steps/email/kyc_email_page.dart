@@ -126,8 +126,10 @@ class _KycEmailFormState extends State<KycEmailForm> {
                           onPressed: () {
                             FocusManager.instance.primaryFocus?.unfocus();
                             if (_formKey.currentState?.validate() ?? false) {
-                              context.read<KycEmailStepCubit>().registerEmail(
-                                _emailCtrl.text.trim(),
+                              unawaited(
+                                context.read<KycEmailStepCubit>().registerEmail(
+                                  _emailCtrl.text.trim(),
+                                ),
                               );
                             }
                           },

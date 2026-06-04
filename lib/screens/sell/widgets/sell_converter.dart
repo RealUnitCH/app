@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
@@ -41,31 +42,33 @@ class _SellConverterState extends State<SellConverter> {
   @override
   void initState() {
     super.initState();
-    getIt<SupportedFiatRepository>().getSellable().then(
-      (currencies) {
-        if (mounted) setState(() => _sellable = currencies);
-      },
-      onError: (Object error, StackTrace stack) {
-        developer.log(
-          'SellConverter: failed to load sellable currencies — picker will '
-          'be disabled and the user is notified',
-          name: 'realunit_wallet.sell',
-          error: error,
-          stackTrace: stack,
-          level: 1000, // SEVERE
-        );
-        if (!mounted) return;
-        setState(() => _loadFailed = true);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(S.of(context).settingsCurrencyLoadFailed),
-              backgroundColor: RealUnitColors.status.red600,
-            ),
+    unawaited(
+      getIt<SupportedFiatRepository>().getSellable().then(
+        (currencies) {
+          if (mounted) setState(() => _sellable = currencies);
+        },
+        onError: (Object error, StackTrace stack) {
+          developer.log(
+            'SellConverter: failed to load sellable currencies — picker will '
+            'be disabled and the user is notified',
+            name: 'realunit_wallet.sell',
+            error: error,
+            stackTrace: stack,
+            level: 1000, // SEVERE
           );
-        });
-      },
+          if (!mounted) return;
+          setState(() => _loadFailed = true);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(S.of(context).settingsCurrencyLoadFailed),
+                backgroundColor: RealUnitColors.status.red600,
+              ),
+            );
+          });
+        },
+      ),
     );
   }
 
@@ -127,7 +130,9 @@ class _SellConverterState extends State<SellConverter> {
                                 onTap: () {
                                   final maxStr = state.balance.toString();
                                   _amountController.text = maxStr;
-                                  context.read<SellConverterCubit>().onSharesChanged(maxStr);
+                                  unawaited(
+                                    context.read<SellConverterCubit>().onSharesChanged(maxStr),
+                                  );
                                 },
                               );
                             },
@@ -247,7 +252,9 @@ class _SellConverterState extends State<SellConverter> {
                           initialValue: state.currency,
                           onSelected: (currency) {
                             if (currency == state.currency) return;
-                            context.read<SellConverterCubit>().onCurrencyChanged(currency);
+                            unawaited(
+                              context.read<SellConverterCubit>().onCurrencyChanged(currency),
+                            );
                           },
                           itemBuilder: (context) => _sellable.map((currency) {
                             return PopupMenuItem(

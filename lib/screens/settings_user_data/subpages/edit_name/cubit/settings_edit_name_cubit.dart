@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
@@ -11,7 +13,7 @@ class SettingsEditNameCubit extends Cubit<SettingsEditNameState> {
   SettingsEditNameCubit({required DfxKycService kycService})
     : _kycService = kycService,
       super(const SettingsEditNameInitial()) {
-    _loadEdit();
+    unawaited(_loadEdit());
   }
 
   Future<void> _loadEdit() async {

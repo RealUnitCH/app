@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
@@ -14,7 +15,7 @@ class SellBankAccountsCubit extends Cubit<SellBankAccountsState> {
     DfxBankAccountService bankAccountService,
   ) : _dfxBankAccountService = bankAccountService,
       super(const SellBankAccountsInitial()) {
-    _loadBankAccounts();
+    unawaited(_loadBankAccounts());
   }
 
   Future<void> add({required String iban, String? label}) async {

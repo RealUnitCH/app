@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,7 +14,7 @@ class SupportTicketsCubit extends Cubit<SupportTicketsState> {
       super(
         const SupportTicketsInitial(),
       ) {
-    loadTickets();
+    unawaited(loadTickets());
   }
 
   Future<void> loadTickets() async {

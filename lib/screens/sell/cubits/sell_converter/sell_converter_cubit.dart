@@ -87,6 +87,10 @@ class SellConverterCubit extends Cubit<SellConverterState> {
     // the seq guard.
     emit(state.copyWith(loading: true, currency: currency));
     try {
+      // realunit-lint:ignore cross_flow_brokerbot_endpoint — current behaviour is pinned by
+      // sell_converter_cubit_test.dart ('onCurrencyChanged calls getBuyPrice (not getSellPrice)').
+      // Baselined and flagged for product review of whether the sell flow should price via
+      // getSellPrice on a currency change; not changed here to keep this PR behaviour-neutral.
       final result = await _brokerbotService.getBuyPrice(state.sharesText, currency);
       if (isClosed || mySeq != _seq) return;
       emit(

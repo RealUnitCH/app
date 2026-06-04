@@ -21,7 +21,7 @@ class DashboardTransactionHistoryCubit extends Cubit<List<Transaction>> {
 
   @override
   Future<void> close() {
-    _subscription.cancel();
+    unawaited(_subscription.cancel());
     return super.close();
   }
 }

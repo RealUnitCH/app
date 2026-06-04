@@ -46,7 +46,7 @@ class _LifecycleInitializerState extends State<LifecycleInitializer> {
 
   void _onResumed() {
     getIt<PinAuthCubit>().onAppResumed();
-    getIt<BalanceService>().updateBalance(getIt<AppStore>().primaryAddress);
+    unawaited(getIt<BalanceService>().updateBalance(getIt<AppStore>().primaryAddress));
   }
 
   void _onInactive() {}

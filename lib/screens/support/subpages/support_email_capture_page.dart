@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -111,14 +113,14 @@ class _SupportEmailCaptureFormState extends State<SupportEmailCaptureForm> {
                   BlocBuilder<SupportEmailCaptureCubit, SupportEmailCaptureState>(
                     builder: (context, state) {
                       return AppFilledButton(
-                        state: state is SupportEmailCaptureLoading
-                            ? .loading
-                            : .idle,
+                        state: state is SupportEmailCaptureLoading ? .loading : .idle,
                         onPressed: () {
                           FocusManager.instance.primaryFocus?.unfocus();
                           if (_formKey.currentState?.validate() ?? false) {
-                            context.read<SupportEmailCaptureCubit>().submit(
-                              _emailCtrl.text.trim(),
+                            unawaited(
+                              context.read<SupportEmailCaptureCubit>().submit(
+                                _emailCtrl.text.trim(),
+                              ),
                             );
                           }
                         },

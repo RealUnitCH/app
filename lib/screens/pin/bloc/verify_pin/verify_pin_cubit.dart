@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/biometric_service.dart';
@@ -23,7 +25,7 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
     if (state is VerifyPinTemporarilyLocked || state is VerifyPinLocked) return;
     if (state.pin.length == pinLength) return;
     emit(state.copyWith(pin: '${state.pin}$digit'));
-    if (state.pin.length == pinLength) checkPin();
+    if (state.pin.length == pinLength) unawaited(checkPin());
   }
 
   void deleteDigit() {
