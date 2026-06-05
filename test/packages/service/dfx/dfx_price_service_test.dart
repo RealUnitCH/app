@@ -60,6 +60,20 @@ void main() {
           throwsException,
         );
       });
+
+      test('returns zero when the price is missing (quote unavailable)', () async {
+        // The live endpoint omits chf/eur while the quote is unavailable,
+        // e.g. {"timestamp": "..."}. Must return zero (UI shows "--.--"),
+        // not throw on null * 100.
+        final client = MockClient((_) async => http.Response(
+              jsonEncode({'timestamp': '2026-06-04T22:28:16.539Z'}),
+              200,
+            ));
+
+        final price = await build(client).getPriceOfAsset(realUnitAsset, Currency.chf);
+
+        expect(price, BigInt.zero);
+      });
     });
 
     group('getPriceChart', () {
@@ -107,6 +121,25 @@ void main() {
           throwsException,
         );
       });
+
+      test('skips entries whose price is missing instead of discarding the whole chart', () async {
+        // A single trailing point without chf/eur must not wipe the entire
+        // chart — the prior valued points are kept.
+        final client = MockClient((_) async => http.Response(
+              jsonEncode([
+                {'chf': 1.0, 'eur': 0.95, 'timestamp': '2026-01-01T00:00:00Z'},
+                {'chf': 2.0, 'eur': 1.90, 'timestamp': '2026-01-02T00:00:00Z'},
+                {'timestamp': '2026-01-03T00:00:00Z'},
+              ]),
+              200,
+            ));
+
+        final points = await build(client).getPriceChart(realUnitAsset, Currency.chf);
+
+        expect(points, hasLength(2));
+        expect(points.last.price, BigInt.from(200));
+        expect(points.last.time, DateTime.utc(2026, 1, 2));
+      });
     });
 
     group('getChfToEurRate', () {
@@ -124,6 +157,17 @@ void main() {
       test('returns 0.0 when CHF is zero (avoids division by zero)', () async {
         final client = MockClient((_) async => http.Response(
               jsonEncode({'chf': 0.0, 'eur': 1.0}),
+              200,
+            ));
+
+        final rate = await build(client).getChfToEurRate();
+
+        expect(rate, 0.0);
+      });
+
+      test('returns 0.0 when the price is missing (quote unavailable)', () async {
+        final client = MockClient((_) async => http.Response(
+              jsonEncode({'timestamp': '2026-06-04T22:28:16.539Z'}),
               200,
             ));
 
