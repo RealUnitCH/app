@@ -86,6 +86,32 @@ void main() {
       expect(cubit.state.loading, isFalse);
     });
 
+    test('flags priceUnavailable on service error and clears it on the next success', () async {
+      // Aktionariat/brokerbot down: every price call fails → the converter
+      // surfaces a hint via state.priceUnavailable. When the backend recovers
+      // the next successful call must clear the flag again.
+      when(
+        () => service.getBuyShares(any(), any()),
+      ).thenAnswer((_) async => throw Exception('priceInCHF undefined'));
+
+      final cubit = BuyConverterCubit(service);
+      await cubit.onFiatChanged('100');
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      expect(cubit.state.priceUnavailable, isTrue);
+
+      when(() => service.getBuyShares(any(), any())).thenAnswer(
+        (_) async => BrokerbotBuySharesDto(
+          shares: 7,
+          pricePerShare: 12.5,
+          availableShares: 100,
+        ),
+      );
+      await cubit.onFiatChanged('200');
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      expect(cubit.state.priceUnavailable, isFalse);
+      expect(cubit.state.sharesText, '7');
+    });
+
     test(
       'onSharesChanged debounces, then writes the converted fiat with matching fractional digits',
       () async {

@@ -43,12 +43,13 @@ class SellConverterCubit extends Cubit<SellConverterState> {
           state.copyWith(
             sharesText: result.shares.toString(),
             loading: false,
+            priceUnavailable: false,
           ),
         );
       } catch (e) {
         developer.log(e.toString());
         if (isClosed || mySeq != _seq) return;
-        emit(state.copyWith(loading: false));
+        emit(state.copyWith(loading: false, priceUnavailable: true));
       }
     });
   }
@@ -70,12 +71,13 @@ class SellConverterCubit extends Cubit<SellConverterState> {
           state.copyWith(
             fiatText: result.estimatedAmount.toStringAsFixed(_fractionDigits(value)),
             loading: false,
+            priceUnavailable: false,
           ),
         );
       } catch (e) {
         developer.log(e.toString());
         if (isClosed || mySeq != _seq) return;
-        emit(state.copyWith(loading: false));
+        emit(state.copyWith(loading: false, priceUnavailable: true));
       }
     });
   }
@@ -93,12 +95,13 @@ class SellConverterCubit extends Cubit<SellConverterState> {
         state.copyWith(
           fiatText: result.totalCost.toStringAsFixed(_fractionDigits(state.sharesText)),
           loading: false,
+          priceUnavailable: false,
         ),
       );
     } catch (e) {
       developer.log(e.toString());
       if (isClosed || mySeq != _seq) return;
-      emit(state.copyWith(loading: false));
+      emit(state.copyWith(loading: false, priceUnavailable: true));
     }
   }
 

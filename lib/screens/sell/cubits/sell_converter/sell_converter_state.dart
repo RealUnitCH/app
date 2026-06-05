@@ -5,12 +5,14 @@ class SellConverterState extends Equatable {
   final String sharesText;
   final Currency currency;
   final bool loading;
+  final bool priceUnavailable;
 
   const SellConverterState({
     this.fiatText = '',
     this.sharesText = '',
     this.currency = Currency.chf,
     this.loading = false,
+    this.priceUnavailable = false,
   });
 
   SellConverterState copyWith({
@@ -18,15 +20,17 @@ class SellConverterState extends Equatable {
     String? sharesText,
     Currency? currency,
     bool? loading,
+    bool? priceUnavailable,
   }) {
     return SellConverterState(
       fiatText: fiatText ?? this.fiatText,
       sharesText: sharesText ?? this.sharesText,
       currency: currency ?? this.currency,
       loading: loading ?? this.loading,
+      priceUnavailable: priceUnavailable ?? this.priceUnavailable,
     );
   }
 
   @override
-  List<Object?> get props => [fiatText, sharesText, currency, loading];
+  List<Object?> get props => [fiatText, sharesText, currency, loading, priceUnavailable];
 }

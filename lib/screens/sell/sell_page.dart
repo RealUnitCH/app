@@ -8,6 +8,7 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info
 import 'package:realunit_wallet/screens/sell/cubits/sell_balance/sell_balance_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_converter/sell_converter_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
+import 'package:realunit_wallet/screens/buy/widgets/payment_action_required.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_selected_bank_account/sell_selected_bank_account_cubit.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_bank_account_field.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_button.dart';
@@ -92,6 +93,12 @@ class _SellViewState extends State<SellView> {
                                 amountController: _amountController,
                                 resultController: _resultController,
                               ),
+                              if (state.priceUnavailable)
+                                PaymentActionRequired(
+                                  title: S.of(context).priceSourceUnavailableTitle,
+                                  description:
+                                      S.of(context).priceSourceUnavailableDescription,
+                                ),
                               const SellBankAccountField(),
                               const Spacer(),
                               SellButton(

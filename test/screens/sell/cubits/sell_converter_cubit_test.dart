@@ -52,6 +52,32 @@ void main() {
       verify(() => service.getSellShares('100', Currency.chf)).called(1);
     });
 
+    test('flags priceUnavailable on service error and clears it on the next success', () async {
+      // Aktionariat/brokerbot down: getSellShares fails → state.priceUnavailable
+      // drives the hint; a later successful call must clear it again.
+      when(
+        () => service.getSellShares(any(), any()),
+      ).thenAnswer((_) async => throw Exception('priceInCHF undefined'));
+
+      final cubit = SellConverterCubit(service);
+      await cubit.onFiatChanged('100');
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      expect(cubit.state.priceUnavailable, isTrue);
+
+      when(() => service.getSellShares(any(), any())).thenAnswer(
+        (_) async => BrokerbotSellSharesDto(
+          targetAmount: 100,
+          shares: 8,
+          pricePerShare: 12.5,
+          currency: 'CHF',
+        ),
+      );
+      await cubit.onFiatChanged('200');
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      expect(cubit.state.priceUnavailable, isFalse);
+      expect(cubit.state.sharesText, '8');
+    });
+
     test('onFiatChanged respects an explicit currency argument', () async {
       when(() => service.getSellShares(any(), any())).thenAnswer(
         (_) async => BrokerbotSellSharesDto(
