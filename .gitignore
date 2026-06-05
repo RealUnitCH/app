@@ -35,6 +35,9 @@ android/app/.cxx
 /build/
 *.g.dart
 *.lock
+# Keep Fastlane bundler lockfiles tracked for reproducible store deploys
+!android/Gemfile.lock
+!ios/Gemfile.lock
 
 # Symbolication related
 app.*.symbols
