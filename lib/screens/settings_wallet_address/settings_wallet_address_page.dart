@@ -6,13 +6,16 @@ import 'package:realunit_wallet/packages/wallet/payment_uri.dart';
 import 'package:realunit_wallet/screens/receive/widgets/qr_address_widget.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:web3dart/web3dart.dart';
 
 class SettingsWalletAddressPage extends StatelessWidget {
   const SettingsWalletAddressPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final walletAddress = getIt<AppStore>().primaryAddress;
+    // Display the receive address in its EIP-55 checksummed form — the
+    // canonical representation that lets the user verify it by checksum.
+    final walletAddress = EthereumAddress.fromHex(getIt<AppStore>().primaryAddress).hexEip55;
 
     return Scaffold(
       appBar: AppBar(
