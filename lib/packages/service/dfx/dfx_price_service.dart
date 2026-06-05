@@ -4,6 +4,7 @@ import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/models/price_point.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/price/dto/real_unit_price_dto.dart';
 import 'package:realunit_wallet/packages/service/price_service.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
@@ -17,6 +18,11 @@ class DFXPriceService extends APriceService {
 
   String get _host => _appStore.apiConfig.apiHost;
 
+  double? _priceFor(RealUnitPriceDto dto, Currency currency) => switch (currency) {
+    Currency.eur => dto.eur,
+    Currency.chf => dto.chf,
+  };
+
   @override
   Future<List<PricePoint>> getPriceChart(Asset asset, Currency currency) async {
     final uri = buildUri(_host, _priceHistoryPath, {'timeFrame': 'ALL'});
@@ -29,20 +35,19 @@ class DFXPriceService extends APriceService {
     final result = <PricePoint>[];
 
     for (final entry in body) {
-      BigInt price;
-      switch (currency) {
-        case Currency.eur:
-          price = BigInt.from(entry['eur'] * 100);
-          break;
-        case Currency.chf:
-          price = BigInt.from(entry['chf'] * 100);
-          break;
-      }
+      final dto = RealUnitPriceDto.fromJson(entry as Map<String, dynamic>);
+      final price = _priceFor(dto, currency);
+
+      // Skip points the backend has not priced yet (e.g. the current day before
+      // the daily fixing). A null value would otherwise crash the multiplication,
+      // and a point without a timestamp cannot be placed on the time axis.
+      if (price == null || dto.timestamp == null) continue;
+
       result.add(
         PricePoint(
           asset: asset,
-          price: price,
-          time: DateTime.parse(entry['timestamp']),
+          price: BigInt.from(price * 100),
+          time: dto.timestamp!,
         ),
       );
     }
@@ -57,14 +62,14 @@ class DFXPriceService extends APriceService {
 
     if (response.statusCode != 200) throw Exception(response.body);
 
-    final body = jsonDecode(response.body);
+    final dto = RealUnitPriceDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    final price = _priceFor(dto, currency);
 
-    switch (currency) {
-      case Currency.eur:
-        return BigInt.from(body['eur'] * 100);
-      case Currency.chf:
-        return BigInt.from(body['chf'] * 100);
-    }
+    // The backend returns only a timestamp when no price is published yet; surface
+    // it as the zero sentinel the dashboard already renders as "--.--".
+    if (price == null) return BigInt.zero;
+
+    return BigInt.from(price * 100);
   }
 
   /// Returns the equivalent EUR amount for 1 CHF
@@ -74,9 +79,9 @@ class DFXPriceService extends APriceService {
 
     if (response.statusCode != 200) throw Exception(response.body);
 
-    final body = jsonDecode(response.body);
-    final chf = (body['chf'] as num).toDouble();
-    final eur = (body['eur'] as num).toDouble();
+    final dto = RealUnitPriceDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    final chf = dto.chf ?? 0;
+    final eur = dto.eur ?? 0;
 
     return chf > 0 ? eur / chf : 0.0;
   }

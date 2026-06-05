@@ -60,6 +60,30 @@ void main() {
           throwsException,
         );
       });
+
+      test('returns zero when CHF is absent (unpriced timestamp-only payload)', () async {
+        // The live endpoint returns `{"timestamp": ...}` while no price is
+        // published. The dashboard renders BigInt.zero as "--.--".
+        final client = MockClient((_) async => http.Response(
+              jsonEncode({'timestamp': '2026-06-05T08:20:40Z'}),
+              200,
+            ));
+
+        final price = await build(client).getPriceOfAsset(realUnitAsset, Currency.chf);
+
+        expect(price, BigInt.zero);
+      });
+
+      test('returns zero when EUR is absent (unpriced timestamp-only payload)', () async {
+        final client = MockClient((_) async => http.Response(
+              jsonEncode({'timestamp': '2026-06-05T08:20:40Z'}),
+              200,
+            ));
+
+        final price = await build(client).getPriceOfAsset(realUnitAsset, Currency.eur);
+
+        expect(price, BigInt.zero);
+      });
     });
 
     group('getPriceChart', () {
@@ -107,6 +131,40 @@ void main() {
           throwsException,
         );
       });
+
+      test('skips entries whose requested currency price is null', () async {
+        // The newest history entry of the live endpoint is unpriced
+        // (`{"timestamp": ...}` only). It must be skipped, not crash.
+        final client = MockClient((_) async => http.Response(
+              jsonEncode([
+                {'chf': 1.0, 'eur': 0.95, 'timestamp': '2026-01-01T00:00:00Z'},
+                {'eur': 2.30, 'timestamp': '2026-02-01T00:00:00Z'}, // no chf
+                {'timestamp': '2026-03-01T00:00:00Z'}, // unpriced
+              ]),
+              200,
+            ));
+
+        final points = await build(client).getPriceChart(realUnitAsset, Currency.chf);
+
+        expect(points, hasLength(1));
+        expect(points.single.price, BigInt.from(100));
+        expect(points.single.time, DateTime.utc(2026, 1, 1));
+      });
+
+      test('skips entries without a parseable timestamp', () async {
+        final client = MockClient((_) async => http.Response(
+              jsonEncode([
+                {'chf': 1.0, 'eur': 0.95}, // no timestamp
+                {'chf': 2.0, 'eur': 1.90, 'timestamp': '2026-02-01T00:00:00Z'},
+              ]),
+              200,
+            ));
+
+        final points = await build(client).getPriceChart(realUnitAsset, Currency.chf);
+
+        expect(points, hasLength(1));
+        expect(points.single.price, BigInt.from(200));
+      });
     });
 
     group('getChfToEurRate', () {
@@ -124,6 +182,17 @@ void main() {
       test('returns 0.0 when CHF is zero (avoids division by zero)', () async {
         final client = MockClient((_) async => http.Response(
               jsonEncode({'chf': 0.0, 'eur': 1.0}),
+              200,
+            ));
+
+        final rate = await build(client).getChfToEurRate();
+
+        expect(rate, 0.0);
+      });
+
+      test('returns 0.0 when the payload is unpriced (chf/eur absent)', () async {
+        final client = MockClient((_) async => http.Response(
+              jsonEncode({'timestamp': '2026-06-05T08:20:40Z'}),
               200,
             ));
 

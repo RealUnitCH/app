@@ -125,5 +125,21 @@ void main() {
         return wrapForGolden(buildSubject());
       },
     );
+
+    goldenTest(
+      // State produced when `/v1/realunit/price` carries a price but every
+      // history entry is still unpriced: DFXPriceService skips the null
+      // entries, so the price renders while the chart stays empty. The
+      // inverse state (no price at all -> "--.--") is `dashboard_empty`.
+      'with price, unpriced history (chart empty)',
+      fileName: 'dashboard_price_no_chart',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        when(() => dashboardBloc.state).thenReturn(
+          emptyDashboardState().copyWith(price: BigInt.from(11300)),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
   });
 }
