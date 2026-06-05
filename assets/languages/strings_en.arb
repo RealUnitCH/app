@@ -194,6 +194,8 @@
   "portfolio": "Portfolio",
   "portfolioDevelopment": "Portfolio development",
   "postcodeAbr": "Post code",
+  "priceProviderUnavailableDescription": "The external price provider Aktionariat is currently not delivering prices. The problem is on Aktionariat's side, not with RealUnit or the app. Everything will work again automatically as soon as Aktionariat delivers prices. Please try again later.",
+  "priceProviderUnavailableTitle": "Problem with the price provider (Aktionariat)",
   "proofDocument": "Proof document",
   "purposeOfPayment": "Purpose of payment",
   "qrCode": "QR code",

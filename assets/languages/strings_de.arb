@@ -194,6 +194,8 @@
   "portfolio": "Bestand",
   "portfolioDevelopment": "Bestandsentwicklung",
   "postcodeAbr": "PLZ",
+  "priceProviderUnavailableDescription": "Der externe Kursanbieter Aktionariat liefert aktuell keine Kurse. Das Problem liegt bei Aktionariat – nicht bei RealUnit oder der App. Sobald Aktionariat wieder Kurse liefert, funktioniert alles automatisch. Bitte später erneut versuchen.",
+  "priceProviderUnavailableTitle": "Problem beim Kursanbieter (Aktionariat)",
   "proofDocument": "Nachweis-Dokument",
   "purposeOfPayment": "Verwendungszweck",
   "qrCode": "QR-Code",
