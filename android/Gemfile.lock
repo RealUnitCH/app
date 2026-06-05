@@ -230,7 +230,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  fastlane (>= 2.220)
+  fastlane (= 2.232.2)
   ostruct
 
 BUNDLED WITH
