@@ -66,6 +66,7 @@ void main() {
     when(() => balanceService.startSync(any())).thenReturn(null);
     when(() => transactionHistoryService.apiBasedSync()).thenAnswer((_) async {});
     when(() => bitboxService.stopConnectionStatusObserver()).thenReturn(null);
+    when(() => bitboxService.clear()).thenAnswer((_) async {});
   });
 
   HomeBloc build() => HomeBloc(
@@ -378,6 +379,58 @@ void main() {
           verifyNever(() => transactionHistoryService.apiBasedSync());
         },
       );
+    });
+
+    group('DeleteCurrentWalletEvent (Initiative I, ADR 0001)', () {
+      // F-024 closure: `_onDeleteCurrentWallet` MUST call
+      // `BitboxService.clear()` in addition to `stopConnectionStatusObserver`,
+      // so a subsequent "restore different seed, re-pair the same device"
+      // can no longer silently re-attach the old derivation path against the
+      // device's new static pubkey.
+
+      late _MockSessionCache sessionCache;
+
+      setUp(() {
+        sessionCache = _MockSessionCache();
+        when(() => sessionCache.clear()).thenAnswer((_) async {});
+        when(() => bitboxService.stopConnectionStatusObserver()).thenReturn(null);
+        when(() => bitboxService.clear()).thenAnswer((_) async {});
+        when(
+          () => walletService.deleteCurrentWallet(),
+        ).thenAnswer((_) async {});
+        when(() => appStore.sessionCache).thenReturn(sessionCache);
+      });
+
+      test('calls BitboxService.clear() in addition to stopConnectionStatusObserver', () async {
+        when(() => walletService.hasWallet()).thenReturn(true);
+        when(() => settingsService.isTermsAccepted).thenReturn(true);
+
+        final bloc = build();
+        await bloc.stream.firstWhere((s) => s.hasWallet);
+
+        bloc.add(const DeleteCurrentWalletEvent());
+        await bloc.stream.firstWhere((s) => s.hasWallet == false);
+
+        verify(() => bitboxService.stopConnectionStatusObserver()).called(1);
+        verify(() => bitboxService.clear()).called(1);
+        verify(() => walletService.deleteCurrentWallet()).called(1);
+      });
+
+      test('still calls clear() even when no wallet is present', () async {
+        // Defensive: clear() must run before the hasWallet branch so a
+        // pre-pair "delete" still releases any in-flight BitBox session.
+        when(() => walletService.hasWallet()).thenReturn(false);
+
+        final bloc = build();
+        await bloc.stream.firstWhere((s) => s.hasWallet == false);
+
+        bloc.add(const DeleteCurrentWalletEvent());
+        // Stream emits the cleared state (isLoadingWallet flips back to false).
+        await bloc.stream.firstWhere((s) => s.isLoadingWallet == false);
+
+        verify(() => bitboxService.clear()).called(1);
+        verifyNever(() => walletService.deleteCurrentWallet());
+      });
     });
   });
 

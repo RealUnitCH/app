@@ -28,10 +28,17 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
 
   final String _address;
 
+  /// Optional callback the service wires up in [BitboxService.getCredentials]
+  /// so a sign-queue timeout in this credentials instance can flip the
+  /// service-level state to `Lost(signQueueTimeout)`. Stored as a closure to
+  /// keep the dependency uni-directional — credentials never reach back
+  /// through a singleton getter.
+  final void Function()? _onSignQueueTimeout;
+
   BitboxManager? bitboxManager;
   String? derivationPath;
 
-  BitboxCredentials(this._address);
+  BitboxCredentials(this._address, [this._onSignQueueTimeout]);
 
   /// Re-seeds the static sign queue with a freshly-completed future.
   ///
@@ -73,7 +80,16 @@ class BitboxCredentials extends CredentialsWithKnownAddress {
       try {
         return await sign().timeout(signQueueTimeout);
       } on TimeoutException {
+        // F-009 closure (Initiative I, ADR 0001): the queue-timeout used to
+        // clear local credentials but leave BitboxService thinking we were
+        // still connected — the observer kept polling and the consuming cubit
+        // had no way to learn the device was lost without polling
+        // currentStatus. Propagating via the closure-wired callback flips the
+        // service-level Stream to Lost(signQueueTimeout) so the observer
+        // tears down and the consuming cubit can route to the reconnect sheet
+        // off a state transition instead of a poll.
         clearBitbox();
+        _onSignQueueTimeout?.call();
         throw const BitboxNotConnectedException();
       }
     });

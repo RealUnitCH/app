@@ -4,6 +4,7 @@ import 'dart:developer' as developer;
 import 'package:bitbox_flutter/bitbox_flutter.dart' as sdk;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
+import 'package:realunit_wallet/packages/hardware_wallet/bitbox_connection_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/utils/device_info.dart';
@@ -35,6 +36,12 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
        _createWalletTimeout = createWalletTimeout,
        _pairingPinTimeout = pairingPinTimeout,
        super(BitboxNotConnected()) {
+    // Subscribe to the lifecycle Stream so a mid-session Lost (e.g. observer
+    // device-vanish, sign-queue timeout) bounces the cubit to
+    // BitboxNotConnected without forcing every internal try/catch to also
+    // poll currentStatus. The subscription is cancelled in [close] to
+    // prevent the stream from holding a reference to the closed cubit.
+    _statusSub = _service.status.listen(_onServiceStatus);
     _startScanning();
   }
 
@@ -51,7 +58,29 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
   final WalletService _walletService;
   final DFXAuthService _authService;
   Timer? _checkForTimer;
-  Future<bool>? _pendingInit;
+  Future<BitboxConnectionStatus>? _pendingInit;
+  StreamSubscription<BitboxConnectionStatus>? _statusSub;
+
+  /// Routes service-level transitions into the cubit's UX state machine. The
+  /// only mid-flow transition the cubit cares about is `Lost` — the
+  /// service-level signal that the paired device is gone before the cubit
+  /// has reached `BitboxConnected` is the channel the timeout / observer
+  /// paths feed (see `_synchronizeBoundedSign` propagation in
+  /// `BitboxCredentials` and the periodic observer in `BitboxService`).
+  void _onServiceStatus(BitboxConnectionStatus status) {
+    if (isClosed) return;
+    if (status is Lost) {
+      developer.log('service emitted Lost(${status.reason.name})',
+          name: '$ConnectBitboxCubit');
+      _pendingInit = null;
+      _checkForTimer?.cancel();
+      emit(BitboxNotConnected());
+      _checkForTimer = Timer.periodic(
+        const Duration(milliseconds: 500),
+        (_) => checkForBitbox(),
+      );
+    }
+  }
 
   Future<void> checkForBitbox() async {
     final devices = await _service.getAllUsbDevices();
@@ -79,17 +108,14 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
       if (isClosed) return;
 
       var initFailed = false;
-      _pendingInit = _service
-          .init(device)
-          .then((success) {
-            if (!success) initFailed = true;
-            return success;
-          })
-          .catchError((Object e) {
-            developer.log('init error: $e', name: '$ConnectBitboxCubit');
-            initFailed = true;
-            return false;
-          });
+      _pendingInit = _service.init(device).then((status) {
+        if (status is! Paired && status is! InUse) initFailed = true;
+        return status;
+      }).catchError((Object e) {
+        developer.log('init error: $e', name: '$ConnectBitboxCubit');
+        initFailed = true;
+        return const Disconnected() as BitboxConnectionStatus;
+      });
 
       String channelHash = '';
       final deadline = DateTime.now().add(const Duration(seconds: 90));
@@ -130,11 +156,18 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
 
     try {
       emit(BitboxPairing(currentState.device));
-      final initOk = await _pendingInit!.timeout(
+      // _pendingInit now resolves to a BitboxConnectionStatus — only Paired
+      // (or the transient InUse) counts as a successful init. Anything else
+      // (Connecting still pending, Disconnected, Lost, Disconnecting) means
+      // the device-side confirmation never landed and the cubit must bounce
+      // back to BitboxNotConnected.
+      final initStatus = await _pendingInit!.timeout(
         _pairingPinTimeout,
-        onTimeout: () => false,
+        onTimeout: () => const Disconnected() as BitboxConnectionStatus,
       );
-      if (!initOk) throw Exception('pairing not confirmed on device');
+      if (initStatus is! Paired && initStatus is! InUse) {
+        throw Exception('pairing not confirmed on device');
+      }
       await _service.confirmPairing().timeout(
         _confirmPairingTimeout,
         onTimeout: () => throw TimeoutException(
@@ -216,6 +249,15 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     // as an unhandled exception after the cubit is gone.
     _pendingInit?.ignore();
     _pendingInit = null;
+    // Cancel the lifecycle subscription so the broadcast Stream stops
+    // holding a reference to this cubit (prevents subscription-leak; pinned
+    // by the "cancelled subscriptions stop receiving transitions" test in
+    // bitbox_service_lifecycle_test.dart). The await is fire-and-forget
+    // chained off super.close() so a hot-restart with many cubits doesn't
+    // serialise on the cancellation.
+    final sub = _statusSub;
+    _statusSub = null;
+    sub?.cancel();
     return super.close();
   }
 }

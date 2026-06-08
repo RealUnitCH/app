@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
+import 'package:realunit_wallet/packages/hardware_wallet/bitbox_connection_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -19,7 +20,10 @@ class _MockBitboxWallet extends Mock implements BitboxWallet {}
 
 class _MockAuthService extends Mock implements DFXAuthService {}
 
-class _FakeBitboxDevice extends Fake implements sdk.BitboxDevice {}
+class _FakeBitboxDevice extends Fake implements sdk.BitboxDevice {
+  @override
+  String get identifier => 'fake-device';
+}
 
 class _FakeBitboxWalletAccount extends Fake implements BitboxWalletAccount {}
 
@@ -29,6 +33,7 @@ void main() {
   late _MockAuthService authService;
   late _FakeBitboxDevice device;
   late _MockBitboxWallet wallet;
+  late StreamController<BitboxConnectionStatus> statusController;
 
   setUpAll(() {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
@@ -46,13 +51,19 @@ void main() {
     authService = _MockAuthService();
     device = _FakeBitboxDevice();
     wallet = _MockBitboxWallet();
+    statusController = StreamController<BitboxConnectionStatus>.broadcast();
 
     when(() => service.startScan()).thenAnswer((_) async => true);
     when(() => service.getAllUsbDevices()).thenAnswer((_) async => []);
     when(() => service.startConnectionStatusObserver()).thenReturn(null);
+    when(() => service.status).thenAnswer((_) => statusController.stream);
     when(() => walletService.createBitboxWallet(any())).thenAnswer((_) async => wallet);
     when(() => wallet.currentAccount).thenReturn(_FakeBitboxWalletAccount());
     when(() => authService.ensureSignatureFor(any())).thenAnswer((_) async {});
+  });
+
+  tearDown(() async {
+    await statusController.close();
   });
 
   // Tests pass in short timeouts so the bounce-back path can be exercised in
@@ -80,7 +91,7 @@ void main() {
 
   group('$ConnectBitboxCubit', () {
     test('reaches BitboxConnected via BitboxCapturingSignature when all succeed', () async {
-      final initCompleter = Completer<bool>();
+      final initCompleter = Completer<BitboxConnectionStatus>();
       var pollCount = 0;
 
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
@@ -105,7 +116,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 10));
       expect(cubit.state, isA<BitboxPairing>());
 
-      initCompleter.complete(true);
+      initCompleter.complete(Paired(device));
       await confirmFut;
 
       expect(cubit.state, isA<BitboxConnected>());
@@ -119,7 +130,7 @@ void main() {
     test('emits BitboxSignatureFailed when the signature capture throws', () async {
       var pollCount = 0;
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
-      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.init(any())).thenAnswer((_) async => Paired(device));
       when(() => service.getChannelHash()).thenAnswer((_) async {
         pollCount++;
         return pollCount < 3 ? '' : 'HASH-ok';
@@ -145,7 +156,7 @@ void main() {
       var pollCount = 0;
       var signCalls = 0;
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
-      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.init(any())).thenAnswer((_) async => Paired(device));
       when(() => service.getChannelHash()).thenAnswer((_) async {
         pollCount++;
         return pollCount < 3 ? '' : 'HASH-ok';
@@ -179,7 +190,7 @@ void main() {
     test('continueWithoutSignature transitions BitboxSignatureFailed to BitboxConnected', () async {
       var pollCount = 0;
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
-      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.init(any())).thenAnswer((_) async => Paired(device));
       when(() => service.getChannelHash()).thenAnswer((_) async {
         pollCount++;
         return pollCount < 3 ? '' : 'HASH-ok';
@@ -209,7 +220,7 @@ void main() {
     test('finishSetup transitions BitboxConnected to BitboxFinishSetup', () async {
       var pollCount = 0;
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
-      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.init(any())).thenAnswer((_) async => Paired(device));
       when(() => service.getChannelHash()).thenAnswer((_) async {
         pollCount++;
         return pollCount < 3 ? '' : 'HASH-ok';
@@ -235,7 +246,7 @@ void main() {
         'FRESH-NEW',
       ];
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
-      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.init(any())).thenAnswer((_) async => Paired(device));
       when(() => service.getChannelHash()).thenAnswer(
         (_) async => responses.isEmpty ? 'FRESH-NEW' : responses.removeAt(0),
       );
@@ -248,9 +259,12 @@ void main() {
       expect((cubit.state as BitboxCheckHash).channelHash, 'FRESH-NEW');
     });
 
-    test('falls back to NotConnected when init returns false', () async {
+    test('falls back to NotConnected when init resolves to Disconnected', () async {
+      // Post-Initiative-I: init() now returns a BitboxConnectionStatus. A
+      // resolution that is NOT Paired/InUse means pairing did not land, so
+      // the cubit must bounce to BitboxNotConnected.
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
-      when(() => service.init(any())).thenAnswer((_) async => false);
+      when(() => service.init(any())).thenAnswer((_) async => const Disconnected());
       when(() => service.getChannelHash()).thenAnswer((_) async => '');
 
       final cubit = makeCubit();
@@ -285,7 +299,11 @@ void main() {
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
       when(
         () => service.init(any()),
-      ).thenAnswer((_) => Future<bool>.error(Exception('async init boom')));
+      ).thenAnswer(
+        (_) => Future<BitboxConnectionStatus>.error(
+          Exception('async init boom'),
+        ),
+      );
       when(() => service.getChannelHash()).thenAnswer((_) async => '');
 
       final cubit = makeCubit();
@@ -300,7 +318,7 @@ void main() {
     test('bounces to NotConnected when confirmPairing hangs past the timeout', () async {
       var pollCount = 0;
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
-      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.init(any())).thenAnswer((_) async => Paired(device));
       when(() => service.getChannelHash()).thenAnswer((_) async {
         pollCount++;
         return pollCount < 3 ? '' : 'HASH-ok';
@@ -326,7 +344,7 @@ void main() {
       // failure path back to BitboxNotConnected.
       var pollCount = 0;
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
-      when(() => service.init(any())).thenAnswer((_) => Completer<bool>().future);
+      when(() => service.init(any())).thenAnswer((_) => Completer<BitboxConnectionStatus>().future);
       when(() => service.getChannelHash()).thenAnswer((_) async {
         pollCount++;
         return pollCount < 3 ? '' : 'HASH-ok';
@@ -353,7 +371,7 @@ void main() {
     test('emits BitboxCheckHash before service.confirmPairing is called (P1)', () async {
       var pollCount = 0;
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
-      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.init(any())).thenAnswer((_) async => Paired(device));
       when(() => service.getChannelHash()).thenAnswer((_) async {
         pollCount++;
         return pollCount < 3 ? '' : 'HASH-VISIBLE-TO-USER';
@@ -377,7 +395,7 @@ void main() {
     test('bounces to NotConnected when createBitboxWallet hangs past the timeout', () async {
       var pollCount = 0;
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
-      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.init(any())).thenAnswer((_) async => Paired(device));
       when(() => service.getChannelHash()).thenAnswer((_) async {
         pollCount++;
         return pollCount < 3 ? '' : 'HASH-ok';
@@ -397,6 +415,109 @@ void main() {
           .firstWhere((s) => s is BitboxNotConnected)
           .timeout(const Duration(seconds: 2));
       expect(cubit.state, isA<BitboxNotConnected>());
+    });
+
+    // -----------------------------------------------------------------------
+    // Initiative I — BitboxService.status stream subscription
+    //
+    // Post-ADR-0001 the cubit subscribes to the service's lifecycle stream
+    // so a service-side Lost (e.g. sign-queue timeout, observer device
+    // vanish) bounces the cubit back to BitboxNotConnected without forcing
+    // each individual try/catch to also poll currentStatus.
+    // -----------------------------------------------------------------------
+
+    test('subscribes to BitboxService.status on construction', () {
+      // The cubit's construction must register exactly one stream
+      // subscription. Without it the Lost-routing below would silently
+      // no-op.
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      verify(() => service.status).called(1);
+      expect(
+        statusController.hasListener,
+        isTrue,
+        reason: 'cubit must hold a live subscription after construction',
+      );
+    });
+
+    test('service-emitted Lost bounces an in-progress pairing back to NotConnected', () async {
+      // Mid-flow scenario: cubit has reached BitboxCheckHash, sign-queue
+      // timeout fires on the service side and emits Lost. The cubit must
+      // bounce to BitboxNotConnected and re-arm the scan timer without
+      // requiring the user to manually unplug.
+      var pollCount = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) async => Paired(device));
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 3 ? '' : 'HASH-ok';
+      });
+
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+      await waitForState<BitboxCheckHash>(cubit);
+      clearInteractions(service);
+
+      // Service flips to Lost mid-flow. Cubit must observe the transition
+      // and route back to BitboxNotConnected.
+      statusController.add(const Lost(LostReason.signQueueTimeout));
+      await cubit.stream
+          .firstWhere((s) => s is BitboxNotConnected)
+          .timeout(const Duration(seconds: 2));
+      expect(cubit.state, isA<BitboxNotConnected>());
+      await Future<void>.delayed(const Duration(milliseconds: 650));
+      verify(
+        () => service.getAllUsbDevices(),
+      ).called(greaterThanOrEqualTo(1));
+    });
+
+    test('non-Lost transitions on the status stream do NOT spuriously bounce', () async {
+      // Defensive: emitting Paired or Connecting from the service must not
+      // flip the cubit's UX state. Only Lost is load-bearing.
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+      final emitted = <BitboxConnectionState>[];
+      final sub = cubit.stream.listen(emitted.add);
+      addTearDown(sub.cancel);
+
+      statusController.add(const Disconnected());
+      statusController.add(Connecting(device));
+      statusController.add(Paired(device));
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(
+        emitted.whereType<BitboxNotConnected>().toList(),
+        isEmpty,
+        reason: 'non-Lost transitions must not perturb the cubit state',
+      );
+    });
+
+    test('close() cancels the status subscription (no leak after close)', () async {
+      final cubit = makeCubit();
+      expect(statusController.hasListener, isTrue);
+      await cubit.close();
+      expect(
+        statusController.hasListener,
+        isFalse,
+        reason: 'close() must cancel the cubit\'s status subscription',
+      );
+    });
+
+    test('Lost emitted after close() does NOT throw or emit', () async {
+      // Defensive: a Lost arriving after `close()` (e.g. service emitting
+      // during cubit teardown) must be ignored without throwing.
+      final cubit = makeCubit();
+      final emitted = <BitboxConnectionState>[];
+      final sub = cubit.stream.listen(emitted.add);
+      await cubit.close();
+      await sub.cancel();
+
+      statusController.add(const Lost(LostReason.deviceUnreachable));
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      // No assertion beyond "no throw" — the cancel above must have
+      // detached, so no further state-emission is even possible.
+      expect(emitted.whereType<BitboxNotConnected>(), isEmpty);
     });
   });
 }

@@ -84,7 +84,18 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   ) async {
     emit(state.copyWith(isLoadingWallet: true));
 
+    // Initiative I (ADR 0001) — F-024 closure. `stopConnectionStatusObserver`
+    // only cancels the periodic; `clear()` ALSO empties the credentials map,
+    // disconnects the underlying BitboxManager, and walks the lifecycle
+    // Stream to Disconnected. Without the `clear()` a "delete wallet,
+    // restore different seed, re-pair the same device" flow could silently
+    // re-attach the old derivation path against the device's new static
+    // pubkey. `clear()` invokes `stopConnectionStatusObserver` internally;
+    // calling both is intentional (the explicit `stop` call is kept so a
+    // refactor that drops the implicit one inside `clear()` does not
+    // regress the wallet-delete teardown).
     _bitboxService.stopConnectionStatusObserver();
+    await _bitboxService.clear();
     await _appStore.sessionCache.clear();
     if (_walletService.hasWallet()) {
       await _walletService.deleteCurrentWallet();

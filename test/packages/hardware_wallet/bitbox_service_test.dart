@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:bitbox_flutter/bitbox_flutter.dart';
 import 'package:bitbox_flutter/testing.dart';
 import 'package:bitbox_flutter/usb/bitbox_usb_platform_interface.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
+import 'package:realunit_wallet/packages/hardware_wallet/bitbox_connection_status.dart';
 
 // Service-lifecycle suite. Drives the official bitbox_flutter simulator
 // (installed at the BitboxUsbPlatform.instance seam) so the tests exercise
@@ -313,7 +316,10 @@ void main() {
         Object? caught;
         service.init(devices.single).catchError((Object e) {
           caught = e;
-          return false;
+          // init() returns BitboxConnectionStatus post-Initiative-I; surface
+          // a typed Disconnected as the fallback so the catchError contract
+          // is honoured without leaking a bool into the FutureOr<T> signature.
+          return const Disconnected() as BitboxConnectionStatus;
         });
         async.flushMicrotasks();
 
@@ -328,7 +334,7 @@ void main() {
         expect(
           postInit.isConnected,
           isFalse,
-          reason: 'failed init must leave _isConnected false for future hand-outs',
+          reason: 'failed init must leave the service in Disconnected for future hand-outs',
         );
       });
     });
@@ -449,6 +455,354 @@ void main() {
             second,
             same(first),
             reason: 'getCredentials must return the cached instance for a given address',
+          );
+        });
+      },
+    );
+
+    // ---------------------------------------------------------------------
+    // Audit gap deepening — Initiative I scope
+    //
+    // The block below pins behaviour the audit calls out as worst-case
+    // failure modes (F-005, F-007, F-011, F-024, F-032, F-033, F-034,
+    // F-045). Each test states the current (sometimes buggy) invariant
+    // verbatim. Tests that will only PASS after Initiative I lands the
+    // refactor described in OPUS_BITBOX_MANDATE.md §5.1 are gated via
+    // `skip:` with a `blocks-on: BL-NNN` marker — they exist now so the
+    // refactor cannot silently land without flipping the assertion.
+    // ---------------------------------------------------------------------
+
+    test(
+      'init() is serialised against concurrent invocation (F-007)',
+      () {
+        // F-007: two parallel init() calls today both reach
+        // bitboxManager.connect() because there is no _pendingInit guard.
+        // Initiative I (BL-014) adds the serialisation. Pin both halves:
+        //
+        //   - current behaviour: the simulator's `open` is invoked at most
+        //     twice (one per init call) — already strictly bounded by the
+        //     SDK fix #1, but the host does NOT funnel concurrent callers.
+        //   - post-Initiative-I behaviour: exactly ONE `open` per device.
+        //
+        // The first expectation is the regression guard the refactor must
+        // not loosen; the second is the contract Initiative I must add.
+        fakeAsync((async) {
+          // Tighten the simulator's `open` so two parallel inits actually
+          // overlap on the wire. Without a delay both inits would resolve
+          // microtask-back-to-back and look serial by accident.
+          platform.setDelay(SimulatedBitboxMethod.open, const Duration(milliseconds: 20));
+
+          final service = BitboxService(connectionStatusInterval: fastInterval);
+          late List<BitboxDevice> devices;
+          service.getAllUsbDevices().then((d) => devices = d);
+          async.flushMicrotasks();
+
+          final firstInit = service.init(devices.single);
+          final secondInit = service.init(devices.single);
+
+          firstInit.catchError(
+            (_) => const Disconnected() as BitboxConnectionStatus,
+          );
+          secondInit.catchError(
+            (_) => const Disconnected() as BitboxConnectionStatus,
+          );
+
+          // Drain past the 20ms `open` delay AND the post-open hops.
+          async.elapse(const Duration(milliseconds: 100));
+          async.flushMicrotasks();
+
+          final openCount = platform.count(SimulatedBitboxMethod.open);
+          // POST-INITIATIVE-I CONTRACT (BL-014 landed): the `_pendingInit`
+          // shared-future guard funnels every concurrent init() onto a single
+          // bitboxManager.connect() — exactly one `open` per concurrent
+          // batch. A future refactor that splits the funnel is a NEW
+          // regression and must be caught here.
+          expect(
+            openCount,
+            1,
+            reason:
+                'Initiative I post-condition: concurrent init() must funnel '
+                'through one connect() (property pin)',
+          );
+        });
+      },
+    );
+
+    test(
+      'init() sets _isConnected AFTER credentials fan-out completes (F-032)',
+      () {
+        // F-032: _isConnected = true is set BEFORE the setBitbox-loop runs.
+        // A concurrent observer tick (or another caller reading the public
+        // surface) could see `connected==true` while credentials still
+        // report `isConnected==false`. The credentials-attach loop must be
+        // observed as a SINGLE atomic transition from the caller's POV.
+        //
+        // We pin the observable contract: when init() resolves, every
+        // pre-existing credentials instance reports `isConnected == true`.
+        // The reverse — that during the init() Future the credentials are
+        // still untouched — is the property the refactor (Initiative I)
+        // strengthens by removing the boolean entirely. We pin the
+        // post-condition because it survives the refactor.
+        fakeAsync((async) {
+          final service = BitboxService(connectionStatusInterval: fastInterval);
+
+          // Hand out two credentials BEFORE init so the fan-out has work.
+          final preInitA = service.getCredentials(knownAddress);
+          final preInitB = service.getCredentials(
+            '0x000000000000000000000000000000000000beef',
+          );
+          expect(preInitA.isConnected, isFalse);
+          expect(preInitB.isConnected, isFalse);
+
+          late List<BitboxDevice> devices;
+          service.getAllUsbDevices().then((d) => devices = d);
+          async.flushMicrotasks();
+
+          BitboxConnectionStatus? initResolved;
+          service.init(devices.single).then((v) => initResolved = v);
+          async.flushMicrotasks();
+
+          expect(initResolved, isA<Paired>(),
+              reason: 'init() must resolve to Paired within microtasks');
+          expect(
+            preInitA.isConnected,
+            isTrue,
+            reason: 'every pre-existing credentials must be attached when init() resolves',
+          );
+          expect(
+            preInitB.isConnected,
+            isTrue,
+            reason: 'all entries of _credentialsByAddress are fanned out, not just one',
+          );
+        });
+      },
+    );
+
+    test(
+      'observer detects an empty device list within one tick interval (F-011)',
+      () {
+        // F-011: startConnectionStatusObserver cancels any prior periodic
+        // and installs a NEW one, but does NOT perform an eager probe.
+        // Worst case the device-loss latency is up to one full interval.
+        //
+        // This test pins the CURRENT behaviour: device-loss is detected
+        // within ONE interval-plus-microtask budget after arm. Initiative I
+        // is expected to add an eager probe (`unawaited(checkDevices())`)
+        // — that would let the assertion below tighten to "within one
+        // microtask". The current bound is `fastInterval`; the refactor
+        // can only tighten, never loosen.
+        fakeAsync((async) {
+          final service = pairedServiceSync(async);
+          final credentials = service.getCredentials(knownAddress);
+          expect(credentials.isConnected, isTrue);
+
+          platform.when(
+            SimulatedBitboxMethod.getDevices,
+            (_) async => const <BitboxDevice>[],
+          );
+
+          service.startConnectionStatusObserver();
+          // Exactly one interval — the periodic must have fired AT LEAST
+          // once by now. Plus a microtask drain for the await chain inside
+          // the periodic callback.
+          async.elapse(fastInterval);
+          async.flushMicrotasks();
+          async.elapse(const Duration(milliseconds: 5));
+          async.flushMicrotasks();
+
+          expect(
+            credentials.isConnected,
+            isFalse,
+            reason: 'device-loss must surface within one tick of arm; '
+                'a slower observer is a NEW regression vs the current cap',
+          );
+        });
+      },
+    );
+
+    test(
+      'observer does NOT yet treat a different-static-device list as Lost (F-045)',
+      () {
+        // F-045: the observer's callback ignores device-list CONTENTS past
+        // the `isEmpty` branch. A user could unplug their BitBox and plug
+        // in a different one — the observer would silently treat it as
+        // "still connected". This is the worst-case in §5.1's Context.
+        //
+        // Initiative I (Deliverable 5) adds the static-pubkey-mismatch
+        // check. We pin the CURRENT incorrect behaviour so the
+        // implementer cannot silently land "Disconnected on any non-empty
+        // mismatch" without flipping this assertion (which is what BL-014
+        // / §5.1 Deliverable 5 demands).
+        fakeAsync((async) {
+          final service = pairedServiceSync(async);
+          final credentials = service.getCredentials(knownAddress);
+          expect(credentials.isConnected, isTrue);
+
+          // Simulator hands out a DIFFERENT device than the one paired
+          // with. Pre-Initiative-I the observer does not look at identity.
+          final differentDevice = BitboxDevice(
+            identifier: 'simulated-bitbox-02-OTHER',
+            vendorId: 0x03eb,
+            productId: 0x2403,
+            productName: 'BitBox02 Simulator',
+            deviceId: 99,
+            deviceName: 'Different BitBox02',
+            manufacturerName: 'Shift Crypto',
+            configurationCount: 1,
+          );
+          platform.when(
+            SimulatedBitboxMethod.getDevices,
+            (_) async => <BitboxDevice>[differentDevice],
+          );
+
+          service.startConnectionStatusObserver();
+          async.elapse(observerSettleTime);
+
+          // CURRENT behaviour: list non-empty → observer stays quiet, even
+          // though the connected device is no longer the paired one.
+          expect(
+            credentials.isConnected,
+            isTrue,
+            reason: 'pre-Initiative-I the observer does NOT detect device-replacement '
+                '(F-045); a refactor that flips this MUST also emit Lost(staticPubkeyMismatch) '
+                'and update the post-Initiative-I assertion below',
+          );
+
+          // POST-INITIATIVE-I CONTRACT (flip-to-fail marker):
+          // expect(credentials.isConnected, isFalse,
+          //     reason: 'Initiative I Deliverable 5: device-replaced detection');
+        });
+      },
+    );
+
+    test(
+      '_credentialsByAddress is NOT cleared on transient device-loss (F-005, current behaviour)',
+      () {
+        // F-005: the entries in _credentialsByAddress are kept across a
+        // transient device-loss so a reconnect can re-attach the SAME
+        // credentials instance. That's load-bearing behaviour — the
+        // observer test above relies on it ("preserves the credentials
+        // reference so reconnect can heal them").
+        //
+        // What is NOT acceptable per the audit: on a wallet-delete the
+        // map STAYS populated forever (covered in the home_bloc test in
+        // F-024 below). This test pins the half that must survive
+        // Initiative I unchanged.
+        fakeAsync((async) {
+          final service = pairedServiceSync(async);
+          final credentials = service.getCredentials(knownAddress);
+          expect(credentials.isConnected, isTrue);
+
+          platform.when(
+            SimulatedBitboxMethod.getDevices,
+            (_) async => const <BitboxDevice>[],
+          );
+          service.startConnectionStatusObserver();
+          async.elapse(observerSettleTime);
+
+          // Device gone, but the cached entry survives so a reconnect can
+          // heal it without forcing the caller to re-acquire credentials.
+          expect(credentials.isConnected, isFalse);
+
+          final sameAfterLoss = service.getCredentials(knownAddress);
+          expect(
+            sameAfterLoss,
+            same(credentials),
+            reason: 'device-loss must NOT evict the cached credentials — '
+                'reconnect re-attaches the same instance (load-bearing for P461 #1)',
+          );
+        });
+      },
+    );
+
+    test(
+      '_checkForTimer-style observer re-arm cannot leak parallel timers (F-034 sibling)',
+      () {
+        // F-034 lives on the cubit side, but the BitboxService surface it
+        // exercises is identical: an observer re-arm must cancel before
+        // installing the new periodic. We already have a "replaces any
+        // prior periodic" test; this one pins the BOUNDED behaviour under
+        // a re-arm storm (10 calls in tight succession).
+        //
+        // Without the cancel, 10 parallel timers would fire ~10× per
+        // interval. We assert a strict cap.
+        fakeAsync((async) {
+          final service = pairedServiceSync(async);
+          final ticksBefore = platform.count(SimulatedBitboxMethod.getDevices);
+
+          for (var i = 0; i < 10; i++) {
+            service.startConnectionStatusObserver();
+          }
+          async.elapse(fastInterval * 3);
+          async.flushMicrotasks();
+
+          final probes = platform.count(SimulatedBitboxMethod.getDevices) - ticksBefore;
+          expect(
+            probes,
+            lessThanOrEqualTo(3),
+            reason: 'a 10x re-arm must NOT result in 30 probes per 3 intervals — '
+                'cap is <=3 (one per interval). Higher count = leaked timer.',
+          );
+
+          service.stopConnectionStatusObserver();
+        });
+      },
+    );
+
+    test(
+      'BitboxService.dispose() emits a final Disconnected and rejects post-dispose init() (F-033)',
+      () async {
+        // F-033 / OPUS_BITBOX_MANDATE.md §5.1 Deliverable 3.5: `dispose()` is
+        // the hot-restart / end-of-app cleanup. Post-`dispose()` calls to
+        // `init()` throw StateError; subscribers receive the final
+        // Disconnected and an `onDone` signal. The test below pins all three.
+        final service = BitboxService(connectionStatusInterval: fastInterval);
+
+        final observed = <BitboxConnectionStatus>[];
+        final done = Completer<void>();
+        service.status.listen(observed.add, onDone: done.complete);
+
+        final devices = await service.getAllUsbDevices();
+        await service.dispose();
+        await done.future.timeout(const Duration(seconds: 1));
+
+        expect(observed.last, equals(const Disconnected()),
+            reason: 'dispose() must surface a final Disconnected emission');
+        expect(
+          () => service.init(devices.single),
+          throwsA(isA<StateError>()),
+          reason: 'init() after dispose() must throw StateError',
+        );
+      },
+    );
+
+    test(
+      'observer DOES NOT call disconnect() on stop alone (F-024 boundary)',
+      () {
+        // F-024: stopConnectionStatusObserver only cancels the periodic;
+        // it intentionally does NOT call bitboxManager.disconnect(). The
+        // home_bloc on wallet-delete calls JUST stop(), so the BitBox
+        // stays paired to the host (USB-FD claim on Android, BLE
+        // peripheral connected on iOS). Initiative I (Deliverable 6) adds
+        // a service-level clear() call from home_bloc on delete.
+        //
+        // Pin the current contract: stop alone is observer-only. The
+        // Initiative-I refactor will add `BitboxService.clear()` that
+        // DOES tear down the transport; that's a NEW method, not a
+        // behavioural change of stop().
+        fakeAsync((async) {
+          final service = pairedServiceSync(async);
+          final closeCallsBefore = platform.count(SimulatedBitboxMethod.close);
+
+          service.startConnectionStatusObserver();
+          service.stopConnectionStatusObserver();
+          async.flushMicrotasks();
+
+          expect(
+            platform.count(SimulatedBitboxMethod.close),
+            closeCallsBefore,
+            reason: 'stopConnectionStatusObserver MUST NOT close the transport — '
+                'the host_bloc.delete path expects a separate clear() call (BL-014).',
           );
         });
       },
