@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -18,9 +20,11 @@ class BuyPage extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (_) => BuyConverterCubit(
-            getIt<DfxBrokerbotService>(),
-          )..onFiatChanged('300'),
+          create: (_) {
+            final cubit = BuyConverterCubit(getIt<DfxBrokerbotService>());
+            unawaited(cubit.onFiatChanged('300'));
+            return cubit;
+          },
         ),
         BlocProvider(
           create: (_) => BuyPaymentInfoCubit(
@@ -57,9 +61,11 @@ class _BuyViewState extends State<BuyView> {
         listener: (context, state) {
           _syncController(_amountController, state.fiatText);
           _syncController(_resultController, state.sharesText);
-          context.read<BuyPaymentInfoCubit>().getPaymentInfo(
-            amount: _amountController.text,
-            currency: state.currency,
+          unawaited(
+            context.read<BuyPaymentInfoCubit>().getPaymentInfo(
+              amount: _amountController.text,
+              currency: state.currency,
+            ),
           );
         },
         builder: (context, state) {

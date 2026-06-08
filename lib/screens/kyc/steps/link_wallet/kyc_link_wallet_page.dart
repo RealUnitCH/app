@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -52,7 +54,7 @@ class KycLinkWalletView extends StatelessWidget {
             // Aktionariat share register, so `getRegistrationInfo` will return
             // `AlreadyRegistered` and `_runCheckKyc` will dispatch the next
             // KYC step.
-            context.read<KycCubit>().checkKyc();
+            unawaited(context.read<KycCubit>().checkKyc());
           }
           if (state is KycLinkWalletFailure) {
             ScaffoldMessenger.of(context).showSnackBar(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
@@ -18,13 +20,16 @@ class KycFinancialDataPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) =>
-          KycFinancialDataCubit(
-            getIt<DfxKycService>(),
-          )..loadQuestions(
+      create: (_) {
+        final cubit = KycFinancialDataCubit(getIt<DfxKycService>());
+        unawaited(
+          cubit.loadQuestions(
             url,
             language: context.read<SettingsBloc>().state.language,
           ),
+        );
+        return cubit;
+      },
       child: const KycFinancialDataView(),
     );
   }
@@ -38,7 +43,7 @@ class KycFinancialDataView extends StatelessWidget {
     return BlocListener<KycFinancialDataCubit, KycFinancialDataState>(
       listener: (context, state) {
         if (state is KycFinancialDataSubmitSuccess) {
-          context.read<KycCubit>().checkKyc();
+          unawaited(context.read<KycCubit>().checkKyc());
         }
         if (state is KycFinancialDataFailure) {
           ScaffoldMessenger.of(context).showSnackBar(

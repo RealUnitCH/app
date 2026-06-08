@@ -86,6 +86,9 @@ dev_dependencies:
     sdk: flutter
 
   alchemist: ^0.14.0
+  # Direct dev dependency so tool/lints/pattern_guard.dart may import it (the
+  # version is pinned by the analyzer override below).
+  analyzer: ^10.0.0
   bloc_test: ^10.0.0
   build_runner: ^2.13.0
   drift_dev: ^2.32.1

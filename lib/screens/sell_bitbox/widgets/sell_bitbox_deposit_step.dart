@@ -133,6 +133,7 @@ class SellBitboxDepositStep extends StatelessWidget {
 
   String _truncateAddress(String address) {
     if (address.length <= 12) return address;
+    // realunit-lint:ignore fixed_index_address_substring — guarded by the length check above (>12).
     return '${address.substring(0, 6)}…${address.substring(address.length - 4)}';
   }
 }

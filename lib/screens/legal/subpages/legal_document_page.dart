@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
@@ -52,7 +53,7 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
     if (widget.initialMarkdownContent != null) {
       _markdownContent = widget.initialMarkdownContent;
     } else {
-      _loadMarkdown();
+      unawaited(_loadMarkdown());
     }
   }
 
@@ -81,7 +82,7 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
       _loadFailed = false;
       _markdownContent = null;
     });
-    _loadMarkdown();
+    unawaited(_loadMarkdown());
   }
 
   String? get _pdfUrl {
@@ -108,11 +109,13 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
                   ),
                   onTapLink: (text, href, title) {
                     if (href == null || href.startsWith('mailto:') || href.contains('@')) return;
-                    context.pushNamed(
-                      AppRoutes.webView,
-                      extra: WebViewRouteParams(
-                        title: text,
-                        url: Uri.parse(href),
+                    unawaited(
+                      context.pushNamed(
+                        AppRoutes.webView,
+                        extra: WebViewRouteParams(
+                          title: text,
+                          url: Uri.parse(href),
+                        ),
                       ),
                     );
                   },

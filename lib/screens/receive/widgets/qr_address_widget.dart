@@ -38,16 +38,24 @@ class QRAddressWidget extends StatelessWidget {
               Text.rich(
                 TextSpan(
                   children: [
+                    // The fixed 0/6/21/36 slices assume `subtitle` is a full
+                    // 42-char EVM address — true at the only call site, but a
+                    // guarded slice is the better shape and is tracked as a
+                    // follow-up. Baselined below so the pattern guard blocks
+                    // NEW occurrences (this is the audit's RangeError site).
                     TextSpan(
+                      // realunit-lint:ignore fixed_index_address_substring — baselined audit site, see note above.
                       text: subtitle.substring(0, 6),
                       style: const TextStyle(fontWeight: .bold),
                     ),
                     const TextSpan(text: ' '),
                     TextSpan(
+                      // realunit-lint:ignore fixed_index_address_substring — baselined audit site, see note above.
                       text: subtitle.substring(6, 21),
                     ),
                     const TextSpan(text: '\n'),
                     TextSpan(
+                      // realunit-lint:ignore fixed_index_address_substring — baselined audit site, see note above.
                       text: subtitle.substring(21, 36),
                     ),
                     const TextSpan(text: ' '),

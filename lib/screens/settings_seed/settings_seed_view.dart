@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,7 +21,7 @@ class SettingsSeedView extends StatefulWidget {
 class _SettingsSeedViewState extends State<SettingsSeedView> {
   @override
   void initState() {
-    NoScreenshot.instance.screenshotOff();
+    unawaited(NoScreenshot.instance.screenshotOff());
     super.initState();
   }
 
@@ -114,7 +116,7 @@ class _SettingsSeedViewState extends State<SettingsSeedView> {
 
   @override
   void dispose() {
-    NoScreenshot.instance.screenshotOn();
+    unawaited(NoScreenshot.instance.screenshotOn());
     super.dispose();
   }
 }

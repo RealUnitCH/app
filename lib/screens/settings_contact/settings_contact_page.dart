@@ -20,7 +20,11 @@ class SettingsContactPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => SettingsContactCubit(getIt<DfxKycService>())..init(),
+      create: (_) {
+        final cubit = SettingsContactCubit(getIt<DfxKycService>());
+        unawaited(cubit.init());
+        return cubit;
+      },
       child: const SettingsContactView(),
     );
   }

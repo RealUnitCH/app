@@ -17,6 +17,7 @@ linter:
     prefer_const_constructors: true
     prefer_single_quotes: true
     unawaited_futures: true
+    discarded_futures: true
     avoid_dynamic_calls: true
     cast_nullable_to_non_nullable: true
     null_check_on_nullable_type_parameter: true

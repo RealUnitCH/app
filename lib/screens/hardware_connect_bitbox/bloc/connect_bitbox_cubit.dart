@@ -35,7 +35,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
        _createWalletTimeout = createWalletTimeout,
        _pairingPinTimeout = pairingPinTimeout,
        super(BitboxNotConnected()) {
-    _startScanning();
+    unawaited(_startScanning());
   }
 
   final Duration _confirmPairingTimeout;

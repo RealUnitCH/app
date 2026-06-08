@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -28,9 +30,11 @@ class SellPage extends StatelessWidget {
           ),
         ),
         BlocProvider(
-          create: (context) => SellConverterCubit(
-            getIt<DfxBrokerbotService>(),
-          )..onSharesChanged('100'),
+          create: (context) {
+            final cubit = SellConverterCubit(getIt<DfxBrokerbotService>());
+            unawaited(cubit.onSharesChanged('100'));
+            return cubit;
+          },
         ),
         BlocProvider(
           create: (context) => SellPaymentInfoCubit(
