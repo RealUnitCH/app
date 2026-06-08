@@ -45,7 +45,8 @@ end
 platform :android do
 
   def release_track
-    return "internal"
+    # Open testing ("beta"): public, link-shareable track. Internal-only uploads left the Open test on a stale build, so opt-in testers got "not found".
+    return "beta"
   end
 
   def aab_path
