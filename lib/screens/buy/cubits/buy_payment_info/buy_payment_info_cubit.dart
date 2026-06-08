@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:async/async.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
@@ -80,6 +81,16 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
       );
     } on BitboxNotConnectedException {
       return const BuyPaymentInfoFailure(PaymentInfoError.bitboxDisconnected);
+    } on ApiException catch (e) {
+      // 503 / PRICE_SOURCE_UNAVAILABLE means the external price provider
+      // (Aktionariat) is down, so no quote can be built — surface that
+      // explicitly instead of a generic failure. Must stay below the
+      // KYC/Registration clauses (those are ApiException subclasses).
+      if (e.statusCode == 503 || e.code == 'PRICE_SOURCE_UNAVAILABLE') {
+        return const BuyPaymentInfoFailure(PaymentInfoError.priceSourceUnavailable);
+      }
+      developer.log(e.toString());
+      return const BuyPaymentInfoFailure(PaymentInfoError.unknown);
     } catch (e) {
       developer.log(e.toString());
       return const BuyPaymentInfoFailure(PaymentInfoError.unknown);
