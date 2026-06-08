@@ -28,7 +28,7 @@
   "buyExecutedReference": "Ihre Referenz",
   "buyExecutedTitle": "Vielen Dank.",
   "buyMinAmount": "Mindestbetrag: ${amount} ${currency}",
-  "buyPaymentConfirm": "Zahlungsanweisungen per E-Mail anfordern",
+  "buyPaymentConfirm": "Klicken Sie hier, sobald Sie die Überweisung getätigt haben",
   "buyPaymentConfirmFailed": "Es gibt ein technisches Problem. Bitte versuchen Sie es später erneut. Falls der Fehler weiterhin besteht, kontaktieren Sie unseren Support.",
   "buyPaymentConfirmFailedAktionariat": "Es gibt ein technisches Problem. Bitte überprüfen Sie Ihr E-Mail-Postfach, möglicherweise fehlt noch eine Bestätigung Ihrer Blockchain-Adresse. Andernfalls versuchen Sie es später erneut. Falls der Fehler weiterhin besteht, kontaktieren Sie unseren Support.",
   "buyPaymentInformation": "Zahlungsinformationen",
