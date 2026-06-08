@@ -6,7 +6,7 @@ class RealUnitRegistrationInfoDto {
   /// `KycCubit._runCheckKyc` — see CONTRIBUTING.md "API as Decision
   /// Authority". `userData` is populated for `addWallet` (prior payload)
   /// and `newRegistration` (KYC pre-fill); `null` for `alreadyRegistered`
-  /// (no UX needed) and `kycRequired` (edge case).
+  /// (no UX needed).
   final RealUnitRegistrationState state;
   final RealUnitUserDataDto? realUnitUserDataDto;
 

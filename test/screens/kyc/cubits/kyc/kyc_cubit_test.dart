@@ -279,37 +279,12 @@ void main() {
       ],
     );
 
-    // `KycRequired` gets its own dedicated state so the failure page can show
-    // a tailored "complete your verification" message instead of the generic
-    // "step (-) cannot be completed" fallback.
-    blocTest<KycCubit, KycState>(
-      'emits KycRequiredFailure when wallet status reports KycRequired',
-      setUp: () {
-        when(() => kycService.getKycStatus()).thenAnswer(
-          (_) async => _kycStatus(level: KycLevel.level20),
-        );
-        when(() => kycService.getUser()).thenAnswer((_) async => _user());
-        when(() => registrationService.getRegistrationInfo()).thenAnswer(
-          (_) async => _walletStatus(RealUnitRegistrationState.kycRequired),
-        );
-      },
-      build: buildCubit,
-      act: (cubit) async {
-        cubit.markLegalDisclaimerAccepted();
-        await cubit.checkKyc();
-      },
-      expect: () => [
-        const KycLoading(),
-        const KycRequiredFailure(),
-      ],
-    );
-
     // Wallet-mode signing-capability gate: the address+signature debug
     // wallet cannot produce an EIP-712 signature. The cubit must surface
     // `KycSignatureUnsupportedFailure` BEFORE emitting `KycSuccess` for any
     // state that would require signing (`NewRegistration` / `AddWallet`).
-    // States that don't require signing (`AlreadyRegistered`, `KycRequired`)
-    // still flow through normally.
+    // States that don't require signing (`AlreadyRegistered`) still flow
+    // through normally.
     blocTest<KycCubit, KycState>(
       'emits KycSignatureUnsupportedFailure when debug wallet + NewRegistration',
       setUp: () {
