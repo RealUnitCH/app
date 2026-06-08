@@ -92,15 +92,6 @@ class KycFailure extends KycState {
   List<Object?> get props => [message];
 }
 
-/// Emitted when `getRegistrationInfo()` reports `kycRequired` — i.e. the
-/// wallet cannot be added without first completing the identity verification
-/// flow. Distinct from `KycUnsupportedStepFailure` so the user sees a
-/// tailored "complete your verification" message instead of the generic
-/// "step (-) cannot be completed" fallback.
-class KycRequiredFailure extends KycState {
-  const KycRequiredFailure();
-}
-
 /// Emitted when the wallet currently in use cannot produce EIP-712 signatures
 /// (today: the address+signature debug wallet) and the API has routed the
 /// user to a state (`NewRegistration` / `AddWallet`) that would require one.

@@ -152,9 +152,6 @@ class KycCubit extends Cubit<KycState> {
             ),
           );
           return;
-        case RealUnitRegistrationState.kycRequired:
-          emit(const KycRequiredFailure());
-          return;
       }
 
       // Account-merge invitation is still surfaced from the step list because

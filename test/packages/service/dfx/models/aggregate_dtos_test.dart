@@ -206,16 +206,6 @@ void main() {
       expect(dto.realUnitUserDataDto, isNotNull);
     });
 
-    test('parses KycRequired with null userData (edge case)', () {
-      final dto = RealUnitRegistrationInfoDto.fromJson({
-        'state': 'KycRequired',
-        'userData': null,
-      });
-
-      expect(dto.state, RealUnitRegistrationState.kycRequired);
-      expect(dto.realUnitUserDataDto, isNull);
-    });
-
     test('throws ArgumentError on unknown state', () {
       expect(
         () => RealUnitRegistrationInfoDto.fromJson({
