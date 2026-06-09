@@ -38,7 +38,16 @@ abstract class DFXAuthService {
   static const _signMessageTimeout = Duration(minutes: 3);
   static const _httpTimeout = Duration(seconds: 20);
 
-  final String signMessagePath = '/v1/auth/signMessage';
+  /// Auth sign-in message, derived locally from the address. Mirrors the
+  /// server's `Config.auth.signMessageGeneral` template (DFXswiss/api): the
+  /// backend re-derives this exact string from the address on every verify
+  /// (stateless, no nonce) and accepts it, so there is no need to first
+  /// round-trip through `GET /v1/auth/signMessage`. Dropping that call also
+  /// removes a network-timeout failure mode from the onboarding/pairing flow.
+  static const _signMessagePrefix =
+      'By_signing_this_message,_you_confirm_that_you_are_the_sole_owner_'
+      'of_the_provided_Blockchain_address._Your_ID:_';
+
   final String authPath = '/v1/auth';
   final AppStore appStore;
   final WalletService walletService;
@@ -51,7 +60,10 @@ abstract class DFXAuthService {
 
   String get walletAddress => wallet.primaryAddress.address.hexEip55;
 
-  Future<String> getSignMessage() => _fetchSignMessage(walletAddress);
+  String getSignMessage() => buildSignMessage(walletAddress);
+
+  /// Builds the deterministic auth sign-in message for [address] (EIP-55).
+  String buildSignMessage(String address) => '$_signMessagePrefix$address';
 
   /// Create-and-persist the auth signature for [account] without going through
   /// `appStore.wallet`. Used during the BitBox pairing flow so the signature is
@@ -68,25 +80,12 @@ abstract class DFXAuthService {
       return;
     }
 
-    final message = await _fetchSignMessage(address);
+    final message = buildSignMessage(address);
     final signature = await account.signMessage(message).timeout(_signMessageTimeout);
     if (signature.isEmpty || signature == '0x') {
       throw const SigningCancelledException();
     }
     await appStore.sessionCache.saveSignature(address, signature);
-  }
-
-  Future<String> _fetchSignMessage(String address) async {
-    final uri = buildUri(host, signMessagePath, {'address': address});
-    final response = await appStore.httpClient
-        .get(uri, headers: {'accept': 'application/json'})
-        .timeout(_httpTimeout);
-    if (response.statusCode != 200) {
-      throw Exception(
-        'Failed to get sign message. Status: ${response.statusCode} ${response.body}',
-      );
-    }
-    return (jsonDecode(response.body) as Map<String, dynamic>)['message'] as String;
   }
 
   // Exceptions this method can throw on the BitBox path:
@@ -122,7 +121,7 @@ abstract class DFXAuthService {
   }
 
   Future<Map<String, dynamic>> getAuthResponse([bool sendWalletName = true]) async {
-    final signature = await getSignature(await getSignMessage());
+    final signature = await getSignature(getSignMessage());
 
     final requestBody = jsonEncode(
       sendWalletName
@@ -178,13 +177,15 @@ abstract class DFXAuthService {
     Uri uri, {
     Map<String, String> headers = const {},
   }) {
-    return _authenticated((token) => appStore.httpClient.get(
-          uri,
-          headers: {
-            ...headers,
-            'Authorization': 'Bearer $token',
-          },
-        ));
+    return _authenticated(
+      (token) => appStore.httpClient.get(
+        uri,
+        headers: {
+          ...headers,
+          'Authorization': 'Bearer $token',
+        },
+      ),
+    );
   }
 
   Future<http.Response> authenticatedPut(
@@ -193,15 +194,17 @@ abstract class DFXAuthService {
     Object? body,
     Encoding? encoding,
   }) {
-    return _authenticated((token) => appStore.httpClient.put(
-          uri,
-          headers: {
-            ...headers,
-            'Authorization': 'Bearer $token',
-          },
-          body: body,
-          encoding: encoding,
-        ));
+    return _authenticated(
+      (token) => appStore.httpClient.put(
+        uri,
+        headers: {
+          ...headers,
+          'Authorization': 'Bearer $token',
+        },
+        body: body,
+        encoding: encoding,
+      ),
+    );
   }
 
   Future<http.Response> authenticatedPost(
@@ -210,15 +213,17 @@ abstract class DFXAuthService {
     Object? body,
     Encoding? encoding,
   }) {
-    return _authenticated((token) => appStore.httpClient.post(
-          uri,
-          headers: {
-            ...headers,
-            'Authorization': 'Bearer $token',
-          },
-          body: body,
-          encoding: encoding,
-        ));
+    return _authenticated(
+      (token) => appStore.httpClient.post(
+        uri,
+        headers: {
+          ...headers,
+          'Authorization': 'Bearer $token',
+        },
+        body: body,
+        encoding: encoding,
+      ),
+    );
   }
 
   /// Runs [request] with a Bearer token and retries once on a 401 with a
