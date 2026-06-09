@@ -27,14 +27,12 @@ void main() {
   });
 
   group('$KycEmailVerificationState', () {
-    test('all four states are distinct singletons by type', () {
+    test('all states are distinct singletons by type', () {
       expect(const KycEmailVerificationInitial(), const KycEmailVerificationInitial());
       expect(const KycEmailVerificationInitial(),
           isNot(const KycEmailVerificationLoading()));
       expect(const KycEmailVerificationSuccess(),
           isNot(const KycEmailVerificationFailure()));
-      expect(const KycEmailVerificationFailure(),
-          isNot(const KycEmailVerificationRegistrationFailure()));
     });
   });
 

@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_verification/kyc_email_verification_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
@@ -20,7 +19,6 @@ class KycEmailVerificationPage extends StatelessWidget {
     return BlocProvider(
       create: (context) => KycEmailVerificationCubit(
         dfxService: getIt<DfxWidgetService>(),
-        registrationService: getIt<RealUnitRegistrationService>(),
       ),
       child: const KycEmailVerificationView(),
     );
@@ -38,16 +36,6 @@ class KycEmailVerificationView extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(S.of(context).registerEmailVerificationFailed),
-              backgroundColor: RealUnitColors.status.red600,
-            ),
-          );
-        }
-        if (state is KycEmailVerificationRegistrationFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                S.of(context).registerEmailVerificationRegistrationFailed,
-              ),
               backgroundColor: RealUnitColors.status.red600,
             ),
           );
