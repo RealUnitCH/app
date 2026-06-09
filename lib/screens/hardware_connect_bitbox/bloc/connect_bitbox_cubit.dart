@@ -31,6 +31,12 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
   // rather than mislabelled as unseeded.
   static const _statusUninitialized = 'uninitialized';
 
+  // The status read is a local cached lookup (no device round-trip), so it
+  // returns in milliseconds. This cap only exists so a hypothetical stall can
+  // never hang the pairing flow — on timeout the read is treated as "not
+  // uninitialized" (fail-open) and the normal acquire path proceeds.
+  static const Duration _deviceStatusTimeout = Duration(seconds: 5);
+
   ConnectBitboxCubit(
     this._service,
     this._walletService,
@@ -190,10 +196,11 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
   /// the existing behaviour, never removes the working one.
   Future<bool> _isDeviceUninitialized() async {
     try {
-      return await _service.getDeviceStatus() == _statusUninitialized;
+      final status = await _service.getDeviceStatus().timeout(_deviceStatusTimeout);
+      return status == _statusUninitialized;
     } catch (e) {
       developer.log(
-        'device status read failed, treating device as ready: $e',
+        'device status read failed/timed out, treating device as ready: $e',
         name: '$ConnectBitboxCubit',
       );
       return false;
