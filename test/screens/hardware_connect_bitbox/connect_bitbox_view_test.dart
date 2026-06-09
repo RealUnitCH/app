@@ -1,3 +1,4 @@
+import 'package:bitbox_flutter/bitbox_flutter.dart' as sdk;
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +20,8 @@ class _MockConnectBitboxCubit extends MockCubit<BitboxConnectionState>
     implements ConnectBitboxCubit {}
 
 class _MockBitboxWallet extends Mock implements BitboxWallet {}
+
+class _FakeBitboxDevice extends Fake implements sdk.BitboxDevice {}
 
 void main() {
   late _MockConnectBitboxCubit cubit;
@@ -103,6 +106,23 @@ void main() {
       final buttons = tester.widgetList<AppFilledButton>(find.byType(AppFilledButton)).toList();
       buttons[1].onPressed?.call();
       verify(() => cubit.continueWithoutSignature()).called(1);
+    });
+
+    testWidgets('BitboxNotInitialized shows retry and cancel buttons', (tester) async {
+      final device = _FakeBitboxDevice();
+      await pumpView(tester, BitboxNotInitialized(device));
+
+      expect(find.byType(AppFilledButton), findsNWidgets(2));
+    });
+
+    testWidgets('BitboxNotInitialized retry button calls recheckDeviceStatus', (tester) async {
+      final device = _FakeBitboxDevice();
+      when(() => cubit.recheckDeviceStatus()).thenAnswer((_) async {});
+      await pumpView(tester, BitboxNotInitialized(device));
+
+      final buttons = tester.widgetList<AppFilledButton>(find.byType(AppFilledButton)).toList();
+      buttons[0].onPressed?.call();
+      verify(() => cubit.recheckDeviceStatus()).called(1);
     });
 
     testWidgets('ConnectContent honors confirmLabel and cancelLabel overrides', (tester) async {

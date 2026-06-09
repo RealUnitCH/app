@@ -24,6 +24,13 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
   // walked away and the device-side ephemeral noise channel has died.
   static const Duration _defaultPairingPinTimeout = Duration(seconds: 120);
 
+  // The bitbox02 firmware status for a device that has no wallet set up — it
+  // cannot derive an address. Mirrors the SDK's `StatusUninitialized`. Only this
+  // value is treated as "not set up": other non-ready statuses (e.g. a firmware
+  // upgrade requirement) are intentionally left on the existing failure path
+  // rather than mislabelled as unseeded.
+  static const _statusUninitialized = 'uninitialized';
+
   ConnectBitboxCubit(
     this._service,
     this._walletService,
@@ -155,18 +162,60 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
           'Disconnect the device, restart the app, and re-pair.',
         ),
       );
-      final wallet = await _acquireWalletOrDefault().timeout(
-        _createWalletTimeout,
-        onTimeout: () => throw TimeoutException(
-          'BitBox did not return an ETH address within '
-          '${_createWalletTimeout.inSeconds}s. Try disconnecting and re-pairing.',
-        ),
-      );
-      _service.startConnectionStatusObserver();
-      await _captureAuthSignature(wallet);
+      // A device paired without a wallet set up has no seed, so the address read
+      // below would come back empty and fail as a generic error — bouncing the
+      // user into the silent re-scan loop with no idea why. Detect it up front
+      // and surface a dedicated state. Returning here (instead of throwing) means
+      // no re-scan timer is armed, so the device isn't picked up and re-paired in
+      // an endless loop.
+      if (await _service.getDeviceStatus() == _statusUninitialized) {
+        if (isClosed) return;
+        emit(BitboxNotInitialized(currentState.device));
+        return;
+      }
+      await _acquireWalletAndConnect();
     } catch (e) {
       developer.log(e.toString(), name: '$ConnectBitboxCubit');
       _pendingInit = null;
+      if (isClosed) return;
+      emit(BitboxNotConnected());
+      _checkForTimer = Timer.periodic(const Duration(milliseconds: 500), (_) => checkForBitbox());
+    }
+  }
+
+  /// Acquires the wallet from the device and finishes the connection. Shared by
+  /// the initial pairing flow and the [recheckDeviceStatus] retry so both run
+  /// the same create/observe/sign sequence.
+  Future<void> _acquireWalletAndConnect() async {
+    final wallet = await _acquireWalletOrDefault().timeout(
+      _createWalletTimeout,
+      onTimeout: () => throw TimeoutException(
+        'BitBox did not return an ETH address within '
+        '${_createWalletTimeout.inSeconds}s. Try disconnecting and re-pairing.',
+      ),
+    );
+    _service.startConnectionStatusObserver();
+    await _captureAuthSignature(wallet);
+  }
+
+  /// Re-reads the device status after a [BitboxNotInitialized], for when the user
+  /// has set up / restored a wallet on the device and wants to continue without
+  /// re-pairing. If the device now reports a wallet, the connection proceeds; if
+  /// it is still unseeded, the state is re-emitted so the user can try again.
+  Future<void> recheckDeviceStatus() async {
+    final currentState = state;
+    if (currentState is! BitboxNotInitialized) return;
+    try {
+      if (await _service.getDeviceStatus() == _statusUninitialized) {
+        if (isClosed) return;
+        emit(BitboxNotInitialized(currentState.device));
+        return;
+      }
+      if (isClosed) return;
+      emit(BitboxPairing(currentState.device));
+      await _acquireWalletAndConnect();
+    } catch (e) {
+      developer.log(e.toString(), name: '$ConnectBitboxCubit');
       if (isClosed) return;
       emit(BitboxNotConnected());
       _checkForTimer = Timer.periodic(const Duration(milliseconds: 500), (_) => checkForBitbox());

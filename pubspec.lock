@@ -77,8 +77,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "v0.0.8"
-      resolved-ref: "7786f6e70b716287f08f4b7082762e6d7d0546bf"
+      ref: "fix/bitbox-uninitialized-device-status"
+      resolved-ref: "237ceee851cd654ccfd4bbcdee094fd796032453"
       url: "https://github.com/DFXswiss/bitbox_flutter.git"
     source: git
     version: "0.0.1"

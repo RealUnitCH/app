@@ -382,6 +382,26 @@ void main() {
       });
     });
 
+    test('getDeviceStatus returns the firmware status the device reports', () {
+      // Thin pass-through to the plugin's cached-status read. The cubit branches
+      // on this string after pairing to detect an unseeded device, so a
+      // method-name flip would silently break that gate on real hardware.
+      fakeAsync((async) {
+        final service = pairedServiceSync(async);
+        platform.when(
+          SimulatedBitboxMethod.getDeviceStatus,
+          (_) async => 'uninitialized',
+        );
+
+        String? status;
+        service.getDeviceStatus().then((value) => status = value);
+        async.flushMicrotasks();
+
+        expect(status, 'uninitialized');
+        expect(platform.count(SimulatedBitboxMethod.getDeviceStatus), 1);
+      });
+    });
+
     test('confirmPairing returns normally on a verified channel', () {
       // Happy path: user pressed the on-device button.
       fakeAsync((async) {
