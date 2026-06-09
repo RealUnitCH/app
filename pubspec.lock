@@ -78,7 +78,7 @@ packages:
     description:
       path: "."
       ref: "fix/bitbox-uninitialized-device-status"
-      resolved-ref: "237ceee851cd654ccfd4bbcdee094fd796032453"
+      resolved-ref: "1cfab9d982f5a822dfbaf2d1ec961c8fdd7e9e30"
       url: "https://github.com/DFXswiss/bitbox_flutter.git"
     source: git
     version: "0.0.1"
