@@ -4,17 +4,9 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_info_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_verification/kyc_email_verification_cubit.dart';
 
 class _MockAuthService extends Mock implements DFXAuthService {}
-
-class _MockRegistrationService extends Mock implements RealUnitRegistrationService {}
 
 String _fakeJwt(int accountId) {
   final header = base64Url
@@ -26,53 +18,16 @@ String _fakeJwt(int accountId) {
   return '$header.$payload.signature';
 }
 
-const _kycData = KycPersonalData(
-  accountType: KycAccountType.personal,
-  firstName: 'A',
-  lastName: 'B',
-  phone: '+41',
-  address: KycAddress(
-    street: 'S',
-    zip: '8000',
-    city: 'Zurich',
-    country: 41,
-  ),
-);
-
-const _userData = RealUnitUserDataDto(
-  email: 'a@b.com',
-  name: 'A B',
-  type: 'HUMAN',
-  phoneNumber: '+41',
-  birthday: '2000-01-01',
-  nationality: 'CH',
-  addressStreet: 'S',
-  addressPostalCode: '8000',
-  addressCity: 'Zurich',
-  addressCountry: 'CH',
-  swissTaxResidence: true,
-  lang: 'de',
-  kycData: _kycData,
-);
-
 void main() {
   late _MockAuthService auth;
-  late _MockRegistrationService registrationService;
-
-  setUpAll(() {
-    registerFallbackValue(_userData);
-  });
 
   setUp(() {
     auth = _MockAuthService();
-    registrationService = _MockRegistrationService();
     when(() => auth.invalidateAuthToken()).thenReturn(null);
   });
 
-  KycEmailVerificationCubit build() => KycEmailVerificationCubit(
-        dfxService: auth,
-        registrationService: registrationService,
-      );
+  KycEmailVerificationCubit build() =>
+      KycEmailVerificationCubit(dfxService: auth);
 
   group('initial state', () {
     test('emits $KycEmailVerificationInitial', () {
@@ -82,9 +37,10 @@ void main() {
 
   group('checkEmailVerification', () {
     blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
-      'same account id before + after invalidation → Failure',
+      'same account id before + after invalidation → Failure '
+      '(confirmation link not visited yet)',
       setUp: () {
-        // Both calls return the same token, so the same account id is parsed.
+        // Both reads return the same token, so the same account id is parsed.
         when(() => auth.getAuthToken()).thenAnswer((_) async => _fakeJwt(1));
       },
       build: build,
@@ -93,26 +49,16 @@ void main() {
         isA<KycEmailVerificationLoading>(),
         isA<KycEmailVerificationFailure>(),
       ],
-      verify: (_) {
-        verify(() => auth.invalidateAuthToken()).called(1);
-        verifyNever(() => registrationService.registerWallet(any()));
-      },
+      verify: (_) => verify(() => auth.invalidateAuthToken()).called(1),
     );
 
     blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
-      'changed account id + existing user data → registerWallet + Success',
+      'changed account id → Success (merge confirmed; the KYC flow handles '
+      'registration — nothing is registered here)',
       setUp: () {
         final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        when(() => registrationService.getRegistrationInfo()).thenAnswer(
-          (_) async => RealUnitRegistrationInfoDto(
-            state: RealUnitRegistrationState.addWallet,
-            realUnitUserDataDto: _userData,
-          ),
-        );
-        when(() => registrationService.registerWallet(any()))
-            .thenAnswer((_) async => RegistrationStatus.completed);
       },
       build: build,
       act: (c) => c.checkEmailVerification(),
@@ -120,87 +66,17 @@ void main() {
         isA<KycEmailVerificationLoading>(),
         isA<KycEmailVerificationSuccess>(),
       ],
-      verify: (_) => verify(() => registrationService.registerWallet(_userData)).called(1),
     );
 
     blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
-      'changed account id but no userData → RegistrationFailure, no Success '
-      '(propagation race: user can retry by tapping the confirm button again)',
+      'retry: first tap (link not visited) → Failure, second tap (account now '
+      'changed) → Success',
       setUp: () {
-        final tokens = [_fakeJwt(1), _fakeJwt(2)];
+        // tap 1: both reads = account 1 → Failure.
+        // tap 2: account 1 → 2 → Success.
+        final tokens = [_fakeJwt(1), _fakeJwt(1), _fakeJwt(1), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        when(() => registrationService.getRegistrationInfo()).thenAnswer(
-          (_) async => RealUnitRegistrationInfoDto(
-            state: RealUnitRegistrationState.newRegistration,
-            realUnitUserDataDto: null,
-          ),
-        );
-      },
-      build: build,
-      act: (c) => c.checkEmailVerification(),
-      expect: () => [
-        isA<KycEmailVerificationLoading>(),
-        isA<KycEmailVerificationRegistrationFailure>(),
-      ],
-      verify: (_) {
-        verifyNever(() => registrationService.registerWallet(any()));
-      },
-    );
-
-    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
-      'registerWallet throws → RegistrationFailure, no Success '
-      '(failure is surfaced so the user can retry instead of proceeding '
-      'with a wallet that is not actually registered)',
-      setUp: () {
-        final tokens = [_fakeJwt(1), _fakeJwt(2)];
-        var i = 0;
-        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        when(() => registrationService.getRegistrationInfo()).thenAnswer(
-          (_) async => RealUnitRegistrationInfoDto(
-            state: RealUnitRegistrationState.addWallet,
-            realUnitUserDataDto: _userData,
-          ),
-        );
-        when(() => registrationService.registerWallet(any()))
-            .thenAnswer((_) async => throw Exception('boom'));
-      },
-      build: build,
-      act: (c) => c.checkEmailVerification(),
-      expect: () => [
-        isA<KycEmailVerificationLoading>(),
-        isA<KycEmailVerificationRegistrationFailure>(),
-      ],
-      verify: (_) => verify(() => registrationService.registerWallet(_userData)).called(1),
-    );
-
-    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
-      'retry after null-userData race: second call skips account-id check '
-      '(propagation completed → registerWallet succeeds → Success)',
-      setUp: () {
-        // First call: account-id changes, userData not yet propagated.
-        // Second call: same account-id (already merged), userData now present.
-        // Without the `_mergeDetected` short-circuit the second call would
-        // hit the same-account-id guard and emit Failure ("email not yet
-        // confirmed") — verifying the retry path works.
-        final tokens = [_fakeJwt(1), _fakeJwt(2), _fakeJwt(2), _fakeJwt(2)];
-        var i = 0;
-        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        var walletStatusCallCount = 0;
-        when(() => registrationService.getRegistrationInfo()).thenAnswer((_) async {
-          walletStatusCallCount++;
-          return walletStatusCallCount == 1
-              ? RealUnitRegistrationInfoDto(
-                  state: RealUnitRegistrationState.newRegistration,
-                  realUnitUserDataDto: null,
-                )
-              : RealUnitRegistrationInfoDto(
-                  state: RealUnitRegistrationState.addWallet,
-                  realUnitUserDataDto: _userData,
-                );
-        });
-        when(() => registrationService.registerWallet(any()))
-            .thenAnswer((_) async => RegistrationStatus.completed);
       },
       build: build,
       act: (c) async {
@@ -209,13 +85,10 @@ void main() {
       },
       expect: () => [
         isA<KycEmailVerificationLoading>(),
-        isA<KycEmailVerificationRegistrationFailure>(),
+        isA<KycEmailVerificationFailure>(),
         isA<KycEmailVerificationLoading>(),
         isA<KycEmailVerificationSuccess>(),
       ],
-      verify: (_) {
-        verify(() => registrationService.registerWallet(_userData)).called(1);
-      },
     );
   });
 
