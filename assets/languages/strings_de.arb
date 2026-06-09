@@ -53,6 +53,8 @@
   "connectBitboxContent": "Bitte verbinden Sie Ihre BitBox mit Ihrem Smartphone.",
   "connectBitboxContentIos": "Bitte verbinden Sie Ihre BitBox mit Ihrem Smartphone und aktivieren Sie zusätzlich Bluetooth.",
   "connectBitboxFailed": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+  "connectBitboxNotInitialized": "Auf dieser BitBox ist noch keine Wallet eingerichtet. Bitte richten Sie über die BitBox-App eine Wallet auf dem Gerät ein oder stellen Sie eine wieder her und versuchen Sie es erneut.",
+  "connectBitboxNotInitializedTitle": "BitBox noch nicht eingerichtet",
   "connectBitboxSignInHint": "Nach der Code-Überprüfung wird die BitBox um eine zusätzliche Bestätigung zur Anmeldung gebeten.",
   "connectBitboxSignatureCapturing": "Bitte bestätigen Sie die Anmeldeanfrage auf Ihrem BitBox-Gerät. Diese Signatur wird einmalig erfasst, damit künftige Käufe Ihre BitBox nicht erneut benötigen.",
   "connectBitboxSignatureCapturingTitle": "Anmeldung bestätigen",
