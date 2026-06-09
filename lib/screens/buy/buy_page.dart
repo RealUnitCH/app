@@ -9,6 +9,7 @@ import 'package:realunit_wallet/screens/buy/widgets/payment_action_button.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 
 class BuyPage extends StatelessWidget {
   const BuyPage({super.key});
@@ -87,6 +88,16 @@ class _BuyViewState extends State<BuyView> {
                               PaymentActionButton(
                                 amountController: _amountController,
                               ),
+                              const SizedBox(height: 16),
+                              Text(
+                                S.of(context).buyAdvertisingDisclaimer,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: RealUnitColors.neutral500),
+                                textAlign: .center,
+                              ),
+                              const SizedBox(height: 8),
                             ],
                           ),
                         ),
