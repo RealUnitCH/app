@@ -455,23 +455,20 @@ void main() {
       verifyNever(() => sessionCache.saveSignature(any(), any()));
     });
 
-    test('fetches a sign message, signs, and persists when the cache is cold', () async {
-      String? capturedPath;
-      String? capturedAddrParam;
-      final client = MockClient((request) async {
-        capturedPath = request.url.path;
-        capturedAddrParam = request.url.queryParameters['address'];
-        return http.Response(jsonEncode({'message': 'please sign'}), 200);
+    test('builds the sign message locally, signs, and persists when the cache is cold', () async {
+      var httpCalled = false;
+      final client = MockClient((_) async {
+        httpCalled = true;
+        return http.Response('unexpected', 500);
       });
       when(() => appStore.httpClient).thenReturn(client);
 
       await buildService().ensureSignatureFor(account);
 
-      expect(capturedPath, '/v1/auth/signMessage');
-      // Address query param is the account's address (EIP-55 checksummed),
-      // not the service's active wallet address — this is the BitBox-pairing
+      // No /v1/auth/signMessage round-trip — the message is derived locally
+      // from the account address (EIP-55 checksummed), the BitBox-pairing
       // entry point.
-      expect(capturedAddrParam, accountAddressEip55);
+      expect(httpCalled, isFalse);
       expect(account.signCallCount, 1);
       verify(() => sessionCache.saveSignature(accountAddressEip55, stubSignature)).called(1);
     });
@@ -508,21 +505,6 @@ void main() {
         );
       });
     }
-
-    test('propagates the HTTP error when the sign-message endpoint is non-200', () async {
-      when(() => appStore.httpClient).thenReturn(
-        MockClient(
-          (_) async => http.Response('upstream broken', 502),
-        ),
-      );
-
-      expect(
-        () => buildService().ensureSignatureFor(account),
-        throwsA(isA<Exception>()),
-      );
-      // No sign ceremony triggered when the message fetch fails.
-      expect(account.signCallCount, 0);
-    });
   });
 
   // -------------------------------------------------------------------------
@@ -596,29 +578,21 @@ void main() {
       return _SignatureTestAuthService(appStore, walletService, account, walletAddress);
     }
 
-    test('getSignMessage GETs /v1/auth/signMessage with the wallet address', () async {
-      String? capturedPath;
-      String? capturedAddr;
-      final client = MockClient((request) async {
-        capturedPath = request.url.path;
-        capturedAddr = request.url.queryParameters['address'];
-        return http.Response(jsonEncode({'message': 'please sign me'}), 200);
+    test('getSignMessage builds the deterministic message locally, no HTTP', () async {
+      var httpCalled = false;
+      final client = MockClient((_) async {
+        httpCalled = true;
+        return http.Response('unexpected', 500);
       });
 
-      final message = await buildService(client).getSignMessage();
-
-      expect(message, 'please sign me');
-      expect(capturedPath, '/v1/auth/signMessage');
-      expect(capturedAddr, walletAddress);
-    });
-
-    test('getSignMessage throws on non-200', () async {
-      final client = MockClient((_) async => http.Response('boom', 500));
+      final message = buildService(client).getSignMessage();
 
       expect(
-        () => buildService(client).getSignMessage(),
-        throwsA(isA<Exception>()),
+        message,
+        'By_signing_this_message,_you_confirm_that_you_are_the_sole_owner_'
+        'of_the_provided_Blockchain_address._Your_ID:_$walletAddress',
       );
+      expect(httpCalled, isFalse, reason: 'no /v1/auth/signMessage round-trip');
     });
 
     test(
@@ -631,10 +605,6 @@ void main() {
         var seq = 0;
         final client = MockClient((request) async {
           seq++;
-          if (request.method == 'GET') {
-            // /v1/auth/signMessage round-trip.
-            return http.Response(jsonEncode({'message': 'please sign'}), 200);
-          }
           sentMethod = request.method;
           sentPath = request.url.path;
           sentHeaders = request.headers;
@@ -651,17 +621,14 @@ void main() {
         expect(sentBody!['wallet'], 'RealUnit');
         expect(sentBody!['address'], walletAddress);
         expect(sentBody!['signature'], validSignature);
-        // Two HTTP calls: sign-message + auth.
-        expect(seq, 2);
+        // One HTTP call: auth only — the sign message is built locally.
+        expect(seq, 1);
       },
     );
 
     test('getAuthResponse omits walletName when sendWalletName=false', () async {
       Map<String, dynamic>? sentBody;
       final client = MockClient((request) async {
-        if (request.method == 'GET') {
-          return http.Response(jsonEncode({'message': 'm'}), 200);
-        }
         sentBody = jsonDecode(request.body) as Map<String, dynamic>;
         return http.Response(jsonEncode({'accessToken': 'jwt'}), 201);
       });
@@ -675,9 +642,6 @@ void main() {
 
     test('getAuthResponse surfaces the 403 message when present', () async {
       final client = MockClient((request) async {
-        if (request.method == 'GET') {
-          return http.Response(jsonEncode({'message': 'm'}), 200);
-        }
         return http.Response(
           jsonEncode({'statusCode': 403, 'message': 'country-blocked'}),
           403,
@@ -698,9 +662,6 @@ void main() {
 
     test('getAuthResponse falls back to the canned 403 message when the body has none', () async {
       final client = MockClient((request) async {
-        if (request.method == 'GET') {
-          return http.Response(jsonEncode({'message': 'm'}), 200);
-        }
         return http.Response(jsonEncode({'statusCode': 403}), 403);
       });
 
@@ -718,9 +679,6 @@ void main() {
 
     test('getAuthResponse throws on an arbitrary non-201/403 status', () async {
       final client = MockClient((request) async {
-        if (request.method == 'GET') {
-          return http.Response(jsonEncode({'message': 'm'}), 200);
-        }
         return http.Response('upstream broken', 502);
       });
 
@@ -735,9 +693,6 @@ void main() {
       () async {
         var authCalls = 0;
         final client = MockClient((request) async {
-          if (request.method == 'GET') {
-            return http.Response(jsonEncode({'message': 'm'}), 200);
-          }
           authCalls++;
           return http.Response(jsonEncode({'accessToken': 'jwt-1'}), 201);
         });
@@ -767,9 +722,6 @@ void main() {
       sessionCache.setAuthToken('stale-jwt');
       var authCalls = 0;
       final client = MockClient((request) async {
-        if (request.method == 'GET') {
-          return http.Response(jsonEncode({'message': 'm'}), 200);
-        }
         authCalls++;
         return http.Response(jsonEncode({'accessToken': 'jwt-fresh'}), 201);
       });

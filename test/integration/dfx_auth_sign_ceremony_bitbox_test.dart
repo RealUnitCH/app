@@ -77,7 +77,6 @@ void main() {
     late FakeBitboxCredentials credentials;
     late BitboxWalletAccount account;
 
-    const signMessage = 'Sign me to log in to api.dfx.swiss';
     const jwt = 'jwt-fresh-token';
 
     setUp(() {
@@ -111,20 +110,12 @@ void main() {
     }
 
     test(
-      'happy path: cold cache → signMessage GET → BitBox sign → auth POST 201 → JWT cached',
+      'happy path: cold cache → local sign message → BitBox sign → auth POST 201 → JWT cached',
       () async {
         final calls = <String>[];
         Map<String, dynamic>? authBody;
         final client = MockClient((request) async {
           calls.add('${request.method} ${request.url.path}');
-          if (request.method == 'GET' && request.url.path == '/v1/auth/signMessage') {
-            // Address query param must be the credentials' EIP-55 address.
-            expect(
-              request.url.queryParameters['address'],
-              credentials.address.hexEip55,
-            );
-            return http.Response(jsonEncode({'message': signMessage}), 200);
-          }
           if (request.method == 'POST' && request.url.path == '/v1/auth') {
             authBody = jsonDecode(request.body) as Map<String, dynamic>;
             return http.Response(jsonEncode({'accessToken': jwt}), 201);
@@ -137,11 +128,9 @@ void main() {
         final token = await service.getAuthToken();
 
         expect(token, jwt);
-        // The full ceremony happened in order: sign-message GET, then auth POST.
-        expect(calls, [
-          'GET /v1/auth/signMessage',
-          'POST /v1/auth',
-        ]);
+        // The sign message is built locally now, so the only HTTP call is the
+        // auth POST — no /v1/auth/signMessage round-trip.
+        expect(calls, ['POST /v1/auth']);
         // BitBox signed exactly once — the cancel/disconnect guards never
         // forced a retry on the happy path.
         expect(credentials.signCallCount, 1);
@@ -176,9 +165,6 @@ void main() {
         final calls = <String>[];
         final client = MockClient((request) async {
           calls.add('${request.method} ${request.url.path}');
-          if (request.method == 'GET') {
-            return http.Response(jsonEncode({'message': signMessage}), 200);
-          }
           // If the POST ever fires the cancel guard didn't fire — fail loudly.
           return http.Response('cancel did not short-circuit', 500);
         });
@@ -190,8 +176,9 @@ void main() {
           throwsA(isA<SigningCancelledException>()),
         );
 
-        // signMessage was fetched but the cancel happened before any POST.
-        expect(calls, ['GET /v1/auth/signMessage']);
+        // No HTTP at all: the message is built locally and the cancel happens
+        // during signing, before any auth POST.
+        expect(calls, isEmpty);
         expect(credentials.signCallCount, 1);
         expect(sessionCache.authToken, isNull);
         expect(sessionCache.signature, isNull);
@@ -211,12 +198,9 @@ void main() {
         credentials.signDelay = Duration.zero;
 
         fakeAsync((async) {
-          final client = MockClient((request) async {
-            if (request.method == 'GET') {
-              return http.Response(jsonEncode({'message': signMessage}), 200);
-            }
-            return http.Response('should never POST on a timed-out sign', 500);
-          });
+          final client = MockClient(
+            (_) async => http.Response('should never POST on a timed-out sign', 500),
+          );
           final service = buildService(client);
 
           Object? caught;
@@ -248,15 +232,12 @@ void main() {
     test(
       '403 country-blocked: sign succeeds, auth POST returns 403 with message → Exception propagated to caller',
       () async {
-        final client = MockClient((request) async {
-          if (request.method == 'GET') {
-            return http.Response(jsonEncode({'message': signMessage}), 200);
-          }
-          return http.Response(
+        final client = MockClient(
+          (_) async => http.Response(
             jsonEncode({'statusCode': 403, 'message': 'country-blocked: CH'}),
             403,
-          );
-        });
+          ),
+        );
         final service = buildService(client);
 
         await expectLater(
