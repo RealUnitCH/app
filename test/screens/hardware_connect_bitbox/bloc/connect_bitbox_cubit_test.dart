@@ -548,5 +548,30 @@ void main() {
       await cubit.recheckDeviceStatus();
       expect(cubit.state, isA<BitboxNotConnected>());
     });
+
+    // Fail-open guarantee: a failing status read must NOT block a device that
+    // would otherwise pair. If getDeviceStatus throws, the flow falls through to
+    // the normal acquire path and still reaches BitboxConnected — the new gate
+    // can only ever ADD the unseeded path, never break the working one.
+    test('continues to BitboxConnected when the status read throws', () async {
+      var pollCount = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 3 ? '' : 'HASH-ok';
+      });
+      when(() => service.confirmPairing()).thenAnswer((_) async {});
+      when(() => service.getDeviceStatus()).thenThrow(Exception('status boom'));
+
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      await waitForState<BitboxCheckHash>(cubit);
+      await cubit.confirmPairing();
+
+      expect(cubit.state, isA<BitboxConnected>());
+      verify(() => walletService.createBitboxWallet(any())).called(1);
+    });
   });
 }

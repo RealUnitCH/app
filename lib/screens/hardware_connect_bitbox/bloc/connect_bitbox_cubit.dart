@@ -168,7 +168,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
       // and surface a dedicated state. Returning here (instead of throwing) means
       // no re-scan timer is armed, so the device isn't picked up and re-paired in
       // an endless loop.
-      if (await _service.getDeviceStatus() == _statusUninitialized) {
+      if (await _isDeviceUninitialized()) {
         if (isClosed) return;
         emit(BitboxNotInitialized(currentState.device));
         return;
@@ -180,6 +180,23 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
       if (isClosed) return;
       emit(BitboxNotConnected());
       _checkForTimer = Timer.periodic(const Duration(milliseconds: 500), (_) => checkForBitbox());
+    }
+  }
+
+  /// Reads the device status, treating ONLY a clean, explicit `uninitialized`
+  /// read as "no wallet set up". Any failure or unexpected value returns false
+  /// (fail-open), so a status read can never block a device that would otherwise
+  /// pair successfully — it only ever adds the dedicated unseeded path on top of
+  /// the existing behaviour, never removes the working one.
+  Future<bool> _isDeviceUninitialized() async {
+    try {
+      return await _service.getDeviceStatus() == _statusUninitialized;
+    } catch (e) {
+      developer.log(
+        'device status read failed, treating device as ready: $e',
+        name: '$ConnectBitboxCubit',
+      );
+      return false;
     }
   }
 
@@ -206,7 +223,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     final currentState = state;
     if (currentState is! BitboxNotInitialized) return;
     try {
-      if (await _service.getDeviceStatus() == _statusUninitialized) {
+      if (await _isDeviceUninitialized()) {
         if (isClosed) return;
         emit(BitboxNotInitialized(currentState.device));
         return;
