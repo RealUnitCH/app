@@ -1,3 +1,4 @@
+import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -14,6 +15,8 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_serv
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
+import 'package:realunit_wallet/screens/kyc/subpages/kyc_failure_page.dart';
+import 'package:realunit_wallet/screens/kyc/subpages/kyc_loading_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_pending_page.dart';
 
 import '../../helper/helper.dart';
@@ -26,6 +29,8 @@ class _MockRealUnitRegistrationService extends Mock
 class _MockAppStore extends Mock implements AppStore {}
 
 class _MockAWallet extends Mock implements AWallet {}
+
+class _MockKycCubit extends MockCubit<KycState> implements KycCubit {}
 
 UserKycDto _kycHeader({KycLevel level = KycLevel.level0}) =>
     UserKycDto(hash: 'h', level: level, dataComplete: false);
@@ -65,66 +70,104 @@ KycStepSessionDto _currentStep(
 );
 
 void main() {
-  late _MockDfxKycService kycService;
-  late _MockRealUnitRegistrationService registrationService;
-  late _MockAppStore appStore;
-  late _MockAWallet wallet;
+  group('$KycViewManager (mocked cubit)', () {
+    late KycCubit kycCubit;
 
-  setUp(() {
-    kycService = _MockDfxKycService();
-    registrationService = _MockRealUnitRegistrationService();
-    appStore = _MockAppStore();
-    wallet = _MockAWallet();
-    when(() => appStore.wallet).thenReturn(wallet);
-    when(() => wallet.walletType).thenReturn(WalletType.software);
-    when(() => registrationService.getRegistrationInfo()).thenAnswer(
-      (_) async => RealUnitRegistrationInfoDto(
-        state: RealUnitRegistrationState.alreadyRegistered,
-      ),
-    );
-  });
+    setUp(() {
+      kycCubit = _MockKycCubit();
+    });
 
-  // An in-progress `dfxApproval` step used to land on a blank white Scaffold
-  // (the `(_) => const Scaffold()` fallback in KycViewManager). It must render
-  // the existing pending page instead.
-  testWidgets(
-    'KycSuccess(dfxApproval) renders KycPendingPage, not a blank Scaffold',
-    (tester) async {
-      when(() => kycService.getKycStatus()).thenAnswer(
-        (_) async => _kycStatus(
-          level: KycLevel.level50,
-          processStatus: KycProcessStatus.inProgress,
-        ),
-      );
-      when(() => kycService.getUser()).thenAnswer((_) async => _user());
-      when(() => kycService.continueKyc()).thenAnswer(
-        (_) async => _session(
-          level: KycLevel.level50,
-          steps: const [],
-          currentStep: _currentStep(KycStepName.dfxApproval),
-        ),
-      );
-
-      final cubit = KycCubit(kycService, registrationService, appStore);
+    Future<void> pumpManager(WidgetTester tester, KycState state) async {
+      when(() => kycCubit.state).thenReturn(state);
       await tester.pumpApp(
         BlocProvider<KycCubit>.value(
-          value: cubit,
+          value: kycCubit,
           child: const KycViewManager(),
         ),
       );
+    }
 
-      cubit.markLegalDisclaimerAccepted();
-      await cubit.checkKyc();
-      await tester.pumpAndSettle();
+    // #610 F2: KycInitial is the pre-checkKyc() seed state. It must render the
+    // loading page, never fall through to the diagnostic catch-all that would
+    // flash "Unhandled KYC state: KycInitial" on the very first frame.
+    testWidgets('KycInitial renders the loading page, not the failure fallback',
+        (tester) async {
+      await pumpManager(tester, const KycInitial());
 
-      // Sanity: the cubit really reached the bug-triggering state.
-      expect(cubit.state, isA<KycSuccess>());
-      expect((cubit.state as KycSuccess).currentStep, KycStep.dfxApproval);
+      expect(find.byType(KycLoadingPage), findsOneWidget);
+      expect(find.byType(KycFailurePage), findsNothing);
+    });
 
-      // Regression assertion: the pending page renders (not a blank screen).
-      expect(find.byType(KycPendingPage), findsOneWidget);
+    testWidgets('KycLoading renders the loading page', (tester) async {
+      await pumpManager(tester, const KycLoading());
 
-      await cubit.close();
-    },
-  );
+      expect(find.byType(KycLoadingPage), findsOneWidget);
+      expect(find.byType(KycFailurePage), findsNothing);
+    });
+  });
+
+  group('KycViewManager (real cubit integration)', () {
+    late _MockDfxKycService kycService;
+    late _MockRealUnitRegistrationService registrationService;
+    late _MockAppStore appStore;
+    late _MockAWallet wallet;
+
+    setUp(() {
+      kycService = _MockDfxKycService();
+      registrationService = _MockRealUnitRegistrationService();
+      appStore = _MockAppStore();
+      wallet = _MockAWallet();
+      when(() => appStore.wallet).thenReturn(wallet);
+      when(() => wallet.walletType).thenReturn(WalletType.software);
+      when(() => registrationService.getRegistrationInfo()).thenAnswer(
+        (_) async => RealUnitRegistrationInfoDto(
+          state: RealUnitRegistrationState.alreadyRegistered,
+        ),
+      );
+    });
+
+    // An in-progress `dfxApproval` step used to land on a blank white Scaffold
+    // (the `(_) => const Scaffold()` fallback in KycViewManager). It must render
+    // the existing pending page instead.
+    testWidgets(
+      'KycSuccess(dfxApproval) renders KycPendingPage, not a blank Scaffold',
+      (tester) async {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.inProgress,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => kycService.continueKyc()).thenAnswer(
+          (_) async => _session(
+            level: KycLevel.level50,
+            steps: const [],
+            currentStep: _currentStep(KycStepName.dfxApproval),
+          ),
+        );
+
+        final cubit = KycCubit(kycService, registrationService, appStore);
+        await tester.pumpApp(
+          BlocProvider<KycCubit>.value(
+            value: cubit,
+            child: const KycViewManager(),
+          ),
+        );
+
+        cubit.markLegalDisclaimerAccepted();
+        await cubit.checkKyc();
+        await tester.pumpAndSettle();
+
+        // Sanity: the cubit really reached the bug-triggering state.
+        expect(cubit.state, isA<KycSuccess>());
+        expect((cubit.state as KycSuccess).currentStep, KycStep.dfxApproval);
+
+        // Regression assertion: the pending page renders (not a blank screen).
+        expect(find.byType(KycPendingPage), findsOneWidget);
+
+        await cubit.close();
+      },
+    );
+  });
 }

@@ -73,6 +73,9 @@ class KycMergeProcessing extends KycState {
   const KycMergeProcessing();
 }
 
+/// The backend reported a KYC step (or a `PendingReview`) that the app cannot
+/// map to a known UI page. Surfaced as an explicit failure page (never a silent
+/// `KycCompleted`), naming the offending step via [stepName] when one is known.
 class KycUnsupportedStepFailure extends KycState {
   // Null when the backend says `PendingReview` but the step list contains no
   // `isRequired` step we can name — we still surface the failure (never a

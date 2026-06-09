@@ -4,6 +4,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
@@ -17,12 +18,8 @@ class _MockAuthService extends Mock implements DFXAuthService {}
 class _MockRegistrationService extends Mock implements RealUnitRegistrationService {}
 
 String _fakeJwt(int accountId) {
-  final header = base64Url
-      .encode(utf8.encode('{"alg":"HS256"}'))
-      .replaceAll('=', '');
-  final payload = base64Url
-      .encode(utf8.encode('{"account":$accountId}'))
-      .replaceAll('=', '');
+  final header = base64Url.encode(utf8.encode('{"alg":"HS256"}')).replaceAll('=', '');
+  final payload = base64Url.encode(utf8.encode('{"account":$accountId}')).replaceAll('=', '');
   return '$header.$payload.signature';
 }
 
@@ -55,6 +52,14 @@ const _userData = RealUnitUserDataDto(
   kycData: _kycData,
 );
 
+RealUnitRegistrationInfoDto _registrationInfo({
+  RealUnitRegistrationState state = RealUnitRegistrationState.addWallet,
+  RealUnitUserDataDto? userData = _userData,
+}) => RealUnitRegistrationInfoDto(
+  state: state,
+  realUnitUserDataDto: userData,
+);
+
 void main() {
   late _MockAuthService auth;
   late _MockRegistrationService registrationService;
@@ -69,10 +74,19 @@ void main() {
     when(() => auth.invalidateAuthToken()).thenReturn(null);
   });
 
-  KycEmailVerificationCubit build() => KycEmailVerificationCubit(
-        dfxService: auth,
-        registrationService: registrationService,
-      );
+  KycEmailVerificationCubit build({
+    void Function()? onSignProduced,
+    bool initialMergeDetected = false,
+    int registrationInfoRetries = 1,
+    Duration registrationInfoRetryDelay = Duration.zero,
+  }) => KycEmailVerificationCubit(
+    dfxService: auth,
+    registrationService: registrationService,
+    onSignProduced: onSignProduced,
+    initialMergeDetected: initialMergeDetected,
+    registrationInfoRetries: registrationInfoRetries,
+    registrationInfoRetryDelay: registrationInfoRetryDelay,
+  );
 
   group('initial state', () {
     test('emits $KycEmailVerificationInitial', () {
@@ -106,13 +120,11 @@ void main() {
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
         when(() => registrationService.getRegistrationInfo()).thenAnswer(
-          (_) async => RealUnitRegistrationInfoDto(
-            state: RealUnitRegistrationState.addWallet,
-            realUnitUserDataDto: _userData,
-          ),
+          (_) async => _registrationInfo(),
         );
-        when(() => registrationService.registerWallet(any()))
-            .thenAnswer((_) async => RegistrationStatus.completed);
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenAnswer((_) async => RegistrationStatus.completed);
       },
       build: build,
       act: (c) => c.checkEmailVerification(),
@@ -124,6 +136,31 @@ void main() {
     );
 
     blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
+      'initialMergeDetected (re-entrant resume) skips the one-shot account-id '
+      'check and goes straight to registerWallet → Success',
+      setUp: () {
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _registrationInfo(),
+        );
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenAnswer((_) async => RegistrationStatus.completed);
+      },
+      build: () => build(initialMergeDetected: true),
+      act: (c) => c.checkEmailVerification(),
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationSuccess>(),
+      ],
+      verify: (_) {
+        // The account-id delta is the one-shot signal that cannot be re-derived
+        // after a restart — re-entrant mode must NOT call it.
+        verifyNever(() => auth.getAuthToken());
+        verify(() => registrationService.registerWallet(_userData)).called(1);
+      },
+    );
+
+    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
       'changed account id but no userData → RegistrationFailure, no Success '
       '(propagation race: user can retry by tapping the confirm button again)',
       setUp: () {
@@ -131,9 +168,9 @@ void main() {
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
         when(() => registrationService.getRegistrationInfo()).thenAnswer(
-          (_) async => RealUnitRegistrationInfoDto(
+          (_) async => _registrationInfo(
             state: RealUnitRegistrationState.newRegistration,
-            realUnitUserDataDto: null,
+            userData: null,
           ),
         );
       },
@@ -149,6 +186,38 @@ void main() {
     );
 
     blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
+      'changed account id retries registration info propagation before registering',
+      setUp: () {
+        final tokens = [_fakeJwt(1), _fakeJwt(2)];
+        var i = 0;
+        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
+        var registrationInfoCallCount = 0;
+        when(() => registrationService.getRegistrationInfo()).thenAnswer((_) async {
+          registrationInfoCallCount++;
+          return registrationInfoCallCount == 1
+              ? _registrationInfo(
+                  state: RealUnitRegistrationState.newRegistration,
+                  userData: null,
+                )
+              : _registrationInfo();
+        });
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenAnswer((_) async => RegistrationStatus.completed);
+      },
+      build: () => build(registrationInfoRetries: 2),
+      act: (c) => c.checkEmailVerification(),
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationSuccess>(),
+      ],
+      verify: (_) {
+        verify(() => registrationService.getRegistrationInfo()).called(2);
+        verify(() => registrationService.registerWallet(_userData)).called(1);
+      },
+    );
+
+    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
       'registerWallet throws → RegistrationFailure, no Success '
       '(failure is surfaced so the user can retry instead of proceeding '
       'with a wallet that is not actually registered)',
@@ -157,13 +226,11 @@ void main() {
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
         when(() => registrationService.getRegistrationInfo()).thenAnswer(
-          (_) async => RealUnitRegistrationInfoDto(
-            state: RealUnitRegistrationState.addWallet,
-            realUnitUserDataDto: _userData,
-          ),
+          (_) async => _registrationInfo(),
         );
-        when(() => registrationService.registerWallet(any()))
-            .thenAnswer((_) async => throw Exception('boom'));
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenAnswer((_) async => throw Exception('boom'));
       },
       build: build,
       act: (c) => c.checkEmailVerification(),
@@ -186,21 +253,19 @@ void main() {
         final tokens = [_fakeJwt(1), _fakeJwt(2), _fakeJwt(2), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        var walletStatusCallCount = 0;
+        var registrationInfoCallCount = 0;
         when(() => registrationService.getRegistrationInfo()).thenAnswer((_) async {
-          walletStatusCallCount++;
-          return walletStatusCallCount == 1
-              ? RealUnitRegistrationInfoDto(
+          registrationInfoCallCount++;
+          return registrationInfoCallCount == 1
+              ? _registrationInfo(
                   state: RealUnitRegistrationState.newRegistration,
-                  realUnitUserDataDto: null,
+                  userData: null,
                 )
-              : RealUnitRegistrationInfoDto(
-                  state: RealUnitRegistrationState.addWallet,
-                  realUnitUserDataDto: _userData,
-                );
+              : _registrationInfo();
         });
-        when(() => registrationService.registerWallet(any()))
-            .thenAnswer((_) async => RegistrationStatus.completed);
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenAnswer((_) async => RegistrationStatus.completed);
       },
       build: build,
       act: (c) async {
@@ -216,6 +281,186 @@ void main() {
       verify: (_) {
         verify(() => registrationService.registerWallet(_userData)).called(1);
       },
+    );
+  });
+
+  group('BL-006: BitBox disconnect mid-sign routes to BitboxRequired', () {
+    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
+      'registerWallet throws BitboxNotConnectedException → '
+      'KycEmailVerificationBitboxRequired (legacy exception path)',
+      setUp: () {
+        final tokens = [_fakeJwt(1), _fakeJwt(2)];
+        var i = 0;
+        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _registrationInfo(),
+        );
+        when(() => registrationService.registerWallet(any())).thenAnswer(
+          (_) async => throw const BitboxNotConnectedException(),
+        );
+      },
+      build: build,
+      act: (c) => c.checkEmailVerification(),
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationBitboxRequired>(),
+      ],
+      verify: (_) => verify(() => registrationService.registerWallet(_userData)).called(1),
+    );
+
+    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
+      '#610 F1 / BL-006: reconnect after BitboxNotConnected → the merge latch '
+      'STAYS set, so the second call re-attempts the registration SIGN '
+      'instead of re-running the one-shot account-id check.',
+      setUp: () {
+        // First call: account changes 1→2 (merge detected), the sign then fails
+        // with a BitBox disconnect mid-signature. The auth side is now settled.
+        //
+        // The bug (BL-006): the disconnect handler used to reset the latch, so
+        // the post-reconnect retry re-ran the one-shot account-id check. By then
+        // getAuthToken keeps returning the merged account (2), so the
+        // same-account-id guard (2 == 2) dead-ended on Failure ("email not
+        // confirmed") and the user could never finish — even though the BitBox
+        // was reconnected and ready to sign.
+        //
+        // Fixed: the latch stays set, so the second call skips the auth-side
+        // check entirely and goes straight to registerWallet, which now
+        // succeeds on the reconnected device. We feed only the two tokens the
+        // first call's account-id check consumes; if the latch were wrongly
+        // reset the second call would demand a third token and re-run the
+        // (now same-account) guard, surfacing Failure instead of Success.
+        final tokens = [_fakeJwt(1), _fakeJwt(2)];
+        var i = 0;
+        when(() => auth.getAuthToken())
+            .thenAnswer((_) async => tokens[i < tokens.length ? i++ : tokens.length - 1]);
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _registrationInfo(),
+        );
+        var registerCallCount = 0;
+        when(() => registrationService.registerWallet(any())).thenAnswer(
+          (_) async {
+            registerCallCount++;
+            if (registerCallCount == 1) {
+              throw const BitboxNotConnectedException();
+            }
+            return RegistrationStatus.completed;
+          },
+        );
+      },
+      build: build,
+      act: (c) async {
+        await c.checkEmailVerification();
+        await c.checkEmailVerification();
+      },
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationBitboxRequired>(),
+        isA<KycEmailVerificationLoading>(),
+        // Latch held → the retry re-signs and completes the merge.
+        isA<KycEmailVerificationSuccess>(),
+      ],
+      verify: (_) {
+        // Two sign attempts (failed + succeeded), and the auth-side account-id
+        // check ran only ONCE — not re-run on the retry.
+        verify(() => registrationService.registerWallet(_userData)).called(2);
+        verify(() => auth.getAuthToken()).called(2);
+      },
+    );
+  });
+
+  group('success callback fires only after registerWallet', () {
+    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
+      'on Success → onSignProduced callback is invoked',
+      setUp: () {
+        final tokens = [_fakeJwt(1), _fakeJwt(2)];
+        var i = 0;
+        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _registrationInfo(),
+        );
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenAnswer((_) async => RegistrationStatus.completed);
+      },
+      build: () {
+        var callCount = 0;
+        final cubit = build(onSignProduced: () => callCount++);
+        // Stash the callback's invocation count on the cubit via a
+        // sentinel state-listener so the verify block can assert it.
+        addTearDown(() {
+          expect(callCount, 1, reason: 'success callback must fire exactly once on Success');
+        });
+        return cubit;
+      },
+      act: (c) => c.checkEmailVerification(),
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationSuccess>(),
+      ],
+    );
+
+    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
+      'on RegistrationFailure → onSignProduced is NOT invoked',
+      setUp: () {
+        final tokens = [_fakeJwt(1), _fakeJwt(2)];
+        var i = 0;
+        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _registrationInfo(),
+        );
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenAnswer((_) async => throw Exception('boom'));
+      },
+      build: () {
+        var callCount = 0;
+        final cubit = build(onSignProduced: () => callCount++);
+        addTearDown(() {
+          expect(
+            callCount,
+            0,
+            reason: 'success callback must NOT fire if registerWallet failed',
+          );
+        });
+        return cubit;
+      },
+      act: (c) => c.checkEmailVerification(),
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationRegistrationFailure>(),
+      ],
+    );
+
+    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
+      'on BitboxRequired → onSignProduced is NOT invoked',
+      setUp: () {
+        final tokens = [_fakeJwt(1), _fakeJwt(2)];
+        var i = 0;
+        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _registrationInfo(),
+        );
+        when(() => registrationService.registerWallet(any())).thenAnswer(
+          (_) async => throw const BitboxNotConnectedException(),
+        );
+      },
+      build: () {
+        var callCount = 0;
+        final cubit = build(onSignProduced: () => callCount++);
+        addTearDown(() {
+          expect(
+            callCount,
+            0,
+            reason: 'success callback must NOT fire on a BitBox disconnect',
+          );
+        });
+        return cubit;
+      },
+      act: (c) => c.checkEmailVerification(),
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationBitboxRequired>(),
+      ],
     );
   });
 

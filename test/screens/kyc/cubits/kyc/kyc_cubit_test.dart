@@ -35,9 +35,11 @@ UserKycDto _kycHeader({KycLevel level = KycLevel.level0}) =>
 UserDto _user({
   String? mail = 'test@example.com',
   KycLevel headerLevel = KycLevel.level0,
+  List<String> addresses = const [],
 }) => UserDto(
   mail: mail,
   kyc: _kycHeader(level: headerLevel),
+  addresses: addresses,
 );
 
 KycStepDto _step(
@@ -159,12 +161,72 @@ void main() {
     );
 
     blocTest<KycCubit, KycState>(
+      'does not use empty addresses as proof that wallet registration is missing',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(level: KycLevel.level20),
+        );
+        when(() => kycService.getUser()).thenAnswer(
+          (_) async => _user(addresses: const []),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycSuccess(currentStep: KycStep.legalDisclaimer),
+      ],
+    );
+
+    blocTest<KycCubit, KycState>(
+      'does not use user.addresses as wallet-routing authority when another address is present',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(level: KycLevel.level20),
+        );
+        when(() => kycService.getUser()).thenAnswer(
+          (_) async => _user(addresses: const ['0xsomeotheraddress']),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycSuccess(currentStep: KycStep.legalDisclaimer),
+      ],
+    );
+
+    blocTest<KycCubit, KycState>(
       'auto-registers email when mail exists but level < 10, then recurses',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
           (_) async => _kycStatus(level: KycLevel.level0),
         );
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.registerEmail(any())).thenAnswer(
+          (_) async => RegistrationEmailStatus.emailRegistered,
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycSuccess(currentStep: KycStep.email),
+      ],
+      verify: (_) {
+        verify(() => registrationService.registerEmail('test@example.com')).called(1);
+      },
+    );
+
+    blocTest<KycCubit, KycState>(
+      'auto-registers email when mail exists but level < 10 even if addresses are empty',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(level: KycLevel.level0),
+        );
+        when(() => kycService.getUser()).thenAnswer(
+          (_) async => _user(addresses: const []),
+        );
         when(() => registrationService.registerEmail(any())).thenAnswer(
           (_) async => RegistrationEmailStatus.emailRegistered,
         );
@@ -983,7 +1045,8 @@ void main() {
       act: (cubit) async {
         await cubit.checkKyc(); // expects legalDisclaimer
         cubit.markLegalDisclaimerAccepted();
-        await cubit.checkKyc(); // expects KycCompleted (AlreadyRegistered + processStatus=Completed)
+        await cubit
+            .checkKyc(); // expects KycCompleted (AlreadyRegistered + processStatus=Completed)
       },
       expect: () => [
         const KycLoading(),

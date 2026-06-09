@@ -61,7 +61,25 @@ void main() {
       final a = BuyPaymentInfoFailure(PaymentInfoError.kycRequired, requiredLevel: 30);
       final b = BuyPaymentInfoFailure(PaymentInfoError.kycRequired, requiredLevel: 30);
       expect(a, equals(b));
-      expect(a.props, [PaymentInfoError.kycRequired, 30, null]);
+      expect(a.props, [PaymentInfoError.kycRequired, 30, null, '']);
+    });
+
+    test('message participates in equality and props', () {
+      final a = BuyPaymentInfoFailure(PaymentInfoError.unknown, message: 'Forbidden resource');
+      final b = BuyPaymentInfoFailure(PaymentInfoError.unknown, message: 'Forbidden resource');
+      final c = BuyPaymentInfoFailure(PaymentInfoError.unknown);
+      expect(a, equals(b));
+      expect(a, isNot(equals(c)));
+      expect(a.props, [PaymentInfoError.unknown, null, null, 'Forbidden resource']);
+    });
+
+    test('context participates in equality and props', () {
+      final a = BuyPaymentInfoFailure(PaymentInfoError.kycRequired, context: 'buy');
+      final b = BuyPaymentInfoFailure(PaymentInfoError.kycRequired, context: 'buy');
+      final c = BuyPaymentInfoFailure(PaymentInfoError.kycRequired);
+      expect(a, equals(b));
+      expect(a, isNot(equals(c)));
+      expect(a.props, [PaymentInfoError.kycRequired, null, 'buy', '']);
     });
 
     test('null requiredLevel is allowed and equal across instances', () {
@@ -89,7 +107,7 @@ void main() {
         context: 'RealunitBuy',
       );
       expect(a, equals(b));
-      expect(a.props, [PaymentInfoError.kycRequired, 30, 'RealunitBuy']);
+      expect(a.props, [PaymentInfoError.kycRequired, 30, 'RealunitBuy', '']);
     });
 
     test('different context is unequal', () {

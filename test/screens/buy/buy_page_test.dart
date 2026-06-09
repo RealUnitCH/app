@@ -259,7 +259,9 @@ void main() {
       );
     });
 
-    testWidgets('retries payment info when unknown error is shown', (tester) async {
+    testWidgets('retries payment info with the default amount when unknown error is shown', (
+      tester,
+    ) async {
       when(() => buyPaymentInfoCubit.state).thenReturn(
         const BuyPaymentInfoFailure(PaymentInfoError.unknown),
       );
@@ -277,7 +279,7 @@ void main() {
 
       verify(
         () => buyPaymentInfoCubit.getPaymentInfo(
-          amount: '',
+          amount: '300',
           currency: Currency.eur,
         ),
       ).called(1);

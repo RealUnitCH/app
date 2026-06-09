@@ -11,8 +11,7 @@ import '../../../helper/helper.dart';
 void main() {
   setUpAll(() {
     final countryService = MockDfxCountryService();
-    when(() => countryService.getAllCountries())
-        .thenAnswer((_) async => const <Country>[]);
+    when(() => countryService.getAllCountries()).thenAnswer((_) async => const <Country>[]);
     GetIt.instance.registerSingleton<DfxCountryService>(countryService);
   });
 
@@ -31,6 +30,7 @@ void main() {
             postalCodeCtrl: TextEditingController(),
             cityCtrl: TextEditingController(),
             countryCtrl: ValueNotifier<Country?>(null),
+            swissTaxResidenceCtrl: ValueNotifier<bool>(false),
             onSubmit: () async {},
           ),
         ),

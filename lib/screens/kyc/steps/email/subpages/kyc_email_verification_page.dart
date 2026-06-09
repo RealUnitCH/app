@@ -6,14 +6,21 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/screens/hardware_connect_bitbox/show_bitbox_reconnect_sheet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
+import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/cubits/email_verification/kyc_email_verification_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 class KycEmailVerificationPage extends StatelessWidget {
-  const KycEmailVerificationPage({super.key});
+  /// When `true` the auth-side merge already happened in a prior session, so
+  /// the one-shot account-id check is seeded as already-detected and success
+  /// advances the KYC flow in place instead of popping a pushed route.
+  final bool mergeAlreadyConfirmed;
+
+  const KycEmailVerificationPage({super.key, this.mergeAlreadyConfirmed = false});
 
   @override
   Widget build(BuildContext context) {
@@ -21,19 +28,22 @@ class KycEmailVerificationPage extends StatelessWidget {
       create: (context) => KycEmailVerificationCubit(
         dfxService: getIt<DfxWidgetService>(),
         registrationService: getIt<RealUnitRegistrationService>(),
+        initialMergeDetected: mergeAlreadyConfirmed,
       ),
-      child: const KycEmailVerificationView(),
+      child: KycEmailVerificationView(mergeAlreadyConfirmed: mergeAlreadyConfirmed),
     );
   }
 }
 
 class KycEmailVerificationView extends StatelessWidget {
-  const KycEmailVerificationView({super.key});
+  final bool mergeAlreadyConfirmed;
+
+  const KycEmailVerificationView({super.key, this.mergeAlreadyConfirmed = false});
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<KycEmailVerificationCubit, KycEmailVerificationState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is KycEmailVerificationFailure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -53,7 +63,31 @@ class KycEmailVerificationView extends StatelessWidget {
           );
         }
         if (state is KycEmailVerificationSuccess) {
-          context.pop(true);
+          if (mergeAlreadyConfirmed) {
+            // Re-entrant resume: this view is rendered in place by
+            // KycViewManager (not a pushed route). Advance the KYC flow via
+            // checkKyc — the wallet is now registered, so the registration
+            // gate clears and the flow continues. Popping here would tear
+            // down the whole /kyc route.
+            context.read<KycCubit>().checkKyc();
+          } else {
+            context.pop(true);
+          }
+        }
+        if (state is KycEmailVerificationBitboxRequired) {
+          // BL-006 — surface the reconnect sheet instead of a generic
+          // "Registration failed" snackbar. On successful reconnect,
+          // immediately re-run the verification flow; the cubit's
+          // `_mergeDetected` latch was reset on the disconnect so the
+          // JWT account check runs again.
+          //
+          // Capture the cubit reference up front so the post-await
+          // re-run does not depend on the still-mounted BuildContext.
+          final cubit = context.read<KycEmailVerificationCubit>();
+          final reconnected = await showBitboxReconnectSheet(context);
+          if (reconnected && !cubit.isClosed) {
+            await cubit.checkEmailVerification();
+          }
         }
       },
       child: Scaffold(
@@ -91,12 +125,14 @@ class KycEmailVerificationView extends StatelessWidget {
                         child: BlocBuilder<KycEmailVerificationCubit, KycEmailVerificationState>(
                           builder: (context, state) {
                             final isLoading = state is KycEmailVerificationLoading;
-                            final isBitbox = context
-                                    .read<HomeBloc>()
-                                    .state
-                                    .openWallet
-                                    ?.currentAccount
-                                    .primaryAddress is BitboxCredentials;
+                            final isBitbox =
+                                context
+                                        .read<HomeBloc>()
+                                        .state
+                                        .openWallet
+                                        ?.currentAccount
+                                        .primaryAddress
+                                    is BitboxCredentials;
                             return Column(
                               spacing: 12,
                               children: [
