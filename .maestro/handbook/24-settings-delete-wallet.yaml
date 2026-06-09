@@ -3,13 +3,13 @@
 # this flow's diagnostic capture lands in build/handbook-captures/24-settings-delete-wallet.png.
 # Continues from 23-settings-contact (no clearState). The contact page is
 # pushed on top of the Settings menu, so we tap back to the menu, then open
-# "Geschäftsbeziehung beenden". That entry does not navigate to a new page —
+# "Abmelden". That entry does not navigate to a new page —
 # it presents the SettingsConfirmLogoutWalletSheet modal, the confirmation
-# step for terminating the business relationship and signing out of the
-# wallet. This flow documents that sheet: it stops on the modal and does NOT
+# step for logging out, which removes the wallet from the device and returns
+# to onboarding. This flow documents that sheet: it stops on the modal and does NOT
 # tick the confirmation checkbox or tap "Abmelden".
 #
-# Both taps (back to the Settings menu, then opening the terminate entry) are
+# Both taps (back to the Settings menu, then opening the logout entry) are
 # gated on their target not yet showing and re-tapped if one was silently
 # dropped (Maestro/XCUITest tap-loss on Apple Silicon + iOS 26,
 # mobile-dev-inc/maestro#3137). Each gate stops its loop the instant the
@@ -36,7 +36,7 @@ appId: swiss.realunit.app
               text: '.*Aus REALU Wallet abmelden.*'
           commands:
             - tapOn:
-                text: '.*Geschäftsbeziehung beenden.*'
+                text: '.*Abmelden.*'
                 optional: true
 - waitForAnimationToEnd
 - extendedWaitUntil:

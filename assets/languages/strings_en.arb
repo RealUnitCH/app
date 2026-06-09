@@ -272,7 +272,7 @@
   "settingsCurrency": "Currency",
   "settingsCurrencyLoadFailed": "Failed to load currencies",
   "settingsCurrencyLoadFailedDescription": "Please check your internet connection and try again.",
-  "settingsDeleteWallet": "Terminate business relationship",
+  "settingsDeleteWallet": "Logout",
   "settingsLanguageLoadFailed": "Failed to load languages",
   "settingsLanguageLoadFailedDescription": "Please check your internet connection and try again.",
   "settingsLanguages": "Languages",
