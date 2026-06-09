@@ -11,12 +11,12 @@ import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/error_handling/realunit_error_view.dart';
 import 'package:realunit_wallet/setup/lifecycle_initializer.dart';
 import 'package:realunit_wallet/setup/routing/router_config.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
-import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/themes.dart';
 
 Future<void> main() async {
@@ -59,7 +59,7 @@ void _installErrorHandlers() {
     );
     defaultOnError?.call(details);
   };
-  ErrorWidget.builder = (details) => _RealUnitErrorView(details: details);
+  ErrorWidget.builder = (details) => RealUnitErrorView(details: details);
 }
 
 Future<void> _initializeWithSplashDuration() async {
@@ -166,48 +166,4 @@ class _WalletAppState extends State<WalletApp> {
 
     routerConfig.goNamed(targetRoute);
   }
-}
-
-/// Minimal on-brand replacement for the default grey [ErrorWidget]. Rendered by
-/// [ErrorWidget.builder] for any uncaught build/paint exception, so it lives
-/// outside the [MaterialApp] localization scope — the copy is deliberately
-/// hardcoded (no `S.of(context)`) because this is a last-resort surface that
-/// must render even when localization is unavailable. In debug it also shows
-/// the exception text to keep diagnosis fast; release shows only the friendly
-/// line.
-class _RealUnitErrorView extends StatelessWidget {
-  const _RealUnitErrorView({required this.details});
-
-  final FlutterErrorDetails details;
-
-  @override
-  Widget build(BuildContext context) => Directionality(
-    textDirection: TextDirection.ltr,
-    child: Container(
-      color: RealUnitColors.neutral50,
-      alignment: Alignment.center,
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        spacing: 12,
-        children: [
-          Icon(Icons.error_outline, color: RealUnitColors.status.red600, size: 48),
-          const Text(
-            'Something went wrong. Please restart the app.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: RealUnitColors.neutral900,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          if (kDebugMode)
-            Text(
-              details.exceptionAsString(),
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: RealUnitColors.neutral500),
-            ),
-        ],
-      ),
-    ),
-  );
 }

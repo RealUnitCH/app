@@ -238,6 +238,35 @@ void main() {
           verifyNever(() => transactionHistoryService.apiBasedSync());
         },
       );
+
+      test(
+        'recovery gate throws → caught as load failure, spinner cleared, recovery flag stays off',
+        () async {
+          when(() => walletService.hasWallet()).thenReturn(true);
+          // The gate runs inside the load try/catch, so an unexpected throw
+          // (e.g. a corrupt wallet-type index) is handled as a load failure
+          // instead of leaving isLoadingWallet stuck true — and must NOT divert
+          // the app into the recovery flow.
+          when(
+            () => walletService.currentWalletNeedsAddressRecovery(),
+          ).thenThrow(Exception('gate boom'));
+
+          final bloc = build();
+          await bloc.stream.firstWhere((s) => s.hasWallet);
+
+          bloc.add(const LoadCurrentWalletEvent());
+          await bloc.stream.firstWhere(
+            (s) => s.isLoadingWallet == false && s.openWallet == null,
+          );
+
+          expect(bloc.state.isLoadingWallet, isFalse);
+          expect(bloc.state.bitboxAddressRecoveryNeeded, isFalse);
+          expect(bloc.state.openWallet, isNull);
+          verifyNever(() => walletService.getCurrentWallet());
+          verifyNever(() => balanceService.updateBalance(any()));
+          verifyNever(() => transactionHistoryService.apiBasedSync());
+        },
+      );
     });
 
     group('LoadWalletEvent', () {
