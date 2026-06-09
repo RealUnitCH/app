@@ -4,6 +4,7 @@ import 'package:bitbox_flutter/usb/bitbox_usb_platform_interface.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_address_unavailable_exception.dart';
 
 // Service-lifecycle suite. Drives the official bitbox_flutter simulator
 // (installed at the BitboxUsbPlatform.instance seam) so the tests exercise
@@ -453,5 +454,93 @@ void main() {
         });
       },
     );
+
+    // The empty-address self-heal boundary. The SDK coerces a native `null`
+    // into `""` at its transport layer (`return result ?? ''`), so a device
+    // that stalls right after channel-hash verify resolves getETHAddress with
+    // an empty string instead of throwing. getEthAddress retries that transient
+    // empty read across `attempts`; only a persistent empty throws. Both the
+    // create and heal flows route through this method, so an empty read can
+    // never be persisted.
+    group('getEthAddress', () {
+      const validAddress = '0x1111111111111111111111111111111111111111';
+      const retryDelay = Duration(milliseconds: 200);
+
+      test('returns the address when the first read is non-empty', () {
+        fakeAsync((async) {
+          final service = pairedServiceSync(async);
+          platform.when(SimulatedBitboxMethod.getETHAddress, (_) async => validAddress);
+
+          String? result;
+          service.getEthAddress(retryDelay: retryDelay).then((value) => result = value);
+          async.flushMicrotasks();
+
+          expect(result, validAddress);
+          expect(
+            platform.count(SimulatedBitboxMethod.getETHAddress),
+            1,
+            reason: 'a non-empty first read must short-circuit the retry loop',
+          );
+        });
+      });
+
+      test('retries an empty read and succeeds once the device returns a valid address', () {
+        fakeAsync((async) {
+          final service = pairedServiceSync(async);
+          // First read stalls (empty), second read recovers — the exact BLE
+          // stall the boundary exists to absorb.
+          var call = 0;
+          platform.when(
+            SimulatedBitboxMethod.getETHAddress,
+            (_) async => call++ == 0 ? '' : validAddress,
+          );
+
+          String? result;
+          service.getEthAddress(retryDelay: retryDelay).then((value) => result = value);
+          // The first (empty) read resolves on microtasks; the retry waits the
+          // backoff before the second read.
+          async.flushMicrotasks();
+          expect(result, isNull, reason: 'must wait the retry delay before the second read');
+
+          async.elapse(retryDelay);
+
+          expect(result, validAddress);
+          expect(
+            platform.count(SimulatedBitboxMethod.getETHAddress),
+            2,
+            reason: 'exactly one retry was needed to recover',
+          );
+        });
+      });
+
+      test('throws BitboxAddressUnavailableException when every read is empty', () {
+        fakeAsync((async) {
+          final service = pairedServiceSync(async);
+          platform.when(SimulatedBitboxMethod.getETHAddress, (_) async => '');
+
+          Object? caught;
+          service
+              .getEthAddress(attempts: 3, retryDelay: retryDelay)
+              .catchError((Object e) {
+            caught = e;
+            return '';
+          });
+          // Drive past both inter-attempt delays so all three reads run.
+          async.flushMicrotasks();
+          async.elapse(retryDelay * 3);
+
+          expect(
+            caught,
+            isA<BitboxAddressUnavailableException>(),
+            reason: 'a persistent empty read must throw, never return ""',
+          );
+          expect(
+            platform.count(SimulatedBitboxMethod.getETHAddress),
+            3,
+            reason: 'all configured attempts must be exhausted before throwing',
+          );
+        });
+      });
+    });
   });
 }
