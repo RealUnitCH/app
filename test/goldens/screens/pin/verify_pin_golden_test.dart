@@ -50,5 +50,25 @@ void main() {
         ),
       ),
     );
+
+    goldenTest(
+      'verifying state replaces the number pad with a spinner',
+      fileName: 'verify_pin_page_verifying',
+      // CupertinoActivityIndicator never settles; pump once to capture the
+      // initial frame instead of letting pumpAndSettle hang.
+      pumpBeforeTest: pumpOnce,
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        final cubit = _MockVerifyPinCubit();
+        when(() => cubit.state).thenReturn(const VerifyPinVerifying(pin: '123456'));
+        when(() => cubit.checkBiometricAvailability()).thenAnswer((_) async {});
+        return wrapForGolden(
+          BlocProvider<VerifyPinCubit>.value(
+            value: cubit,
+            child: VerifyPinView(onAuthenticated: () {}),
+          ),
+        );
+      },
+    );
   });
 }
