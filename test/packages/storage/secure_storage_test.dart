@@ -126,6 +126,24 @@ void main() {
       verify(() => mockStorage.delete(key: 'wallet.mnemonic.encryption.key')).called(1);
     });
 
+    test('deleteMnemonicEncryptionKey deletes the mnemonic encryption key', () async {
+      await secureStorage.deleteMnemonicEncryptionKey();
+
+      verify(() => mockStorage.delete(key: 'wallet.mnemonic.encryption.key')).called(1);
+    });
+
+    test('readBiometricCryptoSentinel forwards the read for the given key', () async {
+      when(() => mockStorage.read(key: 'bio.sentinel')).thenAnswer((_) async => 'bound');
+
+      expect(await secureStorage.readBiometricCryptoSentinel('bio.sentinel'), 'bound');
+    });
+
+    test('writeBiometricCryptoSentinel forwards the write for the given key', () async {
+      await secureStorage.writeBiometricCryptoSentinel('bio.sentinel', 'bound');
+
+      verify(() => mockStorage.write(key: 'bio.sentinel', value: 'bound')).called(1);
+    });
+
     test('getPinSalt returns null when no salt is stored', () async {
       when(
         () => mockStorage.read(key: 'pin.salt'),
