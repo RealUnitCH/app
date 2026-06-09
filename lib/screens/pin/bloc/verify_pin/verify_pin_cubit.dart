@@ -34,19 +34,26 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
 
   Future<void> checkPin() async {
     final pin = state.pin;
-    emit(VerifyPinVerifying(pin: pin, failedAttempts: state.failedAttempts));
-    final isCorrect = await _secureStorage.verifyPin(pin);
-    if (isCorrect) {
-      if (enableLockout) await _secureStorage.resetPinLockout();
-      emit(const VerifyPinSuccess());
-    } else {
-      if (!enableLockout) {
-        emit(const VerifyPinFailure(failedAttempts: 0));
-        return;
+    final previousAttempts = state.failedAttempts;
+    emit(VerifyPinVerifying(pin: pin, failedAttempts: previousAttempts));
+    try {
+      final isCorrect = await _secureStorage.verifyPin(pin);
+      if (isCorrect) {
+        if (enableLockout) await _secureStorage.resetPinLockout();
+        emit(const VerifyPinSuccess());
+      } else {
+        if (!enableLockout) {
+          emit(const VerifyPinFailure(failedAttempts: 0));
+          return;
+        }
+        final attempts = await _secureStorage.getPinFailedAttempts() + 1;
+        await _secureStorage.setPinFailedAttempts(attempts);
+        await _emitLockState(attempts);
       }
-      final attempts = await _secureStorage.getPinFailedAttempts() + 1;
-      await _secureStorage.setPinFailedAttempts(attempts);
-      await _emitLockState(attempts);
+    } catch (_) {
+      // A hash/storage failure must not strand the user on the spinner with no
+      // number pad. Restore the input so they can retry instead of dead-ending.
+      emit(VerifyPinState(failedAttempts: previousAttempts));
     }
   }
 

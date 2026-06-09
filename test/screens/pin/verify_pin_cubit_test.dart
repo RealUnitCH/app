@@ -189,6 +189,21 @@ void main() {
         // Permanent lockout does NOT write a temporary lockedUntil.
         verifyNever(() => secureStorage.setPinLockedUntil(any()));
       });
+
+      test('a verifyPin failure recovers to a usable state instead of a stuck spinner', () async {
+        when(() => secureStorage.verifyPin(any())).thenThrow(Exception('hash failure'));
+        final cubit = build();
+        // After the spinner, recovery emits a plain VerifyPinState (input reset)
+        // so the number pad returns — never a permanent VerifyPinVerifying.
+        final recovered =
+            cubit.stream.firstWhere((s) => s.runtimeType == VerifyPinState && s.pin.isEmpty);
+
+        addPin(cubit, '123456');
+        await recovered.timeout(const Duration(seconds: 30));
+
+        expect(cubit.state.runtimeType, VerifyPinState);
+        expect(cubit.state.pin, isEmpty);
+      });
     });
 
     group('onLockExpired', () {
