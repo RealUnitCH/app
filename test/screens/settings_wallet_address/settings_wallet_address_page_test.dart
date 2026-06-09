@@ -42,5 +42,16 @@ void main() {
         findsOne,
       );
     });
+
+    testWidgets('displays the address in EIP-55 checksummed form', (tester) async {
+      await tester.pumpApp(const SettingsWalletAddressPage());
+
+      // The mocked primaryAddress is all-lowercase; the screen must render and
+      // encode the checksummed (EIP-55) form in both the text and the QR uri.
+      const checksummed = '0x938115B533a0b746428361760A6972dfd06D984a';
+      final qr = tester.widget<QRAddressWidget>(find.byType(QRAddressWidget));
+      expect(qr.subtitle, checksummed);
+      expect(qr.uri, contains(checksummed));
+    });
   });
 }

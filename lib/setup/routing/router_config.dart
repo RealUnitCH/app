@@ -181,7 +181,7 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: AppRoutes.kyc,
       path: '/kyc',
-      builder: (_, _) => const KycPageManager(),
+      builder: (_, state) => KycPageManager(kycContext: state.extra as String?),
     ),
 
     GoRoute(

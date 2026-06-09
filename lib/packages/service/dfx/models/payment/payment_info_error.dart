@@ -3,5 +3,6 @@ enum PaymentInfoError {
   kycRequired,
   minAmountNotMet,
   bitboxDisconnected,
+  priceSourceUnavailable,
   unknown,
 }

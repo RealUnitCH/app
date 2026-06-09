@@ -227,5 +227,24 @@ void main() {
         return wrapForGolden(buildSubject());
       },
     );
+
+    goldenTest(
+      'price source (Aktionariat) unavailable failure',
+      fileName: 'buy_price_source_unavailable',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        when(() => paymentInfoCubit.state).thenReturn(
+          const BuyPaymentInfoFailure(PaymentInfoError.priceSourceUnavailable),
+        );
+        when(() => converterCubit.state).thenReturn(
+          const BuyConverterState(
+            fiatText: '100',
+            sharesText: '1.00',
+            currency: Currency.chf,
+          ),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
   });
 }

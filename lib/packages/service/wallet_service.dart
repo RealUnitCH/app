@@ -391,6 +391,11 @@ class WalletService {
     // wallet deletion.
     final isolate = _walletIsolate;
     if (isolate != null) await isolate.lock(id);
+    // Per-wallet delete removes this wallet's rows (incl. seed/walletInfos,
+    // BL-004) so no recoverable seed survives. The mnemonic encryption key is
+    // shared across wallets, so it is only removed when this was the last
+    // wallet AND the user opted in — deleting it eagerly would brick any other
+    // wallet that still relies on it.
     final counts = await _repository.deleteWallet(id);
     final isLast = await _repository.isLastWallet();
     final shouldDeleteKey =

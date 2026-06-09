@@ -2,7 +2,7 @@ name: Handbook Build Check
 
 # PR-only build verification for Dockerfile.handbook + the Goldens-assembled
 # screenshots. Does NOT push to Docker Hub and does NOT deploy — that
-# remains the job of handbook-deploy.yaml (develop push → DEV → PRD).
+# remains the job of handbook-deploy.yaml (staging push → DEV, develop push → PRD).
 #
 # Path filter covers everything that goes into the handbook image:
 #   - docs/handbook/**            handbook HTML, README, en/de subtrees
@@ -21,7 +21,22 @@ on:
     paths:
       - "docs/handbook/**"
       - "scripts/assemble-handbook-screenshots.sh"
+      - "scripts/assemble-handbook-store-listing.py"
+      - "scripts/templates/store-listing.html.tmpl"
+      - "scripts/assemble-handbook-legal.py"
+      - "scripts/build-legal-downloads.sh"
+      - "scripts/templates/legal-downloads.html.tmpl"
       - "test/goldens/**"
+      # Store-listing section is a derived export of the Fastlane metadata —
+      # changing it must re-run the generator and re-commit the handbook.
+      - "ios/fastlane/metadata/**"
+      - "ios/fastlane/screenshots/**"
+      - "android/fastlane/metadata/**"
+      # Legal-downloads section is a derived export of the in-app legal Markdown
+      # (and the ARB titles) — changing either must re-run the generator and
+      # re-commit the handbook HTML block.
+      - "assets/legal/**"
+      - "assets/languages/**"
       - "Dockerfile.handbook"
       - "handbook.nginx.conf"
       - "handbook.htpasswd"
@@ -55,6 +70,57 @@ jobs:
           count=$(ls -1 /tmp/handbook-shots/*.png | wc -l | tr -d ' ')
           if [ "$count" != "52" ]; then
             echo "expected 52 screenshots, got $count" >&2
+            exit 1
+          fi
+
+      - name: Verify store-listing HTML sanitizer drops disallowed markup
+        # full_description.txt is rendered unescaped in the handbook (Google
+        # Play allows a small HTML subset), so the generator runs it through an
+        # allowlist sanitizer. Guard that the sanitizer keeps neutralizing
+        # injection: a </details>/<script>/javascript: payload must not survive.
+        run: |
+          python3 - <<'PY'
+          import importlib.util
+          spec = importlib.util.spec_from_file_location("gen", "scripts/assemble-handbook-store-listing.py")
+          gen = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(gen)
+          payload = '</details><script>alert(1)</script><b>ok</b><a href="javascript:alert(1)">x</a>'
+          out = gen.sanitize_play_html(payload)
+          assert "<script" not in out, out
+          assert "</details" not in out, out
+          assert "javascript:" not in out, out
+          assert "<b>ok</b>" in out, out
+          print("sanitizer OK:", out)
+          PY
+
+      - name: Verify handbook store-listing section is in sync with metadata
+        # The store-listing block in docs/handbook/de/index.html is a derived
+        # export of the Fastlane metadata. Re-run the generator; if the working
+        # tree changes, the committed handbook is stale — someone edited a
+        # metadata file (or a screenshot) without re-running the generator.
+        run: |
+          set -euo pipefail
+          python3 scripts/assemble-handbook-store-listing.py /tmp/store-out
+          if ! git diff --quiet docs/handbook/de/index.html; then
+            echo "::error::docs/handbook/de/index.html is stale — re-run scripts/assemble-handbook-store-listing.py and commit."
+            git diff docs/handbook/de/index.html
+            exit 1
+          fi
+
+      - name: Verify handbook legal-downloads section is in sync with assets/legal
+        # The legal-downloads block in docs/handbook/de/index.html is a derived
+        # export of assets/legal/*.md + the ARB titles. Re-run the (pure-stdlib,
+        # deterministic) generator; if the working tree changes, the committed
+        # handbook is stale — someone edited a legal .md or its ARB title without
+        # re-running the generator. Only the HTML block is gated here; the
+        # pandoc-produced PDF/DOCX are non-deterministic and intentionally
+        # git-ignored, so build-legal-downloads.sh is NOT run in this gate.
+        run: |
+          set -euo pipefail
+          python3 scripts/assemble-handbook-legal.py /tmp/legal-out
+          if ! git diff --quiet docs/handbook/de/index.html; then
+            echo "::error::docs/handbook/de/index.html legal-downloads block is stale — re-run scripts/assemble-handbook-legal.py and commit."
+            git diff docs/handbook/de/index.html
             exit 1
           fi
 
@@ -93,6 +159,18 @@ jobs:
             # both prove the file is on disk. 404 means it was not assembled.
             if [ "$code" = "404" ]; then
               echo "screenshot ${name}.png missing from /usr/share/nginx/html/screenshots/" >&2
+              docker logs handbook
+              exit 1
+            fi
+          done
+
+          # Legal downloads must be present (built by the legal-docs-builder
+          # stage via pandoc). Same 200/401-vs-404 logic: 404 means the PDF/DOCX
+          # was not produced. Covers PDF + DOCX and both languages.
+          for f in legal/privacy_policy_de.pdf legal/privacy_policy_de.docx legal/terms_of_use_en.pdf legal/registration_agreement_de.docx; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -u "${HANDBOOK_USER:-x}:${HANDBOOK_PASS:-x}" "http://127.0.0.1:8080/${f}")
+            if [ "$code" = "404" ]; then
+              echo "legal download ${f} missing from /usr/share/nginx/html/legal/" >&2
               docker logs handbook
               exit 1
             fi

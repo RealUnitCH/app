@@ -257,6 +257,15 @@ class SecureStorage {
   Future<void> writeBiometricCryptoSentinel(String key, String value) =>
       _secureStorage.write(key: key, value: value);
 
+  /// Legacy alias for [deleteMnemonicEncryptionKey] — still referenced by
+  /// `WalletRepository.purgeWallet`. Removes the AES-GCM key that decrypts
+  /// stored seeds; once gone, any surviving encrypted seed is permanently
+  /// undecryptable and a fresh key is lazily minted on next creation.
+  // @no-integration-test: forwards to FlutterSecureStorage (Android Keystore /
+  // iOS Keychain) over a platform channel; real keystore removal is only
+  // verifiable on-device — the unit test mocks the plugin.
+  Future<void> deleteMnemonicKey() => _secureStorage.delete(key: _mnemonicEncryptionKey);
+
   static String encryptSeed(Uint8List key, String plaintext) {
     final iv = _secureRandomBytes(12);
     final cipher = GCMBlockCipher(AESEngine())

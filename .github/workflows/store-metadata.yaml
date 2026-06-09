@@ -1,0 +1,115 @@
+name: Store metadata sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ios/fastlane/metadata/**'
+      - 'ios/fastlane/screenshots/**'
+      - 'android/fastlane/metadata/**'
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Which store to push to'
+        required: true
+        default: 'both'
+        type: choice
+        options: [ios, android, both]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: store-metadata-${{ github.ref }}
+  cancel-in-progress: false   # never abort an in-flight upload
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v5
+      - name: Reject FIXME placeholders + enforce character limits
+        run: bash scripts/check-store-metadata.sh
+
+  ios:
+    needs: preflight
+    if: ${{ github.event_name == 'push' || github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both' }}
+    runs-on: macos-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+          working-directory: ios
+
+      - name: Install matching bundler
+        run: gem install bundler -v 2.7.2
+
+      - name: Install gems
+        run: bundle _2.7.2_ install
+        working-directory: ios
+
+      - name: Write Apple API key + export env (mirrors release.yaml pattern)
+        run: |
+          set -euo pipefail
+          KEY_PATH="${{ github.workspace }}/AuthKey.p8"
+          echo "$APP_STORE_CONNECT_KEY" > "$KEY_PATH"
+          echo "FASTLANE_APPLE_API_KEY_PATH=$KEY_PATH" >> $GITHUB_ENV
+          echo "FASTLANE_APPLE_API_KEY_ID=$APP_STORE_CONNECT_KEY_ID" >> $GITHUB_ENV
+          echo "FASTLANE_APPLE_API_ISSUER_ID=$APP_STORE_CONNECT_ISSUER_ID" >> $GITHUB_ENV
+        env:
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+
+      - name: Run deliver (metadata-only)
+        run: bundle exec fastlane store_metadata --verbose
+        working-directory: ios
+        env:
+          FASTLANE_HIDE_CHANGELOG: 1
+
+      - name: Cleanup
+        if: always()
+        run: rm -f "${FASTLANE_APPLE_API_KEY_PATH:-${{ github.workspace }}/AuthKey.p8}" || true
+
+  android:
+    needs: preflight
+    if: ${{ github.event_name == 'push' || github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+          working-directory: android
+
+      - name: Install matching bundler
+        run: gem install bundler -v 2.7.2
+
+      - name: Install gems
+        run: bundle _2.7.2_ install
+        working-directory: android
+
+      - name: Decode Play Store service-account JSON (mirrors release.yaml pattern)
+        env:
+          PLAY_STORE_JSON: ${{ secrets.PLAY_STORE_JSON_BASE64 }}
+        run: |
+          set -euo pipefail
+          echo "$PLAY_STORE_JSON" | base64 --decode > android/credentials.json
+
+      - name: Run supply (metadata-only)
+        run: bundle exec fastlane store_metadata
+        working-directory: android
+
+      - name: Cleanup
+        if: always()
+        run: rm -f android/credentials.json || true

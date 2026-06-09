@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
@@ -150,6 +151,28 @@ void main() {
       expect(f.requiredLevel, 30);
     });
 
+    test('KycLevelRequiredException with context → Failure carries context', () async {
+      when(() => service.getPaymentInfo(any(), currency: any(named: 'currency')))
+          .thenAnswer(
+        (_) async => throw const KycLevelRequiredException(
+          statusCode: 403,
+          code: 'KYC_REQUIRED',
+          message: 'KYC required',
+          requiredLevel: 30,
+          currentLevel: 10,
+          context: 'RealunitBuy',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '300');
+
+      final f = cubit.state as BuyPaymentInfoFailure;
+      expect(f.error, PaymentInfoError.kycRequired);
+      expect(f.requiredLevel, 30);
+      expect(f.context, 'RealunitBuy');
+    });
+
     test('RegistrationRequiredException → Failure(registrationRequired)', () async {
       when(() => service.getPaymentInfo(any(), currency: any(named: 'currency')))
           .thenAnswer(
@@ -165,6 +188,25 @@ void main() {
 
       final f = cubit.state as BuyPaymentInfoFailure;
       expect(f.error, PaymentInfoError.registrationRequired);
+    });
+
+    test('RegistrationRequiredException with context → Failure carries context', () async {
+      when(() => service.getPaymentInfo(any(), currency: any(named: 'currency')))
+          .thenAnswer(
+        (_) async => throw const RegistrationRequiredException(
+          statusCode: 403,
+          code: 'REGISTRATION_REQUIRED',
+          message: 'Sign first',
+          context: 'RealunitBuy',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '300');
+
+      final f = cubit.state as BuyPaymentInfoFailure;
+      expect(f.error, PaymentInfoError.registrationRequired);
+      expect(f.context, 'RealunitBuy');
     });
 
     test('generic exception → Failure(unknown)', () async {
@@ -187,6 +229,50 @@ void main() {
 
       final f = cubit.state as BuyPaymentInfoFailure;
       expect(f.error, PaymentInfoError.bitboxDisconnected);
+    });
+
+    test('ApiException 503 → Failure(priceSourceUnavailable)', () async {
+      when(() => service.getPaymentInfo(any(), currency: any(named: 'currency')))
+          .thenAnswer(
+        (_) async => throw const ApiException(
+          statusCode: 503,
+          code: 'PRICE_SOURCE_UNAVAILABLE',
+          message: 'RealUnit price source (Aktionariat) is currently unavailable',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '300');
+
+      expect((cubit.state as BuyPaymentInfoFailure).error, PaymentInfoError.priceSourceUnavailable);
+    });
+
+    test('ApiException with code PRICE_SOURCE_UNAVAILABLE (non-503) → priceSourceUnavailable', () async {
+      when(() => service.getPaymentInfo(any(), currency: any(named: 'currency')))
+          .thenAnswer(
+        (_) async => throw const ApiException(
+          statusCode: 500,
+          code: 'PRICE_SOURCE_UNAVAILABLE',
+          message: 'unavailable',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '300');
+
+      expect((cubit.state as BuyPaymentInfoFailure).error, PaymentInfoError.priceSourceUnavailable);
+    });
+
+    test('other ApiException (e.g. 400) → Failure(unknown)', () async {
+      when(() => service.getPaymentInfo(any(), currency: any(named: 'currency')))
+          .thenAnswer(
+        (_) async => throw const ApiException(statusCode: 400, code: 'BAD_REQUEST', message: 'bad'),
+      );
+
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '300');
+
+      expect((cubit.state as BuyPaymentInfoFailure).error, PaymentInfoError.unknown);
     });
 
     test('does not emit after close', () async {

@@ -43,18 +43,22 @@
 
         // Copy-link buttons next to each flow name: one click copies the
         // absolute deep-link to the clipboard, updates the URL bar to that
-        // anchor, and flashes a checkmark for 1.2s. Falls back to the
-        // textarea+execCommand trick on browsers without async clipboard.
-        // Original label is captured per-button at wire-up time (not per
-        // click) so a rapid second click while the "✓ Kopiert" state is
-        // still showing can't lock the label in the flashed state.
+        // anchor, and flashes a checkmark for 1.2s. Buttons carrying
+        // data-copy-url instead copy that URL verbatim (used by
+        // #spec-downloads for the public tester links) and leave the URL
+        // bar untouched. Falls back to the textarea+execCommand trick on
+        // browsers without async clipboard. Original label is captured
+        // per-button at wire-up time (not per click) so a rapid second
+        // click while the "✓ Kopiert" state is still showing can't lock
+        // the label in the flashed state.
         document.querySelectorAll('.copy-link').forEach(function (btn) {
           var origText = btn.textContent;
           var resetTimer = null;
           btn.addEventListener('click', function () {
             var target = btn.dataset.target;
-            if (!target) return;
-            var url = location.origin + location.pathname + '#' + target;
+            var copyUrl = btn.dataset.copyUrl;
+            if (!target && !copyUrl) return;
+            var url = copyUrl || location.origin + location.pathname + '#' + target;
             var done = function () {
               btn.textContent = '✓ Kopiert';
               btn.dataset.copied = 'true';
@@ -64,7 +68,7 @@
                 btn.removeAttribute('data-copied');
                 resetTimer = null;
               }, 1200);
-              if (location.hash !== '#' + target) location.hash = target;
+              if (target && location.hash !== '#' + target) location.hash = target;
             };
             if (navigator.clipboard && navigator.clipboard.writeText) {
               navigator.clipboard.writeText(url).then(done, function () {
@@ -531,6 +535,215 @@
         border-color: var(--line-2);
         color: var(--ink);
       }
+      /* Store-listing section (#spec-store-listing) — see
+         scripts/assemble-handbook-store-listing.py. Uses the handbook palette
+         vars (the scope-extension snippet's --text-secondary/--border/
+         --surface-alt map to --ink-3/--line/--surface-2 here). */
+      dl.store-listing {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 8px 24px;
+        margin: 16px 0 32px;
+      }
+      dl.store-listing dt {
+        font-weight: 600;
+        color: var(--ink-3);
+      }
+      dl.store-listing dd {
+        margin: 0;
+      }
+      dl.store-listing dd pre {
+        white-space: pre-wrap;
+        margin: 0;
+      }
+      .store-screenshots {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+        margin: 0 0 24px;
+      }
+      .store-screenshots figure {
+        margin: 0;
+      }
+      .store-screenshots img {
+        width: 100%;
+        height: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      .store-screenshots figcaption {
+        font-size: 12px;
+        color: var(--ink-3);
+        margin-top: 4px;
+        text-align: center;
+      }
+      figure.store-graphic img,
+      figure.store-icon img {
+        height: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      figure.store-graphic {
+        margin: 0 0 24px;
+        max-width: 512px;
+      }
+      figure.store-graphic img {
+        width: 100%;
+      }
+      figure.store-icon {
+        margin: 0 0 24px;
+      }
+      .rendered-html {
+        padding: 12px;
+        background: var(--surface-2);
+        border-radius: 8px;
+      }
+      /* Per-element source link (↗) pointing at the file in the repo. */
+      a.src {
+        text-decoration: none;
+        color: var(--ink-4);
+        font-weight: 600;
+        padding: 0 2px;
+      }
+      a.src:hover {
+        color: var(--brand);
+      }
+      .store-listing .src,
+      .store-screenshots .src {
+        font-size: 0.85em;
+      }
+      /* Legal-downloads section (#spec-legal-downloads) — see
+         scripts/assemble-handbook-legal.py. Reuses the .test card chrome
+         (border + :target highlight) so each (document, language) entry has the
+         same direct-link affordance as the screenshot cards. */
+      .test.legal-doc .downloads {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+      }
+      .test.legal-doc .doc-title {
+        flex-basis: 100%;
+        font-size: 13px;
+        color: var(--ink-2);
+      }
+      a.dl-btn {
+        text-decoration: none;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--brand);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 5px 12px;
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          color 0.15s;
+      }
+      a.dl-btn:hover {
+        background: var(--surface);
+        border-color: var(--brand);
+      }
+      /* Task-overview section (#spec-tasks) — table rendered client-side from
+         tasks.csv, which is mounted into the container at runtime from the
+         private server repo (see issue #662). No task data lives in this repo;
+         only the renderer + a fallback for when no CSV is mounted. Reuses the
+         handbook palette/card chrome. */
+      #spec-tasks .tasks-table-wrap {
+        overflow-x: auto;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      #spec-tasks table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+      }
+      #spec-tasks th,
+      #spec-tasks td {
+        text-align: left;
+        vertical-align: top;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--line);
+      }
+      #spec-tasks thead th {
+        background: var(--surface-2);
+        color: var(--ink);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      #spec-tasks tbody tr:last-child td {
+        border-bottom: none;
+      }
+      #spec-tasks tbody tr:hover {
+        background: var(--surface-2);
+      }
+      #spec-tasks td a {
+        margin-right: 10px;
+        white-space: nowrap;
+      }
+      #spec-tasks td a:last-child {
+        margin-right: 0;
+      }
+      #spec-tasks .tasks-note {
+        margin: 0;
+        color: var(--ink-3);
+        background: var(--surface);
+        border: 1px dashed var(--line-2);
+        border-radius: 8px;
+        padding: 14px 16px;
+      }
+      /* Downloads section (#spec-downloads) — static, hand-maintained list of
+         the three public tester/download links. Reuses the .test card chrome
+         (border + :target highlight) and the .copy-link button; the body adds a
+         self-contained inline-SVG QR code per link so a tester can scan it from
+         the desktop handbook. The copy button carries data-copy-url so it copies
+         the actual store/download URL rather than a handbook deep-link. */
+      .test.download .dl-body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 14px;
+      }
+      .test.download .dl-desc {
+        margin: 0;
+        font-size: 13px;
+        color: var(--ink-2);
+        text-align: center;
+      }
+      .test.download .dl-qr {
+        width: 132px;
+        height: 132px;
+        padding: 8px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      .test.download .dl-qr svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .test.download .dl-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+      }
+      .test.download .dl-url {
+        width: 100%;
+        margin: 0;
+        font-family: 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 11px;
+        color: var(--ink-3);
+        text-align: center;
+        overflow-wrap: anywhere;
+        word-break: break-all;
+      }
     </style>
   </head>
   <body>
@@ -609,6 +822,18 @@
             <li>
               <a href="#spec-mails"><span class="spec-num">M</span>E-Mails</a>
             </li>
+            <li>
+              <a href="#spec-store-listing"><span class="spec-num">S</span>Store-Listing</a>
+            </li>
+            <li>
+              <a href="#spec-legal-downloads"><span class="spec-num">L</span>Rechtsdokumente</a>
+            </li>
+            <li>
+              <a href="#spec-downloads"><span class="spec-num">D</span>Download / Test</a>
+            </li>
+            <li>
+              <a href="#spec-tasks"><span class="spec-num">A</span>Aufgaben</a>
+            </li>
           </ol>
         </nav>
       </aside>
@@ -672,10 +897,11 @@
           <div class="callout info">
             <p>
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/screens/&lt;feature&gt;</code>
-              auf dfx01 (Hardware-Determinismus) → neue Baseline committen → Push auf
-              <code>develop</code> triggert <code>handbook-deploy.yaml</code> → Docker-Build
-              assembliert die 52 Slots aus <code>test/goldens/screens/</code> → DEV-Image,
-              dann PRD-Image, beide via Cloudflare Tunnel.
+              auf dfx01 (Hardware-Determinismus) → neue Baseline committen →
+              <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
+              und assembliert die 52 Slots aus <code>test/goldens/screens/</code> → Push auf
+              <code>staging</code> deployt das DEV-Image, Push auf <code>develop</code> das
+              PRD-Image, beide via Cloudflare Tunnel.
             </p>
           </div>
         </section>
@@ -2182,11 +2408,582 @@
             Eine Änderung an Mail-Vorlage, i18n-Übersetzung oder
             Generator-Skript im api-Repo löst hier <b>keinen</b> automatischen
             Rebuild aus. Die neue Version wird mit dem nächsten
-            Handbook-Deploy (Push auf <code>develop</code> mit
-            handbook-relevanten Pfaden oder manueller
-            <code>workflow_dispatch</code> auf <code>handbook-deploy.yaml</code>
-            im realunit-app-Repo) reingezogen.
+            Handbook-Deploy (Push auf <code>staging</code> → DEV bzw.
+            <code>develop</code> → PRD mit handbook-relevanten Pfaden oder
+            manueller <code>workflow_dispatch</code> auf
+            <code>handbook-deploy.yaml</code> im realunit-app-Repo) reingezogen.
           </p>
+        </details>
+
+        <!-- BEGIN:store-listing -->
+<details id="spec-store-listing" class="spec" open>
+  <summary>
+    <div class="spec-head">
+      <div class="lhs">
+        <h2><span class="num">S</span>App Store / Play Store Listing</h2>
+        <div class="file">ios/fastlane/metadata · android/fastlane/metadata</div>
+      </div>
+      <div class="rhs">
+        <b>Live aus Repo</b>
+        <div class="links">
+          <a href="https://github.com/RealUnitCH/app/tree/develop/ios/fastlane/metadata">iOS metadata ↗</a>
+          ·
+          <a href="https://github.com/RealUnitCH/app/tree/develop/android/fastlane/metadata/android">Android metadata ↗</a>
+        </div>
+      </div>
+    </div>
+  </summary>
+
+  <p class="spec-intro">
+    Single source of truth für alles, was an Apple App Store Connect und
+    Google Play Console übermittelt wird. Änderung an Text, Screenshot
+    oder Feature Graphic geht ausschliesslich über einen PR auf diese
+    Dateien; <code>store-metadata.yaml</code> pusht den neuen Stand an
+    beide Konsolen, und der nächste Handbook-Build rendert ihn hier neu.
+    Jedes Feld und jedes Bild unten verlinkt mit <span class="src">↗</span>
+    direkt auf seine Quelldatei im Repo.
+  </p>
+
+  <!-- iOS section -->
+  <h3>Apple App Store (de-DE)</h3>
+  <dl class="store-listing">
+    <dt>App-Name (max 30)</dt><dd><code>RealUnit Wallet</code> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/name.txt" title="Quelle: name.txt">↗</a></dd>
+    <dt>Untertitel (max 30)</dt><dd><code>Sicher. Einfach. Unabhängig.</code> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/subtitle.txt" title="Quelle: subtitle.txt">↗</a></dd>
+    <dt>Beschreibung (max 4000) <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/description.txt" title="Quelle: description.txt">↗</a></dt><dd><pre>Die offizielle App der RealUnit Schweiz AG – für den einfachen, sicheren Kauf und die Verwahrung der RealUnit Aktientoken. Ohne Bank. Ohne Gebühren. Direkt in Ihrer Hand.
+
+IHRE VORTEILE AUF EINEN BLICK
+
+Kostenloser Kauf von RealUnit Token
+Bankenunabhängige, sichere Verwahrung Ihrer Token
+Aktueller Aktienkurs und persönliche Vermögensübersicht
+Belege für Handel und Steuern jederzeit abrufbar
+Kompatibel mit der Hardware Wallet Bitbox02 Nova
+
+FÜR WEN IST DIE APP?
+
+Die RealUnit App richtet sich an Anlegerinnen und Anleger, die ihr Vermögen ausserhalb des Bankensystems verwalten möchten – transparent, sicher und selbstbestimmt.
+
+Die RealUnit Schweiz AG ist eine börsenkotierte Investmentgesellschaft, welche breit diversifiziert in Realwerte investiert. Wir verfolgen das Ziel, das uns anvertraute Vermögen bestmöglich vor Krisen und Kaufkraftverlust zu schützen und das Privateigentum zu sichern.
+
+Jetzt herunterladen und Ihre finanzielle Souveränität zurückgewinnen.</pre></dd>
+    <dt>Schlagwörter (max 100, kommasepariert)</dt><dd><code>RealUnit,Wallet,Token,Aktien,Vermögen,Schweiz,Bitbox,Krypto,Investment,bankenunabhängig</code> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/keywords.txt" title="Quelle: keywords.txt">↗</a></dd>
+    <dt>Marketing-URL</dt><dd><a href="https://realunit.ch">https://realunit.ch</a> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/marketing_url.txt" title="Quelle: marketing_url.txt">↗</a></dd>
+    <dt>Privacy-URL</dt><dd><a href="https://realunit.ch/datenschutz/">https://realunit.ch/datenschutz/</a> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/privacy_url.txt" title="Quelle: privacy_url.txt">↗</a></dd>
+    <dt>Support-URL</dt><dd><a href="https://realunit.ch/kontakt/">https://realunit.ch/kontakt/</a> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/support_url.txt" title="Quelle: support_url.txt">↗</a></dd>
+    <dt>Copyright</dt><dd>© 2026 RealUnit Schweiz AG <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/copyright.txt" title="Quelle: copyright.txt">↗</a></dd>
+    <dt>Release-Notes</dt><dd>Erste Veröffentlichung der RealUnit Wallet App. <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/release_notes.txt" title="Quelle: release_notes.txt">↗</a></dd>
+  </dl>
+
+  <h4>Screenshots — iPhone 6.9 Display (1320×2868)</h4>
+  <div class="store-screenshots">
+    <figure><img src="../store/ios/iphone-69/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPhone%206.9%20Display/01_welcome.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/iphone-69/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPhone%206.9%20Display/02_dashboard.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/iphone-69/03_security.png"  alt="Security"/><figcaption>03_security <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPhone%206.9%20Display/03_security.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/iphone-69/04_buy.png"       alt="Buy"/><figcaption>04_buy <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPhone%206.9%20Display/04_buy.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/iphone-69/05_tax.png"       alt="Tax"/><figcaption>05_tax <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPhone%206.9%20Display/05_tax.png" title="Quelle">↗</a></figcaption></figure>
+  </div>
+
+  <h4>Screenshots — iPad Pro 13" Display (2752×2064)</h4>
+  <div class="store-screenshots">
+    <figure><img src="../store/ios/ipad-13/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPad%20Pro%20(13%20inch)%20Display/01_welcome.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/ipad-13/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPad%20Pro%20(13%20inch)%20Display/02_dashboard.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/ipad-13/03_security.png"  alt="Security"/><figcaption>03_security <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPad%20Pro%20(13%20inch)%20Display/03_security.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/ipad-13/04_buy.png"       alt="Buy"/><figcaption>04_buy <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPad%20Pro%20(13%20inch)%20Display/04_buy.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/ipad-13/05_tax.png"       alt="Tax"/><figcaption>05_tax <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPad%20Pro%20(13%20inch)%20Display/05_tax.png" title="Quelle">↗</a></figcaption></figure>
+  </div>
+
+  <!-- Android section -->
+  <h3>Google Play Store (de-DE)</h3>
+  <dl class="store-listing">
+    <dt>Titel (max 50)</dt><dd><code>RealUnit Wallet</code> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/title.txt" title="Quelle: title.txt">↗</a></dd>
+    <dt>Kurzbeschreibung (max 80)</dt><dd>RealUnit Token kaufen, verwahren &amp; verwalten – sicher und bankenunabhängig. <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/short_description.txt" title="Quelle: short_description.txt">↗</a></dd>
+    <dt>Lang-Beschreibung (max 4000, HTML) <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/full_description.txt" title="Quelle: full_description.txt">↗</a></dt><dd><div class="rendered-html">Die offizielle App der RealUnit Schweiz AG – für den einfachen, gebührenfreien Kauf und die sichere Verwahrung der RealUnit Aktientoken. Ohne Bank. Ohne Gebühren. Direkt in Ihrer Hand.
+
+<b>Ihre Vorteile</b>
+
+✔ Kostenloser Kauf von RealUnit Token
+
+✔ Bankenunabhängige, sichere Verwahrung Ihrer Token
+
+✔ Aktueller Aktienkurs und persönliche Vermögensübersicht
+
+✔ Belege für Handel und Steuern jederzeit abrufbar
+
+✔ Kompatibel mit der Hardware Wallet Bitbox02 Nova
+
+<b>Für wen ist die App?</b>
+
+Die RealUnit App richtet sich an Anlegerinnen und Anleger, die ihr Vermögen ausserhalb des Bankensystems verwalten möchten – transparent, sicher und selbstbestimmt.
+
+<b>Über RealUnit Schweiz AG</b>
+
+Die RealUnit Schweiz AG ist eine börsenkotierte Investmentgesellschaft, welche breit diversifiziert in Realwerte investiert. Wir verfolgen das Ziel, das uns anvertraute Vermögen bestmöglich vor Krisen und Kaufkraftverlust zu schützen und das Privateigentum zu sichern.
+
+Jetzt herunterladen und Ihre finanzielle Souveränität zurückgewinnen.</div></dd>
+    <dt>Changelog</dt><dd>Erste Veröffentlichung der RealUnit Wallet App. <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/changelogs/default.txt" title="Quelle: changelogs/default.txt">↗</a></dd>
+  </dl>
+
+  <h4>Feature Graphic (1024×500)</h4>
+  <figure class="store-graphic"><img src="../store/android/featureGraphic.png" alt="Feature Graphic"/><figcaption>featureGraphic <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/featureGraphic.png" title="Quelle">↗</a></figcaption></figure>
+
+  <h4>Icon (512×512)</h4>
+  <figure class="store-icon"><img src="../store/android/icon.png" alt="App Icon"/><figcaption>icon <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/icon.png" title="Quelle">↗</a></figcaption></figure>
+
+  <h4>Phone Screenshots (1350×2400)</h4>
+  <div class="store-screenshots">
+    <figure><img src="../store/android/phone/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/phoneScreenshots/01_welcome.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/phone/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/phoneScreenshots/02_dashboard.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/phone/03_security.png"  alt="Security"/><figcaption>03_security <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/phoneScreenshots/03_security.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/phone/04_buy.png"       alt="Buy"/><figcaption>04_buy <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/phoneScreenshots/04_buy.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/phone/05_tax.png"       alt="Tax"/><figcaption>05_tax <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/phoneScreenshots/05_tax.png" title="Quelle">↗</a></figcaption></figure>
+  </div>
+
+  <h4>7" Tablet (1920×1200)</h4>
+  <div class="store-screenshots">
+    <figure><img src="../store/android/seven-inch/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/sevenInchScreenshots/01_welcome.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/seven-inch/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/sevenInchScreenshots/02_dashboard.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/seven-inch/03_security.png"  alt="Security"/><figcaption>03_security <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/sevenInchScreenshots/03_security.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/seven-inch/04_buy.png"       alt="Buy"/><figcaption>04_buy <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/sevenInchScreenshots/04_buy.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/seven-inch/05_tax.png"       alt="Tax"/><figcaption>05_tax <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/sevenInchScreenshots/05_tax.png" title="Quelle">↗</a></figcaption></figure>
+  </div>
+
+  <h4>10" Tablet (2560×1440)</h4>
+  <div class="store-screenshots">
+    <figure><img src="../store/android/ten-inch/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/tenInchScreenshots/01_welcome.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/ten-inch/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/tenInchScreenshots/02_dashboard.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/ten-inch/03_security.png"  alt="Security"/><figcaption>03_security <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/tenInchScreenshots/03_security.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/ten-inch/04_buy.png"       alt="Buy"/><figcaption>04_buy <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/tenInchScreenshots/04_buy.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/ten-inch/05_tax.png"       alt="Tax"/><figcaption>05_tax <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/tenInchScreenshots/05_tax.png" title="Quelle">↗</a></figcaption></figure>
+  </div>
+</details>
+<!-- END:store-listing -->
+
+        <!-- BEGIN:legal-downloads -->
+<details id="spec-legal-downloads" class="spec" open>
+  <summary>
+    <div class="spec-head">
+      <div class="lhs">
+        <h2><span class="num">L</span>Rechtsdokumente — Downloads</h2>
+        <div class="file">assets/legal/*.md</div>
+      </div>
+      <div class="rhs">
+        <b>Live aus Repo</b>
+        <div class="links">
+          <a href="https://github.com/RealUnitCH/app/tree/develop/assets/legal">assets/legal ↗</a>
+        </div>
+      </div>
+    </div>
+  </summary>
+
+  <p class="spec-intro">
+    Single source of truth für die App-eigenen Rechtstexte sind die Markdown-Dateien
+    unter <code>assets/legal/*.md</code>. Die In-App-Ansicht (<code>LegalDocumentPage</code>)
+    und die Downloads hier rendern aus denselben Dateien; jede Änderung am Text geht
+    ausschliesslich über einen PR auf diese Markdown-Quellen. Pro Dokument und Sprache
+    gibt es einen <b>PDF</b>- und <b>DOCX</b>-Download (im Handbook-Image via
+    <code>pandoc</code> erzeugt) sowie einen Direkt-Link (🔗) auf den jeweiligen Eintrag
+    und einen <span class="src">↗</span>-Link auf die Markdown-Quelldatei.
+    DFX- und Aktionariat-Dokumente sowie die extern gehosteten Unternehmensdokumente
+    (Prospekte, Statuten) sind <em>nicht</em> Teil dieses Exports — sie haben keine
+    Markdown-Quelle im Repo.
+  </p>
+
+  <h3>Datenschutzbestimmungen <a class="src" href="https://github.com/RealUnitCH/app/tree/develop/assets/legal" title="Quelle: assets/legal/">↗</a></h3>
+  <div class="tests cols-2">
+    <div class="test legal-doc" id="legal-privacy_policy-de">
+      <div class="head">
+        <a class="name permalink" href="#legal-privacy_policy-de">privacy_policy_de</a>
+        <button class="copy-link" type="button" data-target="legal-privacy_policy-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">de</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Datenschutzbestimmungen</span>
+        <a class="dl-btn" href="../legal/privacy_policy_de.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/privacy_policy_de.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/privacy_policy_de.md" title="Quelle: privacy_policy_de.md">Markdown ↗</a>
+      </div>
+    </div>
+    <div class="test legal-doc" id="legal-privacy_policy-en">
+      <div class="head">
+        <a class="name permalink" href="#legal-privacy_policy-en">privacy_policy_en</a>
+        <button class="copy-link" type="button" data-target="legal-privacy_policy-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">en</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Privacy Policy</span>
+        <a class="dl-btn" href="../legal/privacy_policy_en.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/privacy_policy_en.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/privacy_policy_en.md" title="Quelle: privacy_policy_en.md">Markdown ↗</a>
+      </div>
+    </div>
+  </div>
+  <h3>Nutzungsbedingungen <a class="src" href="https://github.com/RealUnitCH/app/tree/develop/assets/legal" title="Quelle: assets/legal/">↗</a></h3>
+  <div class="tests cols-2">
+    <div class="test legal-doc" id="legal-terms_of_use-de">
+      <div class="head">
+        <a class="name permalink" href="#legal-terms_of_use-de">terms_of_use_de</a>
+        <button class="copy-link" type="button" data-target="legal-terms_of_use-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">de</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Nutzungsbedingungen</span>
+        <a class="dl-btn" href="../legal/terms_of_use_de.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/terms_of_use_de.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/terms_of_use_de.md" title="Quelle: terms_of_use_de.md">Markdown ↗</a>
+      </div>
+    </div>
+    <div class="test legal-doc" id="legal-terms_of_use-en">
+      <div class="head">
+        <a class="name permalink" href="#legal-terms_of_use-en">terms_of_use_en</a>
+        <button class="copy-link" type="button" data-target="legal-terms_of_use-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">en</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Terms of use</span>
+        <a class="dl-btn" href="../legal/terms_of_use_en.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/terms_of_use_en.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/terms_of_use_en.md" title="Quelle: terms_of_use_en.md">Markdown ↗</a>
+      </div>
+    </div>
+  </div>
+  <h3>Registrierungsvereinbarung <a class="src" href="https://github.com/RealUnitCH/app/tree/develop/assets/legal" title="Quelle: assets/legal/">↗</a></h3>
+  <div class="tests cols-2">
+    <div class="test legal-doc" id="legal-registration_agreement-de">
+      <div class="head">
+        <a class="name permalink" href="#legal-registration_agreement-de">registration_agreement_de</a>
+        <button class="copy-link" type="button" data-target="legal-registration_agreement-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">de</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Registrierungsvereinbarung</span>
+        <a class="dl-btn" href="../legal/registration_agreement_de.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/registration_agreement_de.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/registration_agreement_de.md" title="Quelle: registration_agreement_de.md">Markdown ↗</a>
+      </div>
+    </div>
+    <div class="test legal-doc" id="legal-registration_agreement-en">
+      <div class="head">
+        <a class="name permalink" href="#legal-registration_agreement-en">registration_agreement_en</a>
+        <button class="copy-link" type="button" data-target="legal-registration_agreement-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">en</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Registration Agreement</span>
+        <a class="dl-btn" href="../legal/registration_agreement_en.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/registration_agreement_en.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/registration_agreement_en.md" title="Quelle: registration_agreement_en.md">Markdown ↗</a>
+      </div>
+    </div>
+  </div>
+</details>
+<!-- END:legal-downloads -->
+
+        <details id="spec-downloads" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">D</span>Download / Test-Zugang</h2>
+                <div class="file">docs/handbook/de/index.html</div>
+              </div>
+              <div class="rhs">
+                <b>3 Plattformen</b>
+                <div class="links">
+                  <a href="https://github.com/RealUnitCH/app/releases">Releases ↗</a>
+                </div>
+              </div>
+            </div>
+          </summary>
+
+          <p class="spec-intro">
+            Die öffentlichen Test- und Download-Zugänge der RealUnit-App an einem Ort —
+            iOS über <b>TestFlight</b>, Android über den <b>offenen Test im Play Store</b>
+            oder als <b>APK-Direkt-Download</b>. Die Links sind öffentlich und stabil und
+            werden statisch hier im Handbook gepflegt; pro Zugang gibt es den Link, einen
+            Kopier-Button und einen QR-Code zum Scannen mit dem Handy. Bei einem künftigen
+            Wechsel (z.&nbsp;B. neue TestFlight-Public-Gruppe oder geänderter
+            Play-Test-Pfad) diese Sektion aktualisieren.
+          </p>
+
+          <div class="tests cols-3">
+            <div class="test download" id="dl-testflight">
+              <div class="head">
+                <a class="name permalink" href="#dl-testflight">Apple TestFlight</a>
+                <span class="src">iOS</span>
+              </div>
+              <div class="dl-body">
+                <div class="dl-qr"><svg role="img" viewBox="0 0 37 37"><title>QR-Code: Apple TestFlight</title><path fill="#fff" d="M0 0h37v37h-37z"/><path stroke="#343233" d="M4 4.5h7m1 0h1m1 0h2m3 0h6m1 0h7m-29 1h1m5 0h1m1 0h1m1 0h1m1 0h1m1 0h1m2 0h2m1 0h1m1 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m1 0h1m1 0h2m1 0h1m2 0h1m2 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m3 0h1m1 0h4m2 0h1m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m1 0h1m2 0h4m1 0h1m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m5 0h2m2 0h1m1 0h2m2 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-21 1h5m4 0h2m1 0h1m-21 1h1m1 0h2m1 0h3m2 0h1m3 0h2m1 0h1m1 0h2m1 0h1m2 0h1m1 0h2m-28 1h2m7 0h1m3 0h1m1 0h9m3 0h1m-27 1h2m2 0h1m1 0h3m1 0h2m2 0h1m1 0h1m2 0h1m1 0h1m2 0h2m-27 1h1m1 0h1m5 0h2m1 0h4m3 0h1m3 0h1m4 0h1m-28 1h2m3 0h2m5 0h2m2 0h1m5 0h1m1 0h2m-26 1h1m3 0h1m1 0h3m1 0h2m2 0h1m1 0h1m1 0h1m2 0h1m3 0h3m-28 1h2m1 0h4m3 0h2m3 0h2m1 0h1m1 0h1m1 0h2m1 0h3m-28 1h2m1 0h2m6 0h1m1 0h1m1 0h1m2 0h3m2 0h1m2 0h1m-28 1h3m3 0h2m2 0h1m2 0h1m1 0h1m2 0h4m2 0h2m1 0h1m-27 1h1m1 0h1m6 0h2m1 0h1m1 0h1m1 0h1m5 0h1m1 0h3m-28 1h1m3 0h5m2 0h2m1 0h4m3 0h4m1 0h1m-25 1h4m2 0h1m8 0h2m2 0h1m4 0h1m-26 1h2m1 0h3m4 0h1m1 0h14m-19 1h1m1 0h1m3 0h1m1 0h5m3 0h5m-29 1h7m1 0h1m1 0h1m2 0h2m1 0h5m1 0h1m1 0h2m1 0h1m-28 1h1m5 0h1m1 0h1m1 0h6m2 0h1m1 0h1m3 0h2m-26 1h1m1 0h3m1 0h1m2 0h2m6 0h2m1 0h5m1 0h3m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h2m1 0h4m3 0h2m1 0h3m2 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h1m2 0h5m2 0h1m2 0h1m1 0h1m-29 1h1m5 0h1m3 0h1m1 0h1m7 0h1m3 0h2m1 0h1m-28 1h7m1 0h3m2 0h1m1 0h1m2 0h5m2 0h1m1 0h1"/></svg></div>
+                <p class="dl-desc">
+                  Öffentlicher Tester-Zugang für iPhone &amp; iPad. Link auf dem Gerät
+                  öffnen, TestFlight installieren (falls noch nicht vorhanden) und dem
+                  Test beitreten — Updates kommen automatisch über TestFlight.
+                </p>
+                <div class="dl-actions">
+                  <a class="dl-btn" href="https://testflight.apple.com/join/xpAAwseS" target="_blank" rel="noopener">Öffnen ↗</a>
+                  <button class="copy-link" type="button" data-copy-url="https://testflight.apple.com/join/xpAAwseS" title="Link kopieren" aria-label="TestFlight-Link kopieren">🔗 Link kopieren</button>
+                </div>
+                <code class="dl-url">https://testflight.apple.com/join/xpAAwseS</code>
+              </div>
+            </div>
+            <div class="test download" id="dl-playstore">
+              <div class="head">
+                <a class="name permalink" href="#dl-playstore">Google Play — Offener Test</a>
+                <span class="src">Android</span>
+              </div>
+              <div class="dl-body">
+                <div class="dl-qr"><svg role="img" viewBox="0 0 41 41"><title>QR-Code: Google Play — Offener Test</title><path fill="#fff" d="M0 0h41v41h-41z"/><path stroke="#343233" d="M4 4.5h7m5 0h2m1 0h1m2 0h2m2 0h2m2 0h7m-33 1h1m5 0h1m2 0h1m1 0h5m1 0h1m2 0h2m1 0h1m2 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m3 0h1m1 0h2m1 0h1m1 0h1m1 0h1m6 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m6 0h2m1 0h1m1 0h2m2 0h1m3 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m2 0h1m2 0h3m2 0h1m5 0h1m2 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m1 0h1m4 0h1m1 0h6m1 0h1m3 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-23 1h2m3 0h7m-22 1h1m2 0h1m1 0h2m1 0h3m2 0h2m1 0h1m2 0h1m1 0h1m1 0h3m1 0h1m-28 1h1m4 0h1m2 0h1m4 0h1m3 0h1m2 0h2m3 0h3m3 0h2m-33 1h1m2 0h4m1 0h1m1 0h5m1 0h1m1 0h3m5 0h3m1 0h1m1 0h1m-33 1h3m2 0h1m1 0h1m1 0h1m1 0h1m1 0h1m7 0h2m5 0h2m1 0h2m-27 1h2m3 0h1m2 0h1m1 0h2m1 0h3m1 0h1m1 0h3m1 0h1m1 0h2m-32 1h1m2 0h1m6 0h2m1 0h2m2 0h2m2 0h1m1 0h1m1 0h1m1 0h5m-32 1h3m1 0h3m3 0h1m2 0h4m3 0h1m1 0h5m2 0h2m-32 1h2m1 0h3m1 0h2m1 0h4m2 0h7m1 0h1m1 0h2m3 0h1m-32 1h1m4 0h3m1 0h1m4 0h10m2 0h1m1 0h1m2 0h1m-31 1h3m4 0h3m1 0h2m2 0h1m3 0h1m2 0h2m2 0h1m1 0h1m-24 1h1m1 0h1m2 0h2m1 0h1m1 0h1m1 0h1m11 0h3m-33 1h3m1 0h1m4 0h1m1 0h1m1 0h5m2 0h4m1 0h1m1 0h1m3 0h2m-30 1h1m1 0h3m3 0h3m3 0h2m1 0h2m1 0h3m1 0h1m-18 1h1m2 0h1m1 0h1m4 0h1m1 0h1m3 0h1m3 0h3m-33 1h2m1 0h1m2 0h4m1 0h1m4 0h2m1 0h1m1 0h2m2 0h4m3 0h1m-32 1h2m2 0h1m1 0h1m2 0h2m1 0h1m1 0h1m2 0h6m1 0h2m1 0h2m-30 1h1m1 0h1m1 0h1m1 0h1m1 0h2m1 0h1m1 0h1m3 0h1m1 0h3m2 0h5m2 0h2m-25 1h3m2 0h2m2 0h1m1 0h6m3 0h2m1 0h2m-33 1h7m2 0h4m3 0h3m5 0h1m1 0h1m1 0h4m-32 1h1m5 0h1m1 0h1m1 0h1m3 0h2m1 0h1m1 0h4m1 0h1m3 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m3 0h2m3 0h1m1 0h3m1 0h6m2 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m2 0h6m4 0h1m4 0h1m1 0h2m-30 1h1m1 0h3m1 0h1m2 0h2m4 0h2m1 0h1m1 0h2m1 0h1m4 0h2m2 0h1m-33 1h1m5 0h1m2 0h4m4 0h5m2 0h1m4 0h1m-30 1h7m1 0h2m1 0h1m3 0h1m3 0h1m1 0h1m2 0h3m1 0h2m1 0h1"/></svg></div>
+                <p class="dl-desc">
+                  Offener Test im Play Store. Link auf dem Android-Gerät öffnen, dem
+                  Test beitreten und die App regulär über den Play Store installieren —
+                  Updates kommen automatisch.
+                </p>
+                <div class="dl-actions">
+                  <a class="dl-btn" href="https://play.google.com/apps/testing/swiss.realunit.app" target="_blank" rel="noopener">Öffnen ↗</a>
+                  <button class="copy-link" type="button" data-copy-url="https://play.google.com/apps/testing/swiss.realunit.app" title="Link kopieren" aria-label="Play-Store-Test-Link kopieren">🔗 Link kopieren</button>
+                </div>
+                <code class="dl-url">https://play.google.com/apps/testing/swiss.realunit.app</code>
+              </div>
+            </div>
+            <div class="test download" id="dl-apk">
+              <div class="head">
+                <a class="name permalink" href="#dl-apk">Android APK</a>
+                <span class="src">Android</span>
+              </div>
+              <div class="dl-body">
+                <div class="dl-qr"><svg role="img" viewBox="0 0 37 37"><title>QR-Code: Android APK (GitHub Releases)</title><path fill="#fff" d="M0 0h37v37h-37z"/><path stroke="#343233" d="M4 4.5h7m3 0h3m1 0h1m3 0h1m3 0h7m-29 1h1m5 0h1m1 0h2m4 0h1m1 0h1m3 0h1m1 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m2 0h2m2 0h2m1 0h1m3 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m1 0h1m1 0h1m2 0h1m3 0h1m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h2m5 0h1m2 0h2m1 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m3 0h1m3 0h1m5 0h1m1 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-21 1h2m1 0h1m2 0h2m4 0h1m-21 1h1m5 0h1m1 0h1m1 0h8m3 0h2m2 0h3m-28 1h6m3 0h1m1 0h2m1 0h2m1 0h3m1 0h1m1 0h2m1 0h2m-27 1h7m1 0h1m1 0h1m3 0h3m6 0h1m-23 1h2m4 0h2m4 0h3m1 0h2m1 0h1m3 0h1m-25 1h3m2 0h2m8 0h1m2 0h1m2 0h2m4 0h1m-29 1h2m1 0h2m3 0h1m2 0h1m2 0h2m1 0h2m1 0h1m1 0h3m2 0h2m-29 1h1m2 0h1m1 0h2m6 0h1m1 0h1m2 0h1m1 0h2m2 0h3m-25 1h1m1 0h2m2 0h2m1 0h2m3 0h1m2 0h1m3 0h2m1 0h1m1 0h1m-27 1h2m2 0h2m3 0h7m1 0h1m1 0h1m1 0h1m1 0h2m-27 1h1m2 0h2m2 0h2m2 0h2m2 0h2m2 0h1m2 0h3m1 0h3m-29 1h2m2 0h1m1 0h1m2 0h5m1 0h3m1 0h1m4 0h2m2 0h1m-29 1h1m2 0h3m2 0h1m1 0h1m3 0h1m3 0h1m1 0h1m1 0h1m-23 1h1m2 0h2m1 0h2m1 0h1m1 0h6m2 0h6m1 0h3m-21 1h1m1 0h1m1 0h1m2 0h1m2 0h1m1 0h1m3 0h2m-26 1h7m6 0h1m1 0h6m1 0h1m1 0h3m-27 1h1m5 0h1m4 0h1m2 0h1m4 0h2m3 0h1m3 0h1m-29 1h1m1 0h3m1 0h1m2 0h3m1 0h5m1 0h7m1 0h1m-28 1h1m1 0h3m1 0h1m3 0h4m1 0h7m3 0h2m1 0h1m-29 1h1m1 0h3m1 0h1m4 0h2m1 0h3m1 0h10m-28 1h1m5 0h1m6 0h3m2 0h1m3 0h2m1 0h2m1 0h1m-29 1h7m1 0h2m1 0h1m2 0h1m2 0h3m2 0h3m1 0h1"/></svg></div>
+                <p class="dl-desc">
+                  Direkt-Download ohne Play Store: APK des gewünschten Releases von
+                  GitHub laden und installieren (Installation aus unbekannten Quellen
+                  zulassen). Kein Auto-Update — neue Versionen manuell laden.
+                </p>
+                <div class="dl-actions">
+                  <a class="dl-btn" href="https://github.com/RealUnitCH/app/releases" target="_blank" rel="noopener">Öffnen ↗</a>
+                  <button class="copy-link" type="button" data-copy-url="https://github.com/RealUnitCH/app/releases" title="Link kopieren" aria-label="APK-Releases-Link kopieren">🔗 Link kopieren</button>
+                </div>
+                <code class="dl-url">https://github.com/RealUnitCH/app/releases</code>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details id="spec-tasks" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">A</span>Aufgaben — Projektübersicht</h2>
+                <div class="file">tasks.csv</div>
+              </div>
+              <div class="rhs">
+                <b>Live aus privatem Server-Repo</b>
+                <div class="links"><span class="src">CSV-Mount</span></div>
+              </div>
+            </div>
+          </summary>
+
+          <p class="spec-intro">
+            Diese Übersicht ist die laufende Aufgaben- und Statusliste des Projekts. Die
+            Daten werden zur Laufzeit aus einer CSV-Datei geladen, die ausschliesslich im
+            privaten Server-Repository gepflegt und per Mount in den Handbook-Container
+            eingebunden wird — im Handbook-Repo liegen nur Darstellung und Renderer, keine
+            Aufgabendaten. Fehlt der Mount (z.&nbsp;B. lokaler Image-Build), erscheint statt
+            der Tabelle ein Hinweis.
+          </p>
+
+          <div id="tasks-table"></div>
+
+          <script>
+            // Renders the task overview from the CSV that the private server repo
+            // mounts into the container at /de/tasks.csv. The data lives only in
+            // that repo; this handbook ships only the renderer + a graceful 404
+            // fallback for when no CSV is mounted (e.g. local build). See #662.
+            (function () {
+              var MOUNT_ID = 'tasks-table';
+              var CSV_URL = 'tasks.csv'; // relative to /de/ → same-origin /de/tasks.csv
+              var LINKS_HEADER = 'links';
+
+              function showNote(message) {
+                var host = document.getElementById(MOUNT_ID);
+                if (!host) return;
+                host.textContent = '';
+                var p = document.createElement('p');
+                p.className = 'tasks-note';
+                p.textContent = message;
+                host.appendChild(p);
+              }
+
+              // RFC-4180 parser: handles quoted fields containing commas or
+              // newlines and "" escaped quotes; tolerates LF and CRLF endings.
+              function parseCsv(text) {
+                var rows = [];
+                var row = [];
+                var field = '';
+                var inQuotes = false;
+                var i = 0;
+                var n = text.length;
+                function pushField() {
+                  row.push(field);
+                  field = '';
+                }
+                function pushRow() {
+                  pushField();
+                  rows.push(row);
+                  row = [];
+                }
+                while (i < n) {
+                  var c = text.charAt(i);
+                  if (inQuotes) {
+                    if (c === '"') {
+                      if (text.charAt(i + 1) === '"') {
+                        field += '"';
+                        i += 2;
+                        continue;
+                      }
+                      inQuotes = false;
+                      i += 1;
+                      continue;
+                    }
+                    field += c;
+                    i += 1;
+                    continue;
+                  }
+                  if (c === '"') {
+                    inQuotes = true;
+                    i += 1;
+                    continue;
+                  }
+                  if (c === ',') {
+                    pushField();
+                    i += 1;
+                    continue;
+                  }
+                  if (c === '\r') {
+                    i += 1;
+                    continue;
+                  }
+                  if (c === '\n') {
+                    pushRow();
+                    i += 1;
+                    continue;
+                  }
+                  field += c;
+                  i += 1;
+                }
+                // Flush a trailing field/row unless the file ended on a newline.
+                if (field !== '' || row.length > 0) pushRow();
+                return rows;
+              }
+
+              function shortLabel(url) {
+                try {
+                  var u = new URL(url);
+                  var segs = u.pathname.split('/').filter(Boolean);
+                  var last = segs.length ? segs[segs.length - 1] : u.hostname;
+                  return /^\d+$/.test(last) ? '#' + last : last;
+                } catch (e) {
+                  return url;
+                }
+              }
+
+              // The Links column holds 0..n whitespace-separated URLs. Linkify
+              // http(s) tokens (open in a new tab); pass anything else through
+              // as text. textContent / element APIs HTML-escape every value.
+              function fillLinks(td, value) {
+                var tokens = value.split(/\s+/);
+                var count = 0;
+                for (var i = 0; i < tokens.length; i++) {
+                  var token = tokens[i];
+                  if (!token) continue;
+                  if (!/^https?:\/\//i.test(token)) {
+                    td.appendChild(document.createTextNode((count ? ' ' : '') + token));
+                    count += 1;
+                    continue;
+                  }
+                  var a = document.createElement('a');
+                  a.href = token;
+                  a.target = '_blank';
+                  a.rel = 'noopener';
+                  a.textContent = shortLabel(token);
+                  td.appendChild(a);
+                  count += 1;
+                }
+              }
+
+              function renderTable(rows) {
+                var host = document.getElementById(MOUNT_ID);
+                if (!host) return;
+                var header = rows[0];
+                var linksCol = -1;
+                for (var h = 0; h < header.length; h++) {
+                  if (header[h].trim().toLowerCase() === LINKS_HEADER) linksCol = h;
+                }
+
+                var table = document.createElement('table');
+                var thead = document.createElement('thead');
+                var headRow = document.createElement('tr');
+                for (var c = 0; c < header.length; c++) {
+                  var th = document.createElement('th');
+                  th.textContent = header[c];
+                  headRow.appendChild(th);
+                }
+                thead.appendChild(headRow);
+                table.appendChild(thead);
+
+                var tbody = document.createElement('tbody');
+                for (var r = 1; r < rows.length; r++) {
+                  var cells = rows[r];
+                  var tr = document.createElement('tr');
+                  for (var k = 0; k < header.length; k++) {
+                    var td = document.createElement('td');
+                    var value = k < cells.length ? cells[k] : '';
+                    if (k === linksCol) {
+                      fillLinks(td, value);
+                    } else {
+                      td.textContent = value;
+                    }
+                    tr.appendChild(td);
+                  }
+                  tbody.appendChild(tr);
+                }
+                table.appendChild(tbody);
+
+                var wrap = document.createElement('div');
+                wrap.className = 'tasks-table-wrap';
+                wrap.appendChild(table);
+                host.textContent = '';
+                host.appendChild(wrap);
+              }
+
+              function isBlankRow(row) {
+                return row.length === 1 && row[0].trim() === '';
+              }
+
+              function load() {
+                fetch(CSV_URL, { credentials: 'same-origin' })
+                  .then(function (res) {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.text();
+                  })
+                  .then(function (text) {
+                    if (!text || !text.trim()) throw new Error('empty');
+                    var rows = parseCsv(text).filter(function (row) {
+                      return !isBlankRow(row);
+                    });
+                    if (!rows.length) throw new Error('no rows');
+                    renderTable(rows);
+                  })
+                  .catch(function () {
+                    showNote(
+                      'Aufgabenübersicht wird auf dem Server bereitgestellt (kein Mount in dieser Umgebung).'
+                    );
+                  });
+              }
+
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', load);
+              } else {
+                load();
+              }
+            })();
+          </script>
         </details>
       </main>
     </div>

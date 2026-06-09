@@ -19,7 +19,7 @@ enum WalletType { software, bitbox, debug }
 |---|---|---|---|
 | `software` | yes (12-word seed, encrypted at rest) | signs in the background, near-zero user friction | full app — register, link wallet, trade |
 | `bitbox` | yes (on the hardware device) | requires confirmation on the connected unlocked BitBox | full app — register, link wallet, trade |
-| `debug` | no (address only, plus a stored signature attestation) | **cannot sign** — `DebugWalletAccount.signMessage` throws `UnsupportedError` | read-only browsing of a known address, plus any flow that the API accepts without a fresh signature (`AlreadyRegistered`, `KycRequired`) |
+| `debug` | no (address only, plus a stored signature attestation) | **cannot sign** — `DebugWalletAccount.signMessage` throws `UnsupportedError` | read-only browsing of a known address, plus any flow that the API accepts without a fresh signature (`AlreadyRegistered`) |
 
 ## Features that require signing
 
@@ -37,8 +37,8 @@ current wallet is `WalletType.debug` and the API has routed to either of the
 above states, the cubit emits `KycSignatureUnsupportedFailure` instead of
 `KycSuccess`, and `KycPageManager` renders `KycSignatureUnsupportedPage`.
 
-`AlreadyRegistered` and `KycRequired` do not invoke the signer, so debug-mode
-users flow through them unchanged.
+`AlreadyRegistered` does not invoke the signer, so debug-mode
+users flow through it unchanged.
 
 ## Why this gate is local
 

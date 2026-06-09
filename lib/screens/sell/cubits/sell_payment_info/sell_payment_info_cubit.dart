@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
@@ -77,6 +78,7 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
           PaymentInfoError.kycRequired,
           message: e.toString(),
           requiredLevel: e.requiredLevel,
+          context: e.context,
         ),
       );
     } on RegistrationRequiredException catch (e) {
@@ -85,6 +87,7 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
         SellPaymentInfoFailure(
           PaymentInfoError.registrationRequired,
           message: e.toString(),
+          context: e.context,
         ),
       );
     } on BitboxNotConnectedException catch (e) {
@@ -92,6 +95,27 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
       emit(
         SellPaymentInfoFailure(
           PaymentInfoError.bitboxDisconnected,
+          message: e.toString(),
+        ),
+      );
+    } on ApiException catch (e) {
+      // 503 / PRICE_SOURCE_UNAVAILABLE = external price provider (Aktionariat)
+      // down → no quote possible. Must stay below the KYC/Registration clauses
+      // (those are ApiException subclasses).
+      if (isClosed) return;
+      if (e.statusCode == 503 || e.code == 'PRICE_SOURCE_UNAVAILABLE') {
+        emit(
+          SellPaymentInfoFailure(
+            PaymentInfoError.priceSourceUnavailable,
+            message: e.message,
+          ),
+        );
+        return;
+      }
+      developer.log(e.toString());
+      emit(
+        SellPaymentInfoFailure(
+          PaymentInfoError.unknown,
           message: e.toString(),
         ),
       );

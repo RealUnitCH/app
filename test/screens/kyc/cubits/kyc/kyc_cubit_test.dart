@@ -279,37 +279,12 @@ void main() {
       ],
     );
 
-    // `KycRequired` gets its own dedicated state so the failure page can show
-    // a tailored "complete your verification" message instead of the generic
-    // "step (-) cannot be completed" fallback.
-    blocTest<KycCubit, KycState>(
-      'emits KycRequiredFailure when wallet status reports KycRequired',
-      setUp: () {
-        when(() => kycService.getKycStatus()).thenAnswer(
-          (_) async => _kycStatus(level: KycLevel.level20),
-        );
-        when(() => kycService.getUser()).thenAnswer((_) async => _user());
-        when(() => registrationService.getRegistrationInfo()).thenAnswer(
-          (_) async => _walletStatus(RealUnitRegistrationState.kycRequired),
-        );
-      },
-      build: buildCubit,
-      act: (cubit) async {
-        cubit.markLegalDisclaimerAccepted();
-        await cubit.checkKyc();
-      },
-      expect: () => [
-        const KycLoading(),
-        const KycRequiredFailure(),
-      ],
-    );
-
     // Wallet-mode signing-capability gate: the address+signature debug
     // wallet cannot produce an EIP-712 signature. The cubit must surface
     // `KycSignatureUnsupportedFailure` BEFORE emitting `KycSuccess` for any
     // state that would require signing (`NewRegistration` / `AddWallet`).
-    // States that don't require signing (`AlreadyRegistered`, `KycRequired`)
-    // still flow through normally.
+    // States that don't require signing (`AlreadyRegistered`) still flow
+    // through normally.
     blocTest<KycCubit, KycState>(
       'emits KycSignatureUnsupportedFailure when debug wallet + NewRegistration',
       setUp: () {
@@ -462,6 +437,25 @@ void main() {
         await cubit.checkKyc();
       },
       expect: () => [const KycLoading(), const KycCompleted()],
+    );
+
+    blocTest<KycCubit, KycState>(
+      'emits KycMergeProcessing when API reports processStatus=MergeProcessing',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level20,
+            processStatus: KycProcessStatus.mergeProcessing,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        await cubit.checkKyc();
+      },
+      expect: () => [const KycLoading(), const KycMergeProcessing()],
     );
 
     blocTest<KycCubit, KycState>(
@@ -899,6 +893,77 @@ void main() {
           cubit.close();
         });
       },
+    );
+  });
+
+  group('$KycCubit context forwarding', () {
+    blocTest<KycCubit, KycState>(
+      'passes context to getKycStatus and continueKyc when provided',
+      setUp: () {
+        when(() => kycService.getKycStatus(context: 'RealunitBuy')).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level20,
+            processStatus: KycProcessStatus.inProgress,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => kycService.continueKyc(context: 'RealunitBuy')).thenAnswer(
+          (_) async => _session(
+            level: KycLevel.level20,
+            steps: const [],
+            currentStep: _currentStep(
+              KycStepName.ident,
+              url: 'https://example.com/ident',
+            ),
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        await cubit.checkKyc(context: 'RealunitBuy');
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycSuccess(
+          currentStep: KycStep.ident,
+          urlOrToken: 'https://example.com/ident',
+        ),
+      ],
+      verify: (_) {
+        verify(() => kycService.getKycStatus(context: 'RealunitBuy')).called(1);
+        verify(() => kycService.continueKyc(context: 'RealunitBuy')).called(1);
+      },
+    );
+
+    blocTest<KycCubit, KycState>(
+      'context is sticky — subsequent checkKyc() without context reuses the stored one',
+      setUp: () {
+        when(() => kycService.getKycStatus(context: 'RealunitBuy')).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        // First call sets the context.
+        await cubit.checkKyc(context: 'RealunitBuy');
+        // Second call omits context — should reuse 'RealunitBuy'.
+        await cubit.checkKyc();
+      },
+      verify: (_) {
+        verify(() => kycService.getKycStatus(context: 'RealunitBuy')).called(2);
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycCompleted(),
+        const KycLoading(),
+        const KycCompleted(),
+      ],
     );
   });
 

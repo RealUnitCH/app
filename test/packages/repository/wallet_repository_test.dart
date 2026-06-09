@@ -186,5 +186,21 @@ void main() {
               'WalletService gate can decide whether to wipe the mnemonic '
               'encryption key (when the opt-in is enabled)');
     });
+
+    test('purgeWallet removes the walletInfos seed row AND the mnemonic key', () async {
+      // The user-facing delete must leave no recoverable seed material —
+      // neither the encrypted row nor the AES key.
+      when(() => secureStorage.deleteMnemonicKey()).thenAnswer((_) async {});
+
+      final walletId = await repo.createWallet(walletName, WalletType.software, seed, address);
+      await db.insertWalletAccount(walletId, 'acc-0', 0);
+      expect(await db.getWalletById(walletId), isNotNull);
+
+      await repo.purgeWallet(walletId);
+
+      expect(await db.getWalletById(walletId), isNull); // encrypted seed row gone
+      expect(await db.getWalletAccounts(walletId), isEmpty); // accounts gone
+      verify(() => secureStorage.deleteMnemonicKey()).called(1); // AES key removed
+    });
   });
 }

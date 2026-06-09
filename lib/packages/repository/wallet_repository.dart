@@ -56,6 +56,14 @@ class WalletRepository {
   /// same transaction-adjacent window.
   Future<bool> isLastWallet() async => (await _appDatabase.countWallets()) == 0;
 
+  /// Full purge for the user-facing delete: removes the encrypted-seed row AND
+  /// the AES-GCM mnemonic key, so no recoverable seed material remains on
+  /// device.
+  Future<void> purgeWallet(int id) async {
+    await _appDatabase.deleteWalletCompletely(id);
+    await _secureStorage.deleteMnemonicKey();
+  }
+
   Future<WalletInfo> _decryptWalletInfo(WalletInfo info) async {
     final key = await _secureStorage.getOrCreateMnemonicKey();
     final decryptedSeed = SecureStorage.decryptSeed(key, info.seed);

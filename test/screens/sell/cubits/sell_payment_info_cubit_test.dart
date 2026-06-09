@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
@@ -183,6 +184,61 @@ void main() {
       expect(f.requiredLevel, 30);
     });
 
+    test('KycLevelRequiredException with context → Failure carries context', () async {
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency'))).thenAnswer(
+        (_) async => throw const KycLevelRequiredException(
+          statusCode: 403,
+          code: 'KYC_REQUIRED',
+          message: 'KYC required',
+          requiredLevel: 50,
+          currentLevel: 30,
+          context: 'RealunitSell',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
+
+      final f = cubit.state as SellPaymentInfoFailure;
+      expect(f.error, PaymentInfoError.kycRequired);
+      expect(f.requiredLevel, 50);
+      expect(f.context, 'RealunitSell');
+    });
+
+    test(
+      'BitboxNotConnectedException → Failure(bitboxDisconnected) carrying the message',
+      () async {
+        // BitBox quote flow lifts a typed disconnect into its own failure state
+        // so the UI can prompt the user to re-plug / re-pair instead of
+        // surfacing it as a generic unknown error.
+        when(
+          () => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')),
+        ).thenAnswer((_) async => throw const BitboxNotConnectedException());
+
+        final cubit = build();
+        await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
+
+        final f = cubit.state as SellPaymentInfoFailure;
+        expect(f.error, PaymentInfoError.bitboxDisconnected);
+        expect(f.message, contains('BitBox is not connected'));
+      },
+    );
+
+    test('BitboxNotConnectedException does not emit after close', () async {
+      // Async-tail guard: a late BitBox disconnect must not throw a
+      // post-close emit. Mirrors the generic-exception / KycRequired guards
+      // already covered above.
+      final completer = Completer<SellPaymentInfo>();
+      when(
+        () => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')),
+      ).thenAnswer((_) => completer.future);
+
+      final cubit = build();
+      unawaited(cubit.getPaymentInfo(amount: '100', iban: 'CH56'));
+      await cubit.close();
+      completer.completeError(const BitboxNotConnectedException());
+    });
+
     test('RegistrationRequiredException → Failure(registrationRequired)', () async {
       when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency'))).thenAnswer(
         (_) async => throw const RegistrationRequiredException(
@@ -201,17 +257,22 @@ void main() {
       );
     });
 
-    test('BitboxNotConnectedException → Failure(bitboxDisconnected)', () async {
-      when(
-        () => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')),
-      ).thenAnswer((_) async => throw const BitboxNotConnectedException());
+    test('RegistrationRequiredException with context → Failure carries context', () async {
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency'))).thenAnswer(
+        (_) async => throw const RegistrationRequiredException(
+          statusCode: 403,
+          code: 'REGISTRATION_REQUIRED',
+          message: 'Sign first',
+          context: 'RealunitSell',
+        ),
+      );
 
       final cubit = build();
       await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
 
-      final failure = cubit.state as SellPaymentInfoFailure;
-      expect(failure.error, PaymentInfoError.bitboxDisconnected);
-      expect(failure.message, contains('BitBox is not connected'));
+      final f = cubit.state as SellPaymentInfoFailure;
+      expect(f.error, PaymentInfoError.registrationRequired);
+      expect(f.context, 'RealunitSell');
     });
 
     test('generic exception → Failure(unknown) carrying the message', () async {
@@ -225,6 +286,32 @@ void main() {
       final f = cubit.state as SellPaymentInfoFailure;
       expect(f.error, PaymentInfoError.unknown);
       expect(f.message, contains('network'));
+    });
+
+    test('ApiException 503 → Failure(priceSourceUnavailable)', () async {
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency'))).thenAnswer(
+        (_) async => throw const ApiException(
+          statusCode: 503,
+          code: 'PRICE_SOURCE_UNAVAILABLE',
+          message: 'RealUnit price source (Aktionariat) is currently unavailable',
+        ),
+      );
+
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
+
+      expect((cubit.state as SellPaymentInfoFailure).error, PaymentInfoError.priceSourceUnavailable);
+    });
+
+    test('other ApiException (e.g. 400) → Failure(unknown)', () async {
+      when(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency'))).thenAnswer(
+        (_) async => throw const ApiException(statusCode: 400, code: 'BAD_REQUEST', message: 'bad'),
+      );
+
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '100', iban: 'CH56');
+
+      expect((cubit.state as SellPaymentInfoFailure).error, PaymentInfoError.unknown);
     });
 
     test(

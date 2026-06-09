@@ -35,6 +35,9 @@ android/app/.cxx
 /build/
 *.g.dart
 *.lock
+# Keep Fastlane bundler lockfiles tracked for reproducible store deploys
+!android/Gemfile.lock
+!ios/Gemfile.lock
 
 # Symbolication related
 app.*.symbols
@@ -65,6 +68,14 @@ docs/handbook/mails/
 # Source of truth are the Golden baselines under test/goldens/; this
 # directory is only populated transiently for local previews.
 docs/handbook/screenshots/
+
+# Built at handbook build time from assets/legal/*.md via pandoc
+# (scripts/build-legal-downloads.sh, see Dockerfile.handbook). The PDF/DOCX are
+# NON-deterministic (pandoc embeds timestamps/metadata), so — unlike the
+# committed legal-downloads HTML block in de/index.html — they are never
+# committed and never sync-gated; they exist only inside the image. This
+# directory holds the assembly output for local previews only.
+docs/handbook/legal/
 
 # Scratch directories produced when reproducing the handbook CI's
 # mail-preview generation locally (see docs/handbook/README.md → "E-Mail

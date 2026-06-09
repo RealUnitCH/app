@@ -24,11 +24,11 @@ class SellButton extends StatelessWidget {
       listener: (context, state) async {
         if (state is SellPaymentInfoFailure) {
           if (state.error == .kycRequired) {
-            await context.pushNamed(AppRoutes.kyc);
+            await context.pushNamed(AppRoutes.kyc, extra: state.context);
             return;
           }
           if (state.error == .registrationRequired) {
-            await context.pushNamed(AppRoutes.kyc);
+            await context.pushNamed(AppRoutes.kyc, extra: state.context);
             return;
           }
           if (state.error == .bitboxDisconnected) {
@@ -40,6 +40,17 @@ class SellButton extends StatelessWidget {
                 amount: amount,
                 iban: bankAccount!.iban,
                 currency: converterCurrency,
+              );
+            }
+            return;
+          }
+          if (state.error == .priceSourceUnavailable) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(S.of(context).priceProviderUnavailableTitle),
+                  backgroundColor: RealUnitColors.status.red600,
+                ),
               );
             }
             return;

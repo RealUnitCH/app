@@ -1,9 +1,15 @@
 name: Handbook CI/CD
 
-# Single deploy pipeline for the handbook image: every push to `develop`
-# (with handbook-relevant paths) builds the image once and rolls it out
-# to BOTH the DEV and PRD endpoints sequentially. PRD only runs when DEV
-# finishes green, so a broken handbook can't reach production.
+# Per-branch handbook deploy pipeline, one environment per branch:
+#   push to `staging` → build from staging → deploy DEV  (dev-handbook.realunit.app)
+#   push to `develop` → build from develop → deploy PRD  (handbook.realunit.app)
+#
+# DEV and PRD are independent runs keyed by the pushed branch; they no
+# longer share a single run that fans out to both. The "DEV is green before
+# PRD ships" guarantee is now provided by the branch-promotion flow itself:
+# handbook content reaches `develop` only after it has been on `staging`
+# (auto-staging-pr.yaml opens the staging → develop PR), i.e. after it was
+# built and smoke-tested on DEV. Promoting to develop is what triggers PRD.
 #
 # This is a deliberate dev/prd-coupling exception scoped to the handbook
 # alone — the wallet app itself still follows the strict develop→main
@@ -11,15 +17,23 @@ name: Handbook CI/CD
 #
 # All build/deploy/smoke logic lives in the reusable workflow
 # .github/workflows/handbook.yaml. This file only wires the per-env
-# parameters and the DEV-must-pass ordering.
+# parameters (source ref, image tag, smoke URL, deploy secrets) and routes
+# the pushed branch to its environment via the per-job `if:` guards below.
 
 on:
   push:
-    branches: [develop]
+    branches: [staging, develop]
     paths:
       - "docs/handbook/**"
       - "test/goldens/screens/**"
       - "scripts/assemble-handbook-screenshots.sh"
+      - "scripts/assemble-handbook-store-listing.py"
+      - "scripts/templates/store-listing.html.tmpl"
+      # Store-listing section is baked into the image from the Fastlane
+      # metadata; a metadata- or screenshot-only change must redeploy too.
+      - "ios/fastlane/metadata/**"
+      - "ios/fastlane/screenshots/**"
+      - "android/fastlane/metadata/**"
       - "Dockerfile.handbook"
       - "handbook.nginx.conf"
       - "handbook.htpasswd"
@@ -30,21 +44,28 @@ on:
 permissions:
   contents: read
 
-# Serialize handbook deploys so a manual workflow_dispatch can't race a
-# concurrent develop push: both would build :beta in parallel, the later
-# build would win on Docker Hub, and dfxdev / dfxprd could end up pulling
-# different images depending on timing. cancel-in-progress is false so a
-# mid-rollout deploy is never killed (we'd otherwise risk leaving DEV
-# halfway through and PRD never started).
+# One concurrency lane PER BRANCH so a staging (DEV) deploy and a develop
+# (PRD) deploy never serialize against — or cancel — each other. Within a
+# single lane a manual workflow_dispatch still can't race a push: both would
+# build the same env's tag in parallel, the later build would win on Docker
+# Hub, and the target server could pull either depending on timing.
+# cancel-in-progress is false so a mid-rollout deploy is never killed (we'd
+# otherwise risk recreating the container halfway through).
 concurrency:
-  group: handbook-deploy
+  group: handbook-deploy-${{ github.ref_name }}
   cancel-in-progress: false
 
 jobs:
+  # Push to staging → DEV. Distinct image tag (:beta) from PRD (:latest) so a
+  # staging build can never clobber the develop build on Docker Hub (both
+  # used to push :beta, which raced whenever the two branches were pushed
+  # close together).
   deploy-dev:
+    if: github.ref_name == 'staging'
     uses: ./.github/workflows/handbook.yaml
     with:
       environment: DEV
+      ref: staging
       docker_tag: dfxswiss/realunit-app-handbook:beta
       smoke_url: https://dev-handbook.realunit.app/healthz
     secrets:
@@ -55,12 +76,14 @@ jobs:
       DEPLOY_USER: ${{ secrets.DEPLOY_DEV_USER }}
       DEPLOY_HOST: ${{ secrets.DEPLOY_DEV_HOST }}
 
+  # Push to develop → PRD.
   deploy-prd:
-    needs: deploy-dev
+    if: github.ref_name == 'develop'
     uses: ./.github/workflows/handbook.yaml
     with:
       environment: PRD
-      docker_tag: dfxswiss/realunit-app-handbook:beta
+      ref: develop
+      docker_tag: dfxswiss/realunit-app-handbook:latest
       smoke_url: https://handbook.realunit.app/healthz
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}

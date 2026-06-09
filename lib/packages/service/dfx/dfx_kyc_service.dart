@@ -34,10 +34,12 @@ class DfxKycService extends DFXAuthService {
     return UserDto.fromJson(json);
   }
 
-  Future<KycLevelDto> getKycStatus() async {
+  Future<KycLevelDto> getKycStatus({String? context}) async {
     final user = await getUser();
 
-    final uri = buildUri(host, _kycPath);
+    final queryParams = <String, String>{};
+    if (context != null) queryParams['context'] = context;
+    final uri = buildUri(host, _kycPath, queryParams.isNotEmpty ? queryParams : null);
     final response = await authenticatedGet(
       uri,
       headers: {
@@ -55,10 +57,12 @@ class DfxKycService extends DFXAuthService {
     return KycLevelDto.fromJson(json);
   }
 
-  Future<KycSessionDto> continueKyc() async {
+  Future<KycSessionDto> continueKyc({String? context}) async {
     final user = await getUser();
 
-    final uri = buildUri(host, _kycPath);
+    final queryParams = <String, String>{};
+    if (context != null) queryParams['context'] = context;
+    final uri = buildUri(host, _kycPath, queryParams.isNotEmpty ? queryParams : null);
     final response = await authenticatedPut(
       uri,
       headers: {

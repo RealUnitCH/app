@@ -13,12 +13,7 @@ enum RealUnitRegistrationState {
 
   /// No prior Aktionariat registration on this account. The app shows
   /// the full registration form, pre-filled from `userData` when present.
-  newRegistration(jsonName: 'NewRegistration'),
-
-  /// Edge case — KYC not done yet. Reachable from the wallet-status
-  /// endpoint only when something is very wrong; surfaced as
-  /// `KycUnsupportedStepFailure`.
-  kycRequired(jsonName: 'KycRequired');
+  newRegistration(jsonName: 'NewRegistration');
 
   final String jsonName;
   const RealUnitRegistrationState({required this.jsonName});

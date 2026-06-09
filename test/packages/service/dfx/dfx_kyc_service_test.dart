@@ -352,6 +352,38 @@ void main() {
         );
       });
 
+      test('appends ?context= query param when context is provided', () async {
+        Uri? capturedUri;
+        final client = MockClient((request) async {
+          if (request.url.path == '/v2/user') {
+            return http.Response(jsonEncode(_userJson), 200);
+          }
+          capturedUri = request.url;
+          return http.Response(jsonEncode(_kycLevelJson), 200);
+        });
+
+        await build(client).getKycStatus(context: 'RealunitBuy');
+
+        expect(capturedUri!.path, '/v2/kyc');
+        expect(capturedUri!.queryParameters['context'], 'RealunitBuy');
+      });
+
+      test('omits context query param when context is null', () async {
+        Uri? capturedUri;
+        final client = MockClient((request) async {
+          if (request.url.path == '/v2/user') {
+            return http.Response(jsonEncode(_userJson), 200);
+          }
+          capturedUri = request.url;
+          return http.Response(jsonEncode(_kycLevelJson), 200);
+        });
+
+        await build(client).getKycStatus();
+
+        expect(capturedUri!.path, '/v2/kyc');
+        expect(capturedUri!.queryParameters, isNot(contains('context')));
+      });
+
       // Failure on the user-fetch must short-circuit — the kyc-code is
       // unobtainable, so calling /v2/kyc would just produce another error.
       // Uses a 4xx that does NOT trigger the auth-service's 401 token refresh
@@ -401,6 +433,38 @@ void main() {
         expect(dto.currentStep, isNotNull);
         expect(dto.currentStep!.session.url, 'https://example.com/kyc/session/abc');
         expect(dto.currentStep!.session.type, UrlType.browser);
+      });
+
+      test('appends ?context= query param when context is provided', () async {
+        Uri? capturedUri;
+        final client = MockClient((request) async {
+          if (request.url.path == '/v2/user') {
+            return http.Response(jsonEncode(_userJson), 200);
+          }
+          capturedUri = request.url;
+          return http.Response(jsonEncode(_kycSessionJson), 200);
+        });
+
+        await build(client).continueKyc(context: 'RealunitSell');
+
+        expect(capturedUri!.path, '/v2/kyc');
+        expect(capturedUri!.queryParameters['context'], 'RealunitSell');
+      });
+
+      test('omits context query param when context is null', () async {
+        Uri? capturedUri;
+        final client = MockClient((request) async {
+          if (request.url.path == '/v2/user') {
+            return http.Response(jsonEncode(_userJson), 200);
+          }
+          capturedUri = request.url;
+          return http.Response(jsonEncode(_kycSessionJson), 200);
+        });
+
+        await build(client).continueKyc();
+
+        expect(capturedUri!.path, '/v2/kyc');
+        expect(capturedUri!.queryParameters, isNot(contains('context')));
       });
 
       test('throws ApiException on a 409 conflict from /v2/kyc', () async {
