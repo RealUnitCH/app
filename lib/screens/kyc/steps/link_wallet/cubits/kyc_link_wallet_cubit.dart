@@ -15,10 +15,8 @@ part 'kyc_link_wallet_state.dart';
 class KycLinkWalletCubit extends Cubit<KycLinkWalletState> {
   final RealUnitRegistrationService _registrationService;
 
-  KycLinkWalletCubit(
-    RealUnitRegistrationService registrationService,
-    RealUnitUserDataDto userData,
-  ) : _registrationService = registrationService,
+  KycLinkWalletCubit(RealUnitRegistrationService registrationService, RealUnitUserDataDto userData)
+    : _registrationService = registrationService,
       super(KycLinkWalletReady(userData));
 
   Future<void> submit(RealUnitUserDataDto userData) async {
@@ -26,10 +24,14 @@ class KycLinkWalletCubit extends Cubit<KycLinkWalletState> {
       emit(KycLinkWalletSubmitting(userData));
       await _registrationService.registerWallet(userData);
       emit(const KycLinkWalletSuccess());
-    } on BitboxNotConnectedException catch (e) {
-      emit(KycLinkWalletFailure(e.toString(), cause: e));
+    } on BitboxNotConnectedException {
+      emit(KycLinkWalletBitboxRequired(userData));
     } catch (e) {
       emit(KycLinkWalletFailure(e.toString(), cause: e));
     }
   }
+
+  /// Re-runs registration after the BitBox connection was established via the
+  /// `ConnectBitboxPage` sheet. Mirror of `KycRegistrationSubmitCubit.retrySubmit`.
+  Future<void> retrySubmit(RealUnitUserDataDto userData) => submit(userData);
 }

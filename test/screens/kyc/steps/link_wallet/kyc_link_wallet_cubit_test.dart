@@ -61,45 +61,74 @@ void main() {
     blocTest<KycLinkWalletCubit, KycLinkWalletState>(
       'registerWallet succeeds → Submitting → Success',
       setUp: () {
-        when(() => registrationService.registerWallet(any()))
-            .thenAnswer((_) async => RegistrationStatus.completed);
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenAnswer((_) async => RegistrationStatus.completed);
       },
       build: build,
       act: (c) => c.submit(_userData),
-      expect: () => [
-        const KycLinkWalletSubmitting(_userData),
-        const KycLinkWalletSuccess(),
-      ],
+      expect: () => [const KycLinkWalletSubmitting(_userData), const KycLinkWalletSuccess()],
       verify: (_) {
         verify(() => registrationService.registerWallet(_userData)).called(1);
       },
     );
 
     blocTest<KycLinkWalletCubit, KycLinkWalletState>(
-      'registerWallet throws BitboxNotConnectedException → Failure',
+      'registerWallet throws BitboxNotConnectedException → BitboxRequired',
       setUp: () {
-        when(() => registrationService.registerWallet(any()))
-            .thenThrow(const BitboxNotConnectedException());
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenThrow(const BitboxNotConnectedException());
       },
       build: build,
       act: (c) => c.submit(_userData),
       expect: () => [
         const KycLinkWalletSubmitting(_userData),
-        isA<KycLinkWalletFailure>(),
+        const KycLinkWalletBitboxRequired(_userData),
       ],
     );
 
     blocTest<KycLinkWalletCubit, KycLinkWalletState>(
       'registerWallet throws generic exception → Failure',
       setUp: () {
-        when(() => registrationService.registerWallet(any()))
-            .thenAnswer((_) async => throw Exception('network down'));
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenAnswer((_) async => throw Exception('network down'));
       },
       build: build,
       act: (c) => c.submit(_userData),
+      expect: () => [const KycLinkWalletSubmitting(_userData), isA<KycLinkWalletFailure>()],
+    );
+  });
+
+  group('retrySubmit', () {
+    blocTest<KycLinkWalletCubit, KycLinkWalletState>(
+      're-runs registration after the BitBox was connected → Submitting → Success',
+      setUp: () {
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenAnswer((_) async => RegistrationStatus.completed);
+      },
+      build: build,
+      act: (c) => c.retrySubmit(_userData),
+      expect: () => [const KycLinkWalletSubmitting(_userData), const KycLinkWalletSuccess()],
+      verify: (_) {
+        verify(() => registrationService.registerWallet(_userData)).called(1);
+      },
+    );
+
+    blocTest<KycLinkWalletCubit, KycLinkWalletState>(
+      'still emits BitboxRequired on retry when the BitBox is still disconnected',
+      setUp: () {
+        when(
+          () => registrationService.registerWallet(any()),
+        ).thenThrow(const BitboxNotConnectedException());
+      },
+      build: build,
+      act: (c) => c.retrySubmit(_userData),
       expect: () => [
         const KycLinkWalletSubmitting(_userData),
-        isA<KycLinkWalletFailure>(),
+        const KycLinkWalletBitboxRequired(_userData),
       ],
     );
   });
