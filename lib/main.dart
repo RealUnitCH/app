@@ -168,6 +168,13 @@ class _WalletAppState extends State<WalletApp> {
   }
 }
 
+/// Test-only seam for [_RealUnitErrorView]. The widget is private (so
+/// [ErrorWidget.builder] can't be swapped from outside), but its last-resort
+/// rendering is worth pinning. Constructs exactly what [_installErrorHandlers]
+/// wires into [ErrorWidget.builder].
+@visibleForTesting
+Widget buildRealUnitErrorView(FlutterErrorDetails details) => _RealUnitErrorView(details: details);
+
 /// Minimal on-brand replacement for the default grey [ErrorWidget]. Rendered by
 /// [ErrorWidget.builder] for any uncaught build/paint exception, so it lives
 /// outside the [MaterialApp] localization scope — the copy is deliberately
