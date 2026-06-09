@@ -13,8 +13,7 @@ import 'package:realunit_wallet/screens/kyc/steps/link_wallet/kyc_link_wallet_pa
 
 import '../../../helper/helper.dart';
 
-class _MockKycLinkWalletCubit extends MockCubit<KycLinkWalletState>
-    implements KycLinkWalletCubit {}
+class _MockKycLinkWalletCubit extends MockCubit<KycLinkWalletState> implements KycLinkWalletCubit {}
 
 class _MockKycCubit extends MockCubit<KycState> implements KycCubit {}
 
@@ -72,6 +71,28 @@ void main() {
       constraints: phoneConstraints,
       builder: () {
         when(() => linkCubit.state).thenReturn(const KycLinkWalletReady(_userData));
+        return wrapForGolden(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<KycCubit>.value(value: kycCubit),
+              BlocProvider<KycLinkWalletCubit>.value(value: linkCubit),
+            ],
+            child: const KycLinkWalletView(),
+          ),
+        );
+      },
+    );
+
+    // Locks the visual contract for the BitBox-required state: it must render
+    // the idle confirm body (so dismissing the connect sheet lands the user
+    // back on the submit button), never a spinner or error dead-end. The
+    // connect sheet itself is baselined separately under hardware_connect_bitbox.
+    goldenTest(
+      'bitbox required renders the idle confirm body',
+      fileName: 'kyc_link_wallet_page_bitbox_required',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => linkCubit.state).thenReturn(const KycLinkWalletBitboxRequired(_userData));
         return wrapForGolden(
           MultiBlocProvider(
             providers: [
