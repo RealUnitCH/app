@@ -34,7 +34,7 @@ class _CreateWalletViewState extends State<CreateWalletView> {
         padding: const .symmetric(horizontal: 20),
         child: BlocBuilder<CreateWalletCubit, CreateWalletState>(
           builder: (context, state) {
-            if (state.wallet != null) {
+            if (state.draft != null) {
               return LayoutBuilder(
                 builder: (context, constraint) {
                   return SingleChildScrollView(
@@ -68,7 +68,10 @@ class _CreateWalletViewState extends State<CreateWalletView> {
                               ],
                             ),
                             SeedBlurCard(
-                              seed: state.wallet!.seed,
+                              // The draft holds the only main-isolate
+                              // copy of the BIP39 mnemonic during this
+                              // onboarding window — see BL-018.
+                              seed: state.draft!.mnemonic,
                               onTap: context.read<CreateWalletCubit>().toggleShowSeed,
                               blur: state.hideSeed,
                             ),
@@ -79,7 +82,7 @@ class _CreateWalletViewState extends State<CreateWalletView> {
                                 label: S.of(context).createWalletConfirm,
                                 onPressed: () => context.pushNamed(
                                   OnboardingRoutes.verifySeed,
-                                  extra: state.wallet,
+                                  extra: state.draft,
                                 ),
                               ),
                             ),

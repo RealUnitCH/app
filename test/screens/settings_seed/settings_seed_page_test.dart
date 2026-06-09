@@ -17,6 +17,7 @@ import 'package:realunit_wallet/widgets/mnemonic_field.dart';
 import 'package:realunit_wallet/widgets/seed_blur_card.dart';
 
 import '../../helper/helper.dart';
+import '../../test_utils/fake_wallet_isolate.dart';
 
 class MockSettingsSeedCubit extends MockCubit<SettingsSeedState> implements SettingsSeedCubit {}
 
@@ -41,15 +42,17 @@ void main() {
       ),
     );
     when(() => appStore.wallet).thenReturn(wallet);
-    when(() => wallet.seed).thenReturn(
-      'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
-    );
     // Page builds a real SettingsSeedCubit via BlocProvider(create: ...), which
     // calls WalletService.ensureCurrentWalletUnlocked() before reading the
-    // seed and lockCurrentWallet() on close. Stub both so mocktail returns
-    // real Future<void>s instead of null.
+    // seed via revealCurrentSeed. Stub all three so mocktail returns real
+    // Futures.
     when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
     when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
+    when(() => walletService.revealCurrentSeed()).thenAnswer(
+      (_) async => SeedDraft(
+        'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
+      ),
+    );
   });
 
   void setupDependencyInjection() {
@@ -131,12 +134,21 @@ void main() {
     testWidgets('first render with SoftwareViewWallet shows spinner, then SeedBlurCard', (tester) async {
       const seed =
           'cheese trigger cannon mention judge hire snack sustain annual predict illness celery';
+      // The reveal returns a fresh draft carrying the seed; stub it
+      // here so the cubit's _loadSeed picks it up after unlock.
+      when(() => walletService.revealCurrentSeed())
+          .thenAnswer((_) async => SeedDraft(seed));
       final softwareViewWallet = SoftwareViewWallet(
         1,
         'Test',
         '0x0000000000000000000000000000000000000001',
       );
-      final softwareWallet = SoftwareWallet(1, 'Test', seed);
+      final softwareWallet = SoftwareWallet(
+        1,
+        'Test',
+        '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+        FakeWalletIsolate(),
+      );
       final unlockCompleter = Completer<void>();
       // Cycle wallet from view → unlocked the same way the real
       // WalletService.ensureCurrentWalletUnlocked does.

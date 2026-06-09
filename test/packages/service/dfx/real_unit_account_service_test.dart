@@ -11,10 +11,9 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_account_service.d
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
-class _MockAppStore extends Mock implements AppStore {}
+import '../../../test_utils/fake_wallet_isolate.dart';
 
-const _testMnemonic =
-    'test test test test test test test test test test test junk';
+class _MockAppStore extends Mock implements AppStore {}
 
 Map<String, dynamic> _summary({
   double? chf,
@@ -43,7 +42,12 @@ void main() {
 
   setUp(() {
     appStore = _MockAppStore();
-    wallet = SoftwareWallet(1, 'Main', _testMnemonic);
+    wallet = SoftwareWallet(
+      1,
+      'Main',
+      '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+      FakeWalletIsolate(),
+    );
     when(() => appStore.wallet).thenReturn(wallet);
     when(() => appStore.apiConfig)
         .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));

@@ -12,14 +12,16 @@ import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class VerifySeedPage extends StatelessWidget {
-  const VerifySeedPage({super.key, required this.wallet});
+  const VerifySeedPage({super.key, required this.draft});
 
-  final SoftwareWallet wallet;
+  /// Transient mnemonic holder produced by `CreateWalletCubit`. The
+  /// cubit takes ownership of `dispose()`; this page only forwards.
+  final SeedDraft draft;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (_) => VerifySeedCubit(
-      wallet,
+      draft,
       getIt<WalletService>(),
     ),
     child: const VerifySeedView(),

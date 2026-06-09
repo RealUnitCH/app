@@ -18,9 +18,35 @@ class SecureStorage {
   static const _pinFailedAttemptsKey = 'pin.failedAttempts';
   static const _pinLockedUntilKey = 'pin.lockedUntil';
 
+  /// iOS Keychain accessibility — keys are reachable only after the
+  /// first unlock of the device and never restored to a different
+  /// device via iCloud Keychain backup. Locked in here so a refactor
+  /// of the FlutterSecureStorage call sites cannot quietly drop the
+  /// constraint; the snapshot test in
+  /// `test/packages/storage/secure_storage_options_test.dart` will
+  /// fail if this value changes. See BL-050 / ADR 0003 §"flutter_secure_storage
+  /// hardening".
+  static const iosOptions = IOSOptions(
+    accessibility: KeychainAccessibility.first_unlock_this_device,
+  );
+
+  /// Android: route every secure-storage call through
+  /// `EncryptedSharedPreferences` (AES-256-GCM with a key bound to
+  /// the Android Keystore). The default backend writes plaintext to
+  /// SharedPreferences on older Android versions; the explicit opt-in
+  /// here makes the encryption-at-rest constraint a regression test
+  /// rather than a hidden default that could flip.
+  static const androidOptions = AndroidOptions(
+    encryptedSharedPreferences: true,
+  );
+
   final FlutterSecureStorage _secureStorage;
 
-  const SecureStorage() : _secureStorage = const FlutterSecureStorage();
+  const SecureStorage()
+      : _secureStorage = const FlutterSecureStorage(
+          iOptions: iosOptions,
+          aOptions: androidOptions,
+        );
 
   /// Test-only constructor that injects a [FlutterSecureStorage] (typically a
   /// mock or the platform-interface-backed `TestFlutterSecureStoragePlatform`).
@@ -48,18 +74,44 @@ class SecureStorage {
     return Uint8List.fromList(List.generate(16, (_) => random.nextInt(256)));
   }
 
-  // PIN-hash iteration count, picked for sub-second verification on mid-range
-  // phones. The PIN hash + salt live in [FlutterSecureStorage] (Android Keystore
-  // / iOS Keychain), so an offline brute-force first requires breaking that
-  // hardware-backed boundary. Online brute-force against the app UI is bounded
-  // by the lockout cascade in `verify_pin_cubit.dart`. The stronger guarantee
-  // for the actual private key comes from the OS-keystore-managed mnemonic
-  // encryption key — not from this hash. 250k roughly doubles the offline
-  // brute-force cost vs. 100k while staying perceptibly sub-second on the
-  // median target phone. Earlier 100k / 600k / 10k hashes are still accepted
-  // and transparently rehashed to [_pinHashIterations].
-  static const _pinHashIterations = 250000;
-  static const _legacyIterationCandidates = <int>[600000, 100000, 10000];
+  // Post-Initiative-IV (BL-045): the PIN-hash iteration count is the
+  // OWASP 2025 recommendation for PBKDF2-HMAC-SHA256 — 600,000. The PIN
+  // hash + salt live in [FlutterSecureStorage] (Android Keystore / iOS
+  // Keychain), so an offline brute-force first requires breaking that
+  // hardware-backed boundary. Online brute-force against the app UI is
+  // bounded by the lockout cascade in `verify_pin_cubit.dart`. The
+  // stronger guarantee for the actual private key comes from the
+  // OS-keystore-managed mnemonic encryption key — not from this hash.
+  //
+  // Accepted-as-legacy list:
+  //   - 250k: the previous production setting (Initiative-IV bump
+  //     migrates anyone who unlocks on this version), transparently
+  //     rehashed to 600k on next successful unlock.
+  //   - 100k: a still-older shipping value, also transparently
+  //     rehashed.
+  //
+  // Rejected: 10k (BL-045 explicitly removed this — well below
+  // contemporary OWASP guidance; a user landing on 10k is force-reset
+  // out of the app rather than transparently upgraded, because the
+  // attacker may have already brute-forced the hash on a leaked DB
+  // snapshot).
+  static const _pinHashIterations = 600000;
+  static const _legacyIterationCandidates = <int>[250000, 100000];
+  /// Iteration counts that are explicitly NEVER accepted. A hash on
+  /// disk with one of these counts produces a `verifyPin == false`
+  /// even for the correct PIN — the user is forced to reset, which is
+  /// the intended UX. Exposed for the snapshot test in
+  /// `secure_storage_test.dart`.
+  static const rejectedIterationCandidates = <int>[10000];
+
+  /// Currently-accepted-as-legacy iteration counts. Surfaced for the
+  /// transparent-rehash snapshot test; the verify path iterates this
+  /// list internally.
+  static const legacyIterationCandidates = _legacyIterationCandidates;
+
+  /// Current production iteration count (OWASP 2025 PBKDF2-HMAC-SHA256).
+  /// Exposed for the snapshot test.
+  static const currentIterations = _pinHashIterations;
 
   static String hashPin(String pin, Uint8List salt, {int iterations = _pinHashIterations}) {
     final derivator = KeyDerivator('SHA-256/HMAC/PBKDF2');
@@ -100,6 +152,22 @@ class SecureStorage {
   Future<void> setPinSalt(Uint8List salt) =>
       _secureStorage.write(key: _pinSaltKey, value: bytesToHex(salt));
 
+  /// Verifies [pin] against the stored hash. On success, transparently
+  /// rehashes from any legacy iteration count to the current target
+  /// (BL-045 / OWASP-2025 PBKDF2-HMAC-SHA256 600k).
+  ///
+  /// Behaviour:
+  ///   - 600k (current target) — fast path, accepted without rehash.
+  ///   - 250k / 100k — accepted as legacy, immediately re-derived at
+  ///     600k and the stored hash is overwritten. Atomic: a single
+  ///     secure-storage write per ADR 0003 §"Rehash atomicity"; if
+  ///     the write fails the old legacy hash remains and the next
+  ///     unlock takes the same path.
+  ///   - 10k — NOT accepted (BL-045 removed it). A PIN at this
+  ///     iteration count returns false even when correct; the user
+  ///     is forced through a PIN-reset flow rather than transparently
+  ///     upgraded, because an attacker may already have brute-forced
+  ///     the hash on a leaked DB snapshot.
   Future<bool> verifyPin(String pin) async {
     final hash = await getPinHash();
     final salt = await getPinSalt();
@@ -107,9 +175,10 @@ class SecureStorage {
 
     if (await hashPinAsync(pin, salt) == hash) return true;
 
-    // Transparent rehash: any earlier iteration count we ever shipped is still
-    // accepted exactly once, then upgraded to the current target so subsequent
-    // unlocks pay the fast path.
+    // Transparent rehash: each accepted-as-legacy iteration count is
+    // tried exactly once, then the matching hash is replaced with the
+    // 600k hash. There is only one `pin.hash` entry in storage; the
+    // rehash is a single overwrite — no two-entry interim state.
     for (final legacy in _legacyIterationCandidates) {
       if (await hashPinAsync(pin, salt, iterations: legacy) == hash) {
         final newHash = await hashPinAsync(pin, salt);
@@ -165,9 +234,33 @@ class SecureStorage {
     return key;
   }
 
-  /// Removes the AES-GCM key that decrypts stored seeds. Once gone, any
-  /// surviving encrypted seed is permanently undecryptable; a fresh key is
-  /// lazily minted on next creation.
+  /// Removes the Keychain-stored mnemonic encryption key. Called on the
+  /// last-wallet-delete path when the user has opted in via
+  /// `SettingsRepository.deleteMnemonicKeyOnLastWalletDelete`. Defensive
+  /// no-op semantics: a missing key is not an error — the caller may have
+  /// already cleared it, or the key may never have been written (a fresh
+  /// install that only ever held view wallets).
+  Future<void> deleteMnemonicEncryptionKey() =>
+      _secureStorage.delete(key: _mnemonicEncryptionKey);
+
+  /// Read the biometric-CryptoObject sentinel under [key]. Called by
+  /// `BiometricService.authenticate` AFTER a successful biometric
+  /// prompt — the native CryptoObject binding gates the underlying
+  /// Keychain / Keystore read on the biometric. See BL-049 / ADR 0003
+  /// §"Biometric CryptoObject binding".
+  Future<String?> readBiometricCryptoSentinel(String key) =>
+      _secureStorage.read(key: key);
+
+  /// Write the biometric-CryptoObject sentinel. Called on first
+  /// `BiometricService.enable()` so subsequent unwraps have something
+  /// to read.
+  Future<void> writeBiometricCryptoSentinel(String key, String value) =>
+      _secureStorage.write(key: key, value: value);
+
+  /// Legacy alias for [deleteMnemonicEncryptionKey] — still referenced by
+  /// `WalletRepository.purgeWallet`. Removes the AES-GCM key that decrypts
+  /// stored seeds; once gone, any surviving encrypted seed is permanently
+  /// undecryptable and a fresh key is lazily minted on next creation.
   // @no-integration-test: forwards to FlutterSecureStorage (Android Keystore /
   // iOS Keychain) over a platform channel; real keystore removal is only
   // verifiable on-device — the unit test mocks the plugin.

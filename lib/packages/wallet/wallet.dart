@@ -1,9 +1,9 @@
+import 'dart:convert' show utf8;
 import 'dart:typed_data';
 
-import 'package:bip32/bip32.dart';
-import 'package:bip39/bip39.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
+import 'package:realunit_wallet/packages/wallet/wallet_isolate.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:web3dart/web3dart.dart';
 
@@ -21,29 +21,62 @@ abstract class AWallet {
   AWallet(this.id, this.name);
 }
 
+/// Software wallet handle — post-Initiative-IV (BL-018), this class
+/// never holds the BIP39 mnemonic as a long-lived field. The plaintext
+/// lives in the dedicated [WalletIsolate]; the main isolate keeps only
+/// the public address, the wallet identity, and a reference to the
+/// isolate so every sign call can be marshalled across.
+///
+/// Lifecycle:
+///   - Construction binds the handle to the isolate-side slot keyed by
+///     `id`. The slot itself is created by `WalletService` via either
+///     `WalletIsolate.adoptPlaintext` (onboarding/restore) or
+///     `WalletIsolate.unlock` (app start with persisted ciphertext).
+///   - Lock invalidates the slot but does not invalidate the handle —
+///     the handle gets re-paired with a fresh slot on the next unlock.
+///     The view-wallet replacement happens at the `AppStore` level so
+///     attempting to sign through a stale handle throws via the
+///     isolate's `NotUnlocked` error.
+///
+/// Display flows (verify-seed quiz, settings-seed reveal) use a
+/// separate [SeedDraft] value object that is created scope-locally —
+/// see `WalletService.generateUncommittedSeedDraft` and
+/// `WalletService.revealSeed`. Law 6 permits the seed string on the
+/// main isolate inside a clearly-scoped function.
 class SoftwareWallet extends AWallet {
   @override
   WalletType get walletType => WalletType.software;
 
-  final String seed;
+  /// Public Ethereum address derived from the primary account
+  /// (`m/44'/60'/0'/0/0`). Cached on the handle so renders that only
+  /// need the address (the vast majority — balance, receive QR, etc.)
+  /// don't pay an IPC round trip.
+  final String address;
+
+  final WalletIsolate _isolate;
 
   @override
   late final WalletAccount primaryAccount;
-  late final BIP32 _bip32;
 
   late WalletAccount _currentAccount;
 
   @override
   WalletAccount get currentAccount => _currentAccount;
 
-  SoftwareWallet(super.id, super.name, this.seed) {
-    final seedBytes = mnemonicToSeed(seed);
-    _bip32 = BIP32.fromSeed(seedBytes);
-    primaryAccount = WalletAccount(_bip32, 0);
+  /// `id` is the persisted wallet row's primary key; it doubles as the
+  /// isolate-side slot key so concurrent multi-wallet support (a later
+  /// initiative) needs no schema change here.
+  SoftwareWallet(super.id, super.name, this.address, this._isolate) {
+    primaryAccount = WalletAccount(_isolate, id, 0, address);
     _currentAccount = primaryAccount;
   }
 
-  void selectAccount(int index) => _currentAccount = WalletAccount(_bip32, index);
+  /// Selects a different account index. The address for the new
+  /// account is derived lazily on first sign through the isolate; this
+  /// constructor takes a placeholder address so the caller can pin
+  /// the public-facing address before the round trip completes.
+  void selectAccount(int index, String addressForIndex) =>
+      _currentAccount = WalletAccount(_isolate, id, index, addressForIndex);
 }
 
 /// Software wallet without the mnemonic in memory — only the public address is
@@ -66,6 +99,81 @@ class SoftwareViewWallet extends AWallet {
   SoftwareViewWallet(super.id, super.name, String address) {
     primaryAccount = SoftwareViewWalletAccount(0, _LockedCredentials(address));
     _currentAccount = primaryAccount;
+  }
+}
+
+/// Transient holder of a BIP39 mnemonic on the main isolate. The only
+/// legitimate callers are:
+///
+///   - `WalletService.generateUncommittedSeedDraft` (onboarding new
+///     wallet — the draft is held in `CreateWalletCubit.state` while
+///     the user copies the words; verify-seed consumes it and the
+///     commit path adopts the plaintext into the isolate).
+///   - `WalletService.restoreWallet`'s internal draft (user-typed
+///     mnemonic; same adoption path, no quiz step).
+///   - `WalletService.revealSeed` (settings-seed flow — round-trips
+///     the mnemonic from the isolate so the user can see the words).
+///
+/// The class is intentionally not a `SoftwareWallet`: there is no
+/// `id` (the wallet may not be persisted yet) and no sign primitives.
+/// Holders must call [dispose] as soon as the displayed words are no
+/// longer needed; the dispose overwrites the inner field with spaces
+/// so a heap walk pre-GC sees the dummy at the same slot, not the
+/// mnemonic.
+///
+/// SECURITY: BIP39 lifetime — see BL-018. The draft lifetime is the
+/// scope of the holding cubit; lifecycle observers must call [dispose]
+/// on hidden so the seed doesn't make it into an iOS app-suspend
+/// snapshot.
+class SeedDraft {
+  SeedDraft(String mnemonic, {this.name}) : _mnemonic = mnemonic;
+
+  /// Optional wallet name carried alongside the draft so the
+  /// onboarding flow can hand a single value through the screens
+  /// without a sibling field.
+  final String? name;
+
+  // Mutable so [dispose] can overwrite the field. `final` would defeat
+  // the best-effort zeroize.
+  String _mnemonic;
+
+  // Once disposed, subsequent reads throw. Callers that race
+  // (e.g. the verify quiz reading mnemonic while the lifecycle
+  // observer disposes) get a typed `StateError` instead of an empty
+  // string they might silently render.
+  bool _disposed = false;
+
+  String get mnemonic {
+    if (_disposed) {
+      throw StateError('SeedDraft accessed after dispose — '
+          'the BIP39 reference was cleared; spawn a new draft.');
+    }
+    return _mnemonic;
+  }
+
+  /// The 12 / 24 words split on whitespace, dropping empty tokens.
+  /// Identical semantics to the legacy `String.seedWords` extension so
+  /// the verify-quiz and reveal flows can keep their existing logic
+  /// without re-parsing the mnemonic across the boundary.
+  List<String> get seedWords =>
+      mnemonic.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+
+  /// `true` after [dispose] runs. Lifecycle observers consult this
+  /// before re-disposing on a second `hidden` event.
+  bool get isDisposed => _disposed;
+
+  /// Best-effort zeroize the held string. Dart `String` is immutable;
+  /// the assignment swaps the field to a same-length space-filled
+  /// string so a heap walk pre-GC observes the dummy in the old field
+  /// slot. The original buffer remains reachable through the literal
+  /// pool if it was a const, but the only path that produced this
+  /// instance was `bip39.generateMnemonic()` (a fresh allocation) or
+  /// the isolate's `_RevealRequest` response (a fresh String from the
+  /// isolate's heap), neither of which is const-pooled.
+  void dispose() {
+    if (_disposed) return;
+    _mnemonic = ' ' * _mnemonic.length;
+    _disposed = true;
   }
 }
 
@@ -212,4 +320,97 @@ class DebugWallet extends AWallet {
   DebugWallet(super.id, super.name, this.address) {
     _account = DebugWalletAccount(address);
   }
+}
+
+/// Credentials for a [SoftwareWallet] account post-Initiative-IV. The
+/// only path off the main isolate is `signPersonalMessage`, which
+/// marshals across to [WalletIsolate]. Every synchronous sign method
+/// (`signToEcSignature`, `signPersonalMessageToUint8List`) throws
+/// `UnsupportedError` — the isolate boundary is fundamentally async
+/// and no main-side cipher is available to satisfy the sync contract.
+/// Callers that need bytes-back today must transition to the async
+/// `signPersonalMessage` (Initiative II's `SignPipeline` is the
+/// expected funnel).
+class _IsolateCredentials extends CredentialsWithKnownAddress {
+  _IsolateCredentials(this._isolate, this._walletId, this._accountIndex, String hexAddress)
+      : _address = EthereumAddress.fromHex(hexAddress);
+
+  final WalletIsolate _isolate;
+  final int _walletId;
+  final int _accountIndex;
+  final EthereumAddress _address;
+
+  @override
+  EthereumAddress get address => _address;
+
+  String get _derivationPath => "m/44'/60'/$_accountIndex'/0/0";
+
+  @override
+  MsgSignature signToEcSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) =>
+      throw UnsupportedError(_isolateSyncErrorMessage);
+
+  @override
+  Future<MsgSignature> signToSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) async {
+    final raw = await _isolate.signDigest(
+      _walletId,
+      _derivationPath,
+      payload,
+      chainId: chainId,
+    );
+    return MsgSignature(raw.r, raw.s, raw.v);
+  }
+
+  @override
+  Future<Uint8List> signPersonalMessage(Uint8List payload, {int? chainId}) =>
+      _isolate.signPersonalMessage(
+        _walletId,
+        _derivationPath,
+        payload,
+        chainId: chainId,
+      );
+
+  @override
+  Uint8List signPersonalMessageToUint8List(Uint8List payload, {int? chainId}) =>
+      throw UnsupportedError(_isolateSyncErrorMessage);
+}
+
+const _isolateSyncErrorMessage =
+    'SoftwareWallet sign requires an async path post-Initiative-IV — '
+    'the BIP32 root lives in the dedicated WalletIsolate and the IPC '
+    'channel is async-only. Use signPersonalMessage / signToSignature '
+    '(both Future-returning) instead.';
+
+/// Account on a [SoftwareWallet]. `signMessage` round-trips through
+/// the [WalletIsolate] so the BIP32 derivation happens off the main
+/// isolate; the main side receives only the 65-byte signature bytes.
+class WalletAccount extends AWalletAccount {
+  WalletAccount(WalletIsolate isolate, int walletId, int accountIndex, String addressHex)
+      : _isolate = isolate,
+        _walletId = walletId,
+        super(accountIndex,
+            _IsolateCredentials(isolate, walletId, accountIndex, addressHex));
+
+  final WalletIsolate _isolate;
+  final int _walletId;
+
+  @override
+  Future<String> signMessage(String message, {int addressIndex = 0}) async {
+    final path = "m/44'/60'/$accountIndex'/0/$addressIndex";
+    final signed = await _isolate.signPersonalMessage(
+      _walletId,
+      path,
+      utf8.encode(message),
+    );
+    return '0x${_hexEncode(signed)}';
+  }
+}
+
+String _hexEncode(Uint8List bytes) {
+  const chars = '0123456789abcdef';
+  final buf = StringBuffer();
+  for (final b in bytes) {
+    buf.write(chars[(b >> 4) & 0xf]);
+    buf.write(chars[b & 0xf]);
+  }
+  return buf.toString();
 }

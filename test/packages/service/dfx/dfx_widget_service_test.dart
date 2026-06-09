@@ -7,14 +7,13 @@ import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
+import '../../../test_utils/fake_wallet_isolate.dart';
+
 class _MockAppStore extends Mock implements AppStore {}
 
 class _MockCacheRepository extends Mock implements CacheRepository {}
 
 class _MockWalletService extends Mock implements WalletService {}
-
-const _testMnemonic =
-    'test test test test test test test test test test test junk';
 
 void main() {
   late _MockAppStore appStore;
@@ -26,7 +25,12 @@ void main() {
     appStore = _MockAppStore();
     walletService = _MockWalletService();
     sessionCache = SessionCache(_MockCacheRepository());
-    wallet = SoftwareWallet(1, 'Main', _testMnemonic);
+    wallet = SoftwareWallet(
+      1,
+      'Main',
+      '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+      FakeWalletIsolate(),
+    );
     when(() => appStore.sessionCache).thenReturn(sessionCache);
     when(() => appStore.wallet).thenReturn(wallet);
     when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});

@@ -129,21 +129,62 @@ void main() {
       verifyNever(() => secureStorage.getOrCreateMnemonicKey());
     });
 
-    test('deleteWallet removes the wallet-account-info rows for the wallet', () async {
-      // `WalletStorage.deleteWallet` (today) deletes from
-      // wallet_account_infos, not from wallet_infos itself. Pin the
-      // observable behaviour: a previously-created account row is gone
-      // afterwards.
-      final walletId = await repo.createWallet(walletName, WalletType.software, seed, address);
+    test('deleteWallet removes BOTH wallet-account-info AND wallet-info rows (BL-004)',
+        () async {
+      // Post-Initiative-IV: deleteWallet drops both the dependent
+      // walletAccountInfos rows AND the walletInfos row carrying the
+      // encrypted seed. Pre-IV the walletInfos row stayed forever, so
+      // a leaked Keychain key could later recover every wallet ever
+      // created on this install.
+      final walletId =
+          await repo.createWallet(walletName, WalletType.software, seed, address);
       await db.insertWalletAccount(walletId, 'acc-0', 0);
 
       final beforeAccounts = await db.getWalletAccounts(walletId);
       expect(beforeAccounts, hasLength(1));
+      expect(await db.getWalletById(walletId), isNotNull);
 
-      await repo.deleteWallet(walletId);
+      final result = await repo.deleteWallet(walletId);
 
-      final afterAccounts = await db.getWalletAccounts(walletId);
-      expect(afterAccounts, isEmpty);
+      expect(result.accountRows, 1);
+      expect(result.walletRows, 1,
+          reason: 'BL-004: walletInfos row count must be surfaced and '
+              'must drop to one — the cleanup chain is auditable end-to-end');
+      expect(await db.getWalletAccounts(walletId), isEmpty);
+      expect(await db.getWalletById(walletId), isNull,
+          reason: 'encrypted seed row must NOT survive the delete');
+    });
+
+    test('isLastWallet returns true when no wallet rows remain', () async {
+      expect(await repo.isLastWallet(), isTrue,
+          reason: 'fresh DB is the trivial "no other wallets" case');
+    });
+
+    test('isLastWallet returns false while siblings still exist', () async {
+      await repo.createWallet(walletName, WalletType.software, seed, address);
+      await repo.createWallet('Other', WalletType.software, seed, address);
+
+      expect(await repo.isLastWallet(), isFalse,
+          reason: 'two rows are present — last-wallet check must be false');
+    });
+
+    test('isLastWallet flips to true after the final delete', () async {
+      final id1 =
+          await repo.createWallet(walletName, WalletType.software, seed, address);
+      final id2 =
+          await repo.createWallet('Second', WalletType.software, seed, address);
+
+      expect(await repo.isLastWallet(), isFalse);
+
+      await repo.deleteWallet(id1);
+      expect(await repo.isLastWallet(), isFalse,
+          reason: 'one row still survives — not the last delete yet');
+
+      await repo.deleteWallet(id2);
+      expect(await repo.isLastWallet(), isTrue,
+          reason: 'the last delete must flip isLastWallet to true so the '
+              'WalletService gate can decide whether to wipe the mnemonic '
+              'encryption key (when the opt-in is enabled)');
     });
 
     test('purgeWallet removes the walletInfos seed row AND the mnemonic key', () async {
@@ -160,19 +201,6 @@ void main() {
       expect(await db.getWalletById(walletId), isNull); // encrypted seed row gone
       expect(await db.getWalletAccounts(walletId), isEmpty); // accounts gone
       verify(() => secureStorage.deleteMnemonicKey()).called(1); // AES key removed
-    });
-
-    test('deleteWallet (account-only) leaves the seed row and mnemonic key intact', () async {
-      // Onboarding-regenerate contract: the account-only primitive must NOT
-      // wipe the seed row or the AES key.
-      final walletId = await repo.createWallet(walletName, WalletType.software, seed, address);
-      await db.insertWalletAccount(walletId, 'acc-0', 0);
-
-      await repo.deleteWallet(walletId);
-
-      expect(await db.getWalletById(walletId), isNotNull); // row survives
-      expect(await db.getWalletAccounts(walletId), isEmpty); // accounts gone
-      verifyNever(() => secureStorage.deleteMnemonicKey()); // key untouched
     });
   });
 }

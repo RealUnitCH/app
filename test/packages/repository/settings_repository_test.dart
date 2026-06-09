@@ -157,5 +157,29 @@ void main() {
         expect(repo.networkMode, NetworkMode.testnet);
       });
     });
+
+    group('deleteMnemonicKeyOnLastWalletDelete', () {
+      test('defaults to false when not stored', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.deleteMnemonicKeyOnLastWalletDelete, isFalse);
+      });
+
+      test('setter persists the advanced cleanup preference', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        repo.deleteMnemonicKeyOnLastWalletDelete = true;
+        await Future<void>.delayed(Duration.zero);
+
+        expect(repo.deleteMnemonicKeyOnLastWalletDelete, isTrue);
+
+        repo.deleteMnemonicKeyOnLastWalletDelete = false;
+        await Future<void>.delayed(Duration.zero);
+
+        expect(repo.deleteMnemonicKeyOnLastWalletDelete, isFalse);
+      });
+    });
   });
 }

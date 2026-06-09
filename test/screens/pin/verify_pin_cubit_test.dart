@@ -229,7 +229,8 @@ void main() {
 
       test('successful biometric unlock resets lockout and emits VerifyPinSuccess', () async {
         when(() => biometricService.canUse()).thenAnswer((_) async => true);
-        when(() => biometricService.authenticate()).thenAnswer((_) async => true);
+        when(() => biometricService.authenticate()).thenAnswer((_) async =>
+            const BiometricAuthResult.forTesting(success: true, unwrappedSecret: 'ok'));
         final cubit = build();
         final success = cubit.stream.firstWhere((s) => s is VerifyPinSuccess);
 
@@ -242,12 +243,30 @@ void main() {
 
       test('failed biometric authenticate does NOT emit success', () async {
         when(() => biometricService.canUse()).thenAnswer((_) async => true);
-        when(() => biometricService.authenticate()).thenAnswer((_) async => false);
+        when(() => biometricService.authenticate()).thenAnswer((_) async =>
+            const BiometricAuthResult.forTesting(success: false, unwrappedSecret: null));
         final cubit = build();
 
         await cubit.checkBiometricAvailability();
 
         expect(cubit.state, isNot(isA<VerifyPinSuccess>()));
+        verifyNever(() => secureStorage.resetPinLockout());
+      });
+
+      test('biometric prompt success without CryptoObject unwrap does NOT emit success (BL-049)',
+          () async {
+        // A patched-return-true on a rooted device: success=true,
+        // unwrappedSecret=null. The cubit must refuse the unlock.
+        when(() => biometricService.canUse()).thenAnswer((_) async => true);
+        when(() => biometricService.authenticate()).thenAnswer((_) async =>
+            const BiometricAuthResult.forTesting(success: true, unwrappedSecret: null));
+        final cubit = build();
+
+        await cubit.checkBiometricAvailability();
+
+        expect(cubit.state, isNot(isA<VerifyPinSuccess>()),
+            reason: 'BL-049: biometric success without a cryptographic '
+                'unwrap is a patched return — refuse the unlock');
         verifyNever(() => secureStorage.resetPinLockout());
       });
 

@@ -47,4 +47,21 @@ class SettingsRepository {
 
   set softwareTermsAccepted(bool accepted) =>
       _sharedPreferences.setBool('softwareTermsAccepted', accepted);
+
+  /// When `true`, deleting the last wallet on the device also wipes the
+  /// Keychain-stored mnemonic encryption key. The default is `false` —
+  /// leaving the key in place is the conservative choice because a future
+  /// restore-from-encrypted-backup would otherwise be unable to decrypt
+  /// any seed that came along for the ride. Users who want belt-and-braces
+  /// defence-in-depth (factory-reset feel) can opt in via the advanced
+  /// settings; the Initiative IV ADR documents the trade-off.
+  ///
+  /// Setting name kept as a plain bool in shared preferences so a
+  /// reinstall picks up the user's prior choice; secure storage isn't
+  /// needed for the flag itself, only for the key the flag controls.
+  bool get deleteMnemonicKeyOnLastWalletDelete =>
+      _sharedPreferences.getBool('deleteMnemonicKeyOnLastWalletDelete') ?? false;
+
+  set deleteMnemonicKeyOnLastWalletDelete(bool enabled) =>
+      _sharedPreferences.setBool('deleteMnemonicKeyOnLastWalletDelete', enabled);
 }

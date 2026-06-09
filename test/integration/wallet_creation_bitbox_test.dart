@@ -85,7 +85,13 @@ void main() {
     // we never arm the observer in these tests.
     bitboxService = BitboxService();
     appStore = _MockAppStore();
-    service = WalletService(bitboxService, walletRepository, settingsRepository, appStore);
+    service = WalletService(
+      bitboxService,
+      walletRepository,
+      settingsRepository,
+      appStore,
+      secureStorage,
+    );
 
     when(() => secureStorage.getOrCreateMnemonicKey()).thenAnswer((_) async => mnemonicKey);
   });
@@ -207,6 +213,7 @@ void main() {
           coldRepo,
           settingsRepository,
           _MockAppStore(),
+          coldSecureStorage,
         );
 
         final reloaded = await coldService.getWalletById(created.id);

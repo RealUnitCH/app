@@ -22,13 +22,10 @@ void main() {
   late _MockSettingsSeedCubit settingsSeedCubit;
   final MockAppStore appStore = MockAppStore();
   final _MockWalletService walletService = _MockWalletService();
-  final MockSoftwareWallet wallet = MockSoftwareWallet();
 
   setUp(() {
     settingsSeedCubit = _MockSettingsSeedCubit();
     when(() => settingsSeedCubit.state).thenReturn(const SettingsSeedState(seed));
-    when(() => appStore.wallet).thenReturn(wallet);
-    when(() => wallet.seed).thenReturn(seed);
     when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
     when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
   });

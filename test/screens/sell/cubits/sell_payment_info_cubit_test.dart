@@ -16,11 +16,11 @@ import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
+import '../../../test_utils/fake_wallet_isolate.dart';
+
 class _MockSellPaymentInfoService extends Mock implements RealUnitSellPaymentInfoService {}
 
 class _MockAppStore extends Mock implements AppStore {}
-
-const _testMnemonic = 'test test test test test test test test test test test junk';
 
 SellPaymentInfo _info({
   bool isValid = true,
@@ -79,7 +79,14 @@ void main() {
   setUp(() {
     service = _MockSellPaymentInfoService();
     appStore = _MockAppStore();
-    when(() => appStore.wallet).thenReturn(SoftwareWallet(1, 'Main', _testMnemonic));
+    when(() => appStore.wallet).thenReturn(
+      SoftwareWallet(
+        1,
+        'Main',
+        '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+        FakeWalletIsolate(),
+      ),
+    );
   });
 
   SellPaymentInfoCubit build() => SellPaymentInfoCubit(service, appStore);
