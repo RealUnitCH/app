@@ -33,7 +33,9 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
   }
 
   Future<void> checkPin() async {
-    final isCorrect = await _secureStorage.verifyPin(state.pin);
+    final pin = state.pin;
+    emit(VerifyPinVerifying(pin: pin, failedAttempts: state.failedAttempts));
+    final isCorrect = await _secureStorage.verifyPin(pin);
     if (isCorrect) {
       if (enableLockout) await _secureStorage.resetPinLockout();
       emit(const VerifyPinSuccess());

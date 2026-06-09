@@ -110,6 +110,24 @@ void main() {
         verify(() => secureStorage.resetPinLockout()).called(1);
       });
 
+      blocTest<VerifyPinCubit, VerifyPinState>(
+        'emits VerifyPinVerifying (carrying the full pin) before VerifyPinSuccess',
+        build: build,
+        setUp: () =>
+            when(() => secureStorage.verifyPin(any())).thenAnswer((_) async => true),
+        act: (cubit) => addPin(cubit, '123456'),
+        expect: () => [
+          const VerifyPinState(pin: '1'),
+          const VerifyPinState(pin: '12'),
+          const VerifyPinState(pin: '123'),
+          const VerifyPinState(pin: '1234'),
+          const VerifyPinState(pin: '12345'),
+          const VerifyPinState(pin: '123456'),
+          const VerifyPinVerifying(pin: '123456'),
+          const VerifyPinSuccess(),
+        ],
+      );
+
       test('wrong pin (1st attempt) with lockout on emits VerifyPinFailure', () async {
         when(() => secureStorage.verifyPin(any())).thenAnswer((_) async => false);
         when(() => secureStorage.getPinFailedAttempts()).thenAnswer((_) async => 0);

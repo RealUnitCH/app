@@ -60,6 +60,28 @@ void main() {
     });
   });
 
+  group('VerifyPinVerifying', () {
+    test('carries the entered pin and is equal for same pin + attempts', () {
+      final a = VerifyPinVerifying(pin: '123456');
+      final b = VerifyPinVerifying(pin: '123456');
+      expect(a, equals(b));
+      expect(a.hashCode, b.hashCode);
+      expect(a.pin, '123456');
+      expect(a.failedAttempts, 0);
+    });
+
+    test('different pin is unequal', () {
+      final a = VerifyPinVerifying(pin: '123456');
+      final b = VerifyPinVerifying(pin: '654321');
+      expect(a, isNot(equals(b)));
+    });
+
+    test('preserves failedAttempts', () {
+      final a = VerifyPinVerifying(pin: '123456', failedAttempts: 3);
+      expect(a.failedAttempts, 3);
+    });
+  });
+
   group('VerifyPinFailure', () {
     test('same failedAttempts is equal', () {
       final a = VerifyPinFailure(failedAttempts: 2);

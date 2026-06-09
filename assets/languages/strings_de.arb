@@ -186,6 +186,7 @@
   "pinVerify": "Geben Sie Ihre PIN ein",
   "pinVerifyDescription": "Geben Sie Ihre PIN ein, um Ihre Wallet zu entsperren",
   "pinVerifyFailed": "Die PIN ist falsch. Versuchen Sie es erneut.",
+  "pinVerifying": "Anmeldung…",
   "pinVerifyLocked": "Zu viele Fehlversuche. Nutzen Sie 'PIN vergessen?', um zurückzusetzen.",
   "pinVerifyLockedTemporarily": "Zu viele Fehlversuche. Versuchen Sie es in ${remaining} erneut.",
   "pinVerifySeedDescription": "Geben Sie Ihre PIN ein, um Ihre Seed-Phrase anzuzeigen",
