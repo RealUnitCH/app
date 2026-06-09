@@ -125,13 +125,13 @@ class SettingsPage extends StatelessWidget {
                 title: S.of(context).settingsDeleteWallet,
                 leading: const XCircleIcon(size: 24),
                 onTap: () async {
-                  bool? isLogout = await showModalBottomSheet(
+                  final bool? isLogout = await showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
                     builder: (_) => const SettingsConfirmLogoutWalletSheet(),
                   );
                   if (isLogout ?? false) {
-                    await Future.delayed(const Duration(milliseconds: 300));
+                    await Future<void>.delayed(const Duration(milliseconds: 300));
                     if (context.mounted) {
                       await context.read<PinAuthCubit>().reset();
                       if (context.mounted) {

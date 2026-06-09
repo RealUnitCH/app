@@ -167,7 +167,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
             // alreadyRegistered). The backend now reflects the new wallet,
             // so re-fetching `getRegistrationInfo` in `_runCheckKyc` will return
             // `AlreadyRegistered` and dispatch the next KYC step.
-            context.read<KycCubit>().checkKyc();
+            unawaited(context.read<KycCubit>().checkKyc());
 
             if (state.status == RegistrationStatus.forwardingFailed) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -191,7 +191,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
           }
           if (state is KycRegistrationSubmitBitboxRequired) {
             final registration = state.registration;
-            final result = await showModalBottomSheet(
+            final result = await showModalBottomSheet<bool>(
               context: context,
               isScrollControlled: true,
               builder: (_) => ConnectBitboxPage(
@@ -202,7 +202,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
               ),
             );
             if (context.mounted && result == true) {
-              context.read<KycRegistrationSubmitCubit>().retrySubmit(registration);
+              unawaited(context.read<KycRegistrationSubmitCubit>().retrySubmit(registration));
             }
           }
         },

@@ -34,7 +34,7 @@ class DfxBrokerbotService extends DFXAuthService {
       throw Exception('BuyPrice request failed: ${res.body}');
     }
 
-    return BrokerbotBuyPriceDto.fromJson(jsonDecode(res.body));
+    return BrokerbotBuyPriceDto.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
   }
 
   /// Convert CHF → REALU shares
@@ -54,7 +54,7 @@ class DfxBrokerbotService extends DFXAuthService {
       throw Exception('Shares request failed: ${res.body}');
     }
 
-    return BrokerbotBuySharesDto.fromJson(jsonDecode(res.body));
+    return BrokerbotBuySharesDto.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
   }
 
   /// Convert REALU shares → CHF (with fees)
@@ -75,7 +75,7 @@ class DfxBrokerbotService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: res.statusCode);
     }
 
-    return BrokerbotSellPriceDto.fromJson(jsonDecode(res.body));
+    return BrokerbotSellPriceDto.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
   }
 
   /// Convert CHF → REALU shares (with fees)
@@ -96,6 +96,6 @@ class DfxBrokerbotService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: res.statusCode);
     }
 
-    return BrokerbotSellSharesDto.fromJson(jsonDecode(res.body));
+    return BrokerbotSellSharesDto.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
   }
 }

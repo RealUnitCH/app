@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
@@ -73,9 +74,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       return;
     }
 
-    _balanceService.updateBalance(_appStore.primaryAddress);
+    unawaited(_balanceService.updateBalance(_appStore.primaryAddress));
     _balanceService.startSync(_appStore.primaryAddress);
-    _transactionHistoryService.apiBasedSync();
+    unawaited(_transactionHistoryService.apiBasedSync());
   }
 
   Future<void> _onDeleteCurrentWallet(

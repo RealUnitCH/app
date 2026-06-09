@@ -45,7 +45,7 @@ class RealUnitRegistrationService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    return RealUnitRegistrationInfoDto.fromJson(jsonDecode(response.body));
+    return RealUnitRegistrationInfoDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
   /// registers an email on the wallet. Should always be called first when registering
@@ -67,7 +67,8 @@ class RealUnitRegistrationService extends DFXAuthService {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
-    final responseDto = RealUnitRegistrationEmailResponseDto.fromJson(jsonDecode(response.body));
+    final responseDto =
+        RealUnitRegistrationEmailResponseDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
     return responseDto.status;
   }
 
@@ -166,7 +167,8 @@ class RealUnitRegistrationService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
+    final responseDto =
+        RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
     return responseDto.status;
   }
 
@@ -223,7 +225,8 @@ class RealUnitRegistrationService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
+    final responseDto =
+        RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
     return responseDto.status;
   }
 }

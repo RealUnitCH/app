@@ -53,7 +53,7 @@ class DfxKycService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    final json = jsonDecode(response.body);
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
     return KycLevelDto.fromJson(json);
   }
 
@@ -76,7 +76,7 @@ class DfxKycService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    final json = jsonDecode(response.body);
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
     return KycSessionDto.fromJson(json);
   }
 
@@ -98,7 +98,7 @@ class DfxKycService extends DFXAuthService {
       throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
     }
 
-    final json = jsonDecode(response.body);
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
     return KycSessionDto.fromJson(json);
   }
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -57,10 +58,10 @@ class PaymentAdditionalActionNeededButton extends StatelessWidget {
                 onPressed: () async {
                   await context.pushNamed(AppRoutes.kyc, extra: paymentState.context);
                   if (context.mounted) {
-                    context.read<BuyPaymentInfoCubit>().getPaymentInfo(
+                    unawaited(context.read<BuyPaymentInfoCubit>().getPaymentInfo(
                       amount: amountController.text,
                       currency: context.read<BuyConverterCubit>().state.currency,
-                    );
+                    ));
                   }
                 },
                 label: S.of(context).next,
@@ -74,10 +75,10 @@ class PaymentAdditionalActionNeededButton extends StatelessWidget {
                 onPressed: () async {
                   await context.pushNamed(AppRoutes.kyc, extra: paymentState.context);
                   if (context.mounted) {
-                    context.read<BuyPaymentInfoCubit>().getPaymentInfo(
+                    unawaited(context.read<BuyPaymentInfoCubit>().getPaymentInfo(
                       amount: amountController.text,
                       currency: context.read<BuyConverterCubit>().state.currency,
-                    );
+                    ));
                   }
                 },
                 label: S.of(context).next,
@@ -92,10 +93,10 @@ class PaymentAdditionalActionNeededButton extends StatelessWidget {
                   final paymentInfoCubit = context.read<BuyPaymentInfoCubit>();
                   final converterCubit = context.read<BuyConverterCubit>();
                   await showBitboxReconnectSheet(context);
-                  paymentInfoCubit.getPaymentInfo(
+                  unawaited(paymentInfoCubit.getPaymentInfo(
                     amount: amountController.text,
                     currency: converterCubit.state.currency,
-                  );
+                  ));
                 },
                 label: S.of(context).bitboxReconnect,
               ),

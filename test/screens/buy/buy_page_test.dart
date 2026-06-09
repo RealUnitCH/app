@@ -299,8 +299,8 @@ void main() {
       final amountField = find.byType(TextField).first;
       final resultField = find.byType(TextField).last;
 
-      TextField amount = tester.widget(amountField);
-      TextField result = tester.widget(resultField);
+      final TextField amount = tester.widget(amountField);
+      final TextField result = tester.widget(resultField);
 
       expect(amount.controller!.text, equals('5.00'));
       expect(result.controller!.text, equals('0.50'));

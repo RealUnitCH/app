@@ -89,7 +89,7 @@ void main() {
       'previousStep at step 0 is a no-op (cannot go below zero)',
       build: LegalDisclaimerCubit.new,
       act: (cubit) => cubit.previousStep(),
-      expect: () => [],
+      expect: () => <LegalDisclaimerState>[],
     );
   });
 }

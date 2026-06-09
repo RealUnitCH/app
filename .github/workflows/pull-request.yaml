@@ -70,7 +70,7 @@ jobs:
       - run: dart run tool/generate_localization.dart
       - run: dart run tool/generate_release_info.dart
       - run: flutter pub run build_runner build
-      - run: flutter analyze
+      - run: flutter analyze --fatal-warnings
       # Excludes the `golden` tag: visual-regression tests live under
       # `test/goldens/` and are validated on the dfx01 self-hosted runner
       # in the parallel `golden-tests` job (Hardware-Determinismus, see
@@ -78,7 +78,24 @@ jobs:
       # both duplicate work and erroneously red this job on macos-latest
       # where the Skia/font-rendering does not match the committed
       # baselines.
-      - run: flutter test --coverage --exclude-tags golden
+      #
+      # `ulimit -n 16384` raises the per-process file-descriptor cap. This is
+      # NOT masking an app-code handle leak — verified by reproducing under the
+      # macOS default (256) and inspecting open FDs with `lsof`:
+      #   - The flutter_tools parent process holds ~3 stdio PIPE fds per spawned
+      #     per-suite helper (`flutter_tester` + `dart development-service`) and
+      #     does not release them, so its FD use scales with the number of test
+      #     files (currently 353). Under 256 it dies ~suite 80 with
+      #     `ProcessException: Too many open files`
+      #     (stack: `package:flutter_tools/src/base/async_guard.dart`).
+      #   - The `flutter_tester` children and app/test code stay flat (~20 fds,
+      #     2 sockets each); the app's `HttpClient` is a `MockClient` in tests,
+      #     so no real sockets/files leak per test. The consumer is the runner's
+      #     subprocess pipes, not unclosed app handles.
+      # 16384 leaves headroom to ~5000 test files. If the suite ever outgrows
+      # that, shard the run (separate `flutter test` invocations + coverage
+      # merge) so each process spawns only a subset — do not just raise this.
+      - run: ulimit -n 16384 && flutter test --coverage --exclude-tags golden
 
       # Narrow the coverage report to the README-defined activated surface:
       #   lib/packages/**             — services, repositories, signers, utils

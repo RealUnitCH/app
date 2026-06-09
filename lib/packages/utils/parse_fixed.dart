@@ -14,8 +14,8 @@ BigInt parseFixed(String value, int? decimals) {
     throw Exception('too many decimal points, value, $value');
   }
 
-  var whole = comps.isNotEmpty ? comps[0] : '0';
-  var fraction = (comps.length == 2 ? comps[1] : '0').padRight(decimals, '0');
+  final whole = comps.isNotEmpty ? comps[0] : '0';
+  final fraction = (comps.length == 2 ? comps[1] : '0').padRight(decimals, '0');
 
   // Check the fraction doesn't exceed our decimals size
   if (fraction.length > multiplier.length - 1) {

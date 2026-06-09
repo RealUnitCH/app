@@ -163,7 +163,7 @@ class _WelcomePageState extends State<WelcomePage> {
   );
 
   Future<void> onBitboxPressed(BuildContext context) async {
-    await showModalBottomSheet(
+    await showModalBottomSheet<void>(
       isScrollControlled: true,
       context: context,
       builder: (_) => ConnectBitboxPage(

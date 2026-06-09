@@ -108,7 +108,7 @@ class SellBankAccountSelectionPage extends StatelessWidget {
   Future<void> _onAddBankAccountPressed(BuildContext context) async {
     final sellBankAccountsCubit = context.read<SellBankAccountsCubit>();
 
-    await showModalBottomSheet(
+    await showModalBottomSheet<void>(
       isScrollControlled: true,
       context: context,
       builder: (_) => BlocProvider.value(

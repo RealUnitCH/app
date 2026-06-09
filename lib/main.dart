@@ -41,7 +41,7 @@ Future<void> _initialize() async {
 Future<void> _initializeWithSplashDuration() async {
   await Future.wait([
     _initialize(),
-    Future.delayed(const Duration(seconds: 3)),
+    Future<void>.delayed(const Duration(seconds: 3)),
   ]);
 }
 
