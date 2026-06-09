@@ -4,9 +4,9 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_info_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
@@ -124,8 +124,9 @@ void main() {
     );
 
     blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
-      'changed account id but no userData → RegistrationFailure, no Success '
-      '(propagation race: user can retry by tapping the confirm button again)',
+      'changed account id + NewRegistration → Success (hands off to the KYC flow), '
+      'no registerWallet — the merged account has no prior RealUnit registration '
+      'so register/wallet would 400 "No RealUnit registration found"',
       setUp: () {
         final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
@@ -141,7 +142,33 @@ void main() {
       act: (c) => c.checkEmailVerification(),
       expect: () => [
         isA<KycEmailVerificationLoading>(),
-        isA<KycEmailVerificationRegistrationFailure>(),
+        isA<KycEmailVerificationSuccess>(),
+      ],
+      verify: (_) {
+        verifyNever(() => registrationService.registerWallet(any()));
+      },
+    );
+
+    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
+      'NewRegistration WITH userData present still hands off (Success), no '
+      'registerWallet — reproduces the real bug: existing KYC data makes '
+      'userData non-null while the account still has no RealUnit registration',
+      setUp: () {
+        final tokens = [_fakeJwt(1), _fakeJwt(2)];
+        var i = 0;
+        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.newRegistration,
+            realUnitUserDataDto: _userData,
+          ),
+        );
+      },
+      build: build,
+      act: (c) => c.checkEmailVerification(),
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationSuccess>(),
       ],
       verify: (_) {
         verifyNever(() => registrationService.registerWallet(any()));
@@ -175,32 +202,29 @@ void main() {
     );
 
     blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
-      'retry after null-userData race: second call skips account-id check '
-      '(propagation completed → registerWallet succeeds → Success)',
+      'retry after a transient registerWallet failure (AddWallet): the second '
+      'call skips the account-id check via _mergeDetected → registerWallet '
+      'succeeds → Success',
       setUp: () {
-        // First call: account-id changes, userData not yet propagated.
-        // Second call: same account-id (already merged), userData now present.
-        // Without the `_mergeDetected` short-circuit the second call would
-        // hit the same-account-id guard and emit Failure ("email not yet
-        // confirmed") — verifying the retry path works.
-        final tokens = [_fakeJwt(1), _fakeJwt(2), _fakeJwt(2), _fakeJwt(2)];
+        // First call detects the merge (account 1 → 2). The second call must
+        // skip the same-account-id guard (which would otherwise emit Failure,
+        // "email not yet confirmed") thanks to `_mergeDetected`, and retry the
+        // AddWallet registration.
+        final tokens = [_fakeJwt(1), _fakeJwt(2)];
         var i = 0;
         when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
-        var walletStatusCallCount = 0;
-        when(() => registrationService.getRegistrationInfo()).thenAnswer((_) async {
-          walletStatusCallCount++;
-          return walletStatusCallCount == 1
-              ? RealUnitRegistrationInfoDto(
-                  state: RealUnitRegistrationState.newRegistration,
-                  realUnitUserDataDto: null,
-                )
-              : RealUnitRegistrationInfoDto(
-                  state: RealUnitRegistrationState.addWallet,
-                  realUnitUserDataDto: _userData,
-                );
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.addWallet,
+            realUnitUserDataDto: _userData,
+          ),
+        );
+        var calls = 0;
+        when(() => registrationService.registerWallet(any())).thenAnswer((_) async {
+          calls++;
+          if (calls == 1) throw Exception('transient');
+          return RegistrationStatus.completed;
         });
-        when(() => registrationService.registerWallet(any()))
-            .thenAnswer((_) async => RegistrationStatus.completed);
       },
       build: build,
       act: (c) async {
@@ -214,7 +238,7 @@ void main() {
         isA<KycEmailVerificationSuccess>(),
       ],
       verify: (_) {
-        verify(() => registrationService.registerWallet(_userData)).called(1);
+        verify(() => registrationService.registerWallet(_userData)).called(2);
       },
     );
   });

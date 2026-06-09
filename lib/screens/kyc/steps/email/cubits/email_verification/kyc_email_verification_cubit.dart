@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/utils/jwt_decoder.dart';
 
@@ -70,23 +71,32 @@ class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
     // open and the user can retry without the failure being papered over.
   }
 
-  /// Returns `true` when the wallet was successfully registered with the
-  /// (now-merged) user account. On failure the cubit is already in
-  /// [KycEmailVerificationRegistrationFailure] so the listener can show the
+  /// Returns `true` when the merge can proceed — either the wallet was
+  /// registered (`addWallet` / `alreadyRegistered`), or the account has no
+  /// prior RealUnit registration (`newRegistration`) and is handed back to the
+  /// KYC flow for the full registration form. On failure the cubit is already
+  /// in [KycEmailVerificationRegistrationFailure] so the listener can show the
   /// error to the user.
   Future<bool> _completeRegistration(int generation) async {
     try {
       final info = await _registrationService.getRegistrationInfo();
       if (isClosed || generation != _runGeneration) return false;
+
+      // `registerWallet` (POST /register/wallet) only ADDS a wallet to an
+      // already-existing RealUnit registration, reusing its prior signed data.
+      // When the merged account has no prior registration the API returns
+      // `newRegistration`, and calling register/wallet would fail with
+      // "No RealUnit registration found" (400). The merge is already confirmed
+      // here (the JWT account changed), so hand back to the KYC flow: `KycCubit`
+      // routes `newRegistration` to the full registration form (register/complete).
+      if (info.state == RealUnitRegistrationState.newRegistration) {
+        return true;
+      }
+
+      // For addWallet / alreadyRegistered the API always provides userData; a
+      // null here is a genuine anomaly the user should retry / report.
       if (info.realUnitUserDataDto == null) {
-        // Backend race: the auth service reports the merged account while the
-        // user-data service hasn't propagated yet. Surface as a recoverable
-        // failure so the user can retry by tapping the confirmation button
-        // again — by then propagation will usually have completed, and the
-        // retry path skips the auth-side check thanks to `_mergeDetected`.
-        developer.log(
-          'getRegistrationInfo returned null realUnitUserDataDto after merge',
-        );
+        developer.log('Unexpected null userData for registration state ${info.state}');
         emit(const KycEmailVerificationRegistrationFailure());
         return false;
       }

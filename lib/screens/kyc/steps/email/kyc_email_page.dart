@@ -80,12 +80,11 @@ class _KycEmailFormState extends State<KycEmailForm> {
               ),
             );
             if (isConfirmed == true && context.mounted) {
-              // A successful merge confirmation already registered this
-              // wallet via `KycEmailVerificationCubit._completeRegistration`
-              // → `RealUnitRegistrationService.registerWallet`. The next
-              // `checkKyc()` re-fetches `getRegistrationInfo`, sees
-              // `AlreadyRegistered`, and routes forward — no local sign-gate
-              // flag needed.
+              // The merge is confirmed. `checkKyc()` re-fetches
+              // `getRegistrationInfo` and routes by state: AddWallet /
+              // AlreadyRegistered were already registered inline by
+              // `KycEmailVerificationCubit`; NewRegistration (no prior RealUnit
+              // registration) is routed to the full registration form here.
               context.read<KycCubit>().checkKyc();
             }
           }
