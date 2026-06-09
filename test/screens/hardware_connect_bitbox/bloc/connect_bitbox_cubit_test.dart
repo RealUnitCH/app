@@ -61,6 +61,7 @@ void main() {
     Duration confirmPairingTimeout = const Duration(milliseconds: 500),
     Duration createWalletTimeout = const Duration(milliseconds: 500),
     Duration pairingPinTimeout = const Duration(milliseconds: 500),
+    Future<BitboxWallet> Function()? acquireWallet,
   }) => ConnectBitboxCubit(
     service,
     walletService,
@@ -68,6 +69,7 @@ void main() {
     confirmPairingTimeout: confirmPairingTimeout,
     createWalletTimeout: createWalletTimeout,
     pairingPinTimeout: pairingPinTimeout,
+    acquireWallet: acquireWallet,
   );
 
   Future<void> waitForState<T>(
@@ -397,6 +399,59 @@ void main() {
           .firstWhere((s) => s is BitboxNotConnected)
           .timeout(const Duration(seconds: 2));
       expect(cubit.state, isA<BitboxNotConnected>());
+    });
+
+    // Recovery flow injection: when an `acquireWallet` override is supplied
+    // (the address-recovery page passes `healCurrentBitboxAddress`), the cubit
+    // must call IT instead of the default `createBitboxWallet`, so re-pairing
+    // backfills the existing row rather than creating a second wallet.
+    test('confirmPairing uses the injected acquireWallet instead of createBitboxWallet', () async {
+      var pollCount = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 3 ? '' : 'HASH-ok';
+      });
+      when(() => service.confirmPairing()).thenAnswer((_) async {});
+
+      var acquireCalls = 0;
+      final cubit = makeCubit(
+        acquireWallet: () async {
+          acquireCalls++;
+          return wallet;
+        },
+      );
+      addTearDown(cubit.close);
+
+      await waitForState<BitboxCheckHash>(cubit);
+      await cubit.confirmPairing();
+
+      expect(cubit.state, isA<BitboxConnected>());
+      expect(acquireCalls, 1, reason: 'the injected acquireWallet must be the wallet source');
+      // The default path must NOT run when an override is supplied.
+      verifyNever(() => walletService.createBitboxWallet(any()));
+      verify(() => authService.ensureSignatureFor(any())).called(1);
+    });
+
+    test('confirmPairing falls back to createBitboxWallet when no override is given', () async {
+      var pollCount = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 3 ? '' : 'HASH-ok';
+      });
+      when(() => service.confirmPairing()).thenAnswer((_) async {});
+
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      await waitForState<BitboxCheckHash>(cubit);
+      await cubit.confirmPairing();
+
+      expect(cubit.state, isA<BitboxConnected>());
+      verify(() => walletService.createBitboxWallet('Luke-Skywallet')).called(1);
     });
   });
 }

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:bitbox_flutter/bitbox_manager.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -9,6 +8,7 @@ import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_address_unavailable_exception.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -18,8 +18,6 @@ class _MockWalletRepository extends Mock implements WalletRepository {}
 class _MockSettingsRepository extends Mock implements SettingsRepository {}
 
 class _MockBitboxService extends Mock implements BitboxService {}
-
-class _MockBitboxManager extends Mock implements BitboxManager {}
 
 class _MockAppStore extends Mock implements AppStore {}
 
@@ -221,22 +219,14 @@ void main() {
     });
 
     group('createBitboxWallet', () {
-      // Drives the BitBox-pairing happy path end-to-end at this layer: derive
-      // the EIP-55 address from the device, persist a view-row in `walletInfos`
-      // (encrypted-seed column is `null` for hardware wallets), mark the row
-      // current, and return a typed BitboxWallet so the caller can immediately
-      // request a signature in the same flow.
-      late _MockBitboxManager manager;
+      // Drives the BitBox-pairing happy path end-to-end at this layer: fetch
+      // the EIP-55 address from the device via the retry boundary, persist a
+      // view-row in `walletInfos` (encrypted-seed column is `null` for hardware
+      // wallets), mark the row current, and return a typed BitboxWallet so the
+      // caller can immediately request a signature in the same flow.
 
-      setUp(() {
-        manager = _MockBitboxManager();
-        when(() => bitbox.bitboxManager).thenReturn(manager);
-      });
-
-      test('derives the BIP-44 ETH address from the device and persists a view row', () async {
-        when(
-          () => manager.getETHAddress(1, "m/44'/60'/0'/0/0"),
-        ).thenAnswer((_) async => _debugAddress);
+      test('fetches the ETH address via the service boundary and persists a view row', () async {
+        when(() => bitbox.getEthAddress()).thenAnswer((_) async => _debugAddress);
         when(() => repo.createViewWallet(any(), any(), any())).thenAnswer((_) async => 11);
         // BitboxWallet ctor pulls credentials from the service — return a
         // fake handle so the test exercises the WalletService logic and not
@@ -248,10 +238,9 @@ void main() {
         expect(wallet, isA<BitboxWallet>());
         expect(wallet.id, 11);
         expect(wallet.name, 'Hardware');
-        // The BitBox keypath is non-negotiable: chainId 1 + ETH's canonical
-        // BIP-44 path. A drifting keypath would silently quote a different
-        // address than the rest of the app expects.
-        verify(() => manager.getETHAddress(1, "m/44'/60'/0'/0/0")).called(1);
+        // The address fetch goes through the centralised retry boundary, not a
+        // raw manager call — that's where the empty-read self-heal lives.
+        verify(() => bitbox.getEthAddress()).called(1);
         verify(
           () => repo.createViewWallet('Hardware', WalletType.bitbox, _debugAddress),
         ).called(1);
@@ -261,9 +250,7 @@ void main() {
       });
 
       test('propagates a BitBox derivation failure without writing to the repo', () async {
-        when(
-          () => manager.getETHAddress(any(), any()),
-        ).thenThrow(Exception('USB transport dropped'));
+        when(() => bitbox.getEthAddress()).thenThrow(Exception('USB transport dropped'));
 
         expect(
           () => service.createBitboxWallet('Hardware'),
@@ -271,6 +258,124 @@ void main() {
         );
         verifyNever(() => repo.createViewWallet(any(), any(), any()));
         verifyNever(() => settings.saveCurrentWalletId(any()));
+      });
+
+      // The retry boundary throws on a persistent empty read; createBitboxWallet
+      // must propagate it so nothing lands on disk and the pairing flow's retry
+      // path takes over.
+      test('propagates BitboxAddressUnavailableException from the boundary — nothing persisted',
+          () async {
+        when(() => bitbox.getEthAddress()).thenThrow(const BitboxAddressUnavailableException());
+
+        await expectLater(
+          () => service.createBitboxWallet('Hardware'),
+          throwsA(isA<BitboxAddressUnavailableException>()),
+        );
+        verifyNever(() => repo.createViewWallet(any(), any(), any()));
+        verifyNever(() => settings.saveCurrentWalletId(any()));
+      });
+
+      // Defence-in-depth: the boundary can't be empty, but a non-empty yet
+      // malformed read still has to be rejected by the format guard before
+      // `EthereumAddress.fromHex` would crash the dashboard build.
+      test('throws BitboxAddressUnavailableException on a malformed address', () async {
+        when(() => bitbox.getEthAddress()).thenAnswer((_) async => 'not-a-hex-address');
+
+        await expectLater(
+          () => service.createBitboxWallet('Hardware'),
+          throwsA(isA<BitboxAddressUnavailableException>()),
+        );
+        verifyNever(() => repo.createViewWallet(any(), any(), any()));
+        verifyNever(() => settings.saveCurrentWalletId(any()));
+      });
+    });
+
+    group('currentWalletNeedsAddressRecovery', () {
+      test('true for a BitBox row persisted with an empty address', () async {
+        when(() => settings.currentWalletId).thenReturn(5);
+        when(() => repo.getWalletInfo(5)).thenAnswer(
+          (_) async => _info(id: 5, name: 'Hardware', address: '', type: WalletType.bitbox),
+        );
+
+        expect(await service.currentWalletNeedsAddressRecovery(), isTrue);
+      });
+
+      test('true for a BitBox row persisted with a malformed address', () async {
+        when(() => settings.currentWalletId).thenReturn(5);
+        when(() => repo.getWalletInfo(5)).thenAnswer(
+          (_) async => _info(id: 5, name: 'Hardware', address: 'garbage', type: WalletType.bitbox),
+        );
+
+        expect(await service.currentWalletNeedsAddressRecovery(), isTrue);
+      });
+
+      test('false for a BitBox row with a valid address', () async {
+        when(() => settings.currentWalletId).thenReturn(5);
+        when(() => repo.getWalletInfo(5)).thenAnswer(
+          (_) async =>
+              _info(id: 5, name: 'Hardware', address: _debugAddress, type: WalletType.bitbox),
+        );
+
+        expect(await service.currentWalletNeedsAddressRecovery(), isFalse);
+      });
+
+      test('false for a software wallet even with an empty address', () async {
+        when(() => settings.currentWalletId).thenReturn(5);
+        when(() => repo.getWalletInfo(5)).thenAnswer(
+          (_) async => _info(id: 5, name: 'Main', address: '', type: WalletType.software),
+        );
+
+        expect(await service.currentWalletNeedsAddressRecovery(), isFalse);
+      });
+
+      test('false when no current wallet id is set', () async {
+        when(() => settings.currentWalletId).thenReturn(null);
+
+        expect(await service.currentWalletNeedsAddressRecovery(), isFalse);
+        verifyNever(() => repo.getWalletInfo(any()));
+      });
+
+      test('false when the row is missing', () async {
+        when(() => settings.currentWalletId).thenReturn(5);
+        when(() => repo.getWalletInfo(5)).thenAnswer((_) async => null);
+
+        expect(await service.currentWalletNeedsAddressRecovery(), isFalse);
+      });
+    });
+
+    group('healCurrentBitboxAddress', () {
+      setUp(() {
+        when(() => bitbox.getCredentials(any())).thenReturn(BitboxCredentials(_debugAddress));
+      });
+
+      test('re-derives the address, backfills the row, and returns a BitboxWallet', () async {
+        when(() => settings.currentWalletId).thenReturn(5);
+        when(() => repo.getWalletInfo(5)).thenAnswer(
+          (_) async => _info(id: 5, name: 'Hardware', address: '', type: WalletType.bitbox),
+        );
+        when(() => bitbox.getEthAddress()).thenAnswer((_) async => _debugAddress);
+
+        final wallet = await service.healCurrentBitboxAddress();
+
+        expect(wallet, isA<BitboxWallet>());
+        expect(wallet.id, 5);
+        expect(wallet.name, 'Hardware');
+        verify(() => bitbox.getEthAddress()).called(1);
+        verify(() => repo.updateAddress(5, _debugAddress)).called(1);
+      });
+
+      test('propagates BitboxAddressUnavailableException and does NOT persist', () async {
+        when(() => settings.currentWalletId).thenReturn(5);
+        when(() => repo.getWalletInfo(5)).thenAnswer(
+          (_) async => _info(id: 5, name: 'Hardware', address: '', type: WalletType.bitbox),
+        );
+        when(() => bitbox.getEthAddress()).thenThrow(const BitboxAddressUnavailableException());
+
+        await expectLater(
+          () => service.healCurrentBitboxAddress(),
+          throwsA(isA<BitboxAddressUnavailableException>()),
+        );
+        verifyNever(() => repo.updateAddress(any(), any()));
       });
     });
 

@@ -5,7 +5,9 @@ import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_address_unavailable_exception.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
+import 'package:web3dart/web3dart.dart';
 
 class WalletService {
   final WalletRepository _repository;
@@ -85,10 +87,71 @@ class WalletService {
   }
 
   Future<BitboxWallet> createBitboxWallet(String name) async {
-    final address = await _bitboxService.bitboxManager.getETHAddress(1, "m/44'/60'/0'/0/0");
+    // [BitboxService.getEthAddress] already retries the transient empty read
+    // the SDK produces when it coerces a native `null` into `""` (its
+    // `return result ?? ''` transport boundary) and throws on a persistent
+    // one. The format guard below is defence-in-depth — it also rejects the
+    // rarer non-empty-but-malformed read before `EthereumAddress.fromHex`
+    // would crash the dashboard build on the next launch.
+    final address = await _bitboxService.getEthAddress();
+    if (!_isValidEthAddress(address)) {
+      throw const BitboxAddressUnavailableException();
+    }
     final walletId = await _repository.createViewWallet(name, WalletType.bitbox, address);
     await setCurrentWallet(walletId);
     return BitboxWallet(walletId, name, address, _bitboxService);
+  }
+
+  /// True when [address] parses as a canonical 20-byte Ethereum address.
+  ///
+  /// Uses the same web3dart parser that every wallet credential class relies on
+  /// so the validity boundary here matches exactly the one that would otherwise
+  /// throw deep in the dashboard build. An empty string fails fast through the
+  /// [FormatException]/[ArgumentError] catch — no need to special-case it.
+  static bool _isValidEthAddress(String address) {
+    try {
+      EthereumAddress.fromHex(address);
+      return true;
+    } on FormatException {
+      return false;
+    } on ArgumentError {
+      return false;
+    }
+  }
+
+  /// Non-throwing probe used at app load to decide whether the current wallet
+  /// is a BitBox row that was persisted with an empty/invalid address (the
+  /// pre-fix data corruption). Returns false for software/debug wallets, for a
+  /// missing current id, for an absent row, and for a BitBox row whose address
+  /// parses cleanly — i.e. it only flags the rows that would crash the
+  /// dashboard build, leaving every healthy wallet on the normal load path.
+  Future<bool> currentWalletNeedsAddressRecovery() async {
+    final id = _settingsRepository.currentWalletId;
+    if (id == null) return false;
+    final info = await _repository.getWalletInfo(id);
+    if (info == null) return false;
+    if (WalletType.values[info.type] != WalletType.bitbox) return false;
+    return !_isValidEthAddress(info.address);
+  }
+
+  /// Re-derives the ETH address from a freshly re-paired BitBox and backfills it
+  /// onto the current wallet row, replacing the empty/invalid one. This is local
+  /// crypto/device recovery — the address is a deterministic function of the
+  /// device, not account state owned by the API — so it does not belong behind a
+  /// network round-trip. Throws [BitboxAddressUnavailableException] if the device
+  /// still returns an unusable address so the recovery UI can retry rather than
+  /// re-persist the corruption.
+  Future<BitboxWallet> healCurrentBitboxAddress() async {
+    final id = _settingsRepository.currentWalletId!;
+    final info = (await _repository.getWalletInfo(id))!;
+    // Shares the retry + empty-guard boundary with createBitboxWallet; the
+    // format check stays as defence-in-depth (see that method).
+    final address = await _bitboxService.getEthAddress();
+    if (!_isValidEthAddress(address)) {
+      throw const BitboxAddressUnavailableException();
+    }
+    await _repository.updateAddress(id, address);
+    return BitboxWallet(id, info.name, address, _bitboxService);
   }
 
   /// Persists a user-supplied seed phrase immediately — the user typed an

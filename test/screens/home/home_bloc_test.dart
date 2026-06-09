@@ -55,6 +55,9 @@ void main() {
     // and the AppStore-driven side effects (`primaryAddress`, `sessionCache`,
     // `wallet =`) all resolve without throwing.
     when(() => walletService.hasWallet()).thenReturn(false);
+    // Default: a healthy wallet does not need address recovery, so
+    // LoadCurrentWalletEvent falls through to the normal load path.
+    when(() => walletService.currentWalletNeedsAddressRecovery()).thenAnswer((_) async => false);
     when(() => settingsService.isSoftwareTermsAccepted).thenReturn(false);
     when(() => settingsService.isTermsAccepted).thenReturn(false);
     when(() => settingsService.setTermsAccepted(any())).thenReturn(null);
@@ -187,6 +190,33 @@ void main() {
       });
 
       test(
+        'BitBox address recovery needed → emits bitboxAddressRecoveryNeeded, does NOT load wallet',
+        () async {
+          when(() => walletService.hasWallet()).thenReturn(true);
+          when(
+            () => walletService.currentWalletNeedsAddressRecovery(),
+          ).thenAnswer((_) async => true);
+
+          final bloc = build();
+          await bloc.stream.firstWhere((s) => s.hasWallet);
+
+          bloc.add(const LoadCurrentWalletEvent());
+          await bloc.stream.firstWhere(
+            (s) => s.bitboxAddressRecoveryNeeded && !s.isLoadingWallet,
+          );
+
+          expect(bloc.state.bitboxAddressRecoveryNeeded, isTrue);
+          expect(bloc.state.isLoadingWallet, isFalse);
+          expect(bloc.state.openWallet, isNull);
+          // The corrupt wallet must never be loaded into the AppStore — that is
+          // the exact path that crashes the dashboard build.
+          verifyNever(() => walletService.getCurrentWallet());
+          verifyNever(() => balanceService.updateBalance(any()));
+          verifyNever(() => transactionHistoryService.apiBasedSync());
+        },
+      );
+
+      test(
         'getCurrentWallet throws → isLoadingWallet flips back to false, no sync side effects',
         () async {
           when(() => walletService.hasWallet()).thenReturn(true);
@@ -230,6 +260,28 @@ void main() {
         verify(() => balanceService.updateBalance(_primary)).called(1);
         verify(() => balanceService.startSync(_primary)).called(1);
         verify(() => transactionHistoryService.apiBasedSync()).called(1);
+      });
+
+      test('clears bitboxAddressRecoveryNeeded once a wallet loads cleanly', () async {
+        // Drive the bloc into the recovery state first, then prove that loading
+        // the healed wallet via LoadWalletEvent flips the flag back off so
+        // `_navigate` routes to the dashboard instead of back to recovery.
+        final wallet = DebugWallet(1, 'Healed', _debugAddress);
+        when(() => appStore.wallet).thenReturn(wallet);
+        when(() => walletService.hasWallet()).thenReturn(true);
+        when(
+          () => walletService.currentWalletNeedsAddressRecovery(),
+        ).thenAnswer((_) async => true);
+
+        final bloc = build();
+        await bloc.stream.firstWhere((s) => s.hasWallet);
+        bloc.add(const LoadCurrentWalletEvent());
+        await bloc.stream.firstWhere((s) => s.bitboxAddressRecoveryNeeded);
+
+        bloc.add(LoadWalletEvent(wallet));
+        await bloc.stream.firstWhere((s) => s.openWallet == wallet);
+
+        expect(bloc.state.bitboxAddressRecoveryNeeded, isFalse);
       });
     });
 
