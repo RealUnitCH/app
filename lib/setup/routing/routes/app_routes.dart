@@ -7,6 +7,7 @@ abstract final class AppRoutes {
   static const sellBitbox = 'sellBitbox';
   static const kyc = 'kyc';
   static const receive = 'receive';
+  static const bitboxAddressRecovery = 'bitboxAddressRecovery';
 
   static const webView = 'webView';
 }

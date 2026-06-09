@@ -3,8 +3,14 @@ import 'dart:developer' as developer;
 
 import 'package:bitbox_flutter/bitbox_flutter.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_address_unavailable_exception.dart';
 
 class BitboxService {
+  // ETH's canonical BIP-44 derivation path. Centralised here so the create
+  // and heal flows share one literal — a drift between them would quote two
+  // different addresses for the same device.
+  static const _ethDerivationPath = "m/44'/60'/0'/0/0";
+
   // Observer poll period is widened in production and tightened in tests so
   // device-loss-recovery behaviour can be exercised in real time without
   // five-second sleeps.
@@ -121,5 +127,28 @@ class BitboxService {
   Future<void> confirmPairing() async {
     final didVerify = await bitboxManager.channelHashVerify();
     if (!didVerify) throw Exception('Failed to verify');
+  }
+
+  /// Derives the wallet's ETH address from the device, retrying transient empty
+  /// reads before giving up.
+  ///
+  /// The SDK coerces a native `null` into `""` at the transport boundary
+  /// (`bitbox_usb_method_channel.dart`'s `return result ?? ''`), so a device
+  /// that isn't fully ready (e.g. a BLE stall right after channel-hash verify)
+  /// resolves `getETHAddress` with an empty string instead of throwing. This is
+  /// the single boundary through which create + heal fetch the address, so an
+  /// empty read can never be persisted: a transient stall self-recovers across
+  /// [attempts], and a persistent one throws [BitboxAddressUnavailableException]
+  /// instead of handing back `""`.
+  Future<String> getEthAddress({
+    int attempts = 3,
+    Duration retryDelay = const Duration(milliseconds: 200),
+  }) async {
+    for (var attempt = 0; attempt < attempts; attempt++) {
+      final address = await bitboxManager.getETHAddress(1, _ethDerivationPath);
+      if (address.isNotEmpty) return address;
+      if (attempt < attempts - 1) await Future<void>.delayed(retryDelay);
+    }
+    throw const BitboxAddressUnavailableException();
   }
 }

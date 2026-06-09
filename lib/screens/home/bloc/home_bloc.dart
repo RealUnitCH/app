@@ -56,6 +56,16 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     if (state.openWallet != null || !_walletService.hasWallet()) return;
 
     emit(state.copyWith(isLoadingWallet: true));
+
+    // Self-heal gate: a BitBox row persisted with an empty/invalid address would
+    // crash the dashboard build via `EthereumAddress.fromHex("")`. Divert to the
+    // address-recovery pairing flow before we ever load such a wallet into the
+    // AppStore. Non-throwing — a healthy wallet returns false and falls through.
+    if (await _walletService.currentWalletNeedsAddressRecovery()) {
+      emit(state.copyWith(isLoadingWallet: false, bitboxAddressRecoveryNeeded: true));
+      return;
+    }
+
     try {
       final wallet = await _walletService.getCurrentWallet();
       _appStore.wallet = wallet;
@@ -102,7 +112,17 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
   Future<void> _onLoadWallet(LoadWalletEvent event, Emitter<HomeState> emit) async {
     _updateWallet(event.wallet);
-    emit(state.copyWith(hasWallet: true, openWallet: _appStore.wallet, isLoadingWallet: false));
+    // A wallet that loaded cleanly here (including a freshly healed BitBox
+    // address) means recovery is done — clear the flag so `_navigate` routes to
+    // the dashboard instead of back to the recovery page.
+    emit(
+      state.copyWith(
+        hasWallet: true,
+        openWallet: _appStore.wallet,
+        isLoadingWallet: false,
+        bitboxAddressRecoveryNeeded: false,
+      ),
+    );
   }
 
   void _onSyncWalletServices(

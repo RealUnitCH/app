@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_address_unavailable_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
@@ -15,6 +16,7 @@ void main() {
   group('exception toString surface', () {
     final exceptions = <Object>[
       const BitboxNotConnectedException(),
+      const BitboxAddressUnavailableException(),
       const SigningCancelledException(),
       const ApiException(code: 'TEST', message: 'test'),
       const RegistrationRequiredException(code: 'TEST', message: 'test'),

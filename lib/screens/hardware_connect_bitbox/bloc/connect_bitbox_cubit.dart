@@ -31,9 +31,11 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
     Duration confirmPairingTimeout = _defaultConfirmPairingTimeout,
     Duration createWalletTimeout = _defaultCreateWalletTimeout,
     Duration pairingPinTimeout = _defaultPairingPinTimeout,
+    Future<BitboxWallet> Function()? acquireWallet,
   }) : _confirmPairingTimeout = confirmPairingTimeout,
        _createWalletTimeout = createWalletTimeout,
        _pairingPinTimeout = pairingPinTimeout,
+       _acquireWallet = acquireWallet,
        super(BitboxNotConnected()) {
     _startScanning();
   }
@@ -41,6 +43,16 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
   final Duration _confirmPairingTimeout;
   final Duration _createWalletTimeout;
   final Duration _pairingPinTimeout;
+
+  /// Injectable wallet-acquisition step. `null` selects the default behaviour:
+  /// the initial-pairing flow creates a brand-new view wallet. The
+  /// address-recovery flow passes [WalletService.healCurrentBitboxAddress] so
+  /// the same pairing ceremony backfills the empty address onto the existing
+  /// row instead of creating a second wallet.
+  final Future<BitboxWallet> Function()? _acquireWallet;
+
+  Future<BitboxWallet> _acquireWalletOrDefault() =>
+      (_acquireWallet ?? (() => _walletService.createBitboxWallet('Luke-Skywallet')))();
 
   Future<void> _startScanning() async {
     if (DeviceInfo.instance.isIOS) await _service.startScan();
@@ -143,15 +155,13 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
           'Disconnect the device, restart the app, and re-pair.',
         ),
       );
-      final wallet = await _walletService
-          .createBitboxWallet('Luke-Skywallet')
-          .timeout(
-            _createWalletTimeout,
-            onTimeout: () => throw TimeoutException(
-              'BitBox did not return an ETH address within '
-              '${_createWalletTimeout.inSeconds}s. Try disconnecting and re-pairing.',
-            ),
-          );
+      final wallet = await _acquireWalletOrDefault().timeout(
+        _createWalletTimeout,
+        onTimeout: () => throw TimeoutException(
+          'BitBox did not return an ETH address within '
+          '${_createWalletTimeout.inSeconds}s. Try disconnecting and re-pairing.',
+        ),
+      );
       _service.startConnectionStatusObserver();
       await _captureAuthSignature(wallet);
     } catch (e) {
