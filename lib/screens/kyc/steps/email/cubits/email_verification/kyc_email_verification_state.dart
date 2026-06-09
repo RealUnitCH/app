@@ -27,3 +27,7 @@ class KycEmailVerificationRegistrationFailure
     extends KycEmailVerificationState {
   const KycEmailVerificationRegistrationFailure();
 }
+
+class KycEmailVerificationMergeProcessing extends KycEmailVerificationState {
+  const KycEmailVerificationMergeProcessing();
+}

@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/utils/jwt_decoder.dart';
 
@@ -78,12 +79,18 @@ class KycEmailVerificationCubit extends Cubit<KycEmailVerificationState> {
     try {
       final info = await _registrationService.getRegistrationInfo();
       if (isClosed || generation != _runGeneration) return false;
+      if (info.state == RealUnitRegistrationState.mergeProcessing) {
+        // The merge is confirmed (JWT account already changed) but the backend
+        // is still re-parenting the merged-in data, so `userData` isn't ready
+        // yet. This is the expected post-merge propagation window — render a
+        // waiting state (not a failure) so the user re-checks instead of seeing
+        // a scary error. The retry skips the auth-side check via `_mergeDetected`.
+        emit(const KycEmailVerificationMergeProcessing());
+        return false;
+      }
       if (info.realUnitUserDataDto == null) {
-        // Backend race: the auth service reports the merged account while the
-        // user-data service hasn't propagated yet. Surface as a recoverable
-        // failure so the user can retry by tapping the confirmation button
-        // again — by then propagation will usually have completed, and the
-        // retry path skips the auth-side check thanks to `_mergeDetected`.
+        // No merge in progress yet still no userData — a genuine failure the
+        // user should retry / report.
         developer.log(
           'getRegistrationInfo returned null realUnitUserDataDto after merge',
         );

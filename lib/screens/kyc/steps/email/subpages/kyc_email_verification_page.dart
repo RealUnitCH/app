@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -91,6 +92,8 @@ class KycEmailVerificationView extends StatelessWidget {
                         child: BlocBuilder<KycEmailVerificationCubit, KycEmailVerificationState>(
                           builder: (context, state) {
                             final isLoading = state is KycEmailVerificationLoading;
+                            final isMergeProcessing =
+                                state is KycEmailVerificationMergeProcessing;
                             final isBitbox = context
                                     .read<HomeBloc>()
                                     .state
@@ -100,6 +103,15 @@ class KycEmailVerificationView extends StatelessWidget {
                             return Column(
                               spacing: 12,
                               children: [
+                                if (isMergeProcessing) ...[
+                                  const CupertinoActivityIndicator(),
+                                  Text(
+                                    S.of(context).kycMergeProcessingDescription,
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context).textTheme.bodyMedium
+                                        ?.copyWith(color: RealUnitColors.neutral500),
+                                  ),
+                                ],
                                 AppFilledButton(
                                   state: isLoading ? .loading : .idle,
                                   onPressed: () => context

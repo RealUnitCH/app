@@ -13,15 +13,23 @@ enum RealUnitRegistrationState {
 
   /// No prior Aktionariat registration on this account. The app shows
   /// the full registration form, pre-filled from `userData` when present.
-  newRegistration(jsonName: 'NewRegistration');
+  newRegistration(jsonName: 'NewRegistration'),
+
+  /// An account merge for this user is still propagating on the backend, so
+  /// `userData` is not yet available. The app renders a waiting state and
+  /// re-checks instead of treating the absent `userData` as a failure.
+  mergeProcessing(jsonName: 'MergeProcessing');
 
   final String jsonName;
   const RealUnitRegistrationState({required this.jsonName});
 
+  /// Unknown values fall back to [mergeProcessing] (a benign waiting state the
+  /// user can re-check) so an additively-introduced backend state never crashes
+  /// the client — mirrors the tolerant parsing of other server-mirror enums.
   factory RealUnitRegistrationState.fromJson(String value) {
     return RealUnitRegistrationState.values.firstWhere(
       (e) => e.jsonName == value,
-      orElse: () => throw ArgumentError('Unknown RealUnitRegistrationState: $value'),
+      orElse: () => RealUnitRegistrationState.mergeProcessing,
     );
   }
 }

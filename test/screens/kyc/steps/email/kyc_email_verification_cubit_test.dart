@@ -149,6 +149,32 @@ void main() {
     );
 
     blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
+      'changed account id + state=mergeProcessing → MergeProcessing, no '
+      'RegistrationFailure, no registerWallet (post-merge propagation window '
+      'renders a waiting state instead of an error)',
+      setUp: () {
+        final tokens = [_fakeJwt(1), _fakeJwt(2)];
+        var i = 0;
+        when(() => auth.getAuthToken()).thenAnswer((_) async => tokens[i++]);
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => RealUnitRegistrationInfoDto(
+            state: RealUnitRegistrationState.mergeProcessing,
+            realUnitUserDataDto: null,
+          ),
+        );
+      },
+      build: build,
+      act: (c) => c.checkEmailVerification(),
+      expect: () => [
+        isA<KycEmailVerificationLoading>(),
+        isA<KycEmailVerificationMergeProcessing>(),
+      ],
+      verify: (_) {
+        verifyNever(() => registrationService.registerWallet(any()));
+      },
+    );
+
+    blocTest<KycEmailVerificationCubit, KycEmailVerificationState>(
       'registerWallet throws → RegistrationFailure, no Success '
       '(failure is surfaced so the user can retry instead of proceeding '
       'with a wallet that is not actually registered)',

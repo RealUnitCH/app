@@ -279,6 +279,28 @@ void main() {
       ],
     );
 
+    blocTest<KycCubit, KycState>(
+      'emits KycMergeProcessing when wallet status reports MergeProcessing',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(level: KycLevel.level20),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(RealUnitRegistrationState.mergeProcessing),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        await cubit.checkKyc();
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycMergeProcessing(),
+      ],
+    );
+
     // Wallet-mode signing-capability gate: the address+signature debug
     // wallet cannot produce an EIP-712 signature. The cubit must surface
     // `KycSignatureUnsupportedFailure` BEFORE emitting `KycSuccess` for any

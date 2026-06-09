@@ -152,6 +152,13 @@ class KycCubit extends Cubit<KycState> {
             ),
           );
           return;
+        case RealUnitRegistrationState.mergeProcessing:
+          // A merge for this user is still propagating, so the registration
+          // data isn't ready. Render the waiting screen and let the user
+          // re-check instead of routing into a half-populated form — same
+          // signal the KYC processStatus path surfaces below.
+          emit(const KycMergeProcessing());
+          return;
       }
 
       // Account-merge invitation is still surfaced from the step list because
