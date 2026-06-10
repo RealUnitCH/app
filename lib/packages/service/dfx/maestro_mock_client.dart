@@ -94,11 +94,20 @@ class MaestroMockClient extends BaseClient {
   };
 
   Map<String, dynamic> _continueKycResponse() => {
-    'currentStep': {
-      'name': 'ContactData',
-      'session': {'url': 'https://localhost:3000/v2/kyc/session/1'},
-    },
-  };
+        'kycLevel': 10,
+        'kycSteps': _kycSteps(),
+        'processStatus': 'InProgress',
+        'currentStep': {
+          'name': 'ContactData',
+          'status': 'Completed',
+          'sequenceNumber': 0,
+          'isCurrent': true,
+          'session': {
+            'url': 'https://localhost:3000/v2/kyc/session/1',
+            'type': 'API',
+          },
+        },
+      };
 
   List<Map<String, dynamic>> _kycSteps() => [
     {
