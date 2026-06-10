@@ -2,8 +2,10 @@ import 'package:realunit_wallet/models/asset.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 
-/// if true, requires to have a local running backend
-bool get _localTesting => false;
+/// `true` when compiled with `--dart-define=MAESTRO_MOCK=true` so the app
+/// routes all DFX API calls through the in-process [MaestroMockClient].
+/// In production this is always `false`.
+bool get _localTesting => const bool.fromEnvironment('MAESTRO_MOCK', defaultValue: false);
 
 class ApiConfig {
   final NetworkMode networkMode;

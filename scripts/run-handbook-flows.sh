@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Tier-3 navigation smoke for the 26 .maestro/handbook/*.yaml flows.
+# Tier-3 navigation smoke for the 28 .maestro/handbook/*.yaml flows.
 #
 # For each flow (alphabetical order):
 #   1. run the Maestro flow — navigates the real built app to the target
