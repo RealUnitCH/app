@@ -38,3 +38,18 @@ class KycLinkWalletFailure extends KycLinkWalletState {
   @override
   List<Object?> get props => [message, cause];
 }
+
+/// Emitted when `registerWallet` aborts because the BitBox is not connected.
+/// The page reacts by opening the `ConnectBitboxPage` sheet and, on a
+/// successful connection, calls `retrySubmit`. Carries `userData` so the page
+/// renders the idle confirm body underneath the sheet (and again if the user
+/// dismisses it without connecting). Mirror of
+/// `KycRegistrationSubmitBitboxRequired`.
+class KycLinkWalletBitboxRequired extends KycLinkWalletState {
+  final RealUnitUserDataDto userData;
+
+  const KycLinkWalletBitboxRequired(this.userData);
+
+  @override
+  List<Object?> get props => [userData];
+}
