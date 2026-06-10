@@ -1,0 +1,93 @@
+# Tier-3 E2E: KYC "add wallet" (link wallet) BitBox-connect sheet — part 2 of 2.
+#
+# Prerequisite: flow 11a-kyc-link-wallet must have run (app is on
+# KycLinkWalletPage with the shareholder-confirmation body visible).
+#
+# Regression guard for PR #720: verifies that tapping "Wallet hinzufügen"
+# WITHOUT a connected BitBox opens the ConnectBitboxPage bottom sheet
+# instead of surfacing a dead-end red "BitBox is not connected" error.
+#
+# The MaestroRegistrationService (active under MAESTRO_MOCK) throws
+# BitboxNotConnectedException on the first registerWallet() call, which
+# the page catches and translates into the connect-sheet UI.
+# Retry (after a successful connect) calls through to the real service
+# and the mock API returns {"status":"completed"} — covered by widget
+# tests, not repeated here.
+#
+# The sheet is dismissed by tapping the background scrim (top ~20% of
+# screen where the sheet does not reach). After dismissal the page must
+# still show the link-wallet body so the user can try again.
+#
+# Finally, the flow navigates back to the dashboard (through the buy
+# page that redirected here) so the next handbook flow (12-settings)
+# starts from the expected state.
+appId: swiss.realunit.app
+---
+# Tap the submit button. The title "Wallet hinzufügen" (AppBar) and the
+# submit button share the same i18n string; we use a bottom-center
+# coordinate to reliably hit the button.
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible: 'BitBox verbinden'
+          commands:
+            - tapOn:
+                point: '50%,88%'
+                optional: true
+      - waitForAnimationToEnd
+
+# The connect sheet slides up with title "BitBox verbinden". The initial
+# state is BitboxConnecting (scanning for devices). Just seeing the
+# sheet confirms the regression guard — the bug (#720) would have shown
+# a SnackBar error instead.
+- extendedWaitUntil:
+    visible: 'BitBox verbinden'
+    timeout: 15000
+
+# Dismiss the sheet by tapping outside (top portion of the screen where
+# the scrim is visible). The sheet covers ~80% of the screen height, so
+# the top ~10% is safe scrim area.
+- tapOn:
+    point: '50%,10%'
+- waitForAnimationToEnd
+
+# After dismissal, the link-wallet body must still be visible — the user
+# is not stuck on an error page and can try again.
+- extendedWaitUntil:
+    visible: 'Sie sind als Aktionär eingetragen'
+    timeout: 10000
+
+# Navigate back to the dashboard for the next flow (12-settings).
+# First back: link-wallet page → buy page (the page that redirected to
+# KYC in mock mode).
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible: 'RealUnit kaufen'
+          commands:
+            - tapOn:
+                point: '8%,8%'
+                optional: true
+      - waitForAnimationToEnd
+# Second back (if needed): buy page → dashboard. The buy page has a
+# standard AppBar back button because it was pushed from dashboard.
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible: 'RealUnit kaufen'
+          commands:
+            - tapOn:
+                point: '8%,8%'
+                optional: true
+      - waitForAnimationToEnd
+
+# Confirm we landed on the dashboard.
+- extendedWaitUntil:
+    visible: 'RealUnit kaufen'
+    timeout: 15000

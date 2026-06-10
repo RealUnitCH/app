@@ -30,6 +30,8 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_account_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/maestro_mock_client.dart';
+import 'package:realunit_wallet/packages/service/dfx/maestro_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
@@ -78,10 +80,12 @@ Future<void> finishSetup(String encryptionKey) async {
   getIt.registerSingleton(AppDatabase(encryptionKey));
   setupRepositories();
 
+  final useMock = MaestroMockClient.inMaestroMockMode;
   getIt.registerSingleton(
     AppStore(
       () => ApiConfig(networkMode: getIt<SettingsRepository>().networkMode),
       SessionCache(getIt<CacheRepository>()),
+      useMock ? MaestroMockClient() : null,
     ),
   );
 
@@ -178,7 +182,9 @@ void setupServices() {
     () => RealUnitPdfService(getIt<AppStore>(), getIt<WalletService>()),
   );
   getIt.registerFactory(
-    () => RealUnitRegistrationService(getIt<AppStore>(), getIt<WalletService>()),
+    () => MaestroMockClient.inMaestroMockMode
+        ? MaestroRegistrationService(getIt<AppStore>(), getIt<WalletService>())
+        : RealUnitRegistrationService(getIt<AppStore>(), getIt<WalletService>()),
   );
   getIt.registerFactory(
     () => RealUnitSellPaymentInfoService(getIt<AppStore>(), getIt<WalletService>()),

@@ -1,0 +1,50 @@
+# Tier-3 E2E: KYC "add wallet" (link wallet) flow — part 1 of 2.
+#
+# Prerequisite: flow 11-dashboard must have run (app is on dashboard with
+# a software wallet, PIN verified). This flow relies on the MAESTRO_MOCK
+# build flag: tapping "RealUnit kaufen" opens /buy, and the mock mode
+# redirects /buy → /kyc immediately. The mock API then returns
+# `AddWallet` registration info (after the legal disclaimer is accepted),
+# routing the app to the KycLinkWalletPage.
+#
+# Regression guard for PR #720: this flow verifies that the link-wallet
+# page renders the "shareholder confirmed" UI and is ready for the
+# BitBox-connect sheet test in flow 11b.
+#
+# The handbook screenshot for this flow maps to the Golden baseline
+# kyc_link_wallet_page_default.png via scripts/assemble-handbook-screenshots.sh.
+appId: swiss.realunit.app
+---
+# Navigate from dashboard to KYC via the buy-page redirect (mock mode only).
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible: 'Rechtlicher Hinweis'
+          commands:
+            - tapOn:
+                text: 'RealUnit kaufen'
+                optional: true
+- waitForAnimationToEnd
+
+# The legal disclaimer has 5 steps (0-4). Each step shows a "Ja" / "Nein"
+# button pair — "Ja" advances, on the last step it completes and triggers
+# checkKyc(). With the mock API the next route is KycLinkWalletPage.
+- extendedWaitUntil:
+    visible: 'Rechtlicher Hinweis'
+    timeout: 15000
+
+- repeat:
+    times: 5
+    commands:
+      - tapOn:
+          text: 'Ja'
+      - waitForAnimationToEnd
+
+# After accepting the legal disclaimer, checkKyc() fetches registration
+# info from the mock → state=AddWallet → KycLinkWalletPage renders with
+# the shareholder-confirmation description.
+- extendedWaitUntil:
+    visible: 'Sie sind als Aktionär eingetragen'
+    timeout: 30000

@@ -7,11 +7,12 @@ import 'package:realunit_wallet/packages/wallet/wallet.dart';
 class AppStore {
   final ApiConfig Function() getApiConfig;
   final SessionCache sessionCache;
-  final Client httpClient = RealUnitApiClient();
+  final Client httpClient;
 
   AWallet? _wallet;
 
-  AppStore(this.getApiConfig, this.sessionCache);
+  AppStore(this.getApiConfig, this.sessionCache, [Client? httpClient])
+    : httpClient = httpClient ?? RealUnitApiClient();
 
   set wallet(AWallet wallet_) => _wallet = wallet_;
 

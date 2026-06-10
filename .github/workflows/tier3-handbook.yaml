@@ -87,7 +87,7 @@ name: Tier 3 — Handbook flows
 #   reflow elements out of the tap-coordinate path or shift safe-area
 #   insets in a way that breaks the assertions. When the macOS runner
 #   image stops shipping iPhone 17 by default, bump this here AND
-#   re-verify all 26 flows on the new device (run
+#   re-verify all 28 flows on the new device (run
 #   `scripts/run-handbook-flows.sh` locally; assertion failures point
 #   at flows that need their coordinates / waits updated).
 #
@@ -133,8 +133,8 @@ jobs:
       || contains(github.event.pull_request.labels.*.name, 'tier3:full')
     runs-on: macos-latest
     # ~12 min setup (Flutter + tooling, build, sim erase/boot/install) plus
-    # ~26-33 min for the 26 handbook flows — each flow restarts the XCUITest
-    # driver (~40-60 s). A full run lands around 40-46 min; 60 min gives
+    # ~28-36 min for the 28 handbook flows — each flow restarts the XCUITest
+    # driver (~40-60 s). A full run lands around 42-50 min; 60 min gives
     # headroom for runner-speed variance and the per-flow retry budget.
     timeout-minutes: 60
     steps:
@@ -182,7 +182,12 @@ jobs:
             ios-derived-data-${{ runner.os }}-${{ steps.xcode.outputs.version }}-
 
       - name: Build iOS simulator app
-        run: flutter build ios --simulator --debug
+        # MAESTRO_MOCK enables in-process HTTP mocking for authenticated
+        # flows (KYC, add-wallet) that need canned API responses. It also
+        # sets ApiConfig._localTesting=true, routing ALL DFX API traffic
+        # through MaestroMockClient — unknown paths receive empty 200
+        # responses so dashboard/settings flows don't crash.
+        run: flutter build ios --simulator --debug --dart-define=MAESTRO_MOCK=true
 
       # `scripts/run-handbook-flows.sh` does its own `simctl shutdown / erase /
       # boot / bootstatus / install` once it has a booted UDID. We just need
