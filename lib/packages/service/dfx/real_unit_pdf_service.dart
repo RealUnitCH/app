@@ -49,6 +49,7 @@ class RealUnitPdfService extends DFXAuthService {
   Future<PdfDto> getTransactionsReceipt(
     List<String> ids, {
     Currency currency = Currency.chf,
+    Language? language,
   }) async {
     final uri = buildUri(host, _transactionsReceiptMultiPath);
     final response = await authenticatedPost(
@@ -56,7 +57,7 @@ class RealUnitPdfService extends DFXAuthService {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: jsonEncode(MultiReceiptDto(txIds: ids, currency: currency)),
+      body: jsonEncode(MultiReceiptDto(txIds: ids, currency: currency, language: language)),
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
@@ -67,14 +68,14 @@ class RealUnitPdfService extends DFXAuthService {
     return PdfDto.fromJson(jsonDecode(response.body));
   }
 
-  Future<PdfDto> getTransactionReceipt(String id, {Currency currency = Currency.chf}) async {
+  Future<PdfDto> getTransactionReceipt(String id, {Currency currency = Currency.chf, Language? language}) async {
     final uri = buildUri(host, _transactionsReceiptSinglePath);
     final response = await authenticatedPost(
       uri,
       headers: {
         'Content-Type': 'application/json',
       },
-      body: jsonEncode(SingleReceiptDto(txId: id, currency: currency)),
+      body: jsonEncode(SingleReceiptDto(txId: id, currency: currency, language: language)),
     );
 
     if (response.statusCode != 200 && response.statusCode != 201) {
