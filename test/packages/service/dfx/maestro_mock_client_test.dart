@@ -136,5 +136,11 @@ void main() {
         expect(MaestroMockClient.inMaestroMockMode, isFalse);
       });
     });
+
+    group('close', () {
+      test('delegates to inner client', () {
+        expect(() => client.close(), returnsNormally);
+      });
+    });
   });
 }
