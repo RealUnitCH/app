@@ -18,6 +18,10 @@ class VerifyPinState extends Equatable {
   List<Object?> get props => [pin, failedAttempts];
 }
 
+class VerifyPinVerifying extends VerifyPinState {
+  const VerifyPinVerifying({required super.pin, super.failedAttempts});
+}
+
 class VerifyPinSuccess extends VerifyPinState {
   const VerifyPinSuccess() : super(pin: '');
 }

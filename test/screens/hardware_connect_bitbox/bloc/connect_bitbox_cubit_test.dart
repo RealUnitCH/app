@@ -50,6 +50,10 @@ void main() {
     when(() => service.startScan()).thenAnswer((_) async => true);
     when(() => service.getAllUsbDevices()).thenAnswer((_) async => []);
     when(() => service.startConnectionStatusObserver()).thenReturn(null);
+    // Default to a device that has a wallet set up so the existing pairing
+    // tests reach the address-derivation path. The unseeded path is exercised
+    // explicitly below.
+    when(() => service.getDeviceStatus()).thenAnswer((_) async => 'initialized');
     when(() => walletService.createBitboxWallet(any())).thenAnswer((_) async => wallet);
     when(() => wallet.currentAccount).thenReturn(_FakeBitboxWalletAccount());
     when(() => authService.ensureSignatureFor(any())).thenAnswer((_) async {});
@@ -452,6 +456,152 @@ void main() {
 
       expect(cubit.state, isA<BitboxConnected>());
       verify(() => walletService.createBitboxWallet('Luke-Skywallet')).called(1);
+    });
+
+    // A brand-new device with no wallet (firmware status `uninitialized`) cannot
+    // derive an address. It must surface BitboxNotInitialized — not the generic
+    // failure — and must NOT try to create a wallet or arm the re-scan timer that
+    // would re-pair the device in an endless loop.
+    test('emits BitboxNotInitialized when the device has no wallet set up', () async {
+      var pollCount = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 3 ? '' : 'HASH-ok';
+      });
+      when(() => service.confirmPairing()).thenAnswer((_) async {});
+      when(() => service.getDeviceStatus()).thenAnswer((_) async => 'uninitialized');
+
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      await waitForState<BitboxCheckHash>(cubit);
+      await cubit.confirmPairing();
+
+      expect(cubit.state, isA<BitboxNotInitialized>());
+      verifyNever(() => walletService.createBitboxWallet(any()));
+
+      // The state must be stable: no re-scan timer is armed, so the cubit does
+      // not bounce back through the connection flow on its own.
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(cubit.state, isA<BitboxNotInitialized>());
+    });
+
+    test('recheckDeviceStatus continues to BitboxConnected once a wallet is set up', () async {
+      var pollCount = 0;
+      var statusCalls = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 3 ? '' : 'HASH-ok';
+      });
+      when(() => service.confirmPairing()).thenAnswer((_) async {});
+      when(() => service.getDeviceStatus()).thenAnswer((_) async {
+        statusCalls++;
+        return statusCalls == 1 ? 'uninitialized' : 'initialized';
+      });
+
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      await waitForState<BitboxCheckHash>(cubit);
+      await cubit.confirmPairing();
+      expect(cubit.state, isA<BitboxNotInitialized>());
+
+      await cubit.recheckDeviceStatus();
+      expect(cubit.state, isA<BitboxConnected>());
+      verify(() => walletService.createBitboxWallet(any())).called(1);
+    });
+
+    test(
+      'recheckDeviceStatus stays in BitboxNotInitialized while the device is still unseeded',
+      () async {
+        var pollCount = 0;
+        when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+        when(() => service.init(any())).thenAnswer((_) async => true);
+        when(() => service.getChannelHash()).thenAnswer((_) async {
+          pollCount++;
+          return pollCount < 3 ? '' : 'HASH-ok';
+        });
+        when(() => service.confirmPairing()).thenAnswer((_) async {});
+        when(() => service.getDeviceStatus()).thenAnswer((_) async => 'uninitialized');
+
+        final cubit = makeCubit();
+        addTearDown(cubit.close);
+
+        await waitForState<BitboxCheckHash>(cubit);
+        await cubit.confirmPairing();
+        expect(cubit.state, isA<BitboxNotInitialized>());
+
+        await cubit.recheckDeviceStatus();
+        expect(cubit.state, isA<BitboxNotInitialized>());
+        verifyNever(() => walletService.createBitboxWallet(any()));
+      },
+    );
+
+    test('recheckDeviceStatus is a no-op when not in BitboxNotInitialized', () async {
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      await cubit.recheckDeviceStatus();
+      expect(cubit.state, isA<BitboxNotConnected>());
+    });
+
+    test('recheckDeviceStatus falls back to NotConnected when acquireWallet throws', () async {
+      var pollCount = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 3 ? '' : 'HASH-ok';
+      });
+      when(() => service.confirmPairing()).thenAnswer((_) async {});
+      // First call: device unseeded → BitboxNotInitialized.
+      // Second call (recheckDeviceStatus): device now seeded, but wallet
+      // acquisition fails → catch block must emit BitboxNotConnected.
+      var statusCalls = 0;
+      when(() => service.getDeviceStatus()).thenAnswer((_) async {
+        statusCalls++;
+        return statusCalls == 1 ? 'uninitialized' : 'initialized';
+      });
+      when(() => walletService.createBitboxWallet(any())).thenThrow(Exception('wallet boom'));
+
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      await waitForState<BitboxCheckHash>(cubit);
+      await cubit.confirmPairing();
+      expect(cubit.state, isA<BitboxNotInitialized>());
+
+      await cubit.recheckDeviceStatus();
+      expect(cubit.state, isA<BitboxNotConnected>());
+    });
+
+    // Fail-open guarantee: a failing status read must NOT block a device that
+    // would otherwise pair. If getDeviceStatus throws, the flow falls through to
+    // the normal acquire path and still reaches BitboxConnected — the new gate
+    // can only ever ADD the unseeded path, never break the working one.
+    test('continues to BitboxConnected when the status read throws', () async {
+      var pollCount = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 3 ? '' : 'HASH-ok';
+      });
+      when(() => service.confirmPairing()).thenAnswer((_) async {});
+      when(() => service.getDeviceStatus()).thenThrow(Exception('status boom'));
+
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      await waitForState<BitboxCheckHash>(cubit);
+      await cubit.confirmPairing();
+
+      expect(cubit.state, isA<BitboxConnected>());
+      verify(() => walletService.createBitboxWallet(any())).called(1);
     });
   });
 }

@@ -1,10 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_page.dart';
+import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/link_wallet/cubits/kyc_link_wallet_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
@@ -27,10 +30,7 @@ class KycLinkWalletPage extends StatelessWidget {
       return const _LinkWalletMissingUserDataPage();
     }
     return BlocProvider(
-      create: (_) => KycLinkWalletCubit(
-        getIt<RealUnitRegistrationService>(),
-        data,
-      ),
+      create: (_) => KycLinkWalletCubit(getIt<RealUnitRegistrationService>(), data),
       child: const KycLinkWalletView(),
     );
   }
@@ -45,8 +45,10 @@ class KycLinkWalletView extends StatelessWidget {
       appBar: AppBar(title: Text(S.of(context).kycLinkWalletTitle)),
       body: BlocConsumer<KycLinkWalletCubit, KycLinkWalletState>(
         listenWhen: (_, current) =>
-            current is KycLinkWalletSuccess || current is KycLinkWalletFailure,
-        listener: (context, state) {
+            current is KycLinkWalletSuccess ||
+            current is KycLinkWalletFailure ||
+            current is KycLinkWalletBitboxRequired,
+        listener: (context, state) async {
           if (state is KycLinkWalletSuccess) {
             // Re-fetch routing state from the API. The wallet is now in the
             // Aktionariat share register, so `getRegistrationInfo` will return
@@ -62,6 +64,26 @@ class KycLinkWalletView extends StatelessWidget {
               ),
             );
           }
+          if (state is KycLinkWalletBitboxRequired) {
+            // No BitBox connected when registering the wallet — open the
+            // shared connect sheet instead of dead-ending on an error, then
+            // retry registration once the device is linked. Mirror of
+            // `KycRegistrationPage`.
+            final userData = state.userData;
+            final result = await showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              builder: (_) => ConnectBitboxPage(
+                onFinish: (wallet) {
+                  context.read<HomeBloc>().add(SyncWalletServicesEvent(wallet));
+                  context.pop(true);
+                },
+              ),
+            );
+            if (context.mounted && result == true) {
+              context.read<KycLinkWalletCubit>().retrySubmit(userData);
+            }
+          }
         },
         builder: (context, state) => switch (state) {
           KycLinkWalletReady(:final userData) => _LinkWalletBody(
@@ -71,6 +93,13 @@ class KycLinkWalletView extends StatelessWidget {
           KycLinkWalletSubmitting(:final userData) => _LinkWalletBody(
             userData: userData,
             isSubmitting: true,
+          ),
+          // BitBox required: the listener drives the connect sheet on top of
+          // this frame; render the idle confirm body so the user lands back on
+          // the submit button if they dismiss the sheet without connecting.
+          KycLinkWalletBitboxRequired(:final userData) => _LinkWalletBody(
+            userData: userData,
+            isSubmitting: false,
           ),
           // Success: the Bloc listener kicks off `checkKyc` which transitions
           // the parent KycCubit, so this branch is a transient frame. Render
@@ -104,14 +133,8 @@ class _LinkWalletBody extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
-            _LinkWalletInfoRow(
-              label: S.of(context).name,
-              value: userData.name,
-            ),
-            _LinkWalletInfoRow(
-              label: S.of(context).walletAddress,
-              value: walletAddress,
-            ),
+            _LinkWalletInfoRow(label: S.of(context).name, value: userData.name),
+            _LinkWalletInfoRow(label: S.of(context).walletAddress, value: walletAddress),
             const Spacer(),
             AppFilledButton(
               state: isSubmitting ? FilledButtonState.loading : FilledButtonState.idle,
@@ -142,14 +165,9 @@ class _LinkWalletInfoRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: RealUnitColors.neutral500,
-          ),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: RealUnitColors.neutral500),
         ),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
+        Text(value, style: Theme.of(context).textTheme.bodyLarge),
       ],
     );
   }

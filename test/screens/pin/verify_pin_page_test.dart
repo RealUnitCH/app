@@ -1,5 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -9,6 +9,7 @@ import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/pin/bloc/verify_pin/verify_pin_cubit.dart';
+import 'package:realunit_wallet/screens/pin/constants/pin_constants.dart';
 import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/pin/widgets/pin_indicator.dart';
 import 'package:realunit_wallet/setup/di.dart';
@@ -156,6 +157,38 @@ void main() {
             .ignoring,
         isTrue,
       );
+    });
+
+    testWidgets('shows a loading indicator and hides the number pad while verifying', (
+      tester,
+    ) async {
+      when(() => verifyPinCubit.state).thenReturn(const VerifyPinVerifying(pin: '123456'));
+
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
+
+      expect(find.byType(CupertinoActivityIndicator), findsOne);
+      expect(find.text(S.current.pinVerifying), findsOne);
+      expect(find.byType(NumberPad), findsNothing);
+      // Dots stay filled during the wait so the screen does not look reset.
+      expect(
+        (tester.widget(find.byType(PinIndicator)) as PinIndicator).pinLength,
+        pinLength,
+      );
+    });
+
+    testWidgets('keeps the loading indicator after success while the wallet loads', (
+      tester,
+    ) async {
+      when(() => verifyPinCubit.state).thenReturn(const VerifyPinSuccess());
+
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
+
+      expect(find.byType(CupertinoActivityIndicator), findsOne);
+      expect(find.byType(NumberPad), findsNothing);
     });
 
     group('$BlocListener', () {

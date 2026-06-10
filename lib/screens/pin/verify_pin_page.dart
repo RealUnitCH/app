@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -98,6 +99,9 @@ class _VerifyPinViewState extends State<VerifyPinView> {
     },
     builder: (context, state) {
       final isLocked = state is VerifyPinTemporarilyLocked || state is VerifyPinLocked;
+      // Covers both the PIN-hash check (VerifyPinVerifying) and the subsequent
+      // wallet load that runs after success while this screen is still on top.
+      final isVerifying = state is VerifyPinVerifying || state is VerifyPinSuccess;
 
       return Scaffold(
         appBar: AppBar(),
@@ -139,7 +143,7 @@ class _VerifyPinViewState extends State<VerifyPinView> {
                               spacing: 16.0,
                               children: [
                                 PinIndicator(
-                                  pinLength: state.pin.length,
+                                  pinLength: isVerifying ? pinLength : state.pin.length,
                                   expectedPinLength: pinLength,
                                   wrongPin: state is VerifyPinFailure || isLocked,
                                 ),
@@ -174,13 +178,16 @@ class _VerifyPinViewState extends State<VerifyPinView> {
                         ),
                       ),
                       const Spacer(),
-                      IgnorePointer(
-                        ignoring: isLocked,
-                        child: NumberPad(
-                          onNumberPressed: context.read<VerifyPinCubit>().addDigit,
-                          onDeletePressed: context.read<VerifyPinCubit>().deleteDigit,
+                      if (isVerifying)
+                        const _VerifyingIndicator()
+                      else
+                        IgnorePointer(
+                          ignoring: isLocked,
+                          child: NumberPad(
+                            onNumberPressed: context.read<VerifyPinCubit>().addDigit,
+                            onDeletePressed: context.read<VerifyPinCubit>().deleteDigit,
+                          ),
                         ),
-                      ),
                       if (widget.bottom != null) widget.bottom! else const SizedBox(height: 60.0),
                     ],
                   ),
@@ -254,6 +261,30 @@ class _ForgotPinButton extends StatelessWidget {
         },
         label: S.of(context).pinForgotten,
       ),
+    ),
+  );
+}
+
+class _VerifyingIndicator extends StatelessWidget {
+  const _VerifyingIndicator();
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    // Matches the NumberPad footprint (4 rows of ~68px) so swapping it in for
+    // the spinner does not shift the PIN dots above it.
+    height: 272,
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const CupertinoActivityIndicator(radius: 16),
+        const SizedBox(height: 16),
+        Text(
+          S.of(context).pinVerifying,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: RealUnitColors.neutral500,
+          ),
+        ),
+      ],
     ),
   );
 }

@@ -110,6 +110,24 @@ void main() {
         verify(() => secureStorage.resetPinLockout()).called(1);
       });
 
+      blocTest<VerifyPinCubit, VerifyPinState>(
+        'emits VerifyPinVerifying (carrying the full pin) before VerifyPinSuccess',
+        build: build,
+        setUp: () =>
+            when(() => secureStorage.verifyPin(any())).thenAnswer((_) async => true),
+        act: (cubit) => addPin(cubit, '123456'),
+        expect: () => [
+          const VerifyPinState(pin: '1'),
+          const VerifyPinState(pin: '12'),
+          const VerifyPinState(pin: '123'),
+          const VerifyPinState(pin: '1234'),
+          const VerifyPinState(pin: '12345'),
+          const VerifyPinState(pin: '123456'),
+          const VerifyPinVerifying(pin: '123456'),
+          const VerifyPinSuccess(),
+        ],
+      );
+
       test('wrong pin (1st attempt) with lockout on emits VerifyPinFailure', () async {
         when(() => secureStorage.verifyPin(any())).thenAnswer((_) async => false);
         when(() => secureStorage.getPinFailedAttempts()).thenAnswer((_) async => 0);
@@ -170,6 +188,21 @@ void main() {
         verify(() => secureStorage.setPinFailedAttempts(permanentLockoutThreshold)).called(1);
         // Permanent lockout does NOT write a temporary lockedUntil.
         verifyNever(() => secureStorage.setPinLockedUntil(any()));
+      });
+
+      test('a verifyPin failure recovers to a usable state instead of a stuck spinner', () async {
+        when(() => secureStorage.verifyPin(any())).thenThrow(Exception('hash failure'));
+        final cubit = build();
+        // After the spinner, recovery emits a plain VerifyPinState (input reset)
+        // so the number pad returns — never a permanent VerifyPinVerifying.
+        final recovered =
+            cubit.stream.firstWhere((s) => s.runtimeType == VerifyPinState && s.pin.isEmpty);
+
+        addPin(cubit, '123456');
+        await recovered.timeout(const Duration(seconds: 30));
+
+        expect(cubit.state.runtimeType, VerifyPinState);
+        expect(cubit.state.pin, isEmpty);
       });
     });
 

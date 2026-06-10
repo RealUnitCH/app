@@ -129,6 +129,13 @@ class BitboxService {
     if (!didVerify) throw Exception('Failed to verify');
   }
 
+  /// The paired device's firmware status (`uninitialized` / `seeded` /
+  /// `initialized`). Read after pairing to tell a device with no wallet set up
+  /// (`uninitialized` — cannot derive an address) apart from a ready device.
+  /// Delegates to the plugin's cached-status read, so there is no device
+  /// round-trip and it cannot block.
+  Future<String> getDeviceStatus() => bitboxManager.getDeviceStatus();
+
   /// Derives the wallet's ETH address from the device, retrying transient empty
   /// reads before giving up.
   ///

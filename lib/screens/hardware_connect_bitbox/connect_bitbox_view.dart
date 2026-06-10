@@ -121,6 +121,20 @@ class ConnectBitboxView extends StatelessWidget {
                         ],
                       ),
                     ),
+                    BitboxNotInitialized() => ConnectContent(
+                      title: S.of(context).connectBitboxNotInitializedTitle,
+                      imagePath: 'assets/images/illustrations/bitbox_connect.svg',
+                      onConfirm: () => context.read<ConnectBitboxCubit>().recheckDeviceStatus(),
+                      onCancel: onCancel ?? context.pop,
+                      confirmLabel: S.of(context).retry,
+                      child: Text(
+                        S.of(context).connectBitboxNotInitialized,
+                        textAlign: .center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: RealUnitColors.neutral500,
+                        ),
+                      ),
+                    ),
                     BitboxCapturingSignature() => ConnectContent(
                       title: S.of(context).connectBitboxSignatureCapturingTitle,
                       imagePath: 'assets/images/illustrations/bitbox_connected.svg',
