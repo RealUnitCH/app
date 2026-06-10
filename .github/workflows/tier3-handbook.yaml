@@ -183,10 +183,10 @@ jobs:
 
       - name: Build iOS simulator app
         # MAESTRO_MOCK enables in-process HTTP mocking for authenticated
-        # flows (KYC, add-wallet) that need canned API responses. It also
-        # sets ApiConfig._localTesting=true, routing ALL DFX API traffic
-        # through MaestroMockClient — unknown paths receive empty 200
-        # responses so dashboard/settings flows don't crash.
+        # flows (KYC, add-wallet) that need canned API responses. Only
+        # KYC/registration paths are intercepted; all other requests
+        # (auth, dashboard, prices, balances) pass through to the real
+        # DFX API so existing handbook flows work without modification.
         run: flutter build ios --simulator --debug --dart-define=MAESTRO_MOCK=true
 
       # `scripts/run-handbook-flows.sh` does its own `simctl shutdown / erase /

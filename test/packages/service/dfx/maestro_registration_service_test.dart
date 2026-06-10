@@ -1,20 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:realunit_wallet/packages/config/api_config.dart';
-import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/maestro_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
-import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
-import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
 class MockAppStore extends Mock implements AppStore {}
 class MockWalletService extends Mock implements WalletService {}
-class MockSessionCache extends Mock implements SessionCache {}
 
 void main() {
   group('MaestroRegistrationService', () {
