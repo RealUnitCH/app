@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart';
+import 'package:http/testing.dart';
 import 'package:realunit_wallet/packages/service/dfx/maestro_mock_client.dart';
 
 void main() {
@@ -13,36 +14,18 @@ void main() {
     });
 
     Future<Map<String, dynamic>> _getJson(String path) async {
-      final request = Request('GET', Uri.parse('http://localhost:3000$path'));
-      final response = await client.send(request);
-      final body = await response.stream.bytesToString();
-      return jsonDecode(body) as Map<String, dynamic>;
-    }
-
-    Future<Map<String, dynamic>> _postJson(String path) async {
-      final request = Request('POST', Uri.parse('http://localhost:3000$path'));
+      final request = Request('GET', Uri.parse('https://api.dfx.swiss$path'));
       final response = await client.send(request);
       final body = await response.stream.bytesToString();
       return jsonDecode(body) as Map<String, dynamic>;
     }
 
     Future<Map<String, dynamic>> _putJson(String path) async {
-      final request = Request('PUT', Uri.parse('http://localhost:3000$path'));
+      final request = Request('PUT', Uri.parse('https://api.dfx.swiss$path'));
       final response = await client.send(request);
       final body = await response.stream.bytesToString();
       return jsonDecode(body) as Map<String, dynamic>;
     }
-
-    group('POST /v1/auth', () {
-      test('returns 201 with accessToken', () async {
-        final request = Request('POST', Uri.parse('http://localhost:3000/v1/auth'));
-        final response = await client.send(request);
-        expect(response.statusCode, 201);
-        final body = await response.stream.bytesToString();
-        final json = jsonDecode(body) as Map<String, dynamic>;
-        expect(json['accessToken'], 'maestro-mock-token');
-      });
-    });
 
     group('GET /v2/user', () {
       test('returns user with email and kyc hash', () async {
@@ -104,7 +87,7 @@ void main() {
       test('returns 201 with completed status', () async {
         final request = Request(
           'POST',
-          Uri.parse('http://localhost:3000/v1/realunit/register/wallet'),
+          Uri.parse('https://api.dfx.swiss/v1/realunit/register/wallet'),
         );
         final response = await client.send(request);
         expect(response.statusCode, 201);
@@ -118,7 +101,7 @@ void main() {
       test('returns 201 with completed status', () async {
         final request = Request(
           'POST',
-          Uri.parse('http://localhost:3000/v1/realunit/register/email'),
+          Uri.parse('https://api.dfx.swiss/v1/realunit/register/email'),
         );
         final response = await client.send(request);
         expect(response.statusCode, 201);
@@ -128,10 +111,23 @@ void main() {
       });
     });
 
-    group('unknown paths', () {
-      test('returns 200 with empty JSON object', () async {
-        final json = await _getJson('/v2/some/unknown/path');
-        expect(json, isEmpty);
+    group('unknown paths pass through to inner client', () {
+      test('forwards request to inner client (real API)', () async {
+        // Use a MockClient as inner to verify pass-through behavior.
+        final mockInner = MockClient((request) async {
+          expect(request.url.path, '/v1/some/real/endpoint');
+          return Response('{"real": "data"}', 200);
+        });
+        final passThroughClient = MaestroMockClient(mockInner);
+
+        final request = Request(
+          'GET',
+          Uri.parse('https://api.dfx.swiss/v1/some/real/endpoint'),
+        );
+        final response = await passThroughClient.send(request);
+        final body = await response.stream.bytesToString();
+        final json = jsonDecode(body) as Map<String, dynamic>;
+        expect(json['real'], 'data');
       });
     });
 

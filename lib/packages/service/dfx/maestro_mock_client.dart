@@ -5,15 +5,20 @@ import 'package:http/http.dart';
 
 /// Intercepts HTTP calls when the app is compiled with
 /// `--dart-define=MAESTRO_MOCK=true` and returns canned JSON responses for
-/// all DFX API endpoints the KYC / link-wallet flow needs.
+/// the DFX API endpoints the KYC / link-wallet flow needs.
 ///
-/// Unknown paths receive a default empty 200 to prevent crashes on
-/// dashboard / price / balance calls. The mock is only compiled into the
-/// binary when [inMaestroMockMode] is true — production builds are
-/// unaffected.
+/// Auth (`POST /v1/auth`) is NOT intercepted — the app gets a real token
+/// from the DFX API so dashboard / price / balance calls that pass through
+/// to the real API work with a valid Bearer token. Only KYC and
+/// registration endpoints that the mock must control are intercepted.
+///
+/// Unknown paths are forwarded to the real DFX API via [_inner].
 class MaestroMockClient extends BaseClient {
-  static const _mockToken = 'maestro-mock-token';
   static const _mockKycHash = 'maestro-kyc-hash';
+
+  final Client _inner;
+
+  MaestroMockClient([Client? inner]) : _inner = inner ?? Client();
 
   /// Whether the current build was compiled with `MAESTRO_MOCK=true`.
   static bool get inMaestroMockMode =>
@@ -27,18 +32,14 @@ class MaestroMockClient extends BaseClient {
     final resp = _response(method, path);
     if (resp != null) return resp;
 
-    // Unknown path — return a valid empty JSON response so the app
-    // doesn't crash on dashboard / price / balance API calls.
-    return _json(200, <String, dynamic>{});
+    // Pass through to the real DFX API. The app has a real auth token
+    // (we don't intercept /v1/auth), so dashboard / price / balance
+    // calls hit api.dfx.swiss with valid credentials.
+    return _inner.send(request);
   }
 
   StreamedResponse? _response(String method, String path) {
     switch (path) {
-      case '/v1/auth':
-        if (method == 'POST') {
-          return _json(201, {'accessToken': _mockToken});
-        }
-        break;
       case '/v2/user':
         if (method == 'GET') {
           return _json(200, _user());
@@ -78,20 +79,20 @@ class MaestroMockClient extends BaseClient {
   }
 
   Map<String, dynamic> _user() => {
-    'mail': 'shareholder@example.com',
-    'kyc': {
-      'hash': _mockKycHash,
-      'level': 10,
-      'dataComplete': true,
-    },
-    'capabilities': <String, dynamic>{},
-  };
+        'mail': 'shareholder@example.com',
+        'kyc': {
+          'hash': _mockKycHash,
+          'level': 10,
+          'dataComplete': true,
+        },
+        'capabilities': <String, dynamic>{},
+      };
 
   Map<String, dynamic> _kycStatus() => {
-    'kycLevel': 10,
-    'kycSteps': _kycSteps(),
-    'processStatus': 'InProgress',
-  };
+        'kycLevel': 10,
+        'kycSteps': _kycSteps(),
+        'processStatus': 'InProgress',
+      };
 
   Map<String, dynamic> _continueKycResponse() => {
         'kycLevel': 10,
@@ -110,49 +111,49 @@ class MaestroMockClient extends BaseClient {
       };
 
   List<Map<String, dynamic>> _kycSteps() => [
-    {
-      'name': 'ContactData',
-      'status': 'Completed',
-      'sequenceNumber': 0,
-      'isCurrent': false,
-      'isRequired': true,
-    },
-    {
-      'name': 'RealUnitRegistration',
-      'status': 'Completed',
-      'sequenceNumber': 1,
-      'isCurrent': false,
-      'isRequired': true,
-    },
-  ];
+        {
+          'name': 'ContactData',
+          'status': 'Completed',
+          'sequenceNumber': 0,
+          'isCurrent': false,
+          'isRequired': true,
+        },
+        {
+          'name': 'RealUnitRegistration',
+          'status': 'Completed',
+          'sequenceNumber': 1,
+          'isCurrent': false,
+          'isRequired': true,
+        },
+      ];
 
   Map<String, dynamic> _userData() => {
-    'email': 'shareholder@example.com',
-    'name': 'Max Mustermann',
-    'type': 'Personal',
-    'phoneNumber': '+41791234567',
-    'birthday': '1990-01-01',
-    'nationality': 'CH',
-    'addressStreet': 'Bahnhofstrasse 1',
-    'addressPostalCode': '8001',
-    'addressCity': 'Zürich',
-    'addressCountry': 'CH',
-    'swissTaxResidence': true,
-    'lang': 'DE',
-    'kycData': {
-      'accountType': 'Personal',
-      'firstName': 'Max',
-      'lastName': 'Mustermann',
-      'phone': '+41791234567',
-      'address': {
-        'street': 'Bahnhofstrasse',
-        'houseNumber': '1',
-        'zip': '8001',
-        'city': 'Zürich',
-        'country': 1,
-      },
-    },
-  };
+        'email': 'shareholder@example.com',
+        'name': 'Max Mustermann',
+        'type': 'Personal',
+        'phoneNumber': '+41791234567',
+        'birthday': '1990-01-01',
+        'nationality': 'CH',
+        'addressStreet': 'Bahnhofstrasse 1',
+        'addressPostalCode': '8001',
+        'addressCity': 'Zürich',
+        'addressCountry': 'CH',
+        'swissTaxResidence': true,
+        'lang': 'DE',
+        'kycData': {
+          'accountType': 'Personal',
+          'firstName': 'Max',
+          'lastName': 'Mustermann',
+          'phone': '+41791234567',
+          'address': {
+            'street': 'Bahnhofstrasse',
+            'houseNumber': '1',
+            'zip': '8001',
+            'city': 'Zürich',
+            'country': 1,
+          },
+        },
+      };
 
   StreamedResponse _json(int code, Object body) {
     final bytes = utf8.encode(jsonEncode(body));
@@ -163,4 +164,7 @@ class MaestroMockClient extends BaseClient {
       headers: {'content-type': 'application/json'},
     );
   }
+
+  @override
+  void close() => _inner.close();
 }

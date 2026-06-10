@@ -10,9 +10,6 @@
 # Regression guard for PR #720: this flow verifies that the link-wallet
 # page renders the "shareholder confirmed" UI and is ready for the
 # BitBox-connect sheet test in flow 11b.
-#
-# The handbook screenshot for this flow maps to the Golden baseline
-# kyc_link_wallet_page_default.png via scripts/assemble-handbook-screenshots.sh.
 appId: swiss.realunit.app
 ---
 # Navigate from dashboard to KYC via the buy-page redirect (mock mode only).
