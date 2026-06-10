@@ -25,8 +25,8 @@ appId: swiss.realunit.app
                 optional: true
 - waitForAnimationToEnd
 
-# The legal disclaimer has 5 steps (0-4). Each step shows a "Ja" / "Nein"
-# button pair — "Ja" advances, on the last step it completes and triggers
+# The legal disclaimer has 5 steps (0-4). Each step shows a "Zustimmen" / "Ablehnen"
+# button pair — "Zustimmen" advances, on the last step it completes and triggers
 # checkKyc(). With the mock API the next route is KycLinkWalletPage.
 - extendedWaitUntil:
     visible: 'Rechtlicher Hinweis'
@@ -36,7 +36,7 @@ appId: swiss.realunit.app
     times: 5
     commands:
       - tapOn:
-          text: 'Ja'
+          text: 'Zustimmen'
       - waitForAnimationToEnd
 
 # After accepting the legal disclaimer, checkKyc() fetches registration
