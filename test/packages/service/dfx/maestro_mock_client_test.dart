@@ -13,14 +13,14 @@ void main() {
       client = MaestroMockClient();
     });
 
-    Future<Map<String, dynamic>> _getJson(String path) async {
+    Future<Map<String, dynamic>> getJson(String path) async {
       final request = Request('GET', Uri.parse('https://api.dfx.swiss$path'));
       final response = await client.send(request);
       final body = await response.stream.bytesToString();
       return jsonDecode(body) as Map<String, dynamic>;
     }
 
-    Future<Map<String, dynamic>> _putJson(String path) async {
+    Future<Map<String, dynamic>> putJson(String path) async {
       final request = Request('PUT', Uri.parse('https://api.dfx.swiss$path'));
       final response = await client.send(request);
       final body = await response.stream.bytesToString();
@@ -29,7 +29,7 @@ void main() {
 
     group('GET /v2/user', () {
       test('returns user with email and kyc hash', () async {
-        final json = await _getJson('/v2/user');
+        final json = await getJson('/v2/user');
         expect(json['mail'], 'shareholder@example.com');
         expect((json['kyc'] as Map<String, dynamic>)['hash'], 'maestro-kyc-hash');
         expect((json['kyc'] as Map<String, dynamic>)['level'], 10);
@@ -38,14 +38,14 @@ void main() {
 
     group('PUT /v2/user', () {
       test('returns same user shape', () async {
-        final json = await _putJson('/v2/user');
+        final json = await putJson('/v2/user');
         expect(json['mail'], isNotNull);
       });
     });
 
     group('GET /v2/kyc', () {
       test('returns kyc status with InProgress processStatus', () async {
-        final json = await _getJson('/v2/kyc');
+        final json = await getJson('/v2/kyc');
         expect(json['kycLevel'], 10);
         expect(json['processStatus'], 'InProgress');
         final steps = json['kycSteps'] as List<dynamic>;
@@ -55,7 +55,7 @@ void main() {
 
     group('PUT /v2/kyc', () {
       test('returns session response with required fields', () async {
-        final json = await _putJson('/v2/kyc');
+        final json = await putJson('/v2/kyc');
         expect(json['kycLevel'], 10);
         expect(json['processStatus'], 'InProgress');
         expect(json['kycSteps'], isNotEmpty);
@@ -72,7 +72,7 @@ void main() {
 
     group('GET /v1/realunit/registration', () {
       test('returns AddWallet state with userData', () async {
-        final json = await _getJson('/v1/realunit/registration');
+        final json = await getJson('/v1/realunit/registration');
         expect(json['state'], 'AddWallet');
         final userData = json['userData'] as Map<String, dynamic>;
         expect(userData['email'], 'shareholder@example.com');

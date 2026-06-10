@@ -12,7 +12,7 @@ class MockWalletService extends Mock implements WalletService {}
 
 void main() {
   group('MaestroRegistrationService', () {
-    final userData = RealUnitUserDataDto(
+    final userData = const RealUnitUserDataDto(
       email: 'test@example.com',
       name: 'Max Mustermann',
       type: 'Personal',
