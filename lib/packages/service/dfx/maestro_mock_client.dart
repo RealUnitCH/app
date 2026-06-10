@@ -7,10 +7,10 @@ import 'package:http/http.dart';
 /// `--dart-define=MAESTRO_MOCK=true` and returns canned JSON responses for
 /// the DFX API endpoints the KYC / link-wallet flow needs.
 ///
-/// Auth (`POST /v1/auth`) is NOT intercepted — the app gets a real token
-/// from the DFX API so dashboard / price / balance calls that pass through
-/// to the real API work with a valid Bearer token. Only KYC and
-/// registration endpoints that the mock must control are intercepted.
+/// Auth (`POST /v1/auth`) is intercepted and returns a synthetic token so
+/// authenticated KYC / registration calls succeed without hitting the real
+/// DFX API. Only KYC and registration endpoints that the mock must control
+/// are intercepted; all other calls pass through to the real API.
 ///
 /// Unknown paths are forwarded to the real DFX API via [_inner].
 class MaestroMockClient extends BaseClient {
@@ -40,6 +40,11 @@ class MaestroMockClient extends BaseClient {
 
   StreamedResponse? _response(String method, String path) {
     switch (path) {
+      case '/v1/auth':
+        if (method == 'POST') {
+          return _json(201, {'accessToken': 'maestro-mock-token'});
+        }
+        break;
       case '/v2/user':
         if (method == 'GET') {
           return _json(200, _user());

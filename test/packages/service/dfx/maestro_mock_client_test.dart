@@ -27,6 +27,24 @@ void main() {
       return jsonDecode(body) as Map<String, dynamic>;
     }
 
+    Future<Map<String, dynamic>> postJson(String path, {Object? body}) async {
+      final request = Request('POST', Uri.parse('https://api.dfx.swiss$path'));
+      if (body != null) {
+        request.body = jsonEncode(body);
+        request.headers['content-type'] = 'application/json';
+      }
+      final response = await client.send(request);
+      final responseBody = await response.stream.bytesToString();
+      return jsonDecode(responseBody) as Map<String, dynamic>;
+    }
+
+    group('POST /v1/auth', () {
+      test('returns access token', () async {
+        final json = await postJson('/v1/auth');
+        expect(json['accessToken'], 'maestro-mock-token');
+      });
+    });
+
     group('GET /v2/user', () {
       test('returns user with email and kyc hash', () async {
         final json = await getJson('/v2/user');
