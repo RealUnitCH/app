@@ -549,6 +549,36 @@ void main() {
       expect(cubit.state, isA<BitboxNotConnected>());
     });
 
+    test('recheckDeviceStatus falls back to NotConnected when acquireWallet throws', () async {
+      var pollCount = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 3 ? '' : 'HASH-ok';
+      });
+      when(() => service.confirmPairing()).thenAnswer((_) async {});
+      // First call: device unseeded → BitboxNotInitialized.
+      // Second call (recheckDeviceStatus): device now seeded, but wallet
+      // acquisition fails → catch block must emit BitboxNotConnected.
+      var statusCalls = 0;
+      when(() => service.getDeviceStatus()).thenAnswer((_) async {
+        statusCalls++;
+        return statusCalls == 1 ? 'uninitialized' : 'initialized';
+      });
+      when(() => walletService.createBitboxWallet(any())).thenThrow(Exception('wallet boom'));
+
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      await waitForState<BitboxCheckHash>(cubit);
+      await cubit.confirmPairing();
+      expect(cubit.state, isA<BitboxNotInitialized>());
+
+      await cubit.recheckDeviceStatus();
+      expect(cubit.state, isA<BitboxNotConnected>());
+    });
+
     // Fail-open guarantee: a failing status read must NOT block a device that
     // would otherwise pair. If getDeviceStatus throws, the flow falls through to
     // the normal acquire path and still reaches BitboxConnected — the new gate
