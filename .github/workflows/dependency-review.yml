@@ -19,15 +19,28 @@ jobs:
   dependency-review:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # TEMPORARY non-blocking: the action needs the repo's Dependency graph,
-    # which is currently disabled (admin setting:
-    # https://github.com/RealUnitCH/app/settings/security_analysis).
-    # Flip this to blocking (delete continue-on-error) in the same PR/commit
-    # that enables the graph — a permanently yellow gate is not a gate.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # The action hard-fails when the repo's Dependency graph is disabled
+      # (admin setting). Probe first: with the graph off, emit a loud warning
+      # and skip — with it on, the gate arms itself automatically, no
+      # follow-up commit needed.
+      - name: Check Dependency graph availability
+        id: graph
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/${{ github.repository }}/dependency-graph/sbom" --silent >/dev/null 2>&1; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Dependency graph is disabled for this repository — dependency review SKIPPED. An admin should enable it: https://github.com/${{ github.repository }}/settings/security_analysis"
+          fi
+
       - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        if: steps.graph.outputs.enabled == 'true'
         with:
           fail-on-severity: high
           comment-summary-in-pr: on-failure
