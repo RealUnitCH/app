@@ -1,0 +1,35 @@
+# Dependency-update automation.
+#
+# Why: this repo currently has no automated dependency monitoring at all —
+# a known-vulnerable transitive package would sit unnoticed until a human
+# happens to read an advisory. For a wallet app the dependency tree is the
+# single largest attack surface (the 2025 npm supply-chain worms made that
+# concrete); pub is smaller but not immune, and GitHub Actions are code we
+# execute with repo credentials.
+#
+# The 7-day cooldown is deliberate: freshly published versions are the
+# riskiest (compromised-maintainer releases get yanked within days). Waiting
+# a week would have blocked every major 2025 supply-chain incident while
+# costing nothing for legitimate updates.
+
+version: 2
+updates:
+  - package-ecosystem: pub
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    target-branch: staging
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    target-branch: staging
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5

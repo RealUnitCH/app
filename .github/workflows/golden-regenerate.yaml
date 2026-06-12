@@ -28,10 +28,11 @@ concurrency:
   group: golden-regenerate-${{ github.ref }}
   cancel-in-progress: true
 
-# `contents: write` is load-bearing: the auto-commit step pushes back to
-# the dispatched branch. The default `GITHUB_TOKEN` permission is `read`.
+# Push happens via the TAG_DEPLOY_KEY ssh-agent (see below), not the
+# GITHUB_TOKEN — token pushes would leave the new head SHA without any
+# triggered checks. `contents: read` is enough for checkout.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   regenerate:
@@ -40,11 +41,22 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+
+      # Push via the existing deploy key (same key auto-tag.yaml uses) instead
+      # of GITHUB_TOKEN. This closes a documented gate hole: pushes made with
+      # GITHUB_TOKEN deliberately do NOT trigger workflows, so the bot-pushed
+      # baseline commit used to sit at the PR head with ZERO status checks —
+      # and GitHub shows such a PR as mergeable. Required checks never ran
+      # against the new baselines unless a human remembered the empty-commit
+      # re-arm. Deploy-key pushes DO trigger workflows, so the full PR gate
+      # re-runs on the regenerated head automatically.
+      - name: Setup SSH for Deploy Key
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          # Explicit token so the later `git push` is authenticated. Without
-          # this, checkout still works but the remote is configured with no
-          # credential helper and the push fails with HTTP 403.
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ssh-private-key: ${{ secrets.TAG_DEPLOY_KEY }}
+
+      - name: Configure Git for SSH
+        run: git remote set-url origin git@github.com:${{ github.repository }}.git
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.41.6"
