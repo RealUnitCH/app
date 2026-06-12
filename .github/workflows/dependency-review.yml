@@ -19,6 +19,12 @@ jobs:
   dependency-review:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # TEMPORARY non-blocking: the action needs the repo's Dependency graph,
+    # which is currently disabled (admin setting:
+    # https://github.com/RealUnitCH/app/settings/security_analysis).
+    # Flip this to blocking (delete continue-on-error) in the same PR/commit
+    # that enables the graph — a permanently yellow gate is not a gate.
+    continue-on-error: true
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
