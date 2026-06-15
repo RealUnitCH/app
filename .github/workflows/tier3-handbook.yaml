@@ -68,11 +68,11 @@ name: Tier 3 — Handbook flows
 #   retried. The post-mortem block (lsof / ps / simctl log + Maestro
 #   `--debug-output`) captures failure state so future regressions
 #   can be diagnosed forensically. The CI-hardening track that landed
-#   this guard was DFXswiss/realunit-app#487 (now closed).
+#   this guard was RealUnitCH/app#487 (now closed).
 #
 # Why no pixel-diff here:
 #   Pixel drift on the page renders is owned by the Visual Regression job
-#   in `pull-request.yaml` (alchemist Goldens on the dfx01 hardware-pinned
+#   in `pull-request.yaml` (alchemist Goldens on the self-hosted hardware-pinned
 #   runner). Tier-3 catches the regressions Goldens cannot see — broken
 #   tap routing, missing navigation, locale/`Intl` problems, iOS-build
 #   and `simctl install` failures. The per-flow `assertVisible` /

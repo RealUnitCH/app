@@ -72,7 +72,7 @@ jobs:
       - run: flutter pub run build_runner build
       - run: flutter analyze
       # Excludes the `golden` tag: visual-regression tests live under
-      # `test/goldens/` and are validated on the dfx01 self-hosted runner
+      # `test/goldens/` and are validated on the self-hosted runner
       # in the parallel `golden-tests` job (Hardware-Determinismus, see
       # `docs/visual-regression-tests.md`). Running them here too would
       # both duplicate work and erroneously red this job on macos-latest
@@ -275,7 +275,7 @@ jobs:
             fi
           fi
 
-  # Visual regression tests on the dfx01 self-hosted runner. Goldens live
+  # Visual regression tests on the self-hosted runner. Goldens live
   # under `test/goldens/` and are validated pixel-for-pixel against committed
   # baselines under `test/goldens/screens/**/goldens/macos/`. The Mac Studio
   # M3 Ultra is the authoritative render target — its baselines are committed,
@@ -286,10 +286,10 @@ jobs:
   # separation is intentional:
   #  * `build` covers analyze + unit/widget tests + coverage — needs no
   #    hardware determinism.
-  #  * `golden-tests` covers pixel-exact rendering — must run on dfx01 so
+  #  * `golden-tests` covers pixel-exact rendering — must run on the self-hosted runner so
   #    baselines and validation use identical Skia/font-rendering state.
   #
-  # On dfx01 outage: temporarily flip `runs-on:` to `macos-15` and regenerate
+  # On self-hosted runner outage: temporarily flip `runs-on:` to `macos-15` and regenerate
   # baselines in the same PR (see `docs/visual-regression-tests.md`).
   golden-tests:
     name: Visual Regression

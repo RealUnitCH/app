@@ -10,7 +10,7 @@ name: Handbook reusable CI/CD
 # ordering here; "DEV green before PRD" comes from the staging→develop
 # promotion flow (see handbook-deploy.yaml header).
 #
-# Mirrors infrastructure/templates/ssh-deploy-*.yaml from DFXServer/server.
+# Mirrors the shared SSH-deploy workflow templates from the internal ops repo.
 
 on:
   workflow_call:

@@ -13,11 +13,11 @@ on `develop` + `main`).
 |---|---|
 | Framework | [alchemist](https://pub.dev/packages/alchemist) 0.14.0 (Betterment) |
 | Font | Open Sans, eingecheckt unter `assets/fonts/` (SIL OFL 1.1) |
-| Render host | dfx01 self-hosted runner (Mac Studio M3 Ultra) — Labels `self-hosted, macOS, ARM64, m3-ultra, realunit-app` |
+| Render host | Self-hosted macOS ARM64 runner — Labels `self-hosted, macOS, ARM64, m3-ultra, realunit-app` |
 | Theme | `realUnitTheme` (light) aus `lib/styles/themes.dart` |
 | CI job | `golden-tests` in `.github/workflows/pull-request.yaml` |
 
-Baselines werden ausschliesslich auf dfx01 generiert und validiert. Lokales
+Baselines werden ausschliesslich auf the self-hosted runner generiert und validiert. Lokales
 `flutter test test/goldens/` schlägt erwartet mit Pixel-Drift fehl
 (unterschiedliche Mac-Hardware/macOS-Versionen rendern Sub-Pixel-AA leicht
 anders).
@@ -42,7 +42,7 @@ For a one-page edge case the cost/benefit doesn't justify it. The test is commit
 ## Regenerating baselines
 
 Permanent on-demand workflow `.github/workflows/golden-regenerate.yaml`
-runs `flutter test test/goldens --update-goldens` on dfx01 and commits
+runs `flutter test test/goldens --update-goldens` on the self-hosted runner and commits
 the regenerated PNGs back to the dispatched branch as
 `github-actions[bot]`. One command:
 
@@ -88,7 +88,7 @@ RUN_ID=$(gh run list --workflow=golden-regenerate.yaml --limit 1 --json database
 gh run download "$RUN_ID" -n golden-baselines -D /tmp/baselines
 rsync -a /tmp/baselines/ test/goldens/
 git add test/goldens/
-git commit -m "test(goldens): regenerate baselines on dfx01"
+git commit -m "test(goldens): regenerate baselines on the self-hosted runner"
 git push
 ```
 
@@ -101,7 +101,7 @@ git push
 2. Open a Draft PR. The `golden-tests` job will be red because the new
    test has no committed baseline.
 3. Run `gh workflow run golden-regenerate.yaml --ref <branch>`. The
-   workflow regenerates on dfx01 and pushes the PNGs back to the
+   workflow regenerates on the self-hosted runner and pushes the PNGs back to the
    branch as `github-actions[bot]`. Pull and verify `golden-tests`
    goes green.
 
@@ -130,13 +130,13 @@ branch, dispatch the regenerate workflow:
 gh workflow run golden-regenerate.yaml --ref <bump-branch>
 ```
 
-The bot pushes `test(goldens): regenerate baselines on dfx01` onto the
+The bot pushes `test(goldens): regenerate baselines on the self-hosted runner` onto the
 branch; rename or amend the commit message locally if a more specific
 "regenerate after Flutter X.Y.Z bump" note is useful.
 
-### dfx01 outage fallback
+### Self-hosted runner outage fallback
 
-If dfx01 is down (power, macOS update, service maintenance) and a PR is
+If the self-hosted runner is down (power, macOS update, service maintenance) and a PR is
 blocked on `golden-tests`:
 
 1. Switch `runs-on:` in `pull-request.yaml` for the `golden-tests` job —
@@ -144,17 +144,17 @@ blocked on `golden-tests`:
    to `macos-15`.
 2. Dispatch the regenerate workflow on the branch to refresh all baselines
    on `macos-15`.
-3. Merge. When dfx01 is back up, flip `runs-on:` back in both workflows
-   and regenerate baselines on dfx01 in a separate PR.
+3. Merge. When the self-hosted runner is back up, flip `runs-on:` back in both workflows
+   and regenerate baselines on the self-hosted runner in a separate PR.
 
 This path is intentionally manual — it's a notfall, not a routine. The
 flipping of baselines between two hosts incurs a mass-PNG-change PR each
 direction.
 
-### macOS update on dfx01
+### macOS update on the self-hosted runner
 
 The Mac Studio M3 Ultra runs macOS — updates change Skia/CoreText
-versions slightly. Before applying a macOS update on dfx01:
+versions slightly. Before applying a macOS update on the self-hosted runner:
 
 1. Prepare a regenerate-baselines PR.
 2. Apply the macOS update.
@@ -164,11 +164,10 @@ versions slightly. Before applying a macOS update on dfx01:
 
 ### Why `realunit-app` not `realunit-ios` as runner label?
 
-The label registered in `DFXswiss/realunit-app` is `realunit-app`, not the
-`realunit-ios` documented in `DFXServer/server` for the earlier Tier 3
-Maestro plan. Goldens are headless Skia (no iOS Simulator), so an
+The label registered in `RealUnitCH/app` is `realunit-app`, not the
+`realunit-ios` from the earlier Tier 3 Maestro plan. Goldens are headless Skia (no iOS Simulator), so an
 `-ios`-suffixed label would be misleading. If the runner later picks up
-Tier 3 Maestro work too (e.g. when the dfx01 capacity allows it), add the
+Tier 3 Maestro work too (e.g. when the self-hosted runner capacity allows it), add the
 `realunit-ios` label alongside the existing one — single runner, two
 workload classes.
 
@@ -181,12 +180,12 @@ require pixel-stable text rendering; the only honest fix is to ship the
 font with the app. The 5 TTF variants (Regular, Italic, SemiBold, Bold,
 BoldItalic) live under `assets/fonts/` with the SIL OFL 1.1 license file.
 
-### Why dfx01 not GitHub-hosted macos-15?
+### Why self-hosted, not GitHub-hosted macos-15?
 
 Performance (M3 Ultra ~2-3× faster than the GitHub macOS hosted runner)
 and Hardware-Determinismus (identical Skia/CoreText/HW across runs —
 no GitHub image bump can drift the baselines). The cost argument does
-**not** apply — `DFXswiss/realunit-app` is public, GitHub Actions on
+**not** apply — `RealUnitCH/app` is public, GitHub Actions on
 public repos are free even for macOS minutes.
 
 ## Handbook screenshots are sourced from Goldens
@@ -202,7 +201,7 @@ have its own screenshot set anymore.
 - **Single source of truth.** A UI regression that flips a Golden also
   breaks the handbook image before either ships. The pixel-checked
   baseline IS the documentation.
-- **Determinism.** dfx01's headless Skia/Open Sans render is byte-stable
+- **Determinism.** the self-hosted runner's headless Skia/Open Sans render is byte-stable
   across CI runs. The previous Maestro-driven iOS-Simulator capture
   drifted on Apple Silicon + iOS 26 driver hangs
   (mobile-dev-inc/maestro#3137).
@@ -237,7 +236,7 @@ that directory into `/usr/share/nginx/html/screenshots/`.
 ### When you change an existing handbook page
 
 Touch the Golden test (or the underlying widget/copy), let CI regenerate
-the baseline on dfx01, and commit the new PNG. The handbook picks up
+the baseline on the self-hosted runner, and commit the new PNG. The handbook picks up
 the change automatically on the next docker build — no separate
 handbook-screenshot recapture step needed.
 

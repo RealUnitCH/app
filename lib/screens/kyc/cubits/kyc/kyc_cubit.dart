@@ -168,8 +168,7 @@ class KycCubit extends Cubit<KycState> {
       // From here on the API is the authority. Render `processStatus` plus
       // the matching `currentStep` from the session response; no local
       // iteration over `kycSteps`, no local "what counts as actionable"
-      // set, no local level threshold. See docs/api-authority-plan.md
-      // (Wave 2) for the design.
+      // set, no local level threshold.
       switch (kycStatus.processStatus) {
         case KycProcessStatus.completed:
           emit(const KycCompleted());
@@ -180,11 +179,11 @@ class KycCubit extends Cubit<KycState> {
         case KycProcessStatus.pendingReview:
           // PendingReview is authoritative: the API says "do not let the user
           // through". Never collapse this branch to `KycCompleted` — that
-          // would be the same class of misroute as the 2026-05-21 incident,
-          // just in the opposite direction (API: review pending → app:
-          // completed). If we cannot identify a required step we surface
-          // `KycUnsupportedStepFailure` so the user gets an explicit error
-          // instead of a silent dashboard handoff.
+          // would be the same class of misroute, just in the opposite
+          // direction (API: review pending → app: completed). If we cannot
+          // identify a required step we surface `KycUnsupportedStepFailure`
+          // so the user gets an explicit error instead of a silent dashboard
+          // handoff.
           final pending = kycStatus.kycSteps.firstWhereOrNull(
             (s) => s.isRequired && s.status != KycStepStatus.completed,
           );
@@ -234,11 +233,10 @@ class KycCubit extends Cubit<KycState> {
     final kycStatus = await _kycService.continueKyc(context: _kycContext);
     if (isClosed || generation != _runGeneration) return;
 
-    // `KycSessionDto.currentStep` is the authoritative source — see
-    // `docs/api-authority-audit.md` V45 and `docs/api-authority-plan.md`
-    // §W2.2. Never iterate `kycSteps` here: the local filter is the same
-    // anti-pattern V1/V2/V3/V5 just eliminated in `_runCheckKyc`. If the
-    // session response has no `currentStep` we surface
+    // `KycSessionDto.currentStep` is the authoritative source. Never
+    // iterate `kycSteps` here: the local filter is the same anti-pattern
+    // just eliminated in `_runCheckKyc`. If the session response has no
+    // `currentStep` we surface
     // `KycUnsupportedStepFailure` instead of throwing a bare `StateError`
     // through the outer catch (which used to land as raw stack trace text
     // in the i18n message).

@@ -1,6 +1,6 @@
 # Testing Guide
 
-RealUnit's tests are organised into five tiers (see [#314](https://github.com/DFXswiss/realunit-app/issues/314)). Each tier trades off fidelity for cost; pick the lowest tier that still proves the behaviour you care about.
+RealUnit's tests are organised into five tiers (see [#314](https://github.com/RealUnitCH/app/issues/314)). Each tier trades off fidelity for cost; pick the lowest tier that still proves the behaviour you care about.
 
 | Tier | What it exercises | Hardware | CI |
 |---|---|---|---|
@@ -351,7 +351,7 @@ check on `develop` (unlike `Analyze & Test`, `Visual Regression`,
 and `Coverage Floor Gate`, which are required — see ruleset `PRs`
 / id `11317379`) until the reliability is proven on the pinned
 version over time. The CI-hardening track that landed this guard
-was [#487](https://github.com/DFXswiss/realunit-app/issues/487)
+was [#487](https://github.com/RealUnitCH/app/issues/487)
 (now closed).
 
 The real-hardware variant (BitBox02 Nova) stays deferred — Phase 3 of #314 — and is the entry point for any PR that adds a `bitbox:full` label later.
@@ -380,7 +380,7 @@ The workflow runs three jobs:
 
 Tier 3 runs separately under `tier3-handbook.yaml` (push to `develop`, manual, or any PR labelled `tier3:full` except PRs targeting `main`). Its only artifact is `handbook-captures`, the per-flow diagnostic recordings — coverage data is owned by `Analyze & Test` instead.
 
-The Tier 0/1 coverage artifacts (`coverage-lcov`, `coverage-summary`) are emitted by the `Analyze & Test` job in `pull-request.yaml` (see [#323](https://github.com/DFXswiss/realunit-app/pull/323)) and consumed by the `Coverage Floor Gate`. The repo holds a [100 % coverage rule](https://github.com/DFXswiss/realunit-app/pull/322) for new code on the activated surface; the committed floor lives in `.coverage-floor-lines` and `.coverage-floor-functions` and is ratcheted upward per PR — drop the threshold only with reviewer sign-off and a written reason (`coverage:lower-floor` label).
+The Tier 0/1 coverage artifacts (`coverage-lcov`, `coverage-summary`) are emitted by the `Analyze & Test` job in `pull-request.yaml` (see [#323](https://github.com/RealUnitCH/app/pull/323)) and consumed by the `Coverage Floor Gate`. The repo holds a [100 % coverage rule](https://github.com/RealUnitCH/app/pull/322) for new code on the activated surface; the committed floor lives in `.coverage-floor-lines` and `.coverage-floor-functions` and is ratcheted upward per PR — drop the threshold only with reviewer sign-off and a written reason (`coverage:lower-floor` label).
 
 ## Surface that needs infra work before it can be unit-tested
 

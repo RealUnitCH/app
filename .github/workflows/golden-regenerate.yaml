@@ -1,6 +1,6 @@
 name: Golden Regenerate
 
-# On-demand visual-regression baseline regeneration on the dfx01 self-hosted
+# On-demand visual-regression baseline regeneration on the self-hosted
 # runner. Replaces the previous pattern of introducing/removing a temporary
 # `golden-bootstrap.yaml` per regen cycle.
 #
@@ -8,7 +8,7 @@ name: Golden Regenerate
 #   gh workflow run golden-regenerate.yaml --ref <feature-branch>
 #
 # The workflow checks out the dispatched ref, runs `flutter test
-# test/goldens --update-goldens` on dfx01, then commits the regenerated PNGs
+# test/goldens --update-goldens` on the self-hosted runner, then commits the regenerated PNGs
 # back to that same ref as `github-actions[bot]`. If the ref is protected
 # (e.g. `develop`/`main`), the push fails cleanly — by design, no force-push
 # or bypass. In that case the regenerated baselines are still uploaded as a
@@ -74,7 +74,7 @@ jobs:
             echo "No baseline changes detected — nothing to commit."
             exit 0
           fi
-          git commit -m "test(goldens): regenerate baselines on dfx01"
+          git commit -m "test(goldens): regenerate baselines on the self-hosted runner"
           # On protected branches (develop/main) this fails by design.
           # The next step uploads the PNGs as an artifact so the user can
           # still recover the regen output.
