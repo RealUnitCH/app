@@ -56,7 +56,7 @@ appId: swiss.realunit.app
 # After dismissal, the link-wallet body must still be visible — the user
 # is not stuck on an error page and can try again.
 - extendedWaitUntil:
-    visible: 'Sie sind als Aktionär eingetragen'
+    visible: 'Sie sind als Aktionär eingetragen.*'
     timeout: 10000
 
 # Navigate back to the dashboard for the next flow (12-settings).
