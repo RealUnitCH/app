@@ -17,7 +17,7 @@ on `develop` + `main`).
 | Theme | `realUnitTheme` (light) aus `lib/styles/themes.dart` |
 | CI job | `golden-tests` in `.github/workflows/pull-request.yaml` |
 
-Baselines werden ausschliesslich auf the self-hosted runner generiert und validiert. Lokales
+Baselines werden ausschliesslich auf dem self-hosted Runner generiert und validiert. Lokales
 `flutter test test/goldens/` schlägt erwartet mit Pixel-Drift fehl
 (unterschiedliche Mac-Hardware/macOS-Versionen rendern Sub-Pixel-AA leicht
 anders).
@@ -201,7 +201,7 @@ have its own screenshot set anymore.
 - **Single source of truth.** A UI regression that flips a Golden also
   breaks the handbook image before either ships. The pixel-checked
   baseline IS the documentation.
-- **Determinism.** the self-hosted runner's headless Skia/Open Sans render is byte-stable
+- **Determinism.** The self-hosted runner's headless Skia/Open Sans render is byte-stable
   across CI runs. The previous Maestro-driven iOS-Simulator capture
   drifted on Apple Silicon + iOS 26 driver hangs
   (mobile-dev-inc/maestro#3137).
