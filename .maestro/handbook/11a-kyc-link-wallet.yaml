@@ -43,5 +43,5 @@ appId: swiss.realunit.app
 # info from the mock → state=AddWallet → KycLinkWalletPage renders with
 # the shareholder-confirmation description.
 - extendedWaitUntil:
-    visible: 'Sie sind als Aktionär eingetragen'
+    visible: 'Sie sind als Aktionär eingetragen.*'
     timeout: 30000
