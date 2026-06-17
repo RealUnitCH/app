@@ -5,7 +5,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart'
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
-import 'package:realunit_wallet/screens/buy/widgets/payment_additional_action_needed_button.dart';
+import 'package:realunit_wallet/screens/buy/widgets/payment_action_button.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
 import 'package:realunit_wallet/setup/di.dart';
@@ -82,9 +82,9 @@ class _BuyViewState extends State<BuyView> {
                                 resultController: _resultController,
                               ),
                               const SizedBox(height: 32),
-                              PaymentInformation(amount: _amountController.text),
+                              const PaymentInformation(),
                               const Spacer(),
-                              PaymentAdditionalActionNeededButton(
+                              PaymentActionButton(
                                 amountController: _amountController,
                               ),
                             ],

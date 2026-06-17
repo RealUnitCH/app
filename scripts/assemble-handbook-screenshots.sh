@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Assemble the 52 handbook screenshots from the visual-regression Golden
+# Assemble the 53 handbook screenshots from the visual-regression Golden
 # baselines. The flat `NN-name.png` output layout matches what
 # docs/handbook/de/index.html links to (`<img src="../screenshots/NN-name.png">`
 # — the relative path resolves to `docs/handbook/screenshots/NN-name.png`).
@@ -87,6 +87,7 @@ MAPPING=(
   "50-sell-kyc-required=sell/goldens/macos/sell_kyc_required.png"
   "51-sell-min-amount=sell/goldens/macos/sell_min_amount_not_met.png"
   "52-sell-unknown-error=sell/goldens/macos/sell_unknown_error.png"
+  "53-buy-payment-details=buy/goldens/macos/buy_payment_details_default.png"
 )
 
 missing=()

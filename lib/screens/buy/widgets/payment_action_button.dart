@@ -5,15 +5,20 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
+import 'package:realunit_wallet/screens/buy/widgets/buy_confirm_button.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/show_bitbox_reconnect_sheet.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
-class PaymentAdditionalActionNeededButton extends StatelessWidget {
+/// Bottom call-to-action of the buy page. It mirrors the `BuyPaymentInfoCubit`
+/// state: on a valid quote it shows the binding-buy CTA, otherwise it offers
+/// the action the current gate requires (register, KYC, reconnect, retry) or a
+/// disabled button for the min-amount validation error.
+class PaymentActionButton extends StatelessWidget {
   final TextEditingController amountController;
 
-  const PaymentAdditionalActionNeededButton({
+  const PaymentActionButton({
     super.key,
     required this.amountController,
   });
@@ -22,6 +27,12 @@ class PaymentAdditionalActionNeededButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<BuyPaymentInfoCubit, BuyPaymentInfoState>(
       builder: (context, paymentState) {
+        if (paymentState is BuyPaymentInfoSuccess) {
+          return BuyConfirmButton(
+            buyPaymentInfo: paymentState.buyPaymentInfo,
+            amount: amountController.text,
+          );
+        }
         if (paymentState is BuyPaymentInfoFailure) {
           if (paymentState.error == PaymentInfoError.minAmountNotMet) {
             final state = paymentState as BuyPaymentInfoMinAmountNotMetFailure;

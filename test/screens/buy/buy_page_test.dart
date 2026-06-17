@@ -19,13 +19,12 @@ import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
+import 'package:realunit_wallet/screens/buy/widgets/buy_confirm_button.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_action_required.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
-import 'package:realunit_wallet/screens/buy/widgets/payment_information_details.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
-import 'package:realunit_wallet/widgets/tab_selector.dart';
 
 import '../../helper/helper.dart';
 
@@ -143,47 +142,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(PaymentConverter), findsOne);
-      expect(find.byType(PaymentInformationDetails), findsOne);
+      // On a valid quote the bottom CTA is the binding-buy button; the
+      // bank-transfer details have moved to the BuyPaymentDetailsPage.
+      expect(find.byType(BuyConfirmButton), findsOne);
+      expect(find.text(S.current.buyPaymentConfirm), findsOne);
     });
-
-    testWidgets(
-      'render correctly when $BuyPaymentInfo paymentRequest is not null',
-      (tester) async {
-        when(() => buyPaymentInfoCubit.state).thenReturn(
-          const BuyPaymentInfoSuccess(
-            BuyPaymentInfo(
-              id: 1,
-              iban: 'iban',
-              bic: 'bic',
-              name: 'name',
-              street: 'street',
-              number: 'number',
-              zip: 'zip',
-              city: 'city',
-              country: 'country',
-              currency: Currency.chf,
-              paymentRequest: 'svgString',
-            ),
-          ),
-        );
-
-        whenListen(
-          converterCubit,
-          Stream.fromIterable([
-            const BuyConverterState(fiatText: '100', sharesText: '1.00', loading: true),
-            const BuyConverterState(fiatText: '100', sharesText: '1.00', loading: false),
-          ]),
-          initialState: const BuyConverterState(fiatText: '100', sharesText: '1.00'),
-        );
-
-        await tester.pumpApp(buildSubject(const BuyView()));
-        await tester.pumpAndSettle();
-
-        expect(find.byType(PaymentConverter), findsOne);
-        expect(find.byType(PaymentInformationDetails), findsOne);
-        expect(find.byType(TabSelector<PaymentInfoOptions>), findsOne);
-      },
-    );
 
     testWidgets('renders correctly when $BuyPaymentInfo is loading', (tester) async {
       when(() => buyPaymentInfoCubit.state).thenReturn(const BuyPaymentInfoLoading());
