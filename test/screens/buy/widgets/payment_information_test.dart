@@ -3,11 +3,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_action_required.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
-import 'package:realunit_wallet/screens/buy/widgets/payment_information_details.dart';
+import 'package:realunit_wallet/styles/currency.dart';
 
 import '../../../helper/helper.dart';
 
@@ -17,7 +18,7 @@ class _MockBuyPaymentInfoCubit extends MockCubit<BuyPaymentInfoState>
 Widget _host(BuyPaymentInfoCubit cubit) =>
     BlocProvider<BuyPaymentInfoCubit>.value(
       value: cubit,
-      child: const PaymentInformation(amount: '100'),
+      child: const PaymentInformation(),
     );
 
 void main() {
@@ -68,11 +69,40 @@ void main() {
     });
 
     testWidgets(
+      'Success: renders nothing — the CTA lives in PaymentActionButton',
+      (tester) async {
+        // On a valid quote PaymentInformation is silent: the binding-buy CTA
+        // and the bank-transfer details are owned by other widgets now.
+        when(() => cubit.state).thenReturn(
+          const BuyPaymentInfoSuccess(
+            BuyPaymentInfo(
+              id: 1,
+              iban: 'iban',
+              bic: 'bic',
+              name: 'name',
+              street: 'street',
+              number: 'number',
+              zip: 'zip',
+              city: 'city',
+              country: 'country',
+              currency: Currency.chf,
+            ),
+          ),
+        );
+
+        await tester.pumpApp(_host(cubit));
+
+        expect(find.byType(PaymentActionRequired), findsNothing);
+        expect(find.byType(CupertinoActivityIndicator), findsNothing);
+      },
+    );
+
+    testWidgets(
       'Failure(minAmountNotMet) (without specialized class) falls through to SizedBox.shrink',
       (tester) async {
         // Using the generic BuyPaymentInfoFailure with minAmountNotMet — the
-        // widget's branch only handles the three branded errors, so the
-        // fallback SizedBox.shrink should be returned.
+        // widget's branch only handles the branded errors, so the fallback
+        // SizedBox.shrink should be returned.
         when(() => cubit.state).thenReturn(
           const BuyPaymentInfoFailure(PaymentInfoError.minAmountNotMet),
         );
@@ -81,7 +111,6 @@ void main() {
 
         expect(find.byType(PaymentActionRequired), findsNothing);
         expect(find.byType(CupertinoActivityIndicator), findsNothing);
-        expect(find.byType(PaymentInformationDetails), findsNothing);
       },
     );
 
@@ -92,7 +121,6 @@ void main() {
 
       expect(find.byType(PaymentActionRequired), findsNothing);
       expect(find.byType(CupertinoActivityIndicator), findsNothing);
-      expect(find.byType(PaymentInformationDetails), findsNothing);
     });
   });
 }
