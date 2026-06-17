@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -19,6 +21,7 @@ import 'package:realunit_wallet/packages/service/debug_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_bank_account_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_config_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_fiat_service.dart';
@@ -89,6 +92,19 @@ Future<void> finishSetup(String encryptionKey) async {
   await setupBlocs();
 
   await setupDefaultAssets();
+
+  // Warm the API-provided validation patterns so name/address form fields can
+  // validate synchronously. Fire-and-forget: a failure here just means the
+  // first KYC form defers to the server's authoritative validation.
+  unawaited(
+    getIt<DfxConfigService>().load().catchError(
+      (Object error) => developer.log(
+        'failed to preload validation config: $error',
+        name: 'di',
+        error: error,
+      ),
+    ),
+  );
 }
 
 void setupRepositories() {
@@ -138,6 +154,7 @@ void setupServices() {
     ),
   );
 
+  getIt.registerLazySingleton(() => DfxConfigService(getIt<AppStore>()));
   getIt.registerCachedFactory(() => DfxCountryService(getIt<AppStore>()));
   getIt.registerLazySingleton(() => DfxFiatService(getIt<AppStore>()));
   getIt.registerLazySingleton(() => DfxLanguageService(getIt<AppStore>()));
@@ -199,6 +216,7 @@ Future<void> setupBlocs() async {
         // so drop their session caches when the user switches networks.
         getIt<DfxFiatService>().invalidateCache();
         getIt<DfxLanguageService>().invalidateCache();
+        getIt<DfxConfigService>().invalidateCache();
       },
     ),
   );

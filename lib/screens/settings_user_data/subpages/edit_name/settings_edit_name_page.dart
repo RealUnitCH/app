@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_config_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
-import 'package:realunit_wallet/packages/utils/swiss_payment_text.dart';
 import 'package:realunit_wallet/packages/utils/xfile_extension.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_name/cubit/settings_edit_name_cubit.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_failure_page.dart';
@@ -99,7 +99,9 @@ class _SettingsEditNameViewState extends State<SettingsEditNameView> {
                                   textCapitalization: .words,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) return '';
-                                    if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
+                                    if (!getIt<DfxConfigService>().isSwissPaymentText(value)) {
+                                      return S.of(context).swissPaymentTextInvalid;
+                                    }
                                     return null;
                                   },
                                 ),
@@ -110,7 +112,9 @@ class _SettingsEditNameViewState extends State<SettingsEditNameView> {
                                   textCapitalization: .words,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) return '';
-                                    if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
+                                    if (!getIt<DfxConfigService>().isSwissPaymentText(value)) {
+                                      return S.of(context).swissPaymentTextInvalid;
+                                    }
                                     return null;
                                   },
                                 ),

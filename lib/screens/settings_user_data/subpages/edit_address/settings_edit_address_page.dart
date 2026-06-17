@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_config_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
-import 'package:realunit_wallet/packages/utils/swiss_payment_text.dart';
 import 'package:realunit_wallet/packages/utils/xfile_extension.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_address/cubit/settings_edit_address_cubit.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_failure_page.dart';
@@ -112,7 +112,11 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                                         textCapitalization: .words,
                                         validator: (value) {
                                           if (value == null || value.isEmpty) return '';
-                                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
+                                          if (!getIt<DfxConfigService>().isSwissPaymentText(
+                                            value,
+                                          )) {
+                                            return S.of(context).swissPaymentTextInvalid;
+                                          }
                                           return null;
                                         },
                                       ),
@@ -125,7 +129,11 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                                         keyboardType: .streetAddress,
                                         validator: (value) {
                                           if (value == null || value.isEmpty) return null;
-                                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
+                                          if (!getIt<DfxConfigService>().isSwissPaymentText(
+                                            value,
+                                          )) {
+                                            return S.of(context).swissPaymentTextInvalid;
+                                          }
                                           return null;
                                         },
                                       ),
@@ -145,7 +153,11 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                                         keyboardType: .number,
                                         validator: (value) {
                                           if (value == null || value.isEmpty) return '';
-                                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
+                                          if (!getIt<DfxConfigService>().isSwissPaymentText(
+                                            value,
+                                          )) {
+                                            return S.of(context).swissPaymentTextInvalid;
+                                          }
                                           return null;
                                         },
                                       ),
@@ -160,7 +172,11 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                                         textCapitalization: .words,
                                         validator: (value) {
                                           if (value == null || value.isEmpty) return '';
-                                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
+                                          if (!getIt<DfxConfigService>().isSwissPaymentText(
+                                            value,
+                                          )) {
+                                            return S.of(context).swissPaymentTextInvalid;
+                                          }
                                           return null;
                                         },
                                       ),
