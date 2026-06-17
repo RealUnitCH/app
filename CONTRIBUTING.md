@@ -75,7 +75,7 @@ Extend the API, then change the app. **Do not add app-side workarounds.** Open a
 
 ### Audit
 
-A full audit of current violations lives in [`docs/api-authority-audit.md`](docs/api-authority-audit.md). New PRs must not add to it; ideally they reduce it.
+Current violations of this rule are tracked internally. New PRs must not add to that list; ideally they reduce it.
 
 ### Consuming API capabilities — eight rules
 
@@ -91,7 +91,7 @@ When the API exposes a capability (boolean flag or struct on `UserCapabilitiesDt
 
 5. **No reactive 400-handling for what a capability could pre-tell.** If the backend exposes a pre-tap capability, the app must consume it. Attempting the action and reacting to a typed `BadRequestException` post-submit is a regression — the user loses form data, the error-body parsing is brittle, the navigation choreography is fragile. Reactive errors are only for things the capability can't predict (network failures, transient backend issues, race conditions).
 
-6. **Pair-PR discipline.** App-side capability adoption happens in the same PR that deletes the local logic the capability replaces. PR title: `refactor(<scope>): consume <Capability>`. PR body cites the V-ID from `docs/api-authority-audit.md` and the API-side commit. The PR is opened **after** the API PR has merged on `develop` — running ahead of the API merge means the consumer sees null forever in DEV and the change effectively dead-codes itself.
+6. **Pair-PR discipline.** App-side capability adoption happens in the same PR that deletes the local logic the capability replaces. PR title: `refactor(<scope>): consume <Capability>`. PR body references the violation it resolves and the API-side commit. The PR is opened **after** the API PR has merged on `develop` — running ahead of the API merge means the consumer sees null forever in DEV and the change effectively dead-codes itself.
 
 7. **Tests pin the contract, not the implementation.** Cubit tests assert that `init()` with `capability == null` emits the legacy-fallback success state; with `available: true` emits the available state; with `available: false, missingPrerequisite: Email` emits the prerequisite-required state. Widget tests assert that taps in each state push the correct route. Don't test "if mail == null, the tile state is unavailable" — that ties the test to the backend rule, exactly what we're trying to decouple.
 

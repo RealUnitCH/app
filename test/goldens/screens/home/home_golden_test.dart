@@ -56,7 +56,7 @@ void main() {
     //
     // Scoped 0.5% diff threshold: the price chart's stroked path renders
     // with sub-pixel anti-aliasing whose exact coverage values jitter
-    // across runs even on the locked dfx01 renderer (chart-line drift was
+    // across runs even on the locked self-hosted renderer (chart-line drift was
     // regenerated twice within five days under bot commit 044852b and the
     // d25c61d follow-up, both touching only the curve region). Other
     // goldens have no such drift surface and remain at the 0.0 default.

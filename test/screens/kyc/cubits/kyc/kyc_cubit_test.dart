@@ -481,8 +481,8 @@ void main() {
     );
 
     // PendingReview is authoritative. The cubit must NEVER collapse this
-    // branch to `KycCompleted` — that would be the mirror image of the
-    // 2026-05-21 ident-misroute (API: review pending → app: dashboard).
+    // branch to `KycCompleted` — regression: an API review-pending status
+    // must not route the user to the dashboard.
     blocTest<KycCubit, KycState>(
       'emits KycUnsupportedStepFailure (not Completed) when PendingReview has no required step at all',
       setUp: () {
