@@ -84,7 +84,12 @@ class KycRegistrationAddressStep extends StatelessWidget {
                         hintText: '8000',
                         controller: postalCodeCtrl,
                         label: S.of(context).postcodeAbr,
-                        keyboardType: TextInputType.number,
+                        // Postal codes are alphanumeric in many residence
+                        // countries (e.g. NL "1011 AB", UK "EC1A 1BB", CA
+                        // "K1A 0B1"). A number-only keyboard makes those
+                        // impossible to type, while the validator + backend
+                        // already accept letters and spaces.
+                        keyboardType: TextInputType.text,
                         validator: (value) {
                           if (value == null || value.isEmpty) return '';
                           if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;

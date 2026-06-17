@@ -117,6 +117,21 @@ void main() {
       expect(find.byType(CupertinoActivityIndicator), findsNothing);
     });
 
+    testWidgets('postal code field uses a text keyboard for alphanumeric codes',
+        (tester) async {
+      // Foreign postal codes are alphanumeric (NL "1011 AB", UK "EC1A 1BB").
+      // A number-only keyboard would make them impossible to type.
+      when(() => settingsEditAddressCubit.state).thenReturn(const SettingsEditAddressReady('url'));
+
+      await tester.pumpApp(buildSubject(const SettingsEditAddressView()));
+      await tester.pumpAndSettle();
+
+      final postalField = tester.widget<LabeledTextField>(
+        find.byWidgetPredicate((w) => w is LabeledTextField && w.hintText == '8000'),
+      );
+      expect(postalField.keyboardType, TextInputType.text);
+    });
+
     testWidgets('renders correctly when submitting', (tester) async {
       when(
         () => settingsEditAddressCubit.state,
