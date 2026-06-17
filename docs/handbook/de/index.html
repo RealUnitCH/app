@@ -2166,7 +2166,7 @@
                 <div class="file">test/goldens/screens/buy/</div>
               </div>
               <div class="rhs">
-                <b>5 Screens</b>
+                <b>6 Screens</b>
               </div>
             </div>
           </summary>
@@ -2175,7 +2175,9 @@
             <em>Loading</em> (Zahlungsinfos werden vom Backend geholt), den Pflicht-Gates
             <em>Registration Required</em> und <em>KYC Required</em>, dem
             Validierungs-Fehler <em>Min Amount Not Met</em> sowie dem generischen
-            <em>Unknown Error</em>.
+            <em>Unknown Error</em>. Nach dem verbindlichen Kauf
+            (»Jetzt verbindlich kaufen«) folgt die Seite <em>Zahlungsdetails</em>
+            mit der Bankverbindung und dem Verwendungszweck.
           </p>
 
           <div class="tests cols-2">
@@ -2266,6 +2268,26 @@
                 Generischer Fehler-State, wenn das Backend keinen spezifischen Statuscode
                 liefert. Retry-CTA und kurze Erklärung — keine technischen Details für
                 den User.
+              </div>
+            </div>
+            <div class="test" id="53-buy-payment-details">
+              <div class="head">
+                <a class="name permalink" href="#53-buy-payment-details">53-buy-payment-details</a>
+                <button class="copy-link" type="button" data-target="53-buy-payment-details" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">buy_payment_details_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/53-buy-payment-details.png"
+                  alt="Kaufen — Zahlungsdetails nach verbindlichem Kauf"
+                />
+              </div>
+              <div class="desc">
+                Zahlungsdetails-Seite nach dem verbindlichen Kauf. Sie weist auf die
+                zusätzlich per E-Mail zugestellte Zahlungsanweisung hin, betont den
+                wichtigen Verwendungszweck und zeigt Referenz sowie die vollständige
+                Bankverbindung (IBAN/BIC/Empfänger) mit optionalem QR-Code. Abschluss
+                über »Zurück zum Hauptbereich«.
               </div>
             </div>
           </div>
