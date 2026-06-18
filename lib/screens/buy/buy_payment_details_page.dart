@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
@@ -10,17 +9,20 @@ import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 /// Arguments for the `Zahlungsdetails` page, passed via the GoRouter `extra`
 /// slot. The buy quote ([buyPaymentInfo]) and the committed [amount] are
-/// produced on the buy page; [reference] is the order reference returned by
-/// the confirm call that made the purchase binding.
+/// produced on the buy page; [purposeOfPayment] is the remittance info
+/// returned by the confirm call that the customer must put on the bank
+/// transfer, and [paymentRequest] is the matching QR code (if any).
 class BuyPaymentDetailsParams {
   final BuyPaymentInfo buyPaymentInfo;
   final String amount;
-  final String reference;
+  final String purposeOfPayment;
+  final String? paymentRequest;
 
   const BuyPaymentDetailsParams({
     required this.buyPaymentInfo,
     required this.amount,
-    required this.reference,
+    required this.purposeOfPayment,
+    this.paymentRequest,
   });
 }
 
@@ -68,31 +70,11 @@ class BuyPaymentDetailsPage extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (params.reference.isNotEmpty)
-                  Row(
-                    spacing: 8.0,
-                    children: [
-                      Text(
-                        '${S.of(context).buyExecutedReference}: ${params.reference}',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: .w600,
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () => Clipboard.setData(
-                          ClipboardData(text: params.reference),
-                        ),
-                        child: const Icon(
-                          Icons.copy_outlined,
-                          color: RealUnitColors.realUnitBlue,
-                          size: 16,
-                        ),
-                      ),
-                    ],
-                  ),
                 PaymentDetailsCard(
                   buyPaymentInfo: params.buyPaymentInfo,
                   amount: params.amount,
+                  purposeOfPayment: params.purposeOfPayment,
+                  paymentRequest: params.paymentRequest,
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20.0),
