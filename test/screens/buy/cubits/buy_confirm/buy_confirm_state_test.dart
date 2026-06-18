@@ -29,22 +29,44 @@ void main() {
 
   group('BuyConfirmSuccess', () {
     test('same fields are equal and props match', () {
-      final a = BuyConfirmSuccess(remittanceInfo: 'ref-1', paymentRequest: 'qr');
-      final b = BuyConfirmSuccess(remittanceInfo: 'ref-1', paymentRequest: 'qr');
+      final a = BuyConfirmSuccess(
+        reference: 'ref-1',
+        remittanceInfo: 'ref-1',
+        paymentRequest: 'qr',
+      );
+      final b = BuyConfirmSuccess(
+        reference: 'ref-1',
+        remittanceInfo: 'ref-1',
+        paymentRequest: 'qr',
+      );
       expect(a, equals(b));
-      expect(a.props, ['ref-1', 'qr']);
+      expect(a.props, ['ref-1', 'ref-1', 'qr']);
+    });
+
+    test('different reference is unequal', () {
+      final a = BuyConfirmSuccess(reference: 'ref-1');
+      final b = BuyConfirmSuccess(reference: 'ref-2');
+      expect(a, isNot(equals(b)));
     });
 
     test('different remittanceInfo is unequal', () {
-      final a = BuyConfirmSuccess(remittanceInfo: 'ref-1');
-      final b = BuyConfirmSuccess(remittanceInfo: 'ref-2');
+      final a = BuyConfirmSuccess(reference: 'ref', remittanceInfo: 'ref-1');
+      final b = BuyConfirmSuccess(reference: 'ref', remittanceInfo: 'ref-2');
       expect(a, isNot(equals(b)));
     });
 
     test('different paymentRequest is unequal', () {
-      final a = BuyConfirmSuccess(remittanceInfo: 'ref-1', paymentRequest: 'a');
-      final b = BuyConfirmSuccess(remittanceInfo: 'ref-1', paymentRequest: 'b');
+      final a = BuyConfirmSuccess(reference: 'ref-1', paymentRequest: 'a');
+      final b = BuyConfirmSuccess(reference: 'ref-1', paymentRequest: 'b');
       expect(a, isNot(equals(b)));
+    });
+
+    test('backward compatible: only reference set leaves the rest null', () {
+      final a = BuyConfirmSuccess(reference: 'RU-REF-1');
+      expect(a.reference, 'RU-REF-1');
+      expect(a.remittanceInfo, isNull);
+      expect(a.paymentRequest, isNull);
+      expect(a.props, ['RU-REF-1', null, null]);
     });
   });
 
@@ -69,7 +91,7 @@ void main() {
     });
 
     test('Success vs Failure are unequal', () {
-      final s = BuyConfirmSuccess(remittanceInfo: 'ref');
+      final s = BuyConfirmSuccess(reference: 'ref');
       final f = BuyConfirmFailure(BuyConfirmError.unknown);
       expect(s, isNot(equals(f)));
     });

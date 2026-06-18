@@ -36,9 +36,27 @@ void main() {
       await done;
 
       final success = cubit.state as BuyConfirmSuccess;
+      expect(success.reference, 'REF-123');
       expect(success.remittanceInfo, 'REF-123');
       expect(success.paymentRequest, 'SPC-payload');
       verify(() => service.confirmPayment(7)).called(1);
+    });
+
+    test('confirmPayment is backward compatible: a reference-only DTO emits '
+        'Success with the reference and null remittance info / QR', () async {
+      when(() => service.confirmPayment(any())).thenAnswer(
+        (_) async => const RealUnitBuyConfirmDto(reference: 'REF-456'),
+      );
+
+      final cubit = BuyConfirmCubit(service);
+      final done = cubit.stream.firstWhere((s) => s is BuyConfirmSuccess);
+      await cubit.confirmPayment(9);
+      await done;
+
+      final success = cubit.state as BuyConfirmSuccess;
+      expect(success.reference, 'REF-456');
+      expect(success.remittanceInfo, isNull);
+      expect(success.paymentRequest, isNull);
     });
 
     test('confirmPayment emits Failure(aktionariat) on ApiException 503', () async {

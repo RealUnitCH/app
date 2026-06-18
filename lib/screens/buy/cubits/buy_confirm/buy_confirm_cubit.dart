@@ -20,6 +20,7 @@ class BuyConfirmCubit extends Cubit<BuyConfirmState> {
       final dto = await _buyPaymentInfoService.confirmPayment(paymentInfoId);
       emit(
         BuyConfirmSuccess(
+          reference: dto.reference,
           remittanceInfo: dto.remittanceInfo,
           paymentRequest: dto.paymentRequest,
         ),

@@ -8,6 +8,7 @@ import 'package:realunit_wallet/screens/buy/buy_payment_details_page.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_details_card.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/currency.dart';
+import 'package:realunit_wallet/widgets/tab_selector.dart';
 
 import '../../helper/helper.dart';
 
@@ -54,6 +55,24 @@ void main() {
       // The confirm remittance info appears as the Verwendungszweck value.
       expect(find.text(S.current.purposeOfPayment), findsOneWidget);
       expect(find.text('RU-2026-000123'), findsOneWidget);
+    });
+
+    testWidgets('backward compatible: with paymentRequest null the purpose '
+        'renders inside the card and there is no QR tab', (tester) async {
+      await tester.pumpApp(
+        BuyPaymentDetailsPage(params: _params(paymentRequest: null)),
+      );
+
+      // Purpose of payment is rendered as the Verwendungszweck inside the card.
+      expect(
+        find.descendant(
+          of: find.byType(PaymentDetailsCard),
+          matching: find.text('RU-2026-000123'),
+        ),
+        findsOneWidget,
+      );
+      // No payment request → no tab selector / QR.
+      expect(find.byType(TabSelector<PaymentInfoOptions>), findsNothing);
     });
 
     testWidgets('shows no standalone reference line above the card',

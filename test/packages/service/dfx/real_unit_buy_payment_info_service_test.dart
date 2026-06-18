@@ -314,6 +314,23 @@ void main() {
         expect(result.paymentRequest, equals('SPC-qr'));
       });
 
+      test('backward compatible: a reference-only response (current API) maps '
+          'to a DTO with null remittance info / QR', () async {
+        final referenceText = 'REALU-123';
+        final appStore = buildAppStore(
+          (request) async => http.Response(
+            '{"reference":"$referenceText"}',
+            200,
+          ),
+        );
+        service = RealUnitBuyPaymentInfoService(appStore, walletService);
+
+        final result = await service.confirmPayment(1);
+        expect(result.reference, equals(referenceText));
+        expect(result.remittanceInfo, isNull);
+        expect(result.paymentRequest, isNull);
+      });
+
       test('succeeds on 201 status code', () async {
         final referenceText = 'REALU-123';
         final appStore = buildAppStore(

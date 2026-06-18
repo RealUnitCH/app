@@ -43,6 +43,27 @@ void main() {
 
       expect(dto.paymentRequest, isNull);
     });
+
+    test('backward compatible: a reference-only payload (current API) leaves '
+        'remittanceInfo and paymentRequest null', () {
+      final dto = RealUnitBuyConfirmDto.fromJson({'reference': 'XYZ-123'});
+
+      expect(dto.reference, 'XYZ-123');
+      expect(dto.remittanceInfo, isNull);
+      expect(dto.paymentRequest, isNull);
+    });
+
+    test('forward path: all three fields present are parsed', () {
+      final dto = RealUnitBuyConfirmDto.fromJson({
+        'reference': 'XYZ-123',
+        'remittanceInfo': 'REMIT-123',
+        'paymentRequest': 'SPC-qr',
+      });
+
+      expect(dto.reference, 'XYZ-123');
+      expect(dto.remittanceInfo, 'REMIT-123');
+      expect(dto.paymentRequest, 'SPC-qr');
+    });
   });
 
   group('$RealUnitBuyPaymentInfoDto.fromJson', () {
