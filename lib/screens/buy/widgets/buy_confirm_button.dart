@@ -58,7 +58,8 @@ class BuyConfirmButtonView extends StatelessWidget {
             extra: BuyPaymentDetailsParams(
               buyPaymentInfo: buyPaymentInfo,
               amount: amount,
-              reference: state.reference,
+              purposeOfPayment: state.remittanceInfo,
+              paymentRequest: state.paymentRequest,
             ),
           );
         }

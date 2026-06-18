@@ -24,11 +24,15 @@ const _info = BuyPaymentInfo(
   currency: Currency.chf,
 );
 
-BuyPaymentDetailsParams _params({String reference = 'REF-1'}) =>
+BuyPaymentDetailsParams _params({
+  String purposeOfPayment = 'RU-2026-000123',
+  String? paymentRequest,
+}) =>
     BuyPaymentDetailsParams(
       buyPaymentInfo: _info,
       amount: '100',
-      reference: reference,
+      purposeOfPayment: purposeOfPayment,
+      paymentRequest: paymentRequest,
     );
 
 void main() {
@@ -43,24 +47,28 @@ void main() {
       expect(find.byType(PaymentDetailsCard), findsOneWidget);
     });
 
-    testWidgets('renders the order reference when present', (tester) async {
+    testWidgets('renders the purpose of payment as the Verwendungszweck '
+        'inside the details card', (tester) async {
       await tester.pumpApp(BuyPaymentDetailsPage(params: _params()));
 
-      expect(
-        find.text('${S.current.buyExecutedReference}: REF-1'),
-        findsOneWidget,
-      );
+      // The confirm remittance info appears as the Verwendungszweck value.
+      expect(find.text(S.current.purposeOfPayment), findsOneWidget);
+      expect(find.text('RU-2026-000123'), findsOneWidget);
     });
 
-    testWidgets('hides the reference row when reference is empty',
+    testWidgets('shows no standalone reference line above the card',
         (tester) async {
-      await tester.pumpApp(
-        BuyPaymentDetailsPage(params: _params(reference: '')),
-      );
+      await tester.pumpApp(BuyPaymentDetailsPage(params: _params()));
 
+      // The purpose value only lives inside the card, never as a
+      // "Ihre Referenz: ..." line above it.
+      expect(find.textContaining('RU-2026-000123:'), findsNothing);
       expect(
-        find.textContaining(S.current.buyExecutedReference),
-        findsNothing,
+        find.descendant(
+          of: find.byType(PaymentDetailsCard),
+          matching: find.text('RU-2026-000123'),
+        ),
+        findsOneWidget,
       );
     });
 

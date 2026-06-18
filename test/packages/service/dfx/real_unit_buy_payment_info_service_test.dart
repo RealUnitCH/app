@@ -243,19 +243,23 @@ void main() {
           capturedUrl = request.url.toString();
           capturedMethod = request.method;
           capturedHeaders = request.headers;
-          return http.Response('{"reference":"$referenceText"}', 200);
+          return http.Response(
+            '{"reference":"$referenceText","remittanceInfo":"$referenceText"}',
+            200,
+          );
         });
 
         final paymentInfoId = 123;
 
         service = RealUnitBuyPaymentInfoService(appStore, walletService);
-        final reference = await service.confirmPayment(paymentInfoId);
+        final result = await service.confirmPayment(paymentInfoId);
 
         expect(capturedMethod, equals('PUT'));
         expect(capturedUrl, contains(apiConfig.apiHost));
         expect(capturedUrl, contains('/v1/realunit/buy/$paymentInfoId/confirm'));
         expect(capturedHeaders?['Authorization'], equals('Bearer test-auth-token'));
-        expect(reference, equals(referenceText));
+        expect(result.reference, equals(referenceText));
+        expect(result.remittanceInfo, equals(referenceText));
       });
 
       test('throws ApiException on non-200/201 status code', () async {
@@ -297,23 +301,33 @@ void main() {
       test('succeeds on 200 status code', () async {
         final referenceText = 'REALU-123';
         final appStore = buildAppStore(
-          (request) async => http.Response('{"reference":"$referenceText"}', 200),
+          (request) async => http.Response(
+            '{"reference":"$referenceText","remittanceInfo":"$referenceText","paymentRequest":"SPC-qr"}',
+            200,
+          ),
         );
         service = RealUnitBuyPaymentInfoService(appStore, walletService);
 
-        final reference = await service.confirmPayment(1);
-        expect(reference, equals(referenceText));
+        final result = await service.confirmPayment(1);
+        expect(result.reference, equals(referenceText));
+        expect(result.remittanceInfo, equals(referenceText));
+        expect(result.paymentRequest, equals('SPC-qr'));
       });
 
       test('succeeds on 201 status code', () async {
         final referenceText = 'REALU-123';
         final appStore = buildAppStore(
-          (request) async => http.Response('{"reference":"$referenceText"}', 201),
+          (request) async => http.Response(
+            '{"reference":"$referenceText","remittanceInfo":"$referenceText"}',
+            201,
+          ),
         );
         service = RealUnitBuyPaymentInfoService(appStore, walletService);
 
-        final reference = await service.confirmPayment(1);
-        expect(reference, equals(referenceText));
+        final result = await service.confirmPayment(1);
+        expect(result.reference, equals(referenceText));
+        expect(result.remittanceInfo, equals(referenceText));
+        expect(result.paymentRequest, isNull);
       });
     });
 

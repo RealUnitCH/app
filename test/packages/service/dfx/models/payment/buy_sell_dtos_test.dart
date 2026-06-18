@@ -23,10 +23,25 @@ void main() {
   });
 
   group('$RealUnitBuyConfirmDto.fromJson', () {
-    test('reads the reference field', () {
-      final dto = RealUnitBuyConfirmDto.fromJson({'reference': 'XYZ-123'});
+    test('reads the reference, remittance info and optional payment request', () {
+      final dto = RealUnitBuyConfirmDto.fromJson({
+        'reference': 'XYZ-123',
+        'remittanceInfo': 'XYZ-123',
+        'paymentRequest': 'SPC-qr',
+      });
 
       expect(dto.reference, 'XYZ-123');
+      expect(dto.remittanceInfo, 'XYZ-123');
+      expect(dto.paymentRequest, 'SPC-qr');
+    });
+
+    test('leaves paymentRequest null when absent', () {
+      final dto = RealUnitBuyConfirmDto.fromJson({
+        'reference': 'XYZ-123',
+        'remittanceInfo': 'XYZ-123',
+      });
+
+      expect(dto.paymentRequest, isNull);
     });
   });
 

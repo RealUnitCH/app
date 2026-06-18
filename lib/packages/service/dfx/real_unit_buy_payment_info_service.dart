@@ -58,7 +58,7 @@ class RealUnitBuyPaymentInfoService extends DFXAuthService {
     }
   }
 
-  Future<String> confirmPayment(int id) async {
+  Future<RealUnitBuyConfirmDto> confirmPayment(int id) async {
     final uri = buildUri(host, _confirmPaymentPath(id));
 
     final response = await authenticatedPut(
@@ -72,6 +72,6 @@ class RealUnitBuyPaymentInfoService extends DFXAuthService {
 
     final json = jsonDecode(response.body) as Map<String, dynamic>;
     final responseDto = RealUnitBuyConfirmDto.fromJson(json);
-    return responseDto.reference;
+    return responseDto;
   }
 }

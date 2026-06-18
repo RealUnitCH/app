@@ -10,34 +10,37 @@ import 'package:realunit_wallet/widgets/tab_selector.dart';
 
 import '../../../helper/helper.dart';
 
-BuyPaymentInfo _info({String? paymentRequest, String? remittanceInfo}) =>
-    BuyPaymentInfo(
-      id: 1,
-      iban: 'CH00 0000 0000 0000 0000 0',
-      bic: 'BICCBIC',
-      name: 'RealUnit AG',
-      street: 'Bahnhofstrasse',
-      number: '1',
-      zip: '8001',
-      city: 'Zurich',
-      country: 'Switzerland',
-      currency: Currency.chf,
-      paymentRequest: paymentRequest,
-      remittanceInfo: remittanceInfo,
-    );
+const _info = BuyPaymentInfo(
+  id: 1,
+  iban: 'CH00 0000 0000 0000 0000 0',
+  bic: 'BICCBIC',
+  name: 'RealUnit AG',
+  street: 'Bahnhofstrasse',
+  number: '1',
+  zip: '8001',
+  city: 'Zurich',
+  country: 'Switzerland',
+  currency: Currency.chf,
+);
 
 // The card uses InkWell (needs a Material ancestor) and renders a tall list of
 // rows — host it in a scrollable Scaffold so it lays out without overflow.
-Widget _host(BuyPaymentInfo info) => Scaffold(
+Widget _host({String purposeOfPayment = '', String? paymentRequest}) =>
+    Scaffold(
       body: SingleChildScrollView(
-        child: PaymentDetailsCard(buyPaymentInfo: info, amount: '100'),
+        child: PaymentDetailsCard(
+          buyPaymentInfo: _info,
+          amount: '100',
+          purposeOfPayment: purposeOfPayment,
+          paymentRequest: paymentRequest,
+        ),
       ),
     );
 
 void main() {
   group('$PaymentDetailsCard', () {
     testWidgets('renders the bank-transfer fields and the amount', (tester) async {
-      await tester.pumpApp(_host(_info()));
+      await tester.pumpApp(_host());
 
       expect(find.text('CH00 0000 0000 0000 0000 0'), findsOneWidget);
       expect(find.text('BICCBIC'), findsOneWidget);
@@ -46,23 +49,23 @@ void main() {
       expect(find.text('${S.current.amountIn} ${Currency.chf.code}'), findsOneWidget);
     });
 
-    testWidgets('renders the purpose of payment when remittanceInfo is set',
+    testWidgets('renders the purpose of payment when purposeOfPayment is set',
         (tester) async {
-      await tester.pumpApp(_host(_info(remittanceInfo: 'REF-XYZ')));
+      await tester.pumpApp(_host(purposeOfPayment: 'REF-XYZ'));
 
       expect(find.text(S.current.purposeOfPayment), findsOneWidget);
       expect(find.text('REF-XYZ'), findsOneWidget);
     });
 
-    testWidgets('omits the purpose row when remittanceInfo is null',
+    testWidgets('omits the purpose row when purposeOfPayment is empty',
         (tester) async {
-      await tester.pumpApp(_host(_info()));
+      await tester.pumpApp(_host());
 
       expect(find.text(S.current.purposeOfPayment), findsNothing);
     });
 
     testWidgets('renders copy icons for the rows', (tester) async {
-      await tester.pumpApp(_host(_info()));
+      await tester.pumpApp(_host());
 
       expect(find.byIcon(Icons.copy_outlined), findsWidgets);
     });
@@ -81,7 +84,7 @@ void main() {
         messenger.setMockMethodCallHandler(SystemChannels.platform, null);
       });
 
-      await tester.pumpApp(_host(_info()));
+      await tester.pumpApp(_host());
 
       await tester.tap(find.byIcon(Icons.copy_outlined).first);
       await tester.pump();
@@ -91,7 +94,7 @@ void main() {
 
     testWidgets('shows no tab selector when there is no payment request',
         (tester) async {
-      await tester.pumpApp(_host(_info()));
+      await tester.pumpApp(_host());
 
       expect(find.byType(TabSelector<PaymentInfoOptions>), findsNothing);
     });
@@ -99,7 +102,7 @@ void main() {
     testWidgets('shows the tab selector and a QR code when a payment request exists',
         (tester) async {
       await tester.pumpApp(
-        _host(_info(paymentRequest: 'SPC\n0200\nsome-payload')),
+        _host(paymentRequest: 'SPC\n0200\nsome-payload'),
       );
 
       expect(find.byType(TabSelector<PaymentInfoOptions>), findsOneWidget);

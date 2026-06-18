@@ -131,7 +131,7 @@ void main() {
       whenListen(
         cubit,
         Stream.fromIterable([
-          const BuyConfirmSuccess('REF-1'),
+          const BuyConfirmSuccess(remittanceInfo: 'RU-2026-000123'),
         ]),
         initialState: const BuyConfirmInitial(),
       );
@@ -167,6 +167,8 @@ void main() {
 
       expect(find.text(S.current.buyPaymentDetailsTitle), findsOneWidget);
       expect(find.text(S.current.buyPaymentInstructionEmail), findsOneWidget);
+      // The confirm remittance info is surfaced as the Verwendungszweck.
+      expect(find.text('RU-2026-000123'), findsOneWidget);
     });
   });
 }

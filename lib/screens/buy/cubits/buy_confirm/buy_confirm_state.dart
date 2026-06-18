@@ -18,12 +18,16 @@ class BuyConfirmLoading extends BuyConfirmState {
 }
 
 class BuyConfirmSuccess extends BuyConfirmState {
-  final String reference;
+  final String remittanceInfo;
+  final String? paymentRequest;
 
-  const BuyConfirmSuccess(this.reference);
+  const BuyConfirmSuccess({
+    required this.remittanceInfo,
+    this.paymentRequest,
+  });
 
   @override
-  List<Object?> get props => [reference];
+  List<Object?> get props => [remittanceInfo, paymentRequest];
 }
 
 class BuyConfirmFailure extends BuyConfirmState {
