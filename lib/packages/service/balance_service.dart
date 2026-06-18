@@ -21,15 +21,23 @@ class BalanceService {
 
   Timer? _syncTimer;
 
+  // Set once the account endpoint 404s (wallet has no RealUnit account yet), so
+  // the 10s poll stops re-hitting an endpoint that will keep returning 404.
+  bool _accountMissing = false;
+
   void startSync(String address) {
     cancelSync();
 
+    // Re-check on every (re)start (e.g. app resume / after onboarding an account).
+    _accountMissing = false;
     _syncTimer = Timer.periodic(const Duration(seconds: 10), (_) => updateBalance(address));
   }
 
   void cancelSync() => _syncTimer?.cancel();
 
   Future<void> updateBalance(String address) async {
+    if (_accountMissing) return;
+
     try {
       final uri = buildUri(_host, '$_balancePath/$address');
 
@@ -52,6 +60,8 @@ class BalanceService {
             ),
           );
         }
+      } else if (response.statusCode == 404) {
+        _accountMissing = true;
       }
     } catch (e) {
       developer.log('Failed to update RealUnit balance: $e');

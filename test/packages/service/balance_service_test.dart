@@ -277,6 +277,63 @@ void main() {
           expect(calls, callsAtCancel, reason: 'cancelled timer must not tick again');
         });
       });
+
+      // A wallet with no RealUnit account 404s on every probe; the poll must stop
+      // hitting the endpoint after the first 404 instead of hammering it every 10s.
+      group('no RealUnit account (404)', () {
+        test('stops probing the network after a 404', () {
+          fakeAsync((async) {
+            var calls = 0;
+            final appStore = buildAppStore((_) async {
+              calls++;
+              return http.Response(
+                jsonEncode({'statusCode': 404, 'message': 'Account not found', 'error': 'Not Found'}),
+                404,
+              );
+            });
+            final service = BalanceService(balanceRepository, appStore);
+
+            service.startSync('0xNoAccount');
+
+            // First tick at T=10 hits the network once and gets a 404.
+            async.elapse(const Duration(seconds: 10));
+            async.flushMicrotasks();
+            expect(calls, 1);
+
+            // Every later tick must be a no-op — no more 404 spam.
+            async.elapse(const Duration(minutes: 5));
+            async.flushMicrotasks();
+            expect(calls, 1, reason: 'after a 404 the poll must stop hitting the endpoint');
+
+            service.cancelSync();
+          });
+        });
+
+        test('a fresh startSync re-checks after a previous 404', () {
+          fakeAsync((async) {
+            var calls = 0;
+            final appStore = buildAppStore((_) async {
+              calls++;
+              return http.Response('{"error": "Not Found"}', 404);
+            });
+            final service = BalanceService(balanceRepository, appStore);
+
+            service.startSync('0xAddr');
+            async.elapse(const Duration(seconds: 10));
+            async.flushMicrotasks();
+            expect(calls, 1);
+
+            // Onboarding / app-resume re-runs startSync, which must clear the
+            // missing-account flag and probe again (the account may now exist).
+            service.startSync('0xAddr');
+            async.elapse(const Duration(seconds: 10));
+            async.flushMicrotasks();
+            expect(calls, 2, reason: 'startSync must reset the flag and re-probe');
+
+            service.cancelSync();
+          });
+        });
+      });
     });
   });
 }
