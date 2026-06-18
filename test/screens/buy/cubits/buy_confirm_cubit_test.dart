@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/dto/real_unit_buy_confirm_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_confirm/buy_confirm_cubit.dart';
 
@@ -19,17 +20,43 @@ void main() {
       expect(BuyConfirmCubit(service).state, isA<BuyConfirmInitial>());
     });
 
-    test('confirmPayment emits Success with the returned reference', () async {
-      when(() => service.confirmPayment(any()))
-          .thenAnswer((_) async => 'REF-123');
+    test('confirmPayment emits Success with the confirm remittance info and QR',
+        () async {
+      when(() => service.confirmPayment(any())).thenAnswer(
+        (_) async => const RealUnitBuyConfirmDto(
+          reference: 'REF-123',
+          remittanceInfo: 'REF-123',
+          paymentRequest: 'SPC-payload',
+        ),
+      );
 
       final cubit = BuyConfirmCubit(service);
       final done = cubit.stream.firstWhere((s) => s is BuyConfirmSuccess);
       await cubit.confirmPayment(7);
       await done;
 
-      expect((cubit.state as BuyConfirmSuccess).reference, 'REF-123');
+      final success = cubit.state as BuyConfirmSuccess;
+      expect(success.reference, 'REF-123');
+      expect(success.remittanceInfo, 'REF-123');
+      expect(success.paymentRequest, 'SPC-payload');
       verify(() => service.confirmPayment(7)).called(1);
+    });
+
+    test('confirmPayment is backward compatible: a reference-only DTO emits '
+        'Success with the reference and null remittance info / QR', () async {
+      when(() => service.confirmPayment(any())).thenAnswer(
+        (_) async => const RealUnitBuyConfirmDto(reference: 'REF-456'),
+      );
+
+      final cubit = BuyConfirmCubit(service);
+      final done = cubit.stream.firstWhere((s) => s is BuyConfirmSuccess);
+      await cubit.confirmPayment(9);
+      await done;
+
+      final success = cubit.state as BuyConfirmSuccess;
+      expect(success.reference, 'REF-456');
+      expect(success.remittanceInfo, isNull);
+      expect(success.paymentRequest, isNull);
     });
 
     test('confirmPayment emits Failure(aktionariat) on ApiException 503', () async {

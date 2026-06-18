@@ -11,8 +11,10 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_paym
 import 'package:realunit_wallet/screens/buy/buy_payment_details_page.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_confirm/buy_confirm_cubit.dart';
 import 'package:realunit_wallet/screens/buy/widgets/buy_confirm_button.dart';
+import 'package:realunit_wallet/screens/buy/widgets/payment_details_card.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/currency.dart';
+import 'package:realunit_wallet/widgets/tab_selector.dart';
 
 class _MockBuyConfirmCubit extends MockCubit<BuyConfirmState>
     implements BuyConfirmCubit {}
@@ -126,47 +128,80 @@ void main() {
       expect(find.text(S.current.buyPaymentConfirmFailedAktionariat), findsOneWidget);
     });
 
-    testWidgets('navigates to the payment details page on success',
+    GoRouter detailsRouter() => GoRouter(
+          initialLocation: '/buy',
+          routes: [
+            GoRoute(
+              name: AppRoutes.buy,
+              path: '/buy',
+              builder: (_, _) => Scaffold(
+                body: BlocProvider<BuyConfirmCubit>.value(
+                  value: cubit,
+                  child: const BuyConfirmButtonView(
+                    buyPaymentInfo: _info,
+                    amount: '100',
+                  ),
+                ),
+              ),
+            ),
+            GoRoute(
+              name: AppRoutes.buyPaymentDetails,
+              path: '/buyPaymentDetails',
+              builder: (_, state) => BuyPaymentDetailsPage(
+                params: state.extra as BuyPaymentDetailsParams,
+              ),
+            ),
+          ],
+        );
+
+    testWidgets('backward compatible: a reference-only success navigates to the '
+        'details page, shows the reference as Verwendungszweck and no QR tab',
         (tester) async {
       whenListen(
         cubit,
         Stream.fromIterable([
-          const BuyConfirmSuccess('REF-1'),
+          const BuyConfirmSuccess(
+            reference: 'RU-REF-1',
+            remittanceInfo: null,
+            paymentRequest: null,
+          ),
         ]),
         initialState: const BuyConfirmInitial(),
       );
 
-      final router = GoRouter(
-        initialLocation: '/buy',
-        routes: [
-          GoRoute(
-            name: AppRoutes.buy,
-            path: '/buy',
-            builder: (_, _) => Scaffold(
-              body: BlocProvider<BuyConfirmCubit>.value(
-                value: cubit,
-                child: const BuyConfirmButtonView(
-                  buyPaymentInfo: _info,
-                  amount: '100',
-                ),
-              ),
-            ),
-          ),
-          GoRoute(
-            name: AppRoutes.buyPaymentDetails,
-            path: '/buyPaymentDetails',
-            builder: (_, state) => BuyPaymentDetailsPage(
-              params: state.extra as BuyPaymentDetailsParams,
-            ),
-          ),
-        ],
-      );
-
-      await tester.pumpWidget(host(router: router));
+      await tester.pumpWidget(host(router: detailsRouter()));
       await tester.pumpAndSettle();
 
       expect(find.text(S.current.buyPaymentDetailsTitle), findsOneWidget);
       expect(find.text(S.current.buyPaymentInstructionEmail), findsOneWidget);
+      // Falls back to `reference` as the Verwendungszweck.
+      expect(find.text('RU-REF-1'), findsOneWidget);
+      // No QR encoding → no tab selector.
+      expect(find.byType(TabSelector<PaymentInfoOptions>), findsNothing);
+    });
+
+    testWidgets('forward path: remittanceInfo + paymentRequest drive the '
+        'Verwendungszweck and surface the QR tab', (tester) async {
+      whenListen(
+        cubit,
+        Stream.fromIterable([
+          const BuyConfirmSuccess(
+            reference: 'RU-REF-2',
+            remittanceInfo: 'RU-REMIT-2',
+            paymentRequest: 'SPC\n0200\nsome-payload',
+          ),
+        ]),
+        initialState: const BuyConfirmInitial(),
+      );
+
+      await tester.pumpWidget(host(router: detailsRouter()));
+      await tester.pumpAndSettle();
+
+      // The API-designated remittance info wins over the reference fallback.
+      expect(find.text('RU-REMIT-2'), findsOneWidget);
+      expect(find.text('RU-REF-2'), findsNothing);
+      // The payment request encoding surfaces the QR tab.
+      expect(find.byType(TabSelector<PaymentInfoOptions>), findsOneWidget);
     });
   });
 }

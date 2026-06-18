@@ -14,6 +14,7 @@ import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registrati
 import 'package:realunit_wallet/screens/kyc/steps/registration/kyc_registration_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_address_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_personal_step.dart';
+import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 
 import '../../../helper/helper.dart';
 
@@ -130,6 +131,32 @@ void main() {
       await tester.pump();
 
       expect(find.byType(KycRegistrationAddressStep), findsOne);
+    });
+
+    testWidgets('postal code field uses a text keyboard for alphanumeric codes',
+        (tester) async {
+      // Regression guard: foreign postal codes are alphanumeric (NL "1011 AB",
+      // UK "EC1A 1BB"). A number-only keyboard blocked customers from entering
+      // them even though the validator + backend accept letters and spaces.
+      final state = const KycRegistrationStepState(
+        step: KycRegistrationStep.address,
+        steps: [
+          KycRegistrationStep.personal,
+          KycRegistrationStep.address,
+        ],
+      );
+      when(() => registrationStepCubit.state).thenReturn(state);
+
+      await tester.pumpApp(buildSubject(const KycRegistrationView()));
+      await tester.pump();
+
+      (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(state.index);
+      await tester.pump();
+
+      final postalField = tester.widget<LabeledTextField>(
+        find.byWidgetPredicate((w) => w is LabeledTextField && w.hintText == '8000'),
+      );
+      expect(postalField.keyboardType, TextInputType.text);
     });
   });
 

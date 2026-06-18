@@ -57,10 +57,10 @@ void main() {
   });
 
   group('$BuyConfirmState equality', () {
-    test('Success carries the reference', () {
-      const a = BuyConfirmSuccess('XYZ-1');
-      const b = BuyConfirmSuccess('XYZ-1');
-      const c = BuyConfirmSuccess('XYZ-2');
+    test('Success carries the reference, remittance info and QR', () {
+      const a = BuyConfirmSuccess(reference: 'XYZ-1');
+      const b = BuyConfirmSuccess(reference: 'XYZ-1');
+      const c = BuyConfirmSuccess(reference: 'XYZ-2');
       expect(a, b);
       expect(a, isNot(c));
     });

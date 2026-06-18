@@ -20,17 +20,21 @@ enum PaymentInfoOptions {
 class PaymentDetailsCard extends StatelessWidget {
   final String amount;
   final BuyPaymentInfo buyPaymentInfo;
+  final String purposeOfPayment;
+  final String? paymentRequest;
 
   const PaymentDetailsCard({
     super.key,
     required this.buyPaymentInfo,
     required this.amount,
+    required this.purposeOfPayment,
+    this.paymentRequest,
   });
 
   @override
   Widget build(BuildContext context) {
     final selectedTab = ValueNotifier(PaymentInfoOptions.text);
-    final hasQrCode = buyPaymentInfo.paymentRequest != null;
+    final hasQrCode = paymentRequest != null;
 
     return ValueListenableBuilder<PaymentInfoOptions>(
       valueListenable: selectedTab,
@@ -75,10 +79,10 @@ class PaymentDetailsCard extends StatelessWidget {
                         description: '${S.of(context).amountIn} ${buyPaymentInfo.currency.code}',
                         value: amount,
                       ),
-                      if (buyPaymentInfo.remittanceInfo != null)
+                      if (purposeOfPayment.isNotEmpty)
                         _PaymentDetailsRow(
                           description: S.of(context).purposeOfPayment,
-                          value: buyPaymentInfo.remittanceInfo!,
+                          value: purposeOfPayment,
                         ),
                       _PaymentDetailsRow(
                         description: S.of(context).iban,
@@ -115,9 +119,9 @@ class PaymentDetailsCard extends StatelessWidget {
                 PaymentInfoOptions.qrCode => Container(
                   padding: const .all(16.0),
                   child: Center(
-                    child: buyPaymentInfo.paymentRequest!.contains('<svg')
+                    child: paymentRequest!.contains('<svg')
                         ? SvgPicture.string(
-                            SvgParser.normalize(buyPaymentInfo.paymentRequest!),
+                            SvgParser.normalize(paymentRequest!),
                             width: MediaQuery.widthOf(context) * 0.6,
                             fit: .contain,
                           )
@@ -125,7 +129,7 @@ class PaymentDetailsCard extends StatelessWidget {
                             height: MediaQuery.widthOf(context) * 0.6,
                             width: MediaQuery.widthOf(context) * 0.6,
                             child: QrImageView(
-                              data: buyPaymentInfo.paymentRequest!,
+                              data: paymentRequest!,
                             ),
                           ),
                   ),

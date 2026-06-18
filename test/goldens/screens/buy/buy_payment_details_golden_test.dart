@@ -19,10 +19,9 @@ void main() {
       city: 'Zurich',
       country: 'Switzerland',
       currency: Currency.chf,
-      remittanceInfo: 'RU-2026-000123',
     ),
     amount: '100',
-    reference: 'RU-2026-000123',
+    purposeOfPayment: 'RU-2026-000123',
   );
 
   group('$BuyPaymentDetailsPage', () {
