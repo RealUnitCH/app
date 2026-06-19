@@ -97,14 +97,14 @@ void main() {
       expect(find.text(S.current.buyBackToMain), findsOneWidget);
     });
 
-    testWidgets('back-to-main button navigates to home', (tester) async {
+    testWidgets('back-to-main button navigates to dashboard', (tester) async {
       final router = GoRouter(
         initialLocation: '/buyPaymentDetails',
         routes: [
           GoRoute(
-            name: AppRoutes.home,
-            path: '/home',
-            builder: (_, _) => const Scaffold(body: Text('HOME-AREA')),
+            name: AppRoutes.dashboard,
+            path: '/dashboard',
+            builder: (_, _) => const Scaffold(body: Text('DASHBOARD-AREA')),
           ),
           GoRoute(
             name: AppRoutes.buyPaymentDetails,
@@ -132,7 +132,7 @@ void main() {
       await tester.tap(find.text(S.current.buyBackToMain));
       await tester.pumpAndSettle();
 
-      expect(find.text('HOME-AREA'), findsOneWidget);
+      expect(find.text('DASHBOARD-AREA'), findsOneWidget);
     });
   });
 }

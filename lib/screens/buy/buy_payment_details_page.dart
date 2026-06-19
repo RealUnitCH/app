@@ -79,7 +79,7 @@ class BuyPaymentDetailsPage extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20.0),
                   child: AppFilledButton(
-                    onPressed: () => context.goNamed(AppRoutes.home),
+                    onPressed: () => context.goNamed(AppRoutes.dashboard),
                     label: S.of(context).buyBackToMain,
                   ),
                 ),

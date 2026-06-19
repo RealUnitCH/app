@@ -22,6 +22,17 @@ void main() {
       expect(cubit.state.horizontalLineValues, isEmpty);
     });
 
+    test('initial state defaults to TimePeriod.all', () {
+      // Regression guard for the dashboard default: a freshly constructed
+      // cubit must select the full range, not a clipped window.
+      final cubit = PortfolioChartCubit([
+        _pt(DateTime.utc(2026, 1, 1), 1000),
+        _pt(DateTime.utc(2026, 2, 1), 2000),
+      ]);
+
+      expect(cubit.state.selectedPeriod, TimePeriod.all);
+    });
+
     test('empty input keeps zero-window after selectPeriod to oneMonth', () async {
       // Guards the empty-input early-return branch when period changes.
       final cubit = PortfolioChartCubit(const []);
@@ -66,11 +77,9 @@ void main() {
       // `average * 0.05` so the chart still has a visible Y-range instead of
       // collapsing to a single horizontal line.
       //
-      // Dates are anchored to `DateTime.now()` because the cubit's default
-      // period (`TimePeriod.threeMonths`) clips the visible window relative
-      // to `DateTime.now()`; hardcoded calendar dates would silently fall
-      // outside the window once the calendar moves on and the test would
-      // start asserting on an empty series.
+      // Dates are anchored to `DateTime.now()` so the series stays realistic
+      // and robust against any future period-clipping; this test exercises the
+      // default period (`TimePeriod.all`), which keeps the full series visible.
       final now = DateTime.now();
       final points = [
         _pt(now.subtract(const Duration(days: 60)), 10000),
@@ -208,9 +217,9 @@ void main() {
 
     test('non-empty prices but all outside the selected window yield an empty visible chart', () {
       // Regression: PortfolioChartCubit used to crash with `Bad state: No
-      // element` when every price fell outside the selected window. With the
-      // default switched to threeMonths, that's a realistic state for any
-      // user whose only data points are older than 90 days.
+      // element` when every price fell outside the selected window. That is a
+      // realistic state whenever the user narrows to a short period (here
+      // oneWeek) while their only data points are older than the window.
       final points = [
         _pt(DateTime.utc(2020, 1, 1), 5000),
         _pt(DateTime.utc(2020, 2, 1), 6000),
