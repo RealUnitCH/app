@@ -20,6 +20,17 @@ void main() {
       expect(cubit.state.maxY, 1);
     });
 
+    test('initial state defaults to TimePeriod.all', () {
+      // Regression guard for the dashboard default: a freshly constructed
+      // cubit must select the full range, not a clipped window.
+      final cubit = PriceChartCubit([
+        _pp(DateTime.utc(2026, 1, 1), 1000),
+        _pp(DateTime.utc(2026, 2, 1), 2000),
+      ]);
+
+      expect(cubit.state.selectedPeriod, TimePeriod.all);
+    });
+
     test('empty price list keeps zero-window after selectPeriod to oneWeek', () async {
       // Guards the early-return branch in _calculateChartData: even when the
       // selected period changes, an empty input must keep visibleSpots empty

@@ -22,6 +22,17 @@ void main() {
       expect(cubit.state.horizontalLineValues, isEmpty);
     });
 
+    test('initial state defaults to TimePeriod.all', () {
+      // Regression guard for the dashboard default: a freshly constructed
+      // cubit must select the full range, not a clipped window.
+      final cubit = PortfolioChartCubit([
+        _pt(DateTime.utc(2026, 1, 1), 1000),
+        _pt(DateTime.utc(2026, 2, 1), 2000),
+      ]);
+
+      expect(cubit.state.selectedPeriod, TimePeriod.all);
+    });
+
     test('empty input keeps zero-window after selectPeriod to oneMonth', () async {
       // Guards the empty-input early-return branch when period changes.
       final cubit = PortfolioChartCubit(const []);
