@@ -155,9 +155,9 @@ void main() {
 
     test('non-empty prices but all outside the selected window yield an empty visible chart', () {
       // Regression: PriceChartCubit used to crash with `Bad state: No
-      // element` when every price fell outside the selected window. With the
-      // default switched to threeMonths, that's a realistic state for any
-      // user whose only data points are older than 90 days.
+      // element` when every price fell outside the selected window. That is a
+      // realistic state whenever the user narrows to a short period (here
+      // oneWeek) while their only data points are older than the window.
       final cubit = PriceChartCubit([
         _pp(DateTime.utc(2020, 1, 1), 1000),
         _pp(DateTime.utc(2020, 2, 1), 2000),
