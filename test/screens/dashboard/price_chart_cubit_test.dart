@@ -20,6 +20,17 @@ void main() {
       expect(cubit.state.maxY, 1);
     });
 
+    test('initial state defaults to TimePeriod.all', () {
+      // Regression guard for the dashboard default: a freshly constructed
+      // cubit must select the full range, not a clipped window.
+      final cubit = PriceChartCubit([
+        _pp(DateTime.utc(2026, 1, 1), 1000),
+        _pp(DateTime.utc(2026, 2, 1), 2000),
+      ]);
+
+      expect(cubit.state.selectedPeriod, TimePeriod.all);
+    });
+
     test('empty price list keeps zero-window after selectPeriod to oneWeek', () async {
       // Guards the early-return branch in _calculateChartData: even when the
       // selected period changes, an empty input must keep visibleSpots empty
@@ -155,9 +166,9 @@ void main() {
 
     test('non-empty prices but all outside the selected window yield an empty visible chart', () {
       // Regression: PriceChartCubit used to crash with `Bad state: No
-      // element` when every price fell outside the selected window. With the
-      // default switched to threeMonths, that's a realistic state for any
-      // user whose only data points are older than 90 days.
+      // element` when every price fell outside the selected window. That is a
+      // realistic state whenever the user narrows to a short period (here
+      // oneWeek) while their only data points are older than the window.
       final cubit = PriceChartCubit([
         _pp(DateTime.utc(2020, 1, 1), 1000),
         _pp(DateTime.utc(2020, 2, 1), 2000),
