@@ -84,6 +84,7 @@ class TransactionHistoryDownloadButtonView extends StatelessWidget {
                         context.read<TransactionHistoryMultiReceiptCubit>().generateReceipt(
                           transactionsIds,
                           currency: context.read<SettingsBloc>().state.currency,
+                          language: context.read<SettingsBloc>().state.language,
                         ),
                     child: Container(
                       height: 44,
