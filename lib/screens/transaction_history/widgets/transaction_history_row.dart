@@ -149,6 +149,7 @@ class TransactionHistoryRowView extends StatelessWidget {
                             context.read<TransactionHistoryReceiptCubit>().generateReceipt(
                               transaction.txId,
                               currency: context.read<SettingsBloc>().state.currency,
+                              language: context.read<SettingsBloc>().state.language,
                             );
                           },
                           child: const Icon(

@@ -9,6 +9,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/pdf/pdf_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
 import 'package:realunit_wallet/screens/transaction_history/cubits/multi_receipt/transaction_history_multi_receipt_cubit.dart';
 import 'package:realunit_wallet/styles/currency.dart';
+import 'package:realunit_wallet/styles/language.dart';
 
 class _MockPdfService extends Mock implements RealUnitPdfService {}
 
@@ -38,6 +39,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(Currency.chf);
+    registerFallbackValue(Language.en);
   });
 
   setUp(() {
@@ -67,7 +69,7 @@ void main() {
     test('generateReceipt writes the PDF and emits Success with the file path', () async {
       final pdfBytes = utf8.encode('%PDF-1.4 fake-multi');
       when(
-        () => service.getTransactionsReceipt(any(), currency: any(named: 'currency')),
+        () => service.getTransactionsReceipt(any(), currency: any(named: 'currency'), language: any(named: 'language')),
       ).thenAnswer((_) async => PdfDto(pdfData: base64Encode(pdfBytes)));
 
       final cubit = buildCubit();
@@ -79,7 +81,7 @@ void main() {
         ]),
       );
 
-      await cubit.generateReceipt(['tx-1', 'tx-2'], currency: Currency.eur);
+      await cubit.generateReceipt(['tx-1', 'tx-2'], currency: Currency.eur, language: Language.de);
       await emissions;
 
       expect(cubit.state, isA<TransactionHistoryMultiReceiptSuccess>());
@@ -89,28 +91,30 @@ void main() {
       expect(File(success.receiptPath).readAsBytesSync(), pdfBytes);
       expect(directoryPort.calls, 1);
       verify(
-        () => service.getTransactionsReceipt(['tx-1', 'tx-2'], currency: Currency.eur),
+        () => service.getTransactionsReceipt(['tx-1', 'tx-2'], currency: Currency.eur, language: Language.de),
       ).called(1);
     });
 
     test('generateReceipt uses Currency.chf as default', () async {
       when(
-        () => service.getTransactionsReceipt(any(), currency: any(named: 'currency')),
+        () => service.getTransactionsReceipt(any(), currency: any(named: 'currency'), language: any(named: 'language')),
       ).thenAnswer((_) async => PdfDto(pdfData: base64Encode(<int>[1])));
 
       final cubit = buildCubit();
-      await cubit.generateReceipt(['tx-1']);
+      await cubit.generateReceipt(['tx-1'], language: Language.en);
 
-      verify(() => service.getTransactionsReceipt(['tx-1'], currency: Currency.chf)).called(1);
+      verify(
+        () => service.getTransactionsReceipt(['tx-1'], currency: Currency.chf, language: Language.en),
+      ).called(1);
     });
 
     test('generateReceipt emits Failure on service error', () async {
       when(
-        () => service.getTransactionsReceipt(any(), currency: any(named: 'currency')),
+        () => service.getTransactionsReceipt(any(), currency: any(named: 'currency'), language: any(named: 'language')),
       ).thenAnswer((_) async => throw Exception('network'));
 
       final cubit = buildCubit();
-      await cubit.generateReceipt(['tx-1', 'tx-2']);
+      await cubit.generateReceipt(['tx-1', 'tx-2'], language: Language.en);
 
       expect(cubit.state, isA<TransactionHistoryMultiReceiptFailure>());
       final failure = cubit.state as TransactionHistoryMultiReceiptFailure;
@@ -122,11 +126,11 @@ void main() {
       final brokenPort = _FakeDocumentsDirectoryPort(missing);
 
       when(
-        () => service.getTransactionsReceipt(any(), currency: any(named: 'currency')),
+        () => service.getTransactionsReceipt(any(), currency: any(named: 'currency'), language: any(named: 'language')),
       ).thenAnswer((_) async => PdfDto(pdfData: base64Encode(<int>[1])));
 
       final cubit = TransactionHistoryMultiReceiptCubit(service, directory: brokenPort);
-      await cubit.generateReceipt(['tx-1']);
+      await cubit.generateReceipt(['tx-1'], language: Language.en);
 
       expect(cubit.state, isA<TransactionHistoryMultiReceiptFailure>());
     });
@@ -134,11 +138,11 @@ void main() {
     test('does not emit Success when closed during service call', () async {
       final completer = Completer<PdfDto>();
       when(
-        () => service.getTransactionsReceipt(any(), currency: any(named: 'currency')),
+        () => service.getTransactionsReceipt(any(), currency: any(named: 'currency'), language: any(named: 'language')),
       ).thenAnswer((_) => completer.future);
 
       final cubit = buildCubit();
-      unawaited(cubit.generateReceipt(['tx-1']));
+      unawaited(cubit.generateReceipt(['tx-1'], language: Language.en));
       await cubit.close();
       completer.complete(PdfDto(pdfData: base64Encode(<int>[1])));
     });
@@ -146,11 +150,11 @@ void main() {
     test('does not emit Failure after close', () async {
       final completer = Completer<PdfDto>();
       when(
-        () => service.getTransactionsReceipt(any(), currency: any(named: 'currency')),
+        () => service.getTransactionsReceipt(any(), currency: any(named: 'currency'), language: any(named: 'language')),
       ).thenAnswer((_) => completer.future);
 
       final cubit = buildCubit();
-      unawaited(cubit.generateReceipt(['tx-1']));
+      unawaited(cubit.generateReceipt(['tx-1'], language: Language.en));
       await cubit.close();
       completer.completeError(Exception('late'));
     });

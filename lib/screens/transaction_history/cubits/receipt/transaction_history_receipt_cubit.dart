@@ -7,6 +7,7 @@ import 'package:realunit_wallet/packages/io/documents_directory_port.dart';
 import 'package:realunit_wallet/packages/io/path_provider_adapter.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
 import 'package:realunit_wallet/styles/currency.dart';
+import 'package:realunit_wallet/styles/language.dart';
 
 part 'transaction_history_receipt_state.dart';
 
@@ -21,11 +22,11 @@ class TransactionHistoryReceiptCubit extends Cubit<TransactionHistoryReceiptStat
        _directory = directory ?? const PathProviderAdapter(),
        super(const TransactionHistoryReceiptInitial());
 
-  Future<void> generateReceipt(String txId, {Currency currency = Currency.chf}) async {
+  Future<void> generateReceipt(String txId, {Currency currency = Currency.chf, required Language language}) async {
     try {
       emit(const TransactionHistoryReceiptLoading());
 
-      final response = await _pdfService.getTransactionReceipt(txId, currency: currency);
+      final response = await _pdfService.getTransactionReceipt(txId, currency: currency, language: language);
       if (isClosed) return;
       final file = await _createFileFromBytes(response.pdfData, txId);
       if (isClosed) return;
