@@ -120,7 +120,7 @@ class _SettingsConfirmLogoutWalletSheetState extends State<SettingsConfirmLogout
                     Expanded(
                       child: AppFilledButton(
                         onPressed: isChecked ? () => context.pop(true) : null,
-                        label: S.of(context).logout,
+                        label: S.of(context).reset,
                       ),
                     ),
                   ],

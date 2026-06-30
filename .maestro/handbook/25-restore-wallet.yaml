@@ -3,9 +3,9 @@
 # this flow's diagnostic capture lands in build/handbook-captures/25-restore-wallet.png.
 # Continues from 24-settings-delete-wallet (no clearState): the
 # SettingsConfirmLogoutWalletSheet modal is showing. We complete the
-# termination here — tick the "Ich habe meine Wiederherstellungsphrase
-# gesichert." checkbox (which enables the disabled "Abmelden" button), then
-# tap "Abmelden". Confirming the logout wipes the wallet and drops the app
+# reset here — tick the "Ich habe meine Wiederherstellungsphrase
+# gesichert." checkbox (which enables the disabled "Zurücksetzen" button), then
+# tap "Zurücksetzen". Confirming the reset wipes the wallet and drops the app
 # back to onboarding (welcome).
 #
 # From there we walk the restore path: from the HomePage splash tap "Start"
@@ -33,20 +33,20 @@
 # previous wrap-sensitive `leftOf:` coordinate-tap that XCUITest silently
 # dropped on Apple Silicon + iOS 26 (mobile-dev-inc/maestro#3137) — that
 # silent loss is what caused the prior run to never check the box, leaving
-# "Abmelden" disabled and every downstream step a no-op against the still
+# "Zurücksetzen" disabled and every downstream step a no-op against the still
 # visible modal. We tap the checkbox once by id (a single deterministic
-# Semantics target with a full-row tap surface), then gate the "Abmelden"
-# button tap on the modal still being visible — if "Abmelden" was silently
+# Semantics target with a full-row tap surface), then gate the "Zurücksetzen"
+# button tap on the modal still being visible — if "Zurücksetzen" was silently
 # dropped we re-tap until the modal closes. We deliberately do not loop the
 # checkbox itself: tapping it twice would toggle it back off again, since
 # the underlying `setState(() => isChecked = !isChecked)` is not idempotent.
 # If the checkbox tap is the one that's silently dropped, the next
-# `extendedWaitUntil notVisible "Aus REALU Wallet abmelden"` (with the
-# Abmelden button still disabled) fails loudly rather than passing silently
+# `extendedWaitUntil notVisible "REALU Wallet zurücksetzen"` (with the
+# Zurücksetzen button still disabled) fails loudly rather than passing silently
 # downstream — and the same Semantics-id strategy that fixed flow 26's
 # Nutzungsbedingungen-link tap has been reliable enough since.
 #
-# All tap-leading steps (Abmelden, Start, Software-Wallet, Wallet
+# All tap-leading steps (Zurücksetzen, Start, Software-Wallet, Wallet
 # wiederherstellen) are gated on their target not yet showing and re-tapped
 # if one was silently dropped. Each gate stops its loop the instant the
 # screen changes, so surplus iterations no-op.
@@ -61,15 +61,15 @@ appId: swiss.realunit.app
       - runFlow:
           when:
             visible:
-              text: '.*Aus REALU Wallet abmelden.*'
+              text: '.*REALU Wallet zurücksetzen.*'
           commands:
             - tapOn:
-                text: 'Abmelden'
+                text: 'Zurücksetzen'
                 optional: true
 - waitForAnimationToEnd
 - extendedWaitUntil:
     notVisible:
-      text: '.*Aus REALU Wallet abmelden.*'
+      text: '.*REALU Wallet zurücksetzen.*'
     timeout: 15000
 - repeat:
     times: 3

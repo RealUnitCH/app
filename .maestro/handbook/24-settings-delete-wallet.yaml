@@ -3,13 +3,13 @@
 # this flow's diagnostic capture lands in build/handbook-captures/24-settings-delete-wallet.png.
 # Continues from 23-settings-contact (no clearState). The contact page is
 # pushed on top of the Settings menu, so we tap back to the menu, then open
-# "Abmelden". That entry does not navigate to a new page —
+# "Wallet zurücksetzen". That entry does not navigate to a new page —
 # it presents the SettingsConfirmLogoutWalletSheet modal, the confirmation
-# step for logging out, which removes the wallet from the device and returns
+# step for resetting the wallet, which removes the wallet from the device and returns
 # to onboarding. This flow documents that sheet: it stops on the modal and does NOT
-# tick the confirmation checkbox or tap "Abmelden".
+# tick the confirmation checkbox or tap "Zurücksetzen".
 #
-# Both taps (back to the Settings menu, then opening the logout entry) are
+# Both taps (back to the Settings menu, then opening the reset entry) are
 # gated on their target not yet showing and re-tapped if one was silently
 # dropped (Maestro/XCUITest tap-loss on Apple Silicon + iOS 26,
 # mobile-dev-inc/maestro#3137). Each gate stops its loop the instant the
@@ -33,13 +33,13 @@ appId: swiss.realunit.app
       - runFlow:
           when:
             notVisible:
-              text: '.*Aus REALU Wallet abmelden.*'
+              text: '.*REALU Wallet zurücksetzen.*'
           commands:
             - tapOn:
-                text: '.*Abmelden.*'
+                text: '.*Wallet zurücksetzen.*'
                 optional: true
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
-      text: '.*Aus REALU Wallet abmelden.*'
+      text: '.*REALU Wallet zurücksetzen.*'
     timeout: 30000
