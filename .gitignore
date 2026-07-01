@@ -63,6 +63,12 @@ app.*.map.json
 # from api repo"). Never commit; source of truth is the api repo.
 docs/handbook/mails/
 
+# Staged at handbook build time from DFXswiss/api's committed example receipts
+# (see .github/workflows/handbook.yaml — step "Stage RealUnit receipt examples
+# from api repo"). Never commit; source of truth is the api repo
+# (docs/examples/realunit-receipt/, rendered by SwissQRService).
+docs/handbook/receipts/
+
 # Assembled at handbook build time from test/goldens/screens/ via
 # scripts/assemble-handbook-screenshots.sh (see Dockerfile.handbook).
 # Source of truth are the Golden baselines under test/goldens/; this

@@ -172,6 +172,35 @@ rm -rf ./_handlebars-only
 (Den finalen Build-Step macht aber immer der CI — lokale Files sind nur fürs
 Vorab-Anschauen während eines Template-Refactors.)
 
+## Transaktionsbelege
+
+Die Sektion **B — Transaktionsbelege** verlinkt vier Muster-PDFs, die das
+Backend erzeugt (Transaktionshistorie + Transaktionsbestätigung, je DE/EN).
+Anders als die Mail-Previews werden diese PDFs **nicht** hier generiert — sie
+liegen bereits committet im api-Repo unter `docs/examples/realunit-receipt/`
+(gerendert vom `SwissQRService` via `realunit-receipt-example.spec.ts`) und
+werden beim Handbook-Build nur ins Image kopiert (Step "Stage RealUnit receipt
+examples from api repo" in `handbook.yaml`; Zielverzeichnis
+`docs/handbook/receipts/` ist gitignored). Single Source of Truth ist das
+api-Repo.
+
+Kommt upstream ein Beispiel hinzu oder weg, failt der Build am
+`EXPECTED_PDF_COUNT`-Guard — dann die Zahl in `handbook.yaml` und die
+Download-Karten in `docs/handbook/de/index.html` (`#spec-receipts`) im selben
+Zug anpassen.
+
+### Lokal ansehen
+
+```bash
+# PDFs aus einem lokalen api-Checkout ins (gitignored) receipts-Dir kopieren
+mkdir -p docs/handbook/receipts
+cp <api-checkout>/docs/examples/realunit-receipt/*.pdf docs/handbook/receipts/
+open docs/handbook/de/index.html   # Sektion "B — Transaktionsbelege"
+```
+
+Zum Regenerieren der Muster-PDFs selbst siehe das api-Repo
+(`GENERATE_RECEIPT_EXAMPLES=true npx jest realunit-receipt-example`).
+
 ## Beziehung zu den Tier-0/Tier-1-Tests
 
 Tier 0/1 (Unit + Widget + integration-mit-FakeBitboxCredentials) prüfen
