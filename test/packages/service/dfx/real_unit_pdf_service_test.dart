@@ -119,12 +119,15 @@ void main() {
         final pdf = await build(client).getTransactionsReceipt(
           ['0xa', '0xb', '0xc'],
           currency: Currency.eur,
+          language: Language.de,
         );
 
         expect(pdf.pdfData, 'MULTI');
         expect(path, '/v1/realunit/transactions/receipt/multi');
         expect(body!['txHashes'], ['0xa', '0xb', '0xc']);
         expect(body!['currency'], 'EUR');
+        // Language is uppercased on the wire.
+        expect(body!['language'], 'DE');
       });
 
       test('defaults currency to CHF when not specified', () async {
@@ -134,7 +137,7 @@ void main() {
           return http.Response(jsonEncode({'pdfData': 'X'}), 200);
         });
 
-        await build(client).getTransactionsReceipt(['0x1']);
+        await build(client).getTransactionsReceipt(['0x1'], language: Language.en);
 
         expect(body!['currency'], 'CHF');
       });
@@ -146,7 +149,7 @@ void main() {
             ));
 
         expect(
-          () => build(client).getTransactionsReceipt(['0x1']),
+          () => build(client).getTransactionsReceipt(['0x1'], language: Language.en),
           throwsA(isA<ApiException>()),
         );
       });
@@ -165,12 +168,15 @@ void main() {
         final pdf = await build(client).getTransactionReceipt(
           '0xabc',
           currency: Currency.eur,
+          language: Language.de,
         );
 
         expect(pdf.pdfData, 'SINGLE');
         expect(path, '/v1/realunit/transactions/receipt/single');
         expect(body!['txHash'], '0xabc');
         expect(body!['currency'], 'EUR');
+        // Language is uppercased on the wire.
+        expect(body!['language'], 'DE');
       });
 
       test('defaults currency to CHF when not specified', () async {
@@ -180,7 +186,7 @@ void main() {
           return http.Response(jsonEncode({'pdfData': 'X'}), 200);
         });
 
-        await build(client).getTransactionReceipt('0xabc');
+        await build(client).getTransactionReceipt('0xabc', language: Language.en);
 
         expect(body!['currency'], 'CHF');
       });
@@ -192,7 +198,7 @@ void main() {
             ));
 
         expect(
-          () => build(client).getTransactionReceipt('0xmissing'),
+          () => build(client).getTransactionReceipt('0xmissing', language: Language.en),
           throwsA(isA<ApiException>()),
         );
       });

@@ -15,10 +15,10 @@ import 'package:realunit_wallet/styles/language.dart';
 
 void main() {
   group('$MultiReceiptDto.toJson', () {
-    test('defaults currency to CHF and renames txIds → txHashes', () {
+    test('defaults currency to CHF and language to EN, renames txIds → txHashes', () {
       const dto = MultiReceiptDto(txIds: ['a', 'b']);
 
-      expect(dto.toJson(), {'txHashes': ['a', 'b'], 'currency': 'CHF'});
+      expect(dto.toJson(), {'txHashes': ['a', 'b'], 'currency': 'CHF', 'language': 'EN'});
     });
 
     test('honours a custom currency', () {
@@ -26,19 +26,31 @@ void main() {
 
       expect(dto.toJson()['currency'], 'EUR');
     });
+
+    test('honours a language override and uppercases the code', () {
+      const dto = MultiReceiptDto(txIds: ['x'], language: Language.de);
+
+      expect(dto.toJson()['language'], 'DE');
+    });
   });
 
   group('$SingleReceiptDto.toJson', () {
-    test('defaults currency to CHF and renames txId → txHash', () {
+    test('defaults currency to CHF and language to EN, renames txId → txHash', () {
       const dto = SingleReceiptDto(txId: '0xabc');
 
-      expect(dto.toJson(), {'txHash': '0xabc', 'currency': 'CHF'});
+      expect(dto.toJson(), {'txHash': '0xabc', 'currency': 'CHF', 'language': 'EN'});
     });
 
     test('honours a custom currency', () {
       const dto = SingleReceiptDto(txId: '0xabc', currency: Currency.eur);
 
       expect(dto.toJson()['currency'], 'EUR');
+    });
+
+    test('honours a language override and uppercases the code', () {
+      const dto = SingleReceiptDto(txId: '0xabc', language: Language.de);
+
+      expect(dto.toJson()['language'], 'DE');
     });
   });
 
