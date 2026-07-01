@@ -22,11 +22,19 @@ class TransactionHistoryMultiReceiptCubit extends Cubit<TransactionHistoryMultiR
        _directory = directory ?? const PathProviderAdapter(),
        super(const TransactionHistoryMultiReceiptInitial());
 
-  Future<void> generateReceipt(List<String> ids, {Currency currency = Currency.chf, required Language language}) async {
+  Future<void> generateReceipt(
+    List<String> ids, {
+    Currency currency = Currency.chf,
+    required Language language,
+  }) async {
     try {
       emit(const TransactionHistoryMultiReceiptLoading());
 
-      final response = await _pdfService.getTransactionsReceipt(ids, currency: currency, language: language);
+      final response = await _pdfService.getTransactionsReceipt(
+        ids,
+        currency: currency,
+        language: language,
+      );
       if (isClosed) return;
       final file = await _createFileFromBytes(response.pdfData);
       if (isClosed) return;

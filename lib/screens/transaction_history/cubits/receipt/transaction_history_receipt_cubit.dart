@@ -22,11 +22,19 @@ class TransactionHistoryReceiptCubit extends Cubit<TransactionHistoryReceiptStat
        _directory = directory ?? const PathProviderAdapter(),
        super(const TransactionHistoryReceiptInitial());
 
-  Future<void> generateReceipt(String txId, {Currency currency = Currency.chf, required Language language}) async {
+  Future<void> generateReceipt(
+    String txId, {
+    Currency currency = Currency.chf,
+    required Language language,
+  }) async {
     try {
       emit(const TransactionHistoryReceiptLoading());
 
-      final response = await _pdfService.getTransactionReceipt(txId, currency: currency, language: language);
+      final response = await _pdfService.getTransactionReceipt(
+        txId,
+        currency: currency,
+        language: language,
+      );
       if (isClosed) return;
       final file = await _createFileFromBytes(response.pdfData, txId);
       if (isClosed) return;
