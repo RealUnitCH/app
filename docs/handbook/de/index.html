@@ -823,6 +823,9 @@
               <a href="#spec-mails"><span class="spec-num">M</span>E-Mails</a>
             </li>
             <li>
+              <a href="#spec-receipts"><span class="spec-num">B</span>Transaktionsbelege</a>
+            </li>
+            <li>
               <a href="#spec-store-listing"><span class="spec-num">S</span>Store-Listing</a>
             </li>
             <li>
@@ -2435,6 +2438,89 @@
             manueller <code>workflow_dispatch</code> auf
             <code>handbook-deploy.yaml</code> im realunit-app-Repo) reingezogen.
           </p>
+        </details>
+
+        <details id="spec-receipts" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">B</span>Transaktionsbelege</h2>
+                <div class="file">DFXswiss/api · docs/examples/realunit-receipt/</div>
+              </div>
+              <div class="rhs">
+                <b>Live aus api-Repo</b>
+                <div class="links">
+                  <a href="../receipts/">Ordner öffnen ↗</a>
+                </div>
+              </div>
+            </div>
+          </summary>
+
+          <p class="spec-intro">
+            Beispiel-Belege, die das Backend als PDF erzeugt: die
+            <b>Transaktionshistorie</b> (Sammelbeleg über mehrere Transaktionen,
+            per Klick auf „Transaktionshistorie") und die
+            <b>Transaktionsbestätigung</b> (Einzelbeleg für eine Transaktion). Der
+            Renderer lebt im
+            <a href="https://github.com/DFXswiss/api">DFXswiss/api</a>-Repo
+            (<code>src/subdomains/supporting/payment/services/swiss-qr.service.ts</code>);
+            die verlinkten Muster-PDFs liegen dort als
+            <code>docs/examples/realunit-receipt/*.pdf</code> und werden bei jedem
+            Handbook-Build automatisch ins Image gezogen — Single Source of Truth
+            ist das api-Repo, dieses Handbook spiegelt nur den aktuellen Stand.
+          </p>
+
+          <h3>Transaktionshistorie <a class="src" href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-receipt" title="Quelle: docs/examples/realunit-receipt/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test legal-doc" id="receipt-history-de">
+              <div class="head">
+                <a class="name permalink" href="#receipt-history-de">transaction_history_de</a>
+                <button class="copy-link" type="button" data-target="receipt-history-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">de</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Transaktionshistorie (Sammelbeleg)</span>
+                <a class="dl-btn" href="../receipts/transaction-history-de.pdf" download>PDF</a>
+              </div>
+            </div>
+            <div class="test legal-doc" id="receipt-history-en">
+              <div class="head">
+                <a class="name permalink" href="#receipt-history-en">transaction_history_en</a>
+                <button class="copy-link" type="button" data-target="receipt-history-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">en</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Transaction History</span>
+                <a class="dl-btn" href="../receipts/transaction-history-en.pdf" download>PDF</a>
+              </div>
+            </div>
+          </div>
+
+          <h3>Transaktionsbestätigung <a class="src" href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-receipt" title="Quelle: docs/examples/realunit-receipt/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test legal-doc" id="receipt-confirmation-de">
+              <div class="head">
+                <a class="name permalink" href="#receipt-confirmation-de">transaction_confirmation_de</a>
+                <button class="copy-link" type="button" data-target="receipt-confirmation-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">de</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Transaktionsbestätigung (Einzelbeleg)</span>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-de.pdf" download>PDF</a>
+              </div>
+            </div>
+            <div class="test legal-doc" id="receipt-confirmation-en">
+              <div class="head">
+                <a class="name permalink" href="#receipt-confirmation-en">transaction_confirmation_en</a>
+                <button class="copy-link" type="button" data-target="receipt-confirmation-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">en</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Transaction Confirmation</span>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-en.pdf" download>PDF</a>
+              </div>
+            </div>
+          </div>
         </details>
 
         <!-- BEGIN:store-listing -->
