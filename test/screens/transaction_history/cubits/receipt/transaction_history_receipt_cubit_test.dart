@@ -69,7 +69,11 @@ void main() {
     test('generateReceipt writes the PDF and emits Success with the file path', () async {
       final pdfBytes = utf8.encode('%PDF-1.4 fake-tx');
       when(
-        () => service.getTransactionReceipt(any(), currency: any(named: 'currency'), language: any(named: 'language')),
+        () => service.getTransactionReceipt(
+          any(),
+          currency: any(named: 'currency'),
+          language: any(named: 'language'),
+        ),
       ).thenAnswer((_) async => PdfDto(pdfData: base64Encode(pdfBytes)));
 
       final cubit = buildCubit();
@@ -97,7 +101,11 @@ void main() {
 
     test('generateReceipt uses Currency.chf as default', () async {
       when(
-        () => service.getTransactionReceipt(any(), currency: any(named: 'currency'), language: any(named: 'language')),
+        () => service.getTransactionReceipt(
+          any(),
+          currency: any(named: 'currency'),
+          language: any(named: 'language'),
+        ),
       ).thenAnswer((_) async => PdfDto(pdfData: base64Encode(<int>[1])));
 
       final cubit = buildCubit();
@@ -110,7 +118,11 @@ void main() {
 
     test('generateReceipt emits Failure on service error', () async {
       when(
-        () => service.getTransactionReceipt(any(), currency: any(named: 'currency'), language: any(named: 'language')),
+        () => service.getTransactionReceipt(
+          any(),
+          currency: any(named: 'currency'),
+          language: any(named: 'language'),
+        ),
       ).thenAnswer((_) async => throw Exception('network'));
 
       final cubit = buildCubit();
@@ -126,7 +138,11 @@ void main() {
       final brokenPort = _FakeDocumentsDirectoryPort(missing);
 
       when(
-        () => service.getTransactionReceipt(any(), currency: any(named: 'currency'), language: any(named: 'language')),
+        () => service.getTransactionReceipt(
+          any(),
+          currency: any(named: 'currency'),
+          language: any(named: 'language'),
+        ),
       ).thenAnswer((_) async => PdfDto(pdfData: base64Encode(<int>[1])));
 
       final cubit = TransactionHistoryReceiptCubit(service, directory: brokenPort);
@@ -138,7 +154,11 @@ void main() {
     test('does not emit Success when closed during service call', () async {
       final completer = Completer<PdfDto>();
       when(
-        () => service.getTransactionReceipt(any(), currency: any(named: 'currency'), language: any(named: 'language')),
+        () => service.getTransactionReceipt(
+          any(),
+          currency: any(named: 'currency'),
+          language: any(named: 'language'),
+        ),
       ).thenAnswer((_) => completer.future);
 
       final cubit = buildCubit();
@@ -152,7 +172,11 @@ void main() {
     test('does not emit Failure after close', () async {
       final completer = Completer<PdfDto>();
       when(
-        () => service.getTransactionReceipt(any(), currency: any(named: 'currency'), language: any(named: 'language')),
+        () => service.getTransactionReceipt(
+          any(),
+          currency: any(named: 'currency'),
+          language: any(named: 'language'),
+        ),
       ).thenAnswer((_) => completer.future);
 
       final cubit = buildCubit();
