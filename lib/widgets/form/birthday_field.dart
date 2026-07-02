@@ -29,9 +29,11 @@ class _BirthdayFieldState extends State<BirthdayField> {
     final value = widget.controller.value;
     if (value != null) {
       final parts = value.split('-');
-      selectedYear = parts[0];
-      selectedMonth = parts[1];
-      selectedDay = parts[2];
+      if (parts.length == 3) {
+        selectedYear = parts[0];
+        selectedMonth = parts[1];
+        selectedDay = parts[2];
+      }
     }
   }
 
