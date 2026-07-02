@@ -337,7 +337,7 @@
   "twoFa": "Two-factor authentication",
   "twoFaCodeRequired": "Code is required",
   "twoFaCodeTooShort": "Code should be 6 digits",
-  "twoFaDescription": "To continue with the identity check, we need to verify you via the 2-factor authentication method. A code is going to be sent to your emails.",
+  "twoFaDescription": "To continue with the identity check, we need to verify you via the 2-factor authentication method. A code has been sent to your email.",
   "twoFaResendCode": "Send code again",
   "twoFaSendCodeFailed": "There was a problem sending the email",
   "twoFaWrongCode": "The Code is wrong",
