@@ -80,6 +80,27 @@ void main() {
         expect(find.text(S.current.pinCreateDescription('$pinLength')), findsOne);
         expect(find.byType(NumberPad), findsOne);
       });
+
+      testWidgets('forwards digit and delete taps to the cubit', (tester) async {
+        when(() => setupPinCubit.state).thenReturn(const SetupPinState(mode: SetupPinMode.create));
+
+        await tester.pumpApp(buildSubject(const SetupPinView()));
+
+        // Tapping a digit runs the pad's onNumberPressed closure, which the
+        // other setup-pin specs (spinner / error / listener states) never
+        // exercise because they don't press the pad.
+        final seven = find.descendant(of: find.byType(NumberPad), matching: find.text('7'));
+        await tester.ensureVisible(seven);
+        await tester.tap(seven);
+        await tester.pump();
+        verify(() => setupPinCubit.addDigit(7)).called(1);
+
+        final delete = find.byIcon(Icons.arrow_back_ios_new);
+        await tester.ensureVisible(delete);
+        await tester.tap(delete);
+        await tester.pump();
+        verify(() => setupPinCubit.deleteDigit()).called(1);
+      });
     });
 
     group('${SetupPinMode.confirm}', () {
