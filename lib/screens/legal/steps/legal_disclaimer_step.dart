@@ -33,6 +33,13 @@ class LegalDisclaimerStep extends StatelessWidget {
             color: RealUnitColors.neutral500,
           ),
         ),
+        if (step == 0)
+          Text(
+            s.legalDisclaimerAdvertising,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: RealUnitColors.neutral500,
+            ),
+          ),
       ],
     );
   }
