@@ -9,11 +9,26 @@ import 'package:realunit_wallet/screens/pin/bloc/verify_pin/verify_pin_cubit.dar
 /// Equatable-`props` surface tests for `VerifyPinState` and its subclasses.
 void main() {
   group('VerifyPinState (base)', () {
-    test('defaults: empty pin, 0 failed attempts', () {
+    test('defaults: empty pin, 0 failed attempts, unknown biometrics', () {
       final state = VerifyPinState();
       expect(state.pin, '');
       expect(state.failedAttempts, 0);
-      expect(state.props, ['', 0]);
+      expect(state.biometricStatus, BiometricStatus.unknown);
+      expect(state.props, ['', 0, BiometricStatus.unknown]);
+    });
+
+    test('different biometricStatus is unequal', () {
+      final a = VerifyPinState(biometricStatus: BiometricStatus.available);
+      final b = VerifyPinState(biometricStatus: BiometricStatus.unavailable);
+      expect(a, isNot(equals(b)));
+    });
+
+    test('copyWith updates biometricStatus while keeping the rest', () {
+      final base = VerifyPinState(pin: '12', failedAttempts: 3);
+      final next = base.copyWith(biometricStatus: BiometricStatus.available);
+      expect(next.pin, '12');
+      expect(next.failedAttempts, 3);
+      expect(next.biometricStatus, BiometricStatus.available);
     });
 
     test('same pin + same attempts is equal', () {
@@ -105,7 +120,7 @@ void main() {
       expect(a, equals(b));
       // The override extends super.props with lockedUntil, so we explicitly
       // pin the order so any future refactor of `props` is caught.
-      expect(a.props, ['', 5, t]);
+      expect(a.props, ['', 5, BiometricStatus.unknown, t]);
     });
 
     test('different lockedUntil is unequal', () {
@@ -129,6 +144,28 @@ void main() {
       final a = VerifyPinLocked(failedAttempts: 99);
       final b = VerifyPinLocked(failedAttempts: 100);
       expect(a, isNot(equals(b)));
+    });
+  });
+
+  group('VerifyPinUnverifiable', () {
+    test('has an empty pin and counts no attempts by default', () {
+      final a = VerifyPinUnverifiable();
+      expect(a.pin, '');
+      expect(a.failedAttempts, 0);
+      expect(a.biometricStatus, BiometricStatus.unknown);
+    });
+
+    test('carries biometricStatus and is equal for the same values', () {
+      final a = VerifyPinUnverifiable(biometricStatus: BiometricStatus.available);
+      final b = VerifyPinUnverifiable(biometricStatus: BiometricStatus.available);
+      expect(a, equals(b));
+      expect(a.hashCode, b.hashCode);
+    });
+
+    test('is distinct from a plain state with the same props', () {
+      final u = VerifyPinUnverifiable();
+      final s = VerifyPinState();
+      expect(u, isNot(equals(s)));
     });
   });
 

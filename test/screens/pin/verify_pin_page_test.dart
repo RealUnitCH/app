@@ -1,5 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -45,7 +47,8 @@ void main() {
     when(() => secureStorage.getPinFailedAttempts()).thenAnswer((_) => Future.value(0));
     getIt.registerSingleton<SecureStorage>(secureStorage);
     final biometricService = MockBiometricService();
-    when(() => biometricService.canUse()).thenAnswer((_) => Future.value(false));
+    when(() => biometricService.isEnabled()).thenAnswer((_) => Future.value(false));
+    when(() => biometricService.isAvailable()).thenAnswer((_) => Future.value(false));
     getIt.registerSingleton<BiometricService>(biometricService);
     getIt.registerSingleton<PinAuthCubit>(pinAuthCubit);
   }
@@ -125,16 +128,7 @@ void main() {
         buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
       );
       expect(find.text(S.current.pinVerifyLockedTemporarily('59s')), findsOne);
-      expect(
-        tester
-            .widget<IgnorePointer>(
-              find.byWidgetPredicate(
-                (widget) => widget is IgnorePointer && widget.child.runtimeType == NumberPad,
-              ),
-            )
-            .ignoring,
-        isTrue,
-      );
+      expect(tester.widget<NumberPad>(find.byType(NumberPad)).inputEnabled, isFalse);
     });
 
     testWidgets('shows error message and locks permanently when pin is reaches threshold', (
@@ -147,16 +141,7 @@ void main() {
       );
 
       expect(find.text(S.current.pinVerifyLocked), findsOne);
-      expect(
-        tester
-            .widget<IgnorePointer>(
-              find.byWidgetPredicate(
-                (widget) => widget is IgnorePointer && widget.child.runtimeType == NumberPad,
-              ),
-            )
-            .ignoring,
-        isTrue,
-      );
+      expect(tester.widget<NumberPad>(find.byType(NumberPad)).inputEnabled, isFalse);
     });
 
     testWidgets('shows a loading indicator and hides the number pad while verifying', (
@@ -189,6 +174,209 @@ void main() {
 
       expect(find.byType(CupertinoActivityIndicator), findsOne);
       expect(find.byType(NumberPad), findsNothing);
+    });
+
+    testWidgets('shows the biometric button when biometrics are available', (tester) async {
+      when(() => verifyPinCubit.state).thenReturn(
+        const VerifyPinState(biometricStatus: BiometricStatus.available),
+      );
+
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
+
+      expect(find.byIcon(Icons.fingerprint), findsOne);
+      expect(tester.widget<NumberPad>(find.byType(NumberPad)).inputEnabled, isTrue);
+    });
+
+    testWidgets('hides the biometric button when biometrics are not available', (tester) async {
+      when(() => verifyPinCubit.state).thenReturn(const VerifyPinState());
+
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
+
+      expect(find.byIcon(Icons.fingerprint), findsNothing);
+    });
+
+    testWidgets('the biometric button carries a screen-reader accessibility label', (
+      tester,
+    ) async {
+      when(() => verifyPinCubit.state).thenReturn(
+        const VerifyPinState(biometricStatus: BiometricStatus.available),
+      );
+
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
+
+      // The glyph is visible and the unlock shortcut is announced to a screen
+      // reader via the icon's semanticLabel.
+      final icon = tester.widget<Icon>(find.byIcon(Icons.fingerprint));
+      expect(icon.semanticLabel, S.current.pinVerifyBiometricButton);
+    });
+
+    testWidgets('exposes no biometric accessibility label when the button is hidden', (
+      tester,
+    ) async {
+      when(() => verifyPinCubit.state).thenReturn(const VerifyPinState());
+
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
+
+      // With biometrics unavailable no glyph is built, so there is no icon to
+      // carry the accessibility label (neither the fingerprint nor Face-ID one).
+      expect(find.byIcon(Icons.fingerprint), findsNothing);
+      expect(find.byIcon(Icons.face), findsNothing);
+    });
+
+    testWidgets('keeps the biometric button active while temporarily locked', (tester) async {
+      when(() => verifyPinCubit.state).thenReturn(
+        VerifyPinTemporarilyLocked(
+          failedAttempts: 5,
+          lockedUntil: DateTime.now().add(const Duration(minutes: 1)),
+          biometricStatus: BiometricStatus.available,
+        ),
+      );
+
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
+
+      final numberPad = tester.widget<NumberPad>(find.byType(NumberPad));
+      // Pad disabled, yet the biometric shortcut is still offered.
+      expect(numberPad.inputEnabled, isFalse);
+      expect(find.byIcon(Icons.fingerprint), findsOne);
+    });
+
+    testWidgets('tapping the biometric button triggers promptBiometric', (tester) async {
+      when(() => verifyPinCubit.state).thenReturn(
+        const VerifyPinState(biometricStatus: BiometricStatus.available),
+      );
+      when(() => verifyPinCubit.promptBiometric()).thenAnswer((_) async {});
+
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
+
+      await tester.ensureVisible(find.byIcon(Icons.fingerprint));
+      await tester.tap(find.byIcon(Icons.fingerprint));
+      await tester.pump();
+
+      verify(() => verifyPinCubit.promptBiometric()).called(1);
+    });
+
+    testWidgets('the biometric button fires even while temporarily locked', (tester) async {
+      when(() => verifyPinCubit.state).thenReturn(
+        VerifyPinTemporarilyLocked(
+          failedAttempts: 5,
+          lockedUntil: DateTime.now().add(const Duration(minutes: 1)),
+          biometricStatus: BiometricStatus.available,
+        ),
+      );
+      when(() => verifyPinCubit.promptBiometric()).thenAnswer((_) async {});
+
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
+
+      // The pad is inert but the escape-hatch button must still reach the cubit.
+      expect(tester.widget<NumberPad>(find.byType(NumberPad)).inputEnabled, isFalse);
+      await tester.ensureVisible(find.byIcon(Icons.fingerprint));
+      await tester.tap(find.byIcon(Icons.fingerprint));
+      await tester.pump();
+
+      verify(() => verifyPinCubit.promptBiometric()).called(1);
+    });
+
+    testWidgets('uses the face icon on iOS', (tester) async {
+      when(() => verifyPinCubit.state).thenReturn(
+        const VerifyPinState(biometricStatus: BiometricStatus.available),
+      );
+
+      // Must be cleared before the test body returns (the framework asserts all
+      // foundation debug vars are unset), so reset it in a finally.
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        await tester.pumpApp(
+          buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+        );
+
+        expect(find.byIcon(Icons.face), findsOne);
+        expect(find.byIcon(Icons.fingerprint), findsNothing);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    });
+
+    testWidgets('shows the locked hint when biometrics are temporarily locked', (tester) async {
+      when(() => verifyPinCubit.state).thenReturn(
+        const VerifyPinState(biometricStatus: BiometricStatus.temporarilyLocked),
+      );
+
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
+
+      expect(find.text(S.current.pinVerifyBiometricHintLocked), findsOne);
+    });
+
+    testWidgets('shows the not-enrolled hint', (tester) async {
+      when(() => verifyPinCubit.state).thenReturn(
+        const VerifyPinState(biometricStatus: BiometricStatus.notEnrolled),
+      );
+
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
+
+      expect(find.text(S.current.pinVerifyBiometricHintNotEnrolled), findsOne);
+    });
+
+    testWidgets('shows the unavailable hint', (tester) async {
+      when(() => verifyPinCubit.state).thenReturn(
+        const VerifyPinState(biometricStatus: BiometricStatus.unavailable),
+      );
+
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
+
+      expect(find.text(S.current.pinVerifyBiometricHintUnavailable), findsOne);
+    });
+
+    testWidgets('unverifiable in a gate flow shows the button-free recovery message', (
+      tester,
+    ) async {
+      when(() => verifyPinCubit.state).thenReturn(const VerifyPinUnverifiable());
+
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
+
+      // No `bottom` (no Forgot-PIN button) → the gate-variant text is shown.
+      expect(find.text(S.current.pinVerifyUnverifiableGate), findsOne);
+      expect(tester.widget<NumberPad>(find.byType(NumberPad)).inputEnabled, isFalse);
+    });
+
+    testWidgets('unverifiable in the app-lock flow references the forgot-PIN reset', (
+      tester,
+    ) async {
+      when(() => verifyPinCubit.state).thenReturn(const VerifyPinUnverifiable());
+
+      await tester.pumpApp(
+        buildSubject(
+          VerifyPinView(
+            onAuthenticated: onAuthenticated,
+            bottom: const SizedBox(),
+          ),
+        ),
+      );
+
+      // A `bottom` widget (the Forgot-PIN button lives here) → the text that
+      // points at it is valid.
+      expect(find.text(S.current.pinVerifyUnverifiable), findsOne);
     });
 
     group('$BlocListener', () {
