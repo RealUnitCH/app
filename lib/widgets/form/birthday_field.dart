@@ -30,9 +30,11 @@ class _BirthdayFieldState extends State<BirthdayField> {
     if (value != null) {
       final parts = value.split('-');
       if (parts.length == 3) {
-        selectedYear = parts[0];
-        selectedMonth = parts[1];
-        selectedDay = parts[2];
+        // Only seed values the dropdowns actually offer; a value outside the
+        // item list trips DropdownButtonFormField's single-match assert.
+        if (years.contains(parts[0])) selectedYear = parts[0];
+        if (months.contains(parts[1])) selectedMonth = parts[1];
+        if (days.contains(parts[2])) selectedDay = parts[2];
       }
     }
   }
@@ -42,6 +44,18 @@ class _BirthdayFieldState extends State<BirthdayField> {
       final value = '$selectedYear-$selectedMonth-$selectedDay';
       widget.controller.value = value;
     }
+  }
+
+  // False for impossible combinations like 31.02.: DateTime rolls the
+  // overflow into the next month.
+  bool get isValidCalendarDate {
+    if (selectedDay == null || selectedMonth == null || selectedYear == null) return true;
+    final date = DateTime(
+      int.parse(selectedYear!),
+      int.parse(selectedMonth!),
+      int.parse(selectedDay!),
+    );
+    return date.month == int.parse(selectedMonth!);
   }
 
   @override
@@ -76,7 +90,7 @@ class _BirthdayFieldState extends State<BirthdayField> {
                   setState(() => selectedDay = v);
                   updateBirthday();
                 },
-                validator: (v) => v == null ? '' : null,
+                validator: (v) => v == null || !isValidCalendarDate ? '' : null,
               ),
             ),
             Expanded(

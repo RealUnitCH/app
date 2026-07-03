@@ -44,7 +44,12 @@ class SettingsUserDataView extends StatelessWidget {
         padding: const .symmetric(horizontal: 20.0, vertical: 12.0),
         child: BlocBuilder<SettingsUserDataCubit, SettingsUserDataState>(
           builder: (context, state) => switch (state) {
-            SettingsUserDataSuccess(:final userData, :final email, :final pendingSteps, :final capabilities) =>
+            SettingsUserDataSuccess(
+              :final userData,
+              :final email,
+              :final pendingSteps,
+              :final capabilities,
+            ) =>
               userData != null
                   ? SingleChildScrollView(
                       child: Padding(
@@ -75,10 +80,11 @@ class SettingsUserDataView extends StatelessWidget {
                                       }
                                     : null,
                               ),
-                              _UserDataRow(
-                                label: S.of(context).birthday,
-                                value: DateFormat('dd.MM.yyyy').format(userData.birthday),
-                              ),
+                              if (userData.birthday != null)
+                                _UserDataRow(
+                                  label: S.of(context).birthday,
+                                  value: DateFormat('dd.MM.yyyy').format(userData.birthday!),
+                                ),
                               _UserDataRow(
                                 label: S.of(context).registerCitizenship,
                                 value: userData.nationality.name,
