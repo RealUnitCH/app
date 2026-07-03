@@ -80,42 +80,35 @@ void main() {
       expect(data.lang, 'en');
     });
 
-    // The Equatable `props` list intentionally only includes `email` and
-    // `name`. The two assertions below pin both branches: identical
-    // email+name compares equal (even with differing nationality/phone),
-    // and divergent email or name breaks equality. The narrow props
-    // surface mirrors that user identity in the app is keyed on the
-    // mailbox + display name, not on every detail the API ships.
-    test('equality only considers email and name (props are narrow)', () {
-      final a = makeUserData(
-        phoneNumber: '+41790000001',
-        addressStreet: 'A',
-      );
-      final b = makeUserData(
-        phoneNumber: '+41790000002',
-        addressStreet: 'B',
-      );
+    test('instances with identical fields are equal', () {
+      final a = makeUserData();
+      final b = makeUserData();
 
       expect(a, equals(b));
       expect(a.hashCode, b.hashCode);
     });
 
-    test('different email or name breaks equality', () {
-      final base = makeUserData();
-      final differentEmail = makeUserData(email: 'bob@example.com');
-      final differentName = makeUserData(name: 'Bob Doe');
+    test('differing only in birthday breaks equality', () {
+      final base = makeUserData(birthday: DateTime.utc(1990, 1, 1));
+      final other = makeUserData(birthday: DateTime.utc(1991, 2, 3));
 
-      expect(base, isNot(equals(differentEmail)));
-      expect(base, isNot(equals(differentName)));
+      expect(base, isNot(equals(other)));
     });
 
-    test('props exposes exactly [email, name]', () {
-      // Catches accidental additions to props that would silently widen
-      // the equality contract beyond identity (and break the existing
-      // call sites that lean on `email == name` matching).
-      final data = makeUserData();
+    test('equality reflects the full field set', () {
+      final base = makeUserData();
 
-      expect(data.props, [data.email, data.name]);
+      expect(base, isNot(equals(makeUserData(email: 'bob@example.com'))));
+      expect(base, isNot(equals(makeUserData(name: 'Bob Doe'))));
+      expect(base, isNot(equals(makeUserData(type: RegistrationUserType.corporation))));
+      expect(base, isNot(equals(makeUserData(phoneNumber: '+41790000009'))));
+      expect(base, isNot(equals(makeUserData(nationality: germany))));
+      expect(base, isNot(equals(makeUserData(addressStreet: 'Other 2'))));
+      expect(base, isNot(equals(makeUserData(addressPostalCode: '9999'))));
+      expect(base, isNot(equals(makeUserData(addressCity: 'Geneva'))));
+      expect(base, isNot(equals(makeUserData(addressCountry: germany))));
+      expect(base, isNot(equals(makeUserData(swissTaxResidence: false))));
+      expect(base, isNot(equals(makeUserData(lang: 'en'))));
     });
   });
 }

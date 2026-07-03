@@ -32,5 +32,18 @@ class UserData extends Equatable {
   });
 
   @override
-  List<Object?> get props => [email, name];
+  List<Object?> get props => [
+    type,
+    email,
+    name,
+    phoneNumber,
+    birthday,
+    nationality,
+    addressStreet,
+    addressPostalCode,
+    addressCity,
+    addressCountry,
+    swissTaxResidence,
+    lang,
+  ];
 }
