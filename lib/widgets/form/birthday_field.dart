@@ -21,7 +21,7 @@ class _BirthdayFieldState extends State<BirthdayField> {
 
   List<String> days = List.generate(31, (i) => '${i + 1}'.padLeft(2, '0'));
   List<String> months = List.generate(12, (i) => '${i + 1}'.padLeft(2, '0'));
-  List<String> years = List.generate(82, (i) => '${DateTime.now().year - i - 18}');
+  List<String> years = List.generate(141, (i) => '${DateTime.now().year - i}');
 
   @override
   void initState() {
