@@ -337,7 +337,7 @@
   "twoFa": "2-Faktor Authentifizierung",
   "twoFaCodeRequired": "Code ist erforderlich",
   "twoFaCodeTooShort": "Der Code sollte 6 Ziffern lang sein",
-  "twoFaDescription": "Um weiter mit der Identitätsprüfung fortzufahren, müssen Sie sich über die 2-Faktor Authentifizierungsmethode verifizieren. Ein Code wird Ihnen per Mail zugesendet.",
+  "twoFaDescription": "Um weiter mit der Identitätsprüfung fortzufahren, müssen Sie sich über die 2-Faktor Authentifizierungsmethode verifizieren. Ein Code wurde Ihnen per Mail zugesendet.",
   "twoFaResendCode": "Code erneut senden",
   "twoFaSendCodeFailed": "Es ist ein Problem beim Senden der Mail aufgetreten",
   "twoFaWrongCode": "Der Code ist falsch",

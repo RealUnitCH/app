@@ -1,13 +1,13 @@
 # Terms of Use for the RealUnit Wallet App
 
-*As of: February 2026*
+*As of: June 2026*
 
 
 ## 1. Scope
 
 These terms of use govern the use of the RealUnit Wallet App (hereinafter "App"), published by RealUnit Schweiz AG, Schochenmühlestrasse 6, 6340 Baar, Switzerland (hereinafter "RealUnit" or "we").
 
-By using the App, you agree to these terms of use. The General Terms and Conditions (GTC) additionally apply to the purchase and sale of RealUnit stock tokens.
+By using the App, you agree to these terms of use. The General Terms and Conditions of DFX AG (hereinafter "GTC"; available at [https://docs.dfx.swiss/en/tnc.html](https://docs.dfx.swiss/en/tnc.html)) additionally apply to the purchase and sale of RealUnit stock tokens.
 
 
 ## 2. Description of the App
@@ -34,7 +34,7 @@ The App is a self-custody solution. This means:
 
 ## 4. Usage Requirements
 
-The App is intended for persons residing in a country whose legal system permits the use of this App as well as the acquisition and possession of tokenised shares. The App is specifically **not** intended for persons residing in the USA, Canada, Singapore, or China.
+The App is intended for persons residing in a country whose legal system permits the use of this App as well as the acquisition and possession of tokenised shares. The App and the acquisition of RealUnit stock tokens are directed exclusively at persons resident in Switzerland, the United Kingdom, or the European Economic Area, or at nationals of Switzerland, Germany, Liechtenstein, or Austria. The public offering is made only in Switzerland, Liechtenstein, and Germany. Excluded are in particular persons resident in the United States as well as in territories subject to an embargo or sanctions programme; the country and sanctions screening recorded during onboarding is decisive.
 
 You confirm that you have legal capacity and have reached the minimum age required in your country for the use of digital financial services.
 
@@ -56,8 +56,6 @@ For certain functions (e.g., price queries, balance queries), the App communicat
 
 
 ## 7. Device Permissions
-
-The App may request the following device permissions:
 
 - **Camera**: For scanning QR codes
 - **Biometric sensors**: For Face ID or fingerprint unlock (optional)
@@ -85,7 +83,7 @@ The App is provided "as is". RealUnit makes no warranty for:
 - Damages or losses arising from improper handling, loss of recovery words, or unauthorised access by third parties
 - Damages or losses arising from disruptions or failures of the Ethereum blockchain or other networks
 
-RealUnit's liability is excluded to the extent permitted by law, in particular for indirect damages, consequential damages, and lost profits.
+RealUnit's liability is excluded to the extent permitted by law, in particular for indirect damages, consequential damages, and lost profits. Liability for damages arising from unlawful intent or gross negligence remains unaffected; such liability cannot be excluded in advance pursuant to Art. 100 para. 1 CO.
 
 
 ## 10. Intellectual Property
@@ -95,12 +93,12 @@ All rights to the App, including design, source code, trademarks, and content, b
 
 ## 11. Changes to the Terms of Use
 
-RealUnit reserves the right to change these terms of use at any time. Changed terms of use will be provided via an app update. Continued use of the App after an update constitutes acceptance of the changed terms of use.
+RealUnit reserves the right to change these terms of use at any time. In the case of material changes, we will inform you in advance in an appropriate manner; insofar as legally required, we will obtain your explicit consent. Changed terms of use will be provided via an app update. In the case of non-material changes, continued use of the App after an update constitutes acceptance of the changed terms of use.
 
 
 ## 12. Applicable Law and Jurisdiction
 
-Swiss law applies exclusively. The place of jurisdiction is Baar, Canton of Zug, Switzerland, to the extent permitted by law.
+Swiss law applies exclusively. The place of jurisdiction is Baar, Canton of Zug, Switzerland, to the extent permitted by law. Mandatory places of jurisdiction and mandatory consumer protection law at the domicile of consumers remain reserved.
 
 
 ## 13. Contact
@@ -110,4 +108,5 @@ Schochenmühlestrasse 6\
 6340 Baar, Switzerland
 
 Phone: +41 41 761 00 90\
+Email: info@realunit.ch\
 Website: realunit.ch

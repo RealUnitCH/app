@@ -78,7 +78,8 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
             type: RegistrationUserType.fromName(userDataDto.type),
             name: userDataDto.name,
             email: userDataDto.email,
-            birthday: DateTime.parse(userDataDto.birthday),
+            // The API returns '' when no birthday is on record.
+            birthday: DateTime.tryParse(userDataDto.birthday),
             nationality: nationalityCountry,
             addressStreet: userDataDto.addressStreet,
             addressCity: userDataDto.addressCity,

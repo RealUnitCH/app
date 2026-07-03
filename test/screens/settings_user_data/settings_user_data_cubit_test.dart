@@ -53,12 +53,13 @@ const _kycData = KycPersonalData(
 RealUnitUserDataDto _userData({
   String nationality = 'CH',
   String addressCountry = 'CH',
+  String birthday = '1990-01-15',
 }) => RealUnitUserDataDto(
   email: 'a@b.com',
   name: 'Test User',
   type: 'HUMAN',
   phoneNumber: '+41790000000',
-  birthday: '1990-01-15',
+  birthday: birthday,
   nationality: nationality,
   addressStreet: 'Teststrasse 1',
   addressPostalCode: '8000',
@@ -130,6 +131,34 @@ void main() {
       expect(success.userData!.addressCountry, _de);
       expect(success.pendingSteps, isEmpty);
       expect(success.capabilities.canEditName, isTrue);
+    });
+
+    test('Success with unset birthday when the API returns an empty birthday', () async {
+      // The API maps a missing birthday to '' for verified-name accounts;
+      // parsing it used to throw and surface the failure view.
+      when(() => registrationService.getRegistrationInfo()).thenAnswer(
+        (_) async => RealUnitRegistrationInfoDto(
+          state: RealUnitRegistrationState.addWallet,
+          realUnitUserDataDto: _userData(birthday: ''),
+        ),
+      );
+      when(() => kycService.getKycStatus()).thenAnswer(
+        (_) async => const KycLevelDto(kycLevel: KycLevel.level20, kycSteps: []),
+      );
+      when(() => kycService.getUser()).thenAnswer(
+        (_) async => const UserDto(
+          mail: 'a@b.com',
+          kyc: UserKycDto(hash: 'h', level: KycLevel.level20, dataComplete: true),
+        ),
+      );
+      when(() => countryService.getCountryBySymbol(any())).thenAnswer((_) async => _ch);
+
+      final cubit = build();
+      await cubit.stream.firstWhere((s) => s is SettingsUserDataSuccess);
+
+      final success = cubit.state as SettingsUserDataSuccess;
+      expect(success.userData, isNotNull);
+      expect(success.userData!.birthday, isNull);
     });
 
     test('Success surfaces pending change steps that are inReview', () async {

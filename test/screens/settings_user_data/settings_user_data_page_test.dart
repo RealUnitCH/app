@@ -120,6 +120,42 @@ void main() {
       );
     });
 
+    testWidgets('hides the birthday row when no birthday is on record', (tester) async {
+      const userData = UserData(
+        email: 'test-direct@dfx.swiss',
+        name: 'Test Direct',
+        type: RegistrationUserType.human,
+        phoneNumber: '+41791234567',
+        birthday: null,
+        nationality: Country(
+          id: 41,
+          symbol: 'CH',
+          name: 'Switzerland',
+          kycAllowed: true,
+        ),
+        addressStreet: 'Teststrasse',
+        addressPostalCode: '8000',
+        addressCity: 'Zurich',
+        addressCountry: Country(
+          id: 41,
+          symbol: 'CH',
+          name: 'Switzerland',
+          kycAllowed: true,
+        ),
+        swissTaxResidence: true,
+        lang: 'DE',
+      );
+
+      when(() => settingsUserDataCubit.state).thenReturn(
+        const SettingsUserDataSuccess(userData: userData),
+      );
+
+      await tester.pumpApp(buildSubject(const SettingsUserDataView()));
+
+      expect(find.text(S.current.birthday), findsNothing);
+      expect(find.text('Test Direct'), findsOne);
+    });
+
     testWidgets('renders correctly when user data was not found', (tester) async {
       when(() => settingsUserDataCubit.state).thenReturn(
         const SettingsUserDataSuccess(),
