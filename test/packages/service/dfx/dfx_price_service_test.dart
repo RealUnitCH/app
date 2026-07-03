@@ -61,21 +61,25 @@ void main() {
         );
       });
 
-      test('rounds the scaled price instead of truncating (1.23 → 123)', () async {
-        // 1.23 * 100 is 122.999… in IEEE-754; `BigInt.from` on the raw product
-        // truncates toward zero to 122, understating the price by a rappen.
+      test('rounds the scaled price instead of truncating (4.56 → 456)', () async {
+        // 4.56 * 100 is 455.999… in IEEE-754; `BigInt.from` on the raw product
+        // truncates toward zero to 455, understating the price by a rappen.
+        // 1.23 * 100 is exactly 123.0 and is never truncated — kept as a
+        // non-truncating sanity case.
         final client = MockClient((_) async => http.Response(
               jsonEncode({'chf': 1.23, 'eur': 4.56}),
               200,
             ));
 
-        expect(
-          await build(client).getPriceOfAsset(realUnitAsset, Currency.chf),
-          BigInt.from(123),
-        );
+        // Primary guard: the value that actually loses a rappen when truncated.
         expect(
           await build(client).getPriceOfAsset(realUnitAsset, Currency.eur),
           BigInt.from(456),
+        );
+        // Sanity: an exact product must stay put.
+        expect(
+          await build(client).getPriceOfAsset(realUnitAsset, Currency.chf),
+          BigInt.from(123),
         );
       });
 
@@ -118,7 +122,10 @@ void main() {
         expect(points[1].price, BigInt.from(250));
       });
 
-      test('rounds each scaled chart price instead of truncating (1.23 → 123)', () async {
+      test('rounds each scaled chart price instead of truncating (4.56 → 456)', () async {
+        // 4.56 * 100 is 455.999… in IEEE-754 and truncates toward zero to 455;
+        // rounding keeps the correct 456. 1.23 * 100 is exactly 123.0 and is
+        // never truncated — kept as a non-truncating sanity case.
         final client = MockClient((_) async => http.Response(
               jsonEncode([
                 {'chf': 1.23, 'eur': 4.56, 'timestamp': '2026-01-01T00:00:00Z'},
@@ -126,11 +133,13 @@ void main() {
               200,
             ));
 
-        final chf = await build(client).getPriceChart(realUnitAsset, Currency.chf);
-        expect(chf.single.price, BigInt.from(123));
-
+        // Primary guard: the value that actually loses a rappen when truncated.
         final eur = await build(client).getPriceChart(realUnitAsset, Currency.eur);
         expect(eur.single.price, BigInt.from(456));
+
+        // Sanity: an exact product must stay put.
+        final chf = await build(client).getPriceChart(realUnitAsset, Currency.chf);
+        expect(chf.single.price, BigInt.from(123));
       });
 
       test('parses EUR chart correctly', () async {

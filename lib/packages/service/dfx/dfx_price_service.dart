@@ -40,9 +40,10 @@ class DFXPriceService extends APriceService {
       result.add(
         PricePoint(
           asset: asset,
-          // Round the fractional-unit price (e.g. 1.23 CHF → 123 rappen);
+          // Round the fractional-unit price (e.g. 4.56 CHF → 456 rappen);
           // `BigInt.from` on the raw `double * 100` truncates toward zero and
-          // would drop a rappen on values like 1.23 (122.999… → 122).
+          // would drop a rappen on values like 4.56 (455.999… → 455). Values
+          // such as 1.23 are exactly 123.0 in IEEE-754 and were never truncated.
           price: BigInt.from(((rawPrice as num) * 100).round()),
           time: DateTime.parse(entry['timestamp']),
         ),
