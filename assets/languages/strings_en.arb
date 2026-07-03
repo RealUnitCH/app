@@ -281,7 +281,7 @@
   "settings": "Settings",
   "settingsAppVersion": "Version ${tag}",
   "settingsBiometricUnlock": "Unlock with biometrics",
-  "settingsBiometricUnlockFailed": "Biometric unlock could not be enabled.",
+  "settingsBiometricUnlockFailed": "Could not change the biometric-unlock setting.",
   "settingsChangePin": "Change PIN",
   "settingsChangePinVerifyDescription": "Enter your current PIN to set a new one",
   "settingsCurrency": "Currency",

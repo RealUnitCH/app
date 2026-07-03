@@ -281,7 +281,7 @@
   "settings": "Einstellungen",
   "settingsAppVersion": "Version ${tag}",
   "settingsBiometricUnlock": "Mit Biometrie entsperren",
-  "settingsBiometricUnlockFailed": "Biometrische Entsperrung konnte nicht aktiviert werden.",
+  "settingsBiometricUnlockFailed": "Die Einstellung für die biometrische Entsperrung konnte nicht geändert werden.",
   "settingsChangePin": "PIN ändern",
   "settingsChangePinVerifyDescription": "Geben Sie Ihre aktuelle PIN ein, um eine neue festzulegen",
   "settingsCurrency": "Währung",

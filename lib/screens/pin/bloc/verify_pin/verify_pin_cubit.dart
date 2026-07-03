@@ -187,7 +187,18 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
     if (state is VerifyPinSuccess) return;
     switch (outcome) {
       case BiometricAuthOutcome.success:
-        if (enableLockout) await _secureStorage.resetPinLockout();
+        if (enableLockout) {
+          try {
+            await _secureStorage.resetPinLockout();
+          } catch (_) {
+            // Best-effort cleanup: the scan already succeeded, so unlock even if
+            // clearing the counter fails — a stale count self-heals on the next
+            // successful check. Without this a keychain throw would skip the
+            // success emit (the wallet would stay locked after a valid scan) and,
+            // because every caller is fire-and-forget, surface as an unhandled
+            // async error. Mirrors _checkPin's defensive storage handling.
+          }
+        }
         _safeEmit(VerifyPinSuccess(biometricStatus: state.biometricStatus));
       case BiometricAuthOutcome.failed:
         // Plain scan failure or user cancel: stay silent, keep the button.

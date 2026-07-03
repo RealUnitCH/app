@@ -590,6 +590,26 @@ void main() {
         verify(() => secureStorage.resetPinLockout()).called(1);
       });
 
+      test(
+        'success still unlocks when the lockout reset throws (no unhandled error)',
+        () async {
+          // A keychain failure while clearing the counter must not skip the
+          // unlock: the scan already succeeded. The best-effort reset swallows
+          // the throw so callers (all fire-and-forget) never see an unhandled
+          // async error and the wallet still opens.
+          when(() => biometricService.authenticate())
+              .thenAnswer((_) async => BiometricAuthOutcome.success);
+          when(() => secureStorage.resetPinLockout())
+              .thenThrow(Exception('keychain unavailable'));
+          final cubit = build();
+
+          await cubit.promptBiometric();
+
+          expect(cubit.state, isA<VerifyPinSuccess>());
+          verify(() => secureStorage.resetPinLockout()).called(1);
+        },
+      );
+
       blocTest<VerifyPinCubit, VerifyPinState>(
         'a non-success outcome after an already-landed success emits no second state (N2)',
         // First prompt unlocks (success); a second prompt returns a NON-success
