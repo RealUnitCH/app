@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bloc_test/bloc_test.dart';
@@ -25,8 +26,8 @@ void main() {
   setUp(() {
     secureStorage = _MockSecureStorage();
     biometricService = _MockBiometricService();
-    when(() => secureStorage.setPinSalt(any())).thenAnswer((_) async {});
-    when(() => secureStorage.setPinHash(any())).thenAnswer((_) async {});
+    // The confirmed PIN is now persisted as one atomic salt+hash credential.
+    when(() => secureStorage.setPinCredential(any(), any())).thenAnswer((_) async {});
   });
 
   SetupPinCubit build() => SetupPinCubit(secureStorage, biometricService);
@@ -89,7 +90,8 @@ void main() {
       expect(cubit.state.isComplete, isFalse);
     });
 
-    test('matching confirm-pin persists salt + hash and emits isComplete=true', () async {
+    test('matching confirm-pin persists the atomic credential and emits isComplete=true',
+        () async {
       final cubit = build();
       // The cubit's stream is broadcast and does not replay past events —
       // subscribe BEFORE driving the digits so we don't race the emit.
@@ -102,13 +104,15 @@ void main() {
         cubit.addDigit(d);
       }
       // _onPinComplete fires _confirmPin without awaiting; PBKDF2 with
-      // 600k iterations runs via `compute()`. On a Flutter-test isolate
+      // 250k iterations runs via `compute()`. On a Flutter-test isolate
       // shim this can take several seconds — generous timeout.
       await completed.timeout(const Duration(seconds: 30));
 
       expect(cubit.state.isComplete, isTrue);
-      verify(() => secureStorage.setPinSalt(any())).called(1);
-      verify(() => secureStorage.setPinHash(any())).called(1);
+      // One atomic write — never the legacy split pair.
+      verify(() => secureStorage.setPinCredential(any(), any())).called(1);
+      verifyNever(() => secureStorage.setPinSalt(any()));
+      verifyNever(() => secureStorage.setPinHash(any()));
     });
 
     test('mismatching confirm-pin resets currentPin and sets mismatch=true', () async {
@@ -126,8 +130,7 @@ void main() {
       expect(cubit.state.mismatch, isTrue);
       expect(cubit.state.currentPin, '');
       expect(cubit.state.isComplete, isFalse);
-      verifyNever(() => secureStorage.setPinSalt(any()));
-      verifyNever(() => secureStorage.setPinHash(any()));
+      verifyNever(() => secureStorage.setPinCredential(any(), any()));
     });
 
     test('confirming flips isSubmitting on during hashing and off on completion', () async {
@@ -151,39 +154,57 @@ void main() {
       expect(completedState.isComplete, isTrue);
     });
 
-    test('a delete+retype race during hashing writes the salt/hash pair exactly once (F-09)',
+    test('a delete+retype race during the write persists the credential exactly once (F-09)',
         () async {
+      // Gate the atomic write so it stays in flight (isSubmitting == true) while
+      // we fire the race — deterministic, no wall-clock delay. `writeStarted`
+      // fires the moment _confirmPin reaches the write, i.e. past the real
+      // PBKDF2 hash, so we know the in-flight window is open.
+      final writeGate = Completer<void>();
+      final writeStarted = Completer<void>();
+      when(() => secureStorage.setPinCredential(any(), any())).thenAnswer((_) async {
+        if (!writeStarted.isCompleted) writeStarted.complete();
+        await writeGate.future;
+      });
+
       final cubit = build();
       final completed = cubit.stream.firstWhere((s) => s.isComplete);
 
       for (final d in [1, 2, 3, 4, 5, 6]) {
         cubit.addDigit(d);
       }
-      for (final d in [1, 2, 3, 4, 5]) {
+      for (final d in [1, 2, 3, 4, 5, 6]) {
         cubit.addDigit(d);
       }
-      // Complete the pin, then — while _confirmPin is suspended at the PBKDF2
-      // hash — fire the real race the guard exists for: delete the last digit
-      // and retype it. On the unguarded code delete would step back past the
-      // length guard and the retype would spawn a SECOND concurrent _confirmPin
-      // (a second write pair); the isSubmitting guard must drop both so the pair
-      // is written exactly once.
-      cubit.addDigit(6);
+
+      // Wait until the credential write is actually in flight.
+      await writeStarted.future.timeout(const Duration(seconds: 30));
+
+      // While the write is suspended, fire the real race the guard exists for:
+      // delete the last digit and retype it. On the unguarded code delete would
+      // step back past the length guard and the retype would spawn a SECOND
+      // concurrent _confirmPin (a second write); the isSubmitting guard must drop
+      // both so the credential is written exactly once.
       cubit.deleteDigit();
       cubit.addDigit(6);
+      // Flush any microtasks the blocked re-entry might have scheduled instead of
+      // waiting on the wall clock.
+      await pumpEventQueue();
+
       // The blocked delete/retype must leave the completing pin untouched.
       expect(cubit.state.currentPin, '123456');
+
+      // Release the gated write so the single _confirmPin completes.
+      writeGate.complete();
       await completed.timeout(const Duration(seconds: 30));
-      // Let any erroneously-spawned second write settle before asserting once.
-      await Future<void>.delayed(const Duration(milliseconds: 50));
 
       expect(cubit.state.isComplete, isTrue);
-      verify(() => secureStorage.setPinSalt(any())).called(1);
-      verify(() => secureStorage.setPinHash(any())).called(1);
+      verify(() => secureStorage.setPinCredential(any(), any())).called(1);
     });
 
     test('a storage write failure returns to a usable pad with a retry hint', () async {
-      when(() => secureStorage.setPinHash(any())).thenThrow(Exception('keychain unavailable'));
+      when(() => secureStorage.setPinCredential(any(), any()))
+          .thenThrow(Exception('keychain unavailable'));
       final cubit = build();
       final failed = cubit.stream.firstWhere((s) => s.storeFailed);
 

@@ -97,7 +97,17 @@ void main() {
       verify(() => mockStorage.write(key: 'pin.hash', value: 'hashed')).called(1);
     });
 
-    test('hasPinHash is true when the read returns a non-null value', () async {
+    test('hasPinHash is true when only the atomic credential is present', () async {
+      when(
+        () => mockStorage.read(key: 'pin.credential'),
+      ).thenAnswer((_) async => 'deadbeef:hash');
+      when(() => mockStorage.read(key: 'pin.hash')).thenAnswer((_) async => null);
+
+      expect(await secureStorage.hasPinHash(), isTrue);
+    });
+
+    test('hasPinHash is true when only the legacy hash is present', () async {
+      when(() => mockStorage.read(key: 'pin.credential')).thenAnswer((_) async => null);
       when(
         () => mockStorage.read(key: 'pin.hash'),
       ).thenAnswer((_) async => 'something');
@@ -105,17 +115,17 @@ void main() {
       expect(await secureStorage.hasPinHash(), isTrue);
     });
 
-    test('hasPinHash is false when the read returns null', () async {
-      when(
-        () => mockStorage.read(key: 'pin.hash'),
-      ).thenAnswer((_) async => null);
+    test('hasPinHash is false only when both credential and legacy hash are null', () async {
+      when(() => mockStorage.read(key: 'pin.credential')).thenAnswer((_) async => null);
+      when(() => mockStorage.read(key: 'pin.hash')).thenAnswer((_) async => null);
 
       expect(await secureStorage.hasPinHash(), isFalse);
     });
 
-    test('deletePinHash deletes both pin.hash and pin.salt in parallel', () async {
+    test('deletePinHash deletes pin.credential, pin.hash and pin.salt in parallel', () async {
       await secureStorage.deletePinHash();
 
+      verify(() => mockStorage.delete(key: 'pin.credential')).called(1);
       verify(() => mockStorage.delete(key: 'pin.hash')).called(1);
       verify(() => mockStorage.delete(key: 'pin.salt')).called(1);
     });
@@ -153,10 +163,26 @@ void main() {
         () => mockStorage.write(key: 'pin.salt', value: 'deadbeef'),
       ).called(1);
     });
+
+    test('setPinCredential writes saltHex:hash atomically and clears the legacy split keys',
+        () async {
+      final salt = Uint8List.fromList([0xde, 0xad, 0xbe, 0xef]);
+
+      await secureStorage.setPinCredential(salt, 'thehash');
+
+      // One combined write: the salt/hash pair can never be torn.
+      verify(
+        () => mockStorage.write(key: 'pin.credential', value: 'deadbeef:thehash'),
+      ).called(1);
+      // The legacy split keys are cleared so a leftover pair is never consulted.
+      verify(() => mockStorage.delete(key: 'pin.hash')).called(1);
+      verify(() => mockStorage.delete(key: 'pin.salt')).called(1);
+    });
   });
 
   group('SecureStorage verifyPin', () {
-    test('is notVerifiable when no pin hash is stored', () async {
+    test('is notVerifiable when no pin hash is stored (legacy path)', () async {
+      when(() => mockStorage.read(key: 'pin.credential')).thenAnswer((_) async => null);
       when(() => mockStorage.read(key: 'pin.hash')).thenAnswer((_) async => null);
       when(
         () => mockStorage.read(key: 'pin.salt'),
@@ -168,7 +194,8 @@ void main() {
       );
     });
 
-    test('is notVerifiable when no salt is stored', () async {
+    test('is notVerifiable when no salt is stored (legacy path)', () async {
+      when(() => mockStorage.read(key: 'pin.credential')).thenAnswer((_) async => null);
       when(
         () => mockStorage.read(key: 'pin.hash'),
       ).thenAnswer((_) async => 'something');
@@ -180,12 +207,14 @@ void main() {
       );
     });
 
-    test('is correct when the pin hashes to the stored value (current iterations)', () async {
+    test('is correct when the pin hashes to the stored value on the legacy path', () async {
       final salt = SecureStorage.generatePinSalt();
       // Build the actual current-target hash through the real hashPin helper
       // so we don't pin a specific iteration count in the test.
       final expectedHash = SecureStorage.hashPin('123456', salt);
 
+      // credential absent → verifyPin falls back to the legacy split keys.
+      when(() => mockStorage.read(key: 'pin.credential')).thenAnswer((_) async => null);
       when(
         () => mockStorage.read(key: 'pin.hash'),
       ).thenAnswer((_) async => expectedHash);
@@ -199,19 +228,21 @@ void main() {
       );
       // No rehash write expected on the fast path.
       verifyNever(
-        () => mockStorage.write(
-          key: 'pin.hash',
-          value: any(named: 'value'),
-        ),
+        () => mockStorage.write(key: 'pin.credential', value: any(named: 'value')),
+      );
+      verifyNever(
+        () => mockStorage.write(key: 'pin.hash', value: any(named: 'value')),
       );
     });
 
-    test('is wrong when the pin is wrong on every accepted iteration count', () async {
+    test('is wrong when the pin is wrong on every accepted iteration count (legacy path)',
+        () async {
       final salt = SecureStorage.generatePinSalt();
       // Pin some unrelated hash that no candidate iteration count can produce
       // for the test pin.
       const unrelatedHash = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
 
+      when(() => mockStorage.read(key: 'pin.credential')).thenAnswer((_) async => null);
       when(
         () => mockStorage.read(key: 'pin.hash'),
       ).thenAnswer((_) async => unrelatedHash);
@@ -225,11 +256,87 @@ void main() {
       );
     });
 
-    test('legacy hash is accepted once (correct) and transparently rehashed', () async {
+    test('is correct via the atomic credential key', () async {
+      final salt = SecureStorage.generatePinSalt();
+      // The stored credential holds the current-target hash for the entered pin.
+      final hash = SecureStorage.hashPin('123456', salt);
+
+      when(
+        () => mockStorage.read(key: 'pin.credential'),
+      ).thenAnswer((_) async => '${bytesToHex(salt)}:$hash');
+
+      expect(
+        await secureStorage.verifyPin('123456'),
+        PinVerificationResult.correct,
+      );
+      // Fast path: nothing is rewritten and the legacy split keys are never read.
+      verifyNever(
+        () => mockStorage.write(key: any(named: 'key'), value: any(named: 'value')),
+      );
+      verifyNever(() => mockStorage.read(key: 'pin.hash'));
+      verifyNever(() => mockStorage.read(key: 'pin.salt'));
+    });
+
+    test('is wrong via the atomic credential key', () async {
+      final salt = SecureStorage.generatePinSalt();
+      const unrelatedHash = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+
+      when(
+        () => mockStorage.read(key: 'pin.credential'),
+      ).thenAnswer((_) async => '${bytesToHex(salt)}:$unrelatedHash');
+
+      expect(
+        await secureStorage.verifyPin('123456'),
+        PinVerificationResult.wrong,
+      );
+    });
+
+    for (final malformed in ['kein-doppelpunkt', ':abc', 'abc:', 'zz:aa']) {
+      test('is notVerifiable when the stored credential is malformed ("$malformed")', () async {
+        when(
+          () => mockStorage.read(key: 'pin.credential'),
+        ).thenAnswer((_) async => malformed);
+
+        expect(
+          await secureStorage.verifyPin('123456'),
+          PinVerificationResult.notVerifiable,
+        );
+        // A malformed credential must NOT silently fall back to the legacy pair.
+        verifyNever(() => mockStorage.read(key: 'pin.hash'));
+        verifyNever(() => mockStorage.read(key: 'pin.salt'));
+      });
+    }
+
+    test('the atomic credential takes precedence over the legacy split keys', () async {
+      final salt = SecureStorage.generatePinSalt();
+      final hash = SecureStorage.hashPin('123456', salt);
+
+      // Credential matches the entered pin; the legacy pair holds unrelated data
+      // that would NOT match — proving the credential path wins and the legacy
+      // keys are never consulted.
+      when(
+        () => mockStorage.read(key: 'pin.credential'),
+      ).thenAnswer((_) async => '${bytesToHex(salt)}:$hash');
+      when(() => mockStorage.read(key: 'pin.hash')).thenAnswer((_) async => 'deadbeef');
+      when(
+        () => mockStorage.read(key: 'pin.salt'),
+      ).thenAnswer((_) async => bytesToHex(SecureStorage.generatePinSalt()));
+
+      expect(
+        await secureStorage.verifyPin('123456'),
+        PinVerificationResult.correct,
+      );
+      verifyNever(() => mockStorage.read(key: 'pin.hash'));
+      verifyNever(() => mockStorage.read(key: 'pin.salt'));
+    });
+
+    test('legacy hash is accepted once (correct) and migrated onto the atomic credential',
+        () async {
       final salt = SecureStorage.generatePinSalt();
       // 10_000 is one of the documented legacy iteration counts.
       final legacyHash = SecureStorage.hashPin('123456', salt, iterations: 10000);
 
+      when(() => mockStorage.read(key: 'pin.credential')).thenAnswer((_) async => null);
       when(
         () => mockStorage.read(key: 'pin.hash'),
       ).thenAnswer((_) async => legacyHash);
@@ -242,12 +349,17 @@ void main() {
         PinVerificationResult.correct,
       );
 
-      // The rehash MUST land on the current target — i.e. exactly one
-      // write to pin.hash whose value is the new hash, not the legacy one.
+      // The rehash migrates onto the atomic credential key (saltHex:newHash) and
+      // clears the legacy split keys — it must NOT write pin.hash any more.
       final newHash = SecureStorage.hashPin('123456', salt);
       verify(
-        () => mockStorage.write(key: 'pin.hash', value: newHash),
+        () => mockStorage.write(key: 'pin.credential', value: '${bytesToHex(salt)}:$newHash'),
       ).called(1);
+      verify(() => mockStorage.delete(key: 'pin.hash')).called(1);
+      verify(() => mockStorage.delete(key: 'pin.salt')).called(1);
+      verifyNever(
+        () => mockStorage.write(key: 'pin.hash', value: any(named: 'value')),
+      );
     });
   });
 

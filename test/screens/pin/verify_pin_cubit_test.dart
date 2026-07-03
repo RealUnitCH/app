@@ -531,6 +531,51 @@ void main() {
         pinGate.complete(PinVerificationResult.wrong); // cleanup
         await Future<void>.delayed(Duration.zero);
       });
+
+      test(
+        'a biometric unlock landing in the wrong-branch window neither counts an '
+        'attempt nor clobbers success (F-01 cross-guard)',
+        () async {
+          // Three gates let us pin the exact interleaving: the pin check resolves
+          // WRONG, then the biometric prompt succeeds while the wrong branch is
+          // suspended reading the failure counter, then the counter read resolves.
+          final verifyGate = Completer<PinVerificationResult>();
+          final attemptsGate = Completer<int>();
+          final authGate = Completer<BiometricAuthOutcome>();
+          when(() => secureStorage.verifyPin(any())).thenAnswer((_) => verifyGate.future);
+          when(() => secureStorage.getPinFailedAttempts()).thenAnswer((_) => attemptsGate.future);
+          when(() => biometricService.authenticate()).thenAnswer((_) => authGate.future);
+          final cubit = build();
+          final success = cubit.stream.firstWhere((s) => s is VerifyPinSuccess);
+
+          final prompt = cubit.promptBiometric(); // authenticate() pending on authGate
+          addPin(cubit, '999999'); // 6th digit → _checkPin → verifyPin pending on verifyGate
+
+          // Resolve the pin check as WRONG: _checkPin enters the wrong branch and
+          // suspends on getPinFailedAttempts (pending on attemptsGate).
+          verifyGate.complete(PinVerificationResult.wrong);
+          await pumpEventQueue();
+
+          // Now the racing biometric prompt succeeds: it resets the lockout and
+          // emits VerifyPinSuccess right inside the window the wrong branch is
+          // suspended in.
+          authGate.complete(BiometricAuthOutcome.success);
+          await prompt;
+          await success.timeout(const Duration(seconds: 30));
+          expect(cubit.state, isA<VerifyPinSuccess>());
+
+          // Release the wrong branch's counter read AFTER the biometric success.
+          attemptsGate.complete(0);
+          await pumpEventQueue();
+
+          // The cross-guard must short-circuit the wrong branch: no stale counter
+          // written back over the reset, and the success left intact. Without the
+          // guard, setPinFailedAttempts would run and _emitLockState would clobber
+          // the success with a failure/lock state.
+          expect(cubit.state, isA<VerifyPinSuccess>());
+          verifyNever(() => secureStorage.setPinFailedAttempts(any()));
+        },
+      );
     });
 
     group('promptBiometric outcome mapping', () {

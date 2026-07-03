@@ -84,12 +84,11 @@ class SetupPinCubit extends Cubit<SetupPinState> {
       final salt = SecureStorage.generatePinSalt();
       final hash = await SecureStorage.hashPinAsync(confirmPin, salt);
       if (isClosed) return;
-      // Written sequentially (hash first) rather than via Future.wait so a
-      // failure is attributed and surfaced instead of completing silently. A
-      // torn pair stays bounded: a full retry rewrites both consistently.
-      await _secureStorage.setPinHash(hash);
-      if (isClosed) return;
-      await _secureStorage.setPinSalt(salt);
+      // Persist salt+hash as one atomic keychain write. Two separate writes let
+      // a process kill during a PIN change strand a new hash beside the old salt
+      // (both keys non-null) — unverifiable-but-counted, driving the user into
+      // the lockout cascade with no recovery (audit F-09).
+      await _secureStorage.setPinCredential(salt, hash);
       if (isClosed) return;
       emit(state.copyWith(isSubmitting: false, isComplete: true));
     } catch (_) {

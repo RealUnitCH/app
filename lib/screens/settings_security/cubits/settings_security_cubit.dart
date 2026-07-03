@@ -35,23 +35,31 @@ class SettingsSecurityCubit extends Cubit<SettingsSecurityState> {
   Future<void> toggleBiometrics({required bool enabled}) async {
     if (state.isBusy) return;
     emit(state.copyWith(isBusy: true));
-    if (enabled) {
-      final outcome = await _biometricService.enable();
+    try {
+      if (enabled) {
+        final outcome = await _biometricService.enable();
+        if (isClosed) return;
+        final success = outcome == BiometricAuthOutcome.success;
+        // A plain cancel/scan failure stays silent; anything else is a real fault.
+        final failedSilently = outcome == BiometricAuthOutcome.failed;
+        emit(
+          state.copyWith(
+            biometricEnabled: success,
+            isBusy: false,
+            error: success || failedSilently ? null : SettingsSecurityError.biometricEnableFailed,
+          ),
+        );
+      } else {
+        await _biometricService.disable();
+        if (isClosed) return;
+        emit(state.copyWith(biometricEnabled: false, isBusy: false));
+      }
+    } catch (_) {
+      // A keychain write failure must not strand the toggle on the spinner with
+      // the re-entrancy guard (isBusy) latched — clear it and surface the fault
+      // instead of dead-ending, mirroring the PIN cubits' storage-failure path.
       if (isClosed) return;
-      final success = outcome == BiometricAuthOutcome.success;
-      // A plain cancel/scan failure stays silent; anything else is a real fault.
-      final failedSilently = outcome == BiometricAuthOutcome.failed;
-      emit(
-        state.copyWith(
-          biometricEnabled: success,
-          isBusy: false,
-          error: success || failedSilently ? null : SettingsSecurityError.biometricEnableFailed,
-        ),
-      );
-    } else {
-      await _biometricService.disable();
-      if (isClosed) return;
-      emit(state.copyWith(biometricEnabled: false, isBusy: false));
+      emit(state.copyWith(isBusy: false, error: SettingsSecurityError.biometricEnableFailed));
     }
   }
 }

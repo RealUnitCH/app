@@ -139,6 +139,65 @@ void main() {
       ],
       verify: (_) => verify(() => biometricService.enable()).called(1),
     );
+
+    blocTest<SettingsSecurityCubit, SettingsSecurityState>(
+      'enable throwing (keychain write failure) clears busy and surfaces the error',
+      setUp: () => when(() => biometricService.enable())
+          .thenThrow(Exception('keychain unavailable')),
+      build: build,
+      act: (cubit) => cubit.toggleBiometrics(enabled: true),
+      // Must NOT strand on the spinner (isBusy latched); clears busy + raises the
+      // one-shot error instead.
+      expect: () => const [
+        SettingsSecurityState(isBusy: true),
+        SettingsSecurityState(
+          error: SettingsSecurityError.biometricEnableFailed,
+        ),
+      ],
+    );
+
+    test('a throwing enable does not latch isBusy — a later toggle can retry', () async {
+      when(() => biometricService.enable()).thenThrow(Exception('keychain unavailable'));
+      final cubit = build();
+
+      await cubit.toggleBiometrics(enabled: true);
+      expect(cubit.state.isBusy, isFalse);
+      expect(cubit.state.error, SettingsSecurityError.biometricEnableFailed);
+
+      // The re-entrancy guard (isBusy) must have released: a retry actually
+      // reaches enable() again instead of being dropped as a stacked prompt.
+      when(() => biometricService.enable()).thenAnswer((_) async => BiometricAuthOutcome.success);
+      await cubit.toggleBiometrics(enabled: true);
+
+      expect(cubit.state.biometricEnabled, isTrue);
+      expect(cubit.state.isBusy, isFalse);
+      expect(cubit.state.error, isNull);
+      verify(() => biometricService.enable()).called(2);
+    });
+
+    blocTest<SettingsSecurityCubit, SettingsSecurityState>(
+      'disable throwing (keychain write failure) clears busy and surfaces the error',
+      setUp: () => when(() => biometricService.disable())
+          .thenThrow(Exception('keychain unavailable')),
+      build: build,
+      seed: () => const SettingsSecurityState(
+        biometricSupported: true,
+        biometricEnabled: true,
+      ),
+      act: (cubit) => cubit.toggleBiometrics(enabled: false),
+      expect: () => const [
+        SettingsSecurityState(
+          biometricSupported: true,
+          biometricEnabled: true,
+          isBusy: true,
+        ),
+        SettingsSecurityState(
+          biometricSupported: true,
+          biometricEnabled: true,
+          error: SettingsSecurityError.biometricEnableFailed,
+        ),
+      ],
+    );
   });
 }
 

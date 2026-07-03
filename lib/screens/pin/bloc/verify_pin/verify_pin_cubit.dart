@@ -83,7 +83,14 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
             return;
           }
           final attempts = await _secureStorage.getPinFailedAttempts() + 1;
+          // A biometric prompt racing this check may have reset the lockout and
+          // emitted VerifyPinSuccess between the guard on the correct/return path
+          // above and here. Re-check after each await before touching the counter
+          // or the state: otherwise setPinFailedAttempts writes a stale non-zero
+          // count back over the reset and _emitLockState clobbers the success.
+          if (isClosed || state is VerifyPinSuccess) return;
           await _secureStorage.setPinFailedAttempts(attempts);
+          if (isClosed || state is VerifyPinSuccess) return;
           await _emitLockState(attempts);
       }
     } catch (_) {
@@ -231,6 +238,10 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
     } else if (duration > Duration.zero) {
       final lockedUntil = DateTime.now().add(duration);
       await _secureStorage.setPinLockedUntil(lockedUntil);
+      // A biometric unlock racing this write may already have landed
+      // VerifyPinSuccess; don't clobber it with a lock state (completes the
+      // wrong-branch cross-guard for the temporary-lock await point).
+      if (isClosed || state is VerifyPinSuccess) return;
       _safeEmit(VerifyPinTemporarilyLocked(
         failedAttempts: attempts,
         lockedUntil: lockedUntil,
