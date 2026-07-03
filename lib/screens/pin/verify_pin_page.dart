@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -12,6 +11,7 @@ import 'package:realunit_wallet/screens/pin/bloc/verify_pin/verify_pin_cubit.dar
 import 'package:realunit_wallet/screens/pin/constants/pin_constants.dart';
 import 'package:realunit_wallet/screens/pin/widgets/forgot_pin_bottom_sheet.dart';
 import 'package:realunit_wallet/screens/pin/widgets/pin_indicator.dart';
+import 'package:realunit_wallet/screens/pin/widgets/verifying_indicator.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_text_button.dart';
@@ -92,6 +92,9 @@ class _VerifyPinViewState extends State<VerifyPinView> {
   Widget build(BuildContext context) => BlocConsumer<VerifyPinCubit, VerifyPinState>(
     listener: (context, state) {
       if (state is VerifyPinSuccess) {
+        // Stop the lockout countdown so it cannot fire onLockExpired over the
+        // success state while the wallet loads (spurious re-prompt / re-lock).
+        _countdownTimer?.cancel();
         widget.onAuthenticated();
       } else if (state is VerifyPinTemporarilyLocked) {
         _startCountdown(state.lockedUntil);
@@ -99,9 +102,15 @@ class _VerifyPinViewState extends State<VerifyPinView> {
     },
     builder: (context, state) {
       final isLocked = state is VerifyPinTemporarilyLocked || state is VerifyPinLocked;
+      final isUnverifiable = state is VerifyPinUnverifiable;
+      final showsError = state is VerifyPinFailure || isLocked || isUnverifiable;
       // Covers both the PIN-hash check (VerifyPinVerifying) and the subsequent
       // wallet load that runs after success while this screen is still on top.
       final isVerifying = state is VerifyPinVerifying || state is VerifyPinSuccess;
+      // Biometrics are OS-bound, so the shortcut stays offered even behind an
+      // active lockout — a successful scan is the way out.
+      final biometricAvailable = state.biometricStatus == BiometricStatus.available;
+      final biometricHint = _biometricHint(context, state.biometricStatus);
 
       return Scaffold(
         appBar: AppBar(),
@@ -117,21 +126,21 @@ class _VerifyPinViewState extends State<VerifyPinView> {
                     children: [
                       const Spacer(),
                       Padding(
-                        padding: const .symmetric(horizontal: 20.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Column(
-                          mainAxisAlignment: .center,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Column(
                               spacing: 8.0,
                               children: [
                                 Text(
                                   S.of(context).pinVerify,
-                                  textAlign: .center,
+                                  textAlign: TextAlign.center,
                                   style: Theme.of(context).textTheme.headlineMedium,
                                 ),
                                 Text(
                                   widget.description ?? S.of(context).pinVerifyDescription,
-                                  textAlign: .center,
+                                  textAlign: TextAlign.center,
                                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: RealUnitColors.neutral500,
                                   ),
@@ -145,15 +154,15 @@ class _VerifyPinViewState extends State<VerifyPinView> {
                                 PinIndicator(
                                   pinLength: isVerifying ? pinLength : state.pin.length,
                                   expectedPinLength: pinLength,
-                                  wrongPin: state is VerifyPinFailure || isLocked,
+                                  wrongPin: state is VerifyPinFailure || isLocked || isUnverifiable,
                                 ),
                                 Visibility(
-                                  visible: state is VerifyPinFailure || isLocked,
+                                  visible: showsError,
                                   maintainSize: true,
                                   maintainAnimation: true,
                                   maintainState: true,
-                                  child: SizedBox(
-                                    height: 40.0,
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(minHeight: 40.0),
                                     child: Text(
                                       switch (state) {
                                         VerifyPinTemporarilyLocked s =>
@@ -163,15 +172,30 @@ class _VerifyPinViewState extends State<VerifyPinView> {
                                                 _formatRemaining(s.lockedUntil),
                                               ),
                                         VerifyPinLocked _ => S.of(context).pinVerifyLocked,
+                                        // The 'Forgot PIN?' button only exists in
+                                        // the appLock variant (bottom != null);
+                                        // gate flows get a text without that
+                                        // dangling button reference.
+                                        VerifyPinUnverifiable _ => widget.bottom != null
+                                            ? S.of(context).pinVerifyUnverifiable
+                                            : S.of(context).pinVerifyUnverifiableGate,
                                         _ => S.of(context).pinVerifyFailed,
                                       },
                                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                         color: RealUnitColors.status.red600,
                                       ),
-                                      textAlign: .center,
+                                      textAlign: TextAlign.center,
                                     ),
                                   ),
                                 ),
+                                if (biometricHint != null)
+                                  Text(
+                                    biometricHint,
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: RealUnitColors.neutral500,
+                                    ),
+                                  ),
                               ],
                             ),
                           ],
@@ -179,14 +203,26 @@ class _VerifyPinViewState extends State<VerifyPinView> {
                       ),
                       const Spacer(),
                       if (isVerifying)
-                        const _VerifyingIndicator()
+                        const VerifyingIndicator()
                       else
-                        IgnorePointer(
-                          ignoring: isLocked,
-                          child: NumberPad(
-                            onNumberPressed: context.read<VerifyPinCubit>().addDigit,
-                            onDeletePressed: context.read<VerifyPinCubit>().deleteDigit,
-                          ),
+                        NumberPad(
+                          onNumberPressed: context.read<VerifyPinCubit>().addDigit,
+                          onDeletePressed: context.read<VerifyPinCubit>().deleteDigit,
+                          inputEnabled: !(isLocked || isUnverifiable),
+                          onBiometricPressed: biometricAvailable
+                              ? context.read<VerifyPinCubit>().promptBiometric
+                              : null,
+                          biometricIcon: biometricAvailable
+                              ? Icon(
+                                  // Face-ID phones expect a face glyph; everything
+                                  // else keeps the fingerprint affordance.
+                                  Theme.of(context).platform == TargetPlatform.iOS
+                                      ? Icons.face
+                                      : Icons.fingerprint,
+                                  size: 28,
+                                  color: RealUnitColors.realUnitBlack,
+                                )
+                              : null,
                         ),
                       if (widget.bottom != null) widget.bottom! else const SizedBox(height: 60.0),
                     ],
@@ -218,6 +254,16 @@ class _VerifyPinViewState extends State<VerifyPinView> {
       }
     });
   }
+
+  /// Explanatory line shown when biometrics are enabled but currently unusable,
+  /// so the missing Face-ID/biometrics button is not left unexplained.
+  String? _biometricHint(BuildContext context, BiometricStatus status) => switch (status) {
+    BiometricStatus.temporarilyLocked ||
+    BiometricStatus.permanentlyLocked => S.of(context).pinVerifyBiometricHintLocked,
+    BiometricStatus.notEnrolled => S.of(context).pinVerifyBiometricHintNotEnrolled,
+    BiometricStatus.unavailable => S.of(context).pinVerifyBiometricHintUnavailable,
+    _ => null,
+  };
 
   String _formatRemaining(DateTime lockedUntil) {
     final remaining = lockedUntil.difference(DateTime.now());
@@ -261,30 +307,6 @@ class _ForgotPinButton extends StatelessWidget {
         },
         label: S.of(context).pinForgotten,
       ),
-    ),
-  );
-}
-
-class _VerifyingIndicator extends StatelessWidget {
-  const _VerifyingIndicator();
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    // Matches the NumberPad footprint (4 rows of ~68px) so swapping it in for
-    // the spinner does not shift the PIN dots above it.
-    height: 272,
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const CupertinoActivityIndicator(radius: 16),
-        const SizedBox(height: 16),
-        Text(
-          S.of(context).pinVerifying,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: RealUnitColors.neutral500,
-          ),
-        ),
-      ],
     ),
   );
 }

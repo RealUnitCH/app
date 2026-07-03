@@ -83,5 +83,78 @@ void main() {
 
       expect(dots, 1);
     });
+
+    testWidgets('biometric icon rendered only when both callback and icon are provided',
+        (tester) async {
+      await tester.pumpWidget(_host(
+        NumberPad(onNumberPressed: (_) {}, onDeletePressed: () {}),
+      ));
+      expect(find.byIcon(Icons.fingerprint), findsNothing);
+
+      await tester.pumpWidget(_host(
+        NumberPad(
+          onNumberPressed: (_) {},
+          onDeletePressed: () {},
+          onBiometricPressed: () {},
+          biometricIcon: const Icon(Icons.fingerprint),
+        ),
+      ));
+      expect(find.byIcon(Icons.fingerprint), findsOneWidget);
+    });
+
+    testWidgets('tapping the biometric button fires onBiometricPressed', (tester) async {
+      var biometrics = 0;
+      await tester.pumpWidget(_host(
+        NumberPad(
+          onNumberPressed: (_) {},
+          onDeletePressed: () {},
+          onBiometricPressed: () => biometrics++,
+          biometricIcon: const Icon(Icons.fingerprint),
+        ),
+      ));
+
+      await tester.tap(find.byIcon(Icons.fingerprint));
+      await tester.pump();
+
+      expect(biometrics, 1);
+    });
+
+    testWidgets('inputEnabled=false makes digits and delete inert', (tester) async {
+      final pressed = <int>[];
+      var deletes = 0;
+      await tester.pumpWidget(_host(
+        NumberPad(
+          onNumberPressed: pressed.add,
+          onDeletePressed: () => deletes++,
+          inputEnabled: false,
+        ),
+      ));
+
+      await tester.tap(find.text('1'));
+      await tester.tap(find.text('0'));
+      await tester.tap(find.byIcon(Icons.arrow_back_ios_new));
+      await tester.pump();
+
+      expect(pressed, isEmpty);
+      expect(deletes, 0);
+    });
+
+    testWidgets('biometric button stays active while inputEnabled is false', (tester) async {
+      var biometrics = 0;
+      await tester.pumpWidget(_host(
+        NumberPad(
+          onNumberPressed: (_) {},
+          onDeletePressed: () {},
+          inputEnabled: false,
+          onBiometricPressed: () => biometrics++,
+          biometricIcon: const Icon(Icons.fingerprint),
+        ),
+      ));
+
+      await tester.tap(find.byIcon(Icons.fingerprint));
+      await tester.pump();
+
+      expect(biometrics, 1);
+    });
   });
 }

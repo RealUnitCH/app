@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/service/biometric/biometric_auth_outcome.dart';
 import 'package:realunit_wallet/packages/service/biometric/biometric_port.dart';
 import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
@@ -138,58 +140,91 @@ void main() {
     });
 
     group('authenticate', () {
-      test('returns true with the expected prompt configuration', () async {
+      test('is success with the expected prompt configuration', () async {
         final port = _FakeBiometricPort(authenticateResult: true);
         final service = BiometricService(storage, biometric: port);
 
-        expect(await service.authenticate(), isTrue);
+        expect(await service.authenticate(), BiometricAuthOutcome.success);
         expect(port.authenticateCalls, 1);
         expect(port.lastReason, 'Authenticate to unlock your wallet');
         expect(port.lastBiometricOnly, isTrue);
         expect(port.lastPersistAcrossBackgrounding, isTrue);
       });
 
-      test('returns false when the user cancels (port returns false)', () async {
+      test('is failed when the port returns false (plain scan failure)', () async {
         final port = _FakeBiometricPort(authenticateResult: false);
         final service = BiometricService(storage, biometric: port);
 
-        expect(await service.authenticate(), isFalse);
+        expect(await service.authenticate(), BiometricAuthOutcome.failed);
       });
 
-      test('returns false and swallows when the platform throws', () async {
+      test('is unavailable when a non-plugin error is thrown', () async {
         final port = _FakeBiometricPort(
-          authenticateThrows: Exception('PlatformException(NotAvailable)'),
+          authenticateThrows: Exception('unexpected'),
         );
         final service = BiometricService(storage, biometric: port);
 
-        expect(await service.authenticate(), isFalse);
+        expect(await service.authenticate(), BiometricAuthOutcome.unavailable);
       });
+
+      // Full mapping of the `local_auth` 3.x exception surface. Each code is
+      // pinned so a plugin-side semantic change (or a wrong grouping here)
+      // trips a test rather than silently mis-handling a lockout / enrollment
+      // state at the unlock screen.
+      const mapping = <LocalAuthExceptionCode, BiometricAuthOutcome>{
+        LocalAuthExceptionCode.userCanceled: BiometricAuthOutcome.failed,
+        LocalAuthExceptionCode.userRequestedFallback: BiometricAuthOutcome.failed,
+        LocalAuthExceptionCode.timeout: BiometricAuthOutcome.failed,
+        LocalAuthExceptionCode.systemCanceled: BiometricAuthOutcome.failed,
+        LocalAuthExceptionCode.authInProgress: BiometricAuthOutcome.failed,
+        LocalAuthExceptionCode.temporaryLockout: BiometricAuthOutcome.temporarilyLocked,
+        LocalAuthExceptionCode.biometricLockout: BiometricAuthOutcome.permanentlyLocked,
+        LocalAuthExceptionCode.noBiometricsEnrolled: BiometricAuthOutcome.notEnrolled,
+        LocalAuthExceptionCode.noCredentialsSet: BiometricAuthOutcome.notEnrolled,
+        LocalAuthExceptionCode.noBiometricHardware: BiometricAuthOutcome.unavailable,
+        LocalAuthExceptionCode.biometricHardwareTemporarilyUnavailable:
+            BiometricAuthOutcome.unavailable,
+        LocalAuthExceptionCode.uiUnavailable: BiometricAuthOutcome.unavailable,
+        LocalAuthExceptionCode.deviceError: BiometricAuthOutcome.unavailable,
+        LocalAuthExceptionCode.unknownError: BiometricAuthOutcome.unavailable,
+      };
+
+      for (final entry in mapping.entries) {
+        test('LocalAuthException(${entry.key.name}) maps to ${entry.value.name}', () async {
+          final port = _FakeBiometricPort(
+            authenticateThrows: LocalAuthException(code: entry.key),
+          );
+          final service = BiometricService(storage, biometric: port);
+
+          expect(await service.authenticate(), entry.value);
+        });
+      }
     });
 
     group('enable', () {
-      test('persists the flag and returns true when authenticate succeeds', () async {
+      test('persists the flag and returns success when authenticate succeeds', () async {
         when(() => storage.setIsBiometricEnabled(enabled: any(named: 'enabled')))
             .thenAnswer((_) async {});
         final port = _FakeBiometricPort(authenticateResult: true);
         final service = BiometricService(storage, biometric: port);
 
-        expect(await service.enable(), isTrue);
+        expect(await service.enable(), BiometricAuthOutcome.success);
         verify(() => storage.setIsBiometricEnabled(enabled: true)).called(1);
       });
 
-      test('does not persist when authenticate fails', () async {
+      test('returns failed and does not persist on a plain scan failure / cancel', () async {
         final port = _FakeBiometricPort(authenticateResult: false);
         final service = BiometricService(storage, biometric: port);
 
-        expect(await service.enable(), isFalse);
+        expect(await service.enable(), BiometricAuthOutcome.failed);
         verifyNever(() => storage.setIsBiometricEnabled(enabled: any(named: 'enabled')));
       });
 
-      test('does not persist when the platform throws during authenticate', () async {
+      test('returns unavailable and does not persist when the platform throws', () async {
         final port = _FakeBiometricPort(authenticateThrows: Exception('boom'));
         final service = BiometricService(storage, biometric: port);
 
-        expect(await service.enable(), isFalse);
+        expect(await service.enable(), BiometricAuthOutcome.unavailable);
         verifyNever(() => storage.setIsBiometricEnabled(enabled: any(named: 'enabled')));
       });
     });

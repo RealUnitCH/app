@@ -156,25 +156,31 @@ void main() {
   });
 
   group('SecureStorage verifyPin', () {
-    test('returns false when no pin hash is stored', () async {
+    test('is notVerifiable when no pin hash is stored', () async {
       when(() => mockStorage.read(key: 'pin.hash')).thenAnswer((_) async => null);
       when(
         () => mockStorage.read(key: 'pin.salt'),
       ).thenAnswer((_) async => bytesToHex(Uint8List(16)));
 
-      expect(await secureStorage.verifyPin('123456'), isFalse);
+      expect(
+        await secureStorage.verifyPin('123456'),
+        PinVerificationResult.notVerifiable,
+      );
     });
 
-    test('returns false when no salt is stored', () async {
+    test('is notVerifiable when no salt is stored', () async {
       when(
         () => mockStorage.read(key: 'pin.hash'),
       ).thenAnswer((_) async => 'something');
       when(() => mockStorage.read(key: 'pin.salt')).thenAnswer((_) async => null);
 
-      expect(await secureStorage.verifyPin('123456'), isFalse);
+      expect(
+        await secureStorage.verifyPin('123456'),
+        PinVerificationResult.notVerifiable,
+      );
     });
 
-    test('returns true when the pin hashes to the stored value (current iterations)', () async {
+    test('is correct when the pin hashes to the stored value (current iterations)', () async {
       final salt = SecureStorage.generatePinSalt();
       // Build the actual current-target hash through the real hashPin helper
       // so we don't pin a specific iteration count in the test.
@@ -187,7 +193,10 @@ void main() {
         () => mockStorage.read(key: 'pin.salt'),
       ).thenAnswer((_) async => bytesToHex(salt));
 
-      expect(await secureStorage.verifyPin('123456'), isTrue);
+      expect(
+        await secureStorage.verifyPin('123456'),
+        PinVerificationResult.correct,
+      );
       // No rehash write expected on the fast path.
       verifyNever(
         () => mockStorage.write(
@@ -197,7 +206,7 @@ void main() {
       );
     });
 
-    test('returns false when the pin is wrong on every accepted iteration count', () async {
+    test('is wrong when the pin is wrong on every accepted iteration count', () async {
       final salt = SecureStorage.generatePinSalt();
       // Pin some unrelated hash that no candidate iteration count can produce
       // for the test pin.
@@ -210,10 +219,13 @@ void main() {
         () => mockStorage.read(key: 'pin.salt'),
       ).thenAnswer((_) async => bytesToHex(salt));
 
-      expect(await secureStorage.verifyPin('123456'), isFalse);
+      expect(
+        await secureStorage.verifyPin('123456'),
+        PinVerificationResult.wrong,
+      );
     });
 
-    test('legacy hash is accepted once and transparently rehashed', () async {
+    test('legacy hash is accepted once (correct) and transparently rehashed', () async {
       final salt = SecureStorage.generatePinSalt();
       // 10_000 is one of the documented legacy iteration counts.
       final legacyHash = SecureStorage.hashPin('123456', salt, iterations: 10000);
@@ -225,7 +237,10 @@ void main() {
         () => mockStorage.read(key: 'pin.salt'),
       ).thenAnswer((_) async => bytesToHex(salt));
 
-      expect(await secureStorage.verifyPin('123456'), isTrue);
+      expect(
+        await secureStorage.verifyPin('123456'),
+        PinVerificationResult.correct,
+      );
 
       // The rehash MUST land on the current target — i.e. exactly one
       // write to pin.hash whose value is the new hash, not the legacy one.

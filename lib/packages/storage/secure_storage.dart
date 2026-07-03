@@ -9,6 +9,27 @@ import 'package:pointycastle/block/modes/gcm.dart';
 import 'package:pointycastle/key_derivators/api.dart';
 import 'package:web3dart/crypto.dart';
 
+/// Outcome of a [SecureStorage.verifyPin] check.
+///
+/// [verifyPin] used to return a bare `bool`, which conflated "the entered PIN
+/// is wrong" with "no PIN hash/salt is stored, so no input can ever match".
+/// The latter is a storage fault, not a wrong guess — counting it as a failed
+/// attempt would drive the user into the lockout cascade for a PIN they could
+/// never enter correctly. [notVerifiable] lets the caller offer a recovery path
+/// instead of penalising the user.
+enum PinVerificationResult {
+  /// The entered PIN matched the stored hash (possibly after a legacy rehash).
+  correct,
+
+  /// A hash and salt are stored but the entered PIN did not match — a real
+  /// failed attempt.
+  wrong,
+
+  /// No hash and/or salt is stored, so the PIN cannot be checked at all. Not a
+  /// wrong guess; must not count towards the lockout cascade.
+  notVerifiable,
+}
+
 class SecureStorage {
   static const _databaseEncryptionKey = 'drift.encryption.password';
   static const _mnemonicEncryptionKey = 'wallet.mnemonic.encryption.key';
@@ -100,12 +121,15 @@ class SecureStorage {
   Future<void> setPinSalt(Uint8List salt) =>
       _secureStorage.write(key: _pinSaltKey, value: bytesToHex(salt));
 
-  Future<bool> verifyPin(String pin) async {
+  Future<PinVerificationResult> verifyPin(String pin) async {
     final hash = await getPinHash();
     final salt = await getPinSalt();
-    if (hash == null || salt == null) return false;
+    // Missing hash/salt means no entered PIN could ever match — a storage fault,
+    // not a wrong guess. Report it distinctly so the caller can steer the user
+    // to recovery instead of counting a lockout attempt.
+    if (hash == null || salt == null) return PinVerificationResult.notVerifiable;
 
-    if (await hashPinAsync(pin, salt) == hash) return true;
+    if (await hashPinAsync(pin, salt) == hash) return PinVerificationResult.correct;
 
     // Transparent rehash: any earlier iteration count we ever shipped is still
     // accepted exactly once, then upgraded to the current target so subsequent
@@ -114,11 +138,11 @@ class SecureStorage {
       if (await hashPinAsync(pin, salt, iterations: legacy) == hash) {
         final newHash = await hashPinAsync(pin, salt);
         await setPinHash(newHash);
-        return true;
+        return PinVerificationResult.correct;
       }
     }
 
-    return false;
+    return PinVerificationResult.wrong;
   }
 
   // Pin lockout

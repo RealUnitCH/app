@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/service/biometric/biometric_auth_outcome.dart';
 import 'package:realunit_wallet/packages/service/biometric_service.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/pin/bloc/setup_pin/setup_pin_cubit.dart';
@@ -129,6 +130,102 @@ void main() {
       verifyNever(() => secureStorage.setPinHash(any()));
     });
 
+    test('confirming flips isSubmitting on during hashing and off on completion', () async {
+      final cubit = build();
+      final submitting = cubit.stream.firstWhere((s) => s.isSubmitting);
+      final completed = cubit.stream.firstWhere((s) => s.isComplete);
+
+      for (final d in [1, 2, 3, 4, 5, 6]) {
+        cubit.addDigit(d);
+      }
+      for (final d in [1, 2, 3, 4, 5, 6]) {
+        cubit.addDigit(d);
+      }
+
+      final submittingState = await submitting.timeout(const Duration(seconds: 30));
+      expect(submittingState.isSubmitting, isTrue);
+      expect(submittingState.isComplete, isFalse);
+
+      final completedState = await completed.timeout(const Duration(seconds: 30));
+      expect(completedState.isSubmitting, isFalse);
+      expect(completedState.isComplete, isTrue);
+    });
+
+    test('a delete+retype race during hashing writes the salt/hash pair exactly once (F-09)',
+        () async {
+      final cubit = build();
+      final completed = cubit.stream.firstWhere((s) => s.isComplete);
+
+      for (final d in [1, 2, 3, 4, 5, 6]) {
+        cubit.addDigit(d);
+      }
+      for (final d in [1, 2, 3, 4, 5]) {
+        cubit.addDigit(d);
+      }
+      // Complete the pin, then — while _confirmPin is suspended at the PBKDF2
+      // hash — fire the real race the guard exists for: delete the last digit
+      // and retype it. On the unguarded code delete would step back past the
+      // length guard and the retype would spawn a SECOND concurrent _confirmPin
+      // (a second write pair); the isSubmitting guard must drop both so the pair
+      // is written exactly once.
+      cubit.addDigit(6);
+      cubit.deleteDigit();
+      cubit.addDigit(6);
+      // The blocked delete/retype must leave the completing pin untouched.
+      expect(cubit.state.currentPin, '123456');
+      await completed.timeout(const Duration(seconds: 30));
+      // Let any erroneously-spawned second write settle before asserting once.
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(cubit.state.isComplete, isTrue);
+      verify(() => secureStorage.setPinSalt(any())).called(1);
+      verify(() => secureStorage.setPinHash(any())).called(1);
+    });
+
+    test('a storage write failure returns to a usable pad with a retry hint', () async {
+      when(() => secureStorage.setPinHash(any())).thenThrow(Exception('keychain unavailable'));
+      final cubit = build();
+      final failed = cubit.stream.firstWhere((s) => s.storeFailed);
+
+      for (final d in [1, 2, 3, 4, 5, 6]) {
+        cubit.addDigit(d);
+      }
+      for (final d in [1, 2, 3, 4, 5, 6]) {
+        cubit.addDigit(d);
+      }
+      await failed.timeout(const Duration(seconds: 30));
+
+      // Must not strand the user on the spinner: pad returns, error surfaced.
+      expect(cubit.state.isSubmitting, isFalse);
+      expect(cubit.state.storeFailed, isTrue);
+      expect(cubit.state.currentPin, '');
+      expect(cubit.state.isComplete, isFalse);
+    });
+
+    blocTest<SetupPinCubit, SetupPinState>(
+      'addDigit ignored while submitting',
+      build: build,
+      seed: () => const SetupPinState(
+        mode: SetupPinMode.confirm,
+        currentPin: '12',
+        isSubmitting: true,
+      ),
+      act: (cubit) => cubit.addDigit(3),
+      expect: () => [],
+    );
+
+    blocTest<SetupPinCubit, SetupPinState>(
+      'deleteDigit ignored while submitting',
+      build: build,
+      seed: () => const SetupPinState(
+        mode: SetupPinMode.confirm,
+        currentPin: '12',
+        isSubmitting: true,
+      ),
+      act: (cubit) => cubit.deleteDigit(),
+      expect: () => [],
+    );
+
     blocTest<SetupPinCubit, SetupPinState>(
       'reset returns to the initial state',
       build: build,
@@ -151,11 +248,12 @@ void main() {
     });
 
     test('enableBiometrics delegates to BiometricService.enable', () async {
-      when(() => biometricService.enable()).thenAnswer((_) async => true);
+      when(() => biometricService.enable())
+          .thenAnswer((_) async => BiometricAuthOutcome.success);
 
       final result = await build().enableBiometrics();
 
-      expect(result, isTrue);
+      expect(result, BiometricAuthOutcome.success);
       verify(() => biometricService.enable()).called(1);
     });
   });

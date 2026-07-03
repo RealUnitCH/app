@@ -94,6 +94,16 @@ class SettingsPage extends StatelessWidget {
                   onTap: () => context.pushNamed(SettingsRoutes.contact),
                 ),
                 SettingOption(
+                  title: S.of(context).settingsSecurity,
+                  leading: const Icon(
+                    Icons.shield_outlined,
+                    size: 24,
+                    color: RealUnitColors.realUnitBlue,
+                  ),
+                  trailing: _forwardIcon,
+                  onTap: () => context.pushNamed(SettingsRoutes.security),
+                ),
+                SettingOption(
                   title: S.of(context).walletAddress,
                   leading: const RealUnitIcon(size: 24),
                   trailing: _forwardIcon,
