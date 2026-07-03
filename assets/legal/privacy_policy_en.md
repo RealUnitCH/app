@@ -55,8 +55,11 @@ Identity verification (Know Your Customer, KYC) is required above certain amount
 
 - Identity documents (passport, identity card)
 - Biometric data for facial recognition (as part of video identification)
+- Approximate and precise location (collected by Sumsub as a fraud-prevention and geo-risk signal)
 
 This data is processed by DFX AG in accordance with their own privacy policy.
+
+The approximate and precise location collected by Sumsub (Sum and Substance Ltd.) is transmitted to Sumsub's servers as a fraud-prevention signal and processed in accordance with Sumsub's privacy notice (https://sumsub.com/privacy-notice/). This location data is only collected if you start the identity verification.
 
 The biometric data for facial recognition collected during video identification constitutes sensitive personal data (Art. 5 lit. c no. 4 DSG) or special categories of personal data (Art. 9 GDPR). It is processed with your explicit consent (Art. 9 para. 2 lit. a GDPR).
 

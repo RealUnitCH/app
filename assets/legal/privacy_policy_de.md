@@ -55,8 +55,11 @@ Ab bestimmten Beträgen ist eine Identitätsprüfung (Know Your Customer, KYC) e
 
 - Ausweisdokumente (Reisepass, Identitätskarte)
 - Biometrische Daten zur Gesichtserkennung (im Rahmen der Video-Identifikation)
+- Ungefährer und genauer Standort (durch Sumsub als Betrugspräventions- und Geo-Risiko-Signal)
 
 Diese Daten werden von DFX AG gemäss deren eigener Datenschutzrichtlinie verarbeitet.
+
+Der von Sumsub (Sum and Substance Ltd.) erhobene ungefähre und genaue Standort wird als Signal zur Betrugsprävention an die Server von Sumsub übermittelt und gemäss der Datenschutzerklärung von Sumsub (https://sumsub.com/privacy-notice/) verarbeitet. Diese Standortdaten werden nur erhoben, wenn Sie die Identitätsprüfung starten.
 
 Die im Rahmen der Video-Identifikation erhobenen biometrischen Daten zur Gesichtserkennung sind besonders schützenswerte Personendaten (Art. 5 lit. c Ziff. 4 DSG) bzw. besondere Kategorien personenbezogener Daten (Art. 9 DSGVO). Ihre Bearbeitung erfolgt mit Ihrer ausdrücklichen Einwilligung (Art. 9 Abs. 2 lit. a DSGVO).
 
