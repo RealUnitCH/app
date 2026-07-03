@@ -181,13 +181,37 @@ class SecureStorage {
     return '${base64.encode(iv)}:${base64.encode(ciphertext)}';
   }
 
+  /// Decrypts a seed produced by [encryptSeed].
+  ///
+  /// Every malformed / tampered input is surfaced as a typed
+  /// [SeedDecryptionException] instead of the raw failure it wraps:
+  ///  * a missing `:` separator (previously an uncaught [RangeError] from
+  ///    `substring(0, -1)`),
+  ///  * a non-base64 IV / ciphertext or non-UTF-8 plaintext (a
+  ///    [FormatException]),
+  ///  * a wrong key, a tampered ciphertext, or a truncated GCM tag (an
+  ///    [InvalidCipherTextException]).
+  ///
+  /// This lets the unlock path catch one known type and show a controlled
+  /// error rather than crashing on a corrupted `walletInfos.seed` row.
+  /// AES-GCM rejecting a tampered ciphertext stays fully intact — this only
+  /// makes the rejection *typed*, it does not weaken authentication.
   static String decryptSeed(Uint8List key, String encoded) {
     final colonIndex = encoded.indexOf(':');
-    final iv = base64.decode(encoded.substring(0, colonIndex));
-    final ciphertext = base64.decode(encoded.substring(colonIndex + 1));
-    final cipher = GCMBlockCipher(AESEngine())
-      ..init(false, AEADParameters(KeyParameter(key), 128, iv, Uint8List(0)));
-    return utf8.decode(cipher.process(ciphertext));
+    if (colonIndex < 0) {
+      throw const SeedDecryptionException('missing IV separator');
+    }
+    try {
+      final iv = base64.decode(encoded.substring(0, colonIndex));
+      final ciphertext = base64.decode(encoded.substring(colonIndex + 1));
+      final cipher = GCMBlockCipher(AESEngine())
+        ..init(false, AEADParameters(KeyParameter(key), 128, iv, Uint8List(0)));
+      return utf8.decode(cipher.process(ciphertext));
+    } on InvalidCipherTextException catch (e) {
+      throw SeedDecryptionException('authentication failed: ${e.message}');
+    } on FormatException catch (e) {
+      throw SeedDecryptionException('malformed ciphertext: ${e.message}');
+    }
   }
 
   static Uint8List _secureRandomBytes(int length) {
@@ -198,3 +222,17 @@ class SecureStorage {
 
 String _hashPinIsolate(({String pin, Uint8List salt, int iterations}) args) =>
     SecureStorage.hashPin(args.pin, args.salt, iterations: args.iterations);
+
+/// Thrown by [SecureStorage.decryptSeed] when the stored ciphertext cannot be
+/// decrypted — because it is structurally malformed (missing separator, invalid
+/// base64), was tampered with, or was written under a different key (GCM tag
+/// mismatch). Lets callers on the unlock path distinguish "the stored seed is
+/// corrupt" from an unrelated crash and react with a controlled recovery flow.
+class SeedDecryptionException implements Exception {
+  const SeedDecryptionException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'SeedDecryptionException: $message';
+}

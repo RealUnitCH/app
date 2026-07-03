@@ -1,6 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -90,6 +91,41 @@ void main() {
       );
       expect(find.byType(RestoreWalletInputField), findsOne);
       expect(find.byType(RestoreWalletButton), findsOne);
+    });
+
+    // The restore screen is where the user types their existing 12-word
+    // recovery phrase, so it handles real seed material like the sibling seed
+    // screens. It must block screenshots + the app-switcher snapshot on init
+    // and re-enable them on dispose so it never lands in the recents thumbnail
+    // or a screen recording.
+    testWidgets('disables screenshots on init and re-enables on dispose', (tester) async {
+      const channel = MethodChannel('com.flutterplaza.no_screenshot_methods');
+      final calls = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        channel,
+        (call) async {
+          calls.add(call.method);
+          return true;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, null),
+      );
+
+      await tester.pumpApp(buildSubject(const RestoreWalletView()));
+      expect(
+        calls,
+        contains('screenshotOff'),
+        reason: 'the restore screen handles real seed words and must block screenshots on init',
+      );
+
+      // Replace the screen so RestoreWalletView is disposed.
+      await tester.pumpApp(buildSubject(const SizedBox.shrink()));
+      expect(
+        calls,
+        contains('screenshotOn'),
+        reason: 'leaving the restore screen must re-enable screenshots',
+      );
     });
 
     group('$RestoreWalletButton', () {

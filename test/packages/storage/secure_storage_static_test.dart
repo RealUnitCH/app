@@ -124,14 +124,30 @@ void main() {
         expect(a, isNot(b));
       });
 
-      test('decryptSeed with the wrong key throws', () {
+      test('decryptSeed with the wrong key throws a typed SeedDecryptionException', () {
         final correctKey = aesKey();
         final wrongKey = Uint8List.fromList(List.generate(32, (i) => 0xFF - i));
         final encoded = SecureStorage.encryptSeed(correctKey, 'secret');
 
+        // GCM tag mismatch surfaces as a typed exception, not a bare
+        // InvalidCipherTextException leaking out of the unlock path.
         expect(
           () => SecureStorage.decryptSeed(wrongKey, encoded),
-          throwsA(anything),
+          throwsA(isA<SeedDecryptionException>()),
+        );
+      });
+
+      test('decryptSeed with a tampered ciphertext throws a typed SeedDecryptionException', () {
+        final key = aesKey();
+        final encoded = SecureStorage.encryptSeed(key, 'secret');
+        // Flip the last character of the base64 ciphertext half so the GCM
+        // authentication tag no longer verifies.
+        final tampered = encoded.substring(0, encoded.length - 1) +
+            (encoded.endsWith('A') ? 'B' : 'A');
+
+        expect(
+          () => SecureStorage.decryptSeed(key, tampered),
+          throwsA(isA<SeedDecryptionException>()),
         );
       });
 
@@ -147,22 +163,48 @@ void main() {
         expect(parts[0], hasLength(16));
       });
 
-      test('decryptSeed with missing colon separator throws', () {
+      test('decryptSeed with missing colon separator throws a typed SeedDecryptionException', () {
         final key = aesKey();
 
+        // Previously an uncaught RangeError from `substring(0, -1)`; now a
+        // controlled, catchable failure.
         expect(
           () => SecureStorage.decryptSeed(key, 'noColonHere'),
-          throwsA(anything),
+          throwsA(isA<SeedDecryptionException>()),
         );
       });
 
-      test('decryptSeed with empty string throws', () {
+      test('decryptSeed with empty string throws a typed SeedDecryptionException', () {
         final key = aesKey();
 
         expect(
           () => SecureStorage.decryptSeed(key, ''),
-          throwsA(anything),
+          throwsA(isA<SeedDecryptionException>()),
         );
+      });
+
+      test('decryptSeed with a valid separator but non-base64 body throws a typed exception', () {
+        final key = aesKey();
+
+        // Colon present (clears the separator guard) but the ciphertext half
+        // is not valid base64 → exercises the FormatException branch.
+        expect(
+          () => SecureStorage.decryptSeed(key, 'AAAAAAAAAAAAAAAA:not*valid*base64'),
+          throwsA(isA<SeedDecryptionException>()),
+        );
+      });
+
+      test('SeedDecryptionException carries a descriptive message and toString', () {
+        SeedDecryptionException? caught;
+        try {
+          SecureStorage.decryptSeed(aesKey(), 'noColonHere');
+        } on SeedDecryptionException catch (e) {
+          caught = e;
+        }
+
+        expect(caught, isNotNull);
+        expect(caught!.message, contains('IV separator'));
+        expect(caught.toString(), 'SeedDecryptionException: ${caught.message}');
       });
     });
   });

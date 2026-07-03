@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -89,6 +90,12 @@ Future<void> finishSetup(String encryptionKey) async {
   await setupBlocs();
 
   await setupDefaultAssets();
+
+  // `setupDefaultAssets` has now opened the SQLCipher file, so it exists on
+  // disk. Keep the encrypted seed database out of the iOS iCloud/iTunes backup
+  // (#298 / NEW-20). Best-effort and idempotent; `unawaited` so a platform
+  // hiccup surfaces in the zone instead of blocking boot. No-op off iOS.
+  unawaited(AppDatabase.excludeDatabaseFromBackup());
 }
 
 void setupRepositories() {

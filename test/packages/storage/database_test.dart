@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:realunit_wallet/packages/io/backup_exclusion_port.dart';
 import 'package:realunit_wallet/packages/io/documents_directory_port.dart';
 import 'package:realunit_wallet/packages/storage/database.dart';
 
@@ -80,6 +81,59 @@ void main() {
       expect(secondPath, p.join(secondDir.path, 'wallet.db.enc'));
     });
   });
+
+  group('AppDatabase.excludeDatabaseFromBackup', () {
+    late Directory tempDir;
+
+    setUp(() {
+      tempDir = Directory.systemTemp.createTempSync('app_database_backup_test_');
+    });
+
+    tearDown(() {
+      if (tempDir.existsSync()) {
+        tempDir.deleteSync(recursive: true);
+      }
+    });
+
+    test('excludes the db file and its wal/shm/journal sidecars in place', () async {
+      final dirPort = _FakeDocumentsDirectoryPort(tempDir);
+      final exclusionPort = _RecordingBackupExclusionPort();
+
+      await AppDatabase.excludeDatabaseFromBackup(exclusionPort, dirPort);
+
+      final dbPath = p.join(tempDir.path, 'wallet.db.enc');
+      expect(exclusionPort.calls, hasLength(1));
+      expect(exclusionPort.calls.single, [
+        dbPath,
+        '$dbPath-wal',
+        '$dbPath-shm',
+        '$dbPath-journal',
+      ]);
+      // The database keeps its resolved documents-dir path — the exclusion is
+      // applied in place, with no move (and therefore no migration risk).
+      expect(exclusionPort.calls.single.first, dbPath);
+    });
+
+    test('resolves the path through the documents port (no hard-coded location)', () async {
+      final dirPort = _FakeDocumentsDirectoryPort(tempDir);
+      final exclusionPort = _RecordingBackupExclusionPort();
+
+      await AppDatabase.excludeDatabaseFromBackup(exclusionPort, dirPort);
+
+      expect(dirPort.docsCalls, 1);
+    });
+  });
+}
+
+/// Records every [excludeFromBackup] invocation so tests can assert the exact
+/// set of paths handed to the platform boundary.
+class _RecordingBackupExclusionPort implements BackupExclusionPort {
+  final List<List<String>> calls = <List<String>>[];
+
+  @override
+  Future<void> excludeFromBackup(List<String> paths) async {
+    calls.add(paths);
+  }
 }
 
 /// Hands back each directory in [_directories] in turn; pins that
