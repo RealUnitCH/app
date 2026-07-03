@@ -20,6 +20,8 @@ class Country extends Equatable {
   });
 
   @override
+  // Deliberately id-keyed: dropdown seeding matches a Country fetched in one
+  // epoch against the items list of another, tolerating field drift.
   List<Object?> get props => [id];
 }
 

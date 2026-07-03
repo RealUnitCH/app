@@ -136,6 +136,27 @@ void main() {
         verify(() => secureStorage.resetPinLockout()).called(1);
       });
 
+      test(
+        'correct pin still unlocks when the lockout reset throws (no unhandled error)',
+        () async {
+          // A keychain failure while clearing the counter must not skip the
+          // unlock: the PIN was correct. The best-effort reset swallows the
+          // throw so the wallet still opens — mirrors the biometric success path.
+          when(() => secureStorage.verifyPin(any()))
+              .thenAnswer((_) async => PinVerificationResult.correct);
+          when(() => secureStorage.resetPinLockout())
+              .thenThrow(Exception('keychain unavailable'));
+          final cubit = build();
+          final success = cubit.stream.firstWhere((s) => s is VerifyPinSuccess);
+
+          addPin(cubit, '123456');
+          await success.timeout(const Duration(seconds: 30));
+
+          expect(cubit.state, isA<VerifyPinSuccess>());
+          verify(() => secureStorage.resetPinLockout()).called(1);
+        },
+      );
+
       blocTest<VerifyPinCubit, VerifyPinState>(
         'emits VerifyPinVerifying (carrying the full pin) before VerifyPinSuccess',
         build: build,
