@@ -1,6 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
@@ -16,6 +17,8 @@ import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registrati
 class _MockDfxKycService extends Mock implements DfxKycService {}
 
 class _MockRealUnitRegistrationService extends Mock implements RealUnitRegistrationService {}
+
+class _MockSettingsRepository extends Mock implements SettingsRepository {}
 
 const _country = Country(
   id: 41,
@@ -66,6 +69,7 @@ Future<void> _submitFromRegistration(
 void main() {
   late DfxKycService kycService;
   late RealUnitRegistrationService registrationService;
+  late SettingsRepository settingsRepository;
 
   setUpAll(() {
     registerFallbackValue(_registration());
@@ -74,10 +78,12 @@ void main() {
   setUp(() {
     kycService = _MockDfxKycService();
     registrationService = _MockRealUnitRegistrationService();
+    settingsRepository = _MockSettingsRepository();
+    when(() => settingsRepository.language).thenReturn('de');
   });
 
   KycRegistrationSubmitCubit buildCubit() =>
-      KycRegistrationSubmitCubit(registrationService, kycService);
+      KycRegistrationSubmitCubit(registrationService, kycService, settingsRepository);
 
   group('$KycRegistrationSubmitCubit submit', () {
     blocTest<KycRegistrationSubmitCubit, KycRegistrationSubmitState>(
@@ -85,7 +91,7 @@ void main() {
       setUp: () {
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
         when(
-          () => registrationService.completeRegistration(any()),
+          () => registrationService.completeRegistration(any(), lang: any(named: 'lang')),
         ).thenAnswer((_) async => RegistrationStatus.completed);
       },
       build: buildCubit,
@@ -97,11 +103,29 @@ void main() {
     );
 
     blocTest<KycRegistrationSubmitCubit, KycRegistrationSubmitState>(
+      'forwards the app language from settings to completeRegistration (audit #657 P9 M2)',
+      setUp: () {
+        when(() => settingsRepository.language).thenReturn('en');
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(
+          () => registrationService.completeRegistration(any(), lang: any(named: 'lang')),
+        ).thenAnswer((_) async => RegistrationStatus.completed);
+      },
+      build: buildCubit,
+      act: (cubit) => _submitFromRegistration(cubit, _registration()),
+      verify: (_) {
+        verify(
+          () => registrationService.completeRegistration(any(), lang: 'en'),
+        ).called(1);
+      },
+    );
+
+    blocTest<KycRegistrationSubmitCubit, KycRegistrationSubmitState>(
       'emits BitboxRequired with the registration payload when BitBox not connected',
       setUp: () {
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
         when(
-          () => registrationService.completeRegistration(any()),
+          () => registrationService.completeRegistration(any(), lang: any(named: 'lang')),
         ).thenThrow(const BitboxNotConnectedException());
       },
       build: buildCubit,
@@ -116,7 +140,7 @@ void main() {
       'emits Success(alreadyRegistered) when the API reports already-registered (was: silent ApiException swallow)',
       setUp: () {
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
-        when(() => registrationService.completeRegistration(any())).thenAnswer(
+        when(() => registrationService.completeRegistration(any(), lang: any(named: 'lang'))).thenAnswer(
           (_) async => RegistrationStatus.alreadyRegistered,
         );
       },
@@ -132,7 +156,7 @@ void main() {
       'emits Failure on backend ApiException (account-exists no longer silently masked)',
       setUp: () {
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
-        when(() => registrationService.completeRegistration(any())).thenThrow(
+        when(() => registrationService.completeRegistration(any(), lang: any(named: 'lang'))).thenThrow(
           const ApiException(
             statusCode: 409,
             code: 'ACCOUNT_EXISTS',
@@ -152,7 +176,7 @@ void main() {
       'emits Failure on generic post-sign exception (network/parse/empty-sig)',
       setUp: () {
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
-        when(() => registrationService.completeRegistration(any())).thenThrow(
+        when(() => registrationService.completeRegistration(any(), lang: any(named: 'lang'))).thenThrow(
           Exception('Signature was empty'),
         );
       },
@@ -196,7 +220,7 @@ void main() {
       'retries the sign after reconnect and emits Success',
       setUp: () {
         when(
-          () => registrationService.completeRegistration(any()),
+          () => registrationService.completeRegistration(any(), lang: any(named: 'lang')),
         ).thenAnswer((_) async => RegistrationStatus.completed);
       },
       build: buildCubit,
@@ -211,7 +235,7 @@ void main() {
       'still emits BitboxRequired on retry when wallet is still disconnected',
       setUp: () {
         when(
-          () => registrationService.completeRegistration(any()),
+          () => registrationService.completeRegistration(any(), lang: any(named: 'lang')),
         ).thenThrow(const BitboxNotConnectedException());
       },
       build: buildCubit,
