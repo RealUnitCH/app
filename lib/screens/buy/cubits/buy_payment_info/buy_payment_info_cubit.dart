@@ -29,6 +29,14 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
   ) : _buyPaymentInfoService = buyPaymentInfoService,
       super(const BuyPaymentInfoInitial());
 
+  /// The whole-currency amount the backend will actually charge for the raw
+  /// [input] the user typed. The buy quote is always requested with this
+  /// rounded integer, so the SEPA transfer / QR the API builds encodes it —
+  /// the Details tab must surface the same number, never the raw keystrokes
+  /// (e.g. `300,75` → `301`). Accepts a comma decimal separator.
+  static int chargedAmount(String input) =>
+      double.parse(input.isEmpty ? '0' : input.replaceAll(',', '.')).round();
+
   Future<void> getPaymentInfo({String amount = '300', Currency currency = Currency.chf}) async {
     await _completer?.cancel();
 
@@ -47,11 +55,8 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
 
   Future<BuyPaymentInfoState> _runGetPaymentInfo(String amount, Currency currency) async {
     try {
-      final sanitizedAmount = amount.isEmpty ? '0' : amount.replaceAll(',', '.');
-      final parsedAmount = double.parse(sanitizedAmount);
-
       final paymentInfo = await _buyPaymentInfoService.getPaymentInfo(
-        parsedAmount.round(),
+        chargedAmount(amount),
         currency: currency,
       );
 

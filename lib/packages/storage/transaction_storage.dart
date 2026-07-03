@@ -76,8 +76,13 @@ extension TransactionStorage on AppDatabase {
                 row.asset.isIn(assets),
                 row.type.equals(2),
                 Expression.or([
-                  row.senderAddress.equals(wallet),
-                  row.receiverAddress.equals(wallet),
+                  // EVM addresses are stored verbatim from the API (EIP-55
+                  // checksummed, mixed case) while `wallet` is the lowercase
+                  // primary address. Compare case-insensitively so existing
+                  // checksummed rows still match — a plain `=` on TEXT is
+                  // case-sensitive and silently returns an empty history.
+                  row.senderAddress.collate(Collate.noCase).equals(wallet),
+                  row.receiverAddress.collate(Collate.noCase).equals(wallet),
                 ]),
               ]),
             )
@@ -95,8 +100,8 @@ extension TransactionStorage on AppDatabase {
                 row.asset.isIn(assets),
                 row.type.equals(2),
                 Expression.or([
-                  row.senderAddress.equals(wallet),
-                  row.receiverAddress.equals(wallet),
+                  row.senderAddress.collate(Collate.noCase).equals(wallet),
+                  row.receiverAddress.collate(Collate.noCase).equals(wallet),
                 ]),
               ]),
             )
@@ -115,8 +120,8 @@ extension TransactionStorage on AppDatabase {
                 row.asset.isIn(assets),
                 row.type.isIn([3, 4]),
                 Expression.or([
-                  row.senderAddress.equals(wallet),
-                  row.receiverAddress.equals(wallet),
+                  row.senderAddress.collate(Collate.noCase).equals(wallet),
+                  row.receiverAddress.collate(Collate.noCase).equals(wallet),
                 ]),
               ]),
             )

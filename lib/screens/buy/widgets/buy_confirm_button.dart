@@ -6,6 +6,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_paym
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/screens/buy/buy_payment_details_page.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_confirm/buy_confirm_cubit.dart';
+import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
@@ -57,7 +58,9 @@ class BuyConfirmButtonView extends StatelessWidget {
             AppRoutes.buyPaymentDetails,
             extra: BuyPaymentDetailsParams(
               buyPaymentInfo: buyPaymentInfo,
-              amount: amount,
+              // Show the integer the backend actually charges (the quote is
+              // built from the rounded amount), not the raw keystrokes.
+              amount: '${BuyPaymentInfoCubit.chargedAmount(amount)}',
               // Backward compatible: prefer the API-designated purpose once it
               // ships; until then `reference` (always returned) is the value.
               purposeOfPayment: state.remittanceInfo ?? state.reference,

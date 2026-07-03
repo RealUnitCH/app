@@ -61,6 +61,24 @@ void main() {
         );
       });
 
+      test('rounds the scaled price instead of truncating (1.23 → 123)', () async {
+        // 1.23 * 100 is 122.999… in IEEE-754; `BigInt.from` on the raw product
+        // truncates toward zero to 122, understating the price by a rappen.
+        final client = MockClient((_) async => http.Response(
+              jsonEncode({'chf': 1.23, 'eur': 4.56}),
+              200,
+            ));
+
+        expect(
+          await build(client).getPriceOfAsset(realUnitAsset, Currency.chf),
+          BigInt.from(123),
+        );
+        expect(
+          await build(client).getPriceOfAsset(realUnitAsset, Currency.eur),
+          BigInt.from(456),
+        );
+      });
+
       test('returns zero when the price is missing (quote unavailable)', () async {
         // The live endpoint omits chf/eur while the quote is unavailable,
         // e.g. {"timestamp": "..."}. Must return zero (UI shows "--.--"),
@@ -98,6 +116,21 @@ void main() {
         expect(points[0].price, BigInt.from(100));
         expect(points[0].time, DateTime.utc(2026, 1, 1));
         expect(points[1].price, BigInt.from(250));
+      });
+
+      test('rounds each scaled chart price instead of truncating (1.23 → 123)', () async {
+        final client = MockClient((_) async => http.Response(
+              jsonEncode([
+                {'chf': 1.23, 'eur': 4.56, 'timestamp': '2026-01-01T00:00:00Z'},
+              ]),
+              200,
+            ));
+
+        final chf = await build(client).getPriceChart(realUnitAsset, Currency.chf);
+        expect(chf.single.price, BigInt.from(123));
+
+        final eur = await build(client).getPriceChart(realUnitAsset, Currency.eur);
+        expect(eur.single.price, BigInt.from(456));
       });
 
       test('parses EUR chart correctly', () async {

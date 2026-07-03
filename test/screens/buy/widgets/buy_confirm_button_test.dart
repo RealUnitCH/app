@@ -180,6 +180,55 @@ void main() {
       expect(find.byType(TabSelector<PaymentInfoOptions>), findsNothing);
     });
 
+    GoRouter detailsRouterWithAmount(String amount) => GoRouter(
+          initialLocation: '/buy',
+          routes: [
+            GoRoute(
+              name: AppRoutes.buy,
+              path: '/buy',
+              builder: (_, _) => Scaffold(
+                body: BlocProvider<BuyConfirmCubit>.value(
+                  value: cubit,
+                  child: BuyConfirmButtonView(
+                    buyPaymentInfo: _info,
+                    amount: amount,
+                  ),
+                ),
+              ),
+            ),
+            GoRoute(
+              name: AppRoutes.buyPaymentDetails,
+              path: '/buyPaymentDetails',
+              builder: (_, state) => BuyPaymentDetailsPage(
+                params: state.extra as BuyPaymentDetailsParams,
+              ),
+            ),
+          ],
+        );
+
+    testWidgets('shows the rounded charged amount on the details page, not the '
+        'raw typed value (300.75 → 301)', (tester) async {
+      whenListen(
+        cubit,
+        Stream.fromIterable([
+          const BuyConfirmSuccess(
+            reference: 'RU-REF-3',
+            remittanceInfo: null,
+            paymentRequest: null,
+          ),
+        ]),
+        initialState: const BuyConfirmInitial(),
+      );
+
+      await tester.pumpWidget(host(router: detailsRouterWithAmount('300.75')));
+      await tester.pumpAndSettle();
+
+      // The SEPA transfer / QR is built from the rounded integer the app sent
+      // for the quote; the Details tab must match it.
+      expect(find.text('301'), findsOneWidget);
+      expect(find.text('300.75'), findsNothing);
+    });
+
     testWidgets('forward path: remittanceInfo + paymentRequest drive the '
         'Verwendungszweck and surface the QR tab', (tester) async {
       whenListen(

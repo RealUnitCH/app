@@ -39,7 +39,9 @@ class DfxBrokerbotService extends DFXAuthService {
 
   /// Convert CHF → REALU shares
   Future<BrokerbotBuySharesDto> getBuyShares(String amountInput, Currency currency) async {
-    final amount = double.tryParse(amountInput);
+    // The fiat fields accept a comma decimal separator; normalize it the same
+    // way the order/payment-info path does before parsing.
+    final amount = double.tryParse(amountInput.replaceAll(',', '.'));
     if (amount == null || amount <= 0) {
       throw Exception('Shares request failed: amountInput is not valid');
     }
@@ -80,7 +82,9 @@ class DfxBrokerbotService extends DFXAuthService {
 
   /// Convert CHF → REALU shares (with fees)
   Future<BrokerbotSellSharesDto> getSellShares(String amountInput, Currency currency) async {
-    final amount = double.tryParse(amountInput);
+    // The fiat fields accept a comma decimal separator; normalize it the same
+    // way the order/payment-info path does before parsing.
+    final amount = double.tryParse(amountInput.replaceAll(',', '.'));
     if (amount == null || amount <= 0) {
       throw Exception('SellShares request failed: amountInput is invalid');
     }

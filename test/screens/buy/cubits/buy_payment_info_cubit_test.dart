@@ -48,6 +48,31 @@ void main() {
 
   BuyPaymentInfoCubit build() => BuyPaymentInfoCubit(service);
 
+  group('BuyPaymentInfoCubit.chargedAmount', () {
+    // The Details tab must show the amount the backend actually charges (the
+    // quote is requested with this rounded integer), not the raw keystrokes.
+    test('rounds a dot decimal to the charged integer (300.75 → 301)', () {
+      expect(BuyPaymentInfoCubit.chargedAmount('300.75'), 301);
+    });
+
+    test('normalises a comma decimal (300,75 → 301)', () {
+      expect(BuyPaymentInfoCubit.chargedAmount('300,75'), 301);
+    });
+
+    test('leaves a whole amount unchanged (300 → 300)', () {
+      expect(BuyPaymentInfoCubit.chargedAmount('300'), 300);
+    });
+
+    test('treats an empty string as zero', () {
+      expect(BuyPaymentInfoCubit.chargedAmount(''), 0);
+    });
+
+    test('rounds half away from zero and down below the half (0.5 → 1, 1.49 → 1)', () {
+      expect(BuyPaymentInfoCubit.chargedAmount('0.5'), 1);
+      expect(BuyPaymentInfoCubit.chargedAmount('1.49'), 1);
+    });
+  });
+
   group('$BuyPaymentInfoCubit', () {
     test('initial state is BuyPaymentInfoInitial', () {
       expect(build().state, isA<BuyPaymentInfoInitial>());
