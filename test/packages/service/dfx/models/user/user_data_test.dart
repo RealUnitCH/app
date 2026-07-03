@@ -88,13 +88,6 @@ void main() {
       expect(a.hashCode, b.hashCode);
     });
 
-    test('differing only in birthday breaks equality', () {
-      final base = makeUserData(birthday: DateTime.utc(1990, 1, 1));
-      final other = makeUserData(birthday: DateTime.utc(1991, 2, 3));
-
-      expect(base, isNot(equals(other)));
-    });
-
     test('equality reflects the full field set', () {
       final base = makeUserData();
 
@@ -109,6 +102,7 @@ void main() {
       expect(base, isNot(equals(makeUserData(addressCountry: germany))));
       expect(base, isNot(equals(makeUserData(swissTaxResidence: false))));
       expect(base, isNot(equals(makeUserData(lang: 'en'))));
+      expect(base, isNot(equals(makeUserData(birthday: DateTime.utc(1991, 2, 3)))));
     });
   });
 }
