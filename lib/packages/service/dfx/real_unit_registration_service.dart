@@ -71,21 +71,21 @@ class RealUnitRegistrationService extends DFXAuthService {
     return responseDto.status;
   }
 
-  /// registers a wallet and and adds the wallet to the new user
-  Future<RegistrationStatus> completeRegistration(Registration registration) async {
+  /// registers a wallet and adds the wallet to the new user
+  Future<RegistrationStatus> completeRegistration(Registration registration, {String lang = 'DE'}) async {
     // EIP-712 registration signature requires the private key — promote the
     // view-wallet (if any) to a fully unlocked SoftwareWallet first, then
     // lock back down in the finally so a throw mid-sequence doesn't leave the
     // key resident.
     await walletService.ensureCurrentWalletUnlocked();
     try {
-      return await _completeRegistration(registration);
+      return await _completeRegistration(registration, lang: lang.toUpperCase());
     } finally {
       await walletService.lockCurrentWallet();
     }
   }
 
-  Future<RegistrationStatus> _completeRegistration(Registration registration) async {
+  Future<RegistrationStatus> _completeRegistration(Registration registration, {required String lang}) async {
     final credentials = appStore.wallet.primaryAccount.primaryAddress;
     // BitBox firmware rejects non-ASCII bytes in EIP-712 string fields.
     // Transliterate everything that goes into the signed envelope AND the
@@ -136,7 +136,7 @@ class RealUnitRegistrationService extends DFXAuthService {
       registrationDate: registrationDate,
       walletAddress: credentials.address.hexEip55,
       signature: signature,
-      lang: 'DE',
+      lang: lang,
       kycData: KycPersonalData(
         accountType: KycAccountType.fromUserType(registration.type),
         firstName: registration.firstName,

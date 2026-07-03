@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
@@ -41,6 +42,7 @@ class KycRegistrationPage extends StatelessWidget {
           create: (_) => KycRegistrationSubmitCubit(
             getIt<RealUnitRegistrationService>(),
             getIt<DfxKycService>(),
+            getIt<SettingsRepository>(),
           ),
         ),
         BlocProvider(

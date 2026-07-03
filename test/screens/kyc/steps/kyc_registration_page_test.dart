@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
@@ -31,6 +32,8 @@ class MockRealUnitRegistrationService extends Mock implements RealUnitRegistrati
 class MockDfxCountryService extends Mock implements DfxCountryService {}
 
 class MockDfxKycService extends Mock implements DfxKycService {}
+
+class MockSettingsRepository extends Mock implements SettingsRepository {}
 
 void main() {
   late KycRegistrationStepCubit registrationStepCubit;
@@ -65,6 +68,7 @@ void main() {
     getIt.registerSingleton<RealUnitRegistrationService>(MockRealUnitRegistrationService());
     getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
     getIt.registerSingleton<DfxKycService>(MockDfxKycService());
+    getIt.registerSingleton<SettingsRepository>(MockSettingsRepository());
   }
 
   setUpAll(() {

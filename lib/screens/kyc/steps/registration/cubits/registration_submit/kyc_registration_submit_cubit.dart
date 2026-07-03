@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
@@ -15,12 +16,15 @@ part 'kyc_registration_submit_state.dart';
 class KycRegistrationSubmitCubit extends Cubit<KycRegistrationSubmitState> {
   final DfxKycService _kycService;
   final RealUnitRegistrationService _registrationService;
+  final SettingsRepository _settingsRepository;
 
   KycRegistrationSubmitCubit(
     RealUnitRegistrationService registrationService,
     DfxKycService kycService,
+    SettingsRepository settingsRepository,
   ) : _registrationService = registrationService,
       _kycService = kycService,
+      _settingsRepository = settingsRepository,
       super(KycRegistrationSubmitInitial());
 
   Future<void> submit({
@@ -72,7 +76,12 @@ class KycRegistrationSubmitCubit extends Cubit<KycRegistrationSubmitState> {
 
   Future<void> _doCompleteRegistration(Registration registration) async {
     try {
-      final status = await _registrationService.completeRegistration(registration);
+      // Audit #657 P9 M2: send the user's app language instead of a
+      // hardcoded DE.
+      final status = await _registrationService.completeRegistration(
+        registration,
+        lang: _settingsRepository.language,
+      );
       // The API returns a structured `RegistrationStatus` in every
       // success case — including `alreadyRegistered`
       // (DFXswiss/api#3733). We forward whatever the backend says and
