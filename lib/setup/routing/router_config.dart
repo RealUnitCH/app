@@ -28,6 +28,7 @@ import 'package:realunit_wallet/screens/settings_legal_documents/settings_legal_
 import 'package:realunit_wallet/screens/settings_legal_documents/subpages/settings_aktionariat_documents_page.dart';
 import 'package:realunit_wallet/screens/settings_legal_documents/subpages/settings_dfx_documents_page.dart';
 import 'package:realunit_wallet/screens/settings_network/settings_network_page.dart';
+import 'package:realunit_wallet/screens/settings_security/settings_security_page.dart';
 import 'package:realunit_wallet/screens/settings_seed/settings_seed_page.dart';
 import 'package:realunit_wallet/screens/settings_tax_report/settings_tax_report_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/settings_user_data_page.dart';
@@ -245,6 +246,22 @@ final GoRouter routerConfig = GoRouter(
           name: SettingsRoutes.network,
           path: 'network',
           builder: (_, _) => SettingsNetworkPage(),
+        ),
+        GoRoute(
+          name: SettingsRoutes.security,
+          path: 'security',
+          builder: (_, _) => const SettingsSecurityPage(),
+        ),
+        GoRoute(
+          name: SettingsRoutes.changePin,
+          path: 'security/changePin',
+          builder: (_, state) {
+            final params = state.extra as ChangePinParams;
+            return SetupPinPage(
+              promptBiometrics: false,
+              onCompleted: params.onCompleted,
+            );
+          },
         ),
         GoRoute(
           name: SettingsRoutes.taxReport,

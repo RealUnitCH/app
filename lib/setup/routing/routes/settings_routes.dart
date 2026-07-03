@@ -7,6 +7,8 @@ abstract final class SettingsRoutes {
   static const languages = 'settingsLanguages';
   static const legalDocuments = 'settingsLegalDocuments';
   static const network = 'settingsNetwork';
+  static const security = 'settingsSecurity';
+  static const changePin = 'settingsChangePin';
   static const taxReport = 'settingsTaxReport';
   static const seed = 'settingsSeed';
   static const walletAddress = 'settingsWalletAddress';

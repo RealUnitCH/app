@@ -6,11 +6,25 @@ class NumberPad extends StatelessWidget {
   final VoidCallback onDeletePressed;
   final void Function(int digit) onNumberPressed;
 
+  /// Optional biometric shortcut rendered in the otherwise-empty bottom-left
+  /// slot (only when no decimal key is used). Stays tappable even when
+  /// [inputEnabled] is false, so a locked-out user can still fall back to
+  /// biometrics.
+  final VoidCallback? onBiometricPressed;
+  final Widget? biometricIcon;
+
+  /// Gates the digit / zero / delete / decimal keys. When false those keys are
+  /// inert (no ripple, no callback) while the biometric shortcut keeps working.
+  final bool inputEnabled;
+
   const NumberPad({
     super.key,
     required this.onNumberPressed,
     required this.onDeletePressed,
     this.onDecimalPressed,
+    this.onBiometricPressed,
+    this.biometricIcon,
+    this.inputEnabled = true,
   });
 
   static const _buttonStyle = TextStyle(
@@ -38,7 +52,7 @@ class NumberPad extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: rowDigits.map((digit) {
                     return _buildButton(
-                      onTap: () => onNumberPressed(digit),
+                      onTap: inputEnabled ? () => onNumberPressed(digit) : null,
                       child: Text('$digit', style: _buttonStyle),
                     );
                   }).toList(),
@@ -50,21 +64,22 @@ class NumberPad extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // Decimal button
+                  // Bottom-left slot: decimal key when requested, otherwise the
+                  // optional biometric shortcut, otherwise an empty spacer.
                   _buildButton(
-                    onTap: onDecimalPressed,
-                    child: onDecimalPressed != null
-                        ? const Text('.', style: _buttonStyle)
-                        : const SizedBox(width: 60, height: 60),
+                    onTap: onDecimalPressed != null
+                        ? (inputEnabled ? onDecimalPressed : null)
+                        : onBiometricPressed,
+                    child: _bottomLeftChild(),
                   ),
                   // Zero button
                   _buildButton(
-                    onTap: () => onNumberPressed(0),
+                    onTap: inputEnabled ? () => onNumberPressed(0) : null,
                     child: const Text('0', style: _buttonStyle),
                   ),
                   // Delete Button
                   _buildButton(
-                    onTap: onDeletePressed,
+                    onTap: inputEnabled ? onDeletePressed : null,
                     child: const Icon(
                       size: 16,
                       fontWeight: FontWeight.bold,
@@ -79,6 +94,12 @@ class NumberPad extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _bottomLeftChild() {
+    if (onDecimalPressed != null) return const Text('.', style: _buttonStyle);
+    if (onBiometricPressed != null && biometricIcon != null) return biometricIcon!;
+    return const SizedBox(width: 60, height: 60);
   }
 
   Widget _buildButton({

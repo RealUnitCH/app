@@ -70,5 +70,60 @@ void main() {
         );
       },
     );
+
+    goldenTest(
+      'biometric button shown in the number pad when biometrics are available',
+      fileName: 'verify_pin_page_biometric_button',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        final cubit = _MockVerifyPinCubit();
+        when(() => cubit.state).thenReturn(
+          const VerifyPinState(biometricStatus: BiometricStatus.available),
+        );
+        when(() => cubit.checkBiometricAvailability()).thenAnswer((_) async {});
+        return wrapForGolden(
+          BlocProvider<VerifyPinCubit>.value(
+            value: cubit,
+            child: VerifyPinView(onAuthenticated: () {}),
+          ),
+        );
+      },
+    );
+
+    goldenTest(
+      'biometric hint shown when biometrics are enabled but temporarily locked',
+      fileName: 'verify_pin_page_biometric_hint',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        final cubit = _MockVerifyPinCubit();
+        when(() => cubit.state).thenReturn(
+          const VerifyPinState(biometricStatus: BiometricStatus.temporarilyLocked),
+        );
+        when(() => cubit.checkBiometricAvailability()).thenAnswer((_) async {});
+        return wrapForGolden(
+          BlocProvider<VerifyPinCubit>.value(
+            value: cubit,
+            child: VerifyPinView(onAuthenticated: () {}),
+          ),
+        );
+      },
+    );
+
+    goldenTest(
+      'unverifiable state disables the pad and shows the recovery message',
+      fileName: 'verify_pin_page_unverifiable',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        final cubit = _MockVerifyPinCubit();
+        when(() => cubit.state).thenReturn(const VerifyPinUnverifiable());
+        when(() => cubit.checkBiometricAvailability()).thenAnswer((_) async {});
+        return wrapForGolden(
+          BlocProvider<VerifyPinCubit>.value(
+            value: cubit,
+            child: VerifyPinView(onAuthenticated: () {}),
+          ),
+        );
+      },
+    );
   });
 }

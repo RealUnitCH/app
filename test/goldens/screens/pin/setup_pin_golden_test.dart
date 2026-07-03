@@ -45,5 +45,20 @@ void main() {
         return wrapForGolden(buildSubject());
       },
     );
+
+    goldenTest(
+      'submitting state replaces the number pad with a spinner',
+      fileName: 'setup_pin_page_submitting',
+      // CupertinoActivityIndicator never settles; pump once to capture the
+      // initial frame instead of letting pumpAndSettle hang.
+      pumpBeforeTest: pumpOnce,
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        when(() => setupPinCubit.state).thenReturn(
+          const SetupPinState(mode: SetupPinMode.confirm, isSubmitting: true),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
   });
 }

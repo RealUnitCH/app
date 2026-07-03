@@ -67,7 +67,7 @@ The transport is USB on Android and Bluetooth on iOS; the original BitBox 02 has
 | Verify seed phrase (3-word challenge) | always | mvp | widget (`verify_seed/verify_seed_page_test.dart`) + golden (`verify_seed/verify_seed_golden_test.dart`) |
 | Setup PIN | always | mvp | widget (`pin/setup_pin_page_test.dart`) + golden (`pin/setup_pin_golden_test.dart`) |
 | Verify PIN (unlock) | always | mvp | widget (`pin/verify_pin_page_test.dart`) + golden (`pin/verify_pin_golden_test.dart`) |
-| Biometric unlock (Face ID / Touch ID / fingerprint) | always | mvp | — |
+| Biometric unlock (Face ID / Touch ID / fingerprint) | always | mvp | cubit (`pin/verify_pin_cubit_test.dart`) + widget (`pin/verify_pin_page_test.dart`) |
 | Legal disclaimer (post-onboarding gate) | always | mvp | golden (`legal/legal_disclaimer_golden_test.dart`, `legal/legal_document_golden_test.dart`); cubit transition covered in [#319](https://github.com/RealUnitCH/app/pull/319) |
 | Onboarding completion | always | mvp | widget (`onboarding/onboarding_completed_page_test.dart`) + golden (`onboarding/onboarding_completed_golden_test.dart`) |
 
@@ -112,6 +112,8 @@ The transport is USB on Android and Bluetooth on iOS; the original BitBox 02 has
 | Currencies / Languages / Network | always | defer | golden (`settings_currencies/settings_currencies_golden_test.dart`, `settings_languages/settings_languages_golden_test.dart`, `settings_network/settings_network_golden_test.dart`) |
 | Tax report | always | defer | golden (`settings_tax_report/settings_tax_report_golden_test.dart`) |
 | Contact | always | defer | golden (`settings_contact/settings_contact_golden_test.dart`) |
+| Security — change PIN | always | defer | widget (`settings_security/settings_security_page_test.dart`) |
+| Security — biometric unlock toggle | always | defer | cubit (`settings_security/cubits/settings_security_cubit_test.dart`) + widget (`settings_security/settings_security_page_test.dart`) + golden (`settings_security/settings_security_golden_test.dart`) |
 
 ### Support
 
