@@ -1,6 +1,6 @@
 # Datenschutzerklärung der RealUnit Wallet App
 
-*Stand: Februar 2026*
+*Stand: Juni 2026*
 
 
 ## 1. Verantwortliche Stelle
@@ -29,7 +29,7 @@ RealUnit hat **keinen Zugriff** auf Ihre privaten Schlüssel, Ihre Wiederherstel
 
 ## 3. Erhebung und Weitergabe persönlicher Daten
 
-Für den Kauf und Verkauf von RealUnit-Aktientoken sowie die Eintragung in das Aktienbuch ist eine Registrierung erforderlich. Dabei werden folgende persönliche Daten erhoben:
+Für den Kauf und Verkauf von RealUnit Aktientoken sowie die Eintragung in das Aktienbuch ist eine Registrierung erforderlich. Dabei werden folgende persönliche Daten erhoben:
 
 - Vorname und Nachname
 - E-Mail-Adresse
@@ -42,10 +42,11 @@ Für den Kauf und Verkauf von RealUnit-Aktientoken sowie die Eintragung in das A
 Diese Daten werden an folgende Unternehmen übermittelt und von diesen verarbeitet:
 
 - **RealUnit Schweiz AG** – zur Führung des Aktienbuchs und zur Erfüllung gesetzlicher Pflichten (z.B. Meldepflichten, AIA)
-- **DFX AG** – zur Abwicklung von Kauf- und Verkaufstransaktionen sowie zur Durchführung der Identitätsprüfung (KYC)
+- **DFX AG** – zur Abwicklung von Kauf- und Verkaufstransaktionen sowie zur Durchführung der Identitätsprüfung (KYC) und zum Abgleich mit Sanktions-Embargolisten (Sanctions-Screening)
 - **Aktionariat AG** – zur technischen Unterstützung der Aktionärsregistrierung und Tokenisierung
+- **Yapeal AG** – zur Abwicklung von Ein- und Auszahlungen (Zahlungsverkehr)
 
-Die Verarbeitung erfolgt auf Grundlage Ihrer Einwilligung sowie zur Erfüllung vertraglicher und gesetzlicher Pflichten (Art. 6 DSG; Art. 6 Abs. 1 lit. a, b und c DSGVO).
+Die Bearbeitung dieser Daten ist zur Anbahnung und Erfüllung des Vertragsverhältnisses sowie zur Erfüllung gesetzlicher Pflichten (z.B. Melde- und Aufbewahrungspflichten) erforderlich; soweit wir Daten gestützt auf Ihre Einwilligung bearbeiten, können Sie diese jederzeit widerrufen. Für Nutzerinnen und Nutzer im Anwendungsbereich der DSGVO stützt sich die Verarbeitung auf Art. 6 Abs. 1 lit. a, b und c DSGVO.
 
 
 ## 4. Identitätsprüfung (KYC)
@@ -57,15 +58,17 @@ Ab bestimmten Beträgen ist eine Identitätsprüfung (Know Your Customer, KYC) e
 
 Diese Daten werden von DFX AG gemäss deren eigener Datenschutzrichtlinie verarbeitet.
 
+Die im Rahmen der Video-Identifikation erhobenen biometrischen Daten zur Gesichtserkennung sind besonders schützenswerte Personendaten (Art. 5 lit. c Ziff. 4 DSG) bzw. besondere Kategorien personenbezogener Daten (Art. 9 DSGVO). Ihre Bearbeitung erfolgt mit Ihrer ausdrücklichen Einwilligung (Art. 9 Abs. 2 lit. a DSGVO).
 
-## 5. Kommunikation mit externen Diensten
 
-Die App kommuniziert für bestimmte Funktionen mit externen Diensten:
+## 5. Kommunikation mit externen Diensten und Bekanntgabe ins Ausland
 
 - **DFX AG**: Für Kursabfragen, Guthabenabfragen, Kauf-/Verkaufs- und Registrierungsfunktionen. Dabei werden Ihre Wallet-Adresse und ggf. personenbezogene Daten übermittelt.
 - **Ethereum-Blockchain-Nodes**: Für die Übermittlung von Transaktionen und die Abfrage von Blockchain-Daten. Dabei können Ihre Wallet-Adresse und Ihre IP-Adresse an die Node-Betreiber übermittelt werden.
 
 Für die Nutzung dieser Drittanbieterdienste gelten deren jeweilige Datenschutzrichtlinien.
+
+Einzelne der genannten Empfänger oder deren Subdienstleister können personenbezogene Daten ausserhalb der Schweiz bearbeiten (z.B. Sumsub für die Identitätsprüfung, Betreiber von Blockchain-Nodes sowie App-Store-Betreiber). Erfolgt eine Bekanntgabe in einen Staat ohne angemessenes Datenschutzniveau, stellen wir geeignete Garantien sicher (insbesondere Standardvertragsklauseln) oder stützen uns auf eine gesetzliche Ausnahme (Art. 16 f. DSG; Art. 44 ff. DSGVO).
 
 
 ## 6. Blockchain-Transparenz
@@ -74,8 +77,6 @@ Sämtliche Transaktionen auf der Ethereum-Blockchain sind **öffentlich einsehba
 
 
 ## 7. Geräteberechtigungen
-
-Die App kann folgende Geräteberechtigungen anfordern:
 
 - **Kamera**: Zum Scannen von QR-Codes (z.B. für Wallet-Adressen oder Zahlungsanforderungen)
 - **Biometrische Sensoren**: Für Face ID oder Fingerabdruck-Entsperrung (optional)
@@ -97,10 +98,16 @@ Sie haben jederzeit das Recht:
 - Die **Löschung** Ihrer Daten zu verlangen, soweit keine gesetzlichen Aufbewahrungspflichten entgegenstehen
 - Ihre **Einwilligung** zur Datenverarbeitung jederzeit zu widerrufen
 
+Soweit die DSGVO anwendbar ist, stehen Ihnen zudem das Recht auf Datenübertragbarkeit (Art. 20 DSGVO), das Recht auf Widerspruch (Art. 21 DSGVO) und das Recht auf Einschränkung der Bearbeitung (Art. 18 DSGVO) zu. Sie haben überdies das Recht, sich bei einer Aufsichtsbehörde zu beschweren (in der Schweiz: Eidgenössischer Datenschutz- und Öffentlichkeitsbeauftragter, EDÖB; im Anwendungsbereich der DSGVO: zuständige Datenschutzaufsichtsbehörde).
+
 Zur Ausübung dieser Rechte wenden Sie sich bitte an info@realunit.ch.
 
 
 ## 10. Schlussbestimmungen
+
+### Aufbewahrung
+
+Wir bewahren personenbezogene Daten so lange auf, wie dies für die genannten Zwecke oder aufgrund gesetzlicher Aufbewahrungspflichten erforderlich ist; danach werden sie gelöscht oder anonymisiert.
 
 ### Salvatorische Klausel
 

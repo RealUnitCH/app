@@ -1,6 +1,6 @@
 # Privacy Policy of the RealUnit Wallet App
 
-*As of: February 2026*
+*As of: June 2026*
 
 
 ## 1. Responsible Entity
@@ -42,10 +42,11 @@ Registration is required for the purchase and sale of RealUnit share tokens and 
 This data is transmitted to and processed by the following companies:
 
 - **RealUnit Schweiz AG** – for maintaining the share register and fulfilling legal obligations (e.g. reporting obligations, AEOI)
-- **DFX AG** – for processing buy and sell transactions and conducting identity verification (KYC)
+- **DFX AG** – for processing buy and sell transactions and conducting identity verification (KYC) and for screening against sanctions/embargo lists (sanctions screening)
 - **Aktionariat AG** – for technical support of shareholder registration and tokenization
+- **Yapeal AG** – for processing deposits and withdrawals (payment transactions)
 
-Processing is based on your consent and for the fulfillment of contractual and legal obligations (Art. 6 DSG; Art. 6 para. 1 lit. a, b and c GDPR).
+Processing of this data is necessary for initiating and performing the contractual relationship and for fulfilling legal obligations (e.g. reporting and retention obligations); insofar as we process data based on your consent, you may withdraw it at any time. For users within the scope of the GDPR, processing is based on Art. 6 para. 1 lit. a, b and c GDPR.
 
 
 ## 4. Identity Verification (KYC)
@@ -57,15 +58,17 @@ Identity verification (Know Your Customer, KYC) is required above certain amount
 
 This data is processed by DFX AG in accordance with their own privacy policy.
 
+The biometric data for facial recognition collected during video identification constitutes sensitive personal data (Art. 5 lit. c no. 4 DSG) or special categories of personal data (Art. 9 GDPR). It is processed with your explicit consent (Art. 9 para. 2 lit. a GDPR).
 
-## 5. Communication with External Services
 
-The app communicates with external services for certain functions:
+## 5. Communication with External Services and Disclosure Abroad
 
 - **DFX AG**: For exchange rate queries, balance queries, buy/sell and registration functions. Your wallet address and, where applicable, personal data are transmitted.
 - **Ethereum Blockchain Nodes**: For submitting transactions and querying blockchain data. Your wallet address and IP address may be transmitted to node operators.
 
 The respective privacy policies of these third-party services apply to their use.
+
+Some of the aforementioned recipients or their sub-processors may process personal data outside Switzerland (e.g. Sumsub for identity verification, blockchain node operators, and app store operators). Where data is disclosed to a country without an adequate level of data protection, we ensure appropriate safeguards (in particular standard contractual clauses) or rely on a statutory exception (Art. 16 et seq. DSG; Art. 44 et seq. GDPR).
 
 
 ## 6. Blockchain Transparency
@@ -74,8 +77,6 @@ All transactions on the Ethereum blockchain are **publicly visible**. This means
 
 
 ## 7. Device Permissions
-
-The app may request the following device permissions:
 
 - **Camera**: For scanning QR codes (e.g. for wallet addresses or payment requests)
 - **Biometric sensors**: For Face ID or fingerprint unlock (optional)
@@ -97,10 +98,16 @@ You have the right at any time to:
 - **Request deletion** of your data, insofar as no statutory retention obligations apply
 - **Revoke your consent** to data processing at any time
 
+Insofar as the GDPR applies, you are also entitled to the right to data portability (Art. 20 GDPR), the right to object (Art. 21 GDPR), and the right to restriction of processing (Art. 18 GDPR). You furthermore have the right to lodge a complaint with a supervisory authority (in Switzerland: the Federal Data Protection and Information Commissioner, FDPIC; within the scope of the GDPR: the competent data protection supervisory authority).
+
 To exercise these rights, please contact info@realunit.ch.
 
 
 ## 10. Final Provisions
+
+### Retention
+
+We retain personal data for as long as necessary for the stated purposes or due to statutory retention obligations; thereafter it is deleted or anonymized.
 
 ### Severability Clause
 
