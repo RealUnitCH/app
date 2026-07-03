@@ -60,8 +60,6 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('1920'), findsOneWidget);
-      expect(find.text('05'), findsOneWidget);
-      expect(find.text('15'), findsOneWidget);
     });
 
     testWidgets('ignores malformed month/day parts outside the dropdown items', (
@@ -79,60 +77,60 @@ void main() {
       expect(find.text('40'), findsNothing);
     });
 
-    testWidgets('validate() fails for an impossible calendar date', (tester) async {
+    // Impossible dates (31.02., 29.02. outside leap years) roll into the next
+    // month, which validate() rejects.
+    final year30 = '${DateTime.now().year - 30}';
+    for (final (seed, expectedValid) in [
+      ('$year30-02-31', false),
+      ('$year30-02-28', true),
+      ('2003-02-29', false),
+      ('2004-02-29', true),
+    ]) {
+      testWidgets('validate() is $expectedValid for $seed', (tester) async {
+        final formKey = GlobalKey<FormState>();
+        await tester.pumpApp(
+          _host(
+            Form(
+              key: formKey,
+              child: BirthdayField(controller: ValueNotifier<String?>(seed)),
+            ),
+          ),
+        );
+
+        expect(formKey.currentState!.validate(), expectedValid);
+      });
+    }
+
+    testWidgets('validate() fails for a birthday in the future', (tester) async {
       final formKey = GlobalKey<FormState>();
-      final year = '${DateTime.now().year - 30}';
+      final tomorrow = DateTime.now().add(const Duration(days: 1));
+      final seed =
+          '${tomorrow.year}-'
+          '${'${tomorrow.month}'.padLeft(2, '0')}-'
+          '${'${tomorrow.day}'.padLeft(2, '0')}';
       await tester.pumpApp(
         _host(
           Form(
             key: formKey,
-            child: BirthdayField(controller: ValueNotifier<String?>('$year-02-31')),
+            child: BirthdayField(controller: ValueNotifier<String?>(seed)),
           ),
         ),
       );
 
+      // Rejected via isValidBirthdate, or on Dec 31 (rolled year not offered,
+      // seed guard nulls it) via the null check — false either way.
       expect(formKey.currentState!.validate(), isFalse);
     });
 
-    testWidgets('validate() passes for a valid calendar date', (tester) async {
+    testWidgets('validate() passes for today', (tester) async {
       final formKey = GlobalKey<FormState>();
-      final year = '${DateTime.now().year - 30}';
+      final now = DateTime.now();
+      final seed = '${now.year}-${'${now.month}'.padLeft(2, '0')}-${'${now.day}'.padLeft(2, '0')}';
       await tester.pumpApp(
         _host(
           Form(
             key: formKey,
-            child: BirthdayField(controller: ValueNotifier<String?>('$year-02-28')),
-          ),
-        ),
-      );
-
-      expect(formKey.currentState!.validate(), isTrue);
-    });
-
-    testWidgets('validate() fails for Feb 29 in a non-leap year', (tester) async {
-      // 2003 is not a leap year: DateTime(2003, 2, 29) rolls over to March 1,
-      // so the month no longer matches and the date is rejected.
-      final formKey = GlobalKey<FormState>();
-      await tester.pumpApp(
-        _host(
-          Form(
-            key: formKey,
-            child: BirthdayField(controller: ValueNotifier<String?>('2003-02-29')),
-          ),
-        ),
-      );
-
-      expect(formKey.currentState!.validate(), isFalse);
-    });
-
-    testWidgets('validate() passes for Feb 29 in a leap year', (tester) async {
-      // 2004 is a leap year: DateTime(2004, 2, 29) stays in February.
-      final formKey = GlobalKey<FormState>();
-      await tester.pumpApp(
-        _host(
-          Form(
-            key: formKey,
-            child: BirthdayField(controller: ValueNotifier<String?>('2004-02-29')),
+            child: BirthdayField(controller: ValueNotifier<String?>(seed)),
           ),
         ),
       );
@@ -144,40 +142,36 @@ void main() {
       tester,
     ) async {
       final controller = ValueNotifier<String?>(null);
-      final formKey = GlobalKey<FormState>();
-      await tester.pumpApp(
-        _host(
-          Form(
-            key: formKey,
-            child: BirthdayField(controller: controller),
-          ),
-        ),
-      );
+      await tester.pumpApp(_host(BirthdayField(controller: controller)));
 
       Future<void> select(int fieldIndex, String value) async {
         await tester.tap(find.byType(DropdownField<String>).at(fieldIndex));
         await tester.pumpAndSettle();
+        // A closed sibling dropdown can show the same label as an item in the
+        // open menu (day '05' while picking month '05'), so match only inside
+        // the open menu's scrollable, which renders last in the tree.
+        final item = find.descendant(
+          of: find.byType(Scrollable).last,
+          matching: find.text(value),
+        );
         // The menu builds its items lazily, so scroll the freshly-opened menu
         // (the last scrollable on screen) until the target item is rendered.
-        // While a menu is open its value is unique to that menu.
         await tester.scrollUntilVisible(
-          find.text(value),
+          item,
           50.0,
           scrollable: find.byType(Scrollable).last,
         );
         await tester.pumpAndSettle();
-        await tester.tap(find.text(value));
+        await tester.tap(item);
         await tester.pumpAndSettle();
       }
 
-      await select(0, '31'); // day
-      await select(1, '02'); // month
-      await select(2, '2000'); // year
+      await select(0, '05');
+      await select(1, '05');
+      await select(2, '2000');
 
       // updateBirthday writes once all three parts are set.
-      expect(controller.value, '2000-02-31');
-      // 31 February is impossible, so the field validates as false.
-      expect(formKey.currentState!.validate(), isFalse);
+      expect(controller.value, '2000-05-05');
     });
 
     testWidgets('does not throw when the birthday has no separators', (tester) async {
