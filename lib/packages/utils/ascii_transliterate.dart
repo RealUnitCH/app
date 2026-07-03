@@ -96,6 +96,13 @@ const Map<String, String> _singleCharReplacements = {
   '”': '"', // ” right double quote
   '–': '-', // – en dash
   '—': '-', // — em dash
+  // Guillemets — the quotation marks used in Swiss French/Italian text. Without
+  // these, an address line like `«Le Château»` was signed as `?Le Château?`
+  // (placeholder loss) and the BitBox payload no longer matched the backend's.
+  '«': '"', // « left-pointing double angle quote
+  '»': '"', // » right-pointing double angle quote
+  '‹': "'", // ‹ left-pointing single angle quote
+  '›': "'", // › right-pointing single angle quote
 };
 
 /// Returns an ASCII-safe representation of [input]. German umlauts and

@@ -90,9 +90,29 @@ class RealUnitSellPaymentInfoService extends DFXAuthService {
       final credentials = appStore.wallet.currentAccount.primaryAddress;
       _validateEip7702Data(paymentInfo.eip7702, credentials.address.hexEip55, paymentInfo.amount);
 
-      final delegationSignature = await Eip712Signer.signDelegation(
+      // Sign through the hardened envelope, NOT the legacy static wrapper. The
+      // legacy `signDelegation` rebuilt the typed-data `types` verbatim from
+      // the backend payload, so a backend that appended a hidden field (e.g.
+      // `{name: "secretApproval", type: "uint256"}`) to `Delegation`/`Caveat`
+      // would have it silently signed by the BitBox. `signDelegationEnvelope`
+      // pins the `types` against the client-side schema and re-validates the
+      // trusted parameters (verifyingContract / chainId / delegator / amount /
+      // domain name+version) before any byte reaches the device. On the happy
+      // path the signed envelope is byte-identical to the legacy one, so the
+      // signature still verifies backend-side.
+      final expectedWei = BigInt.from(paymentInfo.amount) *
+          BigInt.from(10).pow(appStore.apiConfig.asset.decimals);
+      final delegationSignature = await const Eip712Signer().signDelegationEnvelope(
         credentials: credentials,
         eip7702Data: paymentInfo.eip7702,
+        expectedVerifyingContract: _delegationManagerAddress,
+        expectedChainId: appStore.apiConfig.asset.chainId,
+        expectedDelegator: credentials.address.hexEip55,
+        expectedAmount: expectedWei,
+        // Domain name/version pinned to the RealUnit DelegationManager domain
+        // (see test/integration/eip7702_delegation_bitbox_test.dart fixtures).
+        expectedDomainName: 'RealUnit',
+        expectedDomainVersion: '1',
       );
       final authorizationSignature = Eip7702Signer.signAuthorization(
         credentials: credentials,
@@ -112,7 +132,13 @@ class RealUnitSellPaymentInfoService extends DFXAuthService {
             authorization: Eip7702AuthorizationDto(
               chainId: paymentInfo.eip7702.domain.chainId,
               address: paymentInfo.eip7702.delegatorAddress,
-              nonce: paymentInfo.eip7702.userNonce,
+              // Echo the authorization nonce as a JSON number (the backend
+              // contract). The exact uint64 is preserved on the security-
+              // critical path — signAuthorization signs the full BigInt; this
+              // is just the metadata echo the backend cross-checks.
+              nonce: paymentInfo.eip7702.userNonce.toInt(),
+              // r/s zero-padded to 32 bytes (64 hex chars): an ECDSA component
+              // with leading zero bytes must not be sent short to the backend.
               r: '0x${authorizationSignature.r.toRadixString(16).padLeft(64, '0')}',
               s: '0x${authorizationSignature.s.toRadixString(16).padLeft(64, '0')}',
               yParity: authorizationSignature.yParity,

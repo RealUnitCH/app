@@ -13,7 +13,7 @@ Eip7702Data _data({int chainId = 1, int userNonce = 0}) => Eip7702Data(
       relayerAddress: '0x0000000000000000000000000000000000000002',
       delegationManagerAddress: '0x0000000000000000000000000000000000000003',
       delegatorAddress: _delegatorAddress,
-      userNonce: userNonce,
+      userNonce: BigInt.from(userNonce),
       domain: Eip7702Domain(
         name: 'RealUnit',
         version: '1',
@@ -21,12 +21,12 @@ Eip7702Data _data({int chainId = 1, int userNonce = 0}) => Eip7702Data(
         verifyingContract: '0x0000000000000000000000000000000000000004',
       ),
       types: const Eip7702Types(delegation: [], caveat: []),
-      message: const Eip7702Message(
+      message: Eip7702Message(
         delegate: '0x0000000000000000000000000000000000000005',
         delegator: _delegatorAddress,
         authority: '0x0000000000000000000000000000000000000006',
         caveats: [],
-        salt: 0,
+        salt: BigInt.zero,
       ),
       tokenAddress: '0x0000000000000000000000000000000000000007',
       amountWei: '0',

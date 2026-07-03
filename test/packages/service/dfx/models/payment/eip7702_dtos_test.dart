@@ -63,7 +63,25 @@ void main() {
       expect(dto.delegator, '0xdr');
       expect(dto.authority, '0xauth');
       expect(dto.caveats, hasLength(1));
-      expect(dto.salt, 42);
+      expect(dto.salt, BigInt.from(42));
+    });
+
+    // #608 F2: salt is a uint256 — a 256-bit value cannot fit in a Dart `int`
+    // (64-bit, 53-bit on web). Parsing it as `int` silently truncated the salt
+    // the user signs. Parse as BigInt from a number-or-string JSON value.
+    test('parses a full-width uint256 salt without truncation', () {
+      final huge = BigInt.parse('0x${'f' * 64}'); // 2^256 - 1, beyond int range
+      final dto = Eip7702Message.fromJson({
+        'delegate': '0xd',
+        'delegator': '0xdr',
+        'authority': '0xauth',
+        'caveats': const [],
+        'salt': huge.toString(), // backend sends large salts as a string
+      });
+      expect(dto.salt, huge);
+      // The value is genuinely outside Dart's int range, so the old
+      // `json['salt'] as int` path could not have represented it.
+      expect(huge > BigInt.from(0x7fffffffffffffff), isTrue);
     });
   });
 
@@ -101,13 +119,26 @@ void main() {
       expect(dto.relayerAddress, '0xrelay');
       expect(dto.delegationManagerAddress, '0xmgr');
       expect(dto.delegatorAddress, '0xdr');
-      expect(dto.userNonce, 7);
+      expect(dto.userNonce, BigInt.from(7));
       expect(dto.domain.chainId, 1);
       expect(dto.types.delegation, isEmpty);
       expect(dto.message.delegate, '0xd');
       expect(dto.tokenAddress, '0xtoken');
       expect(dto.amountWei, '12345');
       expect(dto.depositAddress, '0xdeposit');
+    });
+
+    // #608 F2: the EIP-7702 authorization nonce is a uint64; a value above
+    // 2^63 overflows a Dart int. Parse it as BigInt so the signed authorization
+    // tuple carries the exact nonce.
+    test('parses a uint64 userNonce beyond int range without overflow', () {
+      final bigNonce = BigInt.parse('18446744073709551615'); // 2^64 - 1
+      final dto = Eip7702Data.fromJson({
+        ...fullJson,
+        'userNonce': bigNonce.toString(),
+      });
+      expect(dto.userNonce, bigNonce);
+      expect(bigNonce > BigInt.from(0x7fffffffffffffff), isTrue);
     });
   });
 

@@ -12,6 +12,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_pa
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
+import 'package:realunit_wallet/packages/wallet/exceptions/eip712_schema_drift_exception.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/styles/currency.dart';
@@ -239,6 +240,64 @@ void main() {
         throwsA(predicate(
           (e) => e.toString().contains('amount mismatch'),
         )),
+      );
+    });
+  });
+
+  // #608 F1 (HIGH): the defense-in-depth schema-pinning was dead code — the
+  // production confirmPayment used the legacy `Eip712Signer.signDelegation`
+  // static, which rebuilt the typed-data `types` VERBATIM from the backend
+  // payload. A backend that appended a hidden field to `Delegation`/`Caveat`
+  // would have it silently signed by the device. The fix routes signing
+  // through `signDelegationEnvelope`, which pins `types` against the client
+  // schema. `_validateEip7702Data` never inspected `types`, so these tests use
+  // an otherwise-valid payload — only the schema-pinning can catch the drift.
+  group('confirmPayment schema-pinning (F-038 / #608 F1)', () {
+    // The canonical MetaMask Delegation Framework v1.3.0 type set.
+    List<Map<String, String>> canonicalDelegation() => [
+          {'name': 'delegate', 'type': 'address'},
+          {'name': 'delegator', 'type': 'address'},
+          {'name': 'authority', 'type': 'bytes32'},
+          {'name': 'caveats', 'type': 'Caveat[]'},
+          {'name': 'salt', 'type': 'uint256'},
+        ];
+    List<Map<String, String>> canonicalCaveat() => [
+          {'name': 'enforcer', 'type': 'address'},
+          {'name': 'terms', 'type': 'bytes'},
+        ];
+
+    test('backend smuggles a hidden Delegation field → refused before signing', () async {
+      final json = _validEip7702Json();
+      json['types'] = {
+        'Delegation': [
+          ...canonicalDelegation(),
+          // The smuggled field the user can never see in the amount UI.
+          {'name': 'secretApproval', 'type': 'uint256'},
+        ],
+        'Caveat': canonicalCaveat(),
+      };
+
+      await expectLater(
+        build().confirmPayment(_info(eip7702Override: json)),
+        // Schema drift is detected; without the migration the legacy verbatim
+        // rebuild would have signed it (failing later with an unrelated error).
+        throwsA(isA<Eip712SchemaDriftException>()),
+      );
+    });
+
+    test('canonical types are accepted by the schema-pinning (no false positive)', () async {
+      final json = _validEip7702Json();
+      json['types'] = {
+        'Delegation': canonicalDelegation(),
+        'Caveat': canonicalCaveat(),
+      };
+
+      // The pinning passes, so signing proceeds and fails only because the test
+      // fake credentials cannot actually sign — NOT a schema rejection. This
+      // pins that the migration does not reject legitimate payloads.
+      await expectLater(
+        build().confirmPayment(_info(eip7702Override: json)),
+        throwsA(isNot(isA<Eip712SchemaDriftException>())),
       );
     });
   });
