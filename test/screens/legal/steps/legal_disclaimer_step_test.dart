@@ -49,13 +49,20 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
 
-      // Step 0 appends the advertising/prospectus disclaimer as a third Text
-      // below title + body; step 1 keeps only its title / body pair.
+      // Pin the actual disclaimer, not just a Text count: it carries the
+      // downloads URL, which is identical across locales. It must appear on
+      // step 0 and be absent on step 1.
       await tester.pumpApp(const LegalDisclaimerStep(step: 0));
-      expect(find.byType(Text), findsNWidgets(3));
+      expect(
+        find.textContaining('realunit.ch/ueber-uns/downloads/'),
+        findsOneWidget,
+      );
 
       await tester.pumpApp(const LegalDisclaimerStep(step: 1));
-      expect(find.byType(Text), findsNWidgets(2));
+      expect(
+        find.textContaining('realunit.ch/ueber-uns/downloads/'),
+        findsNothing,
+      );
     });
   });
 }
