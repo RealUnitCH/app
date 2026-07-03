@@ -72,14 +72,18 @@ class SettingsUserDataCubit extends Cubit<SettingsUserDataState> {
       final nationalityCountry = countryResults.elementAt(0);
       final addressCountry = countryResults.elementAt(1);
 
+      // '' (no birthday on record) parses to null; date-only UTC so equal dates compare equal.
+      final parsedBirthday = DateTime.tryParse(userDataDto.birthday);
+
       emit(
         SettingsUserDataSuccess(
           userData: UserData(
             type: RegistrationUserType.fromName(userDataDto.type),
             name: userDataDto.name,
             email: userDataDto.email,
-            // The API returns '' when no birthday is on record.
-            birthday: DateTime.tryParse(userDataDto.birthday),
+            birthday: parsedBirthday == null
+                ? null
+                : DateTime.utc(parsedBirthday.year, parsedBirthday.month, parsedBirthday.day),
             nationality: nationalityCountry,
             addressStreet: userDataDto.addressStreet,
             addressCity: userDataDto.addressCity,
