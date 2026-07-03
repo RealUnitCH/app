@@ -7,7 +7,7 @@ class UserData extends Equatable {
   final String email;
   final String name;
   final String phoneNumber;
-  final DateTime birthday;
+  final DateTime? birthday;
   final Country nationality;
   final String addressStreet;
   final String addressPostalCode;
