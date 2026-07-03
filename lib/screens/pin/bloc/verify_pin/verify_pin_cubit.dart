@@ -180,11 +180,13 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
   Future<void> _promptBiometric() async {
     final outcome = await _biometricService.authenticate();
     if (isClosed) return;
+    // A parallel PIN check may already have unlocked the wallet; don't emit a
+    // second terminal/status state over that success — a re-emitted
+    // VerifyPinSuccess re-fires onAuthenticated, a status change re-enables the
+    // pad, and the lockout reset would run twice.
+    if (state is VerifyPinSuccess) return;
     switch (outcome) {
       case BiometricAuthOutcome.success:
-        // A parallel PIN check may already have unlocked the wallet; don't
-        // re-emit success or run the lockout reset a second time.
-        if (state is VerifyPinSuccess) break;
         if (enableLockout) await _secureStorage.resetPinLockout();
         _safeEmit(VerifyPinSuccess(biometricStatus: state.biometricStatus));
       case BiometricAuthOutcome.failed:

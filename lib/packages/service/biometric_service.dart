@@ -41,6 +41,9 @@ class BiometricService {
   /// [BiometricAuthOutcome] so the caller can decide between staying silent and
   /// showing a targeted hint — the old bare `false` collapsed all of these into
   /// one indistinguishable failure.
+  // @no-integration-test: drives the local_auth OS biometric prompt and maps
+  //   its platform LocalAuthException codes onto BiometricAuthOutcome — only
+  //   verifiable on a real device; the unit test mocks the exception surface.
   Future<BiometricAuthOutcome> authenticate() async {
     try {
       final authenticated = await _biometric.authenticate(

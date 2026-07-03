@@ -591,6 +591,34 @@ void main() {
       });
 
       blocTest<VerifyPinCubit, VerifyPinState>(
+        'a non-success outcome after an already-landed success emits no second state (N2)',
+        // First prompt unlocks (success); a second prompt returns a NON-success
+        // outcome. The pre-switch success guard must drop it so no second
+        // VerifyPinSuccess (with a changed biometricStatus) is emitted over the
+        // terminal success — which would re-fire onAuthenticated and re-enable
+        // the pad. Without the guard the temporarilyLocked branch would re-emit.
+        setUp: () {
+          final outcomes = <BiometricAuthOutcome>[
+            BiometricAuthOutcome.success,
+            BiometricAuthOutcome.temporarilyLocked,
+          ];
+          var call = 0;
+          when(() => biometricService.authenticate())
+              .thenAnswer((_) async => outcomes[call++]);
+        },
+        build: build,
+        act: (cubit) async {
+          await cubit.promptBiometric();
+          await cubit.promptBiometric();
+        },
+        // Exactly one state, and nothing after it.
+        expect: () => const [VerifyPinSuccess()],
+        verify: (_) {
+          verify(() => biometricService.authenticate()).called(2);
+        },
+      );
+
+      blocTest<VerifyPinCubit, VerifyPinState>(
         'failed leaves the status untouched and emits nothing',
         build: build,
         setUp: () => when(() => biometricService.authenticate())
@@ -699,16 +727,20 @@ void main() {
       );
 
       blocTest<VerifyPinCubit, VerifyPinState>(
-        'success is preserved when a late non-success outcome arrives',
+        'a late non-success outcome after success is dropped entirely (no re-emit)',
         build: build,
         setUp: () => when(() => biometricService.authenticate())
             .thenAnswer((_) async => BiometricAuthOutcome.temporarilyLocked),
         seed: () => const VerifyPinSuccess(biometricStatus: BiometricStatus.available),
         act: (cubit) => cubit.promptBiometric(),
+        // The guard returns before the switch, so nothing is emitted: the
+        // terminal success is neither flattened to a plain pad state nor
+        // re-emitted with a new status (a second VerifyPinSuccess would re-fire
+        // onAuthenticated).
+        expect: () => const <VerifyPinState>[],
         verify: (cubit) {
-          // Must not flatten the terminal success back to a plain pad state.
           expect(cubit.state, isA<VerifyPinSuccess>());
-          expect(cubit.state.biometricStatus, BiometricStatus.temporarilyLocked);
+          expect(cubit.state.biometricStatus, BiometricStatus.available);
         },
       );
     });

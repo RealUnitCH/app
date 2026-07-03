@@ -100,7 +100,8 @@ class VerifyPinLocked extends VerifyPinState {
 
 /// The stored PIN hash/salt is missing, so no entered PIN can ever match. This
 /// is a storage fault, not a wrong guess: the pad is disabled and no failed
-/// attempt is counted — the only way out is the "Forgot PIN?" recovery flow.
+/// attempt is counted. Recovery is the "Forgot PIN?" flow; biometrics, if
+/// enabled, still unlock — they authenticate against the OS, not the stored hash.
 class VerifyPinUnverifiable extends VerifyPinState {
   const VerifyPinUnverifiable({
     super.failedAttempts,

@@ -188,6 +188,7 @@
   "pinSaveFailed": "Your PIN could not be saved. Try again.",
   "pinSaving": "Saving…",
   "pinVerify": "Enter your pin",
+  "pinVerifyBiometricButton": "Unlock with biometrics",
   "pinVerifyBiometricHintLocked": "Face ID/biometrics are locked. Unlock your device once with your device passcode (PIN, pattern or password).",
   "pinVerifyBiometricHintNotEnrolled": "Face ID/biometrics are no longer set up on this device.",
   "pinVerifyBiometricHintUnavailable": "Biometric unlock is currently unavailable.",

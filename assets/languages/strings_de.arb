@@ -188,6 +188,7 @@
   "pinSaveFailed": "Die PIN konnte nicht gespeichert werden. Versuchen Sie es erneut.",
   "pinSaving": "Speichern…",
   "pinVerify": "Geben Sie Ihre PIN ein",
+  "pinVerifyBiometricButton": "Mit Biometrie entsperren",
   "pinVerifyBiometricHintLocked": "Face ID/Biometrie ist gesperrt. Entsperren Sie Ihr Gerät einmal mit Ihrem Gerätecode (PIN, Muster oder Passwort).",
   "pinVerifyBiometricHintNotEnrolled": "Face ID/Biometrie ist auf diesem Gerät nicht mehr eingerichtet.",
   "pinVerifyBiometricHintUnavailable": "Biometrische Entsperrung ist derzeit nicht verfügbar.",

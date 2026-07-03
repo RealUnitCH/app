@@ -199,6 +199,47 @@ void main() {
       expect(find.byIcon(Icons.fingerprint), findsNothing);
     });
 
+    testWidgets('the biometric button carries a screen-reader accessibility label', (
+      tester,
+    ) async {
+      // bySemanticsLabel walks the live semantics tree, so it must be enabled.
+      final handle = tester.ensureSemantics();
+      addTearDown(handle.dispose);
+      when(() => verifyPinCubit.state).thenReturn(
+        const VerifyPinState(biometricStatus: BiometricStatus.available),
+      );
+
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
+
+      // The glyph is visible and the unlock shortcut is announced to a screen
+      // reader via the icon's semanticLabel.
+      expect(find.byIcon(Icons.fingerprint), findsOne);
+      expect(
+        find.bySemanticsLabel(S.current.pinVerifyBiometricButton),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('exposes no biometric accessibility label when the button is hidden', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      addTearDown(handle.dispose);
+      when(() => verifyPinCubit.state).thenReturn(const VerifyPinState());
+
+      await tester.pumpApp(
+        buildSubject(VerifyPinView(onAuthenticated: onAuthenticated)),
+      );
+
+      expect(find.byIcon(Icons.fingerprint), findsNothing);
+      expect(
+        find.bySemanticsLabel(S.current.pinVerifyBiometricButton),
+        findsNothing,
+      );
+    });
+
     testWidgets('keeps the biometric button active while temporarily locked', (tester) async {
       when(() => verifyPinCubit.state).thenReturn(
         VerifyPinTemporarilyLocked(

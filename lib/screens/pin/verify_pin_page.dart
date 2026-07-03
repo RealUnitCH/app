@@ -221,6 +221,7 @@ class _VerifyPinViewState extends State<VerifyPinView> {
                                       : Icons.fingerprint,
                                   size: 28,
                                   color: RealUnitColors.realUnitBlack,
+                                  semanticLabel: S.of(context).pinVerifyBiometricButton,
                                 )
                               : null,
                         ),
