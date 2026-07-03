@@ -68,7 +68,7 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
       if (state is VerifyPinSuccess) return;
       switch (result) {
         case PinVerificationResult.correct:
-          if (enableLockout) await _secureStorage.resetPinLockout();
+          await _resetLockoutBestEffort();
           _safeEmit(VerifyPinSuccess(biometricStatus: biometricStatus));
         case PinVerificationResult.notVerifiable:
           // No stored hash/salt: no input could ever match. Steer to recovery
@@ -187,18 +187,7 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
     if (state is VerifyPinSuccess) return;
     switch (outcome) {
       case BiometricAuthOutcome.success:
-        if (enableLockout) {
-          try {
-            await _secureStorage.resetPinLockout();
-          } catch (_) {
-            // Best-effort cleanup: the scan already succeeded, so unlock even if
-            // clearing the counter fails — a stale count self-heals on the next
-            // successful check. Without this a keychain throw would skip the
-            // success emit (the wallet would stay locked after a valid scan) and,
-            // because every caller is fire-and-forget, surface as an unhandled
-            // async error. Mirrors _checkPin's defensive storage handling.
-          }
-        }
+        await _resetLockoutBestEffort();
         _safeEmit(VerifyPinSuccess(biometricStatus: state.biometricStatus));
       case BiometricAuthOutcome.failed:
         // Plain scan failure or user cancel: stay silent, keep the button.
@@ -211,6 +200,24 @@ class VerifyPinCubit extends Cubit<VerifyPinState> {
         _setBiometricStatus(BiometricStatus.notEnrolled);
       case BiometricAuthOutcome.unavailable:
         _setBiometricStatus(BiometricStatus.unavailable);
+    }
+  }
+
+  /// Clears the failed-attempt / lockout counters after a successful auth.
+  ///
+  /// Best-effort: the auth already succeeded (correct PIN or a valid biometric
+  /// scan), so a keychain failure while clearing the counters must not block the
+  /// unlock — a stale count self-heals on the next successful check. Without this
+  /// a throw would skip the success emit (the wallet would stay locked after a
+  /// valid auth) and, because callers are fire-and-forget, surface as an
+  /// unhandled async error. Both success paths (PIN and biometric) route through
+  /// here so they stay consistent.
+  Future<void> _resetLockoutBestEffort() async {
+    if (!enableLockout) return;
+    try {
+      await _secureStorage.resetPinLockout();
+    } catch (_) {
+      // Intentionally swallowed — see the doc comment above.
     }
   }
 

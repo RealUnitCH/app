@@ -109,10 +109,8 @@ void main() {
       await completed.timeout(const Duration(seconds: 30));
 
       expect(cubit.state.isComplete, isTrue);
-      // One atomic write — never the legacy split pair.
+      // One atomic write.
       verify(() => secureStorage.setPinCredential(any(), any())).called(1);
-      verifyNever(() => secureStorage.setPinSalt(any()));
-      verifyNever(() => secureStorage.setPinHash(any()));
     });
 
     test('mismatching confirm-pin resets currentPin and sets mismatch=true', () async {

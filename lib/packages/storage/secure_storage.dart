@@ -111,8 +111,6 @@ class SecureStorage {
 
   Future<String?> getPinHash() => _secureStorage.read(key: _pinHashKey);
 
-  Future<void> setPinHash(String hash) => _secureStorage.write(key: _pinHashKey, value: hash);
-
   Future<bool> hasPinHash() async =>
       await _secureStorage.read(key: _pinCredentialKey) != null ||
       await _secureStorage.read(key: _pinHashKey) != null;
@@ -128,9 +126,6 @@ class SecureStorage {
     if (hex == null) return null;
     return hexToBytes(hex);
   }
-
-  Future<void> setPinSalt(Uint8List salt) =>
-      _secureStorage.write(key: _pinSaltKey, value: bytesToHex(salt));
 
   /// Writes the PIN salt+hash as a single atomic keychain entry.
   ///

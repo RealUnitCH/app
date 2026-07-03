@@ -91,12 +91,6 @@ void main() {
       expect(await secureStorage.getPinHash(), 'abc123');
     });
 
-    test('setPinHash writes the value under pin.hash', () async {
-      await secureStorage.setPinHash('hashed');
-
-      verify(() => mockStorage.write(key: 'pin.hash', value: 'hashed')).called(1);
-    });
-
     test('hasPinHash is true when only the atomic credential is present', () async {
       when(
         () => mockStorage.read(key: 'pin.credential'),
@@ -152,16 +146,6 @@ void main() {
 
       final decoded = await secureStorage.getPinSalt();
       expect(decoded, salt);
-    });
-
-    test('setPinSalt hex-encodes the bytes before writing', () async {
-      final salt = Uint8List.fromList([0xde, 0xad, 0xbe, 0xef]);
-
-      await secureStorage.setPinSalt(salt);
-
-      verify(
-        () => mockStorage.write(key: 'pin.salt', value: 'deadbeef'),
-      ).called(1);
     });
 
     test('setPinCredential writes saltHex:hash atomically and clears the legacy split keys',
