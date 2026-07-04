@@ -157,10 +157,12 @@ void main() {
       expect(cubit.state.fiatText, '125.50');
     });
 
-    test('onCurrencyChanged calls getBuyPrice (not getSellPrice) with current shares', () async {
-      // Note: the cubit uses BUY price for currency switch (likely on purpose
-      // to convert the displayed share count to a fiat estimate without the
-      // sell-side fee deduction). This test pins that contract.
+    test(
+        'onCurrencyChanged re-quotes via the SELL price endpoint '
+        '(issue #657 P4 S1 regression — used to call getBuyPrice)', () async {
+      // The previous behaviour called getBuyPrice/totalCost on a currency
+      // switch, rendering a buy-side quote as the sell "You receive" amount —
+      // inconsistent with onSharesChanged, which quotes via getSellPrice.
       when(() => service.getBuyPrice(any(), any())).thenAnswer(
         (_) async => BrokerbotBuyPriceDto(
           totalCost: 50.0,
@@ -182,16 +184,26 @@ void main() {
       await cubit.onSharesChanged('10');
       await Future<void>.delayed(const Duration(milliseconds: 250));
 
+      when(() => service.getSellPrice(any(), any())).thenAnswer(
+        (_) async => BrokerbotSellPriceDto(
+          shares: 10,
+          estimatedAmount: 95.5,
+          pricePerShare: 9.55,
+          currency: 'EUR',
+        ),
+      );
       await cubit.onCurrencyChanged(Currency.eur);
 
       expect(cubit.state.currency, Currency.eur);
-      expect(cubit.state.fiatText, '50.00');
-      verify(() => service.getBuyPrice('10', Currency.eur)).called(1);
+      // Sell-side estimate, NOT the buy-side totalCost (50.00).
+      expect(cubit.state.fiatText, '95.50');
+      verify(() => service.getSellPrice('10', Currency.eur)).called(1);
+      verifyNever(() => service.getBuyPrice(any(), any()));
     });
 
-    test('onCurrencyChanged flips currency even when getBuyPrice throws', () async {
+    test('onCurrencyChanged flips currency even when the sell quote throws', () async {
       when(
-        () => service.getBuyPrice(any(), any()),
+        () => service.getSellPrice(any(), any()),
       ).thenAnswer((_) async => throw Exception('throttle'));
 
       final cubit = SellConverterCubit(service);
