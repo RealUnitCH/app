@@ -27,6 +27,14 @@ void main() {
       // walks descendants, hitting the rendered TextSpan tree.
       expect(find.textContaining(_address.substring(0, 6)), findsAtLeastNWidgets(1));
       expect(find.textContaining(_address.substring(36)), findsAtLeastNWidgets(1));
+
+      // Pin the exact 4-chunk grouping: 6 bold / 15 / 15 / 6 bold, joined by ' ', '\n', ' '.
+      final text = tester.widget<Text>(find.byType(Text));
+      expect(
+        text.textSpan!.toPlainText(),
+        '${_address.substring(0, 6)} ${_address.substring(6, 21)}\n'
+        '${_address.substring(21, 36)} ${_address.substring(36)}',
+      );
     });
 
     testWidgets('renders a copy icon next to the address', (tester) async {
