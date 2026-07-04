@@ -76,6 +76,18 @@ void main() {
       expect(path, '/v1/realunit/account/0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
     });
 
+    test('getPortfolioHistory rounds the scaled value instead of truncating (4.56 → 456)', () async {
+      // 4.56 * 100 is 455.999… in IEEE-754; BigInt.from on the raw product
+      // truncates toward zero and understates the value by a rappen.
+      final client = MockClient(
+        (_) async => http.Response(jsonEncode(_summary(chf: 4.56)), 200),
+      );
+
+      final points = await build(client).getPortfolioHistory(Currency.chf);
+
+      expect(points.single.value, BigInt.from(456));
+    });
+
     test('getPortfolioHistory uses EUR values when Currency.eur is requested', () async {
       final client = MockClient((_) async => http.Response(
             jsonEncode(_summary(chf: 12.34, eur: 11.50)),

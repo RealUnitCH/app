@@ -9,6 +9,7 @@ import '../../../helper/helper.dart';
 void main() {
   const params = BuyPaymentDetailsParams(
     buyPaymentInfo: BuyPaymentInfo(
+      amount: 300,
       id: 1,
       iban: 'CH00 0000 0000 0000 0000 0',
       bic: 'BICCBIC',

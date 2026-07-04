@@ -18,6 +18,9 @@ class BuyPaymentInfo extends Equatable {
   // authority on whether the quote is valid for trading and what the
   // current min/max limits are for the user+currency combination.
   final bool isValid;
+  // The whole-currency amount this quote charges, echoed by the API — the
+  // Details page must render this, never re-derive it from keystrokes.
+  final double amount;
   final double? minVolume;
   final double? maxVolume;
   final String? error;
@@ -33,6 +36,7 @@ class BuyPaymentInfo extends Equatable {
     required this.city,
     required this.country,
     required this.currency,
+    required this.amount,
     this.isValid = true,
     this.paymentRequest,
     this.remittanceInfo,
@@ -56,6 +60,7 @@ class BuyPaymentInfo extends Equatable {
     paymentRequest,
     remittanceInfo,
     isValid,
+    amount,
     minVolume,
     maxVolume,
     error,

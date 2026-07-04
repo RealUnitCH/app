@@ -115,6 +115,7 @@ void main() {
       when(() => buyPaymentInfoCubit.state).thenReturn(
         const BuyPaymentInfoSuccess(
           BuyPaymentInfo(
+            amount: 300,
             id: 1,
             iban: 'iban',
             bic: 'bic',
