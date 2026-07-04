@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -140,14 +141,22 @@ void main() {
       test('decryptSeed with a tampered ciphertext throws a typed SeedDecryptionException', () {
         final key = aesKey();
         final encoded = SecureStorage.encryptSeed(key, 'secret');
-        // Flip the last character of the base64 ciphertext half so the GCM
-        // authentication tag no longer verifies.
-        final tampered = encoded.substring(0, encoded.length - 1) +
-            (encoded.endsWith('A') ? 'B' : 'A');
+        final colonIndex = encoded.indexOf(':');
+        final ciphertext = base64.decode(encoded.substring(colonIndex + 1));
+        // Flip one bit mid-ciphertext and re-encode so the base64 stays valid
+        // and the failure comes from the GCM authentication tag check.
+        ciphertext[ciphertext.length ~/ 2] ^= 0x01;
+        final tampered = '${encoded.substring(0, colonIndex)}:${base64.encode(ciphertext)}';
 
         expect(
           () => SecureStorage.decryptSeed(key, tampered),
-          throwsA(isA<SeedDecryptionException>()),
+          throwsA(
+            isA<SeedDecryptionException>().having(
+              (e) => e.message,
+              'message',
+              contains('authentication failed'),
+            ),
+          ),
         );
       });
 
