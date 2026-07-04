@@ -8,8 +8,8 @@ import 'package:realunit_wallet/packages/hardware_wallet/bitbox_credentials.dart
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/sell_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
@@ -149,7 +149,7 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
     final retryState = state;
     if (retryState is! SellBitboxDepositRetry) return;
 
-    emit(SellBitboxDepositing());
+    emit(SellBitboxRetryingDeposit());
     await _broadcastDepositAndConfirm(
       retryState.signedSwapTransaction,
       retryState.signedDepositTransaction,
@@ -177,12 +177,9 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
     try {
       await _sellService.confirmPaymentWithTxHash(_paymentInfo, txHash);
       emit(SellBitboxSuccess());
+    } on AlreadyConfirmedException {
+      emit(SellBitboxSuccess());
     } catch (e) {
-      // 409 = an earlier confirm already landed but its response was lost.
-      if (e is ApiException && e.statusCode == 409) {
-        emit(SellBitboxSuccess());
-        return;
-      }
       emit(
         SellBitboxDepositRetry(signedSwap, signedDeposit, e.toString(), broadcastTxHash: txHash),
       );

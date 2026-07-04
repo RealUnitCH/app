@@ -6,7 +6,7 @@ import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/sell_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/faucet/faucet_response_dto.dart';
@@ -585,19 +585,30 @@ void main() {
     });
   });
 
+  // Installs the common credential/unsigned-tx stubs and drives the cubit to
+  // the deposit step. Per-test broadcast/confirm stubs work installed before
+  // or after — mocktail resolves stubs per method, not by setup order.
+  Future<SellBitboxCubit> driveToDepositConfirm() async {
+    when(() => account.primaryAddress).thenReturn(FakeBitboxCredentials());
+    when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
+      (_) async => const RealUnitUnsignedTransactionsRequestDto(
+        swap: '0xdeadbeef',
+        deposit: '0xcafebabe',
+      ),
+    );
+    final cubit = build();
+    await cubit.stream.firstWhere((s) => s is SellBitboxEthReady);
+    await cubit.proceedToSwap();
+    await cubit.confirmSwap();
+    await cubit.confirmDeposit();
+    return cubit;
+  }
+
   group('retryDeposit idempotency', () {
     test(
       'a retry after broadcast-succeeded/confirm-failed confirms only and '
       'must NOT re-broadcast the on-chain deposit tx',
       () async {
-        final creds = FakeBitboxCredentials();
-        when(() => account.primaryAddress).thenReturn(creds);
-        when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
-          (_) async => const RealUnitUnsignedTransactionsRequestDto(
-            swap: '0xdeadbeef',
-            deposit: '0xcafebabe',
-          ),
-        );
         // Both broadcasts (swap + deposit) succeed …
         when(
           () => sellService.broadcastTransaction(any(), any()),
@@ -609,11 +620,7 @@ void main() {
           if (confirms == 1) throw Exception('confirm backend down');
         });
 
-        final cubit = build();
-        await cubit.stream.firstWhere((s) => s is SellBitboxEthReady);
-        await cubit.proceedToSwap();
-        await cubit.confirmSwap();
-        await cubit.confirmDeposit();
+        final cubit = await driveToDepositConfirm();
 
         // The deposit IS on-chain; the retry state must carry its txHash.
         final retry = cubit.state;
@@ -633,14 +640,6 @@ void main() {
     );
 
     test('a retry after a FAILED broadcast may safely broadcast again', () async {
-      final creds = FakeBitboxCredentials();
-      when(() => account.primaryAddress).thenReturn(creds);
-      when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
-        (_) async => const RealUnitUnsignedTransactionsRequestDto(
-          swap: '0xdeadbeef',
-          deposit: '0xcafebabe',
-        ),
-      );
       // Swap broadcast succeeds, the first deposit broadcast fails, the
       // re-broadcast on retry succeeds.
       var broadcasts = 0;
@@ -651,11 +650,7 @@ void main() {
       });
       when(() => sellService.confirmPaymentWithTxHash(any(), any())).thenAnswer((_) async {});
 
-      final cubit = build();
-      await cubit.stream.firstWhere((s) => s is SellBitboxEthReady);
-      await cubit.proceedToSwap();
-      await cubit.confirmSwap();
-      await cubit.confirmDeposit();
+      final cubit = await driveToDepositConfirm();
 
       // Deposit broadcast failed → nothing on-chain → no txHash carried.
       final retry = cubit.state;
@@ -672,14 +667,6 @@ void main() {
     });
 
     test('a 409 already-confirmed on retry resolves to success, not another retry loop', () async {
-      final creds = FakeBitboxCredentials();
-      when(() => account.primaryAddress).thenReturn(creds);
-      when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
-        (_) async => const RealUnitUnsignedTransactionsRequestDto(
-          swap: '0xdeadbeef',
-          deposit: '0xcafebabe',
-        ),
-      );
       when(
         () => sellService.broadcastTransaction(any(), any()),
       ).thenAnswer((_) async => '0xtxhash');
@@ -689,18 +676,14 @@ void main() {
       when(() => sellService.confirmPaymentWithTxHash(any(), any())).thenAnswer((_) async {
         confirms++;
         if (confirms == 1) throw Exception('response lost');
-        throw const ApiException(
+        throw const AlreadyConfirmedException(
           statusCode: 409,
           code: 'CONFLICT',
           message: 'Transaction request is already confirmed',
         );
       });
 
-      final cubit = build();
-      await cubit.stream.firstWhere((s) => s is SellBitboxEthReady);
-      await cubit.proceedToSwap();
-      await cubit.confirmSwap();
-      await cubit.confirmDeposit();
+      final cubit = await driveToDepositConfirm();
       expect(cubit.state, isA<SellBitboxDepositRetry>());
       verify(() => sellService.broadcastTransaction(any(), any())).called(2);
 
@@ -714,14 +697,6 @@ void main() {
 
   group('retryDeposit after close', () {
     test('throws StateError from the first emit (no silent state corruption)', () async {
-      final creds = FakeBitboxCredentials();
-      when(() => account.primaryAddress).thenReturn(creds);
-      when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
-        (_) async => const RealUnitUnsignedTransactionsRequestDto(
-          swap: '0xdeadbeef',
-          deposit: '0xcafebabe',
-        ),
-      );
       var broadcasts = 0;
       when(() => sellService.broadcastTransaction(any(), any())).thenAnswer((_) async {
         broadcasts++;
@@ -730,11 +705,7 @@ void main() {
       });
       when(() => sellService.confirmPaymentWithTxHash(any(), any())).thenAnswer((_) async {});
 
-      final cubit = build();
-      await cubit.stream.firstWhere((s) => s is SellBitboxEthReady);
-      await cubit.proceedToSwap();
-      await cubit.confirmSwap();
-      await cubit.confirmDeposit();
+      final cubit = await driveToDepositConfirm();
       expect(cubit.state, isA<SellBitboxDepositRetry>());
 
       await cubit.close();

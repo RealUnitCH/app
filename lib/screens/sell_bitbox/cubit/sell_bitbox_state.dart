@@ -47,6 +47,9 @@ class SellBitboxAwaitingDepositConfirm extends SellBitboxDepositState {
 
 class SellBitboxDepositing extends SellBitboxDepositState {}
 
+// Retry in flight: HTTP-only work on stored signed bytes — no BitBox prompt.
+class SellBitboxRetryingDeposit extends SellBitboxDepositState {}
+
 // The swap was broadcast; the deposit step then failed. A null `broadcastTxHash`
 // means the deposit broadcast got no usable response (retry re-sends the same
 // signed bytes); non-null means it is on-chain and retry resumes at the confirm.

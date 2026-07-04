@@ -62,14 +62,16 @@ class SellBitboxDepositStep extends StatelessWidget {
             ],
           );
         }
-        if (state is SellBitboxDepositing) {
+        if (state is SellBitboxDepositing || state is SellBitboxRetryingDeposit) {
           return Column(
             mainAxisAlignment: .center,
             spacing: 24,
             children: [
               const CupertinoActivityIndicator(),
               Text(
-                S.of(context).sellBitboxDepositing,
+                state is SellBitboxRetryingDeposit
+                    ? S.of(context).sellBitboxRetryingDeposit
+                    : S.of(context).sellBitboxDepositing,
                 style: Theme.of(context).textTheme.bodyLarge,
                 textAlign: .center,
               ),

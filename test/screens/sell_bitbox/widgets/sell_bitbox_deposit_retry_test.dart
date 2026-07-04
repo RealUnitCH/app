@@ -15,51 +15,53 @@ import 'package:realunit_wallet/styles/currency.dart';
 
 import '../../../helper/helper.dart';
 
-class _MockSellBitboxCubit extends MockCubit<SellBitboxState>
-    implements SellBitboxCubit {}
+class _MockSellBitboxCubit extends MockCubit<SellBitboxState> implements SellBitboxCubit {}
 
 Map<String, dynamic> _eip7702Json() => {
-      'relayerAddress': '0xrelay',
-      'delegationManagerAddress': '0xmgr',
-      'delegatorAddress': '0xdr',
-      'userNonce': 7,
-      'domain': {
-        'name': 'RealUnit',
-        'version': '1',
-        'chainId': 1,
-        'verifyingContract': '0xverify',
-      },
-      'types': {'Delegation': <Map<String, dynamic>>[], 'Caveat': <Map<String, dynamic>>[]},
-      'message': {
-        'delegate': '0xd',
-        'delegator': '0xdr',
-        'authority': '0xauth',
-        'caveats': <Map<String, dynamic>>[],
-        'salt': 0,
-      },
-      'tokenAddress': '0xtoken',
-      'amountWei': '12345',
-      'depositAddress': '0xdeposit',
-    };
+  'relayerAddress': '0xrelay',
+  'delegationManagerAddress': '0xmgr',
+  'delegatorAddress': '0xdr',
+  'userNonce': 7,
+  'domain': {
+    'name': 'RealUnit',
+    'version': '1',
+    'chainId': 1,
+    'verifyingContract': '0xverify',
+  },
+  'types': {'Delegation': <Map<String, dynamic>>[], 'Caveat': <Map<String, dynamic>>[]},
+  'message': {
+    'delegate': '0xd',
+    'delegator': '0xdr',
+    'authority': '0xauth',
+    'caveats': <Map<String, dynamic>>[],
+    'salt': 0,
+  },
+  'tokenAddress': '0xtoken',
+  'amountWei': '12345',
+  'depositAddress': '0xdeposit',
+};
 
 SellPaymentInfo _info() => SellPaymentInfo(
-      id: 42,
-      eip7702: Eip7702Data.fromJson(_eip7702Json()),
-      amount: 100,
-      exchangeRate: 1.0,
-      rate: 1.0,
-      beneficiary: const BeneficiaryDto(iban: 'CH...'),
-      estimatedAmount: 99.5,
-      currency: Currency.chf,
-      depositAddress: '0xdeposit',
-      tokenAddress: '0xtoken',
-      chainId: 1,
-      ethBalance: 0.1,
-      requiredGasEth: 0.001,
-    );
+  id: 42,
+  eip7702: Eip7702Data.fromJson(_eip7702Json()),
+  amount: 100,
+  exchangeRate: 1.0,
+  rate: 1.0,
+  beneficiary: const BeneficiaryDto(iban: 'CH...'),
+  estimatedAmount: 99.5,
+  currency: Currency.chf,
+  depositAddress: '0xdeposit',
+  tokenAddress: '0xtoken',
+  chainId: 1,
+  ethBalance: 0.1,
+  requiredGasEth: 0.001,
+);
 
 const _signed = BroadcastTransactionRequestDto(
-  unsignedTx: '0xtx', r: '0xr', s: '0xs', v: 27,
+  unsignedTx: '0xtx',
+  r: '0xr',
+  s: '0xs',
+  v: 27,
 );
 
 void main() {
@@ -75,10 +77,12 @@ void main() {
         SellBitboxDepositRetry(_signed, _signed, 'rpc 502'),
       );
 
-      await tester.pumpApp(BlocProvider<SellBitboxCubit>.value(
-        value: cubit,
-        child: SellBitboxDepositStep(paymentInfo: _info()),
-      ));
+      await tester.pumpApp(
+        BlocProvider<SellBitboxCubit>.value(
+          value: cubit,
+          child: SellBitboxDepositStep(paymentInfo: _info()),
+        ),
+      );
 
       final icon = tester.widget<Icon>(find.byIcon(Icons.error_outline));
       expect(icon.color, RealUnitColors.status.red600);
@@ -93,40 +97,59 @@ void main() {
         SellBitboxDepositRetry(_signed, _signed, 'rpc 502'),
       );
 
-      await tester.pumpApp(BlocProvider<SellBitboxCubit>.value(
-        value: cubit,
-        child: SellBitboxDepositStep(paymentInfo: _info()),
-      ));
+      await tester.pumpApp(
+        BlocProvider<SellBitboxCubit>.value(
+          value: cubit,
+          child: SellBitboxDepositStep(paymentInfo: _info()),
+        ),
+      );
 
       expect(find.text('Deposit failed'), findsOneWidget);
       expect(find.text('Confirmation pending'), findsNothing);
     });
 
-    testWidgets(
-        'non-null broadcastTxHash: the deposit IS on-chain — shows the '
+    testWidgets('non-null broadcastTxHash: the deposit IS on-chain — shows the '
         'confirmation-pending copy, not "could not be sent"', (tester) async {
       when(() => cubit.state).thenReturn(
         SellBitboxDepositRetry(_signed, _signed, '409', broadcastTxHash: '0xtxhash'),
       );
 
-      await tester.pumpApp(BlocProvider<SellBitboxCubit>.value(
-        value: cubit,
-        child: SellBitboxDepositStep(paymentInfo: _info()),
-      ));
+      await tester.pumpApp(
+        BlocProvider<SellBitboxCubit>.value(
+          value: cubit,
+          child: SellBitboxDepositStep(paymentInfo: _info()),
+        ),
+      );
 
       expect(find.text('Confirmation pending'), findsOneWidget);
       expect(find.text('Deposit failed'), findsNothing);
       expect(find.textContaining('could not be sent'), findsNothing);
     });
 
-    testWidgets('unrelated state: renders SizedBox.shrink (no content)',
-        (tester) async {
+    testWidgets('retry in flight: neutral completing copy — no BitBox prompt is '
+        'coming, so the depositing instruction must not show', (tester) async {
+      when(() => cubit.state).thenReturn(SellBitboxRetryingDeposit());
+
+      await tester.pumpApp(
+        BlocProvider<SellBitboxCubit>.value(
+          value: cubit,
+          child: SellBitboxDepositStep(paymentInfo: _info()),
+        ),
+      );
+
+      expect(find.text('Completing the ZCHF deposit.'), findsOneWidget);
+      expect(find.textContaining('confirm on the Bitbox'), findsNothing);
+    });
+
+    testWidgets('unrelated state: renders SizedBox.shrink (no content)', (tester) async {
       when(() => cubit.state).thenReturn(SellBitboxEthReady());
 
-      await tester.pumpApp(BlocProvider<SellBitboxCubit>.value(
-        value: cubit,
-        child: SellBitboxDepositStep(paymentInfo: _info()),
-      ));
+      await tester.pumpApp(
+        BlocProvider<SellBitboxCubit>.value(
+          value: cubit,
+          child: SellBitboxDepositStep(paymentInfo: _info()),
+        ),
+      );
 
       expect(find.byIcon(Icons.error_outline), findsNothing);
       expect(find.byType(FilledButton), findsNothing);
@@ -134,14 +157,17 @@ void main() {
   });
 
   group('$SellBitboxSwapStep fallback', () {
-    testWidgets('unrelated state: renders SizedBox.shrink (no FilledButton, no spinner)',
-        (tester) async {
+    testWidgets('unrelated state: renders SizedBox.shrink (no FilledButton, no spinner)', (
+      tester,
+    ) async {
       when(() => cubit.state).thenReturn(SellBitboxDepositing());
 
-      await tester.pumpApp(BlocProvider<SellBitboxCubit>.value(
-        value: cubit,
-        child: SellBitboxSwapStep(paymentInfo: _info()),
-      ));
+      await tester.pumpApp(
+        BlocProvider<SellBitboxCubit>.value(
+          value: cubit,
+          child: SellBitboxSwapStep(paymentInfo: _info()),
+        ),
+      );
 
       expect(find.byType(FilledButton), findsNothing);
     });
