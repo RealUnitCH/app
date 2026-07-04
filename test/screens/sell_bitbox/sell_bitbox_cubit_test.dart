@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -8,6 +6,7 @@ import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/faucet/faucet_response_dto.dart';
@@ -586,7 +585,7 @@ void main() {
     });
   });
 
-  group('retryDeposit idempotency (issue #657 P4 BB1)', () {
+  group('retryDeposit idempotency', () {
     test(
       'a retry after broadcast-succeeded/confirm-failed confirms only and '
       'must NOT re-broadcast the on-chain deposit tx',
@@ -600,12 +599,12 @@ void main() {
           ),
         );
         // Both broadcasts (swap + deposit) succeed …
-        when(() => sellService.broadcastTransaction(any(), any()))
-            .thenAnswer((_) async => '0xtxhash');
+        when(
+          () => sellService.broadcastTransaction(any(), any()),
+        ).thenAnswer((_) async => '0xtxhash');
         // … but the payment confirmation fails once, then succeeds.
         var confirms = 0;
-        when(() => sellService.confirmPaymentWithTxHash(any(), any()))
-            .thenAnswer((_) async {
+        when(() => sellService.confirmPaymentWithTxHash(any(), any())).thenAnswer((_) async {
           confirms++;
           if (confirms == 1) throw Exception('confirm backend down');
         });
@@ -650,8 +649,7 @@ void main() {
         if (broadcasts == 2) throw Exception('mempool hiccup');
         return '0xok';
       });
-      when(() => sellService.confirmPaymentWithTxHash(any(), any()))
-          .thenAnswer((_) async {});
+      when(() => sellService.confirmPaymentWithTxHash(any(), any())).thenAnswer((_) async {});
 
       final cubit = build();
       await cubit.stream.firstWhere((s) => s is SellBitboxEthReady);
@@ -667,70 +665,80 @@ void main() {
       await cubit.retryDeposit();
 
       expect(cubit.state, isA<SellBitboxSuccess>());
+      // The retry actually re-broadcast (swap + failed deposit + re-broadcast)
+      // and confirmed with the fresh hash — success is not reachable otherwise.
+      verify(() => sellService.broadcastTransaction(any(), any())).called(3);
+      verify(() => sellService.confirmPaymentWithTxHash(any(), '0xok')).called(1);
+    });
+
+    test('a 409 already-confirmed on retry resolves to success, not another retry loop', () async {
+      final creds = FakeBitboxCredentials();
+      when(() => account.primaryAddress).thenReturn(creds);
+      when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
+        (_) async => const RealUnitUnsignedTransactionsRequestDto(
+          swap: '0xdeadbeef',
+          deposit: '0xcafebabe',
+        ),
+      );
+      when(
+        () => sellService.broadcastTransaction(any(), any()),
+      ).thenAnswer((_) async => '0xtxhash');
+      // The first confirm reached the server but its response was lost; the
+      // second gets the server's 409 "already confirmed".
+      var confirms = 0;
+      when(() => sellService.confirmPaymentWithTxHash(any(), any())).thenAnswer((_) async {
+        confirms++;
+        if (confirms == 1) throw Exception('response lost');
+        throw const ApiException(
+          statusCode: 409,
+          code: 'CONFLICT',
+          message: 'Transaction request is already confirmed',
+        );
+      });
+
+      final cubit = build();
+      await cubit.stream.firstWhere((s) => s is SellBitboxEthReady);
+      await cubit.proceedToSwap();
+      await cubit.confirmSwap();
+      await cubit.confirmDeposit();
+      expect(cubit.state, isA<SellBitboxDepositRetry>());
+      verify(() => sellService.broadcastTransaction(any(), any())).called(2);
+
+      await cubit.retryDeposit();
+
+      // The sell already completed server-side — the 409 is success, not an error.
+      expect(cubit.state, isA<SellBitboxSuccess>());
+      verifyNever(() => sellService.broadcastTransaction(any(), any()));
     });
   });
 
-  // A StateError from an emit() against a closed cubit must surface to the
-  // caller (retryDeposit performs no emit-gating of its own); pin that the
-  // closed-cubit path throws instead of silently corrupting state.
-  group('retryDeposit defensive outer-catch', () {
-    test(
-      'StateError from emit-after-close is caught and the cubit is left intact',
-      () async {
-        // First, drive the cubit through swap → AwaitingDepositConfirm so we
-        // can hand-craft a DepositRetry state via the broadcast-failure path.
-        final creds = FakeBitboxCredentials();
-        when(() => account.primaryAddress).thenReturn(creds);
-        when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
-          (_) async => const RealUnitUnsignedTransactionsRequestDto(
-            swap: '0xdeadbeef',
-            deposit: '0xcafebabe',
-          ),
-        );
-        // First broadcast (swap) succeeds, second (deposit) explodes — so the
-        // cubit settles in DepositRetry with non-null signed payloads.
-        var broadcasts = 0;
-        when(() => sellService.broadcastTransaction(any(), any())).thenAnswer(
-          (_) async {
-            broadcasts++;
-            if (broadcasts == 2) throw Exception('boom');
-            return '0xok';
-          },
-        );
-        when(() => sellService.confirmPaymentWithTxHash(any(), any())).thenAnswer((_) async {});
+  group('retryDeposit after close', () {
+    test('throws StateError from the first emit (no silent state corruption)', () async {
+      final creds = FakeBitboxCredentials();
+      when(() => account.primaryAddress).thenReturn(creds);
+      when(() => sellService.createUnsignedTransactions(any())).thenAnswer(
+        (_) async => const RealUnitUnsignedTransactionsRequestDto(
+          swap: '0xdeadbeef',
+          deposit: '0xcafebabe',
+        ),
+      );
+      var broadcasts = 0;
+      when(() => sellService.broadcastTransaction(any(), any())).thenAnswer((_) async {
+        broadcasts++;
+        if (broadcasts == 2) throw Exception('boom');
+        return '0xok';
+      });
+      when(() => sellService.confirmPaymentWithTxHash(any(), any())).thenAnswer((_) async {});
 
-        final cubit = build();
-        await cubit.stream.firstWhere((s) => s is SellBitboxEthReady);
-        await cubit.proceedToSwap();
-        await cubit.confirmSwap();
-        await cubit.confirmDeposit();
-        expect(cubit.state, isA<SellBitboxDepositRetry>());
+      final cubit = build();
+      await cubit.stream.firstWhere((s) => s is SellBitboxEthReady);
+      await cubit.proceedToSwap();
+      await cubit.confirmSwap();
+      await cubit.confirmDeposit();
+      expect(cubit.state, isA<SellBitboxDepositRetry>());
 
-        // Now close the cubit — the next emit() will throw StateError. The
-        // outer try/catch in retryDeposit must catch that, build a fresh
-        // DepositRetry envelope (lines that would otherwise be unreachable)
-        // and attempt to emit it (which will throw again and surface to the
-        // caller — we await with runZonedGuarded to keep the harness clean).
-        await cubit.close();
-        Object? caught;
-        await runZonedGuarded(
-          () async {
-            try {
-              await cubit.retryDeposit();
-            } catch (e) {
-              caught = e;
-            }
-          },
-          (e, _) {
-            caught ??= e;
-          },
-        );
-
-        // The exact error type isn't load-bearing — what matters is that the
-        // outer catch evaluated its `SellBitboxDepositRetry(...)` arguments
-        // before re-throwing through the closed-stream emit.
-        expect(caught, isA<StateError>());
-      },
-    );
+      await cubit.close();
+      await expectLater(cubit.retryDeposit(), throwsStateError);
+    });
   });
 }

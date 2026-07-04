@@ -260,6 +260,8 @@
   "sellBitboxDepositDescription": "Bestätigen Sie auf der BitBox, um ZCHF an die DFX-Einzahlungsadresse zu überweisen.",
   "sellBitboxDepositFrom": "Sie senden",
   "sellBitboxDepositing": "ZCHF wird gesendet. Bestätigen Sie auf der Bitbox",
+  "sellBitboxConfirmRetryDescription": "Die ZCHF-Einzahlung wurde gesendet, konnte aber noch nicht bei DFX bestätigt werden. Tippen Sie auf Wiederholen.",
+  "sellBitboxConfirmRetryTitle": "Bestätigung ausstehend",
   "sellBitboxDepositRetryDescription": "Der Tausch wurde abgeschlossen, aber die ZCHF-Einzahlung konnte nicht gesendet werden. Ihre Mittel sind sicher. Tippen Sie auf Wiederholen.",
   "sellBitboxDepositRetryTitle": "Einzahlung fehlgeschlagen",
   "sellBitboxDepositTitle": "ZCHF an DFX senden",

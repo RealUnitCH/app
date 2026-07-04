@@ -260,6 +260,8 @@
   "sellBitboxDepositDescription": "Confirm on your BitBox to transfer ZCHF to the DFX deposit address.",
   "sellBitboxDepositFrom": "You send",
   "sellBitboxDepositing": "Sending ZCHF. Please confirm on the Bitbox.",
+  "sellBitboxConfirmRetryDescription": "The ZCHF deposit was sent, but we could not confirm it with DFX yet. Tap retry to confirm.",
+  "sellBitboxConfirmRetryTitle": "Confirmation pending",
   "sellBitboxDepositRetryDescription": "The swap was completed but the ZCHF deposit could not be sent. Your funds are safe. Tap retry to try again.",
   "sellBitboxDepositRetryTitle": "Deposit failed",
   "sellBitboxDepositTitle": "Send ZCHF to DFX",

@@ -77,18 +77,24 @@ class SellBitboxDepositStep extends StatelessWidget {
           );
         }
         if (state is SellBitboxDepositRetry) {
+          // Non-null broadcastTxHash: the deposit IS on-chain, only the confirm is pending.
+          final confirmOnly = state.broadcastTxHash != null;
           return Column(
             mainAxisAlignment: .center,
             spacing: 24,
             children: [
               Icon(Icons.error_outline, size: 48, color: RealUnitColors.status.red600),
               Text(
-                S.of(context).sellBitboxDepositRetryTitle,
+                confirmOnly
+                    ? S.of(context).sellBitboxConfirmRetryTitle
+                    : S.of(context).sellBitboxDepositRetryTitle,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: .bold),
                 textAlign: .center,
               ),
               Text(
-                S.of(context).sellBitboxDepositRetryDescription,
+                confirmOnly
+                    ? S.of(context).sellBitboxConfirmRetryDescription
+                    : S.of(context).sellBitboxDepositRetryDescription,
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: RealUnitColors.neutral500),

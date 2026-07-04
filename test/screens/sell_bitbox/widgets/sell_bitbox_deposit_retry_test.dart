@@ -88,6 +88,37 @@ void main() {
       expect(retry.onPressed, isNotNull);
     });
 
+    testWidgets('null broadcastTxHash: shows the deposit-failed copy', (tester) async {
+      when(() => cubit.state).thenReturn(
+        SellBitboxDepositRetry(_signed, _signed, 'rpc 502'),
+      );
+
+      await tester.pumpApp(BlocProvider<SellBitboxCubit>.value(
+        value: cubit,
+        child: SellBitboxDepositStep(paymentInfo: _info()),
+      ));
+
+      expect(find.text('Deposit failed'), findsOneWidget);
+      expect(find.text('Confirmation pending'), findsNothing);
+    });
+
+    testWidgets(
+        'non-null broadcastTxHash: the deposit IS on-chain — shows the '
+        'confirmation-pending copy, not "could not be sent"', (tester) async {
+      when(() => cubit.state).thenReturn(
+        SellBitboxDepositRetry(_signed, _signed, '409', broadcastTxHash: '0xtxhash'),
+      );
+
+      await tester.pumpApp(BlocProvider<SellBitboxCubit>.value(
+        value: cubit,
+        child: SellBitboxDepositStep(paymentInfo: _info()),
+      ));
+
+      expect(find.text('Confirmation pending'), findsOneWidget);
+      expect(find.text('Deposit failed'), findsNothing);
+      expect(find.textContaining('could not be sent'), findsNothing);
+    });
+
     testWidgets('unrelated state: renders SizedBox.shrink (no content)',
         (tester) async {
       when(() => cubit.state).thenReturn(SellBitboxEthReady());

@@ -149,12 +149,9 @@ void main() {
       expect(a, isNot(equals(b)));
     });
 
-    test('different broadcastTxHash values are unequal (issue #657 P4 BB1)', () {
-      // null = deposit not yet on-chain (retry may broadcast); non-null =
-      // already broadcast (retry must confirm only).
+    test('different broadcastTxHash values are unequal', () {
       final a = SellBitboxDepositRetry(broadcastA, broadcastB, 'boom');
-      final b = SellBitboxDepositRetry(broadcastA, broadcastB, 'boom',
-          broadcastTxHash: '0xtxhash');
+      final b = SellBitboxDepositRetry(broadcastA, broadcastB, 'boom', broadcastTxHash: '0xtxhash');
       expect(a, isNot(equals(b)));
       expect(b.props, [broadcastA, broadcastB, '0xtxhash', 'boom']);
     });
