@@ -41,7 +41,7 @@
 # checkbox itself: tapping it twice would toggle it back off again, since
 # the underlying `setState(() => isChecked = !isChecked)` is not idempotent.
 # If the checkbox tap is the one that's silently dropped, the next
-# `extendedWaitUntil notVisible "REALU Wallet zurücksetzen"` (with the
+# `extendedWaitUntil notVisible "RealUnit Wallet zurücksetzen"` (with the
 # Zurücksetzen button still disabled) fails loudly rather than passing silently
 # downstream — and the same Semantics-id strategy that fixed flow 26's
 # Nutzungsbedingungen-link tap has been reliable enough since.
@@ -61,7 +61,7 @@ appId: swiss.realunit.app
       - runFlow:
           when:
             visible:
-              text: '.*REALU Wallet zurücksetzen.*'
+              text: '.*RealUnit Wallet zurücksetzen.*'
           commands:
             - tapOn:
                 text: 'Zurücksetzen'
@@ -69,7 +69,7 @@ appId: swiss.realunit.app
 - waitForAnimationToEnd
 - extendedWaitUntil:
     notVisible:
-      text: '.*REALU Wallet zurücksetzen.*'
+      text: '.*RealUnit Wallet zurücksetzen.*'
     timeout: 15000
 - repeat:
     times: 3
