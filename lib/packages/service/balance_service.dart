@@ -21,10 +21,20 @@ class BalanceService {
 
   Timer? _syncTimer;
 
+  // Latched once the account endpoint 404s (wallet has no RealUnit account yet)
+  // so the 10s poll stops re-hitting it. Only periodic ticks are gated: direct
+  // updateBalance calls (eager fetch, app resume) always probe, and a 200
+  // un-latches the flag so polling resumes once the account exists.
+  bool _accountMissing = false;
+
   void startSync(String address) {
     cancelSync();
 
-    _syncTimer = Timer.periodic(const Duration(seconds: 10), (_) => updateBalance(address));
+    _accountMissing = false;
+    _syncTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (_accountMissing) return;
+      updateBalance(address);
+    });
   }
 
   void cancelSync() => _syncTimer?.cancel();
@@ -36,6 +46,8 @@ class BalanceService {
       final response = await _appStore.httpClient.get(uri);
 
       if (response.statusCode == 200) {
+        _accountMissing = false;
+
         final json = jsonDecode(response.body);
         final balanceString = json['balance'] as String?;
 
@@ -52,6 +64,8 @@ class BalanceService {
             ),
           );
         }
+      } else if (response.statusCode == 404) {
+        _accountMissing = true;
       }
     } catch (e) {
       developer.log('Failed to update RealUnit balance: $e');
