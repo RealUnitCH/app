@@ -512,6 +512,42 @@ void main() {
             service.cancelSync();
           });
         });
+
+        // The reverse of the un-latch: after a 200 cleared the flag, a later 404
+        // (account removed server-side) must re-latch it and stop the ticks.
+        test('a 404 after a 200 re-latches and stops the poll', () {
+          fakeAsync((async) {
+            var calls = 0;
+            var accountExists = true;
+            final appStore = buildAppStore((_) async {
+              calls++;
+              return accountExists
+                  ? http.Response(jsonEncode({'balance': '5'}), 200)
+                  : http.Response('{"error": "Not Found"}', 404);
+            });
+            final service = BalanceService(balanceRepository, appStore);
+
+            service.startSync('0xAddr');
+
+            // While the account exists the poll keeps ticking (200 clears the flag).
+            async.elapse(const Duration(seconds: 20));
+            async.flushMicrotasks();
+            expect(calls, 2, reason: 'poll keeps ticking while the account exists');
+
+            // Account removed server-side: the next tick 404s and must re-latch.
+            accountExists = false;
+            async.elapse(const Duration(seconds: 10));
+            async.flushMicrotasks();
+            expect(calls, 3, reason: 'the 404 tick still fires');
+
+            // Now gated again — no further probes.
+            async.elapse(const Duration(minutes: 5));
+            async.flushMicrotasks();
+            expect(calls, 3, reason: 'a 404 after a 200 must re-latch and stop the poll');
+
+            service.cancelSync();
+          });
+        });
       });
     });
   });
