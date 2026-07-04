@@ -80,7 +80,8 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
 
   Future<void> checkForBitbox() async {
     final devices = await _service.getAllUsbDevices();
-    if (isClosed) return;
+    // An overlapping tick must not stomp the state machine or start a second connect.
+    if (isClosed || state is! BitboxNotConnected || _pendingInit != null) return;
     if (devices.isNotEmpty) {
       emit(BitboxFound(devices.first));
       _checkForTimer?.cancel();
@@ -89,7 +90,8 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
   }
 
   Future<void> connectToBitbox(sdk.BitboxDevice device) async {
-    if (state is BitboxConnecting) return;
+    // A second init() on the shared SDK manager wedges pairing; ticks are gated upstream too.
+    if (state is BitboxConnecting || _pendingInit != null) return;
     emit(BitboxConnecting(device));
     try {
       // Snapshot any hash from a prior pairing on the same BitboxService
@@ -142,11 +144,20 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
       emit(BitboxCheckHash(device, channelHash));
     } catch (e) {
       developer.log(e.toString(), name: '$ConnectBitboxCubit');
-      _pendingInit = null;
+      _releasePendingInit();
       if (isClosed) return;
       emit(BitboxNotConnected());
       _checkForTimer = Timer.periodic(const Duration(milliseconds: 500), (_) => checkForBitbox());
     }
+  }
+
+  /// Frees the connect gate once the orphaned init() settles (pairing budget caps a zombie).
+  void _releasePendingInit() {
+    final orphan = _pendingInit;
+    if (orphan == null) return;
+    orphan.timeout(_pairingPinTimeout, onTimeout: () => false).whenComplete(() {
+      if (identical(_pendingInit, orphan)) _pendingInit = null;
+    });
   }
 
   Future<void> confirmPairing() async {
@@ -160,6 +171,8 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
         onTimeout: () => false,
       );
       if (!initOk) throw Exception('pairing not confirmed on device');
+      // Consumed — release the gate so every later path can pair afresh.
+      _pendingInit = null;
       await _service.confirmPairing().timeout(
         _confirmPairingTimeout,
         onTimeout: () => throw TimeoutException(
@@ -182,7 +195,7 @@ class ConnectBitboxCubit extends Cubit<BitboxConnectionState> {
       await _acquireWalletAndConnect();
     } catch (e) {
       developer.log(e.toString(), name: '$ConnectBitboxCubit');
-      _pendingInit = null;
+      _releasePendingInit();
       if (isClosed) return;
       emit(BitboxNotConnected());
       _checkForTimer = Timer.periodic(const Duration(milliseconds: 500), (_) => checkForBitbox());

@@ -122,6 +122,98 @@ void main() {
       verify(() => authService.ensureSignatureFor(any())).called(1);
     });
 
+    test('a late scan tick neither stomps the state nor starts a second init '
+        'while one is pending', () async {
+      final initCompleter = Completer<bool>();
+      var pollCount = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) => initCompleter.future);
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 2 ? '' : 'HASH-1';
+      });
+
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      // First connect settles in BitboxCheckHash while init() is still pending.
+      await waitForState<BitboxCheckHash>(cubit);
+      verify(() => service.init(any())).called(1);
+
+      // A late overlapping scan tick re-runs the full tick body.
+      await cubit.checkForBitbox();
+
+      // Must neither stomp the hash screen nor start a second init().
+      verifyNever(() => service.init(any()));
+      expect(cubit.state, isA<BitboxCheckHash>());
+    });
+
+    test('after a pairing-pin timeout the orphaned init gates fresh connects '
+        'until it settles or the release cap elapses', () async {
+      final initCompleter = Completer<bool>(); // never completes: zombie init
+      var pollCount = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) => initCompleter.future);
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 2 ? '' : 'HASH-1';
+      });
+
+      final cubit = makeCubit(pairingPinTimeout: const Duration(milliseconds: 200));
+      addTearDown(cubit.close);
+
+      await waitForState<BitboxCheckHash>(cubit);
+      verify(() => service.init(any())).called(1);
+
+      await cubit.confirmPairing();
+      expect(cubit.state, isA<BitboxNotConnected>());
+
+      // The orphaned init() is still live: no second init(), no state stomp.
+      await cubit.checkForBitbox();
+      verifyNever(() => service.init(any()));
+      expect(cubit.state, isA<BitboxNotConnected>());
+
+      // Once the release cap elapses, the next tick pairs afresh (the tick
+      // fires connectToBitbox unawaited, so give init() a beat).
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      await cubit.checkForBitbox();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      verify(() => service.init(any())).called(1);
+    });
+
+    test('a failed recheck after BitboxNotInitialized re-arms scanning that '
+        'can actually reconnect', () async {
+      var pollCount = 0;
+      when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
+      when(() => service.init(any())).thenAnswer((_) async => true);
+      when(() => service.getChannelHash()).thenAnswer((_) async {
+        pollCount++;
+        return pollCount < 2 ? '' : 'HASH-1';
+      });
+      when(() => service.confirmPairing()).thenAnswer((_) async {});
+      when(() => service.getDeviceStatus()).thenAnswer((_) async => 'uninitialized');
+
+      final cubit = makeCubit();
+      addTearDown(cubit.close);
+
+      await waitForState<BitboxCheckHash>(cubit);
+      verify(() => service.init(any())).called(1);
+
+      await cubit.confirmPairing();
+      expect(cubit.state, isA<BitboxNotInitialized>());
+
+      // The user seeded the device; the wallet acquisition still fails once.
+      when(() => service.getDeviceStatus()).thenAnswer((_) async => 'initialized');
+      when(() => walletService.createBitboxWallet(any())).thenThrow(Exception('nope'));
+      await cubit.recheckDeviceStatus();
+      expect(cubit.state, isA<BitboxNotConnected>());
+
+      // The consumed gate must allow a fresh pairing (tick fires connectToBitbox unawaited).
+      await cubit.checkForBitbox();
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      verify(() => service.init(any())).called(1);
+    });
+
     test('emits BitboxSignatureFailed when the signature capture throws', () async {
       var pollCount = 0;
       when(() => service.getAllUsbDevices()).thenAnswer((_) async => [device]);
