@@ -242,6 +242,12 @@ void main() {
         final captured =
             verify(() => service.setFinancialData('url', captureAny())).captured;
         expect(captured.length, 2);
+        List<Map<String, dynamic>> payload(Object? c) =>
+            (c as List<KycFinancialResponse>).map((r) => r.toJson()).toList();
+        expect(payload(captured[0]), [
+          {'key': 'q1', 'value': 'a'},
+        ]);
+        expect(payload(captured[1]), payload(captured[0]));
       },
     );
 
