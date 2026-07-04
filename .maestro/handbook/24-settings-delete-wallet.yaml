@@ -33,7 +33,7 @@ appId: swiss.realunit.app
       - runFlow:
           when:
             notVisible:
-              text: '.*REALU Wallet zurücksetzen.*'
+              text: '.*RealUnit Wallet zurücksetzen.*'
           commands:
             - tapOn:
                 text: '.*Wallet zurücksetzen.*'
@@ -41,5 +41,5 @@ appId: swiss.realunit.app
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
-      text: '.*REALU Wallet zurücksetzen.*'
+      text: '.*RealUnit Wallet zurücksetzen.*'
     timeout: 30000
