@@ -17,6 +17,7 @@ class RestoreWalletCubit extends Cubit<RestoreWalletState> {
   final DFXAuthService _authService;
 
   void restoreWallet(String seed) async {
+    if (state.isLoading) return;
     emit(const RestoreWalletState(isLoading: true));
 
     final normalizedSeed = seed.split(' ').where((element) => element.isNotEmpty).join(' ');

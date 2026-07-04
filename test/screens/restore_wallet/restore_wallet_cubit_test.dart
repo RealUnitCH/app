@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
@@ -89,6 +91,26 @@ void main() {
 
       expect(cubit.state.wallet, same(restored));
       expect(cubit.state.hasError, isFalse);
+    });
+
+    test('restoreWallet ignores a second call while one is already in flight '
+        '(retry double-tap guard)', () async {
+      final restored = SoftwareWallet(1, 'W', _testMnemonic);
+      final completer = Completer<SoftwareWallet>();
+      when(() => service.restoreWallet(any(), any())).thenAnswer((_) => completer.future);
+      final cubit = RestoreWalletCubit(service, authService);
+
+      cubit.restoreWallet(_testMnemonic);
+      expect(cubit.state.isLoading, isTrue);
+
+      // A double-tap on the retry button must not start a second restore.
+      cubit.restoreWallet(_testMnemonic);
+
+      completer.complete(restored);
+      await cubit.stream.firstWhere((s) => s.wallet != null);
+
+      verify(() => service.restoreWallet(any(), any())).called(1);
+      expect(cubit.state.wallet, same(restored));
     });
 
     test('restoreWallet emits an interim isLoading=true state', () async {

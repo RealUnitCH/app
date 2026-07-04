@@ -192,6 +192,11 @@ void main() {
 
         await tester.pumpApp(buildSubject(const RestoreWalletView()));
 
+        // Paste a seed into the first cell; the paste handler spreads it over all 12.
+        const seed = 'test test test test test test test test test test test junk';
+        await tester.enterText(find.byType(TextField).first, seed);
+        await tester.pump();
+
         final button = find.descendant(
           of: find.byType(RestoreWalletButton),
           matching: find.byType(FilledButton),
@@ -200,10 +205,10 @@ void main() {
         expect(find.byType(CupertinoActivityIndicator), findsNothing);
         expect(tester.widget<FilledButton>(button).enabled, isTrue);
 
-        // Tapping it retries the restore.
+        // Tapping it retries the restore with the exact seed that was entered.
         await tester.tap(button);
         await tester.pump();
-        verify(() => restoreWalletCubit.restoreWallet(any())).called(1);
+        verify(() => restoreWalletCubit.restoreWallet(seed)).called(1);
       });
     });
 
