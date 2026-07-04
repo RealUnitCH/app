@@ -87,10 +87,7 @@ class SellConverterCubit extends Cubit<SellConverterState> {
     // the seq guard.
     emit(state.copyWith(loading: true, currency: currency));
     try {
-      // Sell flow: a currency switch must re-quote via the SELL price endpoint
-      // (estimatedAmount = what the user receives), mirroring _convertShares.
-      // It previously called getBuyPrice/totalCost, showing a buy-side quote
-      // as the "You receive" amount (issue #657 P4 S1).
+      // Re-quote via getSellPrice.estimatedAmount, mirroring onSharesChanged (#657 P4 S1).
       final result = await _brokerbotService.getSellPrice(state.sharesText, currency);
       if (isClosed || mySeq != _seq) return;
       emit(
