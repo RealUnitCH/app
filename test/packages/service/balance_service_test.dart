@@ -287,7 +287,11 @@ void main() {
             final appStore = buildAppStore((_) async {
               calls++;
               return http.Response(
-                jsonEncode({'statusCode': 404, 'message': 'Account not found', 'error': 'Not Found'}),
+                jsonEncode({
+                  'statusCode': 404,
+                  'message': 'Account not found',
+                  'error': 'Not Found',
+                }),
                 404,
               );
             });
@@ -329,6 +333,67 @@ void main() {
             async.elapse(const Duration(seconds: 10));
             async.flushMicrotasks();
             expect(calls, 2, reason: 'startSync must reset the flag and re-probe');
+
+            service.cancelSync();
+          });
+        });
+
+        test('a direct updateBalance call still probes after a 404 latched the flag', () {
+          // The app-resume path (lifecycle_initializer) calls updateBalance
+          // directly, without startSync — it must not be gated by the flag.
+          fakeAsync((async) {
+            var calls = 0;
+            final appStore = buildAppStore((_) async {
+              calls++;
+              return http.Response('{"error": "Not Found"}', 404);
+            });
+            final service = BalanceService(balanceRepository, appStore);
+
+            service.startSync('0xAddr');
+            async.elapse(const Duration(seconds: 10));
+            async.flushMicrotasks();
+            expect(calls, 1);
+
+            service.updateBalance('0xAddr');
+            async.flushMicrotasks();
+            expect(calls, 2, reason: 'direct calls must bypass the missing-account gate');
+
+            service.cancelSync();
+          });
+        });
+
+        test('a 200 on a direct probe un-latches the flag so the periodic resumes', () {
+          fakeAsync((async) {
+            var calls = 0;
+            var accountExists = false;
+            final appStore = buildAppStore((_) async {
+              calls++;
+              return accountExists
+                  ? http.Response(jsonEncode({'balance': '5'}), 200)
+                  : http.Response('{"error": "Not Found"}', 404);
+            });
+            final service = BalanceService(balanceRepository, appStore);
+
+            service.startSync('0xAddr');
+            async.elapse(const Duration(seconds: 10));
+            async.flushMicrotasks();
+            expect(calls, 1);
+
+            // Ticks are gated while the account is missing.
+            async.elapse(const Duration(seconds: 30));
+            async.flushMicrotasks();
+            expect(calls, 1);
+
+            // Account gets created out-of-band; a direct probe (app resume)
+            // sees the 200 and must re-enable the periodic poll.
+            accountExists = true;
+            service.updateBalance('0xAddr');
+            async.flushMicrotasks();
+            expect(calls, 2);
+
+            async.elapse(const Duration(seconds: 20));
+            async.flushMicrotasks();
+            expect(calls, 4, reason: 'ticks must resume once a probe confirmed the account');
 
             service.cancelSync();
           });
