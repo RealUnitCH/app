@@ -128,6 +128,32 @@ void main() {
       },
     );
 
+    blocTest<TransactionHistoryFilterCubit, TransactionHistoryFilterState>(
+      'changeFilter keeps the previously-set bound when only the other changes '
+      '(issue #657 P3 regression)',
+      build: build,
+      act: (cubit) async {
+        stream.add([
+          _tx(DateTime(2026, 1, 1)),
+          _tx(DateTime(2026, 3, 1)),
+          _tx(DateTime(2026, 5, 1)),
+        ]);
+        await Future<void>.delayed(Duration.zero);
+
+        // Two pickers, two separate partial updates — start first, then end.
+        cubit.changeFilter(startDate: DateTime(2026, 2, 1));
+        cubit.changeFilter(endDate: DateTime(2026, 4, 1));
+      },
+      verify: (cubit) {
+        // Both bounds must survive: the window [Feb 1, Apr 1] leaves only Mar 1.
+        // Before the fix the second call dropped the start bound, leaking Jan 1.
+        expect(cubit.state.startDate, DateTime(2026, 2, 1));
+        expect(cubit.state.endDate, DateTime(2026, 4, 1));
+        expect(cubit.state.filtered, hasLength(1));
+        expect(cubit.state.filtered.single.timestamp, DateTime(2026, 3, 1));
+      },
+    );
+
     test('close cancels the stream subscription (no emit after close)', () async {
       final cubit = build();
       await cubit.close();
