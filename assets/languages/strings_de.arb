@@ -244,6 +244,7 @@
   "reset": "Zurücksetzen",
   "residence": "Residenz",
   "restoreWallet": "Wallet wiederherstellen",
+  "restoreWalletFailed": "Wiederherstellung fehlgeschlagen – erneut versuchen",
   "restoreWalletFromSeedDescription": "Bitte geben Sie Ihre 12 Wiederherstellungs-Wörter in der korrekten Reihenfolge ein, um wieder Zugriff auf Ihre Wallet zu erhalten.",
   "restoreWalletSubtitle": "Ich habe bereits eine Wallet (z.B. Aktionariat) und möchte diese wiederherstellen.",
   "restoreWalletSuccessful": "Wallet wiederhergestellt",
