@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_financial_data_dto.dart';
 import 'package:realunit_wallet/screens/kyc/steps/financial_data/cubits/kyc_financial_data_cubit.dart';
 import 'package:realunit_wallet/styles/language.dart';
@@ -208,6 +209,64 @@ void main() {
         expect(c.state, isA<KycFinancialDataLoadedSuccess>());
         expect(c.state, isNot(isA<KycFinancialDataFailure>()));
       },
+    );
+
+    blocTest<KycFinancialDataCubit, KycFinancialDataState>(
+      'a 404 on submit means the step already completed — advances instead of dead-looping',
+      setUp: () {
+        when(
+          () => service.getFinancialData(any(), language: any(named: 'language')),
+        ).thenAnswer(
+          (_) async => const KycFinancialOutData(questions: [_q1], responses: []),
+        );
+        when(() => service.setFinancialData(any(), any())).thenAnswer(
+          (_) async => throw const ApiException(
+            statusCode: 404,
+            code: 'NOT_FOUND',
+            message: 'KYC step not found',
+          ),
+        );
+      },
+      build: build,
+      act: (c) async {
+        await c.loadQuestions('url');
+        c.answerQuestion('q1', 'a');
+        await c.submitAndNext();
+      },
+      skip: 3, // Loading, LoadedSuccess(load), LoadedSuccess(answer)
+      expect: () => [
+        isA<KycFinancialDataSubmitting>(),
+        isA<KycFinancialDataSubmitSuccess>(),
+      ],
+    );
+
+    blocTest<KycFinancialDataCubit, KycFinancialDataState>(
+      'a non-404 ApiException on submit still surfaces a retryable failure',
+      setUp: () {
+        when(
+          () => service.getFinancialData(any(), language: any(named: 'language')),
+        ).thenAnswer(
+          (_) async => const KycFinancialOutData(questions: [_q1], responses: []),
+        );
+        when(() => service.setFinancialData(any(), any())).thenAnswer(
+          (_) async => throw const ApiException(
+            statusCode: 500,
+            code: 'INTERNAL',
+            message: 'server error',
+          ),
+        );
+      },
+      build: build,
+      act: (c) async {
+        await c.loadQuestions('url');
+        c.answerQuestion('q1', 'a');
+        await c.submitAndNext();
+      },
+      skip: 3, // Loading, LoadedSuccess(load), LoadedSuccess(answer)
+      expect: () => [
+        isA<KycFinancialDataSubmitting>(),
+        isA<KycFinancialDataSubmitFailure>().having((s) => s.responses, 'responses', {'q1': 'a'}),
+      ],
     );
 
     blocTest<KycFinancialDataCubit, KycFinancialDataState>(

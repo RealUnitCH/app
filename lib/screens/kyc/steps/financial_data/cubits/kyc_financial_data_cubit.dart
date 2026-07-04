@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_financial_data_dto.dart';
 import 'package:realunit_wallet/styles/language.dart';
 
@@ -87,6 +88,12 @@ class KycFinancialDataCubit extends Cubit<KycFinancialDataState> {
       await _kycService.setFinancialData(current.url, responses);
       emit(const KycFinancialDataSubmitSuccess());
     } catch (e) {
+      // 404 = the step is no longer pending (an earlier submit landed but the
+      // response was lost) — treat as success so checkKyc advances the flow.
+      if (e is ApiException && e.statusCode == 404) {
+        emit(const KycFinancialDataSubmitSuccess());
+        return;
+      }
       // Keep the answers and stay on the questions UI so the user can retry,
       // instead of dropping them onto a dead-end failure page.
       emit(KycFinancialDataSubmitFailure.from(current, e.toString()));
