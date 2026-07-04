@@ -37,10 +37,7 @@ class TransactionHistoryFilterCubit extends Cubit<TransactionHistoryFilterState>
   }
 
   void changeFilter({DateTime? startDate, DateTime? endDate}) {
-    // Each date picker reports only the bound it changed, so resolve the
-    // effective window by merging the partial argument with the bound already
-    // in state. Using the merged values for BOTH the state and the filtered
-    // result keeps the other bound from being silently dropped (issue #657 P3).
+    // Merge the partial picker arg with the state bound so the untouched bound isn't dropped.
     final effectiveStartDate = startDate ?? state.startDate;
     final effectiveEndDate = endDate ?? state.endDate;
     emit(
