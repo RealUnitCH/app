@@ -73,10 +73,7 @@ class QRAddressWidget extends StatelessWidget {
 
   Future<void> _copyToClipboard() => Clipboard.setData(ClipboardData(text: subtitle));
 
-  // Length-safe slice: a full 0x-address is grouped into fixed chunks, but a
-  // short or empty address must not crash with a RangeError (issue #657 P6 —
-  // this widget renders on both Receive and Settings). Clamps the bounds to
-  // the string length instead of slicing past the end.
+  // Clamp slice bounds to the string length so a short address can't throw RangeError.
   static String _slice(String value, int start, [int? end]) {
     if (start >= value.length) return '';
     final clampedEnd = end == null || end > value.length ? value.length : end;
