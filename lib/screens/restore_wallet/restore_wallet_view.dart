@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:no_screenshot/no_screenshot.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/restore_wallet/cubit/restore_wallet/restore_wallet_cubit.dart';
@@ -22,6 +23,20 @@ class RestoreWalletView extends StatefulWidget {
 class _RestoreWalletViewState extends State<RestoreWalletView> {
   final _controllers = List.generate(12, (_) => MnemonicInputFieldController());
   final _focusNodes = List.generate(12, (_) => FocusNode());
+
+  // @no-integration-test: no_screenshot suppresses the OS screenshot /
+  // app-switcher thumbnail / screen-recording via a platform channel — the
+  // real effect is only observable on a device, not in a widget/golden test.
+  @override
+  void initState() {
+    // The user types their existing 12-word recovery phrase here, so this
+    // screen handles real seed material just like the sibling seed screens
+    // (create/settings/verify). Block screenshots + the app-switcher snapshot
+    // while it is on screen; re-enabled on dispose so other screens stay
+    // screenshot-able.
+    NoScreenshot.instance.screenshotOff();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) => MultiBlocListener(
@@ -121,6 +136,7 @@ class _RestoreWalletViewState extends State<RestoreWalletView> {
 
   @override
   void dispose() {
+    NoScreenshot.instance.screenshotOn();
     for (final controller in _controllers) {
       controller.dispose();
     }

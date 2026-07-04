@@ -3,6 +3,7 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.da
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_address_unavailable_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
+import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 
 // Guard against a recurring failure mode: an Exception subclass without a
@@ -26,6 +27,7 @@ void main() {
         requiredLevel: 1,
         currentLevel: 0,
       ),
+      const SeedDecryptionException('test'),
     ];
 
     for (final ex in exceptions) {
