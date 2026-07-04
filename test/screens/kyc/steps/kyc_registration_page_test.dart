@@ -266,6 +266,9 @@ void main() {
 
         verify(() => kycCubit.checkKyc()).called(1);
         expect(find.byType(SnackBar), findsOne);
+        // The re-arm fires for every success status, not just `completed` —
+        // `forwardingFailed` still means the account was accepted.
+        verify(() => homeBloc.add(any(that: isA<SyncWalletServicesEvent>()))).called(1);
       },
     );
 
@@ -280,6 +283,9 @@ void main() {
       await tester.pump();
 
       expect(find.byType(SnackBar), findsOne);
+      // A failed submit must not re-arm the wallet services — the re-arm is
+      // gated behind KycRegistrationSubmitSuccess.
+      verifyNever(() => homeBloc.add(any(that: isA<SyncWalletServicesEvent>())));
     });
   });
 }
