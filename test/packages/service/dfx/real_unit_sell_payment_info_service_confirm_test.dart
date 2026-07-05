@@ -9,6 +9,7 @@ import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/sell_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_payment_info_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
@@ -34,8 +35,7 @@ class _MockWalletService extends Mock implements WalletService {}
 // Re-deriving here gives us a real EthPrivateKey credential which the
 // EIP-712 / EIP-7702 signers accept directly (they reject everything that
 // isn't BitboxCredentials or EthPrivateKey).
-const _testPrivateKeyHex =
-    'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
+const _testPrivateKeyHex = 'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
 
 final _privKey = EthPrivateKey.fromHex(_testPrivateKeyHex);
 final _walletAddress = _privKey.address.hexEip55.toLowerCase();
@@ -44,47 +44,47 @@ const _metaMaskDelegator = '0x63c0c19a282a1b52b07dd5a65b58948a07dae32b';
 const _delegationManager = '0xdb9b1e94b5b69df7e401ddbede43491141047db3';
 
 Map<String, dynamic> _validEip7702Json() => {
-      'relayerAddress': '0xrelay',
-      'delegationManagerAddress': _delegationManager,
-      'delegatorAddress': _metaMaskDelegator,
-      'userNonce': 7,
-      'domain': {
-        'name': 'RealUnit',
-        'version': '1',
-        'chainId': 1,
-        'verifyingContract': _delegationManager,
-      },
-      'types': {
-        'Delegation': <Map<String, dynamic>>[],
-        'Caveat': <Map<String, dynamic>>[],
-      },
-      'message': {
-        'delegate': '0xrelay',
-        'delegator': _walletAddress,
-        'authority': '0xauth',
-        'caveats': <Map<String, dynamic>>[],
-        'salt': 0,
-      },
-      'tokenAddress': '0x553C7f9C780316FC1D34b8e14ac2465Ab22a090B',
-      'amountWei': '100',
-      'depositAddress': '0xdeposit',
-    };
+  'relayerAddress': '0xrelay',
+  'delegationManagerAddress': _delegationManager,
+  'delegatorAddress': _metaMaskDelegator,
+  'userNonce': 7,
+  'domain': {
+    'name': 'RealUnit',
+    'version': '1',
+    'chainId': 1,
+    'verifyingContract': _delegationManager,
+  },
+  'types': {
+    'Delegation': <Map<String, dynamic>>[],
+    'Caveat': <Map<String, dynamic>>[],
+  },
+  'message': {
+    'delegate': '0xrelay',
+    'delegator': _walletAddress,
+    'authority': '0xauth',
+    'caveats': <Map<String, dynamic>>[],
+    'salt': 0,
+  },
+  'tokenAddress': '0x553C7f9C780316FC1D34b8e14ac2465Ab22a090B',
+  'amountWei': '100',
+  'depositAddress': '0xdeposit',
+};
 
 SellPaymentInfo _info({int amount = 100}) => SellPaymentInfo(
-      id: 42,
-      eip7702: Eip7702Data.fromJson(_validEip7702Json()),
-      amount: amount,
-      exchangeRate: 1.0,
-      rate: 1.0,
-      beneficiary: const BeneficiaryDto(iban: 'CH...'),
-      estimatedAmount: 100.0,
-      currency: Currency.chf,
-      depositAddress: '0xdeposit',
-      tokenAddress: '0xtoken',
-      chainId: 1,
-      ethBalance: 0.1,
-      requiredGasEth: 0.001,
-    );
+  id: 42,
+  eip7702: Eip7702Data.fromJson(_validEip7702Json()),
+  amount: amount,
+  exchangeRate: 1.0,
+  rate: 1.0,
+  beneficiary: const BeneficiaryDto(iban: 'CH...'),
+  estimatedAmount: 100.0,
+  currency: Currency.chf,
+  depositAddress: '0xdeposit',
+  tokenAddress: '0xtoken',
+  chainId: 1,
+  ethBalance: 0.1,
+  requiredGasEth: 0.001,
+);
 
 void main() {
   late _MockAppStore appStore;
@@ -101,8 +101,7 @@ void main() {
     session = SessionCache(_MockCacheRepository());
     session.setAuthToken('jwt-1');
 
-    when(() => appStore.apiConfig)
-        .thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+    when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
     when(() => appStore.sessionCache).thenReturn(session);
     when(() => appStore.wallet).thenReturn(wallet);
     when(() => wallet.currentAccount).thenReturn(account);
@@ -175,6 +174,44 @@ void main() {
     });
   });
 
+  group('confirm 409 mapping', () {
+    test('409 "already confirmed" → AlreadyConfirmedException', () async {
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'statusCode': 409,
+            'message': 'Transaction request is already confirmed',
+            'error': 'Conflict',
+          }),
+          409,
+        ),
+      );
+
+      await expectLater(
+        build(client).confirmPaymentWithTxHash(_info(), '0xtxhash'),
+        throwsA(isA<AlreadyConfirmedException>()),
+      );
+    });
+
+    test('any other 409 conflict stays a plain ApiException', () async {
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'statusCode': 409,
+            'message': 'Transaction request is in an invalid state',
+            'error': 'Conflict',
+          }),
+          409,
+        ),
+      );
+
+      await expectLater(
+        build(client).confirmPaymentWithTxHash(_info(), '0xtxhash'),
+        throwsA(predicate((e) => e is ApiException && e is! AlreadyConfirmedException)),
+      );
+    });
+  });
+
   // The EIP-7702 authorization r/s components must always be serialized as full
   // 32-byte (64 hex char) big-endian values. `BigInt.toRadixString(16)` drops
   // leading zero bytes, so any signature whose r or s is < 2^248 used to emit
@@ -202,8 +239,7 @@ void main() {
       );
     }
 
-    test('authorization r and s are always 0x + 64 hex chars across nonces',
-        () async {
+    test('authorization r and s are always 0x + 64 hex chars across nonces', () async {
       for (var nonce = 0; nonce < 96; nonce++) {
         Map<String, dynamic>? body;
         final client = MockClient((request) async {
@@ -213,17 +249,23 @@ void main() {
 
         await build(client).confirmPayment(infoForNonce(nonce));
 
-        final authorization = (body!['eip7702']
-            as Map<String, dynamic>)['authorization'] as Map<String, dynamic>;
+        final authorization =
+            (body!['eip7702'] as Map<String, dynamic>)['authorization'] as Map<String, dynamic>;
         final r = authorization['r'] as String;
         final s = authorization['s'] as String;
 
         expect(r.startsWith('0x'), isTrue);
         expect(s.startsWith('0x'), isTrue);
-        expect(r.substring(2).length, 64,
-            reason: 'r must be a full 32-byte component (nonce=$nonce)');
-        expect(s.substring(2).length, 64,
-            reason: 's must be a full 32-byte component (nonce=$nonce)');
+        expect(
+          r.substring(2).length,
+          64,
+          reason: 'r must be a full 32-byte component (nonce=$nonce)',
+        );
+        expect(
+          s.substring(2).length,
+          64,
+          reason: 's must be a full 32-byte component (nonce=$nonce)',
+        );
         // Value is unchanged, only left-zero-padded.
         expect(BigInt.parse(r.substring(2), radix: 16), isA<BigInt>());
       }
