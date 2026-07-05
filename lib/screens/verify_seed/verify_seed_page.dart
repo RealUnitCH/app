@@ -35,14 +35,11 @@ class VerifySeedView extends StatefulWidget {
 }
 
 class _VerifySeedViewState extends State<VerifySeedView> {
-  // @no-integration-test: no_screenshot suppresses the OS screenshot /
-  // app-switcher thumbnail / screen-recording via a platform channel — the
-  // real effect is only observable on a device, not in a widget/golden test.
   @override
   void initState() {
     // Seed words are entered/visible here — block screenshots and the
-    // app-switcher snapshot like the other seed screens. Re-enabled on dispose
-    // so other screens stay screenshot-able.
+    // app-switcher snapshot. Released on dispose; screenshots re-enable only
+    // when the last protected screen leaves (see ScreenshotGuard).
     ScreenshotGuard.acquire();
     super.initState();
   }

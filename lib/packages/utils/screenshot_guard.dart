@@ -5,6 +5,10 @@ import 'package:no_screenshot/no_screenshot.dart';
 /// global window flag, so a protected screen popped off another protected
 /// screen (e.g. verify-seed over create-wallet) must not re-enable screenshots
 /// while seed material is still visible underneath.
+// @no-integration-test: `no_screenshot` toggles a native window flag whose
+//   effect (blocked capture, blanked app-switcher thumbnail) is only
+//   observable on a physical device; the channel contract is pinned by the
+//   widget/unit tests.
 class ScreenshotGuard {
   ScreenshotGuard._();
 
