@@ -9,9 +9,7 @@ import 'package:no_screenshot/no_screenshot.dart';
 //   effect (blocked capture, blanked app-switcher thumbnail) is only
 //   observable on a physical device; the channel contract is pinned by the
 //   widget/unit tests.
-class ScreenshotGuard {
-  ScreenshotGuard._();
-
+abstract final class ScreenshotGuard {
   static int _holders = 0;
 
   static Future<void> acquire() async {
