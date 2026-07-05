@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:no_screenshot/no_screenshot.dart';
+import 'package:realunit_wallet/packages/utils/screenshot_guard.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/restore_wallet/cubit/restore_wallet/restore_wallet_cubit.dart';
@@ -34,7 +34,7 @@ class _RestoreWalletViewState extends State<RestoreWalletView> {
     // (create/settings/verify). Block screenshots + the app-switcher snapshot
     // while it is on screen; re-enabled on dispose so other screens stay
     // screenshot-able.
-    NoScreenshot.instance.screenshotOff();
+    ScreenshotGuard.acquire();
     super.initState();
   }
 
@@ -136,7 +136,7 @@ class _RestoreWalletViewState extends State<RestoreWalletView> {
 
   @override
   void dispose() {
-    NoScreenshot.instance.screenshotOn();
+    ScreenshotGuard.release();
     for (final controller in _controllers) {
       controller.dispose();
     }

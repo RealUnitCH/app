@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:no_screenshot/no_screenshot.dart';
+import 'package:realunit_wallet/packages/utils/screenshot_guard.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/settings_seed/bloc/settings_seed_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -19,7 +19,7 @@ class SettingsSeedView extends StatefulWidget {
 class _SettingsSeedViewState extends State<SettingsSeedView> {
   @override
   void initState() {
-    NoScreenshot.instance.screenshotOff();
+    ScreenshotGuard.acquire();
     super.initState();
   }
 
@@ -114,7 +114,7 @@ class _SettingsSeedViewState extends State<SettingsSeedView> {
 
   @override
   void dispose() {
-    NoScreenshot.instance.screenshotOn();
+    ScreenshotGuard.release();
     super.dispose();
   }
 }

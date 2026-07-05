@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:no_screenshot/no_screenshot.dart';
+import 'package:realunit_wallet/packages/utils/screenshot_guard.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -43,13 +43,13 @@ class _VerifySeedViewState extends State<VerifySeedView> {
     // Seed words are entered/visible here — block screenshots and the
     // app-switcher snapshot like the other seed screens. Re-enabled on dispose
     // so other screens stay screenshot-able.
-    NoScreenshot.instance.screenshotOff();
+    ScreenshotGuard.acquire();
     super.initState();
   }
 
   @override
   void dispose() {
-    NoScreenshot.instance.screenshotOn();
+    ScreenshotGuard.release();
     super.dispose();
   }
 
