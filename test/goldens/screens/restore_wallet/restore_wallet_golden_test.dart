@@ -21,6 +21,13 @@ void main() {
   late _MockValidateSeedCubit validateSeedCubit;
   late MockHomeBloc homeBloc;
 
+  setUpAll(() {
+    // RestoreWalletView now calls NoScreenshot.screenshotOff() in initState;
+    // stub the platform channel so the golden render does not throw a
+    // MissingPluginException (same pattern as the sibling seed golden tests).
+    stubNoScreenshotChannel();
+  });
+
   setUp(() {
     restoreWalletCubit = _MockRestoreWalletCubit();
     validateSeedCubit = _MockValidateSeedCubit();

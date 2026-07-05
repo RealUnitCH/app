@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
@@ -168,6 +169,11 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
             // so re-fetching `getRegistrationInfo` in `_runCheckKyc` will return
             // `AlreadyRegistered` and dispatch the next KYC step.
             context.read<KycCubit>().checkKyc();
+
+            // Account now exists on the backend: re-arm the wallet services so
+            // the balance poll resumes (it stops itself after 404ing while the
+            // account was missing — see BalanceService).
+            context.read<HomeBloc>().add(SyncWalletServicesEvent(getIt<AppStore>().wallet));
 
             if (state.status == RegistrationStatus.forwardingFailed) {
               ScaffoldMessenger.of(context).showSnackBar(

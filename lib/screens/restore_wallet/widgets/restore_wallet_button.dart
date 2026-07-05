@@ -35,6 +35,17 @@ class RestoreWalletButton extends StatelessWidget {
             state: .success,
           );
         }
+        // Restore threw: leave the spinner and offer a tappable retry — the
+        // error-state button is non-interactive, so render an idle button
+        // with the failure label instead (issue #657 P1 B1).
+        if (restoreWalletState.hasError) {
+          return AppFilledButton(
+            icon: Icons.refresh,
+            label: S.of(context).restoreWalletFailed,
+            onPressed: () =>
+                context.read<RestoreWalletCubit>().restoreWallet(_controllers.seed),
+          );
+        }
         return AppFilledButton(
           label: S.of(context).next,
           state: .loading,

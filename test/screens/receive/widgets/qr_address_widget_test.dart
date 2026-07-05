@@ -27,6 +27,14 @@ void main() {
       // walks descendants, hitting the rendered TextSpan tree.
       expect(find.textContaining(_address.substring(0, 6)), findsAtLeastNWidgets(1));
       expect(find.textContaining(_address.substring(36)), findsAtLeastNWidgets(1));
+
+      // Pin the exact 4-chunk grouping: 6 bold / 15 / 15 / 6 bold, joined by ' ', '\n', ' '.
+      final text = tester.widget<Text>(find.byType(Text));
+      expect(
+        text.textSpan!.toPlainText(),
+        '${_address.substring(0, 6)} ${_address.substring(6, 21)}\n'
+        '${_address.substring(21, 36)} ${_address.substring(36)}',
+      );
     });
 
     testWidgets('renders a copy icon next to the address', (tester) async {
@@ -46,6 +54,25 @@ void main() {
       // Tapping should not throw (clipboard plugin is no-op in test bindings).
       await tester.tap(find.byType(InkWell));
       await tester.pump();
+    });
+
+    testWidgets(
+        'renders a short/unexpected address without a RangeError '
+        '(issue #657 P6 regression)', (tester) async {
+      // A too-short subtitle used to crash on the fixed-index substring(6, 21)
+      // etc. — it must now render gracefully on Receive and Settings.
+      await tester.pumpWidget(_host(
+        const QRAddressWidget(uri: '', subtitle: '0x1234'),
+      ));
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('0x1234'), findsAtLeastNWidgets(1));
+
+      // The extreme case: an empty address must also not throw.
+      await tester.pumpWidget(_host(
+        const QRAddressWidget(uri: '', subtitle: ''),
+      ));
+      expect(tester.takeException(), isNull);
     });
   });
 }

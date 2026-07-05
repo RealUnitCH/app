@@ -4,10 +4,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
+import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/kyc_registration_step_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_submit/kyc_registration_submit_cubit.dart';
@@ -32,15 +35,23 @@ class MockDfxCountryService extends Mock implements DfxCountryService {}
 
 class MockDfxKycService extends Mock implements DfxKycService {}
 
+class MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
+
+class MockAppStore extends Mock implements AppStore {}
+
+class MockAWallet extends Mock implements AWallet {}
+
 void main() {
   late KycRegistrationStepCubit registrationStepCubit;
   late KycRegistrationSubmitCubit registrationSubmitCubit;
   late KycCubit kycCubit;
+  late HomeBloc homeBloc;
 
   setUp(() {
     registrationStepCubit = MockRegistrationStepCubit();
     registrationSubmitCubit = MockRegistrationSubmitCubit();
     kycCubit = MockKycCubit();
+    homeBloc = MockHomeBloc();
 
     when(() => registrationStepCubit.state).thenReturn(
       const KycRegistrationStepState(
@@ -65,9 +76,13 @@ void main() {
     getIt.registerSingleton<RealUnitRegistrationService>(MockRealUnitRegistrationService());
     getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
     getIt.registerSingleton<DfxKycService>(MockDfxKycService());
+    final appStore = MockAppStore();
+    when(() => appStore.wallet).thenReturn(MockAWallet());
+    getIt.registerSingleton<AppStore>(appStore);
   }
 
   setUpAll(() {
+    registerFallbackValue(SyncWalletServicesEvent(MockAWallet()));
     setupDependencyInjection();
   });
 
@@ -79,6 +94,7 @@ void main() {
         BlocProvider.value(value: kycCubit),
         BlocProvider.value(value: registrationStepCubit),
         BlocProvider.value(value: registrationSubmitCubit),
+        BlocProvider.value(value: homeBloc),
       ],
       child: child,
     );
@@ -176,6 +192,23 @@ void main() {
       verify(() => kycCubit.checkKyc()).called(1);
     });
 
+    testWidgets('re-arms wallet services on registration success', (tester) async {
+      // The RealUnit account now exists, so the balance poll (which stops
+      // itself after 404ing while the account was missing) must be restarted.
+      whenListen(
+        registrationSubmitCubit,
+        Stream.fromIterable([
+          const KycRegistrationSubmitSuccess(RegistrationStatus.completed),
+        ]),
+        initialState: KycRegistrationSubmitInitial(),
+      );
+
+      await tester.pumpApp(buildSubject(const KycRegistrationView()));
+      await tester.pump();
+
+      verify(() => homeBloc.add(any(that: isA<SyncWalletServicesEvent>()))).called(1);
+    });
+
     testWidgets(
       'triggers checkKyc on Success(alreadyRegistered)',
       (tester) async {
@@ -233,6 +266,9 @@ void main() {
 
         verify(() => kycCubit.checkKyc()).called(1);
         expect(find.byType(SnackBar), findsOne);
+        // The re-arm fires for every success status, not just `completed` —
+        // `forwardingFailed` still means the account was accepted.
+        verify(() => homeBloc.add(any(that: isA<SyncWalletServicesEvent>()))).called(1);
       },
     );
 
@@ -247,6 +283,9 @@ void main() {
       await tester.pump();
 
       expect(find.byType(SnackBar), findsOne);
+      // A failed submit must not re-arm the wallet services — the re-arm is
+      // gated behind KycRegistrationSubmitSuccess.
+      verifyNever(() => homeBloc.add(any(that: isA<SyncWalletServicesEvent>())));
     });
   });
 }
