@@ -30,6 +30,14 @@ void main() {
       expect(() => chargedFiatAmount('1.300,75'), throwsFormatException);
       expect(() => chargedFiatAmount('3,5,7'), throwsFormatException);
     });
+
+    test('throws on grouping-ambiguous input instead of charging 1/1000th', () {
+      // `10,000` typed as ten thousand would otherwise parse as 10.0 and
+      // silently request a quote for ten francs.
+      expect(() => chargedFiatAmount('1,000'), throwsFormatException);
+      expect(() => chargedFiatAmount('10,000'), throwsFormatException);
+      expect(() => chargedFiatAmount('1.000'), throwsFormatException);
+    });
   });
 
   group('tryParseFiatAmount', () {
@@ -39,6 +47,16 @@ void main() {
 
     test('returns null on multi-separator input', () {
       expect(tryParseFiatAmount('1.300,75'), isNull);
+    });
+
+    test('returns null on grouping-ambiguous input (separator + 3 digits)', () {
+      expect(tryParseFiatAmount('1,000'), isNull);
+      expect(tryParseFiatAmount('1.000'), isNull);
+    });
+
+    test('still accepts unambiguous decimals', () {
+      expect(tryParseFiatAmount('0,5'), 0.5);
+      expect(tryParseFiatAmount('1,50'), 1.5);
     });
   });
 }
