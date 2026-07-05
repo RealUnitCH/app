@@ -1,31 +1,20 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:realunit_wallet/packages/utils/screenshot_guard.dart';
+
+import '../../helper/golden_plugin_stubs.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const channel = MethodChannel('com.flutterplaza.no_screenshot_methods');
   final calls = <String>[];
 
   setUp(() {
     calls.clear();
     ScreenshotGuard.reset();
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
-      channel,
-      (call) async {
-        calls.add(call.method);
-        return true;
-      },
-    );
+    stubNoScreenshotChannel(calls: calls);
   });
 
-  tearDown(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
-      channel,
-      null,
-    );
-  });
+  tearDown(unstubNoScreenshotChannel);
 
   group('$ScreenshotGuard', () {
     test('a single holder toggles the flag off and back on', () async {
