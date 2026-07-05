@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:fake_async/fake_async.dart';
@@ -394,6 +395,197 @@ void main() {
             async.elapse(const Duration(seconds: 20));
             async.flushMicrotasks();
             expect(calls, 4, reason: 'ticks must resume once a probe confirmed the account');
+
+            service.cancelSync();
+          });
+        });
+
+        // Reproduces the real re-arm sequence from HomeBloc._updateWallet: an
+        // unawaited updateBalance fired immediately before startSync. That eager
+        // probe's response resolves AFTER startSync's synchronous reset, so a 404
+        // from it must not re-latch the flag and gate the just-armed poll.
+        test('a re-arm (eager updateBalance then startSync) survives the eager 404', () {
+          fakeAsync((async) {
+            var calls = 0;
+            var accountExists = false;
+            final appStore = buildAppStore((_) async {
+              calls++;
+              return accountExists
+                  ? http.Response(jsonEncode({'balance': '5'}), 200)
+                  : http.Response('{"error": "Not Found"}', 404);
+            });
+            final service = BalanceService(balanceRepository, appStore);
+
+            // Same order as _updateWallet: eager probe (still 404) then startSync.
+            service.updateBalance('0xAddr');
+            service.startSync('0xAddr');
+            async.flushMicrotasks();
+            expect(calls, 1, reason: 'only the eager probe has run so far');
+
+            // Account now exists; the armed poll must probe again at T=10 — the
+            // stale eager 404 must not have gated it.
+            accountExists = true;
+            async.elapse(const Duration(seconds: 10));
+            async.flushMicrotasks();
+            expect(calls, 2, reason: 'a stale eager 404 must not gate the freshly armed poll');
+
+            // And it keeps polling normally now that the account exists.
+            async.elapse(const Duration(seconds: 10));
+            async.flushMicrotasks();
+            expect(calls, 3);
+
+            service.cancelSync();
+          });
+        });
+
+        // Only a definitive 404 pauses the poll. A transient server error must
+        // keep probing so the balance recovers on its own once the backend heals.
+        test('a transient 5xx does not latch the poll', () {
+          fakeAsync((async) {
+            var calls = 0;
+            var failing = true;
+            final appStore = buildAppStore((_) async {
+              calls++;
+              return failing
+                  ? http.Response('{"error": "Server error"}', 500)
+                  : http.Response(jsonEncode({'balance': '5'}), 200);
+            });
+            final service = BalanceService(balanceRepository, appStore);
+
+            service.startSync('0xAddr');
+
+            async.elapse(const Duration(seconds: 10));
+            async.flushMicrotasks();
+            expect(calls, 1, reason: 'first tick hits a 500');
+
+            async.elapse(const Duration(seconds: 10));
+            async.flushMicrotasks();
+            expect(calls, 2, reason: 'a 5xx must not latch — the next tick keeps probing');
+
+            failing = false;
+            async.elapse(const Duration(seconds: 10));
+            async.flushMicrotasks();
+            expect(calls, 3, reason: 'poll recovers to 200 without any restart');
+
+            service.cancelSync();
+          });
+        });
+
+        // A slow probe issued before the latest startSync can resolve out of
+        // order, after a fresh sync already reset the flag. Its stale 404 belongs
+        // to an old generation and must not re-gate the current poll.
+        test('an out-of-order stale response cannot re-gate a re-armed poll', () {
+          fakeAsync((async) {
+            final pending = <Completer<http.Response>>[];
+            final appStore = buildAppStore((_) {
+              final completer = Completer<http.Response>();
+              pending.add(completer);
+              return completer.future;
+            });
+            final service = BalanceService(balanceRepository, appStore);
+
+            // Probe R1 fired while the account was still missing (will 404 late).
+            service.updateBalance('0xAddr');
+            async.flushMicrotasks();
+            expect(pending.length, 1);
+
+            // A fresh startSync bumps the generation, resets the flag, arms the poll.
+            service.startSync('0xAddr');
+
+            // The stale R1 now resolves 404 — from the old generation, so it must
+            // be ignored and must NOT re-latch the flag.
+            pending[0].complete(http.Response('{"error": "Not Found"}', 404));
+            async.flushMicrotasks();
+
+            // The armed poll must still probe at T=10 (flag was not re-latched).
+            async.elapse(const Duration(seconds: 10));
+            async.flushMicrotasks();
+            expect(pending.length, 2, reason: 'a stale 404 must not gate the armed poll');
+            pending[1].complete(http.Response(jsonEncode({'balance': '5'}), 200));
+            async.flushMicrotasks();
+
+            // Account confirmed by the in-generation 200 — polling keeps running.
+            async.elapse(const Duration(seconds: 10));
+            async.flushMicrotasks();
+            expect(pending.length, 3);
+
+            service.cancelSync();
+          });
+        });
+
+        // The reverse of the un-latch: after a 200 cleared the flag, a later 404
+        // (account removed server-side) must re-latch it and stop the ticks.
+        test('a 404 after a 200 re-latches and stops the poll', () {
+          fakeAsync((async) {
+            var calls = 0;
+            var accountExists = true;
+            final appStore = buildAppStore((_) async {
+              calls++;
+              return accountExists
+                  ? http.Response(jsonEncode({'balance': '5'}), 200)
+                  : http.Response('{"error": "Not Found"}', 404);
+            });
+            final service = BalanceService(balanceRepository, appStore);
+
+            service.startSync('0xAddr');
+
+            // While the account exists the poll keeps ticking (200 clears the flag).
+            async.elapse(const Duration(seconds: 20));
+            async.flushMicrotasks();
+            expect(calls, 2, reason: 'poll keeps ticking while the account exists');
+
+            // Account removed server-side: the next tick 404s and must re-latch.
+            accountExists = false;
+            async.elapse(const Duration(seconds: 10));
+            async.flushMicrotasks();
+            expect(calls, 3, reason: 'the 404 tick still fires');
+
+            // Now gated again — no further probes.
+            async.elapse(const Duration(minutes: 5));
+            async.flushMicrotasks();
+            expect(calls, 3, reason: 'a 404 after a 200 must re-latch and stop the poll');
+
+            service.cancelSync();
+          });
+        });
+
+        // Symmetric to the out-of-order 404 case: a slow 200 from an OLD
+        // generation must not clear the flag after a fresh startSync re-armed and
+        // an in-generation 404 latched the gate — otherwise the stale 200 would
+        // wrongly un-gate the poll.
+        test('an out-of-order stale 200 cannot un-gate a re-latched poll', () {
+          fakeAsync((async) {
+            final pending = <Completer<http.Response>>[];
+            final appStore = buildAppStore((_) {
+              final completer = Completer<http.Response>();
+              pending.add(completer);
+              return completer.future;
+            });
+            final service = BalanceService(balanceRepository, appStore);
+
+            // Probe R1 issued in the current generation (will resolve 200 late).
+            service.updateBalance('0xAddr');
+            async.flushMicrotasks();
+            expect(pending.length, 1);
+
+            // A fresh startSync bumps the generation and arms the poll.
+            service.startSync('0xAddr');
+
+            // The armed poll's first tick (new generation) 404s and latches.
+            async.elapse(const Duration(seconds: 10));
+            async.flushMicrotasks();
+            expect(pending.length, 2);
+            pending[1].complete(http.Response('{"error": "Not Found"}', 404));
+            async.flushMicrotasks();
+
+            // Now the stale R1 resolves 200 — from the OLD generation, so it must
+            // NOT clear the flag. The poll must stay gated.
+            pending[0].complete(http.Response(jsonEncode({'balance': '5'}), 200));
+            async.flushMicrotasks();
+
+            async.elapse(const Duration(minutes: 5));
+            async.flushMicrotasks();
+            expect(pending.length, 2, reason: 'a stale 200 must not un-gate the re-latched poll');
 
             service.cancelSync();
           });
