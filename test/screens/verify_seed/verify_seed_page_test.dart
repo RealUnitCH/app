@@ -14,6 +14,7 @@ import 'package:realunit_wallet/screens/verify_seed/widgets/verify_seed_button.d
 import 'package:realunit_wallet/screens/verify_seed/widgets/verify_seed_input_field.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
+import '../../helper/golden_plugin_stubs.dart';
 import '../../helper/pump_app.dart';
 
 class MockVerifySeedCubit extends MockCubit<VerifySeedState> implements VerifySeedCubit {}
@@ -182,9 +183,29 @@ void main() {
       });
     });
 
+    testWidgets('disables screenshots on init and re-enables on dispose', (tester) async {
+      final calls = <String>[];
+      stubNoScreenshotChannel(calls: calls);
+      addTearDown(unstubNoScreenshotChannel);
+
+      await tester.pumpApp(buildSubject(const VerifySeedView()));
+      expect(
+        calls,
+        contains('screenshotOff'),
+        reason: 'seed screen must block screenshots on init',
+      );
+
+      // Replace the screen so VerifySeedView is disposed.
+      await tester.pumpApp(buildSubject(const SizedBox.shrink()));
+      expect(
+        calls,
+        contains('screenshotOn'),
+        reason: 'leaving the seed screen must re-enable screenshots',
+      );
+    });
+
     group('$BlocListener', () {
-      testWidgets('sends $LoadWalletEvent with the committed wallet when verified',
-          (tester) async {
+      testWidgets('sends $LoadWalletEvent with the committed wallet when verified', (tester) async {
         // The committed wallet `verify()` produced — a persisted row with a
         // real id (42), not the draft's `0` sentinel.
         final committed = SoftwareWallet(
