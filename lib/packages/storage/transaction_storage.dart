@@ -69,16 +69,20 @@ extension TransactionStorage on AppDatabase {
     transactions,
   )..orderBy([(u) => OrderingTerm(expression: u.timeStamp, mode: OrderingMode.desc)])).watch();
 
+  // EVM addresses are stored verbatim from the API (EIP-55 mixed case) while
+  // `wallet` is lowercase — compare case-insensitively or history renders empty.
+  Expression<bool> _involvesWallet($TransactionsTable row, String wallet) => Expression.or([
+    row.senderAddress.collate(Collate.noCase).equals(wallet),
+    row.receiverAddress.collate(Collate.noCase).equals(wallet),
+  ]);
+
   Stream<List<TransactionData>> watchTransfersOfAssets(Iterable<int> assets, String wallet) =>
       (select(transactions)
             ..where(
               (row) => Expression.and([
                 row.asset.isIn(assets),
                 row.type.equals(2),
-                Expression.or([
-                  row.senderAddress.equals(wallet),
-                  row.receiverAddress.equals(wallet),
-                ]),
+                _involvesWallet(row, wallet),
               ]),
             )
             ..orderBy([(u) => OrderingTerm(expression: u.timeStamp, mode: OrderingMode.desc)]))
@@ -94,10 +98,7 @@ extension TransactionStorage on AppDatabase {
               (row) => Expression.and([
                 row.asset.isIn(assets),
                 row.type.equals(2),
-                Expression.or([
-                  row.senderAddress.equals(wallet),
-                  row.receiverAddress.equals(wallet),
-                ]),
+                _involvesWallet(row, wallet),
               ]),
             )
             ..orderBy([(u) => OrderingTerm(expression: u.timeStamp, mode: OrderingMode.desc)])
@@ -114,10 +115,7 @@ extension TransactionStorage on AppDatabase {
               (row) => Expression.and([
                 row.asset.isIn(assets),
                 row.type.isIn([3, 4]),
-                Expression.or([
-                  row.senderAddress.equals(wallet),
-                  row.receiverAddress.equals(wallet),
-                ]),
+                _involvesWallet(row, wallet),
               ]),
             )
             ..orderBy([(u) => OrderingTerm(expression: u.timeStamp, mode: OrderingMode.desc)])

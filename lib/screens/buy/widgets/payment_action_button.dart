@@ -30,7 +30,6 @@ class PaymentActionButton extends StatelessWidget {
         if (paymentState is BuyPaymentInfoSuccess) {
           return BuyConfirmButton(
             buyPaymentInfo: paymentState.buyPaymentInfo,
-            amount: amountController.text,
           );
         }
         if (paymentState is BuyPaymentInfoFailure) {

@@ -15,13 +15,11 @@ import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 /// the `Zahlungsdetails` page with the bank-transfer instructions, on failure
 /// it surfaces the typed error as a snackbar.
 class BuyConfirmButton extends StatelessWidget {
-  final String amount;
   final BuyPaymentInfo buyPaymentInfo;
 
   const BuyConfirmButton({
     super.key,
     required this.buyPaymentInfo,
-    required this.amount,
   });
 
   @override
@@ -32,20 +30,17 @@ class BuyConfirmButton extends StatelessWidget {
       ),
       child: BuyConfirmButtonView(
         buyPaymentInfo: buyPaymentInfo,
-        amount: amount,
       ),
     );
   }
 }
 
 class BuyConfirmButtonView extends StatelessWidget {
-  final String amount;
   final BuyPaymentInfo buyPaymentInfo;
 
   const BuyConfirmButtonView({
     super.key,
     required this.buyPaymentInfo,
-    required this.amount,
   });
 
   @override
@@ -57,7 +52,8 @@ class BuyConfirmButtonView extends StatelessWidget {
             AppRoutes.buyPaymentDetails,
             extra: BuyPaymentDetailsParams(
               buyPaymentInfo: buyPaymentInfo,
-              amount: amount,
+              // The charged amount comes from the quote itself, never keystrokes.
+              amount: '${buyPaymentInfo.amount.round()}',
               // Backward compatible: prefer the API-designated purpose once it
               // ships; until then `reference` (always returned) is the value.
               purposeOfPayment: state.remittanceInfo ?? state.reference,

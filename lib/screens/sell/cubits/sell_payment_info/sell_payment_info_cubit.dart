@@ -9,6 +9,7 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exce
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
+import 'package:realunit_wallet/packages/utils/fiat_amount.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
@@ -41,7 +42,7 @@ class SellPaymentInfoCubit extends Cubit<SellPaymentInfoState> {
       emit(const SellPaymentInfoLoading());
 
       final paymentInfo = await _sellPaymentInfoService.getPaymentInfo(
-        double.parse(amount).round(),
+        chargedFiatAmount(amount),
         iban,
         currency: currency,
       );

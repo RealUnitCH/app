@@ -131,6 +131,24 @@ void main() {
         expect(uri!.queryParameters['currency'], 'EUR');
       });
 
+      test('normalises a comma decimal separator before parsing (300,75 → amount=300.75)', () async {
+        // The fiat converter field allows a comma; without normalization
+        // `double.tryParse("300,75")` is null and the converter fails silently.
+        Uri? uri;
+        final client = MockClient((request) async {
+          uri = request.url;
+          return http.Response(
+            jsonEncode({'shares': 3, 'pricePerShare': 100.25, 'availableShares': 100}),
+            200,
+          );
+        });
+
+        final shares = await build(client).getBuyShares('300,75', Currency.chf);
+
+        expect(shares.shares, 3);
+        expect(uri!.queryParameters['amount'], '300.75');
+      });
+
       test('throws for non-numeric / zero / negative amount input', () {
         final client = MockClient((_) async => http.Response('{}', 200));
 
@@ -245,6 +263,28 @@ void main() {
           () => build(client).getSellShares('100', Currency.eur),
           throwsA(isA<ApiException>()),
         );
+      });
+
+      test('normalises a comma decimal separator before parsing (300,75 → amount=300.75)', () async {
+        sessionCache.setAuthToken('jwt-2');
+        Uri? uri;
+        final client = MockClient((request) async {
+          uri = request.url;
+          return http.Response(
+            jsonEncode({
+              'targetAmount': 300.75,
+              'shares': 3,
+              'pricePerShare': 100.25,
+              'currency': 'CHF',
+            }),
+            200,
+          );
+        });
+
+        final shares = await build(client).getSellShares('300,75', Currency.chf);
+
+        expect(shares.shares, 3);
+        expect(uri!.queryParameters['amount'], '300.75');
       });
 
       test('throws when amount is invalid (before any HTTP call)', () async {

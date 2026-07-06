@@ -8,6 +8,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_buy_sh
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_sell_price_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/brokerbot/dfx_sell_shares_dto.dart';
 import 'package:realunit_wallet/styles/currency.dart';
+import 'package:realunit_wallet/packages/utils/fiat_amount.dart';
 
 class DfxBrokerbotService extends DFXAuthService {
   static const _buyPricePath = '/v1/realunit/brokerbot/buyPrice';
@@ -39,7 +40,7 @@ class DfxBrokerbotService extends DFXAuthService {
 
   /// Convert CHF → REALU shares
   Future<BrokerbotBuySharesDto> getBuyShares(String amountInput, Currency currency) async {
-    final amount = double.tryParse(amountInput);
+    final amount = tryParseFiatAmount(amountInput);
     if (amount == null || amount <= 0) {
       throw Exception('Shares request failed: amountInput is not valid');
     }
@@ -80,7 +81,7 @@ class DfxBrokerbotService extends DFXAuthService {
 
   /// Convert CHF → REALU shares (with fees)
   Future<BrokerbotSellSharesDto> getSellShares(String amountInput, Currency currency) async {
-    final amount = double.tryParse(amountInput);
+    final amount = tryParseFiatAmount(amountInput);
     if (amount == null || amount <= 0) {
       throw Exception('SellShares request failed: amountInput is invalid');
     }

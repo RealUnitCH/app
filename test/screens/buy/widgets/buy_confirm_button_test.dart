@@ -20,6 +20,22 @@ class _MockBuyConfirmCubit extends MockCubit<BuyConfirmState>
     implements BuyConfirmCubit {}
 
 const _info = BuyPaymentInfo(
+  amount: 300,
+  id: 42,
+  iban: 'CH00 0000 0000 0000 0000 0',
+  bic: 'BICCBIC',
+  name: 'RealUnit AG',
+  street: 'Bahnhofstrasse',
+  number: '1',
+  zip: '8001',
+  city: 'Zurich',
+  country: 'Switzerland',
+  currency: Currency.chf,
+);
+
+// The quote echoes the charged amount; a fractional echo must render rounded.
+const _quotedFractional = BuyPaymentInfo(
+  amount: 300.75,
   id: 42,
   iban: 'CH00 0000 0000 0000 0000 0',
   bic: 'BICCBIC',
@@ -44,7 +60,7 @@ void main() {
   Widget host({GoRouter? router}) {
     final view = BlocProvider<BuyConfirmCubit>.value(
       value: cubit,
-      child: const BuyConfirmButtonView(buyPaymentInfo: _info, amount: '100'),
+      child: const BuyConfirmButtonView(buyPaymentInfo: _info),
     );
     if (router != null) {
       return MaterialApp.router(
@@ -128,7 +144,7 @@ void main() {
       expect(find.text(S.current.buyPaymentConfirmFailedAktionariat), findsOneWidget);
     });
 
-    GoRouter detailsRouter() => GoRouter(
+    GoRouter detailsRouter({BuyPaymentInfo info = _info}) => GoRouter(
           initialLocation: '/buy',
           routes: [
             GoRoute(
@@ -137,9 +153,8 @@ void main() {
               builder: (_, _) => Scaffold(
                 body: BlocProvider<BuyConfirmCubit>.value(
                   value: cubit,
-                  child: const BuyConfirmButtonView(
-                    buyPaymentInfo: _info,
-                    amount: '100',
+                  child: BuyConfirmButtonView(
+                    buyPaymentInfo: info,
                   ),
                 ),
               ),
@@ -178,6 +193,29 @@ void main() {
       expect(find.text('RU-REF-1'), findsOneWidget);
       // No QR encoding → no tab selector.
       expect(find.byType(TabSelector<PaymentInfoOptions>), findsNothing);
+    });
+
+    testWidgets('shows the charged amount echoed by the quote on the details '
+        'page, rounded (300.75 → 301) — never derived from keystrokes', (tester) async {
+      whenListen(
+        cubit,
+        Stream.fromIterable([
+          const BuyConfirmSuccess(
+            reference: 'RU-REF-3',
+            remittanceInfo: null,
+            paymentRequest: null,
+          ),
+        ]),
+        initialState: const BuyConfirmInitial(),
+      );
+
+      await tester.pumpWidget(host(router: detailsRouter(info: _quotedFractional)));
+      await tester.pumpAndSettle();
+
+      // The details amount is the quote's own echoed charge, so it can never
+      // disagree with the SEPA transfer / QR the backend built for the quote.
+      expect(find.text('301'), findsOneWidget);
+      expect(find.text('300.75'), findsNothing);
     });
 
     testWidgets('forward path: remittanceInfo + paymentRequest drive the '

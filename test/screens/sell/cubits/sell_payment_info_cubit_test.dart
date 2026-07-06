@@ -102,6 +102,16 @@ void main() {
       verify(() => service.getPaymentInfo(100, 'CH56', currency: Currency.chf)).called(1);
     });
 
+    test('a comma-decimal amount is charged as the rounded integer (300,75 → 301)', () async {
+      when(
+        () => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')),
+      ).thenAnswer((_) async => _info());
+
+      await build().getPaymentInfo(amount: '300,75', iban: 'CH56');
+
+      verify(() => service.getPaymentInfo(301, 'CH56', currency: Currency.chf)).called(1);
+    });
+
     test('Success.isBitbox=true when the current wallet is a BitboxWallet', () async {
       when(
         () => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')),
@@ -322,10 +332,10 @@ void main() {
     );
 
     test(
-      'comma decimal in getPaymentInfo throws (UI converter rejects commas first in practice)',
+      'structurally invalid amount (multiple separators) fails without a service call',
       () async {
         final cubit = build();
-        await cubit.getPaymentInfo(amount: '100,50', iban: 'CH56');
+        await cubit.getPaymentInfo(amount: '1.300,75', iban: 'CH56');
 
         expect(cubit.state, isA<SellPaymentInfoFailure>());
         verifyNever(() => service.getPaymentInfo(any(), any(), currency: any(named: 'currency')));

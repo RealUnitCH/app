@@ -15,6 +15,7 @@ const _bankA = BankAccount(id: 1, iban: 'CH1', name: 'A');
 const _bankB = BankAccount(id: 2, iban: 'CH2', name: 'B');
 
 const _buyInfo = BuyPaymentInfo(
+  amount: 300,
   id: 1,
   iban: 'CH',
   bic: 'BIC',

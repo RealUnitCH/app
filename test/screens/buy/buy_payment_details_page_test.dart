@@ -13,6 +13,7 @@ import 'package:realunit_wallet/widgets/tab_selector.dart';
 import '../../helper/helper.dart';
 
 const _info = BuyPaymentInfo(
+  amount: 300,
   id: 1,
   iban: 'CH00 0000 0000 0000 0000 0',
   bic: 'BICCBIC',

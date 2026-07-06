@@ -40,7 +40,7 @@ class RealUnitAccountService {
           // would crash the chart line to zero and show a false -100% change.
           if (value == null) return null;
           return PortfolioValuePoint(
-            value: BigInt.from(value * 100),
+            value: BigInt.from((value * 100).round()),
             balance: BigInt.parse(h.balance),
             time: h.timestamp,
           );

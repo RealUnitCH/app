@@ -20,6 +20,7 @@ BuyPaymentInfo _info({
   String? error,
   Currency currency = Currency.chf,
 }) => BuyPaymentInfo(
+  amount: 300,
   id: 1,
   iban: 'CH56 0483 5012 3456 78',
   bic: 'CRESCHZZ80A',

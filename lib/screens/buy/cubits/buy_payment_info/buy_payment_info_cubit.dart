@@ -9,6 +9,7 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exce
 import 'package:realunit_wallet/packages/service/dfx/models/payment/buy/buy_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/payment_info_error.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
+import 'package:realunit_wallet/packages/utils/fiat_amount.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 part 'buy_payment_info_state.dart';
@@ -47,11 +48,8 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
 
   Future<BuyPaymentInfoState> _runGetPaymentInfo(String amount, Currency currency) async {
     try {
-      final sanitizedAmount = amount.isEmpty ? '0' : amount.replaceAll(',', '.');
-      final parsedAmount = double.parse(sanitizedAmount);
-
       final paymentInfo = await _buyPaymentInfoService.getPaymentInfo(
-        parsedAmount.round(),
+        chargedFiatAmount(amount),
         currency: currency,
       );
 
