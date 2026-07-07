@@ -34,7 +34,7 @@ class PaymentAdditionalActionNeededButton extends StatelessWidget {
                     S
                         .of(context)
                         .buyMinAmount(
-                          '${state.minAmount.round()}',
+                          '${state.minAmount.ceil()}',
                           context.read<BuyConverterCubit>().state.currency.code,
                         ),
                     style: const TextStyle(

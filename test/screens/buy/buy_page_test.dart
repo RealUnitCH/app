@@ -231,7 +231,10 @@ void main() {
     });
 
     testWidgets('renders correctly when min amount is not met', (tester) async {
-      final minAmount = 100.0;
+      // Non-integer min: the API returns the minimum in the input currency
+      // (e.g. 100 CHF ≈ 108.4 EUR). The displayed value must round UP so the
+      // shown amount always satisfies the server-side minimum.
+      final minAmount = 108.4;
       final currency = Currency.chf;
 
       when(() => buyPaymentInfoCubit.state).thenReturn(
@@ -250,7 +253,7 @@ void main() {
 
       expect(find.byType(PaymentActionRequired), findsNothing);
       expect(find.byType(PaymentInformation), findsOne);
-      expect(find.text(S.current.buyMinAmount('${minAmount.round()}', currency.code)), findsOne);
+      expect(find.text(S.current.buyMinAmount('${minAmount.ceil()}', currency.code)), findsOne);
       expect(
         find.byWidgetPredicate(
           (Widget widget) => widget is AppFilledButton && widget.onPressed == null,

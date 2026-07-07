@@ -99,7 +99,7 @@ class SellButton extends StatelessWidget {
                   S
                       .of(context)
                       .sellMinAmount(
-                        '${state.minAmount.round()}',
+                        '${state.minAmount.ceil()}',
                         state.currency.code,
                       ),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
