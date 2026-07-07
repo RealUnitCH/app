@@ -174,9 +174,9 @@ Vorab-Anschauen während eines Template-Refactors.)
 
 ## Transaktionsbelege
 
-Die Sektion **B — Transaktionsbelege** verlinkt sechs Muster-PDFs, die das
-Backend erzeugt: Transaktionshistorie und Transaktionsbestätigung (je DE/EN)
-sowie Verkauf-Bestätigung und Übertragung (je DE).
+Die Sektion **B — Transaktionsbelege** verlinkt acht Muster-PDFs, die das
+Backend erzeugt — Transaktionshistorie, Transaktionsbestätigung,
+Verkauf-Bestätigung und Übertragung, jeweils in DE und EN.
 Anders als die Mail-Previews werden diese PDFs **nicht** hier generiert — sie
 liegen bereits committet im api-Repo unter `docs/examples/realunit-receipt/`
 (gerendert vom `SwissQRService` via `realunit-receipt-example.spec.ts`) und

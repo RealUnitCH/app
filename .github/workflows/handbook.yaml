@@ -217,13 +217,13 @@ jobs:
       - name: Stage RealUnit receipt examples from api repo
         env:
           API_DIR: _api-checkout
-          # The api repo commits six example receipt PDFs under
-          # docs/examples/realunit-receipt/: transaction-{confirmation,history}-{de,en}.pdf
-          # plus transaction-confirmation-sale-de.pdf and transaction-transfer-de.pdf.
+          # The api repo commits eight example receipt PDFs under
+          # docs/examples/realunit-receipt/, each type in DE and EN:
+          # transaction-{confirmation,confirmation-sale,history,transfer}-{de,en}.pdf.
           # `-ne` below fails the build on ANY drift (add OR remove) so a change to
           # the committed set upstream requires an explicit bump here in the SAME
           # PR — same guard rationale as EXPECTED_HTML_COUNT above.
-          EXPECTED_PDF_COUNT: 6
+          EXPECTED_PDF_COUNT: 8
         run: |
           set -euo pipefail
 
