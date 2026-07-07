@@ -69,6 +69,12 @@ docs/handbook/mails/
 # (docs/examples/realunit-receipt/, rendered by SwissQRService).
 docs/handbook/receipts/
 
+# Staged at handbook build time from DFXswiss/api's committed example balance
+# statements (see .github/workflows/handbook.yaml — step "Stage RealUnit balance
+# examples from api repo"). Never commit; source of truth is the api repo
+# (docs/examples/realunit-balance/, rendered by BalancePdfService).
+docs/handbook/balance/
+
 # Assembled at handbook build time from test/goldens/screens/ via
 # scripts/assemble-handbook-screenshots.sh (see Dockerfile.handbook).
 # Source of truth are the Golden baselines under test/goldens/; this

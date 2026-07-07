@@ -217,12 +217,13 @@ jobs:
       - name: Stage RealUnit receipt examples from api repo
         env:
           API_DIR: _api-checkout
-          # The api repo commits four example receipt PDFs under
-          # docs/examples/realunit-receipt/: transaction-{confirmation,history}-{de,en}.pdf.
+          # The api repo commits eight example receipt PDFs under
+          # docs/examples/realunit-receipt/, each type in DE and EN:
+          # transaction-{confirmation,confirmation-sale,history,transfer}-{de,en}.pdf.
           # `-ne` below fails the build on ANY drift (add OR remove) so a change to
           # the committed set upstream requires an explicit bump here in the SAME
           # PR — same guard rationale as EXPECTED_HTML_COUNT above.
-          EXPECTED_PDF_COUNT: 4
+          EXPECTED_PDF_COUNT: 8
         run: |
           set -euo pipefail
 
@@ -251,6 +252,46 @@ jobs:
 
           ls -la docs/handbook/receipts/ | head -20
           echo "Staged $(ls docs/handbook/receipts/*.pdf | wc -l | tr -d ' ') receipt example PDFs"
+
+      - name: Stage RealUnit balance examples from api repo
+        env:
+          API_DIR: _api-checkout
+          # The api repo commits two example portfolio-statement (Vermögensübersicht)
+          # PDFs under docs/examples/realunit-balance/: balance-report-{de,en}.pdf.
+          # `-ne` below fails the build on ANY drift (add OR remove) so a change to
+          # the committed set upstream requires an explicit bump here in the SAME
+          # PR — same guard rationale as the receipt step above.
+          EXPECTED_PDF_COUNT: 2
+        run: |
+          set -euo pipefail
+
+          # Like the receipt examples, these PDFs are already committed in the api
+          # repo (rendered by BalancePdfService via the api-side spec
+          # realunit-balance-example.spec.ts), so no generator / npm run is needed
+          # here — we only copy them into the build context. Reuses the same
+          # _api-checkout/ from the mail step above. NOTE the SEPARATE dest dir
+          # (docs/handbook/balance/, not receipts/) so the receipt step's
+          # `rm -rf docs/handbook/receipts` cannot wipe these, and vice versa.
+          SRC_DIR="${API_DIR}/docs/examples/realunit-balance"
+          if [ ! -d "${SRC_DIR}" ]; then
+            echo "::error::${SRC_DIR} not found in the api checkout — the committed example balance statements are missing upstream (DFXswiss/api docs/examples/realunit-balance/)."
+            exit 1
+          fi
+
+          PDF_COUNT=$(ls "${SRC_DIR}"/*.pdf 2>/dev/null | wc -l | tr -d ' ')
+          if [ "${PDF_COUNT}" -ne "${EXPECTED_PDF_COUNT}" ]; then
+            echo "::error::Expected exactly ${EXPECTED_PDF_COUNT} balance PDFs in ${SRC_DIR}, got ${PDF_COUNT}. If this drift is intentional (example added/removed upstream), update EXPECTED_PDF_COUNT in this workflow in the same PR."
+            exit 1
+          fi
+
+          # Fresh staging dir (defensive, mirrors the receipt step) so a stale PDF
+          # from a previous local run cannot survive into the build context.
+          rm -rf docs/handbook/balance
+          mkdir -p docs/handbook/balance
+          cp "${SRC_DIR}"/*.pdf docs/handbook/balance/
+
+          ls -la docs/handbook/balance/ | head -20
+          echo "Staged $(ls docs/handbook/balance/*.pdf | wc -l | tr -d ' ') balance example PDFs"
 
       # Cleanup runs even when the generator step above (or any other step
       # between staging and `docker build`) fails. Without `if: always()`, a
