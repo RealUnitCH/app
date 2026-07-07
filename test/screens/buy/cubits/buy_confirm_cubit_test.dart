@@ -77,6 +77,24 @@ void main() {
       expect((cubit.state as BuyConfirmFailure).error, BuyConfirmError.aktionariat);
     });
 
+    test('confirmPayment emits Failure(amountTooLow) on ApiException 400 with '
+        'code AmountTooLow', () async {
+      when(() => service.confirmPayment(any())).thenAnswer(
+        (_) async => throw const ApiException(
+          statusCode: 400,
+          code: 'AmountTooLow',
+          message: 'Purchases by bank transfer require a minimum of 100 nominal in base currency',
+        ),
+      );
+
+      final cubit = BuyConfirmCubit(service);
+      final done = cubit.stream.firstWhere((s) => s is BuyConfirmFailure);
+      await cubit.confirmPayment(7);
+      await done;
+
+      expect((cubit.state as BuyConfirmFailure).error, BuyConfirmError.amountTooLow);
+    });
+
     test('confirmPayment emits Failure(unknown) on other ApiException', () async {
       when(() => service.confirmPayment(any())).thenAnswer(
         (_) async => throw const ApiException(
