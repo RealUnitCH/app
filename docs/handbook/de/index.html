@@ -2459,8 +2459,9 @@
           <p class="spec-intro">
             Beispiel-Belege, die das Backend als PDF erzeugt: die
             <b>Transaktionshistorie</b> (Sammelbeleg über mehrere Transaktionen,
-            per Klick auf „Transaktionshistorie") und die
-            <b>Transaktionsbestätigung</b> (Einzelbeleg für eine Transaktion). Der
+            per Klick auf „Transaktionshistorie") und die Einzelbelege je
+            Transaktion — die <b>Transaktionsbestätigung</b> für Kauf und Verkauf
+            sowie die <b>Übertragung</b> (Wallet-zu-Wallet, ohne Kauf/Verkauf). Der
             Renderer lebt im
             <a href="https://github.com/DFXswiss/api">DFXswiss/api</a>-Repo
             (<code>src/subdomains/supporting/payment/services/swiss-qr.service.ts</code>);
@@ -2498,7 +2499,7 @@
             </div>
           </div>
 
-          <h3>Transaktionsbestätigung <a class="src" href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-receipt" title="Quelle: docs/examples/realunit-receipt/">↗</a></h3>
+          <h3>Transaktionsbestätigung – Kauf <a class="src" href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-receipt" title="Quelle: docs/examples/realunit-receipt/">↗</a></h3>
           <div class="tests cols-2">
             <div class="test legal-doc" id="receipt-confirmation-de">
               <div class="head">
@@ -2507,7 +2508,7 @@
                 <span class="src">de</span>
               </div>
               <div class="downloads">
-                <span class="doc-title">Transaktionsbestätigung (Einzelbeleg)</span>
+                <span class="doc-title">Transaktionsbestätigung Kauf (Einzelbeleg)</span>
                 <a class="dl-btn" href="../receipts/transaction-confirmation-de.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
                 <a class="dl-btn" href="../receipts/transaction-confirmation-de.pdf" download>PDF</a>
               </div>
@@ -2519,9 +2520,65 @@
                 <span class="src">en</span>
               </div>
               <div class="downloads">
-                <span class="doc-title">Transaction Confirmation</span>
+                <span class="doc-title">Transaction Confirmation (Purchase)</span>
                 <a class="dl-btn" href="../receipts/transaction-confirmation-en.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
                 <a class="dl-btn" href="../receipts/transaction-confirmation-en.pdf" download>PDF</a>
+              </div>
+            </div>
+          </div>
+
+          <h3>Transaktionsbestätigung – Verkauf <a class="src" href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-receipt" title="Quelle: docs/examples/realunit-receipt/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test legal-doc" id="receipt-confirmation-sale-de">
+              <div class="head">
+                <a class="name permalink" href="#receipt-confirmation-sale-de">transaction_confirmation_sale_de</a>
+                <button class="copy-link" type="button" data-target="receipt-confirmation-sale-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">de</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Transaktionsbestätigung Verkauf (Einzelbeleg)</span>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-sale-de.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-sale-de.pdf" download>PDF</a>
+              </div>
+            </div>
+            <div class="test legal-doc" id="receipt-confirmation-sale-en">
+              <div class="head">
+                <a class="name permalink" href="#receipt-confirmation-sale-en">transaction_confirmation_sale_en</a>
+                <button class="copy-link" type="button" data-target="receipt-confirmation-sale-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">en</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Transaction Confirmation (Sale)</span>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-sale-en.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-sale-en.pdf" download>PDF</a>
+              </div>
+            </div>
+          </div>
+
+          <h3>Übertragung <a class="src" href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-receipt" title="Quelle: docs/examples/realunit-receipt/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test legal-doc" id="receipt-transfer-de">
+              <div class="head">
+                <a class="name permalink" href="#receipt-transfer-de">transaction_transfer_de</a>
+                <button class="copy-link" type="button" data-target="receipt-transfer-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">de</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Übertragung (Wallet-zu-Wallet)</span>
+                <a class="dl-btn" href="../receipts/transaction-transfer-de.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/transaction-transfer-de.pdf" download>PDF</a>
+              </div>
+            </div>
+            <div class="test legal-doc" id="receipt-transfer-en">
+              <div class="head">
+                <a class="name permalink" href="#receipt-transfer-en">transaction_transfer_en</a>
+                <button class="copy-link" type="button" data-target="receipt-transfer-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">en</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Transfer (wallet-to-wallet)</span>
+                <a class="dl-btn" href="../receipts/transaction-transfer-en.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/transaction-transfer-en.pdf" download>PDF</a>
               </div>
             </div>
           </div>
