@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:realunit_wallet/packages/utils/screenshot_guard.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -26,8 +27,28 @@ class VerifySeedPage extends StatelessWidget {
   );
 }
 
-class VerifySeedView extends StatelessWidget {
+class VerifySeedView extends StatefulWidget {
   const VerifySeedView({super.key});
+
+  @override
+  State<VerifySeedView> createState() => _VerifySeedViewState();
+}
+
+class _VerifySeedViewState extends State<VerifySeedView> {
+  @override
+  void initState() {
+    // Seed words are entered/visible here — block screenshots and the
+    // app-switcher snapshot. Released on dispose; screenshots re-enable only
+    // when the last protected screen leaves (see ScreenshotGuard).
+    ScreenshotGuard.acquire();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    ScreenshotGuard.release();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

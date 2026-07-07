@@ -9,12 +9,15 @@ import 'package:realunit_wallet/screens/verify_seed/verify_seed_page.dart';
 
 import '../../../helper/helper.dart';
 
-class _MockVerifySeedCubit extends MockCubit<VerifySeedState>
-    implements VerifySeedCubit {}
+class _MockVerifySeedCubit extends MockCubit<VerifySeedState> implements VerifySeedCubit {}
 
 void main() {
   late _MockVerifySeedCubit verifySeedCubit;
   late MockHomeBloc homeBloc;
+
+  setUpAll(() {
+    stubNoScreenshotChannel();
+  });
 
   setUp(() {
     verifySeedCubit = _MockVerifySeedCubit();
@@ -29,12 +32,12 @@ void main() {
   });
 
   Widget buildSubject() => MultiBlocProvider(
-        providers: [
-          BlocProvider<HomeBloc>.value(value: homeBloc),
-          BlocProvider<VerifySeedCubit>.value(value: verifySeedCubit),
-        ],
-        child: const VerifySeedView(),
-      );
+    providers: [
+      BlocProvider<HomeBloc>.value(value: homeBloc),
+      BlocProvider<VerifySeedCubit>.value(value: verifySeedCubit),
+    ],
+    child: const VerifySeedView(),
+  );
 
   group('$VerifySeedView', () {
     goldenTest(

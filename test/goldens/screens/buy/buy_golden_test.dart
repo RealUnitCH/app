@@ -103,6 +103,7 @@ void main() {
         when(() => paymentInfoCubit.state).thenReturn(
           const BuyPaymentInfoSuccess(
             BuyPaymentInfo(
+              amount: 300,
               id: 1,
               iban: 'CH00 0000 0000 0000 0000 0',
               bic: 'BICCBIC',

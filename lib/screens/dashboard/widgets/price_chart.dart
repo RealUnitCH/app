@@ -66,7 +66,7 @@ class PriceChart extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
                 labelResolver: (line) => formatFixed(
-                  BigInt.from(line.y * 100),
+                  BigInt.from((line.y * 100).round()),
                   2,
                 ),
               )
@@ -110,7 +110,7 @@ class PriceChart extends StatelessWidget {
           final price = touchedSpot.y;
           return LineTooltipItem(
             '${date.day}.${date.month}.${date.year}\n'
-            '${formatFixed(BigInt.from(price * 100), 2)}',
+            '${formatFixed(BigInt.from((price * 100).round()), 2)}',
             const TextStyle(
               color: RealUnitColors.neutral500,
               fontSize: 12,

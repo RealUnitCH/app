@@ -9,6 +9,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/sell_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
@@ -148,36 +149,40 @@ class SellBitboxCubit extends Cubit<SellBitboxState> {
     final retryState = state;
     if (retryState is! SellBitboxDepositRetry) return;
 
-    try {
-      emit(SellBitboxDepositing());
-      await _broadcastDepositAndConfirm(
-        retryState.signedSwapTransaction,
-        retryState.signedDepositTransaction,
-      );
-    } catch (e) {
-      emit(
-        SellBitboxDepositRetry(
-          retryState.signedSwapTransaction,
-          retryState.signedDepositTransaction,
-          e.toString(),
-        ),
-      );
-    }
+    emit(SellBitboxRetryingDeposit());
+    await _broadcastDepositAndConfirm(
+      retryState.signedSwapTransaction,
+      retryState.signedDepositTransaction,
+      knownTxHash: retryState.broadcastTxHash,
+    );
   }
 
   Future<void> _broadcastDepositAndConfirm(
     BroadcastTransactionRequestDto signedSwap,
-    BroadcastTransactionRequestDto signedDeposit,
-  ) async {
+    BroadcastTransactionRequestDto signedDeposit, {
+    String? knownTxHash,
+  }) async {
+    final String txHash;
+    if (knownTxHash != null) {
+      txHash = knownTxHash;
+    } else {
+      try {
+        txHash = await _sellService.broadcastTransaction(_paymentInfo.id, signedDeposit);
+      } catch (e) {
+        // The tx may or may not be on-chain; retry re-sends the same signed bytes — never re-sign.
+        emit(SellBitboxDepositRetry(signedSwap, signedDeposit, e.toString()));
+        return;
+      }
+    }
     try {
-      final txHash = await _sellService.broadcastTransaction(
-        _paymentInfo.id,
-        signedDeposit,
-      );
       await _sellService.confirmPaymentWithTxHash(_paymentInfo, txHash);
       emit(SellBitboxSuccess());
+    } on AlreadyConfirmedException {
+      emit(SellBitboxSuccess());
     } catch (e) {
-      emit(SellBitboxDepositRetry(signedSwap, signedDeposit, e.toString()));
+      emit(
+        SellBitboxDepositRetry(signedSwap, signedDeposit, e.toString(), broadcastTxHash: txHash),
+      );
     }
   }
 

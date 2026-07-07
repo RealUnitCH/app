@@ -140,13 +140,20 @@ void main() {
 
       expect(a, equals(b));
       expect(a.hashCode, b.hashCode);
-      expect(a.props, [broadcastA, broadcastB, 'boom']);
+      expect(a.props, [broadcastA, broadcastB, null, 'boom']);
     });
 
     test('different error messages are unequal', () {
       final a = SellBitboxDepositRetry(broadcastA, broadcastB, 'boom');
       final b = SellBitboxDepositRetry(broadcastA, broadcastB, 'other');
       expect(a, isNot(equals(b)));
+    });
+
+    test('different broadcastTxHash values are unequal', () {
+      final a = SellBitboxDepositRetry(broadcastA, broadcastB, 'boom');
+      final b = SellBitboxDepositRetry(broadcastA, broadcastB, 'boom', broadcastTxHash: '0xtxhash');
+      expect(a, isNot(equals(b)));
+      expect(b.props, [broadcastA, broadcastB, '0xtxhash', 'boom']);
     });
   });
 

@@ -219,6 +219,7 @@ void main() {
   group('$BuyPaymentInfo', () {
     test('equatable props cover every field', () {
       const a = BuyPaymentInfo(
+        amount: 300,
         id: 1,
         iban: 'CH...',
         bic: 'BIC',
@@ -231,6 +232,7 @@ void main() {
         currency: Currency.chf,
       );
       const b = BuyPaymentInfo(
+        amount: 300,
         id: 1,
         iban: 'CH...',
         bic: 'BIC',
@@ -243,6 +245,7 @@ void main() {
         currency: Currency.chf,
       );
       const c = BuyPaymentInfo(
+        amount: 300,
         id: 1,
         iban: 'CH...',
         bic: 'BIC',

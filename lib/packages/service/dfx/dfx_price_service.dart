@@ -40,7 +40,11 @@ class DFXPriceService extends APriceService {
       result.add(
         PricePoint(
           asset: asset,
-          price: BigInt.from(rawPrice * 100),
+          // Round the fractional-unit price (e.g. 4.56 CHF → 456 rappen);
+          // `BigInt.from` on the raw `double * 100` truncates toward zero and
+          // would drop a rappen on values like 4.56 (455.999… → 455). Values
+          // such as 1.23 are exactly 123.0 in IEEE-754 and were never truncated.
+          price: BigInt.from(((rawPrice as num) * 100).round()),
           time: DateTime.parse(entry['timestamp']),
         ),
       );
@@ -65,7 +69,7 @@ class DFXPriceService extends APriceService {
     // A missing price means the quote is currently unavailable. Return zero so
     // the UI renders "--.--" instead of throwing.
     if (rawPrice == null) return BigInt.zero;
-    return BigInt.from(rawPrice * 100);
+    return BigInt.from(((rawPrice as num) * 100).round());
   }
 
   /// Returns the equivalent EUR amount for 1 CHF

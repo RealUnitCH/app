@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/sell_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_response_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_confirm_dto.dart';
@@ -183,7 +184,16 @@ class RealUnitSellPaymentInfoService extends DFXAuthService {
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
-      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
+      final error = ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
+      // 409 "already confirmed": an earlier confirm landed but its response was lost.
+      if (error.statusCode == 409 && error.message.toLowerCase().contains('already confirmed')) {
+        throw AlreadyConfirmedException(
+          statusCode: error.statusCode,
+          code: error.code,
+          message: error.message,
+        );
+      }
+      throw error;
     }
   }
 

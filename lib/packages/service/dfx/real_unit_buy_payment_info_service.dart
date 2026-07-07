@@ -45,6 +45,7 @@ class RealUnitBuyPaymentInfoService extends DFXAuthService {
         paymentRequest: responseDto.paymentRequest,
         remittanceInfo: responseDto.remittanceInfo,
         isValid: responseDto.isValid,
+        amount: responseDto.amount,
         minVolume: responseDto.minVolume,
         maxVolume: responseDto.maxVolume,
         error: responseDto.error,

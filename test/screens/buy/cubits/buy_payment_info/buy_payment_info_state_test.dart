@@ -15,6 +15,7 @@ import 'package:realunit_wallet/styles/currency.dart';
 /// every subclass through a runtime constructor + `.props` lookup, so the
 /// value-type file lands at 100%.
 const _info = BuyPaymentInfo(
+  amount: 300,
   id: 1,
   iban: 'CH',
   bic: 'BIC',
