@@ -195,12 +195,12 @@ void main() {
     });
 
     testWidgets('renders correctly when min amount is not met', (tester) async {
-      // Non-integer min: the API returns the minimum in the input currency
-      // (e.g. 100 CHF ~ 108.4 EUR). The traded amount is quantized with
-      // .round() before it is sent, so the displayed value must round UP to
+      // Non-integer min: the API returns the minimum in the input currency, so
+      // a 100 CHF minimum shown in EUR is ~108.4. The traded amount is quantized
+      // with .round() before it is sent, so the displayed value must round UP to
       // the smallest whole amount that still satisfies the server-side minimum.
       final minAmount = 108.4;
-      final currency = Currency.chf;
+      final currency = Currency.eur;
 
       when(() => buyPaymentInfoCubit.state).thenReturn(
         BuyPaymentInfoMinAmountNotMetFailure(
