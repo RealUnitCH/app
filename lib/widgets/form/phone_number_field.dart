@@ -41,21 +41,6 @@ class _PhoneNumberFieldState extends State<PhoneNumberField> {
     }
   }
 
-  bool _isPlausibleNationalNumber(String value) {
-    switch (prefix) {
-      case '+41':
-        return value.length == 9;
-      case '+49':
-        return value.length >= 10 && value.length <= 11;
-      default:
-        // Only enforce a length rule for prefixes we have an explicit format
-        // for. Fail open for any other prefix so adding one to [prefixes] (or a
-        // future API-driven list) does not silently reject every number from
-        // that country until this switch is updated.
-        return true;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -109,7 +94,7 @@ class _PhoneNumberFieldState extends State<PhoneNumberField> {
                   if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
                     return S.of(context).registerPhoneNumberOnlyDigits;
                   }
-                  if (!_isPlausibleNationalNumber(value)) {
+                  if (value.length < 6) {
                     return S.of(context).registerPhoneNumberTooShort;
                   }
                   return null;

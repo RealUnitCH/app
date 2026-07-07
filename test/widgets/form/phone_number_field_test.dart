@@ -54,7 +54,7 @@ String _phoneError(WidgetTester tester, String Function(S localizations) message
 
 void main() {
   group('$PhoneNumberField', () {
-    testWidgets('keeps the existing required error for empty input', (tester) async {
+    testWidgets('shows the required error for empty input', (tester) async {
       final harness = await _pumpPhoneField(tester);
 
       final isValid = harness.formKey.currentState!.validate();
@@ -68,7 +68,7 @@ void main() {
       expect(harness.controller.value, isNull);
     });
 
-    testWidgets('keeps the existing digits-only error for non-digit input', (tester) async {
+    testWidgets('shows the digits-only error for non-digit input', (tester) async {
       final harness = await _pumpPhoneField(tester);
 
       final isValid = await _enterAndValidate(tester, harness, '79abc4567');
@@ -80,16 +80,31 @@ void main() {
       );
     });
 
-    testWidgets('rejects an implausible Swiss national number', (tester) async {
+    testWidgets('shows the too-short error for a number below the minimum length', (tester) async {
+      final harness = await _pumpPhoneField(tester);
+
+      // Fewer than 6 digits is the only client-side length rule; anything
+      // longer is left to the DFX API, which owns phone-number validation.
+      final isValid = await _enterAndValidate(tester, harness, '12345');
+
+      expect(harness.controller.value, '+4112345');
+      expect(isValid, isFalse);
+      expect(
+        find.text(_phoneError(tester, (s) => s.registerPhoneNumberTooShort)),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('accepts a number at the minimum length boundary', (tester) async {
       final harness = await _pumpPhoneField(tester);
 
       final isValid = await _enterAndValidate(tester, harness, '123456');
 
       expect(harness.controller.value, '+41123456');
-      expect(isValid, isFalse);
+      expect(isValid, isTrue);
     });
 
-    testWidgets('accepts a representative Swiss national number', (tester) async {
+    testWidgets('accepts a representative national number', (tester) async {
       final harness = await _pumpPhoneField(tester);
 
       final isValid = await _enterAndValidate(tester, harness, '791234567');
@@ -98,32 +113,12 @@ void main() {
       expect(isValid, isTrue);
     });
 
-    testWidgets('rejects an implausible German national number', (tester) async {
-      final harness = await _pumpPhoneField(tester, initialPhoneNumber: '+49');
-
-      final isValid = await _enterAndValidate(tester, harness, '123456');
-
-      expect(harness.controller.value, '+49123456');
-      expect(isValid, isFalse);
-    });
-
-    testWidgets('accepts a representative German national number', (tester) async {
+    testWidgets('prepends the selected prefix and applies the same length rule', (tester) async {
       final harness = await _pumpPhoneField(tester, initialPhoneNumber: '+49');
 
       final isValid = await _enterAndValidate(tester, harness, '15123456789');
 
       expect(harness.controller.value, '+4915123456789');
-      expect(isValid, isTrue);
-    });
-
-    testWidgets('does not reject a number whose prefix has no explicit length rule', (tester) async {
-      // A prefix without a dedicated case must fail open on length so that
-      // adding a new prefix (or sourcing the list from the API) cannot silently
-      // reject every number from that country until the switch is updated.
-      final harness = await _pumpPhoneField(tester, initialPhoneNumber: '+43');
-
-      final isValid = await _enterAndValidate(tester, harness, '6641234567');
-
       expect(isValid, isTrue);
     });
   });
