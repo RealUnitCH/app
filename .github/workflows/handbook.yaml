@@ -257,7 +257,7 @@ jobs:
         env:
           API_DIR: _api-checkout
           # The api repo commits two example portfolio-statement (Vermögensübersicht)
-          # PDFs under docs/examples/realunit-balance/: balance-report-{de,en}.pdf.
+          # PDFs under docs/examples/realunit-statement/: vermoegensuebersicht-{de,en}.pdf.
           # `-ne` below fails the build on ANY drift (add OR remove) so a change to
           # the committed set upstream requires an explicit bump here in the SAME
           # PR — same guard rationale as the receipt step above.
@@ -272,9 +272,9 @@ jobs:
           # _api-checkout/ from the mail step above. NOTE the SEPARATE dest dir
           # (docs/handbook/balance/, not receipts/) so the receipt step's
           # `rm -rf docs/handbook/receipts` cannot wipe these, and vice versa.
-          SRC_DIR="${API_DIR}/docs/examples/realunit-balance"
+          SRC_DIR="${API_DIR}/docs/examples/realunit-statement"
           if [ ! -d "${SRC_DIR}" ]; then
-            echo "::error::${SRC_DIR} not found in the api checkout — the committed example balance statements are missing upstream (DFXswiss/api docs/examples/realunit-balance/)."
+            echo "::error::${SRC_DIR} not found in the api checkout — the committed example balance statements are missing upstream (DFXswiss/api docs/examples/realunit-statement/)."
             exit 1
           fi
 
