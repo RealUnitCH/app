@@ -258,7 +258,7 @@ void main() {
         await tester.pumpApp(buildSubject(const SellView()));
 
         expect(
-          find.text(S.current.sellMinAmount(minAmount.ceil().toString(), currency.code)),
+          find.text(S.current.sellMinAmount('${minAmount.ceil()}', currency.code)),
           findsOne,
         );
         expect(
