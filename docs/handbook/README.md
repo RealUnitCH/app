@@ -174,8 +174,9 @@ Vorab-Anschauen während eines Template-Refactors.)
 
 ## Transaktionsbelege
 
-Die Sektion **B — Transaktionsbelege** verlinkt vier Muster-PDFs, die das
-Backend erzeugt (Transaktionshistorie + Transaktionsbestätigung, je DE/EN).
+Die Sektion **B — Transaktionsbelege** verlinkt sechs Muster-PDFs, die das
+Backend erzeugt: Transaktionshistorie und Transaktionsbestätigung (je DE/EN)
+sowie Verkauf-Bestätigung und Übertragung (je DE).
 Anders als die Mail-Previews werden diese PDFs **nicht** hier generiert — sie
 liegen bereits committet im api-Repo unter `docs/examples/realunit-receipt/`
 (gerendert vom `SwissQRService` via `realunit-receipt-example.spec.ts`) und
@@ -200,6 +201,20 @@ open docs/handbook/de/index.html   # Sektion "B — Transaktionsbelege"
 
 Zum Regenerieren der Muster-PDFs selbst siehe das api-Repo
 (`GENERATE_RECEIPT_EXAMPLES=true npx jest realunit-receipt-example`).
+
+## Vermögensübersicht
+
+Die Sektion **V — Vermögensübersicht** (`#spec-balance`) verlinkt zwei
+Muster-PDFs (DE + EN): die Vermögensübersicht weist den REALU-Bestand mit dem
+massgeblichen Steuerwert aus. Wie die Transaktionsbelege werden diese PDFs
+**nicht** hier generiert — sie liegen bereits committet im api-Repo unter
+`docs/examples/realunit-balance/` (gerendert vom `BalancePdfService` via
+`realunit-balance-example.spec.ts`) und werden beim Handbook-Build nur ins Image
+kopiert (Step "Stage RealUnit balance examples from api repo" in `handbook.yaml`;
+Zielverzeichnis `docs/handbook/balance/` ist gitignored). Single Source of Truth
+ist das api-Repo. Kommt upstream ein Beispiel hinzu oder weg, failt der Build am
+eigenen `EXPECTED_PDF_COUNT`-Guard des balance-Steps — dann die Zahl in
+`handbook.yaml` und die Download-Karten in `#spec-balance` im selben Zug anpassen.
 
 ## Beziehung zu den Tier-0/Tier-1-Tests
 
