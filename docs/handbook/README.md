@@ -208,7 +208,7 @@ Die Sektion **V — Vermögensübersicht** (`#spec-balance`) verlinkt zwei
 Muster-PDFs (DE + EN): die Vermögensübersicht weist den REALU-Bestand mit dem
 massgeblichen Steuerwert aus. Wie die Transaktionsbelege werden diese PDFs
 **nicht** hier generiert — sie liegen bereits committet im api-Repo unter
-`docs/examples/realunit-balance/` (gerendert vom `BalancePdfService` via
+`docs/examples/realunit-statement/` (gerendert vom `BalancePdfService` via
 `realunit-balance-example.spec.ts`) und werden beim Handbook-Build nur ins Image
 kopiert (Step "Stage RealUnit balance examples from api repo" in `handbook.yaml`;
 Zielverzeichnis `docs/handbook/balance/` ist gitignored). Single Source of Truth
