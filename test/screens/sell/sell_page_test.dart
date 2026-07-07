@@ -240,7 +240,10 @@ void main() {
       });
 
       testWidgets('is disabled button when minimum amount is not met', (tester) async {
-        final amount = 10.0;
+        // Non-integer min: the traded amount is quantized with .round() before
+        // it is sent, so the displayed value must round UP to the smallest
+        // whole amount that still satisfies the server-side minimum.
+        final amount = 10.4;
         final currency = Currency.chf;
 
         when(
@@ -255,7 +258,7 @@ void main() {
         await tester.pumpApp(buildSubject(const SellView()));
 
         expect(
-          find.text(S.current.sellMinAmount(amount.round().toString(), currency.code)),
+          find.text(S.current.sellMinAmount(amount.ceil().toString(), currency.code)),
           findsOne,
         );
         expect(
