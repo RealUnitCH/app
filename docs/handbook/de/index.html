@@ -826,6 +826,9 @@
               <a href="#spec-receipts"><span class="spec-num">B</span>Transaktionsbelege</a>
             </li>
             <li>
+              <a href="#spec-balance"><span class="spec-num">V</span>Vermögensübersicht</a>
+            </li>
+            <li>
               <a href="#spec-store-listing"><span class="spec-num">S</span>Store-Listing</a>
             </li>
             <li>
@@ -2459,8 +2462,11 @@
           <p class="spec-intro">
             Beispiel-Belege, die das Backend als PDF erzeugt: die
             <b>Transaktionshistorie</b> (Sammelbeleg über mehrere Transaktionen,
-            per Klick auf „Transaktionshistorie") und die
-            <b>Transaktionsbestätigung</b> (Einzelbeleg für eine Transaktion). Der
+            per Klick auf „Transaktionshistorie"), die
+            <b>Transaktionsbestätigung</b> (Einzelbeleg für eine Kauftransaktion),
+            die <b>Verkauf-Bestätigung</b> (Einzelbeleg für eine
+            Verkaufstransaktion) und die <b>Übertragung</b> (Einzelbeleg für eine
+            Wallet-zu-Wallet-Übertragung). Der
             Renderer lebt im
             <a href="https://github.com/DFXswiss/api">DFXswiss/api</a>-Repo
             (<code>src/subdomains/supporting/payment/services/swiss-qr.service.ts</code>);
@@ -2480,6 +2486,7 @@
               </div>
               <div class="downloads">
                 <span class="doc-title">Transaktionshistorie (Sammelbeleg)</span>
+                <a class="dl-btn" href="../receipts/transaction-history-de.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
                 <a class="dl-btn" href="../receipts/transaction-history-de.pdf" download>PDF</a>
               </div>
             </div>
@@ -2491,6 +2498,7 @@
               </div>
               <div class="downloads">
                 <span class="doc-title">Transaction History</span>
+                <a class="dl-btn" href="../receipts/transaction-history-en.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
                 <a class="dl-btn" href="../receipts/transaction-history-en.pdf" download>PDF</a>
               </div>
             </div>
@@ -2506,6 +2514,7 @@
               </div>
               <div class="downloads">
                 <span class="doc-title">Transaktionsbestätigung (Einzelbeleg)</span>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-de.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
                 <a class="dl-btn" href="../receipts/transaction-confirmation-de.pdf" download>PDF</a>
               </div>
             </div>
@@ -2517,7 +2526,118 @@
               </div>
               <div class="downloads">
                 <span class="doc-title">Transaction Confirmation</span>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-en.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
                 <a class="dl-btn" href="../receipts/transaction-confirmation-en.pdf" download>PDF</a>
+              </div>
+            </div>
+            <div class="test legal-doc" id="receipt-confirmation-sale-de">
+              <div class="head">
+                <a class="name permalink" href="#receipt-confirmation-sale-de">transaction_confirmation_sale_de</a>
+                <button class="copy-link" type="button" data-target="receipt-confirmation-sale-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">de</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Verkauf-Bestätigung (Einzelbeleg)</span>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-sale-de.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-sale-de.pdf" download>PDF</a>
+              </div>
+            </div>
+            <div class="test legal-doc" id="receipt-confirmation-sale-en">
+              <div class="head">
+                <a class="name permalink" href="#receipt-confirmation-sale-en">transaction_confirmation_sale_en</a>
+                <button class="copy-link" type="button" data-target="receipt-confirmation-sale-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">en</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Sale Confirmation</span>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-sale-en.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-sale-en.pdf" download>PDF</a>
+              </div>
+            </div>
+          </div>
+
+          <h3>Übertragung <a class="src" href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-receipt" title="Quelle: docs/examples/realunit-receipt/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test legal-doc" id="receipt-transfer-de">
+              <div class="head">
+                <a class="name permalink" href="#receipt-transfer-de">transaction_transfer_de</a>
+                <button class="copy-link" type="button" data-target="receipt-transfer-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">de</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Übertragung (Einzelbeleg)</span>
+                <a class="dl-btn" href="../receipts/transaction-transfer-de.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/transaction-transfer-de.pdf" download>PDF</a>
+              </div>
+            </div>
+            <div class="test legal-doc" id="receipt-transfer-en">
+              <div class="head">
+                <a class="name permalink" href="#receipt-transfer-en">transaction_transfer_en</a>
+                <button class="copy-link" type="button" data-target="receipt-transfer-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">en</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Transfer</span>
+                <a class="dl-btn" href="../receipts/transaction-transfer-en.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/transaction-transfer-en.pdf" download>PDF</a>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details id="spec-balance" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">V</span>Vermögensübersicht</h2>
+                <div class="file">DFXswiss/api · docs/examples/realunit-statement/</div>
+              </div>
+              <div class="rhs">
+                <b>Live aus api-Repo</b>
+                <div class="links">
+                  <a href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-statement">im api-Repo ↗</a>
+                </div>
+              </div>
+            </div>
+          </summary>
+
+          <p class="spec-intro">
+            Beispiel-Beleg, den das Backend als PDF erzeugt: die
+            <b>Vermögensübersicht</b> weist den REALU-Bestand mit dem massgeblichen
+            <b>Steuerwert</b> aus (im Muster 350 REALU per 31.12.2025). Der Renderer
+            lebt im
+            <a href="https://github.com/DFXswiss/api">DFXswiss/api</a>-Repo
+            (<code>src/subdomains/supporting/balance/services/balance-pdf.service.ts</code>);
+            die verlinkten Muster-PDFs liegen dort als
+            <code>docs/examples/realunit-statement/*.pdf</code> und werden bei jedem
+            Handbook-Build automatisch ins Image gezogen — Single Source of Truth
+            ist das api-Repo, dieses Handbook spiegelt nur den aktuellen Stand.
+          </p>
+
+          <h3>Vermögensübersicht <a class="src" href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-statement" title="Quelle: docs/examples/realunit-statement/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test legal-doc" id="vermoegensuebersicht-de">
+              <div class="head">
+                <a class="name permalink" href="#vermoegensuebersicht-de">vermoegensuebersicht_de</a>
+                <button class="copy-link" type="button" data-target="vermoegensuebersicht-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">de</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Vermögensübersicht (Steuerwert)</span>
+                <a class="dl-btn" href="../balance/vermoegensuebersicht-de.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../balance/vermoegensuebersicht-de.pdf" download>PDF</a>
+              </div>
+            </div>
+            <div class="test legal-doc" id="vermoegensuebersicht-en">
+              <div class="head">
+                <a class="name permalink" href="#vermoegensuebersicht-en">vermoegensuebersicht_en</a>
+                <button class="copy-link" type="button" data-target="vermoegensuebersicht-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">en</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Portfolio Statement (Tax Value)</span>
+                <a class="dl-btn" href="../balance/vermoegensuebersicht-en.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../balance/vermoegensuebersicht-en.pdf" download>PDF</a>
               </div>
             </div>
           </div>

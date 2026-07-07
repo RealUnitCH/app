@@ -100,7 +100,11 @@ class SettingsTaxReportView extends StatelessWidget {
 }
 
 class _DatePickerModel extends ValueNotifier<DateTime> {
-  _DatePickerModel() : super(clock.now());
+  // Default to the last completed year-end (31 Dec of the previous year). This
+  // rolls forward automatically: as soon as the clock enters a new year, the
+  // default advances to the 31 Dec that just passed. The user can still pick
+  // any earlier date via the picker.
+  _DatePickerModel() : super(DateTime(clock.now().year - 1, 12, 31));
 
   void setDate(DateTime date) => value = date;
 }
