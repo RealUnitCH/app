@@ -29,6 +29,7 @@
   "buyPaymentConfirm": "Buy now bindingly",
   "buyPaymentConfirmFailed": "There is a technical problem. Please try again later. If the error persists, contact our support team.",
   "buyPaymentConfirmFailedAktionariat": "There is a technical problem. Please check your email inbox — you may still need to confirm your blockchain address. Otherwise, please try again later. If the error persists, contact our support team.",
+  "buyPaymentConfirmFailedPrimaryEmailRequired": "This purchase requires a primary email address on your account. Please add one and try again.",
   "buyPaymentDetailsTitle": "Payment details",
   "buyPaymentInstructionEmail": "Please transfer the purchase amount via bank transfer. We have just sent you the following payment instructions by email as well.",
   "buyPaymentPurposeHint": "Note: The purpose of payment is important! Don't forget to enter it as the payment reference.",

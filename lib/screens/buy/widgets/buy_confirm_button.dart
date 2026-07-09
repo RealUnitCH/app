@@ -64,6 +64,8 @@ class BuyConfirmButtonView extends StatelessWidget {
         if (state is BuyConfirmFailure) {
           final text = switch (state.error) {
             BuyConfirmError.aktionariat => S.of(context).buyPaymentConfirmFailedAktionariat,
+            BuyConfirmError.primaryEmailRequired =>
+              S.of(context).buyPaymentConfirmFailedPrimaryEmailRequired,
             BuyConfirmError.unknown => S.of(context).buyPaymentConfirmFailed,
           };
           ScaffoldMessenger.of(context).showSnackBar(

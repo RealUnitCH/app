@@ -7,6 +7,11 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_
 
 part 'buy_confirm_state.dart';
 
+// Backend error code for a confirm rejected by Aktionariat because the buyer
+// has no primary email on record (HTTP 400). Dispatch on the code, not the
+// message text — the message is Aktionariat's and may change.
+const String _errorCodePrimaryEmailRequired = 'PrimaryEmailRequired';
+
 class BuyConfirmCubit extends Cubit<BuyConfirmState> {
   final RealUnitBuyPaymentInfoService _buyPaymentInfoService;
 
@@ -27,11 +32,12 @@ class BuyConfirmCubit extends Cubit<BuyConfirmState> {
       );
     } on ApiException catch (e) {
       developer.log(e.toString());
-      emit(
-        BuyConfirmFailure(
-          e.statusCode == 503 ? BuyConfirmError.aktionariat : BuyConfirmError.unknown,
-        ),
-      );
+      final error = e.statusCode == 503
+          ? BuyConfirmError.aktionariat
+          : e.code == _errorCodePrimaryEmailRequired
+          ? BuyConfirmError.primaryEmailRequired
+          : BuyConfirmError.unknown;
+      emit(BuyConfirmFailure(error));
     } catch (e) {
       developer.log(e.toString());
       emit(const BuyConfirmFailure(BuyConfirmError.unknown));
