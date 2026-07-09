@@ -95,6 +95,27 @@ void main() {
       expect((cubit.state as BuyConfirmFailure).error, BuyConfirmError.amountTooLow);
     });
 
+    test('confirmPayment prefers aktionariat over amountTooLow when a 503 also '
+        'carries code AmountTooLow', () async {
+      // 503 keeps precedence over the AmountTooLow code — pins the branch order
+      // so a future refactor can't surface a min-purchase message for a genuine
+      // service outage.
+      when(() => service.confirmPayment(any())).thenAnswer(
+        (_) async => throw const ApiException(
+          statusCode: 503,
+          code: 'AmountTooLow',
+          message: 'Aktionariat down',
+        ),
+      );
+
+      final cubit = BuyConfirmCubit(service);
+      final done = cubit.stream.firstWhere((s) => s is BuyConfirmFailure);
+      await cubit.confirmPayment(7);
+      await done;
+
+      expect((cubit.state as BuyConfirmFailure).error, BuyConfirmError.aktionariat);
+    });
+
     test('confirmPayment emits Failure(unknown) on other ApiException', () async {
       when(() => service.confirmPayment(any())).thenAnswer(
         (_) async => throw const ApiException(
