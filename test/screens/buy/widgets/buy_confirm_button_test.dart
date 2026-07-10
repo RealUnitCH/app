@@ -144,6 +144,22 @@ void main() {
       expect(find.text(S.current.buyPaymentConfirmFailedAktionariat), findsOneWidget);
     });
 
+    testWidgets('shows the minimum-purchase error on an amount-too-low failure',
+        (tester) async {
+      whenListen(
+        cubit,
+        Stream.fromIterable([
+          const BuyConfirmFailure(BuyConfirmError.amountTooLow),
+        ]),
+        initialState: const BuyConfirmInitial(),
+      );
+
+      await tester.pumpWidget(host());
+      await tester.pump();
+
+      expect(find.text(S.current.buyPaymentConfirmFailedAmountTooLow), findsOneWidget);
+    });
+
     GoRouter detailsRouter({BuyPaymentInfo info = _info}) => GoRouter(
           initialLocation: '/buy',
           routes: [
