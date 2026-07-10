@@ -235,6 +235,7 @@
   "registerEmailVerificationFailed": "Sie haben Ihre E-Mail noch nicht bestätigt.",
   "registerEmailVerificationTitle": "Willkommen zurück!",
   "registerPhoneNumberInvalid": "Telefonnummer ist erforderlich",
+  "registerPhoneNumberInvalidLength": "Ungültige Länge der Telefonnummer",
   "registerPhoneNumberOnlyDigits": "Nur Zahlen sind erlaubt",
   "registerPhoneNumberTooShort": "Telefonnummer ist zu kurz",
   "registrationFailed": "Registrierung fehlgeschlagen:\n${message}",
