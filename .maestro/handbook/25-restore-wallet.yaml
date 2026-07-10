@@ -25,26 +25,25 @@
 # use the same pattern as the `wallet-logout-confirm-checkbox` and
 # `home-terms-link` Semantics ids elsewhere in the app.
 #
-# The checkbox is now wrapped in `Semantics(identifier:
-# 'wallet-logout-confirm-checkbox', toggled: …)` with a row-wide opaque
+# The checkbox is wrapped in `Semantics(identifier:
+# 'wallet-logout-confirm-checkbox', toggled: isChecked)` with a row-wide opaque
 # GestureDetector (see
-# lib/screens/settings/widgets/settings_confirm_logout_wallet_sheet.dart)
-# so Maestro can target it deterministically via `tapOn: id:` instead of the
+# lib/screens/settings/widgets/settings_confirm_logout_wallet_sheet.dart) so
+# Maestro can both target it by id and read its checked state — instead of the
 # previous wrap-sensitive `leftOf:` coordinate-tap that XCUITest silently
-# dropped on Apple Silicon + iOS 26 (mobile-dev-inc/maestro#3137) — that
-# silent loss is what caused the prior run to never check the box, leaving
-# "Zurücksetzen" disabled and every downstream step a no-op against the still
-# visible modal. We tap the checkbox once by id (a single deterministic
-# Semantics target with a full-row tap surface), then gate the "Zurücksetzen"
-# button tap on the modal still being visible — if "Zurücksetzen" was silently
-# dropped we re-tap until the modal closes. We deliberately do not loop the
-# checkbox itself: tapping it twice would toggle it back off again, since
-# the underlying `setState(() => isChecked = !isChecked)` is not idempotent.
-# If the checkbox tap is the one that's silently dropped, the next
-# `extendedWaitUntil notVisible "RealUnit Wallet zurücksetzen"` (with the
-# Zurücksetzen button still disabled) fails loudly rather than passing silently
-# downstream — and the same Semantics-id strategy that fixed flow 26's
-# Nutzungsbedingungen-link tap has been reliable enough since.
+# dropped on Apple Silicon + iOS 26 (mobile-dev-inc/maestro#3137).
+#
+# XCUITest still drops the occasional id-tap on that stack, and the checkbox is
+# a non-idempotent toggle (`setState(() => isChecked = !isChecked)`), so we can
+# neither trust a single tap nor blind-retry it — a second tap would toggle a
+# landed one back off. Instead we converge: tap the checkbox ONLY while it
+# still reports `checked: false`. A landed tap flips it to checked and ends the
+# loop; a dropped tap leaves it unchecked and is retried; a checked box is
+# never tapped again. `checked` mirrors the `toggled:` Semantics flag and is
+# present in the iOS view hierarchy Maestro reads. We then `assertVisible
+# checked: true`, so an all-dropped run fails loudly right here instead of
+# no-oping the disabled "Zurücksetzen" button through every downstream step and
+# failing confusingly on the modal-still-visible assertion far below.
 #
 # All tap-leading steps (Zurücksetzen, Start, Software-Wallet, Wallet
 # wiederherstellen) are gated on their target not yet showing and re-tapped
@@ -52,9 +51,21 @@
 # screen changes, so surplus iterations no-op.
 appId: swiss.realunit.app
 ---
-- tapOn:
+- repeat:
+    times: 4
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: 'wallet-logout-confirm-checkbox'
+              checked: false
+          commands:
+            - tapOn:
+                id: 'wallet-logout-confirm-checkbox'
+            - waitForAnimationToEnd
+- assertVisible:
     id: 'wallet-logout-confirm-checkbox'
-- waitForAnimationToEnd
+    checked: true
 - repeat:
     times: 3
     commands:
