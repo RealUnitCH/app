@@ -99,6 +99,20 @@ void main() {
       verify(() => service.getPaymentInfo(50, currency: Currency.eur)).called(1);
     });
 
+    test('API isValid=false with error=PrimaryEmailRequired → Failure(primaryEmailRequired)', () async {
+      // The API pre-tells on the quote that the account has no primary
+      // email; the app gates the confirm before the tap instead of
+      // reacting to a post-submit 400.
+      when(() => service.getPaymentInfo(any(), currency: any(named: 'currency')))
+          .thenAnswer((_) async => _info(isValid: false, error: 'PrimaryEmailRequired'));
+
+      final cubit = build();
+      await cubit.getPaymentInfo(amount: '300');
+
+      expect(cubit.state, isA<BuyPaymentInfoFailure>());
+      expect((cubit.state as BuyPaymentInfoFailure).error, PaymentInfoError.primaryEmailRequired);
+    });
+
     test('API isValid=false with unknown error → generic Failure', () async {
       when(() => service.getPaymentInfo(any(), currency: any(named: 'currency')))
           .thenAnswer((_) async => _info(isValid: false, error: 'AmountTooHigh', minVolume: 100));

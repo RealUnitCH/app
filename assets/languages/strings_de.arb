@@ -33,6 +33,7 @@
   "buyPaymentDetailsTitle": "Zahlungsdetails",
   "buyPaymentInstructionEmail": "Bitte überweisen Sie den Kaufbetrag mittels Banktransaktion. Die folgende Zahlungsanweisung haben wir Ihnen soeben auch per E-Mail zugestellt.",
   "buyPaymentPurposeHint": "Hinweis: Der Verwendungszweck ist wichtig! Vergessen Sie nicht, ihn als Zahlungsmitteilung zu erfassen.",
+  "buyPrimaryEmailRequiredCaptureDescription": "Für diesen Kauf benötigen wir Ihre primäre E-Mail-Adresse. Bitte hinterlegen Sie eine E-Mail-Adresse, um fortzufahren.",
   "buyRealu": "RealUnit Aktientoken kaufen",
   "buyRealUnit": "RealUnit kaufen",
   "cancel": "Abbrechen",
