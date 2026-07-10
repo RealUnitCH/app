@@ -311,7 +311,9 @@ final GoRouter routerConfig = GoRouter(
         GoRoute(
           name: SupportRoutes.emailCapture,
           path: 'email',
-          builder: (_, _) => const SupportEmailCapturePage(),
+          builder: (_, state) => SupportEmailCapturePage(
+            description: state.extra as String?,
+          ),
         ),
         GoRoute(
           name: SupportRoutes.tickets,

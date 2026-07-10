@@ -73,13 +73,10 @@ void main() {
       expect(a, isNot(c));
     });
 
-    test('BuyConfirmError enum has exactly aktionariat + primaryEmailRequired + unknown', () {
+    test('BuyConfirmError enum has exactly aktionariat + unknown', () {
       // Pin the variants — the listener in BuyButton switches on these.
-      expect(BuyConfirmError.values.toSet(), {
-        BuyConfirmError.aktionariat,
-        BuyConfirmError.primaryEmailRequired,
-        BuyConfirmError.unknown,
-      });
+      expect(BuyConfirmError.values.toSet(),
+          {BuyConfirmError.aktionariat, BuyConfirmError.unknown});
     });
 
     test('Initial and Loading are distinct singletons (by value)', () {

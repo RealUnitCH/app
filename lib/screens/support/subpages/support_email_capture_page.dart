@@ -9,7 +9,13 @@ import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 
 class SupportEmailCapturePage extends StatelessWidget {
-  const SupportEmailCapturePage({super.key});
+  // Optional entry-point-specific description. The page registers a
+  // *primary* email regardless of caller; only the explanatory copy
+  // differs (Support vs. buy-confirm gate). `null` keeps the default
+  // Support wording, so existing callers stay unchanged.
+  final String? description;
+
+  const SupportEmailCapturePage({super.key, this.description});
 
   @override
   Widget build(BuildContext context) {
@@ -17,25 +23,29 @@ class SupportEmailCapturePage extends StatelessWidget {
       create: (_) => SupportEmailCaptureCubit(
         getIt<RealUnitRegistrationService>(),
       ),
-      child: const SupportEmailCaptureView(),
+      child: SupportEmailCaptureView(description: description),
     );
   }
 }
 
 class SupportEmailCaptureView extends StatelessWidget {
-  const SupportEmailCaptureView({super.key});
+  final String? description;
+
+  const SupportEmailCaptureView({super.key, this.description});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(S.of(context).supportEmailCaptureTitle)),
-      body: const SupportEmailCaptureForm(),
+      body: SupportEmailCaptureForm(description: description),
     );
   }
 }
 
 class SupportEmailCaptureForm extends StatefulWidget {
-  const SupportEmailCaptureForm({super.key});
+  final String? description;
+
+  const SupportEmailCaptureForm({super.key, this.description});
 
   @override
   State<SupportEmailCaptureForm> createState() => _SupportEmailCaptureFormState();
@@ -88,7 +98,7 @@ class _SupportEmailCaptureFormState extends State<SupportEmailCaptureForm> {
                   Padding(
                     padding: const .only(top: 16),
                     child: Text(
-                      S.of(context).supportEmailCaptureDescription,
+                      widget.description ?? S.of(context).supportEmailCaptureDescription,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ),
