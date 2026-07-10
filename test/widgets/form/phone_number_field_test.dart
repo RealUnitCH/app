@@ -54,7 +54,7 @@ String _phoneError(WidgetTester tester, String Function(S localizations) message
 
 void main() {
   group('$PhoneNumberField', () {
-    testWidgets('keeps the existing required error for empty input', (tester) async {
+    testWidgets('shows the required error for empty input', (tester) async {
       final harness = await _pumpPhoneField(tester);
 
       final isValid = harness.formKey.currentState!.validate();
@@ -68,7 +68,7 @@ void main() {
       expect(harness.controller.value, isNull);
     });
 
-    testWidgets('keeps the existing digits-only error for non-digit input', (tester) async {
+    testWidgets('shows the digits-only error for non-digit input', (tester) async {
       final harness = await _pumpPhoneField(tester);
 
       final isValid = await _enterAndValidate(tester, harness, '79abc4567');
@@ -80,118 +80,43 @@ void main() {
       );
     });
 
-    group('prefix +41 plausibility (exactly 9 national digits)', () {
-      testWidgets('rejects an 8-digit national number as too short', (tester) async {
-        final harness = await _pumpPhoneField(tester);
+    // The client performs format hygiene only (non-empty + digits). It must not
+    // gate on length: the API validates the number with libphonenumber, so the
+    // app accepts any non-empty, digits-only national part regardless of length
+    // and lets the backend accept or reject it (CONTRIBUTING: "the API decides…
+    // the app must not block it pre-emptively"). These cases guard against a
+    // length gate being re-introduced.
+    testWidgets('accepts a short +41 national number and defers the length to the API',
+        (tester) async {
+      final harness = await _pumpPhoneField(tester);
 
-        final isValid = await _enterAndValidate(tester, harness, '12345678');
+      final isValid = await _enterAndValidate(tester, harness, '12345');
 
-        expect(harness.controller.value, '+4112345678');
-        expect(isValid, isFalse);
-        expect(
-          find.text(_phoneError(tester, (s) => s.registerPhoneNumberInvalidLength)),
-          findsOneWidget,
-        );
-      });
-
-      testWidgets('accepts a 9-digit national number', (tester) async {
-        final harness = await _pumpPhoneField(tester);
-
-        final isValid = await _enterAndValidate(tester, harness, '791234567');
-
-        expect(harness.controller.value, '+41791234567');
-        expect(isValid, isTrue);
-        expect(
-          find.text(_phoneError(tester, (s) => s.registerPhoneNumberInvalidLength)),
-          findsNothing,
-        );
-      });
-
-      testWidgets('rejects a 10-digit national number as too long', (tester) async {
-        final harness = await _pumpPhoneField(tester);
-
-        final isValid = await _enterAndValidate(tester, harness, '1234567890');
-
-        expect(harness.controller.value, '+411234567890');
-        expect(isValid, isFalse);
-        expect(
-          find.text(_phoneError(tester, (s) => s.registerPhoneNumberInvalidLength)),
-          findsOneWidget,
-        );
-      });
+      expect(harness.controller.value, '+4112345');
+      expect(isValid, isTrue);
     });
 
-    group('prefix +49 plausibility (10 to 11 national digits)', () {
-      testWidgets('rejects a 9-digit national number below the lower bound', (tester) async {
-        final harness = await _pumpPhoneField(tester, initialPhoneNumber: '+49');
+    testWidgets('accepts a full-length Swiss national number', (tester) async {
+      final harness = await _pumpPhoneField(tester);
 
-        final isValid = await _enterAndValidate(tester, harness, '123456789');
+      final isValid = await _enterAndValidate(tester, harness, '791234567');
 
-        expect(harness.controller.value, '+49123456789');
-        expect(isValid, isFalse);
-        expect(
-          find.text(_phoneError(tester, (s) => s.registerPhoneNumberInvalidLength)),
-          findsOneWidget,
-        );
-      });
-
-      testWidgets('accepts a 10-digit national number at the lower bound', (tester) async {
-        final harness = await _pumpPhoneField(tester, initialPhoneNumber: '+49');
-
-        final isValid = await _enterAndValidate(tester, harness, '1234567890');
-
-        expect(harness.controller.value, '+491234567890');
-        expect(isValid, isTrue);
-        expect(
-          find.text(_phoneError(tester, (s) => s.registerPhoneNumberInvalidLength)),
-          findsNothing,
-        );
-      });
-
-      testWidgets('accepts an 11-digit national number at the upper bound', (tester) async {
-        final harness = await _pumpPhoneField(tester, initialPhoneNumber: '+49');
-
-        final isValid = await _enterAndValidate(tester, harness, '15123456789');
-
-        expect(harness.controller.value, '+4915123456789');
-        expect(isValid, isTrue);
-        expect(
-          find.text(_phoneError(tester, (s) => s.registerPhoneNumberInvalidLength)),
-          findsNothing,
-        );
-      });
-
-      testWidgets('rejects a 12-digit national number above the upper bound', (tester) async {
-        final harness = await _pumpPhoneField(tester, initialPhoneNumber: '+49');
-
-        final isValid = await _enterAndValidate(tester, harness, '123456789012');
-
-        expect(harness.controller.value, '+49123456789012');
-        expect(isValid, isFalse);
-        expect(
-          find.text(_phoneError(tester, (s) => s.registerPhoneNumberInvalidLength)),
-          findsOneWidget,
-        );
-      });
+      expect(harness.controller.value, '+41791234567');
+      expect(isValid, isTrue);
     });
 
-    testWidgets(
-      'fails open for an unrecognised prefix and accepts a short national number',
-      (tester) async {
-        // An initial value whose prefix is neither +41 nor +49 leaves `prefix`
-        // null in initState, so `_isPlausibleNationalNumber` reaches its
-        // `default` branch and accepts any non-empty all-digit input.
-        final harness = await _pumpPhoneField(tester, initialPhoneNumber: '+1555');
+    testWidgets('accepts a 9-digit +49 national number (valid per the API, not a length error)',
+        (tester) async {
+      // A 9-digit German national number (e.g. a Frankfurt landline, 069 …) is
+      // valid for libphonenumber; the client must not reject it on length.
+      final harness = await _pumpPhoneField(tester, initialPhoneNumber: '+49');
 
-        final isValid = await _enterAndValidate(tester, harness, '12345');
+      final isValid = await _enterAndValidate(tester, harness, '691234567');
 
-        expect(isValid, isTrue);
-        expect(
-          find.text(_phoneError(tester, (s) => s.registerPhoneNumberInvalidLength)),
-          findsNothing,
-        );
-      },
-    );
+      expect(harness.controller.value, '+49691234567');
+      expect(isValid, isTrue);
+    });
+
     testWidgets('switching the country prefix recomposes the stored number', (tester) async {
       final harness = await _pumpPhoneField(tester, initialPhoneNumber: '+41791234567');
 
