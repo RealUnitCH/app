@@ -216,6 +216,41 @@ ist das api-Repo. Kommt upstream ein Beispiel hinzu oder weg, failt der Build am
 eigenen `EXPECTED_PDF_COUNT`-Guard des balance-Steps — dann die Zahl in
 `handbook.yaml` und die Download-Karten in `#spec-balance` im selben Zug anpassen.
 
+## Web-Baselines (realunit.app)
+
+Die Sektion **W — Web / realunit.app** (`#spec-web`) zeigt die
+Visual-Regression-Baselines der öffentlichen Website `realunit.app`
+(Landingpage + Aktionariat-Adressbestätigungs-Flow). Sie sind das Web-Pendant
+zu den Golden-Screenshots der App: Jedes Bild ist eine **Playwright-Baseline**,
+die im `RealUnitCH/web`-Repo unter `tests/__screenshots__/` committet und von
+dessen Visual-Regression-CI abgesichert ist — driftet das Seitenrendering, wird
+zuerst dort ein Test rot, bevor die Baseline sich ändert.
+
+Wie die api-Artefakte werden diese PNGs **nicht** hier committet, sondern beim
+Handbook-Build eingezogen: der Step "Stage web e2e baselines from web repo" in
+`handbook.yaml` checkt `RealUnitCH/web@develop` aus und kopiert
+`tests/__screenshots__/{desktop-chromium,tablet-chromium,mobile-safari}/` nach
+`docs/handbook/web/` (gitignored). Single Source of Truth ist das web-Repo; die
+Ref bleibt — wie der api-Checkout — auf `develop` gepinnt (Integrations-Branch =
+aktuell akzeptierte Baselines), unabhängig vom DEV/PRD-Ziel.
+
+Kommt im web-Repo eine View hinzu oder weg, failt der Build am
+`EXPECTED_WEB_BASELINE_COUNT`-Guard des Steps — dann die Zahl in `handbook.yaml`
+**und** die Bild-Karten in `#spec-web` (`docs/handbook/de/index.html`) im selben
+Zug anpassen. Eine reine Website-Änderung im web-Repo löst hier **keinen**
+automatischen Rebuild aus — sie fliesst erst mit dem nächsten Handbook-Deploy
+rein (Push auf `staging` → DEV bzw. `develop` → PRD, oder manueller
+`workflow_dispatch` auf `handbook-deploy.yaml`).
+
+### Lokal ansehen
+
+```bash
+# Baselines aus einem lokalen web-Checkout ins (gitignored) web-Dir kopieren
+mkdir -p docs/handbook/web
+cp -R <web-checkout>/tests/__screenshots__/. docs/handbook/web/
+open docs/handbook/de/index.html   # Sektion "W — Web / realunit.app"
+```
+
 ## Beziehung zu den Tier-0/Tier-1-Tests
 
 Tier 0/1 (Unit + Widget + integration-mit-FakeBitboxCredentials) prüfen
