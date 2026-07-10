@@ -238,7 +238,6 @@
   "registerEmailVerificationTitle": "Willkommen zurück!",
   "registerPhoneNumberInvalid": "Telefonnummer ist erforderlich",
   "registerPhoneNumberOnlyDigits": "Nur Zahlen sind erlaubt",
-  "registerPhoneNumberTooShort": "Telefonnummer ist zu kurz",
   "registrationFailed": "Registrierung fehlgeschlagen:\n${message}",
   "registrationForwardingFailed": "Registrierung angenommen, aber die Weiterleitung an die Gesellschaft ist verzögert. Wir versuchen es automatisch erneut.",
   "registrationRequired": "Zusätzliche Angaben erforderlich",

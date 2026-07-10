@@ -238,7 +238,6 @@
   "registerEmailVerificationTitle": "Welcome back!",
   "registerPhoneNumberInvalid": "Phone number is required",
   "registerPhoneNumberOnlyDigits": "Only numbers are allowed",
-  "registerPhoneNumberTooShort": "Phone number is too short",
   "registrationFailed": "Registration failed:\n${message}",
   "registrationForwardingFailed": "Registration accepted, but forwarding to the company is delayed. We will retry automatically.",
   "registrationRequired": "Additional information required",
