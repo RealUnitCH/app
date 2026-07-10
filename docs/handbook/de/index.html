@@ -820,6 +820,9 @@
               <a href="#spec-17"><span class="spec-num">17</span>Verkaufen — States</a>
             </li>
             <li>
+              <a href="#spec-web"><span class="spec-num">W</span>Web · realunit.app</a>
+            </li>
+            <li>
               <a href="#spec-mails"><span class="spec-num">M</span>E-Mails</a>
             </li>
             <li>
@@ -2392,6 +2395,368 @@
               </div>
             </div>
           </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-web" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">W</span>Web · realunit.app</h2>
+                <div class="file">RealUnitCH/web · tests/__screenshots__/</div>
+              </div>
+              <div class="rhs">
+                <b>Live aus web-Repo</b>
+                <div class="links">
+                  <a href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__">Baselines ↗</a>
+                </div>
+              </div>
+            </div>
+          </summary>
+
+          <p class="spec-intro">
+            Die öffentliche Website <a href="https://realunit.app">realunit.app</a>
+            (Landingpage plus der Aktionariat-Adressbestätigungs-Flow unter
+            <code>/confirm-aktionariat</code>) hat ihre eigene Visual-Regression-Suite.
+            Jedes Bild hier ist eine <b>Playwright-Baseline</b> aus dem
+            <a href="https://github.com/RealUnitCH/web">RealUnitCH/web</a>-Repo
+            (<code>tests/__screenshots__/</code>), aufgenommen im gepinnten
+            Linux-Container über drei Viewports — <b>Desktop</b> (Chromium),
+            <b>Tablet</b> (Chromium) und <b>Mobile</b> (Safari). Es gilt dieselbe
+            Eigenschaft wie bei den App-Screens oben: Driftet das Seitenrendering,
+            wird zuerst der Visual-Regression-Test im web-Repo rot, bevor die
+            Baseline sich ändert. Bei jedem Handbook-Build werden die aktuell
+            akzeptierten Baselines aus <code>develop</code> automatisch ins Image
+            gezogen — Single Source of Truth ist das web-Repo, dieses Handbook
+            spiegelt nur den aktuellen Stand.
+          </p>
+
+          <h3>Startseite <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test" id="web-home-desktop">
+              <div class="head">
+                <a class="name permalink" href="#web-home-desktop">web-home-desktop</a>
+                <button class="copy-link" type="button" data-target="web-home-desktop" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/home.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/home.png"
+                  alt="Startseite — Desktop"
+                />
+              </div>
+              <div class="desc">
+                Die Landingpage von realunit.app in der Desktop-Ansicht (Chromium).
+              </div>
+            </div>
+            <div class="test" id="web-home-tablet">
+              <div class="head">
+                <a class="name permalink" href="#web-home-tablet">web-home-tablet</a>
+                <button class="copy-link" type="button" data-target="web-home-tablet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">tablet-chromium/home.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/tablet-chromium/home.png"
+                  alt="Startseite — Tablet"
+                />
+              </div>
+              <div class="desc">
+                Dieselbe Landingpage im Tablet-Layout.
+              </div>
+            </div>
+            <div class="test" id="web-home-mobile-ios">
+              <div class="head">
+                <a class="name permalink" href="#web-home-mobile-ios">web-home-mobile-ios</a>
+                <button class="copy-link" type="button" data-target="web-home-mobile-ios" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/home-ios.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/home-ios.png"
+                  alt="Startseite — Mobile (iOS)"
+                />
+              </div>
+              <div class="desc">
+                Mobile-Ansicht (Safari), iOS-Variante — der Store-Badge richtet
+                sich nach der erkannten Plattform und zeigt hier den App Store.
+              </div>
+            </div>
+            <div class="test" id="web-home-mobile-android">
+              <div class="head">
+                <a class="name permalink" href="#web-home-mobile-android">web-home-mobile-android</a>
+                <button class="copy-link" type="button" data-target="web-home-mobile-android" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/home-android.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/home-android.png"
+                  alt="Startseite — Mobile (Android)"
+                />
+              </div>
+              <div class="desc">
+                Mobile-Ansicht, Android-Variante — hier zeigt derselbe Store-Badge
+                Google Play.
+              </div>
+            </div>
+          </div>
+
+          <h3>Adressbestätigung — bestätigt <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test" id="web-confirm-confirmed-desktop-de">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-confirmed-desktop-de">web-confirm-confirmed-desktop-de</a>
+                <button class="copy-link" type="button" data-target="web-confirm-confirmed-desktop-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-confirmed.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-confirmed.png"
+                  alt="Adressbestätigung erfolgreich — Desktop (DE)"
+                />
+              </div>
+              <div class="desc">
+                Erfolgs-Zustand der Aktionariat-Adressbestätigung nach einem
+                gültigen Link, Desktop, Deutsch.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-confirmed-desktop-en">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-confirmed-desktop-en">web-confirm-confirmed-desktop-en</a>
+                <button class="copy-link" type="button" data-target="web-confirm-confirmed-desktop-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-confirmed-en.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-confirmed-en.png"
+                  alt="Address confirmed — Desktop (EN)"
+                />
+              </div>
+              <div class="desc">
+                Derselbe Erfolgs-Zustand auf Englisch (<code>?lang=en</code>).
+              </div>
+            </div>
+            <div class="test" id="web-confirm-confirmed-tablet">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-confirmed-tablet">web-confirm-confirmed-tablet</a>
+                <button class="copy-link" type="button" data-target="web-confirm-confirmed-tablet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">tablet-chromium/confirm-confirmed.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/tablet-chromium/confirm-confirmed.png"
+                  alt="Adressbestätigung erfolgreich — Tablet"
+                />
+              </div>
+              <div class="desc">
+                Erfolgs-Zustand im Tablet-Layout.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-confirmed-mobile">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-confirmed-mobile">web-confirm-confirmed-mobile</a>
+                <button class="copy-link" type="button" data-target="web-confirm-confirmed-mobile" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/confirm-confirmed-mobile.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/confirm-confirmed-mobile.png"
+                  alt="Adressbestätigung erfolgreich — Mobile"
+                />
+              </div>
+              <div class="desc">
+                Erfolgs-Zustand in der Mobile-Ansicht.
+              </div>
+            </div>
+          </div>
+
+          <h3>Adressbestätigung — ungültiger Link <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test" id="web-confirm-invalid-desktop-de">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-invalid-desktop-de">web-confirm-invalid-desktop-de</a>
+                <button class="copy-link" type="button" data-target="web-confirm-invalid-desktop-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-invalid.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-invalid.png"
+                  alt="Ungültiger Bestätigungslink — Desktop (DE)"
+                />
+              </div>
+              <div class="desc">
+                Fehler-Zustand bei fehlenden oder ungültigen Link-Parametern,
+                Desktop, Deutsch.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-invalid-desktop-en">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-invalid-desktop-en">web-confirm-invalid-desktop-en</a>
+                <button class="copy-link" type="button" data-target="web-confirm-invalid-desktop-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-invalid-en.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-invalid-en.png"
+                  alt="Invalid confirmation link — Desktop (EN)"
+                />
+              </div>
+              <div class="desc">
+                Derselbe Fehler-Zustand auf Englisch.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-invalid-tablet">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-invalid-tablet">web-confirm-invalid-tablet</a>
+                <button class="copy-link" type="button" data-target="web-confirm-invalid-tablet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">tablet-chromium/confirm-invalid.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/tablet-chromium/confirm-invalid.png"
+                  alt="Ungültiger Bestätigungslink — Tablet"
+                />
+              </div>
+              <div class="desc">
+                Fehler-Zustand im Tablet-Layout.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-invalid-mobile">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-invalid-mobile">web-confirm-invalid-mobile</a>
+                <button class="copy-link" type="button" data-target="web-confirm-invalid-mobile" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/confirm-invalid.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/confirm-invalid.png"
+                  alt="Ungültiger Bestätigungslink — Mobile"
+                />
+              </div>
+              <div class="desc">
+                Fehler-Zustand in der Mobile-Ansicht.
+              </div>
+            </div>
+          </div>
+
+          <h3>Adressbestätigung — Dienst nicht verfügbar <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test" id="web-confirm-unavailable-desktop-de">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-unavailable-desktop-de">web-confirm-unavailable-desktop-de</a>
+                <button class="copy-link" type="button" data-target="web-confirm-unavailable-desktop-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-unavailable.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-unavailable.png"
+                  alt="Dienst nicht verfügbar — Desktop (DE)"
+                />
+              </div>
+              <div class="desc">
+                Zustand, wenn der Bestätigungs-Endpunkt nicht erreichbar ist
+                (Backend-Fehler oder Timeout), Desktop, Deutsch.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-unavailable-desktop-en">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-unavailable-desktop-en">web-confirm-unavailable-desktop-en</a>
+                <button class="copy-link" type="button" data-target="web-confirm-unavailable-desktop-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-unavailable-en.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-unavailable-en.png"
+                  alt="Service unavailable — Desktop (EN)"
+                />
+              </div>
+              <div class="desc">
+                Derselbe Zustand auf Englisch.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-unavailable-mobile">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-unavailable-mobile">web-confirm-unavailable-mobile</a>
+                <button class="copy-link" type="button" data-target="web-confirm-unavailable-mobile" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/confirm-unavailable.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/confirm-unavailable.png"
+                  alt="Dienst nicht verfügbar — Mobile"
+                />
+              </div>
+              <div class="desc">
+                Derselbe Zustand in der Mobile-Ansicht.
+              </div>
+            </div>
+          </div>
+
+          <h3>404 — Seite nicht gefunden <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test" id="web-notfound-desktop">
+              <div class="head">
+                <a class="name permalink" href="#web-notfound-desktop">web-notfound-desktop</a>
+                <button class="copy-link" type="button" data-target="web-notfound-desktop" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/notfound.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/notfound.png"
+                  alt="404-Seite — Desktop"
+                />
+              </div>
+              <div class="desc">
+                Die 404-Seite für unbekannte Pfade, Desktop.
+              </div>
+            </div>
+            <div class="test" id="web-notfound-tablet">
+              <div class="head">
+                <a class="name permalink" href="#web-notfound-tablet">web-notfound-tablet</a>
+                <button class="copy-link" type="button" data-target="web-notfound-tablet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">tablet-chromium/notfound.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/tablet-chromium/notfound.png"
+                  alt="404-Seite — Tablet"
+                />
+              </div>
+              <div class="desc">
+                404-Seite im Tablet-Layout.
+              </div>
+            </div>
+            <div class="test" id="web-notfound-mobile">
+              <div class="head">
+                <a class="name permalink" href="#web-notfound-mobile">web-notfound-mobile</a>
+                <button class="copy-link" type="button" data-target="web-notfound-mobile" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/notfound.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/notfound.png"
+                  alt="404-Seite — Mobile"
+                />
+              </div>
+              <div class="desc">
+                404-Seite in der Mobile-Ansicht.
+              </div>
+            </div>
+          </div>
+
+          <p>
+            Eine Änderung an der Website im
+            <a href="https://github.com/RealUnitCH/web">RealUnitCH/web</a>-Repo löst
+            hier <b>keinen</b> automatischen Rebuild aus. Die neuen Baselines werden
+            mit dem nächsten Handbook-Deploy (Push auf <code>staging</code> → DEV
+            bzw. <code>develop</code> → PRD mit handbook-relevanten Pfaden oder
+            manueller <code>workflow_dispatch</code> auf
+            <code>handbook-deploy.yaml</code> im realunit-app-Repo) reingezogen.
+            Kommt im web-Repo eine View hinzu oder weg, failt der Handbook-Build am
+            <code>EXPECTED_WEB_BASELINE_COUNT</code>-Guard, bis Zahl und Karten hier
+            im selben Zug nachgezogen sind.
+          </p>
         </details>
 
         <hr class="sep" />
