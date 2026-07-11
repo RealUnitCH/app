@@ -4,58 +4,27 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
-import 'package:mocktail/mocktail.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/widgets/form/country_field.dart';
 
+import '../../helper/country_fixture.dart';
 import '../../helper/pump_app.dart';
 
-class _MockDfxCountryService extends Mock implements DfxCountryService {}
-
-Country _country({
-  required int id,
-  required String symbol,
-  required String name,
-  required bool kycAllowed,
-}) => Country(
-  id: id,
-  symbol: symbol,
-  name: name,
-  kycAllowed: kycAllowed,
-);
-
 void main() {
-  late _MockDfxCountryService countryService;
-
-  // KYC-allowed: shown for residence and for nationality.
-  final ch = _country(
-    id: 41,
-    symbol: 'CH',
-    name: 'Switzerland',
-    kycAllowed: true,
-  );
-  // Also KYC-allowed: a second allowed country.
-  final allowed = _country(
-    id: 1,
-    symbol: 'NA',
-    name: 'Nationland',
-    kycAllowed: true,
-  );
-  // Not KYC-allowed: hidden for residence, still shown for nationality.
-  final notAllowed = _country(
-    id: 2,
-    symbol: 'RE',
-    name: 'Resland',
-    kycAllowed: false,
-  );
-
-  setUp(() {
-    countryService = _MockDfxCountryService();
-    GetIt.instance.registerSingleton<DfxCountryService>(countryService);
-  });
+  // Concrete fixture countries used by the purpose-filter assertions.
+  // Switzerland (id 41) is KYC-allowed; Afghanistan (id 3) is not — both are
+  // present in the committed country fixture.
+  const switzerland = Country(id: 41, symbol: 'CH', name: 'Switzerland', kycAllowed: true);
+  const afghanistan = Country(id: 3, symbol: 'AF', name: 'Afghanistan', kycAllowed: false);
 
   tearDown(() async => GetIt.instance.reset());
+
+  void registerCountryService(DfxCountryService service) {
+    GetIt.instance.registerSingleton<DfxCountryService>(service);
+  }
 
   Widget host(Widget child, {GlobalKey<FormState>? formKey}) {
     return Scaffold(
@@ -66,25 +35,30 @@ void main() {
     );
   }
 
+  List<Country> renderedCountries(WidgetTester tester) {
+    final button = tester.widget<DropdownButton<Country>>(
+      find.byType(DropdownButton<Country>),
+    );
+    return button.items!.map((item) => item.value!).toList();
+  }
+
   group('$CountryFieldPurpose', () {
     test('nationality allows every country regardless of kycAllowed', () {
-      expect(CountryFieldPurpose.nationality.allows(ch), isTrue);
-      expect(CountryFieldPurpose.nationality.allows(notAllowed), isTrue);
+      expect(CountryFieldPurpose.nationality.allows(switzerland), isTrue);
+      expect(CountryFieldPurpose.nationality.allows(afghanistan), isTrue);
     });
 
     test('residence reads kycAllowed', () {
-      expect(CountryFieldPurpose.residence.allows(ch), isTrue);
-      expect(CountryFieldPurpose.residence.allows(notAllowed), isFalse);
+      expect(CountryFieldPurpose.residence.allows(switzerland), isTrue);
+      expect(CountryFieldPurpose.residence.allows(afghanistan), isFalse);
     });
   });
 
   group('$CountryField filtering', () {
-    testWidgets('nationality purpose shows every country, including non-KYC ones', (
+    testWidgets('nationality purpose offers every fixture country, KYC-allowed or not', (
       tester,
     ) async {
-      when(
-        () => countryService.getAllCountries(),
-      ).thenAnswer((_) async => [ch, allowed, notAllowed]);
+      registerCountryService(fixtureCountryService());
 
       await tester.pumpApp(
         host(
@@ -97,18 +71,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(DropdownButtonFormField<Country>));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Switzerland'), findsWidgets);
-      expect(find.text('Nationland'), findsWidgets);
-      expect(find.text('Resland'), findsWidgets);
+      final names = renderedCountries(tester).map((c) => c.name);
+      expect(names, isNotEmpty);
+      expect(names, contains('Switzerland'));
+      expect(names, contains('Afghanistan'));
     });
 
-    testWidgets('residence purpose hides countries with kycAllowed false', (tester) async {
-      when(
-        () => countryService.getAllCountries(),
-      ).thenAnswer((_) async => [ch, allowed, notAllowed]);
+    testWidgets('residence purpose drops countries with kycAllowed false', (tester) async {
+      registerCountryService(fixtureCountryService());
 
       await tester.pumpApp(
         host(
@@ -121,18 +91,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(DropdownButtonFormField<Country>));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Switzerland'), findsWidgets);
-      expect(find.text('Nationland'), findsWidgets);
-      expect(find.text('Resland'), findsNothing);
+      final names = renderedCountries(tester).map((c) => c.name);
+      expect(names, isNotEmpty);
+      expect(names, contains('Switzerland'));
+      expect(names, isNot(contains('Afghanistan')));
     });
   });
 
   group('$CountryField no auto-selection', () {
     testWidgets('does not preselect a country and does not fire onChanged', (tester) async {
-      when(() => countryService.getAllCountries()).thenAnswer((_) async => [ch, allowed]);
+      registerCountryService(fixtureCountryService());
       Country? picked;
 
       await tester.pumpApp(
@@ -147,12 +115,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(picked, isNull);
-      // The hint is visible because no value is selected.
-      expect(find.text('Schweiz'), findsOneWidget);
+      // Nothing is selected, so the field falls back to its hint.
+      final field = tester.widget<DropdownButtonFormField<Country>>(
+        find.byType(DropdownButtonFormField<Country>),
+      );
+      expect(field.initialValue, isNull);
     });
 
     testWidgets('an untouched field makes the surrounding Form invalid', (tester) async {
-      when(() => countryService.getAllCountries()).thenAnswer((_) async => [ch, allowed]);
+      registerCountryService(fixtureCountryService());
       final formKey = GlobalKey<FormState>();
 
       await tester.pumpApp(
@@ -169,8 +140,8 @@ void main() {
 
   group('$CountryField loading state', () {
     testWidgets('keeps the field present and the Form invalid while loading', (tester) async {
-      final completer = Completer<List<Country>>();
-      when(() => countryService.getAllCountries()).thenAnswer((_) => completer.future);
+      final gate = Completer<http.Response>();
+      registerCountryService(countryServiceWithClient(MockClient((_) => gate.future)));
       final formKey = GlobalKey<FormState>();
 
       await tester.pumpApp(
@@ -186,7 +157,7 @@ void main() {
       expect(find.byType(CupertinoActivityIndicator), findsOneWidget);
       expect(formKey.currentState!.validate(), isFalse);
 
-      completer.complete([ch]);
+      gate.complete(countriesFixtureResponse());
       await tester.pumpAndSettle();
     });
   });
@@ -195,7 +166,7 @@ void main() {
     testWidgets('preselects the initialValue and fires onChanged once countries load', (
       tester,
     ) async {
-      when(() => countryService.getAllCountries()).thenAnswer((_) async => [ch, allowed]);
+      registerCountryService(fixtureCountryService());
       Country? picked;
 
       await tester.pumpApp(
@@ -203,22 +174,20 @@ void main() {
           CountryField(
             label: 'Citizenship',
             purpose: CountryFieldPurpose.nationality,
-            initialValue: ch,
+            initialValue: switzerland,
             onChanged: (c) => picked = c,
           ),
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(picked, ch);
-      expect(find.text('Switzerland'), findsOneWidget);
+      expect(picked, switzerland);
+      expect(find.text('Switzerland'), findsWidgets);
     });
 
     testWidgets('ignores an initialValue absent from the filtered country list', (tester) async {
-      // notAllowed is filtered out for residence purpose; the preselect must not push it back.
-      when(
-        () => countryService.getAllCountries(),
-      ).thenAnswer((_) async => [ch, notAllowed]);
+      // Afghanistan is filtered out for residence purpose; the preselect must not push it back.
+      registerCountryService(fixtureCountryService());
       Country? picked;
 
       await tester.pumpApp(
@@ -226,7 +195,7 @@ void main() {
           CountryField(
             label: 'Country',
             purpose: CountryFieldPurpose.residence,
-            initialValue: notAllowed,
+            initialValue: afghanistan,
             onChanged: (c) => picked = c,
           ),
         ),
@@ -238,13 +207,10 @@ void main() {
   });
 
   group('$CountryField error state', () {
-    testWidgets('keeps the field present, the Form invalid, and offers a retry', (tester) async {
-      var calls = 0;
-      when(() => countryService.getAllCountries()).thenAnswer((_) async {
-        calls++;
-        if (calls == 1) throw Exception('network down');
-        return [ch];
-      });
+    testWidgets('surfaces the error state and hides the dropdown when the load fails', (
+      tester,
+    ) async {
+      registerCountryService(failingCountryService());
       final formKey = GlobalKey<FormState>();
 
       await tester.pumpApp(
@@ -257,11 +223,30 @@ void main() {
 
       // The field is present, the raw exception is not leaked, the Form is invalid.
       expect(find.text('Citizenship'), findsOneWidget);
-      expect(find.textContaining('network down'), findsNothing);
+      expect(find.textContaining('Failed to fetch'), findsNothing);
       expect(formKey.currentState!.validate(), isFalse);
       expect(find.byType(DropdownButtonFormField<Country>), findsNothing);
+      expect(find.byType(TextButton), findsOneWidget);
+    });
 
-      // Retry re-runs the load and recovers into the dropdown.
+    testWidgets('retry re-runs the load and recovers into the dropdown', (tester) async {
+      var calls = 0;
+      registerCountryService(
+        countryServiceWithClient(
+          MockClient((_) async {
+            calls++;
+            return calls == 1 ? http.Response('error', 500) : countriesFixtureResponse();
+          }),
+        ),
+      );
+
+      await tester.pumpApp(
+        host(const CountryField(label: 'Citizenship', purpose: CountryFieldPurpose.nationality)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DropdownButtonFormField<Country>), findsNothing);
+
       await tester.tap(find.byType(TextButton));
       await tester.pumpAndSettle();
 

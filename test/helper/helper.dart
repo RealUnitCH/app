@@ -1,3 +1,4 @@
+export 'country_fixture.dart';
 export 'golden_constants.dart';
 export 'golden_mocks.dart';
 export 'golden_plugin_stubs.dart';
