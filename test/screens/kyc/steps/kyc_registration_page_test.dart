@@ -46,8 +46,6 @@ class MockKycCubit extends MockCubit<KycState> implements KycCubit {}
 
 class MockRealUnitRegistrationService extends Mock implements RealUnitRegistrationService {}
 
-class MockDfxCountryService extends Mock implements DfxCountryService {}
-
 class MockDfxKycService extends Mock implements DfxKycService {}
 
 class MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
@@ -137,7 +135,7 @@ void main() {
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<RealUnitRegistrationService>(MockRealUnitRegistrationService());
-    getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
+    getIt.registerSingleton<DfxCountryService>(fixtureCountryService());
     getIt.registerSingleton<DfxKycService>(MockDfxKycService());
     final appStore = MockAppStore();
     when(() => appStore.wallet).thenReturn(MockAWallet());
@@ -410,35 +408,57 @@ void main() {
   });
 
   group('$KycRegistrationPage prefill', () {
-    testWidgets('seeds the form fields from initialUserData', (tester) async {
-      final countryService = GetIt.instance.get<DfxCountryService>() as MockDfxCountryService;
-      when(() => countryService.getCountryBySymbol(any())).thenAnswer((_) async => _country);
+    testWidgets(
+      'seeds the form fields from initialUserData, resolving both countries '
+      'through the country service',
+      (tester) async {
+        await tester.pumpApp(const KycRegistrationPage(initialUserData: _fixtureUserData));
+        // Scalars seed synchronously in initState; the two country lookups
+        // resolve through the fixture-backed DfxCountryService and setState on
+        // completion.
+        await tester.pumpAndSettle();
 
-      await tester.pumpApp(const KycRegistrationPage(initialUserData: _fixtureUserData));
-      // Scalars seed synchronously in initState; the two country lookups resolve
-      // via DfxCountryService and setState on completion.
-      await tester.pumpAndSettle();
+        expect(find.text('Ada'), findsOneWidget);
+        expect(find.text('Lovelace'), findsOneWidget);
 
-      expect(find.text('Ada'), findsOneWidget);
-      expect(find.text('Lovelace'), findsOneWidget);
-      // nationality + addressCountry both resolve through the country service.
-      verify(() => countryService.getCountryBySymbol('CH')).called(2);
-    });
+        // The DTO carries the two country symbols ('CH' nationality, 'CH'
+        // address); the observable proof that both were resolved is that the
+        // resolved country name reaches the UI. The nationality field lives on
+        // the visible personal step.
+        expect(find.text('Switzerland'), findsWidgets);
+
+        // Reveal the address step and confirm its residence field resolved the
+        // address country too. Both fields rendering the resolved name is a
+        // stronger guarantee than counting service calls: it proves each lookup
+        // resolved to the right country AND propagated into the form.
+        (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(1);
+        await tester.pumpAndSettle();
+        expect(find.text('Switzerland'), findsWidgets);
+      },
+    );
 
     testWidgets('degrades gracefully when the country lookup fails', (tester) async {
-      final countryService = GetIt.instance.get<DfxCountryService>() as MockDfxCountryService;
-      when(() => countryService.getCountryBySymbol(any()))
-          .thenAnswer((_) async => throw Exception('unknown symbol'));
+      // Swap the shared fixture service for one whose HTTP layer always fails,
+      // so every country call (the two symbol lookups and each field's own
+      // getAllCountries) throws. Restore the fixture for the tests that follow.
+      final getIt = GetIt.instance;
+      await getIt.unregister<DfxCountryService>();
+      getIt.registerSingleton<DfxCountryService>(failingCountryService());
+      addTearDown(() async {
+        await getIt.unregister<DfxCountryService>();
+        getIt.registerSingleton<DfxCountryService>(fixtureCountryService());
+      });
 
       await tester.pumpApp(const KycRegistrationPage(initialUserData: _fixtureUserData));
       await tester.pumpAndSettle();
 
       // The scalar prefill still applies. The lookup failure is swallowed by
       // _resolveInitialCountries' catch, so it never escapes as an unhandled
-      // async error — takeException() stays null (the country fields fall back
-      // to empty / their own load-failed state, which is not asserted here).
+      // async error — takeException() stays null. The country field degrades to
+      // its load-failed branch instead of crashing.
       expect(find.text('Ada'), findsOneWidget);
       expect(tester.takeException(), isNull);
+      expect(find.text(S.current.countriesLoadFailed), findsWidgets);
     });
   });
 

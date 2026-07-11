@@ -21,8 +21,6 @@ class MockSettingsUserDataCubit extends MockCubit<SettingsUserDataState>
 
 class MockRealUnitRegistrationService extends Mock implements RealUnitRegistrationService {}
 
-class MockDfxCountryService extends Mock implements DfxCountryService {}
-
 class MockDfxKycService extends Mock implements DfxKycService {}
 
 void main() {
@@ -37,7 +35,7 @@ void main() {
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<RealUnitRegistrationService>(MockRealUnitRegistrationService());
-    getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
+    getIt.registerSingleton<DfxCountryService>(fixtureCountryService());
     getIt.registerSingleton<DfxKycService>(MockDfxKycService());
   }
 
