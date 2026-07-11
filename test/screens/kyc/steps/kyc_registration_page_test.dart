@@ -421,19 +421,40 @@ void main() {
         expect(find.text('Ada'), findsOneWidget);
         expect(find.text('Lovelace'), findsOneWidget);
 
-        // The DTO carries the two country symbols ('CH' nationality, 'CH'
-        // address); the observable proof that both were resolved is that the
-        // resolved country name reaches the UI. The nationality field lives on
-        // the visible personal step.
-        expect(find.text('Switzerland'), findsWidgets);
+        // The DTO carries two country symbols ('CH' nationality, 'CH' address).
+        // Assert on each dropdown's *selected value*, not a 'Switzerland' text
+        // match: a closed DropdownButtonFormField renders every item (Switzerland
+        // among them) into an offstage IndexedStack, so find.text('Switzerland')
+        // would pass on the mere presence of the item — even if
+        // _resolveInitialCountries never resolved anything. The dropdown's
+        // initialValue is the resolved Country handed down through the field, so
+        // asserting it proves the symbol lookup resolved AND propagated into the
+        // form. Scope each query to its step: the PageView keeps the personal
+        // step alive while the address step is built, so an unscoped query would
+        // match both country dropdowns.
+        final natField = tester.widget<DropdownButtonFormField<Country>>(
+          find.descendant(
+            of: find.byType(KycRegistrationPersonalStep),
+            matching: find.byType(DropdownButtonFormField<Country>),
+          ),
+        );
+        expect(natField.initialValue?.id, 41);
+        expect(natField.initialValue?.symbol, 'CH');
+        expect(natField.initialValue?.name, 'Switzerland');
 
         // Reveal the address step and confirm its residence field resolved the
-        // address country too. Both fields rendering the resolved name is a
-        // stronger guarantee than counting service calls: it proves each lookup
-        // resolved to the right country AND propagated into the form.
+        // address country too.
         (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(1);
         await tester.pumpAndSettle();
-        expect(find.text('Switzerland'), findsWidgets);
+        final resField = tester.widget<DropdownButtonFormField<Country>>(
+          find.descendant(
+            of: find.byType(KycRegistrationAddressStep),
+            matching: find.byType(DropdownButtonFormField<Country>),
+          ),
+        );
+        expect(resField.initialValue?.id, 41);
+        expect(resField.initialValue?.symbol, 'CH');
+        expect(resField.initialValue?.name, 'Switzerland');
       },
     );
 
