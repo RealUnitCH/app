@@ -17,10 +17,9 @@ const _fixturePath = 'test/fixtures/dfx_countries.json';
 /// The raw fixture body, for tests that build their own [http.Response].
 String countriesFixtureJson() => File(_fixturePath).readAsStringSync();
 
-/// A `200` response carrying the country fixture. The charset is explicit
-/// because the fixture holds non-Latin-1 characters (accented foreign names);
-/// without it `http.Response` would default to Latin-1 and throw. Use this to
-/// resolve a deferred (`Completer`-gated) or fail-then-recover [MockClient].
+/// A `200` response carrying the country fixture, with an explicit UTF-8 charset
+/// (the fixture holds non-Latin-1 names). Use it to resolve a deferred
+/// (`Completer`-gated) or fail-then-recover [MockClient].
 http.Response countriesFixtureResponse() => http.Response(
       countriesFixtureJson(),
       200,

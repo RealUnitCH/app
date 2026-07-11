@@ -122,9 +122,7 @@ class _CountryFieldState extends State<CountryField> {
 
     final priority = ['CH', 'DE', 'IT', 'FR'];
 
-    // getAllCountries() returns the service's cached list instance, so sort a
-    // copy — sorting in place mutates shared service state and throws when the
-    // cached list is unmodifiable.
+    // Sort a copy — the service hands out its shared cached list.
     final sorted = [...countries]..sort((a, b) {
       final aIndex = priority.indexOf(a.symbol.toUpperCase());
       final bIndex = priority.indexOf(b.symbol.toUpperCase());
