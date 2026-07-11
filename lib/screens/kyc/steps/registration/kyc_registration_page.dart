@@ -22,6 +22,7 @@ import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registrati
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_submit/kyc_registration_submit_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_address_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_personal_step.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_tax_step.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
@@ -79,7 +80,6 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   final postalCodeCtrl = TextEditingController();
   final cityCtrl = TextEditingController();
   final countryCtrl = ValueNotifier<Country?>(null);
-  final swissTaxResidenceCtrl = ValueNotifier<bool>(true);
   final taxCountryCtrl = ValueNotifier<Country?>(null);
   final tinCtrl = TextEditingController();
 
@@ -270,7 +270,10 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
           cityCtrl: cityCtrl,
           countryCtrl: countryCtrl,
           initialCountry: _initialAddressCountry,
-          swissTaxResidenceCtrl: swissTaxResidenceCtrl,
+        );
+
+      case KycRegistrationStep.taxResidence:
+        return KycRegistrationTaxStep(
           taxCountryCtrl: taxCountryCtrl,
           tinCtrl: tinCtrl,
           onSubmit: _onSubmit,
@@ -279,7 +282,11 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   }
 
   Future<void> _onSubmit() async {
-    final swissTaxResidence = swissTaxResidenceCtrl.value;
+    // `swissTaxResidence` is derived from the tax-residence country picked on
+    // the final step: a Swiss (CH) tax residence is Swiss-only, and the TIN is
+    // forwarded only for a non-Swiss tax residence (matching the backend
+    // contract).
+    final swissTaxResidence = taxCountryCtrl.value!.symbol == 'CH';
     final countryAndTINs = swissTaxResidence
         ? null
         : [
@@ -319,7 +326,6 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
     postalCodeCtrl.dispose();
     cityCtrl.dispose();
     countryCtrl.dispose();
-    swissTaxResidenceCtrl.dispose();
     taxCountryCtrl.dispose();
     tinCtrl.dispose();
     super.dispose();

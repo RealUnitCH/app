@@ -4,17 +4,18 @@ import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registrati
 
 void main() {
   group('$KycRegistrationStepCubit initial state', () {
-    test('starts at the personal step with both steps in order', () {
+    test('starts at the personal step with all steps in order', () {
       final cubit = KycRegistrationStepCubit();
 
       expect(cubit.state.step, KycRegistrationStep.personal);
       expect(cubit.state.steps, [
         KycRegistrationStep.personal,
         KycRegistrationStep.address,
+        KycRegistrationStep.taxResidence,
       ]);
       expect(cubit.state.index, 0);
-      expect(cubit.state.totalSteps, 2);
-      expect(cubit.state.progress, closeTo(0.5, 1e-9));
+      expect(cubit.state.totalSteps, 3);
+      expect(cubit.state.progress, closeTo(1 / 3, 1e-9));
       expect(cubit.state.canGoBack, isFalse);
     });
   });
@@ -27,13 +28,16 @@ void main() {
       verify: (c) {
         expect(c.state.step, KycRegistrationStep.address);
         expect(c.state.index, 1);
-        expect(c.state.progress, closeTo(1.0, 1e-9));
+        expect(c.state.progress, closeTo(2 / 3, 1e-9));
         expect(c.state.canGoBack, isTrue);
       },
     );
 
     test('next() at the last step is a no-op (no emit)', () {
-      final cubit = KycRegistrationStepCubit()..next();
+      final cubit = KycRegistrationStepCubit()
+        ..next()
+        ..next();
+      expect(cubit.state.step, KycRegistrationStep.taxResidence);
       final before = cubit.state;
       cubit.next();
       expect(cubit.state, same(before));

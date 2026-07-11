@@ -12,6 +12,7 @@ class KycRegistrationStepCubit extends Cubit<KycRegistrationStepState> {
           steps: [
             KycRegistrationStep.personal,
             KycRegistrationStep.address,
+            KycRegistrationStep.taxResidence,
           ],
         ),
       );

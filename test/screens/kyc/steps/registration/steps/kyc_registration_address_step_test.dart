@@ -1,10 +1,12 @@
+import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/kyc_registration_step_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_address_step.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
@@ -12,160 +14,116 @@ import '../../../../../helper/pump_app.dart';
 
 class _MockDfxCountryService extends Mock implements DfxCountryService {}
 
+class _MockKycRegistrationStepCubit extends MockCubit<KycRegistrationStepState>
+    implements KycRegistrationStepCubit {}
+
 const _germany = Country(id: 49, symbol: 'DE', name: 'Germany', kycAllowed: true);
 const _switzerland = Country(id: 41, symbol: 'CH', name: 'Switzerland', kycAllowed: true);
 
 void main() {
   late _MockDfxCountryService countryService;
+  late _MockKycRegistrationStepCubit stepCubit;
 
   setUp(() {
     countryService = _MockDfxCountryService();
     when(() => countryService.getAllCountries())
         .thenAnswer((_) async => <Country>[_switzerland, _germany]);
     GetIt.instance.registerSingleton<DfxCountryService>(countryService);
+
+    stepCubit = _MockKycRegistrationStepCubit();
+    when(() => stepCubit.state).thenReturn(
+      const KycRegistrationStepState(
+        step: KycRegistrationStep.address,
+        steps: [
+          KycRegistrationStep.personal,
+          KycRegistrationStep.address,
+          KycRegistrationStep.taxResidence,
+        ],
+      ),
+    );
   });
 
   tearDown(() async => GetIt.instance.reset());
 
-  Future<_Harness> pump(
-    WidgetTester tester, {
-    bool initialSwissTaxResidence = true,
-  }) async {
-    final harness = _Harness(
-      swissTaxResidenceCtrl: ValueNotifier<bool>(initialSwissTaxResidence),
-      taxCountryCtrl: ValueNotifier<Country?>(null),
-      tinCtrl: TextEditingController(),
-    );
+  // Prefill the free-text fields with valid Swiss-payment-text values so the
+  // only outstanding validation gate is the residence country selection.
+  Future<_Harness> pump(WidgetTester tester) async {
+    final harness = _Harness();
 
     await tester.pumpApp(
-      Scaffold(
-        body: KycRegistrationAddressStep(
-          addressStreetCtrl: harness.addressStreetCtrl,
-          addressNumberCtrl: harness.addressNumberCtrl,
-          postalCodeCtrl: harness.postalCodeCtrl,
-          cityCtrl: harness.cityCtrl,
-          countryCtrl: harness.countryCtrl,
-          swissTaxResidenceCtrl: harness.swissTaxResidenceCtrl,
-          taxCountryCtrl: harness.taxCountryCtrl,
-          tinCtrl: harness.tinCtrl,
-          onSubmit: () async => harness.submitCount++,
+      BlocProvider<KycRegistrationStepCubit>.value(
+        value: stepCubit,
+        child: Scaffold(
+          body: KycRegistrationAddressStep(
+            addressStreetCtrl: harness.addressStreetCtrl,
+            addressNumberCtrl: harness.addressNumberCtrl,
+            postalCodeCtrl: harness.postalCodeCtrl,
+            cityCtrl: harness.cityCtrl,
+            countryCtrl: harness.countryCtrl,
+          ),
         ),
       ),
     );
+    await tester.pumpAndSettle();
     return harness;
   }
 
-  group('$KycRegistrationAddressStep tax residence section', () {
-    testWidgets(
-      'hides tax-residence country and TIN fields when Swiss residence is true',
-      (tester) async {
-        await pump(tester, initialSwissTaxResidence: true);
+  Finder scrollable() => find.byType(Scrollable).first;
 
-        final context = tester.element(find.byType(KycRegistrationAddressStep));
-        expect(find.text(S.of(context).taxResidenceCountry), findsNothing);
-        expect(find.text(S.of(context).taxIdentificationNumber), findsNothing);
+  Future<void> selectResidenceCountry(WidgetTester tester) async {
+    final dropdown = find.byType(DropdownButtonFormField<Country>);
+    await tester.scrollUntilVisible(dropdown, 100, scrollable: scrollable());
+    await tester.tap(dropdown);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Switzerland').last);
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> tapContinue(WidgetTester tester) async {
+    final button = find.byType(AppFilledButton);
+    await tester.scrollUntilVisible(button, 100, scrollable: scrollable());
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+  }
+
+  group('$KycRegistrationAddressStep', () {
+    testWidgets('renders the address fields and a continue button', (tester) async {
+      await pump(tester);
+
+      expect(find.byType(DropdownButtonFormField<Country>), findsOneWidget);
+      expect(find.byType(AppFilledButton), findsOneWidget);
+    });
+
+    testWidgets(
+      'advances to the next step once the form is valid',
+      (tester) async {
+        await pump(tester);
+        await selectResidenceCountry(tester);
+
+        await tapContinue(tester);
+
+        verify(() => stepCubit.next()).called(1);
       },
     );
 
     testWidgets(
-      'reveals tax-residence country and TIN fields when toggle is switched off',
+      'does not advance while the form is invalid (no country picked)',
       (tester) async {
-        await pump(tester, initialSwissTaxResidence: true);
+        await pump(tester);
 
-        await tester.tap(find.byType(Switch));
-        await tester.pumpAndSettle();
+        // No residence country selected → CountryField keeps the form invalid.
+        await tapContinue(tester);
 
-        final context = tester.element(find.byType(KycRegistrationAddressStep));
-        expect(find.text(S.of(context).taxResidenceCountry), findsOneWidget);
-        expect(find.text(S.of(context).taxIdentificationNumber), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      're-hides the tax-residence fields when the toggle is switched back on',
-      (tester) async {
-        // Start in the revealed (non-Swiss) state, then flip the switch back
-        // to Swiss-only and assert the section collapses again — the reveal
-        // must be fully reversible so a user who toggles by mistake is not
-        // left with a required, now-irrelevant TIN field gating submit.
-        await pump(tester, initialSwissTaxResidence: false);
-
-        final context = tester.element(find.byType(KycRegistrationAddressStep));
-        expect(find.text(S.of(context).taxResidenceCountry), findsOneWidget);
-
-        await tester.tap(find.byType(Switch));
-        await tester.pumpAndSettle();
-
-        expect(find.text(S.of(context).taxResidenceCountry), findsNothing);
-        expect(find.text(S.of(context).taxIdentificationNumber), findsNothing);
-      },
-    );
-
-    testWidgets(
-      'TIN validator surfaces a required error when the field is empty on submit',
-      (tester) async {
-        final harness = await pump(tester, initialSwissTaxResidence: false);
-        await tester.pumpAndSettle();
-
-        final context = tester.element(find.byType(KycRegistrationAddressStep));
-
-        // Scroll the Complete button into view — the step is a
-        // SingleChildScrollView and the button can sit below the viewport.
-        await tester.scrollUntilVisible(
-          find.byType(AppFilledButton),
-          200,
-          scrollable: find.byType(Scrollable).first,
-        );
-        await tester.tap(find.byType(AppFilledButton));
-        await tester.pump();
-
-        expect(find.text(S.of(context).tinRequired), findsOneWidget);
-        // The submit closure must never fire when validation fails — that is
-        // exactly the gap this UI fixes (previous behavior: backend would
-        // surface a global 400 after a successful client-side submit).
-        expect(harness.submitCount, 0);
-      },
-    );
-
-    testWidgets(
-      'TIN entry is recorded verbatim in the controller',
-      (tester) async {
-        final harness = await pump(tester, initialSwissTaxResidence: false);
-        await tester.pumpAndSettle();
-
-        final context = tester.element(find.byType(KycRegistrationAddressStep));
-        final tinFinder = find.widgetWithText(
-          TextFormField,
-          S.of(context).tinHint,
-        );
-        await tester.scrollUntilVisible(
-          tinFinder,
-          200,
-          scrollable: find.byType(Scrollable).first,
-        );
-        await tester.enterText(tinFinder, '12 345 678 901');
-        await tester.pump();
-
-        expect(harness.tinCtrl.text, '12 345 678 901');
+        verifyNever(() => stepCubit.next());
       },
     );
   });
 }
 
 class _Harness {
-  _Harness({
-    required this.swissTaxResidenceCtrl,
-    required this.taxCountryCtrl,
-    required this.tinCtrl,
-  });
-
-  final addressStreetCtrl = TextEditingController();
-  final addressNumberCtrl = TextEditingController();
-  final postalCodeCtrl = TextEditingController();
-  final cityCtrl = TextEditingController();
+  final addressStreetCtrl = TextEditingController(text: 'Bahnhofstrasse');
+  final addressNumberCtrl = TextEditingController(text: '1');
+  final postalCodeCtrl = TextEditingController(text: '8000');
+  final cityCtrl = TextEditingController(text: 'Zurich');
   final countryCtrl = ValueNotifier<Country?>(null);
-  final ValueNotifier<bool> swissTaxResidenceCtrl;
-  final ValueNotifier<Country?> taxCountryCtrl;
-  final TextEditingController tinCtrl;
-  int submitCount = 0;
 }

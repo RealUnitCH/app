@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/utils/swiss_payment_text.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/kyc_registration_step_cubit.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/form/country_field.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
@@ -13,10 +15,6 @@ class KycRegistrationAddressStep extends StatelessWidget {
   final TextEditingController cityCtrl;
   final ValueNotifier<Country?> countryCtrl;
   final Country? initialCountry;
-  final ValueNotifier<bool> swissTaxResidenceCtrl;
-  final ValueNotifier<Country?> taxCountryCtrl;
-  final TextEditingController tinCtrl;
-  final Future<void> Function() onSubmit;
 
   KycRegistrationAddressStep({
     super.key,
@@ -25,10 +23,6 @@ class KycRegistrationAddressStep extends StatelessWidget {
     required this.postalCodeCtrl,
     required this.cityCtrl,
     required this.countryCtrl,
-    required this.swissTaxResidenceCtrl,
-    required this.taxCountryCtrl,
-    required this.tinCtrl,
-    required this.onSubmit,
     this.initialCountry,
   });
   final _formKey = GlobalKey<FormState>();
@@ -126,45 +120,16 @@ class KycRegistrationAddressStep extends StatelessWidget {
                   initialValue: initialCountry,
                   onChanged: (country) => countryCtrl.value = country,
                 ),
-                _SwissTaxResidenceToggle(controller: swissTaxResidenceCtrl),
-                ValueListenableBuilder<bool>(
-                  valueListenable: swissTaxResidenceCtrl,
-                  builder: (context, isSwiss, _) {
-                    if (isSwiss) return const SizedBox.shrink();
-                    return Column(
-                      spacing: 16,
-                      children: [
-                        CountryField(
-                          label: S.of(context).taxResidenceCountry,
-                          purpose: CountryFieldPurpose.nationality,
-                          onChanged: (country) => taxCountryCtrl.value = country,
-                        ),
-                        LabeledTextField(
-                          hintText: S.of(context).tinHint,
-                          controller: tinCtrl,
-                          label: S.of(context).taxIdentificationNumber,
-                          keyboardType: TextInputType.text,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return S.of(context).tinRequired;
-                            }
-                            return null;
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                ),
                 Padding(
-                  padding: const .symmetric(vertical: 16.0),
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: AppFilledButton(
-                    onPressed: () async {
+                    onPressed: () {
                       FocusManager.instance.primaryFocus?.unfocus();
                       if (_formKey.currentState?.validate() ?? false) {
-                        await onSubmit();
+                        context.read<KycRegistrationStepCubit>().next();
                       }
                     },
-                    label: S.of(context).complete,
+                    label: S.of(context).next,
                   ),
                 ),
               ],
@@ -172,35 +137,6 @@ class KycRegistrationAddressStep extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _SwissTaxResidenceToggle extends StatelessWidget {
-  const _SwissTaxResidenceToggle({required this.controller});
-
-  final ValueNotifier<bool> controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder<bool>(
-      valueListenable: controller,
-      builder: (context, value, _) {
-        return Row(
-          children: [
-            Expanded(
-              child: Text(
-                S.of(context).swissTaxResidence,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
-            Switch(
-              value: value,
-              onChanged: (next) => controller.value = next,
-            ),
-          ],
-        );
-      },
     );
   }
 }
