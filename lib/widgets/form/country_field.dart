@@ -100,7 +100,7 @@ class _CountryFieldState extends State<CountryField> {
         }
 
         return DropdownField<Country>(
-          hintText: 'Schweiz',
+          hintText: S.of(context).countryHint,
           label: widget.label,
           items: countries.map((c) => DropdownMenuItem(value: c, child: Text(c.name))).toList(),
           initialValue: initial,
@@ -122,7 +122,10 @@ class _CountryFieldState extends State<CountryField> {
 
     final priority = ['CH', 'DE', 'IT', 'FR'];
 
-    countries.sort((a, b) {
+    // getAllCountries() returns the service's cached list instance, so sort a
+    // copy — sorting in place mutates shared service state and throws when the
+    // cached list is unmodifiable.
+    final sorted = [...countries]..sort((a, b) {
       final aIndex = priority.indexOf(a.symbol.toUpperCase());
       final bIndex = priority.indexOf(b.symbol.toUpperCase());
 
@@ -136,7 +139,7 @@ class _CountryFieldState extends State<CountryField> {
       return a.name.compareTo(b.name);
     });
 
-    return countries;
+    return sorted;
   }
 }
 

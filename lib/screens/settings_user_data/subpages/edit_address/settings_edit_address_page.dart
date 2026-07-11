@@ -105,7 +105,7 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                                     Expanded(
                                       flex: 2,
                                       child: LabeledTextField(
-                                        hintText: 'Musterstrasse',
+                                        hintText: S.of(context).streetHint,
                                         controller: _streetCtrl,
                                         label: S.of(context).street,
                                         keyboardType: .streetAddress,
@@ -158,7 +158,7 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                                     Expanded(
                                       flex: 3,
                                       child: LabeledTextField(
-                                        hintText: 'Zurich',
+                                        hintText: S.of(context).cityHint,
                                         controller: _cityCtrl,
                                         label: S.of(context).city,
                                         keyboardType: .text,

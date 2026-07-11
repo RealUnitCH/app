@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/nationality/cubit/kyc_nationality/kyc_nationality_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/nationality/kyc_nationality_page.dart';
@@ -20,14 +19,6 @@ void main() {
 
   late _MockKycNationalityCubit kycNationalityCubit;
   late _MockKycCubit kycCubit;
-  late MockDfxCountryService countryService;
-
-  const country = Country(
-    id: 41,
-    symbol: 'CH',
-    name: 'Switzerland',
-    kycAllowed: true,
-  );
 
   setUp(() {
     kycNationalityCubit = _MockKycNationalityCubit();
@@ -39,10 +30,7 @@ void main() {
   });
 
   setUpAll(() {
-    countryService = MockDfxCountryService();
-    when(() => countryService.getAllCountries())
-        .thenAnswer((_) async => const [country]);
-    GetIt.instance.registerSingleton<DfxCountryService>(countryService);
+    GetIt.instance.registerSingleton<DfxCountryService>(fixtureCountryService());
   });
 
   tearDownAll(() async => GetIt.instance.reset());

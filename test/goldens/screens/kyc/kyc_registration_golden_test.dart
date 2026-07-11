@@ -50,9 +50,7 @@ void main() {
   // constructor. The default golden uses `initialUserData: null` so it asserts
   // on the empty-form render, which is the first-time-registration path.
   setUpAll(() {
-    final countryService = MockDfxCountryService();
-    when(() => countryService.getAllCountries()).thenAnswer((_) async => const []);
-    GetIt.instance.registerSingleton<DfxCountryService>(countryService);
+    GetIt.instance.registerSingleton<DfxCountryService>(fixtureCountryService());
   });
 
   tearDownAll(() async => GetIt.instance.reset());
