@@ -153,6 +153,42 @@ void main() {
         expect(harness.submitCount, 0);
       },
     );
+
+    testWidgets(
+      'dismisses the keyboard when tapping outside the fields',
+      (tester) async {
+        await pump(tester);
+        // Reveal the TIN field so there is a focusable input to clear.
+        await selectTaxCountry(tester, 'Germany');
+
+        final tinField = find
+            .descendant(
+              of: find.byType(KycRegistrationTaxStep),
+              matching: find.byType(EditableText),
+            )
+            .first;
+        final tinFocus = tester.widget<EditableText>(tinField).focusNode;
+        await tester.tap(tinField);
+        await tester.pump();
+        expect(tinFocus.hasFocus, isTrue);
+
+        // The opaque GestureDetector wrapping the form clears focus on tap.
+        final dismissArea = find.ancestor(
+          of: find.descendant(
+            of: find.byType(KycRegistrationTaxStep),
+            matching: find.byType(Form),
+          ),
+          matching: find.byWidgetPredicate(
+            (w) => w is GestureDetector && w.behavior == HitTestBehavior.opaque && w.onTap != null,
+          ),
+        );
+        expect(dismissArea, findsOneWidget);
+        tester.widget<GestureDetector>(dismissArea).onTap!();
+        await tester.pump();
+
+        expect(tinFocus.hasFocus, isFalse);
+      },
+    );
   });
 }
 

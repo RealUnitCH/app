@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_tax_step.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 import '../../../helper/helper.dart';
 
@@ -21,33 +22,73 @@ void main() {
 
   tearDownAll(() async => GetIt.instance.reset());
 
-  Widget buildSubject(Country? taxCountry) => wrapForGolden(
+  Widget buildSubject() => wrapForGolden(
         Scaffold(
           body: KycRegistrationTaxStep(
-            taxCountryCtrl: ValueNotifier<Country?>(taxCountry),
+            taxCountryCtrl: ValueNotifier<Country?>(null),
             tinCtrl: TextEditingController(),
             onSubmit: () async {},
           ),
         ),
       );
 
+  Future<void> selectCountry(WidgetTester tester, String name) async {
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButtonFormField<Country>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(name).last);
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> tapComplete(WidgetTester tester) async {
+    await tester.tap(find.byType(AppFilledButton));
+    await tester.pumpAndSettle();
+  }
+
   group('$KycRegistrationTaxStep', () {
-    // Two meaningful states: no TIN (nothing picked, or a Swiss tax residence)
-    // vs. the TIN revealed for a non-Swiss tax residence. Swiss and empty render
-    // identically here (the picker has no initial value, so both just show the
-    // hint), so the no-TIN state is captured once.
     goldenTest(
-      'no TIN field without a non-Swiss tax residence',
+      'empty — nothing picked, no TIN',
       fileName: 'kyc_registration_tax_step_default',
       constraints: phoneConstraints,
-      builder: () => buildSubject(null),
+      builder: buildSubject,
     );
 
     goldenTest(
-      'non-Swiss tax residence reveals the TIN field',
+      'Swiss tax residence — no TIN',
+      fileName: 'kyc_registration_tax_step_swiss',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) => selectCountry(tester, 'Switzerland'),
+      builder: buildSubject,
+    );
+
+    goldenTest(
+      'non-Swiss tax residence — TIN revealed',
       fileName: 'kyc_registration_tax_step_non_swiss',
       constraints: phoneConstraints,
-      builder: () => buildSubject(_germany),
+      pumpBeforeTest: (tester) => selectCountry(tester, 'Germany'),
+      builder: buildSubject,
+    );
+
+    goldenTest(
+      'validation error — no tax-residence country picked',
+      fileName: 'kyc_registration_tax_step_country_error',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pumpAndSettle();
+        await tapComplete(tester);
+      },
+      builder: buildSubject,
+    );
+
+    goldenTest(
+      'validation error — non-Swiss residence with an empty TIN',
+      fileName: 'kyc_registration_tax_step_tin_error',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await selectCountry(tester, 'Germany');
+        await tapComplete(tester);
+      },
+      builder: buildSubject,
     );
   });
 }

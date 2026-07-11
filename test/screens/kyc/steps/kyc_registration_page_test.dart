@@ -182,7 +182,11 @@ void main() {
 
   group('$KycRegistrationPage', () {
     testWidgets('renders $KycRegistrationView with null initialUserData', (tester) async {
-      await tester.pumpApp(const KycRegistrationPage());
+      // Non-const construction so the const KycRegistrationPage constructor runs
+      // at runtime instead of being folded into a compile-time constant. Null
+      // initialUserData keeps it side-effect free (no prefill country lookups).
+      // ignore: prefer_const_constructors
+      await tester.pumpApp(KycRegistrationPage());
 
       expect(find.byType(KycRegistrationView), findsOne);
     });
