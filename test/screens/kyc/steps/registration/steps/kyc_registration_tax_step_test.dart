@@ -224,6 +224,47 @@ void main() {
         expect(harness.submitCount, 1);
       },
     );
+
+    testWidgets(
+      're-defaults when the residence country changes, revealing the TIN',
+      (tester) async {
+        // Mirror the page wiring: the tax step is rebuilt via a
+        // ValueListenableBuilder on the residence, so changing the residence
+        // after the initial prefill must re-default the tax country.
+        final harness = _Harness();
+        final residence = ValueNotifier<Country?>(_switzerland);
+        addTearDown(residence.dispose);
+
+        await tester.pumpApp(
+          Scaffold(
+            body: ValueListenableBuilder<Country?>(
+              valueListenable: residence,
+              builder: (_, country, _) => KycRegistrationTaxStep(
+                taxCountryCtrl: harness.taxCountryCtrl,
+                tinCtrl: harness.tinCtrl,
+                initialCountry: country,
+                onSubmit: () async => harness.submitCount++,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Swiss residence: pre-selected, no TIN.
+        var context = tester.element(find.byType(KycRegistrationTaxStep));
+        expect(harness.taxCountryCtrl.value, _switzerland);
+        expect(find.text(S.of(context).taxIdentificationNumber), findsNothing);
+
+        // Residence switches to a non-Swiss country: the tax step re-defaults
+        // and reveals the required TIN without a manual pick.
+        residence.value = _germany;
+        await tester.pumpAndSettle();
+
+        context = tester.element(find.byType(KycRegistrationTaxStep));
+        expect(harness.taxCountryCtrl.value, _germany);
+        expect(find.text(S.of(context).taxIdentificationNumber), findsOneWidget);
+      },
+    );
   });
 }
 
