@@ -89,12 +89,7 @@ class _LifecycleInitializerState extends State<LifecycleInitializer> {
     // effectiveLocation, not currentConfiguration.uri: the KYC flow is pushed
     // imperatively, and the raw uri would capture the base route underneath.
     final location = effectiveLocation(routerConfig.routerDelegate.currentConfiguration);
-    // Pass null for gate routes so a nested re-lock — backgrounded again while
-    // the PIN gate is on screen — keeps the earlier in-flight capture instead
-    // of clobbering it with the gate location.
-    getIt<PinAuthCubit>().onAppHidden(
-      isGateLocation(location) ? null : location,
-    );
+    getIt<PinAuthCubit>().onAppHidden(resumeCaptureFor(location));
     // Drop the mnemonic before the OS suspends the isolate. `lockCurrentWallet`
     // is defensive on its own — no try/catch / catchError by design, so a
     // Future.error surfaces in the Zone instead of being silently swallowed.

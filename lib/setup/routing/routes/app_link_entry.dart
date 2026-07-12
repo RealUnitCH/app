@@ -39,8 +39,9 @@ const String appLinkColdStartLocation = '/home';
 /// Returning the current location instead would be no safer: applied as a
 /// `go`, it rebuilds a pushed `extra`-required route (`/buyPaymentDetails`,
 /// `/webView`, …) with a null `extra` and crashes its builder cast. So crafted
-/// path-carrying URLs are rewritten to the canonical [appLinkUrl]: the
-/// redirect runs once more on that path-less form, falls through unmatched,
+/// path-carrying URLs are rewritten to the canonical [appLinkUrl]: go_router
+/// resolves the rewritten URL to an unmatched (error) match list and
+/// short-circuits before any further redirect pass, so the chain terminates
 /// and [appLinkOnException] keeps the configuration — the same true no-op as
 /// the canonical open, with no rebuild at all.
 ///

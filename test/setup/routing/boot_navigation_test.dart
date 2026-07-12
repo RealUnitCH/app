@@ -7,6 +7,11 @@ import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 
 void main() {
+  // The drift-pin group below constructs the real global GoRouter; initialize
+  // the test binding up front, matching the repo convention for plain-test
+  // files that touch framework globals.
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   // A fully-passed, steady-state input where the user sits on a non-gate route
   // (/kyc). Individual tests flip exactly one field to exercise one branch.
   BootNavAction resolve({
@@ -178,6 +183,14 @@ void main() {
 
     test('a query string does not defeat the gate check', () {
       expect(isGateLocation('/verifyPin?x=1'), isTrue);
+    });
+
+    test('resumeCaptureFor maps gates to null and keeps in-flight routes', () {
+      expect(resumeCaptureFor('/verifyPin'), isNull);
+      expect(resumeCaptureFor('/pinGate'), isNull);
+      expect(resumeCaptureFor('/kyc'), '/kyc');
+      expect(resumeCaptureFor('/kyc?context=buy'), '/kyc?context=buy');
+      expect(resumeCaptureFor(''), '');
     });
 
     test('a query string does not turn a non-gate into a gate', () {

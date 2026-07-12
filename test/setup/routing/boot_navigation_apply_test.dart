@@ -125,19 +125,44 @@ void main() {
       // Fail-closed: not on the allowlist -> dashboard, never the crashing route.
       expect((action as BootNavGoNamed).routeName, AppRoutes.dashboard);
 
+      var cleared = false;
       applyBootNavAction(
         action,
         router,
         onLoadWallet: () {},
-        onClearResume: () {},
+        onClearResume: () => cleared = true,
       );
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
       expect(find.text('dashboard'), findsOneWidget);
       expect(locationOf(router), '/dashboard');
+      // The dashboard is a final landing — the stale capture must be dropped.
+      expect(cleared, isTrue);
     },
   );
+
+  testWidgets('navigating to a gate keeps the capture for the pending unlock', (
+    tester,
+  ) async {
+    final router = buildRouter();
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpAndSettle();
+
+    // A re-lock diverts to the PIN gate. Clearing here would silently degrade
+    // the post-unlock restore to the dashboard fallback.
+    var cleared = false;
+    applyBootNavAction(
+      const BootNavGoNamed(PinRoutes.verify),
+      router,
+      onLoadWallet: () {},
+      onClearResume: () => cleared = true,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('verify'), findsOneWidget);
+    expect(cleared, isFalse);
+  });
 
   testWidgets(
     'premise guard: restoring /buyPaymentDetails from a bare path really throws',

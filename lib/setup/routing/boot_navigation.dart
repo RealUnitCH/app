@@ -81,6 +81,12 @@ const Set<String> gateLocations = {
 /// path only, so a query string cannot defeat the check.
 bool isGateLocation(String loc) => gateLocations.contains(Uri.parse(loc).path);
 
+/// Maps the location the app was backgrounded on to what the resume capture
+/// should store: gate locations map to null so a nested re-lock — backgrounded
+/// again while the PIN gate is showing — keeps the earlier in-flight capture
+/// instead of clobbering it with the gate.
+String? resumeCaptureFor(String location) => isGateLocation(location) ? null : location;
+
 /// Non-gate locations safe to restore after a resume / re-lock: they rebuild
 /// from a bare path (no required `extra`) and sit behind no secondary PIN gate.
 /// Fail-closed — anything not listed falls back to the dashboard (the pre-fix
