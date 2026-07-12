@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:intl/intl.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
@@ -22,6 +21,7 @@ class RealUnitRegistrationService extends DFXAuthService {
   RealUnitRegistrationService(super.appStore, super.walletService);
 
   static const _registrationInfoPath = '/v1/realunit/registration';
+  static const _registerDatePath = '/v1/realunit/register/date';
   static const _registerEmailPath = '/v1/realunit/register/email';
   static const _registerCompletionPath = '/v1/realunit/register/complete';
   static const _registerWalletPath = '/v1/realunit/register/wallet';
@@ -46,6 +46,35 @@ class RealUnitRegistrationService extends DFXAuthService {
     }
 
     return RealUnitRegistrationInfoDto.fromJson(jsonDecode(response.body));
+  }
+
+  /// Fetches the registration date to sign from the API. `registrationDate` is
+  /// part of the EIP-712 signed registration envelope and the backend validates
+  /// it against its own clock, so the value must be the server's date — never
+  /// the device's local date. A device in a timezone ahead of UTC would
+  /// otherwise sign tomorrow's date and be rejected by the backend. Fetched
+  /// immediately before signing so it is always fresh.
+  Future<String> getRegistrationDate() async {
+    final uri = buildUri(host, _registerDatePath);
+    final response = await authenticatedGet(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode != 200) {
+      final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
+      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
+    }
+
+    final date = (jsonDecode(response.body) as Map<String, dynamic>)['date'];
+    if (date is! String) {
+      throw ApiException(
+        statusCode: response.statusCode,
+        code: 'UNKNOWN',
+        message: 'Missing registration date in API response',
+      );
+    }
+    return date;
   }
 
   /// registers an email on the wallet. Should always be called first when registering
@@ -103,7 +132,9 @@ class RealUnitRegistrationService extends DFXAuthService {
     );
     final addressPostalCode = toBitboxSafeAscii(registration.addressPostalCode);
     final addressCity = toBitboxSafeAscii(registration.addressCity);
-    final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    // The registration date is a signed field the backend validates against
+    // its own clock — take it from the API, never the device's local date.
+    final registrationDate = await getRegistrationDate();
     final signature = await Eip712Signer.signRegistration(
       credentials: credentials,
       chainId: _chainId,
@@ -185,7 +216,8 @@ class RealUnitRegistrationService extends DFXAuthService {
 
   Future<RegistrationStatus> _registerWallet(RealUnitUserDataDto userData) async {
     final credentials = appStore.wallet.primaryAccount.primaryAddress;
-    final registrationDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    // Server-provided registration date (signed field) — see completeRegistration.
+    final registrationDate = await getRegistrationDate();
     // Same ASCII guard as completeRegistration — see comment there.
     final signature = await Eip712Signer.signRegistration(
       credentials: credentials,
