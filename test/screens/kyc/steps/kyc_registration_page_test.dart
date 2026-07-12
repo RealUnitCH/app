@@ -651,6 +651,37 @@ void main() {
       ),
     );
 
+    // Same person but tax-resident abroad: nationality CH, residence DE. Proves
+    // the tax residence defaults from the ADDRESS country (not the nationality)
+    // and exercises the non-Swiss prefill end-to-end.
+    const initialUserDataDe = RealUnitUserDataDto(
+      email: 'a@b.com',
+      name: 'Ada Lovelace',
+      type: 'HUMAN',
+      phoneNumber: '+41 79 000 00 00',
+      birthday: '1815-12-10',
+      nationality: 'CH',
+      addressStreet: 'Bahnhofstrasse 1',
+      addressPostalCode: '8000',
+      addressCity: 'Berlin',
+      addressCountry: 'DE',
+      swissTaxResidence: true,
+      lang: 'de',
+      kycData: KycPersonalData(
+        accountType: KycAccountType.personal,
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        phone: '+41 79 000 00 00',
+        address: KycAddress(
+          street: 'Bahnhofstrasse',
+          houseNumber: '1',
+          zip: '8000',
+          city: 'Berlin',
+          country: 55,
+        ),
+      ),
+    );
+
     setUp(() {
       // Land the pager on the final tax-residence step so its country picker is
       // in view once we jump the PageView to it.
@@ -691,9 +722,12 @@ void main() {
         )
         .first;
 
-    Future<void> showTaxStep(WidgetTester tester) async {
+    Future<void> showTaxStep(
+      WidgetTester tester, {
+      RealUnitUserDataDto dto = initialUserData,
+    }) async {
       await tester.pumpApp(
-        buildSubject(const KycRegistrationView(initialUserData: initialUserData)),
+        buildSubject(KycRegistrationView(initialUserData: dto)),
       );
       // Let the seeded country lookups resolve before we jump to the tax page.
       await tester.pumpAndSettle();
@@ -807,6 +841,31 @@ void main() {
         final captured = captureSubmit();
         expect(captured[0], isTrue);
         expect(captured[1], isNull);
+      },
+    );
+
+    testWidgets(
+      'sources the tax residence from a non-Swiss address country, revealing '
+      'the TIN and forwarding it without a manual pick',
+      (tester) async {
+        await showTaxStep(tester, dto: initialUserDataDe);
+
+        // The residence (DE) — not the nationality (CH) — pre-selected the tax
+        // residence, so the TIN is revealed with no manual pick and the derived
+        // non-Swiss result is forwarded.
+        final context = tester.element(find.byType(KycRegistrationTaxStep));
+        final tinField = find.widgetWithText(TextFormField, S.of(context).tinHint);
+        await tester.scrollUntilVisible(tinField, 100, scrollable: taxScrollable());
+        await tester.enterText(tinField, '12 345 678 901');
+        await tester.pump();
+
+        await tapComplete(tester);
+
+        final captured = captureSubmit();
+        expect(captured[0], isFalse);
+        final tins = captured[1] as List<CountryAndTin>;
+        expect(tins.single.country, 'DE');
+        expect(tins.single.tin, '12 345 678 901');
       },
     );
   });
