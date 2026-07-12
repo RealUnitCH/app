@@ -321,4 +321,24 @@ void main() {
       expect(state.hasError, isFalse);
     });
   });
+
+  group('$CountryField hint', () {
+    testWidgets('shows the neutral placeholder hint, not a country name, when empty', (
+      tester,
+    ) async {
+      registerCountryService(fixtureCountryService());
+
+      await tester.pumpApp(
+        host(
+          const CountryField(label: 'Citizenship', purpose: CountryFieldPurpose.nationality),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // pumpApp resolves to the en locale in tests, so the hint is the English
+      // ARB value. This asserts the hint by text, guarding against a silent ARB
+      // regression that the pixel-only goldens cannot catch by value.
+      expect(find.text('Select country'), findsOneWidget);
+    });
+  });
 }
