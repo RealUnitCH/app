@@ -133,6 +133,7 @@ class RealUnitRegistrationService extends DFXAuthService {
       addressCity: addressCity,
       addressCountry: registration.addressCountry.symbol,
       swissTaxResidence: registration.swissTaxResidence,
+      countryAndTINs: registration.countryAndTINs,
       registrationDate: registrationDate,
       walletAddress: credentials.address.hexEip55,
       signature: signature,

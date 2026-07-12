@@ -14,6 +14,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
@@ -31,7 +32,9 @@ import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registrati
 import 'package:realunit_wallet/screens/kyc/steps/registration/kyc_registration_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_address_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_personal_step.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_tax_step.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 
 import '../../../helper/helper.dart';
@@ -102,6 +105,8 @@ const _registrationFixture = Registration(
   swissTaxResidence: true,
 );
 
+const _switzerland = Country(id: 41, symbol: 'CH', name: 'Switzerland', kycAllowed: true);
+
 void main() {
   late KycRegistrationStepCubit registrationStepCubit;
   late KycRegistrationSubmitCubit registrationSubmitCubit;
@@ -153,6 +158,8 @@ void main() {
   setUpAll(() {
     registerFallbackValue(SyncWalletServicesEvent(MockAWallet()));
     registerFallbackValue(_registrationFixture);
+    registerFallbackValue(_switzerland);
+    registerFallbackValue(RegistrationUserType.human);
     setupDependencyInjection();
   });
 
@@ -172,7 +179,11 @@ void main() {
 
   group('$KycRegistrationPage', () {
     testWidgets('renders $KycRegistrationView with null initialUserData', (tester) async {
-      await tester.pumpApp(const KycRegistrationPage());
+      // Non-const construction so the const KycRegistrationPage constructor runs
+      // at runtime instead of being folded into a compile-time constant. Null
+      // initialUserData keeps it side-effect free (no prefill country lookups).
+      // ignore: prefer_const_constructors
+      await tester.pumpApp(KycRegistrationPage());
 
       expect(find.byType(KycRegistrationView), findsOne);
     });
@@ -603,6 +614,183 @@ void main() {
 
         verify(() => homeBloc.add(any(that: isA<SyncWalletServicesEvent>()))).called(1);
         verify(() => registrationSubmitCubit.retrySubmit(_registrationFixture)).called(1);
+      },
+    );
+  });
+
+  // End-to-end wiring of the tax-residence branch: navigating to the final tax
+  // step, picking a tax-residence country and submitting must forward the
+  // derived `swissTaxResidence` + `countryAndTINs` into the submit cubit.
+  // Covers both arms of `_onSubmit` on the page.
+  group('$KycRegistrationView tax residence submit wiring', () {
+    const initialUserData = RealUnitUserDataDto(
+      email: 'a@b.com',
+      name: 'Ada Lovelace',
+      type: 'HUMAN',
+      phoneNumber: '+41 79 000 00 00',
+      birthday: '1815-12-10',
+      nationality: 'CH',
+      addressStreet: 'Bahnhofstrasse 1',
+      addressPostalCode: '8000',
+      addressCity: 'Zurich',
+      addressCountry: 'CH',
+      swissTaxResidence: true,
+      lang: 'de',
+      kycData: KycPersonalData(
+        accountType: KycAccountType.personal,
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        phone: '+41 79 000 00 00',
+        address: KycAddress(
+          street: 'Bahnhofstrasse',
+          houseNumber: '1',
+          zip: '8000',
+          city: 'Zurich',
+          country: 41,
+        ),
+      ),
+    );
+
+    setUp(() {
+      // Land the pager on the final tax-residence step so its country picker is
+      // in view once we jump the PageView to it.
+      when(() => registrationStepCubit.state).thenReturn(
+        const KycRegistrationStepState(
+          step: KycRegistrationStep.taxResidence,
+          steps: [
+            KycRegistrationStep.personal,
+            KycRegistrationStep.address,
+            KycRegistrationStep.taxResidence,
+          ],
+        ),
+      );
+
+      when(
+        () => registrationSubmitCubit.submit(
+          type: any(named: 'type'),
+          firstName: any(named: 'firstName'),
+          lastName: any(named: 'lastName'),
+          phoneNumber: any(named: 'phoneNumber'),
+          birthday: any(named: 'birthday'),
+          nationality: any(named: 'nationality'),
+          addressStreet: any(named: 'addressStreet'),
+          addressStreetNumber: any(named: 'addressStreetNumber'),
+          addressPostalCode: any(named: 'addressPostalCode'),
+          addressCity: any(named: 'addressCity'),
+          addressCountry: any(named: 'addressCountry'),
+          swissTaxResidence: any(named: 'swissTaxResidence'),
+          countryAndTINs: any(named: 'countryAndTINs'),
+        ),
+      ).thenAnswer((_) async {});
+    });
+
+    Finder taxScrollable() => find
+        .descendant(
+          of: find.byType(KycRegistrationTaxStep),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+
+    Future<void> showTaxStep(WidgetTester tester) async {
+      await tester.pumpApp(
+        buildSubject(const KycRegistrationView(initialUserData: initialUserData)),
+      );
+      // Let the seeded country lookups resolve before we jump to the tax page.
+      await tester.pumpAndSettle();
+
+      final index = registrationStepCubit.state.index;
+      (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(index);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> selectTaxCountry(WidgetTester tester, String name) async {
+      // The tax step hosts a single mandatory country dropdown. Selecting a
+      // value makes the form validatable and drives the derived
+      // `swissTaxResidence` on submit.
+      final taxDropdown = find.descendant(
+        of: find.byType(KycRegistrationTaxStep),
+        matching: find.byType(DropdownButtonFormField<Country>),
+      );
+      await tester.scrollUntilVisible(
+        taxDropdown,
+        100,
+        scrollable: taxScrollable(),
+      );
+      await tester.tap(taxDropdown);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(name).last);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> tapComplete(WidgetTester tester) async {
+      final completeButton = find.descendant(
+        of: find.byType(KycRegistrationTaxStep),
+        matching: find.byType(AppFilledButton),
+      );
+      await tester.scrollUntilVisible(
+        completeButton,
+        100,
+        scrollable: taxScrollable(),
+      );
+      await tester.tap(completeButton);
+      await tester.pumpAndSettle();
+    }
+
+    List<dynamic> captureSubmit() => verify(
+      () => registrationSubmitCubit.submit(
+        type: any(named: 'type'),
+        firstName: any(named: 'firstName'),
+        lastName: any(named: 'lastName'),
+        phoneNumber: any(named: 'phoneNumber'),
+        birthday: any(named: 'birthday'),
+        nationality: any(named: 'nationality'),
+        addressStreet: any(named: 'addressStreet'),
+        addressStreetNumber: any(named: 'addressStreetNumber'),
+        addressPostalCode: any(named: 'addressPostalCode'),
+        addressCity: any(named: 'addressCity'),
+        addressCountry: any(named: 'addressCountry'),
+        swissTaxResidence: captureAny(named: 'swissTaxResidence'),
+        countryAndTINs: captureAny(named: 'countryAndTINs'),
+      ),
+    ).captured;
+
+    testWidgets(
+      'Swiss tax residence forwards swissTaxResidence:true and null countryAndTINs',
+      (tester) async {
+        await showTaxStep(tester);
+        await selectTaxCountry(tester, 'Switzerland');
+
+        // A Swiss (CH) tax residence derives Swiss-only — no TIN is collected.
+        await tapComplete(tester);
+
+        final captured = captureSubmit();
+        expect(captured[0], isTrue);
+        expect(captured[1], isNull);
+      },
+    );
+
+    testWidgets(
+      'non-Swiss tax residence forwards swissTaxResidence:false and a countryAndTINs entry',
+      (tester) async {
+        await showTaxStep(tester);
+        await selectTaxCountry(tester, 'Germany');
+
+        final context = tester.element(find.byType(KycRegistrationTaxStep));
+        final tinField = find.widgetWithText(TextFormField, S.of(context).tinHint);
+        await tester.scrollUntilVisible(tinField, 100, scrollable: taxScrollable());
+        // Enter with surrounding whitespace: _onSubmit must trim it before
+        // forwarding, so the captured TIN is the trimmed value.
+        await tester.enterText(tinField, '  12 345 678 901  ');
+        await tester.pump();
+
+        await tapComplete(tester);
+
+        final captured = captureSubmit();
+        expect(captured[0], isFalse);
+        final tins = captured[1] as List<CountryAndTin>;
+        expect(tins, hasLength(1));
+        expect(tins.single.country, 'DE');
+        expect(tins.single.tin, '12 345 678 901');
       },
     );
   });

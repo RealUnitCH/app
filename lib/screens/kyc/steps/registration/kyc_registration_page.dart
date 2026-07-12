@@ -9,6 +9,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
@@ -21,6 +22,7 @@ import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registrati
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_submit/kyc_registration_submit_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_address_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_personal_step.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_tax_step.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
@@ -78,6 +80,8 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   final postalCodeCtrl = TextEditingController();
   final cityCtrl = TextEditingController();
   final countryCtrl = ValueNotifier<Country?>(null);
+  final taxCountryCtrl = ValueNotifier<Country?>(null);
+  final tinCtrl = TextEditingController();
 
   Country? _initialNationality;
   Country? _initialAddressCountry;
@@ -266,25 +270,47 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
           cityCtrl: cityCtrl,
           countryCtrl: countryCtrl,
           initialCountry: _initialAddressCountry,
+        );
+
+      case KycRegistrationStep.taxResidence:
+        return KycRegistrationTaxStep(
+          taxCountryCtrl: taxCountryCtrl,
+          tinCtrl: tinCtrl,
           onSubmit: _onSubmit,
         );
     }
   }
 
-  Future<void> _onSubmit() async => await context.read<KycRegistrationSubmitCubit>().submit(
-    type: typeCtrl.value,
-    firstName: firstnameCtrl.text.trim(),
-    lastName: lastnameCtrl.text.trim(),
-    phoneNumber: phoneCtrl.value?.trim() ?? '',
-    birthday: birthdayCtrl.value ?? '',
-    nationality: nationalityCtrl.value!,
-    addressStreet: addressStreetCtrl.text.trim(),
-    addressStreetNumber: addressStreetNumberCtrl.text.trim(),
-    addressPostalCode: postalCodeCtrl.text.trim(),
-    addressCity: cityCtrl.text.trim(),
-    addressCountry: countryCtrl.value!,
-    swissTaxResidence: true,
-  );
+  Future<void> _onSubmit() async {
+    // `swissTaxResidence` is derived from the tax-residence country picked on
+    // the final step: a Swiss (CH) tax residence is Swiss-only, and the TIN is
+    // forwarded only for a non-Swiss tax residence (matching the backend
+    // contract).
+    final swissTaxResidence = taxCountryCtrl.value!.symbol == 'CH';
+    final countryAndTINs = swissTaxResidence
+        ? null
+        : [
+            CountryAndTin(
+              country: taxCountryCtrl.value!.symbol,
+              tin: tinCtrl.text.trim(),
+            ),
+          ];
+    await context.read<KycRegistrationSubmitCubit>().submit(
+      type: typeCtrl.value,
+      firstName: firstnameCtrl.text.trim(),
+      lastName: lastnameCtrl.text.trim(),
+      phoneNumber: phoneCtrl.value?.trim() ?? '',
+      birthday: birthdayCtrl.value ?? '',
+      nationality: nationalityCtrl.value!,
+      addressStreet: addressStreetCtrl.text.trim(),
+      addressStreetNumber: addressStreetNumberCtrl.text.trim(),
+      addressPostalCode: postalCodeCtrl.text.trim(),
+      addressCity: cityCtrl.text.trim(),
+      addressCountry: countryCtrl.value!,
+      swissTaxResidence: swissTaxResidence,
+      countryAndTINs: countryAndTINs,
+    );
+  }
 
   @override
   void dispose() {
@@ -300,6 +326,8 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
     postalCodeCtrl.dispose();
     cityCtrl.dispose();
     countryCtrl.dispose();
+    taxCountryCtrl.dispose();
+    tinCtrl.dispose();
     super.dispose();
   }
 }

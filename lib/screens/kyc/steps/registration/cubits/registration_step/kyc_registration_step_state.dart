@@ -1,6 +1,6 @@
 part of 'kyc_registration_step_cubit.dart';
 
-enum KycRegistrationStep { personal, address }
+enum KycRegistrationStep { personal, address, taxResidence }
 
 class KycRegistrationStepState {
   final List<KycRegistrationStep> steps;
@@ -25,6 +25,8 @@ class KycRegistrationStepState {
         return S.of(context).personalData;
       case KycRegistrationStep.address:
         return S.of(context).residence;
+      case KycRegistrationStep.taxResidence:
+        return S.of(context).taxResidence;
     }
   }
 }
