@@ -73,7 +73,11 @@ mehr aus diesen Maestro-Läufen.)
 2. **Screenshot-Mapping**: in `scripts/assemble-handbook-screenshots.sh` eine neue
    Zeile in der `MAPPING`-Tabelle ergänzen — `"NN-<name>=<feature>/goldens/macos/<file>.png"`.
    Die Nummer NN ist der Sortierschlüssel im Handbook (keine direkte Bindung mehr
-   an einen Maestro-Flow).
+   an einen Maestro-Flow). Damit ändert sich die Screenshot-Anzahl: den
+   Count-Guard in `.github/workflows/handbook-build-check.yaml` (der
+   `if [ "$count" != "N" ]`-Check plus die `NN-…`-Kommentare/-Samples im
+   Smoke-Step) im selben Zug anpassen — analog zur `EXPECTED_PDF_COUNT`-Mechanik
+   weiter unten.
 3. **HTML**: in `docs/handbook/de/index.html` einen neuen `<div class="test">`-Block
    in die thematisch passende `<details id="spec-NN" class="spec">`-Sektion
    einfügen (Muster siehe spec-01). Die Screenshots sind in wenige thematische
