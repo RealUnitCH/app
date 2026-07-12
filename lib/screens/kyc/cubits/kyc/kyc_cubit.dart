@@ -286,11 +286,13 @@ class KycCubit extends Cubit<KycState> {
         _outstandingLegalAgreements ?? RealUnitLegalAgreement.values,
       );
     } on ApiException catch (e) {
+      if (isClosed) return;
       if (e.statusCode != 404) {
         emit(KycFailure(e.toString()));
         return;
       }
     } catch (e) {
+      if (isClosed) return;
       emit(KycFailure(e.toString()));
       return;
     }
