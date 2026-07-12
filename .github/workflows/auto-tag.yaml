@@ -2,7 +2,7 @@ name: Auto Tag on Merge
 
 on:
   push:
-    branches: [main, develop]
+    branches: [develop]
 
 permissions:
   contents: write
@@ -15,6 +15,7 @@ jobs:
   create-tag:
     name: Create Release Tag
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,13 +29,22 @@ jobs:
           ssh-private-key: ${{ secrets.TAG_DEPLOY_KEY }}
 
       - name: Configure Git for SSH
-        run: git remote set-url origin git@github.com:DFXswiss/realunit-app.git
+        # `${{ github.repository }}` resolves to `<owner>/<repo>` for the
+        # currently running workflow — keeps the remote correct if the repo
+        # is renamed or transferred between orgs, without a follow-up edit.
+        run: git remote set-url origin git@github.com:${{ github.repository }}.git
 
       - name: Get latest tag
         id: get-tag
         run: |
-          # Get only clean semver tags (vX.Y.Z), exclude pre-release tags
-          LATEST_TAG=$(git tag -l --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+          set -euo pipefail
+          # Only consider clean semver tags (vX.Y.Z). Legacy beta tags
+          # (vX.Y.Z-beta.N) are ignored — they were superseded by the
+          # plain-SemVer schema. The trailing `|| true` keeps the
+          # pipeline tolerant of an empty grep under `pipefail`: a
+          # fresh repo with zero matching tags is a legitimate state
+          # that the next `[ -z ... ]` branch handles explicitly.
+          LATEST_TAG=$(git tag -l --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
 
           if [ -z "$LATEST_TAG" ]; then
             echo "No existing tags found, starting with v0.0.0"
@@ -47,8 +57,8 @@ jobs:
       - name: Calculate next version
         id: next-version
         run: |
+          set -euo pipefail
           LATEST_TAG="${{ steps.get-tag.outputs.latest_tag }}"
-          BRANCH="${{ github.ref_name }}"
 
           # Remove 'v' prefix and split into parts
           VERSION="${LATEST_TAG#v}"
@@ -56,25 +66,25 @@ jobs:
           MINOR=$(echo "$VERSION" | cut -d. -f2)
           PATCH=$(echo "$VERSION" | cut -d. -f3)
 
-          # Next release version
+          # Default: patch-bump on top of latest tag.
           NEW_PATCH=$((PATCH + 1))
           NEXT_VERSION="v${MAJOR}.${MINOR}.${NEW_PATCH}"
 
-          if [ "$BRANCH" = "main" ]; then
-            NEW_TAG="$NEXT_VERSION"
-          else
-            # For develop: find latest beta tag for the next version
-            LATEST_BETA=$(git tag -l --sort=-v:refname "${NEXT_VERSION}-beta.*" | head -n 1)
-
-            if [ -z "$LATEST_BETA" ]; then
-              NEW_TAG="${NEXT_VERSION}-beta.1"
-            else
-              # Extract beta number and increment
-              BETA_NUM=$(echo "$LATEST_BETA" | sed "s/${NEXT_VERSION}-beta\.//")
-              NEW_BETA=$((BETA_NUM + 1))
-              NEW_TAG="${NEXT_VERSION}-beta.${NEW_BETA}"
-            fi
+          # Floor for major/minor jumps: when pubspec.yaml is ahead of the
+          # patch-bumped tag, use pubspec instead. Patch increments still come
+          # from the tag history; pubspec is only consulted to trigger jumps.
+          # `|| true` keeps the pipeline tolerant of an empty grep under
+          # `pipefail`: a pubspec without a `version:` line is a legitimate
+          # state that the next `[ -n ... ]` branch handles explicitly.
+          PUBSPEC_VERSION=$(grep -E '^version:[[:space:]]+[0-9]+\.[0-9]+\.[0-9]+' pubspec.yaml \
+            | awk '{print $2}' | cut -d+ -f1 || true)
+          if [ -n "$PUBSPEC_VERSION" ]; then
+            HIGHEST=$(printf '%s\n%s\n' "${NEXT_VERSION#v}" "$PUBSPEC_VERSION" | sort -V | tail -n 1)
+            NEXT_VERSION="v${HIGHEST}"
+            echo "::notice::pubspec marketing version: $PUBSPEC_VERSION; resolved next: $NEXT_VERSION"
           fi
+
+          NEW_TAG="$NEXT_VERSION"
 
           echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
           echo "::notice::New tag: $NEW_TAG"
@@ -82,6 +92,7 @@ jobs:
       - name: Check if tag exists
         id: check-tag
         run: |
+          set -euo pipefail
           NEW_TAG="${{ steps.next-version.outputs.new_tag }}"
           if git rev-parse "$NEW_TAG" >/dev/null 2>&1; then
             echo "::error::Tag $NEW_TAG already exists!"
@@ -93,6 +104,7 @@ jobs:
       - name: Create and push tag
         if: steps.check-tag.outputs.exists == 'false'
         run: |
+          set -euo pipefail
           NEW_TAG="${{ steps.next-version.outputs.new_tag }}"
 
           git config user.name "github-actions[bot]"

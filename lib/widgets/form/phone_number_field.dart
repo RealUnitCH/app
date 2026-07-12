@@ -94,9 +94,8 @@ class _PhoneNumberFieldState extends State<PhoneNumberField> {
                   if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
                     return S.of(context).registerPhoneNumberOnlyDigits;
                   }
-                  if (value.length < 6) {
-                    return S.of(context).registerPhoneNumberTooShort;
-                  }
+                  // Length is validated by the API (libphonenumber); the client
+                  // must not gate on it — see CONTRIBUTING "the API decides".
                   return null;
                 },
               ),

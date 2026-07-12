@@ -1,0 +1,77 @@
+name: bitbox-simulator
+
+# Launches the official BitBox02 simulator
+# (https://github.com/BitBoxSwiss/bitbox02-firmware/releases) and runs
+# the bitbox-testkit baseline scenarios against real firmware logic.
+#
+# What this validates for realunit-app:
+#   • bitbox-api ↔ BitBox02 firmware Noise handshake round-trip.
+#   • ETH-address derivation on chainId=1 AND chainId=137 (the
+#     multi-byte-v boundary that has historically broken EIP-155
+#     consumers).
+#   • ETH personal-message signing at the firmware-doc 1024-byte upper
+#     boundary.
+#   • EIP-1559 sign happy path.
+#
+# What this does NOT validate: realunit-app's Dart code talking to
+# the BitBox via the bitbox_flutter plugin against real hardware.
+# That still requires a physical BitBox02. The simulator covers the
+# FIRMWARE side of the protocol; the Dart consumer side is exercised
+# by Tier 1 (SDK-boundary fake, cross-layer tests under
+# `test/integration/`) and ultimately by Tier 3 Maestro flows on
+# real hardware. See `docs/testing.md` for the five-tier model and
+# issue #314 for the rollout plan. The pinned bitbox_flutter version
+# lives in `pubspec.yaml`.
+#
+# Runs on every PR that touches BitBox surface AND on manual trigger.
+# For ad-hoc maintainer validation, bitbox-simulator-slash.yml
+# accepts /bitbox-simulator on any PR.
+
+on:
+  pull_request:
+    # Fires on every PR except those targeting `main` — stacked PRs
+    # (feature → integration → develop) need their own firmware-simulator
+    # run so a BitBox regression is caught at the lowest possible level,
+    # not only after the stack has been collapsed to a develop PR. The
+    # release lane (develop → main) is skipped because the same SHA
+    # already ran on the develop PR. The `paths:` filter below is the
+    # real cost control on top of that.
+    branches-ignore: [main]
+    paths:
+      - 'lib/packages/hardware_wallet/**'
+      - 'lib/packages/wallet/**'
+      - 'lib/screens/hardware_connect_bitbox/**'
+      - 'test/packages/hardware_wallet/**'
+      - 'test/packages/wallet/**'
+      - 'test/screens/hardware_connect_bitbox/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/bitbox-simulator.yml'
+  workflow_dispatch:
+
+# `read` only — this workflow does not comment back on the PR, so the
+# default-elevated `write` was unused and granted more authority than
+# needed (the slash-command sibling keeps `write` because it DOES
+# create comments to report authz/parse state).
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: bitbox-simulator-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  simulator:
+    name: BitBox02 simulator (real firmware)
+    # Skip on draft PRs (matches `pull-request.yaml` + `tier3-handbook.yaml`).
+    # `workflow_dispatch` falls through because there's no `pull_request`
+    # context — the condition is "anything that isn't a PR, or a PR
+    # that isn't a draft".
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DFXswiss/bitbox-testkit/.github/actions/bitbox-simulator@45a1253d23b545d801cf5a1f42c040b85e389c7d # v0.5.0
+        with:
+          testkit-ref: v0.5.0

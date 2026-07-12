@@ -16,21 +16,29 @@ class SettingsUserDataLoading extends SettingsUserDataState {
 }
 
 class SettingsUserDataFailure extends SettingsUserDataState {
-  final String message;
+  const SettingsUserDataFailure();
+}
 
-  const SettingsUserDataFailure(this.message);
-
-  @override
-  List<Object?> get props => [message];
+class SettingsUserDataBitboxDisconnected extends SettingsUserDataState {
+  const SettingsUserDataBitboxDisconnected();
 }
 
 class SettingsUserDataSuccess extends SettingsUserDataState {
   final UserData? userData;
   final String? email;
   final Set<KycStepName> pendingSteps;
+  // API-driven per-action gates from `/v2/user.capabilities`. The page
+  // uses these to decide whether to render Edit buttons — replacing the
+  // local `pendingSteps == inReview` interpretation.
+  final UserCapabilitiesDto capabilities;
 
-  const SettingsUserDataSuccess({this.userData, this.email, this.pendingSteps = const {}});
+  const SettingsUserDataSuccess({
+    this.userData,
+    this.email,
+    this.pendingSteps = const {},
+    this.capabilities = const UserCapabilitiesDto(),
+  });
 
   @override
-  List<Object?> get props => [userData, email, pendingSteps];
+  List<Object?> get props => [userData, email, pendingSteps, capabilities];
 }

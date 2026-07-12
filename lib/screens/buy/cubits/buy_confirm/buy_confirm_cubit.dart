@@ -7,6 +7,11 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_
 
 part 'buy_confirm_state.dart';
 
+// Backend error code for a confirm rejected by Aktionariat because the
+// purchase is below its minimum (HTTP 400). Dispatch on the code, not the
+// message text — the message is Aktionariat's and may change.
+const String _errorCodeAmountTooLow = 'AmountTooLow';
+
 class BuyConfirmCubit extends Cubit<BuyConfirmState> {
   final RealUnitBuyPaymentInfoService _buyPaymentInfoService;
 
@@ -17,15 +22,22 @@ class BuyConfirmCubit extends Cubit<BuyConfirmState> {
   Future<void> confirmPayment(int paymentInfoId) async {
     try {
       emit(const BuyConfirmLoading());
-      final reference = await _buyPaymentInfoService.confirmPayment(paymentInfoId);
-      emit(BuyConfirmSuccess(reference));
-    } on ApiException catch (e) {
-      developer.log(e.toString());
+      final dto = await _buyPaymentInfoService.confirmPayment(paymentInfoId);
       emit(
-        BuyConfirmFailure(
-          e.statusCode == 503 ? BuyConfirmError.aktionariat : BuyConfirmError.unknown,
+        BuyConfirmSuccess(
+          reference: dto.reference,
+          remittanceInfo: dto.remittanceInfo,
+          paymentRequest: dto.paymentRequest,
         ),
       );
+    } on ApiException catch (e) {
+      developer.log(e.toString());
+      final error = e.statusCode == 503
+          ? BuyConfirmError.aktionariat
+          : e.code == _errorCodeAmountTooLow
+          ? BuyConfirmError.amountTooLow
+          : BuyConfirmError.unknown;
+      emit(BuyConfirmFailure(error));
     } catch (e) {
       developer.log(e.toString());
       emit(const BuyConfirmFailure(BuyConfirmError.unknown));

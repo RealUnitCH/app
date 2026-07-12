@@ -23,36 +23,97 @@ def get_api_key
   )
 end
 
+# Run `deliver` (App Store listing push) as best-effort: a deliver failure is
+# logged loudly but does NOT fail the lane (exit stays 0).
+#
+# Why: while the app has no App Store entry in App Store Connect yet
+# (TestFlight-only), `deliver` cannot create the first App Store version via
+# the API and aborts with "You cannot create a new version of the App in the
+# current state". That is an App-Store-Connect bootstrap prerequisite, not a
+# repo problem — the TestFlight binary (the release-critical step) has already
+# been uploaded, and the listing push is additive. Once the first App Store
+# version is created manually in App Store Connect (one-time), the next
+# tag-driven release's `deliver` writes the listing texts/screenshots
+# automatically — no further manual step.
+#
+# The rescue intentionally wraps ONLY the single `deliver` call, so a failure
+# of ANY other action (gym, signing, upload_to_testflight, …) still hard-fails
+# the lane. The error is surfaced via UI.error/UI.important so a missing
+# bootstrap stays clearly visible in the build log and is never silently lost.
+def deliver_best_effort(**options)
+  deliver(**options)
+rescue => e
+  UI.error("================ App Store listing NOT updated ================")
+  UI.error("`deliver` failed and was skipped (best-effort) — exit stays 0.")
+  UI.error("deliver error: #{e.message}")
+  UI.important("Expected while the app is TestFlight-only with no editable App Store version.")
+  UI.important("ACTION: create the first App Store version once in App Store Connect; the next release then syncs the listing automatically.")
+  UI.error("===============================================================")
+end
+
+# Runs tool/generate_release_info.dart (single source of truth for tag →
+# marketing version + version code) and reads the values back from the
+# generated Dart file. The generated file is the canonical artefact —
+# parsing stdout is brittle because `dart run` prepends "Running build
+# hooks..." with no trailing newline. Same helper is mirrored in
+# android/fastlane/Fastfile.
+def resolve_release_info(raw_tag)
+  generated = Dir.chdir("../..") do
+    sh("dart", "run", "tool/generate_release_info.dart", "--tag=#{raw_tag}")
+    File.read("lib/generated/release_info.dart")
+  end
+
+  info = {
+    "release_tag"       => generated.match(/releaseTag = '([^']+)'/)&.[](1),
+    "marketing_version" => generated.match(/releaseMarketingVersion = '([^']+)'/)&.[](1),
+    "version_code"      => generated.match(/releaseVersionCode = (\d+)/)&.[](1),
+  }
+  missing = info.select { |_, v| v.nil? }.keys
+  UI.user_error!("release-info generator missing keys: #{missing.join(', ')}") unless missing.empty?
+  # `dev` sentinel (versionCode=0) is intended for local builds only —
+  # TestFlight rejects build number 0. Fail loudly before invoking gym.
+  if info["version_code"].to_i <= 0
+    UI.user_error!("refusing to build a store release without a release tag (got: '#{raw_tag}')")
+  end
+  info
+end
+
 platform :ios do
   desc "Push a new beta build to TestFlight"
   lane :beta do
     setup_ci
 
     raw_version_name = ENV["NEW_VERSION"] || "v0.0.0"
-    new_version_name = raw_version_name.delete('v')
-    latest_build = latest_testflight_build_number(api_key: get_api_key)
+    info = resolve_release_info(raw_version_name)
+    tag_name = info["release_tag"]
+    marketing_version = info["marketing_version"]
+    version_code = info["version_code"]
 
     sync_code_signing(
       type: "appstore",
       app_identifier: "swiss.realunit.app",
       api_key: get_api_key,
-      git_url: "git@github.com:DFXswiss/fastlane-certificates.git"
+      git_url: "git@github.com:RealUnitCH/fastlane-certificates.git"
     )
 
+    # CFBundleShortVersionString must be three integers (App Store ITMS-90060).
+    # The marketing version equals the bare tag (e.g. "1.0.15"). The build number is
+    # tag-deterministic and identical to the Android versionCode (see
+    # tool/generate_release_info.dart).
     increment_version_number(
-      version_number: new_version_name,
+      version_number: marketing_version,
       xcodeproj: "Runner.xcodeproj"
     )
-    
+
     increment_build_number(
-      build_number: latest_build + 1,  
+      build_number: version_code,
       xcodeproj: "Runner.xcodeproj"
     )
-    
+
     gym(
       workspace: "Runner.xcworkspace",
       scheme: "Runner",
-      output_name: "realunit-#{new_version_name}.ipa",
+      output_name: "realunit-#{tag_name}.ipa",
       xcargs: "-verbose",
       verbose: true
     )
@@ -60,6 +121,47 @@ platform :ios do
     upload_to_testflight(
       api_key: get_api_key,
       skip_waiting_for_build_processing: true
+    )
+
+    # Push the App Store listing (metadata + screenshots) alongside the binary.
+    # `skip_app_version_update: false` lets `deliver` create or select the
+    # editable App Store version (named after marketing_version) itself. The
+    # Deliverfile keeps this safe: `force` (no prompts), `submit_for_review false`
+    # and `automatic_release false`, so deliver only *stages* the listing for a
+    # human to submit — it never auto-submits or releases to the public.
+    # Run as best-effort (see deliver_best_effort above): while the app has no
+    # App Store version in App Store Connect yet, this push fails and is skipped
+    # without failing the release — the TestFlight binary already shipped.
+    deliver_best_effort(
+      api_key: get_api_key,
+      app_version: marketing_version,
+      metadata_path: "./fastlane/metadata",
+      screenshots_path: "./fastlane/screenshots",
+      skip_binary_upload: true,        # binary already uploaded by upload_to_testflight
+      skip_app_version_update: false,  # create/select the editable App Store version
+      skip_metadata: false,
+      skip_screenshots: false
+    )
+  end
+
+  desc "Upload App Store listing (metadata + screenshots) without a binary"
+  lane :store_metadata do
+    setup_ci
+    # Metadata-only sync (no binary). skip_app_version_update: false so deliver
+    # targets the editable App Store version to attach the listing to. Safe via
+    # the Deliverfile (submit_for_review false + automatic_release false):
+    # staged, never submitted. Best-effort (see deliver_best_effort above): if
+    # no editable App Store version exists yet, the push is skipped without
+    # failing the lane. In practice an editable version exists from a prior
+    # release once the first version has been bootstrapped in App Store Connect.
+    deliver_best_effort(
+      api_key: get_api_key,
+      metadata_path: "./fastlane/metadata",
+      screenshots_path: "./fastlane/screenshots",
+      skip_binary_upload: true,
+      skip_app_version_update: false,
+      skip_metadata: false,
+      skip_screenshots: false
     )
   end
 end

@@ -1,6 +1,6 @@
 part of 'settings_contact_cubit.dart';
 
-class SettingsContactState extends Equatable {
+abstract class SettingsContactState extends Equatable {
   const SettingsContactState();
 
   @override
@@ -16,18 +16,24 @@ class SettingsContactLoading extends SettingsContactState {
 }
 
 class SettingsContactSuccess extends SettingsContactState {
-  final bool emailSet;
+  // Nullable because pre-PR backends do not ship the field. A null
+  // capability is a load-bearing signal: callers must treat it as
+  // "no information, fall back to a direct push".
+  final CreateSupportTicketCapabilityDto? capability;
 
-  const SettingsContactSuccess({this.emailSet = false});
+  const SettingsContactSuccess({this.capability});
 
-  SettingsContactSuccess copyWith({bool? emailSet}) {
-    return SettingsContactSuccess(
-      emailSet: emailSet ?? this.emailSet,
-    );
-  }
-
+  // The DTO is non-Equatable per repo convention, so we decompose its
+  // fields manually here. If the API extends
+  // `CreateSupportTicketCapabilityDto` with new fields, they MUST be
+  // added to this list — otherwise two state instances that differ
+  // only by the new field will compare equal and the cubit will skip
+  // a UI rebuild.
   @override
-  List<Object?> get props => [emailSet];
+  List<Object?> get props => [
+    capability?.available,
+    capability?.missingPrerequisite,
+  ];
 }
 
 class SettingsContactFailure extends SettingsContactState {

@@ -10,23 +10,14 @@ import 'package:realunit_wallet/packages/service/dfx/models/support/support_issu
 class DfxSupportService extends DFXAuthService {
   static const _supportPath = '/v1/support/issue';
 
-  DfxSupportService(super.appStore);
-
-  @override
-  get wallet => appStore.wallet.currentAccount;
-
-  @override
-  String get walletAddress => wallet.primaryAddress.address.hexEip55;
+  DfxSupportService(super.appStore, super.walletService);
 
   Future<List<SupportIssueDto>> getTickets() async {
     final uri = buildUri(host, _supportPath);
-    final authToken = await getAuthToken();
-
-    final response = await appStore.httpClient.get(
+    final response = await authenticatedGet(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
     );
 
@@ -41,13 +32,10 @@ class DfxSupportService extends DFXAuthService {
 
   Future<SupportIssueDto> getTicket(String uid) async {
     final uri = buildUri(host, '$_supportPath/$uid');
-    final authToken = await getAuthToken();
-
-    final response = await appStore.httpClient.get(
+    final response = await authenticatedGet(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
     );
 
@@ -68,7 +56,6 @@ class DfxSupportService extends DFXAuthService {
     String? message,
   }) async {
     final uri = buildUri(host, _supportPath);
-    final authToken = await getAuthToken();
 
     final body = jsonEncode({
       'type': type.toJson(),
@@ -77,11 +64,10 @@ class DfxSupportService extends DFXAuthService {
       if (message != null) 'message': message,
     });
 
-    final response = await appStore.httpClient.post(
+    final response = await authenticatedPost(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
       body: body,
     );
@@ -98,15 +84,13 @@ class DfxSupportService extends DFXAuthService {
 
   Future<void> sendMessage(String ticketUid, String message) async {
     final uri = buildUri(host, '$_supportPath/$ticketUid/message');
-    final authToken = await getAuthToken();
 
     final body = jsonEncode({'message': message});
 
-    final response = await appStore.httpClient.post(
+    final response = await authenticatedPost(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
       body: body,
     );

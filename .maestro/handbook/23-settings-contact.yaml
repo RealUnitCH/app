@@ -1,0 +1,87 @@
+# Tier-3 navigation smoke. The handbook screenshot for this flow is the
+# visual-regression Golden mapped in scripts/assemble-handbook-screenshots.sh;
+# this flow's diagnostic capture lands in build/handbook-captures/23-settings-contact.png.
+# Continues from 22-settings-dfx-documents (no clearState). The DFX-documents
+# sub-page is pushed on top of SettingsLegalDocumentsPage, which in turn sits
+# on the Settings menu. We tap back twice to return to the Settings menu, then
+# open "Kontakt" -> SettingsContactPage.
+#
+# Settle target: the AppBar title "Kontakt" is visible WHILE
+# "Wallet-Adresse" (a settings-menu-only tile, not present on the contact
+# page) has disappeared. This combination uniquely identifies the contact
+# page without depending on `/v1/company-info/RealUnit`.
+#
+# Why NOT settle on "info@realunit.ch":
+#   The email tile is rendered from `state.companyInfo.email` in
+#   SettingsContactCubit (PR #499), which fetches `/v1/company-info/RealUnit`.
+#   That endpoint currently returns 404 on both api.dfx.swiss and
+#   dev.api.dfx.swiss — the backend side of #499 is not yet deployed. The
+#   cubit swallows the company-info error (`catchError -> null`) so the page
+#   still renders, but the email/phone/website/imprint tiles all collapse to
+#   `SizedBox.shrink()`. Asserting on the email string therefore times out
+#   even though the page navigation itself succeeded. The Support tile is
+#   also unreliable as a target: it only renders when
+#   `UserCapabilitiesDto.supportAvailable` is true, which defaults to false
+#   for freshly-created handbook wallets.
+#
+#   Once the backend exposes `/v1/company-info/RealUnit`, this flow can be
+#   tightened back to assert on the email tile — see PR #515 for context.
+#
+# The first back tap gates on "Dokumente der Aktionariat AG" — that tile lives
+# on SettingsLegalDocumentsPage but not on the DFX sub-page, so it cleanly
+# marks arrival at the legal-documents list. ("Dokumente der DFX AG" would not
+# work here: it is also the title of the DFX sub-page we are leaving.)
+#
+# All three taps (back to the legal-documents list, back to the Settings menu,
+# then into the contact screen) are gated on their target not yet showing and
+# re-tapped if one was silently dropped (Maestro/XCUITest tap-loss on Apple
+# Silicon + iOS 26, mobile-dev-inc/maestro#3137). Each gate stops its loop the
+# instant the screen changes, so surplus iterations no-op.
+appId: swiss.realunit.app
+---
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              text: '.*Dokumente der Aktionariat AG.*'
+          commands:
+            - tapOn:
+                point: 8%,8%
+                optional: true
+- waitForAnimationToEnd
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible: 'Einstellungen'
+          commands:
+            - tapOn:
+                point: 8%,8%
+                optional: true
+- waitForAnimationToEnd
+# Gate the "Kontakt" tap on "Wallet-Adresse" still being visible — i.e. we
+# are still on the settings menu and the tap has not yet taken effect. Once
+# we land on SettingsContactPage, "Wallet-Adresse" disappears from the tree
+# and the loop stops re-tapping immediately.
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            visible:
+              text: '.*Wallet-Adresse.*'
+          commands:
+            - tapOn:
+                text: 'Kontakt'
+                optional: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    notVisible:
+      text: '.*Wallet-Adresse.*'
+    timeout: 30000
+- extendedWaitUntil:
+    visible: 'Kontakt'
+    timeout: 30000

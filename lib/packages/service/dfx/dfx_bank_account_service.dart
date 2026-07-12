@@ -1,28 +1,21 @@
 import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
-import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/bank_account/dto/bank_account_dto.dart';
 
-class DfxBankAccountService {
+class DfxBankAccountService extends DFXAuthService {
   static const _bankAccountPath = 'v1/bankAccount';
 
-  String get _host => _appStore.apiConfig.apiHost;
-
-  final AppStore _appStore;
-
-  DfxBankAccountService(AppStore appStore) : _appStore = appStore;
+  DfxBankAccountService(super.appStore, super.walletService);
 
   Future<List<BankAccountDto>> getBankAccounts() async {
-    final authToken = _appStore.sessionCache.authToken;
-
-    final uri = buildUri(_host, _bankAccountPath);
-    final response = await _appStore.httpClient.get(
+    final uri = buildUri(host, _bankAccountPath);
+    final response = await authenticatedGet(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
     );
 
@@ -37,14 +30,11 @@ class DfxBankAccountService {
   }
 
   Future<BankAccountDto> createBankAccount(String iban, String? label) async {
-    final authToken = _appStore.sessionCache.authToken;
-
-    final uri = buildUri(_host, _bankAccountPath);
-    final response = await _appStore.httpClient.post(
+    final uri = buildUri(host, _bankAccountPath);
+    final response = await authenticatedPost(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
       body: jsonEncode({
         'iban': iban,
@@ -66,14 +56,11 @@ class DfxBankAccountService {
     bool? isDefault,
     bool? isActive,
   }) async {
-    final authToken = _appStore.sessionCache.authToken;
-
-    final uri = buildUri(_host, '$_bankAccountPath/$id');
-    final response = await _appStore.httpClient.put(
+    final uri = buildUri(host, '$_bankAccountPath/$id');
+    final response = await authenticatedPut(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
       body: jsonEncode({
         if (label != null) 'label': label,

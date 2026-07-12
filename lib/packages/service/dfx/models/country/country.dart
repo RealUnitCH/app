@@ -6,15 +6,22 @@ class Country extends Equatable {
   final String symbol;
   final String name;
   final String? foreignName;
+  // Whether the backend accepts this country as a KYC address/residence
+  // country (DTO alias `kycAllowed`, backed by `dfxEnable`). A non-allowed
+  // address country is rejected with HTTP 400 on registration submit.
+  final bool kycAllowed;
 
   const Country({
     required this.id,
     required this.symbol,
     required this.name,
+    required this.kycAllowed,
     this.foreignName,
   });
 
   @override
+  // Deliberately id-keyed: dropdown seeding matches a Country fetched in one
+  // epoch against the items list of another, tolerating field drift.
   List<Object?> get props => [id];
 }
 
@@ -25,6 +32,7 @@ extension DfxCountryDtoMapper on DfxCountryDto {
       symbol: symbol,
       name: name,
       foreignName: foreignName,
+      kycAllowed: kycAllowed,
     );
   }
 }

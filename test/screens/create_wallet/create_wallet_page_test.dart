@@ -6,8 +6,10 @@ import 'package:flutter_svg/svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
+import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/screens/create_wallet/bloc/create_wallet_cubit.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_view.dart';
@@ -19,10 +21,18 @@ class MockCreateWalletCubit extends MockCubit<CreateWalletState> implements Crea
 
 class MockWalletService extends Mock implements WalletService {}
 
+class MockDfxKycService extends Mock implements DfxKycService {}
+
 class MockWallet extends Mock implements SoftwareWallet {}
+
+class MockWalletAccount extends Mock implements WalletAccount {}
 
 void main() {
   late CreateWalletCubit createWalletCubit;
+
+  setUpAll(() {
+    registerFallbackValue(MockWalletAccount());
+  });
 
   setUp(() {
     createWalletCubit = MockCreateWalletCubit();
@@ -33,8 +43,21 @@ void main() {
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
     final walletService = MockWalletService();
-    when(() => walletService.createSeedWallet(any())).thenAnswer((_) => Future.value(MockWallet()));
+    // The cubit reads wallet.currentAccount synchronously to pass into the
+    // top-level warmAuthSignature helper, so the mock has to surface a real
+    // account or the unstubbed null trips the cast.
+    final stubbedWallet = MockWallet();
+    when(() => stubbedWallet.currentAccount).thenReturn(MockWalletAccount());
+    when(() => walletService.generateUncommittedSeedWallet(any()))
+        .thenAnswer((_) async => stubbedWallet);
     getIt.registerSingleton<WalletService>(walletService);
+    // CreateWalletCubit now depends on DFXAuthService (via DfxKycService — the
+    // smallest registered subclass) to pre-warm the auth signature on
+    // pairing. The page is what triggers the cubit, so the page-level test
+    // needs the same DI surface.
+    final kyc = MockDfxKycService();
+    when(() => kyc.ensureSignatureFor(any())).thenAnswer((_) async {});
+    getIt.registerSingleton<DfxKycService>(kyc);
   }
 
   setUpAll(() {

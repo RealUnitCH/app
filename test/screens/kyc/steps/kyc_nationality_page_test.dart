@@ -11,6 +11,7 @@ import 'package:realunit_wallet/screens/kyc/steps/nationality/cubit/kyc_national
 import 'package:realunit_wallet/screens/kyc/steps/nationality/kyc_nationality_page.dart';
 import 'package:realunit_wallet/widgets/form/country_field.dart';
 
+import '../../../helper/country_fixture.dart';
 import '../../../helper/pump_app.dart';
 
 class MockKycNationalityCubit extends MockCubit<KycNationalityState>
@@ -19,8 +20,6 @@ class MockKycNationalityCubit extends MockCubit<KycNationalityState>
 class MockKycCubit extends MockCubit<KycState> implements KycCubit {}
 
 class MockDfxKycService extends Mock implements DfxKycService {}
-
-class MockDfxCountryService extends Mock implements DfxCountryService {}
 
 void main() {
   late KycNationalityCubit kycNationalityCubit;
@@ -39,7 +38,7 @@ void main() {
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<DfxKycService>(MockDfxKycService());
-    getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
+    getIt.registerSingleton<DfxCountryService>(fixtureCountryService());
   }
 
   setUpAll(() {

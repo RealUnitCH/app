@@ -14,6 +14,7 @@ import 'package:realunit_wallet/screens/verify_seed/widgets/verify_seed_button.d
 import 'package:realunit_wallet/screens/verify_seed/widgets/verify_seed_input_field.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
+import '../../helper/golden_plugin_stubs.dart';
 import '../../helper/pump_app.dart';
 
 class MockVerifySeedCubit extends MockCubit<VerifySeedState> implements VerifySeedCubit {}
@@ -82,7 +83,7 @@ void main() {
         ),
       );
 
-      await tester.pumpApp(buildSubject(VerifySeedView(wallet: MockWallet())));
+      await tester.pumpApp(buildSubject(const VerifySeedView()));
 
       expect(
         find.byWidgetPredicate((widget) => widget is SvgPicture && widget.width == 124),
@@ -103,7 +104,7 @@ void main() {
           ),
         );
 
-        await tester.pumpApp(buildSubject(VerifySeedView(wallet: MockWallet())));
+        await tester.pumpApp(buildSubject(const VerifySeedView()));
 
         expect(
           find.byWidgetPredicate(
@@ -124,7 +125,7 @@ void main() {
           ),
         );
 
-        await tester.pumpApp(buildSubject(VerifySeedView(wallet: MockWallet())));
+        await tester.pumpApp(buildSubject(const VerifySeedView()));
 
         expect(
           find.byWidgetPredicate(
@@ -146,7 +147,7 @@ void main() {
           ),
         );
 
-        await tester.pumpApp(buildSubject(VerifySeedView(wallet: MockWallet())));
+        await tester.pumpApp(buildSubject(const VerifySeedView()));
 
         expect(
           find.byWidgetPredicate(
@@ -168,7 +169,7 @@ void main() {
           ),
         );
 
-        await tester.pumpApp(buildSubject(VerifySeedView(wallet: MockWallet())));
+        await tester.pumpApp(buildSubject(const VerifySeedView()));
 
         expect(
           find.byWidgetPredicate(
@@ -182,21 +183,52 @@ void main() {
       });
     });
 
-    group('$BlocListener', () {
-      testWidgets('sends $HomeEvent when entered words are verified', (tester) async {
-        final wallet = MockWallet();
+    testWidgets('disables screenshots on init and re-enables on dispose', (tester) async {
+      final calls = <String>[];
+      stubNoScreenshotChannel(calls: calls);
+      addTearDown(unstubNoScreenshotChannel);
 
+      await tester.pumpApp(buildSubject(const VerifySeedView()));
+      expect(
+        calls,
+        contains('screenshotOff'),
+        reason: 'seed screen must block screenshots on init',
+      );
+
+      // Replace the screen so VerifySeedView is disposed.
+      await tester.pumpApp(buildSubject(const SizedBox.shrink()));
+      expect(
+        calls,
+        contains('screenshotOn'),
+        reason: 'leaving the seed screen must re-enable screenshots',
+      );
+    });
+
+    group('$BlocListener', () {
+      testWidgets('sends $LoadWalletEvent with the committed wallet when verified', (tester) async {
+        // The committed wallet `verify()` produced — a persisted row with a
+        // real id (42), not the draft's `0` sentinel.
+        final committed = SoftwareWallet(
+          42,
+          'Main',
+          'cheese trigger cannon mention judge hire snack sustain annual predict illness celery',
+        );
         whenListen(
           verifySeedCubit,
-          Stream.fromIterable([const VerifySeedState(isVerified: true)]),
+          Stream.fromIterable([
+            VerifySeedState(isVerified: true, committedWallet: committed),
+          ]),
           initialState: const VerifySeedState(),
         );
 
-        await tester.pumpApp(buildSubject(VerifySeedView(wallet: wallet)));
+        await tester.pumpApp(buildSubject(const VerifySeedView()));
         await tester.pump();
         await tester.pump(const Duration(seconds: 2));
 
-        verify(() => homeBloc.add(LoadWalletEvent(wallet))).called(1);
+        // The page must dispatch `LoadWalletEvent` (so `HomeBloc` sets
+        // `hasWallet: true` and `main.dart` routes onboarding forward) with
+        // the *committed* wallet — not the draft (`id == 0`).
+        verify(() => homeBloc.add(LoadWalletEvent(committed))).called(1);
       });
     });
   });

@@ -1,0 +1,25 @@
+# Tier-3 navigation smoke. The handbook screenshot for this flow is the
+# visual-regression Golden mapped in scripts/assemble-handbook-screenshots.sh;
+# this flow's diagnostic capture lands in build/handbook-captures/19-settings-seed-revealed.png.
+# Same BIP-39 grid as 05-seed-revealed; lives behind the PIN gate inside Settings.
+#
+# The tap is gated on the reveal prompt still showing and re-tapped if it was
+# silently dropped (Maestro/XCUITest tap-loss on Apple Silicon + iOS 26,
+# mobile-dev-inc/maestro#3137). The gate stops the loop the instant the
+# prompt disappears, so surplus iterations no-op.
+appId: swiss.realunit.app
+---
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            visible: 'Hier tippen, um anzuzeigen'
+          commands:
+            - tapOn:
+                point: 50%,65%
+                optional: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    notVisible: 'Hier tippen, um anzuzeigen'
+    timeout: 30000

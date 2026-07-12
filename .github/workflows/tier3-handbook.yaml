@@ -1,0 +1,305 @@
+name: Tier 3 — Handbook flows
+
+# Drives every `.maestro/handbook/*.yaml` flow against a freshly-erased iOS
+# Simulator and uploads the per-flow diagnostic captures as a build artifact
+# for forensic inspection on assertion failure (pixel drift is owned by the
+# Visual Regression job — see "Why no pixel-diff here" below). Tier 3 in the
+# five-tier model defined in `docs/testing.md`: real BitBox hardware is
+# explicitly out of scope here — the handbook flows only need the software
+# wallet path, so a hosted macOS runner is enough.
+#
+# Trigger model:
+#   * `pull_request` (any target branch) with a `tier3:full` label gate.
+#     macOS runner minutes are scarce; running on every PR would dwarf
+#     the existing Analyze & Test job. Reviewers opt-in by labelling
+#     the PR. The label gate is the cost control, not the branch
+#     filter — stacked PRs against integration branches need the same
+#     opt-in option.
+#   * `push: develop` always runs — post-merge verification is the
+#     authoritative source of truth for "did the handbook flows survive
+#     this merge", independent of any PR state. Same reasoning as
+#     `pull-request.yaml`.
+#   * `workflow_dispatch` for manual catch-up runs and a re-run path when
+#     the macOS image flips an Xcode default and we need to verify the fix
+#     before re-arming the gate. Always runs (label gate doesn't apply).
+#   * `labeled` / `unlabeled` keep the trigger surface in sync with the
+#     `tier3:full` opt-in: adding the label after the PR opened starts a
+#     run; removing it cancels via the concurrency block below.
+#
+# Concurrency:
+#   Same pattern as `pull-request.yaml`: group by `pull_request.number`
+#   (or `github.ref` for push/dispatch) so a new push to the same PR
+#   cancels the in-flight run. Grouping by SHA (the previous approach)
+#   put every commit in its own group, which meant no cancellation
+#   ever happened and back-to-back pushes queued sequentially on
+#   scarce macOS runners. The exception: `labeled` / `unlabeled` events
+#   get their own `ci-<workflow>-label-<run_id>` group so a label toggle
+#   does NOT kill an already-running ~15-minute flow execution — the user
+#   experience of "I added the label, the previous run died" is worse
+#   than the cost of one extra runner-minute.
+#
+# Locale: scripts/run-handbook-flows.sh pins the booted simulator to de_CH
+# so German handbook assertions pass on `macos-latest` runners (default
+# en_US). Local re-captures inherit the same locale → screenshots stable.
+#
+# Why `simctl erase` per run (not `clearState`):
+#   `scripts/run-handbook-flows.sh` already does this, but worth restating
+#   here because it drives the choice of macOS runner. The wallet seed and
+#   PIN live in the iOS Keychain, which survives both Maestro `clearState`
+#   and an app reinstall. A booted simulator from a prior run would start
+#   on the lock screen instead of the welcome flow, breaking every
+#   assertion downstream. `simctl erase` wipes the whole device — the
+#   only known-good clean-state for this purpose.
+#
+# Maestro version pin:
+#   Maestro 2.3.0–2.5.1 has two intermittent failure modes on Apple
+#   Silicon + iOS 26.x simulators: (a) XCUITest driver hangs during
+#   startup with zero stdout, (b) `tapOnElement` reports completed but
+#   the Flutter app never receives the touch event (verified via
+#   Maestro `--debug-output`: captured screenshot shows unchanged
+#   screen after tap). Both regressions tracked upstream in
+#   mobile-dev-inc/maestro#3137 (closed by upstream with the 2.0.10
+#   workaround). We pin via `.maestro-version` (today: `2.0.10`),
+#   which per the #3137 thread runs ~20 sequential flows reliably
+#   with ~10 % residual Apple-XCTest crash on screen transitions.
+#   The retry loop in `scripts/run-handbook-flows.sh` stays in place
+#   as a safety net for that residual crash class, retrying only on
+#   `IOSDriverTimeoutException` — assertion failures are never
+#   retried. The post-mortem block (lsof / ps / simctl log + Maestro
+#   `--debug-output`) captures failure state so future regressions
+#   can be diagnosed forensically. The CI-hardening track that landed
+#   this guard was RealUnitCH/app#487 (now closed).
+#
+# Why no pixel-diff here:
+#   Pixel drift on the page renders is owned by the Visual Regression job
+#   in `pull-request.yaml` (alchemist Goldens on the self-hosted hardware-pinned
+#   runner). Tier-3 catches the regressions Goldens cannot see — broken
+#   tap routing, missing navigation, locale/`Intl` problems, iOS-build
+#   and `simctl install` failures. The per-flow `assertVisible` /
+#   `extendedWaitUntil` covers those structural modes; the diagnostic
+#   captures under `build/handbook-captures/` are forensic artefacts for
+#   assertion failures, not a screenshot baseline.
+#
+# Why `iPhone 17` specifically:
+#   The `.maestro/handbook/*.yaml` flows use absolute tap points (e.g.
+#   `point: 50%,65%`) and assertions on text that sits inside the
+#   iPhone-17 safe-area layout. Any other device class would either
+#   reflow elements out of the tap-coordinate path or shift safe-area
+#   insets in a way that breaks the assertions. When the macOS runner
+#   image stops shipping iPhone 17 by default, bump this here AND
+#   re-verify all 26 flows on the new device (run
+#   `scripts/run-handbook-flows.sh` locally; assertion failures point
+#   at flows that need their coordinates / waits updated).
+#
+# Cross-reference: README "CI/CD" table + `docs/testing.md` Tier 3 entry.
+on:
+  workflow_dispatch:
+    inputs:
+      flows:
+        description: "Space-separated flow-name glob patterns to run (empty = all flows)"
+        required: false
+        default: ""
+        type: string
+  push:
+    branches: [develop]
+  pull_request:
+    # Every PR target except `main` (the release lane is already
+    # covered by `push: develop` on the same SHA — see the longer
+    # rationale in `pull-request.yaml`).
+    branches-ignore: [main]
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+concurrency:
+  group: >-
+    ${{
+      (github.event.action == 'labeled' || github.event.action == 'unlabeled')
+        && format('ci-{0}-label-{1}', github.workflow, github.run_id)
+        || format('ci-{0}-{1}', github.workflow, github.event.pull_request.number || github.ref)
+    }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  flows:
+    name: Maestro handbook flows
+    # PRs only run with the `tier3:full` label. push/dispatch always run.
+    # Drafts pass through unconditionally on push (they cannot push, so
+    # the only way here is via a labelled PR) — no extra `draft == false`
+    # guard needed.
+    if: >-
+      github.event_name != 'pull_request'
+      || contains(github.event.pull_request.labels.*.name, 'tier3:full')
+    runs-on: macos-latest
+    # ~12 min setup (Flutter + tooling, build, sim erase/boot/install) plus
+    # ~26-33 min for the 26 handbook flows — each flow restarts the XCUITest
+    # driver (~40-60 s). A full run lands around 40-46 min; 60 min gives
+    # headroom for runner-speed variance and the per-flow retry budget.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.6"
+          channel: "stable"
+          cache: true
+
+      - run: flutter pub get
+      - run: dart run tool/generate_localization.dart
+      - run: dart run tool/generate_release_info.dart
+      - run: flutter pub run build_runner build
+
+      # Bind the iOS cache key to the active Xcode / iOS-SDK version so
+      # cached `.pcm` module files are not reused across an SDK rev. Without
+      # this, the cache key matched on `runner.os + lock files` only and
+      # restored a cached `SwiftShims-*.pcm` whose `module.modulemap` mtime
+      # no longer matched the SDK on disk — Swift then rejected the cached
+      # module and the build failed with "module file ... was built: mtime
+      # changed". Pinning the cache to `xcodebuild -version` invalidates the
+      # cache the moment the runner image upgrades Xcode.
+      - name: Resolve Xcode version
+        id: xcode
+        run: echo "version=$(xcodebuild -version | tr '\n' '-' | sed 's/[^A-Za-z0-9.-]//g; s/-$//')" >> "$GITHUB_OUTPUT"
+
+      # Cache iOS DerivedData (compiled Flutter modules) + Pods (Cocoapods
+      # dependencies). On a cache hit, `flutter build ios --simulator
+      # --debug` reuses the cached objects and the build time drops from
+      # ~5-6 min to ~2-3 min. Cache-Key invalidates on pubspec.lock or
+      # Podfile.lock changes — i.e. any dependency bump forces a clean
+      # build — and additionally on Xcode version (see step above). The
+      # restore-keys fallback allows partial cache reuse if the lock files
+      # moved but the SDK is unchanged.
+      - name: Cache iOS DerivedData + Pods
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Developer/Xcode/DerivedData
+            ios/Pods
+          key: ios-derived-data-${{ runner.os }}-${{ steps.xcode.outputs.version }}-${{ hashFiles('pubspec.lock', 'ios/Podfile.lock') }}
+          restore-keys: |
+            ios-derived-data-${{ runner.os }}-${{ steps.xcode.outputs.version }}-
+
+      - name: Build iOS simulator app
+        run: flutter build ios --simulator --debug
+
+      # `scripts/run-handbook-flows.sh` does its own `simctl shutdown / erase /
+      # boot / bootstatus / install` once it has a booted UDID. We just need
+      # ANY iPhone 17 simulator in `Booted` state for the script to discover.
+      #
+      # UDID resolution:
+      #   `macos-latest` pre-creates three devices literally named "iPhone 17"
+      #   across iOS 26.0 / 26.1 / 26.2 runtimes. We resolve a UDID explicitly
+      #   instead of `simctl boot "iPhone 17"` so the device choice is
+      #   deterministic and visible in the workflow log. The resolver filters
+      #   to available `iPhone 17` devices on any `iOS-26` runtime, then sorts
+      #   by the numeric tuple of the trailing version segments — so an
+      #   eventual `iOS-26-10` outranks `iOS-26-2` (a lexicographic sort would
+      #   pick the wrong one because `"2" > "1"` as strings).
+      #   Fails loudly with `sys.exit` if no iPhone 17 is available on any
+      #   iOS-26 runtime: we deliberately do NOT fall back to another model
+      #   or major version, because a missing iPhone 17 means the runner
+      #   image changed and the screenshots need re-capturing in the same PR.
+      - name: Boot iOS Simulator
+        run: |
+          set -euo pipefail
+          UDID="$(xcrun simctl list devices available --json | /usr/bin/python3 -c "
+          import json, sys
+          def runtime_key(rt):
+              # 'com.apple.CoreSimulator.SimRuntime.iOS-26-2' -> (26, 2)
+              # Anything non-numeric in the trailing chunks → -1, so a
+              # malformed entry sorts below well-formed ones rather than
+              # crashing the resolver.
+              parts = rt.split('iOS-', 1)[-1].split('-')
+              return tuple(int(p) if p.isdigit() else -1 for p in parts)
+          devices = json.load(sys.stdin)['devices']
+          candidates = []
+          for runtime, devs in devices.items():
+              if 'iOS-26' not in runtime:
+                  continue
+              for d in devs:
+                  if d.get('name') == 'iPhone 17' and d.get('isAvailable'):
+                      candidates.append((runtime, d['udid']))
+          if not candidates:
+              sys.exit('no available iPhone 17 device on an iOS 26.x runtime')
+          # Sort by numeric runtime tuple descending → highest patch wins,
+          # so iOS-26-10 beats iOS-26-2 once Apple ships that.
+          candidates.sort(key=lambda c: runtime_key(c[0]), reverse=True)
+          print(candidates[0][1])
+          ")"
+          echo "Booting iPhone 17 UDID=$UDID"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+
+      - name: Install Maestro CLI
+        run: |
+          set -euo pipefail
+          # `.maestro-version` is committed; if it ever goes missing or
+          # empty, fail loudly here rather than letting Maestro's installer
+          # try to fetch `cli-/maestro.zip` and crash on a 404 with a
+          # confusing error message downstream.
+          MAESTRO_VERSION="$(cat .maestro-version)"
+          if [ -z "$MAESTRO_VERSION" ]; then
+            echo "::error::.maestro-version is empty or missing at repo root"
+            exit 1
+          fi
+          export MAESTRO_VERSION
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      # The script handles per-flow execution, screenshot staging via /tmp
+      # (CoreSimulator can't write to ~/Documents under macOS TCC), and the
+      # full simctl reset cycle. Don't duplicate any of that logic here —
+      # any change in flow handling should land in the script so manual runs
+      # and CI runs stay in sync.
+      #
+      # MAESTRO_DRIVER_STARTUP_TIMEOUT: hosted macOS runners are noisy
+      # neighbours — observed `simctl install Runner.app` taking ~90 s on
+      # a slow run (vs. ~10 s typical). Maestro's default 90 s XCUITest
+      # driver startup window then runs out before the simulator is
+      # fully responsive, producing `IOSDriverTimeoutException`. Bump to
+      # 300 s so the driver has headroom even when the runner is loaded.
+      # MAESTRO_CLI_NO_ANALYTICS skips the startup analytics HTTP call.
+      # Pre-flight diagnostic state: tool versions + simulator runtimes
+      # + loopback config. Captured unconditionally because the cheapest
+      # moment to diagnose a hang is "what did the environment look like
+      # right before the run". Cross-references the post-mortem block
+      # in scripts/run-handbook-flows.sh.
+      - name: Diagnostics — pre-flight network + tool state
+        run: |
+          set +e
+          echo "=== /etc/hosts ==="
+          cat /etc/hosts
+          echo
+          echo "=== ifconfig lo0 ==="
+          ifconfig lo0
+          echo
+          echo "=== xcodebuild -version ==="
+          xcodebuild -version
+          echo
+          echo "=== maestro --version ==="
+          "$HOME/.maestro/bin/maestro" --version
+          echo
+          echo "=== xcrun simctl list runtimes ==="
+          xcrun simctl list runtimes | grep -i ios
+
+      - name: Run handbook flows
+        env:
+          MAESTRO_DRIVER_STARTUP_TIMEOUT: "300000"
+          MAESTRO_CLI_NO_ANALYTICS: "1"
+          HANDBOOK_FLOWS: ${{ inputs.flows }}
+        run: |
+          # set -f: keep word-splitting (multiple patterns) but disable this
+          # shell's filename expansion, so a pattern like `2*` reaches the
+          # script literally instead of being glob-expanded against the cwd.
+          set -f
+          scripts/run-handbook-flows.sh $HANDBOOK_FLOWS
+
+      - name: Upload Tier-3 navigation-smoke captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: handbook-captures
+          path: build/handbook-captures/
+          if-no-files-found: warn

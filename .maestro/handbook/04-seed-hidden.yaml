@@ -1,0 +1,33 @@
+# Tier-3 navigation smoke. The handbook screenshot for this flow is the
+# visual-regression Golden mapped in scripts/assemble-handbook-screenshots.sh;
+# this flow's diagnostic capture lands in build/handbook-captures/04-seed-hidden.png.
+# Seed-backup screen with the SeedBlurCard still covered. BackdropFilter screen —
+# Maestro's own takeScreenshot would render black; xcrun captures correctly.
+#
+# The tap is gated on the seed-backup screen not yet showing and re-tapped if
+# it was silently dropped (Maestro/XCUITest tap-loss on Apple Silicon + iOS 26,
+# mobile-dev-inc/maestro#3137). The gate stops the loop the instant the
+# screen changes, so surplus iterations no-op.
+#
+# The "Neue Wallet erstellen" welcome card is targeted by Semantics id (see
+# lib/screens/welcome/welcome_page.dart) instead of regex text-matching:
+# both step groups stay in the widget tree at all times (AnimatedSlide
+# translates the off-screen group out of view but doesn't remove it), so
+# regex text checks against card titles are unreliable across copy
+# changes and animation half-states.
+appId: swiss.realunit.app
+---
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible: 'Wallet-Sicherung'
+          commands:
+            - tapOn:
+                id: 'welcome-create-wallet'
+                optional: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: 'Wallet-Sicherung'
+    timeout: 30000

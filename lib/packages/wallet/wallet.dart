@@ -46,6 +46,103 @@ class SoftwareWallet extends AWallet {
   void selectAccount(int index) => _currentAccount = WalletAccount(_bip32, index);
 }
 
+/// Software wallet without the mnemonic in memory — only the public address is
+/// cached. Used at app startup so the dashboard renders before the (expensive
+/// and rarely needed) BIP32 derivation happens. Must be upgraded to a full
+/// [SoftwareWallet] via `WalletService.unlockCurrentWallet` before any sign
+/// operation.
+class SoftwareViewWallet extends AWallet {
+  @override
+  WalletType get walletType => WalletType.software;
+
+  @override
+  late final SoftwareViewWalletAccount primaryAccount;
+
+  late SoftwareViewWalletAccount _currentAccount;
+
+  @override
+  SoftwareViewWalletAccount get currentAccount => _currentAccount;
+
+  SoftwareViewWallet(super.id, super.name, String address) {
+    primaryAccount = SoftwareViewWalletAccount(0, _LockedCredentials(address));
+    _currentAccount = primaryAccount;
+  }
+}
+
+// Every sign path is unreachable while [WalletService.ensureCurrentWalletUnlocked]
+// runs before the credentials are used. Hitting any of these would mean a new
+// caller forgot to call it — surface that immediately in dev via [assert] and
+// fall through to a plain [StateError] (programmer error) in release, instead
+// of a typed exception that the rest of the app would have to catch and route.
+class _LockedCredentials extends CredentialsWithKnownAddress {
+  final EthereumAddress _address;
+
+  _LockedCredentials(String hexAddress) : _address = EthereumAddress.fromHex(hexAddress);
+
+  @override
+  EthereumAddress get address => _address;
+
+  // The `throw StateError(...)` lines below are defensive fallthroughs: in
+  // debug builds the `assert(false, ...)` above already trips and surfaces an
+  // AssertionError, so the throw is unreachable. In release the assert is
+  // stripped and the throw becomes the live signal, but the test suite runs
+  // in debug — line-coverage instrumentation never marks the throws as
+  // executed. `// coverage:ignore-line` reflects that without hiding the
+  // behavioural contract (still exercised via `throwsA(isA<Error>())`).
+  @override
+  MsgSignature signToEcSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) {
+    assert(false, _viewWalletProgrammerError);
+    throw StateError(_viewWalletProgrammerError); // coverage:ignore-line
+  }
+
+  @override
+  Future<MsgSignature> signToSignature(Uint8List payload, {int? chainId, bool isEIP1559 = false}) {
+    assert(false, _viewWalletProgrammerError);
+    throw StateError(_viewWalletProgrammerError); // coverage:ignore-line
+  }
+
+  @override
+  Future<Uint8List> signPersonalMessage(Uint8List payload, {int? chainId}) {
+    assert(false, _viewWalletProgrammerError);
+    throw StateError(_viewWalletProgrammerError); // coverage:ignore-line
+  }
+
+  @override
+  Uint8List signPersonalMessageToUint8List(Uint8List payload, {int? chainId}) {
+    assert(false, _viewWalletProgrammerError);
+    throw StateError(_viewWalletProgrammerError); // coverage:ignore-line
+  }
+}
+
+const _viewWalletProgrammerError =
+    'SoftwareViewWallet credentials reached a sign call — '
+    'every signing path must await WalletService.ensureCurrentWalletUnlocked() first.';
+
+class SoftwareViewWalletAccount extends AWalletAccount {
+  SoftwareViewWalletAccount(super.accountIndex, super.primaryAddress);
+
+  // Programmer error: callers must await WalletService.ensureCurrentWalletUnlocked
+  // before signing. The locked credentials on this account already assert on the
+  // same path, so this method is reachable only when the caller bypasses the
+  // wallet's primaryAddress and calls signMessage directly. The `throw
+  // StateError(...)` below is the release-mode fallthrough — debug builds trip
+  // the assert(false) first, so line-coverage in test (debug) never reaches it.
+  @override
+  Future<String> signMessage(String message, {int addressIndex = 0}) {
+    assert(
+      false,
+      'SoftwareViewWalletAccount.signMessage called without first '
+      'awaiting WalletService.ensureCurrentWalletUnlocked()',
+    );
+    // coverage:ignore-start
+    throw StateError(
+      'SoftwareViewWalletAccount cannot sign while the mnemonic '
+      'is locked — call WalletService.ensureCurrentWalletUnlocked() first.',
+    );
+    // coverage:ignore-end
+  }
+}
+
 class BitboxWallet extends AWallet {
   @override
   WalletType get walletType => WalletType.bitbox;

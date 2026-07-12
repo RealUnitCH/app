@@ -6,6 +6,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
@@ -28,6 +29,8 @@ class MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
 
 class MockWalletService extends Mock implements WalletService {}
 
+class MockDfxKycService extends Mock implements DfxKycService {}
+
 class MockWallet extends Mock implements SoftwareWallet {}
 
 void main() {
@@ -47,6 +50,9 @@ void main() {
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<WalletService>(MockWalletService());
+    // RestoreWalletCubit pulls a DFXAuthService (smallest concrete: DfxKycService)
+    // to pre-warm the auth signature after persisting the mnemonic.
+    getIt.registerSingleton<DfxKycService>(MockDfxKycService());
   }
 
   setUpAll(() {
@@ -84,6 +90,32 @@ void main() {
       );
       expect(find.byType(RestoreWalletInputField), findsOne);
       expect(find.byType(RestoreWalletButton), findsOne);
+    });
+
+    // The restore screen is where the user types their existing 12-word
+    // recovery phrase, so it handles real seed material like the sibling seed
+    // screens. It must block screenshots + the app-switcher snapshot on init
+    // and re-enable them on dispose so it never lands in the recents thumbnail
+    // or a screen recording.
+    testWidgets('disables screenshots on init and re-enables on dispose', (tester) async {
+      final calls = <String>[];
+      stubNoScreenshotChannel(calls: calls);
+      addTearDown(unstubNoScreenshotChannel);
+
+      await tester.pumpApp(buildSubject(const RestoreWalletView()));
+      expect(
+        calls,
+        contains('screenshotOff'),
+        reason: 'the restore screen handles real seed words and must block screenshots on init',
+      );
+
+      // Replace the screen so RestoreWalletView is disposed.
+      await tester.pumpApp(buildSubject(const SizedBox.shrink()));
+      expect(
+        calls,
+        contains('screenshotOn'),
+        reason: 'leaving the restore screen must re-enable screenshots',
+      );
     });
 
     group('$RestoreWalletButton', () {
@@ -175,6 +207,32 @@ void main() {
           ),
           findsOne,
         );
+      });
+
+      testWidgets('offers a tappable retry (not a dead spinner) when restore failed '
+          '(issue #657 P1 B1)', (tester) async {
+        when(() => validateSeedCubit.state).thenReturn(ValidateSeedState.valid);
+        when(() => restoreWalletCubit.state).thenReturn(const RestoreWalletState(hasError: true));
+
+        await tester.pumpApp(buildSubject(const RestoreWalletView()));
+
+        // Paste a seed into the first cell; the paste handler spreads it over all 12.
+        const seed = 'test test test test test test test test test test test junk';
+        await tester.enterText(find.byType(TextField).first, seed);
+        await tester.pump();
+
+        final button = find.descendant(
+          of: find.byType(RestoreWalletButton),
+          matching: find.byType(FilledButton),
+        );
+        // Not stuck on the loading spinner; the button is interactive.
+        expect(find.byType(CupertinoActivityIndicator), findsNothing);
+        expect(tester.widget<FilledButton>(button).enabled, isTrue);
+
+        // Tapping it retries the restore with the exact seed that was entered.
+        await tester.tap(button);
+        await tester.pump();
+        verify(() => restoreWalletCubit.restoreWallet(seed)).called(1);
       });
     });
 

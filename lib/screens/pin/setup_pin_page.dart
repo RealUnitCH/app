@@ -8,12 +8,25 @@ import 'package:realunit_wallet/screens/pin/bloc/setup_pin/setup_pin_cubit.dart'
 import 'package:realunit_wallet/screens/pin/constants/pin_constants.dart';
 import 'package:realunit_wallet/screens/pin/widgets/enable_biometric_bottom_sheet.dart';
 import 'package:realunit_wallet/screens/pin/widgets/pin_indicator.dart';
+import 'package:realunit_wallet/screens/pin/widgets/verifying_indicator.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/number_pad.dart';
 
 class SetupPinPage extends StatelessWidget {
-  const SetupPinPage({super.key});
+  /// Invoked once the PIN is stored instead of the default onboarding
+  /// completion. The PIN-change flow passes its own navigation here.
+  final VoidCallback? onCompleted;
+
+  /// Whether to offer the biometric-enable sheet after storing the PIN. The
+  /// onboarding flow keeps this on; the PIN-change flow turns it off.
+  final bool promptBiometrics;
+
+  const SetupPinPage({
+    super.key,
+    this.onCompleted,
+    this.promptBiometrics = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,23 +35,40 @@ class SetupPinPage extends StatelessWidget {
         getIt<SecureStorage>(),
         getIt<BiometricService>(),
       ),
-      child: const SetupPinView(),
+      child: SetupPinView(
+        onCompleted: onCompleted,
+        promptBiometrics: promptBiometrics,
+      ),
     );
   }
 }
 
 class SetupPinView extends StatelessWidget {
-  const SetupPinView({super.key});
+  final VoidCallback? onCompleted;
+  final bool promptBiometrics;
+
+  const SetupPinView({
+    super.key,
+    this.onCompleted,
+    this.promptBiometrics = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<SetupPinCubit, SetupPinState>(
       listener: (context, state) async {
-        if (state.isComplete) {
+        if (!state.isComplete) return;
+        if (promptBiometrics) {
           await _promptBiometricSetup(context);
-          if (context.mounted) {
-            getIt<PinAuthCubit>().onPinSetupComplete();
-          }
+        }
+        if (!context.mounted) return;
+        // Change flow supplies its own follow-up (pop + feedback); onboarding
+        // falls back to the shared auth completion.
+        final completion = onCompleted;
+        if (completion != null) {
+          completion();
+        } else {
+          getIt<PinAuthCubit>().onPinSetupComplete();
         }
       },
       builder: (context, state) {
@@ -105,12 +135,14 @@ class SetupPinView extends StatelessWidget {
                                       wrongPin: state.mismatch,
                                     ),
                                     Visibility(
-                                      visible: state.mismatch,
+                                      visible: state.mismatch || state.storeFailed,
                                       maintainSize: true,
                                       maintainAnimation: true,
                                       maintainState: true,
                                       child: Text(
-                                        S.of(context).pinConfirmFailed,
+                                        state.storeFailed
+                                            ? S.of(context).pinSaveFailed
+                                            : S.of(context).pinConfirmFailed,
                                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                           color: RealUnitColors.status.red600,
                                         ),
@@ -123,11 +155,14 @@ class SetupPinView extends StatelessWidget {
                             ),
                           ),
                           const Spacer(),
-                          NumberPad(
-                            onNumberPressed: (digit) =>
-                                context.read<SetupPinCubit>().addDigit(digit),
-                            onDeletePressed: context.read<SetupPinCubit>().deleteDigit,
-                          ),
+                          if (state.isSubmitting)
+                            VerifyingIndicator(label: S.of(context).pinSaving)
+                          else
+                            NumberPad(
+                              onNumberPressed: (digit) =>
+                                  context.read<SetupPinCubit>().addDigit(digit),
+                              onDeletePressed: context.read<SetupPinCubit>().deleteDigit,
+                            ),
                           const SizedBox(height: 60.0),
                         ],
                       ),

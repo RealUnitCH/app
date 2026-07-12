@@ -1,4 +1,5 @@
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 
 class Registration {
@@ -15,6 +16,7 @@ class Registration {
   final String addressCity;
   final Country addressCountry;
   final bool swissTaxResidence;
+  final List<CountryAndTin>? countryAndTINs;
 
   const Registration({
     required this.type,
@@ -30,5 +32,6 @@ class Registration {
     required this.addressCity,
     required this.addressCountry,
     required this.swissTaxResidence,
+    this.countryAndTINs,
   });
 }

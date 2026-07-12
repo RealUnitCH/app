@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
+import 'package:realunit_wallet/packages/utils/swiss_payment_text.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/kyc_registration_step_cubit.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/form/birthday_field.dart';
@@ -18,6 +19,7 @@ class KycRegistrationPersonalStep extends StatelessWidget {
   final ValueNotifier<String?> birthdayCtrl;
   final ValueNotifier<String?> phoneCtrl;
   final ValueNotifier<Country?> nationalityCtrl;
+  final Country? initialNationality;
 
   KycRegistrationPersonalStep({
     super.key,
@@ -27,6 +29,7 @@ class KycRegistrationPersonalStep extends StatelessWidget {
     required this.phoneCtrl,
     required this.nationalityCtrl,
     required this.birthdayCtrl,
+    this.initialNationality,
   });
 
   final _formKey = GlobalKey<FormState>();
@@ -69,6 +72,7 @@ class KycRegistrationPersonalStep extends StatelessWidget {
                         textCapitalization: TextCapitalization.words,
                         validator: (value) {
                           if (value == null || value.isEmpty) return '';
+                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
                           return null;
                         },
                       ),
@@ -82,6 +86,7 @@ class KycRegistrationPersonalStep extends StatelessWidget {
                         textCapitalization: TextCapitalization.words,
                         validator: (value) {
                           if (value == null || value.isEmpty) return '';
+                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
                           return null;
                         },
                       ),
@@ -96,11 +101,9 @@ class KycRegistrationPersonalStep extends StatelessWidget {
                 ),
                 CountryField(
                   label: S.of(context).registerCitizenship,
+                  purpose: CountryFieldPurpose.nationality,
+                  initialValue: initialNationality,
                   onChanged: (country) => nationalityCtrl.value = country,
-                  validator: (value) {
-                    if (value == null) return '';
-                    return null;
-                  },
                 ),
                 Padding(
                   padding: const .symmetric(vertical: 16.0),

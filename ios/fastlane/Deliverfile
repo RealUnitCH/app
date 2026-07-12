@@ -1,0 +1,9 @@
+# Defaults for both `beta` (binary + metadata combined) and
+# `store_metadata` (metadata-only) lanes. Per-lane options can override.
+app_identifier "swiss.realunit.app"
+
+force true                              # skip interactive confirms (CI)
+submit_for_review false                 # human clicks Submit in App Store Connect — see "Out of scope"
+automatic_release false                 # never auto-release to public — keep manual
+precheck_include_in_app_purchases false # no IAPs in this app
+overwrite_screenshots true              # CI delivers the canonical set, always replace

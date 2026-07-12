@@ -28,6 +28,7 @@ class RealUnitBuyPaymentInfoDto {
   final String? paymentRequest;
   final String? remittanceInfo;
   final bool isValid;
+  final String? error;
 
   const RealUnitBuyPaymentInfoDto({
     required this.id,
@@ -55,6 +56,7 @@ class RealUnitBuyPaymentInfoDto {
     this.paymentRequest,
     this.remittanceInfo,
     required this.isValid,
+    this.error,
   });
 
   factory RealUnitBuyPaymentInfoDto.fromJson(Map<String, dynamic> json) {
@@ -86,6 +88,7 @@ class RealUnitBuyPaymentInfoDto {
       paymentRequest: json['paymentRequest'] as String?,
       remittanceInfo: json['remittanceInfo'] as String?,
       isValid: json['isValid'] as bool,
+      error: json['error'] as String?,
     );
   }
 }

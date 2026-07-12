@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/packages/utils/swiss_payment_text.dart';
 import 'package:realunit_wallet/packages/utils/xfile_extension.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_address/cubit/settings_edit_address_cubit.dart';
 import 'package:realunit_wallet/screens/settings_user_data/subpages/others/settings_edit_failure_page.dart';
@@ -104,13 +105,14 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                                     Expanded(
                                       flex: 2,
                                       child: LabeledTextField(
-                                        hintText: 'Musterstrasse',
+                                        hintText: S.of(context).streetHint,
                                         controller: _streetCtrl,
                                         label: S.of(context).street,
                                         keyboardType: .streetAddress,
                                         textCapitalization: .words,
                                         validator: (value) {
                                           if (value == null || value.isEmpty) return '';
+                                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
                                           return null;
                                         },
                                       ),
@@ -121,6 +123,11 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                                         controller: _numberCtrl,
                                         label: S.of(context).number,
                                         keyboardType: .streetAddress,
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) return null;
+                                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
+                                          return null;
+                                        },
                                       ),
                                     ),
                                   ],
@@ -135,9 +142,15 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                                         hintText: '8000',
                                         controller: _postalCodeCtrl,
                                         label: S.of(context).postcodeAbr,
-                                        keyboardType: .number,
+                                        // Postal codes are alphanumeric in many residence
+                                        // countries (e.g. NL "1011 AB", UK "EC1A 1BB", CA
+                                        // "K1A 0B1"). A number-only keyboard makes those
+                                        // impossible to type, while the validator + backend
+                                        // already accept letters and spaces.
+                                        keyboardType: .text,
                                         validator: (value) {
                                           if (value == null || value.isEmpty) return '';
+                                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
                                           return null;
                                         },
                                       ),
@@ -145,13 +158,14 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                                     Expanded(
                                       flex: 3,
                                       child: LabeledTextField(
-                                        hintText: 'Zurich',
+                                        hintText: S.of(context).cityHint,
                                         controller: _cityCtrl,
                                         label: S.of(context).city,
                                         keyboardType: .text,
                                         textCapitalization: .words,
                                         validator: (value) {
                                           if (value == null || value.isEmpty) return '';
+                                          if (!isSwissPaymentText(value)) return S.of(context).swissPaymentTextInvalid;
                                           return null;
                                         },
                                       ),
@@ -160,11 +174,8 @@ class _SettingsEditAddressViewState extends State<SettingsEditAddressView> {
                                 ),
                                 CountryField(
                                   label: S.of(context).country,
+                                  purpose: CountryFieldPurpose.residence,
                                   onChanged: (country) => _countryCtrl.value = country,
-                                  validator: (value) {
-                                    if (value == null) return '';
-                                    return null;
-                                  },
                                 ),
                                 FilePickerField(
                                   label: S.of(context).proofDocument,

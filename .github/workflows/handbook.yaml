@@ -1,0 +1,458 @@
+name: Handbook reusable CI/CD
+
+# Reusable workflow that builds the handbook nginx image, publishes it to
+# Docker Hub, and tells the target server to pull + recreate the container.
+#
+# Caller (handbook-deploy.yaml) provides the per-environment parameters
+# (source ref, tag, smoke URL, deploy secrets) so the deploy logic itself
+# lives in exactly one place. Each pushed branch is an independent caller
+# run — staging → DEV, develop → PRD — so there is no DEV→PRD `needs:`
+# ordering here; "DEV green before PRD" comes from the staging→develop
+# promotion flow (see handbook-deploy.yaml header).
+#
+# Mirrors the shared SSH-deploy workflow templates from the internal ops repo.
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Target environment label (dev | prd) — used in job name + smoke log lines"
+        required: true
+        type: string
+      ref:
+        description: "Git ref of THIS repo to build the handbook from — the pushed branch (staging for DEV, develop for PRD). Determines the deployed handbook 'Stand'."
+        required: true
+        type: string
+      docker_tag:
+        description: "Full Docker image tag, e.g. dfxswiss/realunit-app-handbook:beta (DEV) / :latest (PRD)"
+        required: true
+        type: string
+      smoke_url:
+        description: "Public URL to poll after deploy"
+        required: true
+        type: string
+    secrets:
+      DOCKER_USERNAME:
+        required: true
+      DOCKER_PASSWORD:
+        required: true
+      DEPLOY_SSH_KEY:
+        required: true
+      DEPLOY_SSH_KNOWN_HOSTS:
+        required: true
+      DEPLOY_USER:
+        required: true
+      DEPLOY_HOST:
+        required: true
+
+# Reusable workflows do NOT inherit `permissions` from the caller — GITHUB_TOKEN
+# scopes are resolved per-workflow. Mirror the `contents: read` floor that both
+# callers set so the reusable behaves identically to the pre-extract setup.
+permissions:
+  contents: read
+
+env:
+  DEPLOY_SERVICE: realunit-app-handbook
+
+jobs:
+  build-and-deploy:
+    name: Build and deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Build the handbook from the environment's source branch: staging
+          # for DEV, develop for PRD (passed by handbook-deploy.yaml as the
+          # pushed branch). This ref governs the deployed handbook content;
+          # the DFXswiss/api checkout below is a SEPARATE, intentionally
+          # develop-pinned source for the mail previews and does not vary
+          # with this input.
+          ref: ${{ inputs.ref }}
+
+      # RealUnit mail previews are the single source of truth in DFXswiss/api
+      # (scripts/generate-realunit-previews.js). We pull them in at build time
+      # instead of checking them into this repo, so a change to a template or
+      # i18n string in the api repo flows into the handbook image on the next
+      # build without a manual sync PR. A handbook-relevant push to staging
+      # (→DEV) or develop (→PRD) — or a manual workflow_dispatch on
+      # handbook-deploy.yaml in this repo — rebuilds the image and re-pulls
+      # api@develop here — so mail-template changes in the api repo only flow
+      # in after such a push/dispatch in this repo. There is NO auto-dispatch
+      # from the api repo. The api ref stays `develop` for both environments
+      # (it does not track the handbook's staging/develop split).
+      - name: Check out DFXswiss/api at develop into _api-checkout/
+        uses: actions/checkout@v4
+        with:
+          # DFXswiss/api is a PUBLIC repo, so the runner's default GITHUB_TOKEN
+          # is sufficient to clone it — no cross-repo PAT setup needed. If the
+          # api repo is ever flipped to private, this step will start failing
+          # with HTTP 404 on checkout; the fix is then to add a PAT secret on
+          # the realunit-app repo and pass it through as `token:` here (and
+          # through the secrets: block of this reusable workflow + the
+          # handbook-deploy.yaml caller).
+          repository: DFXswiss/api
+          ref: develop
+          path: _api-checkout
+
+      - name: Set up Node.js for mail-preview generator
+        uses: actions/setup-node@v4
+        with:
+          # api repo currently does not pin a node version in package.json#engines
+          # or .nvmrc — its CI workflows use NODE_VERSION='20.x' (see
+          # DFXswiss/api/.github/workflows/api-pr.yaml). Mirror that exact string
+          # so a future api-side bump (e.g. to '22.x') stays a one-place change
+          # to track.
+          node-version: '20.x'
+
+      - name: Generate RealUnit mail previews from api repo
+        env:
+          API_DIR: _api-checkout
+          HANDLEBARS_PREFIX: _handlebars-only
+          # Exact expected mail-preview file count: 24 mails + 1 index = 25.
+          # `-ne` below makes ANY drift (drop OR addition) fail the build —
+          # adding a new mail upstream therefore requires an explicit edit
+          # here, which is the whole point: a silently-added (or silently-
+          # removed) mail must never reach the handbook image undetected.
+          # When you legitimately add/remove a mail in
+          # DFXswiss/api/scripts/generate-realunit-previews.js, bump this
+          # number in the SAME PR as the api-side change-PR (or its
+          # follow-up). The exact count is computed as:
+          #   N(add() calls in the generator)
+          #   + N(pendingTypes entries the for-loop expands)
+          #   + 1 (00_index.html)
+          EXPECTED_HTML_COUNT: 25
+        run: |
+          set -euo pipefail
+
+          # The generator script only requires 'handlebars' at runtime (verified
+          # via `grep require ${API_DIR}/scripts/generate-realunit-previews.js`).
+          # We deliberately AVOID `npm ci` against the api package-lock — that
+          # would install ~2400 packages (5+ min wall-clock) just to run a
+          # single 600-line script. Installing handlebars into an isolated
+          # prefix outside the api tree keeps `_api-checkout/` clean (its
+          # package.json/lockfile must remain untouched so a future
+          # `git status` on the api checkout would still be "clean") and the
+          # NODE_PATH override below makes `require('handlebars')` resolve
+          # against the isolated install.
+          npm install --prefix "./${HANDLEBARS_PREFIX}" --no-save --no-audit --no-fund handlebars
+
+          # Defensive cleanup of any prior staging dir (no-op on ephemeral CI
+          # runners, but matters when this step is reproduced locally — see
+          # docs/handbook/README.md → "E-Mail Previews → Lokal regenerieren").
+          # Without this, a stale html in docs/handbook/mails/ from a previous
+          # run would survive into the build context and end up shipped in the
+          # image even though the upstream generator no longer produces it.
+          rm -rf docs/handbook/mails
+          mkdir -p docs/handbook/mails
+
+          # Run the generator. Output goes to ${API_DIR}/scripts/email-previews/realunit/
+          # (path baked into the script). We `tee` stdout+stderr into a log so the
+          # next step can grep for the script's own `console.warn` output —
+          # specifically the "[trigger] Missing explanation for ..." warning,
+          # which the script emits (NOT throws) when a mail file stem has no
+          # entry in the `triggers` map. The script lives in the api repo and
+          # we cannot upgrade that warning to a throw from here, so the grep
+          # below is our only line of defence against silently shipping the
+          # handbook with mails that have no trigger-explanation card.
+          #
+          # `pipefail` is already on from `set -euo pipefail`, so a non-zero
+          # exit from `node` here fails the step — `tee` does not mask it.
+          LOG_FILE="$(mktemp)"
+          NODE_PATH="./${HANDLEBARS_PREFIX}/node_modules" \
+            node "${API_DIR}/scripts/generate-realunit-previews.js" 2>&1 \
+            | tee "${LOG_FILE}"
+
+          # Cross-repo coupling check: the generator only warns; we promote it
+          # to an error so the build fails fast. Anchor `^` so a future log
+          # line that happens to contain the substring "[trigger] Missing"
+          # somewhere mid-line does not trip the check.
+          if grep -q '^\[trigger\] Missing' "${LOG_FILE}"; then
+            echo "::error::Generator emitted a '[trigger] Missing explanation for …' warning — see log above. Add the missing entry to the triggers map in DFXswiss/api/scripts/generate-realunit-previews.js."
+            exit 1
+          fi
+
+          OUT_DIR="${API_DIR}/scripts/email-previews/realunit"
+
+          # Explicit existence check for OUT_DIR so we emit a friendly
+          # `::error::` annotation pointing at the generator, instead of dying
+          # one line later with a raw bash pipeline-failure trace from
+          # `ls "${OUT_DIR}"/*.html | wc -l | tr -d ' '` when the directory is
+          # missing. The count check below would also catch this, but this
+          # early-exit gives a clearer signal in the CI log.
+          if [ ! -d "${OUT_DIR}" ]; then
+            echo "::error::Generator did not create ${OUT_DIR} — it likely crashed before writing any output. See generator log above."
+            exit 1
+          fi
+
+          # Exact-match check (see EXPECTED_HTML_COUNT comment at env: above).
+          HTML_COUNT=$(ls "${OUT_DIR}"/*.html 2>/dev/null | wc -l | tr -d ' ')
+          if [ "${HTML_COUNT}" -ne "${EXPECTED_HTML_COUNT}" ]; then
+            echo "::error::Expected exactly ${EXPECTED_HTML_COUNT} mail preview HTML files in ${OUT_DIR}, got ${HTML_COUNT}. If this drift is intentional (mail added/removed upstream), update EXPECTED_HTML_COUNT in this workflow in the same PR."
+            exit 1
+          fi
+          if [ ! -s "${OUT_DIR}/00_index.html" ]; then
+            echo "::error::Mail preview index ${OUT_DIR}/00_index.html is missing or empty"
+            exit 1
+          fi
+
+          # Stage the generated files into docs/handbook/mails/ so the Docker
+          # build context picks them up (Dockerfile.handbook does
+          # `COPY docs/handbook/ /usr/share/nginx/html/`).
+          cp "${OUT_DIR}"/*.html docs/handbook/mails/
+
+          # nginx has `index index.html` (handbook.nginx.conf line 15) and
+          # `try_files $uri $uri/ =404` (line 82). A request for /mails/ would
+          # therefore look up /mails/index.html and 404 because the generator
+          # names its index `00_index.html` (so it sorts first in a directory
+          # listing). Duplicating the index as `index.html` lets `/mails/`
+          # resolve directly without adding a per-location nginx rule.
+          cp docs/handbook/mails/00_index.html docs/handbook/mails/index.html
+
+          # Final verify (visible in CI log so a future regression is grepable).
+          ls -la docs/handbook/mails/ | head -40
+          echo "Generated $(ls docs/handbook/mails/*.html | wc -l | tr -d ' ') mail preview files"
+
+      - name: Stage RealUnit receipt examples from api repo
+        env:
+          API_DIR: _api-checkout
+          # The api repo commits eight example receipt PDFs under
+          # docs/examples/realunit-receipt/, each type in DE and EN:
+          # transaction-{confirmation,confirmation-sale,history,transfer}-{de,en}.pdf.
+          # `-ne` below fails the build on ANY drift (add OR remove) so a change to
+          # the committed set upstream requires an explicit bump here in the SAME
+          # PR — same guard rationale as EXPECTED_HTML_COUNT above.
+          EXPECTED_PDF_COUNT: 8
+        run: |
+          set -euo pipefail
+
+          # Unlike the mail previews, these PDFs are already committed in the api
+          # repo (rendered from SwissQRService by the api-side spec
+          # realunit-receipt-example.spec.ts), so no generator / npm run is needed
+          # here — we only copy them into the build context. Reuses the same
+          # _api-checkout/ from the mail step above.
+          SRC_DIR="${API_DIR}/docs/examples/realunit-receipt"
+          if [ ! -d "${SRC_DIR}" ]; then
+            echo "::error::${SRC_DIR} not found in the api checkout — the committed example receipts are missing upstream (DFXswiss/api docs/examples/realunit-receipt/)."
+            exit 1
+          fi
+
+          PDF_COUNT=$(ls "${SRC_DIR}"/*.pdf 2>/dev/null | wc -l | tr -d ' ')
+          if [ "${PDF_COUNT}" -ne "${EXPECTED_PDF_COUNT}" ]; then
+            echo "::error::Expected exactly ${EXPECTED_PDF_COUNT} receipt PDFs in ${SRC_DIR}, got ${PDF_COUNT}. If this drift is intentional (example added/removed upstream), update EXPECTED_PDF_COUNT in this workflow in the same PR."
+            exit 1
+          fi
+
+          # Fresh staging dir (defensive, mirrors the mail step) so a stale PDF
+          # from a previous local run cannot survive into the build context.
+          rm -rf docs/handbook/receipts
+          mkdir -p docs/handbook/receipts
+          cp "${SRC_DIR}"/*.pdf docs/handbook/receipts/
+
+          ls -la docs/handbook/receipts/ | head -20
+          echo "Staged $(ls docs/handbook/receipts/*.pdf | wc -l | tr -d ' ') receipt example PDFs"
+
+      - name: Stage RealUnit balance examples from api repo
+        env:
+          API_DIR: _api-checkout
+          # The api repo commits two example portfolio-statement (Vermögensübersicht)
+          # PDFs under docs/examples/realunit-statement/: vermoegensuebersicht-{de,en}.pdf.
+          # `-ne` below fails the build on ANY drift (add OR remove) so a change to
+          # the committed set upstream requires an explicit bump here in the SAME
+          # PR — same guard rationale as the receipt step above.
+          EXPECTED_PDF_COUNT: 2
+        run: |
+          set -euo pipefail
+
+          # Like the receipt examples, these PDFs are already committed in the api
+          # repo (rendered by BalancePdfService via the api-side spec
+          # realunit-balance-example.spec.ts), so no generator / npm run is needed
+          # here — we only copy them into the build context. Reuses the same
+          # _api-checkout/ from the mail step above. NOTE the SEPARATE dest dir
+          # (docs/handbook/balance/, not receipts/) so the receipt step's
+          # `rm -rf docs/handbook/receipts` cannot wipe these, and vice versa.
+          SRC_DIR="${API_DIR}/docs/examples/realunit-statement"
+          if [ ! -d "${SRC_DIR}" ]; then
+            echo "::error::${SRC_DIR} not found in the api checkout — the committed example balance statements are missing upstream (DFXswiss/api docs/examples/realunit-statement/)."
+            exit 1
+          fi
+
+          PDF_COUNT=$(ls "${SRC_DIR}"/*.pdf 2>/dev/null | wc -l | tr -d ' ')
+          if [ "${PDF_COUNT}" -ne "${EXPECTED_PDF_COUNT}" ]; then
+            echo "::error::Expected exactly ${EXPECTED_PDF_COUNT} balance PDFs in ${SRC_DIR}, got ${PDF_COUNT}. If this drift is intentional (example added/removed upstream), update EXPECTED_PDF_COUNT in this workflow in the same PR."
+            exit 1
+          fi
+
+          # Fresh staging dir (defensive, mirrors the receipt step) so a stale PDF
+          # from a previous local run cannot survive into the build context.
+          rm -rf docs/handbook/balance
+          mkdir -p docs/handbook/balance
+          cp "${SRC_DIR}"/*.pdf docs/handbook/balance/
+
+          ls -la docs/handbook/balance/ | head -20
+          echo "Staged $(ls docs/handbook/balance/*.pdf | wc -l | tr -d ' ') balance example PDFs"
+
+      # RealUnit web e2e visual baselines are the single source of truth in
+      # RealUnitCH/web (tests/__screenshots__/), committed there and enforced by
+      # that repo's Playwright visual-regression CI. Like the api mail/receipt/
+      # balance artifacts above, we pull them in at build time instead of
+      # committing them here, so a re-accepted web baseline flows into the
+      # handbook image on the next build without a manual sync PR. The web ref
+      # stays `develop` for both environments (it does not track the handbook's
+      # staging/develop split) — mirroring the api@develop pin above: develop is
+      # RealUnitCH/web's integration branch, i.e. the latest accepted baselines.
+      # RealUnitCH/web is a PUBLIC repo, so the runner's default GITHUB_TOKEN is
+      # enough to clone it (no cross-repo PAT). If it is ever flipped to private,
+      # this checkout starts failing with HTTP 404; the fix is then a PAT secret
+      # wired through as `token:` here (and through the secrets: block of this
+      # reusable workflow + the handbook-deploy.yaml caller).
+      - name: Check out RealUnitCH/web at develop into _web-checkout/
+        uses: actions/checkout@v4
+        with:
+          repository: RealUnitCH/web
+          ref: develop
+          path: _web-checkout
+
+      - name: Stage web e2e baselines from web repo
+        env:
+          WEB_DIR: _web-checkout
+          # RealUnitCH/web commits 18 Playwright visual baselines under
+          # tests/__screenshots__/{desktop-chromium,tablet-chromium,mobile-safari}/.
+          # `-ne` below fails the build on ANY drift (add OR remove) so a change
+          # to the committed set upstream requires an explicit bump here AND a
+          # matching card edit in docs/handbook/de/index.html (#spec-web) in the
+          # SAME change — same guard rationale as the api steps above.
+          EXPECTED_WEB_BASELINE_COUNT: 18
+        run: |
+          set -euo pipefail
+
+          # Already committed in the web repo (generated by its Playwright visual
+          # suite in the pinned Linux container), so no generator / npm run is
+          # needed here — we only copy them into the build context. SEPARATE dest
+          # dir (docs/handbook/web/, not the api dirs) so the other staging steps'
+          # `rm -rf` cannot wipe these, and vice versa.
+          SRC_DIR="${WEB_DIR}/tests/__screenshots__"
+          if [ ! -d "${SRC_DIR}" ]; then
+            echo "::error::${SRC_DIR} not found in the web checkout — the committed Playwright baselines are missing upstream (RealUnitCH/web tests/__screenshots__/)."
+            exit 1
+          fi
+
+          PNG_COUNT=$(find "${SRC_DIR}" -type f -name '*.png' | wc -l | tr -d ' ')
+          if [ "${PNG_COUNT}" -ne "${EXPECTED_WEB_BASELINE_COUNT}" ]; then
+            echo "::error::Expected exactly ${EXPECTED_WEB_BASELINE_COUNT} web baseline PNGs in ${SRC_DIR}, got ${PNG_COUNT}. If this drift is intentional (view added/removed in RealUnitCH/web), update EXPECTED_WEB_BASELINE_COUNT in this workflow AND the cards in docs/handbook/de/index.html (#spec-web) in the same PR."
+            exit 1
+          fi
+
+          # Fresh staging dir (defensive, mirrors the api steps) so a stale PNG
+          # from a previous local run cannot survive into the build context.
+          # `cp -R …/.` preserves the three viewport subdirs so the handbook
+          # <img> paths (../web/<project>/<name>.png) resolve.
+          rm -rf docs/handbook/web
+          mkdir -p docs/handbook/web
+          cp -R "${SRC_DIR}"/. docs/handbook/web/
+
+          find docs/handbook/web -type f -name '*.png' | sort
+          echo "Staged $(find docs/handbook/web -type f -name '*.png' | wc -l | tr -d ' ') web baseline PNGs"
+
+      # Cleanup runs even when the generator step above (or any other step
+      # between staging and `docker build`) fails. Without `if: always()`, a
+      # crash mid-pipeline would leave _api-checkout/ + _handlebars-only/ +
+      # _web-checkout/ in the workspace, and the subsequent `docker build`
+      # (context: .) would ship them to BuildKit — bloating the build context
+      # with ~hundreds of MB of api/web source the image does not need
+      # (Dockerfile only `COPY docs/handbook/`, so the files would not enter the
+      # image itself, but they'd still slow every cached/uncached build).
+      - name: Drop api + web checkouts + handlebars install from build context
+        if: always()
+        env:
+          API_DIR: _api-checkout
+          HANDLEBARS_PREFIX: _handlebars-only
+          WEB_DIR: _web-checkout
+        run: |
+          set -euo pipefail
+          rm -rf "./${API_DIR}" "./${HANDLEBARS_PREFIX}" "./${WEB_DIR}"
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push handbook image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.handbook
+          push: true
+          tags: ${{ inputs.docker_tag }}
+          platforms: linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Install cloudflared
+        env:
+          CLOUDFLARED_VERSION: "2025.4.0"
+          CLOUDFLARED_SHA256: "2561391ee9abdc828afcc52f5ac314b6551a9a6a31ff59cbc64efc63aec04615"
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/cloudflared-linux-arm64" -o /usr/local/bin/cloudflared
+          echo "${CLOUDFLARED_SHA256}  /usr/local/bin/cloudflared" | sha256sum -c -
+          chmod +x /usr/local/bin/cloudflared
+
+      # Deploy via SSH through Cloudflare Tunnel. The `IdentitiesOnly=yes`
+      # and `IdentityAgent=none` options pin SSH to ONLY the explicit
+      # `deploy_key` and disable ssh-agent lookup — without them,
+      # OpenSSH probes default keys + agent identities first and may
+      # exhaust the server's MaxAuthTries before reaching deploy_key,
+      # producing intermittent "Permission denied … Too many
+      # authentication failures" on otherwise-healthy runs (root cause
+      # for the apparent smoke-test flakiness originally tracked in
+      # #487, now closed).
+      - name: Deploy to server
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "${{ secrets.DEPLOY_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy_key \
+            -o IdentitiesOnly=yes \
+            -o IdentityAgent=none \
+            -o ProxyCommand="cloudflared access ssh --hostname ${{ secrets.DEPLOY_HOST }}" \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "${{ env.DEPLOY_SERVICE }}"
+
+      # Post-deploy smoke test: poll the public endpoint until the nginx
+      # container answers 200, or give up. Without this step a "green"
+      # deploy can lie — a misconfigured nginx leaves the container
+      # Up-but-unresponsive while the workflow reports success. Failing
+      # this step blocks the auto-release PR from collecting a green
+      # check and surfaces the regression in CI. Mirrors the pattern
+      # from zkcoins/server `deploy-dev.yaml`.
+      #
+      # Callers point smoke_url at the unauthenticated /healthz endpoint
+      # so the test stays trivial (200 without password) — handbook
+      # content itself sits behind Basic Auth and the credentials must
+      # never land in this public workflow file. The handbook nginx
+      # config keeps /healthz outside auth_basic specifically for this.
+      - name: Smoke test public endpoint
+        env:
+          SMOKE_URL: ${{ inputs.smoke_url }}
+          ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 30); do
+            code=$(curl -sS -L --max-redirs 3 -o /dev/null -w '%{http_code}' --max-time 10 "$SMOKE_URL" || echo "000")
+            if [ "$code" = "200" ]; then
+              echo "${ENVIRONMENT} handbook responded 200 after ${i} attempt(s)"
+              exit 0
+            fi
+            echo "[$i/30] $SMOKE_URL -> ${code} (waiting 10 s)"
+            sleep 10
+          done
+          echo "::error::${ENVIRONMENT} handbook never returned 200 within ~5 min after deploy"
+          exit 1

@@ -14,6 +14,16 @@ class BuyPaymentInfo extends Equatable {
   final Currency currency;
   final String? paymentRequest;
   final String? remittanceInfo;
+  // Fields below come from the API quote response. The backend is the
+  // authority on whether the quote is valid for trading and what the
+  // current min/max limits are for the user+currency combination.
+  final bool isValid;
+  // The whole-currency amount this quote charges, echoed by the API — the
+  // Details page must render this, never re-derive it from keystrokes.
+  final double amount;
+  final double? minVolume;
+  final double? maxVolume;
+  final String? error;
 
   const BuyPaymentInfo({
     required this.id,
@@ -26,10 +36,33 @@ class BuyPaymentInfo extends Equatable {
     required this.city,
     required this.country,
     required this.currency,
+    required this.amount,
+    this.isValid = true,
     this.paymentRequest,
     this.remittanceInfo,
+    this.minVolume,
+    this.maxVolume,
+    this.error,
   });
 
   @override
-  List<Object?> get props => [id, iban, bic, name, street, number, zip, city, country, currency, paymentRequest, remittanceInfo];
+  List<Object?> get props => [
+    id,
+    iban,
+    bic,
+    name,
+    street,
+    number,
+    zip,
+    city,
+    country,
+    currency,
+    paymentRequest,
+    remittanceInfo,
+    isValid,
+    amount,
+    minVolume,
+    maxVolume,
+    error,
+  ];
 }

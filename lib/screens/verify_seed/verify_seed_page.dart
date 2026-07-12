@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:realunit_wallet/packages/utils/screenshot_guard.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -22,14 +23,32 @@ class VerifySeedPage extends StatelessWidget {
       wallet,
       getIt<WalletService>(),
     ),
-    child: VerifySeedView(wallet: wallet),
+    child: const VerifySeedView(),
   );
 }
 
-class VerifySeedView extends StatelessWidget {
-  final SoftwareWallet wallet;
+class VerifySeedView extends StatefulWidget {
+  const VerifySeedView({super.key});
 
-  const VerifySeedView({super.key, required this.wallet});
+  @override
+  State<VerifySeedView> createState() => _VerifySeedViewState();
+}
+
+class _VerifySeedViewState extends State<VerifySeedView> {
+  @override
+  void initState() {
+    // Seed words are entered/visible here — block screenshots and the
+    // app-switcher snapshot. Released on dispose; screenshots re-enable only
+    // when the last protected screen leaves (see ScreenshotGuard).
+    ScreenshotGuard.acquire();
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    ScreenshotGuard.release();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +62,16 @@ class VerifySeedView extends StatelessWidget {
             if (state.isVerified) {
               await Future.delayed(const Duration(seconds: 2));
               if (context.mounted) {
-                context.read<HomeBloc>().add(LoadWalletEvent(wallet));
+                // Load the *committed* wallet (`state.committedWallet`), not
+                // the page's draft (`id == 0`). `committedWallet` is only
+                // ever set together with `isVerified`, so it is non-null
+                // here. `LoadWalletEvent` makes `HomeBloc` set
+                // `hasWallet: true`, which `main.dart`'s `_navigate()` needs
+                // to route forward to onboarding-completed instead of
+                // looping back to welcome.
+                context.read<HomeBloc>().add(
+                  LoadWalletEvent(state.committedWallet!),
+                );
               }
             }
           },

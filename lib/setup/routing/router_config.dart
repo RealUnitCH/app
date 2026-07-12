@@ -3,9 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
+import 'package:realunit_wallet/screens/buy/buy_payment_details_page.dart';
 import 'package:realunit_wallet/screens/create_wallet/create_wallet_page.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/debug_auth/debug_auth_page.dart';
+import 'package:realunit_wallet/screens/hardware_connect_bitbox/bitbox_address_recovery_page.dart';
 import 'package:realunit_wallet/screens/home/home_page.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
 import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
@@ -26,6 +28,7 @@ import 'package:realunit_wallet/screens/settings_legal_documents/settings_legal_
 import 'package:realunit_wallet/screens/settings_legal_documents/subpages/settings_aktionariat_documents_page.dart';
 import 'package:realunit_wallet/screens/settings_legal_documents/subpages/settings_dfx_documents_page.dart';
 import 'package:realunit_wallet/screens/settings_network/settings_network_page.dart';
+import 'package:realunit_wallet/screens/settings_security/settings_security_page.dart';
 import 'package:realunit_wallet/screens/settings_seed/settings_seed_page.dart';
 import 'package:realunit_wallet/screens/settings_tax_report/settings_tax_report_page.dart';
 import 'package:realunit_wallet/screens/settings_user_data/settings_user_data_page.dart';
@@ -35,12 +38,14 @@ import 'package:realunit_wallet/screens/settings_user_data/subpages/edit_phone_n
 import 'package:realunit_wallet/screens/settings_wallet_address/settings_wallet_address_page.dart';
 import 'package:realunit_wallet/screens/support/subpages/support_chat_page.dart';
 import 'package:realunit_wallet/screens/support/subpages/support_create_ticket_page.dart';
+import 'package:realunit_wallet/screens/support/subpages/support_email_capture_page.dart';
 import 'package:realunit_wallet/screens/support/subpages/support_tickets_page.dart';
 import 'package:realunit_wallet/screens/support/support_page.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
 import 'package:realunit_wallet/screens/verify_seed/verify_seed_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/screens/welcome/welcome_page.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_link_entry.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
@@ -50,6 +55,14 @@ import 'package:realunit_wallet/setup/routing/routes/support_routes.dart';
 
 final GoRouter routerConfig = GoRouter(
   initialLocation: '/home',
+  // Custom-scheme opens (realunit-wallet://…, canonical realunit-wallet://open)
+  // only foreground the app; they must not force any navigation. The redirect
+  // keeps the current in-app route (warm resume) or hands off to the normal
+  // boot entry (cold start). See app_link_entry.dart.
+  redirect: (context, state) => appLinkSchemeRedirect(
+    state,
+    routerConfig.routerDelegate.currentConfiguration.uri.toString(),
+  ),
   routes: <RouteBase>[
     GoRoute(
       name: AppRoutes.home,
@@ -138,6 +151,14 @@ final GoRouter routerConfig = GoRouter(
     ),
 
     GoRoute(
+      name: AppRoutes.buyPaymentDetails,
+      path: '/buyPaymentDetails',
+      builder: (_, state) => BuyPaymentDetailsPage(
+        params: state.extra as BuyPaymentDetailsParams,
+      ),
+    ),
+
+    GoRoute(
       name: AppRoutes.sell,
       path: '/sell',
       builder: (_, _) => const SellPage(),
@@ -180,18 +201,19 @@ final GoRouter routerConfig = GoRouter(
     GoRoute(
       name: AppRoutes.kyc,
       path: '/kyc',
-      builder: (_, state) {
-        final extra = state.extra;
-        return KycPageManager(
-          requiredLevel: extra is int ? extra : null,
-        );
-      },
+      builder: (_, state) => KycPageManager(kycContext: state.extra as String?),
     ),
 
     GoRoute(
       name: AppRoutes.receive,
       path: '/receive',
       builder: (_, _) => const ReceivePage(isBottomSheet: false),
+    ),
+
+    GoRoute(
+      name: AppRoutes.bitboxAddressRecovery,
+      path: '/bitboxAddressRecovery',
+      builder: (_, _) => const BitboxAddressRecoveryPage(),
     ),
 
     GoRoute(
@@ -233,6 +255,22 @@ final GoRouter routerConfig = GoRouter(
           name: SettingsRoutes.network,
           path: 'network',
           builder: (_, _) => SettingsNetworkPage(),
+        ),
+        GoRoute(
+          name: SettingsRoutes.security,
+          path: 'security',
+          builder: (_, _) => const SettingsSecurityPage(),
+        ),
+        GoRoute(
+          name: SettingsRoutes.changePin,
+          path: 'security/changePin',
+          builder: (_, state) {
+            final params = state.extra as ChangePinParams;
+            return SetupPinPage(
+              promptBiometrics: false,
+              onCompleted: params.onCompleted,
+            );
+          },
         ),
         GoRoute(
           name: SettingsRoutes.taxReport,
@@ -279,6 +317,13 @@ final GoRouter routerConfig = GoRouter(
       path: '/support',
       builder: (_, _) => const SupportPage(),
       routes: [
+        GoRoute(
+          name: SupportRoutes.emailCapture,
+          path: 'email',
+          builder: (_, state) => SupportEmailCapturePage(
+            description: state.extra as String?,
+          ),
+        ),
         GoRoute(
           name: SupportRoutes.tickets,
           path: 'tickets',

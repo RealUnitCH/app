@@ -2,6 +2,12 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
 
+    <!-- BitBox02 connects via USB-OTG on Android. Declared as optional so the
+         app still installs on tablets/devices without USB host support; the
+         BitBox flow simply won't be usable there. The actual per-device
+         permission is requested at runtime by bitbox_flutter. -->
+    <uses-feature android:name="android.hardware.usb.host" android:required="false" />
+
     <application
         android:label="Real Unit Wallet"
         android:name="${applicationName}"
@@ -27,9 +33,26 @@
             <meta-data
                     android:name="io.flutter.embedding.android.EnableImpeller"
                     android:value="false"/>
+            <!-- Forward the inbound custom-scheme URL to Flutter/go_router
+                 instead of the legacy platform channel, so the scheme redirect
+                 handles it. -->
+            <meta-data
+                android:name="flutter_deeplinking_enabled"
+                android:value="true"/>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <!-- Custom URL scheme (realunit-wallet://…, canonical
+                 realunit-wallet://open). Opening the app via the scheme only
+                 foregrounds it; go_router redirects any scheme URL to the normal
+                 entry. A custom scheme needs no autoVerify / Digital Asset
+                 Links. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="realunit-wallet"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

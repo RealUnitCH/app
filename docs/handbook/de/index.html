@@ -1,0 +1,3775 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RealUnit Wallet — Handbuch &amp; Test-Dokumentation</title>
+    <meta
+      name="description"
+      content="RealUnit Wallet — Handbuch und Test-Dokumentation. Jeder Screenshot ist eine Visual-Regression-Golden-Baseline; die App-Version, die auf realer Hardware exakt diese Screens produziert, ist die spezifizierte."
+    />
+    <script>
+      // Auto-open the enclosing <details> and scroll to the hash target
+      // (e.g. /de/#spec-04 lands on the spec card, /de/#01-welcome lands
+      // on the specific test card inside spec-01 and forces its details
+      // open). getElementById tolerates digit-prefixed IDs like "01-welcome"
+      // which would break document.querySelector(hash) since CSS
+      // identifiers can't start with a digit.
+      function openHashTarget() {
+        var hash = location.hash;
+        if (!hash || hash.length < 2) return;
+        var el = document.getElementById(decodeURIComponent(hash.slice(1)));
+        if (!el) return;
+        var det = el.tagName === 'DETAILS' ? el : el.closest('details');
+        if (det) det.open = true;
+        requestAnimationFrame(function () {
+          el.scrollIntoView({ behavior: 'instant', block: 'start' });
+        });
+      }
+      window.addEventListener('hashchange', openHashTarget);
+      document.addEventListener('DOMContentLoaded', openHashTarget);
+
+      // TOC clicks: open the target <details> before the browser scrolls.
+      document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.toc a[href^="#"]').forEach(function (a) {
+          a.addEventListener('click', function () {
+            var id = a.getAttribute('href').slice(1);
+            if (!id) return;
+            var el = document.getElementById(id);
+            var det = el && (el.tagName === 'DETAILS' ? el : el.closest('details'));
+            if (det) det.open = true;
+          });
+        });
+
+        // Copy-link buttons next to each flow name: one click copies the
+        // absolute deep-link to the clipboard, updates the URL bar to that
+        // anchor, and flashes a checkmark for 1.2s. Buttons carrying
+        // data-copy-url instead copy that URL verbatim (used by
+        // #spec-downloads for the public tester links) and leave the URL
+        // bar untouched. Falls back to the textarea+execCommand trick on
+        // browsers without async clipboard. Original label is captured
+        // per-button at wire-up time (not per click) so a rapid second
+        // click while the "✓ Kopiert" state is still showing can't lock
+        // the label in the flashed state.
+        document.querySelectorAll('.copy-link').forEach(function (btn) {
+          var origText = btn.textContent;
+          var resetTimer = null;
+          btn.addEventListener('click', function () {
+            var target = btn.dataset.target;
+            var copyUrl = btn.dataset.copyUrl;
+            if (!target && !copyUrl) return;
+            var url = copyUrl || location.origin + location.pathname + '#' + target;
+            var done = function () {
+              btn.textContent = '✓ Kopiert';
+              btn.dataset.copied = 'true';
+              if (resetTimer) clearTimeout(resetTimer);
+              resetTimer = setTimeout(function () {
+                btn.textContent = origText;
+                btn.removeAttribute('data-copied');
+                resetTimer = null;
+              }, 1200);
+              if (target && location.hash !== '#' + target) location.hash = target;
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(url).then(done, function () {
+                fallbackCopy(url);
+                done();
+              });
+            } else {
+              fallbackCopy(url);
+              done();
+            }
+          });
+        });
+        function fallbackCopy(text) {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            document.execCommand('copy');
+          } catch (e) {}
+          document.body.removeChild(ta);
+        }
+
+        // Expand/collapse-all toggle in the sidebar.
+        var toggle = document.getElementById('spec-toggle-all');
+        if (!toggle) return;
+        var update = function () {
+          var anyClosed = false;
+          document.querySelectorAll('details.spec').forEach(function (d) {
+            if (!d.open) anyClosed = true;
+          });
+          toggle.setAttribute('data-state', anyClosed ? 'collapsed' : 'expanded');
+          toggle.textContent = anyClosed ? 'Alle ausklappen' : 'Alle einklappen';
+        };
+        toggle.addEventListener('click', function () {
+          var open = toggle.getAttribute('data-state') === 'collapsed';
+          document.querySelectorAll('details.spec').forEach(function (d) {
+            d.open = open;
+          });
+          update();
+        });
+        document.querySelectorAll('details.spec').forEach(function (d) {
+          d.addEventListener('toggle', update);
+        });
+        update();
+      });
+    </script>
+    <style>
+      :root {
+        /* RealUnit brand palette — mirrors lib/styles/colors.dart (RealUnitColors).
+           Same blue used on realunit.ch (#1988C6). Keep in sync with the app. */
+        --bg: #d1e6f5;             /* brand200 */
+        --surface: #ffffff;         /* basic.white */
+        --surface-2: #f2f5f8;       /* neutral100 */
+        --line: #e2e8f0;            /* neutral200 */
+        --line-2: #ced5de;          /* neutral300 */
+        --ink: #343233;             /* realUnitBlack */
+        --ink-2: #475569;           /* neutral600 */
+        --ink-3: #64748b;           /* neutral500 */
+        --ink-4: #94a3b8;           /* neutral400 */
+        --brand: #1988c6;           /* realUnitBlue */
+        --warn: #e9ad3f;            /* okker */
+        --content-width: 960px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        font-size: 14.5px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+      }
+      a {
+        color: var(--brand);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      code {
+        font-family: 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 0.88em;
+        background: var(--surface-2);
+        padding: 1.5px 5px;
+        border-radius: 3px;
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+
+      /* Layout */
+      .wrap {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        gap: 32px;
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 32px;
+      }
+      @media (max-width: 900px) {
+        .wrap {
+          grid-template-columns: 1fr;
+        }
+        aside {
+          position: static !important;
+          height: auto !important;
+        }
+      }
+
+      aside {
+        position: sticky;
+        top: 32px;
+        align-self: start;
+        height: calc(100vh - 64px);
+        overflow-y: auto;
+        padding-right: 12px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        font-size: 15px;
+        color: var(--ink);
+        margin-bottom: 4px;
+      }
+      .brand .dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--brand);
+      }
+      .brand-sub {
+        font-size: 12.5px;
+        color: var(--ink-3);
+        margin: 0 0 20px 0;
+      }
+      .toc-label {
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-4);
+        margin: 18px 0 8px;
+      }
+      .toc ol {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        counter-reset: none;
+      }
+      .toc li {
+        margin: 2px 0;
+      }
+      .toc a {
+        display: block;
+        padding: 4px 6px;
+        border-radius: 3px;
+        font-size: 13px;
+        color: var(--ink-2);
+      }
+      .toc a:hover {
+        background: var(--surface-2);
+        text-decoration: none;
+        color: var(--ink);
+      }
+      .toc .spec-num {
+        display: inline-block;
+        min-width: 22px;
+        font-variant-numeric: tabular-nums;
+        color: var(--ink-4);
+        font-size: 11.5px;
+        margin-right: 8px;
+      }
+
+      main {
+        max-width: var(--content-width);
+      }
+
+      /* Hero */
+      .hero h1 {
+        margin: 0 0 14px 0;
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .lede {
+        font-size: 16px;
+        color: var(--ink-2);
+        margin: 0 0 18px 0;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 18px;
+        font-size: 13px;
+        color: var(--ink-3);
+      }
+      .meta b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      hr.sep {
+        border: 0;
+        border-top: 1px solid var(--line);
+        margin: 48px 0;
+      }
+
+      details.spec {
+        margin: 0 0 72px;
+        scroll-margin-top: 24px;
+      }
+      details.spec > summary {
+        list-style: none;
+        cursor: pointer;
+        user-select: none;
+        padding: 6px 0 4px;
+      }
+      details.spec > summary::-webkit-details-marker {
+        display: none;
+      }
+      details.spec > summary:focus-visible {
+        outline: 2px solid var(--brand);
+        outline-offset: 4px;
+        border-radius: 4px;
+      }
+      details.spec > summary:hover .spec-head .lhs h2 {
+        color: var(--brand);
+      }
+
+      .spec-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 24px;
+        margin-bottom: 14px;
+      }
+      .spec-head .lhs h2 {
+        margin: 0 0 4px 0;
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        display: inline-flex;
+        align-items: baseline;
+        gap: 10px;
+        transition: color 0.15s;
+      }
+      .spec-head .lhs h2::before {
+        content: '▸';
+        display: inline-block;
+        width: 12px;
+        font-size: 14px;
+        color: var(--ink-4);
+        transition:
+          transform 0.18s ease-out,
+          color 0.15s;
+        transform: translateY(-1px);
+      }
+      details.spec[open] .spec-head .lhs h2::before {
+        transform: translateY(-1px) rotate(90deg);
+        color: var(--brand);
+      }
+      .spec-head .lhs h2 .num {
+        display: inline-block;
+        min-width: 38px;
+        color: var(--ink-4);
+        font-variant-numeric: tabular-nums;
+        font-weight: 500;
+      }
+      .spec-head .file {
+        font-family: 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 12.5px;
+        color: var(--ink-3);
+      }
+      .spec-head .rhs {
+        text-align: right;
+        font-size: 12.5px;
+        color: var(--ink-3);
+      }
+      .spec-head .rhs b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+      .spec-head .links {
+        margin-top: 4px;
+      }
+      .spec-head .links a {
+        margin-left: 10px;
+      }
+
+      .spec-intro {
+        color: var(--ink-2);
+        margin: 14px 0 24px;
+      }
+
+      .tests {
+        display: grid;
+        gap: 22px;
+      }
+      .tests.cols-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+      .tests.cols-3 {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+      @media (max-width: 700px) {
+        .tests.cols-2,
+        .tests.cols-3 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .test {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+        /* Buffer for browser-driven scrollIntoView when landed via
+           direct-link (#<flow-name>) so the card title isn't flush
+           against the viewport top edge. */
+        scroll-margin-top: 20px;
+      }
+      .test:target {
+        outline: 2px solid var(--brand);
+        outline-offset: -1px;
+      }
+      .test .head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface-2);
+      }
+      .test .head .src {
+        margin-left: auto;
+      }
+      .test .name {
+        font-family: 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+      a.permalink.name {
+        text-decoration: none;
+      }
+      a.permalink.name:hover {
+        text-decoration: underline;
+        color: var(--brand);
+      }
+      .copy-link {
+        appearance: none;
+        background: transparent;
+        border: 1px solid transparent;
+        padding: 2px 6px;
+        font: inherit;
+        font-size: 11.5px;
+        line-height: 1;
+        color: var(--ink-4);
+        cursor: pointer;
+        border-radius: 4px;
+        transition:
+          color 120ms ease,
+          background 120ms ease,
+          border-color 120ms ease;
+      }
+      .copy-link:hover {
+        color: var(--brand);
+        background: var(--surface);
+        border-color: var(--line);
+      }
+      .copy-link[data-copied='true'] {
+        color: var(--brand);
+        background: var(--surface);
+        border-color: var(--brand);
+      }
+      .test .src {
+        font-family: 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 11.5px;
+        color: var(--ink-4);
+      }
+      .test .img {
+        background: var(--surface-2);
+        display: flex;
+        justify-content: center;
+        padding: 14px;
+      }
+      .test .img img {
+        max-width: 220px;
+        height: auto;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+      .test .desc {
+        padding: 12px 14px;
+        font-size: 13px;
+        color: var(--ink-2);
+      }
+      .test .desc b {
+        color: var(--ink);
+      }
+
+      .callout {
+        border-left: 3px solid var(--brand);
+        background: rgba(25, 136, 198, 0.06);
+        padding: 14px 18px;
+        margin: 24px 0;
+        border-radius: 0 4px 4px 0;
+      }
+      .callout.info {
+        border-color: var(--ink-3);
+        background: var(--surface-2);
+      }
+      .callout.warn {
+        border-color: var(--warn);
+        background: rgba(233, 173, 63, 0.10);
+      }
+      .callout p {
+        margin: 0;
+        color: var(--ink-2);
+        font-size: 13.5px;
+      }
+      .callout b {
+        color: var(--ink);
+      }
+
+      /* Sidebar expand/collapse-all toggle */
+      .toc-actions {
+        margin: 6px 0 16px;
+      }
+      .toc-actions button {
+        appearance: none;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        color: var(--ink-2);
+        cursor: pointer;
+        font: inherit;
+        font-size: 12px;
+        padding: 5px 10px;
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          color 0.15s;
+      }
+      .toc-actions button:hover {
+        background: var(--surface-2);
+        border-color: var(--line-2);
+        color: var(--ink);
+      }
+      /* Store-listing section (#spec-store-listing) — see
+         scripts/assemble-handbook-store-listing.py. Uses the handbook palette
+         vars (the scope-extension snippet's --text-secondary/--border/
+         --surface-alt map to --ink-3/--line/--surface-2 here). */
+      dl.store-listing {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 8px 24px;
+        margin: 16px 0 32px;
+      }
+      dl.store-listing dt {
+        font-weight: 600;
+        color: var(--ink-3);
+      }
+      dl.store-listing dd {
+        margin: 0;
+      }
+      dl.store-listing dd pre {
+        white-space: pre-wrap;
+        margin: 0;
+      }
+      .store-screenshots {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+        margin: 0 0 24px;
+      }
+      .store-screenshots figure {
+        margin: 0;
+      }
+      .store-screenshots img {
+        width: 100%;
+        height: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      .store-screenshots figcaption {
+        font-size: 12px;
+        color: var(--ink-3);
+        margin-top: 4px;
+        text-align: center;
+      }
+      figure.store-graphic img,
+      figure.store-icon img {
+        height: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      figure.store-graphic {
+        margin: 0 0 24px;
+        max-width: 512px;
+      }
+      figure.store-graphic img {
+        width: 100%;
+      }
+      figure.store-icon {
+        margin: 0 0 24px;
+      }
+      .rendered-html {
+        padding: 12px;
+        background: var(--surface-2);
+        border-radius: 8px;
+      }
+      /* Per-element source link (↗) pointing at the file in the repo. */
+      a.src {
+        text-decoration: none;
+        color: var(--ink-4);
+        font-weight: 600;
+        padding: 0 2px;
+      }
+      a.src:hover {
+        color: var(--brand);
+      }
+      .store-listing .src,
+      .store-screenshots .src {
+        font-size: 0.85em;
+      }
+      /* Legal-downloads section (#spec-legal-downloads) — see
+         scripts/assemble-handbook-legal.py. Reuses the .test card chrome
+         (border + :target highlight) so each (document, language) entry has the
+         same direct-link affordance as the screenshot cards. */
+      .test.legal-doc .downloads {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 14px;
+      }
+      .test.legal-doc .doc-title {
+        flex-basis: 100%;
+        font-size: 13px;
+        color: var(--ink-2);
+      }
+      a.dl-btn {
+        text-decoration: none;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--brand);
+        background: var(--surface-2);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 5px 12px;
+        transition:
+          background 0.15s,
+          border-color 0.15s,
+          color 0.15s;
+      }
+      a.dl-btn:hover {
+        background: var(--surface);
+        border-color: var(--brand);
+      }
+      /* Task-overview section (#spec-tasks) — table rendered client-side from
+         tasks.csv, which is mounted into the container at runtime from the
+         private server repo (see issue #662). No task data lives in this repo;
+         only the renderer + a fallback for when no CSV is mounted. Reuses the
+         handbook palette/card chrome. */
+      #spec-tasks .tasks-table-wrap {
+        overflow-x: auto;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      #spec-tasks table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+      }
+      #spec-tasks th,
+      #spec-tasks td {
+        text-align: left;
+        vertical-align: top;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--line);
+      }
+      #spec-tasks thead th {
+        background: var(--surface-2);
+        color: var(--ink);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      #spec-tasks tbody tr:last-child td {
+        border-bottom: none;
+      }
+      #spec-tasks tbody tr:hover {
+        background: var(--surface-2);
+      }
+      #spec-tasks td a {
+        margin-right: 10px;
+        white-space: nowrap;
+      }
+      #spec-tasks td a:last-child {
+        margin-right: 0;
+      }
+      #spec-tasks .tasks-note {
+        margin: 0;
+        color: var(--ink-3);
+        background: var(--surface);
+        border: 1px dashed var(--line-2);
+        border-radius: 8px;
+        padding: 14px 16px;
+      }
+      /* Downloads section (#spec-downloads) — static, hand-maintained list of
+         the three public tester/download links. Reuses the .test card chrome
+         (border + :target highlight) and the .copy-link button; the body adds a
+         self-contained inline-SVG QR code per link so a tester can scan it from
+         the desktop handbook. The copy button carries data-copy-url so it copies
+         the actual store/download URL rather than a handbook deep-link. */
+      .test.download .dl-body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 14px;
+      }
+      .test.download .dl-desc {
+        margin: 0;
+        font-size: 13px;
+        color: var(--ink-2);
+        text-align: center;
+      }
+      .test.download .dl-qr {
+        width: 132px;
+        height: 132px;
+        padding: 8px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      .test.download .dl-qr svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      .test.download .dl-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+      }
+      .test.download .dl-url {
+        width: 100%;
+        margin: 0;
+        font-family: 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 11px;
+        color: var(--ink-3);
+        text-align: center;
+        overflow-wrap: anywhere;
+        word-break: break-all;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <aside>
+        <div class="brand">
+          <span class="dot"></span><span class="name">RealUnit · Handbook</span>
+        </div>
+        <p class="brand-sub">User-Guide &amp; Test-Doku in einem</p>
+
+        <div class="toc-label">Übersicht</div>
+        <nav class="toc">
+          <ol>
+            <li><a href="#intro">Was ist das hier?</a></li>
+            <li><a href="#architecture">Test-Architektur</a></li>
+          </ol>
+        </nav>
+
+        <div class="toc-label">Specs</div>
+        <div class="toc-actions">
+          <button type="button" id="spec-toggle-all" data-state="expanded">Alle einklappen</button>
+        </div>
+        <nav class="toc">
+          <ol>
+            <li>
+              <a href="#spec-01"><span class="spec-num">01</span>Welcome &amp; Onboarding</a>
+            </li>
+            <li>
+              <a href="#spec-02"><span class="spec-num">02</span>Wallet erstellen</a>
+            </li>
+            <li>
+              <a href="#spec-03"><span class="spec-num">03</span>Onboarding abschliessen</a>
+            </li>
+            <li>
+              <a href="#spec-04"><span class="spec-num">04</span>PIN einrichten</a>
+            </li>
+            <li>
+              <a href="#spec-05"><span class="spec-num">05</span>Dashboard</a>
+            </li>
+            <li>
+              <a href="#spec-06"><span class="spec-num">06</span>Einstellungen</a>
+            </li>
+            <li>
+              <a href="#spec-07"><span class="spec-num">07</span>Wallet-Sicherung</a>
+            </li>
+            <li>
+              <a href="#spec-08"><span class="spec-num">08</span>Wiederherstellung &amp; Rechtliches</a>
+            </li>
+            <li>
+              <a href="#spec-09"><span class="spec-num">09</span>Software-Wallet Disclaimer &amp; Rechtsdokumente</a>
+            </li>
+            <li>
+              <a href="#spec-10"><span class="spec-num">10</span>Wallet-Wiederherstellung — States</a>
+            </li>
+            <li>
+              <a href="#spec-11"><span class="spec-num">11</span>Seed-Verifizierung — Details</a>
+            </li>
+            <li>
+              <a href="#spec-12"><span class="spec-num">12</span>Dashboard mit Bestand</a>
+            </li>
+            <li>
+              <a href="#spec-13"><span class="spec-num">13</span>Transaktionshistorie</a>
+            </li>
+            <li>
+              <a href="#spec-14"><span class="spec-num">14</span>KYC — Registrierung &amp; E-Mail</a>
+            </li>
+            <li>
+              <a href="#spec-15"><span class="spec-num">15</span>Steuerbericht — States</a>
+            </li>
+            <li>
+              <a href="#spec-16"><span class="spec-num">16</span>Kaufen — States</a>
+            </li>
+            <li>
+              <a href="#spec-17"><span class="spec-num">17</span>Verkaufen — States</a>
+            </li>
+            <li>
+              <a href="#spec-web"><span class="spec-num">W</span>Web · realunit.app</a>
+            </li>
+            <li>
+              <a href="#spec-mails"><span class="spec-num">M</span>E-Mails</a>
+            </li>
+            <li>
+              <a href="#spec-receipts"><span class="spec-num">B</span>Transaktionsbelege</a>
+            </li>
+            <li>
+              <a href="#spec-balance"><span class="spec-num">V</span>Vermögensübersicht</a>
+            </li>
+            <li>
+              <a href="#spec-store-listing"><span class="spec-num">S</span>Store-Listing</a>
+            </li>
+            <li>
+              <a href="#spec-legal-downloads"><span class="spec-num">L</span>Rechtsdokumente</a>
+            </li>
+            <li>
+              <a href="#spec-downloads"><span class="spec-num">D</span>Download / Test</a>
+            </li>
+            <li>
+              <a href="#spec-tasks"><span class="spec-num">A</span>Aufgaben</a>
+            </li>
+          </ol>
+        </nav>
+      </aside>
+
+      <main>
+        <section class="hero" id="intro">
+          <h1>RealUnit Wallet — Handbook</h1>
+          <p class="lede">
+            User-Doku und Test-Doku in einem. Jeder Screenshot auf dieser Seite ist eine
+            Visual-Regression-Golden-Baseline aus <code>test/goldens/screens/</code> — eine
+            pixel-genaue Aufnahme des Page-Widgets, validiert vor jedem Merge auf dem
+            self-hosted Hardware-Runner. Wenn das Handbook aktuell aussieht, ist die App es auch —
+            und umgekehrt.
+          </p>
+          <div class="meta">
+            <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
+            <span>📂 <b>Code:</b>
+              <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
+            <span>🧪 <b>Tests:</b> ~1100 (Tier 0/1) · 94 Visual-Regression Goldens · 26 Tier-3 Smoke-Flows</span>
+          </div>
+        </section>
+
+        <section id="architecture" style="margin-top: 40px">
+          <h3 style="margin-top: 0">Single Source of Truth</h3>
+          <p>
+            Die 52 Bilder dieser Seite sind ausgewählte Goldens aus
+            <code>test/goldens/screens/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
+            Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
+            <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
+            <code>Dockerfile.handbook</code> assembliert sie in einem Multi-Stage-Build in
+            das deployte nginx-Image — das eingecheckte Repo enthält keine Handbook-PNG-Kopien
+            mehr.
+          </p>
+
+          <p>
+            Lokale Vorschau:
+          </p>
+
+          <div class="callout info">
+            <p>
+              <code>bash scripts/assemble-handbook-screenshots.sh docs/handbook/screenshots</code><br />
+              <code>open docs/handbook/de/index.html</code>
+            </p>
+          </div>
+
+          <p>
+            <code>docs/handbook/screenshots/</code> ist gitignored — das Verzeichnis wird
+            lokal nur transient für die Vorschau befüllt. Im deployten Image macht
+            <code>Dockerfile.handbook</code> exakt denselben Assembly-Schritt.
+          </p>
+
+          <p>
+            Die fünf Test-Tiers sind in <a href="../../testing.md">docs/testing.md</a>
+            dokumentiert. Tier 3 (Maestro Navigation-Smoke) läuft daneben und fängt
+            das, was Goldens nicht sehen: kaputtes Tap-Routing, fehlende Navigation,
+            Locale-Probleme, iOS-Build-/Install-Fehler. Die Goldens-Side ist unter
+            <a href="../../visual-regression-tests.md">visual-regression-tests.md</a>
+            dokumentiert.
+          </p>
+
+          <div class="callout info">
+            <p>
+              <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/screens/&lt;feature&gt;</code>
+              auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
+              <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
+              und assembliert die 52 Slots aus <code>test/goldens/screens/</code> → Push auf
+              <code>staging</code> deployt das DEV-Image, Push auf <code>develop</code> das
+              PRD-Image, beide via Cloudflare Tunnel.
+            </p>
+          </div>
+        </section>
+
+        <hr class="sep" />
+
+        <details id="spec-01" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">01</span>Welcome &amp; Onboarding</h2>
+                <div class="file">.maestro/handbook/01..03-*.yaml</div>
+              </div>
+              <div class="rhs">
+                <b>3 Screens</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/RealUnitCH/app/tree/develop/.maestro/handbook"
+                    >Flows ↗</a
+                  >
+                </div>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Der allererste Screen, den ein neuer User sieht. Zwei Wege gehen davon ab — die
+            <em>App-Wallet</em> (Seed-Phrase auf dem Gerät) und die
+            <em>BitBox-Wallet</em> (Hardware Wallet aus der Schweiz). Auf dem App-Weg gibt es
+            wiederum drei Optionen: neue Wallet anlegen, vorhandene wiederherstellen, oder im
+            Debug-Modus eine bestimmte Adresse via Signatur freischalten.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="01-welcome">
+              <div class="head">
+                <a class="name permalink" href="#01-welcome">01-welcome</a>
+                <button class="copy-link" type="button" data-target="01-welcome" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">01-welcome.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/01-welcome.png"
+                  alt="Welcome — RealUnit Wallet"
+                />
+              </div>
+              <div class="desc">
+                Der Splash-Screen mit RealUnit-Logo, dem Claim
+                <b>„Bankenunabhängig. Sicher."</b>, einem Bergpanorama im Hintergrund und dem
+                <b>Start</b>-CTA. Unter dem Button steht der i18n-Disclaimer, dass die Nutzung
+                der App die Annahme der <em>Nutzungsbedingungen</em> impliziert.
+              </div>
+            </div>
+            <div class="test" id="02-create-vs-restore">
+              <div class="head">
+                <a class="name permalink" href="#02-create-vs-restore">02-create-vs-restore</a>
+                <button class="copy-link" type="button" data-target="02-create-vs-restore" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">02-create-vs-restore.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/02-create-vs-restore.png"
+                  alt="Wallet-Typ wählen"
+                />
+              </div>
+              <div class="desc">
+                Nach <b>Start</b> wählt der User den Wallet-Typ:
+                <b>Software-Wallet (App)</b> für eine reine Software-Wallet auf dem Gerät
+                (deckt sowohl frische Wallet als auch Wiederherstellung einer bestehenden ab), oder
+                <b>BitBox Hardware-Wallet</b> für die Hardware-Wallet aus der Schweiz. Beide Kacheln
+                tragen Subtitle-Text + Icon und tappen weiter in den jeweiligen Onboarding-Pfad.
+              </div>
+            </div>
+            <div class="test" id="03-software-wallet-terms">
+              <div class="head">
+                <a class="name permalink" href="#03-software-wallet-terms">03-software-wallet-terms</a>
+                <button class="copy-link" type="button" data-target="03-software-wallet-terms" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">03-software-wallet-terms.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/03-software-wallet-terms.png"
+                  alt="Software-Wallet-Optionen"
+                />
+              </div>
+              <div class="desc">
+                Innerhalb des App-Wallet-Zweigs gibt es für End-User zwei Optionen:
+                <b>Neue Wallet erstellen</b> (frische BIP-39-Mnemonic) und
+                <b>Wallet wiederherstellen</b> (Import einer bestehenden Phrase, z.B. von
+                Aktionariat). Im Debug-Build (<code>kDebugMode</code>) erscheint zusätzlich
+                eine dritte Kachel <b>Adresse + Signatur</b> als Debug-Pfad für die
+                Backend-Integration — in Release-Builds ist diese Option für End-User
+                <em>nie</em> sichtbar.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-02" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">02</span>Wallet erstellen</h2>
+                <div class="file">.maestro/handbook/04..06-*.yaml</div>
+              </div>
+              <div class="rhs">
+                <b>3 Screens</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/RealUnitCH/app/tree/develop/.maestro/handbook"
+                    >Flows ↗</a
+                  >
+                </div>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            BIP-39-Seed-Backup-Flow. Drei Schritte: Seed-Phrase wird zuerst verschleiert
+            angezeigt mit einer Aufforderung sie aufzuschreiben, dann durch Tap enthüllt
+            (12 Wörter), und schliesslich verifiziert (4 zufällige Wörter müssen wieder
+            eingegeben werden). Im Debug-Build sind die Verify-Felder vorausgefüllt, damit
+            E2E-Tests nicht den BIP-39-Wortlisten-Match laufen müssen.
+          </p>
+
+          <div class="callout warn">
+            <p>
+              Die SeedBlurCard nutzt Flutters <code>BackdropFilter</code> — Maestros eigener
+              <code>takeScreenshot</code> liefert hier nur ein schwarzes PNG, weil XCUITest
+              den GPU-Layer nicht erfasst. <code>xcrun simctl io booted screenshot</code>
+              hingegen rendert das fertige Frame korrekt. Beide Seed-Screens unten sind
+              echte Captures, kein Mock.
+            </p>
+          </div>
+
+          <div class="tests cols-2">
+            <div class="test" id="04-seed-hidden">
+              <div class="head">
+                <a class="name permalink" href="#04-seed-hidden">04-seed-hidden</a>
+                <button class="copy-link" type="button" data-target="04-seed-hidden" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">04-seed-hidden.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/04-seed-hidden.png"
+                  alt="Seed-Backup — verschleiert"
+                />
+              </div>
+              <div class="desc">
+                Die <b>Wallet-Sicherung</b>-Seite mit dem Hinweistext „Notieren Sie Ihre
+                Wiederherstellungs-Wörter auf einem Blatt Papier..." und der verschleierten
+                SeedBlurCard. Die Wörter sind als unscharfe Lozenges sichtbar, in der Mitte
+                steht <em>Hier tippen, um anzuzeigen</em>. Der CTA <b>Ich habe es gesichert</b>
+                ist disabled, bis der User mindestens einmal die Phrase aufgedeckt hat.
+              </div>
+            </div>
+            <div class="test" id="05-seed-revealed">
+              <div class="head">
+                <a class="name permalink" href="#05-seed-revealed">05-seed-revealed</a>
+                <button class="copy-link" type="button" data-target="05-seed-revealed" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">05-seed-revealed.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/05-seed-revealed.png"
+                  alt="Seed-Backup — enthüllt"
+                />
+              </div>
+              <div class="desc">
+                Nach dem Tap zeigt die Karte alle <b>12 BIP-39-Wörter</b> in einem
+                2-Spalten-Grid mit Index. Der Hintergrund ist klar lesbar, der CTA ist
+                aktiviert. Im echten Release-Build wechselt die Karte nach einigen Sekunden
+                automatisch zurück in den verschleierten Zustand.
+              </div>
+            </div>
+            <div class="test" id="06-verify-seed">
+              <div class="head">
+                <a class="name permalink" href="#06-verify-seed">06-verify-seed</a>
+                <button class="copy-link" type="button" data-target="06-verify-seed" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">06-verify-seed.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/06-verify-seed.png"
+                  alt="Seed-Backup — verifizieren"
+                />
+              </div>
+              <div class="desc">
+                <b>Sicherung überprüfen</b>: vier zufällig gewählte Indizes (im Screenshot:
+                Wort 4, 5, 10, 12) müssen vom User wieder eingetippt werden. In
+                <code>kDebugMode</code> trägt der <code>VerifySeedCubit</code> die korrekten
+                Wörter aus der gerade generierten Seed-Phrase direkt ein — daher die
+                ausgefüllten Felder im Screenshot. Im Release-Build sind die Felder leer.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-03" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">03</span>Onboarding abschliessen</h2>
+                <div class="file">.maestro/handbook/07-onboarding-completed.yaml</div>
+              </div>
+              <div class="rhs">
+                <b>1 Screen</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/RealUnitCH/app/blob/develop/.maestro/handbook/07-onboarding-completed.yaml"
+                    >Flow ↗</a
+                  >
+                </div>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Brücke zwischen Seed-Sicherung und PIN-Einrichtung. An dieser Stelle ist die
+            Wallet zwar generiert, aber noch nicht durch eine lokale PIN gegen Zugriff
+            geschützt. Der Screen markiert den erfolgreichen ersten Teil der Onboarding-Reise.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="07-onboarding-completed">
+              <div class="head">
+                <a class="name permalink" href="#07-onboarding-completed">07-onboarding-completed</a>
+                <button class="copy-link" type="button" data-target="07-onboarding-completed" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">07-onboarding-completed.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/07-onboarding-completed.png"
+                  alt="Ihre Wallet ist bereit"
+                />
+              </div>
+              <div class="desc">
+                Vollbild-Bestätigung mit RealU-Token-Hexagon, Headline
+                <b>„Ihre Wallet ist bereit"</b> und dem Hinweis, dass im nächsten Schritt
+                der Zugriff auf die Mobile-App gesichert wird (PIN). <b>Weiter</b>-CTA
+                triggert <code>HomeBloc.CompleteOnboardingEvent</code>, was die Navigation
+                in die PIN-Setup-Route auflöst.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-04" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">04</span>PIN einrichten</h2>
+                <div class="file">.maestro/handbook/08..10-*.yaml</div>
+              </div>
+              <div class="rhs">
+                <b>3 Screens</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/RealUnitCH/app/tree/develop/.maestro/handbook"
+                    >Flows ↗</a
+                  >
+                </div>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            6-stellige App-PIN als zweiter Schutzlayer. <code>SetupPinPage</code> hat zwei
+            Zustände auf derselben Seite (<code>create</code> → <code>confirm</code>) — der
+            Titel und der Hilfstext wechseln, der Numpad bleibt. Nach erfolgreicher
+            Bestätigung erscheint ein Bottom-Sheet, das biometrisches Unlock (Face ID /
+            Touch ID) anbietet.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="08-pin-setup">
+              <div class="head">
+                <a class="name permalink" href="#08-pin-setup">08-pin-setup</a>
+                <button class="copy-link" type="button" data-target="08-pin-setup" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">08-pin-setup.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/08-pin-setup.png"
+                  alt="PIN erstellen — leer"
+                />
+              </div>
+              <div class="desc">
+                Initialer Zustand <b>Erstellen Sie Ihre PIN</b>, Subtitle bittet um eine
+                6-stellige Eingabe, sechs leere Dots, klassischer 3×4-Numpad mit Backspace.
+                Der zentrale State ist <code>SetupPinCubit.create</code>.
+              </div>
+            </div>
+            <div class="test" id="09-pin-confirm">
+              <div class="head">
+                <a class="name permalink" href="#09-pin-confirm">09-pin-confirm</a>
+                <button class="copy-link" type="button" data-target="09-pin-confirm" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">09-pin-confirm.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/09-pin-confirm.png"
+                  alt="PIN bestätigen — leer"
+                />
+              </div>
+              <div class="desc">
+                Nach 6 Ziffern wechselt der Cubit in <code>confirm</code>, die Dots werden
+                zurückgesetzt, Titel und Hilfstext ändern sich auf
+                <b>Bestätigen Sie Ihre PIN</b>. Die Seite ist dieselbe — keine Navigation.
+                Eingabe einer abweichenden PIN würde <code>pinConfirmFailed</code> auslösen
+                und zurück in <code>create</code> springen.
+              </div>
+            </div>
+            <div class="test" id="10-biometric-prompt">
+              <div class="head">
+                <a class="name permalink" href="#10-biometric-prompt">10-biometric-prompt</a>
+                <button class="copy-link" type="button" data-target="10-biometric-prompt" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">10-biometric-prompt.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/10-biometric-prompt.png"
+                  alt="Biometrische Authentifizierung anbieten"
+                />
+              </div>
+              <div class="desc">
+                Modal-Sheet mit Fingerprint-Icon, Headline
+                <b>„Biometrische Authentifizierung aktivieren"</b>, und zwei Aktionen:
+                <b>Aktivieren</b> (Face ID / Touch ID einrichten) oder
+                <b>Überspringen</b>. Der Hintergrund bleibt sichtbar — der PIN-Screen mit
+                gefüllten Dots ist abgedunkelt. Auf dem Simulator gibt es kein echtes
+                Face ID, deshalb verwendet die E2E-Pipeline <b>Überspringen</b>.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-05" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">05</span>Dashboard</h2>
+                <div class="file">.maestro/handbook/11-dashboard.yaml</div>
+              </div>
+              <div class="rhs">
+                <b>1 Screen</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/RealUnitCH/app/blob/develop/.maestro/handbook/11-dashboard.yaml"
+                    >Flow ↗</a
+                  >
+                </div>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Haupteinstieg nach abgeschlossenem Onboarding. Zeigt den aktuellen RealUnit
+            Aktienkurs in der gewählten Anzeigewährung (Default CHF), die Performance-Kurve
+            mit Zeitfenstern (1W/1M/3M/1J/MAX), den eigenen Bestand (hier leer) und den
+            primären <b>RealUnit kaufen</b>-CTA. Der Backend-Roundtrip nach dem
+            Onboarding-Skip ist asynchron — der Wrapper wartet bis der Kauf-CTA gerendert
+            ist, damit das Screenshot kein Loading-State ist.
+          </p>
+
+          <div class="tests cols-1">
+            <div class="test" id="11-dashboard">
+              <div class="head">
+                <a class="name permalink" href="#11-dashboard">11-dashboard</a>
+                <button class="copy-link" type="button" data-target="11-dashboard" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">11-dashboard.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/11-dashboard.png"
+                  alt="Dashboard mit leerem Bestand"
+                />
+              </div>
+              <div class="desc">
+                AppBar mit RealUnit-Wallet-Logo und Hamburger-Icon (rechts) zum Aufruf der
+                Einstellungen. Darunter <b>RealUnit Aktienkurs</b> mit aktueller Anzeige
+                (z.B. <code>CHF 1.43</code>), interaktiver Chart, Time-Range-Tabs. Der
+                Empty-State des Portfolios (R-Hexagon ohne Holdings) signalisiert eine
+                frische Wallet — bei Holdings wird die Position dort gerendert.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-06" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">06</span>Einstellungen</h2>
+                <div class="file">.maestro/handbook/12..16,20..24-*.yaml</div>
+              </div>
+              <div class="rhs">
+                <b>10 Screens</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/RealUnitCH/app/tree/develop/.maestro/handbook"
+                    >Flows ↗</a
+                  >
+                </div>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Sammelpunkt für lokale Einstellungen (Sprache, Anzeigewährung, Netzwerk) sowie
+            On-Chain-Identität (Wallet-Adresse, Recovery-Phrase) und User-Daten für die
+            DFX-Integration (KYC, Steuerbericht). Reachable via Hamburger-Icon rechts oben
+            in der Dashboard-AppBar.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="12-settings">
+              <div class="head">
+                <a class="name permalink" href="#12-settings">12-settings</a>
+                <button class="copy-link" type="button" data-target="12-settings" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">12-settings.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/12-settings.png"
+                  alt="Settings-Übersicht"
+                />
+              </div>
+              <div class="desc">
+                Vollständige Settings-Liste: Sprachen, Währung, Netzwerk, Steuerbericht,
+                Nutzerdaten, Rechtsdokumente, Kontakt, Wallet-Adresse, Wallet-Sicherung,
+                Wallet zurücksetzen. Aktive Auswahlen (Sprache, Währung, Netzwerk)
+                werden inline als trailing Text rechts angezeigt.
+                Die Kachel <b>Wallet-Sicherung</b> erscheint nur bei einer Software-Wallet
+                (Re-Display der BIP-39-Recovery-Phrase) — bei einer BitBox ist sie
+                ausgeblendet, weil dort das Backup auf dem Hardware-Device selbst liegt.
+              </div>
+            </div>
+            <div class="test" id="13-settings-languages">
+              <div class="head">
+                <a class="name permalink" href="#13-settings-languages">13-settings-languages</a>
+                <button class="copy-link" type="button" data-target="13-settings-languages" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">13-settings-languages.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/13-settings-languages.png"
+                  alt="Sprachen — Auswahl"
+                />
+              </div>
+              <div class="desc">
+                Aktuell unterstützte Sprachen: <b>Englisch</b>, <b>Deutsch</b>. Auswahl wird
+                im <code>SettingsBloc</code> persistiert und triggert <code>S.of(context)</code>
+                Rebuilds in der gesamten App. ARB-Quellen liegen in
+                <code>assets/languages/strings_*.arb</code>.
+              </div>
+            </div>
+            <div class="test" id="14-settings-currency">
+              <div class="head">
+                <a class="name permalink" href="#14-settings-currency">14-settings-currency</a>
+                <button class="copy-link" type="button" data-target="14-settings-currency" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">14-settings-currency.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/14-settings-currency.png"
+                  alt="Währung — Auswahl"
+                />
+              </div>
+              <div class="desc">
+                Wahl zwischen <b>EUR</b> und <b>CHF</b> als Anzeigewährung für Aktienkurs,
+                Portfolio und Buy/Sell. Änderung emittiert ein <code>CurrencyChangedEvent</code>
+                im <code>DashboardBloc</code>, das Kursdaten in der neuen Währung nachlädt.
+              </div>
+            </div>
+            <div class="test" id="15-settings-network">
+              <div class="head">
+                <a class="name permalink" href="#15-settings-network">15-settings-network</a>
+                <button class="copy-link" type="button" data-target="15-settings-network" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">15-settings-network.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/15-settings-network.png"
+                  alt="Netzwerk — Mainnet/Testnet"
+                />
+              </div>
+              <div class="desc">
+                Umschalter zwischen <b>Mainnet</b> (Production RealUnit-Kontrakt) und
+                <b>Testnet</b>. Hat Side-Effects: aktive Verbindung wird neu aufgebaut,
+                Chain-spezifische DTOs werden neu instanziiert. Der Switch ist primär für
+                interne Tests und Aktionariat-Demo-Flows gedacht.
+              </div>
+            </div>
+            <div class="test" id="16-settings-wallet-address">
+              <div class="head">
+                <a class="name permalink" href="#16-settings-wallet-address">16-settings-wallet-address</a>
+                <button class="copy-link" type="button" data-target="16-settings-wallet-address" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">16-settings-wallet-address.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/16-settings-wallet-address.png"
+                  alt="Wallet-Adresse mit QR"
+                />
+              </div>
+              <div class="desc">
+                EVM-Adresse der Wallet (<code>0x…</code>) mit QR-Code und Copy-Button —
+                der „Receive"-Punkt der App, auch wenn er nicht so heisst. Beim Buy-Flow
+                kommt die gleiche Information in einem Bottom-Sheet zum Vorschein. QR ist
+                der vom <code>qr_flutter</code>-Package gerenderte Standard-EIP-3770-Frame
+                ohne EIP-681-Payload.
+              </div>
+            </div>
+            <div class="test" id="20-settings-legal-documents">
+              <div class="head">
+                <a class="name permalink" href="#20-settings-legal-documents">20-settings-legal-documents</a>
+                <button class="copy-link" type="button" data-target="20-settings-legal-documents" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">20-settings-legal-documents.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/20-settings-legal-documents.png"
+                  alt="Rechtsdokumente — Übersicht"
+                />
+              </div>
+              <div class="desc">
+                Die <b>Rechtsdokumente</b>-Übersichtsseite in den Einstellungen. Bündelt
+                die rechtlich relevanten Dokumente in zwei Gruppen — <b>Aktionariat</b> und
+                <b>DFX</b> — die jeweils auf eine eigene Unterseite führen.
+              </div>
+            </div>
+            <div class="test" id="21-settings-aktionariat-documents">
+              <div class="head">
+                <a class="name permalink" href="#21-settings-aktionariat-documents">21-settings-aktionariat-documents</a>
+                <button class="copy-link" type="button" data-target="21-settings-aktionariat-documents" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">21-settings-aktionariat-documents.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/21-settings-aktionariat-documents.png"
+                  alt="Aktionariat-Dokumente"
+                />
+              </div>
+              <div class="desc">
+                Unterseite mit den <b>RealUnit/Aktionariat</b>-Aktionärsdokumenten —
+                Unterlagen rund um die RealUnit-Aktie und die Aktionariat-Plattform. Jeder
+                Eintrag öffnet das Dokument im <code>LegalDocumentPage</code>-Viewer.
+              </div>
+            </div>
+            <div class="test" id="22-settings-dfx-documents">
+              <div class="head">
+                <a class="name permalink" href="#22-settings-dfx-documents">22-settings-dfx-documents</a>
+                <button class="copy-link" type="button" data-target="22-settings-dfx-documents" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">22-settings-dfx-documents.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/22-settings-dfx-documents.png"
+                  alt="DFX-Dokumente"
+                />
+              </div>
+              <div class="desc">
+                Unterseite mit den <b>DFX</b>-Rechtsdokumenten — die rechtlichen Unterlagen
+                des DFX-Integrationspartners (z.B. AGB und Datenschutz für Buy/Sell und
+                KYC). Jeder Eintrag öffnet das Dokument im <code>LegalDocumentPage</code>-Viewer.
+              </div>
+            </div>
+            <div class="test" id="23-settings-contact">
+              <div class="head">
+                <a class="name permalink" href="#23-settings-contact">23-settings-contact</a>
+                <button class="copy-link" type="button" data-target="23-settings-contact" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">23-settings-contact.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/23-settings-contact.png"
+                  alt="Kontakt"
+                />
+              </div>
+              <div class="desc">
+                Die <b>Kontakt</b>-Seite in den Einstellungen bündelt die Support- und
+                Kontaktwege: ein Link zum <b>Support</b> (FAQ, Tickets &amp; Chat) sowie
+                Telefonnummer, E-Mail und Website des Anbieters. Darunter steht das
+                <b>Impressum</b> mit Firmenname und Adresse. Die Firmendaten kommen vom
+                <code>DfxCompanyInfoService</code>.
+              </div>
+            </div>
+            <div class="test" id="24-settings-delete-wallet">
+              <div class="head">
+                <a class="name permalink" href="#24-settings-delete-wallet">24-settings-delete-wallet</a>
+                <button class="copy-link" type="button" data-target="24-settings-delete-wallet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">24-settings-delete-wallet.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/24-settings-delete-wallet.png"
+                  alt="Wallet zurücksetzen — Bestätigung"
+                />
+              </div>
+              <div class="desc">
+                Das Bestätigungs-Sheet <b>„REALU Wallet zurücksetzen"</b>, ausgelöst über
+                den Einstellungs-Eintrag <b>Wallet zurücksetzen</b>. Der User muss
+                per Checkbox bestätigen, dass er seine Wiederherstellungsphrase gesichert
+                hat — erst dann wird der <b>Zurücksetzen</b>-Button aktiv. Das Zurücksetzen löscht die
+                Wallet vom Gerät und führt zurück ins Onboarding.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-07" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">07</span>Wallet-Sicherung</h2>
+                <div class="file">.maestro/handbook/17..19-*.yaml</div>
+              </div>
+              <div class="rhs">
+                <b>3 Screens</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/RealUnitCH/app/tree/develop/.maestro/handbook"
+                    >Flows ↗</a
+                  >
+                </div>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            PIN-gated Re-Display der Recovery-Phrase aus den Settings — falls der User die
+            Wörter nach dem Onboarding noch einmal sehen oder neu notieren will. Die
+            <code>SettingsRoutes.seed</code>-Route hängt hinter dem
+            <code>VerifyPinPage</code>-Gate; ein direkter Deep-Link würde gleich umgeleitet.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="17-settings-backup-pin">
+              <div class="head">
+                <a class="name permalink" href="#17-settings-backup-pin">17-settings-backup-pin</a>
+                <button class="copy-link" type="button" data-target="17-settings-backup-pin" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">17-settings-backup-pin.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/17-settings-backup-pin.png"
+                  alt="PIN-Gate vor Recovery-Phrase"
+                />
+              </div>
+              <div class="desc">
+                Selber Numpad wie <code>SetupPinPage</code>, aber im
+                <code>VerifyPinPage</code>-Modus. Titel <b>Geben Sie Ihre PIN ein</b>,
+                Subtitle erläutert, dass dieser Schritt die Wiederherstellungs-Phrase
+                schützt. <b>PIN vergessen?</b> als sekundäre Aktion am unteren Rand —
+                führt aktuell zurück in den Restore-Flow.
+              </div>
+            </div>
+            <div class="test" id="18-settings-seed-hidden">
+              <div class="head">
+                <a class="name permalink" href="#18-settings-seed-hidden">18-settings-seed-hidden</a>
+                <button class="copy-link" type="button" data-target="18-settings-seed-hidden" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">18-settings-seed-hidden.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/18-settings-seed-hidden.png"
+                  alt="Settings-Seed verschleiert"
+                />
+              </div>
+              <div class="desc">
+                Spiegelseite von <code>04-seed-hidden</code>, aber innerhalb der Settings —
+                derselbe SeedBlurCard-Widget, dieselbe BackdropFilter-Magie. Sektion-Header
+                <b>Wiederherstellungs-Wörter</b>, darunter die unscharfe Karte. Wer hier
+                landet, kann die Phrase neu sichern, ohne die Wallet zurückzusetzen.
+              </div>
+            </div>
+            <div class="test" id="19-settings-seed-revealed">
+              <div class="head">
+                <a class="name permalink" href="#19-settings-seed-revealed">19-settings-seed-revealed</a>
+                <button class="copy-link" type="button" data-target="19-settings-seed-revealed" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">19-settings-seed-revealed.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/19-settings-seed-revealed.png"
+                  alt="Settings-Seed enthüllt"
+                />
+              </div>
+              <div class="desc">
+                Wörter werden nach Tap angezeigt. Im Gegensatz zum Onboarding-Flow gibt es
+                hier keinen <em>Verify-Schritt</em> — der User hat die Phrase bereits
+                einmal verifiziert. Nach kurzer Zeit kehrt die Karte automatisch in den
+                Blur-Zustand zurück (Code: <code>SettingsSeedBloc</code>).
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-08" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">08</span>Wiederherstellung &amp; Rechtliches</h2>
+                <div class="file">.maestro/handbook/25..26-*.yaml</div>
+              </div>
+              <div class="rhs">
+                <b>2 Screens</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/RealUnitCH/app/tree/develop/.maestro/handbook"
+                    >Flows ↗</a
+                  >
+                </div>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Zwei eigenständige Screens ausserhalb des linearen Onboarding-Pfads: die
+            Wiederherstellung einer bestehenden Wallet aus dem „restore"-Zweig des
+            Onboardings, und die Nutzungsbedingungen, die direkt vom Splash-Screen aus
+            geöffnet werden können.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="25-restore-wallet">
+              <div class="head">
+                <a class="name permalink" href="#25-restore-wallet">25-restore-wallet</a>
+                <button class="copy-link" type="button" data-target="25-restore-wallet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">25-restore-wallet.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/25-restore-wallet.png"
+                  alt="Wallet wiederherstellen"
+                />
+              </div>
+              <div class="desc">
+                Der <b>Wallet wiederherstellen</b>-Screen aus dem „restore"-Zweig des
+                Onboardings. Hier gibt der User seine bestehende
+                <b>12-Wort-Recovery-Phrase</b> ein, um eine bereits vorhandene Wallet auf
+                dem Gerät zu reaktivieren — etwa nach einem Geräte-Wechsel oder einer
+                Neuinstallation.
+              </div>
+            </div>
+            <div class="test" id="26-terms">
+              <div class="head">
+                <a class="name permalink" href="#26-terms">26-terms</a>
+                <button class="copy-link" type="button" data-target="26-terms" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">26-terms.yaml</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/26-terms.png"
+                  alt="Nutzungsbedingungen"
+                />
+              </div>
+              <div class="desc">
+                Die <b>Nutzungsbedingungen</b> als Dokumentseite, geöffnet über den
+                i18n-Disclaimer-Link auf dem Splash-Screen. Gerendert vom
+                <code>LegalDocumentPage</code>-Viewer in seiner <code>terms</code>-Variante.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-09" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">09</span>Software-Wallet Disclaimer &amp; Rechtsdokumente</h2>
+                <div class="file">test/goldens/screens/legal/</div>
+              </div>
+              <div class="rhs">
+                <b>5 Screens</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Innerhalb des App-Wallet-Zweigs durchläuft der User mehrere rechtliche Schritte:
+            zuerst einen zweistufigen <em>Disclaimer</em>, dann die Zustimmung zu den
+            <em>Rechtsdokumenten</em> in zwei Gruppen (Aktionariat und DFX). Erst nach
+            Bestätigung aller Schritte geht es weiter in die Seed-Generierung.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="27-software-wallet-disclaimer-step-0">
+              <div class="head">
+                <a class="name permalink" href="#27-software-wallet-disclaimer-step-0">27-software-wallet-disclaimer-step-0</a>
+                <button class="copy-link" type="button" data-target="27-software-wallet-disclaimer-step-0" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">legal_disclaimer_step_0.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/27-software-wallet-disclaimer-step-0.png"
+                  alt="Disclaimer — Schritt 1"
+                />
+              </div>
+              <div class="desc">
+                Erste Stufe des Software-Wallet-Disclaimers. Macht klar, dass der User
+                seine Wiederherstellungs-Wörter selbst verwahren muss und im Verlust-Fall
+                kein Zugriff mehr auf die Wallet möglich ist.
+              </div>
+            </div>
+            <div class="test" id="28-software-wallet-disclaimer-step-1">
+              <div class="head">
+                <a class="name permalink" href="#28-software-wallet-disclaimer-step-1">28-software-wallet-disclaimer-step-1</a>
+                <button class="copy-link" type="button" data-target="28-software-wallet-disclaimer-step-1" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">legal_disclaimer_step_1.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/28-software-wallet-disclaimer-step-1.png"
+                  alt="Disclaimer — Schritt 2"
+                />
+              </div>
+              <div class="desc">
+                Zweite Stufe des Disclaimers. Zusätzlicher Hinweis auf das Risiko bei
+                Verlust des Geräts und die Verantwortung des Users für die sichere
+                Aufbewahrung der Recovery-Phrase.
+              </div>
+            </div>
+            <div class="test" id="29-legal-documents-step">
+              <div class="head">
+                <a class="name permalink" href="#29-legal-documents-step">29-legal-documents-step</a>
+                <button class="copy-link" type="button" data-target="29-legal-documents-step" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">legal_documents_step_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/29-legal-documents-step.png"
+                  alt="Rechtsdokumente — Onboarding-Schritt"
+                />
+              </div>
+              <div class="desc">
+                Übersichtsschritt im Onboarding mit beiden Dokument-Gruppen
+                (<b>Aktionariat</b> und <b>DFX</b>). Der User muss beide einzeln öffnen
+                und akzeptieren, bevor der Weiter-CTA aktiv wird.
+              </div>
+            </div>
+            <div class="test" id="30-legal-aktionariat-step">
+              <div class="head">
+                <a class="name permalink" href="#30-legal-aktionariat-step">30-legal-aktionariat-step</a>
+                <button class="copy-link" type="button" data-target="30-legal-aktionariat-step" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">legal_aktionariat_step_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/30-legal-aktionariat-step.png"
+                  alt="Aktionariat-Dokumente — Zustimmung"
+                />
+              </div>
+              <div class="desc">
+                Onboarding-Schritt mit den <b>Aktionariat</b>-Aktionärsdokumenten. Liste
+                der zu akzeptierenden Unterlagen rund um die RealUnit-Aktie. Checkbox
+                aktiviert den Weiter-CTA.
+              </div>
+            </div>
+            <div class="test" id="31-legal-dfx-step">
+              <div class="head">
+                <a class="name permalink" href="#31-legal-dfx-step">31-legal-dfx-step</a>
+                <button class="copy-link" type="button" data-target="31-legal-dfx-step" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">legal_dfx_step_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/31-legal-dfx-step.png"
+                  alt="DFX-Dokumente — Zustimmung"
+                />
+              </div>
+              <div class="desc">
+                Onboarding-Schritt mit den <b>DFX</b>-Rechtsdokumenten (AGB und
+                Datenschutz für Buy/Sell und KYC). Checkbox aktiviert den Weiter-CTA und
+                schliesst den Legal-Block des Onboardings ab.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-10" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">10</span>Wallet-Wiederherstellung — States</h2>
+                <div class="file">test/goldens/screens/restore_wallet/</div>
+              </div>
+              <div class="rhs">
+                <b>2 Screens</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Zustände der Seed-Eingabe auf der <code>RestoreWalletPage</code>. Der
+            Validierungs-Cubit prüft die eingegebenen 12 Wörter gegen die BIP-39-Wortliste
+            und die Checksum — der Submit-Button ist erst aktiv, wenn die Eingabe gültig
+            ist. Bei ungültiger Eingabe wird der Fehler inline angezeigt.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="32-restore-wallet-valid">
+              <div class="head">
+                <a class="name permalink" href="#32-restore-wallet-valid">32-restore-wallet-valid</a>
+                <button class="copy-link" type="button" data-target="32-restore-wallet-valid" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">restore_wallet_page_valid.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/32-restore-wallet-valid.png"
+                  alt="Recovery-Phrase — gültig"
+                />
+              </div>
+              <div class="desc">
+                Alle 12 Wörter sind eingegeben, BIP-39-Validierung erfolgreich. Der
+                <b>Wiederherstellen</b>-CTA ist aktiv. Im Tap-Anschluss generiert die App
+                das Wallet aus der Phrase und navigiert in den PIN-Setup-Schritt.
+              </div>
+            </div>
+            <div class="test" id="33-restore-wallet-invalid">
+              <div class="head">
+                <a class="name permalink" href="#33-restore-wallet-invalid">33-restore-wallet-invalid</a>
+                <button class="copy-link" type="button" data-target="33-restore-wallet-invalid" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">restore_wallet_page_invalid.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/33-restore-wallet-invalid.png"
+                  alt="Recovery-Phrase — ungültig"
+                />
+              </div>
+              <div class="desc">
+                Eingabe enthält ein Wort ausserhalb der BIP-39-Liste oder die Checksum
+                ist falsch. Der CTA bleibt disabled, der Inline-Fehler weist den User
+                darauf hin, seine Eingabe zu korrigieren.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-11" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">11</span>Seed-Verifizierung — Details</h2>
+                <div class="file">test/goldens/screens/verify_seed/</div>
+              </div>
+              <div class="rhs">
+                <b>1 Screen</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Zusatzzustand zu <a href="#06-verify-seed"><code>06-verify-seed</code></a>:
+            alle vier Verifikations-Wörter sind eingetragen und der Submit-CTA ist aktiv.
+            Im Onboarding-Flow folgt darauf der Wechsel in den <em>Onboarding
+            abgeschlossen</em>-Screen.
+          </p>
+
+          <div class="tests cols-1">
+            <div class="test" id="34-verify-seed-completed">
+              <div class="head">
+                <a class="name permalink" href="#34-verify-seed-completed">34-verify-seed-completed</a>
+                <button class="copy-link" type="button" data-target="34-verify-seed-completed" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">verify_seed_page_all_entered.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/34-verify-seed-completed.png"
+                  alt="Seed-Verifikation — alle Wörter eingetragen"
+                />
+              </div>
+              <div class="desc">
+                Alle vier zufällig ausgewählten Verifikations-Wörter sind eingetragen.
+                Der <b>Weiter</b>-CTA ist aktiv. Tap löst die Validierung im
+                <code>VerifySeedCubit</code> aus — bei Übereinstimmung mit der
+                ursprünglichen Phrase folgt der Onboarding-Abschluss-Screen.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-12" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">12</span>Dashboard mit Bestand</h2>
+                <div class="file">test/goldens/screens/dashboard/</div>
+              </div>
+              <div class="rhs">
+                <b>1 Screen</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Variante des Dashboards mit aktiver Position. Spiegelt
+            <a href="#11-dashboard"><code>11-dashboard</code></a>, aber mit gefülltem
+            Portfolio-Bereich statt Empty-State.
+          </p>
+
+          <div class="tests cols-1">
+            <div class="test" id="35-dashboard-with-balance">
+              <div class="head">
+                <a class="name permalink" href="#35-dashboard-with-balance">35-dashboard-with-balance</a>
+                <button class="copy-link" type="button" data-target="35-dashboard-with-balance" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">dashboard_with_balance.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/35-dashboard-with-balance.png"
+                  alt="Dashboard mit Bestand"
+                />
+              </div>
+              <div class="desc">
+                Aktienkurs und Performance-Chart oben, darunter die eigene RealUnit-Position
+                mit Anzahl Aktien, Gegenwert in der Anzeigewährung und Performance seit
+                Kauf. Verlinkt auf Buy/Sell sowie die Transaktionshistorie.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-13" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">13</span>Transaktionshistorie</h2>
+                <div class="file">test/goldens/screens/transaction_history/</div>
+              </div>
+              <div class="rhs">
+                <b>1 Screen</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Liste der bisherigen Käufe und Verkäufe der RealUnit-Aktie. Erreichbar aus
+            dem Dashboard und aus den Einstellungen. Jeder Eintrag zeigt Datum,
+            Richtung (Kauf/Verkauf), Aktien-Menge, Preis und Status.
+          </p>
+
+          <div class="tests cols-1">
+            <div class="test" id="36-transaction-history">
+              <div class="head">
+                <a class="name permalink" href="#36-transaction-history">36-transaction-history</a>
+                <button class="copy-link" type="button" data-target="36-transaction-history" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">transaction_history_page_with_transactions.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/36-transaction-history.png"
+                  alt="Transaktionshistorie mit Einträgen"
+                />
+              </div>
+              <div class="desc">
+                Die Transaktionsliste mit mehreren Einträgen. Jede Zeile bündelt Richtung,
+                Betrag in Aktien, Gegenwert in der Anzeigewährung sowie den Status (z.B.
+                <em>Abgeschlossen</em>, <em>In Bearbeitung</em>). Tap auf eine Zeile öffnet
+                die Detailansicht der jeweiligen Transaktion.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-14" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">14</span>KYC — Registrierung &amp; E-Mail</h2>
+                <div class="file">test/goldens/screens/kyc/</div>
+              </div>
+              <div class="rhs">
+                <b>13 Screens</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            KYC-Onboarding für Buy/Sell — Pflicht ab definierten Volumen-Schwellen. Der
+            Registrierungs-Wizard umfasst zwei Stammdaten-Schritte (persönlich + Adresse)
+            und als finalen Schritt die Steueransässigkeit; der Submit der KYC-Anfrage an
+            das DFX-Backend erfolgt erst auf diesem Steuer-Schritt. Dazu kommt der
+            E-Mail-Verifizierungs-Schritt mit den Fehler-States <em>Loading</em>,
+            <em>Mismatch</em> (eingegebener Code stimmt nicht) und <em>Unknown Error</em>
+            (Backend-Fehler).
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="37-kyc-email-loading">
+              <div class="head">
+                <a class="name permalink" href="#37-kyc-email-loading">37-kyc-email-loading</a>
+                <button class="copy-link" type="button" data-target="37-kyc-email-loading" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_email_page_loading.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/37-kyc-email-loading.png"
+                  alt="KYC E-Mail — Loading"
+                />
+              </div>
+              <div class="desc">
+                Ladezustand der E-Mail-Verifizierung. Der vom User eingegebene Code wird
+                gegen das DFX-Backend geprüft, die Eingabefelder sind während des Calls
+                disabled.
+              </div>
+            </div>
+            <div class="test" id="38-kyc-email-mismatch">
+              <div class="head">
+                <a class="name permalink" href="#38-kyc-email-mismatch">38-kyc-email-mismatch</a>
+                <button class="copy-link" type="button" data-target="38-kyc-email-mismatch" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_email_page_does_not_match.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/38-kyc-email-mismatch.png"
+                  alt="KYC E-Mail — Code stimmt nicht"
+                />
+              </div>
+              <div class="desc">
+                Der eingegebene Bestätigungs-Code stimmt nicht mit dem per E-Mail
+                gesendeten überein. Inline-Fehler unter dem Eingabefeld, der User kann
+                den Code erneut eingeben oder eine neue Mail anfordern.
+              </div>
+            </div>
+            <div class="test" id="39-kyc-email-error">
+              <div class="head">
+                <a class="name permalink" href="#39-kyc-email-error">39-kyc-email-error</a>
+                <button class="copy-link" type="button" data-target="39-kyc-email-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_email_page_unknown_error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/39-kyc-email-error.png"
+                  alt="KYC E-Mail — unbekannter Fehler"
+                />
+              </div>
+              <div class="desc">
+                Generischer Fehler-State, wenn das Backend keinen verwertbaren Statuscode
+                liefert (z.B. Netzwerk-Timeout, 5xx). Der User wird gebeten, es später
+                noch einmal zu probieren.
+              </div>
+            </div>
+            <div class="test" id="40-kyc-registration-personal">
+              <div class="head">
+                <a class="name permalink" href="#40-kyc-registration-personal">40-kyc-registration-personal</a>
+                <button class="copy-link" type="button" data-target="40-kyc-registration-personal" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_personal_step_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/40-kyc-registration-personal.png"
+                  alt="KYC Registrierung — Persönliche Daten"
+                />
+              </div>
+              <div class="desc">
+                Eingabe-Schritt für die persönlichen Stammdaten (Anrede, Vorname,
+                Nachname, Geburtsdatum, Nationalität). Pflichtfelder werden inline
+                validiert, der Weiter-CTA ist disabled bis die Eingabe vollständig ist.
+              </div>
+            </div>
+            <div class="test" id="54-kyc-registration-personal-dropdown">
+              <div class="head">
+                <a class="name permalink" href="#54-kyc-registration-personal-dropdown">54-kyc-registration-personal-dropdown</a>
+                <button class="copy-link" type="button" data-target="54-kyc-registration-personal-dropdown" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_personal_step_dropdown_open.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/54-kyc-registration-personal-dropdown.png"
+                  alt="KYC Registrierung — Nationalitäts-Auswahl"
+                />
+              </div>
+              <div class="desc">
+                Persönliche-Daten-Schritt mit geöffnetem Länder-Picker: Der User wählt
+                seine Nationalität (Staatsbürgerschaft) aus der scrollbaren Länderliste.
+              </div>
+            </div>
+            <div class="test" id="41-kyc-registration-address">
+              <div class="head">
+                <a class="name permalink" href="#41-kyc-registration-address">41-kyc-registration-address</a>
+                <button class="copy-link" type="button" data-target="41-kyc-registration-address" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_address_step_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/41-kyc-registration-address.png"
+                  alt="KYC Registrierung — Adresse"
+                />
+              </div>
+              <div class="desc">
+                Adress-Schritt der KYC-Registrierung (Strasse, Nummer, PLZ, Ort, Land).
+                Der Schritt ist nicht mehr final: „Weiter" führt den User zum
+                abschliessenden Steueransässigkeits-Schritt — die KYC-Anfrage wird erst
+                dort an das DFX-Backend übermittelt.
+              </div>
+            </div>
+            <div class="test" id="55-kyc-registration-address-dropdown">
+              <div class="head">
+                <a class="name permalink" href="#55-kyc-registration-address-dropdown">55-kyc-registration-address-dropdown</a>
+                <button class="copy-link" type="button" data-target="55-kyc-registration-address-dropdown" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_address_step_dropdown_open.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/55-kyc-registration-address-dropdown.png"
+                  alt="KYC Registrierung — Wohnsitz-Land-Auswahl"
+                />
+              </div>
+              <div class="desc">
+                Adress-Schritt mit geöffnetem Länder-Picker: Hier wählt der User das Land
+                seines Wohnsitzes aus der scrollbaren Länderliste.
+              </div>
+            </div>
+            <div class="test" id="56-kyc-registration-tax">
+              <div class="head">
+                <a class="name permalink" href="#56-kyc-registration-tax">56-kyc-registration-tax</a>
+                <button class="copy-link" type="button" data-target="56-kyc-registration-tax" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/56-kyc-registration-tax.png"
+                  alt="KYC Registrierung — Steueransässigkeit"
+                />
+              </div>
+              <div class="desc">
+                Abschliessender Schritt der Registrierung. Der Pflicht-Länder-Picker „Land
+                des steuerlichen Wohnsitzes" ist mit dem im Adress-Schritt erfassten
+                Wohnsitzland vorbelegt — die meisten Menschen sind steueransässig, wo sie
+                wohnen — bleibt aber frei änderbar. Die Abbildung zeigt den unbelegten
+                Fallback-Zustand (kein Wohnsitzland vorhanden), in dem der User genau ein
+                Land wählen muss. Der „Abschliessen"-CTA übermittelt die vollständige
+                KYC-Anfrage an das DFX-Backend.
+              </div>
+            </div>
+            <div class="test" id="57-kyc-registration-tax-dropdown">
+              <div class="head">
+                <a class="name permalink" href="#57-kyc-registration-tax-dropdown">57-kyc-registration-tax-dropdown</a>
+                <button class="copy-link" type="button" data-target="57-kyc-registration-tax-dropdown" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_dropdown_open.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/57-kyc-registration-tax-dropdown.png"
+                  alt="KYC Registrierung — Steuerland-Auswahl"
+                />
+              </div>
+              <div class="desc">
+                Geöffneter Länder-Picker des Steuer-Schritts. Der User wählt genau ein Land
+                des steuerlichen Wohnsitzes aus der scrollbaren Liste.
+              </div>
+            </div>
+            <div class="test" id="58-kyc-registration-tax-swiss">
+              <div class="head">
+                <a class="name permalink" href="#58-kyc-registration-tax-swiss">58-kyc-registration-tax-swiss</a>
+                <button class="copy-link" type="button" data-target="58-kyc-registration-tax-swiss" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_swiss.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/58-kyc-registration-tax-swiss.png"
+                  alt="KYC Registrierung — Schweizer Steueransässigkeit"
+                />
+              </div>
+              <div class="desc">
+                Ist die Schweiz (CH) als steuerlicher Wohnsitz gewählt, entfällt die
+                TIN-Abfrage — der Schritt lässt sich direkt abschliessen.
+              </div>
+            </div>
+            <div class="test" id="59-kyc-registration-tax-non-swiss">
+              <div class="head">
+                <a class="name permalink" href="#59-kyc-registration-tax-non-swiss">59-kyc-registration-tax-non-swiss</a>
+                <button class="copy-link" type="button" data-target="59-kyc-registration-tax-non-swiss" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_non_swiss.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/59-kyc-registration-tax-non-swiss.png"
+                  alt="KYC Registrierung — Ausländische Steueransässigkeit"
+                />
+              </div>
+              <div class="desc">
+                Bei einem Nicht-CH-Steuerwohnsitz erscheint zusätzlich das Pflichtfeld
+                „Steueridentifikationsnummer (TIN)", das zusammen mit dem gewählten Land
+                übermittelt wird.
+              </div>
+            </div>
+            <div class="test" id="60-kyc-registration-tax-country-error">
+              <div class="head">
+                <a class="name permalink" href="#60-kyc-registration-tax-country-error">60-kyc-registration-tax-country-error</a>
+                <button class="copy-link" type="button" data-target="60-kyc-registration-tax-country-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_country_error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/60-kyc-registration-tax-country-error.png"
+                  alt="KYC Registrierung — Fehlende Länderauswahl"
+                />
+              </div>
+              <div class="desc">
+                Validierungsfehler beim Abschliessen ohne gewähltes Land: Der
+                Pflicht-Länder-Picker wird mit rotem Rahmen markiert, der Submit ist
+                blockiert.
+              </div>
+            </div>
+            <div class="test" id="61-kyc-registration-tax-tin-error">
+              <div class="head">
+                <a class="name permalink" href="#61-kyc-registration-tax-tin-error">61-kyc-registration-tax-tin-error</a>
+                <button class="copy-link" type="button" data-target="61-kyc-registration-tax-tin-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_tin_error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/61-kyc-registration-tax-tin-error.png"
+                  alt="KYC Registrierung — Fehlende TIN"
+                />
+              </div>
+              <div class="desc">
+                Validierungsfehler bei ausländischem Steuerwohnsitz ohne TIN: Das
+                Pflicht-TIN-Feld wird mit rotem Rahmen markiert, der Submit ist
+                blockiert.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-15" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">15</span>Steuerbericht — States</h2>
+                <div class="file">test/goldens/screens/settings_tax_report/</div>
+              </div>
+              <div class="rhs">
+                <b>2 Screens</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Steuerbericht-Export aus den Einstellungen. Das Backend generiert den
+            Report on-demand — daher gibt es einen sichtbaren Loading-State und einen
+            Failure-State, falls die Generierung scheitert (z.B. Backend-Fehler oder
+            fehlende KYC).
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="42-settings-tax-report-loading">
+              <div class="head">
+                <a class="name permalink" href="#42-settings-tax-report-loading">42-settings-tax-report-loading</a>
+                <button class="copy-link" type="button" data-target="42-settings-tax-report-loading" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">settings_tax_report_page_loading.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/42-settings-tax-report-loading.png"
+                  alt="Steuerbericht — Loading"
+                />
+              </div>
+              <div class="desc">
+                Ladezustand während das Backend den Steuerbericht generiert. Spinner
+                und Hinweistext informieren den User, dass die Erstellung einige
+                Sekunden dauern kann.
+              </div>
+            </div>
+            <div class="test" id="43-settings-tax-report-failure">
+              <div class="head">
+                <a class="name permalink" href="#43-settings-tax-report-failure">43-settings-tax-report-failure</a>
+                <button class="copy-link" type="button" data-target="43-settings-tax-report-failure" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">settings_tax_report_page_failure.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/43-settings-tax-report-failure.png"
+                  alt="Steuerbericht — Fehler"
+                />
+              </div>
+              <div class="desc">
+                Fehler-State, wenn die Generierung scheitert. Der User erhält eine
+                erklärende Meldung und einen Retry-CTA. Häufigste Ursachen sind
+                Backend-Timeouts oder noch nicht abgeschlossene KYC.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-16" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">16</span>Kaufen — States</h2>
+                <div class="file">test/goldens/screens/buy/</div>
+              </div>
+              <div class="rhs">
+                <b>6 Screens</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Zustände des Kauf-Flows. Der Buy-Cubit unterscheidet zwischen
+            <em>Loading</em> (Zahlungsinfos werden vom Backend geholt), den Pflicht-Gates
+            <em>Registration Required</em> und <em>KYC Required</em>, dem
+            Validierungs-Fehler <em>Min Amount Not Met</em> sowie dem generischen
+            <em>Unknown Error</em>. Nach dem verbindlichen Kauf
+            (»Jetzt verbindlich kaufen«) folgt die Seite <em>Zahlungsdetails</em>
+            mit der Bankverbindung und dem Verwendungszweck.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="44-buy-loading">
+              <div class="head">
+                <a class="name permalink" href="#44-buy-loading">44-buy-loading</a>
+                <button class="copy-link" type="button" data-target="44-buy-loading" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">buy_payment_info_loading.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/44-buy-loading.png"
+                  alt="Kaufen — Zahlungsinfo lädt"
+                />
+              </div>
+              <div class="desc">
+                Loading-State während die Zahlungsinformationen (Bank-Verbindung,
+                Referenz, IBAN) vom DFX-Backend geholt werden. CTA disabled, Spinner
+                zentral.
+              </div>
+            </div>
+            <div class="test" id="45-buy-registration-required">
+              <div class="head">
+                <a class="name permalink" href="#45-buy-registration-required">45-buy-registration-required</a>
+                <button class="copy-link" type="button" data-target="45-buy-registration-required" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">buy_registration_required.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/45-buy-registration-required.png"
+                  alt="Kaufen — Registrierung nötig"
+                />
+              </div>
+              <div class="desc">
+                Hinweis-State, wenn der User noch nicht beim DFX-Backend registriert
+                ist. CTA führt in den Registrierungs-Flow, danach kann der Kauf
+                wiederholt werden.
+              </div>
+            </div>
+            <div class="test" id="46-buy-kyc-required">
+              <div class="head">
+                <a class="name permalink" href="#46-buy-kyc-required">46-buy-kyc-required</a>
+                <button class="copy-link" type="button" data-target="46-buy-kyc-required" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">buy_kyc_required.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/46-buy-kyc-required.png"
+                  alt="Kaufen — KYC nötig"
+                />
+              </div>
+              <div class="desc">
+                Hinweis-State, wenn die geplante Kauf-Summe das Volumen ohne KYC
+                überschreitet. Der CTA verlinkt in den KYC-Flow (siehe Spec 14).
+              </div>
+            </div>
+            <div class="test" id="47-buy-min-amount">
+              <div class="head">
+                <a class="name permalink" href="#47-buy-min-amount">47-buy-min-amount</a>
+                <button class="copy-link" type="button" data-target="47-buy-min-amount" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">buy_min_amount_not_met.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/47-buy-min-amount.png"
+                  alt="Kaufen — Mindestbetrag nicht erreicht"
+                />
+              </div>
+              <div class="desc">
+                Validierungs-Fehler, wenn der eingegebene Betrag unter der vom Backend
+                vorgegebenen Mindest-Kaufsumme liegt. Inline-Fehler unter dem
+                Eingabefeld.
+              </div>
+            </div>
+            <div class="test" id="48-buy-unknown-error">
+              <div class="head">
+                <a class="name permalink" href="#48-buy-unknown-error">48-buy-unknown-error</a>
+                <button class="copy-link" type="button" data-target="48-buy-unknown-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">buy_unknown_error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/48-buy-unknown-error.png"
+                  alt="Kaufen — unbekannter Fehler"
+                />
+              </div>
+              <div class="desc">
+                Generischer Fehler-State, wenn das Backend keinen spezifischen Statuscode
+                liefert. Retry-CTA und kurze Erklärung — keine technischen Details für
+                den User.
+              </div>
+            </div>
+            <div class="test" id="53-buy-payment-details">
+              <div class="head">
+                <a class="name permalink" href="#53-buy-payment-details">53-buy-payment-details</a>
+                <button class="copy-link" type="button" data-target="53-buy-payment-details" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">buy_payment_details_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/53-buy-payment-details.png"
+                  alt="Kaufen — Zahlungsdetails nach verbindlichem Kauf"
+                />
+              </div>
+              <div class="desc">
+                Zahlungsdetails-Seite nach dem verbindlichen Kauf. Sie weist auf die
+                zusätzlich per E-Mail zugestellte Zahlungsanweisung hin, betont den
+                wichtigen Verwendungszweck und zeigt Referenz sowie die vollständige
+                Bankverbindung (IBAN/BIC/Empfänger) mit optionalem QR-Code. Abschluss
+                über »Zurück zum Hauptbereich«.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-17" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">17</span>Verkaufen — States</h2>
+                <div class="file">test/goldens/screens/sell/</div>
+              </div>
+              <div class="rhs">
+                <b>4 Screens</b>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Zustände des Verkauf-Flows. Spiegelbildlich zu Spec 16, ohne separaten
+            <em>Registration Required</em>-State — der Verkauf ist nur für bereits
+            registrierte User aufrufbar.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test" id="49-sell-loading">
+              <div class="head">
+                <a class="name permalink" href="#49-sell-loading">49-sell-loading</a>
+                <button class="copy-link" type="button" data-target="49-sell-loading" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">sell_payment_info_loading.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/49-sell-loading.png"
+                  alt="Verkaufen — Zahlungsinfo lädt"
+                />
+              </div>
+              <div class="desc">
+                Loading-State während die Auszahlungs-Informationen (Bank-Verbindung
+                des Users) vom DFX-Backend geholt werden. CTA disabled, Spinner
+                zentral.
+              </div>
+            </div>
+            <div class="test" id="50-sell-kyc-required">
+              <div class="head">
+                <a class="name permalink" href="#50-sell-kyc-required">50-sell-kyc-required</a>
+                <button class="copy-link" type="button" data-target="50-sell-kyc-required" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">sell_kyc_required.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/50-sell-kyc-required.png"
+                  alt="Verkaufen — KYC nötig"
+                />
+              </div>
+              <div class="desc">
+                Hinweis-State, wenn die geplante Verkauf-Summe das Volumen ohne KYC
+                überschreitet. CTA verlinkt in den KYC-Flow (siehe Spec 14).
+              </div>
+            </div>
+            <div class="test" id="51-sell-min-amount">
+              <div class="head">
+                <a class="name permalink" href="#51-sell-min-amount">51-sell-min-amount</a>
+                <button class="copy-link" type="button" data-target="51-sell-min-amount" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">sell_min_amount_not_met.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/51-sell-min-amount.png"
+                  alt="Verkaufen — Mindestbetrag nicht erreicht"
+                />
+              </div>
+              <div class="desc">
+                Validierungs-Fehler, wenn die eingegebene Verkauf-Menge unter der vom
+                Backend vorgegebenen Mindest-Summe liegt. Inline-Fehler unter dem
+                Eingabefeld.
+              </div>
+            </div>
+            <div class="test" id="52-sell-unknown-error">
+              <div class="head">
+                <a class="name permalink" href="#52-sell-unknown-error">52-sell-unknown-error</a>
+                <button class="copy-link" type="button" data-target="52-sell-unknown-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">sell_unknown_error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/52-sell-unknown-error.png"
+                  alt="Verkaufen — unbekannter Fehler"
+                />
+              </div>
+              <div class="desc">
+                Generischer Fehler-State, wenn das Backend keinen spezifischen Statuscode
+                liefert. Retry-CTA und kurze Erklärung — keine technischen Details für
+                den User.
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-web" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">W</span>Web · realunit.app</h2>
+                <div class="file">RealUnitCH/web · tests/__screenshots__/</div>
+              </div>
+              <div class="rhs">
+                <b>Live aus web-Repo</b>
+                <div class="links">
+                  <a href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__">Baselines ↗</a>
+                </div>
+              </div>
+            </div>
+          </summary>
+
+          <p class="spec-intro">
+            Die öffentliche Website <a href="https://realunit.app">realunit.app</a>
+            (Landingpage plus der Aktionariat-Adressbestätigungs-Flow unter
+            <code>/confirm-aktionariat</code>) hat ihre eigene Visual-Regression-Suite.
+            Jedes Bild hier ist eine <b>Playwright-Baseline</b> aus dem
+            <a href="https://github.com/RealUnitCH/web">RealUnitCH/web</a>-Repo
+            (<code>tests/__screenshots__/</code>), aufgenommen im gepinnten
+            Linux-Container über drei Viewports — <b>Desktop</b> (Chromium),
+            <b>Tablet</b> (Chromium) und <b>Mobile</b> (Safari). Es gilt dieselbe
+            Eigenschaft wie bei den App-Screens oben: Driftet das Seitenrendering,
+            wird zuerst der Visual-Regression-Test im web-Repo rot, bevor die
+            Baseline sich ändert. Bei jedem Handbook-Build werden die aktuell
+            akzeptierten Baselines aus <code>develop</code> automatisch ins Image
+            gezogen — Single Source of Truth ist das web-Repo, dieses Handbook
+            spiegelt nur den aktuellen Stand.
+          </p>
+
+          <h3>Startseite <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test" id="web-home-desktop">
+              <div class="head">
+                <a class="name permalink" href="#web-home-desktop">web-home-desktop</a>
+                <button class="copy-link" type="button" data-target="web-home-desktop" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/home.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/home.png"
+                  alt="Startseite — Desktop"
+                />
+              </div>
+              <div class="desc">
+                Die Landingpage von realunit.app in der Desktop-Ansicht (Chromium).
+              </div>
+            </div>
+            <div class="test" id="web-home-tablet">
+              <div class="head">
+                <a class="name permalink" href="#web-home-tablet">web-home-tablet</a>
+                <button class="copy-link" type="button" data-target="web-home-tablet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">tablet-chromium/home.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/tablet-chromium/home.png"
+                  alt="Startseite — Tablet"
+                />
+              </div>
+              <div class="desc">
+                Dieselbe Landingpage im Tablet-Layout.
+              </div>
+            </div>
+            <div class="test" id="web-home-mobile-ios">
+              <div class="head">
+                <a class="name permalink" href="#web-home-mobile-ios">web-home-mobile-ios</a>
+                <button class="copy-link" type="button" data-target="web-home-mobile-ios" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/home-ios.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/home-ios.png"
+                  alt="Startseite — Mobile (iOS)"
+                />
+              </div>
+              <div class="desc">
+                Mobile-Ansicht (Safari), iOS-Variante — der Store-Badge richtet
+                sich nach der erkannten Plattform und zeigt hier den App Store.
+              </div>
+            </div>
+            <div class="test" id="web-home-mobile-android">
+              <div class="head">
+                <a class="name permalink" href="#web-home-mobile-android">web-home-mobile-android</a>
+                <button class="copy-link" type="button" data-target="web-home-mobile-android" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/home-android.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/home-android.png"
+                  alt="Startseite — Mobile (Android)"
+                />
+              </div>
+              <div class="desc">
+                Mobile-Ansicht, Android-Variante — hier zeigt derselbe Store-Badge
+                Google Play.
+              </div>
+            </div>
+          </div>
+
+          <h3>Adressbestätigung — bestätigt <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test" id="web-confirm-confirmed-desktop-de">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-confirmed-desktop-de">web-confirm-confirmed-desktop-de</a>
+                <button class="copy-link" type="button" data-target="web-confirm-confirmed-desktop-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-confirmed.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-confirmed.png"
+                  alt="Adressbestätigung erfolgreich — Desktop (DE)"
+                />
+              </div>
+              <div class="desc">
+                Erfolgs-Zustand der Aktionariat-Adressbestätigung nach einem
+                gültigen Link, Desktop, Deutsch.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-confirmed-desktop-en">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-confirmed-desktop-en">web-confirm-confirmed-desktop-en</a>
+                <button class="copy-link" type="button" data-target="web-confirm-confirmed-desktop-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-confirmed-en.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-confirmed-en.png"
+                  alt="Address confirmed — Desktop (EN)"
+                />
+              </div>
+              <div class="desc">
+                Derselbe Erfolgs-Zustand auf Englisch (<code>?lang=en</code>).
+              </div>
+            </div>
+            <div class="test" id="web-confirm-confirmed-tablet">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-confirmed-tablet">web-confirm-confirmed-tablet</a>
+                <button class="copy-link" type="button" data-target="web-confirm-confirmed-tablet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">tablet-chromium/confirm-confirmed.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/tablet-chromium/confirm-confirmed.png"
+                  alt="Adressbestätigung erfolgreich — Tablet"
+                />
+              </div>
+              <div class="desc">
+                Erfolgs-Zustand im Tablet-Layout.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-confirmed-mobile">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-confirmed-mobile">web-confirm-confirmed-mobile</a>
+                <button class="copy-link" type="button" data-target="web-confirm-confirmed-mobile" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/confirm-confirmed-mobile.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/confirm-confirmed-mobile.png"
+                  alt="Adressbestätigung erfolgreich — Mobile"
+                />
+              </div>
+              <div class="desc">
+                Erfolgs-Zustand in der Mobile-Ansicht.
+              </div>
+            </div>
+          </div>
+
+          <h3>Adressbestätigung — ungültiger Link <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test" id="web-confirm-invalid-desktop-de">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-invalid-desktop-de">web-confirm-invalid-desktop-de</a>
+                <button class="copy-link" type="button" data-target="web-confirm-invalid-desktop-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-invalid.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-invalid.png"
+                  alt="Ungültiger Bestätigungslink — Desktop (DE)"
+                />
+              </div>
+              <div class="desc">
+                Fehler-Zustand bei fehlenden oder ungültigen Link-Parametern,
+                Desktop, Deutsch.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-invalid-desktop-en">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-invalid-desktop-en">web-confirm-invalid-desktop-en</a>
+                <button class="copy-link" type="button" data-target="web-confirm-invalid-desktop-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-invalid-en.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-invalid-en.png"
+                  alt="Invalid confirmation link — Desktop (EN)"
+                />
+              </div>
+              <div class="desc">
+                Derselbe Fehler-Zustand auf Englisch.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-invalid-tablet">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-invalid-tablet">web-confirm-invalid-tablet</a>
+                <button class="copy-link" type="button" data-target="web-confirm-invalid-tablet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">tablet-chromium/confirm-invalid.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/tablet-chromium/confirm-invalid.png"
+                  alt="Ungültiger Bestätigungslink — Tablet"
+                />
+              </div>
+              <div class="desc">
+                Fehler-Zustand im Tablet-Layout.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-invalid-mobile">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-invalid-mobile">web-confirm-invalid-mobile</a>
+                <button class="copy-link" type="button" data-target="web-confirm-invalid-mobile" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/confirm-invalid.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/confirm-invalid.png"
+                  alt="Ungültiger Bestätigungslink — Mobile"
+                />
+              </div>
+              <div class="desc">
+                Fehler-Zustand in der Mobile-Ansicht.
+              </div>
+            </div>
+          </div>
+
+          <h3>Adressbestätigung — Dienst nicht verfügbar <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test" id="web-confirm-unavailable-desktop-de">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-unavailable-desktop-de">web-confirm-unavailable-desktop-de</a>
+                <button class="copy-link" type="button" data-target="web-confirm-unavailable-desktop-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-unavailable.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-unavailable.png"
+                  alt="Dienst nicht verfügbar — Desktop (DE)"
+                />
+              </div>
+              <div class="desc">
+                Zustand, wenn der Bestätigungs-Endpunkt nicht erreichbar ist
+                (Backend-Fehler oder Timeout), Desktop, Deutsch.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-unavailable-desktop-en">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-unavailable-desktop-en">web-confirm-unavailable-desktop-en</a>
+                <button class="copy-link" type="button" data-target="web-confirm-unavailable-desktop-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-unavailable-en.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-unavailable-en.png"
+                  alt="Service unavailable — Desktop (EN)"
+                />
+              </div>
+              <div class="desc">
+                Derselbe Zustand auf Englisch.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-unavailable-mobile">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-unavailable-mobile">web-confirm-unavailable-mobile</a>
+                <button class="copy-link" type="button" data-target="web-confirm-unavailable-mobile" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/confirm-unavailable.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/confirm-unavailable.png"
+                  alt="Dienst nicht verfügbar — Mobile"
+                />
+              </div>
+              <div class="desc">
+                Derselbe Zustand in der Mobile-Ansicht.
+              </div>
+            </div>
+          </div>
+
+          <h3>404 — Seite nicht gefunden <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test" id="web-notfound-desktop">
+              <div class="head">
+                <a class="name permalink" href="#web-notfound-desktop">web-notfound-desktop</a>
+                <button class="copy-link" type="button" data-target="web-notfound-desktop" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/notfound.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/notfound.png"
+                  alt="404-Seite — Desktop"
+                />
+              </div>
+              <div class="desc">
+                Die 404-Seite für unbekannte Pfade, Desktop.
+              </div>
+            </div>
+            <div class="test" id="web-notfound-tablet">
+              <div class="head">
+                <a class="name permalink" href="#web-notfound-tablet">web-notfound-tablet</a>
+                <button class="copy-link" type="button" data-target="web-notfound-tablet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">tablet-chromium/notfound.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/tablet-chromium/notfound.png"
+                  alt="404-Seite — Tablet"
+                />
+              </div>
+              <div class="desc">
+                404-Seite im Tablet-Layout.
+              </div>
+            </div>
+            <div class="test" id="web-notfound-mobile">
+              <div class="head">
+                <a class="name permalink" href="#web-notfound-mobile">web-notfound-mobile</a>
+                <button class="copy-link" type="button" data-target="web-notfound-mobile" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/notfound.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/notfound.png"
+                  alt="404-Seite — Mobile"
+                />
+              </div>
+              <div class="desc">
+                404-Seite in der Mobile-Ansicht.
+              </div>
+            </div>
+          </div>
+
+          <p>
+            Eine Änderung an der Website im
+            <a href="https://github.com/RealUnitCH/web">RealUnitCH/web</a>-Repo löst
+            hier <b>keinen</b> automatischen Rebuild aus. Die neuen Baselines werden
+            mit dem nächsten Handbook-Deploy (Push auf <code>staging</code> → DEV
+            bzw. <code>develop</code> → PRD mit handbook-relevanten Pfaden oder
+            manueller <code>workflow_dispatch</code> auf
+            <code>handbook-deploy.yaml</code> im realunit-app-Repo) reingezogen.
+            Kommt im web-Repo eine View hinzu oder weg, failt der Handbook-Build am
+            <code>EXPECTED_WEB_BASELINE_COUNT</code>-Guard, bis Zahl und Karten hier
+            im selben Zug nachgezogen sind.
+          </p>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-mails" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">M</span>E-Mails</h2>
+                <div class="file">DFXswiss/api · scripts/generate-realunit-previews.js</div>
+              </div>
+              <div class="rhs">
+                <b>Live aus api-Repo</b>
+                <div class="links">
+                  <a href="../mails/">Übersicht öffnen ↗</a>
+                </div>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            Alle vom Backend an Endkunden versendeten E-Mails als HTML-Vorschau,
+            inkl. Beispieldaten und einer kurzen Erklärung pro Mail, wann sie
+            ausgelöst wird. Die Vorlagen leben im
+            <a href="https://github.com/DFXswiss/api">DFXswiss/api</a>-Repo
+            (<code>src/subdomains/supporting/notification/templates/realunit.hbs</code>
+            + <code>src/shared/i18n/de/mail-realunit.json</code>) und werden bei
+            jedem Handbook-Build automatisch frisch generiert und ins Image
+            gepackt — Single Source of Truth ist das api-Repo, dieses Handbook
+            spiegelt nur den aktuellen Stand.
+          </p>
+
+          <div class="callout info">
+            <p>
+              <b>Übersichts-Seite:</b> <a href="../mails/">../mails/</a> — alle
+              Vorlagen gruppiert nach Kauf / Verkauf / Ausstehend / KYC /
+              Authentifizierung / Account / Sonstiges, mit Klick-zur-Vollansicht
+              je Mail.
+            </p>
+          </div>
+
+          <p>
+            Eine Änderung an Mail-Vorlage, i18n-Übersetzung oder
+            Generator-Skript im api-Repo löst hier <b>keinen</b> automatischen
+            Rebuild aus. Die neue Version wird mit dem nächsten
+            Handbook-Deploy (Push auf <code>staging</code> → DEV bzw.
+            <code>develop</code> → PRD mit handbook-relevanten Pfaden oder
+            manueller <code>workflow_dispatch</code> auf
+            <code>handbook-deploy.yaml</code> im realunit-app-Repo) reingezogen.
+          </p>
+        </details>
+
+        <details id="spec-receipts" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">B</span>Transaktionsbelege</h2>
+                <div class="file">DFXswiss/api · docs/examples/realunit-receipt/</div>
+              </div>
+              <div class="rhs">
+                <b>Live aus api-Repo</b>
+                <div class="links">
+                  <a href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-receipt">im api-Repo ↗</a>
+                </div>
+              </div>
+            </div>
+          </summary>
+
+          <p class="spec-intro">
+            Beispiel-Belege, die das Backend als PDF erzeugt: die
+            <b>Transaktionshistorie</b> (Sammelbeleg über mehrere Transaktionen,
+            per Klick auf „Transaktionshistorie"), die
+            <b>Transaktionsbestätigung</b> (Einzelbeleg für eine Kauftransaktion),
+            die <b>Verkauf-Bestätigung</b> (Einzelbeleg für eine
+            Verkaufstransaktion) und die <b>Übertragung</b> (Einzelbeleg für eine
+            Wallet-zu-Wallet-Übertragung). Der
+            Renderer lebt im
+            <a href="https://github.com/DFXswiss/api">DFXswiss/api</a>-Repo
+            (<code>src/subdomains/supporting/payment/services/swiss-qr.service.ts</code>);
+            die verlinkten Muster-PDFs liegen dort als
+            <code>docs/examples/realunit-receipt/*.pdf</code> und werden bei jedem
+            Handbook-Build automatisch ins Image gezogen — Single Source of Truth
+            ist das api-Repo, dieses Handbook spiegelt nur den aktuellen Stand.
+          </p>
+
+          <h3>Transaktionshistorie <a class="src" href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-receipt" title="Quelle: docs/examples/realunit-receipt/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test legal-doc" id="receipt-history-de">
+              <div class="head">
+                <a class="name permalink" href="#receipt-history-de">transaction_history_de</a>
+                <button class="copy-link" type="button" data-target="receipt-history-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">de</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Transaktionshistorie (Sammelbeleg)</span>
+                <a class="dl-btn" href="../receipts/transaction-history-de.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/transaction-history-de.pdf" download>PDF</a>
+              </div>
+            </div>
+            <div class="test legal-doc" id="receipt-history-en">
+              <div class="head">
+                <a class="name permalink" href="#receipt-history-en">transaction_history_en</a>
+                <button class="copy-link" type="button" data-target="receipt-history-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">en</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Transaction History</span>
+                <a class="dl-btn" href="../receipts/transaction-history-en.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/transaction-history-en.pdf" download>PDF</a>
+              </div>
+            </div>
+          </div>
+
+          <h3>Transaktionsbestätigung <a class="src" href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-receipt" title="Quelle: docs/examples/realunit-receipt/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test legal-doc" id="receipt-confirmation-de">
+              <div class="head">
+                <a class="name permalink" href="#receipt-confirmation-de">transaction_confirmation_de</a>
+                <button class="copy-link" type="button" data-target="receipt-confirmation-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">de</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Transaktionsbestätigung (Einzelbeleg)</span>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-de.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-de.pdf" download>PDF</a>
+              </div>
+            </div>
+            <div class="test legal-doc" id="receipt-confirmation-en">
+              <div class="head">
+                <a class="name permalink" href="#receipt-confirmation-en">transaction_confirmation_en</a>
+                <button class="copy-link" type="button" data-target="receipt-confirmation-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">en</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Transaction Confirmation</span>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-en.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-en.pdf" download>PDF</a>
+              </div>
+            </div>
+            <div class="test legal-doc" id="receipt-confirmation-sale-de">
+              <div class="head">
+                <a class="name permalink" href="#receipt-confirmation-sale-de">transaction_confirmation_sale_de</a>
+                <button class="copy-link" type="button" data-target="receipt-confirmation-sale-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">de</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Verkauf-Bestätigung (Einzelbeleg)</span>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-sale-de.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-sale-de.pdf" download>PDF</a>
+              </div>
+            </div>
+            <div class="test legal-doc" id="receipt-confirmation-sale-en">
+              <div class="head">
+                <a class="name permalink" href="#receipt-confirmation-sale-en">transaction_confirmation_sale_en</a>
+                <button class="copy-link" type="button" data-target="receipt-confirmation-sale-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">en</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Sale Confirmation</span>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-sale-en.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/transaction-confirmation-sale-en.pdf" download>PDF</a>
+              </div>
+            </div>
+          </div>
+
+          <h3>Übertragung <a class="src" href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-receipt" title="Quelle: docs/examples/realunit-receipt/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test legal-doc" id="receipt-transfer-de">
+              <div class="head">
+                <a class="name permalink" href="#receipt-transfer-de">transaction_transfer_de</a>
+                <button class="copy-link" type="button" data-target="receipt-transfer-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">de</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Übertragung (Einzelbeleg)</span>
+                <a class="dl-btn" href="../receipts/transaction-transfer-de.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/transaction-transfer-de.pdf" download>PDF</a>
+              </div>
+            </div>
+            <div class="test legal-doc" id="receipt-transfer-en">
+              <div class="head">
+                <a class="name permalink" href="#receipt-transfer-en">transaction_transfer_en</a>
+                <button class="copy-link" type="button" data-target="receipt-transfer-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">en</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Transfer</span>
+                <a class="dl-btn" href="../receipts/transaction-transfer-en.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../receipts/transaction-transfer-en.pdf" download>PDF</a>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details id="spec-balance" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">V</span>Vermögensübersicht</h2>
+                <div class="file">DFXswiss/api · docs/examples/realunit-statement/</div>
+              </div>
+              <div class="rhs">
+                <b>Live aus api-Repo</b>
+                <div class="links">
+                  <a href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-statement">im api-Repo ↗</a>
+                </div>
+              </div>
+            </div>
+          </summary>
+
+          <p class="spec-intro">
+            Beispiel-Beleg, den das Backend als PDF erzeugt: die
+            <b>Vermögensübersicht</b> weist den REALU-Bestand mit dem massgeblichen
+            <b>Steuerwert</b> aus (im Muster 350 REALU per 31.12.2025). Der Renderer
+            lebt im
+            <a href="https://github.com/DFXswiss/api">DFXswiss/api</a>-Repo
+            (<code>src/subdomains/supporting/balance/services/balance-pdf.service.ts</code>);
+            die verlinkten Muster-PDFs liegen dort als
+            <code>docs/examples/realunit-statement/*.pdf</code> und werden bei jedem
+            Handbook-Build automatisch ins Image gezogen — Single Source of Truth
+            ist das api-Repo, dieses Handbook spiegelt nur den aktuellen Stand.
+          </p>
+
+          <h3>Vermögensübersicht <a class="src" href="https://github.com/DFXswiss/api/tree/develop/docs/examples/realunit-statement" title="Quelle: docs/examples/realunit-statement/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test legal-doc" id="vermoegensuebersicht-de">
+              <div class="head">
+                <a class="name permalink" href="#vermoegensuebersicht-de">vermoegensuebersicht_de</a>
+                <button class="copy-link" type="button" data-target="vermoegensuebersicht-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">de</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Vermögensübersicht (Steuerwert)</span>
+                <a class="dl-btn" href="../balance/vermoegensuebersicht-de.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../balance/vermoegensuebersicht-de.pdf" download>PDF</a>
+              </div>
+            </div>
+            <div class="test legal-doc" id="vermoegensuebersicht-en">
+              <div class="head">
+                <a class="name permalink" href="#vermoegensuebersicht-en">vermoegensuebersicht_en</a>
+                <button class="copy-link" type="button" data-target="vermoegensuebersicht-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">en</span>
+              </div>
+              <div class="downloads">
+                <span class="doc-title">Portfolio Statement (Tax Value)</span>
+                <a class="dl-btn" href="../balance/vermoegensuebersicht-en.pdf" target="_blank" rel="noopener">Ansehen ↗</a>
+                <a class="dl-btn" href="../balance/vermoegensuebersicht-en.pdf" download>PDF</a>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <!-- BEGIN:store-listing -->
+<details id="spec-store-listing" class="spec" open>
+  <summary>
+    <div class="spec-head">
+      <div class="lhs">
+        <h2><span class="num">S</span>App Store / Play Store Listing</h2>
+        <div class="file">ios/fastlane/metadata · android/fastlane/metadata</div>
+      </div>
+      <div class="rhs">
+        <b>Live aus Repo</b>
+        <div class="links">
+          <a href="https://github.com/RealUnitCH/app/tree/develop/ios/fastlane/metadata">iOS metadata ↗</a>
+          ·
+          <a href="https://github.com/RealUnitCH/app/tree/develop/android/fastlane/metadata/android">Android metadata ↗</a>
+        </div>
+      </div>
+    </div>
+  </summary>
+
+  <p class="spec-intro">
+    Single source of truth für alles, was an Apple App Store Connect und
+    Google Play Console übermittelt wird. Änderung an Text, Screenshot
+    oder Feature Graphic geht ausschliesslich über einen PR auf diese
+    Dateien; <code>store-metadata.yaml</code> pusht den neuen Stand an
+    beide Konsolen, und der nächste Handbook-Build rendert ihn hier neu.
+    Jedes Feld und jedes Bild unten verlinkt mit <span class="src">↗</span>
+    direkt auf seine Quelldatei im Repo.
+  </p>
+
+  <!-- iOS section -->
+  <h3>Apple App Store (de-DE)</h3>
+  <dl class="store-listing">
+    <dt>App-Name (max 30)</dt><dd><code>RealUnit</code> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/name.txt" title="Quelle: name.txt">↗</a></dd>
+    <dt>Untertitel (max 30)</dt><dd><code>Sicher. Einfach. Unabhängig.</code> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/subtitle.txt" title="Quelle: subtitle.txt">↗</a></dd>
+    <dt>Beschreibung (max 4000) <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/description.txt" title="Quelle: description.txt">↗</a></dt><dd><pre>Die offizielle App der RealUnit Schweiz AG – für den einfachen, sicheren Kauf und die bankenunabhängige Verwahrung der RealUnit Aktientoken. Direkt in Ihrer Hand.
+
+IHRE VORTEILE AUF EINEN BLICK
+
+Kostenloser Kauf von RealUnit Aktientoken
+Bankenunabhängige, sichere Verwahrung Ihrer RealUnit Aktientoken
+Aktueller Aktienkurs und persönliche Vermögensübersicht
+Belege für Handel und Steuern jederzeit abrufbar
+Kompatibel mit der Hardware Wallet Bitbox02 Nova
+
+FÜR WEN IST DIE APP?
+
+Die RealUnit App richtet sich an Anlegerinnen und Anleger, die ihr Vermögen ausserhalb des Bankensystems verwalten möchten – transparent, sicher und selbstbestimmt.
+
+Die RealUnit Schweiz AG ist eine börsenkotierte Investmentgesellschaft, welche breit diversifiziert in Realwerte investiert. Wir verfolgen das Ziel, das uns anvertraute Vermögen bestmöglich vor Krisen und Kaufkraftverlust zu schützen und das Privateigentum zu sichern.
+
+Jetzt herunterladen und Ihre finanzielle Souveränität zurückgewinnen.
+
+Dieser Inhalt dient Werbezwecken. Die genehmigten Prospekte und weitere Unterlagen zur RealUnit Schweiz AG sind abrufbar unter: https://realunit.ch/ueber-uns/downloads/ (Schweiz) | https://realunit.de/ueber-uns/downloads/ (Deutschland/EU). Vergangene Wertentwicklung ist kein verlässlicher Indikator für zukünftige Ergebnisse.</pre></dd>
+    <dt>Schlagwörter (max 100, kommasepariert)</dt><dd><code>RealUnit,Wallet,Token,Aktien,Vermögen,Schweiz,Bitbox,Krypto,Investment,bankenunabhängig</code> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/keywords.txt" title="Quelle: keywords.txt">↗</a></dd>
+    <dt>Marketing-URL</dt><dd><a href="https://realunit.ch">https://realunit.ch</a> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/marketing_url.txt" title="Quelle: marketing_url.txt">↗</a></dd>
+    <dt>Privacy-URL</dt><dd><a href="https://realunit.ch/datenschutz/">https://realunit.ch/datenschutz/</a> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/privacy_url.txt" title="Quelle: privacy_url.txt">↗</a></dd>
+    <dt>Support-URL</dt><dd><a href="https://realunit.ch/kontakt/">https://realunit.ch/kontakt/</a> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/support_url.txt" title="Quelle: support_url.txt">↗</a></dd>
+    <dt>Copyright</dt><dd>© 2026 RealUnit Schweiz AG <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/copyright.txt" title="Quelle: copyright.txt">↗</a></dd>
+    <dt>Release-Notes</dt><dd>Verbesserte Nutzerführung im Bereich der Registrierung. <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/release_notes.txt" title="Quelle: release_notes.txt">↗</a></dd>
+  </dl>
+
+  <h4>Screenshots — iPhone 6.9 Display (1320×2868)</h4>
+  <div class="store-screenshots">
+    <figure><img src="../store/ios/iphone-69/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPhone%206.9%20Display/01_welcome.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/iphone-69/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPhone%206.9%20Display/02_dashboard.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/iphone-69/03_security.png"  alt="Security"/><figcaption>03_security <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPhone%206.9%20Display/03_security.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/iphone-69/04_buy.png"       alt="Buy"/><figcaption>04_buy <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPhone%206.9%20Display/04_buy.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/iphone-69/05_tax.png"       alt="Tax"/><figcaption>05_tax <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPhone%206.9%20Display/05_tax.png" title="Quelle">↗</a></figcaption></figure>
+  </div>
+
+  <h4>Screenshots — iPad Pro 13" Display (2752×2064)</h4>
+  <div class="store-screenshots">
+    <figure><img src="../store/ios/ipad-13/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPad%20Pro%20(13%20inch)%20Display/01_welcome.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/ipad-13/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPad%20Pro%20(13%20inch)%20Display/02_dashboard.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/ipad-13/03_security.png"  alt="Security"/><figcaption>03_security <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPad%20Pro%20(13%20inch)%20Display/03_security.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/ipad-13/04_buy.png"       alt="Buy"/><figcaption>04_buy <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPad%20Pro%20(13%20inch)%20Display/04_buy.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/ios/ipad-13/05_tax.png"       alt="Tax"/><figcaption>05_tax <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/screenshots/de-DE/iPad%20Pro%20(13%20inch)%20Display/05_tax.png" title="Quelle">↗</a></figcaption></figure>
+  </div>
+
+  <!-- Android section -->
+  <h3>Google Play Store (de-DE)</h3>
+  <dl class="store-listing">
+    <dt>Titel (max 50)</dt><dd><code>RealUnit Wallet</code> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/title.txt" title="Quelle: title.txt">↗</a></dd>
+    <dt>Kurzbeschreibung (max 80)</dt><dd>RealUnit Aktientoken kaufen, verwahren &amp; verwalten – bankenunabhängig. <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/short_description.txt" title="Quelle: short_description.txt">↗</a></dd>
+    <dt>Lang-Beschreibung (max 4000, HTML) <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/full_description.txt" title="Quelle: full_description.txt">↗</a></dt><dd><div class="rendered-html">Die offizielle App der RealUnit Schweiz AG – für den einfachen, sicheren Kauf und die bankenunabhängige Verwahrung der RealUnit Aktientoken. Direkt in Ihrer Hand.
+
+<b>Ihre Vorteile</b>
+
+✔ Kostenloser Kauf von RealUnit Aktientoken
+
+✔ Bankenunabhängige, sichere Verwahrung Ihrer RealUnit Aktientoken
+
+✔ Aktueller Aktienkurs und persönliche Vermögensübersicht
+
+✔ Belege für Handel und Steuern jederzeit abrufbar
+
+✔ Kompatibel mit der Hardware Wallet Bitbox02 Nova
+
+<b>Für wen ist die App?</b>
+
+Die RealUnit App richtet sich an Anlegerinnen und Anleger, die ihr Vermögen ausserhalb des Bankensystems verwalten möchten – transparent, sicher und selbstbestimmt.
+
+<b>Über RealUnit Schweiz AG</b>
+
+Die RealUnit Schweiz AG ist eine börsenkotierte Investmentgesellschaft, welche breit diversifiziert in Realwerte investiert. Wir verfolgen das Ziel, das uns anvertraute Vermögen bestmöglich vor Krisen und Kaufkraftverlust zu schützen und das Privateigentum zu sichern.
+
+Jetzt herunterladen und Ihre finanzielle Souveränität zurückgewinnen.
+
+Dieser Inhalt dient Werbezwecken. Die genehmigten Prospekte und weitere Unterlagen zur RealUnit Schweiz AG sind abrufbar unter: https://realunit.ch/ueber-uns/downloads/ (Schweiz) | https://realunit.de/ueber-uns/downloads/ (Deutschland/EU). Vergangene Wertentwicklung ist kein verlässlicher Indikator für zukünftige Ergebnisse.</div></dd>
+    <dt>Changelog</dt><dd>Verbesserte Nutzerführung im Bereich der Registrierung. <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/changelogs/default.txt" title="Quelle: changelogs/default.txt">↗</a></dd>
+  </dl>
+
+  <h4>Feature Graphic (1024×500)</h4>
+  <figure class="store-graphic"><img src="../store/android/featureGraphic.png" alt="Feature Graphic"/><figcaption>featureGraphic <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/featureGraphic.png" title="Quelle">↗</a></figcaption></figure>
+
+  <h4>Icon (512×512)</h4>
+  <figure class="store-icon"><img src="../store/android/icon.png" alt="App Icon"/><figcaption>icon <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/icon.png" title="Quelle">↗</a></figcaption></figure>
+
+  <h4>Phone Screenshots (1350×2400)</h4>
+  <div class="store-screenshots">
+    <figure><img src="../store/android/phone/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/phoneScreenshots/01_welcome.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/phone/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/phoneScreenshots/02_dashboard.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/phone/03_security.png"  alt="Security"/><figcaption>03_security <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/phoneScreenshots/03_security.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/phone/04_buy.png"       alt="Buy"/><figcaption>04_buy <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/phoneScreenshots/04_buy.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/phone/05_tax.png"       alt="Tax"/><figcaption>05_tax <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/phoneScreenshots/05_tax.png" title="Quelle">↗</a></figcaption></figure>
+  </div>
+
+  <h4>7" Tablet (1920×1200)</h4>
+  <div class="store-screenshots">
+    <figure><img src="../store/android/seven-inch/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/sevenInchScreenshots/01_welcome.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/seven-inch/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/sevenInchScreenshots/02_dashboard.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/seven-inch/03_security.png"  alt="Security"/><figcaption>03_security <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/sevenInchScreenshots/03_security.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/seven-inch/04_buy.png"       alt="Buy"/><figcaption>04_buy <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/sevenInchScreenshots/04_buy.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/seven-inch/05_tax.png"       alt="Tax"/><figcaption>05_tax <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/sevenInchScreenshots/05_tax.png" title="Quelle">↗</a></figcaption></figure>
+  </div>
+
+  <h4>10" Tablet (2560×1440)</h4>
+  <div class="store-screenshots">
+    <figure><img src="../store/android/ten-inch/01_welcome.png"   alt="Welcome"/><figcaption>01_welcome <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/tenInchScreenshots/01_welcome.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/ten-inch/02_dashboard.png" alt="Dashboard"/><figcaption>02_dashboard <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/tenInchScreenshots/02_dashboard.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/ten-inch/03_security.png"  alt="Security"/><figcaption>03_security <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/tenInchScreenshots/03_security.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/ten-inch/04_buy.png"       alt="Buy"/><figcaption>04_buy <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/tenInchScreenshots/04_buy.png" title="Quelle">↗</a></figcaption></figure>
+    <figure><img src="../store/android/ten-inch/05_tax.png"       alt="Tax"/><figcaption>05_tax <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/images/tenInchScreenshots/05_tax.png" title="Quelle">↗</a></figcaption></figure>
+  </div>
+</details>
+<!-- END:store-listing -->
+
+        <!-- BEGIN:legal-downloads -->
+<details id="spec-legal-downloads" class="spec" open>
+  <summary>
+    <div class="spec-head">
+      <div class="lhs">
+        <h2><span class="num">L</span>Rechtsdokumente — Downloads</h2>
+        <div class="file">assets/legal/*.md</div>
+      </div>
+      <div class="rhs">
+        <b>Live aus Repo</b>
+        <div class="links">
+          <a href="https://github.com/RealUnitCH/app/tree/develop/assets/legal">assets/legal ↗</a>
+        </div>
+      </div>
+    </div>
+  </summary>
+
+  <p class="spec-intro">
+    Single source of truth für die App-eigenen Rechtstexte sind die Markdown-Dateien
+    unter <code>assets/legal/*.md</code>. Die In-App-Ansicht (<code>LegalDocumentPage</code>)
+    und die Downloads hier rendern aus denselben Dateien; jede Änderung am Text geht
+    ausschliesslich über einen PR auf diese Markdown-Quellen. Pro Dokument und Sprache
+    gibt es einen <b>PDF</b>- und <b>DOCX</b>-Download (im Handbook-Image via
+    <code>pandoc</code> erzeugt) sowie einen Direkt-Link (🔗) auf den jeweiligen Eintrag
+    und einen <span class="src">↗</span>-Link auf die Markdown-Quelldatei.
+    DFX- und Aktionariat-Dokumente sowie die extern gehosteten Unternehmensdokumente
+    (Prospekte, Statuten) sind <em>nicht</em> Teil dieses Exports — sie haben keine
+    Markdown-Quelle im Repo.
+  </p>
+
+  <h3>Datenschutzbestimmungen <a class="src" href="https://github.com/RealUnitCH/app/tree/develop/assets/legal" title="Quelle: assets/legal/">↗</a></h3>
+  <div class="tests cols-2">
+    <div class="test legal-doc" id="legal-privacy_policy-de">
+      <div class="head">
+        <a class="name permalink" href="#legal-privacy_policy-de">privacy_policy_de</a>
+        <button class="copy-link" type="button" data-target="legal-privacy_policy-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">de</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Datenschutzbestimmungen</span>
+        <a class="dl-btn" href="../legal/privacy_policy_de.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/privacy_policy_de.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/privacy_policy_de.md" title="Quelle: privacy_policy_de.md">Markdown ↗</a>
+      </div>
+    </div>
+    <div class="test legal-doc" id="legal-privacy_policy-en">
+      <div class="head">
+        <a class="name permalink" href="#legal-privacy_policy-en">privacy_policy_en</a>
+        <button class="copy-link" type="button" data-target="legal-privacy_policy-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">en</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Privacy Policy</span>
+        <a class="dl-btn" href="../legal/privacy_policy_en.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/privacy_policy_en.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/privacy_policy_en.md" title="Quelle: privacy_policy_en.md">Markdown ↗</a>
+      </div>
+    </div>
+  </div>
+  <h3>Nutzungsbedingungen <a class="src" href="https://github.com/RealUnitCH/app/tree/develop/assets/legal" title="Quelle: assets/legal/">↗</a></h3>
+  <div class="tests cols-2">
+    <div class="test legal-doc" id="legal-terms_of_use-de">
+      <div class="head">
+        <a class="name permalink" href="#legal-terms_of_use-de">terms_of_use_de</a>
+        <button class="copy-link" type="button" data-target="legal-terms_of_use-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">de</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Nutzungsbedingungen</span>
+        <a class="dl-btn" href="../legal/terms_of_use_de.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/terms_of_use_de.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/terms_of_use_de.md" title="Quelle: terms_of_use_de.md">Markdown ↗</a>
+      </div>
+    </div>
+    <div class="test legal-doc" id="legal-terms_of_use-en">
+      <div class="head">
+        <a class="name permalink" href="#legal-terms_of_use-en">terms_of_use_en</a>
+        <button class="copy-link" type="button" data-target="legal-terms_of_use-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">en</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Terms of use</span>
+        <a class="dl-btn" href="../legal/terms_of_use_en.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/terms_of_use_en.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/terms_of_use_en.md" title="Quelle: terms_of_use_en.md">Markdown ↗</a>
+      </div>
+    </div>
+  </div>
+  <h3>Registrierungsvereinbarung <a class="src" href="https://github.com/RealUnitCH/app/tree/develop/assets/legal" title="Quelle: assets/legal/">↗</a></h3>
+  <div class="tests cols-2">
+    <div class="test legal-doc" id="legal-registration_agreement-de">
+      <div class="head">
+        <a class="name permalink" href="#legal-registration_agreement-de">registration_agreement_de</a>
+        <button class="copy-link" type="button" data-target="legal-registration_agreement-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">de</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Registrierungsvereinbarung</span>
+        <a class="dl-btn" href="../legal/registration_agreement_de.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/registration_agreement_de.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/registration_agreement_de.md" title="Quelle: registration_agreement_de.md">Markdown ↗</a>
+      </div>
+    </div>
+    <div class="test legal-doc" id="legal-registration_agreement-en">
+      <div class="head">
+        <a class="name permalink" href="#legal-registration_agreement-en">registration_agreement_en</a>
+        <button class="copy-link" type="button" data-target="legal-registration_agreement-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">en</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Registration Agreement</span>
+        <a class="dl-btn" href="../legal/registration_agreement_en.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/registration_agreement_en.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/registration_agreement_en.md" title="Quelle: registration_agreement_en.md">Markdown ↗</a>
+      </div>
+    </div>
+  </div>
+</details>
+<!-- END:legal-downloads -->
+
+        <details id="spec-downloads" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">D</span>Download / Test-Zugang</h2>
+                <div class="file">docs/handbook/de/index.html</div>
+              </div>
+              <div class="rhs">
+                <b>5 Zugänge</b>
+                <div class="links">
+                  <a href="https://github.com/RealUnitCH/app/releases">Releases ↗</a>
+                </div>
+              </div>
+            </div>
+          </summary>
+
+          <p class="spec-intro">
+            Die öffentlichen Store- und Test-Zugänge der RealUnit-App an einem Ort —
+            iOS über den <b>App Store</b> oder <b>TestFlight</b>, Android über
+            <b>Google Play</b> (regulärer Eintrag oder <b>offener Test</b>)
+            oder als <b>APK-Direkt-Download</b>. Die Links sind öffentlich und stabil und
+            werden statisch hier im Handbook gepflegt; pro Zugang gibt es den Link, einen
+            Kopier-Button und einen QR-Code zum Scannen mit dem Handy. Bei einem künftigen
+            Wechsel (z.&nbsp;B. neue TestFlight-Public-Gruppe oder geänderter
+            Play-Test-Pfad) diese Sektion aktualisieren.
+          </p>
+
+          <div class="tests cols-2">
+            <div class="test download" id="dl-appstore">
+              <div class="head">
+                <a class="name permalink" href="#dl-appstore">Apple App Store</a>
+                <span class="src">iOS</span>
+              </div>
+              <div class="dl-body">
+                <div class="dl-qr"><svg role="img" viewBox="0 0 41 41"><title>QR-Code: Apple App Store</title><path fill="#fff" d="M0 0h41v41h-41z"/><path stroke="#343233" d="M4 4.5h7m1 0h1m1 0h1m7 0h4m1 0h1m2 0h7m-33 1h1m5 0h1m1 0h2m1 0h1m2 0h1m2 0h1m3 0h1m1 0h1m2 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m4 0h1m1 0h2m1 0h1m1 0h1m1 0h1m2 0h2m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h5m2 0h1m2 0h2m1 0h1m1 0h1m2 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m2 0h1m1 0h1m1 0h1m2 0h1m1 0h1m5 0h1m1 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m2 0h1m4 0h3m1 0h1m3 0h3m1 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-25 1h2m1 0h2m2 0h5m2 0h1m-23 1h1m1 0h2m1 0h3m2 0h3m1 0h2m1 0h1m3 0h1m4 0h1m2 0h1m1 0h2m-33 1h2m2 0h1m2 0h2m1 0h1m2 0h2m1 0h9m1 0h2m1 0h2m1 0h1m-28 1h2m4 0h1m1 0h1m4 0h1m4 0h3m1 0h3m1 0h2m-30 1h1m1 0h1m2 0h1m1 0h2m4 0h2m4 0h2m2 0h2m1 0h1m-28 1h1m3 0h1m2 0h1m2 0h1m1 0h3m3 0h2m2 0h2m1 0h3m-30 1h2m1 0h1m1 0h1m3 0h3m1 0h2m5 0h1m1 0h1m7 0h2m-31 1h7m1 0h1m4 0h1m2 0h4m1 0h2m2 0h1m1 0h1m-29 1h1m4 0h1m1 0h1m1 0h7m5 0h1m1 0h4m2 0h2m-31 1h1m2 0h2m1 0h2m1 0h1m1 0h1m2 0h1m1 0h1m1 0h1m1 0h3m1 0h3m1 0h1m1 0h1m-30 1h2m5 0h2m1 0h2m1 0h2m4 0h1m2 0h4m1 0h2m1 0h2m-33 1h5m1 0h1m2 0h1m2 0h1m1 0h3m1 0h1m2 0h1m2 0h1m1 0h3m1 0h2m-32 1h2m1 0h3m1 0h1m6 0h1m2 0h3m3 0h1m1 0h2m1 0h1m2 0h2m-33 1h2m2 0h1m1 0h1m3 0h1m1 0h2m2 0h1m5 0h1m4 0h1m1 0h2m-31 1h2m1 0h1m1 0h1m1 0h2m1 0h2m3 0h2m3 0h2m1 0h2m1 0h1m2 0h2m1 0h1m-29 1h3m4 0h1m3 0h1m3 0h2m2 0h1m2 0h2m3 0h2m-32 1h1m1 0h1m1 0h1m2 0h3m2 0h3m2 0h1m1 0h1m1 0h1m6 0h1m-30 1h1m1 0h1m2 0h2m1 0h1m2 0h1m2 0h1m2 0h1m1 0h1m2 0h1m1 0h5m3 0h1m-25 1h1m4 0h4m2 0h3m2 0h1m3 0h2m-30 1h7m1 0h1m1 0h1m1 0h2m3 0h5m1 0h2m1 0h1m1 0h1m-29 1h1m5 0h1m1 0h1m1 0h2m4 0h3m1 0h1m2 0h2m3 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m3 0h1m1 0h1m1 0h5m3 0h7m1 0h1m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m5 0h1m1 0h2m1 0h1m1 0h2m4 0h1m1 0h4m-33 1h1m1 0h3m1 0h1m1 0h1m3 0h2m1 0h2m1 0h1m1 0h3m1 0h4m-28 1h1m5 0h1m2 0h2m1 0h3m2 0h1m2 0h1m4 0h4m3 0h1m-33 1h7m1 0h2m3 0h2m1 0h2m1 0h1m1 0h1m3 0h1m2 0h1m1 0h1"/></svg></div>
+                <p class="dl-desc">
+                  Regulärer, öffentlicher Store-Eintrag für iPhone &amp; iPad — der
+                  normale Weg für iOS. Link auf dem Gerät öffnen und die App über
+                  den App Store installieren — Updates kommen automatisch.
+                </p>
+                <div class="dl-actions">
+                  <a class="dl-btn" href="https://apps.apple.com/ch/app/realunit/id6759720010" target="_blank" rel="noopener">Öffnen ↗</a>
+                  <button class="copy-link" type="button" data-copy-url="https://apps.apple.com/ch/app/realunit/id6759720010" title="Link kopieren" aria-label="App-Store-Link kopieren">🔗 Link kopieren</button>
+                </div>
+                <code class="dl-url">https://apps.apple.com/ch/app/realunit/id6759720010</code>
+              </div>
+            </div>
+            <div class="test download" id="dl-playstore-prod">
+              <div class="head">
+                <a class="name permalink" href="#dl-playstore-prod">Google Play</a>
+                <span class="src">Android</span>
+              </div>
+              <div class="dl-body">
+                <div class="dl-qr"><svg role="img" viewBox="0 0 45 45"><title>QR-Code: Google Play</title><path fill="#fff" d="M0 0h45v45h-45z"/><path stroke="#343233" d="M4 4.5h7m1 0h2m2 0h2m4 0h2m2 0h3m1 0h3m1 0h7m-37 1h1m5 0h1m2 0h2m1 0h7m1 0h2m2 0h1m5 0h1m5 0h1m-37 1h1m1 0h3m1 0h1m2 0h1m1 0h3m1 0h7m1 0h2m1 0h1m3 0h1m1 0h3m1 0h1m-37 1h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h2m4 0h2m3 0h3m1 0h1m1 0h1m1 0h3m1 0h1m-37 1h1m1 0h3m1 0h1m1 0h2m2 0h1m5 0h1m2 0h3m2 0h3m1 0h1m1 0h3m1 0h1m-37 1h1m5 0h1m1 0h5m3 0h1m1 0h3m1 0h1m2 0h2m1 0h1m1 0h1m5 0h1m-37 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-29 1h7m1 0h3m2 0h1m2 0h1m1 0h1m-27 1h1m3 0h1m1 0h3m1 0h1m1 0h1m1 0h1m3 0h2m1 0h4m2 0h1m1 0h5m2 0h1m-37 1h1m1 0h4m2 0h2m1 0h1m2 0h1m1 0h2m1 0h2m2 0h1m1 0h1m1 0h2m2 0h3m1 0h1m-34 1h7m1 0h4m2 0h1m1 0h1m1 0h2m1 0h1m1 0h3m1 0h1m1 0h4m-32 1h3m4 0h4m3 0h2m2 0h3m2 0h2m1 0h1m3 0h3m-34 1h1m1 0h3m2 0h2m2 0h1m1 0h3m1 0h1m1 0h4m4 0h2m2 0h4m-32 1h1m5 0h1m3 0h4m4 0h6m3 0h2m-32 1h1m2 0h2m1 0h1m1 0h1m2 0h4m1 0h1m2 0h1m1 0h2m1 0h2m2 0h5m-35 1h2m1 0h1m5 0h1m4 0h2m5 0h4m4 0h4m1 0h1m-35 1h1m1 0h6m2 0h2m1 0h1m1 0h2m2 0h6m1 0h1m1 0h3m2 0h2m-34 1h1m5 0h2m1 0h1m7 0h2m1 0h1m1 0h1m2 0h4m2 0h4m-34 1h2m1 0h3m1 0h3m2 0h2m1 0h3m3 0h1m2 0h3m1 0h3m1 0h1m-33 1h1m2 0h1m4 0h1m1 0h1m1 0h4m1 0h3m2 0h1m2 0h1m1 0h1m4 0h2m-36 1h1m2 0h1m1 0h2m1 0h1m2 0h1m5 0h1m3 0h2m1 0h1m2 0h1m1 0h3m1 0h2m-34 1h2m2 0h1m1 0h2m4 0h4m1 0h1m3 0h2m2 0h3m2 0h2m-31 1h2m2 0h2m1 0h1m3 0h1m1 0h1m1 0h1m2 0h2m1 0h7m1 0h4m-34 1h1m1 0h2m5 0h1m3 0h5m2 0h1m2 0h1m4 0h4m1 0h1m1 0h1m-36 1h1m2 0h3m1 0h2m1 0h2m1 0h2m2 0h3m1 0h3m2 0h1m1 0h2m2 0h3m-36 1h1m1 0h3m3 0h1m5 0h1m1 0h1m2 0h2m1 0h7m3 0h1m-31 1h1m1 0h1m1 0h1m1 0h1m1 0h5m1 0h3m3 0h2m2 0h2m1 0h1m1 0h1m-30 1h1m2 0h1m5 0h2m4 0h2m2 0h3m2 0h3m3 0h1m1 0h1m-35 1h3m3 0h1m1 0h4m1 0h3m1 0h1m2 0h3m1 0h1m1 0h1m1 0h7m-27 1h1m1 0h1m2 0h5m3 0h1m1 0h1m1 0h2m1 0h1m3 0h1m2 0h1m-36 1h7m1 0h1m4 0h1m1 0h1m2 0h1m1 0h1m2 0h2m3 0h1m1 0h1m1 0h1m2 0h1m-36 1h1m5 0h1m2 0h1m1 0h1m2 0h3m2 0h3m4 0h3m3 0h3m1 0h1m-37 1h1m1 0h3m1 0h1m1 0h1m2 0h1m1 0h2m1 0h1m3 0h1m1 0h1m5 0h7m1 0h1m-37 1h1m1 0h3m1 0h1m2 0h1m2 0h3m3 0h2m3 0h1m3 0h1m1 0h3m1 0h1m2 0h1m-37 1h1m1 0h3m1 0h1m2 0h1m1 0h2m2 0h1m1 0h2m1 0h2m1 0h1m1 0h3m2 0h1m-31 1h1m5 0h1m5 0h2m1 0h3m1 0h1m1 0h1m1 0h1m3 0h1m4 0h1m1 0h2m-36 1h7m1 0h4m5 0h1m1 0h3m2 0h1m2 0h1m1 0h3m2 0h3"/></svg></div>
+                <p class="dl-desc">
+                  Regulärer, öffentlicher Store-Eintrag — der normale Weg für
+                  Android. Link auf dem Gerät öffnen und die App über den Play
+                  Store installieren — Updates kommen automatisch.
+                </p>
+                <div class="dl-actions">
+                  <a class="dl-btn" href="https://play.google.com/store/apps/details?id=swiss.realunit.app&amp;hl=de_CH" target="_blank" rel="noopener">Öffnen ↗</a>
+                  <button class="copy-link" type="button" data-copy-url="https://play.google.com/store/apps/details?id=swiss.realunit.app&amp;hl=de_CH" title="Link kopieren" aria-label="Play-Store-Link kopieren">🔗 Link kopieren</button>
+                </div>
+                <code class="dl-url">https://play.google.com/store/apps/details?id=swiss.realunit.app&amp;hl=de_CH</code>
+              </div>
+            </div>
+            <div class="test download" id="dl-testflight">
+              <div class="head">
+                <a class="name permalink" href="#dl-testflight">Apple TestFlight</a>
+                <span class="src">iOS</span>
+              </div>
+              <div class="dl-body">
+                <div class="dl-qr"><svg role="img" viewBox="0 0 37 37"><title>QR-Code: Apple TestFlight</title><path fill="#fff" d="M0 0h37v37h-37z"/><path stroke="#343233" d="M4 4.5h7m1 0h1m1 0h2m3 0h6m1 0h7m-29 1h1m5 0h1m1 0h1m1 0h1m1 0h1m1 0h1m2 0h2m1 0h1m1 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m1 0h1m1 0h2m1 0h1m2 0h1m2 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m3 0h1m1 0h4m2 0h1m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m1 0h1m2 0h4m1 0h1m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m5 0h2m2 0h1m1 0h2m2 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-21 1h5m4 0h2m1 0h1m-21 1h1m1 0h2m1 0h3m2 0h1m3 0h2m1 0h1m1 0h2m1 0h1m2 0h1m1 0h2m-28 1h2m7 0h1m3 0h1m1 0h9m3 0h1m-27 1h2m2 0h1m1 0h3m1 0h2m2 0h1m1 0h1m2 0h1m1 0h1m2 0h2m-27 1h1m1 0h1m5 0h2m1 0h4m3 0h1m3 0h1m4 0h1m-28 1h2m3 0h2m5 0h2m2 0h1m5 0h1m1 0h2m-26 1h1m3 0h1m1 0h3m1 0h2m2 0h1m1 0h1m1 0h1m2 0h1m3 0h3m-28 1h2m1 0h4m3 0h2m3 0h2m1 0h1m1 0h1m1 0h2m1 0h3m-28 1h2m1 0h2m6 0h1m1 0h1m1 0h1m2 0h3m2 0h1m2 0h1m-28 1h3m3 0h2m2 0h1m2 0h1m1 0h1m2 0h4m2 0h2m1 0h1m-27 1h1m1 0h1m6 0h2m1 0h1m1 0h1m1 0h1m5 0h1m1 0h3m-28 1h1m3 0h5m2 0h2m1 0h4m3 0h4m1 0h1m-25 1h4m2 0h1m8 0h2m2 0h1m4 0h1m-26 1h2m1 0h3m4 0h1m1 0h14m-19 1h1m1 0h1m3 0h1m1 0h5m3 0h5m-29 1h7m1 0h1m1 0h1m2 0h2m1 0h5m1 0h1m1 0h2m1 0h1m-28 1h1m5 0h1m1 0h1m1 0h6m2 0h1m1 0h1m3 0h2m-26 1h1m1 0h3m1 0h1m2 0h2m6 0h2m1 0h5m1 0h3m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h2m1 0h4m3 0h2m1 0h3m2 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h1m2 0h5m2 0h1m2 0h1m1 0h1m-29 1h1m5 0h1m3 0h1m1 0h1m7 0h1m3 0h2m1 0h1m-28 1h7m1 0h3m2 0h1m1 0h1m2 0h5m2 0h1m1 0h1"/></svg></div>
+                <p class="dl-desc">
+                  Öffentlicher Tester-Zugang für iPhone &amp; iPad. Link auf dem Gerät
+                  öffnen, TestFlight installieren (falls noch nicht vorhanden) und dem
+                  Test beitreten — Updates kommen automatisch über TestFlight.
+                </p>
+                <div class="dl-actions">
+                  <a class="dl-btn" href="https://testflight.apple.com/join/xpAAwseS" target="_blank" rel="noopener">Öffnen ↗</a>
+                  <button class="copy-link" type="button" data-copy-url="https://testflight.apple.com/join/xpAAwseS" title="Link kopieren" aria-label="TestFlight-Link kopieren">🔗 Link kopieren</button>
+                </div>
+                <code class="dl-url">https://testflight.apple.com/join/xpAAwseS</code>
+              </div>
+            </div>
+            <div class="test download" id="dl-playstore">
+              <div class="head">
+                <a class="name permalink" href="#dl-playstore">Google Play — Offener Test</a>
+                <span class="src">Android</span>
+              </div>
+              <div class="dl-body">
+                <div class="dl-qr"><svg role="img" viewBox="0 0 41 41"><title>QR-Code: Google Play — Offener Test</title><path fill="#fff" d="M0 0h41v41h-41z"/><path stroke="#343233" d="M4 4.5h7m5 0h2m1 0h1m2 0h2m2 0h2m2 0h7m-33 1h1m5 0h1m2 0h1m1 0h5m1 0h1m2 0h2m1 0h1m2 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m3 0h1m1 0h2m1 0h1m1 0h1m1 0h1m6 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m6 0h2m1 0h1m1 0h2m2 0h1m3 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m2 0h1m2 0h3m2 0h1m5 0h1m2 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m1 0h1m4 0h1m1 0h6m1 0h1m3 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-23 1h2m3 0h7m-22 1h1m2 0h1m1 0h2m1 0h3m2 0h2m1 0h1m2 0h1m1 0h1m1 0h3m1 0h1m-28 1h1m4 0h1m2 0h1m4 0h1m3 0h1m2 0h2m3 0h3m3 0h2m-33 1h1m2 0h4m1 0h1m1 0h5m1 0h1m1 0h3m5 0h3m1 0h1m1 0h1m-33 1h3m2 0h1m1 0h1m1 0h1m1 0h1m1 0h1m7 0h2m5 0h2m1 0h2m-27 1h2m3 0h1m2 0h1m1 0h2m1 0h3m1 0h1m1 0h3m1 0h1m1 0h2m-32 1h1m2 0h1m6 0h2m1 0h2m2 0h2m2 0h1m1 0h1m1 0h1m1 0h5m-32 1h3m1 0h3m3 0h1m2 0h4m3 0h1m1 0h5m2 0h2m-32 1h2m1 0h3m1 0h2m1 0h4m2 0h7m1 0h1m1 0h2m3 0h1m-32 1h1m4 0h3m1 0h1m4 0h10m2 0h1m1 0h1m2 0h1m-31 1h3m4 0h3m1 0h2m2 0h1m3 0h1m2 0h2m2 0h1m1 0h1m-24 1h1m1 0h1m2 0h2m1 0h1m1 0h1m1 0h1m11 0h3m-33 1h3m1 0h1m4 0h1m1 0h1m1 0h5m2 0h4m1 0h1m1 0h1m3 0h2m-30 1h1m1 0h3m3 0h3m3 0h2m1 0h2m1 0h3m1 0h1m-18 1h1m2 0h1m1 0h1m4 0h1m1 0h1m3 0h1m3 0h3m-33 1h2m1 0h1m2 0h4m1 0h1m4 0h2m1 0h1m1 0h2m2 0h4m3 0h1m-32 1h2m2 0h1m1 0h1m2 0h2m1 0h1m1 0h1m2 0h6m1 0h2m1 0h2m-30 1h1m1 0h1m1 0h1m1 0h1m1 0h2m1 0h1m1 0h1m3 0h1m1 0h3m2 0h5m2 0h2m-25 1h3m2 0h2m2 0h1m1 0h6m3 0h2m1 0h2m-33 1h7m2 0h4m3 0h3m5 0h1m1 0h1m1 0h4m-32 1h1m5 0h1m1 0h1m1 0h1m3 0h2m1 0h1m1 0h4m1 0h1m3 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m3 0h2m3 0h1m1 0h3m1 0h6m2 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m2 0h6m4 0h1m4 0h1m1 0h2m-30 1h1m1 0h3m1 0h1m2 0h2m4 0h2m1 0h1m1 0h2m1 0h1m4 0h2m2 0h1m-33 1h1m5 0h1m2 0h4m4 0h5m2 0h1m4 0h1m-30 1h7m1 0h2m1 0h1m3 0h1m3 0h1m1 0h1m2 0h3m1 0h2m1 0h1"/></svg></div>
+                <p class="dl-desc">
+                  Offener Test im Play Store. Link auf dem Android-Gerät öffnen, dem
+                  Test beitreten und die App regulär über den Play Store installieren —
+                  Updates kommen automatisch.
+                </p>
+                <div class="dl-actions">
+                  <a class="dl-btn" href="https://play.google.com/apps/testing/swiss.realunit.app" target="_blank" rel="noopener">Öffnen ↗</a>
+                  <button class="copy-link" type="button" data-copy-url="https://play.google.com/apps/testing/swiss.realunit.app" title="Link kopieren" aria-label="Play-Store-Test-Link kopieren">🔗 Link kopieren</button>
+                </div>
+                <code class="dl-url">https://play.google.com/apps/testing/swiss.realunit.app</code>
+              </div>
+            </div>
+            <div class="test download" id="dl-apk">
+              <div class="head">
+                <a class="name permalink" href="#dl-apk">Android APK</a>
+                <span class="src">Android</span>
+              </div>
+              <div class="dl-body">
+                <div class="dl-qr"><svg role="img" viewBox="0 0 37 37"><title>QR-Code: Android APK (GitHub Releases)</title><path fill="#fff" d="M0 0h37v37h-37z"/><path stroke="#343233" d="M4 4.5h7m3 0h3m1 0h1m3 0h1m3 0h7m-29 1h1m5 0h1m1 0h2m4 0h1m1 0h1m3 0h1m1 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m2 0h2m2 0h2m1 0h1m3 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m1 0h1m1 0h1m2 0h1m3 0h1m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h2m5 0h1m2 0h2m1 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m3 0h1m3 0h1m5 0h1m1 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-21 1h2m1 0h1m2 0h2m4 0h1m-21 1h1m5 0h1m1 0h1m1 0h8m3 0h2m2 0h3m-28 1h6m3 0h1m1 0h2m1 0h2m1 0h3m1 0h1m1 0h2m1 0h2m-27 1h7m1 0h1m1 0h1m3 0h3m6 0h1m-23 1h2m4 0h2m4 0h3m1 0h2m1 0h1m3 0h1m-25 1h3m2 0h2m8 0h1m2 0h1m2 0h2m4 0h1m-29 1h2m1 0h2m3 0h1m2 0h1m2 0h2m1 0h2m1 0h1m1 0h3m2 0h2m-29 1h1m2 0h1m1 0h2m6 0h1m1 0h1m2 0h1m1 0h2m2 0h3m-25 1h1m1 0h2m2 0h2m1 0h2m3 0h1m2 0h1m3 0h2m1 0h1m1 0h1m-27 1h2m2 0h2m3 0h7m1 0h1m1 0h1m1 0h1m1 0h2m-27 1h1m2 0h2m2 0h2m2 0h2m2 0h2m2 0h1m2 0h3m1 0h3m-29 1h2m2 0h1m1 0h1m2 0h5m1 0h3m1 0h1m4 0h2m2 0h1m-29 1h1m2 0h3m2 0h1m1 0h1m3 0h1m3 0h1m1 0h1m1 0h1m-23 1h1m2 0h2m1 0h2m1 0h1m1 0h6m2 0h6m1 0h3m-21 1h1m1 0h1m1 0h1m2 0h1m2 0h1m1 0h1m3 0h2m-26 1h7m6 0h1m1 0h6m1 0h1m1 0h3m-27 1h1m5 0h1m4 0h1m2 0h1m4 0h2m3 0h1m3 0h1m-29 1h1m1 0h3m1 0h1m2 0h3m1 0h5m1 0h7m1 0h1m-28 1h1m1 0h3m1 0h1m3 0h4m1 0h7m3 0h2m1 0h1m-29 1h1m1 0h3m1 0h1m4 0h2m1 0h3m1 0h10m-28 1h1m5 0h1m6 0h3m2 0h1m3 0h2m1 0h2m1 0h1m-29 1h7m1 0h2m1 0h1m2 0h1m2 0h3m2 0h3m1 0h1"/></svg></div>
+                <p class="dl-desc">
+                  Direkt-Download ohne Play Store: APK des gewünschten Releases von
+                  GitHub laden und installieren (Installation aus unbekannten Quellen
+                  zulassen). Kein Auto-Update — neue Versionen manuell laden.
+                </p>
+                <div class="dl-actions">
+                  <a class="dl-btn" href="https://github.com/RealUnitCH/app/releases" target="_blank" rel="noopener">Öffnen ↗</a>
+                  <button class="copy-link" type="button" data-copy-url="https://github.com/RealUnitCH/app/releases" title="Link kopieren" aria-label="APK-Releases-Link kopieren">🔗 Link kopieren</button>
+                </div>
+                <code class="dl-url">https://github.com/RealUnitCH/app/releases</code>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details id="spec-tasks" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">A</span>Aufgaben — Projektübersicht</h2>
+                <div class="file">tasks.csv</div>
+              </div>
+              <div class="rhs">
+                <b>Live aus privatem Server-Repo</b>
+                <div class="links"><span class="src">CSV-Mount</span></div>
+              </div>
+            </div>
+          </summary>
+
+          <p class="spec-intro">
+            Diese Übersicht ist die laufende Aufgaben- und Statusliste des Projekts. Die
+            Daten werden zur Laufzeit aus einer CSV-Datei geladen, die ausschliesslich im
+            privaten Server-Repository gepflegt und per Mount in den Handbook-Container
+            eingebunden wird — im Handbook-Repo liegen nur Darstellung und Renderer, keine
+            Aufgabendaten. Fehlt der Mount (z.&nbsp;B. lokaler Image-Build), erscheint statt
+            der Tabelle ein Hinweis.
+          </p>
+
+          <div id="tasks-table"></div>
+
+          <script>
+            // Renders the task overview from the CSV that the private server repo
+            // mounts into the container at /de/tasks.csv. The data lives only in
+            // that repo; this handbook ships only the renderer + a graceful 404
+            // fallback for when no CSV is mounted (e.g. local build). See #662.
+            (function () {
+              var MOUNT_ID = 'tasks-table';
+              var CSV_URL = 'tasks.csv'; // relative to /de/ → same-origin /de/tasks.csv
+              var LINKS_HEADER = 'links';
+
+              function showNote(message) {
+                var host = document.getElementById(MOUNT_ID);
+                if (!host) return;
+                host.textContent = '';
+                var p = document.createElement('p');
+                p.className = 'tasks-note';
+                p.textContent = message;
+                host.appendChild(p);
+              }
+
+              // RFC-4180 parser: handles quoted fields containing commas or
+              // newlines and "" escaped quotes; tolerates LF and CRLF endings.
+              function parseCsv(text) {
+                var rows = [];
+                var row = [];
+                var field = '';
+                var inQuotes = false;
+                var i = 0;
+                var n = text.length;
+                function pushField() {
+                  row.push(field);
+                  field = '';
+                }
+                function pushRow() {
+                  pushField();
+                  rows.push(row);
+                  row = [];
+                }
+                while (i < n) {
+                  var c = text.charAt(i);
+                  if (inQuotes) {
+                    if (c === '"') {
+                      if (text.charAt(i + 1) === '"') {
+                        field += '"';
+                        i += 2;
+                        continue;
+                      }
+                      inQuotes = false;
+                      i += 1;
+                      continue;
+                    }
+                    field += c;
+                    i += 1;
+                    continue;
+                  }
+                  if (c === '"') {
+                    inQuotes = true;
+                    i += 1;
+                    continue;
+                  }
+                  if (c === ',') {
+                    pushField();
+                    i += 1;
+                    continue;
+                  }
+                  if (c === '\r') {
+                    i += 1;
+                    continue;
+                  }
+                  if (c === '\n') {
+                    pushRow();
+                    i += 1;
+                    continue;
+                  }
+                  field += c;
+                  i += 1;
+                }
+                // Flush a trailing field/row unless the file ended on a newline.
+                if (field !== '' || row.length > 0) pushRow();
+                return rows;
+              }
+
+              function shortLabel(url) {
+                try {
+                  var u = new URL(url);
+                  var segs = u.pathname.split('/').filter(Boolean);
+                  var last = segs.length ? segs[segs.length - 1] : u.hostname;
+                  return /^\d+$/.test(last) ? '#' + last : last;
+                } catch (e) {
+                  return url;
+                }
+              }
+
+              // The Links column holds 0..n whitespace-separated URLs. Linkify
+              // http(s) tokens (open in a new tab); pass anything else through
+              // as text. textContent / element APIs HTML-escape every value.
+              function fillLinks(td, value) {
+                var tokens = value.split(/\s+/);
+                var count = 0;
+                for (var i = 0; i < tokens.length; i++) {
+                  var token = tokens[i];
+                  if (!token) continue;
+                  if (!/^https?:\/\//i.test(token)) {
+                    td.appendChild(document.createTextNode((count ? ' ' : '') + token));
+                    count += 1;
+                    continue;
+                  }
+                  var a = document.createElement('a');
+                  a.href = token;
+                  a.target = '_blank';
+                  a.rel = 'noopener';
+                  a.textContent = shortLabel(token);
+                  td.appendChild(a);
+                  count += 1;
+                }
+              }
+
+              function renderTable(rows) {
+                var host = document.getElementById(MOUNT_ID);
+                if (!host) return;
+                var header = rows[0];
+                var linksCol = -1;
+                for (var h = 0; h < header.length; h++) {
+                  if (header[h].trim().toLowerCase() === LINKS_HEADER) linksCol = h;
+                }
+
+                var table = document.createElement('table');
+                var thead = document.createElement('thead');
+                var headRow = document.createElement('tr');
+                for (var c = 0; c < header.length; c++) {
+                  var th = document.createElement('th');
+                  th.textContent = header[c];
+                  headRow.appendChild(th);
+                }
+                thead.appendChild(headRow);
+                table.appendChild(thead);
+
+                var tbody = document.createElement('tbody');
+                for (var r = 1; r < rows.length; r++) {
+                  var cells = rows[r];
+                  var tr = document.createElement('tr');
+                  for (var k = 0; k < header.length; k++) {
+                    var td = document.createElement('td');
+                    var value = k < cells.length ? cells[k] : '';
+                    if (k === linksCol) {
+                      fillLinks(td, value);
+                    } else {
+                      td.textContent = value;
+                    }
+                    tr.appendChild(td);
+                  }
+                  tbody.appendChild(tr);
+                }
+                table.appendChild(tbody);
+
+                var wrap = document.createElement('div');
+                wrap.className = 'tasks-table-wrap';
+                wrap.appendChild(table);
+                host.textContent = '';
+                host.appendChild(wrap);
+              }
+
+              function isBlankRow(row) {
+                return row.length === 1 && row[0].trim() === '';
+              }
+
+              function load() {
+                fetch(CSV_URL, { credentials: 'same-origin' })
+                  .then(function (res) {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.text();
+                  })
+                  .then(function (text) {
+                    if (!text || !text.trim()) throw new Error('empty');
+                    var rows = parseCsv(text).filter(function (row) {
+                      return !isBlankRow(row);
+                    });
+                    if (!rows.length) throw new Error('no rows');
+                    renderTable(rows);
+                  })
+                  .catch(function () {
+                    showNote(
+                      'Aufgabenübersicht wird auf dem Server bereitgestellt (kein Mount in dieser Umgebung).'
+                    );
+                  });
+              }
+
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', load);
+              } else {
+                load();
+              }
+            })();
+          </script>
+        </details>
+      </main>
+    </div>
+  </body>
+</html>

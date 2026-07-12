@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
@@ -31,7 +32,7 @@ class PinAuthCubit extends Cubit<PinAuthState> {
 
   void onPinVerified() => emit(state.copyWith(isPinVerified: true));
 
-  void onAppHidden() => _lastBackgroundTime ??= DateTime.now();
+  void onAppHidden() => _lastBackgroundTime ??= clock.now();
 
   void onAppResumed() {
     if (!state.isPinSetup) return;
@@ -39,7 +40,7 @@ class PinAuthCubit extends Cubit<PinAuthState> {
     final lastBackground = _lastBackgroundTime;
     if (lastBackground == null) return;
 
-    final elapsed = DateTime.now().difference(lastBackground);
+    final elapsed = clock.now().difference(lastBackground);
     if (elapsed >= lockoutDuration) {
       emit(state.copyWith(isPinVerified: false));
     }

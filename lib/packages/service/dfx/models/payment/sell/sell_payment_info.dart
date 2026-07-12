@@ -16,6 +16,13 @@ class SellPaymentInfo {
   final int chainId;
   final double ethBalance;
   final double requiredGasEth;
+  // Fields below come from the API quote response. The backend is the
+  // authority on whether the quote is valid for trading and what the
+  // current min/max limits are for the user+currency combination.
+  final bool isValid;
+  final double minVolume;
+  final double maxVolume;
+  final String? error;
 
   const SellPaymentInfo({
     required this.id,
@@ -31,5 +38,9 @@ class SellPaymentInfo {
     required this.chainId,
     required this.ethBalance,
     required this.requiredGasEth,
+    this.isValid = true,
+    this.minVolume = 0,
+    this.maxVolume = double.infinity,
+    this.error,
   });
 }

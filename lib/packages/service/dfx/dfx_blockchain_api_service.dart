@@ -1,33 +1,27 @@
 import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
-import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 
-class DfxBlockchainApiService {
+class DfxBlockchainApiService extends DFXAuthService {
   static const _balancesPath = 'v1/blockchain/balances';
 
-  String get _host => _appStore.apiConfig.apiHost;
+  String get _blockchain => appStore.apiConfig.asset.chainId == 1 ? 'Ethereum' : 'Sepolia';
 
-  String get _blockchain => _appStore.apiConfig.asset.chainId == 1 ? 'Ethereum' : 'Sepolia';
-
-  final AppStore _appStore;
-
-  DfxBlockchainApiService(AppStore appStore) : _appStore = appStore;
+  DfxBlockchainApiService(super.appStore, super.walletService);
 
   Future<double> getEthBalance(String address) async {
-    final authToken = _appStore.sessionCache.authToken;
-    final uri = buildUri(_host, _balancesPath);
-    final response = await _appStore.httpClient.post(
+    final uri = buildUri(host, _balancesPath);
+    final response = await authenticatedPost(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
       body: jsonEncode({
         'address': address,
         'blockchain': _blockchain,
-        'assetIds': [_appStore.apiConfig.ethAssetId],
+        'assetIds': [appStore.apiConfig.ethAssetId],
       }),
     );
 

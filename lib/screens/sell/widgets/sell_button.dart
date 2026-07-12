@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/bank_account/bank_account.dart';
+import 'package:realunit_wallet/screens/hardware_connect_bitbox/show_bitbox_reconnect_sheet.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_converter/sell_converter_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_payment_info/sell_payment_info_cubit.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_confirm_sheet.dart';
@@ -23,14 +24,35 @@ class SellButton extends StatelessWidget {
       listener: (context, state) async {
         if (state is SellPaymentInfoFailure) {
           if (state.error == .kycRequired) {
-            await context.pushNamed(
-              AppRoutes.kyc,
-              extra: state.requiredLevel,
-            );
+            await context.pushNamed(AppRoutes.kyc, extra: state.context);
             return;
           }
           if (state.error == .registrationRequired) {
-            await context.pushNamed(AppRoutes.kyc);
+            await context.pushNamed(AppRoutes.kyc, extra: state.context);
+            return;
+          }
+          if (state.error == .bitboxDisconnected) {
+            final paymentInfoCubit = context.read<SellPaymentInfoCubit>();
+            final converterCurrency = context.read<SellConverterCubit>().state.currency;
+            await showBitboxReconnectSheet(context);
+            if (bankAccount != null && amount.isNotEmpty) {
+              paymentInfoCubit.getPaymentInfo(
+                amount: amount,
+                iban: bankAccount!.iban,
+                currency: converterCurrency,
+              );
+            }
+            return;
+          }
+          if (state.error == .priceSourceUnavailable) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(S.of(context).priceProviderUnavailableTitle),
+                  backgroundColor: RealUnitColors.status.red600,
+                ),
+              );
+            }
             return;
           }
           if (context.mounted) {
@@ -88,7 +110,7 @@ class SellButton extends StatelessWidget {
                   S
                       .of(context)
                       .sellMinAmount(
-                        '${state.minAmount.round()}',
+                        '${state.minAmount.ceil()}',
                         state.currency.code,
                       ),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(

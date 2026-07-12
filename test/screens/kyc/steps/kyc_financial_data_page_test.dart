@@ -112,6 +112,24 @@ void main() {
       expect(find.byType(KycFinancialDataFailurePage), findsOne);
     });
 
+    testWidgets('still renders the questions page when submitting fails', (tester) async {
+      when(() => kycFinancialDataCubit.state).thenReturn(
+        const KycFinancialDataSubmitFailure(
+          message: 'fail',
+          allQuestions: [KycFinancialQuestion(key: '', type: QuestionType.text, title: '')],
+          visibleQuestions: [KycFinancialQuestion(key: '', type: QuestionType.text, title: '')],
+          responses: {},
+          currentIndex: 0,
+          url: '',
+        ),
+      );
+
+      await tester.pumpApp(buildSubject(const KycFinancialDataView()));
+
+      expect(find.byType(KycFinancialDataQuestionsPage), findsOne);
+      expect(find.byType(KycFinancialDataFailurePage), findsNothing);
+    });
+
     testWidgets(
       'is rendered correctly when financialData was loaded successfully for a ${QuestionType.text}',
       (tester) async {
@@ -232,6 +250,32 @@ void main() {
       await tester.pump();
 
       expect(find.byType(SnackBar), findsOne);
+    });
+
+    testWidgets('shows SnackBar and keeps the questions page if submitting fails retryably', (
+      tester,
+    ) async {
+      whenListen(
+        kycFinancialDataCubit,
+        Stream.fromIterable([
+          const KycFinancialDataSubmitFailure(
+            message: 'fail',
+            allQuestions: [KycFinancialQuestion(key: '', type: QuestionType.text, title: '')],
+            visibleQuestions: [KycFinancialQuestion(key: '', type: QuestionType.text, title: '')],
+            responses: {},
+            currentIndex: 0,
+            url: '',
+          ),
+        ]),
+        initialState: const KycFinancialDataInitial(),
+      );
+
+      await tester.pumpApp(buildSubject(const KycFinancialDataView()));
+      await tester.pump();
+
+      expect(find.descendant(of: find.byType(SnackBar), matching: find.text('fail')), findsOne);
+      expect(find.byType(KycFinancialDataQuestionsPage), findsOne);
+      expect(find.byType(KycFinancialDataFailurePage), findsNothing);
     });
   });
 }

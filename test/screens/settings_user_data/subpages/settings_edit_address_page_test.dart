@@ -17,14 +17,13 @@ import 'package:realunit_wallet/widgets/form/country_field.dart';
 import 'package:realunit_wallet/widgets/form/file_picker_field.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
 
+import '../../../helper/country_fixture.dart';
 import '../../../helper/pump_app.dart';
 
 class MockSettingsEditAddressCubit extends MockCubit<SettingsEditAddressState>
     implements SettingsEditAddressCubit {}
 
 class MockDfxKycService extends Mock implements DfxKycService {}
-
-class MockDfxCountryService extends Mock implements DfxCountryService {}
 
 void main() {
   late SettingsEditAddressCubit settingsEditAddressCubit;
@@ -37,7 +36,7 @@ void main() {
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<DfxKycService>(MockDfxKycService());
-    getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
+    getIt.registerSingleton<DfxCountryService>(fixtureCountryService());
   }
 
   setUpAll(() {
@@ -96,6 +95,8 @@ void main() {
       when(() => settingsEditAddressCubit.state).thenReturn(const SettingsEditAddressReady('url'));
 
       await tester.pumpApp(buildSubject(const SettingsEditAddressView()));
+      // Let the CountryField's country-list future resolve.
+      await tester.pumpAndSettle();
 
       expect(find.byType(LabeledTextField), findsNWidgets(4));
       expect(find.byType(CountryField), findsOne);
@@ -104,12 +105,30 @@ void main() {
       expect(find.byType(CupertinoActivityIndicator), findsNothing);
     });
 
+    testWidgets('postal code field uses a text keyboard for alphanumeric codes',
+        (tester) async {
+      // Foreign postal codes are alphanumeric (NL "1011 AB", UK "EC1A 1BB").
+      // A number-only keyboard would make them impossible to type.
+      when(() => settingsEditAddressCubit.state).thenReturn(const SettingsEditAddressReady('url'));
+
+      await tester.pumpApp(buildSubject(const SettingsEditAddressView()));
+      await tester.pumpAndSettle();
+
+      final postalField = tester.widget<LabeledTextField>(
+        find.byWidgetPredicate((w) => w is LabeledTextField && w.hintText == '8000'),
+      );
+      expect(postalField.keyboardType, TextInputType.text);
+    });
+
     testWidgets('renders correctly when submitting', (tester) async {
       when(
         () => settingsEditAddressCubit.state,
       ).thenReturn(const SettingsEditAddressSubmitting('url'));
 
       await tester.pumpApp(buildSubject(const SettingsEditAddressView()));
+      // Flush the CountryField's country-list future. pumpAndSettle is unusable
+      // here: the submitting state shows a perpetually-animating spinner.
+      await tester.pump();
 
       expect(find.byType(LabeledTextField), findsNWidgets(4));
       expect(find.byType(CountryField), findsOne);

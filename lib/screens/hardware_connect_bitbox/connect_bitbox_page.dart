@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/bloc/connect_bitbox_cubit.dart';
@@ -17,6 +18,9 @@ class ConnectBitboxPage extends StatelessWidget {
     create: (_) => ConnectBitboxCubit(
       getIt<BitboxService>(),
       getIt<WalletService>(),
+      // DfxKycService is the smallest registered DFXAuthService — used only as
+      // a transport for ensureSignatureFor(account); no KYC-specific calls here.
+      getIt<DfxKycService>(),
     ),
     child: ConnectBitboxView(onFinish: onFinish),
   );

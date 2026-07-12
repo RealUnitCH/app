@@ -8,45 +8,22 @@ import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dt
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_session_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
-import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/styles/language.dart';
 
 class DfxKycService extends DFXAuthService {
   static const _userPath = '/v2/user';
   static const _kycPath = 'v2/kyc';
 
-  String get _host => appStore.apiConfig.apiHost;
-
-  DfxKycService(super.appStore);
-
-  @override
-  AWalletAccount get wallet => appStore.wallet.currentAccount;
-
-  @override
-  String get walletAddress => wallet.primaryAddress.address.hexEip55;
+  DfxKycService(super.appStore, super.walletService);
 
   Future<UserDto> getUser() async {
-    final authToken = appStore.sessionCache.authToken;
-
-    final uri = buildUri(_host, _userPath);
-    var response = await appStore.httpClient.get(
+    final uri = buildUri(host, _userPath);
+    final response = await authenticatedGet(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
     );
-
-    if (response.statusCode == 401) {
-      final newToken = await refreshAuthToken();
-      response = await appStore.httpClient.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $newToken',
-        },
-      );
-    }
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
@@ -57,16 +34,16 @@ class DfxKycService extends DFXAuthService {
     return UserDto.fromJson(json);
   }
 
-  Future<KycLevelDto> getKycStatus() async {
+  Future<KycLevelDto> getKycStatus({String? context}) async {
     final user = await getUser();
-    final authToken = appStore.sessionCache.authToken;
 
-    final uri = buildUri(_host, _kycPath);
-    final response = await appStore.httpClient.get(
+    final queryParams = <String, String>{};
+    if (context != null) queryParams['context'] = context;
+    final uri = buildUri(host, _kycPath, queryParams.isNotEmpty ? queryParams : null);
+    final response = await authenticatedGet(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
         'x-kyc-code': user.kyc.hash,
       },
     );
@@ -80,16 +57,16 @@ class DfxKycService extends DFXAuthService {
     return KycLevelDto.fromJson(json);
   }
 
-  Future<KycSessionDto> continueKyc() async {
+  Future<KycSessionDto> continueKyc({String? context}) async {
     final user = await getUser();
-    final authToken = appStore.sessionCache.authToken;
 
-    final uri = buildUri(_host, _kycPath);
-    final response = await appStore.httpClient.put(
+    final queryParams = <String, String>{};
+    if (context != null) queryParams['context'] = context;
+    final uri = buildUri(host, _kycPath, queryParams.isNotEmpty ? queryParams : null);
+    final response = await authenticatedPut(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
         'x-kyc-code': user.kyc.hash,
       },
     );
@@ -106,14 +83,12 @@ class DfxKycService extends DFXAuthService {
   /// sets the given KycStep in progress as the currentStep
   Future<KycSessionDto> startStep(KycStepName stepName) async {
     final user = await getUser();
-    final authToken = appStore.sessionCache.authToken;
 
-    final uri = buildUri(_host, '$_kycPath/${stepName.value}');
-    final response = await appStore.httpClient.get(
+    final uri = buildUri(host, '$_kycPath/${stepName.value}');
+    final response = await authenticatedGet(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
         'x-kyc-code': user.kyc.hash,
       },
     );
@@ -128,14 +103,11 @@ class DfxKycService extends DFXAuthService {
   }
 
   Future<void> updateUser(Map<String, dynamic> body) async {
-    final authToken = appStore.sessionCache.authToken;
-
-    final uri = buildUri(_host, _userPath);
-    final response = await appStore.httpClient.put(
+    final uri = buildUri(host, _userPath);
+    final response = await authenticatedPut(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
       body: jsonEncode(body),
     );
@@ -149,14 +121,12 @@ class DfxKycService extends DFXAuthService {
   /// similar to `updateUser()` but is used to set/update data of a user by using the provided session url from `startStep()` or `continueKyc()`
   Future<void> setData(String url, Map<String, dynamic> body) async {
     final user = await getUser();
-    final authToken = appStore.sessionCache.authToken;
 
     final uri = Uri.parse(url);
-    final response = await appStore.httpClient.put(
+    final response = await authenticatedPut(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
         'x-kyc-code': user.kyc.hash,
       },
       body: jsonEncode(body),
@@ -171,14 +141,12 @@ class DfxKycService extends DFXAuthService {
 
   Future<void> request2FaCode() async {
     final user = await getUser();
-    final authToken = appStore.sessionCache.authToken;
 
-    final uri = buildUri(_host, '$_kycPath/2fa', {'level': 'Strict'});
-    final response = await appStore.httpClient.post(
+    final uri = buildUri(host, '$_kycPath/2fa', {'level': 'Strict'});
+    final response = await authenticatedPost(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
         'x-kyc-code': user.kyc.hash,
       },
     );
@@ -192,14 +160,12 @@ class DfxKycService extends DFXAuthService {
 
   Future<void> verify2FaCode(String code) async {
     final user = await getUser();
-    final authToken = appStore.sessionCache.authToken;
 
-    final uri = buildUri(_host, '$_kycPath/2fa/verify');
-    final response = await appStore.httpClient.post(
+    final uri = buildUri(host, '$_kycPath/2fa/verify');
+    final response = await authenticatedPost(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
         'x-kyc-code': user.kyc.hash,
       },
       body: jsonEncode({'token': code}),
@@ -217,14 +183,12 @@ class DfxKycService extends DFXAuthService {
     Language language = Language.de,
   }) async {
     final user = await getUser();
-    final authToken = appStore.sessionCache.authToken;
 
     final uri = Uri.parse('$url?lang=${language.code}');
-    final response = await appStore.httpClient.get(
+    final response = await authenticatedGet(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
         'x-kyc-code': user.kyc.hash,
       },
     );
@@ -240,14 +204,12 @@ class DfxKycService extends DFXAuthService {
 
   Future<void> setFinancialData(String url, List<KycFinancialResponse> responses) async {
     final user = await getUser();
-    final authToken = appStore.sessionCache.authToken;
 
     final uri = Uri.parse(url);
-    final response = await appStore.httpClient.put(
+    final response = await authenticatedPut(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
         'x-kyc-code': user.kyc.hash,
       },
       body: jsonEncode({

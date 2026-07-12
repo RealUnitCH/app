@@ -80,6 +80,12 @@ class _KycEmailFormState extends State<KycEmailForm> {
               ),
             );
             if (isConfirmed == true && context.mounted) {
+              // Merge confirmed. `checkKyc()` re-fetches `getRegistrationInfo`
+              // and routes this wallet by the API `state`: AddWallet → link
+              // wallet, NewRegistration → full registration form,
+              // AlreadyRegistered → forward. The KYC flow is the single source
+              // of registration routing — see CONTRIBUTING.md "API as Decision
+              // Authority".
               context.read<KycCubit>().checkKyc();
             }
           }

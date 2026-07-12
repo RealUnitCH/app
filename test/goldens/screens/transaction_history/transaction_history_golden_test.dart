@@ -1,0 +1,130 @@
+import 'package:bloc_test/bloc_test.dart';
+import 'package:clock/clock.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/models/transaction.dart';
+import 'package:realunit_wallet/packages/config/api_config.dart';
+import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
+import 'package:realunit_wallet/packages/utils/default_assets.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/screens/transaction_history/cubits/filter/transaction_history_filter_cubit.dart';
+import 'package:realunit_wallet/screens/transaction_history/cubits/receipt/transaction_history_receipt_cubit.dart';
+import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
+
+import '../../../helper/helper.dart';
+
+class _MockTransactionHistoryFilterCubit
+    extends MockCubit<TransactionHistoryFilterState>
+    implements TransactionHistoryFilterCubit {}
+
+class _MockTransactionHistoryReceiptCubit
+    extends MockCubit<TransactionHistoryReceiptState>
+    implements TransactionHistoryReceiptCubit {}
+
+class _MockTransactionRepository extends Mock implements TransactionRepository {}
+
+class _MockRealUnitPdfService extends Mock implements RealUnitPdfService {}
+
+class _MockApiConfig extends Mock implements ApiConfig {}
+
+void main() {
+  late MockSettingsBloc settingsBloc;
+  late _MockTransactionHistoryFilterCubit filterCubit;
+  late _MockTransactionHistoryReceiptCubit receiptCubit;
+  final transactionRepository = _MockTransactionRepository();
+  final appStore = MockAppStore();
+  final apiConfig = _MockApiConfig();
+  const walletAddress = '0xcabd3f4b10a7089986e708d19140bfc98e5880c0';
+
+  setUpAll(() {
+    final getIt = GetIt.instance;
+    when(() => apiConfig.asset).thenReturn(realUnitAsset);
+    when(() => appStore.apiConfig).thenReturn(apiConfig);
+    when(() => appStore.primaryAddress).thenReturn(walletAddress);
+    when(() => transactionRepository.watchTransactionsOfAssets(any(), any()))
+        .thenAnswer((_) => const Stream<List<Transaction>>.empty());
+    getIt.registerSingleton<AppStore>(appStore);
+    getIt.registerSingleton<RealUnitPdfService>(_MockRealUnitPdfService());
+    getIt.registerSingleton<TransactionRepository>(transactionRepository);
+  });
+
+  setUp(() {
+    settingsBloc = MockSettingsBloc();
+    filterCubit = _MockTransactionHistoryFilterCubit();
+    receiptCubit = _MockTransactionHistoryReceiptCubit();
+    when(() => settingsBloc.state).thenReturn(const SettingsState());
+    when(() => filterCubit.state).thenReturn(TransactionHistoryFilterState());
+    when(() => receiptCubit.state)
+        .thenReturn(const TransactionHistoryReceiptInitial());
+  });
+
+  tearDownAll(() async => GetIt.instance.reset());
+
+  Widget buildSubject() => MultiBlocProvider(
+        providers: [
+          BlocProvider<SettingsBloc>.value(value: settingsBloc),
+          BlocProvider<TransactionHistoryFilterCubit>.value(value: filterCubit),
+          BlocProvider<TransactionHistoryReceiptCubit>.value(value: receiptCubit),
+        ],
+        child: TransactionHistoryView(walletAddress: walletAddress),
+      );
+
+  // `TransactionHistoryView._todaysDate` resolves `clock.now()` when the
+  // widget mounts (inside alchemist's builder/test zone, NOT in the outer
+  // `withClock` scope). Pin the clock per-builder so the date-range filter
+  // chip renders deterministically. Same issue + fix as settings_tax_report.
+  final pinnedClock = Clock.fixed(DateTime.utc(2026, 5, 23));
+
+  group('$TransactionHistoryView', () {
+    goldenTest(
+      'empty filter state',
+      fileName: 'transaction_history_page_default',
+      constraints: phoneConstraints,
+      builder: () => withClock(pinnedClock, () => wrapForGolden(buildSubject())),
+    );
+
+    goldenTest(
+      'with transaction list',
+      fileName: 'transaction_history_page_with_transactions',
+      constraints: phoneConstraints,
+      builder: () {
+        final transactions = [
+          Transaction(
+            height: 100,
+            txId: '0xaaa1111',
+            chainId: 1,
+            senderAddress: walletAddress,
+            receiverAddress: '0x1234567890abcdef1234567890abcdef12345678',
+            amount: BigInt.from(2000000000000000000),
+            asset: realUnitAsset,
+            type: TransactionTypes.tokenTransfer,
+            note: null,
+            data: null,
+            timestamp: DateTime.utc(2026, 5, 20, 10, 30),
+          ),
+          Transaction(
+            height: 101,
+            txId: '0xbbb2222',
+            chainId: 1,
+            senderAddress: '0xabcdef1234567890abcdef1234567890abcdef12',
+            receiverAddress: walletAddress,
+            amount: BigInt.from(5000000000000000000),
+            asset: realUnitAsset,
+            type: TransactionTypes.tokenTransfer,
+            note: null,
+            data: null,
+            timestamp: DateTime.utc(2026, 5, 18, 14, 0),
+          ),
+        ];
+        when(() => transactionRepository.watchTransactionsOfAssets(any(), any()))
+            .thenAnswer((_) => Stream.value(transactions));
+        return withClock(pinnedClock, () => wrapForGolden(buildSubject()));
+      },
+    );
+  });
+}

@@ -10,7 +10,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/user_data.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/settings_user_data/cubit/settings_user_data_cubit.dart';
 import 'package:realunit_wallet/screens/settings_user_data/settings_user_data_page.dart';
 
@@ -19,9 +19,7 @@ import '../../helper/helper.dart';
 class MockSettingsUserDataCubit extends MockCubit<SettingsUserDataState>
     implements SettingsUserDataCubit {}
 
-class MockRealUnitWalletService extends Mock implements RealUnitWalletService {}
-
-class MockDfxCountryService extends Mock implements DfxCountryService {}
+class MockRealUnitRegistrationService extends Mock implements RealUnitRegistrationService {}
 
 class MockDfxKycService extends Mock implements DfxKycService {}
 
@@ -36,8 +34,8 @@ void main() {
 
   void setupDependencyInjection() {
     final getIt = GetIt.instance;
-    getIt.registerSingleton<RealUnitWalletService>(MockRealUnitWalletService());
-    getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
+    getIt.registerSingleton<RealUnitRegistrationService>(MockRealUnitRegistrationService());
+    getIt.registerSingleton<DfxCountryService>(fixtureCountryService());
     getIt.registerSingleton<DfxKycService>(MockDfxKycService());
   }
 
@@ -75,15 +73,11 @@ void main() {
     });
 
     testWidgets('renders correctly when loading user data failed', (tester) async {
-      final errorMessage = 'not working bro';
-      when(() => settingsUserDataCubit.state).thenReturn(SettingsUserDataFailure(errorMessage));
+      when(() => settingsUserDataCubit.state).thenReturn(const SettingsUserDataFailure());
 
       await tester.pumpApp(buildSubject(const SettingsUserDataView()));
 
-      expect(
-        find.byWidgetPredicate((Widget widget) => widget is Text && widget.data == errorMessage),
-        findsOne,
-      );
+      expect(find.text(S.current.userDataLoadFailed), findsOne);
     });
 
     testWidgets('renders correctly when user data loaded successfully', (tester) async {
@@ -93,11 +87,21 @@ void main() {
         type: RegistrationUserType.human,
         phoneNumber: '+41791234567',
         birthday: DateTime.now(),
-        nationality: const Country(id: 41, symbol: 'CH', name: 'Switzerland'),
+        nationality: const Country(
+          id: 41,
+          symbol: 'CH',
+          name: 'Switzerland',
+          kycAllowed: true,
+        ),
         addressStreet: 'Teststrasse',
         addressPostalCode: '8000',
         addressCity: 'Zurich',
-        addressCountry: const Country(id: 41, symbol: 'CH', name: 'Switzerland'),
+        addressCountry: const Country(
+          id: 41,
+          symbol: 'CH',
+          name: 'Switzerland',
+          kycAllowed: true,
+        ),
         swissTaxResidence: true,
         lang: 'DE',
       );
@@ -112,6 +116,42 @@ void main() {
         find.byWidgetPredicate((Widget widget) => widget is Column && widget.children.length == 7),
         findsOne,
       );
+    });
+
+    testWidgets('hides the birthday row when no birthday is on record', (tester) async {
+      const userData = UserData(
+        email: 'test-direct@dfx.swiss',
+        name: 'Test Direct',
+        type: RegistrationUserType.human,
+        phoneNumber: '+41791234567',
+        birthday: null,
+        nationality: Country(
+          id: 41,
+          symbol: 'CH',
+          name: 'Switzerland',
+          kycAllowed: true,
+        ),
+        addressStreet: 'Teststrasse',
+        addressPostalCode: '8000',
+        addressCity: 'Zurich',
+        addressCountry: Country(
+          id: 41,
+          symbol: 'CH',
+          name: 'Switzerland',
+          kycAllowed: true,
+        ),
+        swissTaxResidence: true,
+        lang: 'DE',
+      );
+
+      when(() => settingsUserDataCubit.state).thenReturn(
+        const SettingsUserDataSuccess(userData: userData),
+      );
+
+      await tester.pumpApp(buildSubject(const SettingsUserDataView()));
+
+      expect(find.text(S.current.birthday), findsNothing);
+      expect(find.text('Test Direct'), findsOne);
     });
 
     testWidgets('renders correctly when user data was not found', (tester) async {

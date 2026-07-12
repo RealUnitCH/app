@@ -1,0 +1,38 @@
+# Tier-3 navigation smoke. The handbook screenshot for this flow is the
+# visual-regression Golden mapped in scripts/assemble-handbook-screenshots.sh;
+# this flow's diagnostic capture lands in build/handbook-captures/15-settings-network.png.
+#
+# Both taps (back to the settings list, then into the network screen) are
+# gated on their target not yet showing and re-tapped if one was silently
+# dropped (Maestro/XCUITest tap-loss on Apple Silicon + iOS 26,
+# mobile-dev-inc/maestro#3137). Each gate stops its loop the instant the
+# screen changes, so surplus iterations no-op.
+appId: swiss.realunit.app
+---
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible: 'Einstellungen'
+          commands:
+            - tapOn:
+                point: 8%,8%
+                optional: true
+- waitForAnimationToEnd
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              text: '.*Mainnet.*'
+          commands:
+            - tapOn:
+                text: '.*Netzwerk.*'
+                optional: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: '.*Mainnet.*'
+    timeout: 5000

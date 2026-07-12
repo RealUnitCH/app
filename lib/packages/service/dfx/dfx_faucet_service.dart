@@ -1,27 +1,21 @@
 import 'dart:convert';
 
 import 'package:realunit_wallet/packages/config/api_config.dart';
-import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/faucet/faucet_response_dto.dart';
 
-class DfxFaucetService {
+class DfxFaucetService extends DFXAuthService {
   static const _faucetPath = 'v1/faucet';
 
-  String get _host => _appStore.apiConfig.apiHost;
-
-  final AppStore _appStore;
-
-  DfxFaucetService(AppStore appStore) : _appStore = appStore;
+  DfxFaucetService(super.appStore, super.walletService);
 
   Future<FaucetResponseDto> requestFaucet() async {
-    final authToken = _appStore.sessionCache.authToken;
-    final uri = buildUri(_host, _faucetPath);
-    final response = await _appStore.httpClient.post(
+    final uri = buildUri(host, _faucetPath);
+    final response = await authenticatedPost(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $authToken',
       },
     );
 

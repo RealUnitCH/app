@@ -1,0 +1,12 @@
+# Tier-3 navigation smoke. The handbook screenshot for this flow is the
+# visual-regression Golden mapped in scripts/assemble-handbook-screenshots.sh;
+# this flow's diagnostic capture lands in build/handbook-captures/01-welcome.png.
+appId: swiss.realunit.app
+---
+- launchApp:
+    appId: swiss.realunit.app
+    clearState: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: 'Start'
+    timeout: 30000

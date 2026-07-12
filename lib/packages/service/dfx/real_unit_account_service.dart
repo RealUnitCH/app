@@ -29,16 +29,23 @@ class RealUnitAccountService {
     final body = jsonDecode(response.body) as Map<String, dynamic>;
     final accountSummary = AccountSummaryDto.fromJson(body);
 
-    return accountSummary.historicalBalances.map((h) {
-      final value = switch (currency) {
-        Currency.chf => h.valueChf,
-        Currency.eur => h.valueEur,
-      };
-      return PortfolioValuePoint(
-        value: BigInt.from((value ?? 0) * 100),
-        balance: BigInt.parse(h.balance),
-        time: h.timestamp,
-      );
-    }).toList();
+    return accountSummary.historicalBalances
+        .map((h) {
+          final value = switch (currency) {
+            Currency.chf => h.valueChf,
+            Currency.eur => h.valueEur,
+          };
+          // A null value means the API could not price this point (e.g. quote
+          // currently unavailable). Skip it rather than plotting it as 0, which
+          // would crash the chart line to zero and show a false -100% change.
+          if (value == null) return null;
+          return PortfolioValuePoint(
+            value: BigInt.from((value * 100).round()),
+            balance: BigInt.parse(h.balance),
+            time: h.timestamp,
+          );
+        })
+        .whereType<PortfolioValuePoint>()
+        .toList();
   }
 }

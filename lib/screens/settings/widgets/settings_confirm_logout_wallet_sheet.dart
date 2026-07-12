@@ -56,33 +56,55 @@ class _SettingsConfirmLogoutWalletSheetState extends State<SettingsConfirmLogout
                   ),
                 ),
                 const SizedBox(height: 28),
-                Row(
-                  spacing: 12,
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: Checkbox(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
+                // The whole checkbox row is wrapped in a single Semantics node
+                // with a stable `identifier` so Maestro can target it via
+                // `tapOn: id:` on iOS (handbook flow 25). `toggled` mirrors
+                // the checkbox state so the tap-target is treated as a
+                // checkbox in the a11y tree. The opaque GestureDetector
+                // enlarges the tap surface to the full row — same UX as
+                // the native iOS pattern — which means a missed-by-a-pixel
+                // coordinate tap (XCUITest tap-loss on Apple Silicon +
+                // iOS 26, mobile-dev-inc/maestro#3137) still toggles the
+                // box. AbsorbPointer on the inner Checkbox lets the outer
+                // GestureDetector own every hit-test, so we don't run the
+                // toggle twice when the tap happens directly on the box.
+                Semantics(
+                  identifier: 'wallet-logout-confirm-checkbox',
+                  toggled: isChecked,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => setState(() => isChecked = !isChecked),
+                    child: Row(
+                      spacing: 12,
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: AbsorbPointer(
+                            child: Checkbox(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              checkColor: RealUnitColors.basic.white,
+                              activeColor: RealUnitColors.green,
+                              value: isChecked,
+                              onChanged: (value) => setState(() => isChecked = value ?? false),
+                            ),
+                          ),
                         ),
-                        checkColor: RealUnitColors.basic.white,
-                        activeColor: RealUnitColors.green,
-                        value: isChecked,
-                        onChanged: (value) => setState(() => isChecked = value ?? false),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        S.of(context).realunitWalletLogoutCheck,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.black,
-                          height: 16 / 12,
+                        Expanded(
+                          child: Text(
+                            S.of(context).realunitWalletLogoutCheck,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black,
+                              height: 16 / 12,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
                 const SizedBox(height: 16.0),
                 Row(
@@ -98,7 +120,7 @@ class _SettingsConfirmLogoutWalletSheetState extends State<SettingsConfirmLogout
                     Expanded(
                       child: AppFilledButton(
                         onPressed: isChecked ? () => context.pop(true) : null,
-                        label: S.of(context).logout,
+                        label: S.of(context).reset,
                       ),
                     ),
                   ],

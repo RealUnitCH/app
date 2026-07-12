@@ -1,0 +1,363 @@
+name: Release
+
+# Single store-release pipeline. Triggers on every plain `vX.Y.Z` tag and
+# routes based on the PATCH component:
+#
+#   * PATCH == 0 (vX.Y.0)   → Production Release Candidate. Manually pushed
+#                             MAJOR/MINOR tag marking an App-Store-update
+#                             candidate. GitHub release is created with
+#                             prerelease: false.
+#   * PATCH >= 1 (vX.Y.Z)   → Internal Release. Tag produced by auto-tag on
+#                             develop. GitHub release is created with
+#                             prerelease: true.
+#
+# Both lanes ship to the same Test tracks (TestFlight + Play Internal).
+# Production promotion is still done manually in the store backends.
+#
+# The `concurrency: store-release` mutex serialises store uploads so a fast
+# back-to-back push of `vX.Y.0` followed by `vX.Y.1` cannot race for the
+# same store slot.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: store-release
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    name: Inspect tag and decide release lane
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      proceed: ${{ steps.check.outputs.proceed }}
+      is_prerelease: ${{ steps.check.outputs.is_prerelease }}
+    steps:
+      - name: Inspect tag
+        id: check
+        run: |
+          set -euo pipefail
+          TAG="${{ github.ref_name }}"
+          # Strict shape: vX.Y.Z with all parts numeric, no suffix.
+          if ! echo "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::notice::Tag $TAG is not a plain vX.Y.Z tag; skipping release."
+            echo "proceed=false" >> $GITHUB_OUTPUT
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          PATCH=$(echo "$TAG" | cut -d. -f3)
+          if [ "$PATCH" -eq 0 ]; then
+            echo "::notice::Tag $TAG has PATCH=0; running production-candidate release."
+            echo "proceed=true" >> $GITHUB_OUTPUT
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          else
+            echo "::notice::Tag $TAG has PATCH=$PATCH; running internal release."
+            echo "proceed=true" >> $GITHUB_OUTPUT
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          fi
+
+  store-metadata-preflight:
+    # The beta lanes push the store listing (metadata + screenshots) to the
+    # live consoles alongside the binary, so gate the whole release on the
+    # same FIXME/character-limit checks that store-metadata.yaml enforces —
+    # a tag must never ship a FIXME placeholder or oversize field.
+    needs: guard
+    if: needs.guard.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reject FIXME placeholders + enforce character limits
+        run: bash scripts/check-store-metadata.sh
+
+  android-deploy:
+    needs: [guard, store-metadata-preflight]
+    if: needs.guard.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # -------------------
+      # Setup Environment
+      # -------------------
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.6"
+          channel: "stable"
+          cache: true
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.5"
+
+      - name: Init GoMobile
+        run: |
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
+        working-directory: ${{ github.workspace }}
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+          working-directory: android
+
+      - name: Install Bundler
+        run: gem install bundler -v 2.7.2
+
+      - name: Install Gems
+        run: bundle _2.7.2_ install
+        working-directory: android
+
+      - name: Decode Secrets
+        env:
+          PLAY_STORE_JSON: ${{ secrets.PLAY_STORE_JSON_BASE64 }}
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          echo "$PLAY_STORE_JSON" | base64 --decode > android/credentials.json
+          echo "$ANDROID_KEYSTORE" | base64 --decode > android/app/upload-keystore.jks
+
+      - name: Create key.properties
+        env:
+          STORE_PWD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PWD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          cat <<EOF > android/key.properties
+          storeFile=upload-keystore.jks
+          storePassword=$STORE_PWD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PWD
+          EOF
+
+      - name: Install Flutter Dependencies
+        run: |
+          flutter pub get
+          dart run tool/generate_localization.dart
+          dart run tool/generate_release_info.dart --tag=${{ github.ref_name }}
+          dart run build_runner build --delete-conflicting-outputs
+        working-directory: ${{ github.workspace }}
+
+      # -------------------
+      # Build & Deploy
+      # -------------------
+
+      - name: Upload to Play Store
+        run: bundle exec fastlane beta
+        working-directory: android
+        env:
+          NEW_VERSION: ${{ github.ref_name }}
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/app/outputs/flutter-apk/realunit-*.apk
+
+  ios-deploy:
+    needs: [guard, store-metadata-preflight]
+    if: needs.guard.outputs.proceed == 'true'
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      # -------------------
+      # Setup Environment
+      # -------------------
+
+      - name: Setup SSH access for Fastlane Match
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.MATCH_SSH_KEY }}
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.6"
+          channel: "stable"
+          cache: true
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.5"
+
+      - name: Init GoMobile
+        run: |
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
+        working-directory: ${{ github.workspace }}
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+          working-directory: ios
+
+      - name: Install Bundler
+        run: gem install bundler -v 2.7.2
+
+      - name: Install Gems
+        run: bundle _2.7.2_ install
+        working-directory: ios
+
+      - name: Install Flutter Dependencies
+        run: |
+          flutter pub get
+          dart run tool/generate_localization.dart
+          dart run tool/generate_release_info.dart --tag=${{ github.ref_name }}
+          dart run build_runner build --delete-conflicting-outputs
+        working-directory: ${{ github.workspace }}
+
+      - name: Setup Pods (CocoaPods)
+        run: pod install --repo-update
+        working-directory: ios
+
+      - name: Setup App Store Connect API Key
+        run: |
+          # Use an absolute path for reliability
+          KEY_PATH="${{ github.workspace }}/AuthKey.p8"
+
+          # Create the .p8 file
+          echo "${{ secrets.APP_STORE_CONNECT_KEY }}" > "$KEY_PATH"
+
+          # Export Environment Variables GLOBALLY for all subsequent steps (including match)
+          echo "FASTLANE_APPLE_API_KEY_PATH=$KEY_PATH" >> $GITHUB_ENV
+          echo "FASTLANE_APPLE_API_KEY_ID=${{ secrets.APP_STORE_CONNECT_KEY_ID }}" >> $GITHUB_ENV
+          echo "FASTLANE_APPLE_API_ISSUER_ID=${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" >> $GITHUB_ENV
+          echo "MATCH_PASSWORD=${{ secrets.MATCH_PASSWORD }}" >> $GITHUB_ENV
+        env:
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+
+      # -------------------
+      # Build & Deploy
+      # -------------------
+
+      - name: Upload to TestFlight
+        run: bundle exec fastlane beta --verbose
+        working-directory: ios
+        env:
+          NEW_VERSION: ${{ github.ref_name }}
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: ios/realunit-*.ipa
+
+      # Remove the App Store Connect .p8 private key from the runner
+      # workspace once Fastlane has finished. Hosted runners are
+      # ephemeral so the file would be discarded anyway when the VM
+      # is recycled, but `actions/upload-artifact` above globs from
+      # the workspace and a stray `AuthKey.p8` would otherwise be
+      # eligible for inclusion in any future artifact whose `path`
+      # widened. Defence-in-depth — costs nothing.
+      - name: Clean up App Store Connect key
+        if: always()
+        run: rm -f "${FASTLANE_APPLE_API_KEY_PATH:-${{ github.workspace }}/AuthKey.p8}" || true
+
+  github-release:
+    needs: [guard, android-deploy, ios-deploy]
+    if: needs.guard.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate Changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v6.0.1
+        with:
+          configurationJson: |
+            {
+              "template": "#{{CHANGELOG}}",
+              "categories": [
+                {
+                  "title": "## Features",
+                  "labels": ["feat", "feature"]
+                },
+                {
+                  "title": "## Fixes",
+                  "labels": ["fix", "bug"]
+                },
+                {
+                  "title": "## Refactor",
+                  "labels": ["refactor"]
+                },
+                {
+                  "title": "## Others",
+                  "labels": ["chore"]
+                },
+                {
+                  "title": "## Not labelled",
+                  "labels": []
+                }
+              ],
+              "label_extractor": [
+                {
+                  "method": "match",
+                  "pattern": "^([\\w\\-]+)",
+                  "target": "$1",
+                  "on_property": "title"
+                }
+              ]
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: android-apk
+          path: .
+
+      - name: Download iOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-ipa
+          path: .
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          files: |
+            realunit-*.apk
+            realunit-*.ipa
+          generate_release_notes: false
+          draft: false
+          prerelease: ${{ needs.guard.outputs.is_prerelease == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

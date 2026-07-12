@@ -1,7 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:no_screenshot/no_screenshot.dart';
+import 'package:realunit_wallet/packages/utils/screenshot_guard.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/settings_seed/bloc/settings_seed_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -18,7 +19,7 @@ class SettingsSeedView extends StatefulWidget {
 class _SettingsSeedViewState extends State<SettingsSeedView> {
   @override
   void initState() {
-    NoScreenshot.instance.screenshotOff();
+    ScreenshotGuard.acquire();
     super.initState();
   }
 
@@ -87,10 +88,20 @@ class _SettingsSeedViewState extends State<SettingsSeedView> {
               const SizedBox(height: 16),
               BlocBuilder<SettingsSeedCubit, SettingsSeedState>(
                 builder: (context, state) {
+                  // The cubit starts with an empty seed when the wallet is a
+                  // SoftwareViewWallet (the default production state after
+                  // #461) and only fills it in after the async unlock. Until
+                  // the 12 words are in memory, MnemonicReadOnlyField's
+                  // `length == 12` assert would crash this screen — show a
+                  // spinner instead and rebuild once the seed lands.
+                  final wordCount = state.seed.split(' ').where((w) => w.isNotEmpty).length;
+                  if (wordCount != 12) {
+                    return const Center(child: CupertinoActivityIndicator());
+                  }
                   return SeedBlurCard(
-                    seed: context.read<SettingsSeedCubit>().state.seed,
+                    seed: state.seed,
                     onTap: () => context.read<SettingsSeedCubit>().toggleShowSeed(),
-                    blur: !context.read<SettingsSeedCubit>().state.showSeed,
+                    blur: !state.showSeed,
                   );
                 },
               ),
@@ -103,7 +114,7 @@ class _SettingsSeedViewState extends State<SettingsSeedView> {
 
   @override
   void dispose() {
-    NoScreenshot.instance.screenshotOn();
+    ScreenshotGuard.release();
     super.dispose();
   }
 }

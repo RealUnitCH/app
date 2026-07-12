@@ -25,5 +25,14 @@ void main() {
 
     test('should fail to parse .1, no whole number',
         () => expect(() => parseFixed('.1', 6), throwsException));
+
+    test('empty string throws', () => expect(() => parseFixed('', 6), throwsA(anything)));
+
+    test('multiple decimal points throws',
+        () => expect(() => parseFixed('1.2.3', 6), throwsA(isA<Exception>())));
+
+    test('just a dot throws', () => expect(() => parseFixed('.', 6), throwsA(isA<Exception>())));
+
+    test('zero returns BigInt.zero', () => expect(parseFixed('0', 6), BigInt.zero));
   });
 }

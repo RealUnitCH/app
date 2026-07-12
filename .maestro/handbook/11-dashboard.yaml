@@ -1,0 +1,37 @@
+# Tier-3 navigation smoke. The handbook screenshot for this flow is the
+# visual-regression Golden mapped in scripts/assemble-handbook-screenshots.sh;
+# this flow's diagnostic capture lands in build/handbook-captures/11-dashboard.png.
+# Skip biometric prompt if visible; land on dashboard. Backend calls
+# (portfolio, price, history) may still be in-flight; we use the
+# "RealUnit kaufen" action button as the readiness signal — once it
+# renders, the page layout is final. The skip tap is conditional
+# because the biometric prompt only appears with Face ID enrolled on
+# the simulator (see 10-biometric-prompt.yaml header). On CI runners
+# without enrollment the app jumps straight to the dashboard and
+# there is no "Überspringen" button to tap.
+#
+# When the prompt is present the skip tap is gated on the dashboard not
+# yet showing and re-tapped if it was silently dropped (Maestro/XCUITest
+# tap-loss on Apple Silicon + iOS 26, mobile-dev-inc/maestro#3137). The
+# gate stops the loop the instant the dashboard appears, so surplus
+# iterations no-op.
+appId: swiss.realunit.app
+---
+- runFlow:
+    when:
+      visible: 'Überspringen'
+    commands:
+      - repeat:
+          times: 3
+          commands:
+            - runFlow:
+                when:
+                  notVisible: 'RealUnit kaufen'
+                commands:
+                  - tapOn:
+                      text: 'Überspringen'
+                      optional: true
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: 'RealUnit kaufen'
+    timeout: 30000

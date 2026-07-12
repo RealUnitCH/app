@@ -11,9 +11,16 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/handlebars.dart';
 
 class ConnectBitboxView extends StatelessWidget {
-  const ConnectBitboxView({super.key, required this.onFinish});
+  const ConnectBitboxView({super.key, required this.onFinish, this.onCancel});
 
   final void Function(AWallet wallet) onFinish;
+
+  /// Overrides the default cancel handler. Bottom-sheet hosts leave this null so
+  /// cancelling pops the sheet (`context.pop`). Full-page hosts reached via
+  /// `goNamed` (e.g. [BitboxAddressRecoveryPage]) must pass a safe callback —
+  /// there `context.pop` throws `GoError` because the recovery route is the only
+  /// stack entry and `canPop()` is false.
+  final VoidCallback? onCancel;
 
   @override
   Widget build(BuildContext context) => SafeArea(
@@ -64,7 +71,7 @@ class ConnectBitboxView extends StatelessWidget {
                       title: S.of(context).connectBitboxTitle,
                       imagePath: 'assets/images/illustrations/bitbox_connected.svg',
                       onConfirm: context.read<ConnectBitboxCubit>().confirmPairing,
-                      onCancel: context.pop,
+                      onCancel: onCancel ?? context.pop,
                       child: Column(
                         spacing: 16,
                         children: [
@@ -87,6 +94,13 @@ class ConnectBitboxView extends StatelessWidget {
                               style: Theme.of(context).textTheme.headlineSmall,
                             ),
                           ),
+                          Text(
+                            S.of(context).connectBitboxSignInHint,
+                            textAlign: .center,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: RealUnitColors.neutral500,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -107,6 +121,53 @@ class ConnectBitboxView extends StatelessWidget {
                         ],
                       ),
                     ),
+                    BitboxNotInitialized() => ConnectContent(
+                      title: S.of(context).connectBitboxNotInitializedTitle,
+                      imagePath: 'assets/images/illustrations/bitbox_connect.svg',
+                      onConfirm: () => context.read<ConnectBitboxCubit>().recheckDeviceStatus(),
+                      onCancel: onCancel ?? context.pop,
+                      confirmLabel: S.of(context).retry,
+                      child: Text(
+                        S.of(context).connectBitboxNotInitialized,
+                        textAlign: .center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: RealUnitColors.neutral500,
+                        ),
+                      ),
+                    ),
+                    BitboxCapturingSignature() => ConnectContent(
+                      title: S.of(context).connectBitboxSignatureCapturingTitle,
+                      imagePath: 'assets/images/illustrations/bitbox_connected.svg',
+                      child: Column(
+                        spacing: 40,
+                        children: [
+                          Text(
+                            S.of(context).connectBitboxSignatureCapturing,
+                            textAlign: .center,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: RealUnitColors.neutral500,
+                            ),
+                          ),
+                          const CupertinoActivityIndicator(),
+                        ],
+                      ),
+                    ),
+                    BitboxSignatureFailed() => ConnectContent(
+                      title: S.of(context).connectBitboxSignatureFailedTitle,
+                      imagePath: 'assets/images/illustrations/bitbox_connected.svg',
+                      onConfirm: () => context.read<ConnectBitboxCubit>().retrySignatureCapture(),
+                      onCancel: () =>
+                          context.read<ConnectBitboxCubit>().continueWithoutSignature(),
+                      confirmLabel: S.of(context).retry,
+                      cancelLabel: S.of(context).continueAnyway,
+                      child: Text(
+                        S.of(context).connectBitboxSignatureFailed,
+                        textAlign: .center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: RealUnitColors.neutral500,
+                        ),
+                      ),
+                    ),
                     BitboxConnected() => ConnectContent(
                       title: S.of(context).connected,
                       imagePath: 'assets/images/illustrations/bitbox_connected.svg',
@@ -122,7 +183,7 @@ class ConnectBitboxView extends StatelessWidget {
                     _ => ConnectContent(
                       title: S.of(context).connectBitboxTitle,
                       imagePath: 'assets/images/illustrations/bitbox_connect.svg',
-                      onCancel: context.pop,
+                      onCancel: onCancel ?? context.pop,
                       child: Text(
                         DeviceInfo.instance.isIOS
                             ? S.of(context).connectBitboxContentIos

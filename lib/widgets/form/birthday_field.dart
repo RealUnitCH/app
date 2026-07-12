@@ -19,9 +19,11 @@ class _BirthdayFieldState extends State<BirthdayField> {
   String? selectedMonth;
   String? selectedYear;
 
+  static const _yearsBack = 140;
+
   List<String> days = List.generate(31, (i) => '${i + 1}'.padLeft(2, '0'));
   List<String> months = List.generate(12, (i) => '${i + 1}'.padLeft(2, '0'));
-  List<String> years = List.generate(82, (i) => '${DateTime.now().year - i - 18}');
+  List<String> years = List.generate(_yearsBack + 1, (i) => '${DateTime.now().year - i}');
 
   @override
   void initState() {
@@ -29,9 +31,13 @@ class _BirthdayFieldState extends State<BirthdayField> {
     final value = widget.controller.value;
     if (value != null) {
       final parts = value.split('-');
-      selectedYear = parts[0];
-      selectedMonth = parts[1];
-      selectedDay = parts[2];
+      if (parts.length == 3) {
+        // Only seed values the dropdowns actually offer; a value outside the
+        // item list trips DropdownButtonFormField's single-match assert.
+        if (years.contains(parts[0])) selectedYear = parts[0];
+        if (months.contains(parts[1])) selectedMonth = parts[1];
+        if (days.contains(parts[2])) selectedDay = parts[2];
+      }
     }
   }
 
@@ -40,6 +46,18 @@ class _BirthdayFieldState extends State<BirthdayField> {
       final value = '$selectedYear-$selectedMonth-$selectedDay';
       widget.controller.value = value;
     }
+  }
+
+  // False for impossible combinations like 31.02. (DateTime rolls the
+  // overflow into the next month) and for dates after today.
+  bool get isValidBirthdate {
+    if (selectedDay == null || selectedMonth == null || selectedYear == null) return true;
+    final date = DateTime(
+      int.parse(selectedYear!),
+      int.parse(selectedMonth!),
+      int.parse(selectedDay!),
+    );
+    return date.month == int.parse(selectedMonth!) && !date.isAfter(DateTime.now());
   }
 
   @override
@@ -74,7 +92,7 @@ class _BirthdayFieldState extends State<BirthdayField> {
                   setState(() => selectedDay = v);
                   updateBirthday();
                 },
-                validator: (v) => v == null ? '' : null,
+                validator: (v) => v == null || !isValidBirthdate ? '' : null,
               ),
             ),
             Expanded(

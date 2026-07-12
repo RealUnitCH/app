@@ -3,38 +3,29 @@ import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
 part 'kyc_state.dart';
 
 class KycCubit extends Cubit<KycState> {
-  static const _requiredStepNames = {
-    KycStepName.contactData,
-    KycStepName.nationalityData,
-    KycStepName.ident,
-    KycStepName.financialData,
-    KycStepName.dfxApproval,
-  };
-
-  static const _minLevelForActions = 30;
   static const _checkKycTimeout = Duration(seconds: 30);
 
   final DfxKycService _kycService;
   final RealUnitRegistrationService _registrationService;
-  final int _requiredLevel;
+  final AppStore _appStore;
 
   bool _legalDisclaimerAccepted = false;
   bool _emailRegistrationAttempted = false;
-
-  // Per-cubit-instance gate. Reset on every KYC entry because `KycPageManager`
-  // creates a fresh `KycCubit` via `BlocProvider(create:)`, so each entry
-  // forces a fresh hardware-wallet confirmation before sensitive steps.
-  bool _bitboxConfirmed = false;
+  String? _kycContext;
 
   // `Future.timeout` does not cancel the underlying work, so a late HTTP
   // response from an earlier call can still resume and emit state after a
@@ -45,14 +36,15 @@ class KycCubit extends Cubit<KycState> {
 
   KycCubit(
     DfxKycService kycService,
-    RealUnitRegistrationService registrationService, {
-    int? requiredLevel,
-  }) : _kycService = kycService,
-       _registrationService = registrationService,
-       _requiredLevel = requiredLevel ?? _minLevelForActions,
-       super(const KycInitial());
+    RealUnitRegistrationService registrationService,
+    AppStore appStore,
+  ) : _kycService = kycService,
+      _registrationService = registrationService,
+      _appStore = appStore,
+      super(const KycInitial());
 
-  Future<void> checkKyc() async {
+  Future<void> checkKyc({String? context}) async {
+    _kycContext = context ?? _kycContext;
     final generation = ++_runGeneration;
     try {
       await _runCheckKyc(generation).timeout(_checkKycTimeout);
@@ -71,7 +63,7 @@ class KycCubit extends Cubit<KycState> {
       emit(const KycLoading());
 
       final results = await Future.wait([
-        _kycService.getKycStatus(),
+        _kycService.getKycStatus(context: _kycContext),
         _kycService.getUser(),
       ]);
 
@@ -86,8 +78,9 @@ class KycCubit extends Cubit<KycState> {
         return;
       }
 
-      // edge case, where email exists but level is <10. In this case email is automatically registered for RealUnit
-      if (user.mail != null && level < 10) {
+      // Edge case: email exists but level is < 10. Backend hasn't bumped the
+      // level after a prior auto-registration attempt — re-fire it once.
+      if (level < 10) {
         if (_emailRegistrationAttempted) {
           // Backend did not bump the level after registration; surface the
           // current state instead of recursing forever.
@@ -101,58 +94,135 @@ class KycCubit extends Cubit<KycState> {
         return;
       }
 
-      // Disclaimer + form (name/address) + EIP-712 13-step sign always
-      // precede every state past the email step, even when the user is
-      // already at `>= requiredLevel`. The hardware-wallet ceremony is the
-      // security gate, not the backend KYC level — without the sign a
-      // returning user with a high level would otherwise be granted
-      // sensitive actions on this device without ever touching the BitBox.
+      // Disclaimer is a local session gate that must precede every sensitive
+      // call. It does not encode business routing — the API does — it just
+      // enforces a per-session ceremony on this device before the cubit
+      // forwards anything that requires a signed user identity.
       if (!_legalDisclaimerAccepted) {
         emit(const KycSuccess(currentStep: KycStep.legalDisclaimer));
         return;
       }
-      if (!_bitboxConfirmed) {
-        emit(const KycSuccess(currentStep: KycStep.registration));
+
+      // The server-side registration state is the single source of truth for
+      // whether this wallet needs a full registration form, a one-tap
+      // "add wallet" confirmation, or can skip the step entirely. Replaces
+      // the previous client-side `_registrationSignProduced` flag — the cubit
+      // re-fetches state after every successful registration round-trip and
+      // routes from whatever the API now reports.
+      final registrationInfo = await _registrationService.getRegistrationInfo();
+      if (isClosed || generation != _runGeneration) return;
+
+      // Signing capability is a physical property of the wallet implementation
+      // (debug mode is address-only, cannot produce EIP-712 signatures) and
+      // cannot be derived from the server — see CONTRIBUTING.md "API as
+      // Decision Authority" exception list for "physical security boundary"
+      // gates. Surface a tailored failure instead of letting the sign call
+      // throw `UnsupportedError` deep inside the registration flow.
+      if (_appStore.wallet.walletType == WalletType.debug &&
+          (registrationInfo.state == RealUnitRegistrationState.newRegistration ||
+              registrationInfo.state == RealUnitRegistrationState.addWallet)) {
+        emit(const KycSignatureUnsupportedFailure());
         return;
       }
 
-      if (level < _requiredLevel) {
-        final hasMergeRequest = kycStatus.kycSteps.any(
-          (step) => step.reason == KycStepReason.accountMergeRequested,
-        );
-        if (hasMergeRequest) {
-          emit(const KycAccountMergeRequested());
-          return;
-        }
-
-        final requiredSteps = kycStatus.kycSteps.where(
-          (step) => _requiredStepNames.contains(step.name),
-        );
-
-        final pendingStep = requiredSteps.firstWhereOrNull(
-          (step) => step.status == KycStepStatus.inReview,
-        );
-
-        if (pendingStep != null) {
-          final step = _mapStepName(pendingStep.name);
-          if (step != null) {
-            emit(KycPending(step));
-          } else {
-            emit(KycUnsupportedStepFailure(pendingStep.name));
+      switch (registrationInfo.state) {
+        case RealUnitRegistrationState.alreadyRegistered:
+          // The API owns the confirmation gate. When it reports the account
+          // e-mail is not yet confirmed, route to the confirm step. `null`
+          // (pre-rollout backend / grandfathered account) and `true` both mean
+          // "no gate" — proceed exactly as before. Purely additive, API-driven;
+          // see CONTRIBUTING.md "API as Decision Authority" (legacy tolerance).
+          if (registrationInfo.emailConfirmed == false) {
+            emit(const KycSuccess(currentStep: KycStep.confirmEmail));
+            return;
           }
+          // Fall through to the processStatus dispatch below — the sign
+          // gate is satisfied and the user proceeds to the next KYC step.
+          break;
+        case RealUnitRegistrationState.addWallet:
+          // Forward the server-supplied userData so `KycLinkWalletPage` does
+          // not have to re-fetch — see CONTRIBUTING.md "Single round-trip per
+          // decision". The backend always populates this for `AddWallet`.
+          emit(
+            KycSuccess(
+              currentStep: KycStep.linkWallet,
+              realUnitUserData: registrationInfo.realUnitUserDataDto,
+            ),
+          );
           return;
-        }
+        case RealUnitRegistrationState.newRegistration:
+          // userData may be `null` for first-time registrations (no prior
+          // record to pre-fill from); `KycRegistrationPage` renders an empty
+          // form in that case.
+          emit(
+            KycSuccess(
+              currentStep: KycStep.registration,
+              realUnitUserData: registrationInfo.realUnitUserDataDto,
+            ),
+          );
+          return;
+      }
 
-        await _continueKyc(generation);
+      // Account-merge invitation is still surfaced from the step list because
+      // it is delivered as a step `reason`, not as `currentStep`. Render
+      // verbatim what the backend tagged.
+      final hasMergeRequest = kycStatus.kycSteps.any(
+        (step) => step.reason == KycStepReason.accountMergeRequested,
+      );
+      if (hasMergeRequest) {
+        emit(const KycAccountMergeRequested());
         return;
       }
 
-      emit(const KycCompleted());
+      // From here on the API is the authority. Render `processStatus` plus
+      // the matching `currentStep` from the session response; no local
+      // iteration over `kycSteps`, no local "what counts as actionable"
+      // set, no local level threshold.
+      switch (kycStatus.processStatus) {
+        case KycProcessStatus.completed:
+          emit(const KycCompleted());
+          return;
+        case KycProcessStatus.failed:
+          emit(const KycFailure('KYC terminated'));
+          return;
+        case KycProcessStatus.pendingReview:
+          // PendingReview is authoritative: the API says "do not let the user
+          // through". Never collapse this branch to `KycCompleted` — that
+          // would be the same class of misroute, just in the opposite
+          // direction (API: review pending → app: completed). If we cannot
+          // identify a required step we surface `KycUnsupportedStepFailure`
+          // so the user gets an explicit error instead of a silent dashboard
+          // handoff.
+          final pending = kycStatus.kycSteps.firstWhereOrNull(
+            (s) => s.isRequired && s.status != KycStepStatus.completed,
+          );
+          if (pending == null) {
+            emit(const KycUnsupportedStepFailure(null));
+            return;
+          }
+          final step = _mapStepName(pending.name);
+          if (step == null) {
+            emit(KycUnsupportedStepFailure(pending.name));
+            return;
+          }
+          emit(KycPending(step));
+          return;
+        case KycProcessStatus.inProgress:
+          await _continueKyc(generation);
+          return;
+        case KycProcessStatus.mergeProcessing:
+          // The user confirmed a merge and the backend is still processing it.
+          // Render a waiting state; do not treat the polling timeout as failure.
+          emit(const KycMergeProcessing());
+          return;
+      }
     } on ApiException catch (e) {
       if (isClosed || generation != _runGeneration) return;
-      // API returns 403 / code TFA_REQUIRED when 2FA verification is required
-      // before proceeding.
-      if (e.statusCode == 403 || e.code == 'TFA_REQUIRED') {
+      // The body `code` is the authoritative signal — `TfaRequiredException`
+      // on the API sets `{code: 'TFA_REQUIRED', level, message}` and happens
+      // to use HTTP 403 as transport. Matching on status alone would also
+      // capture unrelated forbidden errors and misroute them to 2FA.
+      if (e.code == 'TFA_REQUIRED') {
         emit(const KycSuccess(currentStep: KycStep.twoFa));
       } else {
         rethrow;
@@ -167,15 +237,23 @@ class KycCubit extends Cubit<KycState> {
     _legalDisclaimerAccepted = true;
   }
 
-  void markBitboxConfirmed() {
-    _bitboxConfirmed = true;
-  }
-
   /// should only be called after realunit registration was completed
   Future<void> _continueKyc(int generation) async {
-    final kycStatus = await _kycService.continueKyc();
+    final kycStatus = await _kycService.continueKyc(context: _kycContext);
     if (isClosed || generation != _runGeneration) return;
-    final currentStep = kycStatus.kycSteps.firstWhere((step) => step.isCurrent);
+
+    // `KycSessionDto.currentStep` is the authoritative source. Never
+    // iterate `kycSteps` here: the local filter is the same anti-pattern
+    // just eliminated in `_runCheckKyc`. If the session response has no
+    // `currentStep` we surface
+    // `KycUnsupportedStepFailure` instead of throwing a bare `StateError`
+    // through the outer catch (which used to land as raw stack trace text
+    // in the i18n message).
+    final currentStep = kycStatus.currentStep;
+    if (currentStep == null) {
+      emit(const KycUnsupportedStepFailure(null));
+      return;
+    }
 
     final kycStep = _mapStepName(currentStep.name);
     if (kycStep == null) {
@@ -186,7 +264,7 @@ class KycCubit extends Cubit<KycState> {
     emit(
       KycSuccess(
         currentStep: kycStep,
-        urlOrToken: kycStatus.currentStep?.session.url,
+        urlOrToken: currentStep.session.url,
       ),
     );
   }

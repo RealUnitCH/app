@@ -19,13 +19,16 @@ class SettingsEditNameCubit extends Cubit<SettingsEditNameState> {
       emit(const SettingsEditNameLoading());
       final session = await _kycService.startStep(KycStepName.nameChange);
 
-      if (session.currentStep?.status == KycStepStatus.inReview) {
+      // Per W3.2: the parent page only invokes this cubit when
+      // `UserCapabilitiesDto.canEditName` is true, so an in-review state
+      // is no longer reachable here. The pending branch is kept defensive
+      // (race between the capability check and the start-step call) but
+      // it is no longer the primary gating mechanism.
+      final url = session.currentStep?.session.url;
+      if (url == null) {
         emit(const SettingsEditNamePending());
         return;
       }
-
-      final url = session.currentStep?.session.url;
-      if (url == null) throw Exception('No session URL returned');
       emit(SettingsEditNameReady(url));
     } catch (e) {
       emit(SettingsEditNameFailure(e.toString()));

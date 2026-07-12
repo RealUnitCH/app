@@ -101,7 +101,7 @@ class PortfolioChart extends StatelessWidget {
           final price = touchedSpot.y;
           return LineTooltipItem(
             '${date.day}.${date.month}.${date.year}\n'
-            '${formatFixed(BigInt.from(price * 100), 2)}',
+            '${formatFixed(BigInt.from((price * 100).round()), 2)}',
             const TextStyle(
               color: RealUnitColors.neutral500,
               fontSize: 12,

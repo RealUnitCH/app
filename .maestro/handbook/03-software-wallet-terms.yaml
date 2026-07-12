@@ -1,0 +1,33 @@
+# Tier-3 navigation smoke. The handbook screenshot for this flow is the
+# visual-regression Golden mapped in scripts/assemble-handbook-screenshots.sh;
+# this flow's diagnostic capture lands in build/handbook-captures/03-software-wallet-terms.png.
+#
+# The tap is gated on the next screen not yet showing and re-tapped if it
+# was silently dropped (Maestro/XCUITest tap-loss on Apple Silicon + iOS 26,
+# mobile-dev-inc/maestro#3137). The gate stops the loop the instant the
+# screen changes, so surplus iterations no-op.
+#
+# Welcome cards are targeted by Semantics id (see
+# lib/screens/welcome/welcome_page.dart) instead of regex text-matching:
+# both step groups stay in the widget tree at all times (AnimatedSlide
+# translates the off-screen group out of view but doesn't remove it), so
+# regex text checks against card titles are unreliable across copy
+# changes and animation half-states.
+appId: swiss.realunit.app
+---
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              id: 'welcome-create-wallet'
+          commands:
+            - tapOn:
+                id: 'welcome-software-wallet'
+                optional: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: 'welcome-create-wallet'
+    timeout: 30000

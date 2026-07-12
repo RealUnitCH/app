@@ -1,26 +1,73 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/models/balance.dart';
+import 'package:realunit_wallet/packages/repository/supported_fiat_repository.dart';
 import 'package:realunit_wallet/packages/utils/asset_logo.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_balance/sell_balance_cubit.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_converter/sell_converter_cubit.dart';
 import 'package:realunit_wallet/screens/sell/widgets/sell_max_amount_button.dart';
+import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
-class SellConverter extends StatelessWidget {
+class SellConverter extends StatefulWidget {
   const SellConverter({
     super.key,
-    required TextEditingController amountController,
-    required TextEditingController resultController,
-  }) : _amountController = amountController,
-       _resultController = resultController;
+    required this.amountController,
+    required this.resultController,
+  });
 
-  final TextEditingController _amountController;
-  final TextEditingController _resultController;
+  final TextEditingController amountController;
+  final TextEditingController resultController;
+
+  @override
+  State<SellConverter> createState() => _SellConverterState();
+}
+
+class _SellConverterState extends State<SellConverter> {
+  TextEditingController get _amountController => widget.amountController;
+  TextEditingController get _resultController => widget.resultController;
+
+  // Backend-authoritative list of sellable currencies for the picker.
+  // Loaded once per session via `SupportedFiatRepository`.
+  List<Currency> _sellable = const [];
+  bool _loadFailed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    getIt<SupportedFiatRepository>().getSellable().then(
+      (currencies) {
+        if (mounted) setState(() => _sellable = currencies);
+      },
+      onError: (Object error, StackTrace stack) {
+        developer.log(
+          'SellConverter: failed to load sellable currencies — picker will '
+          'be disabled and the user is notified',
+          name: 'realunit_wallet.sell',
+          error: error,
+          stackTrace: stack,
+          level: 1000, // SEVERE
+        );
+        if (!mounted) return;
+        setState(() => _loadFailed = true);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(S.of(context).settingsCurrencyLoadFailed),
+              backgroundColor: RealUnitColors.status.red600,
+            ),
+          );
+        });
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -193,12 +240,16 @@ class SellConverter extends StatelessWidget {
                     child: BlocBuilder<SellConverterCubit, SellConverterState>(
                       builder: (context, state) {
                         return PopupMenuButton<Currency>(
+                          key: _loadFailed
+                              ? const Key('sell-currency-picker-disabled')
+                              : const Key('sell-currency-picker'),
+                          enabled: !_loadFailed && _sellable.isNotEmpty,
                           initialValue: state.currency,
                           onSelected: (currency) {
                             if (currency == state.currency) return;
                             context.read<SellConverterCubit>().onCurrencyChanged(currency);
                           },
-                          itemBuilder: (context) => Currency.values.map((currency) {
+                          itemBuilder: (context) => _sellable.map((currency) {
                             return PopupMenuItem(
                               value: currency,
                               child: Column(

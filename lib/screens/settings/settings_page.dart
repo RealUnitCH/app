@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/generated/release_info.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
@@ -52,13 +54,14 @@ class SettingsPage extends StatelessWidget {
                   selectedOption: state.currency.code,
                   onTap: () => context.pushNamed(SettingsRoutes.currencies),
                 ),
-                SettingOption(
-                  title: S.of(context).settingsNetwork,
-                  leading: const NodesIcon(size: 24),
-                  trailing: _forwardIcon,
-                  selectedOption: state.networkMode.localizedName(context),
-                  onTap: () => context.pushNamed(SettingsRoutes.network),
-                ),
+                if (kDebugMode)
+                  SettingOption(
+                    title: S.of(context).settingsNetwork,
+                    leading: const NodesIcon(size: 24),
+                    trailing: _forwardIcon,
+                    selectedOption: state.networkMode.localizedName(context),
+                    onTap: () => context.pushNamed(SettingsRoutes.network),
+                  ),
                 SettingOption(
                   title: S.of(context).settingsTaxReport,
                   leading: const DocumentReportIcon(size: 24),
@@ -89,6 +92,16 @@ class SettingsPage extends StatelessWidget {
                   ),
                   trailing: _forwardIcon,
                   onTap: () => context.pushNamed(SettingsRoutes.contact),
+                ),
+                SettingOption(
+                  title: S.of(context).settingsSecurity,
+                  leading: const Icon(
+                    Icons.shield_outlined,
+                    size: 24,
+                    color: RealUnitColors.realUnitBlue,
+                  ),
+                  trailing: _forwardIcon,
+                  onTap: () => context.pushNamed(SettingsRoutes.security),
                 ),
                 SettingOption(
                   title: S.of(context).walletAddress,
@@ -139,6 +152,16 @@ class SettingsPage extends StatelessWidget {
                 },
               ),
             ],
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+            child: Text(
+              S.of(context).settingsAppVersion(releaseTag),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: RealUnitColors.neutral500,
+              ),
+            ),
           ),
         ],
       ),

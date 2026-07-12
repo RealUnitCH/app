@@ -1,0 +1,45 @@
+# Tier-3 navigation smoke. The handbook screenshot for this flow is the
+# visual-regression Golden mapped in scripts/assemble-handbook-screenshots.sh;
+# this flow's diagnostic capture lands in build/handbook-captures/24-settings-delete-wallet.png.
+# Continues from 23-settings-contact (no clearState). The contact page is
+# pushed on top of the Settings menu, so we tap back to the menu, then open
+# "Wallet zurücksetzen". That entry does not navigate to a new page —
+# it presents the SettingsConfirmLogoutWalletSheet modal, the confirmation
+# step for resetting the wallet, which removes the wallet from the device and returns
+# to onboarding. This flow documents that sheet: it stops on the modal and does NOT
+# tick the confirmation checkbox or tap "Zurücksetzen".
+#
+# Both taps (back to the Settings menu, then opening the reset entry) are
+# gated on their target not yet showing and re-tapped if one was silently
+# dropped (Maestro/XCUITest tap-loss on Apple Silicon + iOS 26,
+# mobile-dev-inc/maestro#3137). Each gate stops its loop the instant the
+# sheet/screen changes, so surplus iterations no-op.
+appId: swiss.realunit.app
+---
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible: 'Einstellungen'
+          commands:
+            - tapOn:
+                point: 8%,8%
+                optional: true
+- waitForAnimationToEnd
+- repeat:
+    times: 3
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              text: '.*RealUnit Wallet zurücksetzen.*'
+          commands:
+            - tapOn:
+                text: '.*Wallet zurücksetzen.*'
+                optional: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: '.*RealUnit Wallet zurücksetzen.*'
+    timeout: 30000

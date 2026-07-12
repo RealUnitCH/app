@@ -1,0 +1,27 @@
+# Tier-3 navigation smoke. The handbook screenshot for this flow is the
+# visual-regression Golden mapped in scripts/assemble-handbook-screenshots.sh;
+# this flow's diagnostic capture lands in build/handbook-captures/18-settings-seed-hidden.png.
+# After entering the PIN, the settings seed page renders the same SeedBlurCard
+# used during onboarding (BackdropFilter — only xcrun can capture it).
+#
+# Each tap is gated on the seed page not yet showing and re-tapped if a
+# digit was silently dropped (Maestro/XCUITest tap-loss on Apple Silicon +
+# iOS 26, mobile-dev-inc/maestro#3137).
+appId: swiss.realunit.app
+---
+- repeat:
+    times: 12
+    commands:
+      - runFlow:
+          when:
+            notVisible:
+              text: '.*Wiederherstellungs.*'
+          commands:
+            - tapOn:
+                text: '1'
+                optional: true
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      text: '.*Wiederherstellungs.*'
+    timeout: 30000

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,8 @@ import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
+import 'package:realunit_wallet/packages/repository/supported_fiat_repository.dart';
+import 'package:realunit_wallet/packages/repository/supported_language_repository.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
@@ -19,7 +22,9 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_fiat_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/dfx_language_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_price_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
@@ -28,7 +33,6 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/settings_service.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
@@ -86,6 +90,12 @@ Future<void> finishSetup(String encryptionKey) async {
   await setupBlocs();
 
   await setupDefaultAssets();
+
+  // `setupDefaultAssets` has now opened the SQLCipher file, so it exists on
+  // disk. Keep the encrypted seed database out of the iOS iCloud/iTunes backup
+  // (#298 / NEW-20). Best-effort and idempotent; `unawaited` so a platform
+  // hiccup surfaces in the zone instead of blocking boot. No-op off iOS.
+  unawaited(AppDatabase.excludeDatabaseFromBackup());
 }
 
 void setupRepositories() {
@@ -119,40 +129,67 @@ void setupServices() {
     ),
   );
   getIt.registerSingleton(BitboxService());
-  getIt.registerFactory(
+  getIt.registerLazySingleton(
     () => WalletService(
       getIt<BitboxService>(),
       getIt<WalletRepository>(),
       getIt<SettingsRepository>(),
+      getIt<AppStore>(),
     ),
   );
   getIt.registerFactory(
     () => TransactionHistoryService(
       getIt<AppStore>(),
+      getIt<WalletService>(),
       getIt<TransactionRepository>(),
     ),
   );
 
   getIt.registerCachedFactory(() => DfxCountryService(getIt<AppStore>()));
-  getIt.registerFactory(() => DfxBankAccountService(getIt<AppStore>()));
-  getIt.registerFactory(() => DfxBrokerbotService(getIt<AppStore>()));
-  getIt.registerFactory(() => DfxKycService(getIt<AppStore>()));
-  getIt.registerFactory(() => DFXPriceService(getIt<AppStore>()));
-  getIt.registerFactory(() => DfxSupportService(getIt<AppStore>()));
-  getIt.registerFactory(() => DfxFaucetService(getIt<AppStore>()));
-  getIt.registerFactory(() => DfxBlockchainApiService(getIt<AppStore>()));
+  getIt.registerLazySingleton(() => DfxFiatService(getIt<AppStore>()));
+  getIt.registerLazySingleton(() => DfxLanguageService(getIt<AppStore>()));
+  getIt.registerLazySingleton(
+    () => SupportedFiatRepository(getIt<DfxFiatService>()),
+  );
+  getIt.registerLazySingleton(
+    () => SupportedLanguageRepository(getIt<DfxLanguageService>()),
+  );
   getIt.registerFactory(
-    () => DfxWidgetService(
-      getIt<AppStore>(),
-    ),
+    () => DfxBankAccountService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
+    () => DfxBrokerbotService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
+    () => DfxKycService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(() => DFXPriceService(getIt<AppStore>()));
+  getIt.registerFactory(
+    () => DfxSupportService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
+    () => DfxFaucetService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
+    () => DfxBlockchainApiService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
+    () => DfxWidgetService(getIt<AppStore>(), getIt<WalletService>()),
   );
 
   getIt.registerFactory(() => RealUnitAccountService(getIt<AppStore>()));
-  getIt.registerFactory(() => RealUnitBuyPaymentInfoService(getIt<AppStore>()));
-  getIt.registerFactory(() => RealUnitPdfService(getIt<AppStore>()));
-  getIt.registerFactory(() => RealUnitRegistrationService(getIt<AppStore>()));
-  getIt.registerFactory(() => RealUnitSellPaymentInfoService(getIt<AppStore>()));
-  getIt.registerFactory(() => RealUnitWalletService(getIt<AppStore>()));
+  getIt.registerFactory(
+    () => RealUnitBuyPaymentInfoService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
+    () => RealUnitPdfService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
+    () => RealUnitRegistrationService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
+    () => RealUnitSellPaymentInfoService(getIt<AppStore>(), getIt<WalletService>()),
+  );
   getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
   getIt.registerFactory(
     () => DebugAuthService(getIt<AppStore>(), getIt<SharedPreferences>()),
@@ -164,6 +201,12 @@ Future<void> setupBlocs() async {
     SettingsBloc(
       getIt<SettingsRepository>(),
       () => getIt<DfxWidgetService>().refreshAuthToken(),
+      onNetworkModeChanged: () {
+        // Reference-data lists are scoped per backend (mainnet vs. testnet),
+        // so drop their session caches when the user switches networks.
+        getIt<DfxFiatService>().invalidateCache();
+        getIt<DfxLanguageService>().invalidateCache();
+      },
     ),
   );
   getIt.registerSingleton(
@@ -171,7 +214,6 @@ Future<void> setupBlocs() async {
       getIt<WalletService>(),
       getIt<BalanceService>(),
       getIt<TransactionHistoryService>(),
-      getIt<DfxWidgetService>(),
       getIt<SettingsService>(),
       getIt<AppStore>(),
       getIt<BitboxService>(),

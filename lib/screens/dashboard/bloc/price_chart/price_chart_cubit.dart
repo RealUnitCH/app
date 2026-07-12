@@ -83,6 +83,19 @@ class PriceChartCubit extends Cubit<PriceChartState> {
         )
         .toList();
 
+    if (visibleSpots.isEmpty) {
+      emit(
+        state.copyWith(
+          visibleSpots: [],
+          minX: minX,
+          maxX: maxX,
+          minY: 0,
+          maxY: 1,
+        ),
+      );
+      return;
+    }
+
     // Calculate minY and maxY from the visible spots, with some padding (10%)
     var min = visibleSpots.first.y;
     var max = visibleSpots.first.y;

@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:open_file/open_file.dart';
@@ -71,7 +72,7 @@ class SettingsTaxReportView extends StatelessWidget {
                   return DatePickerField(
                     initialDate: _datePickerModel.value,
                     firstDate: DateTime(2025),
-                    lastDate: DateTime.now(),
+                    lastDate: clock.now(),
                     onDateSelected: (date) => _datePickerModel.setDate(date),
                   );
                 },
@@ -99,7 +100,11 @@ class SettingsTaxReportView extends StatelessWidget {
 }
 
 class _DatePickerModel extends ValueNotifier<DateTime> {
-  _DatePickerModel() : super(DateTime.now());
+  // Default to the last completed year-end (31 Dec of the previous year). This
+  // rolls forward automatically: as soon as the clock enters a new year, the
+  // default advances to the 31 Dec that just passed. The user can still pick
+  // any earlier date via the picker.
+  _DatePickerModel() : super(DateTime(clock.now().year - 1, 12, 31));
 
   void setDate(DateTime date) => value = date;
 }

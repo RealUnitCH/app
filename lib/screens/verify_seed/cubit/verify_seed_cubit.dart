@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:math';
 
 import 'package:equatable/equatable.dart';
@@ -17,7 +18,11 @@ class VerifySeedCubit extends Cubit<VerifySeedState> {
     _initVerification();
   }
 
-  final SoftwareWallet _wallet;
+  /// The draft wallet handed in by `CreateWalletCubit`. Until [verify]
+  /// succeeds and `WalletService.commitGeneratedWallet` lands the row, the
+  /// id is the `0` sentinel — it must NOT be passed to
+  /// `setCurrentWallet` directly; commit first, use the returned id.
+  SoftwareWallet _wallet;
   final WalletService _walletService;
 
   void _initVerification() {
@@ -31,10 +36,18 @@ class VerifySeedCubit extends Cubit<VerifySeedState> {
     emit(
       state.copyWith(
         wordIndices: sortedIndices,
+        // `flutter test` always runs in `kDebugMode == true`, so the
+        // release-mode branch below cannot be exercised from a unit test
+        // without forking the test process into a release VM (which the
+        // coverage tool does not collect from). The two branches differ
+        // only in the seed value of `enteredWords` — release ships empty
+        // slots, debug pre-fills them so devs can tap through quickly.
+        // Marking the release branch as `coverage:ignore-line` keeps the
+        // file at 100 % of the lines that unit tests can actually reach.
         enteredWords:
             kDebugMode // Pre-fill words in debug mode
             ? sortedIndices.map((i) => _wallet.seed.seedWords[i]).toList()
-            : List.filled(4, ''),
+            : List.filled(4, ''), // coverage:ignore-line
       ),
     );
   }
@@ -51,6 +64,13 @@ class VerifySeedCubit extends Cubit<VerifySeedState> {
   }
 
   Future<bool> verify() async {
+    // Re-entrancy guard. The button's `onPressed` is fire-and-forget, so a
+    // second tap can land while the first commit is still in flight (or
+    // already done). A second commit would also trip
+    // `commitGeneratedWallet`'s `assert(draft.id == 0)` on the now-committed
+    // `_wallet`. Bail out and let the first call own the transition.
+    if (state.isVerifying || state.isVerified) return false;
+
     final seedWords = _wallet.seed.seedWords;
 
     for (int i = 0; i < state.wordIndices.length; i++) {
@@ -63,8 +83,50 @@ class VerifySeedCubit extends Cubit<VerifySeedState> {
       }
     }
 
-    await _walletService.setCurrentWallet(_wallet.id);
-    emit(state.copyWith(isVerified: true));
-    return true;
+    // Commit the draft mnemonic to disk BEFORE marking it current — the
+    // wallet handed in by `CreateWalletCubit` is the in-memory-only draft
+    // produced by `WalletService.generateUncommittedSeedWallet` (id == 0).
+    // Persisting at confirm time means a regenerate triggered by an
+    // app-hidden cycle in the create flow never leaves an orphan row in
+    // `walletInfos`. The user only reaches this branch by typing the four
+    // requested words correctly, so the seed they kept is the seed we
+    // store.
+    emit(state.copyWith(isVerifying: true, commitFailed: false));
+    try {
+      final committed = await _walletService.commitGeneratedWallet(_wallet);
+      // Async-tail guard: the AppBar back button on the verify-seed screen
+      // stays enabled while `isVerifying` is true, so the user can pop the
+      // page (closing the cubit) before the commit resolves. A post-close
+      // `emit` would throw `StateError`. Matches the
+      // `connect_bitbox_cubit` / `create_wallet_cubit` / `kyc_cubit`
+      // pattern. The committed row is already persisted at this point —
+      // dropping the success emission is acceptable; the user simply
+      // restarts onboarding and re-uses the existing wallet.
+      if (isClosed) return false;
+      _wallet = committed;
+      await _walletService.setCurrentWallet(committed.id);
+      if (isClosed) return false;
+      emit(
+        state.copyWith(
+          isVerifying: false,
+          isVerified: true,
+          committedWallet: committed,
+        ),
+      );
+      return true;
+    } catch (e, stack) {
+      // Persisting the wallet failed or hung-then-threw. Surface a retry
+      // affordance instead of leaving the screen stuck on a plain
+      // "Bestätigen" with no feedback — `verify` must never resolve into a
+      // state that is neither success nor a visible error.
+      developer.log(
+        'Failed to commit verified wallet',
+        error: e,
+        stackTrace: stack,
+      );
+      if (isClosed) return false;
+      emit(state.copyWith(isVerifying: false, commitFailed: true));
+      return false;
+    }
   }
 }

@@ -40,10 +40,18 @@ class KycFinancialDataView extends StatelessWidget {
         if (state is KycFinancialDataSubmitSuccess) {
           context.read<KycCubit>().checkKyc();
         }
-        if (state is KycFinancialDataFailure) {
+        // KycFinancialDataSubmitFailure is a LoadedSuccess subtype (answers
+        // retained, questions page still shown) — surface the error as a
+        // transient snackbar so submit failures are recoverable, not a dead-end.
+        final failureMessage = switch (state) {
+          KycFinancialDataSubmitFailure(:final message) => message,
+          KycFinancialDataFailure(:final message) => message,
+          _ => null,
+        };
+        if (failureMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.message),
+              content: Text(failureMessage),
               backgroundColor: RealUnitColors.status.red600,
             ),
           );

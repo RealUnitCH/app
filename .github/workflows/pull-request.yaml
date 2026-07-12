@@ -1,23 +1,366 @@
 name: RealUnit Build
 
+# Trigger model:
+#  - `pull_request` fires on every PR regardless of target branch,
+#    EXCEPT PRs targeting `main`. Stacked PRs (feature → integration
+#    → develop) need their own CI run so a regression is caught at
+#    the lowest possible level, not only after the stack has been
+#    collapsed to a develop PR. Release PRs (develop → main, opened
+#    automatically by `auto-release-pr.yaml`) are deliberately
+#    excluded: `push: develop` already covered the same SHA when the
+#    commit landed, and concurrency groups don't dedupe across
+#    push-vs-pull_request events, so allowing both would double
+#    macOS-runner load on the release lane for no signal.
+#  - `ready_for_review` makes the workflow fire the moment a draft PR
+#    is marked ready — drafts themselves skip via the `if:` guard
+#    below (saves macOS-runner minutes while work is still in progress).
+#  - `labeled` / `unlabeled` are intentionally omitted: realunit-app has
+#    no label-gated heavy job here (Tier 3 has its own workflow).
+#  - `push: develop` and `push: staging` keep post-merge verification
+#    as an authoritative source of truth, independent of any PR state.
+#    `staging` participates because feature → staging merges land an
+#    integration commit whose verification cannot be deferred to the
+#    auto-opened staging → develop PR (the gate must be authoritative
+#    at the moment the commit lands on staging). Other branches do not
+#    need a post-push check — the PR-event already covers them.
+#  - `workflow_dispatch` is kept as a manual override and is NOT
+#    draft-gated (see the job `if:` guard below).
 on:
   workflow_dispatch:
+  push:
+    branches: [develop, staging]
   pull_request:
-    branches:
-      - develop
-      - main
+    branches-ignore: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# Group by PR number so a new push to the same PR cancels the
+# in-flight run for the outdated commit. macOS runners are scarce —
+# letting an obsolete run finish wastes ~10 minutes per push. Grouping
+# by SHA (the previous approach) put every commit in its own group,
+# which meant no cancellation ever happened and back-to-back pushes
+# queued sequentially.
+# Falls back to `github.ref` for `push` and `workflow_dispatch` events
+# (where there is no `pull_request.number`): `refs/heads/develop` for
+# post-merge runs, the dispatched ref for manual triggers.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   build:
+    name: Analyze & Test
+    # Skip on draft PRs (matches our `gh pr create --draft` workflow).
+    # `push` (post-merge gate) and `workflow_dispatch` (manual override)
+    # always run — the condition is "anything that isn't a PR, or a PR
+    # that isn't a draft".
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: macos-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.41.6"
           channel: "stable"
+          cache: true
       - run: flutter pub get
       - run: dart run tool/generate_localization.dart
+      - run: dart run tool/generate_release_info.dart
       - run: flutter pub run build_runner build
       - run: flutter analyze
-      - run: flutter test
+      # Excludes the `golden` tag: visual-regression tests live under
+      # `test/goldens/` and are validated on the self-hosted runner
+      # in the parallel `golden-tests` job (Hardware-Determinismus, see
+      # `docs/visual-regression-tests.md`). Running them here too would
+      # both duplicate work and erroneously red this job on macos-latest
+      # where the Skia/font-rendering does not match the committed
+      # baselines.
+      - run: flutter test --coverage --exclude-tags golden
+
+      # Narrow the coverage report to the README-defined activated surface:
+      #   lib/packages/**             — services, repositories, signers, utils
+      #   lib/screens/**/cubit(s)/**  — Cubit logic per feature
+      #   lib/screens/**/bloc/**      — Bloc logic per feature
+      # Widget files (lib/screens/**/*_page.dart, lib/widgets/**) are covered
+      # by `testWidgets` specs and excluded from the line-coverage scope by
+      # design — see README "Coverage scope". Threshold enforcement is the
+      # next step (see README "Coverage infrastructure roadmap"); this step
+      # only produces the scoped baseline + a human-readable summary.
+      #
+      # The extract patterns use lcov's fnmatch matcher, where `*` is greedy
+      # across `/` — so `lib/packages/*` matches arbitrarily deep paths under
+      # that prefix, and `lib/screens/*/cubit/*` matches any feature subtree
+      # (including nested ones like `lib/screens/kyc/steps/email/cubits/...`).
+      # `--ignore-errors unused,empty` covers both a missing prefix after a
+      # rename and a refactor that empties the extracted file — the latter
+      # would otherwise hard-fail on newer lcov versions.
+      #
+      # Note vs. the previous step: `lcov --summary` is no longer guarded by
+      # `|| true`, so a summary failure (e.g. corrupt tracefile) now surfaces
+      # as a red step instead of being silently swallowed. Intentional: the
+      # filtered baseline is the input to the next roadmap item (threshold
+      # check), and silent failures upstream would invalidate that signal.
+      - name: Filter coverage to README scope
+        run: |
+          set -euo pipefail
+          if [ ! -f coverage/lcov.info ]; then
+            echo "::warning::coverage/lcov.info not found — skipping coverage filter"
+            exit 0
+          fi
+          brew install lcov >/dev/null
+          lcov --extract coverage/lcov.info \
+            'lib/packages/*' \
+            'lib/screens/*/cubit/*' \
+            'lib/screens/*/cubits/*' \
+            'lib/screens/*/bloc/*' \
+            --output-file coverage/lcov.info \
+            --ignore-errors unused,empty
+          # Strip code-generator output from the scoped tracefile. Today
+          # only `*.g.dart` (Drift schema mirror) is generated and lives
+          # under `lib/packages/**` — there are no `*.freezed.dart` or
+          # `*.mocks.dart` files in the tree, so we deliberately keep
+          # the pattern list narrow. Add the others here the day a
+          # generator starts emitting them.
+          lcov --remove coverage/lcov.info \
+            '*.g.dart' \
+            --output-file coverage/lcov.info \
+            --ignore-errors unused,empty
+          lcov --summary coverage/lcov.info | tee coverage/lcov.summary
+
+      - name: Report coverage summary
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ ! -f coverage/lcov.summary ]; then
+            exit 0
+          fi
+          {
+            echo "## Coverage report (README scope)"
+            echo
+            echo "Scope: \`lib/packages/**\` + \`lib/screens/**/cubit(s)/**\` + \`lib/screens/**/bloc/**\`"
+            echo
+            echo '```'
+            cat coverage/lcov.summary
+            echo '```'
+            echo
+            echo "_Floor gate active (see \`.coverage-floor-lines\` / \`.coverage-floor-functions\`). README \"Coverage infrastructure roadmap\" documents the ratchet protocol._"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info
+          if-no-files-found: warn
+
+      # The scoped summary is the input to the `coverage-floor` gate job.
+      # `if-no-files-found: error` (not `warn`) is load-bearing: the floor
+      # gate is wire-up-ready as a required status check on `develop`
+      # (the ruleset switch is the open roadmap item in README.md), and
+      # a missing summary MUST surface as a red upload here rather than
+      # reach the gate job as a silent "nothing to compare against".
+      # Pairs with the hard `exit 1` on the gate job's download path —
+      # together they make the gate fail-closed instead of the previous
+      # fail-open (silent `exit 0`).
+      - name: Upload coverage summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-summary
+          path: coverage/lcov.summary
+          if-no-files-found: error
+
+  # Hard-fails the build when scoped coverage drops below the committed floor.
+  # Two flat repo-root files hold the integers: `.coverage-floor-lines` and
+  # `.coverage-floor-functions`. They are diffable, grep-able, and require
+  # no `yq`/JSON tooling in the runner — same rationale as the rest of this
+  # workflow: keep the gate readable in a `git blame`, not buried in YAML.
+  #
+  # Lives in its own job (not inline in `Analyze & Test`) so it can be set
+  # as a separately required status check in branch protection — a single
+  # job name on `Analyze & Test` would let the floor regress without
+  # blocking merge if it stayed inline. The job graph is:
+  #   build  ─►  coverage-floor       (sequential; needs the summary artifact)
+  #   build  ║   bitbox-audit          (parallel; informational only)
+  #
+  # Ratchet protocol (also documented under README "Coverage infrastructure
+  # roadmap"):
+  #   * Raising the floor is encouraged on every PR that raises measured
+  #     coverage — bump the file in the same commit and the gate moves up.
+  #   * Lowering the floor needs a reviewer's explicit OK. PR convention is
+  #     the `coverage:lower-floor` label so the regression is visible at
+  #     a glance in the PR list rather than being smuggled in.
+  #
+  # Why pure bash + awk instead of `lcov --fail-under-*`:
+  #   the `--fail-under-lines` flag arrived in lcov 2.0 and earlier runner
+  #   images may still pull 1.x out of the package manager. Comparing
+  #   `52.9` against `51` with awk sidesteps that and stays portable.
+  #
+  # On the "no data found" path for the functions metric:
+  #   `flutter test --coverage` emits LF/LH (line execution) and BRF/BRH
+  #   (branch) records, but not FN/FNF/FNH (function execution) — that's a
+  #   Flutter limitation, not a repo bug. When the summary reports
+  #   "no data found" for functions, the gate emits a workflow warning
+  #   instead of comparing against an empty value. This is intentionally
+  #   NOT a silent skip: the warning surfaces in the run summary so a
+  #   future Flutter release adding FN records doesn't go unnoticed (and
+  #   the floor file stays committed so the gate activates the moment
+  #   real data appears).
+  #
+  # On the missing `coverage/lcov.summary` path:
+  #   the gate fails CLOSED with `exit 1`. Previously this was a silent
+  #   `exit 0` warning, which made the gate effectively advisory — a broken
+  #   upstream filter (e.g. lcov.info missing, brew install failure) would
+  #   skip the gate without anyone noticing. The new behaviour is: if
+  #   `Analyze & Test` did not produce a summary, the gate is red, the PR
+  #   is blocked, and the reviewer sees exactly where the pipeline broke.
+  coverage-floor:
+    name: Coverage Floor Gate
+    needs: build
+    # Same draft guard as `build`: skip drafts, always run on push/dispatch.
+    # `build` already enforces this, but mirroring it here keeps the gate's
+    # behaviour locally readable instead of inferred from `needs:`.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download coverage summary
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-summary
+          path: coverage
+
+      - name: Enforce coverage floor
+        run: |
+          set -euo pipefail
+          if [ ! -f coverage/lcov.summary ]; then
+            echo "::error::coverage/lcov.summary not found after artifact download — the build job did not produce a scoped coverage summary"
+            exit 1
+          fi
+          if [ ! -f .coverage-floor-lines ] || [ ! -f .coverage-floor-functions ]; then
+            echo "::error::missing .coverage-floor-lines or .coverage-floor-functions at repo root"
+            exit 1
+          fi
+          LINES_FLOOR="$(cat .coverage-floor-lines)"
+          FUNCS_FLOOR="$(cat .coverage-floor-functions)"
+          # Lenient anchored match: `\s*lines\.+:\s*52.9%` and the functions
+          # equivalent. lcov varies the number of dots between releases, so
+          # the `\.+` repetition is load-bearing. Captures the bare number,
+          # no `%` suffix. `sed -E` is portable across BSD and GNU sed —
+          # gawk's 3-arg `match()` is not, so we stick to sed.
+          LINES_NOW="$(sed -nE 's/^[[:space:]]*lines\.+:[[:space:]]*([0-9.]+)%.*/\1/p' coverage/lcov.summary | head -n1)"
+          FUNCS_NOW="$(sed -nE 's/^[[:space:]]*functions\.+:[[:space:]]*([0-9.]+)%.*/\1/p' coverage/lcov.summary | head -n1)"
+          echo "lines:     measured=${LINES_NOW:-<none>}%  floor=${LINES_FLOOR}%"
+          echo "functions: measured=${FUNCS_NOW:-<none>}%  floor=${FUNCS_FLOOR}%"
+          if [ -z "${LINES_NOW}" ]; then
+            echo "::error::could not parse lines coverage from coverage/lcov.summary"
+            exit 1
+          fi
+          if ! awk -v now="${LINES_NOW}" -v floor="${LINES_FLOOR}" 'BEGIN { exit !(now+0 >= floor+0) }'; then
+            echo "::error::lines coverage ${LINES_NOW}% below floor ${LINES_FLOOR}% — see README \"Coverage infrastructure roadmap\""
+            exit 1
+          fi
+          if [ -z "${FUNCS_NOW}" ]; then
+            echo "::warning::functions coverage not reported by lcov (Flutter does not emit FN records) — floor ${FUNCS_FLOOR}% retained for when upstream adds support"
+          else
+            if ! awk -v now="${FUNCS_NOW}" -v floor="${FUNCS_FLOOR}" 'BEGIN { exit !(now+0 >= floor+0) }'; then
+              echo "::error::functions coverage ${FUNCS_NOW}% below floor ${FUNCS_FLOOR}% — see README \"Coverage infrastructure roadmap\""
+              exit 1
+            fi
+          fi
+
+  # Visual regression tests on the self-hosted runner. Goldens live
+  # under `test/goldens/` and are validated pixel-for-pixel against committed
+  # baselines under `test/goldens/screens/**/goldens/macos/`. The Mac Studio
+  # M3 Ultra is the authoritative render target — its baselines are committed,
+  # and PRs that drift from them fail this job. Bootstrap and re-generation
+  # is documented in `docs/visual-regression-tests.md`.
+  #
+  # Runs parallel to `build` (which uses GitHub-hosted macos-latest). The
+  # separation is intentional:
+  #  * `build` covers analyze + unit/widget tests + coverage — needs no
+  #    hardware determinism.
+  #  * `golden-tests` covers pixel-exact rendering — must run on the self-hosted runner so
+  #    baselines and validation use identical Skia/font-rendering state.
+  #
+  # On self-hosted runner outage: temporarily flip `runs-on:` to `macos-15` and regenerate
+  # baselines in the same PR (see `docs/visual-regression-tests.md`).
+  golden-tests:
+    name: Visual Regression
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: [self-hosted, macOS, ARM64, m3-ultra, realunit-app]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.6"
+          channel: "stable"
+          cache: true
+      - run: flutter pub get
+      - run: dart run tool/generate_localization.dart
+      - run: dart run tool/generate_release_info.dart
+      - run: flutter pub run build_runner build
+      - name: Run visual regression tests
+        run: flutter test test/goldens
+      - name: Upload golden diff on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-diffs
+          path: test/goldens/**/failures/**
+          if-no-files-found: ignore
+
+  # Runs the bitbox-audit CLI from DFXswiss/bitbox-testkit to surface which
+  # of the documented BitBox firmware quirks are statically detected in this
+  # repo and which still need runtime coverage. Intentionally non-blocking
+  # and not part of required_status_checks — purely informational.
+  bitbox-audit:
+    name: BitBox quirks audit
+    # Same guard pattern as `build`: skip drafts, always run on push/dispatch.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.5"
+
+      - name: Install bitbox-audit
+        continue-on-error: true
+        run: go install github.com/DFXswiss/bitbox-testkit/go/cmd/bitbox-audit@v0.5.0
+
+      - name: Run bitbox-audit
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          "$(go env GOPATH)/bin/bitbox-audit" \
+            --repo . \
+            --format markdown \
+            --output bitbox-audit-report.md
+
+      - name: Inline report into run summary
+        if: always()
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          if [ -f bitbox-audit-report.md ]; then
+            cat bitbox-audit-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "bitbox-audit-report.md not produced — see job logs." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitbox-audit-report
+          path: bitbox-audit-report.md
+          if-no-files-found: warn

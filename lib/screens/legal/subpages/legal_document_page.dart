@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,6 +9,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
+import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 class LegalDocumentParams {
@@ -24,7 +27,16 @@ class LegalDocumentParams {
 class LegalDocumentPage extends StatefulWidget {
   final LegalDocumentParams params;
 
-  const LegalDocumentPage({super.key, required this.params});
+  /// Pre-loaded markdown content for golden tests. When provided, skips the
+  /// rootBundle asset load so the page renders the loaded state synchronously.
+  @visibleForTesting
+  final String? initialMarkdownContent;
+
+  const LegalDocumentPage({
+    super.key,
+    required this.params,
+    this.initialMarkdownContent,
+  });
 
   @override
   State<LegalDocumentPage> createState() => _LegalDocumentPageState();
@@ -32,23 +44,44 @@ class LegalDocumentPage extends StatefulWidget {
 
 class _LegalDocumentPageState extends State<LegalDocumentPage> {
   String? _markdownContent;
+  bool _loadFailed = false;
 
   @override
   void initState() {
     super.initState();
-    _loadMarkdown();
+    if (widget.initialMarkdownContent != null) {
+      _markdownContent = widget.initialMarkdownContent;
+    } else {
+      _loadMarkdown();
+    }
   }
 
   Future<void> _loadMarkdown() async {
     final code = context.read<SettingsBloc>().state.language.code;
+    final assetPath = 'assets/legal/${widget.params.assetBaseName}_$code.md';
     try {
-      final content = await rootBundle.loadString(
-        'assets/legal/${widget.params.assetBaseName}_$code.md',
-      );
+      // cache: false so Retry after a transient failure actually re-reads the
+      // asset instead of replaying rootBundle's cached error for this key.
+      final content = await rootBundle.loadString(assetPath, cache: false);
       if (mounted) setState(() => _markdownContent = content);
-    } catch (_) {
-      if (mounted) setState(() => _markdownContent = '');
+    } catch (e, stackTrace) {
+      developer.log(
+        'Failed to load legal document "${widget.params.assetBaseName}"',
+        name: 'realunit_wallet.legal',
+        error: e,
+        stackTrace: stackTrace,
+        level: 1000, // SEVERE
+      );
+      if (mounted) setState(() => _loadFailed = true);
     }
+  }
+
+  void _retryLoad() {
+    setState(() {
+      _loadFailed = false;
+      _markdownContent = null;
+    });
+    _loadMarkdown();
   }
 
   String? get _pdfUrl {
@@ -62,7 +95,9 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
     appBar: AppBar(
       title: Text(widget.params.title),
     ),
-    body: _markdownContent != null
+    body: _loadFailed
+        ? _buildError(context)
+        : _markdownContent != null
         ? Column(
             children: [
               Expanded(
@@ -105,6 +140,46 @@ class _LegalDocumentPageState extends State<LegalDocumentPage> {
                 ),
             ],
           )
+        // Documents load from a bundled asset (effectively synchronous), so the
+        // brief null frame stays blank rather than flashing a spinner.
         : const SizedBox.shrink(),
+  );
+
+  // Mirrors the canonical full-page error view in
+  // settings_currencies_page.dart (`_ErrorView`); keep the two in sync.
+  Widget _buildError(BuildContext context) => Center(
+    key: const ValueKey('legalDocumentLoadError'),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.error_outline,
+            size: 48,
+            color: RealUnitColors.neutral500,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            S.of(context).legalDocumentLoadFailed,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            S.of(context).legalDocumentLoadFailedDescription,
+            style: const TextStyle(color: RealUnitColors.neutral500),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton(
+            key: const ValueKey('legalDocumentRetryButton'),
+            onPressed: _retryLoad,
+            child: Text(S.of(context).retry),
+          ),
+        ],
+      ),
+    ),
   );
 }

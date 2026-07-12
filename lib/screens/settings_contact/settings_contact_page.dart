@@ -1,9 +1,9 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
 import 'package:realunit_wallet/screens/settings_contact/cubit/settings_contact_cubit.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
@@ -19,9 +19,7 @@ class SettingsContactPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => SettingsContactCubit(
-        getIt<DfxKycService>(),
-      ),
+      create: (_) => SettingsContactCubit(getIt<DfxKycService>())..init(),
       child: const SettingsContactView(),
     );
   }
@@ -50,26 +48,18 @@ class SettingsContactView extends StatelessWidget {
                 spacing: 12.0,
                 children: [
                   BlocBuilder<SettingsContactCubit, SettingsContactState>(
-                    builder: (context, state) => switch (state) {
-                      SettingsContactSuccess(:final emailSet) =>
-                        emailSet
-                            ? OutlinedTile(
-                                leading: const Icon(
-                                  Icons.support_agent_outlined,
-                                  color: RealUnitColors.realUnitBlue,
-                                  size: 24,
-                                ),
-                                title: S.of(context).contactSupport,
-                                subtitle: S.of(context).contactSupportDescription,
-                                onTap: () => context.pushNamed(SupportRoutes.support),
-                                trailingIcon: Icons.chevron_right_rounded,
-                              )
-                            : const SizedBox.shrink(),
-                      SettingsContactLoading() => const Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: CupertinoActivityIndicator(),
-                      ),
-                      _ => const SizedBox.shrink(),
+                    builder: (context, state) {
+                      return OutlinedTile(
+                        leading: const Icon(
+                          Icons.support_agent_outlined,
+                          color: RealUnitColors.realUnitBlue,
+                          size: 24,
+                        ),
+                        title: S.of(context).contactSupport,
+                        subtitle: S.of(context).contactSupportDescription,
+                        onTap: () => _onSupportTap(context, state),
+                        trailingIcon: Icons.chevron_right_rounded,
+                      );
                     },
                   ),
                   OutlinedTile(
@@ -140,5 +130,62 @@ class SettingsContactView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _onSupportTap(
+    BuildContext context,
+    SettingsContactState state,
+  ) async {
+    final capability = state is SettingsContactSuccess ? state.capability : null;
+
+    // Branch 1: no capability info (legacy backend / Initial / Loading
+    // / Failure). API is the authority — if the call is not allowed,
+    // the Support page surfaces the API error.
+    if (capability == null) {
+      context.pushNamed(SupportRoutes.support);
+      return;
+    }
+
+    // Branch 2: explicitly available → straight to Support.
+    if (capability.available) {
+      context.pushNamed(SupportRoutes.support);
+      return;
+    }
+
+    // Branch 3: a prerequisite is missing. Today the only modeled
+    // value is `email`; new enum members get their own routing branch
+    // here. `unknown` is the open-enum fallback for additive backend
+    // values this app version does not yet recognise.
+    switch (capability.missingPrerequisite) {
+      case MissingPrerequisite.email:
+        await _pushEmailCaptureThenSupport(context);
+      case MissingPrerequisite.unknown:
+      case null:
+        // Defensive: API reported `available: false` without a
+        // prerequisite this app version routes for. Push Support
+        // directly and let the API render the error.
+        context.pushNamed(SupportRoutes.support);
+    }
+  }
+
+  Future<void> _pushEmailCaptureThenSupport(BuildContext context) async {
+    final cubit = context.read<SettingsContactCubit>();
+    final captured = await context.pushNamed<bool>(SupportRoutes.emailCapture);
+    if (captured != true) return;
+    if (!context.mounted) return;
+
+    // Re-fetch the user so the cubit picks up the freshly registered
+    // email. Symmetric to Branch 1: a refreshed state with capability
+    // == null (legacy backend) or available == true forwards; an
+    // explicit unavailable+missingPrerequisite refresh does not (would
+    // re-loop the same capture page).
+    await cubit.init();
+    if (!context.mounted) return;
+    final state = cubit.state;
+    if (state is! SettingsContactSuccess) return;
+    final refreshed = state.capability;
+    if (refreshed == null || refreshed.available) {
+      context.pushNamed(SupportRoutes.support);
+    }
   }
 }

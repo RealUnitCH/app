@@ -1,4 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -79,6 +80,27 @@ void main() {
         expect(find.text(S.current.pinCreateDescription('$pinLength')), findsOne);
         expect(find.byType(NumberPad), findsOne);
       });
+
+      testWidgets('forwards digit and delete taps to the cubit', (tester) async {
+        when(() => setupPinCubit.state).thenReturn(const SetupPinState(mode: SetupPinMode.create));
+
+        await tester.pumpApp(buildSubject(const SetupPinView()));
+
+        // Tapping a digit runs the pad's onNumberPressed closure, which the
+        // other setup-pin specs (spinner / error / listener states) never
+        // exercise because they don't press the pad.
+        final seven = find.descendant(of: find.byType(NumberPad), matching: find.text('7'));
+        await tester.ensureVisible(seven);
+        await tester.tap(seven);
+        await tester.pump();
+        verify(() => setupPinCubit.addDigit(7)).called(1);
+
+        final delete = find.byIcon(Icons.arrow_back_ios_new);
+        await tester.ensureVisible(delete);
+        await tester.tap(delete);
+        await tester.pump();
+        verify(() => setupPinCubit.deleteDigit()).called(1);
+      });
     });
 
     group('${SetupPinMode.confirm}', () {
@@ -110,6 +132,31 @@ void main() {
       });
     });
 
+    testWidgets('shows a saving spinner and hides the pad while submitting', (tester) async {
+      when(() => setupPinCubit.state).thenReturn(
+        const SetupPinState(mode: SetupPinMode.confirm, isSubmitting: true),
+      );
+
+      await tester.pumpApp(buildSubject(const SetupPinView()));
+
+      expect(find.byType(CupertinoActivityIndicator), findsOne);
+      expect(find.byType(NumberPad), findsNothing);
+      // Storing a PIN is not "signing in" — the saving caption is shown.
+      expect(find.text(S.current.pinSaving), findsOne);
+    });
+
+    testWidgets('surfaces a retry hint when storing the PIN failed', (tester) async {
+      when(() => setupPinCubit.state).thenReturn(
+        const SetupPinState(mode: SetupPinMode.confirm, storeFailed: true),
+      );
+
+      await tester.pumpApp(buildSubject(const SetupPinView()));
+
+      expect((tester.widget(find.byType(Visibility)) as Visibility).visible, isTrue);
+      expect(find.text(S.current.pinSaveFailed), findsOne);
+      expect(find.byType(NumberPad), findsOne);
+    });
+
     group('$BlocListener', () {
       testWidgets('triggers onPinSetupComplete if setup is complete', (tester) async {
         whenListen(
@@ -124,6 +171,34 @@ void main() {
         await tester.pump();
 
         verify(() => pinAuthCubit.onPinSetupComplete()).called(1);
+      });
+
+      testWidgets('invokes onCompleted instead of onPinSetupComplete in change mode', (
+        tester,
+      ) async {
+        var completed = 0;
+        whenListen(
+          setupPinCubit,
+          Stream.fromIterable([
+            const SetupPinState(isComplete: true),
+          ]),
+          initialState: const SetupPinState(),
+        );
+
+        await tester.pumpApp(
+          buildSubject(
+            SetupPinView(
+              promptBiometrics: false,
+              onCompleted: () => completed++,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        expect(completed, 1);
+        verifyNever(() => pinAuthCubit.onPinSetupComplete());
+        // Change mode must not offer the biometric-enable sheet.
+        verifyNever(() => setupPinCubit.isBiometricAvailable());
       });
     });
   });
