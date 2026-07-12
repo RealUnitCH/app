@@ -3,7 +3,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_step_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
@@ -15,24 +14,11 @@ import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_reg
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/settings_user_data/cubit/settings_user_data_cubit.dart';
 
+import '../../helper/country_fixture.dart';
+
 class _MockRegistrationService extends Mock implements RealUnitRegistrationService {}
 
-class _MockCountryService extends Mock implements DfxCountryService {}
-
 class _MockKycService extends Mock implements DfxKycService {}
-
-const _ch = Country(
-  id: 41,
-  symbol: 'CH',
-  name: 'Switzerland',
-  kycAllowed: true,
-);
-const _de = Country(
-  id: 49,
-  symbol: 'DE',
-  name: 'Germany',
-  kycAllowed: true,
-);
 
 const _address = KycAddress(
   street: 'Teststrasse',
@@ -79,12 +65,15 @@ KycStepDto _step(KycStepName name, KycStepStatus status, {int seq = 0}) => KycSt
 
 void main() {
   late _MockRegistrationService registrationService;
-  late _MockCountryService countryService;
+  late DfxCountryService countryService;
   late _MockKycService kycService;
 
   setUp(() {
     registrationService = _MockRegistrationService();
-    countryService = _MockCountryService();
+    // Real service over the committed country fixture — country data is never
+    // mocked. Tests that need the lookup to fail reassign it to
+    // failingCountryService() before build().
+    countryService = fixtureCountryService();
     kycService = _MockKycService();
   });
 
@@ -118,8 +107,6 @@ void main() {
           ),
         ),
       );
-      when(() => countryService.getCountryBySymbol('CH')).thenAnswer((_) async => _ch);
-      when(() => countryService.getCountryBySymbol('DE')).thenAnswer((_) async => _de);
 
       final cubit = build();
       await cubit.stream.firstWhere((s) => s is SettingsUserDataSuccess);
@@ -127,8 +114,14 @@ void main() {
       final success = cubit.state as SettingsUserDataSuccess;
       expect(success.userData, isNotNull);
       expect(success.userData!.email, 'a@b.com');
-      expect(success.userData!.nationality, _ch);
-      expect(success.userData!.addressCountry, _de);
+      // Both symbols resolve through the real service against the committed
+      // fixture: CH is id 41, DE is id 55 (Country equality is id-keyed).
+      expect(success.userData!.nationality.id, 41);
+      expect(success.userData!.nationality.symbol, 'CH');
+      expect(success.userData!.nationality.name, 'Switzerland');
+      expect(success.userData!.addressCountry.id, 55);
+      expect(success.userData!.addressCountry.symbol, 'DE');
+      expect(success.userData!.addressCountry.name, 'Germany');
       expect(success.pendingSteps, isEmpty);
       expect(success.capabilities.canEditName, isTrue);
     });
@@ -151,7 +144,6 @@ void main() {
           kyc: UserKycDto(hash: 'h', level: KycLevel.level20, dataComplete: true),
         ),
       );
-      when(() => countryService.getCountryBySymbol(any())).thenAnswer((_) async => _ch);
 
       final cubit = build();
       await cubit.stream.firstWhere((s) => s is SettingsUserDataSuccess);
@@ -186,7 +178,6 @@ void main() {
           kyc: UserKycDto(hash: 'h', level: KycLevel.level20, dataComplete: true),
         ),
       );
-      when(() => countryService.getCountryBySymbol(any())).thenAnswer((_) async => _ch);
 
       final cubit = build();
       await cubit.stream.firstWhere((s) => s is SettingsUserDataSuccess);
@@ -213,14 +204,19 @@ void main() {
         ),
       );
 
+      // A country service whose every call throws proves the lookup is not on
+      // this path: userData is null, so the cubit emits Success(email) before
+      // ever touching the service. Had the missing-userData branch regressed
+      // into calling getCountryBySymbol, this would surface as a Failure — a
+      // stronger guarantee than verifyNever.
+      countryService = failingCountryService();
+
       final cubit = build();
       await cubit.stream.firstWhere((s) => s is SettingsUserDataSuccess);
 
       final success = cubit.state as SettingsUserDataSuccess;
       expect(success.userData, isNull);
       expect(success.email, 'fallback@b.com');
-      // No country lookups when userData is missing.
-      verifyNever(() => countryService.getCountryBySymbol(any()));
     });
 
     test('Failure when registrationService.getRegistrationInfo throws', () async {
@@ -259,9 +255,10 @@ void main() {
           kyc: UserKycDto(hash: 'h', level: KycLevel.level20, dataComplete: true),
         ),
       );
-      when(
-        () => countryService.getCountryBySymbol(any()),
-      ).thenAnswer((_) async => throw Exception('unknown country'));
+      // userData is present, so getUserData reaches the country lookup; a
+      // failing service makes getCountryBySymbol throw, driving the cubit's
+      // catch into the Failure state.
+      countryService = failingCountryService();
 
       final cubit = build();
       await cubit.stream.firstWhere((s) => s is SettingsUserDataFailure);

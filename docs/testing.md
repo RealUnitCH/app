@@ -130,6 +130,19 @@ setUp(() {
 
 See `test/packages/service/dfx/dfx_bank_account_service_test.dart`.
 
+### Country data in tests
+
+Golden tests, and any test that touches country data (`CountryField`, the KYC registration/nationality steps, the settings address form, the `SettingsUserDataCubit`), must **not** stub `DfxCountryService` with a mocktail mock — neither `getAllCountries()` nor `getCountryBySymbol()`. Country data flows through the real `DfxCountryService`, fed from a committed snapshot of the production `GET /v1/country` response (`test/fixtures/dfx_countries.json` — 250 entries, public data, no PII). The only canned seam is the HTTP client: a `MockClient` from [`http/testing`](https://pub.dev/packages/http) serving the fixture. No mocktail stub of `DfxCountryService` remains — the former `getCountryBySymbol` interaction tests (KYC registration prefill, `SettingsUserDataCubit`) now assert on the resolved country instead. `test/packages/service/dfx/dfx_country_service_test.dart` builds the real service directly over its own `MockClient`, which is the same HTTP seam, not a stub of the country data.
+
+The shared helper is [`test/helper/country_fixture.dart`](../test/helper/country_fixture.dart):
+
+- `fixtureCountryService()` — a real service that serves the fixture for `GET /v1/country`. Register it in `getIt` wherever a test needs a populated dropdown.
+- `failingCountryService()` — always responds 500, for the field's error branch.
+- `countryServiceWithClient(client)` — an escape hatch for bespoke `MockClient` behaviour (a `Completer`-gated response for the loading state, or a fail-then-recover client for the retry path).
+- `countriesFixtureResponse()` — a ready-made `200` fixture response, for converted tests that resolve the loading and retry paths with their own `MockClient`.
+
+The fixture holds both KYC-allowed (e.g. Switzerland) and disallowed (e.g. Afghanistan, United States) countries, so purpose filtering (`residence` vs `nationality`) can be asserted against real data. See `test/widgets/form/country_field_test.dart`.
+
 ### Mocktail gotchas
 
 - `Future<X>`-returning methods must use `thenAnswer((_) async => …)`, not `thenReturn`.

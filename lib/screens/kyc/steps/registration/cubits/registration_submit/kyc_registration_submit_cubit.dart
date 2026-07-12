@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
@@ -36,6 +37,7 @@ class KycRegistrationSubmitCubit extends Cubit<KycRegistrationSubmitState> {
     required String addressCity,
     required Country addressCountry,
     required bool swissTaxResidence,
+    List<CountryAndTin>? countryAndTINs,
   }) async {
     try {
       emit(KycRegistrationSubmitLoading());
@@ -57,6 +59,7 @@ class KycRegistrationSubmitCubit extends Cubit<KycRegistrationSubmitState> {
           addressCity: addressCity,
           addressCountry: addressCountry,
           swissTaxResidence: swissTaxResidence,
+          countryAndTINs: countryAndTINs,
         );
 
         await _doCompleteRegistration(registration);

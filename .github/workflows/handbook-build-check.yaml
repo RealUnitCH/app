@@ -68,8 +68,8 @@ jobs:
           set -euo pipefail
           bash scripts/assemble-handbook-screenshots.sh /tmp/handbook-shots
           count=$(ls -1 /tmp/handbook-shots/*.png | wc -l | tr -d ' ')
-          if [ "$count" != "53" ]; then
-            echo "expected 53 screenshots, got $count" >&2
+          if [ "$count" != "61" ]; then
+            echo "expected 61 screenshots, got $count" >&2
             exit 1
           fi
 
@@ -149,11 +149,11 @@ jobs:
             exit 1
           fi
 
-          # Screenshots dir must contain all 53 PNGs assembled from Goldens.
+          # Screenshots dir must contain all 61 PNGs assembled from Goldens.
           # Hit one of them through the auth gate to verify wiring end-to-end.
-          # Mix of original 01-26 range + new 27-53 range so a regression
+          # Mix of original 01-26 range + new 27-61 range so a regression
           # in either half surfaces here.
-          for name in 01-welcome 11-dashboard 26-terms 35-dashboard-with-balance 46-buy-kyc-required 52-sell-unknown-error 53-buy-payment-details; do
+          for name in 01-welcome 11-dashboard 26-terms 35-dashboard-with-balance 46-buy-kyc-required 52-sell-unknown-error 53-buy-payment-details 61-kyc-registration-tax-tin-error; do
             code=$(curl -s -o /dev/null -w '%{http_code}' -u "${HANDBOOK_USER:-x}:${HANDBOOK_PASS:-x}" "http://127.0.0.1:8080/screenshots/${name}.png")
             # 200 (auth happens to match) or 401 (auth fails but file exists)
             # both prove the file is on disk. 404 means it was not assembled.

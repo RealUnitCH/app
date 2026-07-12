@@ -820,6 +820,9 @@
               <a href="#spec-17"><span class="spec-num">17</span>Verkaufen — States</a>
             </li>
             <li>
+              <a href="#spec-web"><span class="spec-num">W</span>Web · realunit.app</a>
+            </li>
+            <li>
               <a href="#spec-mails"><span class="spec-num">M</span>E-Mails</a>
             </li>
             <li>
@@ -1996,15 +1999,18 @@
                 <div class="file">test/goldens/screens/kyc/</div>
               </div>
               <div class="rhs">
-                <b>5 Screens</b>
+                <b>13 Screens</b>
               </div>
             </div>
           </summary>
           <p class="spec-intro">
-            KYC-Onboarding für Buy/Sell — Pflicht ab definierten Volumen-Schwellen. Zwei
-            Stammdaten-Schritte (persönlich + Adresse) sowie ein E-Mail-Verifizierungs-Schritt
-            mit den Fehler-States <em>Loading</em>, <em>Mismatch</em> (eingegebener Code
-            stimmt nicht) und <em>Unknown Error</em> (Backend-Fehler).
+            KYC-Onboarding für Buy/Sell — Pflicht ab definierten Volumen-Schwellen. Der
+            Registrierungs-Wizard umfasst zwei Stammdaten-Schritte (persönlich + Adresse)
+            und als finalen Schritt die Steueransässigkeit; der Submit der KYC-Anfrage an
+            das DFX-Backend erfolgt erst auf diesem Steuer-Schritt. Dazu kommt der
+            E-Mail-Verifizierungs-Schritt mit den Fehler-States <em>Loading</em>,
+            <em>Mismatch</em> (eingegebener Code stimmt nicht) und <em>Unknown Error</em>
+            (Backend-Fehler).
           </p>
 
           <div class="tests cols-2">
@@ -2080,6 +2086,23 @@
                 validiert, der Weiter-CTA ist disabled bis die Eingabe vollständig ist.
               </div>
             </div>
+            <div class="test" id="54-kyc-registration-personal-dropdown">
+              <div class="head">
+                <a class="name permalink" href="#54-kyc-registration-personal-dropdown">54-kyc-registration-personal-dropdown</a>
+                <button class="copy-link" type="button" data-target="54-kyc-registration-personal-dropdown" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_personal_step_dropdown_open.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/54-kyc-registration-personal-dropdown.png"
+                  alt="KYC Registrierung — Nationalitäts-Auswahl"
+                />
+              </div>
+              <div class="desc">
+                Persönliche-Daten-Schritt mit geöffnetem Länder-Picker: Der User wählt
+                seine Nationalität (Staatsbürgerschaft) aus der scrollbaren Länderliste.
+              </div>
+            </div>
             <div class="test" id="41-kyc-registration-address">
               <div class="head">
                 <a class="name permalink" href="#41-kyc-registration-address">41-kyc-registration-address</a>
@@ -2093,9 +2116,137 @@
                 />
               </div>
               <div class="desc">
-                Adress-Schritt der KYC-Registrierung (Strasse, PLZ, Ort, Land). Bei
-                erfolgreichem Submit wird die KYC-Anfrage an das DFX-Backend übermittelt
-                und der User durchläuft anschliessend die Identitätsverifikation.
+                Adress-Schritt der KYC-Registrierung (Strasse, Nummer, PLZ, Ort, Land).
+                Der Schritt ist nicht mehr final: „Weiter" führt den User zum
+                abschliessenden Steueransässigkeits-Schritt — die KYC-Anfrage wird erst
+                dort an das DFX-Backend übermittelt.
+              </div>
+            </div>
+            <div class="test" id="55-kyc-registration-address-dropdown">
+              <div class="head">
+                <a class="name permalink" href="#55-kyc-registration-address-dropdown">55-kyc-registration-address-dropdown</a>
+                <button class="copy-link" type="button" data-target="55-kyc-registration-address-dropdown" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_address_step_dropdown_open.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/55-kyc-registration-address-dropdown.png"
+                  alt="KYC Registrierung — Wohnsitz-Land-Auswahl"
+                />
+              </div>
+              <div class="desc">
+                Adress-Schritt mit geöffnetem Länder-Picker: Hier wählt der User das Land
+                seines Wohnsitzes aus der scrollbaren Länderliste.
+              </div>
+            </div>
+            <div class="test" id="56-kyc-registration-tax">
+              <div class="head">
+                <a class="name permalink" href="#56-kyc-registration-tax">56-kyc-registration-tax</a>
+                <button class="copy-link" type="button" data-target="56-kyc-registration-tax" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/56-kyc-registration-tax.png"
+                  alt="KYC Registrierung — Steueransässigkeit"
+                />
+              </div>
+              <div class="desc">
+                Abschliessender Schritt der Registrierung. Der Pflicht-Länder-Picker „Land
+                des steuerlichen Wohnsitzes" ist mit dem im Adress-Schritt erfassten
+                Wohnsitzland vorbelegt — die meisten Menschen sind steueransässig, wo sie
+                wohnen — bleibt aber frei änderbar. Die Abbildung zeigt den unbelegten
+                Fallback-Zustand (kein Wohnsitzland vorhanden), in dem der User genau ein
+                Land wählen muss. Der „Abschliessen"-CTA übermittelt die vollständige
+                KYC-Anfrage an das DFX-Backend.
+              </div>
+            </div>
+            <div class="test" id="57-kyc-registration-tax-dropdown">
+              <div class="head">
+                <a class="name permalink" href="#57-kyc-registration-tax-dropdown">57-kyc-registration-tax-dropdown</a>
+                <button class="copy-link" type="button" data-target="57-kyc-registration-tax-dropdown" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_dropdown_open.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/57-kyc-registration-tax-dropdown.png"
+                  alt="KYC Registrierung — Steuerland-Auswahl"
+                />
+              </div>
+              <div class="desc">
+                Geöffneter Länder-Picker des Steuer-Schritts. Der User wählt genau ein Land
+                des steuerlichen Wohnsitzes aus der scrollbaren Liste.
+              </div>
+            </div>
+            <div class="test" id="58-kyc-registration-tax-swiss">
+              <div class="head">
+                <a class="name permalink" href="#58-kyc-registration-tax-swiss">58-kyc-registration-tax-swiss</a>
+                <button class="copy-link" type="button" data-target="58-kyc-registration-tax-swiss" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_swiss.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/58-kyc-registration-tax-swiss.png"
+                  alt="KYC Registrierung — Schweizer Steueransässigkeit"
+                />
+              </div>
+              <div class="desc">
+                Ist die Schweiz (CH) als steuerlicher Wohnsitz gewählt, entfällt die
+                TIN-Abfrage — der Schritt lässt sich direkt abschliessen.
+              </div>
+            </div>
+            <div class="test" id="59-kyc-registration-tax-non-swiss">
+              <div class="head">
+                <a class="name permalink" href="#59-kyc-registration-tax-non-swiss">59-kyc-registration-tax-non-swiss</a>
+                <button class="copy-link" type="button" data-target="59-kyc-registration-tax-non-swiss" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_non_swiss.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/59-kyc-registration-tax-non-swiss.png"
+                  alt="KYC Registrierung — Ausländische Steueransässigkeit"
+                />
+              </div>
+              <div class="desc">
+                Bei einem Nicht-CH-Steuerwohnsitz erscheint zusätzlich das Pflichtfeld
+                „Steueridentifikationsnummer (TIN)", das zusammen mit dem gewählten Land
+                übermittelt wird.
+              </div>
+            </div>
+            <div class="test" id="60-kyc-registration-tax-country-error">
+              <div class="head">
+                <a class="name permalink" href="#60-kyc-registration-tax-country-error">60-kyc-registration-tax-country-error</a>
+                <button class="copy-link" type="button" data-target="60-kyc-registration-tax-country-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_country_error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/60-kyc-registration-tax-country-error.png"
+                  alt="KYC Registrierung — Fehlende Länderauswahl"
+                />
+              </div>
+              <div class="desc">
+                Validierungsfehler beim Abschliessen ohne gewähltes Land: Der
+                Pflicht-Länder-Picker wird mit rotem Rahmen markiert, der Submit ist
+                blockiert.
+              </div>
+            </div>
+            <div class="test" id="61-kyc-registration-tax-tin-error">
+              <div class="head">
+                <a class="name permalink" href="#61-kyc-registration-tax-tin-error">61-kyc-registration-tax-tin-error</a>
+                <button class="copy-link" type="button" data-target="61-kyc-registration-tax-tin-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_tin_error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/61-kyc-registration-tax-tin-error.png"
+                  alt="KYC Registrierung — Fehlende TIN"
+                />
+              </div>
+              <div class="desc">
+                Validierungsfehler bei ausländischem Steuerwohnsitz ohne TIN: Das
+                Pflicht-TIN-Feld wird mit rotem Rahmen markiert, der Submit ist
+                blockiert.
               </div>
             </div>
           </div>
@@ -2392,6 +2543,368 @@
               </div>
             </div>
           </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-web" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">W</span>Web · realunit.app</h2>
+                <div class="file">RealUnitCH/web · tests/__screenshots__/</div>
+              </div>
+              <div class="rhs">
+                <b>Live aus web-Repo</b>
+                <div class="links">
+                  <a href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__">Baselines ↗</a>
+                </div>
+              </div>
+            </div>
+          </summary>
+
+          <p class="spec-intro">
+            Die öffentliche Website <a href="https://realunit.app">realunit.app</a>
+            (Landingpage plus der Aktionariat-Adressbestätigungs-Flow unter
+            <code>/confirm-aktionariat</code>) hat ihre eigene Visual-Regression-Suite.
+            Jedes Bild hier ist eine <b>Playwright-Baseline</b> aus dem
+            <a href="https://github.com/RealUnitCH/web">RealUnitCH/web</a>-Repo
+            (<code>tests/__screenshots__/</code>), aufgenommen im gepinnten
+            Linux-Container über drei Viewports — <b>Desktop</b> (Chromium),
+            <b>Tablet</b> (Chromium) und <b>Mobile</b> (Safari). Es gilt dieselbe
+            Eigenschaft wie bei den App-Screens oben: Driftet das Seitenrendering,
+            wird zuerst der Visual-Regression-Test im web-Repo rot, bevor die
+            Baseline sich ändert. Bei jedem Handbook-Build werden die aktuell
+            akzeptierten Baselines aus <code>develop</code> automatisch ins Image
+            gezogen — Single Source of Truth ist das web-Repo, dieses Handbook
+            spiegelt nur den aktuellen Stand.
+          </p>
+
+          <h3>Startseite <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test" id="web-home-desktop">
+              <div class="head">
+                <a class="name permalink" href="#web-home-desktop">web-home-desktop</a>
+                <button class="copy-link" type="button" data-target="web-home-desktop" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/home.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/home.png"
+                  alt="Startseite — Desktop"
+                />
+              </div>
+              <div class="desc">
+                Die Landingpage von realunit.app in der Desktop-Ansicht (Chromium).
+              </div>
+            </div>
+            <div class="test" id="web-home-tablet">
+              <div class="head">
+                <a class="name permalink" href="#web-home-tablet">web-home-tablet</a>
+                <button class="copy-link" type="button" data-target="web-home-tablet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">tablet-chromium/home.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/tablet-chromium/home.png"
+                  alt="Startseite — Tablet"
+                />
+              </div>
+              <div class="desc">
+                Dieselbe Landingpage im Tablet-Layout.
+              </div>
+            </div>
+            <div class="test" id="web-home-mobile-ios">
+              <div class="head">
+                <a class="name permalink" href="#web-home-mobile-ios">web-home-mobile-ios</a>
+                <button class="copy-link" type="button" data-target="web-home-mobile-ios" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/home-ios.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/home-ios.png"
+                  alt="Startseite — Mobile (iOS)"
+                />
+              </div>
+              <div class="desc">
+                Mobile-Ansicht (Safari), iOS-Variante — der Store-Badge richtet
+                sich nach der erkannten Plattform und zeigt hier den App Store.
+              </div>
+            </div>
+            <div class="test" id="web-home-mobile-android">
+              <div class="head">
+                <a class="name permalink" href="#web-home-mobile-android">web-home-mobile-android</a>
+                <button class="copy-link" type="button" data-target="web-home-mobile-android" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/home-android.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/home-android.png"
+                  alt="Startseite — Mobile (Android)"
+                />
+              </div>
+              <div class="desc">
+                Mobile-Ansicht, Android-Variante — hier zeigt derselbe Store-Badge
+                Google Play.
+              </div>
+            </div>
+          </div>
+
+          <h3>Adressbestätigung — bestätigt <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test" id="web-confirm-confirmed-desktop-de">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-confirmed-desktop-de">web-confirm-confirmed-desktop-de</a>
+                <button class="copy-link" type="button" data-target="web-confirm-confirmed-desktop-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-confirmed.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-confirmed.png"
+                  alt="Adressbestätigung erfolgreich — Desktop (DE)"
+                />
+              </div>
+              <div class="desc">
+                Erfolgs-Zustand der Aktionariat-Adressbestätigung nach einem
+                gültigen Link, Desktop, Deutsch.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-confirmed-desktop-en">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-confirmed-desktop-en">web-confirm-confirmed-desktop-en</a>
+                <button class="copy-link" type="button" data-target="web-confirm-confirmed-desktop-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-confirmed-en.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-confirmed-en.png"
+                  alt="Address confirmed — Desktop (EN)"
+                />
+              </div>
+              <div class="desc">
+                Derselbe Erfolgs-Zustand auf Englisch (<code>?lang=en</code>).
+              </div>
+            </div>
+            <div class="test" id="web-confirm-confirmed-tablet">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-confirmed-tablet">web-confirm-confirmed-tablet</a>
+                <button class="copy-link" type="button" data-target="web-confirm-confirmed-tablet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">tablet-chromium/confirm-confirmed.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/tablet-chromium/confirm-confirmed.png"
+                  alt="Adressbestätigung erfolgreich — Tablet"
+                />
+              </div>
+              <div class="desc">
+                Erfolgs-Zustand im Tablet-Layout.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-confirmed-mobile">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-confirmed-mobile">web-confirm-confirmed-mobile</a>
+                <button class="copy-link" type="button" data-target="web-confirm-confirmed-mobile" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/confirm-confirmed-mobile.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/confirm-confirmed-mobile.png"
+                  alt="Adressbestätigung erfolgreich — Mobile"
+                />
+              </div>
+              <div class="desc">
+                Erfolgs-Zustand in der Mobile-Ansicht.
+              </div>
+            </div>
+          </div>
+
+          <h3>Adressbestätigung — ungültiger Link <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test" id="web-confirm-invalid-desktop-de">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-invalid-desktop-de">web-confirm-invalid-desktop-de</a>
+                <button class="copy-link" type="button" data-target="web-confirm-invalid-desktop-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-invalid.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-invalid.png"
+                  alt="Ungültiger Bestätigungslink — Desktop (DE)"
+                />
+              </div>
+              <div class="desc">
+                Fehler-Zustand bei fehlenden oder ungültigen Link-Parametern,
+                Desktop, Deutsch.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-invalid-desktop-en">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-invalid-desktop-en">web-confirm-invalid-desktop-en</a>
+                <button class="copy-link" type="button" data-target="web-confirm-invalid-desktop-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-invalid-en.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-invalid-en.png"
+                  alt="Invalid confirmation link — Desktop (EN)"
+                />
+              </div>
+              <div class="desc">
+                Derselbe Fehler-Zustand auf Englisch.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-invalid-tablet">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-invalid-tablet">web-confirm-invalid-tablet</a>
+                <button class="copy-link" type="button" data-target="web-confirm-invalid-tablet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">tablet-chromium/confirm-invalid.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/tablet-chromium/confirm-invalid.png"
+                  alt="Ungültiger Bestätigungslink — Tablet"
+                />
+              </div>
+              <div class="desc">
+                Fehler-Zustand im Tablet-Layout.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-invalid-mobile">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-invalid-mobile">web-confirm-invalid-mobile</a>
+                <button class="copy-link" type="button" data-target="web-confirm-invalid-mobile" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/confirm-invalid.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/confirm-invalid.png"
+                  alt="Ungültiger Bestätigungslink — Mobile"
+                />
+              </div>
+              <div class="desc">
+                Fehler-Zustand in der Mobile-Ansicht.
+              </div>
+            </div>
+          </div>
+
+          <h3>Adressbestätigung — Dienst nicht verfügbar <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test" id="web-confirm-unavailable-desktop-de">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-unavailable-desktop-de">web-confirm-unavailable-desktop-de</a>
+                <button class="copy-link" type="button" data-target="web-confirm-unavailable-desktop-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-unavailable.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-unavailable.png"
+                  alt="Dienst nicht verfügbar — Desktop (DE)"
+                />
+              </div>
+              <div class="desc">
+                Zustand, wenn der Bestätigungs-Endpunkt nicht erreichbar ist
+                (Backend-Fehler oder Timeout), Desktop, Deutsch.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-unavailable-desktop-en">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-unavailable-desktop-en">web-confirm-unavailable-desktop-en</a>
+                <button class="copy-link" type="button" data-target="web-confirm-unavailable-desktop-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/confirm-unavailable-en.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/confirm-unavailable-en.png"
+                  alt="Service unavailable — Desktop (EN)"
+                />
+              </div>
+              <div class="desc">
+                Derselbe Zustand auf Englisch.
+              </div>
+            </div>
+            <div class="test" id="web-confirm-unavailable-mobile">
+              <div class="head">
+                <a class="name permalink" href="#web-confirm-unavailable-mobile">web-confirm-unavailable-mobile</a>
+                <button class="copy-link" type="button" data-target="web-confirm-unavailable-mobile" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/confirm-unavailable.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/confirm-unavailable.png"
+                  alt="Dienst nicht verfügbar — Mobile"
+                />
+              </div>
+              <div class="desc">
+                Derselbe Zustand in der Mobile-Ansicht.
+              </div>
+            </div>
+          </div>
+
+          <h3>404 — Seite nicht gefunden <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
+          <div class="tests cols-2">
+            <div class="test" id="web-notfound-desktop">
+              <div class="head">
+                <a class="name permalink" href="#web-notfound-desktop">web-notfound-desktop</a>
+                <button class="copy-link" type="button" data-target="web-notfound-desktop" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">desktop-chromium/notfound.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/desktop-chromium/notfound.png"
+                  alt="404-Seite — Desktop"
+                />
+              </div>
+              <div class="desc">
+                Die 404-Seite für unbekannte Pfade, Desktop.
+              </div>
+            </div>
+            <div class="test" id="web-notfound-tablet">
+              <div class="head">
+                <a class="name permalink" href="#web-notfound-tablet">web-notfound-tablet</a>
+                <button class="copy-link" type="button" data-target="web-notfound-tablet" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">tablet-chromium/notfound.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/tablet-chromium/notfound.png"
+                  alt="404-Seite — Tablet"
+                />
+              </div>
+              <div class="desc">
+                404-Seite im Tablet-Layout.
+              </div>
+            </div>
+            <div class="test" id="web-notfound-mobile">
+              <div class="head">
+                <a class="name permalink" href="#web-notfound-mobile">web-notfound-mobile</a>
+                <button class="copy-link" type="button" data-target="web-notfound-mobile" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">mobile-safari/notfound.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../web/mobile-safari/notfound.png"
+                  alt="404-Seite — Mobile"
+                />
+              </div>
+              <div class="desc">
+                404-Seite in der Mobile-Ansicht.
+              </div>
+            </div>
+          </div>
+
+          <p>
+            Eine Änderung an der Website im
+            <a href="https://github.com/RealUnitCH/web">RealUnitCH/web</a>-Repo löst
+            hier <b>keinen</b> automatischen Rebuild aus. Die neuen Baselines werden
+            mit dem nächsten Handbook-Deploy (Push auf <code>staging</code> → DEV
+            bzw. <code>develop</code> → PRD mit handbook-relevanten Pfaden oder
+            manueller <code>workflow_dispatch</code> auf
+            <code>handbook-deploy.yaml</code> im realunit-app-Repo) reingezogen.
+            Kommt im web-Repo eine View hinzu oder weg, failt der Handbook-Build am
+            <code>EXPECTED_WEB_BASELINE_COUNT</code>-Guard, bis Zahl und Karten hier
+            im selben Zug nachgezogen sind.
+          </p>
         </details>
 
         <hr class="sep" />
@@ -2701,7 +3214,7 @@ Dieser Inhalt dient Werbezwecken. Die genehmigten Prospekte und weitere Unterlag
     <dt>Privacy-URL</dt><dd><a href="https://realunit.ch/datenschutz/">https://realunit.ch/datenschutz/</a> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/privacy_url.txt" title="Quelle: privacy_url.txt">↗</a></dd>
     <dt>Support-URL</dt><dd><a href="https://realunit.ch/kontakt/">https://realunit.ch/kontakt/</a> <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/support_url.txt" title="Quelle: support_url.txt">↗</a></dd>
     <dt>Copyright</dt><dd>© 2026 RealUnit Schweiz AG <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/copyright.txt" title="Quelle: copyright.txt">↗</a></dd>
-    <dt>Release-Notes</dt><dd>Erste Veröffentlichung der RealUnit Wallet App. <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/release_notes.txt" title="Quelle: release_notes.txt">↗</a></dd>
+    <dt>Release-Notes</dt><dd>Verbesserte Nutzerführung im Bereich der Registrierung. <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/ios/fastlane/metadata/de-DE/release_notes.txt" title="Quelle: release_notes.txt">↗</a></dd>
   </dl>
 
   <h4>Screenshots — iPhone 6.9 Display (1320×2868)</h4>
@@ -2752,7 +3265,7 @@ Die RealUnit Schweiz AG ist eine börsenkotierte Investmentgesellschaft, welche 
 Jetzt herunterladen und Ihre finanzielle Souveränität zurückgewinnen.
 
 Dieser Inhalt dient Werbezwecken. Die genehmigten Prospekte und weitere Unterlagen zur RealUnit Schweiz AG sind abrufbar unter: https://realunit.ch/ueber-uns/downloads/ (Schweiz) | https://realunit.de/ueber-uns/downloads/ (Deutschland/EU). Vergangene Wertentwicklung ist kein verlässlicher Indikator für zukünftige Ergebnisse.</div></dd>
-    <dt>Changelog</dt><dd>Erste Veröffentlichung der RealUnit Wallet App. <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/changelogs/default.txt" title="Quelle: changelogs/default.txt">↗</a></dd>
+    <dt>Changelog</dt><dd>Verbesserte Nutzerführung im Bereich der Registrierung. <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/android/fastlane/metadata/android/de-DE/changelogs/default.txt" title="Quelle: changelogs/default.txt">↗</a></dd>
   </dl>
 
   <h4>Feature Graphic (1024×500)</h4>
@@ -2918,7 +3431,7 @@ Dieser Inhalt dient Werbezwecken. Die genehmigten Prospekte und weitere Unterlag
                 <div class="file">docs/handbook/de/index.html</div>
               </div>
               <div class="rhs">
-                <b>3 Plattformen</b>
+                <b>5 Zugänge</b>
                 <div class="links">
                   <a href="https://github.com/RealUnitCH/app/releases">Releases ↗</a>
                 </div>
@@ -2927,8 +3440,9 @@ Dieser Inhalt dient Werbezwecken. Die genehmigten Prospekte und weitere Unterlag
           </summary>
 
           <p class="spec-intro">
-            Die öffentlichen Test- und Download-Zugänge der RealUnit-App an einem Ort —
-            iOS über <b>TestFlight</b>, Android über den <b>offenen Test im Play Store</b>
+            Die öffentlichen Store- und Test-Zugänge der RealUnit-App an einem Ort —
+            iOS über den <b>App Store</b> oder <b>TestFlight</b>, Android über
+            <b>Google Play</b> (regulärer Eintrag oder <b>offener Test</b>)
             oder als <b>APK-Direkt-Download</b>. Die Links sind öffentlich und stabil und
             werden statisch hier im Handbook gepflegt; pro Zugang gibt es den Link, einen
             Kopier-Button und einen QR-Code zum Scannen mit dem Handy. Bei einem künftigen
@@ -2936,7 +3450,45 @@ Dieser Inhalt dient Werbezwecken. Die genehmigten Prospekte und weitere Unterlag
             Play-Test-Pfad) diese Sektion aktualisieren.
           </p>
 
-          <div class="tests cols-3">
+          <div class="tests cols-2">
+            <div class="test download" id="dl-appstore">
+              <div class="head">
+                <a class="name permalink" href="#dl-appstore">Apple App Store</a>
+                <span class="src">iOS</span>
+              </div>
+              <div class="dl-body">
+                <div class="dl-qr"><svg role="img" viewBox="0 0 41 41"><title>QR-Code: Apple App Store</title><path fill="#fff" d="M0 0h41v41h-41z"/><path stroke="#343233" d="M4 4.5h7m1 0h1m1 0h1m7 0h4m1 0h1m2 0h7m-33 1h1m5 0h1m1 0h2m1 0h1m2 0h1m2 0h1m3 0h1m1 0h1m2 0h1m5 0h1m-33 1h1m1 0h3m1 0h1m4 0h1m1 0h2m1 0h1m1 0h1m1 0h1m2 0h2m1 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h5m2 0h1m2 0h2m1 0h1m1 0h1m2 0h1m1 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m2 0h1m1 0h1m1 0h1m2 0h1m1 0h1m5 0h1m1 0h1m1 0h3m1 0h1m-33 1h1m5 0h1m2 0h1m4 0h3m1 0h1m3 0h3m1 0h1m5 0h1m-33 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-25 1h2m1 0h2m2 0h5m2 0h1m-23 1h1m1 0h2m1 0h3m2 0h3m1 0h2m1 0h1m3 0h1m4 0h1m2 0h1m1 0h2m-33 1h2m2 0h1m2 0h2m1 0h1m2 0h2m1 0h9m1 0h2m1 0h2m1 0h1m-28 1h2m4 0h1m1 0h1m4 0h1m4 0h3m1 0h3m1 0h2m-30 1h1m1 0h1m2 0h1m1 0h2m4 0h2m4 0h2m2 0h2m1 0h1m-28 1h1m3 0h1m2 0h1m2 0h1m1 0h3m3 0h2m2 0h2m1 0h3m-30 1h2m1 0h1m1 0h1m3 0h3m1 0h2m5 0h1m1 0h1m7 0h2m-31 1h7m1 0h1m4 0h1m2 0h4m1 0h2m2 0h1m1 0h1m-29 1h1m4 0h1m1 0h1m1 0h7m5 0h1m1 0h4m2 0h2m-31 1h1m2 0h2m1 0h2m1 0h1m1 0h1m2 0h1m1 0h1m1 0h1m1 0h3m1 0h3m1 0h1m1 0h1m-30 1h2m5 0h2m1 0h2m1 0h2m4 0h1m2 0h4m1 0h2m1 0h2m-33 1h5m1 0h1m2 0h1m2 0h1m1 0h3m1 0h1m2 0h1m2 0h1m1 0h3m1 0h2m-32 1h2m1 0h3m1 0h1m6 0h1m2 0h3m3 0h1m1 0h2m1 0h1m2 0h2m-33 1h2m2 0h1m1 0h1m3 0h1m1 0h2m2 0h1m5 0h1m4 0h1m1 0h2m-31 1h2m1 0h1m1 0h1m1 0h2m1 0h2m3 0h2m3 0h2m1 0h2m1 0h1m2 0h2m1 0h1m-29 1h3m4 0h1m3 0h1m3 0h2m2 0h1m2 0h2m3 0h2m-32 1h1m1 0h1m1 0h1m2 0h3m2 0h3m2 0h1m1 0h1m1 0h1m6 0h1m-30 1h1m1 0h1m2 0h2m1 0h1m2 0h1m2 0h1m2 0h1m1 0h1m2 0h1m1 0h5m3 0h1m-25 1h1m4 0h4m2 0h3m2 0h1m3 0h2m-30 1h7m1 0h1m1 0h1m1 0h2m3 0h5m1 0h2m1 0h1m1 0h1m-29 1h1m5 0h1m1 0h1m1 0h2m4 0h3m1 0h1m2 0h2m3 0h3m1 0h1m-33 1h1m1 0h3m1 0h1m3 0h1m1 0h1m1 0h5m3 0h7m1 0h1m1 0h1m-33 1h1m1 0h3m1 0h1m1 0h1m5 0h1m1 0h2m1 0h1m1 0h2m4 0h1m1 0h4m-33 1h1m1 0h3m1 0h1m1 0h1m3 0h2m1 0h2m1 0h1m1 0h3m1 0h4m-28 1h1m5 0h1m2 0h2m1 0h3m2 0h1m2 0h1m4 0h4m3 0h1m-33 1h7m1 0h2m3 0h2m1 0h2m1 0h1m1 0h1m3 0h1m2 0h1m1 0h1"/></svg></div>
+                <p class="dl-desc">
+                  Regulärer, öffentlicher Store-Eintrag für iPhone &amp; iPad — der
+                  normale Weg für iOS. Link auf dem Gerät öffnen und die App über
+                  den App Store installieren — Updates kommen automatisch.
+                </p>
+                <div class="dl-actions">
+                  <a class="dl-btn" href="https://apps.apple.com/ch/app/realunit/id6759720010" target="_blank" rel="noopener">Öffnen ↗</a>
+                  <button class="copy-link" type="button" data-copy-url="https://apps.apple.com/ch/app/realunit/id6759720010" title="Link kopieren" aria-label="App-Store-Link kopieren">🔗 Link kopieren</button>
+                </div>
+                <code class="dl-url">https://apps.apple.com/ch/app/realunit/id6759720010</code>
+              </div>
+            </div>
+            <div class="test download" id="dl-playstore-prod">
+              <div class="head">
+                <a class="name permalink" href="#dl-playstore-prod">Google Play</a>
+                <span class="src">Android</span>
+              </div>
+              <div class="dl-body">
+                <div class="dl-qr"><svg role="img" viewBox="0 0 45 45"><title>QR-Code: Google Play</title><path fill="#fff" d="M0 0h45v45h-45z"/><path stroke="#343233" d="M4 4.5h7m1 0h2m2 0h2m4 0h2m2 0h3m1 0h3m1 0h7m-37 1h1m5 0h1m2 0h2m1 0h7m1 0h2m2 0h1m5 0h1m5 0h1m-37 1h1m1 0h3m1 0h1m2 0h1m1 0h3m1 0h7m1 0h2m1 0h1m3 0h1m1 0h3m1 0h1m-37 1h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h2m4 0h2m3 0h3m1 0h1m1 0h1m1 0h3m1 0h1m-37 1h1m1 0h3m1 0h1m1 0h2m2 0h1m5 0h1m2 0h3m2 0h3m1 0h1m1 0h3m1 0h1m-37 1h1m5 0h1m1 0h5m3 0h1m1 0h3m1 0h1m2 0h2m1 0h1m1 0h1m5 0h1m-37 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-29 1h7m1 0h3m2 0h1m2 0h1m1 0h1m-27 1h1m3 0h1m1 0h3m1 0h1m1 0h1m1 0h1m3 0h2m1 0h4m2 0h1m1 0h5m2 0h1m-37 1h1m1 0h4m2 0h2m1 0h1m2 0h1m1 0h2m1 0h2m2 0h1m1 0h1m1 0h2m2 0h3m1 0h1m-34 1h7m1 0h4m2 0h1m1 0h1m1 0h2m1 0h1m1 0h3m1 0h1m1 0h4m-32 1h3m4 0h4m3 0h2m2 0h3m2 0h2m1 0h1m3 0h3m-34 1h1m1 0h3m2 0h2m2 0h1m1 0h3m1 0h1m1 0h4m4 0h2m2 0h4m-32 1h1m5 0h1m3 0h4m4 0h6m3 0h2m-32 1h1m2 0h2m1 0h1m1 0h1m2 0h4m1 0h1m2 0h1m1 0h2m1 0h2m2 0h5m-35 1h2m1 0h1m5 0h1m4 0h2m5 0h4m4 0h4m1 0h1m-35 1h1m1 0h6m2 0h2m1 0h1m1 0h2m2 0h6m1 0h1m1 0h3m2 0h2m-34 1h1m5 0h2m1 0h1m7 0h2m1 0h1m1 0h1m2 0h4m2 0h4m-34 1h2m1 0h3m1 0h3m2 0h2m1 0h3m3 0h1m2 0h3m1 0h3m1 0h1m-33 1h1m2 0h1m4 0h1m1 0h1m1 0h4m1 0h3m2 0h1m2 0h1m1 0h1m4 0h2m-36 1h1m2 0h1m1 0h2m1 0h1m2 0h1m5 0h1m3 0h2m1 0h1m2 0h1m1 0h3m1 0h2m-34 1h2m2 0h1m1 0h2m4 0h4m1 0h1m3 0h2m2 0h3m2 0h2m-31 1h2m2 0h2m1 0h1m3 0h1m1 0h1m1 0h1m2 0h2m1 0h7m1 0h4m-34 1h1m1 0h2m5 0h1m3 0h5m2 0h1m2 0h1m4 0h4m1 0h1m1 0h1m-36 1h1m2 0h3m1 0h2m1 0h2m1 0h2m2 0h3m1 0h3m2 0h1m1 0h2m2 0h3m-36 1h1m1 0h3m3 0h1m5 0h1m1 0h1m2 0h2m1 0h7m3 0h1m-31 1h1m1 0h1m1 0h1m1 0h1m1 0h5m1 0h3m3 0h2m2 0h2m1 0h1m1 0h1m-30 1h1m2 0h1m5 0h2m4 0h2m2 0h3m2 0h3m3 0h1m1 0h1m-35 1h3m3 0h1m1 0h4m1 0h3m1 0h1m2 0h3m1 0h1m1 0h1m1 0h7m-27 1h1m1 0h1m2 0h5m3 0h1m1 0h1m1 0h2m1 0h1m3 0h1m2 0h1m-36 1h7m1 0h1m4 0h1m1 0h1m2 0h1m1 0h1m2 0h2m3 0h1m1 0h1m1 0h1m2 0h1m-36 1h1m5 0h1m2 0h1m1 0h1m2 0h3m2 0h3m4 0h3m3 0h3m1 0h1m-37 1h1m1 0h3m1 0h1m1 0h1m2 0h1m1 0h2m1 0h1m3 0h1m1 0h1m5 0h7m1 0h1m-37 1h1m1 0h3m1 0h1m2 0h1m2 0h3m3 0h2m3 0h1m3 0h1m1 0h3m1 0h1m2 0h1m-37 1h1m1 0h3m1 0h1m2 0h1m1 0h2m2 0h1m1 0h2m1 0h2m1 0h1m1 0h3m2 0h1m-31 1h1m5 0h1m5 0h2m1 0h3m1 0h1m1 0h1m1 0h1m3 0h1m4 0h1m1 0h2m-36 1h7m1 0h4m5 0h1m1 0h3m2 0h1m2 0h1m1 0h3m2 0h3"/></svg></div>
+                <p class="dl-desc">
+                  Regulärer, öffentlicher Store-Eintrag — der normale Weg für
+                  Android. Link auf dem Gerät öffnen und die App über den Play
+                  Store installieren — Updates kommen automatisch.
+                </p>
+                <div class="dl-actions">
+                  <a class="dl-btn" href="https://play.google.com/store/apps/details?id=swiss.realunit.app&amp;hl=de_CH" target="_blank" rel="noopener">Öffnen ↗</a>
+                  <button class="copy-link" type="button" data-copy-url="https://play.google.com/store/apps/details?id=swiss.realunit.app&amp;hl=de_CH" title="Link kopieren" aria-label="Play-Store-Link kopieren">🔗 Link kopieren</button>
+                </div>
+                <code class="dl-url">https://play.google.com/store/apps/details?id=swiss.realunit.app&amp;hl=de_CH</code>
+              </div>
+            </div>
             <div class="test download" id="dl-testflight">
               <div class="head">
                 <a class="name permalink" href="#dl-testflight">Apple TestFlight</a>

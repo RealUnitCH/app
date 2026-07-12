@@ -45,6 +45,7 @@ import 'package:realunit_wallet/screens/transaction_history/transaction_history_
 import 'package:realunit_wallet/screens/verify_seed/verify_seed_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/screens/welcome/welcome_page.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_link_entry.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
@@ -54,6 +55,14 @@ import 'package:realunit_wallet/setup/routing/routes/support_routes.dart';
 
 final GoRouter routerConfig = GoRouter(
   initialLocation: '/home',
+  // Custom-scheme opens (realunit-wallet://…, canonical realunit-wallet://open)
+  // only foreground the app; they must not force any navigation. The redirect
+  // keeps the current in-app route (warm resume) or hands off to the normal
+  // boot entry (cold start). See app_link_entry.dart.
+  redirect: (context, state) => appLinkSchemeRedirect(
+    state,
+    routerConfig.routerDelegate.currentConfiguration.uri.toString(),
+  ),
   routes: <RouteBase>[
     GoRoute(
       name: AppRoutes.home,
@@ -311,7 +320,9 @@ final GoRouter routerConfig = GoRouter(
         GoRoute(
           name: SupportRoutes.emailCapture,
           path: 'email',
-          builder: (_, _) => const SupportEmailCapturePage(),
+          builder: (_, state) => SupportEmailCapturePage(
+            description: state.extra as String?,
+          ),
         ),
         GoRoute(
           name: SupportRoutes.tickets,

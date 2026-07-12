@@ -8,6 +8,7 @@ import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_
 import 'package:realunit_wallet/screens/buy/widgets/buy_confirm_button.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/show_bitbox_reconnect_sheet.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
+import 'package:realunit_wallet/setup/routing/routes/support_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
@@ -83,6 +84,30 @@ class PaymentActionButton extends StatelessWidget {
               child: AppFilledButton(
                 onPressed: () async {
                   await context.pushNamed(AppRoutes.kyc, extra: paymentState.context);
+                  if (context.mounted) {
+                    context.read<BuyPaymentInfoCubit>().getPaymentInfo(
+                      amount: amountController.text,
+                      currency: context.read<BuyConverterCubit>().state.currency,
+                    );
+                  }
+                },
+                label: S.of(context).next,
+              ),
+            );
+          }
+          if (paymentState.error == PaymentInfoError.primaryEmailRequired) {
+            // Pre-tap gate: the API flagged the quote invalid because the
+            // account has no primary email. Route to email capture first,
+            // then re-fetch the quote so a now-valid quote surfaces the
+            // binding-buy CTA — mirrors the registration / KYC gates above.
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: AppFilledButton(
+                onPressed: () async {
+                  await context.pushNamed(
+                    SupportRoutes.emailCapture,
+                    extra: S.of(context).buyPrimaryEmailRequiredCaptureDescription,
+                  );
                   if (context.mounted) {
                     context.read<BuyPaymentInfoCubit>().getPaymentInfo(
                       amount: amountController.text,

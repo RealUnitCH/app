@@ -21,6 +21,12 @@ part 'buy_payment_info_state.dart';
 // already routed via dedicated ApiExceptions and dedicated failure states.
 const String _quoteErrorAmountTooLow = 'AmountTooLow';
 
+// Backend QuoteError code for the "buyer has no primary email on record"
+// case. The API pre-tells this on the quote (`isValid: false`) so the app
+// can gate the confirm before the tap — routing the user to email capture —
+// instead of reacting to a post-submit 400 and losing the flow.
+const String _quoteErrorPrimaryEmailRequired = 'PrimaryEmailRequired';
+
 class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
   final RealUnitBuyPaymentInfoService _buyPaymentInfoService;
   CancelableOperation<BuyPaymentInfoState>? _completer;
@@ -62,6 +68,9 @@ class BuyPaymentInfoCubit extends Cubit<BuyPaymentInfoState> {
             PaymentInfoError.minAmountNotMet,
             minAmount: paymentInfo.minVolume!,
           );
+        }
+        if (paymentInfo.error == _quoteErrorPrimaryEmailRequired) {
+          return const BuyPaymentInfoFailure(PaymentInfoError.primaryEmailRequired);
         }
         return const BuyPaymentInfoFailure(PaymentInfoError.unknown);
       }

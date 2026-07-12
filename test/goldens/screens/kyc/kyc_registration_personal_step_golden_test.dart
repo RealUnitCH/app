@@ -19,10 +19,7 @@ void main() {
   late _MockKycRegistrationStepCubit stepCubit;
 
   setUpAll(() {
-    final countryService = MockDfxCountryService();
-    when(() => countryService.getAllCountries())
-        .thenAnswer((_) async => const <Country>[]);
-    GetIt.instance.registerSingleton<DfxCountryService>(countryService);
+    GetIt.instance.registerSingleton<DfxCountryService>(fixtureCountryService());
   });
 
   tearDownAll(() async => GetIt.instance.reset());
@@ -40,12 +37,7 @@ void main() {
     );
   });
 
-  group('$KycRegistrationPersonalStep', () {
-    goldenTest(
-      'empty personal form',
-      fileName: 'kyc_registration_personal_step_default',
-      constraints: phoneConstraints,
-      builder: () => wrapForGolden(
+  Widget buildSubject() => wrapForGolden(
         BlocProvider<KycRegistrationStepCubit>.value(
           value: stepCubit,
           child: Scaffold(
@@ -61,7 +53,33 @@ void main() {
             ),
           ),
         ),
-      ),
+      );
+
+  // Tap the nationality country field open so the selectable country list is
+  // captured (CH/DE/IT/FR float to the top by CountryField's priority sort).
+  Future<void> openCountryDropdown(WidgetTester tester) async {
+    await tester.pumpAndSettle();
+    final field = find.byType(DropdownButtonFormField<Country>);
+    await tester.ensureVisible(field);
+    await tester.pumpAndSettle();
+    await tester.tap(field);
+    await tester.pumpAndSettle();
+  }
+
+  group('$KycRegistrationPersonalStep', () {
+    goldenTest(
+      'empty personal form',
+      fileName: 'kyc_registration_personal_step_default',
+      constraints: phoneConstraints,
+      builder: buildSubject,
+    );
+
+    goldenTest(
+      'nationality dropdown open — the selectable country list',
+      fileName: 'kyc_registration_personal_step_dropdown_open',
+      constraints: phoneConstraints,
+      pumpBeforeTest: openCountryDropdown,
+      builder: buildSubject,
     );
   });
 }

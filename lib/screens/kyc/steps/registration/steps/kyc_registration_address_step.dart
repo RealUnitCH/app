@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/utils/swiss_payment_text.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/kyc_registration_step_cubit.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/form/country_field.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
@@ -13,7 +15,6 @@ class KycRegistrationAddressStep extends StatelessWidget {
   final TextEditingController cityCtrl;
   final ValueNotifier<Country?> countryCtrl;
   final Country? initialCountry;
-  final Future<void> Function() onSubmit;
 
   KycRegistrationAddressStep({
     super.key,
@@ -22,7 +23,6 @@ class KycRegistrationAddressStep extends StatelessWidget {
     required this.postalCodeCtrl,
     required this.cityCtrl,
     required this.countryCtrl,
-    required this.onSubmit,
     this.initialCountry,
   });
   final _formKey = GlobalKey<FormState>();
@@ -47,7 +47,7 @@ class KycRegistrationAddressStep extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: LabeledTextField(
-                        hintText: 'Musterstrasse',
+                        hintText: S.of(context).streetHint,
                         controller: addressStreetCtrl,
                         label: S.of(context).street,
                         keyboardType: TextInputType.streetAddress,
@@ -100,7 +100,7 @@ class KycRegistrationAddressStep extends StatelessWidget {
                     Expanded(
                       flex: 3,
                       child: LabeledTextField(
-                        hintText: 'Zurich',
+                        hintText: S.of(context).cityHint,
                         controller: cityCtrl,
                         label: S.of(context).city,
                         keyboardType: TextInputType.text,
@@ -121,15 +121,15 @@ class KycRegistrationAddressStep extends StatelessWidget {
                   onChanged: (country) => countryCtrl.value = country,
                 ),
                 Padding(
-                  padding: const .symmetric(vertical: 16.0),
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: AppFilledButton(
-                    onPressed: () async {
+                    onPressed: () {
                       FocusManager.instance.primaryFocus?.unfocus();
                       if (_formKey.currentState?.validate() ?? false) {
-                        await onSubmit();
+                        context.read<KycRegistrationStepCubit>().next();
                       }
                     },
-                    label: S.of(context).complete,
+                    label: S.of(context).next,
                   ),
                 ),
               ],

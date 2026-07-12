@@ -215,6 +215,51 @@ void main() {
         throwsA(isA<ArgumentError>()),
       );
     });
+
+    test('parses emailConfirmed + confirmedDate when present', () {
+      final dto = RealUnitRegistrationInfoDto.fromJson({
+        'state': 'AlreadyRegistered',
+        'userData': null,
+        'emailConfirmed': true,
+        'confirmedDate': '2026-07-11T10:20:30.000Z',
+      });
+
+      expect(dto.emailConfirmed, isTrue);
+      expect(dto.confirmedDate, DateTime.parse('2026-07-11T10:20:30.000Z'));
+    });
+
+    test('parses emailConfirmed=false with no confirmedDate', () {
+      final dto = RealUnitRegistrationInfoDto.fromJson({
+        'state': 'AlreadyRegistered',
+        'userData': null,
+        'emailConfirmed': false,
+      });
+
+      expect(dto.emailConfirmed, isFalse);
+      expect(dto.confirmedDate, isNull);
+    });
+
+    test('legacy fallback: emailConfirmed + confirmedDate absent → null', () {
+      final dto = RealUnitRegistrationInfoDto.fromJson({
+        'state': 'AlreadyRegistered',
+        'userData': null,
+      });
+
+      expect(dto.emailConfirmed, isNull);
+      expect(dto.confirmedDate, isNull);
+    });
+
+    test('guards an unparseable confirmedDate → null', () {
+      final dto = RealUnitRegistrationInfoDto.fromJson({
+        'state': 'AlreadyRegistered',
+        'userData': null,
+        'emailConfirmed': true,
+        'confirmedDate': 'not-a-date',
+      });
+
+      expect(dto.emailConfirmed, isTrue);
+      expect(dto.confirmedDate, isNull);
+    });
   });
 
   group('$RealUnitUserDataDto.fromJson', () {

@@ -6,6 +6,7 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.da
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
@@ -94,6 +95,43 @@ void main() {
         KycRegistrationSubmitLoading(),
         const KycRegistrationSubmitSuccess(RegistrationStatus.completed),
       ],
+    );
+
+    test(
+      'forwards a non-null countryAndTINs into the Registration handed to the service',
+      () async {
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(
+          () => registrationService.completeRegistration(any()),
+        ).thenAnswer((_) async => RegistrationStatus.completed);
+
+        await buildCubit().submit(
+          type: RegistrationUserType.human,
+          firstName: 'Alice',
+          lastName: 'Doe',
+          phoneNumber: '+41791234567',
+          birthday: '1990-01-15',
+          nationality: _country,
+          addressStreet: 'Teststrasse',
+          addressStreetNumber: '1',
+          addressPostalCode: '8000',
+          addressCity: 'Zurich',
+          addressCountry: _country,
+          swissTaxResidence: false,
+          countryAndTINs: const [
+            CountryAndTin(country: 'DE', tin: '12 345 678 901'),
+          ],
+        );
+
+        final captured = verify(
+          () => registrationService.completeRegistration(captureAny()),
+        ).captured.single as Registration;
+
+        expect(captured.swissTaxResidence, isFalse);
+        expect(captured.countryAndTINs, hasLength(1));
+        expect(captured.countryAndTINs!.single.country, 'DE');
+        expect(captured.countryAndTINs!.single.tin, '12 345 678 901');
+      },
     );
 
     blocTest<KycRegistrationSubmitCubit, KycRegistrationSubmitState>(

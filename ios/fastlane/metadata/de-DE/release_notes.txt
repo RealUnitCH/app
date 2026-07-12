@@ -1,1 +1,1 @@
-Erste Veröffentlichung der RealUnit Wallet App.
+Verbesserte Nutzerführung im Bereich der Registrierung.
