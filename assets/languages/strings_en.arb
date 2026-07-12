@@ -73,7 +73,7 @@
   "copyClipboard": "Copied to clipboard",
   "countriesLoadFailed": "Could not load the country list. Please try again.",
   "country": "Country",
-  "countryHint": "Switzerland",
+  "countryHint": "Select country",
   "createWallet": "Create new Wallet",
   "createWalletConfirm": "I’ve written it down",
   "createWalletRecoveryKeyTitle": "Recovery Phrase",
