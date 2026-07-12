@@ -126,12 +126,14 @@ void main() {
       final dropdown = tester.widget<DropdownField<RegistrationUserType>>(
         find.byType(DropdownField<RegistrationUserType>),
       );
-      // A null selection is ignored (guard); a concrete value updates the
-      // controller.
+      // A null selection is ignored (guard) and leaves the initial value; a
+      // concrete value replaces it, so assert the observable transition to the
+      // other enum value (fails if the set-branch assignment is removed).
       dropdown.onChanged!(null);
-      dropdown.onChanged!(RegistrationUserType.human);
-
       expect(harness.typeCtrl.value, RegistrationUserType.human);
+
+      dropdown.onChanged!(RegistrationUserType.corporation);
+      expect(harness.typeCtrl.value, RegistrationUserType.corporation);
     });
 
     testWidgets('dismisses the keyboard when tapping outside the fields', (tester) async {
