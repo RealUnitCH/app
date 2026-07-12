@@ -1,21 +1,26 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_link_entry.dart';
 
 void main() {
-  // A minimal router wired to the *production* [appLinkSchemeRedirect], exactly
-  // as router_config.dart wires it (current location read from the router's own
-  // delegate). `/home` is the normal cold-start entry; `/dashboard` and
-  // `/settings` stand in for arbitrary in-app routes a warm resume must preserve.
+  // A minimal router wired to the *production* scheme handling — the
+  // [appLinkSchemeRedirect] + [appLinkOnException] pair with the push-aware
+  // [effectiveLocation], exactly as router_config.dart wires it. `/home` is the
+  // normal cold-start entry; `/dashboard` and `/settings` stand in for
+  // arbitrary in-app routes a warm resume must preserve.
   GoRouter buildRouter({String initialLocation = '/home'}) {
     late final GoRouter router;
     router = GoRouter(
       initialLocation: initialLocation,
       redirect: (context, state) => appLinkSchemeRedirect(
         state,
-        router.routerDelegate.currentConfiguration.uri.toString(),
+        effectiveLocation(router.routerDelegate.currentConfiguration),
       ),
+      onException: appLinkOnException,
       routes: [
         GoRoute(
           path: '/home',
@@ -28,6 +33,13 @@ void main() {
         GoRoute(
           path: '/settings',
           builder: (_, _) => const Scaffold(body: Text('SET', key: Key('settings'))),
+        ),
+        GoRoute(
+          path: '/details',
+          // Mirrors the real extra-required builders (/buyPaymentDetails,
+          // /webView, …): rebuilding this route from a bare path throws.
+          builder: (_, state) =>
+              Scaffold(body: Text(state.extra! as String, key: const Key('details'))),
         ),
       ],
     );
@@ -82,6 +94,42 @@ void main() {
     expect(find.byKey(const Key('settings')), findsOneWidget);
   });
 
+  testWidgets(
+    'warm resume: a scheme open keeps the user on a PUSHED route '
+    '(how /kyc is reached from Buy/Sell)',
+    (tester) async {
+      final router = await pump(tester);
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+
+      // The KYC flow is entered imperatively — context.pushNamed(AppRoutes.kyc)
+      // from the Buy/Sell buttons — so the flow route sits ON TOP of the base
+      // route instead of replacing it. /settings stands in for the pushed flow.
+      unawaited(router.push('/settings'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('settings')), findsOneWidget);
+
+      // Same promise as for go-routes above: the scheme open must NOT force
+      // any navigation. The pushed route (and with it any page-scoped state,
+      // e.g. the KycCubit) must survive the open.
+      router.go(appLinkUrl);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('settings')), findsOneWidget);
+      expect(find.byKey(const Key('dashboard')), findsNothing);
+
+      // A true no-op also preserves the imperative stack itself — the pushed
+      // route must still pop back to the base route it was pushed from. This
+      // guards against "fixes" that rebuild the page as a new base route
+      // (which would drop page-scoped state, `state.extra`, and the back
+      // stack while leaving the same page visible).
+      expect(router.canPop(), isTrue);
+      router.pop();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('dashboard')), findsOneWidget);
+    },
+  );
+
   testWidgets('cold start on the scheme URL boots to the normal entry', (
     tester,
   ) async {
@@ -109,6 +157,73 @@ void main() {
           reason: 'for $url',
         );
       }
+    },
+  );
+
+  testWidgets(
+    'warm resume: a crafted scheme URL to an auth path is a no-op '
+    '(no navigation, PIN gate not bypassed)',
+    (tester) async {
+      final router = await pump(tester);
+      router.go('/settings');
+      await tester.pumpAndSettle();
+
+      // `realunit-wallet://dashboard` must not navigate anywhere on a warm
+      // resume either — same no-op as the canonical open.
+      router.go('realunit-wallet://dashboard');
+      await tester.pumpAndSettle();
+
+      expect(currentPath(router), '/settings');
+      expect(find.byKey(const Key('settings')), findsOneWidget);
+      expect(find.byKey(const Key('dashboard')), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'warm resume: a crafted scheme URL carrying a real path does not navigate '
+    '(flow-level gates not bypassed)',
+    (tester) async {
+      final router = await pump(tester);
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+
+      // go_router matches on uri.path alone, so this WOULD match /settings if
+      // the redirect let it fall through like the canonical path-less open.
+      router.go('realunit-wallet://open/settings');
+      await tester.pumpAndSettle();
+
+      expect(currentPath(router), '/dashboard');
+      expect(find.byKey(const Key('dashboard')), findsOneWidget);
+      expect(find.byKey(const Key('settings')), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'warm resume: a crafted path-carrying scheme URL over a pushed '
+    'extra-required route neither navigates nor crashes',
+    (tester) async {
+      final router = await pump(tester);
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+
+      // Backgrounding on a pushed extra-required route is the everyday case
+      // (e.g. /buyPaymentDetails while paying in the banking app).
+      unawaited(router.push('/details', extra: 'payment'));
+      await tester.pumpAndSettle();
+      expect(find.text('payment'), findsOneWidget);
+
+      // The crafted URL is rewritten to the canonical path-less open and ends
+      // in the onException no-op. A currentLocation pin instead would rebuild
+      // /details via `go` with a null extra and crash the builder cast.
+      router.go('realunit-wallet://open/settings');
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('payment'), findsOneWidget);
+      expect(router.canPop(), isTrue);
+      router.pop();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('dashboard')), findsOneWidget);
     },
   );
 
