@@ -102,19 +102,23 @@ class RealUnitRegistrationService extends DFXAuthService {
 
   /// registers a wallet and and adds the wallet to the new user
   Future<RegistrationStatus> completeRegistration(Registration registration) async {
+    // Fetch the server-provided signing date BEFORE unlocking the wallet: it
+    // only needs the JWT, not the private key, so a slow or failing fetch must
+    // not hold the decrypted key resident (and a failure aborts before unlock).
+    final registrationDate = await getRegistrationDate();
     // EIP-712 registration signature requires the private key — promote the
     // view-wallet (if any) to a fully unlocked SoftwareWallet first, then
     // lock back down in the finally so a throw mid-sequence doesn't leave the
     // key resident.
     await walletService.ensureCurrentWalletUnlocked();
     try {
-      return await _completeRegistration(registration);
+      return await _completeRegistration(registration, registrationDate);
     } finally {
       await walletService.lockCurrentWallet();
     }
   }
 
-  Future<RegistrationStatus> _completeRegistration(Registration registration) async {
+  Future<RegistrationStatus> _completeRegistration(Registration registration, String registrationDate) async {
     final credentials = appStore.wallet.primaryAccount.primaryAddress;
     // BitBox firmware rejects non-ASCII bytes in EIP-712 string fields.
     // Transliterate everything that goes into the signed envelope AND the
@@ -132,9 +136,6 @@ class RealUnitRegistrationService extends DFXAuthService {
     );
     final addressPostalCode = toBitboxSafeAscii(registration.addressPostalCode);
     final addressCity = toBitboxSafeAscii(registration.addressCity);
-    // The registration date is a signed field the backend validates against
-    // its own clock — take it from the API, never the device's local date.
-    final registrationDate = await getRegistrationDate();
     final signature = await Eip712Signer.signRegistration(
       credentials: credentials,
       chainId: _chainId,
@@ -206,18 +207,18 @@ class RealUnitRegistrationService extends DFXAuthService {
   Future<RegistrationStatus> registerWallet(
     RealUnitUserDataDto userData,
   ) async {
+    // Fetch the signed date before unlocking — see completeRegistration.
+    final registrationDate = await getRegistrationDate();
     await walletService.ensureCurrentWalletUnlocked();
     try {
-      return await _registerWallet(userData);
+      return await _registerWallet(userData, registrationDate);
     } finally {
       await walletService.lockCurrentWallet();
     }
   }
 
-  Future<RegistrationStatus> _registerWallet(RealUnitUserDataDto userData) async {
+  Future<RegistrationStatus> _registerWallet(RealUnitUserDataDto userData, String registrationDate) async {
     final credentials = appStore.wallet.primaryAccount.primaryAddress;
-    // Server-provided registration date (signed field) — see completeRegistration.
-    final registrationDate = await getRegistrationDate();
     // Same ASCII guard as completeRegistration — see comment there.
     final signature = await Eip712Signer.signRegistration(
       credentials: credentials,
