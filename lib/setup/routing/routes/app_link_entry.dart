@@ -36,9 +36,13 @@ const String appLinkColdStartLocation = '/home';
 /// alone, so `realunit-wallet://open/settings/seed` would match — and with a
 /// `null` return it would navigate, straight past flow-level gates (the seed
 /// page's PIN gate lives in the settings navigation path, not on the route).
-/// Such crafted URLs are pinned to [currentLocation] instead: that `go` may
-/// rebuild a pushed route as the base match, but a crafted URL is not worth
-/// preserving a pushed stack for — never navigating anywhere new wins.
+/// Returning the current location instead would be no safer: applied as a
+/// `go`, it rebuilds a pushed `extra`-required route (`/buyPaymentDetails`,
+/// `/webView`, …) with a null `extra` and crashes its builder cast. So crafted
+/// path-carrying URLs are rewritten to the canonical [appLinkUrl]: the
+/// redirect runs once more on that path-less form, falls through unmatched,
+/// and [appLinkOnException] keeps the configuration — the same true no-op as
+/// the canonical open, with no rebuild at all.
 ///
 /// Non-scheme (in-app) navigation is left untouched (`null`).
 //
@@ -52,7 +56,7 @@ String? appLinkSchemeRedirect(GoRouterState state, String currentLocation) {
   final isInAppRoute = current.scheme.isEmpty && current.path.startsWith('/');
   if (!isInAppRoute) return appLinkColdStartLocation;
   final hasPath = state.uri.path.isNotEmpty && state.uri.path != '/';
-  return hasPath ? currentLocation : null;
+  return hasPath ? appLinkUrl : null;
 }
 
 /// go_router exception handler paired with [appLinkSchemeRedirect].

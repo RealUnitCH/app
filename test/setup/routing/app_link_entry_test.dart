@@ -34,6 +34,13 @@ void main() {
           path: '/settings',
           builder: (_, _) => const Scaffold(body: Text('SET', key: Key('settings'))),
         ),
+        GoRoute(
+          path: '/details',
+          // Mirrors the real extra-required builders (/buyPaymentDetails,
+          // /webView, …): rebuilding this route from a bare path throws.
+          builder: (_, state) =>
+              Scaffold(body: Text(state.extra! as String, key: const Key('details'))),
+        ),
       ],
     );
     return router;
@@ -188,6 +195,35 @@ void main() {
       expect(currentPath(router), '/dashboard');
       expect(find.byKey(const Key('dashboard')), findsOneWidget);
       expect(find.byKey(const Key('settings')), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'warm resume: a crafted path-carrying scheme URL over a pushed '
+    'extra-required route neither navigates nor crashes',
+    (tester) async {
+      final router = await pump(tester);
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+
+      // Backgrounding on a pushed extra-required route is the everyday case
+      // (e.g. /buyPaymentDetails while paying in the banking app).
+      unawaited(router.push('/details', extra: 'payment'));
+      await tester.pumpAndSettle();
+      expect(find.text('payment'), findsOneWidget);
+
+      // The crafted URL is rewritten to the canonical path-less open and ends
+      // in the onException no-op. A currentLocation pin instead would rebuild
+      // /details via `go` with a null extra and crash the builder cast.
+      router.go('realunit-wallet://open/settings');
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('payment'), findsOneWidget);
+      expect(router.canPop(), isTrue);
+      router.pop();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('dashboard')), findsOneWidget);
     },
   );
 

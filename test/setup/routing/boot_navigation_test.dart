@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
+import 'package:realunit_wallet/setup/routing/router_config.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
@@ -211,6 +213,36 @@ void main() {
 
     test('a query string does not defeat the allowlist match', () {
       expect(isRestorableLocation('/kyc?context=buy'), isTrue);
+    });
+  });
+
+  group('drift pin against the real route table', () {
+    // Both sets duplicate path literals from router_config.dart. A path rename
+    // there would otherwise drift silently: an unrecognized gate strands the
+    // user on the gate screen (BootNavStay instead of the dashboard fallback),
+    // an unrecognized restorable route silently degrades to the dashboard.
+    Set<String> collectPaths(List<RouteBase> routes, String prefix) {
+      final paths = <String>{};
+      for (final route in routes) {
+        var next = prefix;
+        if (route is GoRoute) {
+          next = route.path.startsWith('/')
+              ? route.path
+              : '${prefix == '/' ? '' : prefix}/${route.path}';
+          paths.add(next);
+        }
+        paths.addAll(collectPaths(route.routes, next));
+      }
+      return paths;
+    }
+
+    test('every gate and restorable location is a real route path', () {
+      // Constructing GoRouter never invokes page builders, so walking the real
+      // routerConfig needs neither DI nor pumpWidget.
+      final realPaths = collectPaths(routerConfig.configuration.routes, '');
+
+      expect(gateLocations.difference(realPaths), isEmpty);
+      expect(restorableLocations.difference(realPaths), isEmpty);
     });
   });
 }
