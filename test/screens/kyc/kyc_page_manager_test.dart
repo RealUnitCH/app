@@ -1,5 +1,8 @@
+import 'package:flutter/widgets.dart';
+import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
@@ -14,7 +17,9 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_serv
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
+import 'package:realunit_wallet/screens/kyc/subpages/kyc_failure_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_pending_page.dart';
+import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
 
 import '../../helper/helper.dart';
 
@@ -26,6 +31,8 @@ class _MockRealUnitRegistrationService extends Mock
 class _MockAppStore extends Mock implements AppStore {}
 
 class _MockAWallet extends Mock implements AWallet {}
+
+class _MockKycCubit extends MockCubit<KycState> implements KycCubit {}
 
 UserKycDto _kycHeader({KycLevel level = KycLevel.level0}) =>
     UserKycDto(hash: 'h', level: level, dataComplete: false);
@@ -125,6 +132,84 @@ void main() {
       expect(find.byType(KycPendingPage), findsOneWidget);
 
       await cubit.close();
+    },
+  );
+
+  Widget viewWithState(KycCubit cubit) => BlocProvider<KycCubit>.value(
+    value: cubit,
+    child: const KycViewManager(),
+  );
+
+  // Exercises the KycPageManager DI wrapper itself (not just KycViewManager):
+  // the create closure must build a KycCubit from getIt and kick off checkKyc
+  // with the passed context.
+  testWidgets(
+    'KycPageManager builds the KycCubit from getIt and runs checkKyc with the context',
+    (tester) async {
+      final getIt = GetIt.instance;
+      getIt.registerSingleton<DfxKycService>(kycService);
+      getIt.registerSingleton<RealUnitRegistrationService>(registrationService);
+      getIt.registerSingleton<AppStore>(appStore);
+      addTearDown(() async => getIt.reset());
+
+      // Fail fast so the created cubit settles into KycFailure without leaving a
+      // pending 30s timeout timer — the assertion is on the DI wiring, not the
+      // resulting state.
+      when(() => kycService.getKycStatus(context: 'RealunitBuy')).thenThrow(
+        Exception('boom'),
+      );
+      when(() => kycService.getUser()).thenAnswer((_) async => _user());
+
+      // Non-const construction so the constructor runs at runtime instead of
+      // folding to a compile-time constant.
+      // ignore: prefer_const_constructors
+      await tester.pumpApp(KycPageManager(kycContext: 'RealunitBuy'));
+      await tester.pumpAndSettle();
+
+      // Proves both halves of the wiring: the cubit was built from getIt (else
+      // this mock is never reached) and checkKyc forwarded the context.
+      verify(() => kycService.getKycStatus(context: 'RealunitBuy')).called(1);
+      expect(find.byType(KycFailurePage), findsOneWidget);
+    },
+  );
+
+  // The KycUnsupportedStepFailure arm renders a KycFailurePage with the
+  // unsupported step name — a state no page test drives directly.
+  testWidgets(
+    'KycViewManager renders KycFailurePage for KycUnsupportedStepFailure',
+    (tester) async {
+      final cubit = _MockKycCubit();
+      when(() => cubit.state).thenReturn(
+        const KycUnsupportedStepFailure(KycStepName.personalData),
+      );
+
+      await tester.pumpApp(viewWithState(cubit));
+
+      expect(find.byType(KycFailurePage), findsOneWidget);
+    },
+  );
+
+  // The legalDisclaimer arm wires LegalDisclaimerPage.onCompleted to
+  // markLegalDisclaimerAccepted + checkKyc; drive that callback directly.
+  testWidgets(
+    'KycViewManager legalDisclaimer onCompleted marks acceptance and re-checks',
+    (tester) async {
+      final cubit = _MockKycCubit();
+      when(() => cubit.state).thenReturn(
+        const KycSuccess(currentStep: KycStep.legalDisclaimer),
+      );
+      when(() => cubit.checkKyc()).thenAnswer((_) async {});
+
+      await tester.pumpApp(viewWithState(cubit));
+      await tester.pumpAndSettle();
+
+      // Drive the disclaimer's completion callback exactly as the page would on
+      // acceptance, without exercising the disclaimer UI itself.
+      final page = tester.widget<LegalDisclaimerPage>(find.byType(LegalDisclaimerPage));
+      page.onCompleted!();
+
+      verify(() => cubit.markLegalDisclaimerAccepted()).called(1);
+      verify(() => cubit.checkKyc()).called(1);
     },
   );
 }
