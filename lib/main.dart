@@ -13,10 +13,9 @@ import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/error_handling/realunit_error_view.dart';
 import 'package:realunit_wallet/setup/lifecycle_initializer.dart';
+import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 import 'package:realunit_wallet/setup/routing/router_config.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
-import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
-import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 import 'package:realunit_wallet/styles/themes.dart';
 
 Future<void> main() async {
@@ -136,34 +135,46 @@ class _WalletAppState extends State<WalletApp> {
 
   void _navigate() {
     final homeState = getIt<HomeBloc>().state;
-    final pinState = getIt<PinAuthCubit>().state;
+    final pin = getIt<PinAuthCubit>();
+    final pinState = pin.state;
+    final current = routerConfig.routerDelegate.currentConfiguration.uri.toString();
 
-    if (homeState.isLoadingWallet) return;
+    final action = resolveBootNavigation(
+      isLoadingWallet: homeState.isLoadingWallet,
+      softwareTermsAccepted: homeState.softwareTermsAccepted,
+      hasWallet: homeState.hasWallet,
+      onboardingCompleted: homeState.onboardingCompleted,
+      isPinSetup: pinState.isPinSetup,
+      isPinVerified: pinState.isPinVerified,
+      bitboxAddressRecoveryNeeded: homeState.bitboxAddressRecoveryNeeded,
+      walletLoaded: homeState.openWallet != null,
+      currentLocation: current,
+      resumeLocation: pin.peekResumeLocation(),
+    );
 
-    String targetRoute;
-    if (!homeState.softwareTermsAccepted) {
-      targetRoute = AppRoutes.home;
-    } else if (!homeState.hasWallet) {
-      targetRoute = OnboardingRoutes.welcome;
-    } else if (!homeState.onboardingCompleted) {
-      targetRoute = OnboardingRoutes.completed;
-    } else if (!pinState.isPinSetup) {
-      targetRoute = PinRoutes.setup;
-    } else if (!pinState.isPinVerified) {
-      targetRoute = PinRoutes.verify;
-    } else if (homeState.bitboxAddressRecoveryNeeded) {
-      // A BitBox wallet was persisted with an empty/invalid address — divert to
-      // the re-pairing recovery flow instead of loading it into the dashboard
-      // (which would crash the build via `EthereumAddress.fromHex("")`).
-      targetRoute = AppRoutes.bitboxAddressRecovery;
-    } else if (homeState.openWallet == null) {
-      // Wallet not loaded yet — trigger load and wait for HomeBloc update
-      _loadWalletIfNeeded();
-      return;
-    } else {
-      targetRoute = AppRoutes.dashboard;
+    switch (action) {
+      case BootNavWaitForLoad():
+        return;
+      case BootNavLoadWallet():
+        // Wallet not loaded yet — trigger load and wait for the HomeBloc update.
+        _loadWalletIfNeeded();
+        return;
+      case BootNavGoNamed(:final routeName):
+        // Reaching the dashboard is the final landing — drop any stale resume
+        // capture so a later benign emission can't bounce the user around.
+        if (routeName == AppRoutes.dashboard) pin.clearResumeLocation();
+        routerConfig.goNamed(routeName);
+        return;
+      case BootNavRestore(:final location):
+        // Return to the in-flight route the user was on before the re-lock,
+        // reached only after the PIN gate above has already passed.
+        pin.clearResumeLocation();
+        routerConfig.go(location);
+        return;
+      case BootNavStay():
+        // Already on a valid non-gate route — discard any stale capture.
+        pin.clearResumeLocation();
+        return;
     }
-
-    routerConfig.goNamed(targetRoute);
   }
 }

@@ -15,6 +15,7 @@ class PinAuthCubit extends Cubit<PinAuthState> {
   final SecureStorage _secureStorage;
 
   DateTime? _lastBackgroundTime;
+  String? _resumeLocation;
 
   Future<void> initialize() async {
     final isPinSetup = await _secureStorage.hasPinHash();
@@ -32,7 +33,21 @@ class PinAuthCubit extends Cubit<PinAuthState> {
 
   void onPinVerified() => emit(state.copyWith(isPinVerified: true));
 
-  void onAppHidden() => _lastBackgroundTime ??= clock.now();
+  /// Captures the background timestamp (for the re-lock timeout) and, once per
+  /// background episode, the route the user was on so `_navigate` can restore
+  /// it after any resulting PIN re-lock. Both use `??=` so only the first
+  /// backgrounding in an episode wins.
+  void onAppHidden(String? currentLocation) {
+    _lastBackgroundTime ??= clock.now();
+    _resumeLocation ??= currentLocation;
+  }
+
+  /// The captured pre-background route, or null. Read (not consumed) here; the
+  /// consumer (`_navigate`) clears it via [clearResumeLocation] once it has
+  /// either restored the route or reached a final landing.
+  String? peekResumeLocation() => _resumeLocation;
+
+  void clearResumeLocation() => _resumeLocation = null;
 
   void onAppResumed() {
     if (!state.isPinSetup) return;
@@ -53,6 +68,7 @@ class PinAuthCubit extends Cubit<PinAuthState> {
       _secureStorage.deleteBiometricEnabled(),
       _secureStorage.resetPinLockout(),
     ]);
+    _resumeLocation = null;
     emit(const PinAuthState());
   }
 }

@@ -75,7 +75,7 @@ void main() {
     });
 
     test('onAppResumed when PIN not setup is a no-op (no emit)', () async {
-      final cubit = build()..onAppHidden();
+      final cubit = build()..onAppHidden(null);
       final before = cubit.state;
       cubit.onAppResumed();
       expect(cubit.state, before);
@@ -93,7 +93,7 @@ void main() {
         // lockoutDuration constant pin below — flipping that constant or the
         // comparator surfaces in the auth flow's own tests.
         cubit
-          ..onAppHidden()
+          ..onAppHidden(null)
           ..onAppResumed();
 
         expect(cubit.state.isPinVerified, isTrue);
@@ -110,7 +110,7 @@ void main() {
           final cubit = build()..onPinSetupComplete();
           expect(cubit.state.isPinVerified, isTrue);
 
-          cubit.onAppHidden();
+          cubit.onAppHidden(null);
           async.elapse(lockoutDuration + const Duration(seconds: 1));
           cubit.onAppResumed();
 
@@ -129,6 +129,67 @@ void main() {
       // The behaviour depends on this exact constant — pin it so changes
       // surface in this file rather than only in the auth flow.
       expect(lockoutDuration, const Duration(minutes: 5));
+    });
+  });
+
+  group('resume location capture', () {
+    test('onAppHidden captures the location once (??=)', () {
+      final cubit = build()
+        ..onAppHidden('/kyc')
+        ..onAppHidden('/dashboard');
+      expect(cubit.peekResumeLocation(), '/kyc');
+    });
+
+    test('a null first capture does not lock out a later real location', () {
+      final cubit = build()
+        ..onAppHidden(null)
+        ..onAppHidden('/kyc');
+      expect(cubit.peekResumeLocation(), '/kyc');
+    });
+
+    test('clearResumeLocation drops the capture', () {
+      final cubit = build()..onAppHidden('/kyc');
+      expect(cubit.peekResumeLocation(), '/kyc');
+      cubit.clearResumeLocation();
+      expect(cubit.peekResumeLocation(), isNull);
+    });
+
+    test('a long hide keeps the resume location for the consumer', () {
+      // The re-lock (isPinVerified -> false) and the resume-location capture
+      // are independent: on relock we still hand the captured route to
+      // `_navigate`, which restores it after the PIN gate and clears it there.
+      fakeAsync((async) {
+        final cubit = build()
+          ..onPinSetupComplete()
+          ..onAppHidden('/kyc');
+        async.elapse(lockoutDuration + const Duration(seconds: 1));
+        cubit.onAppResumed();
+
+        expect(cubit.state.isPinVerified, isFalse);
+        expect(cubit.peekResumeLocation(), '/kyc');
+        cubit.close();
+      });
+    });
+
+    test('a short hide also keeps the resume location for the consumer', () {
+      final cubit = build()
+        ..onPinSetupComplete()
+        ..onAppHidden('/kyc')
+        ..onAppResumed();
+
+      expect(cubit.state.isPinVerified, isTrue);
+      expect(cubit.peekResumeLocation(), '/kyc');
+    });
+
+    test('reset clears the captured resume location', () async {
+      when(() => storage.deletePinHash()).thenAnswer((_) async {});
+      when(() => storage.deleteBiometricEnabled()).thenAnswer((_) async {});
+      when(() => storage.resetPinLockout()).thenAnswer((_) async {});
+
+      final cubit = build()..onAppHidden('/kyc');
+      expect(cubit.peekResumeLocation(), '/kyc');
+      await cubit.reset();
+      expect(cubit.peekResumeLocation(), isNull);
     });
   });
 
