@@ -133,10 +133,21 @@ void main() {
   });
 
   group('resume location capture', () {
-    test('onAppHidden captures the location once (??=)', () {
+    test('a fresh non-gate capture replaces the previous one', () {
+      // Freshest non-null (non-gate) location wins: backgrounding again on a
+      // different in-flight route updates the restore target.
       final cubit = build()
         ..onAppHidden('/kyc')
-        ..onAppHidden('/dashboard');
+        ..onAppHidden('/settings');
+      expect(cubit.peekResumeLocation(), '/settings');
+    });
+
+    test('a null (gate) background keeps the earlier in-flight capture', () {
+      // The caller passes null for gate routes; a nested re-lock must not
+      // clobber the good `/kyc` capture with the gate.
+      final cubit = build()
+        ..onAppHidden('/kyc')
+        ..onAppHidden(null);
       expect(cubit.peekResumeLocation(), '/kyc');
     });
 

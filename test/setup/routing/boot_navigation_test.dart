@@ -136,12 +136,30 @@ void main() {
     test('restore preserves a resume path that carries a query string', () {
       final action = resolve(
         currentLocation: '/verifyPin',
-        resumeLocation: '/transactionHistory?filter=buy',
+        resumeLocation: '/kyc?context=buy',
       );
-      expect(
-        (action as BootNavRestore).location,
-        '/transactionHistory?filter=buy',
+      expect((action as BootNavRestore).location, '/kyc?context=buy');
+    });
+
+    test('an extra-required resume route is NOT restored -> dashboard', () {
+      // `/buyPaymentDetails` rebuilds via `state.extra as BuyPaymentDetailsParams`
+      // (non-nullable): restoring it from a bare path would crash, so it is not
+      // on the allowlist and falls back to the dashboard (fail-closed).
+      final action = resolve(
+        currentLocation: '/verifyPin',
+        resumeLocation: '/buyPaymentDetails',
       );
+      expect((action as BootNavGoNamed).routeName, AppRoutes.dashboard);
+    });
+
+    test('a PIN-gated settings subroute is NOT restored -> dashboard', () {
+      // `/settings/seed` sits behind a secondary PIN gate; exact-path matching
+      // (`/settings/seed` != `/settings`) keeps it off the allowlist.
+      final action = resolve(
+        currentLocation: '/verifyPin',
+        resumeLocation: '/settings/seed',
+      );
+      expect((action as BootNavGoNamed).routeName, AppRoutes.dashboard);
     });
   });
 
@@ -162,6 +180,37 @@ void main() {
 
     test('a query string does not turn a non-gate into a gate', () {
       expect(isGateLocation('/kyc?context=buy'), isFalse);
+    });
+  });
+
+  group('isRestorableLocation', () {
+    for (final loc in kRestorableLocations) {
+      test(
+        '$loc is restorable',
+        () => expect(isRestorableLocation(loc), isTrue),
+      );
+    }
+
+    test('an extra-required route is not restorable', () {
+      expect(isRestorableLocation('/buyPaymentDetails'), isFalse);
+      expect(isRestorableLocation('/sellBitbox'), isFalse);
+      expect(isRestorableLocation('/legalDocument'), isFalse);
+      expect(isRestorableLocation('/webView'), isFalse);
+    });
+
+    test('a PIN-gated / sensitive subroute is not restorable', () {
+      expect(isRestorableLocation('/settings/seed'), isFalse);
+      expect(isRestorableLocation('/settings/security'), isFalse);
+      expect(isRestorableLocation('/settings/security/changePin'), isFalse);
+    });
+
+    test('a gate route is not restorable', () {
+      expect(isRestorableLocation('/verifyPin'), isFalse);
+      expect(isRestorableLocation('/home'), isFalse);
+    });
+
+    test('a query string does not defeat the allowlist match', () {
+      expect(isRestorableLocation('/kyc?context=buy'), isTrue);
     });
   });
 }
