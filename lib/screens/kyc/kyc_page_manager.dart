@@ -4,6 +4,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_legal_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/2fa/kyc_2fa_page.dart';
@@ -35,6 +36,7 @@ class KycPageManager extends StatelessWidget {
       create: (_) => KycCubit(
         getIt<DfxKycService>(),
         getIt<RealUnitRegistrationService>(),
+        getIt<RealUnitLegalService>(),
         getIt<AppStore>(),
       )..checkKyc(context: kycContext),
       child: const KycViewManager(),
@@ -65,8 +67,9 @@ class KycViewManager extends StatelessWidget {
             KycStep.confirmEmail => const KycConfirmEmailPage(),
             KycStep.legalDisclaimer => LegalDisclaimerPage(
               onCompleted: () {
-                context.read<KycCubit>().markLegalDisclaimerAccepted();
-                context.read<KycCubit>().checkKyc();
+                // Records acceptance server-side and re-runs `checkKyc()`
+                // internally, so the API drives the next routing decision.
+                context.read<KycCubit>().acceptLegalDisclaimer();
               },
             ),
             KycStep.registration => KycRegistrationPage(initialUserData: realUnitUserData),
