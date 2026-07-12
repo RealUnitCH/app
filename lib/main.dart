@@ -136,7 +136,7 @@ class _WalletAppState extends State<WalletApp> {
     final homeState = getIt<HomeBloc>().state;
     final pin = getIt<PinAuthCubit>();
     final pinState = pin.state;
-    final current = routerConfig.routerDelegate.currentConfiguration.uri.toString();
+    final current = effectiveLocation(routerConfig.routerDelegate.currentConfiguration);
 
     final action = resolveBootNavigation(
       isLoadingWallet: homeState.isLoadingWallet,

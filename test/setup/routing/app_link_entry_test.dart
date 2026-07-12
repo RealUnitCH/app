@@ -3,21 +3,24 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_link_entry.dart';
 
 void main() {
-  // A minimal router wired to the *production* [appLinkSchemeRedirect], exactly
-  // as router_config.dart wires it (current location read from the router's own
-  // delegate). `/home` is the normal cold-start entry; `/dashboard` and
-  // `/settings` stand in for arbitrary in-app routes a warm resume must preserve.
+  // A minimal router wired to the *production* scheme handling — the
+  // [appLinkSchemeRedirect] + [appLinkOnException] pair with the push-aware
+  // [effectiveLocation], exactly as router_config.dart wires it. `/home` is the
+  // normal cold-start entry; `/dashboard` and `/settings` stand in for
+  // arbitrary in-app routes a warm resume must preserve.
   GoRouter buildRouter({String initialLocation = '/home'}) {
     late final GoRouter router;
     router = GoRouter(
       initialLocation: initialLocation,
       redirect: (context, state) => appLinkSchemeRedirect(
         state,
-        router.routerDelegate.currentConfiguration.uri.toString(),
+        effectiveLocation(router.routerDelegate.currentConfiguration),
       ),
+      onException: appLinkOnException,
       routes: [
         GoRoute(
           path: '/home',
@@ -147,6 +150,25 @@ void main() {
           reason: 'for $url',
         );
       }
+    },
+  );
+
+  testWidgets(
+    'warm resume: a crafted scheme URL to an auth path is a no-op '
+    '(no navigation, PIN gate not bypassed)',
+    (tester) async {
+      final router = await pump(tester);
+      router.go('/settings');
+      await tester.pumpAndSettle();
+
+      // `realunit-wallet://dashboard` must not navigate anywhere on a warm
+      // resume either — same no-op as the canonical open.
+      router.go('realunit-wallet://dashboard');
+      await tester.pumpAndSettle();
+
+      expect(currentPath(router), '/settings');
+      expect(find.byKey(const Key('settings')), findsOneWidget);
+      expect(find.byKey(const Key('dashboard')), findsNothing);
     },
   );
 

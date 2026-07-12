@@ -86,7 +86,9 @@ class _LifecycleInitializerState extends State<LifecycleInitializer> {
     if (_armedForBackground) return;
     _armedForBackground = true;
 
-    final location = routerConfig.routerDelegate.currentConfiguration.uri.toString();
+    // effectiveLocation, not currentConfiguration.uri: the KYC flow is pushed
+    // imperatively, and the raw uri would capture the base route underneath.
+    final location = effectiveLocation(routerConfig.routerDelegate.currentConfiguration);
     // Pass null for gate routes so a nested re-lock — backgrounded again while
     // the PIN gate is on screen — keeps the earlier in-flight capture instead
     // of clobbering it with the gate location.

@@ -42,6 +42,21 @@ class BootNavStay extends BootNavAction {
   const BootNavStay();
 }
 
+/// The location the user actually sees, including imperatively pushed routes.
+///
+/// `RouteMatchList.uri` only reflects declarative (`go`) matches — after a
+/// `push` (how the KYC flow is entered from Buy/Sell) it still reports the
+/// base route underneath. Everything that judges or captures "where the user
+/// is" (the boot machine's `currentLocation`, the background capture, the
+/// scheme-open redirect) must read this helper instead, or a pushed flow is
+/// invisible to it.
+String effectiveLocation(RouteMatchList configuration) {
+  final matches = configuration.matches;
+  final last = matches.isEmpty ? null : matches.last;
+  if (last is ImperativeRouteMatch) return last.matches.uri.toString();
+  return configuration.uri.toString();
+}
+
 /// Locations that are boot/lock gates: `_navigate` re-derives them from state
 /// and must never treat one as an in-flight route to restore. What *is*
 /// restorable is governed by the [kRestorableLocations] allowlist below — not

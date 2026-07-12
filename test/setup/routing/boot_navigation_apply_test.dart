@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -118,6 +120,29 @@ void main() {
       router.go('/buyPaymentDetails');
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNotNull);
+    },
+  );
+
+  testWidgets(
+    'effectiveLocation reports a pushed route where the raw uri stays on the base',
+    (tester) async {
+      final router = buildRouter();
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+      expect(effectiveLocation(router.routerDelegate.currentConfiguration), '/dashboard');
+
+      // The KYC flow is entered exactly like this: an imperative push on top
+      // of the dashboard.
+      unawaited(router.push('/kyc'));
+      await tester.pumpAndSettle();
+
+      // Premise guard for every effectiveLocation call site: the raw uri is
+      // blind to the push — the helper is not.
+      expect(locationOf(router), '/dashboard');
+      expect(effectiveLocation(router.routerDelegate.currentConfiguration), '/kyc');
     },
   );
 }
