@@ -10,9 +10,11 @@ import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dt
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_session_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_step_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/legal/dto/real_unit_legal_info_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/user_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_info_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_state.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_legal_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
@@ -25,8 +27,9 @@ import '../../helper/helper.dart';
 
 class _MockDfxKycService extends Mock implements DfxKycService {}
 
-class _MockRealUnitRegistrationService extends Mock
-    implements RealUnitRegistrationService {}
+class _MockRealUnitRegistrationService extends Mock implements RealUnitRegistrationService {}
+
+class _MockRealUnitLegalService extends Mock implements RealUnitLegalService {}
 
 class _MockAppStore extends Mock implements AppStore {}
 
@@ -37,8 +40,7 @@ class _MockKycCubit extends MockCubit<KycState> implements KycCubit {}
 UserKycDto _kycHeader({KycLevel level = KycLevel.level0}) =>
     UserKycDto(hash: 'h', level: level, dataComplete: false);
 
-UserDto _user({String? mail = 'test@example.com'}) =>
-    UserDto(mail: mail, kyc: _kycHeader());
+UserDto _user({String? mail = 'test@example.com'}) => UserDto(mail: mail, kyc: _kycHeader());
 
 KycLevelDto _kycStatus({
   required KycLevel level,
@@ -74,12 +76,14 @@ KycStepSessionDto _currentStep(
 void main() {
   late _MockDfxKycService kycService;
   late _MockRealUnitRegistrationService registrationService;
+  late _MockRealUnitLegalService legalService;
   late _MockAppStore appStore;
   late _MockAWallet wallet;
 
   setUp(() {
     kycService = _MockDfxKycService();
     registrationService = _MockRealUnitRegistrationService();
+    legalService = _MockRealUnitLegalService();
     appStore = _MockAppStore();
     wallet = _MockAWallet();
     when(() => appStore.wallet).thenReturn(wallet);
@@ -88,6 +92,11 @@ void main() {
       (_) async => RealUnitRegistrationInfoDto(
         state: RealUnitRegistrationState.alreadyRegistered,
       ),
+    );
+    // Default: server reports all legal agreements accepted, so the disclaimer
+    // gate passes and tests exercise downstream routing.
+    when(() => legalService.getLegalInfo()).thenAnswer(
+      (_) async => const RealUnitLegalInfoDto(agreements: [], allAccepted: true),
     );
   });
 
@@ -112,7 +121,7 @@ void main() {
         ),
       );
 
-      final cubit = KycCubit(kycService, registrationService, appStore);
+      final cubit = KycCubit(kycService, registrationService, legalService, appStore);
       await tester.pumpApp(
         BlocProvider<KycCubit>.value(
           value: cubit,
@@ -120,7 +129,8 @@ void main() {
         ),
       );
 
-      cubit.markLegalDisclaimerAccepted();
+      // Server reports all agreements accepted (default stub), so the disclaimer
+      // gate passes and the cubit reaches the dfxApproval routing under test.
       await cubit.checkKyc();
       await tester.pumpAndSettle();
 
@@ -149,6 +159,7 @@ void main() {
       final getIt = GetIt.instance;
       getIt.registerSingleton<DfxKycService>(kycService);
       getIt.registerSingleton<RealUnitRegistrationService>(registrationService);
+      getIt.registerSingleton<RealUnitLegalService>(legalService);
       getIt.registerSingleton<AppStore>(appStore);
       addTearDown(() async => getIt.reset());
 
@@ -190,15 +201,16 @@ void main() {
   );
 
   // The legalDisclaimer arm wires LegalDisclaimerPage.onCompleted to
-  // markLegalDisclaimerAccepted + checkKyc; drive that callback directly.
+  // acceptLegalDisclaimer (which records acceptance server-side and re-checks);
+  // drive that callback directly.
   testWidgets(
-    'KycViewManager legalDisclaimer onCompleted marks acceptance and re-checks',
+    'KycViewManager legalDisclaimer onCompleted records acceptance',
     (tester) async {
       final cubit = _MockKycCubit();
       when(() => cubit.state).thenReturn(
         const KycSuccess(currentStep: KycStep.legalDisclaimer),
       );
-      when(() => cubit.checkKyc()).thenAnswer((_) async {});
+      when(() => cubit.acceptLegalDisclaimer()).thenAnswer((_) async {});
 
       await tester.pumpApp(viewWithState(cubit));
       await tester.pumpAndSettle();
@@ -208,8 +220,7 @@ void main() {
       final page = tester.widget<LegalDisclaimerPage>(find.byType(LegalDisclaimerPage));
       page.onCompleted!();
 
-      verify(() => cubit.markLegalDisclaimerAccepted()).called(1);
-      verify(() => cubit.checkKyc()).called(1);
+      verify(() => cubit.acceptLegalDisclaimer()).called(1);
     },
   );
 }
