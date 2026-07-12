@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Assemble the 53 handbook screenshots from the visual-regression Golden
+# Assemble the 61 handbook screenshots from the visual-regression Golden
 # baselines. The flat `NN-name.png` output layout matches what
 # docs/handbook/de/index.html links to (`<img src="../screenshots/NN-name.png">`
 # — the relative path resolves to `docs/handbook/screenshots/NN-name.png`).
@@ -88,6 +88,14 @@ MAPPING=(
   "51-sell-min-amount=sell/goldens/macos/sell_min_amount_not_met.png"
   "52-sell-unknown-error=sell/goldens/macos/sell_unknown_error.png"
   "53-buy-payment-details=buy/goldens/macos/buy_payment_details_default.png"
+  "54-kyc-registration-personal-dropdown=kyc/goldens/macos/kyc_registration_personal_step_dropdown_open.png"
+  "55-kyc-registration-address-dropdown=kyc/goldens/macos/kyc_registration_address_step_dropdown_open.png"
+  "56-kyc-registration-tax=kyc/goldens/macos/kyc_registration_tax_step_default.png"
+  "57-kyc-registration-tax-dropdown=kyc/goldens/macos/kyc_registration_tax_step_dropdown_open.png"
+  "58-kyc-registration-tax-swiss=kyc/goldens/macos/kyc_registration_tax_step_swiss.png"
+  "59-kyc-registration-tax-non-swiss=kyc/goldens/macos/kyc_registration_tax_step_non_swiss.png"
+  "60-kyc-registration-tax-country-error=kyc/goldens/macos/kyc_registration_tax_step_country_error.png"
+  "61-kyc-registration-tax-tin-error=kyc/goldens/macos/kyc_registration_tax_step_tin_error.png"
 )
 
 missing=()
