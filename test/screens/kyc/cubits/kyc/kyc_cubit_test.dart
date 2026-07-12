@@ -1265,5 +1265,24 @@ void main() {
       act: (cubit) => cubit.acceptLegalDisclaimer(),
       expect: () => [isA<KycFailure>()],
     );
+
+    // A non-ApiException failure (network/parse error) also fails closed via the
+    // generic catch, surfacing as KycFailure rather than being swallowed.
+    blocTest<KycCubit, KycState>(
+      'emits KycFailure when acceptLegal throws a non-ApiException error',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => legalService.acceptLegal(any())).thenThrow(Exception('boom'));
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.acceptLegalDisclaimer(),
+      expect: () => [isA<KycFailure>()],
+    );
   });
 }
