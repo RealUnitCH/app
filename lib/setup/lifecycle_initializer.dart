@@ -7,6 +7,7 @@ import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 import 'package:realunit_wallet/setup/routing/router_config.dart';
 
 class LifecycleInitializer extends StatefulWidget {
@@ -85,8 +86,12 @@ class _LifecycleInitializerState extends State<LifecycleInitializer> {
     if (_armedForBackground) return;
     _armedForBackground = true;
 
+    final location = routerConfig.routerDelegate.currentConfiguration.uri.toString();
+    // Pass null for gate routes so a nested re-lock — backgrounded again while
+    // the PIN gate is on screen — keeps the earlier in-flight capture instead
+    // of clobbering it with the gate location.
     getIt<PinAuthCubit>().onAppHidden(
-      routerConfig.routerDelegate.currentConfiguration.uri.toString(),
+      isGateLocation(location) ? null : location,
     );
     // Drop the mnemonic before the OS suspends the isolate. `lockCurrentWallet`
     // is defensive on its own — no try/catch / catchError by design, so a

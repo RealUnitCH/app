@@ -33,13 +33,16 @@ class PinAuthCubit extends Cubit<PinAuthState> {
 
   void onPinVerified() => emit(state.copyWith(isPinVerified: true));
 
-  /// Captures the background timestamp (for the re-lock timeout) and, once per
-  /// background episode, the route the user was on so `_navigate` can restore
-  /// it after any resulting PIN re-lock. Both use `??=` so only the first
-  /// backgrounding in an episode wins.
+  /// Captures the background timestamp (for the re-lock timeout) and the route
+  /// to restore after any resulting PIN re-lock. The timestamp uses `??=` — only
+  /// the first backgrounding of an episode arms the timeout. The resume route
+  /// instead takes the freshest non-null value: the caller passes null when the
+  /// app is backgrounded on a gate route (see `lifecycle_initializer`), so a
+  /// nested re-lock — backgrounding again while `/verifyPin` is showing — keeps
+  /// the good in-flight capture instead of overwriting it with the gate.
   void onAppHidden(String? currentLocation) {
     _lastBackgroundTime ??= clock.now();
-    _resumeLocation ??= currentLocation;
+    if (currentLocation != null) _resumeLocation = currentLocation;
   }
 
   /// The captured pre-background route, or null. Read (not consumed) here; the

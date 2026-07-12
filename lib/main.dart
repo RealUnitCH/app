@@ -15,7 +15,6 @@ import 'package:realunit_wallet/setup/error_handling/realunit_error_view.dart';
 import 'package:realunit_wallet/setup/lifecycle_initializer.dart';
 import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 import 'package:realunit_wallet/setup/routing/router_config.dart';
-import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/themes.dart';
 
 Future<void> main() async {
@@ -152,29 +151,11 @@ class _WalletAppState extends State<WalletApp> {
       resumeLocation: pin.peekResumeLocation(),
     );
 
-    switch (action) {
-      case BootNavWaitForLoad():
-        return;
-      case BootNavLoadWallet():
-        // Wallet not loaded yet — trigger load and wait for the HomeBloc update.
-        _loadWalletIfNeeded();
-        return;
-      case BootNavGoNamed(:final routeName):
-        // Reaching the dashboard is the final landing — drop any stale resume
-        // capture so a later benign emission can't bounce the user around.
-        if (routeName == AppRoutes.dashboard) pin.clearResumeLocation();
-        routerConfig.goNamed(routeName);
-        return;
-      case BootNavRestore(:final location):
-        // Return to the in-flight route the user was on before the re-lock,
-        // reached only after the PIN gate above has already passed.
-        pin.clearResumeLocation();
-        routerConfig.go(location);
-        return;
-      case BootNavStay():
-        // Already on a valid non-gate route — discard any stale capture.
-        pin.clearResumeLocation();
-        return;
-    }
+    applyBootNavAction(
+      action,
+      routerConfig,
+      onLoadWallet: _loadWalletIfNeeded,
+      onClearResume: pin.clearResumeLocation,
+    );
   }
 }
