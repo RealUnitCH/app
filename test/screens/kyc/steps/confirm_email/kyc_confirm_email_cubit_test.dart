@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/wallet/real_unit_registration_info_dto.dart';
@@ -111,6 +114,38 @@ void main() {
         isA<KycConfirmEmailLoading>(),
         isA<KycConfirmEmailConfirmed>(),
       ],
+    );
+
+    // A stalled request (socket up, backend never responds) must not wedge
+    // the button in its loading state forever. `recheck()` watch-dogs the
+    // call with a 30s timeout; the resulting `TimeoutException` fails closed
+    // to NotConfirmed (retryable). fake_async advances virtual time past the
+    // budget without a wallclock sleep. Mirrors the `KycCubit` outer-timeout
+    // test.
+    test(
+      'stalled getRegistrationInfo -> NotConfirmed after the timeout (not stuck loading)',
+      () {
+        fakeAsync((async) {
+          when(() => registrationService.getRegistrationInfo()).thenAnswer(
+            (_) => Completer<RealUnitRegistrationInfoDto>().future,
+          );
+
+          final cubit = build();
+          final states = <KycConfirmEmailState>[];
+          final sub = cubit.stream.listen(states.add);
+
+          unawaited(cubit.recheck());
+          async.elapse(const Duration(seconds: 31));
+
+          expect(states, const [
+            KycConfirmEmailLoading(),
+            KycConfirmEmailNotConfirmed(),
+          ]);
+
+          sub.cancel();
+          cubit.close();
+        });
+      },
     );
   });
 }

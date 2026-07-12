@@ -11,6 +11,12 @@ part 'kyc_confirm_email_state.dart';
 /// the backend flips the flag (or no longer reports one — legacy/grandfathered,
 /// `null`), the flow proceeds. See CONTRIBUTING.md "API as Decision Authority".
 class KycConfirmEmailCubit extends Cubit<KycConfirmEmailState> {
+  // Mirrors `KycCubit._checkKycTimeout`: the same `getRegistrationInfo()`
+  // call is watch-dogged so a stalled request (socket up, backend never
+  // responds) cannot wedge the button in its loading state forever. On
+  // expiry the `TimeoutException` falls into the fail-closed `catch` below.
+  static const _recheckTimeout = Duration(seconds: 30);
+
   final RealUnitRegistrationService _registrationService;
 
   // Mirrors `KycCubit._runGeneration`: `Future.timeout` does not cancel the
@@ -31,7 +37,9 @@ class KycConfirmEmailCubit extends Cubit<KycConfirmEmailState> {
     if (isClosed) return;
     emit(const KycConfirmEmailLoading());
     try {
-      final info = await _registrationService.getRegistrationInfo();
+      final info = await _registrationService
+          .getRegistrationInfo()
+          .timeout(_recheckTimeout);
       if (isClosed || generation != _runGeneration) return;
       if (info.emailConfirmed == false) {
         emit(const KycConfirmEmailNotConfirmed());
