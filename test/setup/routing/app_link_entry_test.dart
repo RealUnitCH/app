@@ -173,6 +173,25 @@ void main() {
   );
 
   testWidgets(
+    'warm resume: a crafted scheme URL carrying a real path does not navigate '
+    '(flow-level gates not bypassed)',
+    (tester) async {
+      final router = await pump(tester);
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+
+      // go_router matches on uri.path alone, so this WOULD match /settings if
+      // the redirect let it fall through like the canonical path-less open.
+      router.go('realunit-wallet://open/settings');
+      await tester.pumpAndSettle();
+
+      expect(currentPath(router), '/dashboard');
+      expect(find.byKey(const Key('dashboard')), findsOneWidget);
+      expect(find.byKey(const Key('settings')), findsNothing);
+    },
+  );
+
+  testWidgets(
     'cold start on a crafted scheme URL to an auth path still boots to /home '
     '(PIN gate not bypassed)',
     (tester) async {

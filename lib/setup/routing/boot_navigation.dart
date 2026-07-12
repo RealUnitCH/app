@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
@@ -13,32 +15,32 @@ sealed class BootNavAction {
 
 /// The wallet is still loading — do not navigate yet, wait for the next
 /// emission that flips `isLoadingWallet` off.
-class BootNavWaitForLoad extends BootNavAction {
+final class BootNavWaitForLoad extends BootNavAction {
   const BootNavWaitForLoad();
 }
 
 /// All gates passed but the wallet is not in memory yet — trigger the load and
 /// wait for the resulting HomeBloc emission.
-class BootNavLoadWallet extends BootNavAction {
+final class BootNavLoadWallet extends BootNavAction {
   const BootNavLoadWallet();
 }
 
 /// Navigate to a gate / landing route by its go_router name.
-class BootNavGoNamed extends BootNavAction {
+final class BootNavGoNamed extends BootNavAction {
   final String routeName;
   const BootNavGoNamed(this.routeName);
 }
 
 /// Restore the in-flight (non-gate) route the user was on before the background
 /// lock / re-lock, addressed by its location (path).
-class BootNavRestore extends BootNavAction {
+final class BootNavRestore extends BootNavAction {
   final String location;
   const BootNavRestore(this.location);
 }
 
 /// All gates passed and the user is already on a valid non-gate route — leave
 /// them exactly where they are, never yank them to the dashboard.
-class BootNavStay extends BootNavAction {
+final class BootNavStay extends BootNavAction {
   const BootNavStay();
 }
 
@@ -59,9 +61,9 @@ String effectiveLocation(RouteMatchList configuration) {
 
 /// Locations that are boot/lock gates: `_navigate` re-derives them from state
 /// and must never treat one as an in-flight route to restore. What *is*
-/// restorable is governed by the [kRestorableLocations] allowlist below — not
+/// restorable is governed by the [restorableLocations] allowlist below — not
 /// by "anything that is not a gate".
-const Set<String> kGateLocations = {
+const Set<String> gateLocations = {
   '/home',
   '/welcome',
   '/createWallet',
@@ -75,9 +77,9 @@ const Set<String> kGateLocations = {
   '/debugAuth',
 };
 
-/// Whether [loc] resolves to one of the [kGateLocations] gates. Compares the
+/// Whether [loc] resolves to one of the [gateLocations] gates. Compares the
 /// path only, so a query string cannot defeat the check.
-bool isGateLocation(String loc) => kGateLocations.contains(Uri.parse(loc).path);
+bool isGateLocation(String loc) => gateLocations.contains(Uri.parse(loc).path);
 
 /// Non-gate locations safe to restore after a resume / re-lock: they rebuild
 /// from a bare path (no required `extra`) and sit behind no secondary PIN gate.
@@ -85,7 +87,7 @@ bool isGateLocation(String loc) => kGateLocations.contains(Uri.parse(loc).path);
 /// behaviour), so a newly added route can never silently become restorable (and
 /// crash on a missing `extra`) or surface a PIN-gated screen. Matched by exact
 /// path: `/settings/seed` != `/settings`, `/buyPaymentDetails` != `/buy`.
-const Set<String> kRestorableLocations = {
+const Set<String> restorableLocations = {
   '/kyc',
   '/dashboard',
   '/buy',
@@ -95,9 +97,9 @@ const Set<String> kRestorableLocations = {
   '/support',
 };
 
-/// Whether [loc]'s path is in the [kRestorableLocations] allowlist (query
+/// Whether [loc]'s path is in the [restorableLocations] allowlist (query
 /// string ignored).
-bool isRestorableLocation(String loc) => kRestorableLocations.contains(Uri.parse(loc).path);
+bool isRestorableLocation(String loc) => restorableLocations.contains(Uri.parse(loc).path);
 
 /// Pure boot/lock routing decision, evaluated on every HomeBloc / PinAuthCubit
 /// emission.
@@ -105,7 +107,7 @@ bool isRestorableLocation(String loc) => kRestorableLocations.contains(Uri.parse
 /// The gate ladder is evaluated top to bottom, so a restore can only ever be
 /// returned by the final branch — after `!isPinVerified` has already diverted
 /// to the PIN gate. A [BootNavRestore] is additionally limited to the
-/// [kRestorableLocations] allowlist, so it never re-enters a gate route, never
+/// [restorableLocations] allowlist, so it never re-enters a gate route, never
 /// bypasses the PIN gate, and never targets a route that needs `extra`.
 BootNavAction resolveBootNavigation({
   required bool isLoadingWallet,
@@ -169,9 +171,18 @@ void applyBootNavAction(
       return;
     case BootNavRestore(:final location):
       // Return to the in-flight route the user was on before the re-lock,
-      // reached only after the PIN gate above has already passed.
+      // reached only after the PIN gate above has already passed. Rebuild the
+      // real entry shape — dashboard as base, flow pushed on top — so the
+      // flow's pop-based exits (Close buttons, AppBar auto-back) keep working;
+      // a bare `go` would strand the restored route as the only match with
+      // nothing underneath to pop back to.
       onClearResume();
-      router.go(location);
+      if (Uri.parse(location).path == '/dashboard') {
+        router.go(location);
+      } else {
+        router.goNamed(AppRoutes.dashboard);
+        unawaited(router.push(location));
+      }
       return;
     case BootNavStay():
       // Already on a valid non-gate route — discard any stale capture.

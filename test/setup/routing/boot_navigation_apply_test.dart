@@ -62,25 +62,56 @@ void main() {
 
   String locationOf(GoRouter router) => router.routerDelegate.currentConfiguration.uri.toString();
 
-  testWidgets('re-lock -> PIN -> restore lands on the captured /kyc route', (
+  testWidgets(
+    're-lock -> PIN -> restore lands on the captured /kyc route with the '
+    'dashboard underneath (pop-based exits keep working)',
+    (tester) async {
+      final router = buildRouter();
+      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpAndSettle();
+
+      var cleared = false;
+      applyBootNavAction(
+        resolveAfterRelock('/kyc'),
+        router,
+        onLoadWallet: () {},
+        onClearResume: () => cleared = true,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('kyc'), findsOneWidget);
+      expect(effectiveLocation(router.routerDelegate.currentConfiguration), '/kyc');
+      expect(cleared, isTrue);
+
+      // The restore rebuilds the real entry shape (dashboard base + pushed
+      // flow), so the flow's pop-based exits (Close buttons, AppBar auto-back)
+      // still have somewhere to go — a bare `go` restore would strand them.
+      expect(router.canPop(), isTrue);
+      router.pop();
+      await tester.pumpAndSettle();
+      expect(find.text('dashboard'), findsOneWidget);
+      expect(locationOf(router), '/dashboard');
+    },
+  );
+
+  testWidgets('restoring /dashboard itself stays a plain go (nothing to pop)', (
     tester,
   ) async {
     final router = buildRouter();
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     await tester.pumpAndSettle();
 
-    var cleared = false;
     applyBootNavAction(
-      resolveAfterRelock('/kyc'),
+      resolveAfterRelock('/dashboard'),
       router,
       onLoadWallet: () {},
-      onClearResume: () => cleared = true,
+      onClearResume: () {},
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('kyc'), findsOneWidget);
-    expect(locationOf(router), '/kyc');
-    expect(cleared, isTrue);
+    expect(find.text('dashboard'), findsOneWidget);
+    expect(locationOf(router), '/dashboard');
+    expect(router.canPop(), isFalse);
   });
 
   testWidgets(

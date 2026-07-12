@@ -24,24 +24,35 @@ const String appLinkColdStartLocation = '/home';
 /// `main.dart`'s boot flow take over — the PIN gate and boot ordering stay
 /// untouched.
 ///
-/// Warm resume: it returns `null` so the scheme URL stays unmatched and falls
-/// through to [appLinkOnException], which keeps the current route configuration
-/// untouched — a true no-op. Returning a location string here instead would be
-/// applied as a `go` and REPLACE the whole match list: an imperatively pushed
-/// route (the KYC flow from Buy/Sell) would be dropped together with its
-/// page-scoped state, its `extra`, and the back stack underneath it.
+/// Warm resume, canonical path-less open (`realunit-wallet://open`): it returns
+/// `null` so the scheme URL stays unmatched and falls through to
+/// [appLinkOnException], which keeps the current route configuration untouched
+/// — a true no-op. Returning a location string here instead would be applied as
+/// a `go` and REPLACE the whole match list: an imperatively pushed route (the
+/// KYC flow from Buy/Sell) would be dropped together with its page-scoped
+/// state, its `extra`, and the back stack underneath it.
+///
+/// Warm resume, scheme URL CARRYING a path: go_router matches on `uri.path`
+/// alone, so `realunit-wallet://open/settings/seed` would match — and with a
+/// `null` return it would navigate, straight past flow-level gates (the seed
+/// page's PIN gate lives in the settings navigation path, not on the route).
+/// Such crafted URLs are pinned to [currentLocation] instead: that `go` may
+/// rebuild a pushed route as the base match, but a crafted URL is not worth
+/// preserving a pushed stack for — never navigating anywhere new wins.
 ///
 /// Non-scheme (in-app) navigation is left untouched (`null`).
 //
 // @no-integration-test: OS-level custom-scheme delivery and foregrounding can
 // only be exercised on a real device, and no integration_test/ harness exists
-// in this repo yet. The redirect + exception handler pair is covered by widget
-// tests in app_link_entry_test.dart.
+// in this repo yet. The redirect is covered by widget tests in
+// app_link_entry_test.dart.
 String? appLinkSchemeRedirect(GoRouterState state, String currentLocation) {
   if (state.uri.scheme != appLinkScheme) return null;
   final current = Uri.parse(currentLocation);
   final isInAppRoute = current.scheme.isEmpty && current.path.startsWith('/');
-  return isInAppRoute ? null : appLinkColdStartLocation;
+  if (!isInAppRoute) return appLinkColdStartLocation;
+  final hasPath = state.uri.path.isNotEmpty && state.uri.path != '/';
+  return hasPath ? currentLocation : null;
 }
 
 /// go_router exception handler paired with [appLinkSchemeRedirect].
@@ -54,6 +65,11 @@ String? appLinkSchemeRedirect(GoRouterState state, String currentLocation) {
 /// and it is the only variant that survives imperatively pushed routes.
 /// Cold-start scheme opens never reach this handler; the redirect already
 /// mapped them to [appLinkColdStartLocation].
+//
+// @no-integration-test: OS-level custom-scheme delivery and foregrounding can
+// only be exercised on a real device, and no integration_test/ harness exists
+// in this repo yet. The handler is covered by widget tests in
+// app_link_entry_test.dart.
 void appLinkOnException(BuildContext context, GoRouterState state, GoRouter router) {
   if (state.uri.scheme == appLinkScheme) return;
   // A non-scheme URL that matches no route is a programming error. Installing

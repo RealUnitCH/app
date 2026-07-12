@@ -182,14 +182,38 @@ void main() {
       });
     });
 
-    test('a short hide also keeps the resume location for the consumer', () {
+    test('a short hide in the verified state clears the capture eagerly', () {
+      // The episode ended without a re-lock: nothing consumes the capture, so
+      // it is dropped here — a much later, unrelated re-lock must not restore
+      // a route from a long-finished episode.
       final cubit = build()
         ..onPinSetupComplete()
         ..onAppHidden('/kyc')
         ..onAppResumed();
 
       expect(cubit.state.isPinVerified, isTrue);
-      expect(cubit.peekResumeLocation(), '/kyc');
+      expect(cubit.peekResumeLocation(), isNull);
+    });
+
+    test('a short hide while the PIN gate is showing keeps the capture', () {
+      // Nested re-lock: a short away-switch on /verifyPin (isPinVerified is
+      // still false) must not lose the in-flight capture the pending unlock is
+      // about to restore.
+      fakeAsync((async) {
+        final cubit = build()
+          ..onPinSetupComplete()
+          ..onAppHidden('/kyc');
+        async.elapse(lockoutDuration + const Duration(seconds: 1));
+        cubit.onAppResumed(); // re-lock: isPinVerified -> false
+
+        cubit
+          ..onAppHidden(null) // backgrounded again on the gate route
+          ..onAppResumed(); // short: no lockout elapsed
+
+        expect(cubit.state.isPinVerified, isFalse);
+        expect(cubit.peekResumeLocation(), '/kyc');
+        cubit.close();
+      });
     });
 
     test('reset clears the captured resume location', () async {

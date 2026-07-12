@@ -61,6 +61,13 @@ class PinAuthCubit extends Cubit<PinAuthState> {
     final elapsed = clock.now().difference(lastBackground);
     if (elapsed >= lockoutDuration) {
       emit(state.copyWith(isPinVerified: false));
+    } else if (state.isPinVerified) {
+      // The episode ended without a re-lock — nothing will consume the capture,
+      // so drop it eagerly, or a much later unrelated re-lock could restore a
+      // route from a long-finished episode. Kept while the PIN gate is showing
+      // (isPinVerified == false): a short away-switch on `/verifyPin` is the
+      // nested re-lock whose in-flight capture must survive.
+      _resumeLocation = null;
     }
     _lastBackgroundTime = null;
   }

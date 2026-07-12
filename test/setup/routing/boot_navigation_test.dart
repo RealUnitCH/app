@@ -164,7 +164,7 @@ void main() {
   });
 
   group('isGateLocation', () {
-    for (final loc in kGateLocations) {
+    for (final loc in gateLocations) {
       test('$loc is a gate', () => expect(isGateLocation(loc), isTrue));
     }
 
@@ -184,7 +184,7 @@ void main() {
   });
 
   group('isRestorableLocation', () {
-    for (final loc in kRestorableLocations) {
+    for (final loc in restorableLocations) {
       test(
         '$loc is restorable',
         () => expect(isRestorableLocation(loc), isTrue),
