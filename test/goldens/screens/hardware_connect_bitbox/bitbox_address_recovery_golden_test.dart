@@ -28,15 +28,10 @@ void main() {
     );
   }
 
-  // [BitboxAddressRecoveryPage] is a thin getIt-wiring host around the shared
-  // [ConnectBitboxView]: the ConnectBitboxCubit it builds auto-starts a BLE
-  // scan timer in its constructor, so the page itself cannot be pumped
-  // deterministically. We render the exact view the page hosts over a mocked
-  // cubit instead, wiring the non-null onCancel the recovery host supplies
-  // (the initial-pairing host leaves it null). Same seam as
-  // connect_bitbox_golden_test.dart. The not-connected default is the stable
-  // state the user lands on; the animating/transient states are covered by the
-  // shared view's own golden suite.
+  // ConnectBitboxCubit starts a periodic BitBox scan timer in its constructor,
+  // so BitboxAddressRecoveryPage can't be pumped deterministically; we render
+  // its shared [ConnectBitboxView] instead. It documents the recovery screen's
+  // optics, byte-identical to connect_bitbox_page_default, not the page wiring.
   Widget buildSubject() => Scaffold(
         body: BlocProvider<ConnectBitboxCubit>.value(
           value: cubit,
