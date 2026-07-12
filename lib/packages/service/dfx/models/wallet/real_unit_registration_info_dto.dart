@@ -23,11 +23,22 @@ class RealUnitRegistrationInfoDto {
   /// routing (that is [emailConfirmed] alone); carried for completeness/display.
   final DateTime? confirmedDate;
 
+  /// Whether this wallet's RealUnit registration is parked in manual review —
+  /// the Aktionariat forward failed and it awaits a manual re-forward by staff.
+  /// `true` only for the current wallet (`alreadyRegistered`); `false`/absent
+  /// otherwise. Nullable on purpose: `null` means a pre-rollout backend (the
+  /// field does not exist yet). `KycCubit` treats `null`/`false` as "no
+  /// manual-review gate" and proceeds as before — only an explicit `true` routes
+  /// to the review screen. See CONTRIBUTING.md "API as Decision Authority"
+  /// (legacy backend tolerance).
+  final bool? manualReview;
+
   RealUnitRegistrationInfoDto({
     required this.state,
     this.realUnitUserDataDto,
     this.emailConfirmed,
     this.confirmedDate,
+    this.manualReview,
   });
 
   factory RealUnitRegistrationInfoDto.fromJson(Map<String, dynamic> json) {
@@ -40,6 +51,7 @@ class RealUnitRegistrationInfoDto {
       confirmedDate: json['confirmedDate'] != null
           ? DateTime.parse(json['confirmedDate'] as String)
           : null,
+      manualReview: json['manualReview'] as bool?,
     );
   }
 }

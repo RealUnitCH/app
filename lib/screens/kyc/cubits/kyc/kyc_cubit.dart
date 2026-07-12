@@ -159,6 +159,17 @@ class KycCubit extends Cubit<KycState> {
 
       switch (registrationInfo.state) {
         case RealUnitRegistrationState.alreadyRegistered:
+          // The API owns the manual-review gate. When the Aktionariat forward
+          // failed and staff must re-forward the registration, the backend
+          // reports `manualReview == true` and we park the user on a dedicated
+          // waiting screen. Takes precedence over the e-mail gate below. `false`
+          // and `null` (pre-rollout backend) both mean "no gate" — proceed
+          // exactly as before. Purely additive, API-driven; see CONTRIBUTING.md
+          // "API as Decision Authority" (legacy tolerance).
+          if (registrationInfo.manualReview == true) {
+            emit(const KycManualReview());
+            return;
+          }
           // The API owns the confirmation gate. When it reports the account
           // e-mail is not yet confirmed, route to the confirm step. `true`
           // (confirmed, or a grandfathered account) and `null` (pre-rollout
