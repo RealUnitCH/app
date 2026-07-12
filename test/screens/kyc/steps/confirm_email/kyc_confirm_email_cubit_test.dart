@@ -174,44 +174,6 @@ void main() {
 
     test(
       'a superseded recheck bails on the stale generation instead of emitting '
-      'its result (success path)',
-      () async {
-        final first = Completer<RealUnitRegistrationInfoDto>();
-        final second = Completer<RealUnitRegistrationInfoDto>();
-        final calls = [first, second];
-        var i = 0;
-        when(() => registrationService.getRegistrationInfo()).thenAnswer(
-          (_) => calls[i++].future,
-        );
-
-        final cubit = build();
-        final states = <KycConfirmEmailState>[];
-        final sub = cubit.stream.listen(states.add);
-
-        // Two overlapping (non-awaited) rechecks: the second supersedes the
-        // first's generation.
-        unawaited(cubit.recheck());
-        unawaited(cubit.recheck());
-
-        // Resolve the superseded FIRST call: it would report NotConfirmed, but
-        // its continuation must bail on the stale generation.
-        first.complete(_info(emailConfirmed: false));
-        await Future<void>.delayed(Duration.zero);
-        // The winning SECOND call reports Confirmed.
-        second.complete(_info(emailConfirmed: true));
-        await Future<void>.delayed(Duration.zero);
-
-        // Only the winner's result survives; the stale NotConfirmed is dropped
-        // (otherwise the list would be [Loading, NotConfirmed, Confirmed]).
-        expect(states, const [KycConfirmEmailLoading(), KycConfirmEmailConfirmed()]);
-
-        await sub.cancel();
-        await cubit.close();
-      },
-    );
-
-    test(
-      'a superseded recheck bails on the stale generation instead of emitting '
       'over the newer run (catch path)',
       () async {
         final first = Completer<RealUnitRegistrationInfoDto>();
@@ -241,6 +203,51 @@ void main() {
 
         await sub.cancel();
         await cubit.close();
+      },
+    );
+
+    // A late response from a superseded `recheck()` must not overwrite the
+    // fresh state of a newer one. The first call hangs on a `Completer`; a
+    // second call resolves immediately to `Confirmed`; when the first call's
+    // response finally arrives (still `false`) its generation no longer matches,
+    // so it emits nothing. Two back-to-back `Loading`s collapse to one via
+    // Equatable, so the expected sequence is `[Loading, Confirmed]`. Mirrors the
+    // `KycCubit` generation-counter regression test.
+    test(
+      'a late response from a superseded recheck does NOT overwrite the fresh Confirmed state',
+      () async {
+        final call1Completer = Completer<RealUnitRegistrationInfoDto>();
+        var firstCall = true;
+        when(() => registrationService.getRegistrationInfo()).thenAnswer((_) {
+          if (firstCall) {
+            firstCall = false;
+            return call1Completer.future;
+          }
+          return Future.value(_info(emailConfirmed: true));
+        });
+
+        final cubit = build();
+        final states = <KycConfirmEmailState>[];
+        final sub = cubit.stream.listen(states.add);
+
+        final call1Future = cubit.recheck();
+
+        await Future<void>.delayed(Duration.zero);
+
+        await cubit.recheck();
+
+        call1Completer.complete(_info(emailConfirmed: false));
+        await call1Future;
+        await Future<void>.delayed(Duration.zero);
+
+        await sub.cancel();
+        await cubit.close();
+
+        expect(states, const [
+          KycConfirmEmailLoading(),
+          KycConfirmEmailConfirmed(),
+        ]);
+        expect(cubit.state, const KycConfirmEmailConfirmed());
       },
     );
   });

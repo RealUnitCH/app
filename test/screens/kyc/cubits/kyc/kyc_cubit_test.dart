@@ -371,8 +371,8 @@ void main() {
 
     // Email-confirmation gate (API-driven). Only an explicit
     // `emailConfirmed == false` on an already-registered wallet routes to the
-    // confirm step; `true` and `null` (legacy / grandfathered) proceed as
-    // before.
+    // confirm step; `true` (confirmed, or grandfathered) and `null` (pre-rollout
+    // backend) proceed as before.
     blocTest<KycCubit, KycState>(
       'emits KycSuccess(confirmEmail) when AlreadyRegistered and emailConfirmed=false',
       setUp: () {
@@ -439,7 +439,8 @@ void main() {
           ),
         );
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
-        // Explicit null — the pre-rollout backend / grandfathered account case.
+        // Explicit null — the pre-rollout backend case (grandfathered accounts
+        // report an explicit `true`, never `null`).
         when(() => registrationService.getRegistrationInfo()).thenAnswer(
           (_) async => _walletStatus(
             RealUnitRegistrationState.alreadyRegistered,
@@ -454,6 +455,39 @@ void main() {
       expect: () => [
         const KycLoading(),
         const KycCompleted(),
+      ],
+    );
+
+    // The confirm gate is scoped to `alreadyRegistered`. In `addWallet`,
+    // `emailConfirmed` describes the other wallet's registration, so an explicit
+    // `false` must NOT route to the confirm step — the user proceeds to link the
+    // wallet and the gate is re-evaluated on the fresh registration afterwards.
+    blocTest<KycCubit, KycState>(
+      'does NOT gate on emailConfirmed=false when AddWallet (routes to linkWallet)',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(level: KycLevel.level20),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(
+            RealUnitRegistrationState.addWallet,
+            userData: _fixtureUserData,
+            emailConfirmed: false,
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        await cubit.checkKyc();
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycSuccess(
+          currentStep: KycStep.linkWallet,
+          realUnitUserData: _fixtureUserData,
+        ),
       ],
     );
 
