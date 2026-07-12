@@ -75,8 +75,14 @@ class SupportChatMessageBubble extends StatelessWidget {
   }
 
   String _formatTime(DateTime date) {
-    final offset = DateTime.now().timeZoneOffset;
-    final adjustedDateToTimezone = date.add(offset);
-    return '${adjustedDateToTimezone.hour.toString().padLeft(2, '0')}:${adjustedDateToTimezone.minute.toString().padLeft(2, '0')}';
+    // `date` is a UTC instant (the API sends `created` as a `Z`-suffixed
+    // ISO-8601 string, parsed to a UTC `DateTime`). Convert it to the device's
+    // local zone using the rules that applied on the message's own date, so a
+    // message stays render-time-stable across DST boundaries — a March instant
+    // always shows CET, a July instant always shows CEST. Adding
+    // `DateTime.now().timeZoneOffset` instead would apply the *current* offset
+    // to a historic instant and drift by an hour across the DST switch.
+    final localDate = date.toLocal();
+    return '${localDate.hour.toString().padLeft(2, '0')}:${localDate.minute.toString().padLeft(2, '0')}';
   }
 }
