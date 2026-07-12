@@ -249,16 +249,16 @@ void main() {
       expect(dto.confirmedDate, isNull);
     });
 
-    test('guards an unparseable confirmedDate → null', () {
-      final dto = RealUnitRegistrationInfoDto.fromJson({
-        'state': 'AlreadyRegistered',
-        'userData': null,
-        'emailConfirmed': true,
-        'confirmedDate': 'not-a-date',
-      });
-
-      expect(dto.emailConfirmed, isTrue);
-      expect(dto.confirmedDate, isNull);
+    test('throws on a present but unparseable confirmedDate (fail loud)', () {
+      expect(
+        () => RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'emailConfirmed': true,
+          'confirmedDate': 'not-a-date',
+        }),
+        throwsA(isA<FormatException>()),
+      );
     });
   });
 

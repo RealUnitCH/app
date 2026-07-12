@@ -85,6 +85,7 @@ Column meaning:
 | KYC | `KycNationalityPage` | — | — | — |
 | KYC | `KycEmailPage` | — | — | — |
 | KYC | `KycEmailVerificationPage` | — | — | — |
+| KYC | `KycConfirmEmailPage` | — | — | — |
 | KYC | `Kyc2faPage` | — | — | — |
 | KYC | `KycIdentPage` | — | — | — |
 | KYC | `KycFinancialDataPage` | — | — | — |
@@ -97,7 +98,7 @@ Column meaning:
 | KYC | `KycFailurePage` | — | — | — |
 | KYC | `KycAccountMergePage` | — | — | — |
 
-65 screens — 40 routed (`GoRoute`) + 25 non-routed.
+66 screens — 40 routed (`GoRoute`) + 26 non-routed.
 
 ## Notes
 
