@@ -249,6 +249,35 @@ void main() {
       expect(dto.confirmedDate, isNull);
     });
 
+    test('parses manualReview=true', () {
+      final dto = RealUnitRegistrationInfoDto.fromJson({
+        'state': 'AlreadyRegistered',
+        'userData': null,
+        'manualReview': true,
+      });
+
+      expect(dto.manualReview, isTrue);
+    });
+
+    test('parses manualReview=false', () {
+      final dto = RealUnitRegistrationInfoDto.fromJson({
+        'state': 'AlreadyRegistered',
+        'userData': null,
+        'manualReview': false,
+      });
+
+      expect(dto.manualReview, isFalse);
+    });
+
+    test('legacy fallback: manualReview absent → null', () {
+      final dto = RealUnitRegistrationInfoDto.fromJson({
+        'state': 'AlreadyRegistered',
+        'userData': null,
+      });
+
+      expect(dto.manualReview, isNull);
+    });
+
     test('throws on a present but unparseable confirmedDate (fail loud)', () {
       expect(
         () => RealUnitRegistrationInfoDto.fromJson({

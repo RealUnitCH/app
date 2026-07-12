@@ -74,6 +74,15 @@ class KycMergeProcessing extends KycState {
   const KycMergeProcessing();
 }
 
+/// Emitted when the API reports this wallet's RealUnit registration is parked in
+/// manual review (`RealUnitRegistrationInfoDto.manualReview == true`) — the
+/// Aktionariat forward failed and staff must re-forward it before onboarding can
+/// complete. A terminal waiting state: the user cannot act, so the app renders a
+/// "registration under review" screen with a refresh instead of routing further.
+class KycManualReview extends KycState {
+  const KycManualReview();
+}
+
 class KycUnsupportedStepFailure extends KycState {
   // Null when the backend says `PendingReview` but the step list contains no
   // `isRequired` step we can name — we still surface the failure (never a

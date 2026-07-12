@@ -123,6 +123,8 @@
   "kycLinkWalletDescription": "You are registered as a shareholder. Confirm this wallet to add it to your account.",
   "kycLinkWalletSubmit": "Add wallet",
   "kycLinkWalletTitle": "Add wallet",
+  "kycManualReviewDescription": "Your RealUnit registration needs a manual check by our team before it's complete. There's nothing you need to do — we'll take it from here. Your status updates automatically once the review is done.",
+  "kycManualReviewTitle": "Registration under review",
   "kycMergeProcessingDescription": "We're finishing your account merge. This usually takes a moment — your verification status will update automatically.",
   "kycMergeProcessingTitle": "Merging your accounts",
   "kycPending": "Data is being verified",

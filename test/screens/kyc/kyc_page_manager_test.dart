@@ -20,6 +20,7 @@ import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/kyc_page_manager.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_failure_page.dart';
+import 'package:realunit_wallet/screens/kyc/subpages/kyc_manual_review_page.dart';
 import 'package:realunit_wallet/screens/kyc/subpages/kyc_pending_page.dart';
 import 'package:realunit_wallet/screens/legal/legal_disclaimer_page.dart';
 
@@ -197,6 +198,20 @@ void main() {
       await tester.pumpApp(viewWithState(cubit));
 
       expect(find.byType(KycFailurePage), findsOneWidget);
+    },
+  );
+
+  // The KycManualReview arm renders the dedicated registration-under-review
+  // waiting page — a state no page test drives directly.
+  testWidgets(
+    'KycViewManager renders KycManualReviewPage for KycManualReview',
+    (tester) async {
+      final cubit = _MockKycCubit();
+      when(() => cubit.state).thenReturn(const KycManualReview());
+
+      await tester.pumpApp(viewWithState(cubit));
+
+      expect(find.byType(KycManualReviewPage), findsOneWidget);
     },
   );
 

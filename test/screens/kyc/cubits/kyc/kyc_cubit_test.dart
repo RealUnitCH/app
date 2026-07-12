@@ -98,10 +98,12 @@ RealUnitRegistrationInfoDto _walletStatus(
   RealUnitRegistrationState state, {
   RealUnitUserDataDto? userData,
   bool? emailConfirmed,
+  bool? manualReview,
 }) => RealUnitRegistrationInfoDto(
   state: state,
   realUnitUserDataDto: userData,
   emailConfirmed: emailConfirmed,
+  manualReview: manualReview,
 );
 
 // Single-agreement legal info. `allAccepted:false` leaves the one agreement
@@ -524,6 +526,121 @@ void main() {
         when(() => registrationService.getRegistrationInfo()).thenAnswer(
           (_) async => _walletStatus(
             RealUnitRegistrationState.alreadyRegistered,
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycCompleted(),
+      ],
+    );
+
+    // Manual-review gate (API-driven). When the Aktionariat forward failed and
+    // staff must re-forward the registration, the API reports
+    // `manualReview == true` on the already-registered wallet and the cubit
+    // parks the user on a dedicated waiting state. `false` and `null`
+    // (pre-rollout backend) proceed as before.
+    blocTest<KycCubit, KycState>(
+      'emits KycManualReview when AlreadyRegistered and manualReview=true',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(
+            RealUnitRegistrationState.alreadyRegistered,
+            manualReview: true,
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycManualReview(),
+      ],
+    );
+
+    // Manual review takes precedence over the e-mail gate: even with
+    // `emailConfirmed == false`, an explicit `manualReview == true` parks the
+    // user on the review screen rather than routing to the confirm step.
+    blocTest<KycCubit, KycState>(
+      'manualReview=true takes precedence over emailConfirmed=false',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(
+            RealUnitRegistrationState.alreadyRegistered,
+            manualReview: true,
+            emailConfirmed: false,
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycManualReview(),
+      ],
+    );
+
+    // `manualReview == false` is no gate: the cubit proceeds exactly as before
+    // and still applies the e-mail gate below it (here → confirmEmail).
+    blocTest<KycCubit, KycState>(
+      'does NOT emit KycManualReview when manualReview=false (still hits the confirmEmail gate)',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(
+            RealUnitRegistrationState.alreadyRegistered,
+            manualReview: false,
+            emailConfirmed: false,
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycSuccess(currentStep: KycStep.confirmEmail),
+      ],
+    );
+
+    // Legacy fallback: `manualReview == null` (pre-rollout backend) is no gate —
+    // the cubit proceeds exactly as before (here → Completed).
+    blocTest<KycCubit, KycState>(
+      'legacy fallback: proceeds when AlreadyRegistered and manualReview=null',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        // Explicit null manualReview + confirmed e-mail — no gate at all.
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(
+            RealUnitRegistrationState.alreadyRegistered,
+            emailConfirmed: true,
           ),
         );
       },
