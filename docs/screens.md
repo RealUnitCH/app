@@ -85,6 +85,7 @@ Column meaning:
 | KYC | `KycNationalityPage` | — | — | — |
 | KYC | `KycEmailPage` | — | — | — |
 | KYC | `KycEmailVerificationPage` | — | — | — |
+| KYC | `KycConfirmEmailPage` | — | — | — |
 | KYC | `Kyc2faPage` | — | — | — |
 | KYC | `KycIdentPage` | — | — | — |
 | KYC | `KycFinancialDataPage` | — | — | — |

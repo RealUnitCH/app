@@ -128,10 +128,11 @@ class KycCubit extends Cubit<KycState> {
       switch (registrationInfo.state) {
         case RealUnitRegistrationState.alreadyRegistered:
           // The API owns the confirmation gate. When it reports the account
-          // e-mail is not yet confirmed, route to the confirm step. `null`
-          // (pre-rollout backend / grandfathered account) and `true` both mean
-          // "no gate" — proceed exactly as before. Purely additive, API-driven;
-          // see CONTRIBUTING.md "API as Decision Authority" (legacy tolerance).
+          // e-mail is not yet confirmed, route to the confirm step. `true`
+          // (confirmed, or a grandfathered account) and `null` (pre-rollout
+          // backend) both mean "no gate" — proceed exactly as before. Purely
+          // additive, API-driven; see CONTRIBUTING.md "API as Decision
+          // Authority" (legacy tolerance).
           if (registrationInfo.emailConfirmed == false) {
             emit(const KycSuccess(currentStep: KycStep.confirmEmail));
             return;
@@ -143,6 +144,10 @@ class KycCubit extends Cubit<KycState> {
           // Forward the server-supplied userData so `KycLinkWalletPage` does
           // not have to re-fetch — see CONTRIBUTING.md "Single round-trip per
           // decision". The backend always populates this for `AddWallet`.
+          // `emailConfirmed` is deliberately not gated here: in `AddWallet` it
+          // describes the *other* wallet's registration, not this one. After the
+          // link-wallet round-trip `checkKyc()` re-fetches and the gate then
+          // applies to the resulting `AlreadyRegistered` registration.
           emit(
             KycSuccess(
               currentStep: KycStep.linkWallet,
