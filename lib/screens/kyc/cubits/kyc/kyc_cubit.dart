@@ -271,21 +271,29 @@ class KycCubit extends Cubit<KycState> {
   }
 
   /// Records acceptance of the legal disclaimer. Sets the local per-session
-  /// flag first as the offline fallback (so the disclaimer is not re-shown this
-  /// session even if the backend is unreachable), then durably records
-  /// acceptance server-side via `PUT /v1/realunit/legal` for whatever the
-  /// server last reported as outstanding (all agreements when we never got a
-  /// successful `getLegalInfo()`). The server round-trip is best-effort: an
-  /// error is swallowed because the local flag already unblocks the session and
-  /// the following `checkKyc()` re-reads the authoritative server state, which
-  /// then drives the next routing decision.
+  /// flag first (the offline fallback for a pre-rollout backend), then durably
+  /// records acceptance server-side via `PUT /v1/realunit/legal` for whatever
+  /// the server last reported as outstanding (all agreements when we never got
+  /// a successful `getLegalInfo()`). A 404 (endpoint not deployed yet) is
+  /// tolerated — the local flag carries the session; any other PUT failure
+  /// surfaces as `KycFailure` rather than being swallowed into a silent
+  /// re-prompt loop. On success the following `checkKyc()` re-reads the
+  /// authoritative server state, which drives the next routing decision.
   Future<void> acceptLegalDisclaimer() async {
     _legalDisclaimerAccepted = true;
     try {
       await _legalService.acceptLegal(
         _outstandingLegalAgreements ?? RealUnitLegalAgreement.values,
       );
-    } catch (_) {}
+    } on ApiException catch (e) {
+      if (e.statusCode != 404) {
+        emit(KycFailure(e.toString()));
+        return;
+      }
+    } catch (e) {
+      emit(KycFailure(e.toString()));
+      return;
+    }
     await checkKyc();
   }
 

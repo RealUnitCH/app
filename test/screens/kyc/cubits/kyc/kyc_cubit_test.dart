@@ -1000,10 +1000,7 @@ void main() {
           );
         },
         build: buildCubit,
-        act: (cubit) async {
-          cubit.markLegalDisclaimerAccepted();
-          await cubit.checkKyc();
-        },
+        act: (cubit) => cubit.checkKyc(),
         expect: () => [
           const KycLoading(),
           KycSuccess(currentStep: expected, urlOrToken: 'https://example.com/step'),
@@ -1213,12 +1210,12 @@ void main() {
       },
     );
 
-    // Offline path: both the acceptance PUT and the subsequent GET fail. The
-    // local per-session flag (set to true inside `acceptLegalDisclaimer`) then
-    // carries the session so the re-check passes the gate — the server error is
-    // swallowed and never surfaces to the user.
+    // Pre-rollout path: both the acceptance PUT and the subsequent GET return
+    // 404 (endpoint not deployed). The local per-session flag (set inside
+    // `acceptLegalDisclaimer`) carries the session so the re-check passes the
+    // gate — the tolerated 404 never surfaces to the user.
     blocTest<KycCubit, KycState>(
-      'falls back to the local session flag when the server round-trip fails',
+      'falls back to the local session flag when the endpoint returns 404',
       setUp: () {
         when(() => kycService.getKycStatus()).thenAnswer(
           (_) async => _kycStatus(
@@ -1230,7 +1227,9 @@ void main() {
         when(() => legalService.getLegalInfo()).thenThrow(
           const ApiException(statusCode: 404, code: 'NOT_FOUND', message: ''),
         );
-        when(() => legalService.acceptLegal(any())).thenThrow(Exception('legal endpoint down'));
+        when(() => legalService.acceptLegal(any())).thenThrow(
+          const ApiException(statusCode: 404, code: 'NOT_FOUND', message: ''),
+        );
       },
       build: buildCubit,
       act: (cubit) async {
@@ -1243,6 +1242,28 @@ void main() {
         const KycLoading(),
         const KycCompleted(),
       ],
+    );
+
+    // Fail closed: a non-404 PUT failure (endpoint live but the write errors)
+    // surfaces as KycFailure instead of being silently swallowed into a
+    // re-prompt loop.
+    blocTest<KycCubit, KycState>(
+      'emits KycFailure when acceptLegal fails with a non-404 error',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => legalService.acceptLegal(any())).thenThrow(
+          const ApiException(statusCode: 500, code: 'SERVER_ERROR', message: 'boom'),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.acceptLegalDisclaimer(),
+      expect: () => [isA<KycFailure>()],
     );
   });
 }

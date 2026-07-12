@@ -27,8 +27,7 @@ import '../../helper/helper.dart';
 
 class _MockDfxKycService extends Mock implements DfxKycService {}
 
-class _MockRealUnitRegistrationService extends Mock
-    implements RealUnitRegistrationService {}
+class _MockRealUnitRegistrationService extends Mock implements RealUnitRegistrationService {}
 
 class _MockRealUnitLegalService extends Mock implements RealUnitLegalService {}
 
@@ -41,8 +40,7 @@ class _MockKycCubit extends MockCubit<KycState> implements KycCubit {}
 UserKycDto _kycHeader({KycLevel level = KycLevel.level0}) =>
     UserKycDto(hash: 'h', level: level, dataComplete: false);
 
-UserDto _user({String? mail = 'test@example.com'}) =>
-    UserDto(mail: mail, kyc: _kycHeader());
+UserDto _user({String? mail = 'test@example.com'}) => UserDto(mail: mail, kyc: _kycHeader());
 
 KycLevelDto _kycStatus({
   required KycLevel level,
@@ -161,6 +159,7 @@ void main() {
       final getIt = GetIt.instance;
       getIt.registerSingleton<DfxKycService>(kycService);
       getIt.registerSingleton<RealUnitRegistrationService>(registrationService);
+      getIt.registerSingleton<RealUnitLegalService>(legalService);
       getIt.registerSingleton<AppStore>(appStore);
       addTearDown(() async => getIt.reset());
 
@@ -202,15 +201,16 @@ void main() {
   );
 
   // The legalDisclaimer arm wires LegalDisclaimerPage.onCompleted to
-  // markLegalDisclaimerAccepted + checkKyc; drive that callback directly.
+  // acceptLegalDisclaimer (which records acceptance server-side and re-checks);
+  // drive that callback directly.
   testWidgets(
-    'KycViewManager legalDisclaimer onCompleted marks acceptance and re-checks',
+    'KycViewManager legalDisclaimer onCompleted records acceptance',
     (tester) async {
       final cubit = _MockKycCubit();
       when(() => cubit.state).thenReturn(
         const KycSuccess(currentStep: KycStep.legalDisclaimer),
       );
-      when(() => cubit.checkKyc()).thenAnswer((_) async {});
+      when(() => cubit.acceptLegalDisclaimer()).thenAnswer((_) async {});
 
       await tester.pumpApp(viewWithState(cubit));
       await tester.pumpAndSettle();
@@ -220,8 +220,7 @@ void main() {
       final page = tester.widget<LegalDisclaimerPage>(find.byType(LegalDisclaimerPage));
       page.onCompleted!();
 
-      verify(() => cubit.markLegalDisclaimerAccepted()).called(1);
-      verify(() => cubit.checkKyc()).called(1);
+      verify(() => cubit.acceptLegalDisclaimer()).called(1);
     },
   );
 }
