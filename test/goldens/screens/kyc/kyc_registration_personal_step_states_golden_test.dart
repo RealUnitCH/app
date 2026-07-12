@@ -60,7 +60,7 @@ void main() {
         ),
       );
 
-  group('$KycRegistrationPersonalStep states', () {
+  group('$KycRegistrationPersonalStep', () {
     goldenTest(
       'validation error after Next — red error borders on the empty fields',
       fileName: 'kyc_registration_personal_step_validation_error',

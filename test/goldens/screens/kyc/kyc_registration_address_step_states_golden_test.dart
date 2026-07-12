@@ -53,7 +53,7 @@ void main() {
         ),
       );
 
-  group('$KycRegistrationAddressStep states', () {
+  group('$KycRegistrationAddressStep', () {
     goldenTest(
       'validation error after Next — red error borders on every field + country',
       fileName: 'kyc_registration_address_step_validation_error',

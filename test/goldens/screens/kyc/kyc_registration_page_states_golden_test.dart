@@ -52,10 +52,14 @@ class _MockAWallet extends Mock implements AWallet {}
 
 const _country = Country(id: 41, symbol: 'CH', name: 'Switzerland', kycAllowed: true);
 
-// Reused verbatim from test/screens/kyc/steps/kyc_registration_page_test.dart so
-// the prefill golden asserts on the same fixture the widget test drives — a
-// historical placeholder (Ada Lovelace), never customer data. Fixed values only,
-// no `now()`, so the render is byte-stable.
+// Mirrors the placeholder fixture from
+// test/screens/kyc/steps/kyc_registration_page_test.dart (Ada Lovelace, never
+// customer data), but with the birthday year bumped to 1990: unlike that widget
+// test, this golden actually renders the birthday dropdowns, whose year list is
+// only `now().year … now().year-140` (birthday_field.dart). Ada's historical 1815
+// falls outside that window and would render an empty year field; 1990 sits inside
+// it for any plausible run date, so the closed dropdown shows the static selected
+// value (not the `now()`-derived list) and the render stays byte-stable.
 const _kycPersonalData = KycPersonalData(
   accountType: KycAccountType.personal,
   firstName: 'Ada',
@@ -69,7 +73,7 @@ const _fixtureUserData = RealUnitUserDataDto(
   name: 'Ada Lovelace',
   type: 'HUMAN',
   phoneNumber: '+41790000000',
-  birthday: '1815-12-10',
+  birthday: '1990-12-10',
   nationality: 'CH',
   addressStreet: 'S',
   addressPostalCode: '8000',
@@ -86,7 +90,7 @@ const _registrationFixture = Registration(
   firstName: 'Ada',
   lastName: 'Lovelace',
   phoneNumber: '+41790000000',
-  birthday: '1815-12-10',
+  birthday: '1990-12-10',
   nationality: _country,
   addressStreet: 'S',
   addressStreetNumber: '1',
@@ -195,7 +199,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  group('$KycRegistrationView states', () {
+  group('$KycRegistrationView', () {
     goldenTest(
       'address step active — AppBar "Residence", pager on page 2',
       fileName: 'kyc_registration_page_address_step',
