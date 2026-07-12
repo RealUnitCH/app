@@ -37,12 +37,7 @@ void main() {
     );
   });
 
-  group('$KycRegistrationAddressStep', () {
-    goldenTest(
-      'empty address form',
-      fileName: 'kyc_registration_address_step_default',
-      constraints: phoneConstraints,
-      builder: () => wrapForGolden(
+  Widget buildSubject() => wrapForGolden(
         BlocProvider<KycRegistrationStepCubit>.value(
           value: stepCubit,
           child: Scaffold(
@@ -55,7 +50,33 @@ void main() {
             ),
           ),
         ),
-      ),
+      );
+
+  // Tap the residence country field open so the selectable country list is
+  // captured (CH/DE/IT/FR float to the top by CountryField's priority sort).
+  Future<void> openCountryDropdown(WidgetTester tester) async {
+    await tester.pumpAndSettle();
+    final field = find.byType(DropdownButtonFormField<Country>);
+    await tester.ensureVisible(field);
+    await tester.pumpAndSettle();
+    await tester.tap(field);
+    await tester.pumpAndSettle();
+  }
+
+  group('$KycRegistrationAddressStep', () {
+    goldenTest(
+      'empty address form',
+      fileName: 'kyc_registration_address_step_default',
+      constraints: phoneConstraints,
+      builder: buildSubject,
+    );
+
+    goldenTest(
+      'residence country dropdown open — the selectable country list',
+      fileName: 'kyc_registration_address_step_dropdown_open',
+      constraints: phoneConstraints,
+      pumpBeforeTest: openCountryDropdown,
+      builder: buildSubject,
     );
   });
 }
