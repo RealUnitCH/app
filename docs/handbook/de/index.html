@@ -1999,15 +1999,18 @@
                 <div class="file">test/goldens/screens/kyc/</div>
               </div>
               <div class="rhs">
-                <b>5 Screens</b>
+                <b>13 Screens</b>
               </div>
             </div>
           </summary>
           <p class="spec-intro">
-            KYC-Onboarding für Buy/Sell — Pflicht ab definierten Volumen-Schwellen. Zwei
-            Stammdaten-Schritte (persönlich + Adresse) sowie ein E-Mail-Verifizierungs-Schritt
-            mit den Fehler-States <em>Loading</em>, <em>Mismatch</em> (eingegebener Code
-            stimmt nicht) und <em>Unknown Error</em> (Backend-Fehler).
+            KYC-Onboarding für Buy/Sell — Pflicht ab definierten Volumen-Schwellen. Der
+            Registrierungs-Wizard umfasst zwei Stammdaten-Schritte (persönlich + Adresse)
+            und als finalen Schritt die Steueransässigkeit; der Submit der KYC-Anfrage an
+            das DFX-Backend erfolgt erst auf diesem Steuer-Schritt. Dazu kommt der
+            E-Mail-Verifizierungs-Schritt mit den Fehler-States <em>Loading</em>,
+            <em>Mismatch</em> (eingegebener Code stimmt nicht) und <em>Unknown Error</em>
+            (Backend-Fehler).
           </p>
 
           <div class="tests cols-2">
@@ -2083,6 +2086,23 @@
                 validiert, der Weiter-CTA ist disabled bis die Eingabe vollständig ist.
               </div>
             </div>
+            <div class="test" id="54-kyc-registration-personal-dropdown">
+              <div class="head">
+                <a class="name permalink" href="#54-kyc-registration-personal-dropdown">54-kyc-registration-personal-dropdown</a>
+                <button class="copy-link" type="button" data-target="54-kyc-registration-personal-dropdown" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_personal_step_dropdown_open.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/54-kyc-registration-personal-dropdown.png"
+                  alt="KYC Registrierung — Nationalitäts-Auswahl"
+                />
+              </div>
+              <div class="desc">
+                Persönliche-Daten-Schritt mit geöffnetem Länder-Picker: Der User wählt
+                seine Nationalität (Staatsbürgerschaft) aus der scrollbaren Länderliste.
+              </div>
+            </div>
             <div class="test" id="41-kyc-registration-address">
               <div class="head">
                 <a class="name permalink" href="#41-kyc-registration-address">41-kyc-registration-address</a>
@@ -2096,9 +2116,134 @@
                 />
               </div>
               <div class="desc">
-                Adress-Schritt der KYC-Registrierung (Strasse, PLZ, Ort, Land). Bei
-                erfolgreichem Submit wird die KYC-Anfrage an das DFX-Backend übermittelt
-                und der User durchläuft anschliessend die Identitätsverifikation.
+                Adress-Schritt der KYC-Registrierung (Strasse, Nummer, PLZ, Ort, Land).
+                Der Schritt ist nicht mehr final: „Weiter" führt den User zum
+                abschliessenden Steueransässigkeits-Schritt — die KYC-Anfrage wird erst
+                dort an das DFX-Backend übermittelt.
+              </div>
+            </div>
+            <div class="test" id="55-kyc-registration-address-dropdown">
+              <div class="head">
+                <a class="name permalink" href="#55-kyc-registration-address-dropdown">55-kyc-registration-address-dropdown</a>
+                <button class="copy-link" type="button" data-target="55-kyc-registration-address-dropdown" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_address_step_dropdown_open.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/55-kyc-registration-address-dropdown.png"
+                  alt="KYC Registrierung — Wohnsitz-Land-Auswahl"
+                />
+              </div>
+              <div class="desc">
+                Adress-Schritt mit geöffnetem Länder-Picker: Hier wählt der User das Land
+                seines Wohnsitzes aus der scrollbaren Länderliste.
+              </div>
+            </div>
+            <div class="test" id="56-kyc-registration-tax">
+              <div class="head">
+                <a class="name permalink" href="#56-kyc-registration-tax">56-kyc-registration-tax</a>
+                <button class="copy-link" type="button" data-target="56-kyc-registration-tax" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/56-kyc-registration-tax.png"
+                  alt="KYC Registrierung — Steueransässigkeit"
+                />
+              </div>
+              <div class="desc">
+                Abschliessender Schritt der Registrierung. Der Pflicht-Länder-Picker „Land
+                des steuerlichen Wohnsitzes" ist nicht vorbelegt — der User muss genau ein
+                Land wählen. Der „Abschliessen"-CTA übermittelt die vollständige KYC-Anfrage
+                an das DFX-Backend.
+              </div>
+            </div>
+            <div class="test" id="57-kyc-registration-tax-dropdown">
+              <div class="head">
+                <a class="name permalink" href="#57-kyc-registration-tax-dropdown">57-kyc-registration-tax-dropdown</a>
+                <button class="copy-link" type="button" data-target="57-kyc-registration-tax-dropdown" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_dropdown_open.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/57-kyc-registration-tax-dropdown.png"
+                  alt="KYC Registrierung — Steuerland-Auswahl"
+                />
+              </div>
+              <div class="desc">
+                Geöffneter Länder-Picker des Steuer-Schritts. Der User wählt genau ein Land
+                des steuerlichen Wohnsitzes aus der scrollbaren Liste.
+              </div>
+            </div>
+            <div class="test" id="58-kyc-registration-tax-swiss">
+              <div class="head">
+                <a class="name permalink" href="#58-kyc-registration-tax-swiss">58-kyc-registration-tax-swiss</a>
+                <button class="copy-link" type="button" data-target="58-kyc-registration-tax-swiss" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_swiss.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/58-kyc-registration-tax-swiss.png"
+                  alt="KYC Registrierung — Schweizer Steueransässigkeit"
+                />
+              </div>
+              <div class="desc">
+                Ist die Schweiz (CH) als steuerlicher Wohnsitz gewählt, entfällt die
+                TIN-Abfrage — der Schritt lässt sich direkt abschliessen.
+              </div>
+            </div>
+            <div class="test" id="59-kyc-registration-tax-non-swiss">
+              <div class="head">
+                <a class="name permalink" href="#59-kyc-registration-tax-non-swiss">59-kyc-registration-tax-non-swiss</a>
+                <button class="copy-link" type="button" data-target="59-kyc-registration-tax-non-swiss" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_non_swiss.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/59-kyc-registration-tax-non-swiss.png"
+                  alt="KYC Registrierung — Ausländische Steueransässigkeit"
+                />
+              </div>
+              <div class="desc">
+                Bei einem Nicht-CH-Steuerwohnsitz erscheint zusätzlich das Pflichtfeld
+                „Steueridentifikationsnummer (TIN)", das zusammen mit dem gewählten Land
+                übermittelt wird.
+              </div>
+            </div>
+            <div class="test" id="60-kyc-registration-tax-country-error">
+              <div class="head">
+                <a class="name permalink" href="#60-kyc-registration-tax-country-error">60-kyc-registration-tax-country-error</a>
+                <button class="copy-link" type="button" data-target="60-kyc-registration-tax-country-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_country_error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/60-kyc-registration-tax-country-error.png"
+                  alt="KYC Registrierung — Fehlende Länderauswahl"
+                />
+              </div>
+              <div class="desc">
+                Validierungsfehler beim Abschliessen ohne gewähltes Land: Der
+                Pflicht-Länder-Picker wird mit rotem Rahmen markiert, der Submit ist
+                blockiert.
+              </div>
+            </div>
+            <div class="test" id="61-kyc-registration-tax-tin-error">
+              <div class="head">
+                <a class="name permalink" href="#61-kyc-registration-tax-tin-error">61-kyc-registration-tax-tin-error</a>
+                <button class="copy-link" type="button" data-target="61-kyc-registration-tax-tin-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_tin_error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/61-kyc-registration-tax-tin-error.png"
+                  alt="KYC Registrierung — Fehlende TIN"
+                />
+              </div>
+              <div class="desc">
+                Validierungsfehler bei ausländischem Steuerwohnsitz ohne TIN: Das
+                Pflicht-TIN-Feld wird mit rotem Rahmen markiert, der Submit ist
+                blockiert.
               </div>
             </div>
           </div>
