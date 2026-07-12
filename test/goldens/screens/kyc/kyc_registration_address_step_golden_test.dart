@@ -14,17 +14,11 @@ import '../../../helper/helper.dart';
 class _MockKycRegistrationStepCubit extends MockCubit<KycRegistrationStepState>
     implements KycRegistrationStepCubit {}
 
-const _switzerland = Country(id: 41, symbol: 'CH', name: 'Switzerland', kycAllowed: true);
-const _germany = Country(id: 49, symbol: 'DE', name: 'Germany', kycAllowed: true);
-
 void main() {
   late _MockKycRegistrationStepCubit stepCubit;
 
   setUpAll(() {
-    final countryService = MockDfxCountryService();
-    when(() => countryService.getAllCountries())
-        .thenAnswer((_) async => <Country>[_switzerland, _germany]);
-    GetIt.instance.registerSingleton<DfxCountryService>(countryService);
+    GetIt.instance.registerSingleton<DfxCountryService>(fixtureCountryService());
   });
 
   tearDownAll(() async => GetIt.instance.reset());

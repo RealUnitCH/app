@@ -47,7 +47,7 @@ class KycRegistrationAddressStep extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: LabeledTextField(
-                        hintText: 'Musterstrasse',
+                        hintText: S.of(context).streetHint,
                         controller: addressStreetCtrl,
                         label: S.of(context).street,
                         keyboardType: TextInputType.streetAddress,
@@ -100,7 +100,7 @@ class KycRegistrationAddressStep extends StatelessWidget {
                     Expanded(
                       flex: 3,
                       child: LabeledTextField(
-                        hintText: 'Zurich',
+                        hintText: S.of(context).cityHint,
                         controller: cityCtrl,
                         label: S.of(context).city,
                         keyboardType: TextInputType.text,

@@ -19,10 +19,7 @@ void main() {
   late _MockKycRegistrationStepCubit stepCubit;
 
   setUpAll(() {
-    final countryService = MockDfxCountryService();
-    when(() => countryService.getAllCountries())
-        .thenAnswer((_) async => const <Country>[]);
-    GetIt.instance.registerSingleton<DfxCountryService>(countryService);
+    GetIt.instance.registerSingleton<DfxCountryService>(fixtureCountryService());
   });
 
   tearDownAll(() async => GetIt.instance.reset());

@@ -10,25 +10,17 @@ import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registrati
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_address_step.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
+import '../../../../../helper/country_fixture.dart';
 import '../../../../../helper/pump_app.dart';
-
-class _MockDfxCountryService extends Mock implements DfxCountryService {}
 
 class _MockKycRegistrationStepCubit extends MockCubit<KycRegistrationStepState>
     implements KycRegistrationStepCubit {}
 
-const _germany = Country(id: 49, symbol: 'DE', name: 'Germany', kycAllowed: true);
-const _switzerland = Country(id: 41, symbol: 'CH', name: 'Switzerland', kycAllowed: true);
-
 void main() {
-  late _MockDfxCountryService countryService;
   late _MockKycRegistrationStepCubit stepCubit;
 
   setUp(() {
-    countryService = _MockDfxCountryService();
-    when(() => countryService.getAllCountries())
-        .thenAnswer((_) async => <Country>[_switzerland, _germany]);
-    GetIt.instance.registerSingleton<DfxCountryService>(countryService);
+    GetIt.instance.registerSingleton<DfxCountryService>(fixtureCountryService());
 
     stepCubit = _MockKycRegistrationStepCubit();
     when(() => stepCubit.state).thenReturn(
