@@ -665,7 +665,7 @@ void main() {
       addressPostalCode: '8000',
       addressCity: 'Berlin',
       addressCountry: 'DE',
-      swissTaxResidence: true,
+      swissTaxResidence: false,
       lang: 'de',
       kycData: KycPersonalData(
         accountType: KycAccountType.personal,
