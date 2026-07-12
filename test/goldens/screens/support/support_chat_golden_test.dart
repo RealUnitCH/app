@@ -20,9 +20,10 @@ class _MockSupportChatCubit extends MockCubit<SupportChatState>
 // Deterministic two-message conversation. The customer bubble (author ==
 // `customerAuthor`) renders blue and right-aligned; the support bubble renders
 // grey, left-aligned, with the "Support" label above it. `created` is a fixed
-// value so the fixture is deterministic — note the bubble itself formats the
-// time via the production widget's `DateTime.now().timeZoneOffset`, so the
-// rendered HH:MM reflects the render host's UTC offset at capture time.
+// UTC instant and the bubble formats it via `toLocal()`, so the rendered HH:MM
+// is stable across render dates: these March 2024 instants (before that year's
+// DST switch) always show CET, i.e. 08:15/08:42 UTC render as 09:15 and 09:42
+// on the Europe/Zurich runner regardless of when the golden is captured.
 List<SupportMessage> _conversation() => [
       SupportMessage(
         id: 1,
