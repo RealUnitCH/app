@@ -45,6 +45,7 @@ import 'package:realunit_wallet/screens/transaction_history/transaction_history_
 import 'package:realunit_wallet/screens/verify_seed/verify_seed_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/screens/welcome/welcome_page.dart';
+import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_link_entry.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/legal_routes.dart';
@@ -56,13 +57,16 @@ import 'package:realunit_wallet/setup/routing/routes/support_routes.dart';
 final GoRouter routerConfig = GoRouter(
   initialLocation: '/home',
   // Custom-scheme opens (realunit-wallet://…, canonical realunit-wallet://open)
-  // only foreground the app; they must not force any navigation. The redirect
-  // keeps the current in-app route (warm resume) or hands off to the normal
-  // boot entry (cold start). See app_link_entry.dart.
+  // only foreground the app; they must not force any navigation. Cold start:
+  // the redirect hands off to the normal boot entry. Warm resume: the redirect
+  // lets the scheme URL fall through unmatched and onException keeps the
+  // current configuration — the only true no-op that survives imperatively
+  // pushed routes (e.g. the KYC flow). See app_link_entry.dart.
   redirect: (context, state) => appLinkSchemeRedirect(
     state,
-    routerConfig.routerDelegate.currentConfiguration.uri.toString(),
+    effectiveLocation(routerConfig.routerDelegate.currentConfiguration),
   ),
+  onException: appLinkOnException,
   routes: <RouteBase>[
     GoRoute(
       name: AppRoutes.home,

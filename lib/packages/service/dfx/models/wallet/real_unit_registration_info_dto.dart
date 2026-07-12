@@ -11,32 +11,47 @@ class RealUnitRegistrationInfoDto {
   final RealUnitUserDataDto? realUnitUserDataDto;
 
   /// Whether the API has confirmed the account e-mail address for this wallet.
-  /// Nullable on purpose: absent on pre-rollout backends and for grandfathered
-  /// accounts. `KycCubit` treats `null` as "no confirmation gate" and proceeds
-  /// as before — only an explicit `false` routes to the confirm step. See
-  /// CONTRIBUTING.md "API as Decision Authority" (legacy backend tolerance).
+  /// Nullable on purpose: `null` means a pre-rollout backend (the field does
+  /// not exist yet) or no registration at all — grandfathered accounts (in
+  /// existence before the rollout) report an explicit `true`, never `null`.
+  /// `KycCubit` treats `null` as "no confirmation gate" and proceeds as before —
+  /// only an explicit `false` routes to the confirm step. See CONTRIBUTING.md
+  /// "API as Decision Authority" (legacy backend tolerance).
   final bool? emailConfirmed;
 
   /// Timestamp of the confirmation, when the API reports one. Not consumed for
   /// routing (that is [emailConfirmed] alone); carried for completeness/display.
   final DateTime? confirmedDate;
 
+  /// Whether this wallet's RealUnit registration is parked in manual review —
+  /// the Aktionariat forward failed and it awaits a manual re-forward by staff.
+  /// `true` only for the current wallet (`alreadyRegistered`); `false`/absent
+  /// otherwise. Nullable on purpose: `null` means a pre-rollout backend (the
+  /// field does not exist yet). `KycCubit` treats `null`/`false` as "no
+  /// manual-review gate" and proceeds as before — only an explicit `true` routes
+  /// to the review screen. See CONTRIBUTING.md "API as Decision Authority"
+  /// (legacy backend tolerance).
+  final bool? manualReview;
+
   RealUnitRegistrationInfoDto({
     required this.state,
     this.realUnitUserDataDto,
     this.emailConfirmed,
     this.confirmedDate,
+    this.manualReview,
   });
 
   factory RealUnitRegistrationInfoDto.fromJson(Map<String, dynamic> json) {
-    final confirmedDateRaw = json['confirmedDate'] as String?;
     return RealUnitRegistrationInfoDto(
       state: RealUnitRegistrationState.fromJson(json['state'] as String),
       realUnitUserDataDto: json['userData'] != null
           ? RealUnitUserDataDto.fromJson(json['userData'] as Map<String, dynamic>)
           : null,
       emailConfirmed: json['emailConfirmed'] as bool?,
-      confirmedDate: confirmedDateRaw != null ? DateTime.tryParse(confirmedDateRaw) : null,
+      confirmedDate: json['confirmedDate'] != null
+          ? DateTime.parse(json['confirmedDate'] as String)
+          : null,
+      manualReview: json['manualReview'] as bool?,
     );
   }
 }

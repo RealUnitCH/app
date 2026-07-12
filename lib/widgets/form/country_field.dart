@@ -106,6 +106,7 @@ class _CountryFieldState extends State<CountryField> {
           initialValue: initial,
           onChanged: widget.onChanged,
           validator: (value) => value == null ? '' : null,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
         );
       },
     );
