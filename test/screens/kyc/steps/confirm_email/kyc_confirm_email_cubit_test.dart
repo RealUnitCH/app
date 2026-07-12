@@ -148,6 +148,64 @@ void main() {
       },
     );
 
+    // Concurrency guards: `Future.timeout` does not cancel the underlying HTTP
+    // call, so a late continuation from a superseded tap must not emit over the
+    // newer run, and a tap after the cubit closed must not emit at all. These
+    // pin the guard branches (the early `return`s) that the happy-path tests
+    // above execute but never actually take.
+    test(
+      'recheck() after close returns early without touching the service (isClosed guard)',
+      () async {
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _info(emailConfirmed: true),
+        );
+
+        final cubit = build();
+        await cubit.close();
+
+        // Must not throw "Cannot emit after close": the isClosed guard returns
+        // before the loading emit, and the service is never reached.
+        await cubit.recheck();
+
+        expect(cubit.isClosed, isTrue);
+        verifyNever(() => registrationService.getRegistrationInfo());
+      },
+    );
+
+    test(
+      'a superseded recheck bails on the stale generation instead of emitting '
+      'over the newer run (catch path)',
+      () async {
+        final first = Completer<RealUnitRegistrationInfoDto>();
+        final second = Completer<RealUnitRegistrationInfoDto>();
+        final calls = [first, second];
+        var i = 0;
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) => calls[i++].future,
+        );
+
+        final cubit = build();
+        final states = <KycConfirmEmailState>[];
+        final sub = cubit.stream.listen(states.add);
+
+        unawaited(cubit.recheck());
+        unawaited(cubit.recheck());
+
+        // The superseded FIRST call FAILS: the catch block must also bail on the
+        // stale generation rather than emit its fail-closed NotConfirmed over
+        // the newer run.
+        first.completeError(Exception('late failure'));
+        await Future<void>.delayed(Duration.zero);
+        second.complete(_info(emailConfirmed: true));
+        await Future<void>.delayed(Duration.zero);
+
+        expect(states, const [KycConfirmEmailLoading(), KycConfirmEmailConfirmed()]);
+
+        await sub.cancel();
+        await cubit.close();
+      },
+    );
+
     // A late response from a superseded `recheck()` must not overwrite the
     // fresh state of a newer one. The first call hangs on a `Completer`; a
     // second call resolves immediately to `Confirmed`; when the first call's

@@ -936,6 +936,49 @@ void main() {
     );
   });
 
+  // Per-arm coverage of `_mapStepName`: line coverage marks every switch-
+  // expression arm as hit the moment the switch is evaluated, so it cannot
+  // prove an individual arm maps its input to the right step. Drive
+  // `_continueKyc` with each step name and assert the resulting step — the
+  // assertion, not the line hit, pins the arm. (`ident` and `dfxApproval` are
+  // already exercised by the InProgress / PendingReview tests above.)
+  group('$KycCubit _mapStepName routing arms', () {
+    void expectStepMapsTo(KycStepName name, KycStep expected) {
+      blocTest<KycCubit, KycState>(
+        '$name maps to $expected',
+        setUp: () {
+          when(() => kycService.getKycStatus()).thenAnswer(
+            (_) async => _kycStatus(
+              level: KycLevel.level20,
+              processStatus: KycProcessStatus.inProgress,
+            ),
+          );
+          when(() => kycService.getUser()).thenAnswer((_) async => _user());
+          when(() => kycService.continueKyc()).thenAnswer(
+            (_) async => _session(
+              level: KycLevel.level20,
+              steps: const [],
+              currentStep: _currentStep(name, url: 'https://example.com/step'),
+            ),
+          );
+        },
+        build: buildCubit,
+        act: (cubit) async {
+          cubit.markLegalDisclaimerAccepted();
+          await cubit.checkKyc();
+        },
+        expect: () => [
+          const KycLoading(),
+          KycSuccess(currentStep: expected, urlOrToken: 'https://example.com/step'),
+        ],
+      );
+    }
+
+    expectStepMapsTo(KycStepName.contactData, KycStep.registration);
+    expectStepMapsTo(KycStepName.nationalityData, KycStep.nationality);
+    expectStepMapsTo(KycStepName.financialData, KycStep.financialData);
+  });
+
   group('$KycCubit timeout & generation handling', () {
     test(
       'a late response from a timed-out call does NOT overwrite the fresh state of a retry (regression for #315 / #317)',
