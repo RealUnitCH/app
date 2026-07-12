@@ -127,6 +127,15 @@ class KycCubit extends Cubit<KycState> {
 
       switch (registrationInfo.state) {
         case RealUnitRegistrationState.alreadyRegistered:
+          // The API owns the confirmation gate. When it reports the account
+          // e-mail is not yet confirmed, route to the confirm step. `null`
+          // (pre-rollout backend / grandfathered account) and `true` both mean
+          // "no gate" — proceed exactly as before. Purely additive, API-driven;
+          // see CONTRIBUTING.md "API as Decision Authority" (legacy tolerance).
+          if (registrationInfo.emailConfirmed == false) {
+            emit(const KycSuccess(currentStep: KycStep.confirmEmail));
+            return;
+          }
           // Fall through to the processStatus dispatch below — the sign
           // gate is satisfied and the user proceeds to the next KYC step.
           break;

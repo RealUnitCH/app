@@ -91,7 +91,12 @@ KycStepSessionDto _currentStep(
 RealUnitRegistrationInfoDto _walletStatus(
   RealUnitRegistrationState state, {
   RealUnitUserDataDto? userData,
-}) => RealUnitRegistrationInfoDto(state: state, realUnitUserDataDto: userData);
+  bool? emailConfirmed,
+}) => RealUnitRegistrationInfoDto(
+  state: state,
+  realUnitUserDataDto: userData,
+  emailConfirmed: emailConfirmed,
+);
 
 const _kycPersonalData = KycPersonalData(
   accountType: KycAccountType.personal,
@@ -351,6 +356,94 @@ void main() {
         // Default already maps to AlreadyRegistered — make it explicit here.
         when(() => registrationService.getRegistrationInfo()).thenAnswer(
           (_) async => _walletStatus(RealUnitRegistrationState.alreadyRegistered),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        await cubit.checkKyc();
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycCompleted(),
+      ],
+    );
+
+    // Email-confirmation gate (API-driven). Only an explicit
+    // `emailConfirmed == false` on an already-registered wallet routes to the
+    // confirm step; `true` and `null` (legacy / grandfathered) proceed as
+    // before.
+    blocTest<KycCubit, KycState>(
+      'emits KycSuccess(confirmEmail) when AlreadyRegistered and emailConfirmed=false',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(
+            RealUnitRegistrationState.alreadyRegistered,
+            emailConfirmed: false,
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        await cubit.checkKyc();
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycSuccess(currentStep: KycStep.confirmEmail),
+      ],
+    );
+
+    blocTest<KycCubit, KycState>(
+      'proceeds (no confirm gate) when AlreadyRegistered and emailConfirmed=true',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(
+            RealUnitRegistrationState.alreadyRegistered,
+            emailConfirmed: true,
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        cubit.markLegalDisclaimerAccepted();
+        await cubit.checkKyc();
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycCompleted(),
+      ],
+    );
+
+    blocTest<KycCubit, KycState>(
+      'legacy fallback: proceeds when AlreadyRegistered and emailConfirmed=null',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        // Explicit null — the pre-rollout backend / grandfathered account case.
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(
+            RealUnitRegistrationState.alreadyRegistered,
+          ),
         );
       },
       build: buildCubit,

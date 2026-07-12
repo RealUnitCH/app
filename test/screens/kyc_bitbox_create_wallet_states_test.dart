@@ -9,11 +9,12 @@ const _testSeed =
 
 void main() {
   group('$KycState', () {
-    test('KycStep enum has all 9 documented variants', () {
+    test('KycStep enum has all 10 documented variants', () {
       // The KycCubit advances through these steps in order; pin the set so a
       // refactor that drops one surfaces here.
       expect(KycStep.values.toSet(), {
         KycStep.email,
+        KycStep.confirmEmail,
         KycStep.registration,
         KycStep.linkWallet,
         KycStep.legalDisclaimer,
