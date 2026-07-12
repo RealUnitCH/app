@@ -15,7 +15,7 @@ import '../../../helper/helper.dart';
 
 // SellBitboxCubit fires `scheduleMicrotask(_checkEthBalance)` in its constructor
 // and installs a periodic ETH-polling Timer, so the real page can't be pumped
-// deterministically (Lehre aus #815). We render the shared [SellBitboxView]
+// deterministically (learned in #815). We render the shared [SellBitboxView]
 // with a mocked cubit whose `state` getter is stubbed to the exact target
 // state — the same seam the existing `sell_bitbox_golden_test.dart` uses. Each
 // golden therefore anchors the View's rendering of one concrete cubit state
