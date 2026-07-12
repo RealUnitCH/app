@@ -25,10 +25,17 @@ void main() {
         ),
       );
 
-  Future<void> selectCountry(WidgetTester tester, String name) async {
+  // Tap the closed country field so the dropdown menu route opens and the
+  // selectable country list is on screen (CH/DE/IT/FR are floated to the top
+  // by CountryField's priority sort).
+  Future<void> openCountryDropdown(WidgetTester tester) async {
     await tester.pumpAndSettle();
     await tester.tap(find.byType(DropdownButtonFormField<Country>));
     await tester.pumpAndSettle();
+  }
+
+  Future<void> selectCountry(WidgetTester tester, String name) async {
+    await openCountryDropdown(tester);
     await tester.tap(find.text(name).last);
     await tester.pumpAndSettle();
   }
@@ -43,6 +50,14 @@ void main() {
       'empty — nothing picked, no TIN',
       fileName: 'kyc_registration_tax_step_default',
       constraints: phoneConstraints,
+      builder: buildSubject,
+    );
+
+    goldenTest(
+      'country dropdown open — the selectable country list',
+      fileName: 'kyc_registration_tax_step_dropdown_open',
+      constraints: phoneConstraints,
+      pumpBeforeTest: openCountryDropdown,
       builder: buildSubject,
     );
 
