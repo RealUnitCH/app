@@ -10,6 +10,11 @@ import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import '../../../../../helper/country_fixture.dart';
 import '../../../../../helper/pump_app.dart';
 
+// Ids match the committed country fixture (Country equality is id-keyed), so an
+// initialCountry resolves against the list the real DfxCountryService loads.
+const _switzerland = Country(id: 41, symbol: 'CH', name: 'Switzerland', kycAllowed: true);
+const _germany = Country(id: 55, symbol: 'DE', name: 'Germany', kycAllowed: true);
+
 void main() {
   setUp(() {
     GetIt.instance.registerSingleton<DfxCountryService>(fixtureCountryService());
@@ -17,7 +22,7 @@ void main() {
 
   tearDown(() async => GetIt.instance.reset());
 
-  Future<_Harness> pump(WidgetTester tester) async {
+  Future<_Harness> pump(WidgetTester tester, {Country? initialCountry}) async {
     final harness = _Harness();
 
     await tester.pumpApp(
@@ -25,6 +30,7 @@ void main() {
         body: KycRegistrationTaxStep(
           taxCountryCtrl: harness.taxCountryCtrl,
           tinCtrl: harness.tinCtrl,
+          initialCountry: initialCountry,
           onSubmit: () async => harness.submitCount++,
         ),
       ),
@@ -177,6 +183,45 @@ void main() {
         await tester.pump();
 
         expect(tinFocus.hasFocus, isFalse);
+      },
+    );
+  });
+
+  group('$KycRegistrationTaxStep prefill', () {
+    testWidgets(
+      'pre-selects a non-Swiss initial country, propagating it and revealing the TIN',
+      (tester) async {
+        final harness = await pump(tester, initialCountry: _germany);
+
+        // The residence country handed in as initialCountry propagates into the
+        // controller (so the derived swissTaxResidence is set) and reveals the
+        // required TIN — without any manual pick.
+        expect(harness.taxCountryCtrl.value, _germany);
+        final context = tester.element(find.byType(KycRegistrationTaxStep));
+        expect(find.text(S.of(context).taxIdentificationNumber), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'pre-selects a Swiss initial country without a TIN',
+      (tester) async {
+        final harness = await pump(tester, initialCountry: _switzerland);
+
+        expect(harness.taxCountryCtrl.value, _switzerland);
+        final context = tester.element(find.byType(KycRegistrationTaxStep));
+        expect(find.text(S.of(context).taxIdentificationNumber), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'submits the pre-selected Swiss residence without a manual pick',
+      (tester) async {
+        final harness = await pump(tester, initialCountry: _switzerland);
+
+        // The prefill alone satisfies the mandatory country field.
+        await tapComplete(tester);
+
+        expect(harness.submitCount, 1);
       },
     );
   });

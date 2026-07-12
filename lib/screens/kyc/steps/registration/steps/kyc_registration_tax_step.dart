@@ -10,11 +10,17 @@ class KycRegistrationTaxStep extends StatelessWidget {
   final TextEditingController tinCtrl;
   final Future<void> Function() onSubmit;
 
+  /// Pre-selects the tax-residence country — the residence country the user
+  /// entered on the address step (most people are tax-resident where they
+  /// live). Editable here; `null` falls back to an empty, mandatory picker.
+  final Country? initialCountry;
+
   KycRegistrationTaxStep({
     super.key,
     required this.taxCountryCtrl,
     required this.tinCtrl,
     required this.onSubmit,
+    this.initialCountry,
   });
   final _formKey = GlobalKey<FormState>();
 
@@ -31,17 +37,19 @@ class KycRegistrationTaxStep extends StatelessWidget {
             child: Column(
               spacing: 16,
               children: [
-                // The tax-residence country is mandatory: no initial value, so
-                // the user has to make an explicit choice (CountryField's own
-                // validator blocks submit while nothing is picked).
-                // `swissTaxResidence` is derived from this selection — a Swiss
-                // (CH) tax residence maps to Swiss-only, and the TIN is
-                // collected only for a non-Swiss tax residence, matching the
-                // backend contract (`swissTaxResidence` + optional
+                // The tax-residence country defaults to the residence country
+                // entered on the address step (via [initialCountry]) but stays
+                // editable and mandatory: with no residence to fall back on the
+                // picker is empty and CountryField's own validator blocks submit
+                // until a choice is made. `swissTaxResidence` is derived from
+                // this selection — a Swiss (CH) tax residence maps to Swiss-only,
+                // and the TIN is collected only for a non-Swiss tax residence,
+                // matching the backend contract (`swissTaxResidence` + optional
                 // `countryAndTINs`).
                 CountryField(
                   label: S.of(context).taxResidenceCountry,
                   purpose: CountryFieldPurpose.nationality,
+                  initialValue: initialCountry,
                   onChanged: (country) => taxCountryCtrl.value = country,
                 ),
                 ValueListenableBuilder<Country?>(

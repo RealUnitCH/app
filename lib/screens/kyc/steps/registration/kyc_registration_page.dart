@@ -273,10 +273,19 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
         );
 
       case KycRegistrationStep.taxResidence:
-        return KycRegistrationTaxStep(
-          taxCountryCtrl: taxCountryCtrl,
-          tinCtrl: tinCtrl,
-          onSubmit: _onSubmit,
+        // Default the tax-residence country to the residence country entered on
+        // the address step, rebuilding when it changes — most people are
+        // tax-resident where they live. The field stays editable; CountryField
+        // propagates the default into `taxCountryCtrl` and reveals the TIN for a
+        // non-Swiss default.
+        return ValueListenableBuilder<Country?>(
+          valueListenable: countryCtrl,
+          builder: (context, residenceCountry, _) => KycRegistrationTaxStep(
+            taxCountryCtrl: taxCountryCtrl,
+            tinCtrl: tinCtrl,
+            initialCountry: residenceCountry,
+            onSubmit: _onSubmit,
+          ),
         );
     }
   }

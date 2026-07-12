@@ -793,5 +793,21 @@ void main() {
         expect(tins.single.tin, '12 345 678 901');
       },
     );
+
+    testWidgets(
+      'defaults the tax residence to the address country, forwarding it without a manual pick',
+      (tester) async {
+        await showTaxStep(tester);
+
+        // No selectTaxCountry: the Swiss address country pre-selected the tax
+        // residence, so the mandatory field is already valid and submit forwards
+        // the derived Swiss-only result.
+        await tapComplete(tester);
+
+        final captured = captureSubmit();
+        expect(captured[0], isTrue);
+        expect(captured[1], isNull);
+      },
+    );
   });
 }
