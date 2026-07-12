@@ -7,6 +7,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/2fa/kyc_2fa_page.dart';
+import 'package:realunit_wallet/screens/kyc/steps/confirm_email/kyc_confirm_email_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/email/kyc_email_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/financial_data/kyc_financial_data_page.dart';
 import 'package:realunit_wallet/screens/kyc/steps/ident/kyc_ident_page.dart';
@@ -61,6 +62,7 @@ class KycViewManager extends StatelessWidget {
         KycSuccess(:final currentStep, :final urlOrToken, :final realUnitUserData) =>
           switch (currentStep) {
             KycStep.email => const KycEmailPage(),
+            KycStep.confirmEmail => const KycConfirmEmailPage(),
             KycStep.legalDisclaimer => LegalDisclaimerPage(
               onCompleted: () {
                 context.read<KycCubit>().markLegalDisclaimerAccepted();

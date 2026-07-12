@@ -2,6 +2,7 @@ part of 'kyc_cubit.dart';
 
 enum KycStep {
   email,
+  confirmEmail,
   registration,
   linkWallet,
   legalDisclaimer,
