@@ -60,7 +60,7 @@ void main() {
   setUpAll(() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<RealUnitRegistrationService>(_MockRealUnitRegistrationService());
-    getIt.registerSingleton<DfxCountryService>(MockDfxCountryService());
+    getIt.registerSingleton<DfxCountryService>(fixtureCountryService());
     getIt.registerSingleton<DfxKycService>(_MockDfxKycService());
   });
 
