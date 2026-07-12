@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -81,6 +83,42 @@ void main() {
     expect(currentPath(router), '/settings');
     expect(find.byKey(const Key('settings')), findsOneWidget);
   });
+
+  testWidgets(
+    'warm resume: a scheme open keeps the user on a PUSHED route '
+    '(how /kyc is reached from Buy/Sell)',
+    (tester) async {
+      final router = await pump(tester);
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+
+      // The KYC flow is entered imperatively — context.pushNamed(AppRoutes.kyc)
+      // from the Buy/Sell buttons — so the flow route sits ON TOP of the base
+      // route instead of replacing it. /settings stands in for the pushed flow.
+      unawaited(router.push('/settings'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('settings')), findsOneWidget);
+
+      // Same promise as for go-routes above: the scheme open must NOT force
+      // any navigation. The pushed route (and with it any page-scoped state,
+      // e.g. the KycCubit) must survive the open.
+      router.go(appLinkUrl);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('settings')), findsOneWidget);
+      expect(find.byKey(const Key('dashboard')), findsNothing);
+
+      // A true no-op also preserves the imperative stack itself — the pushed
+      // route must still pop back to the base route it was pushed from. This
+      // guards against "fixes" that rebuild the page as a new base route
+      // (which would drop page-scoped state, `state.extra`, and the back
+      // stack while leaving the same page visible).
+      expect(router.canPop(), isTrue);
+      router.pop();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('dashboard')), findsOneWidget);
+    },
+  );
 
   testWidgets('cold start on the scheme URL boots to the normal entry', (
     tester,
