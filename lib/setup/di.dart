@@ -58,7 +58,7 @@ Future<String> setupEssentials() async {
   final secureStorage = const SecureStorage();
   getIt.registerSingleton(secureStorage);
 
-  await _migrateSecurityFlags(sharedPreferences, secureStorage);
+  await migrateSecurityFlags(sharedPreferences, secureStorage);
 
   final encryptionKey = await secureStorage.getEncryptionKey();
 
@@ -231,7 +231,17 @@ Future<void> setupBlocs() async {
 
 Future<bool> _existsDatabaseFile() async => File(await AppDatabase.getDatabasePath()).exists();
 
-Future<void> _migrateSecurityFlags(
+/// Moves the security flags that used to live in [SharedPreferences]
+/// (biometric-enabled, the PIN lockout attempt counter, and the lock-until
+/// timestamp) into [SecureStorage], and drops the legacy `isPinEnabled` flag.
+/// Runs once on every boot from [setupEssentials] and is idempotent once the
+/// prefs are cleared.
+///
+/// Exposed for unit testing (via [SecureStorage.withStorage] + mocked
+/// [SharedPreferences]) because the boot path is otherwise unreachable without
+/// standing up the real service locator.
+@visibleForTesting
+Future<void> migrateSecurityFlags(
   SharedPreferences prefs,
   SecureStorage secureStorage,
 ) async {
