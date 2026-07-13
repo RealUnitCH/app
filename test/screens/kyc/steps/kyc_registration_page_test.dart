@@ -13,6 +13,7 @@ import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
@@ -412,10 +413,47 @@ void main() {
       await tester.pump();
 
       expect(find.byType(SnackBar), findsOne);
+      expect(find.textContaining('Registration failed'), findsOne);
       // A failed submit must not re-arm the wallet services — the re-arm is
       // gated behind KycRegistrationSubmitSuccess.
       verifyNever(() => homeBloc.add(any(that: isA<SyncWalletServicesEvent>())));
     });
+
+    testWidgets(
+      'surfaces the server reason and the nothing-was-saved hint when the '
+      'API rejects the submit',
+      (tester) async {
+        // A structured rejection (e.g. a 400 from register/complete) must not
+        // be shown as a raw exception toString: the user needs the server
+        // reason plus the context that nothing was persisted — otherwise a
+        // rejected submit is indistinguishable from a hang and the re-shown
+        // wizard looks like a routing bug.
+        whenListen(
+          registrationSubmitCubit,
+          Stream.fromIterable([
+            const KycRegistrationSubmitFailure(
+              'RealUnitApiException: Registration date must be today '
+              '(code: UNKNOWN, statusCode: 400)',
+              cause: ApiException(
+                statusCode: 400,
+                code: 'UNKNOWN',
+                message: 'Registration date must be today',
+              ),
+            ),
+          ]),
+          initialState: KycRegistrationSubmitInitial(),
+        );
+
+        await tester.pumpApp(buildSubject(const KycRegistrationView()));
+        await tester.pump();
+
+        expect(find.byType(SnackBar), findsOne);
+        expect(find.textContaining('Registration date must be today'), findsOne);
+        expect(find.textContaining('Your data has not been saved'), findsOne);
+        expect(find.textContaining('RealUnitApiException'), findsNothing);
+        verifyNever(() => homeBloc.add(any(that: isA<SyncWalletServicesEvent>())));
+      },
+    );
   });
 
   group('$KycRegistrationPage prefill', () {

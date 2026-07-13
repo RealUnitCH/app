@@ -8,6 +8,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
@@ -189,8 +190,15 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
             }
           }
           if (state is KycRegistrationSubmitFailure) {
-            final message = state.cause is SigningCancelledException
+            // A structured API rejection carries a human-readable server
+            // reason — surface it with the "nothing was saved" context so a
+            // rejected submit is not mistaken for a hang (the wizard state
+            // is purely local and a rejected submit persists nothing).
+            final cause = state.cause;
+            final message = cause is SigningCancelledException
                 ? S.of(context).signingCancelled
+                : cause is ApiException
+                ? S.of(context).registrationRejected(cause.message)
                 : S.of(context).registrationFailed(state.message);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
