@@ -3,13 +3,18 @@ import 'package:flutter/material.dart';
 /// Column layout that keeps [actions] reachable on every viewport and text scale.
 ///
 /// **Contract**
-/// - [body] may grow with content / accessibility text — it scrolls when the
-///   parent height is bounded.
-/// - [actions] (primary/secondary CTAs) stay **outside** the scroll view so they
-///   never leave the hit-testable region (the BitBox pairing regression).
-/// - When height is unbounded (e.g. a bare `testWidgets` pump without a sheet
-///   height), body and actions stack with `MainAxisSize.min` so layout still
-///   succeeds; production hosts must bound height (sheet / `Expanded` / page).
+/// - [body] scrolls inside a [SingleChildScrollView] whenever it grows with
+///   content or accessibility text scale.
+/// - [actions] (primary/secondary CTAs) stay **outside** the scroll view, in a
+///   sticky block below it, so they never leave the hit-testable region (the
+///   BitBox pairing regression).
+/// - This widget requires a **bounded height** (bottom sheet, `Expanded`, or a
+///   `SizedBox`). Giving it an unbounded height is a programming error: there
+///   would be no room to scroll and the sticky actions would be pushed out of
+///   the hit-test region — exactly the bug this widget exists to prevent. An
+///   unbounded height throws a [FlutterError] in every build mode (debug and
+///   release), so the failure is always loud and never a silently degraded
+///   layout.
 ///
 /// Use this for every bottom sheet and full-screen flow that combines long copy
 /// with bottom CTAs. Do not put a [Spacer] above buttons and hope it fits.
@@ -19,8 +24,6 @@ class ScrollableActionsLayout extends StatelessWidget {
     required this.body,
     this.actions = const [],
     this.padding = EdgeInsets.zero,
-    this.bodyPadding = EdgeInsets.zero,
-    this.actionsPadding = EdgeInsets.zero,
     this.actionsSpacing = 12,
     this.scrollPhysics,
   });
@@ -34,12 +37,6 @@ class ScrollableActionsLayout extends StatelessWidget {
   /// Outer padding around the whole layout.
   final EdgeInsetsGeometry padding;
 
-  /// Extra padding inside the scroll view around [body].
-  final EdgeInsetsGeometry bodyPadding;
-
-  /// Padding around the sticky actions block.
-  final EdgeInsetsGeometry actionsPadding;
-
   /// Vertical gap between action widgets.
   final double actionsSpacing;
 
@@ -49,43 +46,36 @@ class ScrollableActionsLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     final actionBlock = actions.isEmpty
         ? const SizedBox.shrink()
-        : Padding(
-            padding: actionsPadding,
-            child: Column(
-              mainAxisSize: .min,
-              spacing: actionsSpacing,
-              children: actions,
-            ),
+        : Column(
+            mainAxisSize: .min,
+            spacing: actionsSpacing,
+            children: actions,
           );
 
     final scrollBody = SingleChildScrollView(
       physics: scrollPhysics,
-      child: Padding(
-        padding: bodyPadding,
-        child: body,
-      ),
+      child: body,
     );
 
     return Padding(
       padding: padding,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // Unbounded height (some widget tests, intrinsic measuring): no
-          // Expanded — just stack. Production sheets/pages pass a max height.
           if (!constraints.hasBoundedHeight) {
-            return Column(
-              mainAxisSize: .min,
-              crossAxisAlignment: .stretch,
-              children: [
-                Padding(
-                  padding: bodyPadding,
-                  child: body,
-                ),
-                actionBlock,
-              ],
-            );
+            throw FlutterError.fromParts(<DiagnosticsNode>[
+              ErrorSummary('ScrollableActionsLayout requires a bounded height.'),
+              ErrorDescription(
+                'It was given an unbounded height, so the body could not scroll and the '
+                'sticky actions would be pushed out of the hit-test region — the exact '
+                'bug this widget exists to prevent.',
+              ),
+              ErrorHint(
+                'Host it in a bottom sheet, an Expanded, or a SizedBox with a fixed '
+                'height. A Column(mainAxisSize: .min) hands its children an unbounded '
+                'height and is not a valid host.',
+              ),
+            ]);
           }
-
           return Column(
             crossAxisAlignment: .stretch,
             children: [

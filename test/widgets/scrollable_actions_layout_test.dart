@@ -13,35 +13,36 @@ void main() {
       await tester.binding.setSurfaceSize(viewport);
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MediaQuery(
-            data: const MediaQueryData(size: viewport),
-            child: Scaffold(
-              body: SizedBox(
-                height: 500,
-                child: ScrollableActionsLayout(
-                  body: Column(
-                    children: List.generate(
-                      40,
-                      (i) => SizedBox(height: 40, child: Text('row $i')),
+      await expectNoLayoutOverflow(tester, () async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: MediaQuery(
+              data: const MediaQueryData(size: viewport),
+              child: Scaffold(
+                body: SizedBox(
+                  height: 500,
+                  child: ScrollableActionsLayout(
+                    body: Column(
+                      children: List.generate(
+                        40,
+                        (i) => SizedBox(height: 40, child: Text('row $i')),
+                      ),
                     ),
+                    actions: [
+                      FilledButton(
+                        onPressed: () => taps++,
+                        child: const Text('Do it'),
+                      ),
+                    ],
                   ),
-                  actions: [
-                    FilledButton(
-                      onPressed: () => taps++,
-                      child: const Text('Do it'),
-                    ),
-                  ],
                 ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.pump();
+        );
+        await tester.pump();
+      });
 
-      await expectNoLayoutOverflow(tester, () async {});
       await expectFullyTappable(
         tester,
         find.text('Do it'),
@@ -50,7 +51,7 @@ void main() {
       expect(taps, 1);
     });
 
-    testWidgets('stacks without Expanded when height is unbounded', (tester) async {
+    testWidgets('throws when height is unbounded (no silent degradation)', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -65,9 +66,12 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('body'), findsOneWidget);
-      expect(find.text('action'), findsOneWidget);
-      expect(tester.takeException(), isNull);
+      final exception = tester.takeException();
+      expect(exception, isA<FlutterError>());
+      expect(
+        (exception as FlutterError).toString(),
+        contains('requires a bounded height'),
+      );
     });
   });
 }

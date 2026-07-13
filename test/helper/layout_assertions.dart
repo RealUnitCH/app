@@ -1,6 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/styles/themes.dart';
 
 /// Asserts that no [RenderFlex] overflow was reported during [body].
 ///
@@ -36,15 +40,19 @@ Future<void> expectNoLayoutOverflow(
   );
 }
 
-/// Asserts [finder] resolves to a box fully inside [within] (if given) and
-/// that a real pointer tap at its center reaches a [RenderMetaData] /
-/// button path — i.e. the control is hit-testable, not merely in the tree.
+/// Asserts [finder] resolves to a box with real size, fully inside [within],
+/// and that a real pointer tap at its visual center actually reaches a render
+/// object belonging to [finder]'s widget subtree (not just that *some* hit
+/// path exists — [RenderView.hitTest] always returns a non-empty path, so
+/// checking for non-emptiness alone proves nothing). [within] is required
+/// because it is the only load-bearing containment check; callers must name
+/// the sheet/page that bounds the tappable area.
 ///
 /// Prefer this over `tester.widget<AppFilledButton>(...).onPressed?.call()`.
 Future<void> expectFullyTappable(
   WidgetTester tester,
   Finder finder, {
-  Finder? within,
+  required Finder within,
   String? reason,
 }) async {
   expect(
@@ -67,40 +75,75 @@ Future<void> expectFullyTappable(
     reason: reason ?? 'tappable target has zero height',
   );
 
-  if (within != null) {
-    expect(within, findsOneWidget, reason: 'within parent not found');
-    final parentBox = tester.renderObject<RenderBox>(within);
-    final parentRect = parentBox.localToGlobal(Offset.zero) & parentBox.size;
-    // Allow 1px float tolerance.
-    final inflated = parentRect.inflate(1);
-    expect(
-      inflated.contains(rect.topLeft) && inflated.contains(rect.bottomRight),
-      isTrue,
-      reason:
-          reason ??
-          'target $rect is not fully inside parent $parentRect '
-              '(clipped / overflowed — taps will miss)',
-    );
-  }
+  expect(within, findsOneWidget, reason: 'within parent not found');
+  final parentBox = tester.renderObject<RenderBox>(within);
+  final parentRect = parentBox.localToGlobal(Offset.zero) & parentBox.size;
+  // Allow 1px float tolerance.
+  final inflated = parentRect.inflate(1);
+  expect(
+    inflated.contains(rect.topLeft) && inflated.contains(rect.bottomRight),
+    isTrue,
+    reason:
+        reason ??
+        'target $rect is not fully inside parent $parentRect '
+            '(clipped / overflowed — taps will miss)',
+  );
 
-  // Hit-test at the visual center: something in the render path must accept
-  // the hit (otherwise the control is covered or outside the clip).
+  // Hit-test at the visual center and assert the hit path actually reaches a
+  // render object belonging to [finder]'s own element subtree — not merely
+  // that some (any) hit path exists, which is always true for RenderView.
   final center = rect.center;
   final result = HitTestResult();
   WidgetsBinding.instance.hitTestInView(result, center, tester.view.viewId);
 
+  final targets = <RenderObject>{};
+  void collectRenderObjects(Element element) {
+    final renderObject = element.renderObject;
+    if (renderObject != null) {
+      targets.add(renderObject);
+    }
+    element.visitChildren(collectRenderObjects);
+  }
+
+  collectRenderObjects(finder.evaluate().single);
+
   expect(
-    result.path,
-    isNotEmpty,
-    reason: reason ?? 'hit test at $center returned an empty path',
+    result.path.any((entry) => targets.contains(entry.target)),
+    isTrue,
+    reason:
+        reason ??
+        'hit test at $center did not reach $finder — the control is '
+            'covered, clipped, or outside the hit-test region',
   );
 
-  await tester.tapAt(center);
+  await tester.tap(finder, warnIfMissed: true);
   await tester.pump();
 }
 
+/// Runs [body] with [platform] active as the target-platform override.
+///
+/// The override must span the whole test body: widgets that read
+/// `defaultTargetPlatform` directly (e.g. `DeviceInfo.isIOS`, which selects a
+/// different, longer iOS copy) re-read it on every rebuild, and
+/// [expectFullyTappable] rebuilds while tapping. `addTearDown` cannot be used —
+/// the framework's `_verifyInvariants()` runs before package:test tear-downs
+/// and would trip `debugAssertAllFoundationVarsUnset`.
+Future<void> withTargetPlatform(
+  TargetPlatform platform,
+  Future<void> Function() body,
+) async {
+  final previous = debugDefaultTargetPlatformOverride;
+  debugDefaultTargetPlatformOverride = platform;
+  try {
+    await body();
+  } finally {
+    debugDefaultTargetPlatformOverride = previous;
+  }
+}
+
 /// Pumps [widget] as a clipped bottom-sheet-like host (mirrors production
-/// `showModalBottomSheet` clipping) under [mediaQuery].
+/// `showModalBottomSheet` clipping) under [mediaQuery], with real app
+/// localizations wired up so widgets calling `S.of(context)` do not throw.
 Future<void> pumpClippedSheet(
   WidgetTester tester, {
   required Widget widget,
@@ -117,8 +160,15 @@ Future<void> pumpClippedSheet(
     MediaQuery(
       data: mediaQuery,
       child: MaterialApp(
-        theme: theme,
+        theme: theme ?? realUnitTheme,
         locale: locale,
+        localizationsDelegates: const [
+          S.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+        ],
+        supportedLocales: S.delegate.supportedLocales,
         home: Scaffold(
           body: Align(
             alignment: Alignment.bottomCenter,
@@ -132,5 +182,7 @@ Future<void> pumpClippedSheet(
       ),
     ),
   );
+  // SVGs / first frame settle, matching the reference matrix test.
   await tester.pump();
+  await tester.pump(const Duration(milliseconds: 50));
 }

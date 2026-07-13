@@ -6,16 +6,12 @@
 // bug: long DE copy + real channel hash + home-indicator padding + sheet clip.
 import 'package:bitbox_flutter/bitbox_flutter.dart' as sdk;
 import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/bloc/connect_bitbox_cubit.dart';
 import 'package:realunit_wallet/screens/hardware_connect_bitbox/connect_bitbox_view.dart';
-import 'package:realunit_wallet/styles/themes.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 import '../../helper/helper.dart';
@@ -50,47 +46,17 @@ void main() {
   }
 
   Future<void> pumpSheet(WidgetTester tester, MatrixCell cell) async {
-    await tester.binding.setSurfaceSize(cell.device.size);
-    addTearDown(() async {
-      await tester.binding.setSurfaceSize(null);
-    });
-
-    await tester.pumpWidget(
-      MediaQuery(
-        data: cell.mediaQuery,
-        child: MaterialApp(
-          theme: realUnitTheme,
-          locale: const Locale('de'),
-          localizationsDelegates: const [
-            S.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-          ],
-          supportedLocales: S.delegate.supportedLocales,
-          home: Scaffold(
-            body: Align(
-              alignment: Alignment.bottomCenter,
-              child: Material(
-                // Production bottom sheets clip — required for hit-test fidelity.
-                clipBehavior: Clip.antiAlias,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-                child: BlocProvider<ConnectBitboxCubit>.value(
-                  value: cubit,
-                  child: ConnectBitboxView(
-                    onFinish: (_) {},
-                    onCancel: () {},
-                  ),
-                ),
-              ),
-            ),
-          ),
+    await pumpClippedSheet(
+      tester,
+      widget: BlocProvider<ConnectBitboxCubit>.value(
+        value: cubit,
+        child: ConnectBitboxView(
+          onFinish: (_) {},
+          onCancel: () {},
         ),
       ),
+      mediaQuery: cell.mediaQuery,
     );
-    // SVGs / first frame.
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
   }
 
   /// Every state that shows at least one CTA must stay tappable on every cell.
@@ -113,37 +79,39 @@ void main() {
         'notConnected',
       ]) {
         testWidgets('$stateKey · ${cell.id}', (tester) async {
-          stubState(buttonStates()[stateKey]!);
-          when(() => cubit.confirmPairing()).thenAnswer((_) async {});
-          when(() => cubit.recheckDeviceStatus()).thenAnswer((_) async {});
-          when(() => cubit.retrySignatureCapture()).thenAnswer((_) async {});
-          when(() => cubit.continueWithoutSignature()).thenReturn(null);
-          when(() => cubit.finishSetup()).thenReturn(null);
+          await withTargetPlatform(cell.device.platform, () async {
+            stubState(buttonStates()[stateKey]!);
+            when(() => cubit.confirmPairing()).thenAnswer((_) async {});
+            when(() => cubit.recheckDeviceStatus()).thenAnswer((_) async {});
+            when(() => cubit.retrySignatureCapture()).thenAnswer((_) async {});
+            when(() => cubit.continueWithoutSignature()).thenReturn(null);
+            when(() => cubit.finishSetup()).thenReturn(null);
 
-          await expectNoLayoutOverflow(
-            tester,
-            () async {
-              await pumpSheet(tester, cell);
-            },
-            reason: 'overflow on $stateKey / ${cell.label}',
-          );
+            await expectNoLayoutOverflow(
+              tester,
+              () async {
+                await pumpSheet(tester, cell);
+              },
+              reason: 'overflow on $stateKey / ${cell.label}',
+            );
 
-          final buttons = find.byType(AppFilledButton);
-          expect(
-            buttons,
-            findsWidgets,
-            reason: '$stateKey / ${cell.label}: expected CTA(s)',
-          );
+            final buttons = find.byType(AppFilledButton);
+            expect(
+              buttons,
+              findsWidgets,
+              reason: '$stateKey / ${cell.label}: expected CTA(s)',
+            );
 
-          // Primary CTA (first button) must be fully inside the sheet and
-          // receive a real pointer event.
-          final primary = buttons.first;
-          await expectFullyTappable(
-            tester,
-            primary,
-            within: find.byType(ConnectBitboxView),
-            reason: '$stateKey / ${cell.label}: primary CTA not tappable',
-          );
+            // Primary CTA (first button) must be fully inside the sheet and
+            // receive a real pointer event.
+            final primary = buttons.first;
+            await expectFullyTappable(
+              tester,
+              primary,
+              within: find.byType(ConnectBitboxView),
+              reason: '$stateKey / ${cell.label}: primary CTA not tappable',
+            );
+          });
         });
       }
     }
@@ -158,24 +126,26 @@ void main() {
         kIosDeviceProfiles.firstWhere((d) => d.id == 'iphone_15'),
         1.0,
       );
-      stubState(BitboxCheckHash(device, _realChannelHash));
-      when(() => cubit.confirmPairing()).thenAnswer((_) async {});
+      await withTargetPlatform(cell.device.platform, () async {
+        stubState(BitboxCheckHash(device, _realChannelHash));
+        when(() => cubit.confirmPairing()).thenAnswer((_) async {});
 
-      await pumpSheet(tester, cell);
+        await pumpSheet(tester, cell);
 
-      await expectFullyTappable(
-        tester,
-        find.text('Bestätigen'),
-        within: find.byType(ConnectBitboxView),
-      );
-      verify(() => cubit.confirmPairing()).called(1);
+        await expectFullyTappable(
+          tester,
+          find.text('Bestätigen'),
+          within: find.byType(ConnectBitboxView),
+        );
+        verify(() => cubit.confirmPairing()).called(1);
 
-      // Cancel must also be on-screen (was fully clipped in the bug report).
-      await expectFullyTappable(
-        tester,
-        find.text('Abbrechen'),
-        within: find.byType(ConnectBitboxView),
-      );
+        // Cancel must also be on-screen (was fully clipped in the bug report).
+        await expectFullyTappable(
+          tester,
+          find.text('Abbrechen'),
+          within: find.byType(ConnectBitboxView),
+        );
+      });
     },
   );
 
@@ -186,18 +156,20 @@ void main() {
         kIosDeviceProfiles.firstWhere((d) => d.id == 'iphone_se_3'),
         3.0,
       );
-      stubState(BitboxCheckHash(device, _realChannelHash));
-      when(() => cubit.confirmPairing()).thenAnswer((_) async {});
+      await withTargetPlatform(cell.device.platform, () async {
+        stubState(BitboxCheckHash(device, _realChannelHash));
+        when(() => cubit.confirmPairing()).thenAnswer((_) async {});
 
-      await expectNoLayoutOverflow(tester, () async {
-        await pumpSheet(tester, cell);
+        await expectNoLayoutOverflow(tester, () async {
+          await pumpSheet(tester, cell);
+        });
+        await expectFullyTappable(
+          tester,
+          find.byType(AppFilledButton).first,
+          within: find.byType(ConnectBitboxView),
+        );
+        verify(() => cubit.confirmPairing()).called(1);
       });
-      await expectFullyTappable(
-        tester,
-        find.byType(AppFilledButton).first,
-        within: find.byType(ConnectBitboxView),
-      );
-      verify(() => cubit.confirmPairing()).called(1);
     },
   );
 }

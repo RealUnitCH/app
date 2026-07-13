@@ -4,7 +4,7 @@
 
 Every standard phone (iOS mini/SE → Pro Max, Android compact → large) and every system text size (small → extreme accessibility) keeps **all primary actions tappable** and **all critical copy reachable** (scroll if needed).
 
-This is independent of line-coverage %: it is **100 % coverage of the “CTA outside hit bounds” bug class** via a device × text-scale matrix and a catalog of surfaces.
+This is independent of line-coverage %: a device × text-scale matrix plus a living catalog of surfaces gates the "CTA outside hit bounds" bug class for every surface the catalog lists. The catalog does not prove every sticky-CTA surface in the app is covered — see docs/testing.md.
 
 ## Production pattern
 
@@ -24,7 +24,7 @@ Source: [`lib/widgets/scrollable_actions_layout.dart`](../lib/widgets/scrollable
 |---|---|
 | Scroll long body | `Column` + `Spacer` + buttons with no scroll |
 | Sticky actions under the scroll view | Buttons as last children of an overflowing `Column` |
-| Bound sheet with `maxHeight` + scroll inside | Fixed height + non-scroll content that can exceed it |
+| Fix/cap sheet height (e.g. a fraction of screen height) + scroll inside | Fixed height + non-scroll content that can exceed it |
 | Cap large illustrations (`maxHeight`) | Always paint 200×200 art above multi-paragraph copy |
 
 ## Test pattern
@@ -32,14 +32,20 @@ Source: [`lib/widgets/scrollable_actions_layout.dart`](../lib/widgets/scrollable
 ```dart
 for (final cell in kFullResponsiveMatrix) {
   testWidgets('mySheet · ${cell.id}', (tester) async {
-    await expectNoLayoutOverflow(tester, () async {
-      await pumpClippedSheet(tester, widget: sheet, mediaQuery: cell.mediaQuery);
+    await withTargetPlatform(cell.device.platform, () async {
+      await expectNoLayoutOverflow(tester, () async {
+        await pumpClippedSheet(
+          tester,
+          widget: sheet,
+          mediaQuery: cell.mediaQuery,
+        );
+      });
+      await expectFullyTappable(
+        tester,
+        find.text('Bestätigen'),
+        within: find.byType(MySheet),
+      );
     });
-    await expectFullyTappable(
-      tester,
-      find.text('Bestätigen'),
-      within: find.byType(MySheet),
-    );
   });
 }
 ```

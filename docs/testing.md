@@ -121,14 +121,16 @@ See `test/screens/kyc/steps/kyc_email_page_test.dart`.
 2. Do **not** put a bare `Spacer()` above buttons and hope content fits.
 3. Do **not** rely on a fixed fraction of screen height without scroll inside it.
 
-**Test contract (100 % coverage of this bug class)**
+**Test contract (gates every catalogued surface against this bug class)**
 
 | Piece | Role |
 |---|---|
 | [`responsive_matrix.dart`](../test/helper/responsive_matrix.dart) | Standard phones (iPhone SE → Pro Max, Android compact → large) × text scales `0.85…3.0` |
-| [`layout_assertions.dart`](../test/helper/layout_assertions.dart) | `expectNoLayoutOverflow`, `expectFullyTappable` (**real** `tapAt`, not `onPressed?.call()`) |
-| [`responsive_surface_catalog.dart`](../test/helper/responsive_surface_catalog.dart) | Living list of surfaces that **must** have a matrix test; catalog self-test fails if a listed path is missing |
+| [`layout_assertions.dart`](../test/helper/layout_assertions.dart) | `expectNoLayoutOverflow`, `expectFullyTappable` (**real** `tester.tap`, not `onPressed?.call()`; `within` is required and the hit-test path is verified against the target's own render objects) |
+| [`responsive_surface_catalog.dart`](../test/helper/responsive_surface_catalog.dart) | Living list of surfaces that **must** have a matrix test and a production file that references `ScrollableActionsLayout`; catalog self-test fails if either file is missing or the reference regresses |
 | Matrix specs (e.g. `connect_bitbox_responsive_matrix_test.dart`) | Full `kFullResponsiveMatrix` × every button-bearing state |
+
+The catalog is a living list, not a completeness proof: it does not automatically ensure every sticky-CTA surface in the app is registered. Authors must add new sticky-CTA surfaces to the catalog (with a matrix test); that is a review responsibility.
 
 Rules for PRs:
 

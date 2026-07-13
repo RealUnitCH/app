@@ -25,7 +25,7 @@ The app must stay fully usable on every **standard phone** we support (smallest 
 **Test rule (gate for this bug class)**
 
 - Matrix: [`test/helper/responsive_matrix.dart`](test/helper/responsive_matrix.dart) × [`layout_assertions.dart`](test/helper/layout_assertions.dart) (`expectNoLayoutOverflow`, `expectFullyTappable`).
-- Catalog: every sticky-CTA surface is listed in [`responsive_surface_catalog.dart`](test/helper/responsive_surface_catalog.dart) with a matrix test path; the catalog self-test fails if the file is missing.
+- Catalog: sticky-CTA surfaces listed in [`responsive_surface_catalog.dart`](test/helper/responsive_surface_catalog.dart) have a matrix test path and a production path; the catalog self-test fails if either file is missing or the production file no longer references `ScrollableActionsLayout`. Listing every sticky-CTA surface is a review responsibility.
 - Prefer real `tester.tap` / `expectFullyTappable` over `onPressed?.call()`.
 - Details and PR checklist: [`docs/testing.md`](docs/testing.md) § *Responsive layout / sticky CTAs*.
 

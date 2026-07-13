@@ -29,8 +29,6 @@ class DeviceProfile {
     viewPadding: viewPadding,
     devicePixelRatio: 3,
   );
-
-  BoxConstraints get tightConstraints => BoxConstraints.tight(size);
 }
 
 /// Accessibility text scales from system "small" to extreme large accessibility.

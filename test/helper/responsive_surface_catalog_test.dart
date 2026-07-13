@@ -15,12 +15,32 @@ void main() {
             'Surface "${surface.id}" lists matrix test '
             '${surface.matrixTestPath} but the file is missing',
       );
+    }
+  });
+
+  test('every catalogued surface has a production file on disk', () {
+    for (final surface in kResponsiveSurfaceCatalog) {
+      final file = File(surface.productionPath);
       expect(
-        surface.usesScrollableActionsLayout,
+        file.existsSync(),
         isTrue,
         reason:
-            'Surface "${surface.id}" must use ScrollableActionsLayout '
-            '(or be explicitly re-reviewed before setting false)',
+            'Surface "${surface.id}" lists production file '
+            '${surface.productionPath} but the file is missing',
+      );
+    }
+  });
+
+  test('every catalogued surface actually uses ScrollableActionsLayout', () {
+    for (final surface in kResponsiveSurfaceCatalog) {
+      final contents = File(surface.productionPath).readAsStringSync();
+      expect(
+        RegExp(r'ScrollableActionsLayout\s*\(').hasMatch(contents),
+        isTrue,
+        reason:
+            'Surface "${surface.id}" (${surface.productionPath}) no longer '
+            'references ScrollableActionsLayout — the responsive-layout '
+            'contract regressed',
       );
     }
   });
