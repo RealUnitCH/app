@@ -204,7 +204,14 @@ void main() {
       when(() => account.primaryAddress).thenReturn(
         FakeBitboxCredentials(behavior: FakeBitboxBehavior.disconnect)..bitboxManager = null,
       );
-      final client = MockClient((_) async => http.Response('{}', 201));
+      // The date fetch happens before signing, so it must succeed for the flow
+      // to reach the signing step where the disconnected BitBox surfaces.
+      final client = MockClient((request) async {
+        if (request.url.path == '/v1/realunit/register/date') {
+          return http.Response('{"date":"2026-07-13"}', 200);
+        }
+        return http.Response('{}', 201);
+      });
 
       expect(
         () => build(client).completeRegistration(buildRegistration()),
@@ -245,7 +252,14 @@ void main() {
       when(() => account.primaryAddress).thenReturn(
         FakeBitboxCredentials(behavior: FakeBitboxBehavior.disconnect)..bitboxManager = null,
       );
-      final client = MockClient((_) async => http.Response('{}', 201));
+      // The date fetch happens before signing, so it must succeed for the flow
+      // to reach the signing step where the disconnected BitBox surfaces.
+      final client = MockClient((request) async {
+        if (request.url.path == '/v1/realunit/register/date') {
+          return http.Response('{"date":"2026-07-13"}', 200);
+        }
+        return http.Response('{}', 201);
+      });
 
       expect(
         () => build(client).registerWallet(buildUserData()),
