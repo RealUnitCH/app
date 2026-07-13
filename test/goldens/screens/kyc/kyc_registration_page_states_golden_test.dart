@@ -9,6 +9,7 @@ import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_rejected_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
@@ -250,7 +251,7 @@ void main() {
     );
 
     goldenTest(
-      'submit failure SnackBar — registrationFailed (red)',
+      'submit failure SnackBar — signingCancelled (red)',
       fileName: 'kyc_registration_page_submit_failure_snackbar',
       constraints: phoneConstraints,
       pumpBeforeTest: (tester) async {
@@ -264,6 +265,33 @@ void main() {
             const KycRegistrationSubmitFailure(
               'registration rejected',
               cause: SigningCancelledException(),
+            ),
+          ]),
+          initialState: KycRegistrationSubmitInitial(),
+        );
+        return buildView(const KycRegistrationView());
+      },
+    );
+
+    goldenTest(
+      'submit rejected SnackBar — structured 4xx with server reason',
+      fileName: 'kyc_registration_page_submit_rejected_snackbar',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pump(); // deliver the whenListen emission to the listener
+        await tester.pumpAndSettle(); // run the SnackBar entrance to completion
+      },
+      builder: () {
+        whenListen(
+          registrationSubmitCubit,
+          Stream.fromIterable([
+            const KycRegistrationSubmitFailure(
+              'registration rejected',
+              cause: RegistrationRejectedException(
+                statusCode: 400,
+                code: 'UNKNOWN',
+                message: 'Registration date must be today',
+              ),
             ),
           ]),
           initialState: KycRegistrationSubmitInitial(),

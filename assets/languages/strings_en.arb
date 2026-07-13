@@ -249,6 +249,7 @@
   "registerPhoneNumberOnlyDigits": "Only numbers are allowed",
   "registrationFailed": "Registration failed:\n${message}",
   "registrationForwardingFailed": "Registration accepted, but forwarding to the company is delayed. We will retry automatically.",
+  "registrationRejected": "The server rejected your registration:\n${reason}\nYour data has not been saved — please check your entries and submit again.",
   "registrationRequired": "Additional information required",
   "registrationRequiredDescription": "To purchase RealUnit stock tokens, we need some additional information from you.",
   "reset": "Reset",

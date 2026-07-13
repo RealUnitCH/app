@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_rejected_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_email_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_email_response_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_register_wallet_request_dto.dart';
@@ -196,7 +197,27 @@ class RealUnitRegistrationService extends DFXAuthService {
 
     if (response.statusCode != 201 && response.statusCode != 202) {
       final errorJson = jsonDecode(response.body) as Map<String, dynamic>;
-      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
+      final error = ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
+      final status = error.statusCode;
+      // A non-auth 4xx of register/complete itself is a content-level
+      // rejection of exactly this submit — typed so the UI can attribute it
+      // ("check your entries"). The runtimeType check keeps code-specific
+      // subclasses (KYC_LEVEL_REQUIRED, REGISTRATION_REQUIRED) intact; auth
+      // (401/403) and rate-limit (429) responses plus 5xx stay plain.
+      if (error.runtimeType == ApiException &&
+          status != null &&
+          status >= 400 &&
+          status < 500 &&
+          status != 401 &&
+          status != 403 &&
+          status != 429) {
+        throw RegistrationRejectedException(
+          statusCode: status,
+          code: error.code,
+          message: error.message,
+        );
+      }
+      throw error;
     }
 
     final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
