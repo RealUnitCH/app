@@ -190,16 +190,24 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
             }
           }
           if (state is KycRegistrationSubmitFailure) {
-            // A structured API rejection carries a human-readable server
-            // reason — surface it with the "nothing was saved" context so a
-            // rejected submit is not mistaken for a hang (the wizard state
-            // is purely local and a rejected submit persists nothing).
             final cause = state.cause;
-            final message = cause is SigningCancelledException
-                ? S.of(context).signingCancelled
-                : cause is ApiException
-                ? S.of(context).registrationRejected(cause.message)
-                : S.of(context).registrationFailed(state.message);
+            final String message;
+            if (cause is SigningCancelledException) {
+              message = S.of(context).signingCancelled;
+            } else if (cause is ApiException &&
+                cause.statusCode != null &&
+                cause.statusCode! >= 400 &&
+                cause.statusCode! < 500) {
+              // A structured 4xx is a rejection of THIS submit — surface the
+              // server reason with the "nothing was saved" context so it is
+              // not mistaken for a hang (the wizard state is purely local and
+              // a rejected submit persists nothing). 5xx/auth/transport
+              // errors stay on the generic message: "check your entries"
+              // would be the wrong instruction there.
+              message = S.of(context).registrationRejected(cause.message);
+            } else {
+              message = S.of(context).registrationFailed(state.message);
+            }
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(message),

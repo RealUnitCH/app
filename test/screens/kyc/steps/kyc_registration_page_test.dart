@@ -454,6 +454,35 @@ void main() {
         verifyNever(() => homeBloc.add(any(that: isA<SyncWalletServicesEvent>())));
       },
     );
+
+    testWidgets(
+      'keeps the generic failure message for a 5xx — no "check your entries" '
+      'instruction for a server-side fault',
+      (tester) async {
+        whenListen(
+          registrationSubmitCubit,
+          Stream.fromIterable([
+            const KycRegistrationSubmitFailure(
+              'RealUnitApiException: Internal server error '
+              '(code: UNKNOWN, statusCode: 500)',
+              cause: ApiException(
+                statusCode: 500,
+                code: 'UNKNOWN',
+                message: 'Internal server error',
+              ),
+            ),
+          ]),
+          initialState: KycRegistrationSubmitInitial(),
+        );
+
+        await tester.pumpApp(buildSubject(const KycRegistrationView()));
+        await tester.pump();
+
+        expect(find.byType(SnackBar), findsOne);
+        expect(find.textContaining('Registration failed'), findsOne);
+        expect(find.textContaining('Your data has not been saved'), findsNothing);
+      },
+    );
   });
 
   group('$KycRegistrationPage prefill', () {
