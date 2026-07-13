@@ -236,6 +236,12 @@ jobs:
           name: coverage-summary
           path: coverage
 
+      - name: Download scoped coverage tracefile
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-lcov
+          path: coverage
+
       - name: Enforce coverage floor
         run: |
           set -euo pipefail
@@ -274,6 +280,18 @@ jobs:
               exit 1
             fi
           fi
+
+      # Closes the coverage blind spot the floor % alone cannot see: an in-scope
+      # file that no test ever loads is absent from lcov.info entirely, so it
+      # sits in neither the numerator nor the denominator and the scoped %
+      # stays 100 % while the file is wholly untested. This step enumerates the
+      # on-disk activated surface (same globs as the filter step above) and
+      # fails when a file carries no coverage and is not in the committed
+      # lineless allowlist. See scripts/check-coverage-visibility.sh.
+      - name: Enforce in-scope file visibility
+        run: |
+          set -euo pipefail
+          bash scripts/check-coverage-visibility.sh coverage/lcov.info .coverage-visibility-allowlist
 
   # Visual regression tests on the self-hosted runner. Goldens live
   # under `test/goldens/` and are validated pixel-for-pixel against committed
