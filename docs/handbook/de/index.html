@@ -2793,7 +2793,7 @@
             </div>
           </summary>
           <p class="spec-intro">
-            Der Bildschirm „Wallet erstellen“ generiert beim Öffnen im Hintergrund eine neue Seed-Phrase. Bis diese vorliegt, zeigt die App einen kurzen Ladezustand, bevor die Wiederherstellungswörter erscheinen.
+            Der Bildschirm „Wallet erstellen" generiert beim Öffnen im Hintergrund eine neue Seed-Phrase. Bis diese vorliegt, zeigt die App einen kurzen Ladezustand, bevor die Wiederherstellungswörter erscheinen.
           </p>
 
           <div class="tests cols-2">
@@ -2810,7 +2810,7 @@
                 />
               </div>
               <div class="desc">
-                Dieser Zustand zeigt einen <b>zentrierten Ladeindikator</b> auf leerer, hellblauer Fläche mit oberer App-Leiste, solange noch <b>keine Wallet generiert</b> wurde. Der Nutzer sieht ihn kurz direkt nach dem Öffnen des Bildschirms „Wallet erstellen“, während im Hintergrund die neue Seed-Phrase erzeugt wird. Sobald das Wallet bereitsteht, wird der Spinner durch Titel, Erklärtext und die verdeckte Seed-Karte ersetzt.
+                Dieser Zustand zeigt einen <b>zentrierten Ladeindikator</b> auf leerer, hellblauer Fläche mit oberer App-Leiste, solange noch <b>keine Wallet generiert</b> wurde. Der Nutzer sieht ihn kurz direkt nach dem Öffnen des Bildschirms „Wallet erstellen", während im Hintergrund die neue Seed-Phrase erzeugt wird. Sobald das Wallet bereitsteht, wird der Spinner durch Titel, Erklärtext und die verdeckte Seed-Karte ersetzt.
               </div>
             </div>
           </div>
@@ -6477,7 +6477,7 @@
             </div>
           </summary>
           <p class="spec-intro">
-            Der Bildschirm „Wallet-Sicherung“ zeigt die 12 Wiederherstellungs-Wörter, mit denen die Wallet gesichert und wiederhergestellt werden kann. Bevor die Wörter im Speicher liegen, wird anstelle der Seed-Karte ein Ladeindikator eingeblendet.
+            Der Bildschirm „Wallet-Sicherung" zeigt die 12 Wiederherstellungs-Wörter, mit denen die Wallet gesichert und wiederhergestellt werden kann. Bevor die Wörter im Speicher liegen, wird anstelle der Seed-Karte ein Ladeindikator eingeblendet.
           </p>
 
           <div class="tests cols-2">
@@ -7590,7 +7590,7 @@
                 />
               </div>
               <div class="desc">
-                Der <b>Startzustand</b> des Debug-Auth-Tools: sichtbar sind nur das leere Feld „Adresse“ mit dem Platzhalter 0x... und der Textbutton „Signierte Nachricht abrufen“. So sieht der Entwickler den Screen beim Öffnen, wenn keine Adresse gespeichert ist.
+                Der <b>Startzustand</b> des Debug-Auth-Tools: sichtbar sind nur das leere Feld „Adresse" mit dem Platzhalter 0x... und der Textbutton „Signierte Nachricht abrufen". So sieht der Entwickler den Screen beim Öffnen, wenn keine Adresse gespeichert ist.
               </div>
             </div>
             <div class="test" id="263-debug-auth-page-fetching">
@@ -7606,7 +7606,7 @@
                 />
               </div>
               <div class="desc">
-                Während die signierte Nachricht vom Server geladen wird (<b>isLoading</b>), ist der Button „Signierte Nachricht abrufen“ ausgegraut und deaktiviert. Der Signatur-Block fehlt noch, weil bislang keine Nachricht vorliegt.
+                Während die signierte Nachricht vom Server geladen wird (<b>isLoading</b>), ist der Button „Signierte Nachricht abrufen" ausgegraut und deaktiviert. Der Signatur-Block fehlt noch, weil bislang keine Nachricht vorliegt.
               </div>
             </div>
             <div class="test" id="264-debug-auth-page-error">
@@ -7622,7 +7622,7 @@
                 />
               </div>
               <div class="desc">
-                Schlägt der Abruf oder die Authentifizierung fehl, erscheint unter dem Button eine <b>rote Fehlerbox</b> mit dem Fehlertext, hier „Authentifizierung fehlgeschlagen (401).“. Der Signatur-Block bleibt aus, da keine gültige Nachricht geladen wurde.
+                Schlägt der Abruf oder die Authentifizierung fehl, erscheint unter dem Button eine <b>rote Fehlerbox</b> mit dem Fehlertext, hier „Authentifizierung fehlgeschlagen (401).". Der Signatur-Block bleibt aus, da keine gültige Nachricht geladen wurde.
               </div>
             </div>
           </div>
@@ -7666,7 +7666,7 @@
                 />
               </div>
               <div class="desc">
-                Sobald die Nachricht geladen ist, erscheinen ein Trenner, die Überschrift „Signierte Nachricht:“, die Challenge in einer grauen Box, das Feld „Signatur“ und der blaue Button „Authentifizieren“. Der Entwickler signiert die Nachricht extern und trägt die Signatur hier ein.
+                Sobald die Nachricht geladen ist, erscheinen ein Trenner, die Überschrift „Signierte Nachricht:", die Challenge in einer grauen Box, das Feld „Signatur" und der blaue Button „Authentifizieren". Der Entwickler signiert die Nachricht extern und trägt die Signatur hier ein.
               </div>
             </div>
             <div class="test" id="266-debug-auth-page-clipboard-snackbar">
@@ -7682,7 +7682,7 @@
                 />
               </div>
               <div class="desc">
-                Ein Tippen auf die graue Nachrichtenbox kopiert den Text in die Zwischenablage und zeigt unten die <b>grüne Snackbar</b> „In die Zwischenablage kopiert“. So lässt sich die Nachricht bequem in ein externes Signier-Tool übernehmen.
+                Ein Tippen auf die graue Nachrichtenbox kopiert den Text in die Zwischenablage und zeigt unten die <b>grüne Snackbar</b> „In die Zwischenablage kopiert". So lässt sich die Nachricht bequem in ein externes Signier-Tool übernehmen.
               </div>
             </div>
             <div class="test" id="267-debug-auth-page-authenticating">
@@ -7698,7 +7698,7 @@
                 />
               </div>
               <div class="desc">
-                Nach dem Tippen auf „Authentifizieren“ wechselt der Button in den <b>Ladezustand</b> (hellblau mit Spinner), während die eingetragene Signatur gegen den Server geprüft wird. Adress- und Signatur-Feld bleiben dabei sichtbar.
+                Nach dem Tippen auf „Authentifizieren" wechselt der Button in den <b>Ladezustand</b> (hellblau mit Spinner), während die eingetragene Signatur gegen den Server geprüft wird. Adress- und Signatur-Feld bleiben dabei sichtbar.
               </div>
             </div>
           </div>
