@@ -35,8 +35,8 @@ GOLDENS_ROOT="$REPO_ROOT/test/goldens"
 mkdir -p "$OUT"
 
 # handbook-name → golden path relative to test/goldens/ (under screens/ or widgets/)
-# Not every entry has a maestro flow: only slots 01–61 have a companion
-# .maestro/handbook/*.yaml smoke flow; slots 62+ are golden-only.
+# Not every entry has a maestro flow: only slots 01–26 have a companion
+# .maestro/handbook/*.yaml smoke flow; slots 27+ are golden-only.
 MAPPING=(
   "01-welcome=screens/home/goldens/macos/home_page_default.png"
   "02-create-vs-restore=screens/welcome/goldens/macos/welcome_page_ios.png"
