@@ -207,20 +207,20 @@ class _KycRegistrationTaxStepState extends State<KycRegistrationTaxStep> {
           )
         else
           CountryField(
-            // Force a fresh field when the row is recreated so initialValue applies.
-            key: ObjectKey(row),
+            // Key includes used symbols so excluding already-selected countries
+            // rebuilds the field when sibling rows change (no stale FormField value).
+            key: ValueKey(
+              'tax-free-${identityHashCode(row)}-'
+              '${row.country?.symbol}-'
+              '${_usedSymbols(excludingIndex: index).join(',')}',
+            ),
             label: s.taxResidenceCountry,
             purpose: CountryFieldPurpose.nationality,
             initialValue: row.country,
-            onChanged: (country) {
-              // Reject duplicates against other rows (fail loud in the UI by
-              // clearing the pick and forcing a re-selection via setState).
-              if (country != null && _usedSymbols(excludingIndex: index).contains(country.symbol)) {
-                setState(() => row.country = null);
-                return;
-              }
-              setState(() => row.country = country);
-            },
+            // Already-selected countries cannot be picked again — prevents model
+            // vs FormField desync and silent payload loss on duplicate picks.
+            excludeSymbols: _usedSymbols(excludingIndex: index),
+            onChanged: (country) => setState(() => row.country = country),
           ),
         if (showTin)
           LabeledTextField(
@@ -261,14 +261,19 @@ class _LockedCountryField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Match LabeledTextField / DropdownField label chrome (13 bold, height 18/13).
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
           child: Text(
             label,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              height: 18 / 13,
+            ),
           ),
         ),
         InputDecorator(
@@ -287,10 +292,9 @@ class _LockedCountryField extends StatelessWidget {
           ),
           child: Text(
             country.name,
-            style: const TextStyle(
-              color: RealUnitColors.neutral900,
-              fontSize: 16,
-            ),
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: RealUnitColors.neutral900,
+                ),
           ),
         ),
       ],

@@ -313,6 +313,25 @@ void main() {
         expect(tins.single.tin, 'DE111');
       },
     );
+
+    testWidgets(
+      'free picker excludes the locked residence country (no DE duplicate option)',
+      (tester) async {
+        await pump(tester, residenceCountry: _germany);
+        await addTaxResidence(tester);
+
+        final dropdown = find.byType(DropdownButtonFormField<Country>);
+        await tester.scrollUntilVisible(dropdown, 100, scrollable: scrollable());
+        await tester.tap(dropdown);
+        await tester.pumpAndSettle();
+
+        // DE is locked on the primary row — only that one display may show
+        // "Germany"; the open free-picker menu must not offer it again.
+        // Switzerland remains available on the priority list.
+        expect(find.text('Switzerland').last, findsOneWidget);
+        expect(find.text('Germany'), findsOneWidget);
+      },
+    );
   });
 
   // ---------------------------------------------------------------------------
