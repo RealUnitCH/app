@@ -14,6 +14,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_rejected_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
@@ -432,9 +433,9 @@ void main() {
           registrationSubmitCubit,
           Stream.fromIterable([
             const KycRegistrationSubmitFailure(
-              'RealUnitApiException: Registration date must be today '
+              'RegistrationRejectedException: Registration date must be today '
               '(code: UNKNOWN, statusCode: 400)',
-              cause: ApiException(
+              cause: RegistrationRejectedException(
                 statusCode: 400,
                 code: 'UNKNOWN',
                 message: 'Registration date must be today',
@@ -450,7 +451,41 @@ void main() {
         expect(find.byType(SnackBar), findsOne);
         expect(find.textContaining('Registration date must be today'), findsOne);
         expect(find.textContaining('Your data has not been saved'), findsOne);
-        expect(find.textContaining('RealUnitApiException'), findsNothing);
+        expect(find.textContaining('RegistrationRejectedException'), findsNothing);
+        verifyNever(() => homeBloc.add(any(that: isA<SyncWalletServicesEvent>())));
+      },
+    );
+
+    testWidgets(
+      'keeps the generic failure message for an auth error — a 401 is not a '
+      'rejection of the entries',
+      (tester) async {
+        // The service only types non-auth 4xx of register/complete as
+        // RegistrationRejectedException; a persistent 401 (e.g. after the
+        // one-shot token-refresh retry) stays a plain ApiException and must
+        // not tell the user to check their entries.
+        whenListen(
+          registrationSubmitCubit,
+          Stream.fromIterable([
+            const KycRegistrationSubmitFailure(
+              'RealUnitApiException: Unauthorized '
+              '(code: UNKNOWN, statusCode: 401)',
+              cause: ApiException(
+                statusCode: 401,
+                code: 'UNKNOWN',
+                message: 'Unauthorized',
+              ),
+            ),
+          ]),
+          initialState: KycRegistrationSubmitInitial(),
+        );
+
+        await tester.pumpApp(buildSubject(const KycRegistrationView()));
+        await tester.pump();
+
+        expect(find.byType(SnackBar), findsOne);
+        expect(find.textContaining('Registration failed'), findsOne);
+        expect(find.textContaining('Your data has not been saved'), findsNothing);
         verifyNever(() => homeBloc.add(any(that: isA<SyncWalletServicesEvent>())));
       },
     );
@@ -481,6 +516,7 @@ void main() {
         expect(find.byType(SnackBar), findsOne);
         expect(find.textContaining('Registration failed'), findsOne);
         expect(find.textContaining('Your data has not been saved'), findsNothing);
+        verifyNever(() => homeBloc.add(any(that: isA<SyncWalletServicesEvent>())));
       },
     );
   });

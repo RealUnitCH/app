@@ -8,7 +8,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_rejected_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
@@ -194,16 +194,15 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
             final String message;
             if (cause is SigningCancelledException) {
               message = S.of(context).signingCancelled;
-            } else if (cause is ApiException &&
-                cause.statusCode != null &&
-                cause.statusCode! >= 400 &&
-                cause.statusCode! < 500) {
-              // A structured 4xx is a rejection of THIS submit — surface the
-              // server reason with the "nothing was saved" context so it is
-              // not mistaken for a hang (the wizard state is purely local and
-              // a rejected submit persists nothing). 5xx/auth/transport
-              // errors stay on the generic message: "check your entries"
-              // would be the wrong instruction there.
+            } else if (cause is RegistrationRejectedException) {
+              // Thrown only for a content-level (non-auth) 4xx of
+              // register/complete itself — surface the server reason with the
+              // "nothing was saved" context so it is not mistaken for a hang
+              // (the wizard state is purely local and a rejected submit
+              // persists nothing). Auth/rate-limit/5xx/transport errors and
+              // pre-submit failures (getUser, register/date) stay on the
+              // generic message: "check your entries" would be the wrong
+              // instruction there.
               message = S.of(context).registrationRejected(cause.message);
             } else {
               message = S.of(context).registrationFailed(state.message);

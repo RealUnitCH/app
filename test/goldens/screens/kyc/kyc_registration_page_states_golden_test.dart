@@ -9,7 +9,7 @@ import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_rejected_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/kyc/kyc_personal_data.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
@@ -287,7 +287,7 @@ void main() {
           Stream.fromIterable([
             const KycRegistrationSubmitFailure(
               'registration rejected',
-              cause: ApiException(
+              cause: RegistrationRejectedException(
                 statusCode: 400,
                 code: 'UNKNOWN',
                 message: 'Registration date must be today',
