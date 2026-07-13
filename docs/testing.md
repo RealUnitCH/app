@@ -44,7 +44,7 @@ Test layout mirrors `lib/`. Stack: [`flutter_test`](https://pub.dev/packages/flu
 | `test/screens/<feature>/cubit(s)/**` and `test/screens/<feature>/bloc/**` | Cubit/Bloc state-transition specs (in the activated surface for line-coverage) |
 | `test/screens/<feature>/**/*_page_test.dart` | `testWidgets` view specs (cover the page, not the cubit logic) |
 | `test/integration/` | Cross-layer Tier-1 specs using `FakeBitboxCredentials` (e.g. `kyc_sign_flow_test.dart`) |
-| `test/helper/` | Shared test infra: [`pump_app.dart`](../test/helper/pump_app.dart), [`fake_bitbox_credentials.dart`](../test/helper/fake_bitbox_credentials.dart) |
+| `test/helper/` | Shared test infra: [`pump_app.dart`](../test/helper/pump_app.dart), [`fake_bitbox_credentials.dart`](../test/helper/fake_bitbox_credentials.dart), [`responsive_matrix.dart`](../test/helper/responsive_matrix.dart), [`layout_assertions.dart`](../test/helper/layout_assertions.dart), [`responsive_surface_catalog.dart`](../test/helper/responsive_surface_catalog.dart) |
 | `test/models/` | DTO / marshalling specs (`asset_test.dart`, `balance_test.dart`, `transaction_test.dart`, …) |
 | `test/setup/` | App lifecycle / bootstrap specs (`lifecycle_initializer_test.dart`) |
 | `test/styles/` | Currency / language fixtures (`currency_test.dart`, `language_test.dart`) |
@@ -110,6 +110,34 @@ testWidgets('shows SnackBar if submitting fails', (tester) async {
 ```
 
 See `test/screens/kyc/steps/kyc_email_page_test.dart`.
+
+### Responsive layout / sticky CTAs (required)
+
+**Bug class this gates:** content taller than the sheet/viewport (long locale, large accessibility text, small phone) pushes bottom buttons outside the clip → they paint or look tappable but **receive no hits**. Reproduced on BitBox pairing (`Bestätigen` on iOS).
+
+**Production contract**
+
+1. Sticky-CTA screens/sheets use [`ScrollableActionsLayout`](../lib/widgets/scrollable_actions_layout.dart): **scrollable body + actions outside the scroll view**.
+2. Do **not** put a bare `Spacer()` above buttons and hope content fits.
+3. Do **not** rely on a fixed fraction of screen height without scroll inside it.
+
+**Test contract (100 % coverage of this bug class)**
+
+| Piece | Role |
+|---|---|
+| [`responsive_matrix.dart`](../test/helper/responsive_matrix.dart) | Standard phones (iPhone SE → Pro Max, Android compact → large) × text scales `0.85…3.0` |
+| [`layout_assertions.dart`](../test/helper/layout_assertions.dart) | `expectNoLayoutOverflow`, `expectFullyTappable` (**real** `tapAt`, not `onPressed?.call()`) |
+| [`responsive_surface_catalog.dart`](../test/helper/responsive_surface_catalog.dart) | Living list of surfaces that **must** have a matrix test; catalog self-test fails if a listed path is missing |
+| Matrix specs (e.g. `connect_bitbox_responsive_matrix_test.dart`) | Full `kFullResponsiveMatrix` × every button-bearing state |
+
+Rules for PRs:
+
+- Any new bottom sheet / page with a bottom primary action **must** use `ScrollableActionsLayout` (or equivalent Expanded + scroll + sticky actions).
+- Register the surface in `kResponsiveSurfaceCatalog` and add a matrix test **in the same PR**.
+- Interactive widget tests must prefer `tester.tap` / `expectFullyTappable` over calling `onPressed` on the widget.
+- Worst-case content: longest locale you ship (`de`), longest dynamic strings (e.g. real channel-hash shape), not golden-friendly short stubs alone.
+
+Reference implementation: `test/screens/hardware_connect_bitbox/connect_bitbox_responsive_matrix_test.dart` (7 devices × 5 text scales × 5 button states + focused regressions).
 
 ### Service + HTTP
 

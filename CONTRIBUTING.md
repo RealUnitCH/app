@@ -13,6 +13,24 @@ flutter analyze                             # lint check
 
 After changing ARB files, always regenerate: `dart run tool/generate_localization.dart`
 
+## Responsive UI & sticky CTAs — CRITICAL
+
+The app must stay fully usable on every **standard phone** we support (smallest iPhone SE / compact Android → largest Pro Max / large Android) and at every **system text scale** from smaller than default through extreme accessibility (`textScale` 0.85–3.0).
+
+**Layout rule**
+
+- Flows with long content + bottom actions (bottom sheets, onboarding, confirmations) use [`ScrollableActionsLayout`](lib/widgets/scrollable_actions_layout.dart): scrollable body, **CTAs fixed outside** the scroll view.
+- Never rely on `Spacer()` + fixed sheet height alone — that is how the BitBox pairing `Bestätigen` button became untappable on iOS.
+
+**Test rule (gate for this bug class)**
+
+- Matrix: [`test/helper/responsive_matrix.dart`](test/helper/responsive_matrix.dart) × [`layout_assertions.dart`](test/helper/layout_assertions.dart) (`expectNoLayoutOverflow`, `expectFullyTappable`).
+- Catalog: every sticky-CTA surface is listed in [`responsive_surface_catalog.dart`](test/helper/responsive_surface_catalog.dart) with a matrix test path; the catalog self-test fails if the file is missing.
+- Prefer real `tester.tap` / `expectFullyTappable` over `onPressed?.call()`.
+- Details and PR checklist: [`docs/testing.md`](docs/testing.md) § *Responsive layout / sticky CTAs*.
+
+New sticky-CTA UI without `ScrollableActionsLayout` + matrix entry is a **blocking** review finding.
+
 ## Branch Flow
 
 Three branches participate in the release lane:

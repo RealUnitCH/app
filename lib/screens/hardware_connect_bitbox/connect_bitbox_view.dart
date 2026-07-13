@@ -23,33 +23,42 @@ class ConnectBitboxView extends StatelessWidget {
   final VoidCallback? onCancel;
 
   @override
-  Widget build(BuildContext context) => SafeArea(
-    child: SizedBox(
-      height: MediaQuery.of(context).size.height * 0.8,
-      width: .infinity,
-      child: BlocListener<ConnectBitboxCubit, BitboxConnectionState>(
-        listener: (context, state) async {
-          if (state is BitboxFinishSetup) {
-            onFinish(state.wallet);
-          }
-          if (state is BitboxNotConnected) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(S.of(context).connectBitboxFailed),
-                ),
-              );
-            }
-          }
-        },
-        child: Padding(
-          padding: const .symmetric(horizontal: 20.0),
-          child: Column(
-            children: [
-              Handlebars.horizontal(context, margin: const .only(top: 5), width: 36),
-              Expanded(
-                child: BlocBuilder<ConnectBitboxCubit, BitboxConnectionState>(
-                  builder: (context, state) => switch (state) {
+  Widget build(BuildContext context) {
+    // Cap sheet height to a fraction of the screen, but always leave the body
+    // free to scroll inside [ConnectContent] / [ScrollableActionsLayout].
+    // Never size the sheet from content alone without a max — long DE copy +
+    // accessibility text would push CTAs off-screen (pairing regression).
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.9;
+
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: SizedBox(
+          height: maxHeight,
+          width: .infinity,
+          child: BlocListener<ConnectBitboxCubit, BitboxConnectionState>(
+            listener: (context, state) async {
+              if (state is BitboxFinishSetup) {
+                onFinish(state.wallet);
+              }
+              if (state is BitboxNotConnected) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(S.of(context).connectBitboxFailed),
+                    ),
+                  );
+                }
+              }
+            },
+            child: Padding(
+              padding: const .symmetric(horizontal: 20.0),
+              child: Column(
+                children: [
+                  Handlebars.horizontal(context, margin: const .only(top: 5), width: 36),
+                  Expanded(
+                    child: BlocBuilder<ConnectBitboxCubit, BitboxConnectionState>(
+                      builder: (context, state) => switch (state) {
                     BitboxConnecting() => ConnectContent(
                       title: S.of(context).connectBitboxTitle,
                       imagePath: 'assets/images/illustrations/bitbox_connect.svg',
@@ -194,13 +203,15 @@ class ConnectBitboxView extends StatelessWidget {
                         ),
                       ),
                     ),
-                  },
-                ),
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
