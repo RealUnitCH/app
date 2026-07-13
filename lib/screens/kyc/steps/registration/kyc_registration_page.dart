@@ -10,7 +10,6 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_rejected_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
@@ -81,8 +80,6 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   final postalCodeCtrl = TextEditingController();
   final cityCtrl = TextEditingController();
   final countryCtrl = ValueNotifier<Country?>(null);
-  final taxCountryCtrl = ValueNotifier<Country?>(null);
-  final tinCtrl = TextEditingController();
 
   Country? _initialNationality;
   Country? _initialAddressCountry;
@@ -288,37 +285,23 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
         );
 
       case KycRegistrationStep.taxResidence:
-        // Default the tax-residence country to the residence country entered on
-        // the address step, rebuilding when it changes — most people are
-        // tax-resident where they live. The field stays editable; CountryField
-        // propagates the default into `taxCountryCtrl` and reveals the TIN for a
-        // non-Swiss default.
+        // The address-step residence country is hard-wired into the tax list as
+        // a locked primary entry (API: tax residences must include addressCountry).
+        // Rebuild when the residence changes so the locked row stays in sync.
         return ValueListenableBuilder<Country?>(
           valueListenable: countryCtrl,
           builder: (context, residenceCountry, _) => KycRegistrationTaxStep(
-            taxCountryCtrl: taxCountryCtrl,
-            tinCtrl: tinCtrl,
-            initialCountry: residenceCountry,
-            onSubmit: _onSubmit,
+            residenceCountry: residenceCountry,
+            onSubmit: _onSubmitTax,
           ),
         );
     }
   }
 
-  Future<void> _onSubmit() async {
-    // `swissTaxResidence` is derived from the tax-residence country picked on
-    // the final step: a Swiss (CH) tax residence is Swiss-only, and the TIN is
-    // forwarded only for a non-Swiss tax residence (matching the backend
-    // contract).
-    final swissTaxResidence = taxCountryCtrl.value!.symbol == 'CH';
-    final countryAndTINs = swissTaxResidence
-        ? null
-        : [
-            CountryAndTin(
-              country: taxCountryCtrl.value!.symbol,
-              tin: tinCtrl.text.trim(),
-            ),
-          ];
+  Future<void> _onSubmitTax(KycTaxResidenceSubmit tax) async {
+    // `swissTaxResidence` + `countryAndTINs` are derived inside the tax step so
+    // multi-residence and the locked address-country entry stay consistent with
+    // the backend contract (tax residences must include addressCountry).
     await context.read<KycRegistrationSubmitCubit>().submit(
       type: typeCtrl.value,
       firstName: firstnameCtrl.text.trim(),
@@ -331,8 +314,8 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
       addressPostalCode: postalCodeCtrl.text.trim(),
       addressCity: cityCtrl.text.trim(),
       addressCountry: countryCtrl.value!,
-      swissTaxResidence: swissTaxResidence,
-      countryAndTINs: countryAndTINs,
+      swissTaxResidence: tax.swissTaxResidence,
+      countryAndTINs: tax.countryAndTINs,
     );
   }
 
@@ -350,8 +333,6 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
     postalCodeCtrl.dispose();
     cityCtrl.dispose();
     countryCtrl.dispose();
-    taxCountryCtrl.dispose();
-    tinCtrl.dispose();
     super.dispose();
   }
 }
