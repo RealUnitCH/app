@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_brokerbot_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/maestro_mock_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_converter/buy_converter_cubit.dart';
 import 'package:realunit_wallet/screens/buy/cubits/buy_payment_info/buy_payment_info_cubit.dart';
@@ -9,6 +11,7 @@ import 'package:realunit_wallet/screens/buy/widgets/payment_action_button.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_converter.dart';
 import 'package:realunit_wallet/screens/buy/widgets/payment_information.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 
 class BuyPage extends StatelessWidget {
   const BuyPage({super.key});
@@ -43,6 +46,16 @@ class BuyView extends StatefulWidget {
 class _BuyViewState extends State<BuyView> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _resultController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (MaestroMockClient.inMaestroMockMode) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.pushNamed(AppRoutes.kyc);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

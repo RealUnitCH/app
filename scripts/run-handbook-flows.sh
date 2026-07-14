@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Tier-3 navigation smoke for the 26 .maestro/handbook/*.yaml flows.
+# Tier-3 navigation smoke for the 28 .maestro/handbook/*.yaml flows.
 #
 # For each flow (alphabetical order):
 #   1. run the Maestro flow — navigates the real built app to the target
@@ -178,7 +178,7 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 # Per-attempt retry budget for the upstream driver-hang class. The per-flow
 # / per-attempt timing logged below is the data to size the workflow's
 # `timeout-minutes` (see tier3-handbook.yaml) and to target a real speed-up.
-# Worst-case the entire suite is 3 × 26 × ~1 min plus 3 × ~6 min
+# Worst-case the entire suite is 3 × 28 × ~1 min plus 3 × ~6 min
 # driver-startup-timeout per failed attempt, which still fits inside
 # the workflow's 60 min envelope.
 MAESTRO_MAX_ATTEMPTS="${MAESTRO_MAX_ATTEMPTS:-3}"
@@ -199,13 +199,13 @@ mkdir -p "$MAESTRO_DEBUG_ROOT"
 # close, so the next invocation finds nothing alive and has to
 # uninstall/install/start it again from scratch — the Maestro log line
 # `Restarting XCTest Runner (uninstalling, installing and starting)` + a
-# fresh `xcodebuild test-without-building`. Across 26 flows that one-time
-# ~5 min build is effectively paid 26×.
+# fresh `xcodebuild test-without-building`. Across 28 flows that one-time
+# ~5 min build is effectively paid 28×.
 #
 # `--reinstall-driver=false` (Maestro 2.0.10 TestCommand option, default
 # `true`) skips the uninstall step both at session start AND at session
 # close. So invocation 1 installs+starts the runner and then *leaves it
-# running*; invocations 2-26 hit Maestro's `isChannelAlive()` early-return
+# running*; invocations 2-28 hit Maestro's `isChannelAlive()` early-return
 # (`UI Test runner already running, returning`) and reuse it — no
 # reinstall, no rebuild. The first run on a freshly `simctl erase`-d
 # device has nothing to uninstall, so passing the flag there is harmless.
