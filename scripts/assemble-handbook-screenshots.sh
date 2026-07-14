@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Assemble the 268 handbook screenshots from the visual-regression Golden
+# Assemble the 278 handbook screenshots from the visual-regression Golden
 # baselines. The flat `NN-name.png` output layout matches what
 # docs/handbook/de/index.html links to (`<img src="../screenshots/NN-name.png">`
 # — the relative path resolves to `docs/handbook/screenshots/NN-name.png`).
@@ -99,6 +99,16 @@ MAPPING=(
   "59-kyc-registration-tax-non-swiss=screens/kyc/goldens/macos/kyc_registration_tax_step_non_swiss.png"
   "60-kyc-registration-tax-country-error=screens/kyc/goldens/macos/kyc_registration_tax_step_country_error.png"
   "61-kyc-registration-tax-tin-error=screens/kyc/goldens/macos/kyc_registration_tax_step_tin_error.png"
+  "61b-kyc-registration-tax-multi=screens/kyc/goldens/macos/kyc_registration_tax_step_multi.png"
+  "61c-kyc-tax-scenario-s1-ch-only=screens/kyc/goldens/macos/kyc_tax_scenario_s1_ch_only.png"
+  "61d-kyc-tax-scenario-s2-de-only-empty-tin=screens/kyc/goldens/macos/kyc_tax_scenario_s2_de_only_empty_tin.png"
+  "61e-kyc-tax-scenario-s2-de-only-filled=screens/kyc/goldens/macos/kyc_tax_scenario_s2_de_only_filled.png"
+  "61f-kyc-tax-scenario-s2-de-only-tin-error=screens/kyc/goldens/macos/kyc_tax_scenario_s2_de_only_tin_error.png"
+  "61g-kyc-tax-scenario-s3-ch-fr=screens/kyc/goldens/macos/kyc_tax_scenario_s3_ch_fr.png"
+  "61h-kyc-tax-scenario-s3-ch-fr-tin-error=screens/kyc/goldens/macos/kyc_tax_scenario_s3_ch_fr_tin_error.png"
+  "61i-kyc-tax-scenario-s4-de-ch=screens/kyc/goldens/macos/kyc_tax_scenario_s4_de_ch.png"
+  "61j-kyc-tax-scenario-s5-de-fr-us=screens/kyc/goldens/macos/kyc_tax_scenario_s5_de_fr_us.png"
+  "61k-kyc-tax-scenario-s5-de-fr-us-partial-tin-error=screens/kyc/goldens/macos/kyc_tax_scenario_s5_de_fr_us_partial_tin_error.png"
   "62-welcome-page-android=screens/welcome/goldens/macos/welcome_page_android.png"
   "63-create-wallet-page-loading=screens/create_wallet/goldens/macos/create_wallet_page_loading.png"
   "64-verify-seed-page-verifying=screens/verify_seed/goldens/macos/verify_seed_page_verifying.png"

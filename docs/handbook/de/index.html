@@ -2335,13 +2335,13 @@
                 />
               </div>
               <div class="desc">
-                Abschliessender Schritt der Registrierung. Der Pflicht-Länder-Picker „Land
-                des steuerlichen Wohnsitzes" ist mit dem im Adress-Schritt erfassten
-                Wohnsitzland vorbelegt — die meisten Menschen sind steueransässig, wo sie
-                wohnen — bleibt aber frei änderbar. Die Abbildung zeigt den unbelegten
-                Fallback-Zustand (kein Wohnsitzland vorhanden), in dem der User genau ein
-                Land wählen muss. Der „Abschliessen"-CTA übermittelt die vollständige
-                KYC-Anfrage an das DFX-Backend.
+                Abschliessender Schritt der Registrierung. Das Wohnsitzland aus dem
+                Adress-Schritt ist als Steuerwohnsitz hart verdrahtet (nicht entfernbar).
+                Weitere Steuerwohnsitze können hinzugefügt werden; bei Nicht-CH ist die
+                TIN Pflicht. Die Abbildung zeigt den unbelegten Fallback-Zustand (kein
+                Wohnsitzland vorhanden), in dem der User mindestens ein Land wählen muss.
+                Der „Abschliessen"-CTA übermittelt die vollständige KYC-Anfrage an das
+                DFX-Backend.
               </div>
             </div>
             <div class="test" id="57-kyc-registration-tax-dropdown">
@@ -2357,8 +2357,10 @@
                 />
               </div>
               <div class="desc">
-                Geöffneter Länder-Picker des Steuer-Schritts. Der User wählt genau ein Land
-                des steuerlichen Wohnsitzes aus der scrollbaren Liste.
+                Geöffneter Länder-Picker des Steuer-Schritts im leeren Fallback (noch kein
+                Adressland). Bei gesetztem Wohnsitzland entfällt der Picker für den
+                primären Eintrag; er erscheint nur für zusätzlich hinzugefügte
+                Steuerwohnsitze.
               </div>
             </div>
             <div class="test" id="58-kyc-registration-tax-swiss">
@@ -2374,8 +2376,9 @@
                 />
               </div>
               <div class="desc">
-                Ist die Schweiz (CH) als steuerlicher Wohnsitz gewählt, entfällt die
-                TIN-Abfrage — der Schritt lässt sich direkt abschliessen.
+                Ist die Schweiz (CH) Wohnsitz- und damit auch Steuerwohnsitz (locked),
+                entfällt die TIN-Abfrage — der Schritt lässt sich direkt abschliessen.
+                Weitere Nicht-CH-Steuerwohnsitze können optional ergänzt werden (dann mit TIN).
               </div>
             </div>
             <div class="test" id="59-kyc-registration-tax-non-swiss">
@@ -2391,9 +2394,9 @@
                 />
               </div>
               <div class="desc">
-                Bei einem Nicht-CH-Steuerwohnsitz erscheint zusätzlich das Pflichtfeld
-                „Steueridentifikationsnummer (TIN)", das zusammen mit dem gewählten Land
-                übermittelt wird.
+                Bei Nicht-CH-Wohnsitz (z. B. DE) ist dieses Land als Steuerwohnsitz
+                locked und die TIN ist Pflicht. Über „Weiteren Steuerwohnsitz hinzufügen"
+                können weitere Länder ergänzt werden (jeweils mit TIN, ausser CH).
               </div>
             </div>
             <div class="test" id="60-kyc-registration-tax-country-error">
@@ -2430,6 +2433,195 @@
                 Validierungsfehler bei ausländischem Steuerwohnsitz ohne TIN: Das
                 Pflicht-TIN-Feld wird mit rotem Rahmen markiert, der Submit ist
                 blockiert.
+              </div>
+            </div>
+            <div class="test" id="61b-kyc-registration-tax-multi">
+              <div class="head">
+                <a class="name permalink" href="#61b-kyc-registration-tax-multi">61b-kyc-registration-tax-multi</a>
+                <button class="copy-link" type="button" data-target="61b-kyc-registration-tax-multi" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_registration_tax_step_multi.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/61b-kyc-registration-tax-multi.png"
+                  alt="KYC Registrierung — Mehrere Steuerwohnsitze"
+                />
+              </div>
+              <div class="desc">
+                Wohnsitz DE ist locked inkl. TIN-Feld; ein zweiter Steuerwohnsitz
+                (z. B. CH) wurde über „Weiteren Steuerwohnsitz hinzufügen"
+                ergänzt. Beliebig viele zusätzliche Länder sind möglich.
+              </div>
+            </div>
+
+            <h3 id="kyc-tax-scenarios">Kundenszenarien Steuerwohnsitz (S1–S5)</h3>
+            <p class="spec-intro">
+              Fünf repräsentative Kundenfälle: Das Wohnsitzland (Adresse) ist jeweils
+              als primärer Steuerwohnsitz locked. Submit leitet
+              <code>swissTaxResidence</code> und <code>countryAndTINs</code>
+              (alle Nicht-CH-Zeilen mit getrimmter TIN) ab.
+            </p>
+
+            <div class="test" id="61c-kyc-tax-scenario-s1-ch-only">
+              <div class="head">
+                <a class="name permalink" href="#61c-kyc-tax-scenario-s1-ch-only">61c-kyc-tax-scenario-s1-ch-only</a>
+                <button class="copy-link" type="button" data-target="61c-kyc-tax-scenario-s1-ch-only" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_tax_scenario_s1_ch_only.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/61c-kyc-tax-scenario-s1-ch-only.png"
+                  alt="S1 — nur CH"
+                />
+              </div>
+              <div class="desc">
+                <strong>S1:</strong> Wohnsitz CH, nur CH als Steuerwohnsitz.
+                Keine TIN. Submit: <code>swissTaxResidence=true</code>,
+                <code>countryAndTINs=null</code>.
+              </div>
+            </div>
+
+            <div class="test" id="61d-kyc-tax-scenario-s2-de-only-empty-tin">
+              <div class="head">
+                <a class="name permalink" href="#61d-kyc-tax-scenario-s2-de-only-empty-tin">61d-kyc-tax-scenario-s2-de-only-empty-tin</a>
+                <button class="copy-link" type="button" data-target="61d-kyc-tax-scenario-s2-de-only-empty-tin" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_tax_scenario_s2_de_only_empty_tin.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/61d-kyc-tax-scenario-s2-de-only-empty-tin.png"
+                  alt="S2 — DE only, leere TIN"
+                />
+              </div>
+              <div class="desc">
+                <strong>S2 (leer):</strong> Wohnsitz DE locked, TIN-Feld sichtbar und noch leer.
+              </div>
+            </div>
+
+            <div class="test" id="61e-kyc-tax-scenario-s2-de-only-filled">
+              <div class="head">
+                <a class="name permalink" href="#61e-kyc-tax-scenario-s2-de-only-filled">61e-kyc-tax-scenario-s2-de-only-filled</a>
+                <button class="copy-link" type="button" data-target="61e-kyc-tax-scenario-s2-de-only-filled" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_tax_scenario_s2_de_only_filled.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/61e-kyc-tax-scenario-s2-de-only-filled.png"
+                  alt="S2 — DE only, TIN ausgefüllt"
+                />
+              </div>
+              <div class="desc">
+                <strong>S2 (ausgefüllt):</strong> DE locked mit TIN.
+                Submit: <code>swissTaxResidence=false</code>,
+                <code>countryAndTINs=[{DE, tin}]</code>.
+              </div>
+            </div>
+
+            <div class="test" id="61f-kyc-tax-scenario-s2-de-only-tin-error">
+              <div class="head">
+                <a class="name permalink" href="#61f-kyc-tax-scenario-s2-de-only-tin-error">61f-kyc-tax-scenario-s2-de-only-tin-error</a>
+                <button class="copy-link" type="button" data-target="61f-kyc-tax-scenario-s2-de-only-tin-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_tax_scenario_s2_de_only_tin_error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/61f-kyc-tax-scenario-s2-de-only-tin-error.png"
+                  alt="S2 — DE only, TIN-Validierungsfehler"
+                />
+              </div>
+              <div class="desc">
+                <strong>S2 (Fehler):</strong> Abschliessen ohne TIN — Validierungsfehler am TIN-Feld.
+              </div>
+            </div>
+
+            <div class="test" id="61g-kyc-tax-scenario-s3-ch-fr">
+              <div class="head">
+                <a class="name permalink" href="#61g-kyc-tax-scenario-s3-ch-fr">61g-kyc-tax-scenario-s3-ch-fr</a>
+                <button class="copy-link" type="button" data-target="61g-kyc-tax-scenario-s3-ch-fr" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_tax_scenario_s3_ch_fr.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/61g-kyc-tax-scenario-s3-ch-fr.png"
+                  alt="S3 — CH + FR"
+                />
+              </div>
+              <div class="desc">
+                <strong>S3:</strong> Wohnsitz CH locked + zusätzliches FR mit TIN.
+                Submit: <code>swissTaxResidence=true</code>,
+                <code>countryAndTINs=[{FR, tin}]</code>.
+              </div>
+            </div>
+
+            <div class="test" id="61h-kyc-tax-scenario-s3-ch-fr-tin-error">
+              <div class="head">
+                <a class="name permalink" href="#61h-kyc-tax-scenario-s3-ch-fr-tin-error">61h-kyc-tax-scenario-s3-ch-fr-tin-error</a>
+                <button class="copy-link" type="button" data-target="61h-kyc-tax-scenario-s3-ch-fr-tin-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_tax_scenario_s3_ch_fr_tin_error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/61h-kyc-tax-scenario-s3-ch-fr-tin-error.png"
+                  alt="S3 — CH + FR, TIN-Fehler"
+                />
+              </div>
+              <div class="desc">
+                <strong>S3 (Fehler):</strong> FR hinzugefügt, TIN leer — Validierungsfehler.
+              </div>
+            </div>
+
+            <div class="test" id="61i-kyc-tax-scenario-s4-de-ch">
+              <div class="head">
+                <a class="name permalink" href="#61i-kyc-tax-scenario-s4-de-ch">61i-kyc-tax-scenario-s4-de-ch</a>
+                <button class="copy-link" type="button" data-target="61i-kyc-tax-scenario-s4-de-ch" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_tax_scenario_s4_de_ch.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/61i-kyc-tax-scenario-s4-de-ch.png"
+                  alt="S4 — DE + CH"
+                />
+              </div>
+              <div class="desc">
+                <strong>S4:</strong> Wohnsitz DE locked inkl. TIN + zusätzliches CH (ohne TIN).
+                Submit: <code>swissTaxResidence=true</code>,
+                <code>countryAndTINs=[{DE, tin}]</code>.
+              </div>
+            </div>
+
+            <div class="test" id="61j-kyc-tax-scenario-s5-de-fr-us">
+              <div class="head">
+                <a class="name permalink" href="#61j-kyc-tax-scenario-s5-de-fr-us">61j-kyc-tax-scenario-s5-de-fr-us</a>
+                <button class="copy-link" type="button" data-target="61j-kyc-tax-scenario-s5-de-fr-us" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_tax_scenario_s5_de_fr_us.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/61j-kyc-tax-scenario-s5-de-fr-us.png"
+                  alt="S5 — DE + FR + US"
+                />
+              </div>
+              <div class="desc">
+                <strong>S5:</strong> Wohnsitz DE locked + FR + US, alle TINs ausgefüllt.
+                Submit: <code>swissTaxResidence=false</code>,
+                <code>countryAndTINs=[{DE},{FR},{US}]</code>.
+              </div>
+            </div>
+
+            <div class="test" id="61k-kyc-tax-scenario-s5-de-fr-us-partial-tin-error">
+              <div class="head">
+                <a class="name permalink" href="#61k-kyc-tax-scenario-s5-de-fr-us-partial-tin-error">61k-kyc-tax-scenario-s5-de-fr-us-partial-tin-error</a>
+                <button class="copy-link" type="button" data-target="61k-kyc-tax-scenario-s5-de-fr-us-partial-tin-error" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">kyc_tax_scenario_s5_de_fr_us_partial_tin_error.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/61k-kyc-tax-scenario-s5-de-fr-us-partial-tin-error.png"
+                  alt="S5 — fehlende TIN"
+                />
+              </div>
+              <div class="desc">
+                <strong>S5 (Fehler):</strong> DE + FR + US, eine TIN fehlt — Validierungsfehler.
               </div>
             </div>
           </div>
