@@ -94,7 +94,7 @@ Column meaning:
 | KYC | `KycRegistrationPage` | — | — | `161`, `162`, `166`, `168`, `169`, `170`, `171`, `172` |
 | KYC | `KycRegistrationPersonalStep` | — | — | `40`, `54`, `163`, `164`, `165` |
 | KYC | `KycRegistrationAddressStep` | — | — | `41`, `55`, `167` |
-| KYC | `KycRegistrationTaxStep` | — | — | `56`, `57`, `58`, `59`, `60`, `61` |
+| KYC | `KycRegistrationTaxStep` | — | — | `56`, `57`, `58`, `59`, `60`, `61`, `61b`, `61c`, `61d`, `61e`, `61f`, `61g`, `61h`, `61i`, `61j`, `61k` |
 | KYC | `KycNationalityPage` | — | — | `173`, `174`, `175`, `176`, `177`, `178`, `179` |
 | KYC | `KycEmailPage` | — | — | `37`, `38`, `39`, `148`, `149`, `150` |
 | KYC | `KycEmailVerificationPage` | — | — | `152`, `153`, `154`, `155` |

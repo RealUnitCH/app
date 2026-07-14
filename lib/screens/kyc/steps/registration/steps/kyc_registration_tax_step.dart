@@ -1,4 +1,6 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
@@ -21,6 +23,23 @@ class KycTaxResidenceSubmit {
   });
 }
 
+/// One tax residence already on file, resolved to a [Country]. Seeds the form so a returning user
+/// does not silently drop tax residences they declared earlier: the API overwrites the stored set
+/// with exactly what this form submits, so anything not shown here would be lost.
+class KycTaxResidenceSeed {
+  final Country country;
+
+  /// Empty for CH — Swiss tax residence is declared via the `swissTaxResidence` flag and carries no TIN.
+  final String tin;
+
+  const KycTaxResidenceSeed({required this.country, required this.tin});
+}
+
+/// Mirrors the API bounds so the user hits a clean UI limit instead of a server-side 400:
+/// `countryAndTINs` is capped at 10 entries and each TIN at 64 characters.
+const int _maxTaxResidences = 10;
+const int _maxTinLength = 64;
+
 /// One tax-residence row in the form.
 class _TaxRow {
   /// When true, [country] is fixed to the address-step residence country and
@@ -32,8 +51,8 @@ class _TaxRow {
   _TaxRow({
     required this.lockedToResidence,
     this.country,
-    TextEditingController? tinCtrl,
-  }) : tinCtrl = tinCtrl ?? TextEditingController();
+    String? tin,
+  }) : tinCtrl = TextEditingController(text: tin ?? '');
 
   void dispose() => tinCtrl.dispose();
 }
@@ -45,11 +64,16 @@ class KycRegistrationTaxStep extends StatefulWidget {
   /// mandatory country picker (empty-form fallback).
   final Country? residenceCountry;
 
+  /// Tax residences already declared on the backend (prefill). Includes a CH entry with an empty
+  /// TIN when the stored declaration has `swissTaxResidence: true`. Empty for a first-time user.
+  final List<KycTaxResidenceSeed> initialTaxResidences;
+
   final Future<void> Function(KycTaxResidenceSubmit result) onSubmit;
 
   const KycRegistrationTaxStep({
     super.key,
     required this.residenceCountry,
+    required this.initialTaxResidences,
     required this.onSubmit,
   });
 
@@ -64,7 +88,7 @@ class _KycRegistrationTaxStepState extends State<KycRegistrationTaxStep> {
   @override
   void initState() {
     super.initState();
-    _rows = [_buildPrimaryRow(widget.residenceCountry)];
+    _rows = _buildInitialRows(widget.residenceCountry);
   }
 
   @override
@@ -96,6 +120,31 @@ class _KycRegistrationTaxStepState extends State<KycRegistrationTaxStep> {
     super.dispose();
   }
 
+  /// Primary row = the (locked) residence country, with its TIN prefilled when one is on file.
+  /// Every other seeded tax residence becomes an additional row. Capped at [_maxTaxResidences].
+  List<_TaxRow> _buildInitialRows(Country? residence) {
+    final seeds = widget.initialTaxResidences;
+    final residenceSeed = residence == null
+        ? null
+        : seeds.where((s) => s.country.symbol == residence.symbol).firstOrNull;
+
+    final rows = <_TaxRow>[
+      _TaxRow(
+        lockedToResidence: residence != null,
+        country: residence,
+        tin: residenceSeed?.tin,
+      ),
+    ];
+
+    for (final seed in seeds) {
+      if (rows.length >= _maxTaxResidences) break;
+      if (seed.country.symbol == residence?.symbol) continue;
+      rows.add(_TaxRow(lockedToResidence: false, country: seed.country, tin: seed.tin));
+    }
+
+    return rows;
+  }
+
   _TaxRow _buildPrimaryRow(Country? residence) {
     return _TaxRow(
       lockedToResidence: residence != null,
@@ -116,6 +165,7 @@ class _KycRegistrationTaxStepState extends State<KycRegistrationTaxStep> {
   }
 
   void _addRow() {
+    if (_rows.length >= _maxTaxResidences) return;
     setState(() {
       _rows.add(_TaxRow(lockedToResidence: false));
     });
@@ -165,11 +215,12 @@ class _KycRegistrationTaxStepState extends State<KycRegistrationTaxStep> {
                 // requires a TIN. `swissTaxResidence` + `countryAndTINs` are derived
                 // on submit to match the backend contract.
                 for (var i = 0; i < _rows.length; i++) _buildRow(context, i),
-                AppTextButton(
-                  label: s.addTaxResidence,
-                  icon: Icons.add,
-                  onPressed: _addRow,
-                ),
+                if (_rows.length < _maxTaxResidences)
+                  AppTextButton(
+                    label: s.addTaxResidence,
+                    icon: Icons.add,
+                    onPressed: _addRow,
+                  ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: AppFilledButton(
@@ -228,6 +279,7 @@ class _KycRegistrationTaxStepState extends State<KycRegistrationTaxStep> {
             controller: row.tinCtrl,
             label: s.taxIdentificationNumber,
             keyboardType: TextInputType.text,
+            inputFormatters: [LengthLimitingTextInputFormatter(_maxTinLength)],
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return s.tinRequired;
