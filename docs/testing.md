@@ -118,8 +118,9 @@ See `test/screens/kyc/steps/kyc_email_page_test.dart`.
 **Production contract**
 
 1. Sticky-CTA screens/sheets use [`ScrollableActionsLayout`](../lib/widgets/scrollable_actions_layout.dart): **scrollable body + actions outside the scroll view**.
-2. Do **not** put a bare `Spacer()` above buttons and hope content fits.
+2. Do **not** put a bare `Spacer()` above buttons and hope content fits. `Spacer()` inside the body is also illegal (unbounded main axis → RenderFlex crash); use `centerBody: true` to vertically center content that still fits the viewport.
 3. Do **not** rely on a fixed fraction of screen height without scroll inside it.
+4. Host must give the layout a **bounded height** (bottom sheet, `Expanded`, or fixed `SizedBox`). Unbounded height throws a `FlutterError` in every build mode — fail-loud, not a silent broken layout.
 
 **Test contract (gates every catalogued surface against this bug class)**
 
@@ -139,7 +140,7 @@ Rules for PRs:
 - Interactive widget tests must prefer `tester.tap` / `expectFullyTappable` over calling `onPressed` on the widget.
 - Worst-case content: longest locale you ship (`de`), longest dynamic strings (e.g. real channel-hash shape), not golden-friendly short stubs alone.
 
-Reference implementation: `test/screens/hardware_connect_bitbox/connect_bitbox_responsive_matrix_test.dart` (7 devices × 5 text scales × 5 button states + focused regressions).
+Reference implementation: `test/screens/hardware_connect_bitbox/connect_bitbox_responsive_matrix_test.dart` (7 devices × 5 text scales × 5 button states + focused regressions). Eighteen surfaces are catalogued in [`responsive_surface_catalog.dart`](../test/helper/responsive_surface_catalog.dart) (living list — not a completeness proof; see above).
 
 ### Service + HTTP
 

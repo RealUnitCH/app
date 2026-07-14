@@ -20,10 +20,18 @@ ScrollableActionsLayout(
 
 Source: [`lib/widgets/scrollable_actions_layout.dart`](../lib/widgets/scrollable_actions_layout.dart).
 
+**Contract details**
+
+- **Bounded height required.** The host must give `ScrollableActionsLayout` a bounded height (bottom sheet, `Expanded`, or fixed-size `SizedBox`). Unbounded height throws a `FlutterError` in every build mode (debug and release) — fail-loud, not a silent broken layout.
+- **`centerBody: true`** vertically centers `body` while it fits the viewport; once content outgrows the viewport, the body scrolls normally. Use this for screens that previously centered with `Spacer()` above and below.
+- **`Spacer()` is illegal inside the body.** The body lives in a `SingleChildScrollView` (unbounded main axis); a `Spacer` there throws a RenderFlex "unbounded" exception. Prefer `centerBody: true` instead.
+
 | Do | Don't |
 |---|---|
 | Scroll long body | `Column` + `Spacer` + buttons with no scroll |
 | Sticky actions under the scroll view | Buttons as last children of an overflowing `Column` |
+| Host with bounded height (sheet / `Expanded` / fixed `SizedBox`) | Unbounded height host (e.g. bare `Column(mainAxisSize: min)`) |
+| `centerBody: true` for vertically centered content | `Spacer()` inside the scrollable body |
 | Fix/cap sheet height (e.g. a fraction of screen height) + scroll inside | Fixed height + non-scroll content that can exceed it |
 | Cap large illustrations (`maxHeight`) | Always paint 200×200 art above multi-paragraph copy |
 
@@ -58,9 +66,9 @@ Helpers:
 
 ## Rollout
 
-1. **Done:** BitBox connect sheet (`ConnectContent` → `ScrollableActionsLayout` + full matrix).
-2. **Next:** other bottom sheets with sticky CTAs (sell confirm, pin, support, …) — migrate layout, add catalog entry + matrix test in the same PR.
-3. Full-page forms that already use `SingleChildScrollView` end-to-end: add matrix only if they also pin bottom actions without scroll.
+The migration is repo-wide: **18 surfaces** are on `ScrollableActionsLayout` and registered in [`kResponsiveSurfaceCatalog`](../test/helper/responsive_surface_catalog.dart) — the BitBox connect sheet plus dashboard, create wallet, verify pin, the three KYC status pages, KYC account-merge / merge-processing / link-wallet, KYC financial-data questions, onboarding completed, support create-ticket, and five settings_user_data edit/status subpages.
+
+The catalog is a living list reviewed manually, not a proof that every sticky-CTA surface in the app is covered. **Not yet migrated** (no `ScrollableActionsLayout` in these files): welcome page (`welcome_page.dart`), sell confirm/executed sheets, pin setup / biometric bottom sheets.
 
 ## Manual smoke (optional, not the gate)
 

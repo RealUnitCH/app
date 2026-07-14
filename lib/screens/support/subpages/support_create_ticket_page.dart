@@ -9,6 +9,7 @@ import 'package:realunit_wallet/screens/support/cubits/support_create_ticket/sup
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
+import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 import 'package:realunit_wallet/widgets/tag_selection.dart';
 
 class SupportCreateTicketPage extends StatelessWidget {
@@ -54,109 +55,102 @@ class SupportCreateTicketView extends StatelessWidget {
             );
           }
         },
+        // Keyboard: Scaffold.resizeToAvoidBottomInset (default true) already
+        // shrinks the body; ScrollableActionsLayout then gets a reduced
+        // bounded height — no extra viewInsets padding needed.
         builder: (context, state) {
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: IntrinsicHeight(
-                    child: SafeArea(
-                      child: Padding(
-                        padding: const .symmetric(
-                          horizontal: 20,
-                          vertical: 12,
+          return SafeArea(
+            child: Padding(
+              padding: const .symmetric(horizontal: 20, vertical: 12),
+              child: ScrollableActionsLayout(
+                body: Column(
+                  crossAxisAlignment: .start,
+                  mainAxisAlignment: .start,
+                  spacing: 20.0,
+                  children: [
+                    Column(
+                      crossAxisAlignment: .start,
+                      spacing: 12.0,
+                      children: [
+                        Text(
+                          S.of(context).supportSelectType,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            fontWeight: .w600,
+                          ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: .start,
-                          spacing: 20.0,
-                          children: [
-                            Column(
-                              crossAxisAlignment: .start,
-                              spacing: 12.0,
-                              children: [
-                                Text(
-                                  S.of(context).supportSelectType,
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    fontWeight: .w600,
-                                  ),
-                                ),
-                                TagSelection<SupportIssueType>(
-                                  items: [
-                                    (
-                                      SupportIssueType.genericIssue,
-                                      S.of(context).supportGenericIssue,
-                                      Icons.help_outline,
-                                    ),
-                                    (
-                                      SupportIssueType.bugReport,
-                                      S.of(context).supportBugReport,
-                                      Icons.bug_report_outlined,
-                                    ),
-                                    (
-                                      SupportIssueType.kycIssue,
-                                      S.of(context).supportKycIssue,
-                                      Icons.verified_user_outlined,
-                                    ),
-                                  ],
-                                  selected: state.selectedType,
-                                  onSelected: context.read<SupportCreateTicketCubit>().selectType,
-                                ),
-                              ],
+                        TagSelection<SupportIssueType>(
+                          items: [
+                            (
+                              SupportIssueType.genericIssue,
+                              S.of(context).supportGenericIssue,
+                              Icons.help_outline,
                             ),
-                            Column(
-                              crossAxisAlignment: .start,
-                              spacing: 12.0,
-                              children: [
-                                Text(
-                                  S.of(context).supportTypeMessage,
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    fontWeight: .w600,
-                                  ),
-                                ),
-                                TextField(
-                                  onChanged: context.read<SupportCreateTicketCubit>().updateMessage,
-                                  maxLines: 5,
-                                  decoration: InputDecoration(
-                                    hintText: S.of(context).supportEnterMessage,
-                                    border: OutlineInputBorder(
-                                      borderRadius: .circular(12),
-                                      borderSide: const BorderSide(
-                                        color: RealUnitColors.neutral200,
-                                      ),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: .circular(12),
-                                      borderSide: const BorderSide(
-                                        color: RealUnitColors.neutral200,
-                                      ),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: .circular(12),
-                                      borderSide: const BorderSide(
-                                        color: RealUnitColors.realUnitBlue,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            (
+                              SupportIssueType.bugReport,
+                              S.of(context).supportBugReport,
+                              Icons.bug_report_outlined,
                             ),
-                            const Spacer(),
-                            AppFilledButton(
-                              state: state.isSubmitting ? .loading : .idle,
-                              onPressed: state.canSubmit
-                                  ? () => context.read<SupportCreateTicketCubit>().submit()
-                                  : null,
-                              label: S.of(context).supportSend,
+                            (
+                              SupportIssueType.kycIssue,
+                              S.of(context).supportKycIssue,
+                              Icons.verified_user_outlined,
                             ),
                           ],
+                          selected: state.selectedType,
+                          onSelected: context.read<SupportCreateTicketCubit>().selectType,
                         ),
-                      ),
+                      ],
                     ),
-                  ),
+                    Column(
+                      crossAxisAlignment: .start,
+                      spacing: 12.0,
+                      children: [
+                        Text(
+                          S.of(context).supportTypeMessage,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            fontWeight: .w600,
+                          ),
+                        ),
+                        TextField(
+                          onChanged: context.read<SupportCreateTicketCubit>().updateMessage,
+                          maxLines: 5,
+                          decoration: InputDecoration(
+                            hintText: S.of(context).supportEnterMessage,
+                            border: OutlineInputBorder(
+                              borderRadius: .circular(12),
+                              borderSide: const BorderSide(
+                                color: RealUnitColors.neutral200,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: .circular(12),
+                              borderSide: const BorderSide(
+                                color: RealUnitColors.neutral200,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: .circular(12),
+                              borderSide: const BorderSide(
+                                color: RealUnitColors.realUnitBlue,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              );
-            },
+                actions: [
+                  AppFilledButton(
+                    state: state.isSubmitting ? .loading : .idle,
+                    onPressed: state.canSubmit
+                        ? () => context.read<SupportCreateTicketCubit>().submit()
+                        : null,
+                    label: S.of(context).supportSend,
+                  ),
+                ],
+              ),
+            ),
           );
         },
       ),
