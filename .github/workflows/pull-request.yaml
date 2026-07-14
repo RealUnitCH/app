@@ -17,11 +17,17 @@ name: RealUnit Build
 #    push-vs-pull_request events, so allowing both would double
 #    self-hosted-runner load for no signal. The mechanical difference
 #    is that develop → main can be filtered via `branches-ignore: [main]`
-#    on the trigger (nothing else targets `main` as a PR base here);
-#    staging → develop cannot, because `develop` is also the legitimate
-#    target of real feature PRs that need their own CI run — so this
-#    one is filtered by HEAD branch in the job-level `if:` guards
-#    (skip when `github.head_ref` is `staging`) instead.
+#    on the trigger (nothing legitimately targets `main` as a PR base);
+#    staging → develop cannot, because `develop` is the default branch
+#    and can still receive ad-hoc or accidentally-mistargeted PRs that
+#    need full CI — so the filter is surgical and sits in the job-level
+#    `if:` guards instead. Those guards identify the trusted same-repo
+#    auto-PR by head-repo identity, head branch `staging`, and base
+#    branch `develop` together (not branch name alone): a fork PR whose
+#    head branch happens to be named `staging` must not skip required
+#    checks, since a job skipped via job-level `if:` counts as satisfying
+#    a required check and a fork-authored SHA has no corresponding
+#    `push: staging` run in the base repo.
 #  - `ready_for_review` makes the workflow fire the moment a draft PR
 #    is marked ready — drafts themselves skip via the `if:` guard
 #    below (saves macOS-runner minutes while work is still in progress).
@@ -67,7 +73,12 @@ jobs:
     # `push` (post-merge gate) and `workflow_dispatch` (manual override)
     # always run — the condition is "anything that isn't a PR, or a PR
     # that isn't a draft".
-    if: (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && github.head_ref != 'staging'
+    if: >-
+      (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
+      && !(github.event_name == 'pull_request'
+           && github.event.pull_request.head.repo.full_name == github.repository
+           && github.head_ref == 'staging'
+           && github.base_ref == 'develop')
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
@@ -235,7 +246,12 @@ jobs:
     # Same draft guard as `build`: skip drafts, always run on push/dispatch.
     # `build` already enforces this, but mirroring it here keeps the gate's
     # behaviour locally readable instead of inferred from `needs:`.
-    if: (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && github.head_ref != 'staging'
+    if: >-
+      (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
+      && !(github.event_name == 'pull_request'
+           && github.event.pull_request.head.repo.full_name == github.repository
+           && github.head_ref == 'staging'
+           && github.base_ref == 'develop')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -322,7 +338,12 @@ jobs:
   # baselines in the same PR (see `docs/visual-regression-tests.md`).
   golden-tests:
     name: Visual Regression
-    if: (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && github.head_ref != 'staging'
+    if: >-
+      (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
+      && !(github.event_name == 'pull_request'
+           && github.event.pull_request.head.repo.full_name == github.repository
+           && github.head_ref == 'staging'
+           && github.base_ref == 'develop')
     runs-on: [self-hosted, macOS, ARM64, m3-ultra, realunit-app]
     timeout-minutes: 30
     steps:
@@ -353,7 +374,12 @@ jobs:
   bitbox-audit:
     name: BitBox quirks audit
     # Same guard pattern as `build`: skip drafts, always run on push/dispatch.
-    if: (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && github.head_ref != 'staging'
+    if: >-
+      (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
+      && !(github.event_name == 'pull_request'
+           && github.event.pull_request.head.repo.full_name == github.repository
+           && github.head_ref == 'staging'
+           && github.base_ref == 'develop')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
