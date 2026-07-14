@@ -37,7 +37,13 @@ jobs:
   regenerate:
     name: Regenerate golden baselines
     runs-on: [self-hosted, macOS, ARM64, m3-ultra, realunit-app]
-    timeout-minutes: 30
+    # Same reasoning as `golden-tests` in `pull-request.yaml`: the old 30 was
+    # sized for the cache era (~18 minutes of stalled Actions-cache overhead).
+    # Regeneration is that same workload plus a commit+push, so 15 minutes
+    # still leaves room for a cold Flutter SDK download, and it frees this
+    # repo's single self-hosted slot far sooner when a run wedges. Keep the
+    # two jobs' timeouts in sync, like the rest of their setup.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
