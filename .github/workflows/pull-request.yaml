@@ -314,13 +314,14 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: [self-hosted, macOS, ARM64, m3-ultra, realunit-app]
     # 30 was sized for the era when `subosito/flutter-action@v2` still pulled
-    # the SDK through the Actions cache and burned ~18 minutes in a stalled
-    # restore. Without that overhead the job finishes in ~1 minute, so 15 is
-    # generous headroom — it still covers the worst normal case, where the SDK
-    # is absent from the runner's persistent tool cache and has to be
-    # downloaded from scratch. The lower ceiling is what matters here: dfx01
-    # has exactly ONE runner slot for this repo, so a wedged job blocks every
-    # other PR until it is killed. 15 hands the slot back twice as fast as 30.
+    # the SDK through the Actions cache and burned ~18 minutes on a stalled
+    # restore plus the trailing cache-save. Without that overhead the job
+    # finishes in ~1 minute, so 15 is generous headroom — it still covers the
+    # worst normal case, where the SDK is absent from the runner's persistent
+    # tool cache and has to be downloaded from scratch. The lower ceiling is
+    # what matters here: the self-hosted runner has exactly ONE slot for this
+    # repo, so a wedged job blocks every other PR until it is killed. 15 hands
+    # the slot back twice as fast as 30.
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
