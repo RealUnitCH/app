@@ -1,0 +1,46 @@
+name: Dependency Review
+
+# Blocks PRs that introduce dependencies with known vulnerabilities.
+#
+# Why: Dependabot (see .github/dependabot.yml) watches the EXISTING tree on a
+# schedule; this action gates the PR DIFF itself — a newly added pub package
+# or GitHub Action with a known high-severity advisory cannot enter the repo
+# in the first place. GitHub's dependency graph covers pub, so Dart
+# dependencies are in scope. Zero maintenance, first-party action.
+
+on:
+  pull_request:
+    branches-ignore: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # The action hard-fails when the repo's Dependency graph is disabled
+      # (admin setting). Probe first: with the graph off, emit a loud warning
+      # and skip — with it on, the gate arms itself automatically, no
+      # follow-up commit needed.
+      - name: Check Dependency graph availability
+        id: graph
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/${{ github.repository }}/dependency-graph/sbom" --silent >/dev/null 2>&1; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Dependency graph is disabled for this repository — dependency review SKIPPED. An admin should enable it: https://github.com/${{ github.repository }}/settings/security_analysis"
+          fi
+
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        if: steps.graph.outputs.enabled == 'true'
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure

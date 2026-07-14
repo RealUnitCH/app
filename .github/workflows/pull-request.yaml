@@ -382,3 +382,85 @@ jobs:
           name: bitbox-audit-report
           path: bitbox-audit-report.md
           if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  # Coverage Floor Ratchet Guard
+  #
+  # docs/testing.md defines the ratchet protocol: lowering a floor file needs
+  # reviewer sign-off, made visible via the `coverage:lower-floor` label. Until
+  # now that was convention only — a quiet one-line edit to
+  # `.coverage-floor-lines` inside a big diff could slip through review and
+  # silently de-arm the Coverage Floor Gate for every future PR. This job makes
+  # the protocol mechanical: a floor decrease without the label fails the PR.
+  # Raising a floor (the normal ratchet direction) passes without ceremony.
+  floor-ratchet-guard:
+    name: Coverage Floor Ratchet Guard
+    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Floor may only decrease with the coverage:lower-floor label
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HAS_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'coverage:lower-floor') }}
+        run: |
+          set -euo pipefail
+          rc=0
+          for f in .coverage-floor-lines .coverage-floor-functions; do
+            BASE="$(git show "$BASE_SHA:$f" 2>/dev/null || echo 0)"
+            HEAD="$(cat "$f")"
+            echo "$f: base=$BASE head=$HEAD"
+            if awk -v a="$HEAD" -v b="$BASE" 'BEGIN { exit !(a < b) }'; then
+              if [ "$HAS_LABEL" != "true" ]; then
+                echo "::error::$f was lowered ($BASE -> $HEAD) without the 'coverage:lower-floor' label. Lowering a floor requires explicit reviewer sign-off via the label (docs/testing.md ratchet protocol)."
+                rc=1
+              else
+                echo "$f lowered with label — allowed."
+              fi
+            fi
+          done
+          exit "$rc"
+
+  # ---------------------------------------------------------------------------
+  # PR Policy
+  #
+  # Two cheap review-quality gates:
+  # - Conventional-commit PR titles keep `git log` greppable and the release
+  #   notes readable (the repo already uses the convention; this just stops
+  #   drift).
+  # - The size cap exists because review quality degrades sharply with diff
+  #   size — and for a wallet app, an under-reviewed PR is a security risk,
+  #   not a style problem. Generated code (goldens, codegen, pubspec.lock)
+  #   legitimately exceeds the cap: justify it and add the `size:override`
+  #   label.
+  pr-policy:
+    name: PR Policy
+    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Conventional PR title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          if ! echo "$TITLE" | grep -qE '^(feat|fix|docs|chore|refactor|test|ci|build|perf|style|revert)(\([a-z0-9._/ -]+\))?!?: .+'; then
+            echo "::error::PR title '$TITLE' does not follow the conventional-commit format, e.g. 'fix(wallet): reject stale BitBox pairing state'"
+            exit 1
+          fi
+      - name: Size cap (1500 changed lines, label size:override to bypass)
+        env:
+          ADDITIONS: ${{ github.event.pull_request.additions }}
+          DELETIONS: ${{ github.event.pull_request.deletions }}
+          HAS_OVERRIDE: ${{ contains(github.event.pull_request.labels.*.name, 'size:override') }}
+        run: |
+          set -euo pipefail
+          TOTAL=$((ADDITIONS + DELETIONS))
+          echo "changed lines: $TOTAL"
+          if [ "$TOTAL" -gt 1500 ] && [ "$HAS_OVERRIDE" != "true" ]; then
+            echo "::error::PR changes $TOTAL lines (cap 1500). Split it, or add the 'size:override' label with a justification in the description (goldens/codegen/lockfile churn qualifies)."
+            exit 1
+          fi

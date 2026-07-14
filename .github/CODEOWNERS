@@ -1,0 +1,24 @@
+# Code owners for security-critical paths.
+#
+# Why this file exists: the repo's rulesets require 1 approval from anyone
+# with write access — for a wallet app that is too thin on the paths that
+# touch signing ceremonies, key material and the CI gates themselves. With
+# "Require review from Code Owners" enabled in the develop/staging/main
+# rulesets, the people below become a mandatory second pair of eyes exactly
+# where a mistake costs user funds. Until an admin flips that ruleset
+# setting, this file still auto-requests their review on matching PRs.
+
+# Signing ceremonies & key handling
+/lib/packages/wallet/           @davidleomay @TaprootFreak @konstantinullrich
+/lib/packages/hardware_wallet/  @davidleomay @TaprootFreak @konstantinullrich
+/lib/screens/hardware_connect_bitbox/ @davidleomay @TaprootFreak @konstantinullrich
+
+# Dependency manifests (supply chain)
+/pubspec.yaml                   @davidleomay @TaprootFreak @konstantinullrich
+/pubspec.lock                   @davidleomay @TaprootFreak @konstantinullrich
+
+# CI and the gates themselves — a gate nobody guards is not a gate
+/.github/                       @davidleomay @TaprootFreak @konstantinullrich
+/.coverage-floor-lines          @davidleomay @TaprootFreak @konstantinullrich
+/.coverage-floor-functions      @davidleomay @TaprootFreak @konstantinullrich
+/tool/                          @davidleomay @TaprootFreak @konstantinullrich
