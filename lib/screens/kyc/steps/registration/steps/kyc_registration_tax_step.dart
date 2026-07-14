@@ -235,7 +235,7 @@ class _KycRegistrationTaxStepState extends State<KycRegistrationTaxStep> {
               return null;
             },
           ),
-        if (!row.lockedToResidence)
+        if (!row.lockedToResidence && index > 0)
           Align(
             alignment: Alignment.centerRight,
             child: AppTextButton(

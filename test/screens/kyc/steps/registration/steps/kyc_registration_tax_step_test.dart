@@ -423,6 +423,57 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
+  // Remove interaction — the free-row "remove" button and its effect on
+  // _usedSymbols and the submit payload. The locked residence primary row
+  // must never expose a functioning remove button.
+  // ---------------------------------------------------------------------------
+  group('$KycRegistrationTaxStep remove tax residence row', () {
+    testWidgets(
+      'locked residence primary row has no remove button',
+      (tester) async {
+        await pump(tester, residenceCountry: _switzerland);
+
+        expect(find.text(sOf(tester).removeTaxResidence), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'removing an additional row clears it, frees its country for '
+      're-selection, and drops it from the submit payload',
+      (tester) async {
+        final harness = await pump(tester, residenceCountry: _switzerland);
+
+        await addTaxResidence(tester);
+        await selectFreeCountry(tester, 'France');
+        await enterTinAt(tester, 0, 'FR999');
+
+        final removeButton = find.text(sOf(tester).removeTaxResidence);
+        expect(removeButton, findsOneWidget);
+        await tester.scrollUntilVisible(removeButton, 100, scrollable: scrollable());
+        await tester.tap(removeButton);
+        await tester.pumpAndSettle();
+
+        // (a) the row is gone from the UI.
+        expect(find.text('France'), findsNothing);
+        expect(find.text(sOf(tester).taxIdentificationNumber), findsNothing);
+        expect(find.text(sOf(tester).removeTaxResidence), findsNothing);
+
+        // (c) the removed country is not part of the submit payload.
+        await tapComplete(tester);
+        expect(harness.submitCount, 1);
+        expect(harness.lastResult!.swissTaxResidence, isTrue);
+        expect(harness.lastResult!.countryAndTINs, isNull);
+
+        // (b) the country is selectable again in a newly added free picker —
+        // proves the _usedSymbols computation was updated on removal.
+        await addTaxResidence(tester);
+        await selectFreeCountry(tester, 'France');
+        expect(find.text('France'), findsWidgets);
+      },
+    );
+  });
+
+  // ---------------------------------------------------------------------------
   // Empty-form fallback (null residence) + keyboard dismiss + residence re-lock
   // ---------------------------------------------------------------------------
   group('$KycRegistrationTaxStep without residence country (empty fallback)', () {
@@ -500,6 +551,36 @@ void main() {
         expect(tinFocus.hasFocus, isFalse);
       },
     );
+
+    testWidgets(
+      'does not render a remove button on the sole free row '
+      '(regression guard: index 0 must never be removable)',
+      (tester) async {
+        await pump(tester, residenceCountry: null);
+
+        expect(find.text(sOf(tester).removeTaxResidence), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'does not render a remove button on free row 0 when a second free row '
+      'is added; row 1 remove works and does not resurrect a button on row 0 '
+      '(regression guard: only index > 0 is removable)',
+      (tester) async {
+        await pump(tester, residenceCountry: null);
+        await selectFreeCountry(tester, 'Switzerland');
+        await addTaxResidence(tester);
+        await selectFreeCountry(tester, 'Germany');
+
+        final removeButton = find.text(sOf(tester).removeTaxResidence);
+        expect(removeButton, findsOneWidget);
+        await tester.scrollUntilVisible(removeButton, 100, scrollable: scrollable());
+        await tester.tap(removeButton);
+        await tester.pumpAndSettle();
+
+        expect(find.text(sOf(tester).removeTaxResidence), findsNothing);
+      },
+    );
   });
 
   group('$KycRegistrationTaxStep residence country re-lock', () {
@@ -535,6 +616,93 @@ void main() {
         context = tester.element(find.byType(KycRegistrationTaxStep));
         expect(find.text('Germany'), findsWidgets);
         expect(find.text(S.of(context).taxIdentificationNumber), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'keeps an additional row including its entered TIN when the residence '
+      'country changes without a collision',
+      (tester) async {
+        final harness = _Harness();
+        final residence = ValueNotifier<Country?>(_germany);
+        addTearDown(residence.dispose);
+
+        await tester.pumpApp(
+          Scaffold(
+            body: ValueListenableBuilder<Country?>(
+              valueListenable: residence,
+              builder: (_, country, _) => KycRegistrationTaxStep(
+                residenceCountry: country,
+                onSubmit: (result) async {
+                  harness.lastResult = result;
+                  harness.submitCount++;
+                },
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await addTaxResidence(tester);
+        await selectFreeCountry(tester, 'France');
+        await enterTinAt(tester, 1, 'FR999');
+
+        residence.value = _switzerland;
+        await tester.pumpAndSettle();
+
+        expect(find.text('Switzerland'), findsWidgets);
+        expect(find.text('France'), findsWidgets);
+        expect(find.byType(DropdownButtonFormField<Country>), findsOneWidget);
+
+        await tapComplete(tester);
+
+        expect(harness.submitCount, 1);
+        expect(harness.lastResult!.swissTaxResidence, isTrue);
+        final tins = harness.lastResult!.countryAndTINs!;
+        expect(tins, hasLength(1));
+        expect(tins.single.country, 'FR');
+        expect(tins.single.tin, 'FR999');
+      },
+    );
+
+    testWidgets(
+      'drops an additional row that collides with the new residence country',
+      (tester) async {
+        final harness = _Harness();
+        final residence = ValueNotifier<Country?>(_germany);
+        addTearDown(residence.dispose);
+
+        await tester.pumpApp(
+          Scaffold(
+            body: ValueListenableBuilder<Country?>(
+              valueListenable: residence,
+              builder: (_, country, _) => KycRegistrationTaxStep(
+                residenceCountry: country,
+                onSubmit: (result) async {
+                  harness.lastResult = result;
+                  harness.submitCount++;
+                },
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await addTaxResidence(tester);
+        await selectFreeCountry(tester, 'Switzerland');
+
+        residence.value = _switzerland;
+        await tester.pumpAndSettle();
+
+        expect(find.text('Switzerland'), findsOneWidget);
+        expect(find.byType(DropdownButtonFormField<Country>), findsNothing);
+        expect(find.text(sOf(tester).removeTaxResidence), findsNothing);
+
+        await tapComplete(tester);
+
+        expect(harness.submitCount, 1);
+        expect(harness.lastResult!.swissTaxResidence, isTrue);
+        expect(harness.lastResult!.countryAndTINs, isNull);
       },
     );
   });
