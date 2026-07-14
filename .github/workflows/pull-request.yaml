@@ -320,7 +320,13 @@ jobs:
         with:
           flutter-version: "3.41.6"
           channel: "stable"
-          cache: true
+          # Self-hosted runner already keeps the Flutter SDK persistently
+          # under `_work/_tool` across runs. The Actions cache restore on
+          # this runner stalls at 0.5-0.8 MB/s, times out after the 10
+          # minute segment timeout, falls back to a cache miss anyway,
+          # then burns ~8 minutes on a cache-save — ~18 minutes of pure
+          # overhead that returns nothing useful here.
+          cache: false
       - run: flutter pub get
       - run: dart run tool/generate_localization.dart
       - run: dart run tool/generate_release_info.dart
