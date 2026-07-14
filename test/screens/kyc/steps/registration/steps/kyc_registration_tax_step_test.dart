@@ -561,6 +561,26 @@ void main() {
         expect(find.text(sOf(tester).removeTaxResidence), findsNothing);
       },
     );
+
+    testWidgets(
+      'does not render a remove button on free row 0 when a second free row '
+      'is added; row 1 remove works and does not resurrect a button on row 0 '
+      '(regression guard: only index > 0 is removable)',
+      (tester) async {
+        await pump(tester, residenceCountry: null);
+        await selectFreeCountry(tester, 'Switzerland');
+        await addTaxResidence(tester);
+        await selectFreeCountry(tester, 'Germany');
+
+        final removeButton = find.text(sOf(tester).removeTaxResidence);
+        expect(removeButton, findsOneWidget);
+        await tester.scrollUntilVisible(removeButton, 100, scrollable: scrollable());
+        await tester.tap(removeButton);
+        await tester.pumpAndSettle();
+
+        expect(find.text(sOf(tester).removeTaxResidence), findsNothing);
+      },
+    );
   });
 
   group('$KycRegistrationTaxStep residence country re-lock', () {
