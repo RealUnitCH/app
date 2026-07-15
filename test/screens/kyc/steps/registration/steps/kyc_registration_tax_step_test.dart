@@ -560,16 +560,44 @@ void main() {
     });
 
     testWidgets(
-      'row limit: add button disappears once 10 tax residences are present',
+      'row limit: add button disappears once 10 free (non-CH) tax residences are present',
       (tester) async {
         await pump(tester, residenceCountry: _switzerland);
 
-        // Primary + 9 free rows = 10. Further adds are not triggerable.
-        for (var i = 0; i < 9; i++) {
+        // Locked CH primary does not count against the countryAndTINs cap.
+        // 10 free non-CH rows + locked CH = 11 total; further adds are not triggerable.
+        for (var i = 0; i < 10; i++) {
           await addTaxResidence(tester);
         }
 
-        expect(taxRowKeys(), findsNWidgets(10));
+        expect(taxRowKeys(), findsNWidgets(11));
+        expect(find.text(sOf(tester).addTaxResidence), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'CH resident + 10 foreign seeds: all 11 rows appear (none of the 10 non-CH dropped)',
+      (tester) async {
+        // CH never occupies a countryAndTINs slot, so a CH seed + 10 non-CH seeds
+        // must all render (11 rows total).
+        final seeds = <KycTaxResidenceSeed>[
+          const KycTaxResidenceSeed(country: _switzerland, tin: ''),
+          for (var i = 0; i < 10; i++)
+            KycTaxResidenceSeed(
+              country: Country(id: 2000 + i, symbol: 'X$i', name: 'Country $i', kycAllowed: true),
+              tin: 'TIN$i',
+            ),
+        ];
+
+        await pump(
+          tester,
+          residenceCountry: _switzerland,
+          initialTaxResidences: seeds,
+        );
+
+        expect(taxRowKeys(), findsNWidgets(11));
+        // 10 free (prefilled) non-CH rows keep a dropdown; primary CH is locked.
+        expect(find.byType(DropdownButtonFormField<Country>), findsNWidgets(10));
         expect(find.text(sOf(tester).addTaxResidence), findsNothing);
       },
     );
@@ -586,9 +614,39 @@ void main() {
       expect(text, 'A' * 64);
     });
 
-    testWidgets('prefill seeds over the limit are truncated to 10 rows', (tester) async {
+    testWidgets(
+      'seeded TIN over 64 chars is truncated in the field and on submit',
+      (tester) async {
+        final longTin = 'B' * 70;
+        final harness = await pump(
+          tester,
+          residenceCountry: _switzerland,
+          initialTaxResidences: [
+            const KycTaxResidenceSeed(country: _switzerland, tin: ''),
+            KycTaxResidenceSeed(country: _germany, tin: longTin),
+          ],
+        );
+
+        final tinField = find.widgetWithText(TextFormField, sOf(tester).tinHint);
+        expect(tinField, findsOneWidget);
+        final text = tester.widget<TextFormField>(tinField).controller!.text;
+        expect(text.length, 64);
+        expect(text, 'B' * 64);
+
+        await tapComplete(tester);
+
+        expect(harness.submitCount, 1);
+        final tins = harness.lastResult!.countryAndTINs!;
+        expect(tins, hasLength(1));
+        expect(tins.single.country, 'DE');
+        expect(tins.single.tin.length, 64);
+        expect(tins.single.tin, 'B' * 64);
+      },
+    );
+
+    testWidgets('prefill seeds over the limit keep 10 free non-CH rows (11 total with CH)', (tester) async {
       // 12 foreign seeds + locked CH primary would be 13 without the cap; only
-      // 9 free seeds are kept after the primary, for 10 total.
+      // 10 free (non-CH) seeds are kept after the primary, for 11 total (CH + 10).
       final seeds = <KycTaxResidenceSeed>[
         for (var i = 0; i < 12; i++)
           KycTaxResidenceSeed(
@@ -603,9 +661,9 @@ void main() {
         initialTaxResidences: seeds,
       );
 
-      expect(taxRowKeys(), findsNWidgets(10));
-      // 9 free (prefilled) rows keep a dropdown; primary is locked.
-      expect(find.byType(DropdownButtonFormField<Country>), findsNWidgets(9));
+      expect(taxRowKeys(), findsNWidgets(11));
+      // 10 free (prefilled) rows keep a dropdown; primary is locked.
+      expect(find.byType(DropdownButtonFormField<Country>), findsNWidgets(10));
       expect(find.text(sOf(tester).addTaxResidence), findsNothing);
     });
   });

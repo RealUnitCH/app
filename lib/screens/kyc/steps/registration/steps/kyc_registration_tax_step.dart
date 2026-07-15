@@ -52,7 +52,13 @@ class _TaxRow {
     required this.lockedToResidence,
     this.country,
     String? tin,
-  }) : tinCtrl = TextEditingController(text: tin ?? '');
+  }) : tinCtrl = TextEditingController(
+          // Seeded values bypass the keyboard formatter; clamp them to the same API bound so a
+          // legacy over-length TIN cannot slip through to a server-side 400.
+          text: (tin ?? '').length > _maxTinLength
+              ? (tin ?? '').substring(0, _maxTinLength)
+              : (tin ?? ''),
+        );
 
   void dispose() => tinCtrl.dispose();
 }
@@ -120,8 +126,14 @@ class _KycRegistrationTaxStepState extends State<KycRegistrationTaxStep> {
     super.dispose();
   }
 
+  /// Only non-CH rows become countryAndTINs entries; CH is declared via the swissTaxResidence flag
+  /// and never occupies a slot. The API caps countryAndTINs (not total tax residences), so the cap
+  /// counts non-CH rows only — a CH residence plus [_maxTaxResidences] foreign entries is valid.
+  int get _nonChRowCount => _rows.where((r) => r.country?.symbol != 'CH').length;
+
   /// Primary row = the (locked) residence country, with its TIN prefilled when one is on file.
-  /// Every other seeded tax residence becomes an additional row. Capped at [_maxTaxResidences].
+  /// Every other seeded tax residence becomes an additional row. Non-CH rows are capped at
+  /// [_maxTaxResidences] (CH never occupies a countryAndTINs slot).
   List<_TaxRow> _buildInitialRows(Country? residence) {
     final seeds = widget.initialTaxResidences;
     final residenceSeed = residence == null
@@ -137,8 +149,10 @@ class _KycRegistrationTaxStepState extends State<KycRegistrationTaxStep> {
     ];
 
     for (final seed in seeds) {
-      if (rows.length >= _maxTaxResidences) break;
-      if (seed.country.symbol == residence?.symbol) continue;
+      if (seed.country.symbol == residence?.symbol) continue; // already the primary row
+      // Count only non-CH rows against the cap — CH never occupies a countryAndTINs slot.
+      final nonChCount = rows.where((r) => r.country?.symbol != 'CH').length;
+      if (seed.country.symbol != 'CH' && nonChCount >= _maxTaxResidences) continue;
       rows.add(_TaxRow(lockedToResidence: false, country: seed.country, tin: seed.tin));
     }
 
@@ -165,7 +179,7 @@ class _KycRegistrationTaxStepState extends State<KycRegistrationTaxStep> {
   }
 
   void _addRow() {
-    if (_rows.length >= _maxTaxResidences) return;
+    if (_nonChRowCount >= _maxTaxResidences) return;
     setState(() {
       _rows.add(_TaxRow(lockedToResidence: false));
     });
@@ -215,7 +229,7 @@ class _KycRegistrationTaxStepState extends State<KycRegistrationTaxStep> {
                 // requires a TIN. `swissTaxResidence` + `countryAndTINs` are derived
                 // on submit to match the backend contract.
                 for (var i = 0; i < _rows.length; i++) _buildRow(context, i),
-                if (_rows.length < _maxTaxResidences)
+                if (_nonChRowCount < _maxTaxResidences)
                   AppTextButton(
                     label: s.addTaxResidence,
                     icon: Icons.add,
