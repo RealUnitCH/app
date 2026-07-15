@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_country_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/registration_rejected_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/user/dto/real_unit_user_data_dto.dart';
@@ -83,6 +85,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
 
   Country? _initialNationality;
   Country? _initialAddressCountry;
+  List<KycTaxResidenceSeed> _initialTaxResidences = const [];
 
   @override
   void initState() {
@@ -112,16 +115,28 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
       addressStreetNumberCtrl.text = dto.kycData.address.houseNumber ?? '';
       postalCodeCtrl.text = dto.kycData.address.zip;
       cityCtrl.text = dto.kycData.address.city;
-      unawaited(_resolveInitialCountries(dto.nationality, dto.addressCountry));
+      unawaited(
+        _resolveInitialCountries(
+          dto.nationality,
+          dto.addressCountry,
+          swissTaxResidence: dto.swissTaxResidence,
+          countryAndTINs: dto.countryAndTINs,
+        ),
+      );
     }
   }
 
   Future<void> _resolveInitialCountries(
     String nationalitySymbol,
-    String addressCountrySymbol,
-  ) async {
+    String addressCountrySymbol, {
+    required bool swissTaxResidence,
+    List<CountryAndTin>? countryAndTINs,
+  }) async {
+    final countryService = getIt<DfxCountryService>();
+
+    // Nationality/address prefill: independent of the tax-residence lookup. A failure here degrades
+    // to empty pickers (pre-existing behaviour) and must not take the tax seeding down with it.
     try {
-      final countryService = getIt<DfxCountryService>();
       final countries = await Future.wait([
         countryService.getCountryBySymbol(nationalitySymbol),
         countryService.getCountryBySymbol(addressCountrySymbol),
@@ -134,9 +149,32 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
         _initialAddressCountry = countries[1];
       });
     } catch (_) {
-      // Country lookup failed (unknown symbol or network error): degrade
-      // gracefully to the empty country fields — the user can pick manually
-      // and the form still submits.
+      // Country lookup failed (unknown symbol or network error): degrade to empty pickers; the
+      // user can pick manually and the form still submits.
+    }
+
+    // Tax-residence seeds resolved separately: a single unknown tax country must not wipe the
+    // nationality/address prefill, and a failure is logged LOUDLY rather than swallowed — dropping a
+    // seed silently would re-introduce the tax-residence loss this seeding exists to prevent (the API
+    // overwrites the stored set with the form submit).
+    try {
+      final taxSeeds = <KycTaxResidenceSeed>[];
+      if (swissTaxResidence) {
+        final ch = await countryService.getCountryBySymbol('CH');
+        taxSeeds.add(KycTaxResidenceSeed(country: ch, tin: ''));
+      }
+      if (countryAndTINs != null) {
+        for (final entry in countryAndTINs) {
+          final country = await countryService.getCountryBySymbol(entry.country);
+          taxSeeds.add(KycTaxResidenceSeed(country: country, tin: entry.tin));
+        }
+      }
+      if (!mounted) return;
+      setState(() {
+        _initialTaxResidences = taxSeeds;
+      });
+    } catch (e) {
+      developer.log('Failed to resolve prefilled tax residences: $e');
     }
   }
 
@@ -288,10 +326,17 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
         // The address-step residence country is hard-wired into the tax list as
         // a locked primary entry (API: tax residences must include addressCountry).
         // Rebuild when the residence changes so the locked row stays in sync.
+        // ValueKey forces a new State when async seed resolution lands: the tax
+        // step only reads initialTaxResidences in initState, so a late prefill
+        // would otherwise never appear in the form.
         return ValueListenableBuilder<Country?>(
           valueListenable: countryCtrl,
           builder: (context, residenceCountry, _) => KycRegistrationTaxStep(
+            key: ValueKey(
+              'tax-${_initialTaxResidences.map((s) => s.country.symbol).join(",")}',
+            ),
             residenceCountry: residenceCountry,
+            initialTaxResidences: _initialTaxResidences,
             onSubmit: _onSubmitTax,
           ),
         );

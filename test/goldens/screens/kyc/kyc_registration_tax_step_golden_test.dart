@@ -26,6 +26,7 @@ void main() {
         Scaffold(
           body: KycRegistrationTaxStep(
             residenceCountry: residenceCountry,
+            initialTaxResidences: const [],
             onSubmit: (_) async {},
           ),
         ),

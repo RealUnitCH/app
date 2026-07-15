@@ -13,6 +13,7 @@ import '../../../../../helper/pump_app.dart';
 // Ids match the committed country fixture (Country equality is id-keyed).
 const _switzerland = Country(id: 41, symbol: 'CH', name: 'Switzerland', kycAllowed: true);
 const _germany = Country(id: 55, symbol: 'DE', name: 'Germany', kycAllowed: true);
+const _france = Country(id: 73, symbol: 'FR', name: 'France', kycAllowed: true);
 
 void main() {
   setUp(() {
@@ -24,6 +25,7 @@ void main() {
   Future<_Harness> pump(
     WidgetTester tester, {
     required Country? residenceCountry,
+    List<KycTaxResidenceSeed> initialTaxResidences = const [],
   }) async {
     final harness = _Harness();
 
@@ -31,6 +33,7 @@ void main() {
       Scaffold(
         body: KycRegistrationTaxStep(
           residenceCountry: residenceCountry,
+          initialTaxResidences: initialTaxResidences,
           onSubmit: (result) async {
             harness.lastResult = result;
             harness.submitCount++;
@@ -92,6 +95,10 @@ void main() {
     await tester.tap(addButton);
     await tester.pumpAndSettle();
   }
+
+  Finder taxRowKeys() => find.byWidgetPredicate(
+        (w) => w.key is ValueKey<String> && (w.key! as ValueKey<String>).value.startsWith('tax-row-'),
+      );
 
   // ---------------------------------------------------------------------------
   // S1 — Address CH, tax residences: CH only
@@ -474,6 +481,194 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
+  // Prefill seeds + row/TIN limits
+  // ---------------------------------------------------------------------------
+  group('$KycRegistrationTaxStep prefill and bounds', () {
+    testWidgets(
+      'prefill residence CH: locked CH without TIN, DE row prefilled, submit keeps both',
+      (tester) async {
+        final harness = await pump(
+          tester,
+          residenceCountry: _switzerland,
+          initialTaxResidences: const [
+            KycTaxResidenceSeed(country: _switzerland, tin: ''),
+            KycTaxResidenceSeed(country: _germany, tin: 'DE123'),
+          ],
+        );
+
+        expect(find.text('Switzerland'), findsWidgets);
+        expect(find.text('Germany'), findsWidgets);
+        // Locked primary only — free DE row has a dropdown.
+        expect(find.byType(DropdownButtonFormField<Country>), findsOneWidget);
+        // CH has no TIN; DE TIN is prefilled.
+        expect(find.text(sOf(tester).taxIdentificationNumber), findsOneWidget);
+        final tinField = find.widgetWithText(TextFormField, sOf(tester).tinHint);
+        expect(tinField, findsOneWidget);
+        expect(tester.widget<TextFormField>(tinField).controller!.text, 'DE123');
+
+        await tapComplete(tester);
+
+        expect(harness.submitCount, 1);
+        expect(harness.lastResult!.swissTaxResidence, isTrue);
+        final tins = harness.lastResult!.countryAndTINs!;
+        expect(tins, hasLength(1));
+        expect(tins.single.country, 'DE');
+        expect(tins.single.tin, 'DE123');
+      },
+    );
+
+    testWidgets(
+      'prefill residence DE plus CH: locked DE TIN prefilled, free CH without TIN',
+      (tester) async {
+        final harness = await pump(
+          tester,
+          residenceCountry: _germany,
+          initialTaxResidences: const [
+            KycTaxResidenceSeed(country: _germany, tin: 'DE123'),
+            KycTaxResidenceSeed(country: _switzerland, tin: ''),
+          ],
+        );
+
+        expect(find.text('Germany'), findsWidgets);
+        expect(find.text('Switzerland'), findsWidgets);
+        expect(find.byType(DropdownButtonFormField<Country>), findsOneWidget);
+        expect(find.text(sOf(tester).taxIdentificationNumber), findsOneWidget);
+        final tinField = find.widgetWithText(TextFormField, sOf(tester).tinHint);
+        expect(tester.widget<TextFormField>(tinField).controller!.text, 'DE123');
+
+        await tapComplete(tester);
+
+        expect(harness.submitCount, 1);
+        expect(harness.lastResult!.swissTaxResidence, isTrue);
+        final tins = harness.lastResult!.countryAndTINs!;
+        expect(tins, hasLength(1));
+        expect(tins.single.country, 'DE');
+        expect(tins.single.tin, 'DE123');
+      },
+    );
+
+    testWidgets('no prefill: exactly one locked residence row', (tester) async {
+      await pump(
+        tester,
+        residenceCountry: _switzerland,
+        initialTaxResidences: const [],
+      );
+
+      expect(taxRowKeys(), findsOneWidget);
+      expect(find.byType(DropdownButtonFormField<Country>), findsNothing);
+      expect(find.text(sOf(tester).addTaxResidence), findsOneWidget);
+    });
+
+    testWidgets(
+      'row limit: add button disappears once 10 free (non-CH) tax residences are present',
+      (tester) async {
+        await pump(tester, residenceCountry: _switzerland);
+
+        // Locked CH primary does not count against the countryAndTINs cap.
+        // 10 free non-CH rows + locked CH = 11 total; further adds are not triggerable.
+        for (var i = 0; i < 10; i++) {
+          await addTaxResidence(tester);
+        }
+
+        expect(taxRowKeys(), findsNWidgets(11));
+        expect(find.text(sOf(tester).addTaxResidence), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'CH resident + 10 foreign seeds: all 11 rows appear (none of the 10 non-CH dropped)',
+      (tester) async {
+        // CH never occupies a countryAndTINs slot, so a CH seed + 10 non-CH seeds
+        // must all render (11 rows total).
+        final seeds = <KycTaxResidenceSeed>[
+          const KycTaxResidenceSeed(country: _switzerland, tin: ''),
+          for (var i = 0; i < 10; i++)
+            KycTaxResidenceSeed(
+              country: Country(id: 2000 + i, symbol: 'X$i', name: 'Country $i', kycAllowed: true),
+              tin: 'TIN$i',
+            ),
+        ];
+
+        await pump(
+          tester,
+          residenceCountry: _switzerland,
+          initialTaxResidences: seeds,
+        );
+
+        expect(taxRowKeys(), findsNWidgets(11));
+        // 10 free (prefilled) non-CH rows keep a dropdown; primary CH is locked.
+        expect(find.byType(DropdownButtonFormField<Country>), findsNWidgets(10));
+        expect(find.text(sOf(tester).addTaxResidence), findsNothing);
+      },
+    );
+
+    testWidgets('TIN length: entering 70 characters is truncated to 64', (tester) async {
+      await pump(tester, residenceCountry: _germany);
+
+      final longTin = 'A' * 70;
+      await enterTinAt(tester, 0, longTin);
+
+      final tinField = find.widgetWithText(TextFormField, sOf(tester).tinHint);
+      final text = tester.widget<TextFormField>(tinField).controller!.text;
+      expect(text.length, 64);
+      expect(text, 'A' * 64);
+    });
+
+    testWidgets(
+      'seeded TIN over 64 chars is truncated in the field and on submit',
+      (tester) async {
+        final longTin = 'B' * 70;
+        final harness = await pump(
+          tester,
+          residenceCountry: _switzerland,
+          initialTaxResidences: [
+            const KycTaxResidenceSeed(country: _switzerland, tin: ''),
+            KycTaxResidenceSeed(country: _germany, tin: longTin),
+          ],
+        );
+
+        final tinField = find.widgetWithText(TextFormField, sOf(tester).tinHint);
+        expect(tinField, findsOneWidget);
+        final text = tester.widget<TextFormField>(tinField).controller!.text;
+        expect(text.length, 64);
+        expect(text, 'B' * 64);
+
+        await tapComplete(tester);
+
+        expect(harness.submitCount, 1);
+        final tins = harness.lastResult!.countryAndTINs!;
+        expect(tins, hasLength(1));
+        expect(tins.single.country, 'DE');
+        expect(tins.single.tin.length, 64);
+        expect(tins.single.tin, 'B' * 64);
+      },
+    );
+
+    testWidgets('prefill seeds over the limit keep 10 free non-CH rows (11 total with CH)', (tester) async {
+      // 12 foreign seeds + locked CH primary would be 13 without the cap; only
+      // 10 free (non-CH) seeds are kept after the primary, for 11 total (CH + 10).
+      final seeds = <KycTaxResidenceSeed>[
+        for (var i = 0; i < 12; i++)
+          KycTaxResidenceSeed(
+            country: Country(id: 1000 + i, symbol: 'X$i', name: 'Country $i', kycAllowed: true),
+            tin: 'TIN$i',
+          ),
+      ];
+
+      await pump(
+        tester,
+        residenceCountry: _switzerland,
+        initialTaxResidences: seeds,
+      );
+
+      expect(taxRowKeys(), findsNWidgets(11));
+      // 10 free (prefilled) rows keep a dropdown; primary is locked.
+      expect(find.byType(DropdownButtonFormField<Country>), findsNWidgets(10));
+      expect(find.text(sOf(tester).addTaxResidence), findsNothing);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // Empty-form fallback (null residence) + keyboard dismiss + residence re-lock
   // ---------------------------------------------------------------------------
   group('$KycRegistrationTaxStep without residence country (empty fallback)', () {
@@ -597,6 +792,7 @@ void main() {
               valueListenable: residence,
               builder: (_, country, _) => KycRegistrationTaxStep(
                 residenceCountry: country,
+                initialTaxResidences: const [],
                 onSubmit: (result) async {
                   harness.lastResult = result;
                   harness.submitCount++;
@@ -633,6 +829,7 @@ void main() {
               valueListenable: residence,
               builder: (_, country, _) => KycRegistrationTaxStep(
                 residenceCountry: country,
+                initialTaxResidences: const [],
                 onSubmit: (result) async {
                   harness.lastResult = result;
                   harness.submitCount++;
@@ -678,6 +875,7 @@ void main() {
               valueListenable: residence,
               builder: (_, country, _) => KycRegistrationTaxStep(
                 residenceCountry: country,
+                initialTaxResidences: const [],
                 onSubmit: (result) async {
                   harness.lastResult = result;
                   harness.submitCount++;
@@ -703,6 +901,61 @@ void main() {
         expect(harness.submitCount, 1);
         expect(harness.lastResult!.swissTaxResidence, isTrue);
         expect(harness.lastResult!.countryAndTINs, isNull);
+      },
+    );
+
+    testWidgets(
+      'drops a colliding additional seeded row when the residence country changes',
+      (tester) async {
+        final harness = _Harness();
+        final residence = ValueNotifier<Country?>(_switzerland);
+        addTearDown(residence.dispose);
+
+        await tester.pumpApp(
+          Scaffold(
+            body: ValueListenableBuilder<Country?>(
+              valueListenable: residence,
+              builder: (_, country, _) => KycRegistrationTaxStep(
+                residenceCountry: country,
+                initialTaxResidences: const [
+                  KycTaxResidenceSeed(country: _switzerland, tin: ''),
+                  KycTaxResidenceSeed(country: _germany, tin: 'DE123'),
+                  KycTaxResidenceSeed(country: _france, tin: 'FR999'),
+                ],
+                onSubmit: (result) async {
+                  harness.lastResult = result;
+                  harness.submitCount++;
+                },
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // CH locked + DE free + FR free.
+        expect(taxRowKeys(), findsNWidgets(3));
+        expect(find.text('Germany'), findsWidgets);
+        expect(find.text('France'), findsWidgets);
+
+        // Residence becomes DE → the free DE row collides and is dropped; FR remains.
+        // didUpdateWidget rebuilds the primary without TIN prefill (user changed
+        // the country themselves).
+        residence.value = _germany;
+        await tester.pumpAndSettle();
+
+        expect(find.text('Germany'), findsWidgets);
+        expect(find.text('France'), findsWidgets);
+        // Primary locked DE + free FR only (colliding free DE removed).
+        expect(taxRowKeys(), findsNWidgets(2));
+        // Two free-country dropdowns would mean DE still has a free row; only FR.
+        expect(find.byType(DropdownButtonFormField<Country>), findsOneWidget);
+
+        // Primary DE has no prefilled TIN after the re-lock path.
+        final tinField = find.widgetWithText(TextFormField, sOf(tester).tinHint);
+        // DE (primary, empty) + FR (prefilled FR999).
+        expect(tinField, findsNWidgets(2));
+        expect(tester.widget<TextFormField>(tinField.at(0)).controller!.text, isEmpty);
+        expect(tester.widget<TextFormField>(tinField.at(1)).controller!.text, 'FR999');
       },
     );
   });

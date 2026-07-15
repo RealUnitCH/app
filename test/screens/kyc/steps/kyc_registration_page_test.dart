@@ -1022,5 +1022,61 @@ void main() {
         expect(tins[2].tin, 'US123');
       },
     );
+
+    // Prefill wiring: swissTaxResidence + countryAndTINs from initialUserData
+    // must seed the tax step and round-trip on submit (no silent drop).
+    testWidgets(
+      'prefills CH + DE tax residences from initialUserData and submits both',
+      (tester) async {
+        const prefillWithForeignTin = RealUnitUserDataDto(
+          email: 'a@b.com',
+          name: 'Ada Lovelace',
+          type: 'HUMAN',
+          phoneNumber: '+41 79 000 00 00',
+          birthday: '1815-12-10',
+          nationality: 'CH',
+          addressStreet: 'Bahnhofstrasse 1',
+          addressPostalCode: '8000',
+          addressCity: 'Zurich',
+          addressCountry: 'CH',
+          swissTaxResidence: true,
+          countryAndTINs: [CountryAndTin(country: 'DE', tin: 'DE123')],
+          lang: 'de',
+          kycData: KycPersonalData(
+            accountType: KycAccountType.personal,
+            firstName: 'Ada',
+            lastName: 'Lovelace',
+            phone: '+41 79 000 00 00',
+            address: KycAddress(
+              street: 'Bahnhofstrasse',
+              houseNumber: '1',
+              zip: '8000',
+              city: 'Zurich',
+              country: 41,
+            ),
+          ),
+        );
+
+        await showTaxStep(tester, dto: prefillWithForeignTin);
+
+        // Seeds resolved: CH (from swissTaxResidence) + DE (from countryAndTINs).
+        expect(find.text('Switzerland'), findsWidgets);
+        expect(find.text('Germany'), findsWidgets);
+        final context = tester.element(find.byType(KycRegistrationTaxStep));
+        final tinField = find.widgetWithText(TextFormField, S.of(context).tinHint);
+        expect(tinField, findsOneWidget);
+        expect(tester.widget<TextFormField>(tinField).controller!.text, 'DE123');
+
+        await tapComplete(tester);
+
+        final captured = captureSubmit();
+        expect(captured[0], isA<Country>().having((c) => c.symbol, 'symbol', 'CH'));
+        expect(captured[1], isTrue);
+        final tins = captured[2] as List<CountryAndTin>;
+        expect(tins, hasLength(1));
+        expect(tins.single.country, 'DE');
+        expect(tins.single.tin, 'DE123');
+      },
+    );
   });
 }
