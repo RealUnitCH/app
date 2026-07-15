@@ -127,13 +127,15 @@ void main() {
     );
 
     // Emitting `BuyConfirmFailure` drives the BlocConsumer listener
-    // (`buy_confirm_button.dart:64-73`) to show the failure SnackBar. The three
-    // error codes map to three distinct user-facing texts, so each is captured.
+    // (`buy_confirm_button.dart:64-73`) to show the failure SnackBar. Each
+    // error code's user-facing text is captured (aktionariat and
+    // primaryEmailRequired intentionally share the same copy).
     // The `.state` getter follows the emission (BuyConfirmFailure) — the builder
     // still renders the idle button, which is the real post-failure UI.
     for (final (error, name) in const [
       (BuyConfirmError.aktionariat, 'buy_confirm_failed_aktionariat'),
       (BuyConfirmError.amountTooLow, 'buy_confirm_failed_amount_too_low'),
+      (BuyConfirmError.primaryEmailRequired, 'buy_confirm_failed_primary_email_required'),
       (BuyConfirmError.unknown, 'buy_confirm_failed_unknown'),
     ]) {
       goldenTest(
