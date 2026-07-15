@@ -16,18 +16,12 @@ name: RealUnit Build
 #    below (saves macOS-runner minutes while work is still in progress).
 #  - `labeled` / `unlabeled` are intentionally omitted: realunit-app has
 #    no label-gated heavy job here (Tier 3 has its own workflow).
-#  - `push: develop` and `push: staging` keep post-merge verification
-#    as an authoritative source of truth, independent of any PR state.
-#    `staging` participates because feature → staging merges land an
-#    integration commit whose verification cannot be deferred to the
-#    auto-opened staging → develop PR (the gate must be authoritative
-#    at the moment the commit lands on staging). Other branches do not
-#    need a post-push check — the PR-event already covers them.
-#    `push: staging` and the auto-opened #841 PR now share one
-#    concurrency group, so exactly one real run executes per staging
-#    commit (the survivor is the authoritative gate — in practice
-#    often the PR run against the merge commit, a stronger promotion
-#    gate).
+#  - `push: develop` keeps post-merge verification as an authoritative
+#    source of truth. `push: staging` is a fail-safe for the integration
+#    lane: normally the open, non-draft staging → develop PR owns the
+#    heavy CI run for that SHA; if that PR is missing or draft, the
+#    staging push runs the same suite instead. The lightweight `route`
+#    job below makes that decision without consuming a macOS runner.
 #  - `workflow_dispatch` is kept as a manual override and is NOT
 #    draft-gated (see the job `if:` guard below).
 on:
@@ -38,53 +32,95 @@ on:
     branches-ignore: [main]
     types: [opened, synchronize, reopened, ready_for_review]
 
-# Base case: group by PR number so a new push to the same PR cancels
-# the in-flight run for the outdated commit. Falls back to
-# `github.ref` for `push` and `workflow_dispatch` (no pull_request
-# number): `refs/heads/develop` for post-merge runs, the dispatched
-# ref for manual triggers. macOS runners are scarce — letting an
-# obsolete run finish wastes ~10 minutes per push.
-# Staging-lane special case: the permanently-open, same-repo auto-PR
-# "staging → develop" (#841) would otherwise re-verify every staging
-# commit a second time on the identical SHA (its PR-number group
-# differs from the push group). Exactly that non-draft PR —
-# pull_request event, head_ref == 'staging', same repo (the
-# repo-identity check stops a fork branch named `staging` from
-# cancelling the real staging lane), draft == false — is placed into
-# the constant group `refs/heads/staging` shared with `push: staging`.
-# A staging PR that is (manually) set to draft falls back to its own
-# PR-number group so the `push: staging` run survives independently
-# and the commit remains genuinely verified. cancel-in-progress then
-# cancels the duplicate; exactly one real run always survives (no
-# skip, no skipped=success masking — a red stays red). Feature PRs
-# keep their own PR-number group, unaffected.
+# Group PR runs by PR number, and push/dispatch runs by ref. A new SHA
+# cancels work for the outdated SHA in the same lane. Push and PR runs
+# deliberately do NOT share a concurrency group: cross-event
+# cancellation creates cancelled check runs on the current PR head and
+# makes the promotion PR red even when its replacement run succeeds.
+# Heavy-run deduplication for staging is handled by `route` instead.
 concurrency:
-  group: >-
-    ci-${{ github.workflow }}-${{
-      (github.event_name == 'pull_request'
-        && github.head_ref == 'staging'
-        && github.event.pull_request.head.repo.full_name == github.repository
-        && github.event.pull_request.draft == false)
-        && 'refs/heads/staging'
-      || (github.event.pull_request.number || github.ref)
-    }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
+  # Route the expensive jobs without allowing a skipped staging-push job to
+  # satisfy a required PR check. The heavy jobs therefore use distinct
+  # "(staging fallback)" check names on `push: staging`; their canonical
+  # names exist only on PR/develop/manual runs.
+  #
+  # Fail-safe semantics are intentional: an API error, malformed response,
+  # or missing output falls back to running heavy CI. We only suppress the
+  # staging push suite after positively finding an open, non-draft,
+  # same-repository staging → develop PR, whose `synchronize`/`opened` event
+  # owns the canonical required checks for the same SHA.
+  route:
+    name: Route CI execution
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      run_heavy: ${{ steps.route.outputs.run_heavy }}
+      reason: ${{ steps.route.outputs.reason }}
+    steps:
+      - name: Select authoritative CI lane
+        id: route
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          RUN_HEAVY=true
+          REASON="default event: run canonical CI"
+
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            if jq -e '.pull_request.draft == true' "${GITHUB_EVENT_PATH}" >/dev/null; then
+              RUN_HEAVY=false
+              REASON="draft pull request: wait for ready_for_review"
+            else
+              REASON="non-draft pull request: run canonical required checks"
+            fi
+          elif [ "${GITHUB_EVENT_NAME}" = "push" ] && [ "${GITHUB_REF}" = "refs/heads/staging" ]; then
+            if PULLS_JSON="$(
+              gh api --method GET "/repos/${GITHUB_REPOSITORY}/pulls" \
+                -f state=open \
+                -f base=develop \
+                -f head="${GITHUB_REPOSITORY_OWNER}:staging" \
+                -f per_page=100
+            )"; then
+              if jq -e 'any(.[]; .draft == false)' <<<"${PULLS_JSON}" >/dev/null; then
+                RUN_HEAVY=false
+                REASON="ready staging promotion PR found: PR event owns canonical CI"
+              else
+                REASON="no ready staging promotion PR: run push fail-safe CI"
+              fi
+            else
+              echo "::warning::Could not query the staging promotion PR; running fail-safe CI"
+              REASON="promotion PR lookup failed: run push fail-safe CI"
+            fi
+          fi
+
+          echo "run_heavy=${RUN_HEAVY}" >> "${GITHUB_OUTPUT}"
+          echo "reason=${REASON}" >> "${GITHUB_OUTPUT}"
+          {
+            echo "### CI routing"
+            echo
+            echo "- Heavy CI: \`${RUN_HEAVY}\`"
+            echo "- Reason: ${REASON}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
   build:
-    name: Analyze & Test
-    # Skip on draft PRs (matches our `gh pr create --draft` workflow).
-    # `push` (post-merge gate) and `workflow_dispatch` (manual override)
-    # always run — the condition is "anything that isn't a PR, or a PR
-    # that isn't a draft".
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    name: ${{ github.event_name == 'push' && github.ref == 'refs/heads/staging' && 'Analyze & Test (staging fallback)' || 'Analyze & Test' }}
+    needs: route
+    # Missing router output means the router failed unexpectedly. Run CI in
+    # that case; only the explicit string `false` may suppress heavy work.
+    if: ${{ always() && needs.route.outputs.run_heavy != 'false' }}
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.41.6"
@@ -175,7 +211,7 @@ jobs:
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-lcov
           path: coverage/lcov.info
@@ -192,7 +228,7 @@ jobs:
       # fail-open (silent `exit 0`).
       - name: Upload coverage summary
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-summary
           path: coverage/lcov.summary
@@ -243,25 +279,22 @@ jobs:
   #   `Analyze & Test` did not produce a summary, the gate is red, the PR
   #   is blocked, and the reviewer sees exactly where the pipeline broke.
   coverage-floor:
-    name: Coverage Floor Gate
-    needs: build
-    # Same draft guard as `build`: skip drafts, always run on push/dispatch.
-    # `build` already enforces this, but mirroring it here keeps the gate's
-    # behaviour locally readable instead of inferred from `needs:`.
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    name: ${{ github.event_name == 'push' && github.ref == 'refs/heads/staging' && 'Coverage Floor Gate (staging fallback)' || 'Coverage Floor Gate' }}
+    needs: [route, build]
+    if: ${{ always() && needs.route.outputs.run_heavy != 'false' && needs.build.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Download coverage summary
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: coverage-summary
           path: coverage
 
       - name: Download scoped coverage tracefile
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: coverage-lcov
           path: coverage
@@ -334,8 +367,9 @@ jobs:
   # On self-hosted runner outage: temporarily flip `runs-on:` to `macos-15` and regenerate
   # baselines in the same PR (see `docs/visual-regression-tests.md`).
   golden-tests:
-    name: Visual Regression
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    name: ${{ github.event_name == 'push' && github.ref == 'refs/heads/staging' && 'Visual Regression (staging fallback)' || 'Visual Regression' }}
+    needs: route
+    if: ${{ always() && needs.route.outputs.run_heavy != 'false' }}
     runs-on: [self-hosted, macOS, ARM64, m3-ultra, realunit-app]
     # 30 was sized for the era when `subosito/flutter-action@v2` still pulled
     # the SDK through the Actions cache and burned ~18 minutes on a stalled
@@ -348,7 +382,7 @@ jobs:
     # the slot back twice as fast as 30.
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.41.6"
@@ -368,7 +402,7 @@ jobs:
         run: flutter test test/goldens
       - name: Upload golden diff on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: golden-diffs
           path: test/goldens/**/failures/**
@@ -379,16 +413,19 @@ jobs:
   # repo and which still need runtime coverage. Intentionally non-blocking
   # and not part of required_status_checks — purely informational.
   bitbox-audit:
-    name: BitBox quirks audit
-    # Same guard pattern as `build`: skip drafts, always run on push/dispatch.
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    name: ${{ github.event_name == 'push' && github.ref == 'refs/heads/staging' && 'BitBox quirks audit (staging fallback)' || 'BitBox quirks audit' }}
+    needs: route
+    if: ${{ always() && needs.route.outputs.run_heavy != 'false' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.25.5"
+          # This repository has no Go module; caching would only emit a
+          # misleading "go.sum not found" warning for this audit-only job.
+          cache: false
 
       - name: Install bitbox-audit
         continue-on-error: true
@@ -416,7 +453,7 @@ jobs:
 
       - name: Upload audit report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: bitbox-audit-report
           path: bitbox-audit-report.md
