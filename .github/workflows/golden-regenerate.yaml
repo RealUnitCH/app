@@ -45,6 +45,13 @@ jobs:
           # this, checkout still works but the remote is configured with no
           # credential helper and the push fails with HTTP 403.
           token: ${{ secrets.GITHUB_TOKEN }}
+          # Single-slot runner can start minutes after dispatch. Default
+          # checkout pins github.sha (stale by then); render against that
+          # tree and the later push is rejected because the branch tip has
+          # moved. Checkout the live head instead (github.ref_name — the
+          # dispatched branch; workflow_dispatch always runs with --ref
+          # <branch>) so baselines match the tree they get committed to.
+          ref: ${{ github.ref_name }}
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.41.6"
@@ -81,9 +88,13 @@ jobs:
             exit 0
           fi
           git commit -m "test(goldens): regenerate baselines on the self-hosted runner"
-          # On protected branches (develop/main) this fails by design.
-          # The next step uploads the PNGs as an artifact so the user can
-          # still recover the regen output.
+          # Protected branches (develop/main): fails by design — no force-push,
+          # no bypass. Feature branches: after the ref: fix above this should
+          # normally succeed. If the branch still moves between checkout and
+          # push (now a seconds-wide window), fail loud; the fallback artifact
+          # step below still uploads the PNGs. Recovery: re-dispatch (cheap).
+          # Do NOT rebase or force-push — that would publish baselines that no
+          # longer match the tree head they were rendered against.
           git push
 
       # Runs only if the push step failed. Uploads the regenerated PNGs so
