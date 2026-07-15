@@ -317,7 +317,7 @@ jobs:
       - name: Stage web e2e baselines from web repo
         env:
           WEB_DIR: _web-checkout
-          # RealUnitCH/web commits 18 Playwright visual baselines under
+          # RealUnitCH/web commits 22 Playwright visual baselines under
           # tests/__screenshots__/{desktop-chromium,tablet-chromium,mobile-safari}/.
           # `-ne` below fails the build on ANY drift (add OR remove) so a change
           # to the committed set upstream requires an explicit bump here AND a
