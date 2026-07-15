@@ -36,6 +36,7 @@ class ScrollableActionsLayout extends StatelessWidget {
     this.actionsSpacing = 12,
     this.scrollPhysics,
     this.centerBody = false,
+    this.shrinkWrap = false,
   });
 
   /// Scrollable main content (illustration, titles, forms, hints).
@@ -56,6 +57,14 @@ class ScrollableActionsLayout extends StatelessWidget {
   /// it outgrows it). Use for screens that centred their content with a
   /// `Spacer()` above and below — without this they would top-align.
   final bool centerBody;
+
+  /// Size to content (up to the incoming max height) instead of expanding to
+  /// fill it. For bottom sheets / dialogs that should be only as tall as their
+  /// content but still cap-and-scroll when content grows past the available
+  /// height. In this mode the body is NOT floored to the viewport height (so it
+  /// genuinely shrink-wraps), the actions stay pinned below it, and the whole
+  /// layout scrolls its body once content exceeds the cap.
+  final bool shrinkWrap;
 
   @override
   Widget build(BuildContext context) {
@@ -103,27 +112,42 @@ class ScrollableActionsLayout extends StatelessWidget {
 
           return Column(
             crossAxisAlignment: .stretch,
+            mainAxisSize: shrinkWrap ? MainAxisSize.min : MainAxisSize.max,
             children: [
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, viewport) => SingleChildScrollView(
+              if (shrinkWrap)
+                Flexible(
+                  child: SingleChildScrollView(
                     key: const Key('scrollable_actions_layout.body_scroll_view'),
                     physics: scrollPhysics,
-                    child: ConstrainedBox(
-                      // Always at least the leftover viewport height, so bodies may use
-                      // mainAxisAlignment / centering. Once the body outgrows the viewport
-                      // minHeight stops binding and the body simply scrolls.
-                      constraints: BoxConstraints(minHeight: viewport.maxHeight),
-                      child: SizedBox(
-                        // Center() below loosens the width constraint; without this the
-                        // crossAxisAlignment: .stretch chain breaks for width-dependent bodies.
-                        width: double.infinity,
-                        child: centerBody ? Center(child: body) : body,
+                    child: SizedBox(
+                      // Center() below loosens the width constraint; without this the
+                      // crossAxisAlignment: .stretch chain breaks for width-dependent bodies.
+                      width: double.infinity,
+                      child: centerBody ? Center(child: body) : body,
+                    ),
+                  ),
+                )
+              else
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, viewport) => SingleChildScrollView(
+                      key: const Key('scrollable_actions_layout.body_scroll_view'),
+                      physics: scrollPhysics,
+                      child: ConstrainedBox(
+                        // Always at least the leftover viewport height, so bodies may use
+                        // mainAxisAlignment / centering. Once the body outgrows the viewport
+                        // minHeight stops binding and the body simply scrolls.
+                        constraints: BoxConstraints(minHeight: viewport.maxHeight),
+                        child: SizedBox(
+                          // Center() below loosens the width constraint; without this the
+                          // crossAxisAlignment: .stretch chain breaks for width-dependent bodies.
+                          width: double.infinity,
+                          child: centerBody ? Center(child: body) : body,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
               actionBlock,
             ],
           );
