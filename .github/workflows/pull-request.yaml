@@ -23,6 +23,11 @@ name: RealUnit Build
 #    auto-opened staging → develop PR (the gate must be authoritative
 #    at the moment the commit lands on staging). Other branches do not
 #    need a post-push check — the PR-event already covers them.
+#    `push: staging` and the auto-opened #841 PR now share one
+#    concurrency group, so exactly one real run executes per staging
+#    commit (the survivor is the authoritative gate — in practice
+#    often the PR run against the merge commit, a stronger promotion
+#    gate).
 #  - `workflow_dispatch` is kept as a manual override and is NOT
 #    draft-gated (see the job `if:` guard below).
 on:
@@ -33,17 +38,32 @@ on:
     branches-ignore: [main]
     types: [opened, synchronize, reopened, ready_for_review]
 
-# Group by PR number so a new push to the same PR cancels the
-# in-flight run for the outdated commit. macOS runners are scarce —
-# letting an obsolete run finish wastes ~10 minutes per push. Grouping
-# by SHA (the previous approach) put every commit in its own group,
-# which meant no cancellation ever happened and back-to-back pushes
-# queued sequentially.
-# Falls back to `github.ref` for `push` and `workflow_dispatch` events
-# (where there is no `pull_request.number`): `refs/heads/develop` for
-# post-merge runs, the dispatched ref for manual triggers.
+# Base case: group by PR number so a new push to the same PR cancels
+# the in-flight run for the outdated commit. Falls back to
+# `github.ref` for `push` and `workflow_dispatch` (no pull_request
+# number): `refs/heads/develop` for post-merge runs, the dispatched
+# ref for manual triggers. macOS runners are scarce — letting an
+# obsolete run finish wastes ~10 minutes per push.
+# Staging-lane special case: the permanently-open, same-repo auto-PR
+# "staging → develop" (#841) would otherwise re-verify every staging
+# commit a second time on the identical SHA (its PR-number group
+# differs from the push group). Exactly that PR — pull_request event,
+# head_ref == 'staging', same repo (the repo-identity check stops a
+# fork branch named `staging` from cancelling the real staging lane)
+# — is placed into the constant group `refs/heads/staging` shared with
+# `push: staging`. cancel-in-progress then cancels the duplicate;
+# exactly one real run always survives (no skip, no skipped=success
+# masking — a red stays red). Feature PRs keep their own PR-number
+# group, unaffected.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: >-
+    ci-${{ github.workflow }}-${{
+      (github.event_name == 'pull_request'
+        && github.head_ref == 'staging'
+        && github.event.pull_request.head.repo.full_name == github.repository)
+        && 'refs/heads/staging'
+      || (github.event.pull_request.number || github.ref)
+    }}
   cancel-in-progress: true
 
 permissions:
