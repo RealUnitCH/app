@@ -204,10 +204,33 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
     matrixTestPath: 'test/screens/kyc/kyc_static_pages_responsive_matrix_test.dart',
     productionPath: 'lib/screens/kyc/steps/signature_unsupported/kyc_signature_unsupported_page.dart',
   ),
-  // Migration covers 25 surfaces total (bitbox_connect_sheet + 24 above). Known
-  // candidates NOT yet catalogued or confirmed either way (bounded, non-scrolling
-  // Column with no Spacer() and no scroll view — a Spacer() grep would not catch
-  // them): welcome_page, sell_confirm_sheet / sell_executed_sheet,
-  // forgot_pin_bottom_sheet / enable_biometric_bottom_sheet. Not exhaustive — review
-  // responsibility for every new sticky-CTA surface.
+  ResponsiveSurface(
+    id: 'sell_confirm_sheet',
+    description: 'Sell confirmation bottom sheet (shrinkWrap mode)',
+    matrixTestPath: 'test/screens/sell/sell_sheets_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/sell/widgets/sell_confirm_sheet.dart',
+  ),
+  ResponsiveSurface(
+    id: 'sell_executed_sheet',
+    description: 'Sell executed/receipt bottom sheet (shrinkWrap mode)',
+    matrixTestPath: 'test/screens/sell/sell_sheets_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/sell/widgets/sell_executed_sheet.dart',
+  ),
+  ResponsiveSurface(
+    id: 'forgot_pin_bottom_sheet',
+    description: 'Forgot-PIN bottom sheet (shrinkWrap mode)',
+    matrixTestPath: 'test/screens/pin/pin_sheets_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/pin/widgets/forgot_pin_bottom_sheet.dart',
+  ),
+  ResponsiveSurface(
+    id: 'enable_biometric_bottom_sheet',
+    description: 'Enable-biometric bottom sheet (shrinkWrap mode)',
+    matrixTestPath: 'test/screens/pin/pin_sheets_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/pin/widgets/enable_biometric_bottom_sheet.dart',
+  ),
+  // Migration covers 29 surfaces total (bitbox_connect_sheet + 28 above). No
+  // further known candidates remain from the prior sweep. welcome_page was
+  // reviewed and found safe (scrolls end-to-end, no separate sticky CTA) — not
+  // a migration candidate. Not exhaustive — review responsibility for every
+  // new sticky-CTA surface.
 ];

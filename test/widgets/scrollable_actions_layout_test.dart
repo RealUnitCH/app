@@ -558,5 +558,239 @@ void main() {
         expect(taps, 1);
       },
     );
+
+    testWidgets(
+      'shrinkWrap: true sizes to short content under a generous cap',
+      (tester) async {
+        // Cap is a loose maxHeight (bottom-sheet style). Align loosens the
+        // SizedBox's tight height so the layout can genuinely shrink-wrap.
+        const hostSize = Size(375, 600);
+        const cap = 600.0;
+        const bodyHeight = 80.0;
+        const actionHeight = 48.0;
+
+        await tester.binding.setSurfaceSize(hostSize);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await expectNoLayoutOverflow(tester, () async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: MediaQuery(
+                data: const MediaQueryData(size: hostSize),
+                child: Scaffold(
+                  body: SizedBox(
+                    height: cap,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: cap),
+                        child: ScrollableActionsLayout(
+                          shrinkWrap: true,
+                          body: const SizedBox(
+                            height: bodyHeight,
+                            child: Text('shrink wrap short body'),
+                          ),
+                          actions: [
+                            SizedBox(
+                              height: actionHeight,
+                              width: double.infinity,
+                              child: FilledButton(
+                                onPressed: () {},
+                                child: const Text('Shrink wrap CTA'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+        });
+
+        final layoutBox = tester.renderObject<RenderBox>(
+          find.byType(ScrollableActionsLayout),
+        );
+        // Content-sized: body + actions, not expanded to the 600px cap.
+        // Tolerance covers spacing/theme chrome only — not a near-full fill.
+        expect(
+          layoutBox.size.height,
+          closeTo(bodyHeight + actionHeight, 20),
+          reason:
+              'shrinkWrap short layout must size to content '
+              '(~${bodyHeight + actionHeight}), not fill $cap; '
+              'got ${layoutBox.size.height}',
+        );
+        expect(
+          layoutBox.size.height,
+          lessThan(cap / 2),
+          reason: 'must not expand toward the generous cap',
+        );
+
+        await expectFullyTappable(
+          tester,
+          find.text('Shrink wrap CTA'),
+          within: find.byType(ScrollableActionsLayout),
+        );
+      },
+    );
+
+    testWidgets(
+      'shrinkWrap: true caps tall body, scrolls, and pins actions below',
+      (tester) async {
+        const hostSize = Size(375, 500);
+        const cap = 500.0;
+        const actionHeight = 48.0;
+        var taps = 0;
+
+        await tester.binding.setSurfaceSize(hostSize);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await expectNoLayoutOverflow(tester, () async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: MediaQuery(
+                data: const MediaQueryData(size: hostSize),
+                child: Scaffold(
+                  body: SizedBox(
+                    height: cap,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: cap),
+                        child: ScrollableActionsLayout(
+                          shrinkWrap: true,
+                          body: Column(
+                            children: List.generate(
+                              40,
+                              (i) => SizedBox(height: 40, child: Text('row $i')),
+                            ),
+                          ),
+                          actions: [
+                            SizedBox(
+                              height: actionHeight,
+                              width: double.infinity,
+                              child: FilledButton(
+                                onPressed: () => taps++,
+                                child: const Text('Shrink wrap tall CTA'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+          await tester.pump();
+        });
+
+        final layoutBox = tester.renderObject<RenderBox>(
+          find.byType(ScrollableActionsLayout),
+        );
+        // Tall content must hit the cap, not overflow past it.
+        expect(
+          layoutBox.size.height,
+          closeTo(cap, 1),
+          reason:
+              'shrinkWrap tall layout must equal the cap ($cap), '
+              'got ${layoutBox.size.height}',
+        );
+
+        final bodyScrollKey = const Key('scrollable_actions_layout.body_scroll_view');
+        final scrollable = tester.state<ScrollableState>(
+          find.descendant(
+            of: find.byKey(bodyScrollKey),
+            matching: find.byType(Scrollable),
+          ),
+        );
+        expect(
+          scrollable.position.maxScrollExtent,
+          greaterThan(0),
+          reason: 'body must be scrollable when taller than the remaining cap',
+        );
+
+        final bodyScrollRect = _globalRect(tester, find.byKey(bodyScrollKey));
+        final actionRect = _globalRect(tester, find.text('Shrink wrap tall CTA'));
+        expect(
+          actionRect.top,
+          greaterThanOrEqualTo(bodyScrollRect.bottom - 0.5),
+          reason:
+              'actions must stay pinned below the body scroll view '
+              '(action.top=${actionRect.top}, body.bottom=${bodyScrollRect.bottom})',
+        );
+
+        await expectFullyTappable(
+          tester,
+          find.text('Shrink wrap tall CTA'),
+          within: find.byType(ScrollableActionsLayout),
+        );
+        expect(taps, 1);
+      },
+    );
+
+    testWidgets(
+      'shrinkWrap: false (default) still expands short body to fill host',
+      (tester) async {
+        const hostSize = Size(375, 600);
+        const hostHeight = 600.0;
+        const bodyHeight = 80.0;
+        const actionHeight = 48.0;
+
+        await tester.binding.setSurfaceSize(hostSize);
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: MediaQuery(
+              data: const MediaQueryData(size: hostSize),
+              child: Scaffold(
+                body: SizedBox(
+                  height: hostHeight,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: hostHeight),
+                    child: ScrollableActionsLayout(
+                      // shrinkWrap intentionally omitted — default false.
+                      body: const SizedBox(
+                        height: bodyHeight,
+                        child: Text('default short body'),
+                      ),
+                      actions: [
+                        SizedBox(
+                          height: actionHeight,
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: () {},
+                            child: const Text('Default expand CTA'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final layoutBox = tester.renderObject<RenderBox>(
+          find.byType(ScrollableActionsLayout),
+        );
+        // Existing screens rely on Expanded body filling the bounded host.
+        expect(
+          layoutBox.size.height,
+          closeTo(hostHeight, 1),
+          reason:
+              'default shrinkWrap=false must expand to full host height '
+              '($hostHeight), got ${layoutBox.size.height}',
+        );
+      },
+    );
   });
 }
