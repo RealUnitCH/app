@@ -16,58 +16,27 @@ name: RealUnit Build
 #    below (saves macOS-runner minutes while work is still in progress).
 #  - `labeled` / `unlabeled` are intentionally omitted: realunit-app has
 #    no label-gated heavy job here (Tier 3 has its own workflow).
-#  - `push: develop` and `push: staging` keep post-merge verification
-#    as an authoritative source of truth, independent of any PR state.
-#    `staging` participates because feature → staging merges land an
-#    integration commit whose verification cannot be deferred to the
-#    auto-opened staging → develop PR (the gate must be authoritative
-#    at the moment the commit lands on staging). Other branches do not
-#    need a post-push check — the PR-event already covers them.
-#    `push: staging` and the auto-opened #841 PR now share one
-#    concurrency group, so exactly one real run executes per staging
-#    commit (the survivor is the authoritative gate — in practice
-#    often the PR run against the merge commit, a stronger promotion
-#    gate).
+#  - `push: develop` keeps post-merge verification as an authoritative
+#    source of truth. Staging fallback routing lives in the separate
+#    `staging-ci-fallback.yaml` workflow: it dispatches this workflow
+#    only when no ready staging → develop PR owns CI for the pushed SHA.
 #  - `workflow_dispatch` is kept as a manual override and is NOT
 #    draft-gated (see the job `if:` guard below).
 on:
   workflow_dispatch:
   push:
-    branches: [develop, staging]
+    branches: [develop]
   pull_request:
     branches-ignore: [main]
     types: [opened, synchronize, reopened, ready_for_review]
 
-# Base case: group by PR number so a new push to the same PR cancels
-# the in-flight run for the outdated commit. Falls back to
-# `github.ref` for `push` and `workflow_dispatch` (no pull_request
-# number): `refs/heads/develop` for post-merge runs, the dispatched
-# ref for manual triggers. macOS runners are scarce — letting an
-# obsolete run finish wastes ~10 minutes per push.
-# Staging-lane special case: the permanently-open, same-repo auto-PR
-# "staging → develop" (#841) would otherwise re-verify every staging
-# commit a second time on the identical SHA (its PR-number group
-# differs from the push group). Exactly that non-draft PR —
-# pull_request event, head_ref == 'staging', same repo (the
-# repo-identity check stops a fork branch named `staging` from
-# cancelling the real staging lane), draft == false — is placed into
-# the constant group `refs/heads/staging` shared with `push: staging`.
-# A staging PR that is (manually) set to draft falls back to its own
-# PR-number group so the `push: staging` run survives independently
-# and the commit remains genuinely verified. cancel-in-progress then
-# cancels the duplicate; exactly one real run always survives (no
-# skip, no skipped=success masking — a red stays red). Feature PRs
-# keep their own PR-number group, unaffected.
+# Group PR runs by PR number, and push/dispatch runs by ref. A new SHA
+# cancels work for the outdated SHA in the same lane. Staging push
+# routing is isolated in `staging-ci-fallback.yaml`; it either relies on
+# this PR workflow or dispatches this workflow as a fallback, but never
+# shares a concurrency group with the PR run.
 concurrency:
-  group: >-
-    ci-${{ github.workflow }}-${{
-      (github.event_name == 'pull_request'
-        && github.head_ref == 'staging'
-        && github.event.pull_request.head.repo.full_name == github.repository
-        && github.event.pull_request.draft == false)
-        && 'refs/heads/staging'
-      || (github.event.pull_request.number || github.ref)
-    }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -84,7 +53,7 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.41.6"
@@ -175,7 +144,7 @@ jobs:
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-lcov
           path: coverage/lcov.info
@@ -192,7 +161,7 @@ jobs:
       # fail-open (silent `exit 0`).
       - name: Upload coverage summary
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-summary
           path: coverage/lcov.summary
@@ -252,16 +221,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Download coverage summary
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: coverage-summary
           path: coverage
 
       - name: Download scoped coverage tracefile
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: coverage-lcov
           path: coverage
@@ -348,7 +317,7 @@ jobs:
     # the slot back twice as fast as 30.
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.41.6"
@@ -368,7 +337,7 @@ jobs:
         run: flutter test test/goldens
       - name: Upload golden diff on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: golden-diffs
           path: test/goldens/**/failures/**
@@ -385,10 +354,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
           go-version: "1.25.5"
+          # This repository has no Go module; caching would only emit a
+          # misleading "go.sum not found" warning for this audit-only job.
+          cache: false
 
       - name: Install bitbox-audit
         continue-on-error: true
@@ -416,7 +388,7 @@ jobs:
 
       - name: Upload audit report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: bitbox-audit-report
           path: bitbox-audit-report.md
