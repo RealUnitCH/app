@@ -162,8 +162,52 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
     productionPath:
         'lib/screens/settings_user_data/subpages/others/settings_edit_failure_page.dart',
   ),
-  // Migration covers 18 surfaces (bitbox_connect_sheet + 17 above). Confirmed
-  // still NOT migrated (no ScrollableActionsLayout in these files): welcome_page,
-  // sell_confirm_sheet / sell_executed_sheet, setup_pin_page /
-  // forgot_pin_bottom_sheet / enable_biometric_bottom_sheet. Not exhaustive.
+  ResponsiveSurface(
+    id: 'verify_seed_page',
+    description: 'Verify seed phrase page (confirm CTA)',
+    matrixTestPath: 'test/screens/verify_seed/verify_seed_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/verify_seed/verify_seed_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'restore_wallet_view',
+    description: 'Restore wallet from seed phrase view (next CTA)',
+    matrixTestPath: 'test/screens/restore_wallet/restore_wallet_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/restore_wallet/restore_wallet_view.dart',
+  ),
+  ResponsiveSurface(
+    id: 'buy_page',
+    description: 'Buy page (primary CTA)',
+    matrixTestPath: 'test/screens/buy/buy_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/buy/buy_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'sell_page',
+    description: 'Sell page (primary CTA)',
+    matrixTestPath: 'test/screens/sell/sell_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/sell/sell_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'setup_pin_page',
+    description: 'Setup PIN page (sticky numeric keypad as actions)',
+    matrixTestPath: 'test/screens/pin/setup_pin_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/pin/setup_pin_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'kyc_failure_page',
+    description: 'KYC failure status page (no CTA — gates overflow + message reachability only)',
+    matrixTestPath: 'test/screens/kyc/kyc_static_pages_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/kyc/subpages/kyc_failure_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'kyc_signature_unsupported_page',
+    description: 'KYC signature-unsupported status page (no CTA — gates overflow + message reachability only)',
+    matrixTestPath: 'test/screens/kyc/kyc_static_pages_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/kyc/steps/signature_unsupported/kyc_signature_unsupported_page.dart',
+  ),
+  // Migration covers 25 surfaces total (bitbox_connect_sheet + 24 above). Known
+  // candidates NOT yet catalogued or confirmed either way (bounded, non-scrolling
+  // Column with no Spacer() and no scroll view — a Spacer() grep would not catch
+  // them): welcome_page, sell_confirm_sheet / sell_executed_sheet,
+  // forgot_pin_bottom_sheet / enable_biometric_bottom_sheet. Not exhaustive — review
+  // responsibility for every new sticky-CTA surface.
 ];

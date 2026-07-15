@@ -66,9 +66,41 @@ Helpers:
 
 ## Rollout
 
-The migration is repo-wide: **18 surfaces** are on `ScrollableActionsLayout` and registered in [`kResponsiveSurfaceCatalog`](../test/helper/responsive_surface_catalog.dart) — the BitBox connect sheet plus dashboard, create wallet, verify pin, the three KYC status pages, KYC account-merge / merge-processing / link-wallet, KYC financial-data questions, onboarding completed, support create-ticket, and five settings_user_data edit/status subpages.
+The migration is repo-wide. **25 surfaces** are on `ScrollableActionsLayout` and
+registered in [`kResponsiveSurfaceCatalog`](../test/helper/responsive_surface_catalog.dart)
+— the BitBox connect sheet plus dashboard, create wallet, verify pin, the three KYC status
+pages, KYC account-merge / merge-processing / link-wallet, KYC financial-data questions,
+onboarding completed, support create-ticket, five settings_user_data edit/status subpages,
+verify seed phrase, restore wallet, buy, sell, setup PIN, and the two CTA-less KYC static
+pages (failure / signature-unsupported).
 
-The catalog is a living list reviewed manually, not a proof that every sticky-CTA surface in the app is covered. **Not yet migrated** (no `ScrollableActionsLayout` in these files): welcome page (`welcome_page.dart`), sell confirm/executed sheets, pin setup / biometric bottom sheets.
+A follow-up sweep of this branch found and fixed 3 surfaces the original grep
+(`Spacer()` + `AppFilledButton`/`FilledButton`) had missed, because each either used a
+custom button widget or had no CTA at all: `setup_pin_page`, `kyc_failure_page`, and
+`kyc_signature_unsupported_page` (the last two ship with an empty `actions: []` — there is
+no CTA, but the message now scrolls instead of clipping). A parallel workstream separately
+migrated `verify_seed_page`, `restore_wallet_view`, `buy_page`, and `sell_page` off the bare
+`Spacer()` shape. All 7 now have their own matrix test and are registered in
+`kResponsiveSurfaceCatalog`.
+
+The catalog is a living list reviewed manually, not a proof that every sticky-CTA (or
+overflow-prone) surface in the app is covered — the 3-surface miss above is exactly why.
+As of this branch, `grep -rl "Spacer()" lib/` finds hits only in
+`lib/widgets/scrollable_actions_layout.dart` (the widget's own doc comment, not a usage)
+and `lib/screens/dashboard/widgets/transaction_row.dart` (a horizontal `Row` use —
+legitimate, not this bug class, left unchanged). No sticky-CTA surface currently matches
+this grep signal.
+
+That grep is not exhaustive either — it is the same limited signal that missed the 3
+surfaces above in the first place. At least three more surfaces are still plausible,
+un-re-audited candidates because they use a bounded, non-scrolling
+`Column(mainAxisSize: .min, ...)` with no `Spacer()` and no scroll view: the sell
+confirm/executed sheets (`sell_confirm_sheet.dart`, `sell_executed_sheet.dart`) and the two
+PIN bottom sheets (`forgot_pin_bottom_sheet.dart`, `enable_biometric_bottom_sheet.dart`).
+`welcome_page.dart` looks structurally safe (its entire body, including all interactive
+cards, already lives inside one `SingleChildScrollView` with no separate sticky CTA) but
+was not verified with a matrix test. None of these are confirmed either way — that is an
+open item for the next review pass, not a claim of completeness.
 
 ## Manual smoke (optional, not the gate)
 
