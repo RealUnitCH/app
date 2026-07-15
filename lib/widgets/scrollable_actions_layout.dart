@@ -15,6 +15,15 @@ import 'package:flutter/material.dart';
 ///   unbounded height throws a [FlutterError] in every build mode (debug and
 ///   release), so the failure is always loud and never a silently degraded
 ///   layout.
+/// - The body is always given at least the leftover viewport height, so
+///   [mainAxisAlignment] (and vertical centering via [centerBody]) works inside
+///   it. A [Spacer] inside [body] is **not** allowed: inside a scroll view's
+///   unbounded main axis it is a programming error (RenderFlex "unbounded"
+///   exception), unlike the outer bounded-height contract above.
+/// - When the actions alone need the entire viewport, [Expanded] for [body]
+///   collapses toward zero and body content becomes unreachable while the
+///   actions stay reachable — a deliberate trade (a visible, scrollable CTA
+///   beats a dead one) and strictly better than the pre-fix overflow.
 ///
 /// Use this for every bottom sheet and full-screen flow that combines long copy
 /// with bottom CTAs. Do not put a [Spacer] above buttons and hope it fits.
@@ -26,6 +35,7 @@ class ScrollableActionsLayout extends StatelessWidget {
     this.padding = EdgeInsets.zero,
     this.actionsSpacing = 12,
     this.scrollPhysics,
+    this.centerBody = false,
   });
 
   /// Scrollable main content (illustration, titles, forms, hints).
@@ -42,21 +52,13 @@ class ScrollableActionsLayout extends StatelessWidget {
 
   final ScrollPhysics? scrollPhysics;
 
+  /// Vertically centre [body] while it fits the viewport (it still scrolls once
+  /// it outgrows it). Use for screens that centred their content with a
+  /// `Spacer()` above and below — without this they would top-align.
+  final bool centerBody;
+
   @override
   Widget build(BuildContext context) {
-    final actionBlock = actions.isEmpty
-        ? const SizedBox.shrink()
-        : Column(
-            mainAxisSize: .min,
-            spacing: actionsSpacing,
-            children: actions,
-          );
-
-    final scrollBody = SingleChildScrollView(
-      physics: scrollPhysics,
-      child: body,
-    );
-
     return Padding(
       padding: padding,
       child: LayoutBuilder(
@@ -76,10 +78,52 @@ class ScrollableActionsLayout extends StatelessWidget {
               ),
             ]);
           }
+
+          final Widget actionBlock = actions.isEmpty
+              ? const SizedBox.shrink()
+              : ConstrainedBox(
+                  // A Column lays out non-flex children with an UNBOUNDED main axis, so
+                  // without this the action block takes its full intrinsic height and
+                  // overflows the Column when it exceeds the viewport — clipping the CTA
+                  // out of the hit-test region, the exact bug this widget prevents.
+                  // Bounding it at the viewport height is enough: a SingleChildScrollView
+                  // under a loose maxHeight shrink-wraps to its child, so when the actions
+                  // fit (the normal case) NOTHING changes; only when they would overflow
+                  // are they capped and scrolled internally.
+                  constraints: BoxConstraints(maxHeight: constraints.maxHeight),
+                  child: SingleChildScrollView(
+                    key: const Key('scrollable_actions_layout.actions_scroll_view'),
+                    child: Column(
+                      mainAxisSize: .min,
+                      spacing: actionsSpacing,
+                      children: actions,
+                    ),
+                  ),
+                );
+
           return Column(
             crossAxisAlignment: .stretch,
             children: [
-              Expanded(child: scrollBody),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, viewport) => SingleChildScrollView(
+                    key: const Key('scrollable_actions_layout.body_scroll_view'),
+                    physics: scrollPhysics,
+                    child: ConstrainedBox(
+                      // Always at least the leftover viewport height, so bodies may use
+                      // mainAxisAlignment / centering. Once the body outgrows the viewport
+                      // minHeight stops binding and the body simply scrolls.
+                      constraints: BoxConstraints(minHeight: viewport.maxHeight),
+                      child: SizedBox(
+                        // Center() below loosens the width constraint; without this the
+                        // crossAxisAlignment: .stretch chain breaks for width-dependent bodies.
+                        width: double.infinity,
+                        child: centerBody ? Center(child: body) : body,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               actionBlock,
             ],
           );

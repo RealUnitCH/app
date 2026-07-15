@@ -21,6 +21,8 @@ The app must stay fully usable on every **standard phone** we support (smallest 
 
 - Flows with long content + bottom actions (bottom sheets, onboarding, confirmations) use [`ScrollableActionsLayout`](lib/widgets/scrollable_actions_layout.dart): scrollable body, **CTAs fixed outside** the scroll view.
 - Never rely on `Spacer()` + fixed sheet height alone — that is how the BitBox pairing `Bestätigen` button became untappable on iOS.
+- `Spacer()` inside the body is illegal (unbounded main axis in the scroll view → RenderFlex crash). Use `centerBody: true` to vertically center content that still fits.
+- Host must provide **bounded height** (bottom sheet, `Expanded`, or fixed `SizedBox`); unbounded height throws `FlutterError` in every build mode.
 
 **Test rule (gate for this bug class)**
 
