@@ -323,7 +323,7 @@ jobs:
           # to the committed set upstream requires an explicit bump here AND a
           # matching card edit in docs/handbook/de/index.html (#spec-web) in the
           # SAME change — same guard rationale as the api steps above.
-          EXPECTED_WEB_BASELINE_COUNT: 18
+          EXPECTED_WEB_BASELINE_COUNT: 22
         run: |
           set -euo pipefail
 
