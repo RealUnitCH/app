@@ -47,20 +47,24 @@ on:
 # Staging-lane special case: the permanently-open, same-repo auto-PR
 # "staging → develop" (#841) would otherwise re-verify every staging
 # commit a second time on the identical SHA (its PR-number group
-# differs from the push group). Exactly that PR — pull_request event,
-# head_ref == 'staging', same repo (the repo-identity check stops a
-# fork branch named `staging` from cancelling the real staging lane)
-# — is placed into the constant group `refs/heads/staging` shared with
-# `push: staging`. cancel-in-progress then cancels the duplicate;
-# exactly one real run always survives (no skip, no skipped=success
-# masking — a red stays red). Feature PRs keep their own PR-number
-# group, unaffected.
+# differs from the push group). Exactly that non-draft PR —
+# pull_request event, head_ref == 'staging', same repo (the
+# repo-identity check stops a fork branch named `staging` from
+# cancelling the real staging lane), draft == false — is placed into
+# the constant group `refs/heads/staging` shared with `push: staging`.
+# A staging PR that is (manually) set to draft falls back to its own
+# PR-number group so the `push: staging` run survives independently
+# and the commit stays really verified. cancel-in-progress then
+# cancels the duplicate; exactly one real run always survives (no
+# skip, no skipped=success masking — a red stays red). Feature PRs
+# keep their own PR-number group, unaffected.
 concurrency:
   group: >-
     ci-${{ github.workflow }}-${{
       (github.event_name == 'pull_request'
         && github.head_ref == 'staging'
-        && github.event.pull_request.head.repo.full_name == github.repository)
+        && github.event.pull_request.head.repo.full_name == github.repository
+        && github.event.pull_request.draft == false)
         && 'refs/heads/staging'
       || (github.event.pull_request.number || github.ref)
     }}
