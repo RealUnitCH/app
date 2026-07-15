@@ -1,7 +1,7 @@
 # RealUnit Handbook
 
 User-Guide + Test-Doku in einem. Jeder Screenshot ist eine Visual-Regression-
-Golden-Baseline aus `test/goldens/screens/`; das Handbook bleibt nur dann
+Golden-Baseline aus `test/goldens/` (`screens/` + `widgets/`); das Handbook bleibt nur dann
 visuell korrekt, wenn die App es auch ist — eine Drift im echten Seitenrendering
 flippt den entsprechenden Golden-Test rot, bevor das Handbook-Image gebaut wird.
 
@@ -21,8 +21,8 @@ deployten Image (`handbook.realunit.app` / `dev-handbook.realunit.app`).
 
 ## Screenshots regenerieren
 
-Es gibt keinen separaten Regeneration-Schritt: Die 61 Handbook-Screenshots
-sind direkt die Golden-Baselines unter `test/goldens/screens/` (gemappt in
+Es gibt keinen separaten Regeneration-Schritt: Die 278 Handbook-Screenshots
+sind direkt die Golden-Baselines unter `test/goldens/` (gemappt in
 `scripts/assemble-handbook-screenshots.sh`). Eine UI-Änderung an einer der
 gemappten Pages produziert beim `flutter test test/goldens` einen Diff —
 diesen via `golden-regenerate.yaml` auf dem self-hosted Runner regenerieren lassen, und der

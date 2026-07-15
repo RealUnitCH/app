@@ -236,6 +236,12 @@ jobs:
           name: coverage-summary
           path: coverage
 
+      - name: Download scoped coverage tracefile
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-lcov
+          path: coverage
+
       - name: Enforce coverage floor
         run: |
           set -euo pipefail
@@ -275,6 +281,18 @@ jobs:
             fi
           fi
 
+      # Closes the coverage blind spot the floor % alone cannot see: an in-scope
+      # file that no test ever loads is absent from lcov.info entirely, so it
+      # sits in neither the numerator nor the denominator and the scoped %
+      # stays 100 % while the file is wholly untested. This step enumerates the
+      # on-disk activated surface (same globs as the filter step above) and
+      # fails when a file carries no coverage and is not in the committed
+      # lineless allowlist. See scripts/check-coverage-visibility.sh.
+      - name: Enforce in-scope file visibility
+        run: |
+          set -euo pipefail
+          bash scripts/check-coverage-visibility.sh coverage/lcov.info .coverage-visibility-allowlist
+
   # Visual regression tests on the self-hosted runner. Goldens live
   # under `test/goldens/` and are validated pixel-for-pixel against committed
   # baselines under `test/goldens/screens/**/goldens/macos/`. The Mac Studio
@@ -295,14 +313,29 @@ jobs:
     name: Visual Regression
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: [self-hosted, macOS, ARM64, m3-ultra, realunit-app]
-    timeout-minutes: 30
+    # 30 was sized for the era when `subosito/flutter-action@v2` still pulled
+    # the SDK through the Actions cache and burned ~18 minutes on a stalled
+    # restore plus the trailing cache-save. Without that overhead the job
+    # finishes in ~1 minute, so 15 is generous headroom — it still covers the
+    # worst normal case, where the SDK is absent from the runner's persistent
+    # tool cache and has to be downloaded from scratch. The lower ceiling is
+    # what matters here: the self-hosted runner has exactly ONE slot for this
+    # repo, so a wedged job blocks every other PR until it is killed. 15 hands
+    # the slot back twice as fast as 30.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.41.6"
           channel: "stable"
-          cache: true
+          # Self-hosted runner already keeps the Flutter SDK persistently
+          # under `_work/_tool` across runs. The Actions cache restore on
+          # this runner stalls at 0.5-0.8 MB/s, times out after the 10
+          # minute segment timeout, falls back to a cache miss anyway,
+          # then burns ~8 minutes on a cache-save — ~18 minutes of pure
+          # overhead that returns nothing useful here.
+          cache: false
       - run: flutter pub get
       - run: dart run tool/generate_localization.dart
       - run: dart run tool/generate_release_info.dart
