@@ -136,8 +136,10 @@ class SellConfirmSheetView extends StatelessWidget {
     );
   }
 
-  /// Overflow-proof label/value row: both sides are Flexible with single-line
-  /// ellipsis so neither long labels nor long values can expand the row.
+  /// Label/value row: both sides are Flexible and WRAP (not ellipsize) so a long
+  /// value (e.g. a beneficiary IBAN) always stays fully readable — the sheet
+  /// scrolls, so extra height here is absorbed, never data loss via truncation.
+  /// Wrapping also prevents horizontal RenderFlex overflow for either side.
   Widget _infoRow({required String label, required String value}) {
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -145,12 +147,13 @@ class SellConfirmSheetView extends StatelessWidget {
         horizontal: 20.0,
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Flexible(
             child: Text(
               label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              softWrap: true,
               style: const TextStyle(
                 color: RealUnitColors.neutral500,
                 height: 18 / 14,
@@ -162,8 +165,7 @@ class SellConfirmSheetView extends StatelessWidget {
             child: Text(
               value,
               textAlign: TextAlign.end,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              softWrap: true,
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 height: 18 / 14,

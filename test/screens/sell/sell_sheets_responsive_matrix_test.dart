@@ -7,11 +7,17 @@
 //   overflow stripe in release builds).
 // - Horizontal RenderFlex overflow of the IBAN row in the confirm info card.
 // - SellExecutedSheet shown without isScrollControlled (modal height clamped
-//   to 9/16 of the screen).
+//   to 9/16 of the screen) — the dedicated test below documents/demonstrates
+//   why sell_button.dart needs isScrollControlled: true by reproducing the
+//   underlying Flutter clamp behavior in isolation. It does NOT exercise the
+//   real SellButton widget, so it cannot detect a regression at that call site
+//   itself — only the behavior the call site depends on. The matrix loops
+//   always pump with isScrollControlled: true and do not cover this case.
 //
-// Sheets are pumped via a real showModalBottomSheet(isScrollControlled: true)
-// so the screen-height bound production imposes is reproduced. pumpClippedSheet
-// is intentionally not used — it does not reproduce that modal constraint.
+// Matrix sheets are pumped via a real showModalBottomSheet(isScrollControlled:
+// true) so the screen-height bound production imposes is reproduced.
+// pumpClippedSheet is intentionally not used — it does not reproduce that
+// modal constraint.
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -213,5 +219,49 @@ void main() {
         });
       });
     }
+
+    // Documents why sell_button.dart needs isScrollControlled: true when showing
+    // SellExecutedSheet: pumps with false (Flutter's default) and asserts the
+    // 9/16 clamp. Does not instantiate SellButton, so it cannot catch a call-site
+    // regression there — only the underlying Flutter behavior the flag avoids.
+    testWidgets(
+      'SellExecutedSheet without isScrollControlled=true reproduces the 9/16 clamp bug (iphone_se_3@2.0x, de)',
+      (tester) async {
+        final cell = MatrixCell(
+          kIosDeviceProfiles.firstWhere((d) => d.id == 'iphone_se_3'),
+          2.0,
+        );
+
+        await withTargetPlatform(cell.device.platform, () async {
+          await pumpModalSheet(
+            tester,
+            cell,
+            isScrollControlled: false,
+            sheetBuilder: (_) => const SellExecutedSheet(),
+          );
+
+          // Without isScrollControlled: true, Flutter clamps the modal to 9/16 of the
+          // available height regardless of content, so SellExecutedSheet's content
+          // genuinely overflows at this small-device / high-text-scale cell. This is
+          // the exact regression the call-site fix in sell_button.dart guards against.
+          final exception = tester.takeException();
+          expect(
+            exception,
+            isNotNull,
+            reason: 'Expected SellExecutedSheet to overflow / fail to lay out under the '
+                '9/16 modal clamp (isScrollControlled: false) at ${cell.label}. If this '
+                'no longer fails, either the clamp reproduction stopped working or the '
+                'widget silently degrades instead of failing loudly — investigate before '
+                'weakening this assertion.',
+          );
+          expect(
+            exception.toString(),
+            contains('overflowed'),
+            reason: 'Expected the captured exception to be the RenderFlex overflow caused '
+                'by the 9/16 clamp, not some unrelated failure.',
+          );
+        });
+      },
+    );
   });
 }
