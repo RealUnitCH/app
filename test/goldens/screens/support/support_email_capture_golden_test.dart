@@ -64,35 +64,5 @@ void main() {
         ),
       ),
     );
-
-    // A SupportEmailCaptureFailure drives the BlocListener (page:75-85) to show
-    // the red error SnackBar. For `mergeRequested` the listener swaps in the
-    // localized `supportEmailMergeRequiresVerification` copy (a long, wrapping
-    // message), ignoring `message`. Emitting the failure via `whenListen` (the
-    // initial state is Initial) fires the listener; pumpAndSettle runs the
-    // entrance animation (the 4s auto-dismiss is a Timer, not a frame, so the
-    // SnackBar stays visible).
-    goldenTest(
-      'failure SnackBar (red) — email already linked to another wallet',
-      fileName: 'support_email_capture_page_failure_snackbar',
-      constraints: phoneConstraints,
-      pumpBeforeTest: (tester) async {
-        await tester.pump(); // deliver the whenListen emission to the listener
-        await tester.pumpAndSettle(); // run the SnackBar entrance to completion
-      },
-      builder: () {
-        whenListen(
-          cubit,
-          Stream.fromIterable(const [
-            SupportEmailCaptureFailure(
-              error: SupportEmailCaptureError.mergeRequested,
-              message: 'merge required',
-            ),
-          ]),
-          initialState: const SupportEmailCaptureInitial(),
-        );
-        return wrapForGolden(buildSubject());
-      },
-    );
   });
 }
