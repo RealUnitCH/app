@@ -1,13 +1,18 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/support/support_issue_reason.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/support/support_issue_type.dart';
 import 'package:realunit_wallet/screens/support/cubits/support_create_ticket/support_create_ticket_cubit.dart';
 import 'package:realunit_wallet/screens/support/cubits/support_create_ticket/support_create_ticket_state.dart';
 import 'package:realunit_wallet/screens/support/subpages/support_create_ticket_page.dart';
+import 'package:realunit_wallet/styles/themes.dart';
 
 import '../../../helper/helper.dart';
 
@@ -26,6 +31,50 @@ void main() {
         value: cubit,
         child: const SupportCreateTicketView(),
       );
+
+  // The success SnackBar is hosted by the app-level ScaffoldMessenger and the
+  // listener pops the form right after showing it (page:40-48), so faithfully
+  // it renders over the screen we return to — the Support landing
+  // (router tree: /support → create). We rebuild that stack with a real
+  // GoRouter because the page uses go_router's `context.pop`, which needs an
+  // InheritedGoRouter; a plain MaterialApp would throw. After the pop the green
+  // SnackBar shows over a Support-titled host, exactly as in production.
+  Widget buildSuccessSubject() {
+    final router = GoRouter(
+      initialLocation: '/support/create',
+      routes: [
+        GoRoute(
+          path: '/support',
+          builder: (context, _) => Scaffold(
+            appBar: AppBar(title: Text(S.of(context).contactSupport)),
+          ),
+          routes: [
+            GoRoute(
+              path: 'create',
+              builder: (context, _) =>
+                  BlocProvider<SupportCreateTicketCubit>.value(
+                value: cubit,
+                child: const SupportCreateTicketView(),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+    return MaterialApp.router(
+      theme: realUnitTheme,
+      locale: const Locale('de'),
+      localizationsDelegates: [
+        S.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      supportedLocales: S.delegate.supportedLocales,
+      routerConfig: router,
+      debugShowCheckedModeBanner: false,
+    );
+  }
 
   group('$SupportCreateTicketView', () {
     goldenTest(
@@ -73,6 +122,79 @@ void main() {
           ),
         );
         return wrapForGolden(buildSubject());
+      },
+    );
+
+    // A state with `error != null` drives the BlocConsumer.listener (page:49-56)
+    // to show the red failure SnackBar. The listener renders the raw
+    // `e.toString()` the cubit stores (cubit:44), so we feed a real
+    // `ApiException` string rather than invented copy. Emitting the error via
+    // `whenListen` (the initial state has none) fires the listener; pumpAndSettle
+    // runs the entrance animation (the 4s auto-dismiss is a Timer, not a frame,
+    // so the SnackBar stays visible).
+    goldenTest(
+      'submit failure SnackBar (red)',
+      fileName: 'support_create_ticket_page_error_snackbar',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pump(); // deliver the whenListen emission to the listener
+        await tester.pumpAndSettle(); // run the SnackBar entrance to completion
+      },
+      builder: () {
+        whenListen(
+          cubit,
+          Stream.fromIterable([
+            SupportCreateTicketState(
+              selectedType: SupportIssueType.genericIssue,
+              selectedReason: SupportIssueReason.other,
+              message: 'Ich habe eine Frage zu meinem Konto.',
+              error: const ApiException(
+                statusCode: 500,
+                code: 'UNKNOWN',
+                message: 'Internal server error',
+              ).toString(),
+            ),
+          ]),
+          initialState: const SupportCreateTicketState(
+            selectedType: SupportIssueType.genericIssue,
+            selectedReason: SupportIssueReason.other,
+            message: 'Ich habe eine Frage zu meinem Konto.',
+          ),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    // On `isSuccess` the listener shows the green confirmation SnackBar and pops
+    // the form (page:40-48). Rendering it over the create-ticket form would be a
+    // fiction — that page is already gone — so `buildSuccessSubject` reproduces
+    // the real pop to the Support host, where the app-level SnackBar persists.
+    goldenTest(
+      'success SnackBar (green) — over the Support host after the form pops',
+      fileName: 'support_create_ticket_page_success_snackbar',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await tester.pump(); // deliver the isSuccess emission to the listener
+        await tester.pumpAndSettle(); // pop to the host + run the SnackBar entrance
+      },
+      builder: () {
+        whenListen(
+          cubit,
+          Stream.fromIterable(const [
+            SupportCreateTicketState(
+              selectedType: SupportIssueType.genericIssue,
+              selectedReason: SupportIssueReason.other,
+              message: 'Ich habe eine Frage zu meinem Konto.',
+              isSuccess: true,
+            ),
+          ]),
+          initialState: const SupportCreateTicketState(
+            selectedType: SupportIssueType.genericIssue,
+            selectedReason: SupportIssueReason.other,
+            message: 'Ich habe eine Frage zu meinem Konto.',
+          ),
+        );
+        return buildSuccessSubject();
       },
     );
   });
