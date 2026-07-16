@@ -10,6 +10,7 @@ import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/handlebars.dart';
+import 'package:realunit_wallet/widgets/iban_text_formatter.dart';
 import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 
 class SellConfirmSheet extends StatelessWidget {
@@ -102,7 +103,7 @@ class SellConfirmSheetView extends StatelessWidget {
                                 ),
                                 _infoRow(
                                   label: S.of(context).receiver,
-                                  value: paymentInfo.beneficiary.iban,
+                                  value: IbanTextFormatter.formatIban(paymentInfo.beneficiary.iban),
                                 ),
                               ],
                             ),
