@@ -98,6 +98,30 @@ void main() {
       expect(find.byType(OutlinedTile), findsNWidgets(tickets.length));
     });
 
+    testWidgets('renders the ticket date in local time, not UTC', (tester) async {
+      // A UTC instant late in the day: in a positive-offset timezone the local
+      // calendar date rolls to the next day, so this fails if the page renders
+      // the raw UTC components instead of `.toLocal()`.
+      final createdUtc = DateTime.utc(2024, 1, 15, 23, 30);
+      final local = createdUtc.toLocal();
+      final tickets = [
+        SupportIssue(
+          uid: '123',
+          created: createdUtc,
+          messages: [],
+          name: 'name',
+          reason: SupportIssueReason.other,
+          state: SupportIssueState.created,
+          type: SupportIssueType.genericIssue,
+        ),
+      ];
+      when(() => supportTicketsCubit.state).thenReturn(SupportTicketsLoaded(tickets));
+
+      await tester.pumpApp(buildSubject(const SupportTicketsView()));
+
+      expect(find.text('${local.day}.${local.month}.${local.year}'), findsOne);
+    });
+
     testWidgets('renders correctly when successfully loaded but no tickets', (tester) async {
       final tickets = <SupportIssue>[];
       when(() => supportTicketsCubit.state).thenReturn(SupportTicketsLoaded(tickets));
