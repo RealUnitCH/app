@@ -264,5 +264,11 @@ void main() {
 
       expect(find.text(S.current.payRetryInsufficientZchf), findsOne);
     });
+
+    testWidgets('unsigned-tx-mismatch retry reason shows its message', (tester) async {
+      await pumpWithState(tester, const PayProcessPayRetry(PayRetryReason.unsignedTxMismatch));
+
+      expect(find.text(S.current.payRetryUnsignedTxMismatch), findsOne);
+    });
   });
 }

@@ -171,6 +171,40 @@ const _unsignedPayMaxFeeExceedsCap = RealUnitOcpPayUnsignedTransactionDto(
   chainId: 11155111,
 );
 
+// Same to/recipient/amount/chainId as _unsignedPay, but the native ETH `value` field is 1 wei
+// instead of 0 — an ERC20 transfer must carry zero value. Verified byte-for-byte against a
+// reference RLP encoder/decoder (only the single value byte 0x80→0x01 differs from _unsignedPay).
+const _unsignedPayNonZeroValue = RealUnitOcpPayUnsignedTransactionDto(
+  unsignedTx:
+      '0x02f87183aa36a7018459682f008504a817c800830186a094111111111111111111111111111111111111ac0101b844a9059cbb000000000000000000000000222222222222222222222222222222222222bc020000000000000000000000000000000000000000000000004563918244f40000c0',
+  tokenAddress: '0x111111111111111111111111111111111111ac01',
+  recipient: '0x222222222222222222222222222222222222bc02',
+  amountWei: '5000000000000000000',
+  chainId: 11155111,
+);
+
+// Same unsignedTx/tokenAddress/recipient/chainId as _unsignedPay (all still valid and
+// self-consistent), but the DTO's amountWei is not a parseable integer.
+const _unsignedPayInvalidAmountWei = RealUnitOcpPayUnsignedTransactionDto(
+  unsignedTx:
+      '0x02f87183aa36a7018459682f008504a817c800830186a094111111111111111111111111111111111111ac0180b844a9059cbb000000000000000000000000222222222222222222222222222222222222bc020000000000000000000000000000000000000000000000004563918244f40000c0',
+  tokenAddress: '0x111111111111111111111111111111111111ac01',
+  recipient: '0x222222222222222222222222222222222222bc02',
+  amountWei: 'not-a-number',
+  chainId: 11155111,
+);
+
+// Same unsignedTx/recipient/amountWei/chainId as _unsignedPay, but the DTO's tokenAddress is
+// not a valid 20-byte hex address.
+const _unsignedPayInvalidTokenAddress = RealUnitOcpPayUnsignedTransactionDto(
+  unsignedTx:
+      '0x02f87183aa36a7018459682f008504a817c800830186a094111111111111111111111111111111111111ac0180b844a9059cbb000000000000000000000000222222222222222222222222222222222222bc020000000000000000000000000000000000000000000000004563918244f40000c0',
+  tokenAddress: 'not-a-valid-address',
+  recipient: '0x222222222222222222222222222222222222bc02',
+  amountWei: '5000000000000000000',
+  chainId: 11155111,
+);
+
 void main() {
   late _MockPayService payService;
   late _MockFaucet faucet;
@@ -496,6 +530,57 @@ void main() {
     await cubit.close();
   });
 
+  test('unsigned pay tx sends non-zero native value → unsignedTxMismatch, never signed', () async {
+    wireHappyPath();
+    when(() => payService.createPayUnsignedTransaction(any()))
+        .thenAnswer((_) async => _unsignedPayNonZeroValue);
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    final state = await retry as PayProcessPayRetry;
+
+    expect(state.reason, PayRetryReason.unsignedTxMismatch);
+    verifyNever(() => payService.submitPay(any()));
+    await cubit.close();
+  });
+
+  test('unsigned pay tx DTO amountWei is not a valid integer → unsignedTxMismatch, never signed',
+      () async {
+    wireHappyPath();
+    when(() => payService.createPayUnsignedTransaction(any()))
+        .thenAnswer((_) async => _unsignedPayInvalidAmountWei);
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    final state = await retry as PayProcessPayRetry;
+
+    expect(state.reason, PayRetryReason.unsignedTxMismatch);
+    expect(state.message, contains('amountWei is not a valid integer'));
+    verifyNever(() => payService.submitPay(any()));
+    await cubit.close();
+  });
+
+  test(
+    'unsigned pay tx DTO tokenAddress is not a valid 20-byte address → unsignedTxMismatch, never signed',
+    () async {
+      wireHappyPath();
+      when(() => payService.createPayUnsignedTransaction(any()))
+          .thenAnswer((_) async => _unsignedPayInvalidTokenAddress);
+
+      final cubit = build();
+      final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+      await cubit.start();
+      final state = await retry as PayProcessPayRetry;
+
+      expect(state.reason, PayRetryReason.unsignedTxMismatch);
+      expect(state.message, contains('tokenAddress is not a valid 20-byte address'));
+      verifyNever(() => payService.submitPay(any()));
+      await cubit.close();
+    },
+  );
+
   test('terminal non-completed status (Cancelled) → pay-only retry', () async {
     fakeAsync((async) {
       wireHappyPath();
@@ -549,6 +634,74 @@ void main() {
     });
   });
 
+  test('status polling exceeds max attempts on a persistently non-terminal status → transient retry',
+      () {
+    fakeAsync((async) {
+      wireHappyPath();
+      var pollCalls = 0;
+      when(() => payService.getPayStatus('pl_abc')).thenAnswer((_) async {
+        pollCalls++;
+        return const RealUnitOcpPayStatusDto(status: OcpPaymentStatus.pending);
+      });
+
+      final cubit = build();
+      cubit.start();
+      drain(async);
+      expect(cubit.state, isA<PayProcessAwaitingSettlement>());
+
+      // 40 polls @ 3s, each still Pending (never terminal) — the 40th hits the max-attempts
+      // cap and gives up rather than polling forever. Iterations 1-39 exercise the
+      // "still polling" branch; iteration 40 exercises the "give up" branch.
+      for (var i = 0; i < 40; i++) {
+        async.elapse(const Duration(seconds: 3));
+        drain(async);
+      }
+
+      final state = cubit.state as PayProcessPayRetry;
+      expect(state.reason, PayRetryReason.transient);
+      expect(state.message, 'status polling exceeded max attempts');
+      expect(pollCalls, 40);
+
+      // Polling has genuinely stopped — elapsing further must not trigger another call.
+      async.elapse(const Duration(seconds: 3));
+      drain(async);
+      expect(pollCalls, 40);
+
+      cubit.close();
+      async.flushTimers();
+    });
+  });
+
+  test('status polling exceeds max attempts on persistent errors → transient retry', () {
+    fakeAsync((async) {
+      wireHappyPath();
+      var pollCalls = 0;
+      when(() => payService.getPayStatus('pl_abc')).thenAnswer((_) async {
+        pollCalls++;
+        throw Exception('rpc 503');
+      });
+
+      final cubit = build();
+      cubit.start();
+      drain(async);
+      expect(cubit.state, isA<PayProcessAwaitingSettlement>());
+
+      // 40 polls @ 3s, each throwing — the 40th hits the max-attempts cap via the catch path.
+      for (var i = 0; i < 40; i++) {
+        async.elapse(const Duration(seconds: 3));
+        drain(async);
+      }
+
+      final state = cubit.state as PayProcessPayRetry;
+      expect(state.reason, PayRetryReason.transient);
+      expect(state.message, 'status polling exceeded max attempts');
+      expect(pollCalls, 40);
+
+      cubit.close();
+      async.flushTimers();
+    });
+  });
+
   test('low ETH balance → faucet → eth polling crosses threshold → swap proceeds', () async {
     fakeAsync((async) {
       wireHappyPath();
@@ -586,6 +739,45 @@ void main() {
       async.elapse(const Duration(seconds: 3));
       drain(async);
       expect(cubit.state, isA<PayProcessSuccess>());
+
+      cubit.close();
+      async.flushTimers();
+    });
+  });
+
+  test('eth polling ignores a transient balance-check error then proceeds once funded', () {
+    fakeAsync((async) {
+      wireHappyPath();
+      when(
+        () => payService.getSwapPaymentInfo(any()),
+      ).thenAnswer((_) async => _swap(ethBalance: 0, requiredGasEth: 0.001));
+      when(
+        () => faucet.requestFaucet(),
+      ).thenAnswer((_) async => const FaucetResponseDto(txId: '0xf', amount: 0.01));
+      var balanceCall = 0;
+      when(() => blockchain.getEthBalance(any())).thenAnswer((_) async {
+        balanceCall++;
+        if (balanceCall == 1) throw Exception('rpc 503');
+        return 0.01;
+      });
+      when(() => payService.getPayStatus('pl_abc')).thenAnswer(
+        (_) async => const RealUnitOcpPayStatusDto(status: OcpPaymentStatus.completed),
+      );
+
+      final cubit = build();
+      cubit.start();
+      drain(async);
+      expect(cubit.state, isA<PayProcessWaitingForEth>());
+
+      // 1st eth poll @ 5s — balance check throws; must not get stuck, keeps polling.
+      async.elapse(const Duration(seconds: 5));
+      drain(async);
+      expect(cubit.state, isA<PayProcessWaitingForEth>());
+
+      // 2nd eth poll @ 10s — funded → swap proceeds to settlement polling.
+      async.elapse(const Duration(seconds: 5));
+      drain(async);
+      expect(cubit.state, isA<PayProcessAwaitingSettlement>());
 
       cubit.close();
       async.flushTimers();

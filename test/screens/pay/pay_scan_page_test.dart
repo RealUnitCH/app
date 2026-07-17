@@ -118,5 +118,28 @@ void main() {
       expect(find.byType(PayQuoteView), findsOne);
       verify(() => scanCubit.reset()).called(1);
     });
+
+    testWidgets(
+      'errorBuilder shows the camera-unavailable message for non-permission-denied errors',
+      (tester) async {
+        await tester.pumpApp(buildSubject());
+
+        final scanner = tester.widget<MobileScanner>(find.byType(MobileScanner));
+        final context = tester.element(find.byType(MobileScanner));
+        final nonPermissionCode = MobileScannerErrorCode.values.firstWhere(
+          (code) => code != MobileScannerErrorCode.permissionDenied,
+        );
+        final errorWidget = scanner.errorBuilder!(
+          context,
+          MobileScannerException(errorCode: nonPermissionCode),
+          null,
+        );
+
+        await tester.pumpWidget(MaterialApp(home: errorWidget));
+
+        expect(find.text(S.current.payScanCameraUnavailable), findsOne);
+        expect(find.text(S.current.payScanCameraPermissionDenied), findsNothing);
+      },
+    );
   });
 }

@@ -68,6 +68,25 @@ void main() {
       );
     });
 
+    test('rejects a tx whose RLP root has the wrong field count (accessList stripped)', () {
+      // Same tx as _validUnsignedTx but with the trailing accessList field (empty list `c0`)
+      // removed and the outer list-length prefix corrected from 0x71 (113 bytes) to 0x70
+      // (112 bytes) so the RLP still decodes cleanly with zero trailing bytes — root then has
+      // 8 fields instead of 9. Verified byte-for-byte against a reference RLP decoder.
+      expect(
+        () => Eip1559UnsignedTxDecoder.decode(
+          '0x02f87083aa36a7018459682f008504a817c800830186a094111111111111111111111111111111111111ac0180b844a9059cbb000000000000000000000000222222222222222222222222222222222222bc020000000000000000000000000000000000000000000000004563918244f40000',
+        ),
+        throwsA(
+          isA<PayUnsignedTxMismatchException>().having(
+            (e) => e.reason,
+            'reason',
+            'unsigned tx has 8 RLP fields, expected 9',
+          ),
+        ),
+      );
+    });
+
     test('rejects invalid hex', () {
       expect(
         () => Eip1559UnsignedTxDecoder.decode('0x02zzzz'),

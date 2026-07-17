@@ -172,5 +172,16 @@ void main() {
 
       expect(find.text(S.current.payFailureGeneric), findsOne);
     });
+
+    testWidgets('error state retry button re-invokes load()', (tester) async {
+      when(() => quoteCubit.state).thenReturn(const PayQuoteError('boom'));
+      when(() => quoteCubit.load()).thenAnswer((_) async {});
+      await tester.pumpApp(buildSubject());
+
+      await tester.tap(find.byKey(const ValueKey('payQuoteRetryButton')));
+      await tester.pump();
+
+      verify(() => quoteCubit.load()).called(1);
+    });
   });
 }
