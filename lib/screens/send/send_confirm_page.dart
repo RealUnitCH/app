@@ -5,14 +5,27 @@ import 'package:realunit_wallet/styles/colors.dart';
 
 /// Third step: review the recipient + amount before signing. Confirming starts
 /// the on-chain process step.
-class SendConfirmPage extends StatelessWidget {
+class SendConfirmPage extends StatefulWidget {
   final String recipient;
   final int amount;
 
   const SendConfirmPage({super.key, required this.recipient, required this.amount});
 
   @override
+  State<SendConfirmPage> createState() => _SendConfirmPageState();
+}
+
+class _SendConfirmPageState extends State<SendConfirmPage> {
+  /// Once true, permanently disables the confirm button on this route instance
+  /// so a second transfer cannot be re-triggered after push+pop of the process
+  /// page (terminal navigation pattern).
+  bool _navigating = false;
+
+  @override
   Widget build(BuildContext context) {
+    final recipient = widget.recipient;
+    final amount = widget.amount;
+
     return Scaffold(
       appBar: AppBar(title: Text(S.of(context).sendConfirmTitle)),
       body: SafeArea(
@@ -38,11 +51,16 @@ class SendConfirmPage extends StatelessWidget {
               ),
               const Spacer(),
               FilledButton(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => SendProcessPage(recipient: recipient, amount: amount),
-                  ),
-                ),
+                onPressed: _navigating
+                    ? null
+                    : () {
+                        setState(() => _navigating = true);
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => SendProcessPage(recipient: recipient, amount: amount),
+                          ),
+                        );
+                      },
                 child: Text(S.of(context).sendConfirmButton),
               ),
             ],
@@ -64,6 +82,7 @@ class _SummaryRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 16,
       children: [
         Text(
           label,
@@ -71,7 +90,6 @@ class _SummaryRow extends StatelessWidget {
             color: RealUnitColors.neutral500,
           ),
         ),
-        const SizedBox(width: 16),
         Expanded(
           child: Text(
             value,

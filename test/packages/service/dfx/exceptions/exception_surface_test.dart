@@ -40,6 +40,8 @@ void main() {
       const InvalidRecipientAddressException('test'),
       const TransferSignatureUnsupportedException(),
       const TransferGasFundingUnavailableException(),
+      const TransferConfirmMismatchException(),
+      const TransferAlreadyConfirmedException(code: 'TEST', message: 'test'),
     ];
 
     for (final ex in exceptions) {

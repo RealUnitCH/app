@@ -40,6 +40,9 @@ final _walletAddress = _privKey.address.hexEip55;
 const _metaMaskDelegator = '0x63c0c19a282a1b52b07dd5a65b58948a07dae32b';
 const _delegationManager = '0xdb9b1e94b5b69df7e401ddbede43491141047db3';
 
+const _confirmedRecipient = '0xRecipient';
+const _confirmedAmount = 5;
+
 /// Debug-wallet style credential: it is neither BitboxCredentials nor
 /// EthPrivateKey, so `Eip712Signer.signDelegation` hits its `_ => throw
 /// UnsupportedError(...)` branch — exactly the debug-wallet capability gap.
@@ -48,7 +51,7 @@ class _UnsupportedCreds extends Fake implements CredentialsWithKnownAddress {
   EthereumAddress get address => _privKey.address;
 }
 
-Map<String, dynamic> _eip7702Json({int chainId = 1}) => {
+Map<String, dynamic> _eip7702Json({int chainId = 1, String recipient = _confirmedRecipient}) => {
   'relayerAddress': '0xrelay',
   'delegationManagerAddress': _delegationManager,
   'delegatorAddress': _metaMaskDelegator,
@@ -73,18 +76,36 @@ Map<String, dynamic> _eip7702Json({int chainId = 1}) => {
   // The asset address the mainnet RealUnit token resolves to in this fixture.
   'tokenAddress': '0x553C7f9C780316FC1D34b8e14ac2465Ab22a090B',
   'amountWei': '5',
-  'recipient': '0xRecipient',
+  'recipient': recipient,
 };
 
-RealUnitTransferPaymentInfoDto _info() => RealUnitTransferPaymentInfoDto.fromJson({
+RealUnitTransferPaymentInfoDto _info({
+  String toAddress = _confirmedRecipient,
+  int amount = _confirmedAmount,
+  String eip7702Recipient = _confirmedRecipient,
+}) => RealUnitTransferPaymentInfoDto.fromJson({
   'id': 42,
   'uid': 'RTabc',
-  'toAddress': '0xRecipient',
-  'amount': 5,
+  'toAddress': toAddress,
+  'amount': amount,
   'tokenAddress': '0xRealu',
   'chainId': 1,
-  'eip7702': _eip7702Json(),
+  'eip7702': _eip7702Json(recipient: eip7702Recipient),
 });
+
+/// Happy-path confirm with matching user-confirmed recipient/amount.
+Future<String> _confirm(
+  RealUnitTransferService service,
+  RealUnitTransferPaymentInfoDto info, {
+  String confirmedRecipient = _confirmedRecipient,
+  int confirmedAmount = _confirmedAmount,
+}) {
+  return service.confirmTransfer(
+    info,
+    confirmedRecipient: confirmedRecipient,
+    confirmedAmount: confirmedAmount,
+  );
+}
 
 void main() {
   late _MockAppStore appStore;
@@ -189,7 +210,7 @@ void main() {
         return http.Response(jsonEncode({'txHash': '0xdeadbeef'}), 200);
       });
 
-      final txHash = await build(client).confirmTransfer(_info());
+      final txHash = await _confirm(build(client), _info());
 
       expect(txHash, '0xdeadbeef');
       expect(sentUri!.path, '/v1/realunit/transfer/42/confirm');
@@ -218,7 +239,7 @@ void main() {
     test('locks the wallet after signing (key never left resident)', () async {
       final client = MockClient((_) async => http.Response(jsonEncode({'txHash': '0x1'}), 200));
 
-      await build(client).confirmTransfer(_info());
+      await _confirm(build(client), _info());
 
       verify(() => walletService.ensureCurrentWalletUnlocked()).called(1);
       verify(() => walletService.lockCurrentWallet()).called(1);
@@ -229,7 +250,7 @@ void main() {
       final client = MockClient((_) async => http.Response('{}', 200));
 
       expect(
-        () => build(client).confirmTransfer(_info()),
+        () => _confirm(build(client), _info()),
         throwsA(isA<TransferSignatureUnsupportedException>()),
       );
     });
@@ -240,7 +261,7 @@ void main() {
       );
 
       expect(
-        () => build(client).confirmTransfer(_info()),
+        () => _confirm(build(client), _info()),
         throwsA(isA<TransferGasFundingUnavailableException>()),
       );
     });
@@ -252,7 +273,7 @@ void main() {
       );
 
       expect(
-        () => build(client).confirmTransfer(_info()),
+        () => _confirm(build(client), _info()),
         throwsA(isA<ApiException>()),
       );
     });
@@ -265,8 +286,8 @@ void main() {
           RealUnitTransferPaymentInfoDto.fromJson({
             'id': 42,
             'uid': 'RTabc',
-            'toAddress': '0xRecipient',
-            'amount': 5,
+            'toAddress': _confirmedRecipient,
+            'amount': _confirmedAmount,
             'tokenAddress': '0xRealu',
             'chainId': 1,
             'eip7702': mutate(),
@@ -278,7 +299,7 @@ void main() {
           called = true;
           return http.Response('{}', 200);
         });
-        await expectLater(() => build(client).confirmTransfer(info), throwsException);
+        await expectLater(() => _confirm(build(client), info), throwsException);
         expect(called, isFalse, reason: 'no PUT must happen when validation rejects the payload');
       }
 
@@ -337,6 +358,105 @@ void main() {
       test('unparseable amount-wei', () async {
         await expectRejected(infoWith(() => _eip7702Json()..['amountWei'] = 'not-a-number'));
       });
+    });
+
+    // User-confirmed recipient/amount must match the prepare response before
+    // any signature is produced (blind-sign guard).
+    group('user-confirmed recipient/amount guard (throw before any PUT)', () {
+      Future<void> expectMismatch(
+        RealUnitTransferPaymentInfoDto info, {
+        String confirmedRecipient = _confirmedRecipient,
+        int confirmedAmount = _confirmedAmount,
+      }) async {
+        var called = false;
+        final client = MockClient((_) async {
+          called = true;
+          return http.Response('{}', 200);
+        });
+        await expectLater(
+          () => _confirm(
+            build(client),
+            info,
+            confirmedRecipient: confirmedRecipient,
+            confirmedAmount: confirmedAmount,
+          ),
+          throwsA(isA<TransferConfirmMismatchException>()),
+        );
+        expect(called, isFalse, reason: 'no PUT must happen when user-confirm guard rejects');
+      }
+
+      test('toAddress mismatch → TransferConfirmMismatchException', () async {
+        await expectMismatch(_info(toAddress: '0xOtherRecipient'));
+      });
+
+      test('eip7702.recipient mismatch → TransferConfirmMismatchException', () async {
+        await expectMismatch(_info(eip7702Recipient: '0xOtherRecipient'));
+      });
+
+      test('amount mismatch → TransferConfirmMismatchException', () async {
+        await expectMismatch(_info(amount: 99));
+      });
+
+      test('case-insensitive recipient match is accepted (no throw)', () async {
+        final client = MockClient(
+          (_) async => http.Response(jsonEncode({'txHash': '0xok'}), 200),
+        );
+        final txHash = await _confirm(
+          build(client),
+          _info(toAddress: '0xrecipient', eip7702Recipient: '0xRECIPIENT'),
+          confirmedRecipient: '0xReCiPiEnT',
+        );
+        expect(txHash, '0xok');
+      });
+    });
+  });
+
+  group('confirm 409 mapping', () {
+    test('409 "already confirmed" → TransferAlreadyConfirmedException', () async {
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'statusCode': 409,
+            'message': 'Transaction request is already confirmed',
+            'error': 'Conflict',
+            'txHash': '0xfrom409',
+          }),
+          409,
+        ),
+      );
+
+      await expectLater(
+        _confirm(build(client), _info()),
+        throwsA(
+          isA<TransferAlreadyConfirmedException>()
+              .having((e) => e.txHash, 'txHash', '0xfrom409')
+              .having(
+                (e) => e.message.toLowerCase().contains('already confirmed'),
+                'message mentions already confirmed',
+                isTrue,
+              ),
+        ),
+      );
+    });
+
+    test('any other 409 conflict stays a plain ApiException', () async {
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'statusCode': 409,
+            'message': 'Transaction request is in an invalid state',
+            'error': 'Conflict',
+          }),
+          409,
+        ),
+      );
+
+      await expectLater(
+        _confirm(build(client), _info()),
+        throwsA(
+          predicate((e) => e is ApiException && e is! TransferAlreadyConfirmedException),
+        ),
+      );
     });
   });
 }

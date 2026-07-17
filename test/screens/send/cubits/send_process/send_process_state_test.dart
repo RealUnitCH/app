@@ -41,8 +41,8 @@ void main() {
       expect(const SendProcessSuccess('h').props, ['h']);
     });
 
-    test('SendProcessFailure is keyed on reason + message', () {
-      // Equal when reason and message match.
+    test('SendProcessFailure is keyed on reason + message + canRetry', () {
+      // Equal when reason, message, and canRetry match.
       expect(
         const SendProcessFailure(
           SendProcessFailureReason.invalidRequest,
@@ -86,8 +86,37 @@ void main() {
         ),
       );
 
-      // The default (no `message`) variant is equal to itself and unequal to
-      // the same reason carrying a message — both evaluate `props`.
+      // Unequal when canRetry differs (same reason + message).
+      expect(
+        const SendProcessFailure(
+          SendProcessFailureReason.generic,
+          message: 'm',
+          canRetry: true,
+        ),
+        isNot(
+          equals(
+            const SendProcessFailure(
+              SendProcessFailureReason.generic,
+              message: 'm',
+            ),
+          ),
+        ),
+      );
+      expect(
+        const SendProcessFailure(
+          SendProcessFailureReason.generic,
+          message: 'm',
+          canRetry: true,
+        ),
+        const SendProcessFailure(
+          SendProcessFailureReason.generic,
+          message: 'm',
+          canRetry: true,
+        ),
+      );
+
+      // The default (no `message`, canRetry false) variant is equal to itself
+      // and unequal to the same reason carrying a message — both evaluate `props`.
       expect(
         const SendProcessFailure(SendProcessFailureReason.signatureCancelled),
         const SendProcessFailure(SendProcessFailureReason.signatureCancelled),
@@ -109,11 +138,23 @@ void main() {
           SendProcessFailureReason.invalidRequest,
           message: 'm',
         ).props,
-        [SendProcessFailureReason.invalidRequest, 'm'],
+        [SendProcessFailureReason.invalidRequest, 'm', false],
       );
       expect(
         const SendProcessFailure(SendProcessFailureReason.signatureCancelled).props,
-        [SendProcessFailureReason.signatureCancelled, null],
+        [SendProcessFailureReason.signatureCancelled, null, false],
+      );
+      expect(
+        const SendProcessFailure(
+          SendProcessFailureReason.generic,
+          message: 'x',
+          canRetry: true,
+        ).props,
+        [SendProcessFailureReason.generic, 'x', true],
+      );
+      expect(
+        const SendProcessFailure(SendProcessFailureReason.confirmMismatch).props,
+        [SendProcessFailureReason.confirmMismatch, null, false],
       );
     });
   });

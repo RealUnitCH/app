@@ -52,7 +52,8 @@ class SendProcessView extends StatelessWidget {
             context,
             icon: Icons.error_rounded,
             title: S.of(context).sendFailureTitle,
-            description: _failureMessage(context, state.reason),
+            description: _failureMessage(context, state),
+            canRetry: state.canRetry,
           );
         }
       },
@@ -87,48 +88,124 @@ class SendProcessView extends StatelessWidget {
     SendProcessFailure() => S.of(context).sendFailureTitle,
   };
 
-  String _failureMessage(BuildContext context, SendProcessFailureReason reason) => switch (reason) {
+  String _failureMessage(BuildContext context, SendProcessFailure state) => switch (state.reason) {
     SendProcessFailureReason.signatureUnsupported => S.of(context).sendFailureSignatureUnsupported,
     SendProcessFailureReason.signatureCancelled => S.of(context).sendFailureSignatureCancelled,
     SendProcessFailureReason.gasFundingUnavailable => S.of(context).sendFailureGasUnavailable,
     SendProcessFailureReason.invalidRequest => S.of(context).sendFailureInvalidRequest,
+    SendProcessFailureReason.registrationOrKycRequired =>
+      (state.message != null && state.message!.isNotEmpty)
+          ? state.message!
+          : S.of(context).sendFailureRegistrationOrKycRequired,
+    SendProcessFailureReason.confirmMismatch => S.of(context).sendFailureConfirmMismatch,
     SendProcessFailureReason.generic => S.of(context).sendFailureGeneric,
   };
 
+  /// Shows the terminal result sheet. Returns after the sheet is dismissed.
+  ///
+  /// For success and non-retryable failures, Close pops the sheet then this
+  /// method pops the [SendProcessPage] route (today's behaviour).
+  ///
+  /// For retryable failures, Retry dismisses only the sheet and re-invokes
+  /// [SendProcessCubit.retryConfirm] without popping the page — the stored
+  /// prepared transfer `id` must stay alive for the same-intent retry.
   Future<void> _showResultSheet(
     BuildContext context, {
     required IconData icon,
     required String title,
     required String description,
+    bool canRetry = false,
   }) async {
-    await showModalBottomSheet<void>(
+    final shouldPopPage = await showModalBottomSheet<bool>(
       context: context,
       isDismissible: false,
-      builder: (_) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 24,
-            children: [
-              Icon(icon, color: RealUnitColors.realUnitBlue, size: 64),
-              Text(title, style: Theme.of(context).textTheme.headlineMedium),
-              Text(
-                description,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: RealUnitColors.neutral500,
-                ),
+      builder: (sheetContext) => _SendProcessResultSheet(
+        icon: icon,
+        title: title,
+        description: description,
+        canRetry: canRetry,
+      ),
+    );
+    if (!context.mounted) {
+      return;
+    }
+    if (shouldPopPage == false) {
+      // Retry was chosen — stay on this page and re-confirm the same id.
+      await context.read<SendProcessCubit>().retryConfirm();
+      return;
+    }
+    // Close (or null) — leave the send-process route.
+    Navigator.of(context).pop();
+  }
+}
+
+/// Terminal result sheet content. Isolates the double-tap lock for Retry so the
+/// parent view stays a [StatelessWidget].
+class _SendProcessResultSheet extends StatefulWidget {
+  final IconData icon;
+  final String title;
+  final String description;
+  final bool canRetry;
+
+  const _SendProcessResultSheet({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.canRetry,
+  });
+
+  @override
+  State<_SendProcessResultSheet> createState() => _SendProcessResultSheetState();
+}
+
+class _SendProcessResultSheetState extends State<_SendProcessResultSheet> {
+  /// Once the user taps Retry, remove the button so a second tap cannot fire
+  /// another concurrent confirm (mirrors the double-tap-lock discipline used
+  /// elsewhere in this flow).
+  bool _retryConsumed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 24,
+          children: [
+            Icon(widget.icon, color: RealUnitColors.realUnitBlue, size: 64),
+            Text(widget.title, style: Theme.of(context).textTheme.headlineMedium),
+            Text(
+              widget.description,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: RealUnitColors.neutral500,
               ),
+            ),
+            if (widget.canRetry && !_retryConsumed)
               FilledButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(S.of(context).close),
+                onPressed: () {
+                  // Fail-closed double-tap lock: consume before the pop so a
+                  // second tap cannot schedule another concurrent confirm.
+                  if (_retryConsumed) {
+                    return;
+                  }
+                  setState(() {
+                    _retryConsumed = true;
+                  });
+                  // false → parent must NOT pop the SendProcessPage route.
+                  Navigator.of(context).pop(false);
+                },
+                child: Text(S.of(context).retry),
               ),
-            ],
-          ),
+            FilledButton(
+              // true → parent pops the SendProcessPage route after the sheet.
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(S.of(context).close),
+            ),
+          ],
         ),
       ),
     );
-    if (context.mounted) Navigator.of(context).pop();
   }
 }

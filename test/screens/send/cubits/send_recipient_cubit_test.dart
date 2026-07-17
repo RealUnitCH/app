@@ -37,6 +37,58 @@ void main() {
     );
 
     blocTest<SendRecipientCubit, SendRecipientState>(
+      'strips ethereum: pay- EIP-681 payment-request marker before the address',
+      build: SendRecipientCubit.new,
+      act: (cubit) => cubit.submit('ethereum:pay-$lowercase@1?value=100'),
+      expect: () => [const SendRecipientValid(checksummed)],
+    );
+
+    blocTest<SendRecipientCubit, SendRecipientState>(
+      'strips a query suffix when no @chainId is present (simple form)',
+      build: SendRecipientCubit.new,
+      act: (cubit) => cubit.submit('ethereum:$lowercase?value=0'),
+      expect: () => [const SendRecipientValid(checksummed)],
+    );
+
+    blocTest<SendRecipientCubit, SendRecipientState>(
+      'EIP-681 ERC-20 transfer URI extracts recipient from address= query param',
+      build: SendRecipientCubit.new,
+      act: (cubit) => cubit.submit(
+        'ethereum:0x1111111111111111111111111111111111111111/transfer'
+        '?address=$lowercase&uint256=1000000000000000000',
+      ),
+      expect: () => [const SendRecipientValid(checksummed)],
+    );
+
+    blocTest<SendRecipientCubit, SendRecipientState>(
+      'EIP-681 function-call with unrecognized function name fails closed',
+      build: SendRecipientCubit.new,
+      act: (cubit) => cubit.submit('ethereum:$lowercase/approve?spender=0xSpender&uint256=1'),
+      expect: () => [isA<SendRecipientInvalid>()],
+    );
+
+    blocTest<SendRecipientCubit, SendRecipientState>(
+      'EIP-681 function-call without a query string fails closed',
+      build: SendRecipientCubit.new,
+      act: (cubit) => cubit.submit('ethereum:$lowercase/transfer'),
+      expect: () => [isA<SendRecipientInvalid>()],
+    );
+
+    blocTest<SendRecipientCubit, SendRecipientState>(
+      'EIP-681 /transfer URI without address query param fails closed',
+      build: SendRecipientCubit.new,
+      act: (cubit) => cubit.submit('ethereum:$lowercase/transfer?uint256=1'),
+      expect: () => [isA<SendRecipientInvalid>()],
+    );
+
+    blocTest<SendRecipientCubit, SendRecipientState>(
+      'EIP-681 /transfer URI with empty address= query param fails closed',
+      build: SendRecipientCubit.new,
+      act: (cubit) => cubit.submit('ethereum:$lowercase/transfer?address=&uint256=1'),
+      expect: () => [isA<SendRecipientInvalid>()],
+    );
+
+    blocTest<SendRecipientCubit, SendRecipientState>(
       'an invalid address emits SendRecipientInvalid',
       build: SendRecipientCubit.new,
       act: (cubit) => cubit.submit('not-an-address'),

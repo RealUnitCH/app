@@ -19,6 +19,16 @@ enum SendProcessFailureReason {
   /// API message carries the specific detail.
   invalidRequest,
 
+  /// The API requires the user to complete registration or a higher KYC level
+  /// before this transfer can proceed (403 REGISTRATION_REQUIRED /
+  /// KYC_LEVEL_REQUIRED).
+  registrationOrKycRequired,
+
+  /// The prepare response's recipient/amount did not match what the user
+  /// confirmed on-screen. Fail-closed before signing; not retryable with the
+  /// same prepared intent (the server-echoed data itself is wrong).
+  confirmMismatch,
+
   /// Any other unexpected error.
   generic,
 }
@@ -59,8 +69,14 @@ class SendProcessFailure extends SendProcessState {
   /// Diagnostic detail for logs — not the user-facing copy.
   final String? message;
 
-  const SendProcessFailure(this.reason, {this.message});
+  /// When true, the prepared transfer `id` is retained and the user may call
+  /// [SendProcessCubit.retryConfirm] to re-sign and re-PUT `/confirm` for the
+  /// same intent (no new prepare). Defaults to false — a UI affordance flag,
+  /// not a data-correctness fallback.
+  final bool canRetry;
+
+  const SendProcessFailure(this.reason, {this.message, this.canRetry = false});
 
   @override
-  List<Object?> get props => [reason, message];
+  List<Object?> get props => [reason, message, canRetry];
 }

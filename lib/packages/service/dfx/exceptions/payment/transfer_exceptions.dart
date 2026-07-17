@@ -5,6 +5,8 @@
 // Dart default `Instance of '...'`. Typed failures drive control flow — no
 // error-string parsing.
 
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+
 /// The recipient string the user scanned or pasted is not a syntactically valid
 /// EVM address. This is a client-side UX guard only; the API remains the final
 /// authority on the address.
@@ -48,4 +50,39 @@ class TransferGasFundingUnavailableException implements Exception {
 
   @override
   String toString() => 'TransferGasFundingUnavailableException: $detail';
+}
+
+/// The prepare response's recipient/amount does not match what the user
+/// confirmed on-screen. Fail-closed before any signature is produced so a
+/// mismatched backend echo cannot be blind-signed.
+class TransferConfirmMismatchException implements Exception {
+  /// Diagnostic detail (which field diverged), for logs.
+  final String detail;
+
+  const TransferConfirmMismatchException([
+    this.detail = 'prepare response does not match user-confirmed recipient/amount',
+  ]);
+
+  @override
+  String toString() => 'TransferConfirmMismatchException: $detail';
+}
+
+/// The transfer was already confirmed server-side (HTTP 409 with an
+/// "already confirmed" message). An earlier confirm for the same transfer `id`
+/// landed but its response was lost (e.g. transport failure after the server
+/// processed the request). Callers must treat this as success, not failure —
+/// mirrors the sell flow's [AlreadyConfirmedException] for the W2W path.
+class TransferAlreadyConfirmedException extends ApiException {
+  /// Server-reported tx hash when present on the 409 body; null otherwise.
+  final String? txHash;
+
+  const TransferAlreadyConfirmedException({
+    super.statusCode,
+    required super.code,
+    required super.message,
+    this.txHash,
+  });
+
+  @override
+  String toString() => 'TransferAlreadyConfirmedException: $message';
 }

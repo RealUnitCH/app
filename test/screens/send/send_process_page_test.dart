@@ -126,6 +126,8 @@ void main() {
       expect(find.text(S.current.sendSuccessDescription), findsOne);
       expect(find.byIcon(Icons.check_circle_rounded), findsOne);
       expect(find.text(S.current.close), findsOne);
+      // Non-retryable terminal states never offer Retry.
+      expect(find.text(S.current.retry), findsNothing);
 
       await tester.tap(find.text(S.current.close));
       await tester.pump();
@@ -142,6 +144,7 @@ void main() {
 
       expect(find.text(S.current.sendFailureSignatureUnsupported), findsOne);
       expect(find.byIcon(Icons.error_rounded), findsOne);
+      expect(find.text(S.current.retry), findsNothing);
     });
 
     testWidgets('signature-cancelled failure message', (tester) async {
@@ -171,6 +174,29 @@ void main() {
       expect(find.text(S.current.sendFailureInvalidRequest), findsOne);
     });
 
+    testWidgets('registration/KYC failure renders concrete API message', (tester) async {
+      await pumpWithState(
+        tester,
+        const SendProcessFailure(
+          SendProcessFailureReason.registrationOrKycRequired,
+          message: 'Please complete KYC',
+        ),
+      );
+
+      expect(find.text('Please complete KYC'), findsOne);
+    });
+
+    testWidgets('registration/KYC failure falls back to localized copy without message', (
+      tester,
+    ) async {
+      await pumpWithState(
+        tester,
+        const SendProcessFailure(SendProcessFailureReason.registrationOrKycRequired),
+      );
+
+      expect(find.text(S.current.sendFailureRegistrationOrKycRequired), findsOne);
+    });
+
     testWidgets('generic failure message', (tester) async {
       await pumpWithState(
         tester,
@@ -178,6 +204,63 @@ void main() {
       );
 
       expect(find.text(S.current.sendFailureGeneric), findsOne);
+      expect(find.text(S.current.retry), findsNothing);
+    });
+
+    testWidgets('confirm-mismatch failure message (non-retryable)', (tester) async {
+      await pumpWithState(
+        tester,
+        const SendProcessFailure(SendProcessFailureReason.confirmMismatch),
+      );
+
+      expect(find.text(S.current.sendFailureConfirmMismatch), findsOne);
+      expect(find.text(S.current.retry), findsNothing);
+      expect(find.text(S.current.close), findsOne);
+    });
+
+    testWidgets(
+      'retryable failure shows Retry; tapping it calls retryConfirm and keeps the page',
+      (tester) async {
+        when(() => processCubit.retryConfirm()).thenAnswer((_) async {});
+
+        await pumpWithState(
+          tester,
+          const SendProcessFailure(
+            SendProcessFailureReason.generic,
+            message: 'socket hung up',
+            canRetry: true,
+          ),
+        );
+
+        expect(find.text(S.current.retry), findsOne);
+        expect(find.text(S.current.close), findsOne);
+        expect(find.byType(SendProcessView), findsOne);
+
+        await tester.tap(find.text(S.current.retry));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+
+        verify(() => processCubit.retryConfirm()).called(1);
+        // Retry must dismiss only the sheet — the SendProcessPage/View stays.
+        expect(find.byType(SendProcessView), findsOne);
+        expect(find.text(S.current.retry), findsNothing);
+      },
+    );
+
+    testWidgets('non-retryable failure: Close only, no Retry button', (tester) async {
+      await pumpWithState(
+        tester,
+        const SendProcessFailure(SendProcessFailureReason.signatureUnsupported),
+      );
+
+      expect(find.text(S.current.retry), findsNothing);
+      expect(find.text(S.current.close), findsOne);
+
+      await tester.tap(find.text(S.current.close));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byIcon(Icons.error_rounded), findsNothing);
     });
   });
 }

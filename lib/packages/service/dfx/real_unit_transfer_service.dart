@@ -63,19 +63,30 @@ class RealUnitTransferService extends DFXAuthService {
   /// authorization and relays them; DFX broadcasts the gasless transfer and
   /// returns the tx hash.
   ///
+  /// [confirmedRecipient] and [confirmedAmount] are the values the user reviewed
+  /// and approved on the confirm screen. They are required so every call site
+  /// (including retries) must explicitly supply them; the service fail-closes if
+  /// the prepare response echoes different values before any signature is
+  /// produced.
+  ///
   /// Reuses the wallet unlock/lock boundary and the shared
   /// `Eip712Signer.signDelegation` / `Eip7702Signer.signAuthorization` exactly
   /// like the sell software-confirm. A wallet that cannot produce these
   /// signatures (debug wallet, or hardware firmware without raw EIP-7702
   /// support) raises [TransferSignatureUnsupportedException] — the capability
   /// gate, not a wallet-type branch.
-  Future<String> confirmTransfer(RealUnitTransferPaymentInfoDto info) async {
+  Future<String> confirmTransfer(
+    RealUnitTransferPaymentInfoDto info, {
+    required String confirmedRecipient,
+    required int confirmedAmount,
+  }) async {
     // EIP-712 + EIP-7702 typed-data signing needs the private key; promote the
     // view-wallet to a fully unlocked SoftwareWallet before reading credentials.
     await walletService.ensureCurrentWalletUnlocked();
     try {
       final credentials = appStore.wallet.currentAccount.primaryAddress;
       final transferData = info.eip7702;
+      _validateAgainstUserConfirmation(info, confirmedRecipient, confirmedAmount);
       _validateEip7702Data(transferData, credentials.address.hexEip55, info.amount);
 
       final eip7702Data = transferData.toEip7702Data();
@@ -123,6 +134,42 @@ class RealUnitTransferService extends DFXAuthService {
     }
   }
 
+  /// Fail-closed blind-sign guard: the prepare response must echo the recipient
+  /// and amount the user just confirmed on-screen before any signature is
+  /// produced.
+  ///
+  /// Honesty note — the actually-signed EIP-712 struct (`Eip7702Message`:
+  /// delegate/delegator/authority/caveats/salt) carries no recipient/amount
+  /// field of its own. `recipient` / `amountWei` / `tokenAddress` are unsigned
+  /// metadata sitting alongside the signed message. This check only closes the
+  /// gap of "did the backend's prepare response echo something different than
+  /// what the user just confirmed on-screen" before signing. It is NOT a
+  /// decode/validation of the delegation framework's `caveats` payload (the
+  /// actual on-chain enforcement mechanism), which remains unparsed exactly as
+  /// before. This change alone does NOT establish a full on-chain
+  /// recipient/amount cryptographic binding.
+  void _validateAgainstUserConfirmation(
+    RealUnitTransferPaymentInfoDto info,
+    String confirmedRecipient,
+    int confirmedAmount,
+  ) {
+    if (info.toAddress.toLowerCase() != confirmedRecipient.toLowerCase()) {
+      throw TransferConfirmMismatchException(
+        'toAddress ${info.toAddress} does not match confirmed recipient $confirmedRecipient',
+      );
+    }
+    if (info.eip7702.recipient.toLowerCase() != confirmedRecipient.toLowerCase()) {
+      throw TransferConfirmMismatchException(
+        'eip7702.recipient ${info.eip7702.recipient} does not match confirmed recipient $confirmedRecipient',
+      );
+    }
+    if (info.amount != confirmedAmount) {
+      throw TransferConfirmMismatchException(
+        'amount ${info.amount} does not match confirmed amount $confirmedAmount',
+      );
+    }
+  }
+
   Future<String> _sendConfirm(int id, Eip7702ConfirmDto dto) async {
     final uri = buildUri(host, _confirmPath(id));
     final response = await authenticatedPut(
@@ -139,7 +186,19 @@ class RealUnitTransferService extends DFXAuthService {
               .toString(),
         );
       }
-      throw ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
+      final error = ApiException.fromJson(errorJson, httpStatusCode: response.statusCode);
+      // 409 "already confirmed": an earlier confirm for this id landed but its
+      // response was lost. Mirrors RealUnitSellPaymentInfoService._sendConfirm.
+      if (error.statusCode == 409 && error.message.toLowerCase().contains('already confirmed')) {
+        final rawTxHash = errorJson['txHash'];
+        throw TransferAlreadyConfirmedException(
+          statusCode: error.statusCode,
+          code: error.code,
+          message: error.message,
+          txHash: rawTxHash is String ? rawTxHash : null,
+        );
+      }
+      throw error;
     }
 
     return (jsonDecode(response.body) as Map<String, dynamic>)['txHash'] as String;
