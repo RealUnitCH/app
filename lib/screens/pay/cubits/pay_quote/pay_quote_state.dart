@@ -17,6 +17,11 @@ class PayQuoteReady extends PayQuoteState {
   final String fiatAsset;
   final double fiatAmount;
   final double zchfAmount;
+  final String? merchantName;
+  final String? merchantCity;
+  final double? realuAmount;
+  final double? realuEstimatedZchf;
+  final double? realuFeesTotal;
 
   const PayQuoteReady({
     required this.paymentLinkId,
@@ -24,10 +29,26 @@ class PayQuoteReady extends PayQuoteState {
     required this.fiatAsset,
     required this.fiatAmount,
     required this.zchfAmount,
+    this.merchantName,
+    this.merchantCity,
+    this.realuAmount,
+    this.realuEstimatedZchf,
+    this.realuFeesTotal,
   });
 
   @override
-  List<Object?> get props => [paymentLinkId, quoteId, fiatAsset, fiatAmount, zchfAmount];
+  List<Object?> get props => [
+    paymentLinkId,
+    quoteId,
+    fiatAsset,
+    fiatAmount,
+    zchfAmount,
+    merchantName,
+    merchantCity,
+    realuAmount,
+    realuEstimatedZchf,
+    realuFeesTotal,
+  ];
 }
 
 /// The quote attached to the scanned link has expired — the user must re-scan.

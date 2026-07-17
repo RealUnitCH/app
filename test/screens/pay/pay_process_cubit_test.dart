@@ -94,11 +94,79 @@ LnurlpPaymentDto _details({
   );
 }
 
+// A real EIP-1559 (type 2) unsigned tx RLP-encoding an ERC20 transfer(address,uint256) call to
+// `recipient` for `amountWei`, `to` = tokenAddress, on `chainId` — matches the DTO's own security
+// metadata so PayProcessCubit._validatePayUnsignedTx accepts it. Independently verified
+// byte-for-byte against a reference RLP encoder/decoder.
 const _unsignedPay = RealUnitOcpPayUnsignedTransactionDto(
-  // A short EIP-1559-style payload; signToSignature only keccak-hashes it.
-  unsignedTx: '0x02f8',
-  tokenAddress: '0xzchf',
-  recipient: '0xrecipient',
+  unsignedTx:
+      '0x02f87183aa36a7018459682f008504a817c800830186a094111111111111111111111111111111111111ac0180b844a9059cbb000000000000000000000000222222222222222222222222222222222222bc020000000000000000000000000000000000000000000000004563918244f40000c0',
+  tokenAddress: '0x111111111111111111111111111111111111ac01',
+  recipient: '0x222222222222222222222222222222222222bc02',
+  amountWei: '5000000000000000000',
+  chainId: 11155111,
+);
+
+// tx.to (0x333...dead) does not match tokenAddress (0x111...ac01) — tokenAddress mismatch.
+const _unsignedPayWrongToken = RealUnitOcpPayUnsignedTransactionDto(
+  unsignedTx:
+      '0x02f87183aa36a7018459682f008504a817c800830186a094333333333333333333333333333333333333dead80b844a9059cbb000000000000000000000000222222222222222222222222222222222222bc020000000000000000000000000000000000000000000000004563918244f40000c0',
+  tokenAddress: '0x111111111111111111111111111111111111ac01',
+  recipient: '0x222222222222222222222222222222222222bc02',
+  amountWei: '5000000000000000000',
+  chainId: 11155111,
+);
+
+// calldata recipient (0x444...dead) does not match recipient (0x222...bc02) — recipient mismatch.
+const _unsignedPayWrongRecipient = RealUnitOcpPayUnsignedTransactionDto(
+  unsignedTx:
+      '0x02f87183aa36a7018459682f008504a817c800830186a094111111111111111111111111111111111111ac0180b844a9059cbb000000000000000000000000444444444444444444444444444444444444dead0000000000000000000000000000000000000000000000004563918244f40000c0',
+  tokenAddress: '0x111111111111111111111111111111111111ac01',
+  recipient: '0x222222222222222222222222222222222222bc02',
+  amountWei: '5000000000000000000',
+  chainId: 11155111,
+);
+
+// calldata amount is amountWei + 1 (5000000000000000001) — amount mismatch.
+const _unsignedPayWrongAmount = RealUnitOcpPayUnsignedTransactionDto(
+  unsignedTx:
+      '0x02f87183aa36a7018459682f008504a817c800830186a094111111111111111111111111111111111111ac0180b844a9059cbb000000000000000000000000222222222222222222222222222222222222bc020000000000000000000000000000000000000000000000004563918244f40001c0',
+  tokenAddress: '0x111111111111111111111111111111111111ac01',
+  recipient: '0x222222222222222222222222222222222222bc02',
+  amountWei: '5000000000000000000',
+  chainId: 11155111,
+);
+
+// tx.chainId is 999 — chainId mismatch (DTO still claims 11155111).
+const _unsignedPayWrongChainId = RealUnitOcpPayUnsignedTransactionDto(
+  unsignedTx:
+      '0x02f8708203e7018459682f008504a817c800830186a094111111111111111111111111111111111111ac0180b844a9059cbb000000000000000000000000222222222222222222222222222222222222bc020000000000000000000000000000000000000000000000004563918244f40000c0',
+  tokenAddress: '0x111111111111111111111111111111111111ac01',
+  recipient: '0x222222222222222222222222222222222222bc02',
+  amountWei: '5000000000000000000',
+  chainId: 11155111,
+);
+
+// Same to/recipient/amount/chainId as _unsignedPay (all still valid), but gasLimit is raised to
+// 300000 — exceeds the 200_000 local gasLimit cap alone (maxFeePerGas unchanged @ 20 gwei, so
+// total fee stays 0.006 ETH, well under the total-fee cap) — isolates the gasLimit check.
+const _unsignedPayGasLimitExceedsCap = RealUnitOcpPayUnsignedTransactionDto(
+  unsignedTx:
+      '0x02f87183aa36a7018459682f008504a817c800830493e094111111111111111111111111111111111111ac0180b844a9059cbb000000000000000000000000222222222222222222222222222222222222bc020000000000000000000000000000000000000000000000004563918244f40000c0',
+  tokenAddress: '0x111111111111111111111111111111111111ac01',
+  recipient: '0x222222222222222222222222222222222222bc02',
+  amountWei: '5000000000000000000',
+  chainId: 11155111,
+);
+
+// Same to/recipient/amount/chainId as _unsignedPay, gasLimit unchanged at 100000 (under the
+// 200_000 cap), but maxFeePerGas is raised to 600 gwei — total fee becomes 0.06 ETH, over the
+// 0.05 ETH total-fee cap alone — isolates the total-fee check.
+const _unsignedPayMaxFeeExceedsCap = RealUnitOcpPayUnsignedTransactionDto(
+  unsignedTx:
+      '0x02f87183aa36a7018459682f00858bb2c97000830186a094111111111111111111111111111111111111ac0180b844a9059cbb000000000000000000000000222222222222222222222222222222222222bc020000000000000000000000000000000000000000000000004563918244f40000c0',
+  tokenAddress: '0x111111111111111111111111111111111111ac01',
+  recipient: '0x222222222222222222222222222222222222bc02',
   amountWei: '5000000000000000000',
   chainId: 11155111,
 );
@@ -139,7 +207,8 @@ void main() {
     wallet = _MockWallet();
     account = _MockAccount();
 
-    when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+    // testnet → apiConfig.asset.chainId = 11155111, matching every unsigned-tx fixture in this file
+    when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.testnet));
     when(() => appStore.primaryAddress).thenReturn('0xwallet');
     when(() => appStore.wallet).thenReturn(wallet);
     when(() => wallet.walletType).thenReturn(WalletType.software);
@@ -309,6 +378,121 @@ void main() {
     // The swap is done; a failed pay must NOT force a re-swap.
     expect(state.reason, PayRetryReason.transient);
     expect(cubit.state, isNot(isA<PayProcessFailure>()));
+    await cubit.close();
+  });
+
+  test('unsigned pay tx "to" does not match DTO tokenAddress → unsignedTxMismatch, never signed',
+      () async {
+    wireHappyPath();
+    when(() => payService.createPayUnsignedTransaction(any()))
+        .thenAnswer((_) async => _unsignedPayWrongToken);
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    final state = await retry as PayProcessPayRetry;
+
+    expect(state.reason, PayRetryReason.unsignedTxMismatch);
+    verifyNever(() => payService.submitPay(any()));
+    await cubit.close();
+  });
+
+  test('unsigned pay tx calldata recipient does not match DTO recipient → unsignedTxMismatch, never signed',
+      () async {
+    wireHappyPath();
+    when(() => payService.createPayUnsignedTransaction(any()))
+        .thenAnswer((_) async => _unsignedPayWrongRecipient);
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    final state = await retry as PayProcessPayRetry;
+
+    expect(state.reason, PayRetryReason.unsignedTxMismatch);
+    verifyNever(() => payService.submitPay(any()));
+    await cubit.close();
+  });
+
+  test('unsigned pay tx calldata amount does not match DTO amountWei → unsignedTxMismatch, never signed',
+      () async {
+    wireHappyPath();
+    when(() => payService.createPayUnsignedTransaction(any()))
+        .thenAnswer((_) async => _unsignedPayWrongAmount);
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    final state = await retry as PayProcessPayRetry;
+
+    expect(state.reason, PayRetryReason.unsignedTxMismatch);
+    verifyNever(() => payService.submitPay(any()));
+    await cubit.close();
+  });
+
+  test('unsigned pay tx chainId does not match DTO chainId → unsignedTxMismatch, never signed',
+      () async {
+    wireHappyPath();
+    when(() => payService.createPayUnsignedTransaction(any()))
+        .thenAnswer((_) async => _unsignedPayWrongChainId);
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    final state = await retry as PayProcessPayRetry;
+
+    expect(state.reason, PayRetryReason.unsignedTxMismatch);
+    verifyNever(() => payService.submitPay(any()));
+    await cubit.close();
+  });
+
+  test(
+    'unsigned pay tx+DTO self-consistent but chainId mismatches local apiConfig → unsignedTxMismatch, never signed',
+    () async {
+      // _unsignedPay is self-consistent at chainId 11155111 (DTO + RLP both agree), so the
+      // DTO-vs-tx check would pass. Override apiConfig to mainnet (local chainId=1) to prove
+      // the independent local-chainId check rejects it.
+      wireHappyPath();
+      when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+
+      final cubit = build();
+      final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+      await cubit.start();
+      final state = await retry as PayProcessPayRetry;
+
+      expect(state.reason, PayRetryReason.unsignedTxMismatch);
+      verifyNever(() => payService.submitPay(any()));
+      await cubit.close();
+    },
+  );
+
+  test('unsigned pay tx gasLimit exceeds local cap → unsignedTxMismatch, never signed', () async {
+    wireHappyPath();
+    when(() => payService.createPayUnsignedTransaction(any()))
+        .thenAnswer((_) async => _unsignedPayGasLimitExceedsCap);
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    final state = await retry as PayProcessPayRetry;
+
+    expect(state.reason, PayRetryReason.unsignedTxMismatch);
+    verifyNever(() => payService.submitPay(any()));
+    await cubit.close();
+  });
+
+  test('unsigned pay tx max total fee exceeds local cap → unsignedTxMismatch, never signed',
+      () async {
+    wireHappyPath();
+    when(() => payService.createPayUnsignedTransaction(any()))
+        .thenAnswer((_) async => _unsignedPayMaxFeeExceedsCap);
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    final state = await retry as PayProcessPayRetry;
+
+    expect(state.reason, PayRetryReason.unsignedTxMismatch);
+    verifyNever(() => payService.submitPay(any()));
     await cubit.close();
   });
 

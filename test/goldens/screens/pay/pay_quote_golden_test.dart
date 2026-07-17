@@ -63,6 +63,34 @@ void main() {
     );
 
     goldenTest(
+      'ready quote with merchant and REALU swap details',
+      fileName: 'pay_quote_page_ready_with_merchant',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => quoteCubit.state).thenReturn(
+          const PayQuoteReady(
+            paymentLinkId: 'pl_realunit_ocp_sepolia',
+            quoteId: 'plq_realunit_ocp_sepolia',
+            fiatAsset: 'CHF',
+            fiatAmount: 2,
+            zchfAmount: 2.0,
+            merchantName: 'Café Zürich',
+            merchantCity: 'Zürich',
+            realuAmount: 5,
+            realuEstimatedZchf: 1.98,
+            realuFeesTotal: 0.02,
+          ),
+        );
+        return wrapForGolden(
+          BlocProvider<PayQuoteCubit>.value(
+            value: quoteCubit,
+            child: const PayQuoteView(),
+          ),
+        );
+      },
+    );
+
+    goldenTest(
       'expired quote message',
       fileName: 'pay_quote_page_expired',
       constraints: phoneConstraints,

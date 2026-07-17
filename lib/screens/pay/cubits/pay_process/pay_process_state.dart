@@ -36,6 +36,11 @@ enum PayRetryReason {
   /// swap (price moved more than the swap headroom buffer). Re-quoting may land
   /// within the held ZCHF; the leftover ZCHF stays in the wallet meanwhile.
   insufficientZchf,
+
+  /// The unsigned tx the backend returned for signing did not match its own security metadata
+  /// (token/recipient/amount/chain) — see [PayUnsignedTxMismatchException]. Never signed. Retrying
+  /// re-fetches AND re-validates a fresh unsigned tx from scratch.
+  unsignedTxMismatch,
 }
 
 sealed class PayProcessState extends Equatable {

@@ -115,6 +115,29 @@ void main() {
       expect(find.text(S.current.payConfirmButton), findsOne);
     });
 
+    testWidgets('ready state shows merchant and REALU swap details when present', (tester) async {
+      when(() => quoteCubit.state).thenReturn(
+        const PayQuoteReady(
+          paymentLinkId: 'pl_realunit_ocp_sepolia',
+          quoteId: 'plq_realunit_ocp_sepolia',
+          fiatAsset: 'CHF',
+          fiatAmount: 2,
+          zchfAmount: 2.0,
+          merchantName: 'Café Zürich',
+          merchantCity: 'Zürich',
+          realuAmount: 5,
+          realuEstimatedZchf: 1.98,
+          realuFeesTotal: 0.02,
+        ),
+      );
+      await tester.pumpApp(buildSubject());
+
+      expect(find.text('Café Zürich, Zürich'), findsOne);
+      expect(find.text('5 REALU'), findsOne);
+      expect(find.text('1.98 ZCHF'), findsOne);
+      expect(find.text('0.02 REALU'), findsOne);
+    });
+
     testWidgets('confirm button navigates to the process step', (tester) async {
       when(() => quoteCubit.state).thenReturn(ready);
       await tester.pumpApp(buildSubject());

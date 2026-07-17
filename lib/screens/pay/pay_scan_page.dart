@@ -57,6 +57,21 @@ class PayScanView extends StatelessWidget {
               final raw = capture.barcodes.firstOrNull?.rawValue;
               if (raw != null) context.read<PayScanCubit>().onCodeDetected(raw);
             },
+            errorBuilder: (context, error, child) {
+              final message = error.errorCode == MobileScannerErrorCode.permissionDenied
+                  ? S.of(context).payScanCameraPermissionDenied
+                  : S.of(context).payScanCameraUnavailable;
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: RealUnitColors.neutral500),
+                  ),
+                ),
+              );
+            },
           ),
         );
       },

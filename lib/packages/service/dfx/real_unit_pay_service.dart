@@ -135,7 +135,7 @@ class RealUnitPayService extends DFXAuthService {
 
   Future<RealUnitOcpPayStatusDto> getPayStatus(String id) async {
     final uri = buildUri(host, _payStatusPath(id));
-    final response = await authenticatedGet(uri);
+    final response = await authenticatedGet(uri).timeout(_httpTimeout);
 
     if (response.statusCode != 200) {
       _throwApi(response.body, response.statusCode);

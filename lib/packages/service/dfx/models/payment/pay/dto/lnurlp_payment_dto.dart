@@ -3,11 +3,11 @@
 /// needs to size the swap and later settle the payment. Only the fields the pay
 /// flow consumes are mapped.
 ///
-/// The backend `recipient` field is a structured `PaymentLinkRecipientDto`
-/// object, not a string, and the flow never surfaces a merchant name (the real
-/// settlement recipient comes from the pay/unsigned-transaction response). It is
-/// therefore not mapped here — eagerly casting it `as String?` threw a
-/// `TypeError` whenever the backend populated it.
+/// The backend `recipient` field is mapped as [LnurlpRecipientDto?] (nullable
+/// structured object). Only `name` and `city` are carried — the fields the
+/// pay-quote screen displays. Everything else on the backend
+/// `PaymentLinkRecipientDto` object is intentionally left unmapped. When the
+/// merchant configured no recipient the field is absent and parses to null.
 class LnurlpPaymentDto {
   final LnurlpRequestedAmountDto requestedAmount;
   final LnurlpQuoteDto quote;
@@ -16,10 +16,13 @@ class LnurlpPaymentDto {
   /// amount the app must transfer; the app does not compute it locally.
   final List<LnurlpTransferAmountDto> transferAmounts;
 
+  final LnurlpRecipientDto? recipient;
+
   const LnurlpPaymentDto({
     required this.requestedAmount,
     required this.quote,
     required this.transferAmounts,
+    this.recipient,
   });
 
   factory LnurlpPaymentDto.fromJson(Map<String, dynamic> json) {
@@ -32,6 +35,26 @@ class LnurlpPaymentDto {
       transferAmounts: transfers
           .map((e) => LnurlpTransferAmountDto.fromJson(e as Map<String, dynamic>))
           .toList(),
+      recipient: json['recipient'] == null
+          ? null
+          : LnurlpRecipientDto.fromJson(json['recipient'] as Map<String, dynamic>),
+    );
+  }
+}
+
+/// Merchant/recipient fields surfaced on the pay-quote screen. Only `name` and
+/// `city` (from nested `address`) are mapped; other backend fields are unused.
+class LnurlpRecipientDto {
+  final String? name;
+  final String? city;
+
+  const LnurlpRecipientDto({this.name, this.city});
+
+  factory LnurlpRecipientDto.fromJson(Map<String, dynamic> json) {
+    final address = json['address'] as Map<String, dynamic>?;
+    return LnurlpRecipientDto(
+      name: json['name'] as String?,
+      city: address?['city'] as String?,
     );
   }
 }
@@ -45,7 +68,7 @@ class LnurlpRequestedAmountDto {
   factory LnurlpRequestedAmountDto.fromJson(Map<String, dynamic> json) {
     return LnurlpRequestedAmountDto(
       asset: json['asset'] as String,
-      amount: (json['amount'] as num).toDouble(),
+      amount: double.parse(json['amount'].toString()),
     );
   }
 }
@@ -93,10 +116,11 @@ class LnurlpTransferAssetDto {
   const LnurlpTransferAssetDto({required this.asset, this.amount});
 
   factory LnurlpTransferAssetDto.fromJson(Map<String, dynamic> json) {
-    final amount = json['amount'] as num?;
+    final rawAmount = json['amount'];
+    final amount = rawAmount == null ? null : double.parse(rawAmount.toString());
     return LnurlpTransferAssetDto(
       asset: json['asset'] as String,
-      amount: amount?.toDouble(),
+      amount: amount,
     );
   }
 }

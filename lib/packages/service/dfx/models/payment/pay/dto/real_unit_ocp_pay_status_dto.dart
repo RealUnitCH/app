@@ -22,7 +22,9 @@ enum OcpPaymentStatus {
   }
 
   /// Polling stops once the payment reaches a final state.
-  bool get isTerminal => this == completed || this == cancelled || this == expired;
+  /// `unknown` is intentionally terminal so an unrecognised status can never cause an unbounded poll.
+  bool get isTerminal =>
+      this == completed || this == cancelled || this == expired || this == unknown;
 
   bool get isCompleted => this == completed;
 }

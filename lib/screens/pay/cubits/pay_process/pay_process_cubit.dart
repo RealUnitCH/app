@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/eip1559_unsigned_tx_decoder.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/pay_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/lnurlp_payment_dto.dart';
@@ -51,6 +52,12 @@ class PayProcessCubit extends Cubit<PayProcessState> {
   /// retried on its own via [retryPay].
   bool _swapCompleted = false;
 
+  /// Guards overlapping ETH-poll ticks from each calling [_executeSwap]. Set
+  /// synchronously before the first await in a tick; left true once a swap is
+  /// triggered (timer cancelled), reset when balance is still short or on
+  /// transient balance-check errors so the next tick can retry.
+  bool _swapInFlight = false;
+
   /// ZCHF acquired by the (completed) swap — the backend `estimatedAmount` of
   /// the swap quote. Used to detect when a freshly re-fetched settlement amount
   /// can no longer be covered by what we actually hold.
@@ -58,6 +65,20 @@ class PayProcessCubit extends Cubit<PayProcessState> {
 
   Timer? _ethPollingTimer;
   Timer? _statusPollingTimer;
+
+  /// 40 attempts * 3s interval = 2 minutes. Bounds the poll so a status that
+  /// never turns terminal (or a backend that keeps erroring) cannot poll
+  /// forever; beyond this the swap already left the user holding ZCHF, so it
+  /// surfaces the existing pay-only retry state rather than a new failure mode.
+  static const _statusPollMaxAttempts = 40;
+
+  /// Bumped every [_startStatusPolling] call. A tick captures the generation
+  /// active when it starts; if that generation is stale by the time its
+  /// (possibly slow) request returns, the tick is a leftover from an earlier
+  /// polling cycle and must not act on the timer/state of a newer cycle.
+  int _statusPollGeneration = 0;
+  int _statusPollAttempts = 0;
+  bool _statusPollInFlight = false;
 
   /// Headroom over the OCP ZCHF amount when sizing the swap target. The swap is
   /// quoted/broadcast against the ORIGINAL OCP quote, but the pay step settles
@@ -70,6 +91,19 @@ class PayProcessCubit extends Cubit<PayProcessState> {
   /// is caught explicitly and surfaced as a retryable
   /// [PayRetryReason.insufficientZchf] rather than a server-side failure.
   static const _slippageBuffer = 1.03;
+
+  /// Local cap on the pay-leg tx's gasLimit. An ERC20 `transfer` costs roughly
+  /// 60–80k gas; 200k gives >2× headroom so a legitimate tx is never rejected
+  /// while still bounding a compromised backend that would set an absurd limit.
+  static const _maxGasLimit = 200000;
+
+  /// Local cap on the pay-leg tx's declared max total fee
+  /// (`maxFeePerGas * gasLimit`), in wei (0.05 ETH). Combined with
+  /// [_maxGasLimit] this still tolerates fee spikes up to ~250 gwei/gas, well
+  /// above ordinary mainnet congestion, while ensuring a compromised backend
+  /// can never make the app commit to burning more than 0.05 ETH in fees.
+  /// `static final` (not `const`): BigInt is not const-constructible in Dart.
+  static final _maxTotalFeeWei = BigInt.parse('50000000000000000');
 
   static const _ethPollInterval = Duration(seconds: 5);
   static const _statusPollInterval = Duration(seconds: 3);
@@ -112,6 +146,7 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       final swap = await _payService.getSwapPaymentInfo(
         RealUnitSwapDto.fromTargetAmount(_zchfNeeded * _slippageBuffer),
       );
+      if (isClosed) return;
       _swap = swap;
 
       // The API is the authority on whether the swap is fundable; render its
@@ -123,6 +158,7 @@ class PayProcessCubit extends Cubit<PayProcessState> {
 
       await _checkEthBalance(swap);
     } catch (e) {
+      if (isClosed) return;
       emit(PayProcessFailure(PayProcessFailureReason.generic, message: e.toString()));
     }
   }
@@ -139,8 +175,10 @@ class PayProcessCubit extends Cubit<PayProcessState> {
     try {
       emit(const PayProcessWaitingForEth());
       await _faucetService.requestFaucet();
+      if (isClosed) return;
       _startEthPolling(swap);
     } catch (e) {
+      if (isClosed) return;
       emit(PayProcessFailure(PayProcessFailureReason.insufficientEth, message: e.toString()));
     }
   }
@@ -148,14 +186,20 @@ class PayProcessCubit extends Cubit<PayProcessState> {
   void _startEthPolling(SwapPaymentInfo swap) {
     _ethPollingTimer?.cancel();
     _ethPollingTimer = Timer.periodic(_ethPollInterval, (_) async {
+      if (_swapInFlight) return;
+      _swapInFlight = true;
       try {
         final balance = await _blockchainService.getEthBalance(_appStore.primaryAddress);
         if (balance >= swap.requiredGasEth) {
           _ethPollingTimer?.cancel();
           await _executeSwap();
+        } else {
+          // Balance still short — release so the next tick can re-check.
+          _swapInFlight = false;
         }
       } catch (_) {
         // keep polling on transient errors
+        _swapInFlight = false;
       }
     });
   }
@@ -166,18 +210,24 @@ class PayProcessCubit extends Cubit<PayProcessState> {
     try {
       emit(const PayProcessSwapping());
       final unsigned = await _payService.createSwapUnsignedTransaction(swap.id);
+      if (isClosed) return;
       final signed = await _signTransaction(unsigned.swap);
+      if (isClosed) return;
       await _payService.broadcastSwapTransaction(swap.id, signed);
+      if (isClosed) return;
       // The swap is now irreversible — the user holds ZCHF. From here every
       // recovery path retries the PAY leg only; the swap is never redone.
       _swapCompleted = true;
       _acquiredZchf = swap.estimatedAmount;
       await _refreshQuoteAndPay();
     } on PaySignatureUnsupportedException {
+      if (isClosed) return;
       emit(const PayProcessFailure(PayProcessFailureReason.signatureUnsupported));
     } on BitboxNotConnectedException {
+      if (isClosed) return;
       emit(const PayProcessFailure(PayProcessFailureReason.bitboxRequired));
     } catch (e) {
+      if (isClosed) return;
       emit(PayProcessFailure(PayProcessFailureReason.generic, message: e.toString()));
     }
   }
@@ -206,9 +256,12 @@ class PayProcessCubit extends Cubit<PayProcessState> {
     } catch (e) {
       // Transient/network error fetching the quote — NOT a genuine expiry.
       // Retry the pay leg; the swapped ZCHF stays in the wallet.
+      if (isClosed) return;
       emit(PayProcessPayRetry(PayRetryReason.transient, message: e.toString()));
       return;
     }
+
+    if (isClosed) return;
 
     if (details.quote.expiration.isBefore(DateTime.now())) {
       emit(const PayProcessPayRetry(PayRetryReason.quoteExpired));
@@ -241,7 +294,10 @@ class PayProcessCubit extends Cubit<PayProcessState> {
           .createPayUnsignedTransaction(
             RealUnitOcpPayDto(paymentLinkId: _paymentLinkId, quoteId: quoteId),
           );
+      if (isClosed) return;
+      _validatePayUnsignedTx(unsigned);
       final signed = await _signTransaction(unsigned.unsignedTx);
+      if (isClosed) return;
       final txId = await _payService.submitPay(
         RealUnitOcpPaySubmitDto(
           unsignedTx: signed.unsignedTx,
@@ -252,13 +308,21 @@ class PayProcessCubit extends Cubit<PayProcessState> {
           quoteId: quoteId,
         ),
       );
+      if (isClosed) return;
       emit(PayProcessAwaitingSettlement(txId));
       _startStatusPolling();
+    } on PayUnsignedTxMismatchException catch (e) {
+      // The backend's own unsigned tx does not match its own metadata — never sign it. The swap
+      // already happened; recovery retries the pay leg, which re-fetches AND re-validates a fresh
+      // unsigned tx from scratch, so a bad tx can never slip through on retry.
+      if (isClosed) return;
+      emit(PayProcessPayRetry(PayRetryReason.unsignedTxMismatch, message: e.toString()));
     } catch (e) {
-      // The swap already happened; the user holds ZCHF. Any pay-leg failure
-      // here (signing dropped, BitBox disconnect, transient submit error,
-      // settlement rejected) is recoverable by retrying the pay leg — never by
-      // re-swapping. Surface the retryable state rather than a terminal failure.
+      // The swap already happened; the user holds ZCHF. Any pay-leg failure here (signing
+      // dropped, BitBox disconnect, transient submit error, settlement rejected) is recoverable
+      // by retrying the pay leg — never by re-swapping. Surface the retryable state rather than a
+      // terminal failure.
+      if (isClosed) return;
       emit(PayProcessPayRetry(PayRetryReason.transient, message: e.toString()));
     }
   }
@@ -276,23 +340,143 @@ class PayProcessCubit extends Cubit<PayProcessState> {
     return null;
   }
 
+  /// Locally re-derives the security-relevant fields of the pay-leg [unsigned] raw tx (the ZCHF
+  /// ERC20-transfer `to`/recipient/amount/chainId/gas/fees) from the RLP bytes themselves and
+  /// checks them against the DTO metadata, the app's locally configured chainId
+  /// (`apiConfig.asset.chainId`), and local gas/fee caps BEFORE the pay tx is signed. Scope is
+  /// the pay leg only — the earlier REALU→ZCHF swap (`RealUnitSwapUnsignedTransactionDto`) is
+  /// signed without an equivalent decode+validate step today (that DTO has no comparable
+  /// metadata; closing the gap needs a backend extension). The backend is untrusted for this: a
+  /// compromised/buggy backend must never be able to make the app sign a pay transfer to the
+  /// wrong token, recipient, amount, chain, or with unbounded fees. Throws
+  /// [PayUnsignedTxMismatchException] fail-closed on any mismatch or structural anomaly.
+  void _validatePayUnsignedTx(RealUnitOcpPayUnsignedTransactionDto unsigned) {
+    final tx = Eip1559UnsignedTxDecoder.decode(unsigned.unsignedTx);
+
+    // Network + fee sanity (DTO self-consistency, local trusted chain, gas/fee caps)
+    // before content checks (to / recipient / amount).
+    final expectedChainId = BigInt.from(unsigned.chainId);
+    if (tx.chainId != expectedChainId) {
+      throw PayUnsignedTxMismatchException(
+        'chainId mismatch: tx=${tx.chainId} dto=${unsigned.chainId}',
+      );
+    }
+
+    // Independent of the DTO: bind against the chainId baked into the app build
+    // (same value `_signTransaction` passes to `signToSignature`). A compromised
+    // backend that returns a self-consistent but wrong chainId cannot pass this.
+    final localChainId = BigInt.from(_appStore.apiConfig.asset.chainId);
+    if (tx.chainId != localChainId) {
+      throw PayUnsignedTxMismatchException(
+        'chainId ${tx.chainId} does not match locally configured chain $localChainId '
+        '(apiConfig.asset.chainId) — refusing to sign for an unexpected network',
+      );
+    }
+
+    if (tx.gasLimit > BigInt.from(_maxGasLimit)) {
+      throw PayUnsignedTxMismatchException(
+        'unsigned tx gasLimit ${tx.gasLimit} exceeds local cap $_maxGasLimit',
+      );
+    }
+    final totalFeeWei = tx.maxFeePerGas * tx.gasLimit;
+    if (totalFeeWei > _maxTotalFeeWei) {
+      throw PayUnsignedTxMismatchException(
+        'unsigned tx max total fee $totalFeeWei wei exceeds local cap $_maxTotalFeeWei wei',
+      );
+    }
+
+    if (tx.value != BigInt.zero) {
+      throw PayUnsignedTxMismatchException(
+        'unsigned tx sends native value ${tx.value}, expected 0',
+      );
+    }
+
+    final expectedToken = _normalizeAddress(unsigned.tokenAddress, 'tokenAddress');
+    if (tx.to != expectedToken) {
+      throw PayUnsignedTxMismatchException(
+        'tokenAddress mismatch: tx.to=${tx.to} dto.tokenAddress=${unsigned.tokenAddress}',
+      );
+    }
+
+    final transfer = Erc20TransferCalldataDecoder.decode(tx.data);
+
+    final expectedRecipient = _normalizeAddress(unsigned.recipient, 'recipient');
+    if (transfer.recipient != expectedRecipient) {
+      throw PayUnsignedTxMismatchException(
+        'recipient mismatch: calldata=${transfer.recipient} dto.recipient=${unsigned.recipient}',
+      );
+    }
+
+    final BigInt expectedAmount;
+    try {
+      expectedAmount = BigInt.parse(unsigned.amountWei);
+    } on FormatException {
+      throw PayUnsignedTxMismatchException('amountWei is not a valid integer: ${unsigned.amountWei}');
+    }
+    if (transfer.amountWei != expectedAmount) {
+      throw PayUnsignedTxMismatchException(
+        'amount mismatch: calldata=${transfer.amountWei} dto.amountWei=${unsigned.amountWei}',
+      );
+    }
+  }
+
+  /// Normalizes an address DTO field to `0x` + 40 lowercase hex chars, or throws
+  /// [PayUnsignedTxMismatchException] if it isn't one — refusing to compare against a malformed
+  /// address is safer than silently truncating/padding it.
+  static String _normalizeAddress(String raw, String fieldName) {
+    final hex = (raw.startsWith('0x') || raw.startsWith('0X')) ? raw.substring(2) : raw;
+    if (!RegExp(r'^[0-9a-fA-F]{40}$').hasMatch(hex)) {
+      throw PayUnsignedTxMismatchException('$fieldName is not a valid 20-byte address: $raw');
+    }
+    return '0x${hex.toLowerCase()}';
+  }
+
   void _startStatusPolling() {
     _statusPollingTimer?.cancel();
+    final generation = ++_statusPollGeneration;
+    _statusPollAttempts = 0;
+    _statusPollInFlight = false;
     _statusPollingTimer = Timer.periodic(_statusPollInterval, (_) async {
+      if (generation != _statusPollGeneration || _statusPollInFlight) return;
+      _statusPollInFlight = true;
       try {
         final status = await _payService.getPayStatus(_paymentLinkId);
-        if (!status.status.isTerminal) return;
+        if (isClosed || generation != _statusPollGeneration) return;
+        _statusPollAttempts++;
+        if (!status.status.isTerminal) {
+          if (_statusPollAttempts >= _statusPollMaxAttempts) {
+            _statusPollingTimer?.cancel();
+            emit(
+              const PayProcessPayRetry(
+                PayRetryReason.transient,
+                message: 'status polling exceeded max attempts',
+              ),
+            );
+            return;
+          }
+          _statusPollInFlight = false;
+          return;
+        }
         _statusPollingTimer?.cancel();
         if (status.status.isCompleted) {
           emit(const PayProcessSuccess());
         } else {
-          // The engine reached a terminal non-completed status (e.g. the quote
-          // expired or was cancelled before it settled). The user still holds
-          // the swapped ZCHF, so this is recoverable by retrying the pay leg.
           emit(const PayProcessPayRetry(PayRetryReason.transient));
         }
       } catch (_) {
-        // keep polling on transient errors
+        if (isClosed || generation != _statusPollGeneration) return;
+        _statusPollAttempts++;
+        if (_statusPollAttempts >= _statusPollMaxAttempts) {
+          _statusPollingTimer?.cancel();
+          emit(
+            const PayProcessPayRetry(
+              PayRetryReason.transient,
+              message: 'status polling exceeded max attempts',
+            ),
+          );
+          return;
+        }
+        _statusPollInFlight = false;
       }
     });
   }

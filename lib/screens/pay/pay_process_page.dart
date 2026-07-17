@@ -117,6 +117,7 @@ class PayProcessView extends StatelessWidget {
     PayRetryReason.quoteExpired => S.of(context).payRetryQuoteExpired,
     PayRetryReason.transient => S.of(context).payRetryTransient,
     PayRetryReason.insufficientZchf => S.of(context).payRetryInsufficientZchf,
+    PayRetryReason.unsignedTxMismatch => S.of(context).payRetryUnsignedTxMismatch,
   };
 
   Future<void> _showResultSheet(

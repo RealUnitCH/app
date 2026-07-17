@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/lnurlp_payment_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_swap_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 
 part 'pay_quote_state.dart';
@@ -21,6 +22,7 @@ class PayQuoteCubit extends Cubit<PayQuoteState> {
 
     try {
       final details = await _payService.getPaymentDetails(_paymentLinkId);
+      if (isClosed) return;
 
       if (details.quote.expiration.isBefore(DateTime.now())) {
         emit(const PayQuoteExpired());
@@ -33,6 +35,17 @@ class PayQuoteCubit extends Cubit<PayQuoteState> {
         return;
       }
 
+      // Preview-only swap quote using the plain bill ZCHF amount (no slippage
+      // buffer). Shown on the pay-quote screen so the user sees expected REALU
+      // sold, ZCHF proceeds and fees for this bill before confirming. The
+      // actual swap executed later in PayProcessCubit re-requests its own quote
+      // independently with its own slippage buffer and remains the sole source
+      // of truth for what is actually swapped.
+      final swap = await _payService.getSwapPaymentInfo(
+        RealUnitSwapDto.fromTargetAmount(zchfAmount),
+      );
+      if (isClosed) return;
+
       emit(
         PayQuoteReady(
           paymentLinkId: _paymentLinkId,
@@ -40,9 +53,15 @@ class PayQuoteCubit extends Cubit<PayQuoteState> {
           fiatAsset: details.requestedAmount.asset,
           fiatAmount: details.requestedAmount.amount,
           zchfAmount: zchfAmount,
+          merchantName: details.recipient?.name,
+          merchantCity: details.recipient?.city,
+          realuAmount: swap.amount,
+          realuEstimatedZchf: swap.estimatedAmount,
+          realuFeesTotal: swap.feesTotal,
         ),
       );
     } catch (e) {
+      if (isClosed) return;
       emit(PayQuoteError(e.toString()));
     }
   }

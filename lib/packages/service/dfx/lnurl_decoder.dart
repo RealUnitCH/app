@@ -93,12 +93,15 @@ abstract final class LnurlDecoder {
   static String _extractId(Uri uri) {
     final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
     final lnurlpIndex = segments.indexOf('lnurlp');
-    if (lnurlpIndex != -1 && lnurlpIndex + 1 < segments.length) {
-      return segments[lnurlpIndex + 1];
-    }
-    if (segments.isNotEmpty) return segments.last;
+    final candidate = (lnurlpIndex != -1 && lnurlpIndex + 1 < segments.length)
+        ? segments[lnurlpIndex + 1]
+        : (segments.isNotEmpty ? segments.last : null);
+    if (candidate != null && _hasValidPaymentLinkPrefix(candidate)) return candidate;
     throw InvalidPaymentLinkException('No payment id in: $uri');
   }
+
+  static bool _hasValidPaymentLinkPrefix(String id) =>
+      id.startsWith('pl_') || id.startsWith('plp_');
 
   /// Decodes a LUD-01 bech32 `LNURL1...` string to its wrapped UTF-8 URL.
   ///

@@ -48,6 +48,7 @@ void main() {
       expect(dto.minVolumeTarget, 95);
       expect(dto.isValid, isTrue);
       expect(dto.error, isNull);
+      expect(dto.fees?.total, 1.5);
     });
 
     test('maps the error code when isValid is false', () {
@@ -71,6 +72,7 @@ void main() {
 
       expect(dto.isValid, isFalse);
       expect(dto.error, 'LIMIT_EXCEEDED');
+      expect(dto.fees, isNull);
     });
   });
 
@@ -99,6 +101,31 @@ void main() {
     expect(info.ethBalance, 0.4);
     expect(info.requiredGasEth, 0.002);
     expect(info.isValid, isTrue);
+    expect(info.feesTotal, isNull);
+  });
+
+  test('SwapPaymentInfo.fromDto carries fees.total as feesTotal', () {
+    final dto = RealUnitSwapPaymentInfoDto.fromJson({
+      'id': 99,
+      'uid': 'MOCK-UID',
+      'routeId': 7,
+      'timestamp': '2026-06-03T00:00:00.000Z',
+      'amount': 10,
+      'estimatedAmount': 960,
+      'targetAsset': 'ZCHF',
+      'fees': {'total': 3.25},
+      'minVolume': 1,
+      'maxVolume': 1000,
+      'minVolumeTarget': 95,
+      'maxVolumeTarget': 95000,
+      'ethBalance': 1.0,
+      'requiredGasEth': 0.001,
+      'isValid': true,
+    });
+
+    final info = SwapPaymentInfo.fromDto(dto);
+
+    expect(info.feesTotal, 3.25);
   });
 
   test('SwapPaymentInfo equality is value-based (Equatable props)', () {
@@ -219,7 +246,7 @@ void main() {
       expect(OcpPaymentStatus.cancelled.isCompleted, isFalse);
       expect(OcpPaymentStatus.expired.isTerminal, isTrue);
       expect(OcpPaymentStatus.pending.isTerminal, isFalse);
-      expect(OcpPaymentStatus.unknown.isTerminal, isFalse);
+      expect(OcpPaymentStatus.unknown.isTerminal, isTrue);
     });
   });
 
@@ -283,9 +310,13 @@ void main() {
 
     test('ignores the structured recipient object instead of throwing on it', () {
       // The backend `recipient` is a PaymentLinkRecipientDto object, not a
-      // String; reading the quote must not throw on it (the field is unused).
+      // String; reading the quote must not throw on it. Only name+city are
+      // mapped; other nested address fields are intentionally left unmapped.
       final dto = LnurlpPaymentDto.fromJson({
-        'recipient': {'name': 'Acme GmbH', 'address': 'Bahnhofstrasse 1'},
+        'recipient': {
+          'name': 'Acme GmbH',
+          'address': {'street': 'Bahnhofstrasse', 'houseNumber': '1', 'city': 'Zürich'},
+        },
         'requestedAmount': {'asset': 'CHF', 'amount': 42.5},
         'quote': {'id': 'quote_xyz', 'expiration': '2026-06-03T12:00:00.000Z'},
         'transferAmounts': [
@@ -300,6 +331,8 @@ void main() {
 
       expect(dto.quote.id, 'quote_xyz');
       expect(dto.transferAmounts.first.assets.first.amount, 42.7);
+      expect(dto.recipient?.name, 'Acme GmbH');
+      expect(dto.recipient?.city, 'Zürich');
     });
   });
 }

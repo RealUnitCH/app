@@ -17,6 +17,7 @@ class RealUnitSwapPaymentInfoDto {
   final double requiredGasEth;
   final bool isValid;
   final String? error;
+  final RealUnitSwapFeeDto? fees;
 
   const RealUnitSwapPaymentInfoDto({
     required this.id,
@@ -34,6 +35,7 @@ class RealUnitSwapPaymentInfoDto {
     required this.requiredGasEth,
     required this.isValid,
     this.error,
+    this.fees,
   });
 
   factory RealUnitSwapPaymentInfoDto.fromJson(Map<String, dynamic> json) {
@@ -53,6 +55,20 @@ class RealUnitSwapPaymentInfoDto {
       requiredGasEth: (json['requiredGasEth'] as num).toDouble(),
       isValid: json['isValid'] as bool,
       error: json['error'] as String?,
+      fees: json['fees'] == null
+          ? null
+          : RealUnitSwapFeeDto.fromJson(json['fees'] as Map<String, dynamic>),
     );
+  }
+}
+
+/// Fee breakdown from the swap quote. Only `total` is mapped for display.
+class RealUnitSwapFeeDto {
+  final double total;
+
+  const RealUnitSwapFeeDto({required this.total});
+
+  factory RealUnitSwapFeeDto.fromJson(Map<String, dynamic> json) {
+    return RealUnitSwapFeeDto(total: (json['total'] as num).toDouble());
   }
 }

@@ -35,6 +35,7 @@ void main() {
       const AlreadyConfirmedException(code: 'TEST', message: 'test'),
       const InvalidPaymentLinkException('test'),
       const PaySignatureUnsupportedException(),
+      const PayUnsignedTxMismatchException('test'),
     ];
 
     for (final ex in exceptions) {
