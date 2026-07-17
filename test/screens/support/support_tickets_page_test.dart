@@ -99,11 +99,20 @@ void main() {
     });
 
     testWidgets('renders the ticket date in local time, not UTC', (tester) async {
-      // A UTC instant late in the day: in a positive-offset timezone the local
-      // calendar date rolls to the next day, so this fails if the page renders
-      // the raw UTC components instead of `.toLocal()`.
+      // 23:30 UTC crosses midnight only in a positive-offset zone, where the
+      // local calendar date differs from the UTC one — the case that tells the
+      // fix apart from the old raw-UTC rendering. On a zero/negative-offset
+      // runner (e.g. the GitHub-hosted UTC CI job) the two coincide, so skip
+      // rather than pass vacuously and masquerade as a real regression guard.
       final createdUtc = DateTime.utc(2024, 1, 15, 23, 30);
       final local = createdUtc.toLocal();
+      if (local.day == createdUtc.day) {
+        markTestSkipped(
+          'runner timezone does not push 23:30 UTC across midnight; '
+          'the local-vs-UTC date regression is not exercised here',
+        );
+        return;
+      }
       final tickets = [
         SupportIssue(
           uid: '123',
