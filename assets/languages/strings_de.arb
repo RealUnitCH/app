@@ -337,7 +337,6 @@
   "supportEmailCaptureContinue": "Weiter",
   "supportEmailCaptureDescription": "Um ein Support-Ticket zu erfassen, benötigen wir Ihre E-Mail-Adresse.",
   "supportEmailCaptureTitle": "E-Mail-Adresse hinzufügen",
-  "supportEmailMergeRequiresVerification": "Diese E-Mail-Adresse ist bereits einer anderen Wallet zugeordnet. Bitte wählen Sie eine andere Adresse oder kontaktieren Sie den Support per E-Mail.",
   "supportEnterMessage": "Nachricht eingeben",
   "supportGenericIssue": "Allgemeines Anliegen",
   "supportKycIssue": "KYC-Problem",
