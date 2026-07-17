@@ -59,7 +59,9 @@ class TransactionHistoryFilterCubit extends Cubit<TransactionHistoryFilterState>
     DateTime? endDate,
   }) {
     return transactions.where((transaction) {
-      final transactionDate = transaction.timestamp;
+      // The API timestamp is UTC; compare in local time so the date-range
+      // filter matches the local date the rows display.
+      final transactionDate = transaction.timestamp.toLocal();
       final afterStart = startDate == null || !transactionDate.isBefore(startDate);
       final beforeEnd = endDate == null || !transactionDate.isAfter(endDate);
       return afterStart && beforeEnd;
