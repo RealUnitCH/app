@@ -25,7 +25,7 @@ on:
     branches: [staging, develop]
     paths:
       - "docs/handbook/**"
-      - "test/goldens/screens/**"
+      - "test/goldens/**"
       - "scripts/assemble-handbook-screenshots.sh"
       - "scripts/assemble-handbook-store-listing.py"
       - "scripts/templates/store-listing.html.tmpl"

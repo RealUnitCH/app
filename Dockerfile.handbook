@@ -26,6 +26,9 @@ WORKDIR /work
 RUN apk add --no-cache bash coreutils
 COPY scripts/assemble-handbook-screenshots.sh ./scripts/
 COPY test/goldens/screens/ ./test/goldens/screens/
+# Shared-widget baselines (e.g. widgets/form/phone_number_field) live outside
+# screens/ but are mapped into the handbook too, so they must be staged here.
+COPY test/goldens/widgets/ ./test/goldens/widgets/
 RUN bash ./scripts/assemble-handbook-screenshots.sh /out
 
 # Store-listing section: derived export of the Fastlane metadata

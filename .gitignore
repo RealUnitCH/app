@@ -103,3 +103,5 @@ docs/handbook/legal/
 _api-checkout/
 _handlebars-only/
 _web-checkout/
+# Alchemist/flutter golden failure dumps
+**/goldens/**/failures/

@@ -64,6 +64,7 @@ class FilePickerField extends StatelessWidget {
                       Expanded(
                         child: Text(
                           selectedFile!.name,
+                          maxLines: 1,
                           overflow: .ellipsis,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
@@ -82,10 +83,14 @@ class FilePickerField extends StatelessWidget {
                         Icons.add_a_photo_rounded,
                         color: RealUnitColors.neutral400,
                       ),
-                      Text(
-                        label,
-                        style: const TextStyle(
-                          color: RealUnitColors.neutral400,
+                      Flexible(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: .ellipsis,
+                          style: const TextStyle(
+                            color: RealUnitColors.neutral400,
+                          ),
                         ),
                       ),
                     ],

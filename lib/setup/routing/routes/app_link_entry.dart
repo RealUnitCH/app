@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 /// Custom URL scheme the app is opened with. Registered in
@@ -16,22 +17,69 @@ const String appLinkColdStartLocation = '/home';
 /// Top-level go_router redirect for custom-scheme opens.
 ///
 /// A `realunit-wallet://…` open (canonical `realunit-wallet://open`) only brings
-/// the app to the foreground — it must NOT force any in-app navigation. So on a
-/// warm resume it keeps the user exactly where they were: [currentLocation] is
-/// the router's current in-app route, returned unchanged (a no-op). On a cold
-/// start there is no prior in-app route (currentLocation is empty or the scheme
-/// URL itself), so it hands off to the normal boot entry and lets `main.dart`'s
-/// boot flow take over — the PIN gate and boot ordering stay untouched. Either
-/// way go_router never shows an error screen for a scheme URL that matches no
-/// path route. Non-scheme (in-app) navigation is left untouched (`null`).
+/// the app to the foreground — it must NOT force any in-app navigation.
+///
+/// Cold start: there is no prior in-app route ([currentLocation] is empty or
+/// the scheme URL itself), so it hands off to the normal boot entry and lets
+/// `main.dart`'s boot flow take over — the PIN gate and boot ordering stay
+/// untouched.
+///
+/// Warm resume, canonical path-less open (`realunit-wallet://open`): it returns
+/// `null` so the scheme URL stays unmatched and falls through to
+/// [appLinkOnException], which keeps the current route configuration untouched
+/// — a true no-op. Returning a location string here instead would be applied as
+/// a `go` and REPLACE the whole match list: an imperatively pushed route (the
+/// KYC flow from Buy/Sell) would be dropped together with its page-scoped
+/// state, its `extra`, and the back stack underneath it.
+///
+/// Warm resume, scheme URL CARRYING a path: go_router matches on `uri.path`
+/// alone, so `realunit-wallet://open/settings/seed` would match — and with a
+/// `null` return it would navigate, straight past flow-level gates (the seed
+/// page's PIN gate lives in the settings navigation path, not on the route).
+/// Returning the current location instead would be no safer: applied as a
+/// `go`, it rebuilds a pushed `extra`-required route (`/buyPaymentDetails`,
+/// `/webView`, …) with a null `extra` and crashes its builder cast. So crafted
+/// path-carrying URLs are rewritten to the canonical [appLinkUrl]: go_router
+/// resolves the rewritten URL to an unmatched (error) match list and
+/// short-circuits before any further redirect pass, so the chain terminates
+/// and [appLinkOnException] keeps the configuration — the same true no-op as
+/// the canonical open, with no rebuild at all.
+///
+/// Non-scheme (in-app) navigation is left untouched (`null`).
 //
 // @no-integration-test: OS-level custom-scheme delivery and foregrounding can
 // only be exercised on a real device, and no integration_test/ harness exists
-// in this repo yet. The redirect itself is covered by widget tests in
+// in this repo yet. The redirect is covered by widget tests in
 // app_link_entry_test.dart.
 String? appLinkSchemeRedirect(GoRouterState state, String currentLocation) {
   if (state.uri.scheme != appLinkScheme) return null;
   final current = Uri.parse(currentLocation);
   final isInAppRoute = current.scheme.isEmpty && current.path.startsWith('/');
-  return isInAppRoute ? currentLocation : appLinkColdStartLocation;
+  if (!isInAppRoute) return appLinkColdStartLocation;
+  final hasPath = state.uri.path.isNotEmpty && state.uri.path != '/';
+  return hasPath ? appLinkUrl : null;
+}
+
+/// go_router exception handler paired with [appLinkSchemeRedirect].
+///
+/// With an `onException` handler installed, go_router keeps the current route
+/// configuration whenever a URL matches no route (go_router `router.dart`:
+/// "Avoid updating GoRouterDelegate if onException is provided"). A warm
+/// custom-scheme open is exactly that case — [appLinkSchemeRedirect] lets it
+/// fall through unmatched — so doing nothing here IS the foregrounding no-op,
+/// and it is the only variant that survives imperatively pushed routes.
+/// Cold-start scheme opens never reach this handler; the redirect already
+/// mapped them to [appLinkColdStartLocation].
+//
+// @no-integration-test: OS-level custom-scheme delivery and foregrounding can
+// only be exercised on a real device, and no integration_test/ harness exists
+// in this repo yet. The handler is covered by widget tests in
+// app_link_entry_test.dart.
+void appLinkOnException(BuildContext context, GoRouterState state, GoRouter router) {
+  if (state.uri.scheme == appLinkScheme) return;
+  // A non-scheme URL that matches no route is a programming error. Installing
+  // onException removes go_router's default error screen, so fail loud where
+  // tests and debug builds can see it; in release the user stays on the
+  // current screen instead of landing on an error page.
+  assert(false, 'No route matches ${state.uri}');
 }

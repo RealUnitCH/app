@@ -30,6 +30,7 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_account_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_legal_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
@@ -48,21 +49,36 @@ import 'package:shared_preferences/shared_preferences.dart';
 final navigatorKey = GlobalKey<NavigatorState>();
 final getIt = GetIt.instance;
 
-Future<String> setupEssentials() async {
+/// Boots the essentials the rest of `main()` depends on and returns the
+/// SQLCipher database encryption key. It registers [SharedPreferences], the
+/// [SettingsRepository] factory and [SecureStorage] in [getIt], migrates the
+/// legacy security flags, then resolves the key lifecycle: return the stored
+/// key if one exists; on a clean first boot (no key AND no database) mint,
+/// persist and return a fresh key while dropping any stale current-wallet id;
+/// and fail loud if a database is present WITHOUT its key rather than silently
+/// minting a new one (which would strand the encrypted data permanently).
+///
+/// [secureStorage] and [databaseFileExists] are injection seams with production
+/// defaults (`const SecureStorage()` and the real path_provider-backed check),
+/// so the key lifecycle is unit-testable on the host without a keystore or
+/// filesystem — same default-injection pattern as `const PathProviderAdapter()`.
+Future<String> setupEssentials({
+  SecureStorage secureStorage = const SecureStorage(),
+  Future<bool> Function() databaseFileExists = _existsDatabaseFile,
+}) async {
   final sharedPreferences = await SharedPreferences.getInstance();
   getIt.registerSingleton(sharedPreferences);
 
   getIt.registerFactory(() => SettingsRepository(getIt<SharedPreferences>()));
 
-  final secureStorage = const SecureStorage();
   getIt.registerSingleton(secureStorage);
 
-  await _migrateSecurityFlags(sharedPreferences, secureStorage);
+  await migrateSecurityFlags(sharedPreferences, secureStorage);
 
   final encryptionKey = await secureStorage.getEncryptionKey();
 
   if (encryptionKey == null) {
-    if (await _existsDatabaseFile()) {
+    if (await databaseFileExists()) {
       throw Exception('Database found, but key is missing!');
     }
     final freshEncryptionKey = SecureStorage.getNewEncryptionKey();
@@ -182,6 +198,9 @@ void setupServices() {
     () => RealUnitBuyPaymentInfoService(getIt<AppStore>(), getIt<WalletService>()),
   );
   getIt.registerFactory(
+    () => RealUnitLegalService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
     () => RealUnitPdfService(getIt<AppStore>(), getIt<WalletService>()),
   );
   getIt.registerFactory(
@@ -227,7 +246,17 @@ Future<void> setupBlocs() async {
 
 Future<bool> _existsDatabaseFile() async => File(await AppDatabase.getDatabasePath()).exists();
 
-Future<void> _migrateSecurityFlags(
+/// Moves the security flags that used to live in [SharedPreferences]
+/// (biometric-enabled, the PIN lockout attempt counter, and the lock-until
+/// timestamp) into [SecureStorage], and drops the legacy `isPinEnabled` flag.
+/// Runs once on every boot from [setupEssentials] and is idempotent once the
+/// prefs are cleared.
+///
+/// Exposed for unit testing (via [SecureStorage.withStorage] + mocked
+/// [SharedPreferences]) because the boot path is otherwise unreachable without
+/// standing up the real service locator.
+@visibleForTesting
+Future<void> migrateSecurityFlags(
   SharedPreferences prefs,
   SecureStorage secureStorage,
 ) async {

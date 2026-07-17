@@ -30,7 +30,13 @@ class TagSelection<T> extends StatelessWidget {
                       size: 18,
                       color: isSelected ? RealUnitColors.basic.white : RealUnitColors.neutral600,
                     ),
-                    Text(item.$2),
+                    Flexible(
+                      child: Text(
+                        item.$2,
+                        maxLines: 1,
+                        overflow: .ellipsis,
+                      ),
+                    ),
                   ],
                 )
               : Text(item.$2),
