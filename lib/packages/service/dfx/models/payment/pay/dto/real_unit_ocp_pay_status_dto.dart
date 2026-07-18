@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 /// Mirrors the backend `PaymentLinkPaymentStatus` enum 1:1 (type-safe DTO
 /// mirroring, not local business logic). The backend remains the authority on
 /// the payment status; the app renders it and uses [isTerminal] / [isCompleted]
@@ -14,11 +16,19 @@ enum OcpPaymentStatus {
 
   const OcpPaymentStatus(this.value);
 
+  /// Mirrors the backend status 1:1. An unrecognised value is deliberately
+  /// mapped to `unknown` (forward-compat, not a bug) rather than crashing —
+  /// but the raw value is logged so the drift stays visible instead of being
+  /// silently swallowed.
   static OcpPaymentStatus fromValue(String value) {
-    return OcpPaymentStatus.values.firstWhere(
-      (s) => s.value == value,
-      orElse: () => OcpPaymentStatus.unknown,
+    for (final status in OcpPaymentStatus.values) {
+      if (status.value == value) return status;
+    }
+    developer.log(
+      'Unrecognised OcpPaymentStatus "$value" — mapped to unknown (forward-compat).',
+      name: 'OcpPaymentStatus',
     );
+    return OcpPaymentStatus.unknown;
   }
 
   /// Polling stops once the payment reaches a final state.

@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:web3dart/crypto.dart';
+import 'package:web3dart/web3dart.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
@@ -25,8 +28,6 @@ import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/packages/wallet/wallet_account.dart';
 import 'package:realunit_wallet/screens/pay/cubits/pay_process/pay_process_cubit.dart';
-import 'package:web3dart/crypto.dart';
-import 'package:web3dart/web3dart.dart';
 
 import '../../helper/fake_bitbox_credentials.dart';
 
@@ -784,6 +785,89 @@ void main() {
     });
   });
 
+  test('eth polling exceeds max attempts while balance stays short → insufficientEth', () {
+    fakeAsync((async) {
+      wireHappyPath();
+      when(
+        () => payService.getSwapPaymentInfo(any()),
+      ).thenAnswer((_) async => _swap(ethBalance: 0, requiredGasEth: 0.001));
+      when(
+        () => faucet.requestFaucet(),
+      ).thenAnswer((_) async => const FaucetResponseDto(txId: '0xf', amount: 0.01));
+      var balanceCalls = 0;
+      when(() => blockchain.getEthBalance(any())).thenAnswer((_) async {
+        balanceCalls++;
+        return 0.0; // never crosses requiredGasEth
+      });
+
+      final cubit = build();
+      cubit.start();
+      drain(async);
+      expect(cubit.state, isA<PayProcessWaitingForEth>());
+
+      // 24 polls @ 5s, each still short — the 24th hits the max-attempts cap.
+      for (var i = 0; i < 24; i++) {
+        async.elapse(const Duration(seconds: 5));
+        drain(async);
+      }
+
+      final state = cubit.state as PayProcessFailure;
+      expect(state.reason, PayProcessFailureReason.insufficientEth);
+      expect(state.message, 'eth balance polling exceeded max attempts');
+      expect(balanceCalls, 24);
+
+      // Polling has genuinely stopped — elapsing further must not trigger another call.
+      async.elapse(const Duration(seconds: 5));
+      drain(async);
+      expect(balanceCalls, 24);
+      // Swap must never have been attempted after the cap.
+      verifyNever(() => payService.createSwapUnsignedTransaction(any()));
+
+      cubit.close();
+      async.flushTimers();
+    });
+  });
+
+  test('hung getEthBalance is unwound by per-request timeout and still hits max attempts', () {
+    fakeAsync((async) {
+      wireHappyPath();
+      when(
+        () => payService.getSwapPaymentInfo(any()),
+      ).thenAnswer((_) async => _swap(ethBalance: 0, requiredGasEth: 0.001));
+      when(
+        () => faucet.requestFaucet(),
+      ).thenAnswer((_) async => const FaucetResponseDto(txId: '0xf', amount: 0.01));
+      var balanceCalls = 0;
+      when(() => blockchain.getEthBalance(any())).thenAnswer((_) {
+        balanceCalls++;
+        // Never completes — only `.timeout(_ethPollTimeout)` (10s) unwedges the tick.
+        return Completer<double>().future;
+      });
+
+      final cubit = build();
+      cubit.start();
+      drain(async);
+      expect(cubit.state, isA<PayProcessWaitingForEth>());
+
+      // Cadence under fakeAsync: tick @5s starts attempt 1; its 10s timeout and
+      // the next periodic may interleave such that a free tick is only every
+      // ~15s (periodic can fire while still in-flight, then timeout frees).
+      // 24 attempts ⇒ up to ~360s virtual time. Step in 5s until failure.
+      for (var i = 0; i < 100 && cubit.state is! PayProcessFailure; i++) {
+        async.elapse(const Duration(seconds: 5));
+        drain(async);
+      }
+
+      final state = cubit.state as PayProcessFailure;
+      expect(state.reason, PayProcessFailureReason.insufficientEth);
+      expect(state.message, 'eth balance polling exceeded max attempts');
+      expect(balanceCalls, 24);
+
+      cubit.close();
+      async.flushTimers();
+    });
+  });
+
   test('faucet request failure → insufficientEth', () async {
     when(
       () => payService.getSwapPaymentInfo(any()),
@@ -910,6 +994,79 @@ void main() {
 
     expect(state.reason, PayRetryReason.insufficientZchf);
     // The pay leg is never attempted — the swapped ZCHF stays in the wallet.
+    verifyNever(() => payService.createPayUnsignedTransaction(any()));
+    await cubit.close();
+  });
+
+  test('insufficient ZCHF with rawAmount uses exact plain-decimal comparison', () async {
+    wireHappyPath();
+    // Swap acquires estimatedAmount=960. Fresh quote carries rawAmount '1000'
+    // (exact string path) — must hit the plain-decimal branch, not only double `>`.
+    when(() => payService.getPaymentDetails('pl_abc')).thenAnswer(
+      (_) async => LnurlpPaymentDto(
+        requestedAmount: const LnurlpRequestedAmountDto(asset: 'CHF', amount: 42.5),
+        quote: LnurlpQuoteDto(
+          id: 'quote_fresh',
+          expiration: DateTime.now().add(const Duration(minutes: 5)),
+        ),
+        transferAmounts: [
+          const LnurlpTransferAmountDto(
+            method: 'Ethereum',
+            assets: [
+              LnurlpTransferAssetDto(
+                asset: 'ZCHF',
+                amount: 1000,
+                rawAmount: '1000',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    final state = await retry as PayProcessPayRetry;
+
+    expect(state.reason, PayRetryReason.insufficientZchf);
+    verifyNever(() => payService.createPayUnsignedTransaction(any()));
+    await cubit.close();
+  });
+
+  test('malformed rawAmount falls back to double comparison (never treats as OK)', () async {
+    wireHappyPath();
+    // rawAmount is scientific notation → FormatException on plain-decimal parse →
+    // fall back to double `>` (amount 1000 > acquired 960). Must NOT treat as
+    // "not exceeding" just because the exact path failed.
+    when(() => payService.getPaymentDetails('pl_abc')).thenAnswer(
+      (_) async => LnurlpPaymentDto(
+        requestedAmount: const LnurlpRequestedAmountDto(asset: 'CHF', amount: 42.5),
+        quote: LnurlpQuoteDto(
+          id: 'quote_fresh',
+          expiration: DateTime.now().add(const Duration(minutes: 5)),
+        ),
+        transferAmounts: [
+          const LnurlpTransferAmountDto(
+            method: 'Ethereum',
+            assets: [
+              LnurlpTransferAssetDto(
+                asset: 'ZCHF',
+                amount: 1000,
+                rawAmount: '1e3',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    final state = await retry as PayProcessPayRetry;
+
+    expect(state.reason, PayRetryReason.insufficientZchf);
     verifyNever(() => payService.createPayUnsignedTransaction(any()));
     await cubit.close();
   });

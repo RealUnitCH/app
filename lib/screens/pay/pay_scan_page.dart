@@ -67,7 +67,7 @@ class PayScanView extends StatelessWidget {
                   child: Text(
                     message,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: RealUnitColors.neutral500),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: RealUnitColors.neutral500),
                   ),
                 ),
               );

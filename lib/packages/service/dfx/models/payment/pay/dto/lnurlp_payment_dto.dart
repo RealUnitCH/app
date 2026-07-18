@@ -26,13 +26,18 @@ class LnurlpPaymentDto {
   });
 
   factory LnurlpPaymentDto.fromJson(Map<String, dynamic> json) {
-    final transfers = (json['transferAmounts'] as List<dynamic>?) ?? const [];
+    final transfersRaw = json['transferAmounts'];
+    if (transfersRaw is! List) {
+      throw FormatException(
+        'transferAmounts is required and must be a list, got: $transfersRaw',
+      );
+    }
     return LnurlpPaymentDto(
       requestedAmount: LnurlpRequestedAmountDto.fromJson(
         json['requestedAmount'] as Map<String, dynamic>,
       ),
       quote: LnurlpQuoteDto.fromJson(json['quote'] as Map<String, dynamic>),
-      transferAmounts: transfers
+      transferAmounts: transfersRaw
           .map((e) => LnurlpTransferAmountDto.fromJson(e as Map<String, dynamic>))
           .toList(),
       recipient: json['recipient'] == null
@@ -68,7 +73,7 @@ class LnurlpRequestedAmountDto {
   factory LnurlpRequestedAmountDto.fromJson(Map<String, dynamic> json) {
     return LnurlpRequestedAmountDto(
       asset: json['asset'] as String,
-      amount: double.parse(json['amount'].toString()),
+      amount: _parseAmount('requestedAmount.amount', json['amount']),
     );
   }
 }
@@ -94,10 +99,15 @@ class LnurlpTransferAmountDto {
   const LnurlpTransferAmountDto({required this.method, required this.assets});
 
   factory LnurlpTransferAmountDto.fromJson(Map<String, dynamic> json) {
-    final assets = (json['assets'] as List<dynamic>?) ?? const [];
+    final assetsRaw = json['assets'];
+    if (assetsRaw is! List) {
+      throw FormatException(
+        'transferAmounts.assets is required and must be a list, got: $assetsRaw',
+      );
+    }
     return LnurlpTransferAmountDto(
       method: json['method'] as String,
-      assets: assets
+      assets: assetsRaw
           .map((e) => LnurlpTransferAssetDto.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
@@ -113,14 +123,42 @@ class LnurlpTransferAssetDto {
   /// actually transfers (ZCHF on Ethereum), filtered before it is read.
   final double? amount;
 
-  const LnurlpTransferAssetDto({required this.asset, this.amount});
+  /// Exact JSON amount string as received (before `double` conversion), when
+  /// present. Used by the pay-process settlement guard for plain-decimal exact
+  /// comparison so binary-double drift cannot flip a boundary check. Additive —
+  /// callers that only read [amount] (e.g. [PayQuoteCubit]) are unaffected.
+  final String? rawAmount;
+
+  const LnurlpTransferAssetDto({
+    required this.asset,
+    this.amount,
+    this.rawAmount,
+  });
 
   factory LnurlpTransferAssetDto.fromJson(Map<String, dynamic> json) {
-    final rawAmount = json['amount'];
-    final amount = rawAmount == null ? null : double.parse(rawAmount.toString());
+    final raw = json['amount'];
+    if (raw == null) {
+      return LnurlpTransferAssetDto(asset: json['asset'] as String);
+    }
+    final rawAmount = raw.toString();
     return LnurlpTransferAssetDto(
       asset: json['asset'] as String,
-      amount: amount,
+      amount: _parseAmount('transferAmounts.assets.amount', raw),
+      rawAmount: rawAmount,
     );
   }
+}
+
+/// Parses a money amount from JSON. Rejects NaN, ±Infinity and negatives fail-
+/// closed via [FormatException] (same type [double.parse] already throws on
+/// non-numeric input — no new exception class).
+double _parseAmount(String fieldName, Object? raw) {
+  final value = double.parse(raw.toString());
+  if (!value.isFinite) {
+    throw FormatException('$fieldName is not a finite number: $raw');
+  }
+  if (value.isNegative) {
+    throw FormatException('$fieldName must not be negative: $raw');
+  }
+  return value;
 }

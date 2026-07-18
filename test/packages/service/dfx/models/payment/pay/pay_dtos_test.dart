@@ -278,15 +278,31 @@ void main() {
       expect(dto.transferAmounts.first.method, 'Ethereum');
       expect(dto.transferAmounts.first.assets.first.asset, 'ZCHF');
       expect(dto.transferAmounts.first.assets.first.amount, 42.7);
+      // Additive rawAmount captures the JSON value's toString before double parse.
+      expect(dto.transferAmounts.first.assets.first.rawAmount, '42.7');
     });
 
-    test('tolerates a missing transferAmounts list', () {
-      final dto = LnurlpPaymentDto.fromJson({
-        'requestedAmount': {'asset': 'CHF', 'amount': 1.0},
-        'quote': {'id': 'q', 'expiration': '2026-06-03T12:00:00.000Z'},
-      });
+    test('rejects a missing transferAmounts list', () {
+      expect(
+        () => LnurlpPaymentDto.fromJson({
+          'requestedAmount': {'asset': 'CHF', 'amount': 1.0},
+          'quote': {'id': 'q', 'expiration': '2026-06-03T12:00:00.000Z'},
+        }),
+        throwsA(isA<FormatException>()),
+      );
+    });
 
-      expect(dto.transferAmounts, isEmpty);
+    test('rejects a missing assets list within a transferAmounts entry', () {
+      expect(
+        () => LnurlpPaymentDto.fromJson({
+          'requestedAmount': {'asset': 'CHF', 'amount': 1.0},
+          'quote': {'id': 'q', 'expiration': '2026-06-03T12:00:00.000Z'},
+          'transferAmounts': [
+            {'method': 'Ethereum'},
+          ],
+        }),
+        throwsA(isA<FormatException>()),
+      );
     });
 
     test('parses amount-less asset entries (non-priced display path) as null', () {
@@ -306,6 +322,132 @@ void main() {
 
       expect(dto.transferAmounts.first.assets.first.asset, 'ZCHF');
       expect(dto.transferAmounts.first.assets.first.amount, isNull);
+      expect(dto.transferAmounts.first.assets.first.rawAmount, isNull);
+    });
+
+    test('preserves a string amount as rawAmount without double drift', () {
+      final dto = LnurlpPaymentDto.fromJson({
+        'requestedAmount': {'asset': 'CHF', 'amount': '10.10'},
+        'quote': {'id': 'q', 'expiration': '2026-06-03T12:00:00.000Z'},
+        'transferAmounts': [
+          {
+            'method': 'Ethereum',
+            'assets': [
+              {'asset': 'ZCHF', 'amount': '42.70000000000001'},
+            ],
+          },
+        ],
+      });
+
+      expect(dto.requestedAmount.amount, 10.10);
+      expect(dto.transferAmounts.first.assets.first.rawAmount, '42.70000000000001');
+      expect(dto.transferAmounts.first.assets.first.amount, isNotNull);
+    });
+
+    test('rejects NaN in requestedAmount.amount', () {
+      expect(
+        () => LnurlpPaymentDto.fromJson({
+          'requestedAmount': {'asset': 'CHF', 'amount': 'NaN'},
+          'quote': {'id': 'q', 'expiration': '2026-06-03T12:00:00.000Z'},
+          'transferAmounts': [
+            {
+              'method': 'Ethereum',
+              'assets': [
+                {'asset': 'ZCHF', 'amount': 1.0},
+              ],
+            },
+          ],
+        }),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('not a finite number'),
+          ),
+        ),
+      );
+    });
+
+    test('rejects Infinity in transfer asset amount', () {
+      expect(
+        () => LnurlpPaymentDto.fromJson({
+          'requestedAmount': {'asset': 'CHF', 'amount': 1.0},
+          'quote': {'id': 'q', 'expiration': '2026-06-03T12:00:00.000Z'},
+          'transferAmounts': [
+            {
+              'method': 'Ethereum',
+              'assets': [
+                {'asset': 'ZCHF', 'amount': 'Infinity'},
+              ],
+            },
+          ],
+        }),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('not a finite number'),
+          ),
+        ),
+      );
+    });
+
+    test('rejects -Infinity in requestedAmount.amount', () {
+      expect(
+        () => LnurlpPaymentDto.fromJson({
+          'requestedAmount': {'asset': 'CHF', 'amount': '-Infinity'},
+          'quote': {'id': 'q', 'expiration': '2026-06-03T12:00:00.000Z'},
+        }),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('rejects a negative transfer asset amount', () {
+      expect(
+        () => LnurlpPaymentDto.fromJson({
+          'requestedAmount': {'asset': 'CHF', 'amount': 1.0},
+          'quote': {'id': 'q', 'expiration': '2026-06-03T12:00:00.000Z'},
+          'transferAmounts': [
+            {
+              'method': 'Ethereum',
+              'assets': [
+                {'asset': 'ZCHF', 'amount': -1},
+              ],
+            },
+          ],
+        }),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('must not be negative'),
+          ),
+        ),
+      );
+    });
+
+    test('rejects a negative requestedAmount.amount', () {
+      expect(
+        () => LnurlpPaymentDto.fromJson({
+          'requestedAmount': {'asset': 'CHF', 'amount': -0.01},
+          'quote': {'id': 'q', 'expiration': '2026-06-03T12:00:00.000Z'},
+          'transferAmounts': [
+            {
+              'method': 'Ethereum',
+              'assets': [
+                {'asset': 'ZCHF', 'amount': 1.0},
+              ],
+            },
+          ],
+        }),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('must not be negative'),
+          ),
+        ),
+      );
     });
 
     test('ignores the structured recipient object instead of throwing on it', () {

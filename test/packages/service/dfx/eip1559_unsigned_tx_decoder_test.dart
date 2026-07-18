@@ -100,6 +100,122 @@ void main() {
         throwsA(isA<PayUnsignedTxMismatchException>()),
       );
     });
+
+    test('rejects a non-empty access list', () {
+      // Same as _validUnsignedTx but trailing empty accessList `c0` replaced with
+      // `c180` (RLP list of one empty string) and the outer list-length prefix
+      // bumped from 0x71 (113) to 0x72 (114) for the extra payload byte. Verified
+      // by counting payload bytes after `f872` = 114.
+      expect(
+        () => Eip1559UnsignedTxDecoder.decode(
+          '0x02f87283aa36a7018459682f008504a817c800830186a094111111111111111111111111111111111111ac0180b844a9059cbb000000000000000000000000222222222222222222222222222222222222bc020000000000000000000000000000000000000000000000004563918244f40000c180',
+        ),
+        throwsA(
+          isA<PayUnsignedTxMismatchException>().having(
+            (e) => e.reason,
+            'reason',
+            'unsigned tx "accessList" must be an empty RLP list',
+          ),
+        ),
+      );
+    });
+
+    test('rejects a quantity field with a non-canonical leading zero byte', () {
+      // Same as _validUnsignedTx but gasLimit `830186a0` (canonical 100000) replaced
+      // with `84000186a0` (same magnitude, leading 0x00 — non-canonical RLP integer)
+      // and outer list-length 0x71→0x72 for the extra byte. Verified: only the
+      // gasLimit encoding and length prefix differ from _validUnsignedTx.
+      expect(
+        () => Eip1559UnsignedTxDecoder.decode(
+          '0x02f87283aa36a7018459682f008504a817c80084000186a094111111111111111111111111111111111111ac0180b844a9059cbb000000000000000000000000222222222222222222222222222222222222bc020000000000000000000000000000000000000000000000004563918244f40000c0',
+        ),
+        throwsA(
+          isA<PayUnsignedTxMismatchException>().having(
+            (e) => e.reason,
+            'reason',
+            'unsigned tx "gasLimit" has a non-canonical leading zero byte',
+          ),
+        ),
+      );
+    });
+
+    test('rejects a quantity field that is an RLP list instead of a byte string', () {
+      // RLP: type=0x02, long-form list (f8 65 = 101-byte body), fields:
+      // chainId=<empty list c0> (invalid: must be a byte string), nonce=1,
+      // maxPriorityFeePerGas=1, maxFeePerGas=1, gasLimit=100000 (830186a0),
+      // to=20 zero-ish bytes (94 + 20x11), value=0 (80), data=68-byte ERC20
+      // transfer calldata (b844...), accessList=<empty list c0>. Independently
+      // constructed (not derived from _validUnsignedTx by truncation) and
+      // verified byte-for-byte against a reference RLP encoder/decoder so that
+      // every check before `_requireCanonicalInteger(root[chainId], 'chainId')`
+      // passes, and that call is the first one reached — hitting exactly the
+      // "field is not a Uint8List" branch for the chainId field.
+      expect(
+        () => Eip1559UnsignedTxDecoder.decode(
+          '0x02f865c0010101830186a094111111111111111111111111111111111111111180b844a9059cbb000000000000000000000000222222222222222222222222222222222222bc020000000000000000000000000000000000000000000000004563918244f40000c0',
+        ),
+        throwsA(
+          isA<PayUnsignedTxMismatchException>().having(
+            (e) => e.reason,
+            'reason',
+            'unsigned tx "chainId" is not a byte string',
+          ),
+        ),
+      );
+    });
+
+    test('rejects a non-minimal long-form string length encoding', () {
+      // type=0x02, then long-form string prefix 0xb8 (lengthOfLength=1) with
+      // length byte 0x01 (≤55) and one payload byte — must use short-form 0x81
+      // instead. Hits the long-form string branch before root-type checks.
+      expect(
+        () => Eip1559UnsignedTxDecoder.decode('0x02b80101'),
+        throwsA(
+          isA<PayUnsignedTxMismatchException>().having(
+            (e) => e.reason,
+            'reason',
+            'RLP: non-minimal long-form string length encoding',
+          ),
+        ),
+      );
+    });
+
+    test('rejects a non-minimal long-form list length encoding', () {
+      // type=0x02, then long-form list prefix 0xf8 (lengthOfLength=1) with
+      // length byte 0x01 (≤55) and one payload byte `80` — must use short-form
+      // 0xc1 instead. Hits the long-form list branch before field-count checks.
+      expect(
+        () => Eip1559UnsignedTxDecoder.decode('0x02f80180'),
+        throwsA(
+          isA<PayUnsignedTxMismatchException>().having(
+            (e) => e.reason,
+            'reason',
+            'RLP: non-minimal long-form list length encoding',
+          ),
+        ),
+      );
+    });
+
+    test('rejects a length-of-length encoding with a leading zero byte', () {
+      // type=0x02, long-form string prefix 0xb9 (lengthOfLength=2) with length
+      // bytes `00 40` (=64) — a minimal length-of-length never needs a leading
+      // zero; must use a single length byte instead. Verified: lengthOfLength=2
+      // and bytes[0]==0 hit the new _bytesToLength guard before the length≤55
+      // check (which would also reject 64… wait, 64>55, so only the leading-zero
+      // guard rejects this fixture).
+      expect(
+        () => Eip1559UnsignedTxDecoder.decode(
+          '0x02b90040${'11' * 64}',
+        ),
+        throwsA(
+          isA<PayUnsignedTxMismatchException>().having(
+            (e) => e.reason,
+            'reason',
+            'RLP: non-minimal length-of-length encoding (leading zero byte)',
+          ),
+        ),
+      );
+    });
   });
 
   group('Erc20TransferCalldataDecoder.decode', () {

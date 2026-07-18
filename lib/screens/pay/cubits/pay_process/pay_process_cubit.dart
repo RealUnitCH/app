@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:convert/convert.dart' as convert;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:web3dart/crypto.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
@@ -19,8 +20,8 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_pay
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
+import 'package:realunit_wallet/packages/utils/plain_decimal.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
-import 'package:web3dart/crypto.dart';
 
 part 'pay_process_state.dart';
 
@@ -65,6 +66,18 @@ class PayProcessCubit extends Cubit<PayProcessState> {
 
   Timer? _ethPollingTimer;
   Timer? _statusPollingTimer;
+
+  /// 24 attempts * 5s interval ≈ 2 minutes, mirrors the status-poll budget.
+  /// Bounds ETH-balance polling so a faucet that never funds (or a hung
+  /// balance RPC) cannot leave [_swapInFlight] wedged indefinitely.
+  static const _ethPollMaxAttempts = 24;
+
+  /// Per-request cap on [DfxBlockchainApiService.getEthBalance] so a hung HTTP
+  /// layer always resolves (as [TimeoutException], treated as transient by the
+  /// catch path) instead of blocking every subsequent poll tick.
+  static const _ethPollTimeout = Duration(seconds: 10);
+
+  int _ethPollAttempts = 0;
 
   /// 40 attempts * 3s interval = 2 minutes. Bounds the poll so a status that
   /// never turns terminal (or a backend that keeps erroring) cannot poll
@@ -185,20 +198,44 @@ class PayProcessCubit extends Cubit<PayProcessState> {
 
   void _startEthPolling(SwapPaymentInfo swap) {
     _ethPollingTimer?.cancel();
+    _ethPollAttempts = 0;
     _ethPollingTimer = Timer.periodic(_ethPollInterval, (_) async {
       if (_swapInFlight) return;
       _swapInFlight = true;
+      _ethPollAttempts++;
       try {
-        final balance = await _blockchainService.getEthBalance(_appStore.primaryAddress);
+        final balance = await _blockchainService
+            .getEthBalance(_appStore.primaryAddress)
+            .timeout(_ethPollTimeout);
+        if (isClosed) return;
         if (balance >= swap.requiredGasEth) {
           _ethPollingTimer?.cancel();
           await _executeSwap();
+        } else if (_ethPollAttempts >= _ethPollMaxAttempts) {
+          _ethPollingTimer?.cancel();
+          emit(
+            const PayProcessFailure(
+              PayProcessFailureReason.insufficientEth,
+              message: 'eth balance polling exceeded max attempts',
+            ),
+          );
         } else {
           // Balance still short — release so the next tick can re-check.
           _swapInFlight = false;
         }
       } catch (_) {
-        // keep polling on transient errors
+        if (isClosed) return;
+        if (_ethPollAttempts >= _ethPollMaxAttempts) {
+          _ethPollingTimer?.cancel();
+          emit(
+            const PayProcessFailure(
+              PayProcessFailureReason.insufficientEth,
+              message: 'eth balance polling exceeded max attempts',
+            ),
+          );
+          return;
+        }
+        // keep polling on transient errors (including per-request timeout)
         _swapInFlight = false;
       }
     });
@@ -273,12 +310,24 @@ class PayProcessCubit extends Cubit<PayProcessState> {
     // server-side AFTER the irreversible swap, so surface a typed, retryable
     // state (re-quote may land within the held ZCHF) instead of an opaque
     // failure. The leftover ZCHF stays in the wallet.
+    //
+    // Comparison prefers exact plain-decimal strings on the fresh side
+    // ([LnurlpTransferAssetDto.rawAmount]) vs. [_acquiredZchf].toString(). Note
+    // that [_acquiredZchf] is still ultimately double-derived upstream
+    // (swap.estimatedAmount via RealUnitSwapPaymentInfoDto — out of this fix's
+    // scope); this only removes binary-comparison artifacts at the comparison
+    // site itself and gives exact precision on the freshZchf side, without
+    // pretending end-to-end exactness. When the raw string is missing or either
+    // side is not a plain decimal, fall back to the prior double `>` check —
+    // never to "treat as not exceeding".
     final freshZchf = _zchfTransferAmount(details);
-    if (freshZchf != null && freshZchf > _acquiredZchf) {
+    if (freshZchf != null &&
+        _settlementExceedsAcquired(freshZchf.amount, freshZchf.raw, _acquiredZchf)) {
       emit(
         PayProcessPayRetry(
           PayRetryReason.insufficientZchf,
-          message: 'fresh settlement $freshZchf ZCHF exceeds acquired $_acquiredZchf ZCHF',
+          message:
+              'fresh settlement ${freshZchf.amount} ZCHF exceeds acquired $_acquiredZchf ZCHF',
         ),
       );
       return;
@@ -330,14 +379,39 @@ class PayProcessCubit extends Cubit<PayProcessState> {
   /// The ZCHF amount listed for the Ethereum transfer method in a fresh quote,
   /// or null if the link no longer offers a priced Ethereum/ZCHF method. Mirrors
   /// [PayQuoteCubit]'s selection — the app never computes the amount locally.
-  static double? _zchfTransferAmount(LnurlpPaymentDto details) {
+  /// Also surfaces the raw JSON amount string when present for exact decimal
+  /// comparison (see [_settlementExceedsAcquired]).
+  static ({double amount, String? raw})? _zchfTransferAmount(LnurlpPaymentDto details) {
     for (final transfer in details.transferAmounts) {
       if (transfer.method.toLowerCase() != 'ethereum') continue;
       for (final asset in transfer.assets) {
-        if (asset.asset.toUpperCase() == 'ZCHF') return asset.amount;
+        if (asset.asset.toUpperCase() != 'ZCHF') continue;
+        final amount = asset.amount;
+        if (amount == null) return null;
+        return (amount: amount, raw: asset.rawAmount);
       }
     }
     return null;
+  }
+
+  /// True when [freshAmount] strictly exceeds [acquired]. Prefers exact plain-
+  /// decimal string comparison when [freshRaw] is present and both sides parse
+  /// as plain decimals; otherwise uses the prior double `>` comparison.
+  static bool _settlementExceedsAcquired(
+    double freshAmount,
+    String? freshRaw,
+    double acquired,
+  ) {
+    if (freshRaw != null) {
+      final acquiredRaw = acquired.toString();
+      try {
+        return comparePlainDecimalStrings(freshRaw, acquiredRaw) > 0;
+      } on FormatException {
+        // Not a plain decimal on one/both sides (e.g. scientific notation from
+        // double.toString) — fall back to the existing double comparison.
+      }
+    }
+    return freshAmount > acquired;
   }
 
   /// Locally re-derives the security-relevant fields of the pay-leg [unsigned] raw tx (the ZCHF

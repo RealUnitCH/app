@@ -64,12 +64,15 @@ class DecodedEip1559Transaction {
 abstract final class Eip1559UnsignedTxDecoder {
   static const _typeByte = 0x02;
   static const _fieldCount = 9;
+  static const _chainIdFieldIndex = 0;
+  static const _nonceFieldIndex = 1;
   static const _maxPriorityFeePerGasFieldIndex = 2;
   static const _maxFeePerGasFieldIndex = 3;
   static const _gasLimitFieldIndex = 4;
   static const _toFieldIndex = 5;
   static const _valueFieldIndex = 6;
   static const _dataFieldIndex = 7;
+  static const _accessListFieldIndex = 8;
 
   static DecodedEip1559Transaction decode(String rawTransaction) {
     final hex = rawTransaction.startsWith('0x')
@@ -112,13 +115,28 @@ abstract final class Eip1559UnsignedTxDecoder {
     if (data is! Uint8List) {
       throw const PayUnsignedTxMismatchException('unsigned tx "data" is not a byte string');
     }
-    final accessList = root[8];
-    if (accessList is! List<Object>) {
-      throw const PayUnsignedTxMismatchException('unsigned tx "accessList" is not an RLP list');
+    // This narrow decoder only ever handles the plain ERC20-transfer shape the backend
+    // produces for the pay leg, which never carries an access list. Reject non-empty lists
+    // fail-closed rather than signing payload bytes we have not inspected.
+    final accessList = root[_accessListFieldIndex];
+    if (accessList is! List<Object> || accessList.isNotEmpty) {
+      throw const PayUnsignedTxMismatchException(
+        'unsigned tx "accessList" must be an empty RLP list',
+      );
     }
 
+    // Canonical RLP for the six quantity fields (including nonce, which is part of the
+    // signed payload even though its decoded value is not exposed). Leading-zero-byte
+    // integers are non-canonical and rejected before any BigInt conversion.
+    _requireCanonicalInteger(root[_chainIdFieldIndex], 'chainId');
+    _requireCanonicalInteger(root[_nonceFieldIndex], 'nonce');
+    _requireCanonicalInteger(root[_maxPriorityFeePerGasFieldIndex], 'maxPriorityFeePerGas');
+    _requireCanonicalInteger(root[_maxFeePerGasFieldIndex], 'maxFeePerGas');
+    _requireCanonicalInteger(root[_gasLimitFieldIndex], 'gasLimit');
+    _requireCanonicalInteger(root[_valueFieldIndex], 'value');
+
     return DecodedEip1559Transaction(
-      chainId: _asBigInt(root[0]),
+      chainId: _asBigInt(root[_chainIdFieldIndex]),
       maxPriorityFeePerGas: _asBigInt(root[_maxPriorityFeePerGasFieldIndex]),
       maxFeePerGas: _asBigInt(root[_maxFeePerGasFieldIndex]),
       gasLimit: _asBigInt(root[_gasLimitFieldIndex]),
@@ -126,6 +144,21 @@ abstract final class Eip1559UnsignedTxDecoder {
       value: _asBigInt(root[_valueFieldIndex]),
       data: data,
     );
+  }
+
+  /// Canonical RLP integers: empty byte string = 0; otherwise no leading zero byte.
+  /// Zero itself must be the empty string (`0x80`), never `0x00`.
+  static void _requireCanonicalInteger(Object field, String name) {
+    if (field is! Uint8List) {
+      throw PayUnsignedTxMismatchException(
+        'unsigned tx "$name" is not a byte string',
+      );
+    }
+    if (field.isNotEmpty && field[0] == 0) {
+      throw PayUnsignedTxMismatchException(
+        'unsigned tx "$name" has a non-canonical leading zero byte',
+      );
+    }
   }
 
   static BigInt _asBigInt(Object field) {
@@ -155,6 +188,12 @@ abstract final class Eip1559UnsignedTxDecoder {
       final start = pos + 1;
       _requireBytes(data, start, lengthOfLength);
       final length = _bytesToLength(data.sublist(start, start + lengthOfLength));
+      // Non-minimal long-form string: lengths ≤ 55 must use the short-form prefix.
+      if (length <= 55) {
+        throw const PayUnsignedTxMismatchException(
+          'RLP: non-minimal long-form string length encoding',
+        );
+      }
       final start2 = start + lengthOfLength;
       _requireBytes(data, start2, length);
       return (value: data.sublist(start2, start2 + length), end: start2 + length);
@@ -168,6 +207,12 @@ abstract final class Eip1559UnsignedTxDecoder {
       final start = pos + 1;
       _requireBytes(data, start, lengthOfLength);
       final length = _bytesToLength(data.sublist(start, start + lengthOfLength));
+      // Non-minimal long-form list: lengths ≤ 55 must use the short-form prefix.
+      if (length <= 55) {
+        throw const PayUnsignedTxMismatchException(
+          'RLP: non-minimal long-form list length encoding',
+        );
+      }
       final start2 = start + lengthOfLength;
       _requireBytes(data, start2, length);
       return _decodeListBody(data, start2, start2 + length);
@@ -201,6 +246,12 @@ abstract final class Eip1559UnsignedTxDecoder {
     if (bytes.length > 4) {
       throw const PayUnsignedTxMismatchException(
         'RLP: declared length-of-length exceeds practical transaction size',
+      );
+    }
+    // Minimal length-of-length encoding never needs a leading zero byte.
+    if (bytes.length > 1 && bytes[0] == 0) {
+      throw const PayUnsignedTxMismatchException(
+        'RLP: non-minimal length-of-length encoding (leading zero byte)',
       );
     }
     var value = 0;
