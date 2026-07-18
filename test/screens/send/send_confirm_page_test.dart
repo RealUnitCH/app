@@ -67,5 +67,19 @@ void main() {
 
       expect(find.byType(SendProcessView), findsOne);
     });
+
+    testWidgets('double-tap before rebuild pushes only one process page', (tester) async {
+      await tester.pumpApp(
+        const SendConfirmPage(recipient: '0xRecipient', amount: 5),
+      );
+
+      // Two tap-up callbacks before any rebuild (WidgetTester.tap does not pump).
+      await tester.tap(find.text(S.current.sendConfirmButton));
+      await tester.tap(find.text(S.current.sendConfirmButton));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byType(SendProcessView), findsOneWidget);
+    });
   });
 }

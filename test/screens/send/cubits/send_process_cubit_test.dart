@@ -77,7 +77,7 @@ void main() {
 
   /// Stubs `confirmTransfer` with the required named user-confirmed params.
   void stubConfirm([Object? answerOrThrow]) {
-    final invocation = () => service.confirmTransfer(
+    Future<String> invocation() => service.confirmTransfer(
       any(),
       confirmedRecipient: any(named: 'confirmedRecipient'),
       confirmedAmount: any(named: 'confirmedAmount'),
@@ -403,6 +403,23 @@ void main() {
     await cubit.close();
     completer.complete(_info());
     await future; // must not throw StateError, and must not attempt to emit after close
+  });
+
+  test('closing the cubit before prepareTransfer rejects does not throw and does not emit', () async {
+    final completer = Completer<RealUnitTransferPaymentInfoDto>();
+    when(() => service.prepareTransfer(any())).thenAnswer((_) => completer.future);
+
+    final cubit = build();
+    final emitted = <SendProcessState>[];
+    final sub = cubit.stream.listen(emitted.add);
+    final future = cubit.start();
+    await cubit.close();
+    completer.completeError(Exception('boom'));
+    await future; // must not throw StateError, and must not attempt to emit after close
+    await Future<void>.delayed(Duration.zero);
+    await sub.cancel();
+
+    expect(emitted.map((s) => s.runtimeType).toList(), [SendProcessPreparing]);
   });
 
   test('closing the cubit before confirmTransfer resolves does not throw and does not emit', () async {

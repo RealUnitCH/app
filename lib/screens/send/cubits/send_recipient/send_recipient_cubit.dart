@@ -11,8 +11,9 @@ part 'send_recipient_state.dart';
 /// authority on the address. A scanned `ethereum:0x…` URI is normalized to the
 /// bare address so a wallet QR that encodes an EIP-681 URI is accepted. EIP-681
 /// function-call URIs of the form `…/transfer?address=0x…` extract the recipient
-/// from the `address` query parameter (never from the token contract before `/`);
-/// any other function-call form is rejected as unrecognized.
+/// from the single non-empty `address` query parameter (never from the token
+/// contract before `/`); zero, multiple, or empty `address=` values — and any
+/// other function-call form — are rejected as unrecognized/ambiguous.
 class SendRecipientCubit extends Cubit<SendRecipientState> {
   SendRecipientCubit() : super(const SendRecipientEmpty());
 
@@ -28,14 +29,15 @@ class SendRecipientCubit extends Cubit<SendRecipientState> {
 
   /// Validates a manually entered / pasted / scanned [input]. Emits
   /// [SendRecipientValid] with the checksummed address on success, or
-  /// [SendRecipientInvalid] otherwise.
+  /// [SendRecipientInvalid] otherwise. Parsing and decoding exceptions are
+  /// caught and fail closed into [SendRecipientInvalid].
   void submit(String input) {
-    final address = _extractAddress(input);
-    if (address == null) {
-      emit(SendRecipientInvalid(InvalidRecipientAddressException(input.trim())));
-      return;
-    }
     try {
+      final address = _extractAddress(input);
+      if (address == null) {
+        emit(SendRecipientInvalid(InvalidRecipientAddressException(input.trim())));
+        return;
+      }
       final checksummed = EthereumAddress.fromHex(address).hexEip55;
       emit(SendRecipientValid(checksummed));
     } catch (_) {
@@ -49,9 +51,9 @@ class SendRecipientCubit extends Cubit<SendRecipientState> {
   /// Strips an optional `ethereum:` EIP-681 scheme and optional `pay-` payment
   /// marker, then extracts the recipient address. Simple form (`0x…[@chainId][?…]`,
   /// no `/`): the substring before the first `@` or `?`. Function-call form
-  /// (`…/transfer?address=0x…`): the `address` query parameter when the function
-  /// name is exactly `transfer` and a non-empty `address` is present; any other
-  /// function-call form returns `null` (fail closed).
+  /// (`…/transfer?address=0x…`): exactly one non-empty `address` query value
+  /// when the function name is `transfer`; zero, multiple, or empty values —
+  /// and any other function-call form — return `null` (fail closed).
   static String? _extractAddress(String input) {
     var value = input.trim();
     if (value.toLowerCase().startsWith('ethereum:')) {
@@ -70,10 +72,9 @@ class SendRecipientCubit extends Cubit<SendRecipientState> {
 
       if (functionName == 'transfer' && queryStart != -1) {
         final query = afterSlash.substring(queryStart + 1);
-        final params = Uri.splitQueryString(query);
-        final address = params['address']?.trim();
-        if (address != null && address.isNotEmpty) {
-          return address;
+        final addresses = Uri(query: query).queryParametersAll['address'];
+        if (addresses != null && addresses.length == 1 && addresses.first.trim().isNotEmpty) {
+          return addresses.first.trim();
         }
       }
       // Unrecognized/ambiguous function-call form — do not guess an address.

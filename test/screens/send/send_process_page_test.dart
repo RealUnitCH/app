@@ -100,6 +100,44 @@ void main() {
     });
   });
 
+  group('$SendProcessView PopScope canPop', () {
+    testWidgets('blocks back navigation while signing (non-terminal)', (tester) async {
+      when(() => processCubit.state).thenReturn(const SendProcessSigning());
+      await tester.pumpApp(buildSubject());
+
+      final popScope = tester.widget<PopScope>(find.byType(PopScope));
+      expect(popScope.canPop, isFalse);
+    });
+
+    testWidgets('allows back navigation on success (terminal)', (tester) async {
+      when(() => processCubit.state).thenReturn(const SendProcessSuccess('0xtx'));
+      await tester.pumpApp(buildSubject());
+
+      final popScope = tester.widget<PopScope>(find.byType(PopScope));
+      expect(popScope.canPop, isTrue);
+    });
+
+    testWidgets('blocks back navigation on failure (closes the retry stale-window)', (
+      tester,
+    ) async {
+      when(() => processCubit.state).thenReturn(
+        const SendProcessFailure(SendProcessFailureReason.generic),
+      );
+      await tester.pumpApp(buildSubject());
+
+      final popScope = tester.widget<PopScope>(find.byType(PopScope));
+      expect(popScope.canPop, isFalse);
+    });
+
+    testWidgets('blocks back navigation while preparing (non-terminal)', (tester) async {
+      when(() => processCubit.state).thenReturn(const SendProcessPreparing());
+      await tester.pumpApp(buildSubject());
+
+      final popScope = tester.widget<PopScope>(find.byType(PopScope));
+      expect(popScope.canPop, isFalse);
+    });
+  });
+
   // The result sheet is a modal bottom sheet shown from the listener. The view
   // keeps a CupertinoActivityIndicator animating behind it, so pumpAndSettle
   // never settles; pump fixed frames to open the sheet.
@@ -174,17 +212,21 @@ void main() {
       expect(find.text(S.current.sendFailureInvalidRequest), findsOne);
     });
 
-    testWidgets('registration/KYC failure renders concrete API message', (tester) async {
-      await pumpWithState(
-        tester,
-        const SendProcessFailure(
-          SendProcessFailureReason.registrationOrKycRequired,
-          message: 'Please complete KYC',
-        ),
-      );
+    testWidgets(
+      'registration/KYC failure always shows localized copy, never raw API message',
+      (tester) async {
+        await pumpWithState(
+          tester,
+          const SendProcessFailure(
+            SendProcessFailureReason.registrationOrKycRequired,
+            message: 'Please complete KYC',
+          ),
+        );
 
-      expect(find.text('Please complete KYC'), findsOne);
-    });
+        expect(find.text(S.current.sendFailureRegistrationOrKycRequired), findsOne);
+        expect(find.text('Please complete KYC'), findsNothing);
+      },
+    );
 
     testWidgets('registration/KYC failure falls back to localized copy without message', (
       tester,

@@ -58,21 +58,25 @@ class SendProcessView extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(title: Text(S.of(context).sendProcessTitle)),
-          body: SafeArea(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                spacing: 24,
-                children: [
-                  const CupertinoActivityIndicator(radius: 16),
-                  Text(
-                    _progressLabel(context, state),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ],
+        final canPop = state is SendProcessSuccess;
+        return PopScope(
+          canPop: canPop,
+          child: Scaffold(
+            appBar: AppBar(title: Text(S.of(context).sendProcessTitle)),
+            body: SafeArea(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 24,
+                  children: [
+                    const CupertinoActivityIndicator(radius: 16),
+                    Text(
+                      _progressLabel(context, state),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -94,9 +98,7 @@ class SendProcessView extends StatelessWidget {
     SendProcessFailureReason.gasFundingUnavailable => S.of(context).sendFailureGasUnavailable,
     SendProcessFailureReason.invalidRequest => S.of(context).sendFailureInvalidRequest,
     SendProcessFailureReason.registrationOrKycRequired =>
-      (state.message != null && state.message!.isNotEmpty)
-          ? state.message!
-          : S.of(context).sendFailureRegistrationOrKycRequired,
+      S.of(context).sendFailureRegistrationOrKycRequired,
     SendProcessFailureReason.confirmMismatch => S.of(context).sendFailureConfirmMismatch,
     SendProcessFailureReason.generic => S.of(context).sendFailureGeneric,
   };

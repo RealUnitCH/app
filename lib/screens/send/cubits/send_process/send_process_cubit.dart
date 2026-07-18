@@ -67,6 +67,9 @@ class SendProcessCubit extends Cubit<SendProcessState> {
 
     // Phase 1 — prepare. Failures here are terminal and non-retryable: no
     // transfer `id` was ever obtained, so there is nothing safe to retry.
+    // Classification into a local failure state happens in the try/catch;
+    // emission is gated once after so a closed cubit never emits.
+    SendProcessState? prepareFailure;
     try {
       emit(const SendProcessPreparing());
       final info = await _transferService.prepareTransfer(
@@ -77,30 +80,36 @@ class SendProcessCubit extends Cubit<SendProcessState> {
       }
       _preparedInfo = info;
     } on TransferSignatureUnsupportedException {
-      emit(const SendProcessFailure(SendProcessFailureReason.signatureUnsupported));
-      return;
+      prepareFailure = const SendProcessFailure(SendProcessFailureReason.signatureUnsupported);
     } on TransferGasFundingUnavailableException {
-      emit(const SendProcessFailure(SendProcessFailureReason.gasFundingUnavailable));
-      return;
+      prepareFailure = const SendProcessFailure(SendProcessFailureReason.gasFundingUnavailable);
     } on SigningCancelledException {
-      emit(const SendProcessFailure(SendProcessFailureReason.signatureCancelled));
-      return;
+      prepareFailure = const SendProcessFailure(SendProcessFailureReason.signatureCancelled);
     } on BitboxNotConnectedException {
-      emit(const SendProcessFailure(SendProcessFailureReason.signatureUnsupported));
-      return;
+      prepareFailure = const SendProcessFailure(SendProcessFailureReason.signatureUnsupported);
     } on RegistrationRequiredException catch (e) {
-      emit(SendProcessFailure(SendProcessFailureReason.registrationOrKycRequired, message: e.message));
-      return;
+      prepareFailure = SendProcessFailure(
+        SendProcessFailureReason.registrationOrKycRequired,
+        message: e.message,
+      );
     } on KycLevelRequiredException catch (e) {
-      emit(SendProcessFailure(SendProcessFailureReason.registrationOrKycRequired, message: e.message));
-      return;
+      prepareFailure = SendProcessFailure(
+        SendProcessFailureReason.registrationOrKycRequired,
+        message: e.message,
+      );
     } on ApiException catch (e) {
       // The API is the authority on recipient/amount/eligibility. Render its
       // signaled reason rather than re-deriving limits locally.
-      emit(SendProcessFailure(_reasonForApi(e), message: e.message));
-      return;
+      prepareFailure = SendProcessFailure(_reasonForApi(e), message: e.message);
     } catch (e) {
-      emit(SendProcessFailure(SendProcessFailureReason.generic, message: e.toString()));
+      prepareFailure = SendProcessFailure(SendProcessFailureReason.generic, message: e.toString());
+    }
+
+    if (prepareFailure != null) {
+      if (isClosed) {
+        return;
+      }
+      emit(prepareFailure);
       return;
     }
 

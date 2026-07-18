@@ -89,6 +89,25 @@ void main() {
     );
 
     blocTest<SendRecipientCubit, SendRecipientState>(
+      'EIP-681 /transfer URI with duplicate address= query keys fails closed',
+      build: SendRecipientCubit.new,
+      act: (cubit) => cubit.submit(
+        'ethereum:0x1111111111111111111111111111111111111111/transfer'
+        '?address=$lowercase&address=0x2222222222222222222222222222222222222222',
+      ),
+      expect: () => [isA<SendRecipientInvalid>()],
+    );
+
+    blocTest<SendRecipientCubit, SendRecipientState>(
+      'EIP-681 /transfer URI with malformed percent-encoding emits invalid (no throw)',
+      build: SendRecipientCubit.new,
+      act: (cubit) => cubit.submit(
+        'ethereum:0x1111111111111111111111111111111111111111/transfer?address=%ZZ',
+      ),
+      expect: () => [isA<SendRecipientInvalid>()],
+    );
+
+    blocTest<SendRecipientCubit, SendRecipientState>(
       'an invalid address emits SendRecipientInvalid',
       build: SendRecipientCubit.new,
       act: (cubit) => cubit.submit('not-an-address'),

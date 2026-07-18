@@ -54,6 +54,9 @@ class _SendConfirmPageState extends State<SendConfirmPage> {
                 onPressed: _navigating
                     ? null
                     : () {
+                        if (_navigating) {
+                          return;
+                        }
                         setState(() => _navigating = true);
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
