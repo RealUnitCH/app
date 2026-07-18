@@ -139,6 +139,31 @@ void main() {
       );
     });
 
+    // Canonical bare-byte nonce `01` is already accepted by
+    // 'decodes a valid EIP-1559 ERC20-transfer unsigned tx' above.
+    test('rejects a non-canonical single-byte short string (nonce encoded as 8101 instead of bare 01)',
+        () {
+      // Same as _validUnsignedTx but the nonce field (RLP field index 1, right after chainId
+      // `83aa36a7`) is re-encoded from the canonical bare byte `01` to the non-canonical length-1
+      // short string `8101` (same decoded value, 1), and the outer list-length prefix is bumped
+      // from 0x71 (113 bytes) to 0x72 (114 bytes) for the extra encoding byte. Independently
+      // verified byte-for-byte against a reference RLP decoder (only the nonce encoding and the
+      // outer list-length prefix differ from _validUnsignedTx; every other field decodes to the
+      // identical value).
+      expect(
+        () => Eip1559UnsignedTxDecoder.decode(
+          '0x02f87283aa36a781018459682f008504a817c800830186a094111111111111111111111111111111111111ac0180b844a9059cbb000000000000000000000000222222222222222222222222222222222222bc020000000000000000000000000000000000000000000000004563918244f40000c0',
+        ),
+        throwsA(
+          isA<PayUnsignedTxMismatchException>().having(
+            (e) => e.reason,
+            'reason',
+            'RLP: non-canonical single-byte short string (must be the bare byte, not a length-1 string)',
+          ),
+        ),
+      );
+    });
+
     test('rejects a quantity field that is an RLP list instead of a byte string', () {
       // RLP: type=0x02, long-form list (f8 65 = 101-byte body), fields:
       // chainId=<empty list c0> (invalid: must be a byte string), nonce=1,

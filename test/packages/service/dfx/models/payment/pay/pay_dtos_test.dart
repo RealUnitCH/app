@@ -239,6 +239,19 @@ void main() {
       );
     });
 
+    test('falls back to unknown for an empty status without matching the unknown sentinel', () {
+      // Regression test: `unknown` is internally represented as `unknown('')`. Before the fix,
+      // an empty backend value matched that sentinel directly in the known-value loop and bypassed
+      // the developer.log(...) drift-visibility call. The observable return value is `unknown`
+      // either way; this pins the mapping so a future regression that makes '' match something
+      // else (or crash) is caught. The developer.log call itself has no mockable surface in Dart
+      // (same limitation documented in test/screens/sell/widgets/sell_bank_account_field_test.dart).
+      expect(
+        RealUnitOcpPayStatusDto.fromJson({'status': ''}).status,
+        OcpPaymentStatus.unknown,
+      );
+    });
+
     test('isTerminal / isCompleted predicates', () {
       expect(OcpPaymentStatus.completed.isTerminal, isTrue);
       expect(OcpPaymentStatus.completed.isCompleted, isTrue);

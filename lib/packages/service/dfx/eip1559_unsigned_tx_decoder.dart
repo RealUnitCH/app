@@ -182,7 +182,13 @@ abstract final class Eip1559UnsignedTxDecoder {
       final length = prefix - 0x80;
       final start = pos + 1;
       _requireBytes(data, start, length);
-      return (value: data.sublist(start, start + length), end: start + length);
+      final value = data.sublist(start, start + length);
+      if (length == 1 && value[0] < 0x80) {
+        throw const PayUnsignedTxMismatchException(
+          'RLP: non-canonical single-byte short string (must be the bare byte, not a length-1 string)',
+        );
+      }
+      return (value: value, end: start + length);
     } else if (prefix < 0xc0) {
       final lengthOfLength = prefix - 0xb7;
       final start = pos + 1;

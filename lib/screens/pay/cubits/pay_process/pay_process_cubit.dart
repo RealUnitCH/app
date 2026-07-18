@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:convert/convert.dart' as convert;
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:web3dart/crypto.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
@@ -54,10 +55,16 @@ class PayProcessCubit extends Cubit<PayProcessState> {
   bool _swapCompleted = false;
 
   /// Guards overlapping ETH-poll ticks from each calling [_executeSwap]. Set
-  /// synchronously before the first await in a tick; left true once a swap is
-  /// triggered (timer cancelled), reset when balance is still short or on
-  /// transient balance-check errors so the next tick can retry.
+  /// synchronously before the first await in a tick; released in `finally` on
+  /// every path out of a tick (success, max-attempts, isClosed, transient
+  /// error) so a later polling cycle never starts with a stuck `true`.
   bool _swapInFlight = false;
+
+  /// Test-only visibility into the ETH-poll re-entrancy guard — lets tests prove it is released on
+  /// every abort/end path of a poll tick (see [_startEthPolling]) instead of only inferring it
+  /// indirectly from timer behavior.
+  @visibleForTesting
+  bool get debugSwapInFlight => _swapInFlight;
 
   /// ZCHF acquired by the (completed) swap — the backend `estimatedAmount` of
   /// the swap quote. Used to detect when a freshly re-fetched settlement amount
@@ -219,10 +226,9 @@ class PayProcessCubit extends Cubit<PayProcessState> {
               message: 'eth balance polling exceeded max attempts',
             ),
           );
-        } else {
-          // Balance still short — release so the next tick can re-check.
-          _swapInFlight = false;
         }
+        // else: balance still short — falls through to `finally`, which releases
+        // `_swapInFlight` so the next tick can retry.
       } catch (_) {
         if (isClosed) return;
         if (_ethPollAttempts >= _ethPollMaxAttempts) {
@@ -235,7 +241,14 @@ class PayProcessCubit extends Cubit<PayProcessState> {
           );
           return;
         }
-        // keep polling on transient errors (including per-request timeout)
+        // keep polling on transient errors (including per-request timeout) — `finally` below
+        // releases `_swapInFlight`.
+      } finally {
+        // Every path out of this tick (success+swap-triggered, max-attempts emit, isClosed
+        // abort, transient-error retry) must release the guard — otherwise a stuck `true` from
+        // one polling cycle silently wedges every tick of a LATER cycle (`_startEthPolling`
+        // never resets this itself). Safe even on the swap-triggered success path: the timer for
+        // THIS cycle is already cancelled above before `_executeSwap()` runs.
         _swapInFlight = false;
       }
     });
@@ -394,24 +407,29 @@ class PayProcessCubit extends Cubit<PayProcessState> {
     return null;
   }
 
-  /// True when [freshAmount] strictly exceeds [acquired]. Prefers exact plain-
-  /// decimal string comparison when [freshRaw] is present and both sides parse
-  /// as plain decimals; otherwise uses the prior double `>` comparison.
+  /// True when [freshAmount] strictly exceeds [acquired] — or when an exact plain-decimal
+  /// comparison cannot be established at all. Never falls back to a rounding-prone double `>`
+  /// comparison: doing so could wrongly report "not exceeding" (falsely "covered") when the true
+  /// decimal values differ. Fail-closed: any inability to prove exact coverage is treated as
+  /// "exceeds acquired", which routes the caller into the existing retryable
+  /// [PayRetryReason.insufficientZchf] path rather than risking an under-swapped settlement.
   static bool _settlementExceedsAcquired(
     double freshAmount,
     String? freshRaw,
     double acquired,
   ) {
-    if (freshRaw != null) {
-      final acquiredRaw = acquired.toString();
-      try {
-        return comparePlainDecimalStrings(freshRaw, acquiredRaw) > 0;
-      } on FormatException {
-        // Not a plain decimal on one/both sides (e.g. scientific notation from
-        // double.toString) — fall back to the existing double comparison.
-      }
+    if (freshRaw == null) {
+      return true;
     }
-    return freshAmount > acquired;
+    final acquiredRaw = acquired.toString();
+    try {
+      return comparePlainDecimalStrings(freshRaw, acquiredRaw) > 0;
+    } on FormatException {
+      // Not a plain decimal on one/both sides (e.g. scientific notation from double.toString) —
+      // cannot prove exact coverage. Fail closed rather than falling back to a rounding-prone
+      // double comparison that could wrongly say "covered".
+      return true;
+    }
   }
 
   /// Locally re-derives the security-relevant fields of the pay-leg [unsigned] raw tx (the ZCHF

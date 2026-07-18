@@ -83,13 +83,22 @@ LnurlpPaymentDto _details({
   String quoteId = 'quote_fresh',
   double zchf = 42.7,
 }) {
+  // rawAmount mirrors production fromJson (always set when amount is present)
+  // so the settlement guard can prove exact plain-decimal coverage fail-closed
+  // instead of treating a missing raw string as "cannot prove coverage".
   return LnurlpPaymentDto(
     requestedAmount: const LnurlpRequestedAmountDto(asset: 'CHF', amount: 42.5),
     quote: LnurlpQuoteDto(id: quoteId, expiration: expiration),
     transferAmounts: [
       LnurlpTransferAmountDto(
         method: 'Ethereum',
-        assets: [LnurlpTransferAssetDto(asset: 'ZCHF', amount: zchf)],
+        assets: [
+          LnurlpTransferAssetDto(
+            asset: 'ZCHF',
+            amount: zchf,
+            rawAmount: zchf.toString(),
+          ),
+        ],
       ),
     ],
   );
@@ -813,6 +822,7 @@ void main() {
 
       final state = cubit.state as PayProcessFailure;
       expect(state.reason, PayProcessFailureReason.insufficientEth);
+      expect(cubit.debugSwapInFlight, isFalse);
       expect(state.message, 'eth balance polling exceeded max attempts');
       expect(balanceCalls, 24);
 
@@ -824,6 +834,40 @@ void main() {
       verifyNever(() => payService.createSwapUnsignedTransaction(any()));
 
       cubit.close();
+      async.flushTimers();
+    });
+  });
+
+  test('closing the cubit mid eth-poll-tick still releases the guard via finally', () {
+    fakeAsync((async) {
+      wireHappyPath();
+      when(
+        () => payService.getSwapPaymentInfo(any()),
+      ).thenAnswer((_) async => _swap(ethBalance: 0, requiredGasEth: 0.001));
+      when(
+        () => faucet.requestFaucet(),
+      ).thenAnswer((_) async => const FaucetResponseDto(txId: '0xf', amount: 0.01));
+      final balanceCompleter = Completer<double>();
+      when(() => blockchain.getEthBalance(any())).thenAnswer((_) => balanceCompleter.future);
+
+      final cubit = build();
+      cubit.start();
+      drain(async);
+      expect(cubit.state, isA<PayProcessWaitingForEth>());
+
+      // Trigger the first eth-poll tick; it awaits getEthBalance, which never completes yet.
+      async.elapse(const Duration(seconds: 5));
+      drain(async);
+      expect(cubit.debugSwapInFlight, isTrue);
+
+      // Close the cubit while the tick is still in-flight, then let the pending balance future
+      // resolve — the tick resumes into `if (isClosed) return;`, which must still release the
+      // guard via `finally`.
+      cubit.close();
+      balanceCompleter.complete(0.0);
+      drain(async);
+
+      expect(cubit.debugSwapInFlight, isFalse);
       async.flushTimers();
     });
   });
@@ -1034,11 +1078,13 @@ void main() {
     await cubit.close();
   });
 
-  test('malformed rawAmount falls back to double comparison (never treats as OK)', () async {
+  test('malformed rawAmount fail-closed retries (never treats as OK)', () async {
     wireHappyPath();
     // rawAmount is scientific notation → FormatException on plain-decimal parse →
-    // fall back to double `>` (amount 1000 > acquired 960). Must NOT treat as
-    // "not exceeding" just because the exact path failed.
+    // fail closed (cannot prove exact coverage) rather than falling back to a
+    // rounding-prone double comparison. Outcome here still retries; amount 1000
+    // > acquired 960 would also have been true under the old double path, so
+    // this is a regression pin that the path still retries after the fix.
     when(() => payService.getPaymentDetails('pl_abc')).thenAnswer(
       (_) async => LnurlpPaymentDto(
         requestedAmount: const LnurlpRequestedAmountDto(asset: 'CHF', amount: 42.5),
@@ -1054,6 +1100,82 @@ void main() {
                 asset: 'ZCHF',
                 amount: 1000,
                 rawAmount: '1e3',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    final state = await retry as PayProcessPayRetry;
+
+    expect(state.reason, PayRetryReason.insufficientZchf);
+    verifyNever(() => payService.createPayUnsignedTransaction(any()));
+    await cubit.close();
+  });
+
+  test('non-plain-decimal fresh amount that would look covered by double comparison still retries '
+      '(fail-closed)', () async {
+    wireHappyPath();
+    // Swap acquires estimatedAmount=960. Fresh settlement amount is 900 (a plain double LESS than
+    // 960 — the old double `>` fallback would say "not exceeding", i.e. wrongly "covered"), but
+    // rawAmount is scientific notation ('9e2') so no exact plain-decimal comparison is possible.
+    // The fix must NOT fall back to the double comparison here — it must fail closed and retry,
+    // proving the conservative `true` return, not merely coincide with what double comparison
+    // would already have said.
+    when(() => payService.getPaymentDetails('pl_abc')).thenAnswer(
+      (_) async => LnurlpPaymentDto(
+        requestedAmount: const LnurlpRequestedAmountDto(asset: 'CHF', amount: 42.5),
+        quote: LnurlpQuoteDto(
+          id: 'quote_fresh',
+          expiration: DateTime.now().add(const Duration(minutes: 5)),
+        ),
+        transferAmounts: [
+          const LnurlpTransferAmountDto(
+            method: 'Ethereum',
+            assets: [
+              LnurlpTransferAssetDto(
+                asset: 'ZCHF',
+                amount: 900,
+                rawAmount: '9e2',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    final state = await retry as PayProcessPayRetry;
+
+    expect(state.reason, PayRetryReason.insufficientZchf);
+    verifyNever(() => payService.createPayUnsignedTransaction(any()));
+    await cubit.close();
+  });
+
+  test('missing rawAmount fails closed even when the double amount would look covered', () async {
+    wireHappyPath();
+    // amount 900 < acquired 960 — double comparison would say "covered". rawAmount is null so
+    // exact plain-decimal coverage cannot be proven; fail closed and retry.
+    when(() => payService.getPaymentDetails('pl_abc')).thenAnswer(
+      (_) async => LnurlpPaymentDto(
+        requestedAmount: const LnurlpRequestedAmountDto(asset: 'CHF', amount: 42.5),
+        quote: LnurlpQuoteDto(
+          id: 'quote_fresh',
+          expiration: DateTime.now().add(const Duration(minutes: 5)),
+        ),
+        transferAmounts: [
+          const LnurlpTransferAmountDto(
+            method: 'Ethereum',
+            assets: [
+              LnurlpTransferAssetDto(
+                asset: 'ZCHF',
+                amount: 900,
               ),
             ],
           ),
