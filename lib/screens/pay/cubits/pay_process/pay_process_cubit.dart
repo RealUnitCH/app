@@ -330,9 +330,10 @@ class PayProcessCubit extends Cubit<PayProcessState> {
     // (swap.estimatedAmount via RealUnitSwapPaymentInfoDto — out of this fix's
     // scope); this only removes binary-comparison artifacts at the comparison
     // site itself and gives exact precision on the freshZchf side, without
-    // pretending end-to-end exactness. When the raw string is missing or either
-    // side is not a plain decimal, fall back to the prior double `>` check —
-    // never to "treat as not exceeding".
+    // pretending end-to-end exactness. When the raw string is missing or a plain-decimal
+    // comparison cannot be performed (parsing throws), the comparison is fail-closed:
+    // [_settlementExceedsAcquired] returns `true` (= exceeds acquired), triggering the
+    // [PayRetryReason.insufficientZchf] retry — never treated as "covered".
     final freshZchf = _zchfTransferAmount(details);
     if (freshZchf != null &&
         _settlementExceedsAcquired(freshZchf.amount, freshZchf.raw, _acquiredZchf)) {
