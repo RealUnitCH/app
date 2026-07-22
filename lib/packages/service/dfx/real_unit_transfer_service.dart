@@ -209,7 +209,7 @@ class RealUnitTransferService extends DFXAuthService {
   /// recipient is server-bound (the backend supplies the ERC20 transfer call at
   /// execute time), so it is validated for amount/token/chain consistency here.
   void _validateEip7702Data(
-    RealUnitTransferEip7702Data data,
+    RealUnitTransferEip7702DataDto data,
     String walletAddress,
     int userAmount,
   ) {

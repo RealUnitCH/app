@@ -10,7 +10,7 @@ class RealUnitTransferPaymentInfoDto {
   final int amount;
   final String tokenAddress;
   final int chainId;
-  final RealUnitTransferEip7702Data eip7702;
+  final RealUnitTransferEip7702DataDto eip7702;
 
   const RealUnitTransferPaymentInfoDto({
     required this.id,
@@ -30,7 +30,7 @@ class RealUnitTransferPaymentInfoDto {
       amount: (json['amount'] as num).toInt(),
       tokenAddress: json['tokenAddress'] as String,
       chainId: json['chainId'] as int,
-      eip7702: RealUnitTransferEip7702Data.fromJson(
+      eip7702: RealUnitTransferEip7702DataDto.fromJson(
         json['eip7702'] as Map<String, dynamic>,
       ),
     );

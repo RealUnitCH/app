@@ -6,7 +6,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip
 /// exact same shape the EIP-712 delegation + EIP-7702 authorization signers
 /// consume), but the transfer endpoint returns the on-chain destination as
 /// `recipient` rather than the sell flow's `depositAddress`.
-class RealUnitTransferEip7702Data {
+class RealUnitTransferEip7702DataDto {
   final String relayerAddress;
   final String delegationManagerAddress;
   final String delegatorAddress;
@@ -18,7 +18,7 @@ class RealUnitTransferEip7702Data {
   final String amountWei;
   final String recipient;
 
-  const RealUnitTransferEip7702Data({
+  const RealUnitTransferEip7702DataDto({
     required this.relayerAddress,
     required this.delegationManagerAddress,
     required this.delegatorAddress,
@@ -31,8 +31,8 @@ class RealUnitTransferEip7702Data {
     required this.recipient,
   });
 
-  factory RealUnitTransferEip7702Data.fromJson(Map<String, dynamic> json) {
-    return RealUnitTransferEip7702Data(
+  factory RealUnitTransferEip7702DataDto.fromJson(Map<String, dynamic> json) {
+    return RealUnitTransferEip7702DataDto(
       relayerAddress: json['relayerAddress'] as String,
       delegationManagerAddress: json['delegationManagerAddress'] as String,
       delegatorAddress: json['delegatorAddress'] as String,

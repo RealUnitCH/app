@@ -43,9 +43,9 @@ void main() {
     });
   });
 
-  group('RealUnitTransferEip7702Data', () {
+  group('RealUnitTransferEip7702DataDto', () {
     test('fromJson parses the recipient (transfer) shape', () {
-      final data = RealUnitTransferEip7702Data.fromJson(_eip7702Json());
+      final data = RealUnitTransferEip7702DataDto.fromJson(_eip7702Json());
 
       expect(data.relayerAddress, '0xRelayer');
       expect(data.delegatorAddress, '0xDelegator');
@@ -61,7 +61,7 @@ void main() {
     });
 
     test('toEip7702Data maps recipient into the shared signer DTO depositAddress', () {
-      final data = RealUnitTransferEip7702Data.fromJson(_eip7702Json());
+      final data = RealUnitTransferEip7702DataDto.fromJson(_eip7702Json());
 
       final shared = data.toEip7702Data();
 
