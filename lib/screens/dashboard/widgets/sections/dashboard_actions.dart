@@ -46,6 +46,17 @@ class DashboardActions extends StatelessWidget {
             onPressed: () => context.pushNamed(AppRoutes.pay),
           ),
         ),
+        Expanded(
+          child: ActionButton(
+            icon: Icon(
+              Icons.send_rounded,
+              color: RealUnitColors.basic.white,
+              size: 20,
+            ),
+            label: S.of(context).send,
+            onPressed: () => context.pushNamed(AppRoutes.send),
+          ),
+        ),
       ],
     );
   }

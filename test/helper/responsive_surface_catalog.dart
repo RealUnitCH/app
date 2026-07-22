@@ -193,6 +193,31 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
     productionPath: 'lib/screens/sell/sell_page.dart',
   ),
   ResponsiveSurface(
+    id: 'send_amount_page',
+    description: 'Send amount page (next CTA)',
+    matrixTestPath: 'test/screens/send/send_amount_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/send/send_amount_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'send_confirm_page',
+    description: 'Send confirmation page (confirm CTA)',
+    matrixTestPath: 'test/screens/send/send_confirm_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/send/send_confirm_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'send_process_result_sheet',
+    description: 'Send process terminal result sheet (shrinkWrap mode)',
+    matrixTestPath:
+        'test/screens/send/send_process_result_sheet_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/send/send_process_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'send_recipient_page',
+    description: 'Send recipient manual-entry block (next CTA)',
+    matrixTestPath: 'test/screens/send/send_recipient_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/send/send_recipient_page.dart',
+  ),
+  ResponsiveSurface(
     id: 'setup_pin_page',
     description: 'Setup PIN page (sticky numeric keypad as actions)',
     matrixTestPath: 'test/screens/pin/setup_pin_responsive_matrix_test.dart',
@@ -234,7 +259,7 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
     matrixTestPath: 'test/screens/pin/pin_sheets_responsive_matrix_test.dart',
     productionPath: 'lib/screens/pin/widgets/enable_biometric_bottom_sheet.dart',
   ),
-  // Migration covers 30 surfaces total (bitbox_connect_sheet + 29 above). No
+  // Migration covers 34 surfaces total (bitbox_connect_sheet + 33 above). No
   // further known candidates remain from the prior sweep. welcome_page was
   // reviewed and found safe (scrolls end-to-end, no separate sticky CTA) — not
   // a migration candidate. Not exhaustive — review responsibility for every

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/buy/buy_page.dart';
 import 'package:realunit_wallet/screens/buy/buy_payment_details_page.dart';
@@ -18,9 +19,9 @@ import 'package:realunit_wallet/screens/pin/setup_pin_page.dart';
 import 'package:realunit_wallet/screens/pin/verify_pin_page.dart';
 import 'package:realunit_wallet/screens/receive/receive_page.dart';
 import 'package:realunit_wallet/screens/restore_wallet/restore_wallet_page.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/screens/sell/sell_page.dart';
 import 'package:realunit_wallet/screens/sell_bitbox/sell_bitbox_page.dart';
+import 'package:realunit_wallet/screens/send/send_recipient_page.dart';
 import 'package:realunit_wallet/screens/settings/settings_page.dart';
 import 'package:realunit_wallet/screens/settings_contact/settings_contact_page.dart';
 import 'package:realunit_wallet/screens/settings_currencies/settings_currencies_page.dart';
@@ -179,6 +180,12 @@ final GoRouter routerConfig = GoRouter(
       name: AppRoutes.pay,
       path: '/pay',
       builder: (_, _) => const PayScanPage(),
+    ),
+
+    GoRoute(
+      name: AppRoutes.send,
+      path: '/send',
+      builder: (_, _) => const SendRecipientPage(),
     ),
 
     GoRoute(
