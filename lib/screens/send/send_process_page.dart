@@ -7,6 +7,7 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_transfer_service.
 import 'package:realunit_wallet/screens/send/cubits/send_process/send_process_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 
 /// Final step: prepare → sign (EIP-712 delegation + EIP-7702 authorization) →
 /// confirm, then render the txHash success or a typed failure. The cubit drives
@@ -171,41 +172,51 @@ class _SendProcessResultSheetState extends State<_SendProcessResultSheet> {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 24,
-          children: [
-            Icon(widget.icon, color: RealUnitColors.realUnitBlue, size: 64),
-            Text(widget.title, style: Theme.of(context).textTheme.headlineMedium),
-            Text(
-              widget.description,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: RealUnitColors.neutral500,
-              ),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.9,
+          ),
+          child: ScrollableActionsLayout(
+            shrinkWrap: true,
+            body: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 24,
+              children: [
+                Icon(widget.icon, color: RealUnitColors.realUnitBlue, size: 64),
+                Text(widget.title, style: Theme.of(context).textTheme.headlineMedium),
+                Text(
+                  widget.description,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: RealUnitColors.neutral500,
+                  ),
+                ),
+              ],
             ),
-            if (widget.canRetry && !_retryConsumed)
+            actions: [
+              if (widget.canRetry && !_retryConsumed)
+                FilledButton(
+                  onPressed: () {
+                    // Fail-closed double-tap lock: consume before the pop so a
+                    // second tap cannot schedule another concurrent confirm.
+                    if (_retryConsumed) {
+                      return;
+                    }
+                    setState(() {
+                      _retryConsumed = true;
+                    });
+                    // false → parent must NOT pop the SendProcessPage route.
+                    Navigator.of(context).pop(false);
+                  },
+                  child: Text(S.of(context).retry),
+                ),
               FilledButton(
-                onPressed: () {
-                  // Fail-closed double-tap lock: consume before the pop so a
-                  // second tap cannot schedule another concurrent confirm.
-                  if (_retryConsumed) {
-                    return;
-                  }
-                  setState(() {
-                    _retryConsumed = true;
-                  });
-                  // false → parent must NOT pop the SendProcessPage route.
-                  Navigator.of(context).pop(false);
-                },
-                child: Text(S.of(context).retry),
+                // true → parent pops the SendProcessPage route after the sheet.
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(S.of(context).close),
               ),
-            FilledButton(
-              // true → parent pops the SendProcessPage route after the sheet.
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(S.of(context).close),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/send/send_process_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 
 /// Third step: review the recipient + amount before signing. Confirming starts
 /// the on-chain process step.
@@ -31,25 +32,28 @@ class _SendConfirmPageState extends State<SendConfirmPage> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 24,
-            children: [
-              const Spacer(),
-              Text(
-                S.of(context).sendConfirmSummary(amount.toString()),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              _SummaryRow(
-                label: S.of(context).sendConfirmAmount,
-                value: S.of(context).sendShares(amount.toString()),
-              ),
-              _SummaryRow(
-                label: S.of(context).sendConfirmRecipient,
-                value: recipient,
-              ),
-              const Spacer(),
+          child: ScrollableActionsLayout(
+            centerBody: true,
+            body: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 24,
+              children: [
+                Text(
+                  S.of(context).sendConfirmSummary(amount.toString()),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                _SummaryRow(
+                  label: S.of(context).sendConfirmAmount,
+                  value: S.of(context).sendShares(amount.toString()),
+                ),
+                _SummaryRow(
+                  label: S.of(context).sendConfirmRecipient,
+                  value: recipient,
+                ),
+              ],
+            ),
+            actions: [
               FilledButton(
                 onPressed: _navigating
                     ? null
@@ -87,16 +91,20 @@ class _SummaryRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 16,
       children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: RealUnitColors.neutral500,
+        Flexible(
+          child: Text(
+            label,
+            softWrap: true,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: RealUnitColors.neutral500,
+            ),
           ),
         ),
-        Expanded(
+        Flexible(
           child: Text(
             value,
             textAlign: TextAlign.end,
+            softWrap: true,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
         ),
