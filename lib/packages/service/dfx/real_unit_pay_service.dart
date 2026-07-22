@@ -55,7 +55,7 @@ class RealUnitPayService extends DFXAuthService {
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(dto.toJson()),
-    );
+    ).timeout(_httpTimeout);
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       _throwApi(response.body, response.statusCode);
@@ -71,7 +71,7 @@ class RealUnitPayService extends DFXAuthService {
     final response = await authenticatedPut(
       uri,
       headers: {'Content-Type': 'application/json'},
-    );
+    ).timeout(_httpTimeout);
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       _throwApi(response.body, response.statusCode);
@@ -87,7 +87,7 @@ class RealUnitPayService extends DFXAuthService {
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(dto.toJson()),
-    );
+    ).timeout(_httpTimeout);
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       _throwApi(response.body, response.statusCode);
@@ -107,7 +107,7 @@ class RealUnitPayService extends DFXAuthService {
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(dto.toJson()),
-    );
+    ).timeout(_httpTimeout);
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       _throwApi(response.body, response.statusCode);
@@ -123,7 +123,7 @@ class RealUnitPayService extends DFXAuthService {
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(dto.toJson()),
-    );
+    ).timeout(_httpTimeout);
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       _throwApi(response.body, response.statusCode);
