@@ -181,6 +181,12 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
     productionPath: 'lib/screens/buy/buy_page.dart',
   ),
   ResponsiveSurface(
+    id: 'pay_quote_page',
+    description: 'Pay quote page (confirm CTA)',
+    matrixTestPath: 'test/screens/pay/pay_quote_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/pay/pay_quote_page.dart',
+  ),
+  ResponsiveSurface(
     id: 'sell_page',
     description: 'Sell page (primary CTA)',
     matrixTestPath: 'test/screens/sell/sell_responsive_matrix_test.dart',
@@ -228,7 +234,7 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
     matrixTestPath: 'test/screens/pin/pin_sheets_responsive_matrix_test.dart',
     productionPath: 'lib/screens/pin/widgets/enable_biometric_bottom_sheet.dart',
   ),
-  // Migration covers 29 surfaces total (bitbox_connect_sheet + 28 above). No
+  // Migration covers 30 surfaces total (bitbox_connect_sheet + 29 above). No
   // further known candidates remain from the prior sweep. welcome_page was
   // reviewed and found safe (scrolls end-to-end, no separate sticky CTA) — not
   // a migration candidate. Not exhaustive — review responsibility for every
