@@ -8,6 +8,7 @@ import 'package:realunit_wallet/screens/pay/cubits/pay_quote/pay_quote_cubit.dar
 import 'package:realunit_wallet/screens/pay/pay_process_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 
 class PayQuotePage extends StatelessWidget {
   final String paymentLinkId;
@@ -66,56 +67,59 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
   @override
   Widget build(BuildContext context) {
     final state = widget.state;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: 24,
-      children: [
-        const Spacer(),
-        Text(
-          S
-              .of(context)
-              .payQuoteSummary(
-                state.fiatAmount.toStringAsFixed(2),
-                state.fiatAsset,
-              ),
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
-        if (state.merchantName != null) ...[
-          _AmountRow(
-            label: S.of(context).payQuoteMerchant,
-            value: state.merchantCity != null
-                ? '${state.merchantName}, ${state.merchantCity}'
-                : state.merchantName!,
+    return ScrollableActionsLayout(
+      centerBody: true,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 24,
+        children: [
+          Text(
+            S
+                .of(context)
+                .payQuoteSummary(
+                  state.fiatAmount.toStringAsFixed(2),
+                  state.fiatAsset,
+                ),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineMedium,
           ),
-        ],
-        _AmountRow(
-          label: S.of(context).payQuoteRequested,
-          value: '${state.fiatAmount.toStringAsFixed(2)} ${state.fiatAsset}',
-        ),
-        _AmountRow(
-          label: S.of(context).payQuoteZchfNeeded,
-          value: '${state.zchfAmount.toStringAsFixed(2)} ZCHF',
-        ),
-        if (state.realuAmount != null) ...[
+          if (state.merchantName != null) ...[
+            _AmountRow(
+              label: S.of(context).payQuoteMerchant,
+              value: state.merchantCity != null
+                  ? '${state.merchantName}, ${state.merchantCity}'
+                  : state.merchantName!,
+            ),
+          ],
           _AmountRow(
-            label: S.of(context).payQuoteRealuAmount,
-            value: '${state.realuAmount!.toStringAsFixed(0)} ${realUnitAsset.symbol}',
+            label: S.of(context).payQuoteRequested,
+            value: '${state.fiatAmount.toStringAsFixed(2)} ${state.fiatAsset}',
           ),
-        ],
-        if (state.realuEstimatedZchf != null) ...[
           _AmountRow(
-            label: S.of(context).payQuoteRealuEstimated,
-            value: '${state.realuEstimatedZchf!.toStringAsFixed(2)} ZCHF',
+            label: S.of(context).payQuoteZchfNeeded,
+            value: '${state.zchfAmount.toStringAsFixed(2)} ZCHF',
           ),
+          if (state.realuAmount != null) ...[
+            _AmountRow(
+              label: S.of(context).payQuoteRealuAmount,
+              value: '${state.realuAmount!.toStringAsFixed(0)} ${realUnitAsset.symbol}',
+            ),
+          ],
+          if (state.realuEstimatedZchf != null) ...[
+            _AmountRow(
+              label: S.of(context).payQuoteRealuEstimated,
+              value: '${state.realuEstimatedZchf!.toStringAsFixed(2)} ZCHF',
+            ),
+          ],
+          if (state.realuFeesTotal != null) ...[
+            _AmountRow(
+              label: S.of(context).payQuoteRealuFees,
+              value: '${state.realuFeesTotal!.toStringAsFixed(2)} ${realUnitAsset.symbol}',
+            ),
+          ],
         ],
-        if (state.realuFeesTotal != null) ...[
-          _AmountRow(
-            label: S.of(context).payQuoteRealuFees,
-            value: '${state.realuFeesTotal!.toStringAsFixed(2)} ${realUnitAsset.symbol}',
-          ),
-        ],
-        const Spacer(),
+      ),
+      actions: [
         FilledButton(
           onPressed: _navigating
               ? null
@@ -147,14 +151,26 @@ class _AmountRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 16,
       children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: RealUnitColors.neutral500,
+        Flexible(
+          child: Text(
+            label,
+            softWrap: true,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: RealUnitColors.neutral500,
+            ),
           ),
         ),
-        Text(value, style: Theme.of(context).textTheme.bodyLarge),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            softWrap: true,
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+        ),
       ],
     );
   }
