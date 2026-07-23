@@ -112,14 +112,6 @@ void main() {
       );
     });
 
-    test('double-slash lightning form extracts the lightning payload', () {
-      // Pure string — never via router.go / Uri.parse for this form (throws).
-      expect(
-        extractPaymentDeeplinkPayload('realunit-wallet://lightning:$sampleLnurl'),
-        'lightning:$sampleLnurl',
-      );
-    });
-
     test('bare LNURL form extracts the LNURL verbatim', () {
       expect(
         extractPaymentDeeplinkPayload('realunit-wallet:$sampleLnurl'),
@@ -257,7 +249,7 @@ void main() {
     'warm resume: a re-lock landing before the deferred push runs is honored — '
     'no /pay push, payload stashed for post-unlock replay',
     (tester) async {
-      addTearDown(() => pendingPaymentDeeplink = null);
+      addTearDown(clearPendingPaymentDeeplink);
       const sampleLnurl =
           'LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD9E3K7MF0V9CXJTMKXP6XCEF';
       final router = await pump(tester);
@@ -274,7 +266,7 @@ void main() {
 
       expect(find.byKey(const Key('pay')), findsNothing);
       expect(currentPath(router), '/dashboard');
-      expect(pendingPaymentDeeplink, 'lightning:$sampleLnurl');
+      expect(peekPendingPaymentDeeplink(), 'lightning:$sampleLnurl');
     },
   );
 
@@ -293,17 +285,19 @@ void main() {
     },
   );
 
-  // Locked warm-resume: a payment deeplink while sitting on a PIN/unlock gate
-  // must stash and stay on the gate — never push /pay over the lock screen.
+  // Genuinely-locked warm-resume: a payment deeplink while isPinVerified is
+  // false (real PIN/unlock gates) must stash and stay — never push /pay over
+  // the lock screen. Step-up gates (e.g. /pinGate while already unlocked) take
+  // the deferred-push path instead; see the /pinGate test below.
   for (final gate in const [
     (path: '/verifyPin', key: Key('verifyPin')),
-    (path: '/pinGate', key: Key('pinGate')),
     (path: '/setupPin', key: Key('setupPin')),
   ]) {
     testWidgets(
-      'warm resume on ${gate.path}: payment deeplink stashes and does not push /pay',
+      'warm resume on ${gate.path} while locked: payment deeplink stashes and does not push /pay',
       (tester) async {
-        addTearDown(() => pendingPaymentDeeplink = null);
+        addTearDown(clearPendingPaymentDeeplink);
+        when(() => pinAuthCubit.state).thenReturn(const PinAuthState(isPinVerified: false));
         const sampleLnurl =
             'LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD9E3K7MF0V9CXJTMKXP6XCEF';
         final router = await pump(tester);
@@ -317,10 +311,33 @@ void main() {
         expect(find.byKey(const Key('pay')), findsNothing);
         expect(find.byKey(gate.key), findsOneWidget);
         expect(currentPath(router), gate.path);
-        expect(pendingPaymentDeeplink, 'lightning:$sampleLnurl');
+        expect(peekPendingPaymentDeeplink(), 'lightning:$sampleLnurl');
       },
     );
   }
+
+  testWidgets(
+    'warm resume on /pinGate while unlocked (step-up): payment deeplink '
+    'deferred-pushes /pay and does not stash',
+    (tester) async {
+      addTearDown(clearPendingPaymentDeeplink);
+      // Already unlocked — e.g. /pinGate reached from settings seed-view /
+      // change-PIN. setUp already stubs isPinVerified: true.
+      const sampleLnurl =
+          'LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD9E3K7MF0V9CXJTMKXP6XCEF';
+      final router = await pump(tester);
+      router.go('/pinGate');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('pinGate')), findsOneWidget);
+
+      router.go('realunit-wallet:lightning:$sampleLnurl');
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('pay')), findsOneWidget);
+      expect(find.text('PAY:lightning:$sampleLnurl'), findsOneWidget);
+      expect(peekPendingPaymentDeeplink(), isNull);
+    },
+  );
 
   testWidgets('cold start on the scheme URL boots to the normal entry', (
     tester,
@@ -336,7 +353,7 @@ void main() {
   testWidgets(
     'cold start on a payment deeplink boots to /home and stashes the payload',
     (tester) async {
-      addTearDown(() => pendingPaymentDeeplink = null);
+      addTearDown(clearPendingPaymentDeeplink);
       const sampleLnurl =
           'LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD9E3K7MF0V9CXJTMKXP6XCEF';
 
@@ -347,7 +364,7 @@ void main() {
 
       expect(currentPath(router), appLinkColdStartLocation);
       expect(find.byKey(const Key('home')), findsOneWidget);
-      expect(pendingPaymentDeeplink, 'lightning:$sampleLnurl');
+      expect(peekPendingPaymentDeeplink(), 'lightning:$sampleLnurl');
     },
   );
 

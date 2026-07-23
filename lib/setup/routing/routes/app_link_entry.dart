@@ -25,13 +25,16 @@ const String appLinkColdStartLocation = '/home';
 ///
 /// The DFX `/pl` frontend builds the deeplink generically as
 /// `{deepLink}lightning:{LNURL}` with the backend `deepLink='realunit-wallet:'`
-/// (no `//`), so the app normally receives `realunit-wallet:lightning:<LNURL>`
-/// — a double-colon OPAQUE URI. Some OS layer may instead normalize it to
-/// `realunit-wallet://lightning:<LNURL>`; both are handled here.
+/// (no `//`), so the app receives the single-colon opaque form
+/// `realunit-wallet:lightning:<LNURL>`. A `//`-prefixed variant
+/// (`realunit-wallet://lightning:<LNURL>`) never reaches this function in
+/// production: go_router derives `state.uri` via `Uri.parse` of the route-info,
+/// which throws on that form before [appLinkSchemeRedirect] /
+/// [extractPaymentDeeplinkPayload] is ever called — there is nothing to strip.
 ///
 /// Works on the raw URI STRING, not `Uri` component accessors: this is an
 /// opaque URI, not a hierarchical one, so `.host`/`.path` are not a reliable
-/// general parsing strategy for both variants.
+/// general parsing strategy.
 ///
 /// Returns the payload to feed into `PayScanCubit.onCodeDetected` VERBATIM
 /// (e.g. `lightning:LNURL1...`, a bare `LNURL1...`, or a bare `https://...`
@@ -45,8 +48,7 @@ const String appLinkColdStartLocation = '/home';
 String? extractPaymentDeeplinkPayload(String rawUri) {
   const prefix = '$appLinkScheme:';
   if (!rawUri.startsWith(prefix)) return null;
-  var remainder = rawUri.substring(prefix.length);
-  if (remainder.startsWith('//')) remainder = remainder.substring(2);
+  final remainder = rawUri.substring(prefix.length);
   if (remainder.isEmpty) return null;
 
   final isLightning = remainder.startsWith('lightning:');
@@ -89,30 +91,38 @@ String? extractPaymentDeeplinkPayload(String rawUri) {
 ///
 /// Payment-deeplink carve-out: when the scheme URL carries a DFX OpenCryptoPay
 /// payload (see [extractPaymentDeeplinkPayload]), the same security properties
-/// still hold.
+/// still hold. Locked vs unlocked is classified by the authoritative
+/// [PinAuthCubit.state.isPinVerified] flag (read only when already in-app /
+/// booted, so the DI lookup is safe), not by location membership in
+/// [isGateLocation].
 ///
-/// Warm resume, unlocked (`isInAppRoute` and not a [isGateLocation] path): the
-/// redirect itself still returns `null` — a true no-op for the match list /
-/// back-stack / `extra` — and the actual navigation is an imperative
-/// `pushNamed` deferred to `addPostFrameCallback`, so it lands on top of
-/// whatever is currently pushed without replacing it. The deferred callback
-/// re-checks [PinAuthCubit.state.isPinVerified] at execution time: a location
-/// snapshot can still show an unlocked path while an independent app-resume
-/// re-lock (`AppLifecycleState.resumed` → `PinAuthCubit.onAppResumed()`) has
-/// already landed between decision and push. If no longer verified, the
-/// payload is stashed in [pendingPaymentDeeplink] instead — same post-unlock
-/// replay path as the warm-locked branch.
+/// Warm resume, unlocked (`isInAppRoute` and `isPinVerified == true`, including
+/// a step-up gate like `/pinGate` reached from an already-unlocked seed-view /
+/// change-PIN settings flow): the redirect itself still returns `null` — a true
+/// no-op for the match list / back-stack / `extra` — and the actual navigation
+/// is an imperative `pushNamed` deferred to `addPostFrameCallback`, so it lands
+/// on top of whatever is currently shown (including on top of a step-up gate)
+/// without replacing it. Step-up gates complete independently via
+/// `pushReplacementNamed` and are not part of the boot/unlock ladder, so a
+/// stash while sitting on one would never be consumed — deferred push is the
+/// only path that actually resolves a deeplink arriving there. The deferred
+/// callback re-checks [PinAuthCubit.state.isPinVerified] at execution time: an
+/// independent app-resume re-lock (`AppLifecycleState.resumed` →
+/// `PinAuthCubit.onAppResumed()`) can land between decision and push. If no
+/// longer verified, the payload is stashed via [stashPendingPaymentDeeplink]
+/// instead — same post-unlock replay path as the warm-locked branch.
 ///
-/// Warm resume, locked (`isInAppRoute` but current path is a PIN/unlock gate
-/// such as `/verifyPin`): the app is still on a lock gate. The payload is
-/// stashed in [pendingPaymentDeeplink] and the redirect returns `null` so the
-/// gate stays put — never push `/pay` over the lock screen. The stash is
-/// replayed only once the PIN/unlock gate ladder lands on the dashboard
-/// ([applyBootNavAction]'s dashboard branch), never before — same post-unlock
-/// replay path as a cold start.
+/// Warm resume, genuinely locked (`isInAppRoute` and `isPinVerified == false`,
+/// e.g. sitting on a real PIN/unlock gate such as `/verifyPin`): the payload
+/// is stashed via [stashPendingPaymentDeeplink] and the redirect returns
+/// `null` so the gate stays put — never push `/pay` over the lock screen. The
+/// stash is replayed only once the PIN/unlock gate ladder lands on the
+/// dashboard ([applyBootNavAction]'s dashboard / restore / stay branches),
+/// never before — same post-unlock replay path as a cold start.
 ///
-/// Cold start (`!isInAppRoute`): the payload is stashed in
-/// [pendingPaymentDeeplink] and the redirect hands off to
+/// Cold start (`!isInAppRoute`): the PIN gate and boot ladder have not run yet,
+/// and getIt may not be ready — [PinAuthCubit] is not read here. The payload
+/// is stashed via [stashPendingPaymentDeeplink] and the redirect hands off to
 /// [appLinkColdStartLocation] so the normal PIN/unlock gate ladder runs first;
 /// [applyBootNavAction] replays the payload as an imperative `/pay` push only
 /// once that ladder lands on the dashboard.
@@ -130,47 +140,46 @@ String? appLinkSchemeRedirect(GoRouterState state, String currentLocation, GoRou
 
   final paymentPayload = extractPaymentDeeplinkPayload(state.uri.toString());
   if (paymentPayload != null) {
-    if (isInAppRoute && !isGateLocation(current.path)) {
-      // Warm resume, unlocked: the app is already past the lock gates. This
-      // redirect pass itself still returns null — a true no-op identical to
-      // the canonical open — so the current match list / back-stack / extra
-      // stay untouched. The actual navigation is an imperative pushNamed
-      // deferred to addPostFrameCallback (calling into the router
-      // synchronously from inside its own redirect is reentrant/unsafe): it
-      // lands on top of whatever is currently pushed, never replacing it.
-      // TOCTOU: the unlock decision above is from a location snapshot only;
-      // independent AppLifecycleState.resumed → PinAuthCubit.onAppResumed()
-      // can re-lock between that decision and the deferred frame. The
-      // callback re-checks isPinVerified at execution time before pushing.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        // Re-check at execution time: the decision above was made from a
-        // location snapshot, but the push is deferred to the next frame with
-        // no ordering guarantee against an independent re-lock (app resume →
-        // PinAuthCubit.onAppResumed() can land in between). Only push if
-        // still genuinely unlocked; otherwise stash for post-unlock replay —
-        // same stash/replay path as the warm-locked branch below.
-        if (!getIt<PinAuthCubit>().state.isPinVerified) {
-          pendingPaymentDeeplink = paymentPayload;
-          return;
-        }
-        unawaited(router.pushNamed(AppRoutes.pay, extra: paymentPayload));
-      });
-      return null;
-    }
     if (isInAppRoute) {
-      // Warm resume, locked: current path is a PIN/unlock gate. Stash the
-      // payload and stay on the gate — never push /pay over the lock screen.
-      // applyBootNavAction replays the stash only after the gate ladder lands
-      // on the dashboard (same post-unlock path as a cold-start stash).
-      pendingPaymentDeeplink = paymentPayload;
+      if (getIt<PinAuthCubit>().state.isPinVerified) {
+        // Warm resume, unlocked (including a step-up gate like /pinGate reached
+        // from an already-unlocked seed-view / change-PIN flow): defer the push
+        // to addPostFrameCallback (calling into the router synchronously from
+        // inside its own redirect is reentrant/unsafe) and re-check
+        // isPinVerified at execution time — a location snapshot is not proof
+        // against an independent AppLifecycleState.resumed re-lock landing
+        // between this decision and the deferred frame (TOCTOU). If still
+        // unlocked, push /pay on top of whatever is currently shown, including
+        // on top of a step-up gate; that gate's own flow (seed-view /
+        // change-PIN) completes independently via pushReplacementNamed and is
+        // not part of the boot/unlock ladder, so a stash here would never be
+        // consumed — deferred-push is the only path that actually resolves a
+        // deeplink arriving while on a step-up gate.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!getIt<PinAuthCubit>().state.isPinVerified) {
+            stashPendingPaymentDeeplink(paymentPayload);
+            return;
+          }
+          unawaited(router.pushNamed(AppRoutes.pay, extra: paymentPayload));
+        });
+        return null;
+      }
+      // Warm resume, genuinely locked (isPinVerified is false — the app is on
+      // a PIN/unlock gate such as /verifyPin, not a step-up gate over an
+      // already-unlocked session). Stash the payload and stay on the gate —
+      // never push /pay over the lock screen. applyBootNavAction replays the
+      // stash only after the boot/unlock gate ladder lands on the dashboard
+      // (same post-unlock replay path as a cold-start stash).
+      stashPendingPaymentDeeplink(paymentPayload);
       return null;
     }
-    // Cold start: the PIN gate and boot ladder have not run yet. Stash the
-    // payload; applyBootNavAction (boot_navigation.dart) replays it as an
-    // imperative /pay push strictly after resolveBootNavigation lands on the
-    // dashboard — i.e. after the very same PIN/unlock gate ladder a normal
-    // /pay navigation passes, never before.
-    pendingPaymentDeeplink = paymentPayload;
+    // Cold start: the PIN gate and boot ladder have not run yet, and getIt may
+    // not be ready — do not read PinAuthCubit here. Stash the payload;
+    // applyBootNavAction (boot_navigation.dart) replays it as an imperative
+    // /pay push strictly after resolveBootNavigation lands on the dashboard —
+    // i.e. after the same PIN/unlock gate ladder a normal /pay navigation
+    // passes, never before.
+    stashPendingPaymentDeeplink(paymentPayload);
     return appLinkColdStartLocation;
   }
 

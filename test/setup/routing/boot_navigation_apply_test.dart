@@ -208,8 +208,8 @@ void main() {
   );
 
   group('pendingPaymentDeeplink replay', () {
-    setUp(() => pendingPaymentDeeplink = null);
-    tearDown(() => pendingPaymentDeeplink = null);
+    setUp(clearPendingPaymentDeeplink);
+    tearDown(clearPendingPaymentDeeplink);
 
     testWidgets(
       'dashboard landing with a stashed payload pushes /pay on top and consumes the stash',
@@ -218,7 +218,7 @@ void main() {
         await tester.pumpWidget(MaterialApp.router(routerConfig: router));
         await tester.pumpAndSettle();
 
-        pendingPaymentDeeplink = 'lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD';
+        stashPendingPaymentDeeplink('lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD');
         applyBootNavAction(
           const BootNavGoNamed(AppRoutes.dashboard),
           router,
@@ -239,7 +239,7 @@ void main() {
               .toList(),
           ['/dashboard', '/pay'],
         );
-        expect(pendingPaymentDeeplink, isNull);
+        expect(peekPendingPaymentDeeplink(), isNull);
         expect(router.canPop(), isTrue);
         router.pop();
         await tester.pumpAndSettle();
@@ -274,7 +274,7 @@ void main() {
         await tester.pumpWidget(MaterialApp.router(routerConfig: router));
         await tester.pumpAndSettle();
 
-        pendingPaymentDeeplink = 'lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD';
+        stashPendingPaymentDeeplink('lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD');
         applyBootNavAction(
           const BootNavGoNamed(PinRoutes.verify),
           router,
@@ -284,7 +284,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('verify'), findsOneWidget);
-        expect(pendingPaymentDeeplink, 'lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD');
+        expect(peekPendingPaymentDeeplink(), 'lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD');
       },
     );
 
@@ -299,7 +299,7 @@ void main() {
         // Full gate-ladder path (not a bare BootNavGoNamed): after a plain
         // PIN unlock with no captured resume location, resolveBootNavigation
         // returns BootNavGoNamed(dashboard), which replays the stash.
-        pendingPaymentDeeplink = 'lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD';
+        stashPendingPaymentDeeplink('lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD');
         applyBootNavAction(
           resolveAfterRelock(null),
           router,
@@ -315,7 +315,7 @@ void main() {
               .toList(),
           ['/dashboard', '/pay'],
         );
-        expect(pendingPaymentDeeplink, isNull);
+        expect(peekPendingPaymentDeeplink(), isNull);
         expect(router.canPop(), isTrue);
         router.pop();
         await tester.pumpAndSettle();
@@ -331,7 +331,7 @@ void main() {
         await tester.pumpWidget(MaterialApp.router(routerConfig: router));
         await tester.pumpAndSettle();
 
-        pendingPaymentDeeplink = 'lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD';
+        stashPendingPaymentDeeplink('lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD');
         applyBootNavAction(
           resolveAfterRelock('/kyc'),
           router,
@@ -350,7 +350,7 @@ void main() {
               .toList(),
           ['/dashboard', '/kyc', '/pay'],
         );
-        expect(pendingPaymentDeeplink, isNull);
+        expect(peekPendingPaymentDeeplink(), isNull);
         expect(router.canPop(), isTrue);
         router.pop();
         await tester.pumpAndSettle();
@@ -371,7 +371,7 @@ void main() {
         router.go('/dashboard');
         await tester.pumpAndSettle();
 
-        pendingPaymentDeeplink = 'lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD';
+        stashPendingPaymentDeeplink('lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD');
         applyBootNavAction(
           const BootNavStay(),
           router,
@@ -387,7 +387,7 @@ void main() {
               .toList(),
           ['/dashboard', '/pay'],
         );
-        expect(pendingPaymentDeeplink, isNull);
+        expect(peekPendingPaymentDeeplink(), isNull);
         expect(router.canPop(), isTrue);
         router.pop();
         await tester.pumpAndSettle();

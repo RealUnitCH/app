@@ -40,11 +40,17 @@ class PayScanView extends StatefulWidget {
 }
 
 class _PayScanViewState extends State<PayScanView> {
+  /// True while waiting for the one-shot [initialPayload] decode; drives the
+  /// spinner so it can be dismissed after invalid/decoded (unlike the
+  /// immutable [PayScanView.initialPayload] widget field).
+  bool _awaitingInitialDecode = false;
+
   @override
   void initState() {
     super.initState();
     final payload = widget.initialPayload;
     if (payload == null) return;
+    _awaitingInitialDecode = true;
     // Deferred to after the first frame: BlocConsumer below only subscribes
     // during that first build. Calling onCodeDetected synchronously here
     // (before it subscribes) would emit PayScanDecoded/Invalid before
@@ -64,6 +70,7 @@ class _PayScanViewState extends State<PayScanView> {
     return BlocConsumer<PayScanCubit, PayScanState>(
       listener: (context, state) {
         if (state is PayScanDecoded) {
+          setState(() => _awaitingInitialDecode = false);
           Navigator.of(context).push(
             MaterialPageRoute<void>(
               builder: (_) => PayQuotePage(paymentLinkId: state.link.id),
@@ -73,6 +80,7 @@ class _PayScanViewState extends State<PayScanView> {
           context.read<PayScanCubit>().reset();
         }
         if (state is PayScanInvalid) {
+          setState(() => _awaitingInitialDecode = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(S.of(context).payScanInvalid),
@@ -85,7 +93,7 @@ class _PayScanViewState extends State<PayScanView> {
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(title: Text(S.of(context).payScanTitle)),
-          body: widget.initialPayload != null
+          body: _awaitingInitialDecode
               ? const Center(child: CupertinoActivityIndicator())
               : QrScannerView(
                   onDetect: (raw) => context.read<PayScanCubit>().onCodeDetected(raw),

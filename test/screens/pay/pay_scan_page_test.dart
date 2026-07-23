@@ -169,6 +169,35 @@ void main() {
     );
 
     testWidgets(
+      'an invalid initialPayload dismisses the spinner and shows the live camera',
+      (tester) async {
+        whenListen(
+          scanCubit,
+          Stream<PayScanState>.fromIterable([
+            const PayScanInvalid('bad code'),
+          ]),
+          initialState: const PayScanScanning(),
+        );
+
+        await tester.pumpApp(
+          BlocProvider<PayScanCubit>.value(
+            value: scanCubit,
+            child: const PayScanView(
+              initialPayload: 'lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD',
+            ),
+          ),
+        );
+        // CupertinoActivityIndicator animates indefinitely, so pumpAndSettle
+        // would hang. One extra pump is enough for the listener (invalid →
+        // setState dismissing the spinner) and snackbar to run.
+        await tester.pump();
+
+        expect(find.byType(SnackBar), findsOne);
+        expect(find.byType(MobileScanner), findsOneWidget);
+      },
+    );
+
+    testWidgets(
       'no initialPayload never calls onCodeDetected and shows the live camera',
       (tester) async {
         await tester.pumpApp(buildSubject());
