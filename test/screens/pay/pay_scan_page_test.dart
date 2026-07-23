@@ -140,5 +140,43 @@ void main() {
         expect(find.text(S.current.payScanCameraPermissionDenied), findsNothing);
       },
     );
+
+    testWidgets(
+      'an initialPayload feeds the cubit exactly once and skips the live camera',
+      (tester) async {
+        when(() => scanCubit.onCodeDetected(any())).thenReturn(null);
+
+        await tester.pumpApp(
+          BlocProvider<PayScanCubit>.value(
+            value: scanCubit,
+            child: const PayScanView(
+              initialPayload: 'lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD',
+            ),
+          ),
+        );
+        // CupertinoActivityIndicator animates indefinitely, so pumpAndSettle
+        // would hang. One extra pump is enough for the deferred post-frame
+        // onCodeDetected callback to fire.
+        await tester.pump();
+
+        verify(
+          () => scanCubit.onCodeDetected(
+            'lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD',
+          ),
+        ).called(1);
+        expect(find.byType(MobileScanner), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'no initialPayload never calls onCodeDetected and shows the live camera',
+      (tester) async {
+        await tester.pumpApp(buildSubject());
+        await tester.pumpAndSettle();
+
+        verifyNever(() => scanCubit.onCodeDetected(any()));
+        expect(find.byType(MobileScanner), findsOneWidget);
+      },
+    );
   });
 }
