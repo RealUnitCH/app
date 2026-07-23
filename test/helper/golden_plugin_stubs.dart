@@ -68,4 +68,10 @@ void stubMobileScannerChannel() {
     const EventChannel('dev.steenbakker.mobile_scanner/scanner/event'),
     MockStreamHandler.inline(onListen: (arguments, sink) {}),
   );
+  // mobile_scanner 7.x additionally subscribes to a device-orientation event
+  // stream; stub it as a no-op so `listen`/`cancel` don't throw MissingPluginException.
+  messenger.setMockStreamHandler(
+    const EventChannel('dev.steenbakker.mobile_scanner/scanner/deviceOrientation'),
+    MockStreamHandler.inline(onListen: (arguments, sink) {}),
+  );
 }

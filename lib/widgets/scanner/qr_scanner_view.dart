@@ -4,8 +4,26 @@
 // pay flow (LNURL decode) and the wallet-to-wallet send flow (EVM address
 // decode); the per-flow decode logic it feeds is unit-tested in the respective
 // cubit tests.
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:realunit_wallet/styles/colors.dart';
+
+/// Compact icon-only error placeholder used when [QrScannerView.errorBuilder]
+/// is null. Replaces mobile_scanner 7.x's own (taller, textScale-scaling)
+/// default to avoid overflow in bounded layouts like send_recipient_page.dart's
+/// Expanded.
+Widget _defaultErrorBuilder(BuildContext context, MobileScannerException error) {
+  return ColoredBox(
+    color: RealUnitColors.basic.black,
+    child: Center(
+      child: Icon(
+        Icons.error_outline,
+        size: 48,
+        color: RealUnitColors.status.red600,
+      ),
+    ),
+  );
+}
 
 /// Thin wrapper around [MobileScanner] that surfaces the first raw barcode
 /// value of each capture via [onDetect]. Keeping the camera/MethodChannel
@@ -17,8 +35,10 @@ class QrScannerView extends StatelessWidget {
   final ValueChanged<String> onDetect;
 
   /// Optional error UI builder forwarded to [MobileScanner.errorBuilder].
-  /// When null, MobileScanner's own default error handling is used.
-  final Widget Function(BuildContext, MobileScannerException, Widget?)? errorBuilder;
+  /// When null, this compact icon-only placeholder is used instead of
+  /// mobile_scanner 7.x's own (taller, textScale-scaling) default, to avoid
+  /// overflow in bounded layouts like send_recipient_page.dart's Expanded.
+  final Widget Function(BuildContext, MobileScannerException)? errorBuilder;
 
   const QrScannerView({
     super.key,
@@ -33,7 +53,7 @@ class QrScannerView extends StatelessWidget {
         final raw = capture.barcodes.firstOrNull?.rawValue;
         if (raw != null) onDetect(raw);
       },
-      errorBuilder: errorBuilder,
+      errorBuilder: errorBuilder ?? _defaultErrorBuilder,
     );
   }
 }

@@ -55,7 +55,7 @@ class PayScanView extends StatelessWidget {
           appBar: AppBar(title: Text(S.of(context).payScanTitle)),
           body: QrScannerView(
             onDetect: (raw) => context.read<PayScanCubit>().onCodeDetected(raw),
-            errorBuilder: (context, error, child) {
+            errorBuilder: (context, error) {
               final message = error.errorCode == MobileScannerErrorCode.permissionDenied
                   ? S.of(context).payScanCameraPermissionDenied
                   : S.of(context).payScanCameraUnavailable;

@@ -132,7 +132,6 @@ void main() {
         final errorWidget = scanner.errorBuilder!(
           context,
           MobileScannerException(errorCode: nonPermissionCode),
-          null,
         );
 
         await tester.pumpWidget(MaterialApp(home: errorWidget));
