@@ -1,4 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -165,6 +166,37 @@ void main() {
           ),
         ).called(1);
         expect(find.byType(MobileScanner), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'an initialPayload with a successful decode dismisses the spinner and navigates to the quote step',
+      (tester) async {
+        when(() => scanCubit.onCodeDetected(any())).thenReturn(null);
+        final link = DecodedPaymentLink(
+          id: 'pl_abc123',
+          lnurlpUrl: Uri.parse('https://api.dfx.swiss/v1/lnurlp/pl_abc123'),
+        );
+        whenListen(
+          scanCubit,
+          Stream<PayScanState>.fromIterable([PayScanDecoded(link)]),
+          initialState: const PayScanScanning(),
+        );
+
+        await tester.pumpApp(
+          BlocProvider<PayScanCubit>.value(
+            value: scanCubit,
+            child: const PayScanView(
+              initialPayload: 'lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD',
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Spinner dismissed, quote step pushed and rendered; the cubit is reset.
+        expect(find.byType(CupertinoActivityIndicator), findsNothing);
+        expect(find.byType(PayQuoteView), findsOne);
+        verify(() => scanCubit.reset()).called(1);
       },
     );
 

@@ -18,7 +18,9 @@ void main() {
   setUp(() {
     pinAuthCubit = _MockPinAuthCubit();
     GetIt.instance.registerSingleton<PinAuthCubit>(pinAuthCubit);
-    when(() => pinAuthCubit.state).thenReturn(const PinAuthState(isPinVerified: true));
+    when(() => pinAuthCubit.state).thenReturn(
+      const PinAuthState(isPinVerified: true, isPinSetup: true),
+    );
   });
 
   tearDown(() => GetIt.instance.reset());
@@ -256,12 +258,17 @@ void main() {
       router.go('/dashboard');
       await tester.pumpAndSettle();
 
-      // Simulate a re-lock (AppLifecycleState.resumed -> PinAuthCubit.onAppResumed()
-      // sets isPinVerified=false) landing between the redirect's push decision
-      // and the deferred addPostFrameCallback that would perform it.
-      when(() => pinAuthCubit.state).thenReturn(const PinAuthState(isPinVerified: false));
-
+      // Keep setUp's unlocked stub (isPinVerified && isPinSetup) so the
+      // decision-time check schedules the deferred push callback.
       router.go('realunit-wallet:lightning:$sampleLnurl');
+      // Flip the mock AFTER router.go and BEFORE pumpAndSettle so the
+      // decision-time check reads unlocked (schedules the deferred callback)
+      // while the execution-time re-check reads locked — this is what makes
+      // the test non-vacuous (it would fail if the postFrame re-check were
+      // deleted, since the deferred callback would then unconditionally push).
+      // Simulates a re-lock (AppLifecycleState.resumed -> onAppResumed())
+      // landing between decision and deferred frame.
+      when(() => pinAuthCubit.state).thenReturn(const PinAuthState(isPinVerified: false));
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('pay')), findsNothing);
@@ -289,32 +296,57 @@ void main() {
   // false (real PIN/unlock gates) must stash and stay — never push /pay over
   // the lock screen. Step-up gates (e.g. /pinGate while already unlocked) take
   // the deferred-push path instead; see the /pinGate test below.
-  for (final gate in const [
-    (path: '/verifyPin', key: Key('verifyPin')),
-    (path: '/setupPin', key: Key('setupPin')),
-  ]) {
-    testWidgets(
-      'warm resume on ${gate.path} while locked: payment deeplink stashes and does not push /pay',
-      (tester) async {
-        addTearDown(clearPendingPaymentDeeplink);
-        when(() => pinAuthCubit.state).thenReturn(const PinAuthState(isPinVerified: false));
-        const sampleLnurl =
-            'LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD9E3K7MF0V9CXJTMKXP6XCEF';
-        final router = await pump(tester);
-        router.go(gate.path);
-        await tester.pumpAndSettle();
-        expect(find.byKey(gate.key), findsOneWidget);
+  testWidgets(
+    'warm resume on /verifyPin while locked: payment deeplink stashes and does not push /pay',
+    (tester) async {
+      addTearDown(clearPendingPaymentDeeplink);
+      when(() => pinAuthCubit.state).thenReturn(const PinAuthState(isPinVerified: false));
+      const sampleLnurl =
+          'LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD9E3K7MF0V9CXJTMKXP6XCEF';
+      final router = await pump(tester);
+      router.go('/verifyPin');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('verifyPin')), findsOneWidget);
 
-        router.go('realunit-wallet:lightning:$sampleLnurl');
-        await tester.pumpAndSettle();
+      router.go('realunit-wallet:lightning:$sampleLnurl');
+      await tester.pumpAndSettle();
 
-        expect(find.byKey(const Key('pay')), findsNothing);
-        expect(find.byKey(gate.key), findsOneWidget);
-        expect(currentPath(router), gate.path);
-        expect(peekPendingPaymentDeeplink(), 'lightning:$sampleLnurl');
-      },
-    );
-  }
+      expect(find.byKey(const Key('pay')), findsNothing);
+      expect(find.byKey(const Key('verifyPin')), findsOneWidget);
+      expect(currentPath(router), '/verifyPin');
+      expect(peekPendingPaymentDeeplink(), 'lightning:$sampleLnurl');
+    },
+  );
+
+  // /setupPin runtime state from PinAuthCubit.initialize() is
+  // isPinSetup=false, isPinVerified=true (vacuous auto-pass before any PIN is
+  // configured). Classifying unlock by isPinVerified alone would deferred-push
+  // /pay and bypass the mandatory PIN-setup gate — this regression guard uses
+  // the real pair state.
+  testWidgets(
+    'warm resume on /setupPin (vacuous isPinVerified before any PIN is configured): '
+    'payment deeplink stashes and does not push /pay',
+    (tester) async {
+      addTearDown(clearPendingPaymentDeeplink);
+      when(() => pinAuthCubit.state).thenReturn(
+        const PinAuthState(isPinSetup: false, isPinVerified: true),
+      );
+      const sampleLnurl =
+          'LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD9E3K7MF0V9CXJTMKXP6XCEF';
+      final router = await pump(tester);
+      router.go('/setupPin');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('setupPin')), findsOneWidget);
+
+      router.go('realunit-wallet:lightning:$sampleLnurl');
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('pay')), findsNothing);
+      expect(find.byKey(const Key('setupPin')), findsOneWidget);
+      expect(currentPath(router), '/setupPin');
+      expect(peekPendingPaymentDeeplink(), 'lightning:$sampleLnurl');
+    },
+  );
 
   testWidgets(
     'warm resume on /pinGate while unlocked (step-up): payment deeplink '
@@ -322,7 +354,7 @@ void main() {
     (tester) async {
       addTearDown(clearPendingPaymentDeeplink);
       // Already unlocked — e.g. /pinGate reached from settings seed-view /
-      // change-PIN. setUp already stubs isPinVerified: true.
+      // change-PIN. setUp already stubs isPinVerified && isPinSetup.
       const sampleLnurl =
           'LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD9E3K7MF0V9CXJTMKXP6XCEF';
       final router = await pump(tester);

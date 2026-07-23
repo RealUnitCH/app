@@ -91,32 +91,39 @@ String? extractPaymentDeeplinkPayload(String rawUri) {
 ///
 /// Payment-deeplink carve-out: when the scheme URL carries a DFX OpenCryptoPay
 /// payload (see [extractPaymentDeeplinkPayload]), the same security properties
-/// still hold. Locked vs unlocked is classified by the authoritative
-/// [PinAuthCubit.state.isPinVerified] flag (read only when already in-app /
-/// booted, so the DI lookup is safe), not by location membership in
-/// [isGateLocation].
+/// still hold. Locked vs unlocked is classified by the authoritative pair
+/// `isPinVerified && isPinSetup` (read only when already in-app / booted, so
+/// the DI lookup is safe), not by location membership in [isGateLocation] and
+/// not by `isPinVerified` alone. `PinAuthCubit.initialize()` sets
+/// `isPinVerified: !isPinSetup`, so before any PIN is configured
+/// `isPinVerified` is vacuously true — on `/setupPin` that auto-pass must not
+/// be treated as "session unlocked" or a warm-resume payment deeplink would
+/// deferred-push `/pay` and bypass the mandatory PIN-setup gate.
 ///
-/// Warm resume, unlocked (`isInAppRoute` and `isPinVerified == true`, including
-/// a step-up gate like `/pinGate` reached from an already-unlocked seed-view /
-/// change-PIN settings flow): the redirect itself still returns `null` — a true
-/// no-op for the match list / back-stack / `extra` — and the actual navigation
-/// is an imperative `pushNamed` deferred to `addPostFrameCallback`, so it lands
-/// on top of whatever is currently shown (including on top of a step-up gate)
-/// without replacing it. Step-up gates complete independently via
-/// `pushReplacementNamed` and are not part of the boot/unlock ladder, so a
-/// stash while sitting on one would never be consumed — deferred push is the
-/// only path that actually resolves a deeplink arriving there. The deferred
-/// callback re-checks [PinAuthCubit.state.isPinVerified] at execution time: an
-/// independent app-resume re-lock (`AppLifecycleState.resumed` →
-/// `PinAuthCubit.onAppResumed()`) can land between decision and push. If no
-/// longer verified, the payload is stashed via [stashPendingPaymentDeeplink]
-/// instead — same post-unlock replay path as the warm-locked branch.
+/// Warm resume, unlocked (`isInAppRoute` and `isPinVerified && isPinSetup`,
+/// including a step-up gate like `/pinGate` reached from an already-unlocked
+/// seed-view / change-PIN settings flow): the redirect itself still returns
+/// `null` — a true no-op for the match list / back-stack / `extra` — and the
+/// actual navigation is an imperative `pushNamed` deferred to
+/// `addPostFrameCallback`, so it lands on top of whatever is currently shown
+/// (including on top of a step-up gate) without replacing it. Step-up gates
+/// complete independently via `pushReplacementNamed` and are not part of the
+/// boot/unlock ladder, so a stash while sitting on one would never be consumed
+/// — deferred push is the only path that actually resolves a deeplink arriving
+/// there. The deferred callback re-checks the same pair
+/// `isPinVerified && isPinSetup` at execution time: an independent app-resume
+/// re-lock (`AppLifecycleState.resumed` → `PinAuthCubit.onAppResumed()`) can
+/// land between decision and push. If no longer unlocked by that pair, the
+/// payload is stashed via [stashPendingPaymentDeeplink] instead — same
+/// post-unlock replay path as the warm-locked branch.
 ///
-/// Warm resume, genuinely locked (`isInAppRoute` and `isPinVerified == false`,
-/// e.g. sitting on a real PIN/unlock gate such as `/verifyPin`): the payload
-/// is stashed via [stashPendingPaymentDeeplink] and the redirect returns
-/// `null` so the gate stays put — never push `/pay` over the lock screen. The
-/// stash is replayed only once the PIN/unlock gate ladder lands on the
+/// Warm resume, genuinely locked or not-yet-set-up (`isInAppRoute` and
+/// `!(isPinVerified && isPinSetup)`, e.g. sitting on `/verifyPin` with
+/// `isPinVerified == false`, or on `/setupPin` with `isPinSetup == false` even
+/// when `isPinVerified` is the vacuous auto-pass): the payload is stashed via
+/// [stashPendingPaymentDeeplink] and the redirect returns `null` so the gate
+/// stays put — never push `/pay` over the lock screen or the PIN-setup gate.
+/// The stash is replayed only once the PIN/unlock gate ladder lands on the
 /// dashboard ([applyBootNavAction]'s dashboard / restore / stay branches),
 /// never before — same post-unlock replay path as a cold start.
 ///
@@ -141,22 +148,23 @@ String? appLinkSchemeRedirect(GoRouterState state, String currentLocation, GoRou
   final paymentPayload = extractPaymentDeeplinkPayload(state.uri.toString());
   if (paymentPayload != null) {
     if (isInAppRoute) {
-      if (getIt<PinAuthCubit>().state.isPinVerified) {
+      if (getIt<PinAuthCubit>().state.isPinVerified && getIt<PinAuthCubit>().state.isPinSetup) {
         // Warm resume, unlocked (including a step-up gate like /pinGate reached
         // from an already-unlocked seed-view / change-PIN flow): defer the push
         // to addPostFrameCallback (calling into the router synchronously from
-        // inside its own redirect is reentrant/unsafe) and re-check
-        // isPinVerified at execution time — a location snapshot is not proof
-        // against an independent AppLifecycleState.resumed re-lock landing
-        // between this decision and the deferred frame (TOCTOU). If still
-        // unlocked, push /pay on top of whatever is currently shown, including
-        // on top of a step-up gate; that gate's own flow (seed-view /
-        // change-PIN) completes independently via pushReplacementNamed and is
-        // not part of the boot/unlock ladder, so a stash here would never be
-        // consumed — deferred-push is the only path that actually resolves a
-        // deeplink arriving while on a step-up gate.
+        // inside its own redirect is reentrant/unsafe) and re-check the pair
+        // isPinVerified && isPinSetup at execution time — a location snapshot
+        // is not proof against an independent AppLifecycleState.resumed re-lock
+        // landing between this decision and the deferred frame (TOCTOU). If
+        // still unlocked by that pair, push /pay on top of whatever is currently
+        // shown, including on top of a step-up gate; that gate's own flow
+        // (seed-view / change-PIN) completes independently via
+        // pushReplacementNamed and is not part of the boot/unlock ladder, so a
+        // stash here would never be consumed — deferred-push is the only path
+        // that actually resolves a deeplink arriving while on a step-up gate.
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!getIt<PinAuthCubit>().state.isPinVerified) {
+          final pinState = getIt<PinAuthCubit>().state;
+          if (!(pinState.isPinVerified && pinState.isPinSetup)) {
             stashPendingPaymentDeeplink(paymentPayload);
             return;
           }
@@ -164,12 +172,14 @@ String? appLinkSchemeRedirect(GoRouterState state, String currentLocation, GoRou
         });
         return null;
       }
-      // Warm resume, genuinely locked (isPinVerified is false — the app is on
-      // a PIN/unlock gate such as /verifyPin, not a step-up gate over an
-      // already-unlocked session). Stash the payload and stay on the gate —
-      // never push /pay over the lock screen. applyBootNavAction replays the
-      // stash only after the boot/unlock gate ladder lands on the dashboard
-      // (same post-unlock replay path as a cold-start stash).
+      // Warm resume, locked or not-yet-set-up (!(isPinVerified && isPinSetup) —
+      // on /verifyPin with isPinVerified false, or on /setupPin with
+      // isPinSetup false even when isPinVerified is the vacuous auto-pass from
+      // PinAuthCubit.initialize()). Stash the payload and stay on the gate —
+      // never push /pay over the lock screen or the PIN-setup gate.
+      // applyBootNavAction replays the stash only after the boot/unlock gate
+      // ladder lands on the dashboard (same post-unlock replay path as a
+      // cold-start stash).
       stashPendingPaymentDeeplink(paymentPayload);
       return null;
     }
