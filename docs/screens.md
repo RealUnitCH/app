@@ -28,8 +28,10 @@ Column meaning:
   and `debugAuth` (a `kDebugMode`-only dev tool). Each row lists **all** the
   slots whose Golden renders that widget — a screen usually has several (its
   default plus its state variants), so most cells now carry a range rather
-  than a single anchor. One Golden is a shared form widget rather than a
-  screen: slot `268` is `PhoneNumberField` under `test/goldens/widgets/form/`.
+  than a single anchor. Exactly one handbook slot is a shared form widget
+  rather than a screen: slot `268` is `PhoneNumberField` under
+  `test/goldens/widgets/form/`. That path also holds two error-state
+  baselines (German and English) that are not mapped to a handbook slot.
   Only `WebViewPage` (no active Golden) and `KycPageManager` (the orchestrator
   has no Golden of its own — its states are the individual KYC pages) still
   carry `—`. Slot ↔ Golden mapping in
@@ -123,8 +125,9 @@ Column meaning:
 | Shared widgets | `ReferralPayoutTransactionRow` | — | — | `282` |
 
 81 screens — 47 routed (`GoRoute`) + 34 non-routed. The table also carries
-two shared-widget baselines (`PhoneNumberField`, `ReferralPayoutTransactionRow`),
-which are not screens.
+two shared-widget slots (`PhoneNumberField`, `ReferralPayoutTransactionRow`),
+which are not screens; three Golden baselines sit under
+`test/goldens/widgets/form/`, of which only slot `268` is a handbook entry.
 Referral surfaces have Golden baselines (`276`–`290`); the handbook
 documents the programme in `#spec-referral`.
 
