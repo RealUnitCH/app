@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -64,29 +63,6 @@ void main() {
     return button.items!.map((item) => item.value!).toList();
   }
 
-  /// Fixture countries with CH `taxEnable: true`, AF `taxEnable: false`, and
-  /// every other country left without `realunit` (null → selectable).
-  DfxCountryService taxEnableFixtureCountryService() {
-    final body = (jsonDecode(countriesFixtureJson()) as List<dynamic>).map((raw) {
-      final map = Map<String, dynamic>.from(raw as Map);
-      if (map['symbol'] == 'AF') {
-        map['realunit'] = {'taxEnable': false};
-      } else if (map['symbol'] == 'CH') {
-        map['realunit'] = {'taxEnable': true};
-      }
-      return map;
-    }).toList();
-    return countryServiceWithClient(
-      MockClient(
-        (_) async => http.Response(
-          jsonEncode(body),
-          200,
-          headers: const {'content-type': 'application/json; charset=utf-8'},
-        ),
-      ),
-    );
-  }
-
   group('$CountryFieldPurpose', () {
     test('nationality allows every country regardless of kycAllowed', () {
       expect(CountryFieldPurpose.nationality.allows(switzerland), isTrue);
@@ -149,7 +125,7 @@ void main() {
     });
 
     testWidgets('tax purpose drops countries with taxEnable false', (tester) async {
-      registerCountryService(taxEnableFixtureCountryService());
+      registerCountryService(fixtureCountryService());
 
       await tester.pumpApp(
         host(
@@ -166,9 +142,9 @@ void main() {
       final names = countries.map((c) => c.name);
       expect(names, isNotEmpty);
       expect(names, contains('Switzerland'));
+      expect(names, contains('Italy'));
       expect(names, isNot(contains('Afghanistan')));
-      // Null taxEnable stays selectable (countries without realunit).
-      expect(countries.any((c) => c.taxEnable == null), isTrue);
+      expect(names, isNot(contains('United States')));
       expect(countries.any((c) => c.taxEnable == true), isTrue);
       expect(countries.any((c) => c.taxEnable == false), isFalse);
     });
