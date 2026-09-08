@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +20,27 @@ void main() {
   // present in the committed country fixture.
   const switzerland = Country(id: 41, symbol: 'CH', name: 'Switzerland', kycAllowed: true);
   const afghanistan = Country(id: 3, symbol: 'AF', name: 'Afghanistan', kycAllowed: false);
+  const switzerlandTaxEnabled = Country(
+    id: 41,
+    symbol: 'CH',
+    name: 'Switzerland',
+    kycAllowed: true,
+    taxEnable: true,
+  );
+  const afghanistanTaxDisabled = Country(
+    id: 3,
+    symbol: 'AF',
+    name: 'Afghanistan',
+    kycAllowed: false,
+    taxEnable: false,
+  );
+  const taxEnableNull = Country(
+    id: 99,
+    symbol: 'XX',
+    name: 'Somewhere',
+    kycAllowed: true,
+    taxEnable: null,
+  );
 
   tearDown(() async => GetIt.instance.reset());
 
@@ -42,6 +64,29 @@ void main() {
     return button.items!.map((item) => item.value!).toList();
   }
 
+  /// Fixture countries with CH `taxEnable: true`, AF `taxEnable: false`, and
+  /// every other country left without `realunit` (null → selectable).
+  DfxCountryService taxEnableFixtureCountryService() {
+    final body = (jsonDecode(countriesFixtureJson()) as List<dynamic>).map((raw) {
+      final map = Map<String, dynamic>.from(raw as Map);
+      if (map['symbol'] == 'AF') {
+        map['realunit'] = {'taxEnable': false};
+      } else if (map['symbol'] == 'CH') {
+        map['realunit'] = {'taxEnable': true};
+      }
+      return map;
+    }).toList();
+    return countryServiceWithClient(
+      MockClient(
+        (_) async => http.Response(
+          jsonEncode(body),
+          200,
+          headers: const {'content-type': 'application/json; charset=utf-8'},
+        ),
+      ),
+    );
+  }
+
   group('$CountryFieldPurpose', () {
     test('nationality allows every country regardless of kycAllowed', () {
       expect(CountryFieldPurpose.nationality.allows(switzerland), isTrue);
@@ -51,6 +96,12 @@ void main() {
     test('residence reads kycAllowed', () {
       expect(CountryFieldPurpose.residence.allows(switzerland), isTrue);
       expect(CountryFieldPurpose.residence.allows(afghanistan), isFalse);
+    });
+
+    test('tax reads taxEnable (false dropped; null/true allowed)', () {
+      expect(CountryFieldPurpose.tax.allows(switzerlandTaxEnabled), isTrue);
+      expect(CountryFieldPurpose.tax.allows(afghanistanTaxDisabled), isFalse);
+      expect(CountryFieldPurpose.tax.allows(taxEnableNull), isTrue);
     });
   });
 
@@ -95,6 +146,31 @@ void main() {
       expect(names, isNotEmpty);
       expect(names, contains('Switzerland'));
       expect(names, isNot(contains('Afghanistan')));
+    });
+
+    testWidgets('tax purpose drops countries with taxEnable false', (tester) async {
+      registerCountryService(taxEnableFixtureCountryService());
+
+      await tester.pumpApp(
+        host(
+          CountryField(
+            label: 'Tax residence',
+            purpose: CountryFieldPurpose.tax,
+            onChanged: (_) {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final countries = renderedCountries(tester);
+      final names = countries.map((c) => c.name);
+      expect(names, isNotEmpty);
+      expect(names, contains('Switzerland'));
+      expect(names, isNot(contains('Afghanistan')));
+      // Null taxEnable stays selectable (countries without realunit).
+      expect(countries.any((c) => c.taxEnable == null), isTrue);
+      expect(countries.any((c) => c.taxEnable == true), isTrue);
+      expect(countries.any((c) => c.taxEnable == false), isFalse);
     });
   });
 
