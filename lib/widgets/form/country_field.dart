@@ -20,8 +20,8 @@ enum CountryFieldPurpose {
     // so the picker must offer every country.
     CountryFieldPurpose.nationality => true,
     CountryFieldPurpose.residence => country.kycAllowed,
-    // Backend rejects tax residence when realunitTaxEnable == false; the
-    // picker hides those countries. Null/true remain selectable.
+    // Backend rejects tax residence when taxEnable == false (realunit.taxEnable);
+    // the picker hides those countries. Null/true remain selectable.
     CountryFieldPurpose.tax => country.taxEnable != false,
   };
 }

@@ -30,7 +30,7 @@ class DfxCountryDto {
   });
 
   factory DfxCountryDto.fromJson(Map<String, dynamic> json) {
-    final realunit = json['realunit'];
+    final realunit = json['realunit'] as Map<String, dynamic>?;
     return DfxCountryDto(
       id: json['id'] as int,
       symbol: json['symbol'] as String,
@@ -44,7 +44,7 @@ class DfxCountryDto {
       bankAllowed: json['bankAllowed'] as bool,
       cardAllowed: json['cardAllowed'] as bool,
       cryptoAllowed: json['cryptoAllowed'] as bool,
-      taxEnable: realunit is Map ? realunit['taxEnable'] as bool? : null,
+      taxEnable: realunit?['taxEnable'] as bool?,
     );
   }
 }
