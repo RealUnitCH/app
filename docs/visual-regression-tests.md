@@ -5,7 +5,7 @@ files mapped to 350 Golden PNGs under `test/goldens/` (`screens/` and `widgets/`
 plus state variants: Buy/Sell error banners, KYC loading/failure, Dashboard
 with-balance, RestoreWallet valid/invalid, Legal-Disclaimer steps, etc.),
 validated on each PR by the `Visual Regression` job (required status check
-on `develop` + `main`).
+on `staging`, `develop` and `main`).
 
 ## Stack
 
@@ -244,6 +244,6 @@ handbook-screenshot recapture step needed.
 
 ### Reviewing a handbook visual change
 
-Pull the artifact or diff the PNG in `test/goldens/screens/**/` like
-any other Golden review. There is no second set of handbook PNGs to
+Pull the artifact or diff the PNG in `test/goldens/screens/**/` or
+`test/goldens/widgets/**/` like any other Golden review. There is no second set of handbook PNGs to
 also check.

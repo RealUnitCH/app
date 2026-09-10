@@ -122,7 +122,7 @@ while the name was still the wallet address is not stuck as
 the prize-mail greeting too; unsent mail waits for a real `mail`
 address instead of sending to `0x…`. The prize confirmation is HTML at
 send (`html` / `htmlEn` from the plaintext Anzahl / Datum / frozen CHF);
-Überwachung `GET /admin/emails` stays the compact plaintext body. The app renders
+Überwachung stays the compact plaintext body. The app renders
 `copyText` / `copyTextEn` 1:1 except `http://`, protocol-relative
 `//realunit.app`, `www.realunit.app`, and scheme-less
 `realunit.app/…` are folded onto
