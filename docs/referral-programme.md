@@ -186,7 +186,9 @@ copy. Promo `campaignText` is shown 1:1 in a dialog.
 `kind` is `Invite` or `Promo`. If `kind` is omitted, campaign/action text
 without an inviter name is treated as promo so the confirmation dialog
 still appears. The API rejects self-referral, double-bind, and promo+invite
-stacking. Promo credit is only the first successful purchase of at least
+stacking. The inviter's referral prize is due only when the invitee's first
+completed REALU buy is at least `minBuyRealu` (default 200), checked on the
+server. Promo credit uses the same floor on the promo code's own
 `minBuyRealu` (default 200). A first buy below N creates no later claim.
 `redemptionCap` is required — no unlimited option.
 
