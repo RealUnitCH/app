@@ -96,7 +96,8 @@ git push
 
 ### Adding a new golden test
 
-1. Add a `*_golden_test.dart` under `test/goldens/screens/<feature>/`.
+1. Add a `*_golden_test.dart` under `test/goldens/screens/<feature>/`
+   or `test/goldens/widgets/<widget>/`.
    Reuse the mock pattern from the existing golden tests.
 2. Open a Draft PR. The `golden-tests` job will be red because the new
    test has no committed baseline.

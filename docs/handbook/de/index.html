@@ -8464,9 +8464,10 @@
             <p id="geo-filter-status">Lade GET /v1/country …</p>
             <div class="callout warn" id="geo-filter-missing" hidden>
               <p>
-                <b>API ohne <code>realunit</code>-Objekt.</b> Die Geo-Spalten bleiben
-                leer, bis DFXswiss/backend mit dem Country-DTO auf dieser Umgebung
-                deployed ist.
+                <b>API ohne <code>realunit</code>-Objekt.</b> Die Länderliste bleibt
+                leer, bis <code>GET /v1/country</code> auf
+                <code>api.dfx.swiss</code> / <code>dev.api.dfx.swiss</code> das
+                RealUnit-Country-Objekt liefert.
               </p>
             </div>
             <div id="geo-filter-scroller">
@@ -11472,15 +11473,15 @@
             inkl. Beispieldaten und einer kurzen Erklärung pro Mail, wann sie
             ausgelöst wird. Die Vorlagen leben im
             <a href="https://github.com/DFXswiss/api">DFXswiss/api</a>-Repo
-            (<code>src/subdomains/supporting/notification/templates/realunit.hbs</code>
+            (<code>realunit.hbs</code>
             + <code>src/shared/i18n/de/mail-realunit.json</code>) und werden bei
             jedem Handbook-Build automatisch frisch generiert und ins Image
             gepackt — Single Source of Truth ist das api-Repo, dieses Handbook
             spiegelt nur den aktuellen Stand.
             Die Bestätigungs-E-Mail der Empfehlungsprämie (Anzahl, Datum,
-            fixierter Frankenwert) kommt aus dem Nest-Drop-in, nicht aus
-            <code>realunit.hbs</code>: der Mailer sendet HTML aus dem Klartext;
-            <code>GET /admin/emails</code> bleibt der Klartext.
+            fixierter Frankenwert) kommt zur Sendezeit von der DFX-API als
+            <code>html</code> / <code>htmlEn</code> — nicht aus
+            <code>realunit.hbs</code>. Die Überwachung bleibt der Klartext.
           </p>
 
           <div class="callout info">
@@ -11527,8 +11528,7 @@
             Verkaufstransaktion) und die <b>Übertragung</b> (Einzelbeleg für eine
             Wallet-zu-Wallet-Übertragung). Der
             Renderer lebt im
-            <a href="https://github.com/DFXswiss/api">DFXswiss/api</a>-Repo
-            (<code>src/subdomains/supporting/payment/services/swiss-qr.service.ts</code>);
+            <a href="https://github.com/DFXswiss/api">DFXswiss/api</a>-Repo;
             die verlinkten Muster-PDFs liegen dort als
             <code>docs/examples/realunit-receipt/*.pdf</code> und werden bei jedem
             Handbook-Build automatisch ins Image gezogen — Single Source of Truth
@@ -11665,8 +11665,7 @@
             <b>Vermögensübersicht</b> weist den REALU-Bestand mit dem massgeblichen
             <b>Steuerwert</b> aus (im Muster 1'234 REALU zu CHF 1.37 per 31.12.2025). Der Renderer
             lebt im
-            <a href="https://github.com/DFXswiss/api">DFXswiss/api</a>-Repo
-            (<code>src/subdomains/supporting/balance/services/balance-pdf.service.ts</code>);
+            <a href="https://github.com/DFXswiss/api">DFXswiss/api</a>-Repo;
             die verlinkten Muster-PDFs liegen dort als
             <code>docs/examples/realunit-statement/*.pdf</code> und werden bei jedem
             Handbook-Build automatisch ins Image gezogen — Single Source of Truth

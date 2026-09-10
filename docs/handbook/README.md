@@ -83,7 +83,7 @@ auf `https://api.dfx.swiss/v1/country`; eine lokale HTML-Vorschau fällt auf die
    Tests in `test/goldens/screens/`.
 2. **Screenshot-Mapping**: in `scripts/assemble-handbook-screenshots.sh` eine neue
    Zeile in der `MAPPING`-Tabelle ergänzen — `"NN-<name>=screens/<feature>/goldens/macos/<file>.png"`
-   oder `widgets/<widget>/goldens/macos/<file>.png`.
+   oder `"NN-<name>=widgets/<widget>/goldens/macos/<file>.png"`.
    Die Nummer NN ist der Sortierschlüssel im Handbook (keine direkte Bindung mehr
    an einen Maestro-Flow). Damit ändert sich die Screenshot-Anzahl: den
    Count-Guard in `.github/workflows/handbook-build-check.yaml` (der
@@ -118,17 +118,13 @@ Die HTML-Vorschauen aller vom Backend an Endkunden versendeten Mails liegen
 `DFXswiss/api`:
 
 - Generator: `scripts/generate-realunit-previews.js`
-- Vorlage: `src/subdomains/supporting/notification/templates/realunit.hbs`
+- Vorlage: `realunit.hbs`
 - Übersetzungen: `src/shared/i18n/de/mail-realunit.json` (RealUnit-Texte) mit
   Fallback auf `src/shared/i18n/de/mail.json` (DFX-Defaults)
 
 Die Bestätigungs-E-Mail der Empfehlungsprämie (Anzahl, Datum D.M.YYYY, fixierter
-Frankenwert, TB Ziff. 6) kommt aus dem Nest-Drop-in
-[JonnyLuca/dfx-referral-api](https://github.com/JonnyLuca/dfx-referral-api)
-(`PrizeMailAdapter`, `GET /v1/realunit/referral/admin/emails`) — nicht aus
-`realunit.hbs`. Der Mailer bekommt `html` / `htmlEn` zur Sendezeit aus dem
-Klartext (ohne extra Persist-Spalte); die Überwachung bleibt der Klartext.
-Der Live-Mount bleibt `DFXswiss/backend`.
+Frankenwert, TB Ziff. 6) kommt zur Sendezeit von der DFX-API als `html` /
+`htmlEn` — nicht aus `realunit.hbs`. Die Überwachung bleibt der Klartext.
 
 Der Handbook-CI-Build (`.github/workflows/handbook.yaml`) checkt das api-Repo
 zur Build-Zeit aus, führt den Generator aus und kopiert das Ergebnis nach
