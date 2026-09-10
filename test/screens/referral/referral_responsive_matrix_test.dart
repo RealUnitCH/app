@@ -1,4 +1,6 @@
 // Responsive matrix gate for referral sticky-CTA pages.
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -135,8 +137,10 @@ void main() {
                 tester,
                 BlocProvider<ReferralCubit>.value(
                   value: cubit,
-                  child: const ReferralTermsPage(
-                    initialMarkdownContent: '# Teilnahmebedingungen\n\nZiff. 1',
+                  child: ReferralTermsPage(
+                    initialMarkdownContent: File(
+                      'assets/legal/referral_terms_de.md',
+                    ).readAsStringSync(),
                   ),
                 ),
                 cell.mediaQuery,
