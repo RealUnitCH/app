@@ -580,7 +580,10 @@ void main() {
         ),
       );
 
-      expect(() => build(client).acceptTerms(), throwsA(isA<ApiException>()));
+      expect(
+        () => build(client).acceptTerms(version: '2026-08-26'),
+        throwsA(isA<ApiException>()),
+      );
     });
   });
 
@@ -758,7 +761,7 @@ void main() {
       expect(terms.textForLang('en'), '# Terms');
     });
 
-    test('aborts a stalled terms fetch so the bundled TB can load', () {
+    test('aborts a stalled terms fetch so the Retry UI can show', () {
       fakeAsync((async) {
         final client = MockClient((request) async {
           await Future<void>.delayed(const Duration(seconds: 30));

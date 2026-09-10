@@ -1,14 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_terms_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/screens/referral/cubit/referral_cubit.dart';
-import 'package:realunit_wallet/screens/referral/load_referral_terms.dart';
 import 'package:realunit_wallet/screens/referral/referral_error_message.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
@@ -49,18 +46,19 @@ class ReferralTermsPage extends StatefulWidget {
   @visibleForTesting
   final String? initialMarkdownContent;
 
-  /// Injected in tests so a Retry path can fail the bundled TB fallback.
+  /// Version paired with [initialMarkdownContent] so accept can be exercised
+  /// without a GET.
   @visibleForTesting
-  final Future<String> Function(String assetPath)? loadAsset;
+  final String? initialTermsVersion;
 
   /// After the Empfehler has accepted, hide the checkbox and create CTA.
-  /// Still loads GET /terms 1:1, then the bundled 26.08 TB.
+  /// Still loads GET /terms 1:1.
   final bool readOnly;
 
   const ReferralTermsPage({
     super.key,
     this.initialMarkdownContent,
-    this.loadAsset,
+    this.initialTermsVersion,
     this.readOnly = false,
   });
 
@@ -73,7 +71,7 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
   bool _loadFailed = false;
   bool _reloading = false;
   bool _accepted = false;
-  String _termsVersion = ReferralTermsDto.bundledVersion;
+  String _termsVersion = '';
   String? _loadedForLang;
 
   /// Bumped on every fetch so a slower earlier GET cannot overwrite a
@@ -85,6 +83,10 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
     super.initState();
     if (widget.initialMarkdownContent != null) {
       _markdown = widget.initialMarkdownContent;
+      final version = widget.initialTermsVersion;
+      if (version != null && version.trim().isNotEmpty) {
+        _termsVersion = version;
+      }
     }
   }
 
@@ -101,6 +103,7 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
         _markdown = null;
         _loadFailed = false;
         _accepted = false;
+        _termsVersion = '';
       });
     }
     _loadMarkdown();
@@ -116,41 +119,29 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
   Future<void> _loadMarkdown() async {
     final generation = ++_loadGeneration;
     final code = _languageCode();
-    String? apiText;
-    var version = ReferralTermsDto.bundledVersion;
     try {
       if (getIt.isRegistered<RealUnitReferralService>()) {
         final terms = await getIt<RealUnitReferralService>().getTerms();
         if (!mounted || generation != _loadGeneration) return;
         final text = terms.textForLang(code);
         if (terms.version.trim().isNotEmpty && text.trim().isNotEmpty) {
-          apiText = text;
-          version = terms.version;
+          setState(() {
+            _markdown = text;
+            _termsVersion = terms.version;
+            _loadFailed = false;
+            _reloading = false;
+          });
+          return;
         }
       }
     } catch (_) {
-      // Bundled TB 26.08 is the fallback when the API is unreachable.
+      // Retry UI when the API is unreachable or returns empty terms.
     }
     if (!mounted || generation != _loadGeneration) return;
-    final content = await loadReferralTermsMarkdown(
-      languageCode: code,
-      loadAsset: widget.loadAsset ?? ((path) => rootBundle.loadString(path, cache: false)),
-      apiText: apiText,
-    );
-    if (!mounted || generation != _loadGeneration) return;
-    if (content != null) {
-      setState(() {
-        _markdown = content;
-        _termsVersion = version;
-        _loadFailed = false;
-        _reloading = false;
-      });
-    } else {
-      setState(() {
-        _loadFailed = true;
-        _reloading = false;
-      });
-    }
+    setState(() {
+      _loadFailed = true;
+      _reloading = false;
+    });
   }
 
   @override
@@ -318,7 +309,12 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
                 label: s.referralCreateInvite,
                 autofocus: error != null && error.isNotEmpty && _accepted && !accepting,
                 state: accepting ? FilledButtonState.loading : FilledButtonState.idle,
-                onPressed: _accepted && !accepting && _markdown != null && !_loadFailed
+                onPressed:
+                    _accepted &&
+                        !accepting &&
+                        _markdown != null &&
+                        !_loadFailed &&
+                        _termsVersion.trim().isNotEmpty
                     ? () => context.read<ReferralCubit>().acceptTerms(
                         version: _termsVersion,
                       )

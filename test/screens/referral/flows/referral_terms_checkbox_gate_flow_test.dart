@@ -42,7 +42,7 @@ void main() {
       const Stream<ReferralState>.empty(),
       initialState: const ReferralNeedsTerms(summary: _summary),
     );
-    when(() => cubit.acceptTerms()).thenAnswer((_) async {});
+    when(() => cubit.acceptTerms(version: any(named: 'version'))).thenAnswer((_) async {});
   });
 
   tearDown(() async {
@@ -79,6 +79,7 @@ void main() {
           value: cubit,
           child: const ReferralTermsPage(
             initialMarkdownContent: '# Teilnahmebedingungen',
+            initialTermsVersion: '2026-08-26',
           ),
         ),
       );
@@ -104,7 +105,7 @@ void main() {
 
       await tester.tap(find.byType(AppFilledButton));
       await tester.pump();
-      verify(() => cubit.acceptTerms()).called(1);
+      verify(() => cubit.acceptTerms(version: '2026-08-26')).called(1);
     },
   );
 

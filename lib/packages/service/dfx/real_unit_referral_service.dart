@@ -20,7 +20,7 @@ class RealUnitReferralService extends DFXAuthService {
 
   /// Public lookup and the landing page abort after 15s; authenticated
   /// referral calls use the same budget so terms/summary/bind cannot hang
-  /// the UI past the bundled TB fallback.
+  /// the UI past the Retry path.
   static const lookupTimeout = Duration(seconds: 15);
 
   Future<T> _timed<T>(
@@ -55,9 +55,7 @@ class RealUnitReferralService extends DFXAuthService {
     );
   }
 
-  Future<void> acceptTerms({
-    String version = ReferralTermsDto.bundledVersion,
-  }) async {
+  Future<void> acceptTerms({required String version}) async {
     final uri = buildUri(host, '$_basePath/terms/accept');
     final response = await _timed(
       authenticatedPut(

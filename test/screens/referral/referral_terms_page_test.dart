@@ -68,6 +68,7 @@ void main() {
             value: cubit,
             child: const ReferralTermsPage(
               initialMarkdownContent: '# Teilnahmebedingungen',
+              initialTermsVersion: '2026-08-26',
             ),
           ),
         ),
@@ -92,7 +93,7 @@ void main() {
 
       await tester.tap(find.byType(AppFilledButton));
       await tester.pump();
-      verify(() => cubit.acceptTerms(version: ReferralTermsDto.bundledVersion)).called(1);
+      verify(() => cubit.acceptTerms(version: '2026-08-26')).called(1);
     },
   );
 
@@ -125,9 +126,8 @@ void main() {
   );
 
   testWidgets(
-    'read-only loads GET /terms 1:1 instead of only the bundled asset',
+    'read-only loads GET /terms 1:1',
     (tester) async {
-      var assetRequested = false;
       final service = _MockReferralService();
       when(() => service.getTerms()).thenAnswer(
         (_) async => const ReferralTermsDto(
@@ -152,21 +152,13 @@ void main() {
             GlobalWidgetsLocalizations.delegate,
           ],
           supportedLocales: S.delegate.supportedLocales,
-          home: ReferralTermsPage(
-            readOnly: true,
-            loadAsset: (_) async {
-              assetRequested = true;
-              return '# Bundled fallback';
-            },
-          ),
+          home: const ReferralTermsPage(readOnly: true),
         ),
       );
       await tester.pump();
       await tester.pump();
 
       expect(find.textContaining('Live TB after accept'), findsOneWidget);
-      expect(find.textContaining('Bundled fallback'), findsNothing);
-      expect(assetRequested, isFalse);
       expect(find.byType(CheckboxListTile), findsNothing);
     },
   );
@@ -202,6 +194,7 @@ void main() {
           value: cubit,
           child: const ReferralTermsPage(
             initialMarkdownContent: '# Teilnahmebedingungen',
+            initialTermsVersion: '2026-08-26',
           ),
         ),
       ),
@@ -341,7 +334,7 @@ void main() {
   );
 
   testWidgets(
-    'falls back to bundled TB 26.08 when the terms API is unreachable',
+    'shows Retry when the terms API is unreachable',
     (tester) async {
       final service = _MockReferralService();
       when(() => service.getTerms()).thenThrow(Exception('down'));
@@ -370,8 +363,10 @@ void main() {
       await tester.pump();
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('26.08.2026'), findsWidgets);
-      expect(find.textContaining('70 RealUnit-Aktientoken'), findsWidgets);
+      expect(find.textContaining('Dokument konnte nicht geladen'), findsOneWidget);
+      expect(find.text('Wiederholen'), findsOneWidget);
+      expect(find.textContaining('26.08.2026'), findsNothing);
+      expect(find.byType(MarkdownBody), findsNothing);
     },
   );
 
@@ -450,9 +445,7 @@ void main() {
           supportedLocales: S.delegate.supportedLocales,
           home: BlocProvider<ReferralCubit>.value(
             value: cubit,
-            child: ReferralTermsPage(
-              loadAsset: (_) async => throw Exception('missing'),
-            ),
+            child: const ReferralTermsPage(),
           ),
         ),
       );

@@ -189,7 +189,7 @@ jobs:
           # Legal downloads must be present (built by the legal-docs-builder
           # stage via pandoc). Same 200/401-vs-404 logic: 404 means the PDF/DOCX
           # was not produced. Covers PDF + DOCX and both languages.
-          for f in legal/privacy_policy_de.pdf legal/privacy_policy_de.docx legal/terms_of_use_en.pdf legal/registration_agreement_de.docx legal/referral_terms_de.pdf legal/referral_terms_en.pdf legal/referral_terms_de.docx legal/referral_terms_en.docx; do
+          for f in legal/privacy_policy_de.pdf legal/privacy_policy_de.docx legal/terms_of_use_en.pdf legal/registration_agreement_de.docx; do
             if ! docker exec handbook test -f "/usr/share/nginx/html/${f}"; then
               echo "legal download ${f} missing from /usr/share/nginx/html/legal/" >&2
               docker logs handbook
