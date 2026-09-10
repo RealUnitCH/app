@@ -7,6 +7,7 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.da
 import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_created_invite_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_invite_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_summary_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_terms_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/screens/referral/cubit/referral_cubit.dart';
 import 'package:realunit_wallet/screens/referral/referral_error_message.dart';
@@ -141,7 +142,7 @@ void main() {
       return ReferralCubit(service);
     },
     seed: () => const ReferralNeedsTerms(summary: _needsTerms),
-    act: (cubit) => cubit.acceptTerms(version: '2026-08-26'),
+    act: (cubit) => cubit.acceptTerms(),
     expect: () => [
       const ReferralTermsAccepting(summary: _needsTerms),
       const ReferralNeedsTerms(
@@ -149,6 +150,11 @@ void main() {
         errorMessage: referralUnavailableMessage,
       ),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
@@ -160,11 +166,16 @@ void main() {
       return ReferralCubit(service);
     },
     seed: () => const ReferralNeedsTerms(summary: _needsTerms, errorMessage: 'nope'),
-    act: (cubit) => cubit.acceptTerms(version: '2026-08-26'),
+    act: (cubit) => cubit.acceptTerms(),
     expect: () => [
       const ReferralTermsAccepting(summary: _needsTerms, errorMessage: 'nope'),
       const ReferralOverviewLoaded(summary: _eligible, invites: []),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
@@ -180,14 +191,16 @@ void main() {
     },
     seed: () => const ReferralNeedsTerms(summary: _needsTerms),
     act: (cubit) async {
-      final first = cubit.acceptTerms(version: '2026-08-26');
-      final second = cubit.acceptTerms(version: '2026-08-26');
+      final first = cubit.acceptTerms();
+      final second = cubit.acceptTerms();
       acceptRelease.complete();
       await first;
       await second;
     },
     verify: (_) {
-      verify(() => service.acceptTerms(version: '2026-08-26')).called(1);
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
     },
   );
 
@@ -463,7 +476,7 @@ void main() {
       return ReferralCubit(service);
     },
     seed: () => const ReferralNeedsTerms(summary: _needsTerms),
-    act: (cubit) => cubit.acceptTerms(version: '2026-08-26'),
+    act: (cubit) => cubit.acceptTerms(),
     expect: () => [
       const ReferralTermsAccepting(summary: _needsTerms),
       const ReferralOverviewLoaded(
@@ -472,6 +485,11 @@ void main() {
         invitesError: referralUnavailableMessage,
       ),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
@@ -673,11 +691,16 @@ void main() {
       return ReferralCubit(service);
     },
     seed: () => const ReferralNeedsTerms(summary: _needsTerms),
-    act: (cubit) => cubit.acceptTerms(version: '2026-08-26'),
+    act: (cubit) => cubit.acceptTerms(),
     expect: () => [
       const ReferralTermsAccepting(summary: _needsTerms),
       const ReferralNotEligible(),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
@@ -984,7 +1007,7 @@ void main() {
       return ReferralCubit(service);
     },
     seed: () => const ReferralNeedsTerms(summary: _needsTerms),
-    act: (cubit) => cubit.acceptTerms(version: '2026-08-26'),
+    act: (cubit) => cubit.acceptTerms(),
     expect: () => [
       const ReferralTermsAccepting(summary: _needsTerms),
       const ReferralNeedsTerms(
@@ -992,6 +1015,11 @@ void main() {
         errorMessage: referralUnavailableMessage,
       ),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
@@ -1004,11 +1032,16 @@ void main() {
       return ReferralCubit(service);
     },
     seed: () => const ReferralNeedsTerms(summary: _needsTerms),
-    act: (cubit) => cubit.acceptTerms(version: '2026-08-26'),
+    act: (cubit) => cubit.acceptTerms(),
     expect: () => [
       const ReferralTermsAccepting(summary: _needsTerms),
       const ReferralFailure(message: referralUnavailableMessage),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
@@ -1019,11 +1052,16 @@ void main() {
       return ReferralCubit(service);
     },
     seed: () => const ReferralNeedsTerms(summary: _needsTerms),
-    act: (cubit) => cubit.acceptTerms(version: '2026-08-26'),
+    act: (cubit) => cubit.acceptTerms(),
     expect: () => [
       const ReferralTermsAccepting(summary: _needsTerms),
       const ReferralFailure(message: referralUnavailableMessage),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(

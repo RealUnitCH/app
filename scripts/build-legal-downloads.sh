@@ -3,9 +3,6 @@
 # Build the downloadable PDF + DOCX of the in-app legal documents from their
 # Markdown sources under assets/legal/, into <output-dir>/legal/.
 #
-# Only in-app Markdown (privacy_policy, terms_of_use, registration_agreement).
-# Referral terms are API-authored and are not part of this derived export.
-#
 # Usage:
 #   scripts/build-legal-downloads.sh <output-dir>
 #
@@ -37,7 +34,7 @@ repo="$(cd "$script_dir/.." && pwd)"
 legal_src="$repo/assets/legal"
 legal_out="$out/legal"
 
-bases="privacy_policy terms_of_use registration_agreement"
+bases="privacy_policy terms_of_use registration_agreement referral_terms"
 
 mkdir -p "$legal_out"
 

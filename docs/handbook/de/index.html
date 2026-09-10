@@ -9981,19 +9981,16 @@ Dieser Inhalt dient Werbezwecken. Die genehmigten Prospekte und weitere Unterlag
   </summary>
 
   <p class="spec-intro">
-    Single source of truth für die In-App-Markdown-Dokumente (Datenschutz,
-    Nutzungsbedingungen, Registrierungsvereinbarung) sind die Dateien unter
-    <code>assets/legal/*.md</code>. Die In-App-Ansicht (<code>LegalDocumentPage</code>)
-    und die Downloads hier rendern aus denselben Dateien; jede Änderung an diesen
-    Texten geht ausschliesslich über einen PR auf diese Markdown-Quellen.
-    Die Teilnahmebedingungen des Referral-Programms werden von der API geliefert
-    und sind nicht Teil dieses abgeleiteten Exports.
-    Pro Dokument und Sprache gibt es einen <b>PDF</b>- und <b>DOCX</b>-Download
-    (im Handbook-Image via <code>pandoc</code> erzeugt) sowie einen Direkt-Link (🔗)
-    auf den jeweiligen Eintrag und einen <span class="src">↗</span>-Link auf die
-    Markdown-Quelldatei. DFX- und Aktionariat-Dokumente sowie die extern gehosteten
-    Unternehmensdokumente (Prospekte, Statuten) sind <em>nicht</em> Teil dieses
-    Exports — sie haben keine Markdown-Quelle im Repo.
+    Single source of truth für die App-eigenen Rechtstexte sind die Markdown-Dateien
+    unter <code>assets/legal/*.md</code>. Die In-App-Ansicht (<code>LegalDocumentPage</code>)
+    und die Downloads hier rendern aus denselben Dateien; jede Änderung am Text geht
+    ausschliesslich über einen PR auf diese Markdown-Quellen. Pro Dokument und Sprache
+    gibt es einen <b>PDF</b>- und <b>DOCX</b>-Download (im Handbook-Image via
+    <code>pandoc</code> erzeugt) sowie einen Direkt-Link (🔗) auf den jeweiligen Eintrag
+    und einen <span class="src">↗</span>-Link auf die Markdown-Quelldatei.
+    DFX- und Aktionariat-Dokumente sowie die extern gehosteten Unternehmensdokumente
+    (Prospekte, Statuten) sind <em>nicht</em> Teil dieses Exports — sie haben keine
+    Markdown-Quelle im Repo.
   </p>
 
   <h3>Datenschutzbestimmungen <a class="src" href="https://github.com/RealUnitCH/app/tree/develop/assets/legal" title="Quelle: assets/legal/">↗</a></h3>
@@ -10080,6 +10077,35 @@ Dieser Inhalt dient Werbezwecken. Die genehmigten Prospekte und weitere Unterlag
         <a class="dl-btn" href="../legal/registration_agreement_en.pdf" download>PDF</a>
         <a class="dl-btn" href="../legal/registration_agreement_en.docx" download>DOCX</a>
         <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/registration_agreement_en.md" title="Quelle: registration_agreement_en.md">Markdown ↗</a>
+      </div>
+    </div>
+  </div>
+  <h3>Teilnahmebedingungen Referral-Programm <a class="src" href="https://github.com/RealUnitCH/app/tree/develop/assets/legal" title="Quelle: assets/legal/">↗</a></h3>
+  <div class="tests cols-2">
+    <div class="test legal-doc" id="legal-referral_terms-de">
+      <div class="head">
+        <a class="name permalink" href="#legal-referral_terms-de">referral_terms_de</a>
+        <button class="copy-link" type="button" data-target="legal-referral_terms-de" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">de</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Teilnahmebedingungen Referral-Programm</span>
+        <a class="dl-btn" href="../legal/referral_terms_de.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/referral_terms_de.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/referral_terms_de.md" title="Quelle: referral_terms_de.md">Markdown ↗</a>
+      </div>
+    </div>
+    <div class="test legal-doc" id="legal-referral_terms-en">
+      <div class="head">
+        <a class="name permalink" href="#legal-referral_terms-en">referral_terms_en</a>
+        <button class="copy-link" type="button" data-target="legal-referral_terms-en" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+        <span class="src">en</span>
+      </div>
+      <div class="downloads">
+        <span class="doc-title">Referral programme terms of participation</span>
+        <a class="dl-btn" href="../legal/referral_terms_en.pdf" download>PDF</a>
+        <a class="dl-btn" href="../legal/referral_terms_en.docx" download>DOCX</a>
+        <a class="src" href="https://github.com/RealUnitCH/app/blob/develop/assets/legal/referral_terms_en.md" title="Quelle: referral_terms_en.md">Markdown ↗</a>
       </div>
     </div>
   </div>

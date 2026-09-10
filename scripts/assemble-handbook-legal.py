@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """Generate the handbook legal-downloads block from the in-app legal Markdown.
 
-Only in-app Markdown under assets/legal/ (privacy_policy, terms_of_use,
-registration_agreement). Referral terms are API-authored and are not part of
-this derived export. The handbook section at handbook.realunit.app is a
-*derived export* of those files — never hand-edited. This mirrors the
-upstream/downstream relationship that the store-listing and mails/ sections
-already have.
+In-app Markdown under assets/legal/ includes privacy_policy, terms_of_use,
+registration_agreement, referral_terms. The handbook section at
+handbook.realunit.app is a *derived export* of those files — never
+hand-edited. This mirrors the upstream/downstream relationship that the
+store-listing and mails/ sections already have.
 
 Usage:
     scripts/assemble-handbook-legal.py <output-dir>
@@ -56,6 +55,7 @@ BASES = [
     "privacy_policy",
     "terms_of_use",
     "registration_agreement",
+    "referral_terms",
 ]
 
 # Maps each document base to the ARB key the app uses for its title, so the
@@ -64,6 +64,7 @@ TITLE_KEYS = {
     "privacy_policy": "legalDisclaimerCheckboxPrivacyPolicy",
     "terms_of_use": "termsOfUse",
     "registration_agreement": "legalDisclaimerCheckboxRegistrationAgreement",
+    "referral_terms": "referralTermsTitle",
 }
 
 # Languages are discovered, never hardcoded; this only validates that a token

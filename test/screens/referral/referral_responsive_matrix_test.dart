@@ -137,7 +137,6 @@ void main() {
                   value: cubit,
                   child: const ReferralTermsPage(
                     initialMarkdownContent: '# Teilnahmebedingungen\n\nZiff. 1',
-                    initialTermsVersion: '2026-08-26',
                   ),
                 ),
                 cell.mediaQuery,

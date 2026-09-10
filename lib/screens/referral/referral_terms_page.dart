@@ -1,11 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_terms_dto.dart';
 import 'package:realunit_wallet/screens/referral/cubit/referral_cubit.dart';
+import 'package:realunit_wallet/screens/referral/load_referral_terms.dart';
 import 'package:realunit_wallet/screens/referral/referral_error_message.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
@@ -46,19 +48,18 @@ class ReferralTermsPage extends StatefulWidget {
   @visibleForTesting
   final String? initialMarkdownContent;
 
-  /// Version paired with [initialMarkdownContent] so accept can be exercised
-  /// without a GET.
+  /// Injected asset loader for widget tests (defaults to rootBundle).
   @visibleForTesting
-  final String? initialTermsVersion;
+  final Future<String> Function(String assetPath)? loadAsset;
 
   /// After the Empfehler has accepted, hide the checkbox and create CTA.
-  /// Still loads GET /terms 1:1.
+  /// Still loads in-app Markdown from assets.
   final bool readOnly;
 
   const ReferralTermsPage({
     super.key,
     this.initialMarkdownContent,
-    this.initialTermsVersion,
+    this.loadAsset,
     this.readOnly = false,
   });
 
@@ -71,10 +72,10 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
   bool _loadFailed = false;
   bool _reloading = false;
   bool _accepted = false;
-  String _termsVersion = '';
+  String _termsVersion = ReferralTermsDto.bundledVersion;
   String? _loadedForLang;
 
-  /// Bumped on every fetch so a slower earlier GET cannot overwrite a
+  /// Bumped on every load so a slower earlier asset load cannot overwrite a
   /// later language or Retry result.
   int _loadGeneration = 0;
 
@@ -83,10 +84,6 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
     super.initState();
     if (widget.initialMarkdownContent != null) {
       _markdown = widget.initialMarkdownContent;
-      final version = widget.initialTermsVersion;
-      if (version != null && version.trim().isNotEmpty) {
-        _termsVersion = version;
-      }
     }
   }
 
@@ -103,7 +100,6 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
         _markdown = null;
         _loadFailed = false;
         _accepted = false;
-        _termsVersion = '';
       });
     }
     _loadMarkdown();
@@ -119,29 +115,25 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
   Future<void> _loadMarkdown() async {
     final generation = ++_loadGeneration;
     final code = _languageCode();
-    try {
-      if (getIt.isRegistered<RealUnitReferralService>()) {
-        final terms = await getIt<RealUnitReferralService>().getTerms();
-        if (!mounted || generation != _loadGeneration) return;
-        final text = terms.textForLang(code);
-        if (terms.version.trim().isNotEmpty && text.trim().isNotEmpty) {
-          setState(() {
-            _markdown = text;
-            _termsVersion = terms.version;
-            _loadFailed = false;
-            _reloading = false;
-          });
-          return;
-        }
-      }
-    } catch (_) {
-      // Retry UI when the API is unreachable or returns empty terms.
-    }
+    final content = await loadReferralTermsMarkdown(
+      languageCode: code,
+      loadAsset: widget.loadAsset ??
+          ((path) => rootBundle.loadString(path, cache: false)),
+    );
     if (!mounted || generation != _loadGeneration) return;
-    setState(() {
-      _loadFailed = true;
-      _reloading = false;
-    });
+    if (content != null) {
+      setState(() {
+        _markdown = content;
+        _termsVersion = ReferralTermsDto.bundledVersion;
+        _loadFailed = false;
+        _reloading = false;
+      });
+    } else {
+      setState(() {
+        _loadFailed = true;
+        _reloading = false;
+      });
+    }
   }
 
   @override
