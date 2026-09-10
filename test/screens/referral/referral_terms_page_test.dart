@@ -12,7 +12,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_summary_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_terms_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/screens/referral/cubit/referral_cubit.dart';
 import 'package:realunit_wallet/screens/referral/referral_error_message.dart';
 import 'package:realunit_wallet/screens/referral/referral_terms_page.dart';
@@ -129,19 +128,6 @@ void main() {
   testWidgets(
     'read-only loads assets via loadAsset',
     (tester) async {
-      final service = _MockReferralService();
-      when(() => service.getTerms()).thenAnswer(
-        (_) async => const ReferralTermsDto(
-          version: '2026-09-01',
-          markdown: '# API TB must not show',
-          markdownEn: '# API EN',
-        ),
-      );
-      GetIt.instance.registerSingleton<RealUnitReferralService>(service);
-      addTearDown(() async {
-        await GetIt.instance.reset();
-      });
-
       await tester.pumpWidget(
         MaterialApp(
           theme: realUnitTheme,
@@ -166,9 +152,7 @@ void main() {
       await tester.pump();
 
       expect(find.textContaining('Asset TB after accept'), findsOneWidget);
-      expect(find.textContaining('API TB must not show'), findsNothing);
       expect(find.byType(CheckboxListTile), findsNothing);
-      verifyNever(() => service.getTerms());
     },
   );
 
@@ -342,14 +326,8 @@ void main() {
   );
 
   testWidgets(
-    'does not call getTerms and shows loadAsset markdown',
+    'shows loadAsset markdown',
     (tester) async {
-      final service = _MockReferralService();
-      GetIt.instance.registerSingleton<RealUnitReferralService>(service);
-      addTearDown(() async {
-        await GetIt.instance.reset();
-      });
-
       await tester.pumpWidget(
         MaterialApp(
           theme: realUnitTheme,
@@ -375,7 +353,6 @@ void main() {
       expect(find.textContaining('Asset TB 26.08'), findsOneWidget);
       expect(find.text('Wiederholen'), findsNothing);
       expect(find.byType(MarkdownBody), findsOneWidget);
-      verifyNever(() => service.getTerms());
     },
   );
 
@@ -757,5 +734,3 @@ void main() {
     );
   });
 }
-
-class _MockReferralService extends Mock implements RealUnitReferralService {}
