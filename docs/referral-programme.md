@@ -248,8 +248,8 @@ row.
   browser; root-relative `/…` paths open as `https://realunit.ch/…`;
   protocol-relative `//host/…` opens as https; mailto and other schemes stay in the markdown); the accepted-terms checkbox is shown only after the
   markdown has loaded; a later load (language change or Retry)
-  discards an earlier in-flight result. A hung bundled TB asset is timed
-  out after 5s so Retry is shown. Retry stays on the load-failed copy in
+  discards an earlier in-flight result. A missing or empty locale asset
+  shows Retry. Retry stays on the load-failed copy in
   the loading state so a second tap is ignored (the screen is not
   replaced with a blank spinner). create-invite button after checkbox
   «Ich habe die Teilnahmebedingungen gelesen und akzeptiert».

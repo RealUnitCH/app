@@ -17,23 +17,17 @@ void main() {
     expect(paths, ['assets/legal/referral_terms_en.md']);
   });
 
-  test('falls back to the German TB when the locale asset is missing', () async {
+  test('returns null when the locale asset is missing', () async {
     final paths = <String>[];
     final content = await loadReferralTermsMarkdown(
       languageCode: 'en',
       loadAsset: (path) async {
         paths.add(path);
-        if (path.endsWith('_en.md')) {
-          throw Exception('missing');
-        }
-        return '# DE TB';
+        throw Exception('missing');
       },
     );
-    expect(content, '# DE TB');
-    expect(paths, [
-      'assets/legal/referral_terms_en.md',
-      'assets/legal/referral_terms_de.md',
-    ]);
+    expect(content, isNull);
+    expect(paths, ['assets/legal/referral_terms_en.md']);
   });
 
   test('returns null when bundled assets are all empty or missing', () async {
