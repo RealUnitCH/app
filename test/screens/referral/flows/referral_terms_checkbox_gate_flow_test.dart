@@ -5,7 +5,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_summary_dto.dart';
@@ -40,10 +39,6 @@ void main() {
       initialState: const ReferralNeedsTerms(summary: _summary),
     );
     when(() => cubit.acceptTerms(version: any(named: 'version'))).thenAnswer((_) async {});
-  });
-
-  tearDown(() async {
-    await GetIt.instance.reset();
   });
 
   Future<void> pumpTerms(
