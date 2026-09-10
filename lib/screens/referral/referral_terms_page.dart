@@ -6,7 +6,6 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_terms_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/screens/referral/cubit/referral_cubit.dart';
 import 'package:realunit_wallet/screens/referral/load_referral_terms.dart';
 import 'package:realunit_wallet/screens/referral/referral_error_message.dart';
@@ -49,12 +48,12 @@ class ReferralTermsPage extends StatefulWidget {
   @visibleForTesting
   final String? initialMarkdownContent;
 
-  /// Injected in tests so a Retry path can fail the bundled TB fallback.
+  /// Injected asset loader for widget tests (defaults to rootBundle).
   @visibleForTesting
   final Future<String> Function(String assetPath)? loadAsset;
 
   /// After the Empfehler has accepted, hide the checkbox and create CTA.
-  /// Still loads GET /terms 1:1, then the bundled 26.08 TB.
+  /// Still loads in-app Markdown from assets.
   final bool readOnly;
 
   const ReferralTermsPage({
@@ -76,7 +75,7 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
   String _termsVersion = ReferralTermsDto.bundledVersion;
   String? _loadedForLang;
 
-  /// Bumped on every fetch so a slower earlier GET cannot overwrite a
+  /// Bumped on every load so a slower earlier asset load cannot overwrite a
   /// later language or Retry result.
   int _loadGeneration = 0;
 
@@ -116,32 +115,16 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
   Future<void> _loadMarkdown() async {
     final generation = ++_loadGeneration;
     final code = _languageCode();
-    String? apiText;
-    var version = ReferralTermsDto.bundledVersion;
-    try {
-      if (getIt.isRegistered<RealUnitReferralService>()) {
-        final terms = await getIt<RealUnitReferralService>().getTerms();
-        if (!mounted || generation != _loadGeneration) return;
-        final text = terms.textForLang(code);
-        if (terms.version.trim().isNotEmpty && text.trim().isNotEmpty) {
-          apiText = text;
-          version = terms.version;
-        }
-      }
-    } catch (_) {
-      // Bundled TB 26.08 is the fallback when the API is unreachable.
-    }
-    if (!mounted || generation != _loadGeneration) return;
     final content = await loadReferralTermsMarkdown(
       languageCode: code,
-      loadAsset: widget.loadAsset ?? ((path) => rootBundle.loadString(path, cache: false)),
-      apiText: apiText,
+      loadAsset: widget.loadAsset ??
+          ((path) => rootBundle.loadString(path, cache: false)),
     );
     if (!mounted || generation != _loadGeneration) return;
     if (content != null) {
       setState(() {
         _markdown = content;
-        _termsVersion = version;
+        _termsVersion = ReferralTermsDto.bundledVersion;
         _loadFailed = false;
         _reloading = false;
       });
@@ -318,7 +301,12 @@ class _ReferralTermsPageState extends State<ReferralTermsPage> {
                 label: s.referralCreateInvite,
                 autofocus: error != null && error.isNotEmpty && _accepted && !accepting,
                 state: accepting ? FilledButtonState.loading : FilledButtonState.idle,
-                onPressed: _accepted && !accepting && _markdown != null && !_loadFailed
+                onPressed:
+                    _accepted &&
+                        !accepting &&
+                        _markdown != null &&
+                        !_loadFailed &&
+                        _termsVersion.trim().isNotEmpty
                     ? () => context.read<ReferralCubit>().acceptTerms(
                         version: _termsVersion,
                       )

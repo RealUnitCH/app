@@ -84,13 +84,14 @@ API token `Aktienkurs` (never «aktueller NAV»). The tile localizes it
 }
 ```
 
-The app renders this 1:1. Bundled `assets/legal/referral_terms_*.md` is only
-a fallback when the call fails.
+The displayed text is `assets/legal/referral_terms_*.md`. The app renders
+that in-app (`rootBundle`, like `LegalDocumentPage`). PUT accept version
+`2026-08-26` matching the files.
 
 ### `PUT /v1/realunit/referral/terms/accept`
 
 Body: `{ "accepted": true, "version": "2026-08-26" }`. `version` is the
-terms version the user accepted (bundled fallback `2026-08-26`).
+bundled terms version matching the files (`2026-08-26`).
 
 ### `POST /v1/realunit/referral/invites`
 
@@ -249,8 +250,8 @@ row.
   browser; root-relative `/…` paths open as `https://realunit.ch/…`;
   protocol-relative `//host/…` opens as https; mailto and other schemes stay in the markdown); the accepted-terms checkbox is shown only after the
   markdown has loaded; a later load (language change or Retry)
-  discards an earlier in-flight result. A hung bundled TB asset is timed
-  out after 5s so Retry is shown. Retry stays on the load-failed copy in
+  discards an earlier in-flight result. A missing or empty locale asset
+  shows Retry. Retry stays on the load-failed copy in
   the loading state so a second tap is ignored (the screen is not
   replaced with a blank spinner). create-invite button after checkbox
   «Ich habe die Teilnahmebedingungen gelesen und akzeptiert».
@@ -302,8 +303,8 @@ row.
   lock is released when that screen pops, and overview refresh after
   create is not awaited, so a hung summary GET cannot block Create.
   The overview title and Settings → Legal documents (last tile) open
-  the Teilnahmebedingungen read-only (GET /terms 1:1, then bundled
-  26.08) so Ziff. 2–11 stay reachable after the checkbox.
+  the Teilnahmebedingungen read-only (in-app Markdown from assets) so
+  Ziff. 2–11 stay reachable after the checkbox.
 - Registration: dedicated optional step (skip allowed) with the same
   field for invite and promo. A pasted `realunit.app/invite|promo/…`
   URL (or the landing copy button) is reduced to the code before lookup

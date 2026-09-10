@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 """Generate the handbook legal-downloads block from the in-app legal Markdown.
 
-The Markdown under assets/legal/ is the single source of truth for the
-RealUnit documents that the app renders in-app (LegalDocumentPage and the
-referral terms page read assets/legal/<base>_<lang>.md via rootBundle). The
-handbook section at
-handbook.realunit.app is a *derived export* of those files — never hand-edited.
-This mirrors the upstream/downstream relationship that the store-listing and
-mails/ sections already have.
+In-app Markdown under assets/legal/ includes privacy_policy, terms_of_use,
+registration_agreement, referral_terms. The handbook section at
+handbook.realunit.app is a *derived export* of those files — never
+hand-edited. This mirrors the upstream/downstream relationship that the
+store-listing and mails/ sections already have.
 
 Usage:
     scripts/assemble-handbook-legal.py <output-dir>

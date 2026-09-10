@@ -150,6 +150,11 @@ void main() {
         errorMessage: referralUnavailableMessage,
       ),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
@@ -166,6 +171,11 @@ void main() {
       const ReferralTermsAccepting(summary: _needsTerms, errorMessage: 'nope'),
       const ReferralOverviewLoaded(summary: _eligible, invites: []),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
@@ -188,7 +198,9 @@ void main() {
       await second;
     },
     verify: (_) {
-      verify(() => service.acceptTerms(version: ReferralTermsDto.bundledVersion)).called(1);
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
     },
   );
 
@@ -473,6 +485,11 @@ void main() {
         invitesError: referralUnavailableMessage,
       ),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
@@ -679,6 +696,11 @@ void main() {
       const ReferralTermsAccepting(summary: _needsTerms),
       const ReferralNotEligible(),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
@@ -993,6 +1015,11 @@ void main() {
         errorMessage: referralUnavailableMessage,
       ),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
@@ -1010,6 +1037,11 @@ void main() {
       const ReferralTermsAccepting(summary: _needsTerms),
       const ReferralFailure(message: referralUnavailableMessage),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
@@ -1025,6 +1057,11 @@ void main() {
       const ReferralTermsAccepting(summary: _needsTerms),
       const ReferralFailure(message: referralUnavailableMessage),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(

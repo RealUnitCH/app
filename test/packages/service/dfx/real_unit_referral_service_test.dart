@@ -11,6 +11,7 @@ import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_terms_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
@@ -572,6 +573,20 @@ void main() {
       expect(body, {'accepted': true, 'version': '2026-09-01'});
     });
 
+    test('defaults version to the bundled terms version', () async {
+      Map<String, dynamic>? body;
+      final client = MockClient((request) async {
+        body = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response('{}', 200);
+      });
+
+      await build(client).acceptTerms();
+      expect(body, {
+        'accepted': true,
+        'version': ReferralTermsDto.bundledVersion,
+      });
+    });
+
     test('throws ApiException on a non-200/201 response', () async {
       final client = MockClient(
         (_) async => http.Response(
@@ -758,7 +773,7 @@ void main() {
       expect(terms.textForLang('en'), '# Terms');
     });
 
-    test('aborts a stalled terms fetch so the bundled TB can load', () {
+    test('aborts a stalled terms fetch after lookupTimeout', () {
       fakeAsync((async) {
         final client = MockClient((request) async {
           await Future<void>.delayed(const Duration(seconds: 30));

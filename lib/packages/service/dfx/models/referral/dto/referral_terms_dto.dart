@@ -1,8 +1,8 @@
 import 'package:realunit_wallet/packages/service/dfx/models/referral/locale_text.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/referral_json_list.dart';
 
-/// `GET /v1/realunit/referral/terms`. Markdown is authored on the API;
-/// the app renders it 1:1. Bundled assets are a fallback only.
+/// Wallet Markdown under assets/legal/referral_terms_*.md is the displayed text.
+/// The API records the accepted version.
 class ReferralTermsDto {
   static const bundledVersion = '2026-08-26';
 

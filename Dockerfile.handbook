@@ -57,7 +57,7 @@ COPY docs/handbook/de/index.html ./docs/handbook/de/index.html
 RUN python3 ./scripts/assemble-handbook-store-listing.py /out && cp ./docs/handbook/de/index.html /out/index.html
 
 # Legal-downloads section: derived export of the in-app legal Markdown
-# (assets/legal/*.md). Two separate concerns, by design:
+# (assets/legal/*.md, including referral_terms). Two separate concerns, by design:
 #   - assemble-handbook-legal.py rewrites the deterministic <!-- BEGIN/END:
 #     legal-downloads --> block in index.html (committed + sync-gated upstream).
 #   - build-legal-downloads.sh renders the NON-deterministic PDF/DOCX via pandoc
