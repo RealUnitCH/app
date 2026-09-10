@@ -10,8 +10,8 @@ Authenticated routes use the existing Bearer session.
 Live contract until `DFXswiss/backend` is writable (private):
 [JonnyLuca/dfx-referral-api](https://github.com/JonnyLuca/dfx-referral-api)
 (`GET`/`POST /v1/realunit/referral/*`, 70 REALU gate re-checked at credit,
-quarterly cap 100, 3-month expiry, promo `redemptionCap` required, min-buy N
-default 200, KYC + late bind, CORS for `realunit.app`, NestJS drop-in
+quarterly cap 100, 3-month expiry, promo `redemptionCap` required, promo
+`minBuyRealu` default 200, referral first-buy floor 200, KYC + late bind, CORS for `realunit.app`, NestJS drop-in
 `RealUnitReferralController`). Credit is evaluated on Aktionariat
 **settlement** (whole REALU shares) and again when KYC Level 30 is
 reached — not on `PUT /v1/realunit/buy/{id}/confirm` (payment
