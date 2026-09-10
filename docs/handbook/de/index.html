@@ -2300,8 +2300,8 @@
           </summary>
           <p class="spec-intro">
             Liste der bisherigen Käufe und Verkäufe der RealUnit-Aktie. Erreichbar aus
-            dem Dashboard. Jeder Eintrag zeigt Datum, Richtung (Kauf/Verkauf),
-            Aktien-Menge und Gegenwert.
+            dem Dashboard. Jeder Eintrag zeigt Datum, Richtung (Kauf/Verkauf) und
+            Aktien-Menge.
           </p>
 
           <div class="tests cols-1">
@@ -2319,7 +2319,7 @@
               </div>
               <div class="desc">
                 Transaktionshistorie mit Datumsfilter und PDF-Export. Jede Zeile bündelt
-                Richtung, Betrag in Aktien und Gegenwert in der Anzeigewährung; einen
+                Richtung und Betrag in Aktien; einen
                 Status oder eine Detailansicht gibt es nicht. Der Golden zeigt die Liste
                 leer (Test-Fixture ohne gerenderte Einträge); eine gefüllte Liste zeigt 96.
               </div>
@@ -4011,7 +4011,7 @@
             </div>
           </summary>
           <p class="spec-intro">
-            Ist <code>hideAmounts</code> im SettingsBloc gesetzt, maskiert das Dashboard alle Geldbeträge, lässt die übrige Struktur aber unverändert. Ein Schalter in den Einstellungen existiert dafür noch nicht.
+            Ist <code>hideAmounts</code> im SettingsBloc gesetzt, maskiert das Dashboard Bestandswert und Transaktionsbeträge, lässt Stückzahl × Stückpreis und die übrige Struktur aber unverändert. Ein Schalter in den Einstellungen existiert dafür noch nicht.
           </p>
 
           <div class="tests cols-2">
@@ -8084,7 +8084,7 @@
                 />
               </div>
               <div class="desc">
-                Zeigt den <b>Ausgangszustand</b> des Telefonnummer-Felds: die Überschrift <b>Telefonnummer</b>, links das Vorwahl-Dropdown mit der Standardvorwahl <b>+41</b> (Schweiz; weitere Einträge <b>+49</b>, <b>+43</b>, <b>+423</b>) und rechts das noch leere Rufnummernfeld mit dem Platzhalter <b>1231234567</b>. So sehen Nutzer das Feld, bevor sie eine Nummer eingeben; die Länge der Nummer wird erst serverseitig geprüft.
+                Zeigt den <b>Ausgangszustand</b> des Telefonnummer-Felds: die Überschrift <b>Telefonnummer</b>, links das frei editierbare Vorwahlfeld mit der Standardvorwahl <b>+41</b> und rechts das noch leere Rufnummernfeld mit dem Platzhalter <b>1231234567</b>. So sehen Nutzer das Feld, bevor sie eine Nummer eingeben; die Länge der Nummer wird erst serverseitig geprüft.
               </div>
             </div>
           </div>
@@ -11098,8 +11098,9 @@
             Überspringen setzt Weiter nicht auf Laden). Überspringen
             verwirft einen getippten Code und lässt einen
             Deeplink-Stash stehen. Ein abgelehnter Bind (4xx) zeigt einmal einen
-            Dialog: <b>Link ungültig oder abgelaufen</b>, <b>Dieser Einladungs- oder
-            Promo-Code wurde bereits verwendet.</b> (Einlösungslimit erreicht),
+            Dialog: Titel <b>Code bereits eingelöst</b> mit Body <b>Dieser Einladungs- oder
+            Promo-Code wurde bereits verwendet.</b> (Einlösungslimit erreicht);
+            Titel <b>Link ungültig oder abgelaufen</b> für die übrigen Fälle
             <b>Du hast bereits einen Einladungs- oder Promo-Code eingelöst.</b>
             (ein Code pro Konto) oder <b>Diese Einladung gilt nur für neue Kundinnen
             und Kunden.</b> (Eingabe nur vor dem ersten REALU-Kauf).
