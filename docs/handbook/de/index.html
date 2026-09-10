@@ -9981,16 +9981,19 @@ Dieser Inhalt dient Werbezwecken. Die genehmigten Prospekte und weitere Unterlag
   </summary>
 
   <p class="spec-intro">
-    Single source of truth für die App-eigenen Rechtstexte sind die Markdown-Dateien
-    unter <code>assets/legal/*.md</code>. Die In-App-Ansicht (<code>LegalDocumentPage</code>)
-    und die Downloads hier rendern aus denselben Dateien; jede Änderung am Text geht
-    ausschliesslich über einen PR auf diese Markdown-Quellen. Pro Dokument und Sprache
-    gibt es einen <b>PDF</b>- und <b>DOCX</b>-Download (im Handbook-Image via
-    <code>pandoc</code> erzeugt) sowie einen Direkt-Link (🔗) auf den jeweiligen Eintrag
-    und einen <span class="src">↗</span>-Link auf die Markdown-Quelldatei.
-    DFX- und Aktionariat-Dokumente sowie die extern gehosteten Unternehmensdokumente
-    (Prospekte, Statuten) sind <em>nicht</em> Teil dieses Exports — sie haben keine
-    Markdown-Quelle im Repo.
+    Single source of truth für die In-App-Markdown-Dokumente (Datenschutz,
+    Nutzungsbedingungen, Registrierungsvereinbarung) sind die Dateien unter
+    <code>assets/legal/*.md</code>. Die In-App-Ansicht (<code>LegalDocumentPage</code>)
+    und die Downloads hier rendern aus denselben Dateien; jede Änderung an diesen
+    Texten geht ausschliesslich über einen PR auf diese Markdown-Quellen.
+    Die Teilnahmebedingungen des Referral-Programms werden von der API geliefert
+    und sind nicht Teil dieses abgeleiteten Exports.
+    Pro Dokument und Sprache gibt es einen <b>PDF</b>- und <b>DOCX</b>-Download
+    (im Handbook-Image via <code>pandoc</code> erzeugt) sowie einen Direkt-Link (🔗)
+    auf den jeweiligen Eintrag und einen <span class="src">↗</span>-Link auf die
+    Markdown-Quelldatei. DFX- und Aktionariat-Dokumente sowie die extern gehosteten
+    Unternehmensdokumente (Prospekte, Statuten) sind <em>nicht</em> Teil dieses
+    Exports — sie haben keine Markdown-Quelle im Repo.
   </p>
 
   <h3>Datenschutzbestimmungen <a class="src" href="https://github.com/RealUnitCH/app/tree/develop/assets/legal" title="Quelle: assets/legal/">↗</a></h3>
