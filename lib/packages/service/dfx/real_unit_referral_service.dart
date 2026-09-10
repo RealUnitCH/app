@@ -19,8 +19,8 @@ class RealUnitReferralService extends DFXAuthService {
   static const _basePath = '/v1/realunit/referral';
 
   /// Public lookup and the landing page abort after 15s; authenticated
-  /// referral calls use the same budget so terms/summary/bind cannot hang
-  /// the UI past the Retry path.
+  /// referral calls (summary/bind/terms GET) use the same budget so a
+  /// stalled HTTP call cannot hang the caller.
   static const lookupTimeout = Duration(seconds: 15);
 
   Future<T> _timed<T>(

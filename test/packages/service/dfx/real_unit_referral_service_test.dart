@@ -773,7 +773,7 @@ void main() {
       expect(terms.textForLang('en'), '# Terms');
     });
 
-    test('aborts a stalled terms fetch so the Retry UI can show', () {
+    test('aborts a stalled terms fetch after lookupTimeout', () {
       fakeAsync((async) {
         final client = MockClient((request) async {
           await Future<void>.delayed(const Duration(seconds: 30));

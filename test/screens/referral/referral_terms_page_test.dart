@@ -342,10 +342,9 @@ void main() {
   );
 
   testWidgets(
-    'throwing getTerms still shows asset text if loadAsset is provided',
+    'does not call getTerms and shows loadAsset markdown',
     (tester) async {
       final service = _MockReferralService();
-      when(() => service.getTerms()).thenThrow(Exception('down'));
       GetIt.instance.registerSingleton<RealUnitReferralService>(service);
       addTearDown(() async {
         await GetIt.instance.reset();
