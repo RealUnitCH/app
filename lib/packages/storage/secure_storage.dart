@@ -97,6 +97,9 @@ class SecureStorage {
   /// The migration flag is written only after every key that needed a copy
   /// succeeded (write + read-back). A failed copy aborts without the flag so
   /// the next boot can retry; boot itself must not crash.
+  // @no-integration-test: forwards to FlutterSecureStorage (Android Keystore /
+  // iOS Keychain) over a platform channel; real keystore migration is only
+  // verifiable on-device — the unit test mocks the plugin.
   Future<void> migrateFromUnnamespacedStoreIfNeeded({
     FlutterSecureStorage legacy = const FlutterSecureStorage(),
   }) async {

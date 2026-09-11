@@ -13,6 +13,7 @@ class _FakeEngine implements WalletConnectEngine {
   final approvedSessions = <String>[];
   final approvedRequests = <int, String>{};
   var pairCalls = 0;
+  var resetCalls = 0;
 
   @override
   Stream<WalletConnectIncoming> get events => _events.stream;
@@ -47,6 +48,11 @@ class _FakeEngine implements WalletConnectEngine {
 
   @override
   Future<void> disconnect(String topic) async {}
+
+  @override
+  Future<void> reset() async {
+    resetCalls += 1;
+  }
 
   void emit(WalletConnectIncoming incoming) => _events.add(incoming);
 }
@@ -234,6 +240,18 @@ void main() {
       () => service.pair('https://etherscan.io'),
       throwsA(isA<FormatException>()),
     );
+  });
+
+  test('reset calls engine.reset and allows pair again', () async {
+    await service.ensureInitialized();
+    await service.pair(pairing);
+    expect(engine.pairCalls, 1);
+
+    await service.reset();
+    expect(engine.resetCalls, 1);
+
+    await service.pair(pairing);
+    expect(engine.pairCalls, 2);
   });
 
   test('debug wallet rejects personal_sign without prompting', () async {

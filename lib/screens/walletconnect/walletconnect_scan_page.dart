@@ -4,6 +4,7 @@
 // covered by the scanner-navigation catalog test.
 import 'dart:async';
 
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -100,8 +101,11 @@ class WalletConnectScanCubit extends Cubit<WalletConnectScanState> {
   void reset() => emit(const WalletConnectScanScanning());
 }
 
-sealed class WalletConnectScanState {
+sealed class WalletConnectScanState extends Equatable {
   const WalletConnectScanState();
+
+  @override
+  List<Object?> get props => [];
 }
 
 class WalletConnectScanScanning extends WalletConnectScanState {
@@ -116,4 +120,7 @@ class WalletConnectScanDecoded extends WalletConnectScanState {
   final String uri;
 
   const WalletConnectScanDecoded(this.uri);
+
+  @override
+  List<Object?> get props => [uri];
 }

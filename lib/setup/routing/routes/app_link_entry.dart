@@ -224,6 +224,57 @@ String? _extractReferralInviteCode(Uri uri) {
   return null;
 }
 
+/// WalletConnect pairing / scan deeplink: stash when locked or cold-start,
+/// deferred push when unlocked — same security properties as the payment
+/// carve-out on [appLinkSchemeRedirect].
+//
+// @no-integration-test: OS-level custom-scheme / `wc:` delivery; covered by
+// app_link_entry_test.dart.
+String? _handleWalletConnectRedirect({
+  required String raw,
+  required String currentLocation,
+  required GoRouter router,
+}) {
+  final current = Uri.parse(currentLocation);
+  final isInAppRoute = current.scheme.isEmpty && current.path.startsWith('/');
+  final pairingUri = WalletConnectUri.extractPairingUri(raw);
+  final openScan = pairingUri == null && WalletConnectUri.isScanDeeplink(raw);
+
+  void stash() {
+    if (pairingUri != null) {
+      stashPendingWalletConnectPairing(pairingUri);
+    } else if (openScan) {
+      stashPendingWalletConnectScan();
+    }
+  }
+
+  void push() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final pinState = getIt<PinAuthCubit>().state;
+      if (!(pinState.isPinVerified && pinState.isPinSetup)) {
+        stash();
+        return;
+      }
+      if (pairingUri != null) {
+        unawaited(router.pushNamed(AppRoutes.walletConnectSession, extra: pairingUri));
+      } else if (openScan) {
+        unawaited(router.pushNamed(AppRoutes.walletConnectScan));
+      }
+    });
+  }
+
+  if (isInAppRoute) {
+    if (getIt<PinAuthCubit>().state.isPinVerified && getIt<PinAuthCubit>().state.isPinSetup) {
+      push();
+      return null;
+    }
+    stash();
+    return null;
+  }
+  stash();
+  return appLinkColdStartLocation;
+}
+
 /// Top-level go_router redirect for custom-scheme opens.
 ///
 /// A `realunit-wallet://…` open (canonical `realunit-wallet://open`) only brings
@@ -306,51 +357,6 @@ String? _extractReferralInviteCode(Uri uri) {
 // only be exercised on a real device, and no integration_test/ harness exists
 // in this repo yet. The redirect is covered by widget tests in
 // app_link_entry_test.dart.
-String? _handleWalletConnectRedirect({
-  required String raw,
-  required String currentLocation,
-  required GoRouter router,
-}) {
-  final current = Uri.parse(currentLocation);
-  final isInAppRoute = current.scheme.isEmpty && current.path.startsWith('/');
-  final pairingUri = WalletConnectUri.extractPairingUri(raw);
-  final openScan = pairingUri == null && WalletConnectUri.isScanDeeplink(raw);
-
-  void stash() {
-    if (pairingUri != null) {
-      stashPendingWalletConnectPairing(pairingUri);
-    } else if (openScan) {
-      stashPendingWalletConnectScan();
-    }
-  }
-
-  void push() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final pinState = getIt<PinAuthCubit>().state;
-      if (!(pinState.isPinVerified && pinState.isPinSetup)) {
-        stash();
-        return;
-      }
-      if (pairingUri != null) {
-        unawaited(router.pushNamed(AppRoutes.walletConnectSession, extra: pairingUri));
-      } else if (openScan) {
-        unawaited(router.pushNamed(AppRoutes.walletConnectScan));
-      }
-    });
-  }
-
-  if (isInAppRoute) {
-    if (getIt<PinAuthCubit>().state.isPinVerified && getIt<PinAuthCubit>().state.isPinSetup) {
-      push();
-      return null;
-    }
-    stash();
-    return null;
-  }
-  stash();
-  return appLinkColdStartLocation;
-}
-
 String? appLinkSchemeRedirect(
   GoRouterState state,
   String currentLocation,

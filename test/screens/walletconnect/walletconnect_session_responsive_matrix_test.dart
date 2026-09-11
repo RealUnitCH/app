@@ -46,6 +46,9 @@ class _FakeEngine implements WalletConnectEngine {
 
   @override
   Future<void> disconnect(String topic) async {}
+
+  @override
+  Future<void> reset() async {}
 }
 
 void main() {

@@ -266,6 +266,7 @@ Future<void> setupBlocs() async {
       getIt<SettingsService>(),
       getIt<AppStore>(),
       getIt<BitboxService>(),
+      walletConnectService: getIt<WalletConnectService>(),
     ),
   );
   getIt.registerSingleton(
@@ -276,7 +277,10 @@ Future<void> setupBlocs() async {
     ),
   );
 
-  final pinAuthCubit = PinAuthCubit(getIt<SecureStorage>());
+  final pinAuthCubit = PinAuthCubit(
+    getIt<SecureStorage>(),
+    walletConnectService: getIt<WalletConnectService>(),
+  );
   await pinAuthCubit.initialize();
   getIt.registerSingleton(pinAuthCubit);
 }

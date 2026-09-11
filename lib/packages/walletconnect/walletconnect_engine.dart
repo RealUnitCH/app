@@ -30,6 +30,7 @@ abstract class WalletConnectEngine {
   Future<void> approveRequest(int requestId, String result);
   Future<void> rejectRequest(int requestId);
   Future<void> disconnect(String topic);
+  Future<void> reset();
   Stream<WalletConnectIncoming> get events;
 }
 

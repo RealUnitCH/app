@@ -5,6 +5,8 @@ import 'package:reown_walletkit/reown_walletkit.dart';
 import 'package:realunit_wallet/packages/walletconnect/walletconnect_config.dart';
 import 'package:realunit_wallet/packages/walletconnect/walletconnect_engine.dart';
 
+// @no-integration-test: Reown WalletKit plugin/relay boundary; covered by
+//   FakeEngine unit tests — no device harness for live relay sessions.
 class ReownWalletConnectEngine implements WalletConnectEngine {
   final _events = StreamController<WalletConnectIncoming>.broadcast();
   final _requestTopics = <int, String>{};
@@ -184,4 +186,46 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
         topic: topic,
         reason: const ReownSignError(code: 6000, message: 'User disconnected.'),
       );
+
+  @override
+  Future<void> reset() async {
+    final walletKit = _walletKit;
+    if (walletKit == null) return;
+
+    try {
+      final sessions = walletKit.getActiveSessions();
+      for (final session in sessions.values) {
+        try {
+          await walletKit.disconnectSession(
+            topic: session.topic,
+            reason: const ReownSignError(
+              code: 6000,
+              message: 'User disconnected.',
+            ),
+          );
+        } catch (_) {
+          // Session may already be gone.
+        }
+      }
+    } catch (_) {
+      // Listing active sessions must not block clearing the kit.
+    }
+
+    try {
+      final pairings = walletKit.core.pairing.getPairings();
+      for (final pairing in pairings) {
+        try {
+          await walletKit.core.pairing.disconnect(topic: pairing.topic);
+        } catch (_) {
+          // Pairing may already be gone.
+        }
+      }
+    } catch (_) {
+      // Listing pairings must not block clearing the kit.
+    }
+
+    _walletKit = null;
+    _requestTopics.clear();
+    _proposalPairings.clear();
+  }
 }

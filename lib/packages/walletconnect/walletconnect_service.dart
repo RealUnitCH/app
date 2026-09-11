@@ -145,6 +145,14 @@ class WalletConnectService {
     });
   }
 
+  /// Tears down active WalletConnect sessions/pairings so a new wallet can
+  /// re-init after Delete Wallet / Forgot PIN.
+  Future<void> reset() async {
+    await _engine.reset();
+    _initialized = false;
+    _initialization = null;
+  }
+
   Future<void> _initialize() async {
     try {
       await _engine.init(
