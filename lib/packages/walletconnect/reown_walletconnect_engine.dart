@@ -47,7 +47,6 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
 
   void _subscribe(ReownWalletKit walletKit) {
     walletKit.onSessionProposal.subscribe((event) {
-      if (event == null) return;
       final metadata = event.params.proposer.metadata;
       final verifyContext = event.verifyContext;
       final attested = verifyContext?.origin.trim();
@@ -64,7 +63,6 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
     });
 
     walletKit.onSessionRequest.subscribe((event) {
-      if (event == null) return;
       _requestTopics[event.id] = event.topic;
 
       SessionRequest? pending;
@@ -91,7 +89,6 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
     });
 
     walletKit.onSessionDelete.subscribe((event) {
-      if (event == null) return;
       _events.add(WalletConnectSessionDeleted(topic: event.topic));
     });
   }
@@ -146,7 +143,7 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
   Future<void> rejectSession(String proposalId) async {
     await _kit.rejectSession(
       id: int.parse(proposalId),
-      reason: Errors.getSdkError(Errors.USER_REJECTED),
+      reason: const ReownSignError(code: 5000, message: 'User rejected.'),
     );
     final pairingTopic = _proposalPairings.remove(proposalId);
     if (pairingTopic == null || pairingTopic.isEmpty) return;
@@ -190,6 +187,6 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
   @override
   Future<void> disconnect(String topic) => _kit.disconnectSession(
         topic: topic,
-        reason: Errors.getSdkError(Errors.USER_DISCONNECTED),
+        reason: const ReownSignError(code: 6000, message: 'User disconnected.'),
       );
 }
