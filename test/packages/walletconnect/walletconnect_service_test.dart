@@ -185,6 +185,43 @@ void main() {
     expect(engine.approvedRequests.containsKey(11), isFalse);
   });
 
+  test('session delete during signing rejects instead of approving', () async {
+    final started = Completer<void>();
+    final delayed = Completer<String>();
+    final signingService = WalletConnectService.forTesting(
+      engine: engine,
+      address: address,
+      signMessage: (message) async {
+        started.complete();
+        return delayed.future;
+      },
+    );
+    final signingErrors = <WalletConnectServiceError>[];
+    final signingPrompts = <WalletConnectUserPrompt>[];
+    signingService.errors.listen(signingErrors.add);
+    signingService.prompts.listen(signingPrompts.add);
+
+    engine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 12,
+        topic: 'topic',
+        method: 'personal_sign',
+        params: ['hello', address],
+        originUrl: 'https://app.frankencoin.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    final pending = signingService.approvePrompt(signingPrompts.first);
+    await started.future;
+    engine.emit(const WalletConnectSessionDeleted(topic: 'topic'));
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    delayed.complete('sig:hello');
+    await expectLater(pending, throwsA(isA<StateError>()));
+    expect(engine.approvedRequests.containsKey(12), isFalse);
+    expect(engine.rejectedRequests, contains(12));
+  });
+
   test('eth_sendTransaction is rejected without prompting', () async {
     engine.emit(
       const WalletConnectSessionRequest(

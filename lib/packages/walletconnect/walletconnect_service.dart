@@ -311,7 +311,7 @@ class WalletConnectService {
             final signature = await _signMessage(
               _messageFromParams(request.params),
             );
-            await _engine.approveRequest(request.requestId, signature);
+            await _respondIfSessionLive(request.requestId, signature);
           case 'eth_signTypedData':
           case 'eth_signTypedData_v4':
             final jsonData = _typedDataJson(request.params);
@@ -323,7 +323,7 @@ class WalletConnectService {
                 ? request.chainId!
                 : 1;
             final signature = await _signTypedData(chainId, jsonData);
-            await _engine.approveRequest(request.requestId, signature);
+            await _respondIfSessionLive(request.requestId, signature);
           default:
             await _engine.rejectRequest(request.requestId);
         }
@@ -375,6 +375,14 @@ class WalletConnectService {
         sendTransactionUnsupportedMessage,
       ),
     );
+  }
+
+  Future<void> _respondIfSessionLive(int requestId, String signature) async {
+    if (!_sessionLive) {
+      await _engine.rejectRequest(requestId);
+      throw StateError(sessionEndedMessage);
+    }
+    await _engine.approveRequest(requestId, signature);
   }
 
   Future<void> _rejectDebugSigning(int requestId) async {

@@ -122,11 +122,7 @@ class _WalletConnectSessionPageState extends State<WalletConnectSessionPage> {
     setState(() => _busy = true);
     try {
       await _service.approvePrompt(prompt);
-      if (mounted && prompt is WalletConnectProposalPrompt) {
-        setState(() => _prompt = null);
-      } else if (mounted) {
-        Navigator.of(context).maybePop();
-      }
+      if (mounted) setState(() => _prompt = null);
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
