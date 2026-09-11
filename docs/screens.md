@@ -56,6 +56,8 @@ Column meaning:
 | Dashboard & trading | `SellBitboxPage` | `sellBitbox` | `/sellBitbox` | `126`, `127`, `128`, `129`, `130`, `131`, `132`, `133`, `134`, `135`, `136` |
 | Dashboard & trading | `SellBankAccountSelectionPage` | — | — | `121`, `122` |
 | Dashboard & trading | `ReceivePage` | `receive` | `/receive` | `101`, `102` |
+| Dashboard & trading | `WalletConnectScanPage` | `walletConnectScan` | `/walletConnect` | — |
+| Dashboard & trading | `WalletConnectSessionPage` | `walletConnectSession` | `/walletConnect/session` | — |
 | Dashboard & trading | `ConnectBitboxPage` | — | — | `137`, `138`, `139`, `140`, `141`, `142`, `143`, `144`, `145`, `146` |
 | Dashboard & trading | `BitboxAddressRecoveryPage` | `bitboxAddressRecovery` | `/bitboxAddressRecovery` | `147` |
 | Dashboard & trading | `WebViewPage` | `webView` | `/webView` | — |
@@ -122,7 +124,7 @@ Column meaning:
 | Shared widgets | `PhoneNumberField` | — | — | `268` |
 | Shared widgets | `ReferralPayoutTransactionRow` | — | — | `282` |
 
-81 screens — 47 routed (`GoRoute`) + 34 non-routed. The table also carries
+83 screens — 49 routed (`GoRoute`) + 34 non-routed. The table also carries
 two shared-widget baselines (`PhoneNumberField`, `ReferralPayoutTransactionRow`),
 which are not screens.
 Referral surfaces have Golden baselines (`276`–`290`); the handbook
