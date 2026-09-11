@@ -501,6 +501,40 @@ void main() {
     expect(typedEngine.approvedRequests[35], startsWith('typed:1:'));
   });
 
+  test('eth_signTypedData_v4 without a configured chain is rejected', () async {
+    final typedEngine = _FakeEngine();
+    final typedService = WalletConnectService.forTesting(
+      engine: typedEngine,
+      address: address,
+      signMessage: (message) async => 'sig:$message',
+      signTypedData: (chainId, json) async => 'typed:$chainId:$json',
+    );
+    final typedPrompts = <WalletConnectUserPrompt>[];
+    typedService.prompts.listen(typedPrompts.add);
+
+    typedEngine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 37,
+        topic: 'topic',
+        method: 'eth_signTypedData_v4',
+        params: [
+          address,
+          '{"domain":{}}',
+        ],
+        originUrl: 'https://app.frankencoin.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(typedPrompts, hasLength(1));
+    await expectLater(
+      typedService.approvePrompt(typedPrompts.first),
+      throwsA(isA<FormatException>()),
+    );
+    expect(typedEngine.rejectedRequests, contains(37));
+    expect(typedEngine.approvedRequests.containsKey(37), isFalse);
+  });
+
   test('approvePrompt then rejectPrompt on a proposal', () async {
     engine.emit(
       const WalletConnectSessionProposal(

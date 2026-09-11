@@ -326,9 +326,11 @@ class WalletConnectService {
               await _engine.rejectRequest(request.requestId);
               throw const FormatException('Invalid EIP-712 typed data.');
             }
-            final chainId = WalletConnectConfig.chainIds.contains(request.chainId)
-                ? request.chainId!
-                : 1;
+            final chainId = request.chainId;
+            if (chainId == null || !WalletConnectConfig.chainIds.contains(chainId)) {
+              await _engine.rejectRequest(request.requestId);
+              throw const FormatException('Unsupported WalletConnect chain.');
+            }
             final signature = await _signTypedData(chainId, jsonData);
             await _respondIfSessionLive(request.requestId, signature);
           default:

@@ -992,6 +992,23 @@ void main() {
   );
 
   testWidgets(
+    'warm resume: an Android intent WalletConnect wrapper pushes the session route',
+    (tester) async {
+      const pairing =
+          'wc:00e46b69-d0cc-4b3e-b6a2-cee442f97188@2?relay-protocol=irn&symKey=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+      final router = await pump(tester);
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+
+      router.go('intent://wc?uri=${Uri.encodeComponent(pairing)}#Intent;scheme=wc;end');
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('wcSession')), findsOneWidget);
+      expect(find.text('WC:$pairing'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'warm resume on /verifyPin while locked: WalletConnect pairing deeplink '
     'stashes and does not push the session route',
     (tester) async {

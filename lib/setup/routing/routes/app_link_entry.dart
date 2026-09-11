@@ -381,6 +381,15 @@ String? appLinkSchemeRedirect(
         router: router,
       );
     }
+    final raw = state.uri.toString();
+    if (WalletConnectUri.extractPairingUri(raw) != null ||
+        WalletConnectUri.isScanDeeplink(raw)) {
+      return _handleWalletConnectRedirect(
+        raw: raw,
+        currentLocation: currentLocation,
+        router: router,
+      );
+    }
     return null;
   }
 

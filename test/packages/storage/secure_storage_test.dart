@@ -740,6 +740,7 @@ void main() {
           value: any(named: 'value'),
         ),
       ).thenAnswer((_) async {});
+      when(() => namespaced.delete(key: any(named: 'key'))).thenAnswer((_) async {});
 
       final storage = SecureStorage.withStorage(
         namespaced,
@@ -747,6 +748,7 @@ void main() {
       );
       await storage.migrateFromUnnamespacedStoreIfNeeded(legacy: legacy);
 
+      verify(() => namespaced.delete(key: 'pin.credential')).called(1);
       verifyNever(
         () => namespaced.write(
           key: 'secure.storage.namespaced',

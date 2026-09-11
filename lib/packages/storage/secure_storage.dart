@@ -113,6 +113,11 @@ class SecureStorage {
         await _secureStorage.write(key: key, value: value);
         final written = await _secureStorage.read(key: key);
         if (written != value) {
+          try {
+            await _secureStorage.delete(key: key);
+          } catch (_) {
+            // Best-effort rollback; flag is not written either way.
+          }
           developer.log(
             'SecureStorage namespaced migrate failed for $key: read-back mismatch',
           );
