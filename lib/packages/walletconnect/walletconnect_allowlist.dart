@@ -30,6 +30,9 @@ abstract final class WalletConnectAllowlist {
     if (uri == null || uri.host.isEmpty) return null;
 
     var host = uri.host.toLowerCase();
+    while (host.endsWith('.')) {
+      host = host.substring(0, host.length - 1);
+    }
     if (host.startsWith('www.')) host = host.substring(4);
     return host.isEmpty ? null : host;
   }

@@ -81,6 +81,18 @@ void main() {
           path: '/pay',
           builder: (_, state) => Scaffold(body: Text('PAY:${state.extra}', key: const Key('pay'))),
         ),
+        GoRoute(
+          name: AppRoutes.walletConnectScan,
+          path: '/walletConnect',
+          builder: (_, _) => const Scaffold(body: Text('WCSCAN', key: Key('wcScan'))),
+        ),
+        GoRoute(
+          name: AppRoutes.walletConnectSession,
+          path: '/walletConnect/session',
+          builder: (_, state) => Scaffold(
+            body: Text('WC:${state.extra}', key: const Key('wcSession')),
+          ),
+        ),
       ],
     );
     return router;
@@ -961,4 +973,21 @@ void main() {
       );
     });
   });
+
+  testWidgets(
+    'warm resume: a WalletConnect pairing deeplink pushes the session route',
+    (tester) async {
+      const pairing =
+          'wc:00e46b69-d0cc-4b3e-b6a2-cee442f97188@2?relay-protocol=irn&symKey=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+      final router = await pump(tester);
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+
+      router.go('realunit-wallet://wc?uri=${Uri.encodeComponent(pairing)}');
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('wcSession')), findsOneWidget);
+      expect(find.text('WC:$pairing'), findsOneWidget);
+    },
+  );
 }

@@ -17,7 +17,15 @@ abstract final class WalletConnectUri {
     if (isPairingUri(value)) return value;
 
     final uri = Uri.tryParse(value);
-    if (uri == null || uri.scheme.toLowerCase() != 'realunit-wallet') {
+    if (uri == null) return null;
+
+    if (uri.scheme.toLowerCase() == 'intent') {
+      final nested = uri.queryParameters['uri'] ??
+          uri.fragment.split(';').where((p) => p.startsWith('S.uri=')).firstOrNull?.substring(6);
+      if (nested != null) return extractPairingUri(Uri.decodeComponent(nested));
+    }
+
+    if (uri.scheme.toLowerCase() != 'realunit-wallet') {
       return null;
     }
     if (!_isWalletConnectRoute(uri, value)) return null;

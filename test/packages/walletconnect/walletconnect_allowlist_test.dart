@@ -13,6 +13,10 @@ void main() {
       expect(WalletConnectAllowlist.isAllowedOrigin('https://app.frankencoin.com'), isTrue);
       expect(WalletConnectAllowlist.isAllowedOrigin('https://frankencoin.com'), isTrue);
       expect(WalletConnectAllowlist.isAllowedOrigin('https://shares.realunit.ch'), isTrue);
+      expect(
+        WalletConnectAllowlist.isAllowedOrigin('https://tokeninfo.aktionariat.com.'),
+        isTrue,
+      );
     });
 
     test('rejects other providers including etherscan', () {

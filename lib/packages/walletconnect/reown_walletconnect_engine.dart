@@ -8,6 +8,7 @@ import 'package:realunit_wallet/packages/walletconnect/walletconnect_engine.dart
 class ReownWalletConnectEngine implements WalletConnectEngine {
   final _events = StreamController<WalletConnectIncoming>.broadcast();
   final _requestTopics = <int, String>{};
+  final _proposalPairings = <String, String>{};
 
   ReownWalletKit? _walletKit;
 
@@ -21,6 +22,8 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
   }) async {
     if (_walletKit != null) return;
 
+    // createInstance already calls init() (relay + verify). Do not init twice.
+    // logLevel.nothing: no SDK chatter. Init happens only on first pair().
     final walletKit = await ReownWalletKit.createInstance(
       projectId: WalletConnectConfig.projectId,
       metadata: const PairingMetadata(
@@ -30,9 +33,9 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
         icons: ['https://realunit.app/favicon.ico'],
         redirect: Redirect(native: WalletConnectConfig.redirectNative),
       ),
+      logLevel: LogLevel.nothing,
     );
     _subscribe(walletKit);
-    await walletKit.init();
     for (final chainId in chainIds) {
       walletKit.registerAccount(
         chainId: 'eip155:$chainId',
@@ -47,13 +50,12 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
       if (event == null) return;
       final metadata = event.params.proposer.metadata;
       final verifyContext = event.verifyContext;
-      final verifiedOrigin = verifyContext?.origin.trim();
+      final attested = verifyContext?.origin.trim();
+      _proposalPairings[event.id.toString()] = event.params.pairingTopic;
       _events.add(
         WalletConnectSessionProposal(
           proposalId: event.id.toString(),
-          originUrl: verifiedOrigin?.isNotEmpty == true
-              ? verifiedOrigin
-              : metadata.url,
+          originUrl: attested == null || attested.isEmpty ? null : attested,
           verifyStatus: _mapVerify(verifyContext),
           proposerName: metadata.name,
           proposerUrl: metadata.url,
@@ -74,21 +76,14 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
       }
 
       final verifyContext = pending?.verifyContext;
-      final verifiedOrigin = verifyContext?.origin.trim();
-      final sessionUrl = walletKit
-          .getActiveSessions()[event.topic]
-          ?.peer
-          .metadata
-          .url;
+      final attested = verifyContext?.origin.trim();
       _events.add(
         WalletConnectSessionRequest(
           requestId: event.id,
           topic: event.topic,
           method: event.method,
           params: event.params,
-          originUrl: verifiedOrigin?.isNotEmpty == true
-              ? verifiedOrigin
-              : sessionUrl,
+          originUrl: attested == null || attested.isEmpty ? null : attested,
           verifyStatus: _mapVerify(verifyContext),
           chainId: _parseChainId(event.chainId),
         ),
@@ -148,10 +143,19 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
   }
 
   @override
-  Future<void> rejectSession(String proposalId) => _kit.rejectSession(
-        id: int.parse(proposalId),
-        reason: Errors.getSdkError(Errors.USER_REJECTED),
-      );
+  Future<void> rejectSession(String proposalId) async {
+    await _kit.rejectSession(
+      id: int.parse(proposalId),
+      reason: Errors.getSdkError(Errors.USER_REJECTED),
+    );
+    final pairingTopic = _proposalPairings.remove(proposalId);
+    if (pairingTopic == null || pairingTopic.isEmpty) return;
+    try {
+      await _kit.core.pairing.disconnect(topic: pairingTopic);
+    } catch (_) {
+      // Pairing may already be gone after rejectSession.
+    }
+  }
 
   @override
   Future<void> approveRequest(int requestId, String result) async {

@@ -81,6 +81,7 @@ Future<String> setupEssentials({
 
   getIt.registerSingleton(secureStorage);
 
+  await secureStorage.migrateFromUnnamespacedStoreIfNeeded();
   await migrateSecurityFlags(sharedPreferences, secureStorage);
 
   final encryptionKey = await secureStorage.getEncryptionKey();

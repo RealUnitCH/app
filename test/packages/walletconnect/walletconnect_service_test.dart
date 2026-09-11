@@ -155,6 +155,25 @@ void main() {
     expect(engine.approvedRequests[3], 'sig:hello');
   });
 
+  test('eth_sendTransaction is rejected without prompting', () async {
+    engine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 4,
+        topic: 'topic',
+        method: 'eth_sendTransaction',
+        params: [
+          {'to': '0x2222222222222222222222222222222222222222'},
+        ],
+        originUrl: 'https://app.frankencoin.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(prompts, isEmpty);
+    expect(engine.rejectedRequests, [4]);
+    expect(errors.first.type, WalletConnectServiceErrorType.sendTransactionUnsupported);
+  });
+
   test('pair requires a v2 WalletConnect URI', () async {
     await service.ensureInitialized();
     await service.pair(pairing);

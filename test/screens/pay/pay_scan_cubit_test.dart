@@ -22,6 +22,15 @@ void main() {
     );
 
     blocTest<PayScanCubit, PayScanState>(
+      'a WalletConnect pairing URI emits PayScanWalletConnect not invalid',
+      build: PayScanCubit.new,
+      act: (cubit) => cubit.onCodeDetected(
+        'wc:00e46b69-d0cc-4b3e-b6a2-cee442f97188@2?relay-protocol=irn&symKey=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+      ),
+      expect: () => [isA<PayScanWalletConnect>()],
+    );
+
+    blocTest<PayScanCubit, PayScanState>(
       'an invalid code emits PayScanInvalid',
       build: PayScanCubit.new,
       act: (cubit) => cubit.onCodeDetected('not-a-payment-code'),

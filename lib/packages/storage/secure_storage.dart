@@ -44,15 +44,65 @@ class SecureStorage {
   static const _pinLockedUntilKey = 'pin.lockedUntil';
 
   final FlutterSecureStorage _secureStorage;
+  final bool _isolateFromWalletKit;
 
-  const SecureStorage() : _secureStorage = const FlutterSecureStorage();
+  /// WalletKit uses the default FlutterSecureStorage namespace and has been
+  /// observed to wipe sibling keys on pairing. Production storage therefore
+  /// lives in an isolated Android/iOS namespace; [migrateFromUnnamespacedStoreIfNeeded]
+  /// copies existing PIN/mnemonic/DB keys once.
+  static const _namespacedAndroid = AndroidOptions(
+    encryptedSharedPreferences: true,
+    sharedPreferencesName: 'swiss.realunit.app.secure',
+    preferencesKeyPrefix: 'ru_',
+  );
+  static const _namespacedIos = IOSOptions(accountName: 'swiss.realunit.app.secure');
+  static const _namespaceMigrationKey = 'secure.storage.namespaced';
+
+  const SecureStorage()
+      : _secureStorage = const FlutterSecureStorage(
+          aOptions: _namespacedAndroid,
+          iOptions: _namespacedIos,
+        ),
+        _isolateFromWalletKit = true;
 
   /// Test-only constructor that injects a [FlutterSecureStorage] (typically a
   /// mock or the platform-interface-backed `TestFlutterSecureStoragePlatform`).
   /// Lets unit tests exercise every instance method without booting a real
   /// platform channel — the production code path stays untouched.
   @visibleForTesting
-  const SecureStorage.withStorage(this._secureStorage);
+  const SecureStorage.withStorage(this._secureStorage)
+      : _isolateFromWalletKit = false;
+
+  static const _legacyKeysToMigrate = [
+    _databaseEncryptionKey,
+    _mnemonicEncryptionKey,
+    _pinCredentialKey,
+    _pinHashKey,
+    _pinSaltKey,
+    _biometricEnabledKey,
+    _pinFailedAttemptsKey,
+    _pinLockedUntilKey,
+  ];
+
+  /// One-shot copy from the un-namespaced store (the one WalletKit shares)
+  /// into the isolated namespace. No-op for [SecureStorage.withStorage].
+  Future<void> migrateFromUnnamespacedStoreIfNeeded({
+    FlutterSecureStorage legacy = const FlutterSecureStorage(),
+  }) async {
+    if (!_isolateFromWalletKit) return;
+    if (await _secureStorage.read(key: _namespaceMigrationKey) == '1') return;
+    for (final key in _legacyKeysToMigrate) {
+      try {
+        final value = await legacy.read(key: key);
+        if (value == null) continue;
+        if (await _secureStorage.read(key: key) != null) continue;
+        await _secureStorage.write(key: key, value: value);
+      } catch (_) {
+        // Legacy store may be empty or unavailable; never block boot.
+      }
+    }
+    await _secureStorage.write(key: _namespaceMigrationKey, value: '1');
+  }
 
   // Database
 

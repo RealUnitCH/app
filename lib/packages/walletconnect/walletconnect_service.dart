@@ -240,12 +240,6 @@ class WalletConnectService {
           ),
         );
       case 'eth_signTransaction':
-        _prompts.add(
-          WalletConnectRequestPrompt(
-            request: request,
-            messagePreview: jsonEncode(request.params),
-          ),
-        );
       case 'eth_sendTransaction':
         await _rejectUnsupportedTransaction(request.requestId);
       default:
@@ -287,8 +281,6 @@ class WalletConnectService {
                 : 1;
             final signature = await _signTypedData(chainId, jsonData);
             await _engine.approveRequest(request.requestId, signature);
-          case 'eth_signTransaction':
-            await _rejectUnsupportedTransaction(request.requestId);
           default:
             await _engine.rejectRequest(request.requestId);
         }

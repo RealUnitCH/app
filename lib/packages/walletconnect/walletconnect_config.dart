@@ -13,7 +13,6 @@ abstract final class WalletConnectConfig {
     'eth_sign',
     'eth_signTypedData',
     'eth_signTypedData_v4',
-    'eth_signTransaction',
     'wallet_switchEthereumChain',
     'eth_chainId',
     'eth_accounts',
