@@ -83,7 +83,7 @@ void main() {
         proposerUrl: 'https://etherscan.io',
       ),
     );
-    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(engine.rejectedSessions, ['9']);
     expect(errors, isNotEmpty);
     expect(errors.first.type, WalletConnectServiceErrorType.unsupportedProvider);
@@ -101,7 +101,7 @@ void main() {
         proposerUrl: 'https://tokeninfo.aktionariat.com',
       ),
     );
-    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(engine.rejectedSessions, ['8']);
     expect(errors.first.type, WalletConnectServiceErrorType.invalidVerification);
     expect(prompts, isEmpty);
@@ -117,7 +117,7 @@ void main() {
         proposerUrl: 'https://tokeninfo.aktionariat.com',
       ),
     );
-    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(engine.rejectedSessions, ['7']);
     expect(errors.first.type, WalletConnectServiceErrorType.invalidVerification);
     expect(prompts, isEmpty);
@@ -133,7 +133,7 @@ void main() {
         proposerUrl: 'https://tokeninfo.aktionariat.com',
       ),
     );
-    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(engine.rejectedSessions, isEmpty);
     expect(prompts, hasLength(1));
   });
@@ -149,7 +149,7 @@ void main() {
         verifyStatus: WalletConnectVerifyStatus.valid,
       ),
     );
-    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(prompts, hasLength(1));
     await service.approvePrompt(prompts.first);
     expect(engine.approvedRequests[3], 'sig:hello');
@@ -168,7 +168,7 @@ void main() {
         verifyStatus: WalletConnectVerifyStatus.valid,
       ),
     );
-    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(prompts, isEmpty);
     expect(engine.rejectedRequests, [4]);
     expect(errors.first.type, WalletConnectServiceErrorType.sendTransactionUnsupported);

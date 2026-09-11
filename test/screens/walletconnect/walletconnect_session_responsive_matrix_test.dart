@@ -79,7 +79,8 @@ void main() {
                   child: const WalletConnectSessionView(pairingUri: _pairing),
                 ),
               );
-              await tester.pumpAndSettle();
+              await tester.pump();
+              await tester.pump(const Duration(milliseconds: 50));
             },
             reason: 'WalletConnectSessionView overflow / ${cell.label}',
           );

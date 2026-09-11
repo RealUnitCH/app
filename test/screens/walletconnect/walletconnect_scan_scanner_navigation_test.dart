@@ -75,17 +75,20 @@ void main() {
       const capture = BarcodeCapture(barcodes: [Barcode(rawValue: _pairing)]);
       scanner.onDetect!(capture);
       scanner.onDetect!(capture);
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
 
       expect(find.byType(WalletConnectSessionView), findsOne);
 
       Navigator.of(tester.element(find.byType(WalletConnectSessionView))).pop();
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
       expect(find.byType(WalletConnectSessionView), findsNothing);
 
       final scannerAfterPop = tester.widget<MobileScanner>(find.byType(MobileScanner));
       scannerAfterPop.onDetect!(capture);
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
       expect(find.byType(WalletConnectSessionView), findsOne);
     },
   );
