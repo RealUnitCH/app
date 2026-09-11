@@ -36,6 +36,12 @@ void main() {
       expect(WalletConnectAllowlist.isAllowedOrigin('http://shares.realunit.ch'), isFalse);
     });
 
+    test('rejects scheme-relative URLs even for allowlisted hosts', () {
+      expect(WalletConnectAllowlist.isAllowedOrigin('//aktionariat.com'), isFalse);
+      expect(WalletConnectAllowlist.isAllowedOrigin('//shares.realunit.ch'), isFalse);
+      expect(WalletConnectAllowlist.isAllowedOrigin('//app.frankencoin.com'), isFalse);
+    });
+
     test('accepts https subdomain and bare host (prepended to https)', () {
       expect(
         WalletConnectAllowlist.isAllowedOrigin('https://tokeninfo.aktionariat.com'),

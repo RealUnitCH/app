@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/packages/io/normalize_referral_code.dart';
+import 'package:realunit_wallet/packages/walletconnect/walletconnect_uri.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 import 'package:realunit_wallet/setup/routing/referral_bind.dart';
 import 'package:realunit_wallet/setup/routing/referral_pending_code.dart';
-import 'package:realunit_wallet/packages/walletconnect/walletconnect_uri.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 
 /// Custom URL scheme the app is opened with. Registered in

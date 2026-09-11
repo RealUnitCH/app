@@ -10,6 +10,7 @@ class _FakeEngine implements WalletConnectEngine {
   final _events = StreamController<WalletConnectIncoming>.broadcast();
   final rejectedSessions = <String>[];
   final rejectedRequests = <int>[];
+  final disconnectedTopics = <String>[];
   final approvedSessions = <String>[];
   final approvedRequests = <int, String>{};
   var pairCalls = 0;
@@ -47,7 +48,9 @@ class _FakeEngine implements WalletConnectEngine {
   }
 
   @override
-  Future<void> disconnect(String topic) async {}
+  Future<void> disconnect(String topic) async {
+    disconnectedTopics.add(topic);
+  }
 
   @override
   Future<void> reset() async {
@@ -127,6 +130,24 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(engine.rejectedSessions, ['7']);
     expect(errors.first.type, WalletConnectServiceErrorType.invalidVerification);
+    expect(prompts, isEmpty);
+  });
+
+  test('rejects policy-fail session requests and disconnects the topic', () async {
+    engine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 21,
+        topic: 'topic-etherscan',
+        method: 'personal_sign',
+        params: ['hello', address],
+        originUrl: 'https://etherscan.io',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(engine.rejectedRequests, [21]);
+    expect(engine.disconnectedTopics, ['topic-etherscan']);
+    expect(errors.first.type, WalletConnectServiceErrorType.unsupportedProvider);
     expect(prompts, isEmpty);
   });
 
