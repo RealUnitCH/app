@@ -1,11 +1,11 @@
 # Visual Regression Tests
 
-Pixel-exact baseline tests for every page in the app. 57 `lib/screens/**/*_page.dart`
-files mapped to 94 Golden PNGs under `test/goldens/screens/` (page renderings
+Pixel-exact baseline tests for every page in the app. 81 `lib/screens/**/*_page.dart`
+files mapped to 350 Golden PNGs under `test/goldens/` (`screens/` and `widgets/`) (page renderings
 plus state variants: Buy/Sell error banners, KYC loading/failure, Dashboard
 with-balance, RestoreWallet valid/invalid, Legal-Disclaimer steps, etc.),
 validated on each PR by the `Visual Regression` job (required status check
-on `develop` + `main`).
+on `staging`, `develop` and `main`).
 
 ## Stack
 
@@ -29,7 +29,7 @@ One test file per `lib/screens/<feature>/<feature>_page.dart` under
 have multiple state variants (e.g. Welcome has iOS + Android theme,
 Buy has initial + payment-info-loaded, Settings has default +
 confirm-logout-sheet) — those produce more than one PNG each. All
-baselines live under `test/goldens/screens/<feature>/goldens/macos/*.png`.
+baselines live under `test/goldens/screens/<feature>/goldens/macos/*.png` or `test/goldens/widgets/<widget>/goldens/macos/*.png`.
 
 ### Skipped: `web_view_page.dart`
 
@@ -96,7 +96,8 @@ git push
 
 ### Adding a new golden test
 
-1. Add a `*_golden_test.dart` under `test/goldens/screens/<feature>/`.
+1. Add a `*_golden_test.dart` under `test/goldens/screens/<feature>/`
+   or `test/goldens/widgets/<widget>/`.
    Reuse the mock pattern from the existing golden tests.
 2. Open a Draft PR. The `golden-tests` job will be red because the new
    test has no committed baseline.
@@ -190,7 +191,7 @@ public repos are free even for macOS minutes.
 
 ## Handbook screenshots are sourced from Goldens
 
-The 52 PNGs the handbook serves at `handbook.realunit.app/screenshots/`
+The 299 PNGs the handbook serves at `handbook.realunit.app/screenshots/`
 are assembled from the Golden baselines at docker-build time. One
 Golden → one handbook page, via the explicit mapping in
 `scripts/assemble-handbook-screenshots.sh`. The handbook does **not**
@@ -211,25 +212,26 @@ have its own screenshot set anymore.
 ### Where each handbook page comes from
 
 Authoritative mapping table lives in
-`scripts/assemble-handbook-screenshots.sh` — keep it in sync with
-`.maestro/handbook/*.yaml` (one entry per flow). The script copies the
+`scripts/assemble-handbook-screenshots.sh` — one row per handbook slot
+(only slots 01–26 have a companion `.maestro/handbook/*.yaml` smoke flow;
+slots 27+ are golden-only). The script copies the
 Golden into the output directory with the handbook's expected
 `NN-name.png` filename; the Dockerfile multi-stage build then layers
 that directory into `/usr/share/nginx/html/screenshots/`.
 
 ### When you add a new handbook page
 
-1. Add the `.maestro/handbook/<NN>-<name>.yaml` flow (still useful as
-   integration smoke even if no longer the screenshot source — see
-   Maestro section below for current PR-gate vs nightly status).
-2. Add a Golden test under `test/goldens/screens/<screen>/` that
+1. Optionally add a `.maestro/handbook/<NN>-<name>.yaml` flow (only as
+   navigation smoke, not as screenshot source — see Maestro section
+   below for current PR-gate vs nightly status).
+2. Add a Golden test under `test/goldens/screens/<screen>/` or `test/goldens/widgets/<widget>/` (whichever tree the UI lives in) that
    renders the same UI state as the handbook flow's terminal screen.
 3. Add a row to the `MAPPING` array in
    `scripts/assemble-handbook-screenshots.sh` pointing at the new
    Golden file.
 4. Open the PR. The `Handbook Build Check` workflow runs
    `docker build` and a container smoke (`/healthz` + auth gate +
-   probe `/screenshots/<NN>-*.png`). A missing Golden surfaces here
+   spot-checks selected mapped screenshots via `docker exec test -f`; the full set is gated by the assemble step (`expected 299`)). A missing Golden surfaces here
    as a missing-source error from the assembly script before docker
    even spins up.
 
@@ -242,6 +244,6 @@ handbook-screenshot recapture step needed.
 
 ### Reviewing a handbook visual change
 
-Pull the artifact or diff the PNG in `test/goldens/screens/**/` like
-any other Golden review. There is no second set of handbook PNGs to
+Pull the artifact or diff the PNG in `test/goldens/screens/**/` or
+`test/goldens/widgets/**/` like any other Golden review. There is no second set of handbook PNGs to
 also check.
