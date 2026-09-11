@@ -150,10 +150,15 @@ void main() {
         errorMessage: referralUnavailableMessage,
       ),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
-    'acceptTerms keeps the previous error while the retry POST is in flight',
+    'acceptTerms keeps the previous error while the retry PUT is in flight',
     build: () {
       when(() => service.acceptTerms(version: any(named: 'version'))).thenAnswer((_) async {});
       when(() => service.getSummary()).thenAnswer((_) async => _eligible);
@@ -166,10 +171,15 @@ void main() {
       const ReferralTermsAccepting(summary: _needsTerms, errorMessage: 'nope'),
       const ReferralOverviewLoaded(summary: _eligible, invites: []),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
-    'acceptTerms ignores a second call while the POST is in flight',
+    'acceptTerms ignores a second call while the PUT is in flight',
     build: () {
       acceptRelease = Completer<void>();
       when(
@@ -188,7 +198,9 @@ void main() {
       await second;
     },
     verify: (_) {
-      verify(() => service.acceptTerms(version: ReferralTermsDto.bundledVersion)).called(1);
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
     },
   );
 
@@ -473,6 +485,11 @@ void main() {
         invitesError: referralUnavailableMessage,
       ),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
@@ -679,6 +696,11 @@ void main() {
       const ReferralTermsAccepting(summary: _needsTerms),
       const ReferralNotEligible(),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
@@ -977,7 +999,7 @@ void main() {
   );
 
   blocTest<ReferralCubit, ReferralState>(
-    'acceptTerms maps a timed-out POST back to the checkbox',
+    'acceptTerms maps a timed-out PUT back to the checkbox',
     build: () {
       when(
         () => service.acceptTerms(version: any(named: 'version')),
@@ -993,6 +1015,11 @@ void main() {
         errorMessage: referralUnavailableMessage,
       ),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
@@ -1010,6 +1037,11 @@ void main() {
       const ReferralTermsAccepting(summary: _needsTerms),
       const ReferralFailure(message: referralUnavailableMessage),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(
@@ -1025,6 +1057,11 @@ void main() {
       const ReferralTermsAccepting(summary: _needsTerms),
       const ReferralFailure(message: referralUnavailableMessage),
     ],
+    verify: (_) {
+      verify(
+        () => service.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
+    },
   );
 
   blocTest<ReferralCubit, ReferralState>(

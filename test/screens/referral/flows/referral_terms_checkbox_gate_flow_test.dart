@@ -5,12 +5,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_summary_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_terms_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/screens/referral/cubit/referral_cubit.dart';
 import 'package:realunit_wallet/screens/referral/referral_terms_page.dart';
 import 'package:realunit_wallet/styles/themes.dart';
@@ -19,8 +17,6 @@ import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'support/test_view.dart';
 
 class _MockReferralCubit extends MockCubit<ReferralState> implements ReferralCubit {}
-
-class _MockService extends Mock implements RealUnitReferralService {}
 
 const _summary = ReferralSummaryDto(
   eligible: true,
@@ -42,11 +38,7 @@ void main() {
       const Stream<ReferralState>.empty(),
       initialState: const ReferralNeedsTerms(summary: _summary),
     );
-    when(() => cubit.acceptTerms()).thenAnswer((_) async {});
-  });
-
-  tearDown(() async {
-    await GetIt.instance.reset();
+    when(() => cubit.acceptTerms(version: any(named: 'version'))).thenAnswer((_) async {});
   });
 
   Future<void> pumpTerms(
@@ -104,7 +96,9 @@ void main() {
 
       await tester.tap(find.byType(AppFilledButton));
       await tester.pump();
-      verify(() => cubit.acceptTerms()).called(1);
+      verify(
+        () => cubit.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
     },
   );
 
@@ -127,17 +121,14 @@ void main() {
   );
 
   testWidgets('checkbox is hidden until the TB markdown has loaded', (tester) async {
-    final service = _MockService();
-    when(() => service.getTerms()).thenAnswer(
-      (_) => Completer<ReferralTermsDto>().future,
-    );
-    GetIt.instance.registerSingleton<RealUnitReferralService>(service);
-
+    final pendingAsset = Completer<String>();
     await pumpTerms(
       tester,
       home: BlocProvider<ReferralCubit>.value(
         value: cubit,
-        child: const ReferralTermsPage(),
+        child: ReferralTermsPage(
+          loadAsset: (_) => pendingAsset.future,
+        ),
       ),
     );
     await tester.pump();

@@ -11,6 +11,7 @@ import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_terms_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
@@ -401,9 +402,12 @@ void main() {
               'AB12',
               timeout: const Duration(milliseconds: 20),
             )
-            .then<void>((_) {}, onError: (Object e, StackTrace _) {
-          caught = e;
-        });
+            .then<void>(
+              (_) {},
+              onError: (Object e, StackTrace _) {
+                caught = e;
+              },
+            );
 
         async.elapse(const Duration(milliseconds: 20));
         expect(caught, isA<TimeoutException>());
@@ -530,9 +534,12 @@ void main() {
               code: 'XY',
               timeout: const Duration(milliseconds: 20),
             )
-            .then<void>((_) {}, onError: (Object e, StackTrace _) {
-          caught = e;
-        });
+            .then<void>(
+              (_) {},
+              onError: (Object e, StackTrace _) {
+                caught = e;
+              },
+            );
 
         async.elapse(const Duration(milliseconds: 20));
         expect(caught, isA<TimeoutException>());
@@ -552,10 +559,11 @@ void main() {
   });
 
   group('$RealUnitReferralService.acceptTerms', () {
-    test('POSTs accepted:true with the rendered version and accepts 200 or 201', () async {
+    test('PUTs accepted:true with the rendered version and accepts 200 or 201', () async {
       Map<String, dynamic>? body;
       final client = MockClient((request) async {
         body = jsonDecode(request.body) as Map<String, dynamic>;
+        expect(request.method, 'PUT');
         expect(request.url.path, '/v1/realunit/referral/terms/accept');
         expect(request.headers['Authorization'], 'Bearer jwt-1');
         return http.Response('{}', 201);
@@ -563,6 +571,20 @@ void main() {
 
       await build(client).acceptTerms(version: '2026-09-01');
       expect(body, {'accepted': true, 'version': '2026-09-01'});
+    });
+
+    test('defaults version to the bundled terms version', () async {
+      Map<String, dynamic>? body;
+      final client = MockClient((request) async {
+        body = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response('{}', 200);
+      });
+
+      await build(client).acceptTerms();
+      expect(body, {
+        'accepted': true,
+        'version': ReferralTermsDto.bundledVersion,
+      });
     });
 
     test('throws ApiException on a non-200/201 response', () async {
@@ -736,7 +758,7 @@ void main() {
         path = request.url.path;
         return http.Response(
           jsonEncode({
-            'version': '2026-08-14',
+            'version': '2026-08-26',
             'markdown': '# TB',
             'markdownEn': '# Terms',
           }),
@@ -746,12 +768,12 @@ void main() {
 
       final terms = await build(client).getTerms();
       expect(path, '/v1/realunit/referral/terms');
-      expect(terms.version, '2026-08-14');
+      expect(terms.version, '2026-08-26');
       expect(terms.textForLang('de'), '# TB');
       expect(terms.textForLang('en'), '# Terms');
     });
 
-    test('aborts a stalled terms fetch so the bundled TB can load', () {
+    test('aborts a stalled terms fetch after lookupTimeout', () {
       fakeAsync((async) {
         final client = MockClient((request) async {
           await Future<void>.delayed(const Duration(seconds: 30));
@@ -761,9 +783,12 @@ void main() {
         Object? caught;
         build(client)
             .getTerms(timeout: const Duration(milliseconds: 20))
-            .then<void>((_) {}, onError: (Object e, StackTrace _) {
-          caught = e;
-        });
+            .then<void>(
+              (_) {},
+              onError: (Object e, StackTrace _) {
+                caught = e;
+              },
+            );
 
         async.elapse(const Duration(milliseconds: 20));
         expect(caught, isA<TimeoutException>());

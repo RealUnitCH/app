@@ -7,11 +7,10 @@ the decision authority. This app is a rendering layer.
 
 Authenticated routes use the existing Bearer session.
 
-Live contract until `DFXswiss/backend` is writable (private):
-[JonnyLuca/dfx-referral-api](https://github.com/JonnyLuca/dfx-referral-api)
-(`GET`/`POST /v1/realunit/referral/*`, 70 REALU gate re-checked at credit,
-quarterly cap 100, 3-month expiry, promo `redemptionCap` required, min-buy N
-default 200, KYC + late bind, CORS for `realunit.app`, NestJS drop-in
+Live contract: `GET`/`POST /v1/realunit/referral/*` on `api.dfx.swiss` and `dev.api.dfx.swiss`
+(70 REALU gate re-checked at credit,
+quarterly cap 100, 3-month expiry, promo `redemptionCap` required, promo
+`minBuyRealu` default 200, referral first-buy floor 200, KYC + late bind, CORS for `realunit.app`, NestJS drop-in
 `RealUnitReferralController`). Credit is evaluated on Aktionariat
 **settlement** (whole REALU shares) and again when KYC Level 30 is
 reached — not on `PUT /v1/realunit/buy/{id}/confirm` (payment
@@ -34,10 +33,10 @@ does not credit from a stale snapshot (TB Ziff. 2). GET summary and
 POST invites then return `503 { "code": "UNAVAILABLE" }` so this app
 retries instead of showing «not eligible». Live `GET /v1/realunit/account`
 404 `Account not found` is a known-zero holding (tile stays hidden), not
-unknown. Live swagger still
-has no `/v1/realunit/referral` paths; public lookup currently returns
-NestJS `Cannot GET`. The app maps that body (and `503 UNAVAILABLE`)
-to the unavailable retry copy, not Nest internals. `onAccountMerge` /
+unknown. The `/v1/realunit/referral/*` routes are mounted on
+`api.dfx.swiss`; should a deployment ever lack them,
+public lookup returns NestJS `Cannot GET`, and the app maps that body
+(and `503 UNAVAILABLE`) to the unavailable retry copy, not Nest internals. `onAccountMerge` /
 `mergeWallets` is idempotent so a DFX `register/wallet` retry after
 the dropped key is gone does not 404.
 
@@ -78,26 +77,28 @@ API token `Aktienkurs` (never «aktueller NAV»). The tile localizes it
 
 ```json
 {
-  "version": "2026-08-14",
+  "version": "2026-08-26",
   "markdown": "…",
   "markdownEn": "…"
 }
 ```
 
-The app renders this 1:1. Bundled `assets/legal/referral_terms_*.md` is only
-a fallback when the call fails.
+The displayed text is `assets/legal/referral_terms_*.md`. The app renders
+that in-app (`rootBundle`, like `LegalDocumentPage`). PUT accept version
+`2026-08-26` matching the files.
 
-### `POST /v1/realunit/referral/terms/accept`
+### `PUT /v1/realunit/referral/terms/accept`
 
-Body: `{ "accepted": true, "version": "2026-08-14" }`. `version` is the
-terms version the user accepted (bundled fallback `2026-08-14`).
+Body: `{ "accepted": true, "version": "2026-08-26" }`. `version` is the
+bundled terms version matching the files (`2026-08-26`).
 
 ### `POST /v1/realunit/referral/invites`
 
 Body: `{ "guestName": "Alice" }`. Empty, whitespace-only, or
 format-character-only names are **400** (`guestName required`). The
 server applies the same folds as the app (ZWSP/bidi stripped, Unicode
-spaces collapsed, cap 80).
+spaces collapsed); the app caps the name at 80 characters, the API
+accepts up to 256.
 
 Response:
 
@@ -122,7 +123,7 @@ while the name was still the wallet address is not stuck as
 the prize-mail greeting too; unsent mail waits for a real `mail`
 address instead of sending to `0x…`. The prize confirmation is HTML at
 send (`html` / `htmlEn` from the plaintext Anzahl / Datum / frozen CHF);
-Überwachung `GET /admin/emails` stays the compact plaintext body. The app renders
+Überwachung stays the compact plaintext body. The app renders
 `copyText` / `copyTextEn` 1:1 except `http://`, protocol-relative
 `//realunit.app`, `www.realunit.app`, and scheme-less
 `realunit.app/…` are folded onto
@@ -186,8 +187,10 @@ copy. Promo `campaignText` is shown 1:1 in a dialog.
 `kind` is `Invite` or `Promo`. If `kind` is omitted, campaign/action text
 without an inviter name is treated as promo so the confirmation dialog
 still appears. The API rejects self-referral, double-bind, and promo+invite
-stacking. Promo credit is only the first successful purchase of at least
-`minBuyRealu` (default 200). A first buy below N creates no later claim.
+stacking. The inviter's referral prize is due only when the invitee's first
+completed REALU buy is at least 200, checked on the server. Promo credit
+uses the promo code's own `minBuyRealu` (default 200). A first buy below
+the applicable floor creates no later claim.
 `redemptionCap` is required — no unlimited option.
 
 ### `GET /v1/realunit/referral/code/:code` (public)
@@ -247,13 +250,13 @@ row.
   browser; root-relative `/…` paths open as `https://realunit.ch/…`;
   protocol-relative `//host/…` opens as https; mailto and other schemes stay in the markdown); the accepted-terms checkbox is shown only after the
   markdown has loaded; a later load (language change or Retry)
-  discards an earlier in-flight result. A hung bundled TB asset is timed
-  out after 5s so Retry is shown. Retry stays on the load-failed copy in
+  discards an earlier in-flight result. A missing or empty locale asset
+  shows Retry. Retry stays on the load-failed copy in
   the loading state so a second tap is ignored (the screen is not
   replaced with a blank spinner). create-invite button after checkbox
   «Ich habe die Teilnahmebedingungen gelesen und akzeptiert».
   Accepting terms opens the name-entry screen. A second accept while
-  the POST is in flight is ignored. A failed accept
+  the PUT is in flight is ignored. A failed accept
   focuses Create so it can be retried. A second accept stays on that
   error copy in the loading state so the page is not replaced with only
   the accepting spinner. After create, the
@@ -287,7 +290,7 @@ row.
   token, never rounded up), CHF, label «Aktienkurs»
   (empty or «NAV» API labels fall back to the localized Aktienkurs copy).
   Count tiles are announced as «3 Offen» / «2 Gutgeschrieben»; the total
-  tile is one name (REALU, frozen CHF, Aktienkurs).
+  tile is one name (REALU, CHF at the current share price, Aktienkurs).
   Open invites show the personalised share text (API copyText 1:1,
   otherwise the localised template) and can be copied and shared again,
   including when the guest name is blank («Deine Einladung», share text
@@ -300,8 +303,8 @@ row.
   lock is released when that screen pops, and overview refresh after
   create is not awaited, so a hung summary GET cannot block Create.
   The overview title and Settings → Legal documents (last tile) open
-  the Teilnahmebedingungen read-only (GET /terms 1:1, then bundled
-  14.08) so Ziff. 2–11 stay reachable after the checkbox.
+  the Teilnahmebedingungen read-only (in-app Markdown from assets) so
+  Ziff. 2–11 stay reachable after the checkbox.
 - Registration: dedicated optional step (skip allowed) with the same
   field for invite and promo. A pasted `realunit.app/invite|promo/…`
   URL (or the landing copy button) is reduced to the code before lookup
@@ -337,8 +340,9 @@ row.
   code or URL (zero-width, LRM/RLM, bidi) are stripped so lookup is not
   sent a tainted token. Extracted codes are uppercased, stripped of
   messenger zero-width/fullwidth characters and trailing sentence punct
-  (`!`, `?`, `/`, …), and capped at 32 like the API `sanitizeReferralCode`
-  fold, including a nested `invite|promo/{code}` inside a pasted token,
+  (`!`, `?`, `/`, …), and capped at 32 (app/web limit; the API accepts named
+  promo codes up to 256 characters and issues batch codes as
+  `PREFIX-XXXXXXXX`), including a nested `invite|promo/{code}` inside a pasted token,
   as are typographic quotes wrapping a copied URL
   (`“…”`, `«…»`), wrapping parentheses, and a trailing `)` from a
   markdown link, a trailing `"` / `'` from an HTML `href`, or HTML
@@ -539,11 +543,8 @@ Install Referrer covers Android).
 
 ## Out of this repository
 
-The HTTP contract and Nest drop-in live in
-[JonnyLuca/dfx-referral-api](https://github.com/JonnyLuca/dfx-referral-api)
-(`nest/*`, `openapi/referral.json`). Copy that module into private
-`DFXswiss/backend` next to `RealUnitLegalController`. Live
-`api.dfx.swiss` has no `/v1/realunit/referral/*` until that mount
-(NestJS `Cannot GET`). Prize-wallet keys (`PRIZE_WALLET_KEY`,
+The HTTP contract is the DFX API (`api.dfx.swiss` / `dev.api.dfx.swiss`,
+`GET`/`POST /v1/realunit/referral/*`, including
+`POST /v1/realunit/referral/promo/batch`). Prize-wallet keys (`PRIZE_WALLET_KEY`,
 `ETH_RPC_URL`) and the Play app-signing SHA256 are mount/release
 config, not app code.

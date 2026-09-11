@@ -12,7 +12,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_summary_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_terms_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/screens/referral/cubit/referral_cubit.dart';
 import 'package:realunit_wallet/screens/referral/referral_error_message.dart';
 import 'package:realunit_wallet/screens/referral/referral_terms_page.dart';
@@ -92,7 +91,9 @@ void main() {
 
       await tester.tap(find.byType(AppFilledButton));
       await tester.pump();
-      verify(() => cubit.acceptTerms(version: ReferralTermsDto.bundledVersion)).called(1);
+      verify(
+        () => cubit.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
     },
   );
 
@@ -125,22 +126,8 @@ void main() {
   );
 
   testWidgets(
-    'read-only loads GET /terms 1:1 instead of only the bundled asset',
+    'read-only loads assets via loadAsset',
     (tester) async {
-      var assetRequested = false;
-      final service = _MockReferralService();
-      when(() => service.getTerms()).thenAnswer(
-        (_) async => const ReferralTermsDto(
-          version: '2026-09-01',
-          markdown: '# Live TB after accept',
-          markdownEn: '# Live EN',
-        ),
-      );
-      GetIt.instance.registerSingleton<RealUnitReferralService>(service);
-      addTearDown(() async {
-        await GetIt.instance.reset();
-      });
-
       await tester.pumpWidget(
         MaterialApp(
           theme: realUnitTheme,
@@ -154,9 +141,9 @@ void main() {
           supportedLocales: S.delegate.supportedLocales,
           home: ReferralTermsPage(
             readOnly: true,
-            loadAsset: (_) async {
-              assetRequested = true;
-              return '# Bundled fallback';
+            loadAsset: (path) async {
+              expect(path, 'assets/legal/referral_terms_de.md');
+              return '# Asset TB after accept';
             },
           ),
         ),
@@ -164,9 +151,7 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.textContaining('Live TB after accept'), findsOneWidget);
-      expect(find.textContaining('Bundled fallback'), findsNothing);
-      expect(assetRequested, isFalse);
+      expect(find.textContaining('Asset TB after accept'), findsOneWidget);
       expect(find.byType(CheckboxListTile), findsNothing);
     },
   );
@@ -285,7 +270,7 @@ void main() {
   });
 
   testWidgets(
-    'keeps the accept error while the retry POST is in flight',
+    'keeps the accept error while the retry PUT is in flight',
     (tester) async {
       when(() => cubit.state).thenReturn(
         const ReferralTermsAccepting(
@@ -341,15 +326,8 @@ void main() {
   );
 
   testWidgets(
-    'falls back to bundled TB 14.08 when the terms API is unreachable',
+    'shows loadAsset markdown',
     (tester) async {
-      final service = _MockReferralService();
-      when(() => service.getTerms()).thenThrow(Exception('down'));
-      GetIt.instance.registerSingleton<RealUnitReferralService>(service);
-      addTearDown(() async {
-        await GetIt.instance.reset();
-      });
-
       await tester.pumpWidget(
         MaterialApp(
           theme: realUnitTheme,
@@ -363,30 +341,56 @@ void main() {
           supportedLocales: S.delegate.supportedLocales,
           home: BlocProvider<ReferralCubit>.value(
             value: cubit,
-            child: const ReferralTermsPage(),
+            child: ReferralTermsPage(
+              loadAsset: (_) async => '# Asset TB 26.08',
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.textContaining('Asset TB 26.08'), findsOneWidget);
+      expect(find.text('Wiederholen'), findsNothing);
+      expect(find.byType(MarkdownBody), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'shows Retry when loadAsset throws',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: realUnitTheme,
+          locale: const Locale('de'),
+          localizationsDelegates: const [
+            S.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          supportedLocales: S.delegate.supportedLocales,
+          home: BlocProvider<ReferralCubit>.value(
+            value: cubit,
+            child: ReferralTermsPage(
+              loadAsset: (_) async => throw Exception('missing asset'),
+            ),
           ),
         ),
       );
       await tester.pump();
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('14.08.2026'), findsWidgets);
-      expect(find.textContaining('70 RealUnit-Aktientoken'), findsWidgets);
+      expect(find.textContaining('Dokument konnte nicht geladen'), findsOneWidget);
+      expect(find.text('Wiederholen'), findsOneWidget);
+      expect(find.byType(MarkdownBody), findsNothing);
     },
   );
 
   testWidgets('checkbox is hidden until the TB markdown has loaded', (
     tester,
   ) async {
-    final service = _MockReferralService();
-    when(() => service.getTerms()).thenAnswer(
-      (_) => Completer<ReferralTermsDto>().future,
-    );
-    GetIt.instance.registerSingleton<RealUnitReferralService>(service);
-    addTearDown(() async {
-      await GetIt.instance.reset();
-    });
-
+    final pendingAsset = Completer<String>();
     await tester.pumpWidget(
       MaterialApp(
         theme: realUnitTheme,
@@ -400,7 +404,9 @@ void main() {
         supportedLocales: S.delegate.supportedLocales,
         home: BlocProvider<ReferralCubit>.value(
           value: cubit,
-          child: const ReferralTermsPage(),
+          child: ReferralTermsPage(
+            loadAsset: (_) => pendingAsset.future,
+          ),
         ),
       ),
     );
@@ -425,17 +431,7 @@ void main() {
     'terms Retry ignores a second tap while markdown is reloading',
     (tester) async {
       var calls = 0;
-      final retryTerms = Completer<ReferralTermsDto>();
-      final service = _MockReferralService();
-      when(() => service.getTerms()).thenAnswer((_) async {
-        calls += 1;
-        if (calls == 1) throw Exception('down');
-        return retryTerms.future;
-      });
-      GetIt.instance.registerSingleton<RealUnitReferralService>(service);
-      addTearDown(() async {
-        await GetIt.instance.reset();
-      });
+      final retryAsset = Completer<String>();
 
       await tester.pumpWidget(
         MaterialApp(
@@ -451,7 +447,11 @@ void main() {
           home: BlocProvider<ReferralCubit>.value(
             value: cubit,
             child: ReferralTermsPage(
-              loadAsset: (_) async => throw Exception('missing'),
+              loadAsset: (_) async {
+                calls += 1;
+                if (calls == 1) throw Exception('down');
+                return retryAsset.future;
+              },
             ),
           ),
         ),
@@ -485,18 +485,9 @@ void main() {
   testWidgets(
     'ignores a stale terms load after a later load of another language',
     (tester) async {
-      final first = Completer<ReferralTermsDto>();
-      final second = Completer<ReferralTermsDto>();
-      var calls = 0;
-      final service = _MockReferralService();
-      when(() => service.getTerms()).thenAnswer((_) {
-        calls += 1;
-        return calls == 1 ? first.future : second.future;
-      });
-      GetIt.instance.registerSingleton<RealUnitReferralService>(service);
-      addTearDown(() async {
-        await GetIt.instance.reset();
-      });
+      final first = Completer<String>();
+      final second = Completer<String>();
+      final paths = <String>[];
 
       final locale = ValueNotifier(const Locale('de'));
       addTearDown(locale.dispose);
@@ -517,40 +508,38 @@ void main() {
               supportedLocales: S.delegate.supportedLocales,
               home: BlocProvider<ReferralCubit>.value(
                 value: cubit,
-                child: const ReferralTermsPage(),
+                child: ReferralTermsPage(
+                  loadAsset: (path) {
+                    paths.add(path);
+                    if (path.endsWith('referral_terms_en.md')) {
+                      return second.future;
+                    }
+                    return first.future;
+                  },
+                ),
               ),
             );
           },
         ),
       );
       await tester.pump();
-      expect(calls, 1);
+      expect(paths, ['assets/legal/referral_terms_de.md']);
 
       locale.value = const Locale('en');
       await tester.pump();
-      expect(calls, 2);
+      expect(paths, [
+        'assets/legal/referral_terms_de.md',
+        'assets/legal/referral_terms_en.md',
+      ]);
 
-      second.complete(
-        const ReferralTermsDto(
-          version: '2026-08-14',
-          markdown: '# Alte TB',
-          markdownEn: '# New terms',
-        ),
-      );
+      second.complete('# New EN terms');
       await tester.pump();
-      expect(find.textContaining('New terms'), findsOneWidget);
+      expect(find.textContaining('New EN terms'), findsOneWidget);
 
-      first.complete(
-        const ReferralTermsDto(
-          version: '2026-08-14',
-          markdown: '# Stale DE',
-          markdownEn: '# Stale EN',
-        ),
-      );
+      first.complete('# Stale DE');
       await tester.pump();
-      expect(find.textContaining('New terms'), findsOneWidget);
+      expect(find.textContaining('New EN terms'), findsOneWidget);
       expect(find.textContaining('Stale DE'), findsNothing);
-      expect(find.textContaining('Alte TB'), findsNothing);
     },
   );
 
@@ -588,21 +577,12 @@ void main() {
   });
 
   testWidgets(
-    'loads API terms in the SettingsBloc language, not the widget locale',
+    'loads assets in the SettingsBloc language, not the widget locale',
     (tester) async {
       final settings = _MockSettingsBloc();
       const settingsState = SettingsState(language: Language.de);
       when(() => settings.state).thenReturn(settingsState);
       GetIt.instance.registerSingleton<SettingsBloc>(settings);
-      final service = _MockReferralService();
-      when(() => service.getTerms()).thenAnswer(
-        (_) async => const ReferralTermsDto(
-          version: '2026-09-01',
-          markdown: '# DE-TB-FROM-BLOC',
-          markdownEn: '# EN-TB-FROM-LOCALE',
-        ),
-      );
-      GetIt.instance.registerSingleton<RealUnitReferralService>(service);
       addTearDown(() async {
         await GetIt.instance.reset();
       });
@@ -620,20 +600,32 @@ void main() {
           supportedLocales: S.delegate.supportedLocales,
           home: BlocProvider<ReferralCubit>.value(
             value: cubit,
-            child: const ReferralTermsPage(),
+            child: ReferralTermsPage(
+              loadAsset: (path) async {
+                if (path.endsWith('referral_terms_de.md')) {
+                  return '# DE-ASSET-FROM-BLOC';
+                }
+                if (path.endsWith('referral_terms_en.md')) {
+                  return '# EN-ASSET-FROM-LOCALE';
+                }
+                throw Exception('unexpected $path');
+              },
+            ),
           ),
         ),
       );
       await tester.pump();
       await tester.pump();
 
-      expect(find.textContaining('DE-TB-FROM-BLOC'), findsOneWidget);
-      expect(find.textContaining('EN-TB-FROM-LOCALE'), findsNothing);
+      expect(find.textContaining('DE-ASSET-FROM-BLOC'), findsOneWidget);
+      expect(find.textContaining('EN-ASSET-FROM-LOCALE'), findsNothing);
 
       await tester.tap(find.byType(CheckboxListTile));
       await tester.pump();
       await tester.tap(find.byType(AppFilledButton));
-      verify(() => cubit.acceptTerms(version: '2026-09-01')).called(1);
+      verify(
+        () => cubit.acceptTerms(version: ReferralTermsDto.bundledVersion),
+      ).called(1);
     },
   );
 
@@ -742,5 +734,3 @@ void main() {
     );
   });
 }
-
-class _MockReferralService extends Mock implements RealUnitReferralService {}
