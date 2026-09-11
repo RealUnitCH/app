@@ -112,7 +112,7 @@ void main() {
       const WalletConnectSessionProposal(
         proposalId: '7',
         originUrl: 'https://tokeninfo.aktionariat.com',
-        verifyStatus: WalletConnectVerifyStatus.valid,
+        verifyStatus: WalletConnectVerifyStatus.unknown,
         proposerName: 'Aktionariat',
         proposerUrl: 'https://tokeninfo.aktionariat.com',
       ),

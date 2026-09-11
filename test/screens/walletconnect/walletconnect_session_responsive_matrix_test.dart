@@ -10,9 +10,6 @@ import 'package:realunit_wallet/screens/walletconnect/walletconnect_session_page
 
 import '../../helper/helper.dart';
 
-const _pairing =
-    'wc:00e46b69-d0cc-4b3e-b6a2-cee442f97188@2?relay-protocol=irn&symKey=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
-
 class _FakeEngine implements WalletConnectEngine {
   final _events = StreamController<WalletConnectIncoming>.broadcast();
 
@@ -76,11 +73,20 @@ void main() {
               await tester.pumpApp(
                 MediaQuery(
                   data: cell.mediaQuery,
-                  child: const WalletConnectSessionView(pairingUri: _pairing),
+                  child: const WalletConnectSessionView(
+                    initialPrompt: WalletConnectProposalPrompt(
+                      WalletConnectSessionProposal(
+                        proposalId: '1',
+                        originUrl: 'https://tokeninfo.aktionariat.com',
+                        verifyStatus: WalletConnectVerifyStatus.valid,
+                        proposerName: 'Aktionariat',
+                        proposerUrl: 'https://tokeninfo.aktionariat.com',
+                      ),
+                    ),
+                  ),
                 ),
               );
               await tester.pump();
-              await tester.pump(const Duration(milliseconds: 50));
             },
             reason: 'WalletConnectSessionView overflow / ${cell.label}',
           );

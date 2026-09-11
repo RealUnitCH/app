@@ -12,17 +12,30 @@ import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 /// scanner-navigation catalog can `findsOne` it.
 class WalletConnectSessionView extends StatelessWidget {
   final String? pairingUri;
+  final WalletConnectUserPrompt? initialPrompt;
 
-  const WalletConnectSessionView({super.key, this.pairingUri});
+  const WalletConnectSessionView({
+    super.key,
+    this.pairingUri,
+    this.initialPrompt,
+  });
 
   @override
-  Widget build(BuildContext context) => WalletConnectSessionPage(pairingUri: pairingUri);
+  Widget build(BuildContext context) => WalletConnectSessionPage(
+        pairingUri: pairingUri,
+        initialPrompt: initialPrompt,
+      );
 }
 
 class WalletConnectSessionPage extends StatefulWidget {
   final String? pairingUri;
+  final WalletConnectUserPrompt? initialPrompt;
 
-  const WalletConnectSessionPage({super.key, this.pairingUri});
+  const WalletConnectSessionPage({
+    super.key,
+    this.pairingUri,
+    this.initialPrompt,
+  });
 
   @override
   State<WalletConnectSessionPage> createState() => _WalletConnectSessionPageState();
@@ -39,6 +52,7 @@ class _WalletConnectSessionPageState extends State<WalletConnectSessionPage> {
   @override
   void initState() {
     super.initState();
+    _prompt = widget.initialPrompt;
     _prompts = _service.prompts.listen((prompt) {
       if (!mounted) return;
       setState(() => _prompt = prompt);
