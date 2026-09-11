@@ -47,6 +47,11 @@ void main() {
       expect(WalletConnectAllowlist.isAllowedOrigin('javascript:aktionariat.com'), isFalse);
     });
 
+    test('rejects userinfo that would steal an allowlisted host', () {
+      expect(WalletConnectAllowlist.isAllowedOrigin('https://evil@aktionariat.com'), isFalse);
+      expect(WalletConnectAllowlist.isAllowedOrigin('evil@aktionariat.com'), isFalse);
+    });
+
     test('accepts https subdomain and bare host (prepended to https)', () {
       expect(
         WalletConnectAllowlist.isAllowedOrigin('https://tokeninfo.aktionariat.com'),

@@ -31,11 +31,19 @@ abstract final class WalletConnectAllowlist {
       return null;
     }
     if (uri == null || uri.host.isEmpty) {
-      // Bare host only. Scheme-relative (`//host`) stays fail-closed.
-      if (value.contains('://') || value.startsWith('//')) return null;
+      // Bare host only. Scheme-relative (`//host`) and userinfo (`user@host`)
+      // stay fail-closed.
+      if (value.contains('://') || value.startsWith('//') || value.contains('@')) {
+        return null;
+      }
       uri = Uri.tryParse('https://$value');
     }
-    if (uri == null || uri.host.isEmpty || uri.scheme != 'https') return null;
+    if (uri == null ||
+        uri.host.isEmpty ||
+        uri.scheme != 'https' ||
+        uri.userInfo.isNotEmpty) {
+      return null;
+    }
 
     var host = uri.host.toLowerCase();
     while (host.endsWith('.')) {
