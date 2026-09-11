@@ -162,6 +162,29 @@ void main() {
     expect(engine.approvedRequests[3], 'sig:hello');
   });
 
+  test('session delete blocks a later approve from signing', () async {
+    engine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 11,
+        topic: 'topic',
+        method: 'personal_sign',
+        params: ['hello', address],
+        originUrl: 'https://app.frankencoin.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(prompts, hasLength(1));
+    engine.emit(const WalletConnectSessionDeleted(topic: 'topic'));
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(errors.last.type, WalletConnectServiceErrorType.sessionEnded);
+    expect(
+      () => service.approvePrompt(prompts.first),
+      throwsA(isA<StateError>()),
+    );
+    expect(engine.approvedRequests.containsKey(11), isFalse);
+  });
+
   test('eth_sendTransaction is rejected without prompting', () async {
     engine.emit(
       const WalletConnectSessionRequest(

@@ -526,6 +526,7 @@
   "walletConnectScanInvalid": "Das ist kein WalletConnect-Code.",
   "walletConnectScanTitle": "WalletConnect-Code scannen",
   "walletConnectSendTransactionUnsupported": "Transaktionen über WalletConnect werden nicht unterstützt.",
+  "walletConnectSessionEnded": "Die WalletConnect-Sitzung wurde beendet.",
   "walletConnectSign": "Signieren",
   "walletConnectSigningFailed": "Debug-Wallets können nicht signieren.",
   "walletConnectSignTitle": "Nachricht signieren",

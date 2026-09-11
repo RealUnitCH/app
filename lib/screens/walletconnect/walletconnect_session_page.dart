@@ -72,6 +72,8 @@ class _WalletConnectSessionPageState extends State<WalletConnectSessionPage> {
           S.of(context).walletConnectSendTransactionUnsupported,
         WalletConnectServiceErrorType.signingFailed =>
           S.of(context).walletConnectSigningFailed,
+        WalletConnectServiceErrorType.sessionEnded =>
+          S.of(context).walletConnectSessionEnded,
       };
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -80,7 +82,8 @@ class _WalletConnectSessionPageState extends State<WalletConnectSessionPage> {
         ),
       );
       if (error.type == WalletConnectServiceErrorType.unsupportedProvider ||
-          error.type == WalletConnectServiceErrorType.invalidVerification) {
+          error.type == WalletConnectServiceErrorType.invalidVerification ||
+          error.type == WalletConnectServiceErrorType.sessionEnded) {
         Navigator.of(context).maybePop();
       }
     });

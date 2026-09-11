@@ -18,6 +18,7 @@ enum WalletConnectServiceErrorType {
   unsupportedMethod,
   sendTransactionUnsupported,
   signingFailed,
+  sessionEnded,
 }
 
 final class WalletConnectServiceError {
@@ -68,6 +69,7 @@ class WalletConnectService {
       'WalletConnect could not verify this provider.';
   static const invalidUriMessage = 'This is not a valid WalletConnect URI.';
   static const signingFailedMessage = 'Debug wallets cannot sign.';
+  static const sessionEndedMessage = 'The WalletConnect session ended.';
 
   final WalletConnectEngine _engine;
   final WalletService? _walletService;
@@ -82,6 +84,7 @@ class WalletConnectService {
 
   Future<void>? _initialization;
   bool _initialized = false;
+  bool _sessionLive = false;
 
   WalletConnectService({
     required WalletConnectEngine engine,
@@ -151,6 +154,7 @@ class WalletConnectService {
     await _engine.reset();
     _initialized = false;
     _initialization = null;
+    _sessionLive = false;
   }
 
   Future<void> _initialize() async {
@@ -176,6 +180,7 @@ class WalletConnectService {
     }
     await ensureInitialized();
     if (!_initialized) throw StateError('WalletConnect is not initialized.');
+    _sessionLive = true;
     await _engine.pair(pairingUri);
   }
 
@@ -187,6 +192,7 @@ class WalletConnectService {
           _emitPolicyError(incoming.originUrl, incoming.verifyStatus);
           return;
         }
+        _sessionLive = true;
         _prompts.add(WalletConnectProposalPrompt(incoming));
       case WalletConnectSessionRequest():
         if (!_isAccepted(incoming.originUrl, incoming.verifyStatus)) {
@@ -194,9 +200,16 @@ class WalletConnectService {
           _emitPolicyError(incoming.originUrl, incoming.verifyStatus);
           return;
         }
+        _sessionLive = true;
         await _handleRequest(incoming);
       case WalletConnectSessionDeleted():
-        return;
+        _sessionLive = false;
+        _errors.add(
+          const WalletConnectServiceError(
+            WalletConnectServiceErrorType.sessionEnded,
+            sessionEndedMessage,
+          ),
+        );
     }
   }
 
@@ -281,6 +294,9 @@ class WalletConnectService {
   }
 
   Future<void> approvePrompt(WalletConnectUserPrompt prompt) async {
+    if (!_sessionLive) {
+      throw StateError(sessionEndedMessage);
+    }
     switch (prompt) {
       case WalletConnectProposalPrompt():
         await _engine.approveSession(
