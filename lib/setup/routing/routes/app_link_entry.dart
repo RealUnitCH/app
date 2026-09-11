@@ -516,6 +516,11 @@ void appLinkOnException(
   // stash in [appLinkSchemeRedirect] then fall through unmatched — same no-op
   // as the custom scheme. Do not assert: those URIs are OS-delivered.
   if (extractReferralInviteCode(state.uri) != null) return;
+  final raw = state.uri.toString();
+  if (WalletConnectUri.extractPairingUri(raw) != null ||
+      WalletConnectUri.isScanDeeplink(raw)) {
+    return;
+  }
   // A non-scheme URL that matches no route is a programming error. Installing
   // onException removes go_router's default error screen, so fail loud where
   // tests and debug builds can see it; in release the user stays on the
