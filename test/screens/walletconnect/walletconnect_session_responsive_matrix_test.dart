@@ -65,43 +65,61 @@ void main() {
   tearDownAll(() async => GetIt.instance.reset());
 
   group('WalletConnectSessionView responsive matrix', () {
-    for (final cell in kFullResponsiveMatrix) {
-      testWidgets(cell.id, (tester) async {
-        await withTargetPlatform(cell.device.platform, () async {
-          await expectNoLayoutOverflow(
-            tester,
-            () async {
-              await tester.binding.setSurfaceSize(cell.mediaQuery.size);
-              addTearDown(() async => await tester.binding.setSurfaceSize(null));
-              await tester.pumpApp(
-                MediaQuery(
-                  data: cell.mediaQuery,
-                  child: const WalletConnectSessionView(
-                    initialPrompt: WalletConnectProposalPrompt(
-                      WalletConnectSessionProposal(
-                        proposalId: '1',
-                        originUrl: 'https://tokeninfo.aktionariat.com',
-                        verifyStatus: WalletConnectVerifyStatus.valid,
-                        proposerName: 'Aktionariat',
-                        proposerUrl: 'https://tokeninfo.aktionariat.com',
-                      ),
-                    ),
-                  ),
-                ),
-              );
-              await tester.pump();
-            },
-            reason: 'WalletConnectSessionView overflow / ${cell.label}',
-          );
+    const proposal = WalletConnectProposalPrompt(
+      WalletConnectSessionProposal(
+        proposalId: '1',
+        originUrl: 'https://tokeninfo.aktionariat.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+        proposerName: 'Aktionariat',
+        proposerUrl: 'https://tokeninfo.aktionariat.com',
+      ),
+    );
+    const sign = WalletConnectRequestPrompt(
+      request: WalletConnectSessionRequest(
+        requestId: 1,
+        topic: 'topic-1',
+        method: 'personal_sign',
+        params: ['0x68656c6c6f', '0x1111111111111111111111111111111111111111'],
+        originUrl: 'https://tokeninfo.aktionariat.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+        chainId: 1,
+      ),
+      messagePreview: 'hello',
+    );
 
-          await expectFullyTappable(
-            tester,
-            find.widgetWithText(FilledButton, S.current.walletConnectApprove),
-            within: find.byType(WalletConnectSessionView),
-            reason: 'WalletConnectSessionView / ${cell.label}: Connect CTA not tappable',
-          );
+    for (final entry in [
+      (id: 'proposal', prompt: proposal as WalletConnectUserPrompt, cta: () => S.current.walletConnectApprove),
+      (id: 'sign', prompt: sign, cta: () => S.current.walletConnectSign),
+    ]) {
+      for (final cell in kFullResponsiveMatrix) {
+        testWidgets('${entry.id}/${cell.id}', (tester) async {
+          await withTargetPlatform(cell.device.platform, () async {
+            await expectNoLayoutOverflow(
+              tester,
+              () async {
+                await tester.binding.setSurfaceSize(cell.mediaQuery.size);
+                addTearDown(() async => await tester.binding.setSurfaceSize(null));
+                await tester.pumpApp(
+                  MediaQuery(
+                    data: cell.mediaQuery,
+                    child: WalletConnectSessionView(initialPrompt: entry.prompt),
+                  ),
+                );
+                await tester.pump();
+              },
+              reason: 'WalletConnectSessionView ${entry.id} overflow / ${cell.label}',
+            );
+
+            await expectFullyTappable(
+              tester,
+              find.widgetWithText(FilledButton, entry.cta()),
+              within: find.byType(WalletConnectSessionView),
+              reason:
+                  'WalletConnectSessionView ${entry.id} / ${cell.label}: CTA not tappable',
+            );
+          });
         });
-      });
+      }
     }
   });
 }
