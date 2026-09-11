@@ -122,7 +122,10 @@ class _WalletConnectSessionPageState extends State<WalletConnectSessionPage> {
     setState(() => _busy = true);
     try {
       await _service.approvePrompt(prompt);
-      if (mounted) setState(() => _prompt = null);
+      // A newer prompt may have arrived while approve awaited unlock/relay.
+      if (mounted && identical(_prompt, prompt)) {
+        setState(() => _prompt = null);
+      }
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
