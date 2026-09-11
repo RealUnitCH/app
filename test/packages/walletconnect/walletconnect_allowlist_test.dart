@@ -42,6 +42,11 @@ void main() {
       expect(WalletConnectAllowlist.isAllowedOrigin('//app.frankencoin.com'), isFalse);
     });
 
+    test('rejects non-https schemes that would otherwise prepend onto the host', () {
+      expect(WalletConnectAllowlist.isAllowedOrigin('mailto:x@aktionariat.com'), isFalse);
+      expect(WalletConnectAllowlist.isAllowedOrigin('javascript:aktionariat.com'), isFalse);
+    });
+
     test('accepts https subdomain and bare host (prepended to https)', () {
       expect(
         WalletConnectAllowlist.isAllowedOrigin('https://tokeninfo.aktionariat.com'),

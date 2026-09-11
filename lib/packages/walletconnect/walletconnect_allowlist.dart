@@ -24,9 +24,14 @@ abstract final class WalletConnectAllowlist {
     if (value == null || value.isEmpty) return null;
 
     Uri? uri = Uri.tryParse(value);
+    // Non-https schemes (`http:`, `mailto:`, `javascript:`) must not fall
+    // through to the bare-host prepend (`https://mailto:x@aktionariat.com`
+    // would parse as host `aktionariat.com`).
+    if (uri != null && uri.scheme.isNotEmpty && uri.scheme != 'https') {
+      return null;
+    }
     if (uri == null || uri.host.isEmpty) {
-      // Bare host only. Scheme-relative (`//host`) and other schemes stay
-      // fail-closed — do not prepend https onto an attacker-controlled prefix.
+      // Bare host only. Scheme-relative (`//host`) stays fail-closed.
       if (value.contains('://') || value.startsWith('//')) return null;
       uri = Uri.tryParse('https://$value');
     }
