@@ -49,7 +49,9 @@ abstract final class WalletConnectAllowlist {
     while (host.endsWith('.')) {
       host = host.substring(0, host.length - 1);
     }
-    if (host.startsWith('www.')) host = host.substring(4);
+    // Do not strip `www.`: `www.shares.realunit.ch` must not collapse onto
+    // the exact-host allowlist. `www.aktionariat.com` still matches via
+    // `endsWith('.$domain')`.
     return host.isEmpty ? null : host;
   }
 }

@@ -30,6 +30,10 @@ void main() {
     test('rejects unrelated payloads', () {
       expect(WalletConnectUri.isPairingUri('ethereum:0xabc'), isFalse);
       expect(WalletConnectUri.extractPairingUri('https://etherscan.io'), isNull);
+      expect(
+        WalletConnectUri.isPairingUri('wc:@2?relay-protocol=irn&symKey=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'),
+        isFalse,
+      );
     });
 
     test('extracts uri from an Android intent extra', () {

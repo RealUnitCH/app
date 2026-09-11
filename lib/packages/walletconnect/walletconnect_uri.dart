@@ -6,8 +6,8 @@ abstract final class WalletConnectUri {
     if (uri == null || uri.scheme.toLowerCase() != 'wc') return false;
 
     final beforeQuery = value.split('?').first;
-    final version = RegExp(r'@(\d+)$').firstMatch(beforeQuery)?.group(1);
-    if (version != '2') return false;
+    final pairing = RegExp(r'^wc:([^@]+)@2$', caseSensitive: false).firstMatch(beforeQuery);
+    if (pairing == null || pairing.group(1)!.isEmpty) return false;
     return uri.queryParameters['relay-protocol']?.isNotEmpty == true &&
         uri.queryParameters['symKey']?.isNotEmpty == true;
   }
