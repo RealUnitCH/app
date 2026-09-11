@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/transfer_exceptions.dart';
+import 'package:realunit_wallet/packages/walletconnect/walletconnect_uri.dart';
 import 'package:web3dart/web3dart.dart' show EthereumAddress;
 
 part 'send_recipient_state.dart';
@@ -27,7 +28,12 @@ class SendRecipientCubit extends Cubit<SendRecipientState> {
   /// push drops the [SendRecipientValid] hold and the next camera frame
   /// pushes a second amount page.
   void onCodeDetected(String raw) {
-    if (state is SendRecipientValid) {
+    if (state is SendRecipientValid || state is SendRecipientWalletConnect) {
+      return;
+    }
+    final walletConnectUri = WalletConnectUri.extractPairingUri(raw);
+    if (walletConnectUri != null) {
+      emit(SendRecipientWalletConnect(walletConnectUri));
       return;
     }
     submit(raw);

@@ -32,6 +32,7 @@
 				<key>CFBundleURLSchemes</key>
 				<array>
 					<string>realunit-wallet</string>
+				<string>wc</string>
 				</array>
 			</dict>
 		</array>
@@ -44,7 +45,7 @@
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
 		<key>NSCameraUsageDescription</key>
-		<string>This app needs camera access to verify your identity and to scan payment codes</string>
+		<string>This app needs camera access to verify your identity, scan payment codes, and connect to Aktionariat or Frankencoin</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>Please provide us with your geolocation data to prove your current location</string>
 		<key>NSMicrophoneUsageDescription</key>

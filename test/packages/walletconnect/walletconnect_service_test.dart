@@ -1,0 +1,151 @@
+import 'dart:async';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:realunit_wallet/packages/walletconnect/walletconnect_allowlist.dart';
+import 'package:realunit_wallet/packages/walletconnect/walletconnect_engine.dart';
+import 'package:realunit_wallet/packages/walletconnect/walletconnect_service.dart';
+
+class _FakeEngine implements WalletConnectEngine {
+  final _events = StreamController<WalletConnectIncoming>.broadcast();
+  final rejectedSessions = <String>[];
+  final rejectedRequests = <int>[];
+  final approvedSessions = <String>[];
+  final approvedRequests = <int, String>{};
+  var pairCalls = 0;
+
+  @override
+  Stream<WalletConnectIncoming> get events => _events.stream;
+
+  @override
+  Future<void> init({required String address, required List<int> chainIds}) async {}
+
+  @override
+  Future<void> pair(String uri) async {
+    pairCalls += 1;
+  }
+
+  @override
+  Future<void> approveSession(String proposalId, {required String address}) async {
+    approvedSessions.add(proposalId);
+  }
+
+  @override
+  Future<void> rejectSession(String proposalId) async {
+    rejectedSessions.add(proposalId);
+  }
+
+  @override
+  Future<void> approveRequest(int requestId, String result) async {
+    approvedRequests[requestId] = result;
+  }
+
+  @override
+  Future<void> rejectRequest(int requestId) async {
+    rejectedRequests.add(requestId);
+  }
+
+  @override
+  Future<void> disconnect(String topic) async {}
+
+  void emit(WalletConnectIncoming incoming) => _events.add(incoming);
+}
+
+void main() {
+  const address = '0x1111111111111111111111111111111111111111';
+  const pairing =
+      'wc:00e46b69-d0cc-4b3e-b6a2-cee442f97188@2?relay-protocol=irn&symKey=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+
+  late _FakeEngine engine;
+  late WalletConnectService service;
+  late List<WalletConnectServiceError> errors;
+  late List<WalletConnectUserPrompt> prompts;
+
+  setUp(() {
+    engine = _FakeEngine();
+    service = WalletConnectService.forTesting(
+      engine: engine,
+      address: address,
+      signMessage: (message) async => 'sig:$message',
+    );
+    errors = [];
+    prompts = [];
+    service.errors.listen(errors.add);
+    service.prompts.listen(prompts.add);
+  });
+
+  test('rejects etherscan proposals', () async {
+    engine.emit(
+      const WalletConnectSessionProposal(
+        proposalId: '9',
+        originUrl: 'https://etherscan.io',
+        verifyStatus: WalletConnectVerifyStatus.unknown,
+        proposerName: 'Etherscan',
+        proposerUrl: 'https://etherscan.io',
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(engine.rejectedSessions, ['9']);
+    expect(errors, isNotEmpty);
+    expect(errors.first.type, WalletConnectServiceErrorType.unsupportedProvider);
+    expect(errors.first.message, WalletConnectAllowlist.unsupportedProviderMessage);
+    expect(prompts, isEmpty);
+  });
+
+  test('rejects spoofed allowlisted URL with invalid verification', () async {
+    engine.emit(
+      const WalletConnectSessionProposal(
+        proposalId: '8',
+        originUrl: 'https://tokeninfo.aktionariat.com',
+        verifyStatus: WalletConnectVerifyStatus.invalid,
+        proposerName: 'Fake',
+        proposerUrl: 'https://tokeninfo.aktionariat.com',
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(engine.rejectedSessions, ['8']);
+    expect(errors.first.type, WalletConnectServiceErrorType.invalidVerification);
+    expect(prompts, isEmpty);
+  });
+
+  test('prompts for allowlisted Aktionariat proposals', () async {
+    engine.emit(
+      const WalletConnectSessionProposal(
+        proposalId: '1',
+        originUrl: 'https://tokeninfo.aktionariat.com',
+        verifyStatus: WalletConnectVerifyStatus.unknown,
+        proposerName: 'Aktionariat',
+        proposerUrl: 'https://tokeninfo.aktionariat.com',
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(engine.rejectedSessions, isEmpty);
+    expect(prompts, hasLength(1));
+  });
+
+  test('personal_sign happy path', () async {
+    engine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 3,
+        topic: 'topic',
+        method: 'personal_sign',
+        params: ['hello', address],
+        originUrl: 'https://app.frankencoin.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(prompts, hasLength(1));
+    await service.approvePrompt(prompts.first);
+    expect(engine.approvedRequests[3], 'sig:hello');
+  });
+
+  test('pair requires a v2 WalletConnect URI', () async {
+    await service.ensureInitialized();
+    await service.pair(pairing);
+    expect(engine.pairCalls, 1);
+    expect(
+      () => service.pair('https://etherscan.io'),
+      throwsA(isA<FormatException>()),
+    );
+  });
+}

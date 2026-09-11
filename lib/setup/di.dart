@@ -42,6 +42,8 @@ import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/settings_service.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
+import 'package:realunit_wallet/packages/walletconnect/reown_walletconnect_engine.dart';
+import 'package:realunit_wallet/packages/walletconnect/walletconnect_service.dart';
 import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
@@ -162,6 +164,13 @@ void setupServices() {
       getIt<WalletRepository>(),
       getIt<SettingsRepository>(),
       getIt<AppStore>(),
+    ),
+  );
+  getIt.registerLazySingleton<WalletConnectService>(
+    () => WalletConnectService(
+      engine: ReownWalletConnectEngine(),
+      walletService: getIt<WalletService>(),
+      appStore: getIt<AppStore>(),
     ),
   );
   getIt.registerFactory(

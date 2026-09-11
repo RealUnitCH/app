@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/send/cubits/send_recipient/send_recipient_cubit.dart';
+import 'package:realunit_wallet/screens/walletconnect/walletconnect_session_page.dart';
 import 'package:realunit_wallet/screens/send/send_amount_page.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/scanner/push_then_rearm.dart';
@@ -48,6 +49,7 @@ class _SendRecipientViewState extends State<SendRecipientView> {
     return BlocListener<SendRecipientCubit, SendRecipientState>(
       listenWhen: (previous, current) =>
           (current is SendRecipientValid && previous is! SendRecipientValid) ||
+          (current is SendRecipientWalletConnect && previous is! SendRecipientWalletConnect) ||
           current is SendRecipientInvalid,
       listener: (context, state) {
         if (state is SendRecipientValid) {
@@ -55,6 +57,15 @@ class _SendRecipientViewState extends State<SendRecipientView> {
             pushThenRearm(
               context,
               page: SendAmountPage(recipient: state.address),
+              rearm: () => context.read<SendRecipientCubit>().reset(),
+            ),
+          );
+        }
+        if (state is SendRecipientWalletConnect) {
+          unawaited(
+            pushThenRearm(
+              context,
+              page: WalletConnectSessionPage(pairingUri: state.uri),
               rearm: () => context.read<SendRecipientCubit>().reset(),
             ),
           );

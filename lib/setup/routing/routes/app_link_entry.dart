@@ -8,6 +8,7 @@ import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 import 'package:realunit_wallet/setup/routing/referral_bind.dart';
 import 'package:realunit_wallet/setup/routing/referral_pending_code.dart';
+import 'package:realunit_wallet/packages/walletconnect/walletconnect_uri.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 
 /// Custom URL scheme the app is opened with. Registered in
@@ -305,6 +306,51 @@ String? _extractReferralInviteCode(Uri uri) {
 // only be exercised on a real device, and no integration_test/ harness exists
 // in this repo yet. The redirect is covered by widget tests in
 // app_link_entry_test.dart.
+String? _handleWalletConnectRedirect({
+  required String raw,
+  required String currentLocation,
+  required GoRouter router,
+}) {
+  final current = Uri.parse(currentLocation);
+  final isInAppRoute = current.scheme.isEmpty && current.path.startsWith('/');
+  final pairingUri = WalletConnectUri.extractPairingUri(raw);
+  final openScan = pairingUri == null && WalletConnectUri.isScanDeeplink(raw);
+
+  void stash() {
+    if (pairingUri != null) {
+      stashPendingWalletConnectPairing(pairingUri);
+    } else if (openScan) {
+      stashPendingWalletConnectScan();
+    }
+  }
+
+  void push() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final pinState = getIt<PinAuthCubit>().state;
+      if (!(pinState.isPinVerified && pinState.isPinSetup)) {
+        stash();
+        return;
+      }
+      if (pairingUri != null) {
+        unawaited(router.pushNamed(AppRoutes.walletConnectSession, extra: pairingUri));
+      } else if (openScan) {
+        unawaited(router.pushNamed(AppRoutes.walletConnectScan));
+      }
+    });
+  }
+
+  if (isInAppRoute) {
+    if (getIt<PinAuthCubit>().state.isPinVerified && getIt<PinAuthCubit>().state.isPinSetup) {
+      push();
+      return null;
+    }
+    stash();
+    return null;
+  }
+  stash();
+  return appLinkColdStartLocation;
+}
+
 String? appLinkSchemeRedirect(
   GoRouterState state,
   String currentLocation,
@@ -330,6 +376,17 @@ String? appLinkSchemeRedirect(
       );
     }
     return null;
+  }
+
+  if (state.uri.scheme == 'wc' ||
+      (state.uri.scheme == appLinkScheme &&
+          (WalletConnectUri.extractPairingUri(state.uri.toString()) != null ||
+              WalletConnectUri.isScanDeeplink(state.uri.toString())))) {
+    return _handleWalletConnectRedirect(
+      raw: state.uri.toString(),
+      currentLocation: currentLocation,
+      router: router,
+    );
   }
 
   if (state.uri.scheme != appLinkScheme) return null;
@@ -439,7 +496,7 @@ void appLinkOnException(
   GoRouterState state,
   GoRouter router,
 ) {
-  if (state.uri.scheme == appLinkScheme) return;
+  if (state.uri.scheme == appLinkScheme || state.uri.scheme == 'wc') return;
   // https / intent / android-app / ios-app App Links for /invite and /promo
   // stash in [appLinkSchemeRedirect] then fall through unmatched — same no-op
   // as the custom scheme. Do not assert: those URIs are OS-delivered.

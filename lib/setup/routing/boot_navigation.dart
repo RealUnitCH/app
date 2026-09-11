@@ -181,6 +181,37 @@ void clearPendingPaymentDeeplink() {
 /// Returns the current stashed payload without clearing it (read-only).
 String? peekPendingPaymentDeeplink() => _pendingPaymentDeeplink;
 
+enum PendingWalletConnectAction { pair, scan }
+
+({PendingWalletConnectAction action, String? uri})? _pendingWalletConnect;
+
+void stashPendingWalletConnectPairing(String uri) {
+  _pendingWalletConnect = (action: PendingWalletConnectAction.pair, uri: uri);
+}
+
+void stashPendingWalletConnectScan() {
+  _pendingWalletConnect = (action: PendingWalletConnectAction.scan, uri: null);
+}
+
+({PendingWalletConnectAction action, String? uri})? takePendingWalletConnect() {
+  final pending = _pendingWalletConnect;
+  _pendingWalletConnect = null;
+  return pending;
+}
+
+void _replayPendingWalletConnect(GoRouter router) {
+  final pending = takePendingWalletConnect();
+  if (pending == null) return;
+  switch (pending.action) {
+    case PendingWalletConnectAction.pair:
+      unawaited(
+        router.pushNamed(AppRoutes.walletConnectSession, extra: pending.uri),
+      );
+    case PendingWalletConnectAction.scan:
+      unawaited(router.pushNamed(AppRoutes.walletConnectScan));
+  }
+}
+
 /// Executes a [resolveBootNavigation] decision against [router]. Split out from
 /// `main.dart`'s `_navigate` so the routing side effects can be driven against a
 /// real [GoRouter] in a widget test (the decision itself is covered by the pure
@@ -211,9 +242,14 @@ void applyBootNavAction(
         if (payload != null) {
           router.goNamed(routeName);
           unawaited(router.pushNamed(AppRoutes.pay, extra: payload));
+          _replayPendingWalletConnect(router);
           unawaited(bindPendingReferralCode(router));
           return;
         }
+        router.goNamed(routeName);
+        _replayPendingWalletConnect(router);
+        unawaited(bindPendingReferralCode(router));
+        return;
       }
       // Non-dashboard named navigation (PIN/setup/onboarding gates, …) is an
       // intermediate step of the same boot ladder: the stash must survive
@@ -248,6 +284,7 @@ void applyBootNavAction(
       if (payload != null) {
         unawaited(router.pushNamed(AppRoutes.pay, extra: payload));
       }
+      _replayPendingWalletConnect(router);
       // Bind after this frame so the restored location is current. Do not
       // wait for the pushed route to pop — staying on /settings would
       // otherwise never bind. Restored KYC (even with /pay on top) stays
@@ -271,6 +308,7 @@ void applyBootNavAction(
       if (payload != null) {
         unawaited(router.pushNamed(AppRoutes.pay, extra: payload));
       }
+      _replayPendingWalletConnect(router);
       unawaited(bindPendingReferralCode(router));
       return;
   }
