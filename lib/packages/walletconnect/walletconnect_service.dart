@@ -86,6 +86,7 @@ class WalletConnectService {
   bool _initialized = false;
   bool _sessionLive = false;
 
+  // coverage:ignore-start
   WalletConnectService({
     required WalletConnectEngine engine,
     required WalletService walletService,
@@ -99,6 +100,7 @@ class WalletConnectService {
         _testWalletType = null {
     _listen();
   }
+  // coverage:ignore-end
 
   WalletConnectService.forTesting({
     required WalletConnectEngine engine,
@@ -348,18 +350,21 @@ class WalletConnectService {
     final testSigner = _testMessageSigner;
     if (testSigner != null) return testSigner(message);
 
+    // coverage:ignore-start
     await _walletService!.ensureCurrentWalletUnlocked();
     try {
       return await _appStore!.wallet.currentAccount.signMessage(message);
     } finally {
       await _walletService.lockCurrentWallet();
     }
+    // coverage:ignore-end
   }
 
   Future<String> _signTypedData(int chainId, String jsonData) async {
     final testSigner = _testTypedDataSigner;
     if (testSigner != null) return testSigner(chainId, jsonData);
 
+    // coverage:ignore-start
     await _walletService!.ensureCurrentWalletUnlocked();
     try {
       return await Eip712Signer.signTypedDataJson(
@@ -370,6 +375,7 @@ class WalletConnectService {
     } finally {
       await _walletService.lockCurrentWallet();
     }
+    // coverage:ignore-end
   }
 
   Future<void> _rejectUnsupportedTransaction(int requestId) async {

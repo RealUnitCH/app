@@ -114,6 +114,25 @@ void main() {
       );
     });
 
+    test('signTypedDataJson forwards WalletConnect typed data to the credentials', () async {
+      final credentials = _MockBitboxCredentials();
+      when(
+        () => credentials.address,
+      ).thenReturn(EthereumAddress.fromHex('0x0000000000000000000000000000000000000001'));
+      when(
+        () => credentials.signTypedDataV4(any(), any()),
+      ).thenAnswer((_) async => '0xabc123');
+
+      final signature = await Eip712Signer.signTypedDataJson(
+        credentials: credentials,
+        chainId: 1,
+        jsonData: '{"domain":{}}',
+      );
+
+      expect(signature, '0xabc123');
+      verify(() => credentials.signTypedDataV4(1, '{"domain":{}}')).called(1);
+    });
+
     for (final emptySignature in const ['', '0x']) {
       test('throws SigningCancelledException when BitBox returns "$emptySignature"', () async {
         final credentials = _MockBitboxCredentials();

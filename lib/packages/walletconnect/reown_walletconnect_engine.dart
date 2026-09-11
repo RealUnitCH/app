@@ -7,6 +7,7 @@ import 'package:realunit_wallet/packages/walletconnect/walletconnect_engine.dart
 
 // @no-integration-test: Reown WalletKit plugin/relay boundary; covered by
 //   FakeEngine unit tests — no device harness for live relay sessions.
+// coverage:ignore-file
 class ReownWalletConnectEngine implements WalletConnectEngine {
   final _events = StreamController<WalletConnectIncoming>.broadcast();
   final _requestTopics = <int, String>{};

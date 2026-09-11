@@ -714,6 +714,39 @@ void main() {
         );
       },
     );
+
+    test('does not write the migration flag when read-back mismatches', () async {
+      final namespaced = _MockFlutterSecureStorage();
+      final legacy = _MockFlutterSecureStorage();
+
+      when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+      when(() => legacy.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+      when(
+        () => legacy.read(key: 'pin.credential'),
+      ).thenAnswer((_) async => 'deadbeef:hash');
+      when(
+        () => namespaced.write(
+          key: any(named: 'key'),
+          value: any(named: 'value'),
+        ),
+      ).thenAnswer((_) async {});
+      when(
+        () => namespaced.read(key: 'pin.credential'),
+      ).thenAnswer((_) async => 'tampered');
+
+      final storage = SecureStorage.withStorage(
+        namespaced,
+        isolateFromWalletKit: true,
+      );
+      await storage.migrateFromUnnamespacedStoreIfNeeded(legacy: legacy);
+
+      verifyNever(
+        () => namespaced.write(
+          key: 'secure.storage.namespaced',
+          value: any(named: 'value'),
+        ),
+      );
+    });
   });
 
   group('SecureStorage hashPinAsync', () {

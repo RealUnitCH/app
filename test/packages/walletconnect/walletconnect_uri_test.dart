@@ -31,5 +31,30 @@ void main() {
       expect(WalletConnectUri.isPairingUri('ethereum:0xabc'), isFalse);
       expect(WalletConnectUri.extractPairingUri('https://etherscan.io'), isNull);
     });
+
+    test('extracts uri from an Android intent extra', () {
+      final wrapped =
+          'intent://wc?uri=${Uri.encodeComponent(pairing)}#Intent;scheme=wc;end';
+      expect(WalletConnectUri.extractPairingUri(wrapped), pairing);
+    });
+
+    test('isWalletConnectInput accepts pairing, wrap, and scan links', () {
+      expect(WalletConnectUri.isWalletConnectInput(pairing), isTrue);
+      expect(
+        WalletConnectUri.isWalletConnectInput(
+          'realunit-wallet://wc?uri=${Uri.encodeComponent(pairing)}',
+        ),
+        isTrue,
+      );
+      expect(
+        WalletConnectUri.isWalletConnectInput('realunit-wallet://investorpage'),
+        isTrue,
+      );
+      expect(WalletConnectUri.isWalletConnectInput('https://etherscan.io'), isFalse);
+    });
+
+    test('opaque investorpage without host is a scan deeplink', () {
+      expect(WalletConnectUri.isScanDeeplink('realunit-wallet:investorpage'), isTrue);
+    });
   });
 }
