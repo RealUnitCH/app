@@ -1,3 +1,4 @@
+import 'package:alchemist/alchemist.dart' as alchemist;
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,15 +12,19 @@ import 'package:realunit_wallet/models/transaction.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_summary_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/transactions/dto/transactions_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/balance_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/dashboard_bloc.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/pending_transactions_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
+import 'package:realunit_wallet/screens/dashboard/widgets/time_period_selection_button.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/styles/currency.dart';
+import 'package:realunit_wallet/styles/language.dart';
 
 import '../../../helper/helper.dart';
 
@@ -34,9 +39,9 @@ import '../../../helper/helper.dart';
 // `DateTime.now()`, but the value is only consumed by the non-`all` period
 // branches of their `switch`. The default `selectedPeriod` is `TimePeriod.all`
 // (`price_chart_cubit.dart:12`), whose `minX`/`maxX` come purely from the first
-// / last fixture `PricePoint.time`. No period selector is tapped, so `now()`
-// never reaches the rendered spots — the curve, gradient and axis labels are a
-// pure function of the fixed fixtures below.
+// / last fixture `PricePoint.time`. The customer-report goldens below tap 1W/
+// 1M/3M/1J; those windows use offsets from `now()`, so a flat zero-line plot
+// stays stable (no date axis) and MAX still shows the pre-1Y curve.
 
 class _MockDashboardBloc extends MockBloc<DashboardEvent, DashboardState>
     implements DashboardBloc {}
@@ -87,6 +92,35 @@ void main() {
     PortfolioValuePoint(value: BigInt.from(15500), balance: BigInt.from(100), time: DateTime.utc(2026, 4)),
     PortfolioValuePoint(value: BigInt.from(15300), balance: BigInt.from(100), time: DateTime.utc(2026, 5)),
   ];
+
+  // Customer report: older non-zero holdings (outside 1Y so MAX shows a
+  // curve) then zeros through now (1W/1M/3M/1J keep a visible zero line).
+  // Times are local midnight so they share the cubit's period window
+  // (`DateTime(now.year, now.month, now.day - N)`); a clock-time remainder
+  // would shift the zero-line by a few pixels between CI runs.
+  List<PortfolioValuePoint> customerReportHistory() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    PortfolioValuePoint pt(int daysAgo, int valueRappen, int shares) =>
+        PortfolioValuePoint(
+          value: BigInt.from(valueRappen),
+          balance: BigInt.from(shares),
+          time: today.subtract(Duration(days: daysAgo)),
+        );
+    return [
+      pt(500, 10000, 100),
+      pt(470, 18000, 180),
+      pt(440, 35000, 350),
+      pt(410, 50000, 500),
+      pt(370, 0, 0),
+      pt(180, 0, 0),
+      pt(90, 0, 0),
+      pt(30, 0, 0),
+      pt(6, 0, 0),
+      pt(1, 0, 0),
+      pt(0, 0, 0),
+    ];
+  }
 
   Balance zeroBalance() => Balance(
         chainId: realUnitAsset.chainId,
@@ -178,6 +212,9 @@ void main() {
     getIt.registerSingleton<AppStore>(appStore);
     getIt.registerSingleton<RealUnitPdfService>(_MockRealUnitPdfService());
     getIt.registerSingleton<TransactionRepository>(transactionRepository);
+    getIt.registerSingleton<RealUnitReferralService>(
+      MockRealUnitReferralService(),
+    );
   });
 
   tearDownAll(() async => GetIt.instance.reset());
@@ -228,6 +265,106 @@ void main() {
     );
 
     goldenTest(
+      'portfolio history all-zero window keeps a visible chart',
+      fileName: 'dashboard_portfolio_chart_zero',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => dashboardBloc.state).thenReturn(
+          dashboardState(
+            history: [
+              for (final p in portfolioHistory)
+                PortfolioValuePoint(
+                  value: BigInt.zero,
+                  balance: BigInt.zero,
+                  time: p.time,
+                ),
+            ],
+          ),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'customer report MAX — older holdings draw a curve then drop to zero',
+      fileName: 'dashboard_portfolio_chart_zero_collapsed',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => dashboardBloc.state)
+            .thenReturn(dashboardState(history: customerReportHistory()));
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'customer report 1W — recent zeros keep a visible zero-line chart',
+      fileName: 'dashboard_portfolio_chart_zero_collapsed_1w',
+      constraints: phoneConstraints,
+      whilePerforming: (tester) async {
+        await tester.tap(find.widgetWithText(TimePeriodSelectionButton, '1W'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+        return null;
+      },
+      builder: () {
+        when(() => dashboardBloc.state)
+            .thenReturn(dashboardState(history: customerReportHistory()));
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'customer report 1M — recent zeros keep a visible zero-line chart',
+      fileName: 'dashboard_portfolio_chart_zero_collapsed_1m',
+      constraints: phoneConstraints,
+      whilePerforming: (tester) async {
+        await tester.tap(find.widgetWithText(TimePeriodSelectionButton, '1M'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+        return null;
+      },
+      builder: () {
+        when(() => dashboardBloc.state)
+            .thenReturn(dashboardState(history: customerReportHistory()));
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'customer report 3M — recent zeros keep a visible zero-line chart',
+      fileName: 'dashboard_portfolio_chart_zero_collapsed_3m',
+      constraints: phoneConstraints,
+      whilePerforming: (tester) async {
+        await tester.tap(find.widgetWithText(TimePeriodSelectionButton, '3M'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+        return null;
+      },
+      builder: () {
+        when(() => dashboardBloc.state)
+            .thenReturn(dashboardState(history: customerReportHistory()));
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'customer report 1J — recent zeros keep a visible zero-line chart',
+      fileName: 'dashboard_portfolio_chart_zero_collapsed_1j',
+      constraints: phoneConstraints,
+      whilePerforming: (tester) async {
+        await tester.tap(find.widgetWithText(TimePeriodSelectionButton, '1J'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+        return null;
+      },
+      builder: () {
+        when(() => dashboardBloc.state)
+            .thenReturn(dashboardState(history: customerReportHistory()));
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
       'pending transactions section',
       fileName: 'dashboard_pending_transactions',
       constraints: phoneConstraints,
@@ -268,6 +405,55 @@ void main() {
         when(() => balanceCubit.state).thenReturn(heldBalance());
         when(() => transactionRepository.watchTransactionsOfAssets(any(), any(), any()))
             .thenAnswer((_) => Stream.value(recentTransactions));
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'Empfehlungen card and prize in latest transactions',
+      fileName: 'dashboard_referral_entry_and_payout',
+      constraints: phoneConstraints,
+      pumpBeforeTest: (tester) async {
+        await alchemist.precacheImages(tester);
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('Empfehlungen'));
+        await tester.pumpAndSettle();
+      },
+      builder: () {
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(language: Language.de),
+        );
+        when(() => balanceCubit.state).thenReturn(heldBalance());
+        final referral = MockRealUnitReferralService();
+        when(() => referral.getSummary()).thenAnswer(
+          (_) async => const ReferralSummaryDto(
+            eligible: true,
+            termsAccepted: true,
+            openCount: 0,
+            creditedCount: 0,
+            realuSum: 0,
+            chfSum: 0,
+          ),
+        );
+        if (GetIt.instance.isRegistered<RealUnitReferralService>()) {
+          GetIt.instance.unregister<RealUnitReferralService>();
+        }
+        GetIt.instance.registerSingleton<RealUnitReferralService>(referral);
+        final prize = Transaction(
+          height: 0,
+          txId: 'referral-payout-7',
+          chainId: realUnitAsset.chainId,
+          senderAddress: kReferralPayoutSenderAddress,
+          receiverAddress: walletAddress,
+          amount: BigInt.from(20),
+          asset: realUnitAsset,
+          type: TransactionTypes.referralPayout,
+          note: '',
+          data: '246.50',
+          timestamp: DateTime.utc(2026, 8, 24, 10),
+        );
+        when(() => transactionRepository.watchTransactionsOfAssets(any(), any(), any()))
+            .thenAnswer((_) => Stream.value([prize, recentTransactions.first]));
         return wrapForGolden(buildSubject());
       },
     );

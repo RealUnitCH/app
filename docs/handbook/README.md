@@ -21,7 +21,7 @@ deployten Image (`handbook.realunit.app`).
 
 ## Screenshots regenerieren
 
-Es gibt keinen separaten Regeneration-Schritt: Die 278 Handbook-Screenshots
+Es gibt keinen separaten Regeneration-Schritt: Die 299 Handbook-Screenshots
 sind direkt die Golden-Baselines unter `test/goldens/` (gemappt in
 `scripts/assemble-handbook-screenshots.sh`). Eine UI-Änderung an einer der
 gemappten Pages produziert beim `flutter test test/goldens` einen Diff —
@@ -64,14 +64,26 @@ Auch der Tier-3-GitHub-Workflow hat dafür einen `flows`-`workflow_dispatch`-Inp
 neu laufen lassen. (Die Screenshots zieht das Handbook aus den Goldens, nicht
 mehr aus diesen Maestro-Läufen.)
 
+## Live Geo-Filter-Tabelle
+
+Die Sektion **Aktientoken — Geo-Filter** (`#spec-geo`) lädt `GET /v1/country`
+zur Laufzeit. Länderzeilen gehören nicht ins Repo. Namen kommen als Deutsch und
+Englisch aus `Intl.DisplayNames` (ISO 3166), nicht aus `foreignName`. CSV, Excel
+und PDF exportieren die angezeigte Liste. Im Image proxied nginx `/v1/country`
+auf `https://api.dfx.swiss/v1/country`; eine lokale HTML-Vorschau fällt auf die
+öffentliche API zurück.
+
 ## Einen neuen Handbook-Eintrag hinzufügen
 
 1. **Page + Golden-Test**: `lib/screens/<feature>/<name>_page.dart` + zugehörigen
-   Golden-Test unter `test/goldens/screens/<feature>/`. Pattern siehe
+   Golden-Test unter `test/goldens/screens/<feature>/`. Widget-Goldens liegen unter
+   `test/goldens/widgets/<widget>/` (siehe
+   [`../visual-regression-tests.md`](../visual-regression-tests.md)). Pattern siehe
    [`../visual-regression-tests.md`](../visual-regression-tests.md) und bestehende
    Tests in `test/goldens/screens/`.
 2. **Screenshot-Mapping**: in `scripts/assemble-handbook-screenshots.sh` eine neue
-   Zeile in der `MAPPING`-Tabelle ergänzen — `"NN-<name>=<feature>/goldens/macos/<file>.png"`.
+   Zeile in der `MAPPING`-Tabelle ergänzen — `"NN-<name>=screens/<feature>/goldens/macos/<file>.png"`
+   oder `"NN-<name>=widgets/<widget>/goldens/macos/<file>.png"`.
    Die Nummer NN ist der Sortierschlüssel im Handbook (keine direkte Bindung mehr
    an einen Maestro-Flow). Damit ändert sich die Screenshot-Anzahl: den
    Count-Guard in `.github/workflows/handbook-build-check.yaml` (der
@@ -102,12 +114,17 @@ mehr aus diesen Maestro-Läufen.)
 ## E-Mail Previews
 
 Die HTML-Vorschauen aller vom Backend an Endkunden versendeten Mails liegen
-**nicht in diesem Repo**. Quelle ist `DFXswiss/api`:
+**nicht in diesem Repo**. Quelle für KYC-, Kauf- und Verkaufs-Mails ist
+`DFXswiss/api`:
 
 - Generator: `scripts/generate-realunit-previews.js`
-- Vorlage: `src/subdomains/supporting/notification/templates/realunit.hbs`
+- Vorlage: `realunit.hbs`
 - Übersetzungen: `src/shared/i18n/de/mail-realunit.json` (RealUnit-Texte) mit
   Fallback auf `src/shared/i18n/de/mail.json` (DFX-Defaults)
+
+Die Bestätigungs-E-Mail der Empfehlungsprämie (Anzahl, Datum D.M.YYYY, fixierter
+Frankenwert, TB Ziff. 6) kommt zur Sendezeit von der DFX-API als `html` /
+`htmlEn` — nicht aus `realunit.hbs`. Die Überwachung bleibt der Klartext.
 
 Der Handbook-CI-Build (`.github/workflows/handbook.yaml`) checkt das api-Repo
 zur Build-Zeit aus, führt den Generator aus und kopiert das Ergebnis nach
@@ -205,7 +222,7 @@ open docs/handbook/de/index.html   # Sektion "B — Transaktionsbelege"
 ```
 
 Zum Regenerieren der Muster-PDFs selbst siehe das api-Repo
-(`GENERATE_RECEIPT_EXAMPLES=true npx jest realunit-receipt-example`).
+(`GENERATE_RECEIPT_EXAMPLES=true npm test -- realunit-receipt-example`).
 
 ## Vermögensübersicht
 
@@ -214,7 +231,8 @@ Muster-PDFs (DE + EN): die Vermögensübersicht weist den REALU-Bestand mit dem
 massgeblichen Steuerwert aus. Wie die Transaktionsbelege werden diese PDFs
 **nicht** hier generiert — sie liegen bereits committet im api-Repo unter
 `docs/examples/realunit-statement/` (gerendert vom `BalancePdfService` via
-`realunit-balance-example.spec.ts`) und werden beim Handbook-Build nur ins Image
+`realunit-statement-example.spec.ts`, Regeneration mit
+`GENERATE_STATEMENT_EXAMPLE=true npm test -- realunit-statement-example`) und werden beim Handbook-Build nur ins Image
 kopiert (Step "Stage RealUnit balance examples from api repo" in `handbook.yaml`;
 Zielverzeichnis `docs/handbook/balance/` ist gitignored). Single Source of Truth
 ist das api-Repo. Kommt upstream ein Beispiel hinzu oder weg, failt der Build am

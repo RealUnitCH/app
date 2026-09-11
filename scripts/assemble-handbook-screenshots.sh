@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Assemble the 278 handbook screenshots from the visual-regression Golden
+# Assemble the 299 handbook screenshots from the visual-regression Golden
 # baselines. The flat `NN-name.png` output layout matches what
 # docs/handbook/de/index.html links to (`<img src="../screenshots/NN-name.png">`
 # — the relative path resolves to `docs/handbook/screenshots/NN-name.png`).
@@ -107,8 +107,8 @@ MAPPING=(
   "61g-kyc-tax-scenario-s3-ch-fr=screens/kyc/goldens/macos/kyc_tax_scenario_s3_ch_fr.png"
   "61h-kyc-tax-scenario-s3-ch-fr-tin-error=screens/kyc/goldens/macos/kyc_tax_scenario_s3_ch_fr_tin_error.png"
   "61i-kyc-tax-scenario-s4-de-ch=screens/kyc/goldens/macos/kyc_tax_scenario_s4_de_ch.png"
-  "61j-kyc-tax-scenario-s5-de-fr-us=screens/kyc/goldens/macos/kyc_tax_scenario_s5_de_fr_us.png"
-  "61k-kyc-tax-scenario-s5-de-fr-us-partial-tin-error=screens/kyc/goldens/macos/kyc_tax_scenario_s5_de_fr_us_partial_tin_error.png"
+  "61j-kyc-tax-scenario-s5-de-fr-it=screens/kyc/goldens/macos/kyc_tax_scenario_s5_de_fr_it.png"
+  "61k-kyc-tax-scenario-s5-de-fr-it-partial-tin-error=screens/kyc/goldens/macos/kyc_tax_scenario_s5_de_fr_it_partial_tin_error.png"
   "62-welcome-page-android=screens/welcome/goldens/macos/welcome_page_android.png"
   "63-create-wallet-page-loading=screens/create_wallet/goldens/macos/create_wallet_page_loading.png"
   "64-verify-seed-page-verifying=screens/verify_seed/goldens/macos/verify_seed_page_verifying.png"
@@ -316,6 +316,29 @@ MAPPING=(
   "267-debug-auth-page-authenticating=screens/debug_auth/goldens/macos/debug_auth_page_authenticating.png"
   "268-phone-number-field-default=widgets/form/goldens/macos/phone_number_field_default.png"
   "269-dashboard-insider-unlocked=screens/dashboard/goldens/macos/dashboard_insider_unlocked.png"
+  "270-handbook-persona-dca=screens/dashboard/goldens/macos/handbook_persona_dca.png"
+  "271-handbook-persona-lump=screens/dashboard/goldens/macos/handbook_persona_lump.png"
+  "272-handbook-persona-exit=screens/dashboard/goldens/macos/handbook_persona_exit.png"
+  "273-handbook-persona-mix=screens/dashboard/goldens/macos/handbook_persona_mix.png"
+  "274-handbook-persona-scale=screens/dashboard/goldens/macos/handbook_persona_scale.png"
+  "275-handbook-persona-exit-1j=screens/dashboard/goldens/macos/handbook_persona_exit_1j.png"
+  # 276–290: referral/promo goldens. No matching .maestro/handbook flow —
+  # eligibility (KYC 30 + 70 REALU) is not reachable in the 01–26 chain.
+  "276-referral-overview=screens/referral/goldens/macos/referral_overview_page_default.png"
+  "277-kyc-registration-referral=screens/kyc/goldens/macos/kyc_registration_referral_step_default.png"
+  "278-referral-entry-card=screens/referral/goldens/macos/referral_entry_card_eligible.png"
+  "279-referral-not-eligible=screens/referral/goldens/macos/referral_gate_not_eligible.png"
+  "280-referral-create-invite=screens/referral/goldens/macos/referral_create_page_invite_created.png"
+  "281-referral-terms=screens/referral/goldens/macos/referral_terms_page_default.png"
+  "282-referral-payout-row=screens/referral/goldens/macos/referral_payout_transaction_row_default.png"
+  "283-referral-terms-readonly=screens/referral/goldens/macos/referral_terms_page_readonly.png"
+  "284-referral-create-name=screens/referral/goldens/macos/referral_create_page_name_entry.png"
+  "285-settings-referral-eligible=screens/settings/goldens/macos/settings_page_referral_eligible.png"
+  "286-settings-legal-referral-terms=screens/settings_legal_documents/goldens/macos/settings_legal_documents_page_referral_terms.png"
+  "287-kyc-registration-referral-recognized=screens/kyc/goldens/macos/kyc_registration_referral_step_recognized.png"
+  "288-transaction-history-referral-payout=screens/transaction_history/goldens/macos/transaction_history_page_referral_payout.png"
+  "289-dashboard-referral-entry-and-payout=screens/dashboard/goldens/macos/dashboard_referral_entry_and_payout.png"
+  "290-kyc-registration-referral-promo=screens/kyc/goldens/macos/kyc_registration_referral_step_promo.png"
 )
 
 missing=()

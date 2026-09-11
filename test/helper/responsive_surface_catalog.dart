@@ -64,36 +64,31 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
   ResponsiveSurface(
     id: 'kyc_completed_page',
     description: 'KYC completed status page',
-    matrixTestPath:
-        'test/screens/kyc/subpages/kyc_status_pages_responsive_matrix_test.dart',
+    matrixTestPath: 'test/screens/kyc/subpages/kyc_status_pages_responsive_matrix_test.dart',
     productionPath: 'lib/screens/kyc/subpages/kyc_completed_page.dart',
   ),
   ResponsiveSurface(
     id: 'kyc_manual_review_page',
     description: 'KYC manual review status page',
-    matrixTestPath:
-        'test/screens/kyc/subpages/kyc_status_pages_responsive_matrix_test.dart',
+    matrixTestPath: 'test/screens/kyc/subpages/kyc_status_pages_responsive_matrix_test.dart',
     productionPath: 'lib/screens/kyc/subpages/kyc_manual_review_page.dart',
   ),
   ResponsiveSurface(
     id: 'kyc_pending_page',
     description: 'KYC pending status page',
-    matrixTestPath:
-        'test/screens/kyc/subpages/kyc_status_pages_responsive_matrix_test.dart',
+    matrixTestPath: 'test/screens/kyc/subpages/kyc_status_pages_responsive_matrix_test.dart',
     productionPath: 'lib/screens/kyc/subpages/kyc_pending_page.dart',
   ),
   ResponsiveSurface(
     id: 'kyc_unsupported_step_page',
     description: 'KYC unsupported-step handoff page',
-    matrixTestPath:
-        'test/screens/kyc/subpages/kyc_status_pages_responsive_matrix_test.dart',
+    matrixTestPath: 'test/screens/kyc/subpages/kyc_status_pages_responsive_matrix_test.dart',
     productionPath: 'lib/screens/kyc/subpages/kyc_unsupported_step_page.dart',
   ),
   ResponsiveSurface(
     id: 'kyc_personal_data_missing_user_data_page',
     description: 'KYC personal-data missing-payload refresh page',
-    matrixTestPath:
-        'test/screens/kyc/subpages/kyc_status_pages_responsive_matrix_test.dart',
+    matrixTestPath: 'test/screens/kyc/subpages/kyc_status_pages_responsive_matrix_test.dart',
     productionPath: 'lib/screens/kyc/steps/personal_data/kyc_personal_data_page.dart',
   ),
   ResponsiveSurface(
@@ -125,15 +120,13 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
   ResponsiveSurface(
     id: 'onboarding_completed_page',
     description: 'Onboarding completed page',
-    matrixTestPath:
-        'test/screens/onboarding/onboarding_completed_responsive_matrix_test.dart',
+    matrixTestPath: 'test/screens/onboarding/onboarding_completed_responsive_matrix_test.dart',
     productionPath: 'lib/screens/onboarding/onboarding_completed_page.dart',
   ),
   ResponsiveSurface(
     id: 'support_create_ticket_page',
     description: 'Support create ticket page',
-    matrixTestPath:
-        'test/screens/support/support_create_ticket_responsive_matrix_test.dart',
+    matrixTestPath: 'test/screens/support/support_create_ticket_responsive_matrix_test.dart',
     productionPath: 'lib/screens/support/subpages/support_create_ticket_page.dart',
   ),
   ResponsiveSurface(
@@ -143,6 +136,13 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
         'test/screens/settings_user_data/settings_user_data_responsive_matrix_test.dart',
     productionPath:
         'lib/screens/settings_user_data/subpages/edit_address/settings_edit_address_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'settings_wallet_address_page',
+    description: 'Wallet address QR page (sticky Send CTA)',
+    matrixTestPath:
+        'test/screens/settings_wallet_address/settings_wallet_address_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/settings_wallet_address/settings_wallet_address_page.dart',
   ),
   ResponsiveSurface(
     id: 'settings_edit_name_page',
@@ -201,6 +201,18 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
     productionPath: 'lib/screens/pay/pay_quote_page.dart',
   ),
   ResponsiveSurface(
+    id: 'pay_info_page',
+    description: 'Pay info disclosure (Continue CTA)',
+    matrixTestPath: 'test/screens/pay/pay_info_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/pay/pay_info_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'receive_page',
+    description: 'Receive QR page (sticky Send CTA)',
+    matrixTestPath: 'test/screens/receive/receive_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/receive/receive_page.dart',
+  ),
+  ResponsiveSurface(
     id: 'sell_page',
     description: 'Sell page (primary CTA)',
     matrixTestPath: 'test/screens/sell/sell_responsive_matrix_test.dart',
@@ -213,6 +225,12 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
     productionPath: 'lib/screens/send/send_amount_page.dart',
   ),
   ResponsiveSurface(
+    id: 'send_info_page',
+    description: 'Send info disclosure (Continue CTA)',
+    matrixTestPath: 'test/screens/send/send_info_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/send/send_info_page.dart',
+  ),
+  ResponsiveSurface(
     id: 'send_confirm_page',
     description: 'Send confirmation page (confirm CTA)',
     matrixTestPath: 'test/screens/send/send_confirm_responsive_matrix_test.dart',
@@ -221,8 +239,7 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
   ResponsiveSurface(
     id: 'send_process_result_sheet',
     description: 'Send process terminal result sheet (shrinkWrap mode)',
-    matrixTestPath:
-        'test/screens/send/send_process_result_sheet_responsive_matrix_test.dart',
+    matrixTestPath: 'test/screens/send/send_process_result_sheet_responsive_matrix_test.dart',
     productionPath: 'lib/screens/send/send_process_page.dart',
   ),
   ResponsiveSurface(
@@ -245,9 +262,11 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
   ),
   ResponsiveSurface(
     id: 'kyc_signature_unsupported_page',
-    description: 'KYC signature-unsupported status page (no CTA — gates overflow + message reachability only)',
+    description:
+        'KYC signature-unsupported status page (no CTA — gates overflow + message reachability only)',
     matrixTestPath: 'test/screens/kyc/kyc_static_pages_responsive_matrix_test.dart',
-    productionPath: 'lib/screens/kyc/steps/signature_unsupported/kyc_signature_unsupported_page.dart',
+    productionPath:
+        'lib/screens/kyc/steps/signature_unsupported/kyc_signature_unsupported_page.dart',
   ),
   ResponsiveSurface(
     id: 'sell_confirm_sheet',
@@ -273,7 +292,31 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
     matrixTestPath: 'test/screens/pin/pin_sheets_responsive_matrix_test.dart',
     productionPath: 'lib/screens/pin/widgets/enable_biometric_bottom_sheet.dart',
   ),
-  // Migration covers 36 surfaces total (bitbox_connect_sheet + 35 above). No
+  ResponsiveSurface(
+    id: 'referral_terms_page',
+    description: 'Referral terms acceptance page (sticky create CTA)',
+    matrixTestPath: 'test/screens/referral/referral_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/referral/referral_terms_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'referral_create_page',
+    description: 'Referral invite create page (sticky create CTA)',
+    matrixTestPath: 'test/screens/referral/referral_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/referral/referral_create_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'referral_overview_page',
+    description: 'Referral overview page (sticky create CTA)',
+    matrixTestPath: 'test/screens/referral/referral_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/referral/referral_overview_page.dart',
+  ),
+  ResponsiveSurface(
+    id: 'kyc_registration_referral_step',
+    description: 'KYC registration invite/promo code step (sticky next/skip CTAs)',
+    matrixTestPath: 'test/screens/referral/referral_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/kyc/steps/registration/steps/kyc_registration_referral_step.dart',
+  ),
+  // Migration covers 44 surfaces total (bitbox_connect_sheet + 43 above). No
   // further known candidates remain from the prior sweep. welcome_page was
   // reviewed and found safe (scrolls end-to-end, no separate sticky CTA) — not
   // a migration candidate. Not exhaustive — review responsibility for every
