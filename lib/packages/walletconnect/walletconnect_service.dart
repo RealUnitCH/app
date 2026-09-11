@@ -197,6 +197,8 @@ class WalletConnectService {
       case WalletConnectSessionRequest():
         if (!_isAccepted(incoming.originUrl, incoming.verifyStatus)) {
           await _engine.rejectRequest(incoming.requestId);
+          await _engine.disconnect(incoming.topic);
+          _sessionLive = false;
           _emitPolicyError(incoming.originUrl, incoming.verifyStatus);
           return;
         }

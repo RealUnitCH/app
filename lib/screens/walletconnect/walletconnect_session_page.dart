@@ -145,8 +145,15 @@ class _WalletConnectSessionPageState extends State<WalletConnectSessionPage> {
       Navigator.of(context).maybePop();
       return;
     }
-    await _service.rejectPrompt(prompt);
-    if (mounted) Navigator.of(context).maybePop();
+    setState(() => _busy = true);
+    try {
+      await _service.rejectPrompt(prompt);
+      if (mounted && identical(_prompt, prompt)) {
+        Navigator.of(context).maybePop();
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   @override
