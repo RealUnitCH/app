@@ -52,12 +52,11 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
     walletKit.onSessionProposal.subscribe((event) {
       final metadata = event.params.proposer.metadata;
       final verifyContext = event.verifyContext;
-      final attested = verifyContext?.origin.trim();
       _proposalPairings[event.id.toString()] = event.params.pairingTopic;
       _events.add(
         WalletConnectSessionProposal(
           proposalId: event.id.toString(),
-          originUrl: attested == null || attested.isEmpty ? null : attested,
+          originUrl: attestedOriginUrl(verifyContext?.origin),
           verifyStatus: _mapVerify(verifyContext),
           proposerName: metadata.name,
           proposerUrl: metadata.url,
@@ -77,14 +76,13 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
       }
 
       final verifyContext = pending?.verifyContext;
-      final attested = verifyContext?.origin.trim();
       _events.add(
         WalletConnectSessionRequest(
           requestId: event.id,
           topic: event.topic,
           method: event.method,
           params: event.params,
-          originUrl: attested == null || attested.isEmpty ? null : attested,
+          originUrl: attestedOriginUrl(verifyContext?.origin),
           verifyStatus: _mapVerify(verifyContext),
           chainId: _parseChainId(event.chainId),
         ),

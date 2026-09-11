@@ -63,4 +63,14 @@ void main() {
       },
     );
   });
+
+  group('attestedOriginUrl', () {
+    test('returns trimmed Verify origin and drops empty', () {
+      expect(attestedOriginUrl('https://tokeninfo.aktionariat.com'), 'https://tokeninfo.aktionariat.com');
+      expect(attestedOriginUrl('  https://app.frankencoin.com  '), 'https://app.frankencoin.com');
+      expect(attestedOriginUrl(null), isNull);
+      expect(attestedOriginUrl(''), isNull);
+      expect(attestedOriginUrl('   '), isNull);
+    });
+  });
 }

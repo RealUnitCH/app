@@ -22,6 +22,16 @@ WalletConnectVerifyStatus mapWalletConnectVerify({
   }
 }
 
+/// Allowlist input is the Verify-attested origin only.
+///
+/// [verifyOrigin] is `verifyContext.origin`. Do not pass `metadata.url`
+/// (attacker-controlled proposer URL).
+String? attestedOriginUrl(String? verifyOrigin) {
+  final attested = verifyOrigin?.trim();
+  if (attested == null || attested.isEmpty) return null;
+  return attested;
+}
+
 abstract class WalletConnectEngine {
   Future<void> init({required String address, required List<int> chainIds});
   Future<void> pair(String uri);

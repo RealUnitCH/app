@@ -718,8 +718,18 @@ void main() {
     test('does not write the migration flag when read-back mismatches', () async {
       final namespaced = _MockFlutterSecureStorage();
       final legacy = _MockFlutterSecureStorage();
+      var pinReads = 0;
 
-      when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+      when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((invocation) async {
+        final key = invocation.namedArguments[#key] as String;
+        if (key == 'pin.credential') {
+          pinReads += 1;
+          // First read is the existence check (must be empty so we copy).
+          // Second read is the post-write verification.
+          return pinReads == 1 ? null : 'tampered';
+        }
+        return null;
+      });
       when(() => legacy.read(key: any(named: 'key'))).thenAnswer((_) async => null);
       when(
         () => legacy.read(key: 'pin.credential'),
@@ -730,9 +740,6 @@ void main() {
           value: any(named: 'value'),
         ),
       ).thenAnswer((_) async {});
-      when(
-        () => namespaced.read(key: 'pin.credential'),
-      ).thenAnswer((_) async => 'tampered');
 
       final storage = SecureStorage.withStorage(
         namespaced,
