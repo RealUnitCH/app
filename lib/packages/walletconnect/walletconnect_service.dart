@@ -5,6 +5,7 @@ import 'dart:developer' as developer;
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/packages/walletconnect/walletconnect_allowlist.dart';
 import 'package:realunit_wallet/packages/walletconnect/walletconnect_config.dart';
 import 'package:realunit_wallet/packages/walletconnect/walletconnect_engine.dart';
@@ -66,6 +67,7 @@ class WalletConnectService {
   static const invalidVerificationMessage =
       'WalletConnect could not verify this provider.';
   static const invalidUriMessage = 'This is not a valid WalletConnect URI.';
+  static const signingFailedMessage = 'Debug wallets cannot sign.';
 
   final WalletConnectEngine _engine;
   final WalletService? _walletService;
@@ -73,6 +75,7 @@ class WalletConnectService {
   final String? _testAddress;
   final WalletConnectMessageSigner? _testMessageSigner;
   final WalletConnectTypedDataSigner? _testTypedDataSigner;
+  final WalletType? _testWalletType;
 
   final _prompts = StreamController<WalletConnectUserPrompt>.broadcast();
   final _errors = StreamController<WalletConnectServiceError>.broadcast();
@@ -89,7 +92,8 @@ class WalletConnectService {
         _appStore = appStore,
         _testAddress = null,
         _testMessageSigner = null,
-        _testTypedDataSigner = null {
+        _testTypedDataSigner = null,
+        _testWalletType = null {
     _listen();
   }
 
@@ -98,12 +102,14 @@ class WalletConnectService {
     required String address,
     required WalletConnectMessageSigner signMessage,
     WalletConnectTypedDataSigner? signTypedData,
+    WalletType? walletType,
   })  : _engine = engine,
         _walletService = null,
         _appStore = null,
         _testAddress = address,
         _testMessageSigner = signMessage,
-        _testTypedDataSigner = signTypedData {
+        _testTypedDataSigner = signTypedData,
+        _testWalletType = walletType {
     _listen();
   }
 
@@ -111,6 +117,11 @@ class WalletConnectService {
   Stream<WalletConnectServiceError> get errors => _errors.stream;
 
   String get _address => _testAddress ?? _appStore!.primaryAddress;
+
+  WalletType get _walletType {
+    if (_appStore != null) return _appStore.wallet.walletType;
+    return _testWalletType ?? WalletType.software;
+  }
 
   void _listen() {
     _engine.events.listen((event) {
@@ -225,6 +236,10 @@ class WalletConnectService {
         }
       case 'personal_sign':
       case 'eth_sign':
+        if (_walletType == WalletType.debug) {
+          await _rejectDebugSigning(request.requestId);
+          return;
+        }
         _prompts.add(
           WalletConnectRequestPrompt(
             request: request,
@@ -233,6 +248,10 @@ class WalletConnectService {
         );
       case 'eth_signTypedData':
       case 'eth_signTypedData_v4':
+        if (_walletType == WalletType.debug) {
+          await _rejectDebugSigning(request.requestId);
+          return;
+        }
         _prompts.add(
           WalletConnectRequestPrompt(
             request: request,
@@ -330,6 +349,16 @@ class WalletConnectService {
       const WalletConnectServiceError(
         WalletConnectServiceErrorType.sendTransactionUnsupported,
         sendTransactionUnsupportedMessage,
+      ),
+    );
+  }
+
+  Future<void> _rejectDebugSigning(int requestId) async {
+    await _engine.rejectRequest(requestId);
+    _errors.add(
+      const WalletConnectServiceError(
+        WalletConnectServiceErrorType.signingFailed,
+        signingFailedMessage,
       ),
     );
   }

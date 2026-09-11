@@ -111,6 +111,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     // wallet. Covers every DeleteCurrentWalletEvent path (settings delete and
     // BitBox recovery cancel), including those that never call PinAuthCubit.reset().
     clearPendingPaymentDeeplink();
+    clearPendingWalletConnect();
     // A pending referral code must not be credited to the next wallet either;
     // unlike the deeplink that binding cannot be undone.
     await clearPendingReferralCode();

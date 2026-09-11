@@ -579,14 +579,22 @@ void main() {
       () async {
         final namespaced = _MockFlutterSecureStorage();
         final legacy = _MockFlutterSecureStorage();
+        final store = <String, String>{};
 
-        when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+        when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((invocation) async {
+          final key = invocation.namedArguments[#key] as String;
+          return store[key];
+        });
         when(
           () => namespaced.write(
             key: any(named: 'key'),
             value: any(named: 'value'),
           ),
-        ).thenAnswer((_) async {});
+        ).thenAnswer((invocation) async {
+          final key = invocation.namedArguments[#key] as String;
+          final value = invocation.namedArguments[#value] as String;
+          store[key] = value;
+        });
         when(() => legacy.read(key: any(named: 'key'))).thenAnswer((_) async => null);
         when(
           () => legacy.read(key: 'pin.credential'),
@@ -673,6 +681,39 @@ void main() {
         () => namespaced.write(key: 'secure.storage.namespaced', value: '1'),
       ).called(1);
     });
+
+    test(
+      'does not write the migration flag when a namespaced copy write throws',
+      () async {
+        final namespaced = _MockFlutterSecureStorage();
+        final legacy = _MockFlutterSecureStorage();
+
+        when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+        when(() => legacy.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+        when(
+          () => legacy.read(key: 'pin.credential'),
+        ).thenAnswer((_) async => 'deadbeef:hash');
+        when(
+          () => namespaced.write(
+            key: 'pin.credential',
+            value: any(named: 'value'),
+          ),
+        ).thenThrow(Exception('write failed'));
+
+        final storage = SecureStorage.withStorage(
+          namespaced,
+          isolateFromWalletKit: true,
+        );
+        await storage.migrateFromUnnamespacedStoreIfNeeded(legacy: legacy);
+
+        verifyNever(
+          () => namespaced.write(
+            key: 'secure.storage.namespaced',
+            value: any(named: 'value'),
+          ),
+        );
+      },
+    );
   });
 
   group('SecureStorage hashPinAsync', () {

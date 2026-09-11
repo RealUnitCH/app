@@ -1,5 +1,27 @@
 enum WalletConnectVerifyStatus { valid, invalid, unknown, scam }
 
+/// Maps Reown Verify fields without importing reown.
+///
+/// [validationName] must be the Dart enum `.name` (`VALID` / `INVALID` /
+/// `SCAM` / `UNKNOWN`), not `toString()` (`Validation.VALID`), so a substring
+/// match on `valid` cannot promote `SCAM` to [WalletConnectVerifyStatus.valid].
+WalletConnectVerifyStatus mapWalletConnectVerify({
+  required bool isScam,
+  required String? validationName,
+}) {
+  if (isScam) return WalletConnectVerifyStatus.scam;
+  switch (validationName?.toUpperCase()) {
+    case 'VALID':
+      return WalletConnectVerifyStatus.valid;
+    case 'INVALID':
+      return WalletConnectVerifyStatus.invalid;
+    case 'SCAM':
+      return WalletConnectVerifyStatus.scam;
+    default:
+      return WalletConnectVerifyStatus.unknown;
+  }
+}
+
 abstract class WalletConnectEngine {
   Future<void> init({required String address, required List<int> chainIds});
   Future<void> pair(String uri);

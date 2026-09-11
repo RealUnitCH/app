@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/packages/walletconnect/walletconnect_allowlist.dart';
 import 'package:realunit_wallet/packages/walletconnect/walletconnect_engine.dart';
 import 'package:realunit_wallet/packages/walletconnect/walletconnect_service.dart';
@@ -233,5 +234,36 @@ void main() {
       () => service.pair('https://etherscan.io'),
       throwsA(isA<FormatException>()),
     );
+  });
+
+  test('debug wallet rejects personal_sign without prompting', () async {
+    final debugEngine = _FakeEngine();
+    final debugService = WalletConnectService.forTesting(
+      engine: debugEngine,
+      address: address,
+      signMessage: (message) async => 'sig:$message',
+      walletType: WalletType.debug,
+    );
+    final debugErrors = <WalletConnectServiceError>[];
+    final debugPrompts = <WalletConnectUserPrompt>[];
+    debugService.errors.listen(debugErrors.add);
+    debugService.prompts.listen(debugPrompts.add);
+
+    debugEngine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 11,
+        topic: 'topic',
+        method: 'personal_sign',
+        params: ['hello', address],
+        originUrl: 'https://app.frankencoin.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+
+    expect(debugPrompts, isEmpty);
+    expect(debugEngine.rejectedRequests, [11]);
+    expect(debugErrors, isNotEmpty);
+    expect(debugErrors.first.type, WalletConnectServiceErrorType.signingFailed);
   });
 }

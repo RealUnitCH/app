@@ -94,15 +94,10 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
   }
 
   WalletConnectVerifyStatus _mapVerify(VerifyContext? context) {
-    if (context?.isScam == true) return WalletConnectVerifyStatus.scam;
-    final validation = context?.validation;
-    if (validation == null) return WalletConnectVerifyStatus.unknown;
-    final label = validation.toString().toLowerCase();
-    if (label.contains('invalid')) return WalletConnectVerifyStatus.invalid;
-    if (label.contains('valid') && !label.contains('unknown')) {
-      return WalletConnectVerifyStatus.valid;
-    }
-    return WalletConnectVerifyStatus.unknown;
+    return mapWalletConnectVerify(
+      isScam: context?.isScam == true,
+      validationName: context?.validation.name,
+    );
   }
 
   int? _parseChainId(String chainId) {

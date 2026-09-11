@@ -460,6 +460,21 @@ void main() {
 
         expect(peekPendingPaymentDeeplink(), isNull);
       });
+
+      test('clears a stashed WalletConnect pairing so it cannot replay into a re-onboarded wallet', () async {
+        addTearDown(clearPendingWalletConnect);
+        stashPendingWalletConnectPairing('wc:test-pairing');
+
+        final bloc = build();
+        await bloc.stream.firstWhere((s) => true);
+
+        bloc.add(const DeleteCurrentWalletEvent());
+        await bloc.stream.firstWhere(
+          (s) => s.isLoadingWallet == false && s.hasWallet == false,
+        );
+
+        expect(peekPendingWalletConnect(), isNull);
+      });
     });
 
     group('CompleteOnboardingEvent', () {

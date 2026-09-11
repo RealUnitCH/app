@@ -86,6 +86,7 @@ class PinAuthCubit extends Cubit<PinAuthState> {
     // pending referral code: binding is irreversible, so it must never be
     // credited to whoever onboards next on this device.
     clearPendingPaymentDeeplink();
+    clearPendingWalletConnect();
     await clearPendingReferralCode();
     emit(const PinAuthState());
   }

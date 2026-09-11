@@ -59,9 +59,20 @@ class _WalletConnectSessionPageState extends State<WalletConnectSessionPage> {
     });
     _errors = _service.errors.listen((error) {
       if (!mounted) return;
-      final message = error.type == WalletConnectServiceErrorType.unsupportedProvider
-          ? S.of(context).walletConnectUnsupportedProvider
-          : error.message;
+      final message = switch (error.type) {
+        WalletConnectServiceErrorType.unsupportedProvider =>
+          S.of(context).walletConnectUnsupportedProvider,
+        WalletConnectServiceErrorType.invalidVerification =>
+          S.of(context).walletConnectInvalidVerification,
+        WalletConnectServiceErrorType.invalidUri =>
+          S.of(context).walletConnectInvalidUri,
+        WalletConnectServiceErrorType.unsupportedMethod =>
+          S.of(context).walletConnectUnsupportedMethod,
+        WalletConnectServiceErrorType.sendTransactionUnsupported =>
+          S.of(context).walletConnectSendTransactionUnsupported,
+        WalletConnectServiceErrorType.signingFailed =>
+          S.of(context).walletConnectSigningFailed,
+      };
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
@@ -84,11 +95,11 @@ class _WalletConnectSessionPageState extends State<WalletConnectSessionPage> {
   Future<void> _pair(String uri) async {
     try {
       await _service.pair(uri);
-    } on FormatException catch (e) {
+    } on FormatException {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e.message),
+          content: Text(S.of(context).walletConnectInvalidUri),
           backgroundColor: RealUnitColors.status.red600,
         ),
       );
@@ -173,10 +184,10 @@ class _WalletConnectSessionPageState extends State<WalletConnectSessionPage> {
           children: [
             Text(
               S.of(context).walletConnectProposalTitle(prompt.proposal.proposerName),
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 12),
-            Text(prompt.proposal.proposerUrl ?? prompt.proposal.originUrl ?? ''),
+            Text(prompt.proposal.originUrl ?? ''),
           ],
         );
       case WalletConnectRequestPrompt():
@@ -185,7 +196,7 @@ class _WalletConnectSessionPageState extends State<WalletConnectSessionPage> {
           children: [
             Text(
               S.of(context).walletConnectSignTitle,
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 12),
             Text(prompt.originUrl ?? ''),

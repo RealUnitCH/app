@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -92,6 +93,10 @@ class SecureStorage {
 
   /// One-shot copy from the un-namespaced store (the one WalletKit shares)
   /// into the isolated namespace. No-op for [SecureStorage.withStorage].
+  ///
+  /// The migration flag is written only after every key that needed a copy
+  /// succeeded (write + read-back). A failed copy aborts without the flag so
+  /// the next boot can retry; boot itself must not crash.
   Future<void> migrateFromUnnamespacedStoreIfNeeded({
     FlutterSecureStorage legacy = const FlutterSecureStorage(),
   }) async {
@@ -103,8 +108,20 @@ class SecureStorage {
         if (value == null) continue;
         if (await _secureStorage.read(key: key) != null) continue;
         await _secureStorage.write(key: key, value: value);
-      } catch (_) {
-        // Legacy store may be empty or unavailable; never block boot.
+        final written = await _secureStorage.read(key: key);
+        if (written != value) {
+          developer.log(
+            'SecureStorage namespaced migrate failed for $key: read-back mismatch',
+          );
+          return;
+        }
+      } catch (error, stackTrace) {
+        developer.log(
+          'SecureStorage namespaced migrate failed for $key',
+          error: error,
+          stackTrace: stackTrace,
+        );
+        return;
       }
     }
     await _secureStorage.write(key: _namespaceMigrationKey, value: '1');

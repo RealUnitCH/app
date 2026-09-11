@@ -246,6 +246,22 @@ void main() {
         expect(peekPendingPaymentDeeplink(), isNull);
       },
     );
+
+    test(
+      'reset clears a pending WalletConnect stash (no replay into a reset/re-onboarded wallet)',
+      () async {
+        when(() => storage.deletePinHash()).thenAnswer((_) async {});
+        when(() => storage.deleteBiometricEnabled()).thenAnswer((_) async {});
+        when(() => storage.resetPinLockout()).thenAnswer((_) async {});
+        addTearDown(clearPendingWalletConnect);
+
+        stashPendingWalletConnectPairing('wc:test-pairing');
+        final cubit = build();
+        await cubit.reset();
+
+        expect(peekPendingWalletConnect(), isNull);
+      },
+    );
   });
 
   group('reset', () {
