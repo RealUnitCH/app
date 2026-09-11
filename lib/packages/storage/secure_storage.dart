@@ -69,9 +69,15 @@ class SecureStorage {
   /// mock or the platform-interface-backed `TestFlutterSecureStoragePlatform`).
   /// Lets unit tests exercise every instance method without booting a real
   /// platform channel — the production code path stays untouched.
+  ///
+  /// Pass [isolateFromWalletKit] `true` to exercise
+  /// [migrateFromUnnamespacedStoreIfNeeded]; the default `false` keeps existing
+  /// callers as a migrate no-op.
   @visibleForTesting
-  const SecureStorage.withStorage(this._secureStorage)
-      : _isolateFromWalletKit = false;
+  const SecureStorage.withStorage(
+    this._secureStorage, {
+    bool isolateFromWalletKit = false,
+  }) : _isolateFromWalletKit = isolateFromWalletKit;
 
   static const _legacyKeysToMigrate = [
     _databaseEncryptionKey,

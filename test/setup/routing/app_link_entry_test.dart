@@ -990,4 +990,71 @@ void main() {
       expect(find.text('WC:$pairing'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'warm resume on /verifyPin while locked: WalletConnect pairing deeplink '
+    'stashes and does not push the session route',
+    (tester) async {
+      addTearDown(clearPendingWalletConnect);
+      when(
+        () => pinAuthCubit.state,
+      ).thenReturn(const PinAuthState(isPinVerified: false));
+      const pairing =
+          'wc:00e46b69-d0cc-4b3e-b6a2-cee442f97188@2?relay-protocol=irn&symKey=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+      final router = await pump(tester);
+      router.go('/verifyPin');
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('verifyPin')), findsOneWidget);
+
+      router.go('realunit-wallet://wc?uri=${Uri.encodeComponent(pairing)}');
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('wcSession')), findsNothing);
+      expect(find.byKey(const Key('verifyPin')), findsOneWidget);
+      expect(currentPath(router), '/verifyPin');
+      final pending = peekPendingWalletConnect();
+      expect(pending, isNotNull);
+      expect(pending!.action, PendingWalletConnectAction.pair);
+      expect(pending.uri, pairing);
+    },
+  );
+
+  testWidgets(
+    'cold start on a WalletConnect pairing deeplink boots to /home and stashes the pairing',
+    (tester) async {
+      addTearDown(clearPendingWalletConnect);
+      const pairing =
+          'wc:00e46b69-d0cc-4b3e-b6a2-cee442f97188@2?relay-protocol=irn&symKey=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+
+      final router = await pump(
+        tester,
+        initial: 'realunit-wallet://wc?uri=${Uri.encodeComponent(pairing)}',
+      );
+
+      expect(currentPath(router), appLinkColdStartLocation);
+      expect(find.byKey(const Key('home')), findsOneWidget);
+      expect(find.byKey(const Key('wcSession')), findsNothing);
+      final pending = peekPendingWalletConnect();
+      expect(pending, isNotNull);
+      expect(pending!.action, PendingWalletConnectAction.pair);
+      expect(pending.uri, pairing);
+    },
+  );
+
+  testWidgets(
+    'warm resume unlocked: an investorpage deeplink pushes the WalletConnect scan route',
+    (tester) async {
+      addTearDown(clearPendingWalletConnect);
+      final router = await pump(tester);
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+
+      router.go('realunit-wallet://investorpage/REALU');
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('wcScan')), findsOneWidget);
+      expect(find.text('WCSCAN'), findsOneWidget);
+      expect(peekPendingWalletConnect(), isNull);
+    },
+  );
 }

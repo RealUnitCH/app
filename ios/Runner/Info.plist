@@ -32,7 +32,7 @@
 				<key>CFBundleURLSchemes</key>
 				<array>
 					<string>realunit-wallet</string>
-				<string>wc</string>
+					<string>wc</string>
 				</array>
 			</dict>
 		</array>

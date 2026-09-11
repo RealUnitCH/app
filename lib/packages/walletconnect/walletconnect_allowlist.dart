@@ -28,6 +28,9 @@ abstract final class WalletConnectAllowlist {
       uri = Uri.tryParse('https://$value');
     }
     if (uri == null || uri.host.isEmpty) return null;
+    // Fail-closed: attested origins must be https. An empty scheme is only
+    // reached when the bare-host prepend above produced an https URI.
+    if (uri.scheme.isNotEmpty && uri.scheme != 'https') return null;
 
     var host = uri.host.toLowerCase();
     while (host.endsWith('.')) {

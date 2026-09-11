@@ -559,6 +559,122 @@ void main() {
     });
   });
 
+  group('SecureStorage namespaced migrate', () {
+    test('withStorage default does not write the migration flag', () async {
+      final storage = SecureStorage.withStorage(mockStorage);
+
+      await storage.migrateFromUnnamespacedStoreIfNeeded();
+
+      verifyNever(
+        () => mockStorage.write(
+          key: 'secure.storage.namespaced',
+          value: any(named: 'value'),
+        ),
+      );
+    });
+
+    test(
+      'isolateFromWalletKit: true copies a missing pin.credential from legacy '
+      'and writes the migration flag',
+      () async {
+        final namespaced = _MockFlutterSecureStorage();
+        final legacy = _MockFlutterSecureStorage();
+
+        when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+        when(
+          () => namespaced.write(
+            key: any(named: 'key'),
+            value: any(named: 'value'),
+          ),
+        ).thenAnswer((_) async {});
+        when(() => legacy.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+        when(
+          () => legacy.read(key: 'pin.credential'),
+        ).thenAnswer((_) async => 'deadbeef:hash');
+
+        final storage = SecureStorage.withStorage(
+          namespaced,
+          isolateFromWalletKit: true,
+        );
+        await storage.migrateFromUnnamespacedStoreIfNeeded(legacy: legacy);
+
+        verify(
+          () => namespaced.write(key: 'pin.credential', value: 'deadbeef:hash'),
+        ).called(1);
+        verify(
+          () => namespaced.write(key: 'secure.storage.namespaced', value: '1'),
+        ).called(1);
+      },
+    );
+
+    test('second call after flag 1 is a no-op (no legacy reads)', () async {
+      final namespaced = _MockFlutterSecureStorage();
+      final legacy = _MockFlutterSecureStorage();
+
+      when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+      when(
+        () => namespaced.read(key: 'secure.storage.namespaced'),
+      ).thenAnswer((_) async => '1');
+      when(
+        () => namespaced.write(
+          key: any(named: 'key'),
+          value: any(named: 'value'),
+        ),
+      ).thenAnswer((_) async {});
+      when(() => legacy.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+
+      final storage = SecureStorage.withStorage(
+        namespaced,
+        isolateFromWalletKit: true,
+      );
+      await storage.migrateFromUnnamespacedStoreIfNeeded(legacy: legacy);
+
+      verifyNever(() => legacy.read(key: any(named: 'key')));
+      verifyNever(
+        () => namespaced.write(
+          key: any(named: 'key'),
+          value: any(named: 'value'),
+        ),
+      );
+    });
+
+    test('does not overwrite a namespaced key that already has a value', () async {
+      final namespaced = _MockFlutterSecureStorage();
+      final legacy = _MockFlutterSecureStorage();
+
+      when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+      when(
+        () => namespaced.read(key: 'pin.credential'),
+      ).thenAnswer((_) async => 'already:present');
+      when(
+        () => namespaced.write(
+          key: any(named: 'key'),
+          value: any(named: 'value'),
+        ),
+      ).thenAnswer((_) async {});
+      when(() => legacy.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+      when(
+        () => legacy.read(key: 'pin.credential'),
+      ).thenAnswer((_) async => 'legacy:value');
+
+      final storage = SecureStorage.withStorage(
+        namespaced,
+        isolateFromWalletKit: true,
+      );
+      await storage.migrateFromUnnamespacedStoreIfNeeded(legacy: legacy);
+
+      verifyNever(
+        () => namespaced.write(
+          key: 'pin.credential',
+          value: any(named: 'value'),
+        ),
+      );
+      verify(
+        () => namespaced.write(key: 'secure.storage.namespaced', value: '1'),
+      ).called(1);
+    });
+  });
+
   group('SecureStorage hashPinAsync', () {
     test('produces the same hash as the synchronous helper', () async {
       final salt = SecureStorage.generatePinSalt();

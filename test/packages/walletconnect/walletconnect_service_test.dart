@@ -174,6 +174,57 @@ void main() {
     expect(errors.first.type, WalletConnectServiceErrorType.sendTransactionUnsupported);
   });
 
+  test('rejects scam verification even for an allowlisted origin', () async {
+    engine.emit(
+      const WalletConnectSessionProposal(
+        proposalId: '6',
+        originUrl: 'https://tokeninfo.aktionariat.com',
+        verifyStatus: WalletConnectVerifyStatus.scam,
+        proposerName: 'Aktionariat',
+        proposerUrl: 'https://tokeninfo.aktionariat.com',
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(engine.rejectedSessions, ['6']);
+    expect(errors.first.type, WalletConnectServiceErrorType.invalidVerification);
+    expect(prompts, isEmpty);
+  });
+
+  test('eth_signTransaction is rejected without prompting', () async {
+    engine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 5,
+        topic: 'topic',
+        method: 'eth_signTransaction',
+        params: [
+          {'to': '0x2222222222222222222222222222222222222222'},
+        ],
+        originUrl: 'https://app.frankencoin.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(prompts, isEmpty);
+    expect(engine.rejectedRequests, [5]);
+    expect(errors.first.type, WalletConnectServiceErrorType.sendTransactionUnsupported);
+  });
+
+  test('rejects a Verify-valid proposal whose attested origin is null', () async {
+    engine.emit(
+      const WalletConnectSessionProposal(
+        proposalId: '10',
+        originUrl: null,
+        verifyStatus: WalletConnectVerifyStatus.valid,
+        proposerName: 'Aktionariat',
+        proposerUrl: 'https://tokeninfo.aktionariat.com',
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(engine.rejectedSessions, ['10']);
+    expect(errors.first.type, WalletConnectServiceErrorType.unsupportedProvider);
+    expect(prompts, isEmpty);
+  });
+
   test('pair requires a v2 WalletConnect URI', () async {
     await service.ensureInitialized();
     await service.pair(pairing);

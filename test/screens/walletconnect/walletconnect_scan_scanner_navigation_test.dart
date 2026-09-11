@@ -52,6 +52,25 @@ class _FakeEngine implements WalletConnectEngine {
   Future<void> disconnect(String topic) async {}
 }
 
+/// Advances until [WalletConnectSessionView] is on stage. Do not use
+/// `pumpAndSettle` — the session page shows a [CupertinoActivityIndicator]
+/// until the pairing prompt arrives, and that ticker never settles.
+Future<void> _pumpUntilSessionView(WidgetTester tester) async {
+  for (var i = 0; i < 20; i++) {
+    if (find.byType(WalletConnectSessionView).evaluate().isNotEmpty) {
+      return;
+    }
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+}
+
+/// Finishes a [MaterialPageRoute] pop (300ms) without waiting on infinite
+/// tickers still in the outgoing route.
+Future<void> _pumpPopComplete(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+}
+
 void main() {
   setUpAll(() {
     stubMobileScannerChannel();
@@ -74,22 +93,42 @@ void main() {
       final scanner = tester.widget<MobileScanner>(find.byType(MobileScanner));
       const capture = BarcodeCapture(barcodes: [Barcode(rawValue: _pairing)]);
       scanner.onDetect!(capture);
-      scanner.onDetect!(capture);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
+      scanner.onDetect!(capture); // second frame — must not push again
+      await _pumpUntilSessionView(tester);
 
       expect(find.byType(WalletConnectSessionView), findsOne);
 
       Navigator.of(tester.element(find.byType(WalletConnectSessionView))).pop();
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
+      await _pumpPopComplete(tester);
       expect(find.byType(WalletConnectSessionView), findsNothing);
 
       final scannerAfterPop = tester.widget<MobileScanner>(find.byType(MobileScanner));
       scannerAfterPop.onDetect!(capture);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
+      await _pumpUntilSessionView(tester);
       expect(find.byType(WalletConnectSessionView), findsOne);
+    },
+  );
+
+  testWidgets(
+    'a capture during the pop animation does not push a second session page',
+    (tester) async {
+      await tester.pumpApp(const WalletConnectScanPage());
+
+      final scanner = tester.widget<MobileScanner>(find.byType(MobileScanner));
+      final onDetect = scanner.onDetect!;
+      const capture = BarcodeCapture(barcodes: [Barcode(rawValue: _pairing)]);
+      onDetect(capture);
+      await _pumpUntilSessionView(tester);
+      expect(find.byType(WalletConnectSessionView), findsOne);
+
+      Navigator.of(tester.element(find.byType(WalletConnectSessionView))).pop();
+      await tester.pump(); // pop animation in flight — not settled
+      onDetect(capture);
+      await tester.pump();
+      expect(find.byType(WalletConnectSessionView), findsOne);
+
+      await _pumpPopComplete(tester);
+      expect(find.byType(WalletConnectSessionView), findsNothing);
     },
   );
 }

@@ -30,5 +30,21 @@ void main() {
       expect(WalletConnectAllowlist.isAllowedOrigin(null), isFalse);
       expect(WalletConnectAllowlist.isAllowedOrigin(''), isFalse);
     });
+
+    test('rejects http schemes even for allowlisted hosts', () {
+      expect(WalletConnectAllowlist.isAllowedOrigin('http://aktionariat.com'), isFalse);
+      expect(WalletConnectAllowlist.isAllowedOrigin('http://shares.realunit.ch'), isFalse);
+    });
+
+    test('accepts https subdomain and bare host (prepended to https)', () {
+      expect(
+        WalletConnectAllowlist.isAllowedOrigin('https://tokeninfo.aktionariat.com'),
+        isTrue,
+      );
+      expect(
+        WalletConnectAllowlist.isAllowedOrigin('tokeninfo.aktionariat.com'),
+        isTrue,
+      );
+    });
   });
 }

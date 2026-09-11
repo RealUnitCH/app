@@ -199,6 +199,15 @@ void stashPendingWalletConnectScan() {
   return pending;
 }
 
+/// Clears any stashed WalletConnect action without returning it.
+void clearPendingWalletConnect() {
+  _pendingWalletConnect = null;
+}
+
+/// Returns the current stashed WalletConnect action without clearing it.
+({PendingWalletConnectAction action, String? uri})? peekPendingWalletConnect() =>
+    _pendingWalletConnect;
+
 void _replayPendingWalletConnect(GoRouter router) {
   final pending = takePendingWalletConnect();
   if (pending == null) return;
