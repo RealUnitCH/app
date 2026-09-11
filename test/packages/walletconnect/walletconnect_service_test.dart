@@ -107,12 +107,28 @@ void main() {
     expect(prompts, isEmpty);
   });
 
-  test('prompts for allowlisted Aktionariat proposals', () async {
+  test('rejects allowlisted URL when Verify is unknown', () async {
+    engine.emit(
+      const WalletConnectSessionProposal(
+        proposalId: '7',
+        originUrl: 'https://tokeninfo.aktionariat.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+        proposerName: 'Aktionariat',
+        proposerUrl: 'https://tokeninfo.aktionariat.com',
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(engine.rejectedSessions, ['7']);
+    expect(errors.first.type, WalletConnectServiceErrorType.invalidVerification);
+    expect(prompts, isEmpty);
+  });
+
+  test('prompts for Verify-valid Aktionariat proposals', () async {
     engine.emit(
       const WalletConnectSessionProposal(
         proposalId: '1',
         originUrl: 'https://tokeninfo.aktionariat.com',
-        verifyStatus: WalletConnectVerifyStatus.unknown,
+        verifyStatus: WalletConnectVerifyStatus.valid,
         proposerName: 'Aktionariat',
         proposerUrl: 'https://tokeninfo.aktionariat.com',
       ),

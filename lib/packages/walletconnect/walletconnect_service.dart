@@ -182,9 +182,8 @@ class WalletConnectService {
   }
 
   bool _isAccepted(String? origin, WalletConnectVerifyStatus status) =>
-      WalletConnectAllowlist.isAllowedOrigin(origin) &&
-      (status == WalletConnectVerifyStatus.valid ||
-          status == WalletConnectVerifyStatus.unknown);
+      status == WalletConnectVerifyStatus.valid &&
+      WalletConnectAllowlist.isAllowedOrigin(origin);
 
   void _emitPolicyError(String? origin, WalletConnectVerifyStatus status) {
     if (!WalletConnectAllowlist.isAllowedOrigin(origin)) {

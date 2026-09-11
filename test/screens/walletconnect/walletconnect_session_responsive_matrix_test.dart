@@ -28,7 +28,7 @@ class _FakeEngine implements WalletConnectEngine {
       const WalletConnectSessionProposal(
         proposalId: '1',
         originUrl: 'https://tokeninfo.aktionariat.com',
-        verifyStatus: WalletConnectVerifyStatus.unknown,
+        verifyStatus: WalletConnectVerifyStatus.valid,
         proposerName: 'Aktionariat',
         proposerUrl: 'https://tokeninfo.aktionariat.com',
       ),

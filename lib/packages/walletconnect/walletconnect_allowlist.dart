@@ -4,12 +4,16 @@ abstract final class WalletConnectAllowlist {
     'frankencoin.com',
   ];
 
+  /// Aktionariat tenant host for RealUnit (same org, not a third provider).
+  static const allowedExactHosts = ['shares.realunit.ch'];
+
   static const unsupportedProviderMessage =
       'WalletConnect is not supported for this provider.';
 
   static bool isAllowedOrigin(String? url) {
     final host = hostOf(url);
     if (host == null) return false;
+    if (allowedExactHosts.contains(host)) return true;
     return allowedRegistrableDomains.any(
       (domain) => host == domain || host.endsWith('.$domain'),
     );
