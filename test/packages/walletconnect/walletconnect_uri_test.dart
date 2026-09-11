@@ -60,5 +60,14 @@ void main() {
     test('opaque investorpage without host is a scan deeplink', () {
       expect(WalletConnectUri.isScanDeeplink('realunit-wallet:investorpage'), isTrue);
     });
+
+    test('treats an Android intent investorpage wrapper as a scan deeplink', () {
+      expect(
+        WalletConnectUri.isScanDeeplink(
+          'intent://investorpage/REALU#Intent;scheme=realunit-wallet;end',
+        ),
+        isTrue,
+      );
+    });
   });
 }

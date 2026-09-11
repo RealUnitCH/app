@@ -1009,6 +1009,22 @@ void main() {
   );
 
   testWidgets(
+    'warm resume: an Android intent investorpage wrapper pushes the scan route',
+    (tester) async {
+      addTearDown(clearPendingWalletConnect);
+      final router = await pump(tester);
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+
+      router.go('intent://investorpage/REALU#Intent;scheme=realunit-wallet;end');
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('wcScan')), findsOneWidget);
+      expect(find.text('WCSCAN'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'warm resume on /verifyPin while locked: WalletConnect pairing deeplink '
     'stashes and does not push the session route',
     (tester) async {

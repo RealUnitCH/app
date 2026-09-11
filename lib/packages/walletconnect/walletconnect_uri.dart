@@ -55,7 +55,14 @@ abstract final class WalletConnectUri {
   static bool isScanDeeplink(String raw) {
     final value = raw.trim();
     final uri = Uri.tryParse(value);
-    if (uri == null || uri.scheme.toLowerCase() != 'realunit-wallet') {
+    if (uri == null) return false;
+
+    if (uri.scheme.toLowerCase() == 'intent' &&
+        uri.host.toLowerCase() == 'investorpage') {
+      return true;
+    }
+
+    if (uri.scheme.toLowerCase() != 'realunit-wallet') {
       return false;
     }
 
