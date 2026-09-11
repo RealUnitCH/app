@@ -138,16 +138,20 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
 
   @override
   Future<void> rejectSession(String proposalId) async {
-    await _kit.rejectSession(
-      id: int.parse(proposalId),
-      reason: const ReownSignError(code: 5000, message: 'User rejected.'),
-    );
-    final pairingTopic = _proposalPairings.remove(proposalId);
-    if (pairingTopic == null || pairingTopic.isEmpty) return;
     try {
-      await _kit.core.pairing.disconnect(topic: pairingTopic);
-    } catch (_) {
-      // Pairing may already be gone after rejectSession.
+      await _kit.rejectSession(
+        id: int.parse(proposalId),
+        reason: const ReownSignError(code: 5000, message: 'User rejected.'),
+      );
+    } finally {
+      final pairingTopic = _proposalPairings.remove(proposalId);
+      if (pairingTopic != null && pairingTopic.isNotEmpty) {
+        try {
+          await _kit.core.pairing.disconnect(topic: pairingTopic);
+        } catch (_) {
+          // Pairing may already be gone after rejectSession.
+        }
+      }
     }
   }
 
@@ -189,8 +193,32 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
 
   @override
   Future<void> reset() async {
-    final walletKit = _walletKit;
-    if (walletKit == null) return;
+    // Cold start after Delete Wallet / Forgot PIN: `_walletKit` is null but
+    // WalletKit may still have persisted sessions in its default store.
+    // Opening the kit without registerAccount loads that state so we can
+    // disconnect it. Not boot init — only runs on wipe.
+    var walletKit = _walletKit;
+    if (walletKit == null) {
+      try {
+        walletKit = await ReownWalletKit.createInstance(
+          projectId: WalletConnectConfig.projectId,
+          metadata: const PairingMetadata(
+            name: WalletConnectConfig.metadataName,
+            description: WalletConnectConfig.metadataName,
+            url: WalletConnectConfig.metadataUrl,
+            icons: ['https://realunit.app/favicon.ico'],
+            redirect: Redirect(native: WalletConnectConfig.redirectNative),
+          ),
+          logLevel: LogLevel.nothing,
+        );
+        _walletKit = walletKit;
+      } catch (_) {
+        _walletKit = null;
+        _requestTopics.clear();
+        _proposalPairings.clear();
+        return;
+      }
+    }
 
     try {
       final sessions = walletKit.getActiveSessions();

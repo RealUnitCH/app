@@ -15,6 +15,7 @@ class _FakeEngine implements WalletConnectEngine {
   final approvedRequests = <int, String>{};
   var pairCalls = 0;
   var resetCalls = 0;
+  Object? rejectRequestError;
 
   @override
   Stream<WalletConnectIncoming> get events => _events.stream;
@@ -45,6 +46,8 @@ class _FakeEngine implements WalletConnectEngine {
   @override
   Future<void> rejectRequest(int requestId) async {
     rejectedRequests.add(requestId);
+    final error = rejectRequestError;
+    if (error != null) throw error;
   }
 
   @override
@@ -130,6 +133,24 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(engine.rejectedSessions, ['7']);
     expect(errors.first.type, WalletConnectServiceErrorType.invalidVerification);
+    expect(prompts, isEmpty);
+  });
+
+  test('disconnects a policy-fail request even if reject throws', () async {
+    engine.rejectRequestError = StateError('relay down');
+    engine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 22,
+        topic: 'topic-etherscan',
+        method: 'personal_sign',
+        params: ['hello', address],
+        originUrl: 'https://etherscan.io',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(engine.rejectedRequests, [22]);
+    expect(engine.disconnectedTopics, ['topic-etherscan']);
     expect(prompts, isEmpty);
   });
 
