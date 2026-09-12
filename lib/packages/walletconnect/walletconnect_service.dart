@@ -86,7 +86,7 @@ class WalletConnectService {
   bool _initialized = false;
   bool _sessionLive = false;
 
-  // coverage:ignore-start
+  // coverage:ignore-start — production ctor needs WalletService/AppStore; tests use forTesting
   WalletConnectService({
     required WalletConnectEngine engine,
     required WalletService walletService,
@@ -182,16 +182,20 @@ class WalletConnectService {
     }
     await ensureInitialized();
     if (!_initialized) throw StateError('WalletConnect is not initialized.');
-    _sessionLive = true;
     await _engine.pair(pairingUri);
+    _sessionLive = true;
   }
 
   Future<void> _handleIncoming(WalletConnectIncoming incoming) async {
     switch (incoming) {
       case WalletConnectSessionProposal():
         if (!_isAccepted(incoming.originUrl, incoming.verifyStatus)) {
-          await _engine.rejectSession(incoming.proposalId);
-          _emitPolicyError(incoming.originUrl, incoming.verifyStatus);
+          _sessionLive = false;
+          try {
+            await _engine.rejectSession(incoming.proposalId);
+          } finally {
+            _emitPolicyError(incoming.originUrl, incoming.verifyStatus);
+          }
           return;
         }
         _sessionLive = true;
@@ -352,7 +356,7 @@ class WalletConnectService {
     final testSigner = _testMessageSigner;
     if (testSigner != null) return testSigner(message);
 
-    // coverage:ignore-start
+    // coverage:ignore-start — live wallet unlock/sign cannot run in flutter test without a real wallet
     await _walletService!.ensureCurrentWalletUnlocked();
     try {
       return await _appStore!.wallet.currentAccount.signMessage(message);
@@ -366,7 +370,7 @@ class WalletConnectService {
     final testSigner = _testTypedDataSigner;
     if (testSigner != null) return testSigner(chainId, jsonData);
 
-    // coverage:ignore-start
+    // coverage:ignore-start — live EIP-712 sign cannot run in flutter test without a real wallet
     await _walletService!.ensureCurrentWalletUnlocked();
     try {
       return await Eip712Signer.signTypedDataJson(
@@ -446,7 +450,7 @@ class WalletConnectService {
       ];
       return utf8.decode(bytes, allowMalformed: true);
     } on FormatException {
-      // coverage:ignore-line
+      // coverage:ignore-line — utf8.decode with allowMalformed:true does not throw FormatException for tested inputs
       return value;
     }
   }

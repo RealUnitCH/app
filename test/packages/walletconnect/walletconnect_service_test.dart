@@ -17,6 +17,8 @@ class _FakeEngine implements WalletConnectEngine {
   var pairCalls = 0;
   var resetCalls = 0;
   Object? rejectRequestError;
+  Object? rejectSessionError;
+  Object? pairError;
 
   @override
   Stream<WalletConnectIncoming> get events => _events.stream;
@@ -32,6 +34,8 @@ class _FakeEngine implements WalletConnectEngine {
   @override
   Future<void> pair(String uri) async {
     pairCalls += 1;
+    final error = pairError;
+    if (error != null) throw error;
   }
 
   @override
@@ -42,6 +46,8 @@ class _FakeEngine implements WalletConnectEngine {
   @override
   Future<void> rejectSession(String proposalId) async {
     rejectedSessions.add(proposalId);
+    final error = rejectSessionError;
+    if (error != null) throw error;
   }
 
   @override
@@ -157,6 +163,23 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(engine.rejectedRequests, [22]);
     expect(engine.disconnectedTopics, ['topic-etherscan']);
+    expect(prompts, isEmpty);
+  });
+
+  test('emits policy error even if rejectSession throws', () async {
+    engine.rejectSessionError = StateError('relay down');
+    engine.emit(
+      const WalletConnectSessionProposal(
+        proposalId: '60',
+        originUrl: 'https://etherscan.io',
+        verifyStatus: WalletConnectVerifyStatus.unknown,
+        proposerName: 'Etherscan',
+        proposerUrl: 'https://etherscan.io',
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(engine.rejectedSessions, contains('60'));
+    expect(errors.first.type, WalletConnectServiceErrorType.unsupportedProvider);
     expect(prompts, isEmpty);
   });
 
@@ -348,6 +371,27 @@ void main() {
       () => service.pair('https://etherscan.io'),
       throwsA(isA<FormatException>()),
     );
+  });
+
+  test('failed pair does not mark the session live', () async {
+    engine.pairError = StateError('relay down');
+    await expectLater(service.pair(pairing), throwsA(isA<StateError>()));
+    await expectLater(
+      service.approvePrompt(
+        const WalletConnectProposalPrompt(
+          WalletConnectSessionProposal(
+            proposalId: '1',
+            originUrl: 'https://tokeninfo.aktionariat.com',
+            verifyStatus: WalletConnectVerifyStatus.valid,
+            proposerName: 'Aktionariat',
+            proposerUrl: 'https://tokeninfo.aktionariat.com',
+          ),
+        ),
+      ),
+      throwsA(isA<StateError>()),
+    );
+    expect(engine.approvedSessions, isEmpty);
+    expect(engine.pairCalls, 1);
   });
 
   test('reset calls engine.reset and allows pair again', () async {

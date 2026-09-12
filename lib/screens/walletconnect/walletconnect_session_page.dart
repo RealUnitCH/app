@@ -98,7 +98,7 @@ class _WalletConnectSessionPageState extends State<WalletConnectSessionPage> {
   Future<void> _pair(String uri) async {
     try {
       await _service.pair(uri);
-    } on FormatException {
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -106,6 +106,7 @@ class _WalletConnectSessionPageState extends State<WalletConnectSessionPage> {
           backgroundColor: RealUnitColors.status.red600,
         ),
       );
+      Navigator.of(context).maybePop();
     }
   }
 
