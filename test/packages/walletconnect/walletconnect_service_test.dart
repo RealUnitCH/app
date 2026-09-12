@@ -316,6 +316,37 @@ void main() {
     expect(engine.rejectedRequests, contains(12));
   });
 
+  test('reset during signing rejects instead of approving', () async {
+    final engine = _FakeEngine();
+    final completer = Completer<String>();
+    final service = WalletConnectService.forTesting(
+      engine: engine,
+      address: address,
+      signMessage: (_) => completer.future,
+    );
+    final prompts = <WalletConnectUserPrompt>[];
+    service.prompts.listen(prompts.add);
+
+    engine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 41,
+        topic: 'topic',
+        method: 'personal_sign',
+        params: ['hello', address],
+        originUrl: 'https://app.frankencoin.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    final pending = service.approvePrompt(prompts.first);
+    await service.reset();
+    completer.complete('sig:hello');
+    await expectLater(pending, throwsA(isA<StateError>()));
+    expect(engine.approvedRequests, isEmpty);
+    expect(engine.rejectedRequests, contains(41));
+    expect(engine.resetCalls, 1);
+  });
+
   test('eth_sendTransaction is rejected without prompting', () async {
     engine.emit(
       const WalletConnectSessionRequest(

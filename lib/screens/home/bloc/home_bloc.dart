@@ -107,6 +107,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
     _bitboxService.stopConnectionStatusObserver();
     await _appStore.sessionCache.clear();
+    await _walletConnectService?.reset();
     if (_walletService.hasWallet()) {
       await _walletService.deleteCurrentWallet();
       _settingsService.setTermsAccepted(false);
@@ -119,7 +120,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     // A pending referral code must not be credited to the next wallet either;
     // unlike the deeplink that binding cannot be undone.
     await clearPendingReferralCode();
-    await _walletConnectService?.reset();
     emit(
       HomeState(
         hasWallet: false,
