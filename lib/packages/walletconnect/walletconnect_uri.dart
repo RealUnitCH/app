@@ -47,6 +47,8 @@ abstract final class WalletConnectUri {
         candidate = decoded;
       } on FormatException {
         return null;
+      } on ArgumentError {
+        return null;
       }
     }
     return null;
