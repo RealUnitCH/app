@@ -17,6 +17,7 @@ class _FakeEngine implements WalletConnectEngine {
   var pairCalls = 0;
   var resetCalls = 0;
   Object? rejectRequestError;
+  Object? disconnectError;
   Object? rejectSessionError;
   Object? pairError;
 
@@ -65,6 +66,8 @@ class _FakeEngine implements WalletConnectEngine {
   @override
   Future<void> disconnect(String topic) async {
     disconnectedTopics.add(topic);
+    final error = disconnectError;
+    if (error != null) throw error;
   }
 
   @override
@@ -179,6 +182,25 @@ void main() {
     );
     await Future<void>.delayed(const Duration(milliseconds: 10));
     expect(engine.rejectedSessions, contains('60'));
+    expect(errors.first.type, WalletConnectServiceErrorType.unsupportedProvider);
+    expect(prompts, isEmpty);
+  });
+
+  test('emits policy error even if disconnect throws', () async {
+    engine.disconnectError = StateError('relay down');
+    engine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 23,
+        topic: 'topic-etherscan',
+        method: 'personal_sign',
+        params: ['hello', address],
+        originUrl: 'https://etherscan.io',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(engine.rejectedRequests, contains(23));
+    expect(engine.disconnectedTopics, contains('topic-etherscan'));
     expect(errors.first.type, WalletConnectServiceErrorType.unsupportedProvider);
     expect(prompts, isEmpty);
   });

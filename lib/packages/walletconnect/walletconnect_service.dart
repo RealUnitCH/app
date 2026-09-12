@@ -204,11 +204,14 @@ class WalletConnectService {
         if (!_isAccepted(incoming.originUrl, incoming.verifyStatus)) {
           _sessionLive = false;
           try {
-            await _engine.rejectRequest(incoming.requestId);
+            try {
+              await _engine.rejectRequest(incoming.requestId);
+            } finally {
+              await _engine.disconnect(incoming.topic);
+            }
           } finally {
-            await _engine.disconnect(incoming.topic);
+            _emitPolicyError(incoming.originUrl, incoming.verifyStatus);
           }
-          _emitPolicyError(incoming.originUrl, incoming.verifyStatus);
           return;
         }
         _sessionLive = true;

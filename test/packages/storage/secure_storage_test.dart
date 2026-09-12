@@ -715,6 +715,78 @@ void main() {
       },
     );
 
+    test('marker read throw does not propagate', () async {
+      final namespaced = _MockFlutterSecureStorage();
+      final legacy = _MockFlutterSecureStorage();
+
+      when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+      when(
+        () => namespaced.read(key: 'secure.storage.namespaced'),
+      ).thenThrow(Exception('marker read failed'));
+      when(
+        () => namespaced.write(
+          key: any(named: 'key'),
+          value: any(named: 'value'),
+        ),
+      ).thenAnswer((_) async {});
+      when(() => legacy.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+
+      final storage = SecureStorage.withStorage(
+        namespaced,
+        isolateFromWalletKit: true,
+      );
+      await expectLater(
+        storage.migrateFromUnnamespacedStoreIfNeeded(legacy: legacy),
+        completes,
+      );
+      verifyNever(
+        () => namespaced.write(
+          key: 'secure.storage.namespaced',
+          value: any(named: 'value'),
+        ),
+      );
+    });
+
+    test('marker write throw does not propagate', () async {
+      final namespaced = _MockFlutterSecureStorage();
+      final legacy = _MockFlutterSecureStorage();
+      final store = <String, String>{};
+
+      when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((invocation) async {
+        final key = invocation.namedArguments[#key] as String;
+        return store[key];
+      });
+      when(
+        () => namespaced.write(
+          key: any(named: 'key'),
+          value: any(named: 'value'),
+        ),
+      ).thenAnswer((invocation) async {
+        final key = invocation.namedArguments[#key] as String;
+        final value = invocation.namedArguments[#value] as String;
+        store[key] = value;
+      });
+      when(
+        () => namespaced.write(
+          key: 'secure.storage.namespaced',
+          value: any(named: 'value'),
+        ),
+      ).thenThrow(Exception('marker write failed'));
+      when(() => legacy.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+      when(
+        () => legacy.read(key: 'pin.credential'),
+      ).thenAnswer((_) async => 'deadbeef:hash');
+
+      final storage = SecureStorage.withStorage(
+        namespaced,
+        isolateFromWalletKit: true,
+      );
+      await expectLater(
+        storage.migrateFromUnnamespacedStoreIfNeeded(legacy: legacy),
+        completes,
+      );
+    });
+
     test('does not write the migration flag when read-back mismatches', () async {
       final namespaced = _MockFlutterSecureStorage();
       final legacy = _MockFlutterSecureStorage();

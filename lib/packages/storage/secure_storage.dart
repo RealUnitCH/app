@@ -104,7 +104,16 @@ class SecureStorage {
     FlutterSecureStorage legacy = const FlutterSecureStorage(),
   }) async {
     if (!_isolateFromWalletKit) return;
-    if (await _secureStorage.read(key: _namespaceMigrationKey) == '1') return;
+    try {
+      if (await _secureStorage.read(key: _namespaceMigrationKey) == '1') return;
+    } catch (error, stackTrace) {
+      developer.log(
+        'SecureStorage namespaced migrate: marker read failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return;
+    }
     for (final key in _legacyKeysToMigrate) {
       try {
         final value = await legacy.read(key: key);
@@ -132,7 +141,16 @@ class SecureStorage {
         return;
       }
     }
-    await _secureStorage.write(key: _namespaceMigrationKey, value: '1');
+    try {
+      await _secureStorage.write(key: _namespaceMigrationKey, value: '1');
+    } catch (error, stackTrace) {
+      developer.log(
+        'SecureStorage namespaced migrate: marker write failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return;
+    }
   }
 
   // Database

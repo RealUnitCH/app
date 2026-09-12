@@ -156,12 +156,13 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
 
   @override
   Future<void> approveRequest(int requestId, String result) async {
-    final topic = _requestTopics.remove(requestId);
+    final topic = _requestTopics[requestId];
     if (topic == null) throw StateError('Unknown WalletConnect request.');
     await _kit.respondSessionRequest(
       topic: topic,
       response: JsonRpcResponse(id: requestId, result: _decodeResult(result)),
     );
+    _requestTopics.remove(requestId);
   }
 
   dynamic _decodeResult(String result) {
@@ -173,7 +174,7 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
 
   @override
   Future<void> rejectRequest(int requestId) async {
-    final topic = _requestTopics.remove(requestId);
+    final topic = _requestTopics[requestId];
     if (topic == null) return;
     await _kit.respondSessionRequest(
       topic: topic,
@@ -182,6 +183,7 @@ class ReownWalletConnectEngine implements WalletConnectEngine {
         error: const JsonRpcError(code: 5000, message: 'User rejected.'),
       ),
     );
+    _requestTopics.remove(requestId);
   }
 
   @override
