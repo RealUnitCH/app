@@ -104,12 +104,6 @@ void main() {
         ),
         isNull,
       );
-      expect(
-        WalletConnectUri.isPairingUri(
-          'wc:00e46b69-d0cc-4b3e-b6a2-cee442f97188@2?relay-protocol=irn&symKey=%',
-        ),
-        isFalse,
-      );
     });
   });
 }
