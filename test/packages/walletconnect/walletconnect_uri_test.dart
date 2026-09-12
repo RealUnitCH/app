@@ -88,6 +88,28 @@ void main() {
         WalletConnectUri.extractPairingUri('realunit-wallet://wc?uri=%'),
         isNull,
       );
+      expect(
+        WalletConnectUri.extractPairingUri('realunit-wallet://wc?uri=%25'),
+        isNull,
+      );
+      expect(
+        WalletConnectUri.extractPairingUri(
+          'intent://wc?uri=%#Intent;scheme=wc;end',
+        ),
+        isNull,
+      );
+      expect(
+        WalletConnectUri.extractPairingUri(
+          'intent://wc#Intent;scheme=wc;S.uri=%;end',
+        ),
+        isNull,
+      );
+      expect(
+        WalletConnectUri.isPairingUri(
+          'wc:00e46b69-d0cc-4b3e-b6a2-cee442f97188@2?relay-protocol=irn&symKey=%',
+        ),
+        isFalse,
+      );
     });
   });
 }

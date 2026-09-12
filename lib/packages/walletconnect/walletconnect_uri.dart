@@ -1,4 +1,15 @@
 abstract final class WalletConnectUri {
+  /// Truncated `%` escapes throw [ArgumentError], not [FormatException].
+  static T _catchUri<T>(T Function() fn, T fallback) {
+    try {
+      return fn();
+    } on FormatException {
+      return fallback;
+    } on ArgumentError {
+      return fallback;
+    }
+  }
+
   static bool isPairingUri(String raw) {
     final value = raw.trim();
     if (value.isEmpty) return false;
@@ -8,11 +19,17 @@ abstract final class WalletConnectUri {
     final beforeQuery = value.split('?').first;
     final pairing = RegExp(r'^wc:([^@]+)@2$', caseSensitive: false).firstMatch(beforeQuery);
     if (pairing == null || pairing.group(1)!.isEmpty) return false;
-    return uri.queryParameters['relay-protocol']?.isNotEmpty == true &&
-        uri.queryParameters['symKey']?.isNotEmpty == true;
+    return _catchUri(() {
+      return uri.queryParameters['relay-protocol']?.isNotEmpty == true &&
+          uri.queryParameters['symKey']?.isNotEmpty == true;
+    }, false);
   }
 
   static String? extractPairingUri(String raw) {
+    return _catchUri(() => _extractPairingUriUnguarded(raw), null);
+  }
+
+  static String? _extractPairingUriUnguarded(String raw) {
     final value = raw.trim();
     if (isPairingUri(value)) return value;
 
@@ -30,26 +47,16 @@ abstract final class WalletConnectUri {
     }
     if (!_isWalletConnectRoute(uri, value)) return null;
 
-    String? candidate;
-    try {
-      candidate = uri.queryParameters['uri'];
-    } on FormatException {
-      return null;
-    }
+    final candidate = uri.queryParameters['uri'];
     if (candidate == null || candidate.isEmpty) return null;
 
+    var current = candidate;
     for (var attempt = 0; attempt < 3; attempt++) {
-      final trimmed = candidate!.trim();
+      final trimmed = current.trim();
       if (isPairingUri(trimmed)) return trimmed;
-      try {
-        final decoded = Uri.decodeComponent(trimmed);
-        if (decoded == trimmed) return null;
-        candidate = decoded;
-      } on FormatException {
-        return null;
-      } on ArgumentError {
-        return null;
-      }
+      final decoded = Uri.decodeComponent(trimmed);
+      if (decoded == trimmed) return null;
+      current = decoded;
     }
     return null;
   }
