@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/packages/walletconnect/walletconnect_allowlist.dart';
 import 'package:realunit_wallet/packages/walletconnect/walletconnect_engine.dart';
@@ -790,5 +791,68 @@ void main() {
     await service.pair(pairing);
     await service.approvePrompt(prompt);
     expect(engine.rejectedRequests, contains(56));
+  });
+
+  test('empty 0x personal_sign is rejected not approved', () async {
+    final emptyEngine = _FakeEngine();
+    final emptyService = WalletConnectService.forTesting(
+      engine: emptyEngine,
+      address: address,
+      signMessage: (_) async => '0x',
+    );
+    final emptyPrompts = <WalletConnectUserPrompt>[];
+    emptyService.prompts.listen(emptyPrompts.add);
+
+    emptyEngine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 31,
+        topic: 'topic',
+        method: 'personal_sign',
+        params: ['hello', address],
+        originUrl: 'https://app.frankencoin.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    await expectLater(
+      emptyService.approvePrompt(emptyPrompts.first),
+      throwsA(isA<SigningCancelledException>()),
+    );
+    expect(emptyEngine.approvedRequests, isEmpty);
+    expect(emptyEngine.rejectedRequests, contains(31));
+  });
+
+  test('empty 0x typed data is rejected not approved', () async {
+    final typedEngine = _FakeEngine();
+    final typedService = WalletConnectService.forTesting(
+      engine: typedEngine,
+      address: address,
+      signMessage: (message) async => 'sig:$message',
+      signTypedData: (_, _) async => '0x',
+    );
+    final typedPrompts = <WalletConnectUserPrompt>[];
+    typedService.prompts.listen(typedPrompts.add);
+
+    typedEngine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 38,
+        topic: 'topic',
+        method: 'eth_signTypedData_v4',
+        params: [
+          address,
+          '{"domain":{}}',
+        ],
+        originUrl: 'https://app.frankencoin.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+        chainId: 1,
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    await expectLater(
+      typedService.approvePrompt(typedPrompts.first),
+      throwsA(isA<SigningCancelledException>()),
+    );
+    expect(typedEngine.approvedRequests, isEmpty);
+    expect(typedEngine.rejectedRequests, contains(38));
   });
 }

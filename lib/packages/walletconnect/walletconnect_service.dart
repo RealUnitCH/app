@@ -5,6 +5,7 @@ import 'dart:developer' as developer;
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
+import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/packages/walletconnect/walletconnect_allowlist.dart';
 import 'package:realunit_wallet/packages/walletconnect/walletconnect_config.dart';
@@ -325,7 +326,7 @@ class WalletConnectService {
             final signature = await _signMessage(
               _messageFromParams(request.params),
             );
-            await _respondIfSessionLive(request.requestId, signature);
+            await _respondSignature(request.requestId, signature);
           case 'eth_signTypedData':
           case 'eth_signTypedData_v4':
             final jsonData = _typedDataJson(request.params);
@@ -338,8 +339,14 @@ class WalletConnectService {
               await _engine.rejectRequest(request.requestId);
               throw const FormatException('Unsupported WalletConnect chain.');
             }
-            final signature = await _signTypedData(chainId, jsonData);
-            await _respondIfSessionLive(request.requestId, signature);
+            String signature;
+            try {
+              signature = await _signTypedData(chainId, jsonData);
+            } on SigningCancelledException {
+              await _engine.rejectRequest(request.requestId);
+              rethrow;
+            }
+            await _respondSignature(request.requestId, signature);
           default:
             await _engine.rejectRequest(request.requestId);
         }
@@ -395,6 +402,14 @@ class WalletConnectService {
         sendTransactionUnsupportedMessage,
       ),
     );
+  }
+
+  Future<void> _respondSignature(int requestId, String signature) async {
+    if (signature.isEmpty || signature == '0x') {
+      await _engine.rejectRequest(requestId);
+      throw const SigningCancelledException();
+    }
+    await _respondIfSessionLive(requestId, signature);
   }
 
   Future<void> _respondIfSessionLive(int requestId, String signature) async {
