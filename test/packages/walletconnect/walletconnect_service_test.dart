@@ -17,6 +17,7 @@ class _FakeEngine implements WalletConnectEngine {
   final approvedRequests = <int, String>{};
   var pairCalls = 0;
   var resetCalls = 0;
+  Completer<void>? resetHold;
   Object? rejectRequestError;
   Object? disconnectError;
   Object? rejectSessionError;
@@ -74,6 +75,8 @@ class _FakeEngine implements WalletConnectEngine {
   @override
   Future<void> reset() async {
     resetCalls += 1;
+    final hold = resetHold;
+    if (hold != null) await hold.future;
   }
 
   void emit(WalletConnectIncoming incoming) => _events.add(incoming);
@@ -89,7 +92,7 @@ void main() {
   late List<WalletConnectServiceError> errors;
   late List<WalletConnectUserPrompt> prompts;
 
-  setUp(() {
+  setUp(() async {
     engine = _FakeEngine();
     service = WalletConnectService.forTesting(
       engine: engine,
@@ -100,6 +103,7 @@ void main() {
     prompts = [];
     service.errors.listen(errors.add);
     service.prompts.listen(prompts.add);
+    await service.ensureInitialized();
   });
 
   test('rejects etherscan proposals', () async {
@@ -294,6 +298,7 @@ void main() {
     final signingPrompts = <WalletConnectUserPrompt>[];
     signingService.errors.listen(signingErrors.add);
     signingService.prompts.listen(signingPrompts.add);
+    await signingService.ensureInitialized();
 
     engine.emit(
       const WalletConnectSessionRequest(
@@ -326,6 +331,7 @@ void main() {
     );
     final prompts = <WalletConnectUserPrompt>[];
     service.prompts.listen(prompts.add);
+    await service.ensureInitialized();
 
     engine.emit(
       const WalletConnectSessionRequest(
@@ -460,6 +466,28 @@ void main() {
     expect(engine.pairCalls, 2);
   });
 
+  test('incoming during reset does not re-arm the session', () async {
+    // Incoming during reset is dropped because _handleIncoming returns when
+    // !_initialized.
+    engine.resetHold = Completer<void>();
+    await service.pair(pairing);
+    final resetting = service.reset();
+    engine.emit(
+      const WalletConnectSessionProposal(
+        proposalId: '70',
+        originUrl: 'https://tokeninfo.aktionariat.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+        proposerName: 'Aktionariat',
+        proposerUrl: 'https://tokeninfo.aktionariat.com',
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    engine.resetHold!.complete();
+    await resetting;
+    expect(prompts, isEmpty);
+    expect(engine.approvedSessions, isEmpty);
+  });
+
   test('debug wallet rejects personal_sign without prompting', () async {
     final debugEngine = _FakeEngine();
     final debugService = WalletConnectService.forTesting(
@@ -472,6 +500,7 @@ void main() {
     final debugPrompts = <WalletConnectUserPrompt>[];
     debugService.errors.listen(debugErrors.add);
     debugService.prompts.listen(debugPrompts.add);
+    await debugService.ensureInitialized();
 
     debugEngine.emit(
       const WalletConnectSessionRequest(
@@ -583,6 +612,7 @@ void main() {
     );
     final typedPrompts = <WalletConnectUserPrompt>[];
     typedService.prompts.listen(typedPrompts.add);
+    await typedService.ensureInitialized();
 
     typedEngine.emit(
       const WalletConnectSessionRequest(
@@ -614,6 +644,7 @@ void main() {
     );
     final typedPrompts = <WalletConnectUserPrompt>[];
     typedService.prompts.listen(typedPrompts.add);
+    await typedService.ensureInitialized();
 
     typedEngine.emit(
       const WalletConnectSessionRequest(
@@ -700,11 +731,17 @@ void main() {
   });
 
   test('init failure is swallowed so a later pair can retry', () async {
-    engine.initError = StateError('kit down');
-    await service.ensureInitialized();
-    engine.initError = null;
-    await service.pair(pairing);
-    expect(engine.pairCalls, 1);
+    final failingEngine = _FakeEngine();
+    failingEngine.initError = StateError('kit down');
+    final failingService = WalletConnectService.forTesting(
+      engine: failingEngine,
+      address: address,
+      signMessage: (message) async => 'sig:$message',
+    );
+    await failingService.ensureInitialized();
+    failingEngine.initError = null;
+    await failingService.pair(pairing);
+    expect(failingEngine.pairCalls, 1);
   });
 
   test('debug wallet rejects typed data without prompting', () async {
@@ -718,6 +755,7 @@ void main() {
     );
     final debugPrompts = <WalletConnectUserPrompt>[];
     debugService.prompts.listen(debugPrompts.add);
+    await debugService.ensureInitialized();
     debugEngine.emit(
       const WalletConnectSessionRequest(
         requestId: 51,
@@ -833,6 +871,7 @@ void main() {
     );
     final emptyPrompts = <WalletConnectUserPrompt>[];
     emptyService.prompts.listen(emptyPrompts.add);
+    await emptyService.ensureInitialized();
 
     emptyEngine.emit(
       const WalletConnectSessionRequest(
@@ -863,6 +902,7 @@ void main() {
     );
     final typedPrompts = <WalletConnectUserPrompt>[];
     typedService.prompts.listen(typedPrompts.add);
+    await typedService.ensureInitialized();
 
     typedEngine.emit(
       const WalletConnectSessionRequest(

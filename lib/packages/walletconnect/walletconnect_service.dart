@@ -184,10 +184,12 @@ class WalletConnectService {
     await ensureInitialized();
     if (!_initialized) throw StateError('WalletConnect is not initialized.');
     await _engine.pair(pairingUri);
+    if (!_initialized) return;
     _sessionLive = true;
   }
 
   Future<void> _handleIncoming(WalletConnectIncoming incoming) async {
+    if (!_initialized) return;
     switch (incoming) {
       case WalletConnectSessionProposal():
         if (!_isAccepted(incoming.originUrl, incoming.verifyStatus)) {
@@ -251,14 +253,26 @@ class WalletConnectService {
   }
 
   Future<void> _handleRequest(WalletConnectSessionRequest request) async {
+    if (!_sessionLive || !_initialized) {
+      await _engine.rejectRequest(request.requestId);
+      return;
+    }
     switch (request.method) {
       case 'eth_accounts':
       case 'eth_requestAccounts':
+        if (!_sessionLive) {
+          await _engine.rejectRequest(request.requestId);
+          return;
+        }
         await _engine.approveRequest(request.requestId, jsonEncode([_address]));
       case 'eth_chainId':
         final chainId = WalletConnectConfig.chainIds.contains(request.chainId)
             ? request.chainId!
             : 1;
+        if (!_sessionLive) {
+          await _engine.rejectRequest(request.requestId);
+          return;
+        }
         await _engine.approveRequest(
           request.requestId,
           '0x${chainId.toRadixString(16)}',
@@ -266,6 +280,10 @@ class WalletConnectService {
       case 'wallet_switchEthereumChain':
         final chainId = _requestedChainId(request.params);
         if (chainId != null && WalletConnectConfig.chainIds.contains(chainId)) {
+          if (!_sessionLive) {
+            await _engine.rejectRequest(request.requestId);
+            return;
+          }
           await _engine.approveRequest(request.requestId, 'null');
         } else {
           await _engine.rejectRequest(request.requestId);
