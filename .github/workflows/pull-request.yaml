@@ -51,10 +51,10 @@ jobs:
     # that isn't a draft".
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: macos-latest
-    # macos-latest Analyze & Test ran past 30 minutes on this branch
-    # (WalletConnect matrix doubled the session cells). 45 leaves headroom
-    # without holding a cancelled coverage-floor forever.
-    timeout-minutes: 45
+    # macos-latest Analyze & Test ran past 45 minutes on this branch
+    # (WalletConnect matrix plus pairing-error and migrate tests). 60
+    # leaves headroom without holding a cancelled coverage-floor forever.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v6
       - uses: subosito/flutter-action@v2
