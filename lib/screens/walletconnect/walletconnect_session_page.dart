@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
+import 'package:realunit_wallet/packages/wallet/exceptions/signing_cancelled_exception.dart';
 import 'package:realunit_wallet/packages/walletconnect/walletconnect_service.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -126,6 +127,11 @@ class _WalletConnectSessionPageState extends State<WalletConnectSessionPage> {
       // A newer prompt may have arrived while approve awaited unlock/relay.
       if (mounted && identical(_prompt, prompt)) {
         setState(() => _prompt = null);
+      }
+    } on SigningCancelledException {
+      if (!mounted) return;
+      if (identical(_prompt, prompt)) {
+        Navigator.of(context).maybePop();
       }
     } catch (error) {
       if (!mounted) return;
