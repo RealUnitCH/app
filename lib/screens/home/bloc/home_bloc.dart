@@ -10,6 +10,7 @@ import 'package:realunit_wallet/packages/service/settings_service.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
+import 'package:realunit_wallet/packages/walletconnect/walletconnect_service.dart';
 import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 import 'package:realunit_wallet/setup/routing/referral_pending_code.dart';
 
@@ -23,8 +24,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     this._transactionHistoryService,
     this._settingsService,
     this._appStore,
-    this._bitboxService,
-  ) : super(const HomeState()) {
+    this._bitboxService, {
+    WalletConnectService? walletConnectService,
+  })  : _walletConnectService = walletConnectService,
+        super(const HomeState()) {
     on<CheckWalletExistsEvent>(_onCheckWalletExists);
     on<LoadCurrentWalletEvent>(_onLoadCurrentWallet);
     on<LoadWalletEvent>(_onLoadWallet);
@@ -45,6 +48,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final SettingsService _settingsService;
   final AppStore _appStore;
   final BitboxService _bitboxService;
+  final WalletConnectService? _walletConnectService;
 
   void _onCheckWalletExists(CheckWalletExistsEvent event, Emitter<HomeState> emit) {
     final hasWallet = _walletService.hasWallet();
@@ -103,6 +107,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
     _bitboxService.stopConnectionStatusObserver();
     await _appStore.sessionCache.clear();
+    await _walletConnectService?.reset();
     if (_walletService.hasWallet()) {
       await _walletService.deleteCurrentWallet();
       _settingsService.setTermsAccepted(false);
@@ -111,6 +116,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     // wallet. Covers every DeleteCurrentWalletEvent path (settings delete and
     // BitBox recovery cancel), including those that never call PinAuthCubit.reset().
     clearPendingPaymentDeeplink();
+    clearPendingWalletConnect();
     // A pending referral code must not be credited to the next wallet either;
     // unlike the deeplink that binding cannot be undone.
     await clearPendingReferralCode();

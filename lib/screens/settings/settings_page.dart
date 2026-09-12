@@ -16,6 +16,7 @@ import 'package:realunit_wallet/screens/settings/widgets/settings_confirm_logout
 import 'package:realunit_wallet/screens/settings/widgets/settings_section.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_version_unlock.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -110,6 +111,16 @@ class SettingsPage extends StatelessWidget {
                             ),
                             trailing: _forwardIcon,
                             onTap: () => context.pushNamed(SettingsRoutes.legalDocuments),
+                          ),
+                          SettingOption(
+                            title: S.of(context).walletConnectConnect,
+                            leading: const Icon(
+                              Icons.qr_code_scanner_rounded,
+                              size: 24,
+                              color: RealUnitColors.realUnitBlue,
+                            ),
+                            trailing: _forwardIcon,
+                            onTap: () => context.pushNamed(AppRoutes.walletConnectScan),
                           ),
                           SettingOption(
                             title: S.of(context).contact,

@@ -48,6 +48,8 @@ import 'package:realunit_wallet/screens/support/subpages/support_tickets_page.da
 import 'package:realunit_wallet/screens/support/support_page.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
 import 'package:realunit_wallet/screens/verify_seed/verify_seed_page.dart';
+import 'package:realunit_wallet/screens/walletconnect/walletconnect_scan_page.dart';
+import 'package:realunit_wallet/screens/walletconnect/walletconnect_session_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/screens/welcome/welcome_page.dart';
 import 'package:realunit_wallet/setup/di.dart';
@@ -243,6 +245,20 @@ final GoRouter routerConfig = GoRouter(
       name: AppRoutes.receive,
       path: '/receive',
       builder: (_, _) => const ReceivePage(isBottomSheet: false),
+    ),
+
+    GoRoute(
+      name: AppRoutes.walletConnectScan,
+      path: '/walletConnect',
+      builder: (_, _) => const WalletConnectScanPage(),
+    ),
+
+    GoRoute(
+      name: AppRoutes.walletConnectSession,
+      path: '/walletConnect/session',
+      builder: (_, state) => WalletConnectSessionPage(
+        pairingUri: state.extra is String ? state.extra as String : null,
+      ),
     ),
 
     GoRoute(

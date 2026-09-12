@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/pay_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/lnurl_decoder.dart';
+import 'package:realunit_wallet/packages/walletconnect/walletconnect_uri.dart';
 
 part 'pay_scan_state.dart';
 
@@ -20,7 +21,12 @@ class PayScanCubit extends Cubit<PayScanState> {
   /// push drops the [PayScanDecoded] hold and the next camera frame pushes
   /// a second quote page.
   void onCodeDetected(String raw) {
-    if (state is PayScanDecoded) return;
+    if (state is PayScanDecoded || state is PayScanWalletConnect) return;
+    final walletConnectUri = WalletConnectUri.extractPairingUri(raw);
+    if (walletConnectUri != null) {
+      emit(PayScanWalletConnect(walletConnectUri));
+      return;
+    }
     try {
       final decoded = LnurlDecoder.decode(raw);
       emit(PayScanDecoded(decoded));

@@ -47,4 +47,12 @@ const kScannerNavigationCatalog = <ScannerNavigationSurface>[
     regressionTestPath: 'test/screens/pay/pay_scan_scanner_navigation_test.dart',
     destinationWidgetName: 'PayQuoteView',
   ),
+  ScannerNavigationSurface(
+    id: 'walletconnect_scan',
+    description: 'WalletConnect pairing scan',
+    productionPath: 'lib/screens/walletconnect/walletconnect_scan_page.dart',
+    regressionTestPath:
+        'test/screens/walletconnect/walletconnect_scan_scanner_navigation_test.dart',
+    destinationWidgetName: 'WalletConnectSessionView',
+  ),
 ];

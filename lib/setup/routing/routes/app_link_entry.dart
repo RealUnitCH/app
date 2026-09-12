@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/packages/io/normalize_referral_code.dart';
+import 'package:realunit_wallet/packages/walletconnect/walletconnect_uri.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
@@ -223,6 +224,57 @@ String? _extractReferralInviteCode(Uri uri) {
   return null;
 }
 
+/// WalletConnect pairing / scan deeplink: stash when locked or cold-start,
+/// deferred push when unlocked — same security properties as the payment
+/// carve-out on [appLinkSchemeRedirect].
+//
+// @no-integration-test: OS-level custom-scheme / `wc:` delivery; covered by
+// app_link_entry_test.dart.
+String? _handleWalletConnectRedirect({
+  required String raw,
+  required String currentLocation,
+  required GoRouter router,
+}) {
+  final current = Uri.parse(currentLocation);
+  final isInAppRoute = current.scheme.isEmpty && current.path.startsWith('/');
+  final pairingUri = WalletConnectUri.extractPairingUri(raw);
+  final openScan = pairingUri == null && WalletConnectUri.isScanDeeplink(raw);
+
+  void stash() {
+    if (pairingUri != null) {
+      stashPendingWalletConnectPairing(pairingUri);
+    } else if (openScan) {
+      stashPendingWalletConnectScan();
+    }
+  }
+
+  void push() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final pinState = getIt<PinAuthCubit>().state;
+      if (!(pinState.isPinVerified && pinState.isPinSetup)) {
+        stash();
+        return;
+      }
+      if (pairingUri != null) {
+        unawaited(router.pushNamed(AppRoutes.walletConnectSession, extra: pairingUri));
+      } else if (openScan) {
+        unawaited(router.pushNamed(AppRoutes.walletConnectScan));
+      }
+    });
+  }
+
+  if (isInAppRoute) {
+    if (getIt<PinAuthCubit>().state.isPinVerified && getIt<PinAuthCubit>().state.isPinSetup) {
+      push();
+      return null;
+    }
+    stash();
+    return null;
+  }
+  stash();
+  return appLinkColdStartLocation;
+}
+
 /// Top-level go_router redirect for custom-scheme opens.
 ///
 /// A `realunit-wallet://…` open (canonical `realunit-wallet://open`) only brings
@@ -329,7 +381,27 @@ String? appLinkSchemeRedirect(
         router: router,
       );
     }
+    final raw = state.uri.toString();
+    if (WalletConnectUri.extractPairingUri(raw) != null ||
+        WalletConnectUri.isScanDeeplink(raw)) {
+      return _handleWalletConnectRedirect(
+        raw: raw,
+        currentLocation: currentLocation,
+        router: router,
+      );
+    }
     return null;
+  }
+
+  if (state.uri.scheme == 'wc' ||
+      (state.uri.scheme == appLinkScheme &&
+          (WalletConnectUri.extractPairingUri(state.uri.toString()) != null ||
+              WalletConnectUri.isScanDeeplink(state.uri.toString())))) {
+    return _handleWalletConnectRedirect(
+      raw: state.uri.toString(),
+      currentLocation: currentLocation,
+      router: router,
+    );
   }
 
   if (state.uri.scheme != appLinkScheme) return null;
@@ -439,11 +511,16 @@ void appLinkOnException(
   GoRouterState state,
   GoRouter router,
 ) {
-  if (state.uri.scheme == appLinkScheme) return;
+  if (state.uri.scheme == appLinkScheme || state.uri.scheme == 'wc') return;
   // https / intent / android-app / ios-app App Links for /invite and /promo
   // stash in [appLinkSchemeRedirect] then fall through unmatched — same no-op
   // as the custom scheme. Do not assert: those URIs are OS-delivered.
   if (extractReferralInviteCode(state.uri) != null) return;
+  final raw = state.uri.toString();
+  if (WalletConnectUri.extractPairingUri(raw) != null ||
+      WalletConnectUri.isScanDeeplink(raw)) {
+    return;
+  }
   // A non-scheme URL that matches no route is a programming error. Installing
   // onException removes go_router's default error screen, so fail loud where
   // tests and debug builds can see it; in release the user stays on the

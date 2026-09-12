@@ -80,6 +80,8 @@ The transport is USB on Android and Bluetooth on iOS; the original BitBox 02 has
 | Receive — address + QR code | always | mvp | widget (`receive/widgets/qr_address_widget_test.dart`) + golden (`receive/receive_golden_test.dart`) |
 | Transaction history | always | mvp | widget (`transaction_history/transaction_history_page_test.dart`) + golden (`transaction_history/transaction_history_golden_test.dart`) |
 | Sell to BitBox (on-chain transfer) | hardware | defer | golden (`sell_bitbox/sell_bitbox_golden_test.dart`) |
+| WalletConnect — QR scan | always | mvp | widget (`walletconnect/walletconnect_scan_scanner_navigation_test.dart`) + golden (`walletconnect/walletconnect_scan_golden_test.dart`) |
+| WalletConnect — session confirm | always | mvp | widget (`walletconnect/walletconnect_session_responsive_matrix_test.dart`) + golden (`walletconnect/walletconnect_session_golden_test.dart`) |
 
 ### DFX backend integration
 

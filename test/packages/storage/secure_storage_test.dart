@@ -559,6 +559,277 @@ void main() {
     });
   });
 
+  group('SecureStorage namespaced migrate', () {
+    test('withStorage default does not write the migration flag', () async {
+      final storage = SecureStorage.withStorage(mockStorage);
+
+      await storage.migrateFromUnnamespacedStoreIfNeeded();
+
+      verifyNever(
+        () => mockStorage.write(
+          key: 'secure.storage.namespaced',
+          value: any(named: 'value'),
+        ),
+      );
+    });
+
+    test(
+      'isolateFromWalletKit: true copies a missing pin.credential from legacy '
+      'and writes the migration flag',
+      () async {
+        final namespaced = _MockFlutterSecureStorage();
+        final legacy = _MockFlutterSecureStorage();
+        final store = <String, String>{};
+
+        when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((invocation) async {
+          final key = invocation.namedArguments[#key] as String;
+          return store[key];
+        });
+        when(
+          () => namespaced.write(
+            key: any(named: 'key'),
+            value: any(named: 'value'),
+          ),
+        ).thenAnswer((invocation) async {
+          final key = invocation.namedArguments[#key] as String;
+          final value = invocation.namedArguments[#value] as String;
+          store[key] = value;
+        });
+        when(() => legacy.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+        when(
+          () => legacy.read(key: 'pin.credential'),
+        ).thenAnswer((_) async => 'deadbeef:hash');
+
+        final storage = SecureStorage.withStorage(
+          namespaced,
+          isolateFromWalletKit: true,
+        );
+        await storage.migrateFromUnnamespacedStoreIfNeeded(legacy: legacy);
+
+        verify(
+          () => namespaced.write(key: 'pin.credential', value: 'deadbeef:hash'),
+        ).called(1);
+        verify(
+          () => namespaced.write(key: 'secure.storage.namespaced', value: '1'),
+        ).called(1);
+      },
+    );
+
+    test('second call after flag 1 is a no-op (no legacy reads)', () async {
+      final namespaced = _MockFlutterSecureStorage();
+      final legacy = _MockFlutterSecureStorage();
+
+      when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+      when(
+        () => namespaced.read(key: 'secure.storage.namespaced'),
+      ).thenAnswer((_) async => '1');
+      when(
+        () => namespaced.write(
+          key: any(named: 'key'),
+          value: any(named: 'value'),
+        ),
+      ).thenAnswer((_) async {});
+      when(() => legacy.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+
+      final storage = SecureStorage.withStorage(
+        namespaced,
+        isolateFromWalletKit: true,
+      );
+      await storage.migrateFromUnnamespacedStoreIfNeeded(legacy: legacy);
+
+      verifyNever(() => legacy.read(key: any(named: 'key')));
+      verifyNever(
+        () => namespaced.write(
+          key: any(named: 'key'),
+          value: any(named: 'value'),
+        ),
+      );
+    });
+
+    test('does not overwrite a namespaced key that already has a value', () async {
+      final namespaced = _MockFlutterSecureStorage();
+      final legacy = _MockFlutterSecureStorage();
+
+      when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+      when(
+        () => namespaced.read(key: 'pin.credential'),
+      ).thenAnswer((_) async => 'already:present');
+      when(
+        () => namespaced.write(
+          key: any(named: 'key'),
+          value: any(named: 'value'),
+        ),
+      ).thenAnswer((_) async {});
+      when(() => legacy.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+      when(
+        () => legacy.read(key: 'pin.credential'),
+      ).thenAnswer((_) async => 'legacy:value');
+
+      final storage = SecureStorage.withStorage(
+        namespaced,
+        isolateFromWalletKit: true,
+      );
+      await storage.migrateFromUnnamespacedStoreIfNeeded(legacy: legacy);
+
+      verifyNever(
+        () => namespaced.write(
+          key: 'pin.credential',
+          value: any(named: 'value'),
+        ),
+      );
+      verify(
+        () => namespaced.write(key: 'secure.storage.namespaced', value: '1'),
+      ).called(1);
+    });
+
+    test(
+      'does not write the migration flag when a namespaced copy write throws',
+      () async {
+        final namespaced = _MockFlutterSecureStorage();
+        final legacy = _MockFlutterSecureStorage();
+
+        when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+        when(() => legacy.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+        when(
+          () => legacy.read(key: 'pin.credential'),
+        ).thenAnswer((_) async => 'deadbeef:hash');
+        when(
+          () => namespaced.write(
+            key: 'pin.credential',
+            value: any(named: 'value'),
+          ),
+        ).thenThrow(Exception('write failed'));
+
+        final storage = SecureStorage.withStorage(
+          namespaced,
+          isolateFromWalletKit: true,
+        );
+        await storage.migrateFromUnnamespacedStoreIfNeeded(legacy: legacy);
+
+        verifyNever(
+          () => namespaced.write(
+            key: 'secure.storage.namespaced',
+            value: any(named: 'value'),
+          ),
+        );
+      },
+    );
+
+    test('marker read throw does not propagate', () async {
+      final namespaced = _MockFlutterSecureStorage();
+      final legacy = _MockFlutterSecureStorage();
+
+      when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+      when(
+        () => namespaced.read(key: 'secure.storage.namespaced'),
+      ).thenThrow(Exception('marker read failed'));
+      when(
+        () => namespaced.write(
+          key: any(named: 'key'),
+          value: any(named: 'value'),
+        ),
+      ).thenAnswer((_) async {});
+      when(() => legacy.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+
+      final storage = SecureStorage.withStorage(
+        namespaced,
+        isolateFromWalletKit: true,
+      );
+      await expectLater(
+        storage.migrateFromUnnamespacedStoreIfNeeded(legacy: legacy),
+        completes,
+      );
+      verifyNever(
+        () => namespaced.write(
+          key: 'secure.storage.namespaced',
+          value: any(named: 'value'),
+        ),
+      );
+    });
+
+    test('marker write throw does not propagate', () async {
+      final namespaced = _MockFlutterSecureStorage();
+      final legacy = _MockFlutterSecureStorage();
+      final store = <String, String>{};
+
+      when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((invocation) async {
+        final key = invocation.namedArguments[#key] as String;
+        return store[key];
+      });
+      when(
+        () => namespaced.write(
+          key: any(named: 'key'),
+          value: any(named: 'value'),
+        ),
+      ).thenAnswer((invocation) async {
+        final key = invocation.namedArguments[#key] as String;
+        final value = invocation.namedArguments[#value] as String;
+        store[key] = value;
+      });
+      when(
+        () => namespaced.write(
+          key: 'secure.storage.namespaced',
+          value: any(named: 'value'),
+        ),
+      ).thenThrow(Exception('marker write failed'));
+      when(() => legacy.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+      when(
+        () => legacy.read(key: 'pin.credential'),
+      ).thenAnswer((_) async => 'deadbeef:hash');
+
+      final storage = SecureStorage.withStorage(
+        namespaced,
+        isolateFromWalletKit: true,
+      );
+      await expectLater(
+        storage.migrateFromUnnamespacedStoreIfNeeded(legacy: legacy),
+        completes,
+      );
+    });
+
+    test('does not write the migration flag when read-back mismatches', () async {
+      final namespaced = _MockFlutterSecureStorage();
+      final legacy = _MockFlutterSecureStorage();
+      var pinReads = 0;
+
+      when(() => namespaced.read(key: any(named: 'key'))).thenAnswer((invocation) async {
+        final key = invocation.namedArguments[#key] as String;
+        if (key == 'pin.credential') {
+          pinReads += 1;
+          // First read is the existence check (must be empty so we copy).
+          // Second read is the post-write verification.
+          return pinReads == 1 ? null : 'tampered';
+        }
+        return null;
+      });
+      when(() => legacy.read(key: any(named: 'key'))).thenAnswer((_) async => null);
+      when(
+        () => legacy.read(key: 'pin.credential'),
+      ).thenAnswer((_) async => 'deadbeef:hash');
+      when(
+        () => namespaced.write(
+          key: any(named: 'key'),
+          value: any(named: 'value'),
+        ),
+      ).thenAnswer((_) async {});
+      when(() => namespaced.delete(key: any(named: 'key'))).thenAnswer((_) async {});
+
+      final storage = SecureStorage.withStorage(
+        namespaced,
+        isolateFromWalletKit: true,
+      );
+      await storage.migrateFromUnnamespacedStoreIfNeeded(legacy: legacy);
+
+      verify(() => namespaced.delete(key: 'pin.credential')).called(1);
+      verifyNever(
+        () => namespaced.write(
+          key: 'secure.storage.namespaced',
+          value: any(named: 'value'),
+        ),
+      );
+    });
+  });
+
   group('SecureStorage hashPinAsync', () {
     test('produces the same hash as the synchronous helper', () async {
       final salt = SecureStorage.generatePinSalt();
