@@ -450,8 +450,8 @@ class WalletConnectService {
       ];
       return utf8.decode(bytes, allowMalformed: true);
     } on FormatException {
-      // coverage:ignore-line — utf8.decode with allowMalformed:true does not throw FormatException for tested inputs
-      return value;
+      // utf8.decode(allowMalformed: true) does not throw for tested inputs.
+      return value; // coverage:ignore-line
     }
   }
 

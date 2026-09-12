@@ -45,7 +45,8 @@ abstract class WalletConnectEngine {
 }
 
 sealed class WalletConnectIncoming {
-  const WalletConnectIncoming(); // coverage:ignore-line — const ctor has no body for lcov
+  // Const ctor has no body for lcov.
+  const WalletConnectIncoming(); // coverage:ignore-line
 }
 
 final class WalletConnectSessionProposal extends WalletConnectIncoming {
@@ -55,7 +56,8 @@ final class WalletConnectSessionProposal extends WalletConnectIncoming {
   final String proposerName;
   final String? proposerUrl;
 
-  const WalletConnectSessionProposal({ // coverage:ignore-line — const ctor has no body for lcov
+  // Const ctor has no body for lcov.
+  const WalletConnectSessionProposal({ // coverage:ignore-line
     required this.proposalId,
     required this.originUrl,
     required this.verifyStatus,
@@ -73,7 +75,8 @@ final class WalletConnectSessionRequest extends WalletConnectIncoming {
   final WalletConnectVerifyStatus verifyStatus;
   final int? chainId;
 
-  const WalletConnectSessionRequest({ // coverage:ignore-line — const ctor has no body for lcov
+  // Const ctor has no body for lcov.
+  const WalletConnectSessionRequest({ // coverage:ignore-line
     required this.requestId,
     required this.topic,
     required this.method,
@@ -87,5 +90,6 @@ final class WalletConnectSessionRequest extends WalletConnectIncoming {
 final class WalletConnectSessionDeleted extends WalletConnectIncoming {
   final String topic;
 
-  const WalletConnectSessionDeleted({required this.topic}); // coverage:ignore-line — const ctor has no body for lcov
+  // Const ctor has no body for lcov.
+  const WalletConnectSessionDeleted({required this.topic}); // coverage:ignore-line
 }
