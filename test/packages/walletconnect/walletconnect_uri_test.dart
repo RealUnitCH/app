@@ -69,5 +69,25 @@ void main() {
         isTrue,
       );
     });
+
+    test('extracts uri from an intent fragment S.uri extra', () {
+      final wrapped =
+          'intent://wc#Intent;scheme=wc;S.uri=${Uri.encodeComponent(pairing)};end';
+      expect(WalletConnectUri.extractPairingUri(wrapped), pairing);
+    });
+
+    test('returns null when the nested uri is not a pairing URI', () {
+      expect(
+        WalletConnectUri.extractPairingUri('realunit-wallet://wc?uri=hello'),
+        isNull,
+      );
+    });
+
+    test('returns null when the nested uri is malformed percent-encoding', () {
+      expect(
+        WalletConnectUri.extractPairingUri('realunit-wallet://wc?uri=%'),
+        isNull,
+      );
+    });
   });
 }

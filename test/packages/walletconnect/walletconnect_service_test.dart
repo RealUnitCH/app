@@ -21,8 +21,13 @@ class _FakeEngine implements WalletConnectEngine {
   @override
   Stream<WalletConnectIncoming> get events => _events.stream;
 
+  Object? initError;
+
   @override
-  Future<void> init({required String address, required List<int> chainIds}) async {}
+  Future<void> init({required String address, required List<int> chainIds}) async {
+    final error = initError;
+    if (error != null) throw error;
+  }
 
   @override
   Future<void> pair(String uri) async {
@@ -580,5 +585,144 @@ void main() {
       (prompts.first as WalletConnectRequestPrompt).messagePreview,
       'hello',
     );
+  });
+
+  test('proposal prompt exposes the attested origin', () async {
+    engine.emit(
+      const WalletConnectSessionProposal(
+        proposalId: '50',
+        originUrl: 'https://tokeninfo.aktionariat.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+        proposerName: 'Aktionariat',
+        proposerUrl: 'https://evil.example',
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(prompts.first.originUrl, 'https://tokeninfo.aktionariat.com');
+  });
+
+  test('init failure is swallowed so a later pair can retry', () async {
+    engine.initError = StateError('kit down');
+    await service.ensureInitialized();
+    engine.initError = null;
+    await service.pair(pairing);
+    expect(engine.pairCalls, 1);
+  });
+
+  test('debug wallet rejects typed data without prompting', () async {
+    final debugEngine = _FakeEngine();
+    final debugService = WalletConnectService.forTesting(
+      engine: debugEngine,
+      address: address,
+      signMessage: (message) async => 'sig:$message',
+      signTypedData: (chainId, json) async => 'typed',
+      walletType: WalletType.debug,
+    );
+    final debugPrompts = <WalletConnectUserPrompt>[];
+    debugService.prompts.listen(debugPrompts.add);
+    debugEngine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 51,
+        topic: 'topic',
+        method: 'eth_signTypedData_v4',
+        params: [
+          address,
+          '{"domain":{}}',
+        ],
+        originUrl: 'https://app.frankencoin.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+        chainId: 1,
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(debugPrompts, isEmpty);
+    expect(debugEngine.rejectedRequests, [51]);
+  });
+
+  test('approving typed data without a JSON payload is rejected', () async {
+    engine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 52,
+        topic: 'topic',
+        method: 'eth_signTypedData_v4',
+        params: [address],
+        originUrl: 'https://app.frankencoin.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+        chainId: 1,
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(prompts, hasLength(1));
+    await expectLater(
+      service.approvePrompt(prompts.first),
+      throwsA(isA<FormatException>()),
+    );
+    expect(engine.rejectedRequests, contains(52));
+  });
+
+  test('rejectPrompt rejects a sign request', () async {
+    engine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 53,
+        topic: 'topic',
+        method: 'personal_sign',
+        params: ['hello', address],
+        originUrl: 'https://app.frankencoin.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    await service.rejectPrompt(prompts.first);
+    expect(engine.rejectedRequests, contains(53));
+  });
+
+  test('wallet_switchEthereumChain accepts a decimal chain id', () async {
+    engine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 54,
+        topic: 'topic',
+        method: 'wallet_switchEthereumChain',
+        params: [
+          {'chainId': '1'},
+        ],
+        originUrl: 'https://app.frankencoin.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(engine.approvedRequests[54], 'null');
+  });
+
+  test('personal_sign preview falls back when params are only the address', () async {
+    engine.emit(
+      const WalletConnectSessionRequest(
+        requestId: 55,
+        topic: 'topic',
+        method: 'personal_sign',
+        params: [address],
+        originUrl: 'https://app.frankencoin.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    expect(prompts, hasLength(1));
+    expect((prompts.first as WalletConnectRequestPrompt).messagePreview, isNotEmpty);
+  });
+
+  test('approvePrompt rejects an unknown request method', () async {
+    const prompt = WalletConnectRequestPrompt(
+      request: WalletConnectSessionRequest(
+        requestId: 56,
+        topic: 'topic',
+        method: 'wallet_watchAsset',
+        params: [],
+        originUrl: 'https://app.frankencoin.com',
+        verifyStatus: WalletConnectVerifyStatus.valid,
+      ),
+      messagePreview: '',
+    );
+    await service.pair(pairing);
+    await service.approvePrompt(prompt);
+    expect(engine.rejectedRequests, contains(56));
   });
 }

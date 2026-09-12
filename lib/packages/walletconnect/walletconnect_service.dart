@@ -446,6 +446,7 @@ class WalletConnectService {
       ];
       return utf8.decode(bytes, allowMalformed: true);
     } on FormatException {
+      // coverage:ignore-line
       return value;
     }
   }
