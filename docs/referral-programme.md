@@ -432,7 +432,9 @@ row.
   already-registered: «Nur für neue Kundinnen und Kunden»;
   already-bound: «Bereits ein Code eingelöst»;
   self-referral: «Eigene Einladung»;
-  unknown/expired stay «Link ungültig oder abgelaufen»). Close
+  unknown/expired stay «Link ungültig oder abgelaufen»).
+  Handbook slots `291` (expired/unknown) and `292` (already-registered)
+  are the dashboard overlay goldens. Close
   is focused, not barrier-dismissible.
   If the navigator is not attached yet (dashboard boot bind), the promo,
   invalid, or unavailable dialog is shown on the next frame instead of

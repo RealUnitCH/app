@@ -191,7 +191,7 @@ public repos are free even for macOS minutes.
 
 ## Handbook screenshots are sourced from Goldens
 
-The 299 PNGs the handbook serves at `handbook.realunit.app/screenshots/`
+The 301 PNGs the handbook serves at `handbook.realunit.app/screenshots/`
 are assembled from the Golden baselines at docker-build time. One
 Golden → one handbook page, via the explicit mapping in
 `scripts/assemble-handbook-screenshots.sh`. The handbook does **not**
@@ -231,7 +231,7 @@ that directory into `/usr/share/nginx/html/screenshots/`.
    Golden file.
 4. Open the PR. The `Handbook Build Check` workflow runs
    `docker build` and a container smoke (`/healthz` + auth gate +
-   spot-checks selected mapped screenshots via `docker exec test -f`; the full set is gated by the assemble step (`expected 299`)). A missing Golden surfaces here
+   spot-checks selected mapped screenshots via `docker exec test -f`; the full set is gated by the assemble step (`expected 301`)). A missing Golden surfaces here
    as a missing-source error from the assembly script before docker
    even spins up.
 
