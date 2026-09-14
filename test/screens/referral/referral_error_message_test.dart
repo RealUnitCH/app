@@ -336,7 +336,7 @@ void main() {
     );
     expect(
       alreadyRegistered,
-      'Diese Einladung gilt nur für neue Kundinnen und Kunden.',
+      'Einladungs- und Promo-Codes müssen vor dem ersten REALU-Kauf eingelöst werden.',
     );
     expect(invalid, 'Dieser Code ist ungültig oder abgelaufen.');
     expect(invalidTitle, 'Link ungültig oder abgelaufen');

@@ -270,7 +270,7 @@
   "recoveryWordsInvalid": "Recovery words invalid",
   "referralAlreadyBound": "You have already applied an invite or promo code.",
   "referralAlreadyBoundTitle": "Code already applied",
-  "referralAlreadyRegistered": "This invitation is only for new customers.",
+  "referralAlreadyRegistered": "Invite and promo codes must be applied before the first REALU purchase.",
   "referralAlreadyRegisteredTitle": "Only for new customers",
   "referralChfAtSharePrice": "≈ ${chf} at ${label}",
   "referralCodeChecking": "Checking code…",

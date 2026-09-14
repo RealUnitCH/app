@@ -270,7 +270,7 @@
   "recoveryWordsInvalid": "Wiederherstellungs-Wörter ungültig",
   "referralAlreadyBound": "Du hast bereits einen Einladungs- oder Promo-Code eingelöst.",
   "referralAlreadyBoundTitle": "Bereits ein Code eingelöst",
-  "referralAlreadyRegistered": "Diese Einladung gilt nur für neue Kundinnen und Kunden.",
+  "referralAlreadyRegistered": "Einladungs- und Promo-Codes müssen vor dem ersten REALU-Kauf eingelöst werden.",
   "referralAlreadyRegisteredTitle": "Nur für neue Kundinnen und Kunden",
   "referralChfAtSharePrice": "≈ ${chf} zum ${label}",
   "referralCodeChecking": "Code wird geprüft…",
