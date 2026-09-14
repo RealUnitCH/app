@@ -146,7 +146,7 @@ void main() {
           fit: StackFit.expand,
           children: [
             dashboard(),
-            const ModalBarrier(dismissible: false, color: Color(0x8A000000)),
+            const ModalBarrier(dismissible: false, color: Colors.black54),
             Center(child: ReferralBindErrorDialog(token: token)),
           ],
         ),
