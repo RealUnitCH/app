@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Tier-3 navigation smoke for the 26 .maestro/handbook/*.yaml flows
-# (01-welcome … 26-terms). Handbook pages 276–290 (referral/promo) are
+# (01-welcome … 26-terms). Handbook pages 276–292 (referral/promo) are
 # golden-mapped in assemble-handbook-screenshots.sh and are not Maestro
 # flows: the sequential onboarding chain cannot reach an eligible
 # Empfehler (KYC Level 30 + 70 REALU).

@@ -48,7 +48,7 @@ Column meaning:
 | PIN & lock | `VerifyPinPage` | `pinGate` | `/pinGate` | `17`, `76`, `77`, `78`, `79`, `80`, `81`, `82`, `83`, `84`, `85`, `88` |
 | PIN & lock | `SetupPinPage` | `setupPin` | `/setupPin` | `08`, `09`, `10`, `73`, `74`, `75` |
 | PIN & lock | `VerifyPinPage` | `verifyPin` | `/verifyPin` | `86`, `87` |
-| Dashboard & trading | `DashboardPage` | `dashboard` | `/dashboard` | `35`, `89`, `90`, `91`, `92`, `93`, `94`, `289` |
+| Dashboard & trading | `DashboardPage` | `dashboard` | `/dashboard` | `35`, `89`, `90`, `91`, `92`, `93`, `94`, `289`, `291`, `292` |
 | Dashboard & trading | `TransactionHistoryPage` | `transactionHistory` | `/dashboard/transactionHistory` | `36`, `95`, `96`, `97`, `98`, `99`, `100`, `288` |
 | Dashboard & trading | `BuyPage` | `buy` | `/buy` | `44`, `45`, `46`, `47`, `48`, `103`, `104`, `105`, `106`, `107`, `108`, `109`, `110`, `111`, `112`, `113` |
 | Dashboard & trading | `BuyPaymentDetailsPage` | `buyPaymentDetails` | `/buyPaymentDetails` | `53`, `114`, `115`, `116`, `117` |
@@ -121,11 +121,12 @@ Column meaning:
 | KYC | `KycMergeProcessingPage` | — | — | `210` |
 | Shared widgets | `PhoneNumberField` | — | — | `268` |
 | Shared widgets | `ReferralPayoutTransactionRow` | — | — | `282` |
+| Shared widgets | `ReferralBindErrorDialog` | — | — | `291`, `292` |
 
 81 screens — 47 routed (`GoRoute`) + 34 non-routed. The table also carries
-two shared-widget baselines (`PhoneNumberField`, `ReferralPayoutTransactionRow`),
-which are not screens.
-Referral surfaces have Golden baselines (`276`–`290`); the handbook
+shared-widget baselines (`PhoneNumberField`, `ReferralPayoutTransactionRow`,
+`ReferralBindErrorDialog`), which are not screens.
+Referral surfaces have Golden baselines (`276`–`292`); the handbook
 documents the programme in `#spec-referral`.
 
 ## Notes
