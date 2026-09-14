@@ -121,13 +121,14 @@ Column meaning:
 | KYC | `KycMergeProcessingPage` | — | — | `210` |
 | Shared widgets | `PhoneNumberField` | — | — | `268` |
 | Shared widgets | `ReferralPayoutTransactionRow` | — | — | `282` |
-| Shared widgets | `ReferralBindErrorDialog` | — | — | `291`, `292` |
 
 81 screens — 47 routed (`GoRoute`) + 34 non-routed. The table also carries
-shared-widget baselines (`PhoneNumberField`, `ReferralPayoutTransactionRow`,
-`ReferralBindErrorDialog`), which are not screens.
+two shared-widget baselines (`PhoneNumberField`, `ReferralPayoutTransactionRow`),
+which are not screens.
 Referral surfaces have Golden baselines (`276`–`292`); the handbook
-documents the programme in `#spec-referral`.
+documents the programme in `#spec-referral`. Overlay slots `291` and `292`
+are listed on `DashboardPage` (the host screen), not as a second shared-widget
+row.
 
 ## Notes
 
