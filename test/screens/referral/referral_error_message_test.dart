@@ -203,6 +203,7 @@ void main() {
     late String unknown;
     late String quota;
     late String spentTitle;
+    late String alreadyRegisteredTitle;
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('de'),
@@ -221,6 +222,10 @@ void main() {
               context,
               referralSpentMessage,
             );
+            alreadyRegisteredTitle = localizedReferralErrorTitle(
+              context,
+              referralAlreadyRegisteredMessage,
+            );
             return const SizedBox.shrink();
           },
         ),
@@ -237,6 +242,8 @@ void main() {
       'In diesem Quartal sind keine weiteren Prämien möglich.',
     );
     expect(spentTitle, 'Code bereits eingelöst');
+    expect(alreadyRegisteredTitle, 'Nur für neue Kundinnen und Kunden');
+    expect(alreadyRegisteredTitle, isNot('Link ungültig oder abgelaufen'));
   });
 
   testWidgets('maps remaining tokens to localized DE copy', (tester) async {

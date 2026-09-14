@@ -205,13 +205,13 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Link ungültig oder abgelaufen'), findsOneWidget);
+    expect(find.text('Bereits ein Code eingelöst'), findsOneWidget);
     expect(
       find.text('Du hast bereits einen Einladungs- oder Promo-Code eingelöst.'),
       findsOneWidget,
     );
     expect(
-      tester.widget<Text>(find.text('Link ungültig oder abgelaufen')).style?.color,
+      tester.widget<Text>(find.text('Bereits ein Code eingelöst')).style?.color,
       RealUnitColors.status.red600,
     );
     expect(
@@ -716,7 +716,7 @@ void main() {
       );
 
       await bindPendingReferralCode(router);
-      expect(find.text('Link ungültig oder abgelaufen'), findsNothing);
+      expect(find.text('Bereits ein Code eingelöst'), findsNothing);
 
       await tester.pumpWidget(
         MaterialApp.router(
@@ -734,7 +734,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Link ungültig oder abgelaufen'), findsOneWidget);
+      expect(find.text('Bereits ein Code eingelöst'), findsOneWidget);
       expect(
         tester.widget<TextButton>(find.widgetWithText(TextButton, 'Schließen')).autofocus,
         isTrue,
@@ -1184,7 +1184,7 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.text('Link ungültig oder abgelaufen'), findsOneWidget);
+      expect(find.text('Bereits ein Code eingelöst'), findsOneWidget);
       expect(await peekPendingReferralCode(), isNull);
       await tester.tap(find.text('Schließen'));
       await tester.pumpAndSettle();
@@ -1312,7 +1312,7 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.text('Link ungültig oder abgelaufen'), findsOneWidget);
+      expect(find.text('Bereits ein Code eingelöst'), findsOneWidget);
       expect(calls, 2);
       await tester.tap(find.text('Schließen'));
       await tester.pumpAndSettle();

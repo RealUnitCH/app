@@ -11100,10 +11100,14 @@
             Deeplink-Stash stehen. Ein abgelehnter Bind (4xx) zeigt einmal einen
             Dialog: Titel <b>Code bereits eingelöst</b> mit Body <b>Dieser Einladungs- oder
             Promo-Code wurde bereits verwendet.</b> (Einlösungslimit erreicht);
-            Titel <b>Link ungültig oder abgelaufen</b> für die übrigen Fälle
+            Titel <b>Bereits ein Code eingelöst</b> mit Body
             <b>Du hast bereits einen Einladungs- oder Promo-Code eingelöst.</b>
-            (ein Code pro Konto) oder <b>Diese Einladung gilt nur für neue Kundinnen
-            und Kunden.</b> (Eingabe nur vor dem ersten REALU-Kauf).
+            (ein Code pro Konto); Titel <b>Nur für neue Kundinnen und Kunden</b>
+            mit Body <b>Diese Einladung gilt nur für neue Kundinnen
+            und Kunden.</b> (Eingabe nur vor dem ersten REALU-Kauf);
+            Titel <b>Eigene Einladung</b> bei Selbst-Einlösung;
+            Titel <b>Link ungültig oder abgelaufen</b> nur für unbekannte oder
+            abgelaufene Codes.
             Promo-Codes legt RealUnit unter app.dfx.swiss/realunit an: je Code
             ein Gültigkeitsfenster, ein Mindestkauf (Default 200 REALU) und ein
             Einlösungslimit als Anzahl Einlösungen (Pflichtfeld, ganze Zahl ab 1,

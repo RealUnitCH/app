@@ -429,8 +429,10 @@ row.
   Close is keyboard-focused. The boot and deeplink bind dialogs stay modal.
   A 4xx bind (stacking, self-referral,
   spent) shows the matching copy once (spent: «Code bereits eingelöst»;
-  self-referral / already-bound / already-registered have their own
-  sentence; unknown/expired stay «Link ungültig oder abgelaufen»). Close
+  already-registered: «Nur für neue Kundinnen und Kunden»;
+  already-bound: «Bereits ein Code eingelöst»;
+  self-referral: «Eigene Einladung»;
+  unknown/expired stay «Link ungültig oder abgelaufen»). Close
   is focused, not barrier-dismissible.
   If the navigator is not attached yet (dashboard boot bind), the promo,
   invalid, or unavailable dialog is shown on the next frame instead of

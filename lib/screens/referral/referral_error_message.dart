@@ -100,5 +100,14 @@ String localizedReferralErrorTitle(BuildContext context, String message) {
   if (message == referralSpentMessage) {
     return S.of(context).referralCodeSpentTitle;
   }
+  if (message == referralAlreadyRegisteredMessage) {
+    return S.of(context).referralAlreadyRegisteredTitle;
+  }
+  if (message == referralAlreadyBoundMessage) {
+    return S.of(context).referralAlreadyBoundTitle;
+  }
+  if (message == referralSelfReferralMessage) {
+    return S.of(context).referralSelfReferralTitle;
+  }
   return S.of(context).referralCodeInvalidTitle;
 }
