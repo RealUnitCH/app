@@ -293,7 +293,7 @@ row.
   tile is one name (REALU, CHF at the current share price, Aktienkurs).
   Open invites show the personalised share text (API copyText 1:1,
   otherwise the localised template) and can be copied and shared again,
-  including when the guest name is blank («Deine Einladung», share text
+  including when the guest name is blank («Ihre Einladung», share text
   without «Hey ,»);
   credited names stay hidden. Copy and share behave as after create.
   With no open-invite rows and no list error, Create is keyboard-focused.

@@ -64,7 +64,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Empfehlungen'), findsOneWidget);
-    expect(find.text('Erhalte 20 REALU pro Weiterempfehlung'), findsOneWidget);
+    expect(find.text('Erhalten Sie 20 REALU pro Weiterempfehlung'), findsOneWidget);
     expect(
       find.ancestor(
         of: find.byIcon(Icons.card_giftcard_outlined),
@@ -106,6 +106,6 @@ void main() {
     await tester.pump();
 
     expect(find.text('Empfehlungen'), findsNothing);
-    expect(find.text('Erhalte 20 REALU pro Weiterempfehlung'), findsNothing);
+    expect(find.text('Erhalten Sie 20 REALU pro Weiterempfehlung'), findsNothing);
   });
 }

@@ -137,11 +137,11 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Deine Empfehlungen'), findsOneWidget);
+      expect(find.text('Ihre Empfehlungen'), findsOneWidget);
       expect(find.text('INSGESAMT ERHALTEN'), findsOneWidget);
       expect(find.textContaining('Aktienkurs'), findsOneWidget);
       expect(find.text('Offene Einladungen verfallen nach 3 Monaten.'), findsOneWidget);
-      expect(find.text('Deine Einladung für AliceShouldNotAppear'), findsOneWidget);
+      expect(find.text('Ihre Einladung für AliceShouldNotAppear'), findsOneWidget);
       expect(find.text('Persönlicher Einladungslink'), findsOneWidget);
       expect(
         find.text(
@@ -410,8 +410,8 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Deine Einladung'), findsOneWidget);
-    expect(find.textContaining('Deine Einladung für'), findsNothing);
+    expect(find.text('Ihre Einladung'), findsOneWidget);
+    expect(find.textContaining('Ihre Einladung für'), findsNothing);
     expect(find.text('Einladungslink kopieren'), findsOneWidget);
     expect(find.text('Hey ,'), findsNothing);
     expect(
@@ -481,7 +481,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Deine Einladung'), findsNWidgets(2));
+      expect(find.text('Ihre Einladung'), findsNWidgets(2));
       expect(find.text('Einladungslink kopieren'), findsNWidgets(2));
     },
   );
@@ -768,7 +768,7 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.tap(find.text('Deine Empfehlungen'));
+    await tester.tap(find.text('Ihre Empfehlungen'));
     await tester.pumpAndSettle();
     expect(find.text('tb'), findsOneWidget);
   });
@@ -1027,14 +1027,14 @@ void main() {
 
       expect(
         find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         findsOneWidget,
       );
       expect(
         find.ancestor(
           of: find.text(
-            'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+            'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
           ),
           matching: find.byWidgetPredicate(
             (widget) => widget is Semantics && widget.properties.liveRegion == true,
@@ -1120,11 +1120,11 @@ void main() {
 
       expect(
         find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         findsOneWidget,
       );
-      expect(find.textContaining('Deine Einladung für Alice'), findsOneWidget);
+      expect(find.textContaining('Ihre Einladung für Alice'), findsOneWidget);
       expect(find.text('Wiederholen'), findsOneWidget);
       expect(
         tester
@@ -1194,7 +1194,7 @@ void main() {
 
       expect(
         find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         findsOneWidget,
       );
@@ -1275,7 +1275,7 @@ void main() {
 
       expect(
         find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         findsOneWidget,
       );
@@ -1291,7 +1291,7 @@ void main() {
       expect(
         find.ancestor(
           of: find.text(
-            'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+            'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
           ),
           matching: find.byWidgetPredicate(
             (widget) => widget is Semantics && widget.properties.liveRegion == true,
@@ -1337,7 +1337,7 @@ void main() {
 
     expect(
       find.text(
-        'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+        'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
       ),
       findsOneWidget,
     );
@@ -1345,7 +1345,7 @@ void main() {
       tester
           .widget<Text>(
             find.text(
-              'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+              'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
             ),
           )
           .style
@@ -1355,7 +1355,7 @@ void main() {
     expect(
       find.ancestor(
         of: find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         matching: find.byWidgetPredicate(
           (widget) => widget is Semantics && widget.properties.liveRegion == true,
@@ -1413,7 +1413,7 @@ void main() {
 
     expect(
       find.text(
-        'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+        'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
       ),
       findsOneWidget,
     );

@@ -74,7 +74,7 @@ void main() {
     await pumpCreateView(tester);
     await tester.pump();
 
-    expect(find.text('Deine Einladung für Alice'), findsOneWidget);
+    expect(find.text('Ihre Einladung für Alice'), findsOneWidget);
     expect(find.text('Persönlicher Einladungslink'), findsOneWidget);
     expect(
       find.text(
@@ -114,8 +114,8 @@ void main() {
     await pumpCreateView(tester);
     await tester.pump();
 
-    expect(find.text('Deine Einladung'), findsOneWidget);
-    expect(find.textContaining('Deine Einladung für'), findsNothing);
+    expect(find.text('Ihre Einladung'), findsOneWidget);
+    expect(find.textContaining('Ihre Einladung für'), findsNothing);
     expect(find.text('Hey ,'), findsNothing);
     expect(
       find.text('RealUnit lädt dich ein zu RealUnit: https://realunit.app/invite/AB12CD'),
@@ -283,7 +283,7 @@ void main() {
 
     expect(
       find.text(
-        'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+        'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
       ),
       findsOneWidget,
     );
@@ -291,7 +291,7 @@ void main() {
       tester
           .widget<Text>(
             find.text(
-              'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+              'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
             ),
           )
           .style
@@ -301,7 +301,7 @@ void main() {
     expect(
       find.ancestor(
         of: find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         matching: find.byWidgetPredicate(
           (widget) => widget is Semantics && widget.properties.liveRegion == true,

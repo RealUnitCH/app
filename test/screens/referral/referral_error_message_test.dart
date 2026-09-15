@@ -234,7 +234,7 @@ void main() {
 
     expect(
       unknown,
-      'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+      'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
     );
     expect(unknown, isNot('nope'));
     expect(
@@ -308,7 +308,7 @@ void main() {
 
     expect(
       unavailable,
-      'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+      'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
     );
     expect(
       notEligible,
@@ -328,11 +328,11 @@ void main() {
     );
     expect(
       selfReferral,
-      'Du kannst deine eigene Einladung nicht einlösen.',
+      'Sie können Ihre eigene Einladung nicht einlösen.',
     );
     expect(
       alreadyBound,
-      'Du hast bereits einen Einladungs- oder Promo-Code eingelöst.',
+      'Sie haben bereits einen Einladungs- oder Promo-Code eingelöst.',
     );
     expect(
       alreadyRegistered,

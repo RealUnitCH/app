@@ -188,7 +188,7 @@ void main() {
 
     expect(
       find.text(
-        'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+        'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
       ),
       findsOneWidget,
     );
@@ -196,7 +196,7 @@ void main() {
       tester
           .widget<Text>(
             find.text(
-              'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+              'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
             ),
           )
           .style
@@ -206,7 +206,7 @@ void main() {
     expect(
       find.ancestor(
         of: find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         matching: find.byWidgetPredicate(
           (widget) =>
@@ -237,7 +237,7 @@ void main() {
 
     expect(
       find.text(
-        'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+        'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
       ),
       findsOneWidget,
     );
@@ -259,7 +259,7 @@ void main() {
     expect(find.text('nope'), findsNothing);
     expect(
       find.text(
-        'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+        'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
       ),
       findsOneWidget,
     );
@@ -283,7 +283,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Deine Empfehlungen'), findsOneWidget);
+    expect(find.text('Ihre Empfehlungen'), findsOneWidget);
     expect(find.text('Einladungslink erstellen'), findsOneWidget);
   });
 
@@ -396,7 +396,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Deine Empfehlungen'), findsOneWidget);
+    expect(find.text('Ihre Empfehlungen'), findsOneWidget);
   });
 
   testWidgets('accepting terms from the accepting state opens create-invite', (
