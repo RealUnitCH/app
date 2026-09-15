@@ -27,5 +27,12 @@ lib/screens/restore_wallet/cubit/validate_seed/validate_seed_state.dart
 # Const-only data (covered as values by default_assets_test.dart, no lines):
 lib/packages/utils/default_assets.dart
 
+# Const-only WalletConnect metadata (project id, chains, methods); no bodies:
+lib/packages/walletconnect/walletconnect_config.dart
+
+# Reown WalletKit plugin/relay adapter (`coverage:ignore-file`); FakeEngine
+# unit tests cover the port, so this file emits no SF: record:
+lib/packages/walletconnect/reown_walletconnect_engine.dart
+
 # Drift table schema (column getters carry coverage:ignore-line):
 lib/packages/storage/node_storage.dart

@@ -78,9 +78,12 @@ void main() {
     test('copyWith only overrides the provided fields', () {
       const seed = SettingsSeedState('seed-a');
       final updated = seed.copyWith(showSeed: true);
+      final unchanged = seed.copyWith();
 
       expect(updated.seed, 'seed-a');
       expect(updated.showSeed, isTrue);
+      expect(unchanged.seed, 'seed-a');
+      expect(unchanged.showSeed, isFalse);
     });
 
     test('Equatable props cover seed + showSeed', () {

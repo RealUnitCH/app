@@ -2,6 +2,7 @@ import 'package:clock/clock.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
+import 'package:realunit_wallet/packages/walletconnect/walletconnect_service.dart';
 import 'package:realunit_wallet/screens/pin/constants/pin_constants.dart';
 import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 import 'package:realunit_wallet/setup/routing/referral_pending_code.dart';
@@ -10,11 +11,14 @@ part 'pin_auth_state.dart';
 
 class PinAuthCubit extends Cubit<PinAuthState> {
   PinAuthCubit(
-    SecureStorage secureStorage,
-  ) : _secureStorage = secureStorage,
-      super(const PinAuthState());
+    SecureStorage secureStorage, {
+    WalletConnectService? walletConnectService,
+  })  : _secureStorage = secureStorage,
+        _walletConnectService = walletConnectService,
+        super(const PinAuthState());
 
   final SecureStorage _secureStorage;
+  final WalletConnectService? _walletConnectService;
 
   DateTime? _lastBackgroundTime;
   String? _resumeLocation;
@@ -86,7 +90,9 @@ class PinAuthCubit extends Cubit<PinAuthState> {
     // pending referral code: binding is irreversible, so it must never be
     // credited to whoever onboards next on this device.
     clearPendingPaymentDeeplink();
+    clearPendingWalletConnect();
     await clearPendingReferralCode();
+    await _walletConnectService?.reset();
     emit(const PinAuthState());
   }
 }

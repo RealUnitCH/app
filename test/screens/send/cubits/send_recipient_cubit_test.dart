@@ -115,6 +115,15 @@ void main() {
     );
 
     blocTest<SendRecipientCubit, SendRecipientState>(
+      'onCodeDetected routes a WalletConnect URI instead of invalid address',
+      build: SendRecipientCubit.new,
+      act: (cubit) => cubit.onCodeDetected(
+        'wc:00e46b69-d0cc-4b3e-b6a2-cee442f97188@2?relay-protocol=irn&symKey=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+      ),
+      expect: () => [isA<SendRecipientWalletConnect>()],
+    );
+
+    blocTest<SendRecipientCubit, SendRecipientState>(
       'onCodeDetected decodes a scanned address like submit',
       build: SendRecipientCubit.new,
       act: (cubit) => cubit.onCodeDetected(checksummed),

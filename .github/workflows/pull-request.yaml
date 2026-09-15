@@ -50,15 +50,22 @@ jobs:
     # always run — the condition is "anything that isn't a PR, or a PR
     # that isn't a draft".
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
-    runs-on: macos-latest
-    timeout-minutes: 30
+    # Same self-hosted runner as Visual Regression and Coverage collect.
+    # macos-latest cancelled uninstrumented `flutter test --exclude-tags
+    # golden` at 91 and 120 minutes; this runner finishes the suite in
+    # ~2 minutes. One slot: do not collect coverage here — that step
+    # cancelled at 30 minutes and starved Visual Regression in the queue.
+    runs-on: [self-hosted, macOS, ARM64, m3-ultra, realunit-app]
+    # Uninstrumented suite finishes in ~2 minutes here. 15 covers
+    # checkout, codegen, analyze, and that pass/fail run.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.41.6"
           channel: "stable"
-          cache: true
+          cache: false
       - run: flutter pub get
       - run: dart run tool/generate_localization.dart
       - run: dart run tool/generate_release_info.dart
@@ -66,13 +73,107 @@ jobs:
       - run: bash scripts/run-handbook-flows.sh --matcher-self-test
       - run: flutter analyze
       # Excludes the `golden` tag: visual-regression tests live under
-      # `test/goldens/` and are validated on the self-hosted runner
-      # in the parallel `golden-tests` job (Hardware-Determinismus, see
-      # `docs/visual-regression-tests.md`). Running them here too would
-      # both duplicate work and erroneously red this job on macos-latest
-      # where the Skia/font-rendering does not match the committed
-      # baselines.
-      - run: flutter test --coverage --exclude-tags golden
+      # `test/goldens/` and are validated in the `golden-tests` job
+      # (see `docs/visual-regression-tests.md`). Running them here
+      # too would duplicate that work. Floor coverage lives in
+      # `coverage-collect` so this job can free the one slot.
+      - run: flutter test --exclude-tags golden
+
+  # Hard-fails the build when scoped coverage drops below the committed floor.
+  # Two flat repo-root files hold the integers: `.coverage-floor-lines` and
+  # `.coverage-floor-functions`. They are diffable, grep-able, and require
+  # no `yq`/JSON tooling in the runner — same rationale as the rest of this
+  # workflow: keep the gate readable in a `git blame`, not buried in YAML.
+  #
+  # Lives in its own job (not inline in `Analyze & Test`) so it can be set
+  # as a separately required status check in branch protection — a single
+  # job name on `Analyze & Test` would let the floor regress without
+  # blocking merge if it stayed inline. The job graph is:
+  #   build  ║   golden-tests          (one self-hosted slot; either may start first)
+  #          └►  coverage-collect      (after both; needs the runner next)
+  #                  └►  coverage-floor
+  #   bitbox-audit                     (parallel; informational only)
+  #
+  # Ratchet protocol (also documented under README "Coverage infrastructure
+  # roadmap"):
+  #   * Raising the floor is encouraged on every PR that raises measured
+  #     coverage — bump the file in the same commit and the gate moves up.
+  #   * Lowering the floor needs a reviewer's explicit OK. PR convention is
+  #     the `coverage:lower-floor` label so the regression is visible at
+  #     a glance in the PR list rather than being smuggled in.
+  #
+  # Why pure bash + awk instead of `lcov --fail-under-*`:
+  #   the `--fail-under-lines` flag arrived in lcov 2.0 and earlier runner
+  #   images may still pull 1.x out of the package manager. Comparing
+  #   `52.9` against `51` with awk sidesteps that and stays portable.
+  #
+  # On the "no data found" path for the functions metric:
+  #   `flutter test --coverage` emits LF/LH (line execution) and BRF/BRH
+  #   (branch) records, but not FN/FNF/FNH (function execution) — that's a
+  #   Flutter limitation, not a repo bug. When the summary reports
+  #   "no data found" for functions, the gate emits a workflow warning
+  #   instead of comparing against an empty value. This is intentionally
+  #   NOT a silent skip: the warning surfaces in the run summary so a
+  #   future Flutter release adding FN records doesn't go unnoticed (and
+  #   the floor file stays committed so the gate activates the moment
+  #   real data appears).
+  #
+  # On the missing `coverage/lcov.summary` path:
+  #   the gate fails CLOSED with `exit 1`. Previously this was a silent
+  #   `exit 0` warning, which made the gate effectively advisory — a broken
+  #   upstream filter (e.g. lcov.info missing, brew install failure) would
+  #   skip the gate without anyone noticing. The new behaviour is: if
+  #   `Coverage collect` did not produce a summary, the gate is red, the PR
+  #   is blocked, and the reviewer sees exactly where the pipeline broke.
+  coverage-collect:
+    name: Coverage collect
+    needs: [build, golden-tests]
+    # Draft guard PLUS `success()`. A custom `if:` replaces the implicit
+    # skip-on-failed-needs, so without `success()` this job would still
+    # start after a red Analyze or Visual and occupy the one slot for
+    # up to 90 minutes.
+    if: (github.event_name != 'pull_request' || github.event.pull_request.draft == false) && success()
+    # Same self-hosted runner as Analyze & Test / Visual Regression.
+    # Waits until both finish so goldens are not queued behind
+    # instrumented tests. One slot: queue wait is not job timeout.
+    runs-on: [self-hosted, macOS, ARM64, m3-ultra, realunit-app]
+    # Instrumented floor-surface run cancelled at 30 minutes inside
+    # Analyze & Test (uninstrumented suite had already passed in ~2
+    # minutes). 90 is the collect+filter budget on this runner.
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.6"
+          channel: "stable"
+          cache: false
+      - run: flutter pub get
+      - run: dart run tool/generate_localization.dart
+      - run: dart run tool/generate_release_info.dart
+      - run: flutter pub run build_runner build
+      - name: Collect coverage for the floor surface
+        run: |
+          set -euo pipefail
+          cubit_dirs=$(find test -type d \( -name cubit -o -name cubits -o -name bloc \) | tr '\n' ' ')
+          sibling_tests=$(find test/screens \( \
+            -name '*cubit*_test.dart' -o \
+            -name '*bloc*_test.dart' -o \
+            -name '*_state_test.dart' -o \
+            -name '*_event_test.dart' \
+          \) ! -path '*/cubit/*' ! -path '*/cubits/*' ! -path '*/bloc/*' | tr '\n' ' ')
+          states_tests=$(find test -name '*_states_test.dart' | tr '\n' ' ')
+          echo "cubit_dirs=${cubit_dirs}"
+          echo "sibling_tests=${sibling_tests}"
+          echo "states_tests=${states_tests}"
+          # Packages + cubit/bloc folders + sibling cubit specs that
+          # live next to pages. Do not pass feature parent dirs (those
+          # pull widget tests and hung `--coverage` past 58 minutes)
+          # and do not explode every cubit file (that hung 87 minutes
+          # with no log). Expanded reporter so a hang names the spec.
+          # shellcheck disable=SC2086
+          flutter test --coverage --reporter expanded --exclude-tags golden \
+            test/packages/ ${cubit_dirs} ${sibling_tests} ${states_tests}
 
       # Narrow the coverage report to the README-defined activated surface:
       #   lib/packages/**             — services, repositories, signers, utils
@@ -101,10 +202,12 @@ jobs:
         run: |
           set -euo pipefail
           if [ ! -f coverage/lcov.info ]; then
-            echo "::warning::coverage/lcov.info not found — skipping coverage filter"
-            exit 0
+            echo "::error::coverage/lcov.info not found after the floor-surface run"
+            exit 1
           fi
-          brew install lcov >/dev/null
+          if ! command -v lcov >/dev/null; then
+            brew install lcov >/dev/null
+          fi
           lcov --extract coverage/lcov.info \
             'lib/packages/*' \
             'lib/screens/*/cubit/*' \
@@ -168,60 +271,23 @@ jobs:
           path: coverage/lcov.summary
           if-no-files-found: error
 
-  # Hard-fails the build when scoped coverage drops below the committed floor.
-  # Two flat repo-root files hold the integers: `.coverage-floor-lines` and
-  # `.coverage-floor-functions`. They are diffable, grep-able, and require
-  # no `yq`/JSON tooling in the runner — same rationale as the rest of this
-  # workflow: keep the gate readable in a `git blame`, not buried in YAML.
-  #
-  # Lives in its own job (not inline in `Analyze & Test`) so it can be set
-  # as a separately required status check in branch protection — a single
-  # job name on `Analyze & Test` would let the floor regress without
-  # blocking merge if it stayed inline. The job graph is:
-  #   build  ─►  coverage-floor       (sequential; needs the summary artifact)
-  #   build  ║   bitbox-audit          (parallel; informational only)
-  #
-  # Ratchet protocol (also documented under README "Coverage infrastructure
-  # roadmap"):
-  #   * Raising the floor is encouraged on every PR that raises measured
-  #     coverage — bump the file in the same commit and the gate moves up.
-  #   * Lowering the floor needs a reviewer's explicit OK. PR convention is
-  #     the `coverage:lower-floor` label so the regression is visible at
-  #     a glance in the PR list rather than being smuggled in.
-  #
-  # Why pure bash + awk instead of `lcov --fail-under-*`:
-  #   the `--fail-under-lines` flag arrived in lcov 2.0 and earlier runner
-  #   images may still pull 1.x out of the package manager. Comparing
-  #   `52.9` against `51` with awk sidesteps that and stays portable.
-  #
-  # On the "no data found" path for the functions metric:
-  #   `flutter test --coverage` emits LF/LH (line execution) and BRF/BRH
-  #   (branch) records, but not FN/FNF/FNH (function execution) — that's a
-  #   Flutter limitation, not a repo bug. When the summary reports
-  #   "no data found" for functions, the gate emits a workflow warning
-  #   instead of comparing against an empty value. This is intentionally
-  #   NOT a silent skip: the warning surfaces in the run summary so a
-  #   future Flutter release adding FN records doesn't go unnoticed (and
-  #   the floor file stays committed so the gate activates the moment
-  #   real data appears).
-  #
-  # On the missing `coverage/lcov.summary` path:
-  #   the gate fails CLOSED with `exit 1`. Previously this was a silent
-  #   `exit 0` warning, which made the gate effectively advisory — a broken
-  #   upstream filter (e.g. lcov.info missing, brew install failure) would
-  #   skip the gate without anyone noticing. The new behaviour is: if
-  #   `Analyze & Test` did not produce a summary, the gate is red, the PR
-  #   is blocked, and the reviewer sees exactly where the pipeline broke.
   coverage-floor:
     name: Coverage Floor Gate
-    needs: build
-    # Same draft guard as `build`: skip drafts, always run on push/dispatch.
-    # `build` already enforces this, but mirroring it here keeps the gate's
-    # behaviour locally readable instead of inferred from `needs:`.
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    needs: coverage-collect
+    # `always()` so a failed/cancelled collect does not skip this
+    # required check (skipped counts as passing). `success()` stays on
+    # `coverage-collect` so a red Analyze/Visual does not occupy the
+    # one self-hosted slot. Drafts still skip.
+    if: always() && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - name: Require a successful collect
+        if: needs.coverage-collect.result != 'success'
+        run: |
+          echo "::error::Coverage collect did not succeed (result=${{ needs.coverage-collect.result }}) — floor stays red instead of skipped"
+          exit 1
+
       - uses: actions/checkout@v6
 
       - name: Download coverage summary
@@ -240,7 +306,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ ! -f coverage/lcov.summary ]; then
-            echo "::error::coverage/lcov.summary not found after artifact download — the build job did not produce a scoped coverage summary"
+            echo "::error::coverage/lcov.summary not found after artifact download — Coverage collect did not produce a scoped coverage summary"
             exit 1
           fi
           if [ ! -f .coverage-floor-lines ] || [ ! -f .coverage-floor-functions ]; then
@@ -294,28 +360,21 @@ jobs:
   # and PRs that drift from them fail this job. Bootstrap and re-generation
   # is documented in `docs/visual-regression-tests.md`.
   #
-  # Runs parallel to `build` (which uses GitHub-hosted macos-latest). The
-  # separation is intentional:
-  #  * `build` covers analyze + unit/widget tests + coverage — needs no
-  #    hardware determinism.
-  #  * `golden-tests` covers pixel-exact rendering — must run on the self-hosted runner so
-  #    baselines and validation use identical Skia/font-rendering state.
+  # Shares the one-slot self-hosted runner with `build` and
+  # `coverage-collect`. Job purpose stays split: `build` is analyze +
+  # uninstrumented unit/widget tests; this job is pixel-exact goldens;
+  # `coverage-collect` waits for both so goldens are not starved.
+  # Queue wait does not count toward `timeout-minutes`.
   #
-  # On self-hosted runner outage: temporarily flip `runs-on:` to `macos-15` and regenerate
+  # On self-hosted runner outage: temporarily flip `runs-on:` on this
+  # job, `build`, and `coverage-collect` to `macos-15` and regenerate
   # baselines in the same PR (see `docs/visual-regression-tests.md`).
   golden-tests:
     name: Visual Regression
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: [self-hosted, macOS, ARM64, m3-ultra, realunit-app]
-    # 30 was sized for the era when `subosito/flutter-action@v2` still pulled
-    # the SDK through the Actions cache and burned ~18 minutes on a stalled
-    # restore plus the trailing cache-save. Without that overhead the job
-    # finishes in ~1 minute, so 15 is generous headroom — it still covers the
-    # worst normal case, where the SDK is absent from the runner's persistent
-    # tool cache and has to be downloaded from scratch. The lower ceiling is
-    # what matters here: the self-hosted runner has exactly ONE slot for this
-    # repo, so a wedged job blocks every other PR until it is killed. 15 hands
-    # the slot back twice as fast as 30.
+    # Keep in sync with `golden-regenerate.yaml`. A wedged golden job must
+    # not hold the one slot past 15 minutes.
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6

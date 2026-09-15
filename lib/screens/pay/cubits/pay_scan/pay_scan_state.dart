@@ -28,3 +28,12 @@ class PayScanDecoded extends PayScanState {
   @override
   List<Object?> get props => [link.id, link.lnurlpUrl];
 }
+
+class PayScanWalletConnect extends PayScanState {
+  final String uri;
+
+  const PayScanWalletConnect(this.uri);
+
+  @override
+  List<Object?> get props => [uri];
+}

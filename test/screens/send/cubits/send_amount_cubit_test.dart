@@ -83,5 +83,23 @@ void main() {
       act: (cubit) => cubit.useMax(),
       expect: () => <SendAmountState>[],
     );
+
+    blocTest<SendAmountCubit, SendAmountState>(
+      'availableSharesChanged is a no-op when the balance is unchanged',
+      build: () => SendAmountCubit(availableShares: BigInt.from(10)),
+      act: (cubit) => cubit.availableSharesChanged(BigInt.from(10)),
+      expect: () => <SendAmountState>[],
+    );
+
+    blocTest<SendAmountCubit, SendAmountState>(
+      'availableSharesChanged re-checks the current input against a new balance',
+      build: () => SendAmountCubit(availableShares: BigInt.from(10))
+        ..amountChanged('8'),
+      act: (cubit) => cubit.availableSharesChanged(BigInt.from(5)),
+      verify: (cubit) {
+        expect(cubit.availableShares, BigInt.from(5));
+        expect(cubit.state.status, SendAmountStatus.insufficientBalance);
+      },
+    );
   });
 }

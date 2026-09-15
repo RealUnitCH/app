@@ -70,6 +70,17 @@ void main() {
     });
   });
 
+  group('ClearAccountCurrencyEvent', () {
+    test('all instances are equal (singleton-style event, no payload)', () {
+      const a = ClearAccountCurrencyEvent();
+      const b = ClearAccountCurrencyEvent();
+
+      expect(a, equals(b));
+      expect(a.hashCode, b.hashCode);
+      expect(a.props, isEmpty);
+    });
+  });
+
   group('ToggleHideAmountEvent', () {
     test('all instances are equal (singleton-style event, no payload)', () {
       const a = ToggleHideAmountEvent();
@@ -118,18 +129,21 @@ void main() {
       final net = SetNetworkModeEvent(NetworkMode.mainnet);
       final toggle = ToggleHideAmountEvent();
       final unlock = UnlockInsiderFeaturesEvent();
+      final clear = ClearAccountCurrencyEvent();
 
       expect(lang, equals(const SetLanguageEvent(Language.de)));
       expect(cur, equals(const SetCurrencyEvent(Currency.eur)));
       expect(net, equals(const SetNetworkModeEvent(NetworkMode.mainnet)));
       expect(toggle, equals(const ToggleHideAmountEvent()));
       expect(unlock, equals(const UnlockInsiderFeaturesEvent()));
+      expect(clear, equals(const ClearAccountCurrencyEvent()));
 
       expect(lang.props, [Language.de]);
       expect(cur.props, [Currency.eur]);
       expect(net.props, [NetworkMode.mainnet]);
       expect(toggle.props, isEmpty);
       expect(unlock.props, isEmpty);
+      expect(clear.props, isEmpty);
     });
   });
 }

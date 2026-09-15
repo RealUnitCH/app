@@ -44,6 +44,8 @@ import 'package:realunit_wallet/packages/service/transaction_history_service.dar
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/storage/database.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
+import 'package:realunit_wallet/packages/walletconnect/reown_walletconnect_engine.dart';
+import 'package:realunit_wallet/packages/walletconnect/walletconnect_service.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
@@ -79,6 +81,7 @@ Future<String> setupEssentials({
 
   getIt.registerSingleton(secureStorage);
 
+  await secureStorage.migrateFromUnnamespacedStoreIfNeeded();
   await migrateSecurityFlags(sharedPreferences, secureStorage);
 
   final encryptionKey = await secureStorage.getEncryptionKey();
@@ -162,6 +165,13 @@ void setupServices() {
       getIt<WalletRepository>(),
       getIt<SettingsRepository>(),
       getIt<AppStore>(),
+    ),
+  );
+  getIt.registerLazySingleton<WalletConnectService>(
+    () => WalletConnectService(
+      engine: ReownWalletConnectEngine(),
+      walletService: getIt<WalletService>(),
+      appStore: getIt<AppStore>(),
     ),
   );
   getIt.registerFactory(
@@ -256,6 +266,7 @@ Future<void> setupBlocs() async {
       getIt<SettingsService>(),
       getIt<AppStore>(),
       getIt<BitboxService>(),
+      walletConnectService: getIt<WalletConnectService>(),
     ),
   );
   getIt.registerSingleton(
@@ -266,7 +277,10 @@ Future<void> setupBlocs() async {
     ),
   );
 
-  final pinAuthCubit = PinAuthCubit(getIt<SecureStorage>());
+  final pinAuthCubit = PinAuthCubit(
+    getIt<SecureStorage>(),
+    walletConnectService: getIt<WalletConnectService>(),
+  );
   await pinAuthCubit.initialize();
   getIt.registerSingleton(pinAuthCubit);
 }

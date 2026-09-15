@@ -9,6 +9,7 @@ import 'package:realunit_wallet/packages/service/settings_service.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
+import 'package:realunit_wallet/packages/walletconnect/walletconnect_service.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 
@@ -25,6 +26,8 @@ class _MockAppStore extends Mock implements AppStore {}
 class _MockBitboxService extends Mock implements BitboxService {}
 
 class _MockSessionCache extends Mock implements SessionCache {}
+
+class _MockWalletConnectService extends Mock implements WalletConnectService {}
 
 class _FakeWallet extends Fake implements AWallet {}
 
@@ -459,6 +462,45 @@ void main() {
         );
 
         expect(peekPendingPaymentDeeplink(), isNull);
+      });
+
+      test('clears a stashed WalletConnect pairing so it cannot replay into a re-onboarded wallet', () async {
+        addTearDown(clearPendingWalletConnect);
+        stashPendingWalletConnectPairing('wc:test-pairing');
+
+        final bloc = build();
+        await bloc.stream.firstWhere((s) => true);
+
+        bloc.add(const DeleteCurrentWalletEvent());
+        await bloc.stream.firstWhere(
+          (s) => s.isLoadingWallet == false && s.hasWallet == false,
+        );
+
+        expect(peekPendingWalletConnect(), isNull);
+      });
+
+      test('resets WalletConnect sessions after stash clears', () async {
+        final walletConnectService = _MockWalletConnectService();
+        when(() => walletConnectService.reset()).thenAnswer((_) async {});
+
+        final bloc = HomeBloc(
+          walletService,
+          balanceService,
+          transactionHistoryService,
+          settingsService,
+          appStore,
+          bitboxService,
+          walletConnectService: walletConnectService,
+        );
+        await bloc.stream.firstWhere((s) => true);
+
+        bloc.add(const DeleteCurrentWalletEvent());
+        await bloc.stream.firstWhere(
+          (s) => s.isLoadingWallet == false && s.hasWallet == false,
+        );
+
+        verify(() => walletConnectService.reset()).called(1);
+        await bloc.close();
       });
     });
 

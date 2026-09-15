@@ -5,11 +5,14 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:realunit_wallet/setup/routing/referral_pending_code.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
+import 'package:realunit_wallet/packages/walletconnect/walletconnect_service.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/pin/constants/pin_constants.dart';
 import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 
 class _MockSecureStorage extends Mock implements SecureStorage {}
+
+class _MockWalletConnectService extends Mock implements WalletConnectService {}
 
 void main() {
   late _MockSecureStorage storage;
@@ -246,6 +249,39 @@ void main() {
         expect(peekPendingPaymentDeeplink(), isNull);
       },
     );
+
+    test(
+      'reset clears a pending WalletConnect stash (no replay into a reset/re-onboarded wallet)',
+      () async {
+        when(() => storage.deletePinHash()).thenAnswer((_) async {});
+        when(() => storage.deleteBiometricEnabled()).thenAnswer((_) async {});
+        when(() => storage.resetPinLockout()).thenAnswer((_) async {});
+        addTearDown(clearPendingWalletConnect);
+
+        stashPendingWalletConnectPairing('wc:test-pairing');
+        final cubit = build();
+        await cubit.reset();
+
+        expect(peekPendingWalletConnect(), isNull);
+      },
+    );
+
+    test('reset tears down WalletConnect sessions after stash clears', () async {
+      when(() => storage.deletePinHash()).thenAnswer((_) async {});
+      when(() => storage.deleteBiometricEnabled()).thenAnswer((_) async {});
+      when(() => storage.resetPinLockout()).thenAnswer((_) async {});
+      final walletConnectService = _MockWalletConnectService();
+      when(() => walletConnectService.reset()).thenAnswer((_) async {});
+
+      final cubit = PinAuthCubit(
+        storage,
+        walletConnectService: walletConnectService,
+      );
+      await cubit.reset();
+
+      verify(() => walletConnectService.reset()).called(1);
+      await cubit.close();
+    });
   });
 
   group('reset', () {

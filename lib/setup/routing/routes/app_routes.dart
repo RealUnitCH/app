@@ -10,6 +10,8 @@ abstract final class AppRoutes {
   static const send = 'send';
   static const kyc = 'kyc';
   static const receive = 'receive';
+  static const walletConnectScan = 'walletConnectScan';
+  static const walletConnectSession = 'walletConnectSession';
   static const bitboxAddressRecovery = 'bitboxAddressRecovery';
 
   static const webView = 'webView';

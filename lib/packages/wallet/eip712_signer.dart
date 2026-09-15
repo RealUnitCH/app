@@ -119,6 +119,15 @@ class Eip712Signer {
     return _signTypedData(credentials, eip7702Data.domain.chainId, jsonEncode(typedDataMap));
   }
 
+  /// Signs caller-supplied EIP-712 JSON (WalletConnect `eth_signTypedData_v4`).
+  static Future<String> signTypedDataJson({
+    required CredentialsWithKnownAddress credentials,
+    required int chainId,
+    required String jsonData,
+  }) {
+    return _signTypedData(credentials, chainId, jsonData);
+  }
+
   static Future<String> _signTypedData(
     CredentialsWithKnownAddress credentials,
     int chainId,

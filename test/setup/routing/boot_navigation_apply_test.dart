@@ -75,6 +75,16 @@ void main() {
           path: '/pay',
           builder: (_, state) => Text('pay ${state.extra}'),
         ),
+        GoRoute(
+          name: AppRoutes.walletConnectScan,
+          path: '/walletConnect',
+          builder: (_, _) => const Text('WCSCAN'),
+        ),
+        GoRoute(
+          name: AppRoutes.walletConnectSession,
+          path: '/walletConnect/session',
+          builder: (_, state) => Text('WC:${state.extra}'),
+        ),
       ],
     );
     addTearDown(router.dispose);
@@ -494,6 +504,93 @@ void main() {
         router.pop();
         await tester.pumpAndSettle();
         expect(find.text('dashboard'), findsOneWidget);
+      },
+    );
+  });
+
+  group('pendingWalletConnect replay', () {
+    const pairing =
+        'wc:00e46b69-d0cc-4b3e-b6a2-cee442f97188@2?relay-protocol=irn&symKey=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+
+    setUp(clearPendingWalletConnect);
+    tearDown(clearPendingWalletConnect);
+
+    testWidgets(
+      'dashboard landing with a stashed pairing pushes the session and consumes the stash',
+      (tester) async {
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        stashPendingWalletConnectPairing(pairing);
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('WC:$pairing'), findsOneWidget);
+        expect(
+          router.routerDelegate.currentConfiguration.matches.map((m) => m.matchedLocation).toList(),
+          ['/dashboard', '/walletConnect/session'],
+        );
+        expect(peekPendingWalletConnect(), isNull);
+        expect(router.canPop(), isTrue);
+        router.pop();
+        await tester.pumpAndSettle();
+        expect(find.text('dashboard'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'dashboard landing with a stashed scan pushes the scan route and consumes the stash',
+      (tester) async {
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        stashPendingWalletConnectScan();
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.dashboard),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('WCSCAN'), findsOneWidget);
+        expect(
+          router.routerDelegate.currentConfiguration.matches.map((m) => m.matchedLocation).toList(),
+          ['/dashboard', '/walletConnect'],
+        );
+        expect(peekPendingWalletConnect(), isNull);
+      },
+    );
+
+    testWidgets(
+      'a non-dashboard gate landing never consumes or replays the stash',
+      (tester) async {
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        stashPendingWalletConnectPairing(pairing);
+        applyBootNavAction(
+          const BootNavGoNamed(PinRoutes.verify),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('verify'), findsOneWidget);
+        expect(find.text('WC:$pairing'), findsNothing);
+        final pending = peekPendingWalletConnect();
+        expect(pending, isNotNull);
+        expect(pending!.action, PendingWalletConnectAction.pair);
+        expect(pending.uri, pairing);
       },
     );
   });

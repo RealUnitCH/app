@@ -31,3 +31,12 @@ class SendRecipientInvalid extends SendRecipientState {
   @override
   List<Object?> get props => [error.input];
 }
+
+class SendRecipientWalletConnect extends SendRecipientState {
+  final String uri;
+
+  const SendRecipientWalletConnect(this.uri);
+
+  @override
+  List<Object?> get props => [uri];
+}

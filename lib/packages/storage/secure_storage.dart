@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -44,15 +45,114 @@ class SecureStorage {
   static const _pinLockedUntilKey = 'pin.lockedUntil';
 
   final FlutterSecureStorage _secureStorage;
+  final bool _isolateFromWalletKit;
 
-  const SecureStorage() : _secureStorage = const FlutterSecureStorage();
+  /// WalletKit uses the default FlutterSecureStorage namespace and has been
+  /// observed to wipe sibling keys on pairing. Production storage therefore
+  /// lives in an isolated Android/iOS namespace; [migrateFromUnnamespacedStoreIfNeeded]
+  /// copies existing PIN/mnemonic/DB keys once.
+  static const _namespacedAndroid = AndroidOptions(
+    encryptedSharedPreferences: true,
+    sharedPreferencesName: 'swiss.realunit.app.secure',
+    preferencesKeyPrefix: 'ru_',
+  );
+  static const _namespacedIos = IOSOptions(accountName: 'swiss.realunit.app.secure');
+  static const _namespaceMigrationKey = 'secure.storage.namespaced';
+
+  const SecureStorage()
+      : _secureStorage = const FlutterSecureStorage(
+          aOptions: _namespacedAndroid,
+          iOptions: _namespacedIos,
+        ),
+        _isolateFromWalletKit = true;
 
   /// Test-only constructor that injects a [FlutterSecureStorage] (typically a
   /// mock or the platform-interface-backed `TestFlutterSecureStoragePlatform`).
   /// Lets unit tests exercise every instance method without booting a real
   /// platform channel — the production code path stays untouched.
+  ///
+  /// Pass [isolateFromWalletKit] `true` to exercise
+  /// [migrateFromUnnamespacedStoreIfNeeded]; the default `false` keeps existing
+  /// callers as a migrate no-op.
   @visibleForTesting
-  const SecureStorage.withStorage(this._secureStorage);
+  const SecureStorage.withStorage(
+    this._secureStorage, {
+    bool isolateFromWalletKit = false,
+  }) : _isolateFromWalletKit = isolateFromWalletKit;
+
+  static const _legacyKeysToMigrate = [
+    _databaseEncryptionKey,
+    _mnemonicEncryptionKey,
+    _pinCredentialKey,
+    _pinHashKey,
+    _pinSaltKey,
+    _biometricEnabledKey,
+    _pinFailedAttemptsKey,
+    _pinLockedUntilKey,
+  ];
+
+  /// One-shot copy from the un-namespaced store (the one WalletKit shares)
+  /// into the isolated namespace. No-op for [SecureStorage.withStorage].
+  ///
+  /// The migration flag is written only after every key that needed a copy
+  /// succeeded (write + read-back). A failed copy aborts without the flag so
+  /// the next boot can retry; boot itself must not crash.
+  // @no-integration-test: forwards to FlutterSecureStorage (Android Keystore /
+  // iOS Keychain) over a platform channel; real keystore migration is only
+  // verifiable on-device — the unit test mocks the plugin.
+  Future<void> migrateFromUnnamespacedStoreIfNeeded({
+    FlutterSecureStorage legacy = const FlutterSecureStorage(),
+  }) async {
+    if (!_isolateFromWalletKit) return;
+    try {
+      if (await _secureStorage.read(key: _namespaceMigrationKey) == '1') return;
+    } catch (error, stackTrace) {
+      developer.log(
+        'SecureStorage namespaced migrate: marker read failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return;
+    }
+    for (final key in _legacyKeysToMigrate) {
+      try {
+        final value = await legacy.read(key: key);
+        if (value == null) continue;
+        final dest = await _secureStorage.read(key: key);
+        if (dest == value) continue;
+        await _secureStorage.write(key: key, value: value);
+        final written = await _secureStorage.read(key: key);
+        if (written != value) {
+          try {
+            await _secureStorage.delete(key: key);
+          } catch (_) {
+            // Best-effort rollback; flag is not written either way.
+          }
+          developer.log(
+            'SecureStorage namespaced migrate failed for $key: read-back mismatch',
+          );
+          return;
+        }
+      } catch (error, stackTrace) {
+        developer.log(
+          'SecureStorage namespaced migrate failed for $key',
+          error: error,
+          stackTrace: stackTrace,
+        );
+        return;
+      }
+    }
+    try {
+      await _secureStorage.write(key: _namespaceMigrationKey, value: '1');
+    } catch (error, stackTrace) {
+      developer.log(
+        'SecureStorage namespaced migrate: marker write failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      return;
+    }
+  }
 
   // Database
 
@@ -234,6 +334,14 @@ class SecureStorage {
   Future<Uint8List> getOrCreateMnemonicKey() async {
     final existing = await _secureStorage.read(key: _mnemonicEncryptionKey);
     if (existing != null) return base64.decode(existing);
+    if (_isolateFromWalletKit) {
+      final migrated = await _secureStorage.read(key: _namespaceMigrationKey);
+      if (migrated != '1') {
+        throw StateError(
+          'Mnemonic encryption key missing before namespaced migration completed.',
+        );
+      }
+    }
     final key = _secureRandomBytes(32);
     await _secureStorage.write(key: _mnemonicEncryptionKey, value: base64.encode(key));
     return key;

@@ -56,6 +56,13 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
     productionPath: 'lib/screens/create_wallet/create_wallet_view.dart',
   ),
   ResponsiveSurface(
+    id: 'walletconnect_session_page',
+    description: 'WalletConnect session confirm (proposal / sign)',
+    matrixTestPath:
+        'test/screens/walletconnect/walletconnect_session_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/walletconnect/walletconnect_session_page.dart',
+  ),
+  ResponsiveSurface(
     id: 'verify_pin_page',
     description: 'Verify PIN page',
     matrixTestPath: 'test/screens/pin/verify_pin_responsive_matrix_test.dart',
