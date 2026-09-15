@@ -59,6 +59,7 @@ class PayProcessView extends StatelessWidget {
             icon: Icons.check_circle_rounded,
             title: S.of(context).paySuccess,
             description: S.of(context).paySuccessDescription,
+            swapCompleted: true,
           );
         } else if (state is PayProcessPayRetry) {
           // The swap already succeeded — offer to retry the PAY leg only. The
@@ -70,6 +71,7 @@ class PayProcessView extends StatelessWidget {
             icon: Icons.error_rounded,
             title: S.of(context).payFailureTitle,
             description: _failureMessage(context, state),
+            swapCompleted: false,
           );
         }
       },
@@ -141,6 +143,7 @@ class PayProcessView extends StatelessWidget {
     required IconData icon,
     required String title,
     required String description,
+    required bool swapCompleted,
   }) async {
     await waitForIncomingRouteAnimation(context);
     if (!context.mounted) {
@@ -175,7 +178,7 @@ class PayProcessView extends StatelessWidget {
         ),
       ),
     );
-    if (context.mounted) Navigator.of(context).pop();
+    if (context.mounted) Navigator.of(context).pop(swapCompleted);
   }
 
   /// Recovery sheet shown after a successful swap when the pay leg failed. The
@@ -233,7 +236,8 @@ class PayProcessView extends StatelessWidget {
       await cubit.retryPay();
     } else if (context.mounted) {
       // Closed: leave the flow. The swapped ZCHF stays safely in the wallet.
-      Navigator.of(context).pop();
+      // true tells the quote page not to offer Pay again on the same quote.
+      Navigator.of(context).pop(true);
     }
   }
 }
