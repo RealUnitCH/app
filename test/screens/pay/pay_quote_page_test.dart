@@ -168,17 +168,17 @@ void main() {
 
       expect(find.byType(PayProcessView), findsOne);
 
-      // Debug wallet fails immediately and shows a result sheet. Pop the
-      // sheet, then the process route — the same two pops production does
-      // when the user taps Close. Avoid tap(): the sheet is taller than the
-      // default test surface, so Close is outside the hit box.
+      // Debug wallet fails before the swap and shows a result sheet. Pop the
+      // sheet; the process route then pops with swapCompleted=false so Pay
+      // re-enables. Avoid tap(): the sheet is taller than the default test
+      // surface, so Close is outside the hit box.
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       final navigator = tester.state<NavigatorState>(find.byType(Navigator).first);
       navigator.pop();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      navigator.pop();
+      navigator.pop(false);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
