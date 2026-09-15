@@ -15,6 +15,7 @@ void main() {
   setUp(() {
     processCubit = _MockPayProcessCubit();
     when(() => processCubit.state).thenReturn(const PayProcessInitial());
+    when(() => processCubit.swapCompleted).thenReturn(false);
   });
 
   // PayProcessPage resolves its cubit from getIt and calls start(); the golden

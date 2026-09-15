@@ -71,7 +71,7 @@ class PayProcessView extends StatelessWidget {
             icon: Icons.error_rounded,
             title: S.of(context).payFailureTitle,
             description: _failureMessage(context, state),
-            swapCompleted: false,
+            swapCompleted: context.read<PayProcessCubit>().swapCompleted,
           );
         }
       },

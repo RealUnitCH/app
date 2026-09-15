@@ -158,6 +158,19 @@ void main() {
       expect(find.byType(PayProcessView), findsOne);
     });
 
+    testWidgets('double-tap on Pay does not push two process routes', (tester) async {
+      when(() => quoteCubit.state).thenReturn(ready);
+      await tester.pumpApp(buildSubject());
+
+      await tester.tap(find.text(S.current.payConfirmButton));
+      await tester.tap(find.text(S.current.payConfirmButton), warnIfMissed: false);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // Offstage: a second pushed route would hide the first; count both.
+      expect(find.byType(PayProcessView, skipOffstage: false), findsOne);
+    });
+
     testWidgets('Pay re-enables after the process route pops', (tester) async {
       when(() => quoteCubit.state).thenReturn(ready);
       await tester.pumpApp(buildSubject());

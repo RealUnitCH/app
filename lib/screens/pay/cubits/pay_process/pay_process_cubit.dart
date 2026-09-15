@@ -55,6 +55,8 @@ class PayProcessCubit extends Cubit<PayProcessState> {
   /// retried on its own via [retryPay].
   bool _swapCompleted = false;
 
+  bool get swapCompleted => _swapCompleted;
+
   /// Guards overlapping ETH-poll ticks from each calling [_executeSwap]. Set
   /// synchronously before the first await in a tick; released in `finally` on
   /// every path out of a tick (success, max-attempts, isClosed, transient
