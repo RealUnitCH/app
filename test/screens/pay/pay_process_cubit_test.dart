@@ -984,18 +984,18 @@ void main() {
     await cubit.close();
   });
 
-  test('broadcast throw after sign still marks swapCompleted so Pay cannot re-run', () async {
+  test('broadcast throw after sign is a pay-only retry, not a re-scan', () async {
     wireHappyPath();
     when(
       () => payService.broadcastSwapTransaction(any(), any()),
     ).thenThrow(Exception('timeout'));
 
     final cubit = build();
-    final failed = cubit.stream.firstWhere((s) => s is PayProcessFailure);
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
     await cubit.start();
-    final state = await failed as PayProcessFailure;
+    final state = await retry as PayProcessPayRetry;
 
-    expect(state.reason, PayProcessFailureReason.generic);
+    expect(state.reason, PayRetryReason.transient);
     expect(cubit.swapCompleted, isTrue);
     await cubit.close();
   });
