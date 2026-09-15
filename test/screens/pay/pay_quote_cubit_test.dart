@@ -1,8 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/lnurlp_payment_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_swap_dto.dart';
@@ -63,9 +61,8 @@ SwapPaymentInfo _swap({
 void main() {
   late _MockPayService payService;
 
-  setUpAll(() async {
+  setUpAll(() {
     registerFallbackValue(const RealUnitSwapDto.fromTargetAmount(1));
-    await S.delegate.load(const Locale('de'));
   });
 
   setUp(() {
