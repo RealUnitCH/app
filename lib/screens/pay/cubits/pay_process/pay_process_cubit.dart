@@ -261,12 +261,12 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       if (isClosed) return;
       final signed = await _signTransaction(unsigned.swap);
       if (isClosed) return;
-      await _payService.broadcastSwapTransaction(swap.id, signed);
-      if (isClosed) return;
-      // The swap is now irreversible — the user holds ZCHF. From here every
-      // recovery path retries the PAY leg only; the swap is never redone.
+      // Mark completed before the HTTP round-trip. A timeout or dropped 2xx
+      // can still have broadcast the tx; the quote must not re-enable Pay.
       _swapCompleted = true;
       _acquiredZchf = swap.estimatedAmount;
+      await _payService.broadcastSwapTransaction(swap.id, signed);
+      if (isClosed) return;
       await _refreshQuoteAndPay();
     } on PaySignatureUnsupportedException {
       if (isClosed) return;
