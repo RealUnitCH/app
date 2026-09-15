@@ -57,6 +57,7 @@ SwapPaymentInfo _swap({
   double ethBalance = 1.0,
   double requiredGasEth = 0.001,
   bool isValid = true,
+  String? error,
 }) {
   return SwapPaymentInfo.fromDto(
     RealUnitSwapPaymentInfoDto(
@@ -74,6 +75,7 @@ SwapPaymentInfo _swap({
       ethBalance: ethBalance,
       requiredGasEth: requiredGasEth,
       isValid: isValid,
+      error: error,
     ),
   );
 }
@@ -313,14 +315,17 @@ void main() {
     await cubit.close();
   });
 
-  test('invalid swap quote → insufficientZchf', () async {
-    when(() => payService.getSwapPaymentInfo(any())).thenAnswer((_) async => _swap(isValid: false));
+  test('invalid swap quote surfaces the API error 1:1', () async {
+    when(() => payService.getSwapPaymentInfo(any())).thenAnswer(
+      (_) async => _swap(isValid: false, error: 'AmountTooLow'),
+    );
 
     final cubit = build();
     await cubit.start();
 
     final state = cubit.state as PayProcessFailure;
-    expect(state.reason, PayProcessFailureReason.insufficientZchf);
+    expect(state.reason, PayProcessFailureReason.generic);
+    expect(state.message, 'AmountTooLow');
     await cubit.close();
   });
 
@@ -981,6 +986,22 @@ void main() {
     final state = await failed as PayProcessFailure;
 
     expect(state.reason, PayProcessFailureReason.generic);
+    await cubit.close();
+  });
+
+  test('broadcast throw after sign is a pay-only retry, not a re-scan', () async {
+    wireHappyPath();
+    when(
+      () => payService.broadcastSwapTransaction(any(), any()),
+    ).thenThrow(Exception('timeout'));
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    final state = await retry as PayProcessPayRetry;
+
+    expect(state.reason, PayRetryReason.transient);
+    expect(cubit.swapCompleted, isTrue);
     await cubit.close();
   });
 

@@ -1138,6 +1138,9 @@
               <a href="#spec-80"><span class="spec-num">80</span>Testkunden — Bestandsentwicklung</a>
             </li>
             <li>
+              <a href="#spec-81"><span class="spec-num">81</span>Bezahlen — ganze REALU</a>
+            </li>
+            <li>
               <a href="#spec-geo"><span class="spec-num">G</span>Aktientoken — Geo-Filter</a>
             </li>
             <li>
@@ -1186,14 +1189,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 355 Visual-Regression Goldens (301 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 355 Visual-Regression Goldens (304 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 301 App-Screenshots dieser Seite sind Goldens aus
+            Die 304 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1233,7 +1236,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 301 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 304 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -8412,6 +8415,95 @@
                     <tr><td>2026-08-23</td><td>Kauf</td><td class="num">+260</td><td class="num">1800</td></tr>
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-81" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">81</span>Bezahlen — ganze REALU</h2>
+                <div class="file">test/goldens/screens/pay/</div>
+              </div>
+              <div class="rhs">
+                <b>3 Screens</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/pay"
+                    >Goldens ↗</a
+                  >
+                </div>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            OpenCryptoPay-Zahlungen verkaufen immer <b>ganze REALU-Anteile</b> —
+            halbe Anteile gibt es nicht. Die Bestätigungsseite («Zahlung bestätigen»)
+            sagt das ausdrücklich. Ein allfälliger ZCHF-Rest bleibt in der Wallet.
+            Die Zahlungs-API rundet den Tausch auf ganze Anteile auf; die App rechnet
+            die Stückzahl nicht selbst.
+          </p>
+
+          <div class="tests cols-3">
+            <div class="test" id="293-pay-info">
+              <div class="head">
+                <a class="name permalink" href="#293-pay-info">293-pay-info</a>
+                <button class="copy-link" type="button" data-target="293-pay-info" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_info_page.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/293-pay-info.png"
+                  alt="Bevor Sie bezahlen — Hinweis auf ganze REALU-Anteile"
+                />
+              </div>
+              <div class="desc">
+                Intro-Seite <b>Bevor Sie bezahlen</b> mit dem zusätzlichen Absatz:
+                bei jeder Zahlung wird auf ganze REALU-Anteile aufgerundet, weil es
+                keine halben REALU gibt; ein allfälliger ZCHF-Rest bleibt in der Wallet.
+                Golden-Quelle: <code>pay_info_page.png</code>.
+              </div>
+            </div>
+            <div class="test" id="294-pay-quote-ready">
+              <div class="head">
+                <a class="name permalink" href="#294-pay-quote-ready">294-pay-quote-ready</a>
+                <button class="copy-link" type="button" data-target="294-pay-quote-ready" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_quote_page_ready.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/294-pay-quote-ready.png"
+                  alt="Zahlung bestätigen — Aufrundungshinweis"
+                />
+              </div>
+              <div class="desc">
+                Bestätigungsseite mit Betrag, benötigten ZCHF und dem sichtbaren
+                Hinweis, dass jede Zahlung auf ganze REALU-Anteile aufgerundet wird.
+                Restliches ZCHF bleibt in der Wallet. Button <b>Bezahlen</b> bleibt
+                die sticky CTA.
+                Golden-Quelle: <code>pay_quote_page_ready.png</code>.
+              </div>
+            </div>
+            <div class="test" id="295-pay-quote-ready-merchant">
+              <div class="head">
+                <a class="name permalink" href="#295-pay-quote-ready-merchant">295-pay-quote-ready-merchant</a>
+                <button class="copy-link" type="button" data-target="295-pay-quote-ready-merchant" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_quote_page_ready_with_merchant.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/295-pay-quote-ready-merchant.png"
+                  alt="Zahlung bestätigen — Empfänger, REALU-Zeilen und Aufrundungshinweis"
+                />
+              </div>
+              <div class="desc">
+                Dieselbe Bestätigungsseite mit Empfänger, REALU-Anteilzeilen und
+                dem Aufrundungshinweis unter den Beträgen.
+                Golden-Quelle: <code>pay_quote_page_ready_with_merchant.png</code>.
               </div>
             </div>
           </div>

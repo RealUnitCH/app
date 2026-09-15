@@ -56,6 +56,8 @@ Column meaning:
 | Dashboard & trading | `SellBitboxPage` | `sellBitbox` | `/sellBitbox` | `126`, `127`, `128`, `129`, `130`, `131`, `132`, `133`, `134`, `135`, `136` |
 | Dashboard & trading | `SellBankAccountSelectionPage` | — | — | `121`, `122` |
 | Dashboard & trading | `ReceivePage` | `receive` | `/receive` | `101`, `102` |
+| Dashboard & trading | `PayInfoPage` | `pay` | `/pay` | `293` |
+| Dashboard & trading | `PayQuotePage` | — | — | `294`, `295` |
 | Dashboard & trading | `ConnectBitboxPage` | — | — | `137`, `138`, `139`, `140`, `141`, `142`, `143`, `144`, `145`, `146` |
 | Dashboard & trading | `BitboxAddressRecoveryPage` | `bitboxAddressRecovery` | `/bitboxAddressRecovery` | `147` |
 | Dashboard & trading | `WebViewPage` | `webView` | `/webView` | — |
@@ -122,13 +124,14 @@ Column meaning:
 | Shared widgets | `PhoneNumberField` | — | — | `268` |
 | Shared widgets | `ReferralPayoutTransactionRow` | — | — | `282` |
 
-81 screens — 47 routed (`GoRoute`) + 34 non-routed. The table also carries
+83 screens — 48 routed (`GoRoute`) + 35 non-routed. The table also carries
 two shared-widget baselines (`PhoneNumberField`, `ReferralPayoutTransactionRow`),
 which are not screens.
 Referral surfaces have Golden baselines (`276`–`292`); the handbook
 documents the programme in `#spec-referral`. Overlay slots `291` and `292`
 are listed on `DashboardPage` (the host screen), not as a second shared-widget
-row.
+row. OpenCryptoPay pay rounding cards `293`–`295` are documented in
+`#spec-81`.
 
 ## Notes
 
@@ -147,7 +150,7 @@ row.
   `243`–`245`. `SetupPinPage` also backs the `settingsChangePin` route
   (`/settings/security/changePin`) via a second constructor; that reuse has no
   separate Golden and is not given its own row.
-- **Handbook numbering.** Each of the 301 handbook slots is a Visual-Regression
+- **Handbook numbering.** Each of the 304 handbook slots is a Visual-Regression
   Golden under `test/goldens/`, mapped to its handbook position by
   `scripts/assemble-handbook-screenshots.sh`. A parallel Tier-3 Maestro flow
   (`.maestro/handbook/NN-*.yaml`) covers navigation/tap-routing smoke for the

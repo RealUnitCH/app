@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Assemble the 301 handbook screenshots from the visual-regression Golden
+# Assemble the 304 handbook screenshots from the visual-regression Golden
 # baselines. The flat `NN-name.png` output layout matches what
 # docs/handbook/de/index.html links to (`<img src="../screenshots/NN-name.png">`
 # — the relative path resolves to `docs/handbook/screenshots/NN-name.png`).
@@ -341,6 +341,11 @@ MAPPING=(
   "290-kyc-registration-referral-promo=screens/kyc/goldens/macos/kyc_registration_referral_step_promo.png"
   "291-referral-bind-error-invalid=screens/referral/goldens/macos/referral_bind_error_invalid.png"
   "292-referral-bind-error-already-registered=screens/referral/goldens/macos/referral_bind_error_already_registered.png"
+  # 293–295: OpenCryptoPay pay whole-share rounding disclosure. No matching
+  # .maestro/handbook flow — pay is behind the insider unlock in the 01–26 chain.
+  "293-pay-info=screens/pay/goldens/macos/pay_info_page.png"
+  "294-pay-quote-ready=screens/pay/goldens/macos/pay_quote_page_ready.png"
+  "295-pay-quote-ready-merchant=screens/pay/goldens/macos/pay_quote_page_ready_with_merchant.png"
 )
 
 missing=()
