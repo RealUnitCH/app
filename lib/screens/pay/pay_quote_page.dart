@@ -44,8 +44,10 @@ class PayQuoteView extends StatelessWidget {
               PayQuoteReady() => _PayQuoteReadyView(state: state),
               PayQuoteExpired() => _PayQuoteMessage(message: S.of(context).payFailureQuoteExpired),
               PayQuoteUnavailable() => _PayQuoteMessage(message: S.of(context).payQuoteUnavailable),
-              PayQuoteError(:final message) => _PayQuoteMessage(
-                message: message.isNotEmpty ? message : S.of(context).payFailureGeneric,
+              PayQuoteError(:final message, :final insufficientHoldings) => _PayQuoteMessage(
+                message: insufficientHoldings
+                    ? S.of(context).payFailureInsufficientZchf
+                    : (message.isNotEmpty ? message : S.of(context).payFailureGeneric),
                 onRetry: () => context.read<PayQuoteCubit>().load(),
               ),
             },

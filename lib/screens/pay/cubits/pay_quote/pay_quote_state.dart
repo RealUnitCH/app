@@ -63,9 +63,14 @@ class PayQuoteUnavailable extends PayQuoteState {
 
 class PayQuoteError extends PayQuoteState {
   final String message;
+  final bool insufficientHoldings;
 
-  const PayQuoteError(this.message);
+  const PayQuoteError(this.message) : insufficientHoldings = false;
+
+  const PayQuoteError.insufficientHoldings()
+    : message = '',
+      insufficientHoldings = true;
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, insufficientHoldings];
 }

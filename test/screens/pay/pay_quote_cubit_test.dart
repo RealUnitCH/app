@@ -161,15 +161,12 @@ void main() {
     act: (cubit) => cubit.load(),
     expect: () => [
       isA<PayQuoteLoading>(),
-      PayQuoteError(S.current.payFailureInsufficientZchf),
+      const PayQuoteError.insufficientHoldings(),
     ],
     verify: (cubit) {
       expect(cubit.state, isA<PayQuoteError>());
       expect(cubit.state, isNot(isA<PayQuoteReady>()));
-      expect(
-        (cubit.state as PayQuoteError).message,
-        S.current.payFailureInsufficientZchf,
-      );
+      expect((cubit.state as PayQuoteError).insufficientHoldings, isTrue);
     },
   );
 
