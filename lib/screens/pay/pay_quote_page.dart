@@ -137,8 +137,9 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
           onPressed: _navigating
               ? null
               : () async {
+                  if (_navigating) return;
                   setState(() => _navigating = true);
-                  bool? swapCompleted;
+                  bool? swapCompleted = false;
                   try {
                     swapCompleted = await Navigator.of(context).push<bool>(
                       MaterialPageRoute<bool>(
@@ -149,11 +150,14 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
                       ),
                     );
                   } finally {
-                    if (mounted && swapCompleted != true) {
+                    // Only a typed pre-swap failure pops `false` and re-enables
+                    // Pay. `true` (swap ran) and `null` (AppBar / system back)
+                    // both leave this quote so REALU cannot be sold twice.
+                    if (mounted && swapCompleted == false) {
                       setState(() => _navigating = false);
                     }
                   }
-                  if (mounted && swapCompleted == true) {
+                  if (mounted && swapCompleted != false) {
                     Navigator.of(context).pop();
                   }
                 },
