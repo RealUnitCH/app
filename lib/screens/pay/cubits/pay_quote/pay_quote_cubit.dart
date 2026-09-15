@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/lnurlp_payment_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_swap_dto.dart';
@@ -52,7 +51,7 @@ class PayQuoteCubit extends Cubit<PayQuoteState> {
       if (isClosed) return;
 
       if (!swap.isValid) {
-        emit(PayQuoteError(_invalidSwapMessage(swap)));
+        emit(_invalidSwapState(swap));
         return;
       }
 
@@ -76,15 +75,15 @@ class PayQuoteCubit extends Cubit<PayQuoteState> {
     }
   }
 
-  /// User-facing copy for an invalid preview swap. `AmountTooLow` and a
-  /// missing/empty error mean holdings cannot cover the (API-rounded) whole
-  /// shares; any other non-empty API error is shown 1:1.
-  static String _invalidSwapMessage(SwapPaymentInfo swap) {
+  /// Typed error for an invalid preview swap. `AmountTooLow` and a missing/empty
+  /// error mean holdings cannot cover the (API-rounded) whole shares; any other
+  /// non-empty API error is shown 1:1 in the view.
+  static PayQuoteError _invalidSwapState(SwapPaymentInfo swap) {
     final error = swap.error;
     if (error == null || error.isEmpty || error == 'AmountTooLow') {
-      return S.current.payFailureInsufficientZchf;
+      return const PayQuoteError.insufficientHoldings();
     }
-    return error;
+    return PayQuoteError(error);
   }
 
   /// The ZCHF amount listed for the Ethereum transfer method, or null if the
