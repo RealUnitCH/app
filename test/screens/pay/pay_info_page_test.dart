@@ -15,6 +15,10 @@ void main() {
       expect(find.text(S.current.payInfoTitle), findsOneWidget);
       expect(find.text(S.current.payInfoBody), findsOneWidget);
       expect(find.text(S.current.next), findsOneWidget);
+      expect(
+        S.current.payInfoBody,
+        anyOf(contains('ganze REALU'), contains('whole REALU shares')),
+      );
     });
 
     testWidgets('continues to the scanner with the initial payload', (tester) async {

@@ -1,8 +1,10 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/lnurlp_payment_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_swap_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 
 part 'pay_quote_state.dart';
@@ -11,7 +13,9 @@ part 'pay_quote_state.dart';
 /// the requested fiat amount + the exact ZCHF amount the Ethereum method
 /// requires. The amount comes from the API `transferAmounts` (ZCHF on the
 /// Ethereum entry) — the app never computes it. An expired quote surfaces as a
-/// typed state so the view can prompt a re-scan.
+/// typed state so the view can prompt a re-scan. An invalid swap preview
+/// (`isValid: false`) is [PayQuoteError], never Ready — the app does not
+/// locally ceil share counts; `swap.amount` is displayed only when valid.
 class PayQuoteCubit extends Cubit<PayQuoteState> {
   final RealUnitPayService _payService;
   final String _paymentLinkId;
@@ -47,6 +51,11 @@ class PayQuoteCubit extends Cubit<PayQuoteState> {
       );
       if (isClosed) return;
 
+      if (!swap.isValid) {
+        emit(PayQuoteError(_invalidSwapMessage(swap)));
+        return;
+      }
+
       emit(
         PayQuoteReady(
           paymentLinkId: _paymentLinkId,
@@ -65,6 +74,17 @@ class PayQuoteCubit extends Cubit<PayQuoteState> {
       if (isClosed) return;
       emit(PayQuoteError(ApiException.userFacingMessage(e)));
     }
+  }
+
+  /// User-facing copy for an invalid preview swap. `AmountTooLow` and a
+  /// missing/empty error mean holdings cannot cover the (API-rounded) whole
+  /// shares; any other non-empty API error is shown 1:1.
+  static String _invalidSwapMessage(SwapPaymentInfo swap) {
+    final error = swap.error;
+    if (error == null || error.isEmpty || error == 'AmountTooLow') {
+      return S.current.payFailureInsufficientZchf;
+    }
+    return error;
   }
 
   /// The ZCHF amount listed for the Ethereum transfer method, or null if the
