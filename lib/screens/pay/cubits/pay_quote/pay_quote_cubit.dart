@@ -75,15 +75,15 @@ class PayQuoteCubit extends Cubit<PayQuoteState> {
     }
   }
 
-  /// Typed error for an invalid preview swap. `AmountTooLow` and a missing/empty
-  /// error mean holdings cannot cover the (API-rounded) whole shares; any other
-  /// non-empty API error is shown 1:1 in the view.
+  /// Invalid preview swaps are not payable. Non-empty API errors are shown 1:1;
+  /// a missing/empty error uses the view's generic copy. The app does not map
+  /// `AmountTooLow` onto holdings — that string is the API's volume signal.
   static PayQuoteError _invalidSwapState(SwapPaymentInfo swap) {
     final error = swap.error;
-    if (error == null || error.isEmpty || error == 'AmountTooLow') {
-      return const PayQuoteError.insufficientHoldings();
+    if (error != null && error.isNotEmpty) {
+      return PayQuoteError(error);
     }
-    return PayQuoteError(error);
+    return const PayQuoteError('');
   }
 
   /// The ZCHF amount listed for the Ethereum transfer method, or null if the
