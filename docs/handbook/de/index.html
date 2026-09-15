@@ -1186,14 +1186,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 350 Visual-Regression Goldens (299 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 355 Visual-Regression Goldens (301 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 299 App-Screenshots dieser Seite sind Goldens aus
+            Die 301 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1233,7 +1233,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 299 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 301 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -11025,7 +11025,7 @@
           <p class="spec-intro">
             Verifizierte Aktionäre mit mindestens 70 REALU im Wallet (geprüft bei
             der Einladung und bei der Qualifikation) sehen auf dem Dashboard
-            die Karte <b>Empfehlungen</b> («Erhalte 20 REALU pro Weiterempfehlung»)
+            die Karte <b>Empfehlungen</b> («Erhalten Sie 20 REALU pro Weiterempfehlung»)
             und denselben Einstieg in den Einstellungen. Sichtbarkeit, Mindestbestand
             und Auszahlung entscheidet die DFX API; die App rendert
             <code>eligible</code> 1:1. Die Prämie von 20 REALU wird dem Empfehler
@@ -11100,10 +11100,14 @@
             Deeplink-Stash stehen. Ein abgelehnter Bind (4xx) zeigt einmal einen
             Dialog: Titel <b>Code bereits eingelöst</b> mit Body <b>Dieser Einladungs- oder
             Promo-Code wurde bereits verwendet.</b> (Einlösungslimit erreicht);
-            Titel <b>Link ungültig oder abgelaufen</b> für die übrigen Fälle
-            <b>Du hast bereits einen Einladungs- oder Promo-Code eingelöst.</b>
-            (ein Code pro Konto) oder <b>Diese Einladung gilt nur für neue Kundinnen
-            und Kunden.</b> (Eingabe nur vor dem ersten REALU-Kauf).
+            Titel <b>Bereits ein Code eingelöst</b> mit Body
+            <b>Sie haben bereits einen Einladungs- oder Promo-Code eingelöst.</b>
+            (ein Code pro Konto); Titel <b>Nur für neue Kundinnen und Kunden</b>
+            mit Body <b>Einladungs- und Promo-Codes müssen vor dem ersten
+            REALU-Kauf eingelöst werden.</b> (Eingabe nur vor dem ersten Kauf);
+            Titel <b>Eigene Einladung</b> bei Selbst-Einlösung;
+            Titel <b>Link ungültig oder abgelaufen</b> nur für unbekannte oder
+            abgelaufene Codes.
             Promo-Codes legt RealUnit unter app.dfx.swiss/realunit an: je Code
             ein Gültigkeitsfenster, ein Mindestkauf (Default 200 REALU) und ein
             Einlösungslimit als Anzahl Einlösungen (Pflichtfeld, ganze Zahl ab 1,
@@ -11187,7 +11191,8 @@
             TB nach Annahme (`283`), Namenseingabe (`284`), Einstellungen-Karte
             (`285`), Rechtliche Dokumente letzter Eintrag (`286`), Einladung
             erkannt (`287`), Historie mit Prämie (`288`), Dashboard-Einstieg
-            (`289`), Promo-Aktionstext (`290`).
+            (`289`), Promo-Aktionstext (`290`), Bind-Overlay ungültig (`291`),
+            Bind-Overlay nur für neue Kundinnen (`292`).
           </p>
           <div class="test" id="276-referral-overview">
             <div class="head">
@@ -11238,7 +11243,7 @@
               />
             </div>
             <div class="desc">
-              Karte <b>Empfehlungen</b> mit «Erhalte 20 REALU pro Weiterempfehlung»,
+              Karte <b>Empfehlungen</b> mit «Erhalten Sie 20 REALU pro Weiterempfehlung»,
               nur wenn die API <code>eligible</code> setzt.
             </div>
           </div>
@@ -11359,7 +11364,7 @@
             </div>
             <div class="desc">
               Einstieg «Empfehlungen» in den Einstellungen, nur wenn die API
-              <code>eligible</code> setzt. Kartentext «Erhalte 20 REALU pro
+              <code>eligible</code> setzt. Kartentext «Erhalten Sie 20 REALU pro
               Weiterempfehlung».
             </div>
           </div>
@@ -11412,8 +11417,6 @@
             <div class="desc">
               Historie: Prämie mit ganzer Anzahl (20 REALU), Datum und
               Frankenwert, fixiert im Zeitpunkt der Gutschrift (TB Ziff. 6).
-              Im Golden liegt die Prämie ausserhalb des angezeigten Datumsfilters
-              (Testdaten).
             </div>
           </div>
           <div class="test" id="289-dashboard-referral-entry-and-payout">
@@ -11429,7 +11432,7 @@
               />
             </div>
             <div class="desc">
-              Einstieg «Empfehlungen» («Erhalte 20 REALU pro
+              Einstieg «Empfehlungen» («Erhalten Sie 20 REALU pro
               Weiterempfehlung») und Prämie in den letzten Transaktionen.
             </div>
           </div>
@@ -11448,6 +11451,46 @@
             <div class="desc">
               Nach Prüfung erscheint der von RealUnit vorgegebene
               Aktionstext in einem eigenen Fenster (Schließen oder Tippen daneben).
+            </div>
+          </div>
+          <div class="test" id="291-referral-bind-error-invalid">
+            <div class="head">
+              <a class="name permalink" href="#291-referral-bind-error-invalid">291-referral-bind-error-invalid</a>
+              <button class="copy-link" type="button" data-target="291-referral-bind-error-invalid" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+              <span class="src">referral_bind_error_dialog_golden_test.dart</span>
+            </div>
+            <div class="img">
+              <img
+                src="../screenshots/291-referral-bind-error-invalid.png"
+                alt="Dashboard-Overlay: Link ungültig oder abgelaufen"
+              />
+            </div>
+            <div class="desc">
+              Nach einem Bind-4xx für unbekannten oder abgelaufenen Code:
+              Overlay auf dem Dashboard, Titel <b>Link ungültig oder abgelaufen</b>,
+              Body <b>Dieser Code ist ungültig oder abgelaufen.</b>,
+              <b>Schließen</b> mit Tastaturfokus, nicht per Barrier schliessbar.
+              API-Codes <code>EXPIRED</code> / <code>NOT_FOUND</code>.
+            </div>
+          </div>
+          <div class="test" id="292-referral-bind-error-already-registered">
+            <div class="head">
+              <a class="name permalink" href="#292-referral-bind-error-already-registered">292-referral-bind-error-already-registered</a>
+              <button class="copy-link" type="button" data-target="292-referral-bind-error-already-registered" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+              <span class="src">referral_bind_error_dialog_golden_test.dart</span>
+            </div>
+            <div class="img">
+              <img
+                src="../screenshots/292-referral-bind-error-already-registered.png"
+                alt="Dashboard-Overlay: Nur für neue Kundinnen und Kunden"
+              />
+            </div>
+            <div class="desc">
+              Nach einem Bind-4xx, weil das Konto schon einen REALU-Kauf hat:
+              derselbe Overlay, Titel <b>Nur für neue Kundinnen und Kunden</b>,
+              Body <b>Einladungs- und Promo-Codes müssen vor dem ersten REALU-Kauf
+              eingelöst werden.</b> — nicht «Link ungültig».
+              API-Code <code>ALREADY_REGISTERED</code>.
             </div>
           </div>
         </details>

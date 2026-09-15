@@ -9,11 +9,11 @@ import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referra
 import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/referral_lookup_status.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
+import 'package:realunit_wallet/screens/referral/referral_bind_error_dialog.dart';
 import 'package:realunit_wallet/screens/referral/referral_error_message.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/effective_location.dart';
 import 'package:realunit_wallet/setup/routing/referral_pending_code.dart';
-import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 bool _bindInFlight = false;
@@ -323,27 +323,7 @@ Future<void> _showInvalidBindDialog(GoRouter router, Object error) {
     await showDialog<void>(
       context: ctx,
       barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(
-          localizedReferralErrorTitle(dialogContext, token),
-          style: Theme.of(dialogContext).textTheme.bodyMedium?.copyWith(
-            color: RealUnitColors.status.red600,
-          ),
-        ),
-        content: Text(
-          localizedReferralError(dialogContext, token),
-          style: Theme.of(dialogContext).textTheme.bodyMedium?.copyWith(
-            color: RealUnitColors.status.red600,
-          ),
-        ),
-        actions: [
-          TextButton(
-            autofocus: true,
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(S.of(dialogContext).close),
-          ),
-        ],
-      ),
+      builder: (dialogContext) => ReferralBindErrorDialog(token: token),
     );
   });
 }

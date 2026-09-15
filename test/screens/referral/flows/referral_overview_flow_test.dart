@@ -130,7 +130,7 @@ void main() {
     expect(find.text('INSGESAMT ERHALTEN'), findsOneWidget);
     expect(find.text('40 REALU'), findsOneWidget);
     expect(find.textContaining('Aktienkurs'), findsOneWidget);
-    expect(find.text('Deine Einladung für AliceShouldNotAppear'), findsOneWidget);
+    expect(find.text('Ihre Einladung für AliceShouldNotAppear'), findsOneWidget);
     expect(find.text('BobShouldNotAppear'), findsNothing);
   });
 

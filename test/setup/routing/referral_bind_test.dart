@@ -205,20 +205,20 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('Link ungültig oder abgelaufen'), findsOneWidget);
+    expect(find.text('Bereits ein Code eingelöst'), findsOneWidget);
     expect(
-      find.text('Du hast bereits einen Einladungs- oder Promo-Code eingelöst.'),
+      find.text('Sie haben bereits einen Einladungs- oder Promo-Code eingelöst.'),
       findsOneWidget,
     );
     expect(
-      tester.widget<Text>(find.text('Link ungültig oder abgelaufen')).style?.color,
+      tester.widget<Text>(find.text('Bereits ein Code eingelöst')).style?.color,
       RealUnitColors.status.red600,
     );
     expect(
       tester
           .widget<Text>(
             find.text(
-              'Du hast bereits einen Einladungs- oder Promo-Code eingelöst.',
+              'Sie haben bereits einen Einladungs- oder Promo-Code eingelöst.',
             ),
           )
           .style
@@ -228,7 +228,7 @@ void main() {
     await tester.tapAt(const Offset(2, 2));
     await tester.pump();
     expect(
-      find.text('Du hast bereits einen Einladungs- oder Promo-Code eingelöst.'),
+      find.text('Sie haben bereits einen Einladungs- oder Promo-Code eingelöst.'),
       findsOneWidget,
     );
     expect(
@@ -547,7 +547,7 @@ void main() {
 
       expect(
         find.text(
-          'Einladung von Björn erkannt. Björn erhält seine Prämie automatisch, sobald du verifiziert bist und deinen ersten Kauf abgeschlossen hast.',
+          'Einladung von Björn erkannt. Björn erhält seine Prämie automatisch, sobald Sie verifiziert sind und Ihren ersten Kauf abgeschlossen haben.',
         ),
         findsOneWidget,
       );
@@ -716,7 +716,7 @@ void main() {
       );
 
       await bindPendingReferralCode(router);
-      expect(find.text('Link ungültig oder abgelaufen'), findsNothing);
+      expect(find.text('Bereits ein Code eingelöst'), findsNothing);
 
       await tester.pumpWidget(
         MaterialApp.router(
@@ -734,7 +734,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text('Link ungültig oder abgelaufen'), findsOneWidget);
+      expect(find.text('Bereits ein Code eingelöst'), findsOneWidget);
       expect(
         tester.widget<TextButton>(find.widgetWithText(TextButton, 'Schließen')).autofocus,
         isTrue,
@@ -775,7 +775,7 @@ void main() {
 
       expect(
         find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         findsOneWidget,
       );
@@ -791,7 +791,7 @@ void main() {
       await tester.pump();
       expect(
         find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         findsOneWidget,
       );
@@ -837,7 +837,7 @@ void main() {
 
         expect(
           find.text(
-            'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+            'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
           ),
           findsOneWidget,
         );
@@ -883,7 +883,7 @@ void main() {
 
       expect(
         find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         findsOneWidget,
       );
@@ -933,7 +933,7 @@ void main() {
 
       expect(
         find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         findsOneWidget,
       );
@@ -944,7 +944,7 @@ void main() {
 
       expect(
         find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         findsNothing,
       );
@@ -997,7 +997,7 @@ void main() {
 
       expect(
         find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         findsOneWidget,
       );
@@ -1018,7 +1018,7 @@ void main() {
       await pending;
       expect(
         find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         findsNothing,
       );
@@ -1064,7 +1064,7 @@ void main() {
 
       expect(
         find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         findsOneWidget,
       );
@@ -1129,7 +1129,7 @@ void main() {
       expect(await peekPendingReferralCode(), 'NEWER1');
       expect(
         find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         findsOneWidget,
       );
@@ -1184,7 +1184,7 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.text('Link ungültig oder abgelaufen'), findsOneWidget);
+      expect(find.text('Bereits ein Code eingelöst'), findsOneWidget);
       expect(await peekPendingReferralCode(), isNull);
       await tester.tap(find.text('Schließen'));
       await tester.pumpAndSettle();
@@ -1209,7 +1209,7 @@ void main() {
 
       expect(
         find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         findsNothing,
       );
@@ -1312,7 +1312,7 @@ void main() {
       await tester.pump();
       await tester.pump();
 
-      expect(find.text('Link ungültig oder abgelaufen'), findsOneWidget);
+      expect(find.text('Bereits ein Code eingelöst'), findsOneWidget);
       expect(calls, 2);
       await tester.tap(find.text('Schließen'));
       await tester.pumpAndSettle();

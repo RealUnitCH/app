@@ -139,7 +139,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('Hast du einen Empfehlungscode?'), findsOneWidget);
+    expect(find.text('Haben Sie einen Empfehlungscode?'), findsOneWidget);
     final field = tester.widget<TextField>(find.byType(TextField));
     expect(field.enableIMEPersonalizedLearning, isFalse);
     expect(find.textContaining('Einladung von Björn erkannt'), findsOneWidget);
@@ -418,7 +418,7 @@ void main() {
     );
     expect(
       find.text(
-        'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+        'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
       ),
       findsOneWidget,
     );
@@ -426,7 +426,7 @@ void main() {
       _isLiveRegion(
         tester,
         find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
       ),
       isTrue,
@@ -532,7 +532,7 @@ void main() {
       expect(calls, 2);
       expect(
         find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         findsOneWidget,
       );
@@ -1324,7 +1324,7 @@ void main() {
       findsNothing,
     );
     expect(
-      find.text('Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.'),
+      find.text('Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.'),
       findsOneWidget,
     );
     expect(ctrl.text, 'AB12');
@@ -1344,7 +1344,7 @@ void main() {
     await tester.pump(const Duration(seconds: 15));
     expect(find.text('Code wird geprüft…'), findsNothing);
     expect(
-      find.text('Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.'),
+      find.text('Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.'),
       findsOneWidget,
     );
     expect(find.text('Wiederholen'), findsOneWidget);

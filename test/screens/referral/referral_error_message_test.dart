@@ -203,6 +203,7 @@ void main() {
     late String unknown;
     late String quota;
     late String spentTitle;
+    late String alreadyRegisteredTitle;
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('de'),
@@ -221,6 +222,10 @@ void main() {
               context,
               referralSpentMessage,
             );
+            alreadyRegisteredTitle = localizedReferralErrorTitle(
+              context,
+              referralAlreadyRegisteredMessage,
+            );
             return const SizedBox.shrink();
           },
         ),
@@ -229,7 +234,7 @@ void main() {
 
     expect(
       unknown,
-      'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+      'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
     );
     expect(unknown, isNot('nope'));
     expect(
@@ -237,6 +242,8 @@ void main() {
       'In diesem Quartal sind keine weiteren Prämien möglich.',
     );
     expect(spentTitle, 'Code bereits eingelöst');
+    expect(alreadyRegisteredTitle, 'Nur für neue Kundinnen und Kunden');
+    expect(alreadyRegisteredTitle, isNot('Link ungültig oder abgelaufen'));
   });
 
   testWidgets('maps remaining tokens to localized DE copy', (tester) async {
@@ -301,7 +308,7 @@ void main() {
 
     expect(
       unavailable,
-      'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+      'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
     );
     expect(
       notEligible,
@@ -321,15 +328,15 @@ void main() {
     );
     expect(
       selfReferral,
-      'Du kannst deine eigene Einladung nicht einlösen.',
+      'Sie können Ihre eigene Einladung nicht einlösen.',
     );
     expect(
       alreadyBound,
-      'Du hast bereits einen Einladungs- oder Promo-Code eingelöst.',
+      'Sie haben bereits einen Einladungs- oder Promo-Code eingelöst.',
     );
     expect(
       alreadyRegistered,
-      'Diese Einladung gilt nur für neue Kundinnen und Kunden.',
+      'Einladungs- und Promo-Codes müssen vor dem ersten REALU-Kauf eingelöst werden.',
     );
     expect(invalid, 'Dieser Code ist ungültig oder abgelaufen.');
     expect(invalidTitle, 'Link ungültig oder abgelaufen');

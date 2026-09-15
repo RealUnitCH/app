@@ -293,7 +293,7 @@ row.
   tile is one name (REALU, CHF at the current share price, Aktienkurs).
   Open invites show the personalised share text (API copyText 1:1,
   otherwise the localised template) and can be copied and shared again,
-  including when the guest name is blank («Deine Einladung», share text
+  including when the guest name is blank («Ihre Einladung», share text
   without «Hey ,»);
   credited names stay hidden. Copy and share behave as after create.
   With no open-invite rows and no list error, Create is keyboard-focused.
@@ -429,8 +429,12 @@ row.
   Close is keyboard-focused. The boot and deeplink bind dialogs stay modal.
   A 4xx bind (stacking, self-referral,
   spent) shows the matching copy once (spent: «Code bereits eingelöst»;
-  self-referral / already-bound / already-registered have their own
-  sentence; unknown/expired stay «Link ungültig oder abgelaufen»). Close
+  already-registered: «Nur für neue Kundinnen und Kunden»;
+  already-bound: «Bereits ein Code eingelöst»;
+  self-referral: «Eigene Einladung»;
+  unknown/expired stay «Link ungültig oder abgelaufen»).
+  Handbook slots `291` (expired/unknown) and `292` (already-registered)
+  are the dashboard overlay goldens. Close
   is focused, not barrier-dismissible.
   If the navigator is not attached yet (dashboard boot bind), the promo,
   invalid, or unavailable dialog is shown on the next frame instead of

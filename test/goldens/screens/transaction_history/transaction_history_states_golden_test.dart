@@ -174,7 +174,8 @@ void main() {
           type: TransactionTypes.referralPayout,
           note: '',
           data: '246.50',
-          timestamp: DateTime.utc(2026, 8, 24, 10),
+          // Prize date must fall inside the pinned clock's default filter window.
+          timestamp: DateTime.utc(2026, 5, 20, 10),
         );
         return withClock(pinnedClock, () {
           when(() => filterCubit.state).thenReturn(

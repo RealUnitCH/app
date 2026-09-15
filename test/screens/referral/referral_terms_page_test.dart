@@ -194,13 +194,13 @@ void main() {
     await tester.pump();
 
     expect(
-      find.text('Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.'),
+      find.text('Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.'),
       findsOneWidget,
     );
     expect(
       find.ancestor(
         of: find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         matching: find.byWidgetPredicate(
           (widget) => widget is Semantics && widget.properties.liveRegion == true,
@@ -310,7 +310,7 @@ void main() {
 
       expect(
         find.text(
-          'Wir konnten den Code gerade nicht prüfen. Bitte versuche es später erneut.',
+          'Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.',
         ),
         findsOneWidget,
       );

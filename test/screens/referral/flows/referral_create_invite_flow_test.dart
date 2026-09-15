@@ -110,7 +110,7 @@ void main() {
     await pumpCreate(tester);
     await tester.pump();
 
-    expect(find.text('Deine Einladung für Alice'), findsOneWidget);
+    expect(find.text('Ihre Einladung für Alice'), findsOneWidget);
     expect(find.text('Persönlicher Einladungslink'), findsOneWidget);
   });
 }
