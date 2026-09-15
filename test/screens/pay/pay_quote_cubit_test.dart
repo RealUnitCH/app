@@ -163,7 +163,6 @@ void main() {
     verify: (cubit) {
       expect(cubit.state, isA<PayQuoteError>());
       expect(cubit.state, isNot(isA<PayQuoteReady>()));
-      expect((cubit.state as PayQuoteError).insufficientHoldings, isFalse);
       expect((cubit.state as PayQuoteError).message, 'AmountTooLow');
     },
   );
