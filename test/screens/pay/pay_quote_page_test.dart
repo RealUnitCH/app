@@ -216,14 +216,6 @@ void main() {
       expect(find.text(S.current.payQuoteUnavailable), findsOne);
     });
 
-    testWidgets('insufficient-holdings error shows the localized copy, not Pay', (tester) async {
-      when(() => quoteCubit.state).thenReturn(const PayQuoteError.insufficientHoldings());
-      await tester.pumpApp(buildSubject());
-
-      expect(find.text(S.current.payFailureInsufficientZchf), findsOne);
-      expect(find.text(S.current.payConfirmButton), findsNothing);
-    });
-
     testWidgets('error state shows the API message 1:1', (tester) async {
       when(() => quoteCubit.state).thenReturn(const PayQuoteError('boom'));
       await tester.pumpApp(buildSubject());
@@ -238,6 +230,7 @@ void main() {
       await tester.pumpApp(buildSubject());
 
       expect(find.text(S.current.payFailureGeneric), findsOne);
+      expect(find.text(S.current.payConfirmButton), findsNothing);
     });
 
     testWidgets('error state retry button re-invokes load()', (tester) async {

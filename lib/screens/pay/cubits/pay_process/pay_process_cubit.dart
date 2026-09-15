@@ -50,9 +50,9 @@ class PayProcessCubit extends Cubit<PayProcessState> {
 
   SwapPaymentInfo? _swap;
 
-  /// Set once the REALU→ZCHF swap has been broadcast successfully. From this
-  /// point the user holds ZCHF and recovery must NEVER re-swap — the pay leg is
-  /// retried on its own via [retryPay].
+  /// Set after the swap is signed, before broadcast. A timeout can still have
+  /// sent the tx; recovery must NEVER re-swap — the pay leg is retried via
+  /// [retryPay].
   bool _swapCompleted = false;
 
   bool get swapCompleted => _swapCompleted;
