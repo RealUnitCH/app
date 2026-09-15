@@ -276,6 +276,10 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       emit(const PayProcessFailure(PayProcessFailureReason.bitboxRequired));
     } catch (e) {
       if (isClosed) return;
+      if (_swapCompleted) {
+        emit(PayProcessPayRetry(PayRetryReason.transient, message: ApiException.userFacingMessage(e)));
+        return;
+      }
       emit(PayProcessFailure(PayProcessFailureReason.generic, message: ApiException.userFacingMessage(e)));
     }
   }
