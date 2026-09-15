@@ -1,5 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -115,6 +116,7 @@ void main() {
       expect(find.text(S.current.payQuoteSummary('2.00', 'CHF')), findsOne);
       expect(find.text('2.00 CHF'), findsOne);
       expect(find.text('2.00 ZCHF'), findsOne);
+      expect(find.text(S.current.payQuoteRoundingNotice), findsOne);
       expect(find.text(S.current.payConfirmButton), findsOne);
     });
 
@@ -139,6 +141,7 @@ void main() {
       expect(find.text('5 REALU'), findsOne);
       expect(find.text('1.98 ZCHF'), findsOne);
       expect(find.text('0.02 REALU'), findsOne);
+      expect(find.text(S.current.payQuoteRoundingNotice), findsOne);
     });
 
     testWidgets('confirm button navigates to the process step', (tester) async {
@@ -153,6 +156,27 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
 
       expect(find.byType(PayProcessView), findsOne);
+    });
+
+    testWidgets('Pay re-enables after the process route pops', (tester) async {
+      when(() => quoteCubit.state).thenReturn(ready);
+      await tester.pumpApp(buildSubject());
+
+      await tester.tap(find.text(S.current.payConfirmButton));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byType(PayProcessView), findsOne);
+
+      await tester.pageBack();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byType(PayProcessView), findsNothing);
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, S.current.payConfirmButton),
+      );
+      expect(button.onPressed, isNotNull);
     });
 
     testWidgets('expired state shows the re-scan message', (tester) async {
@@ -175,6 +199,7 @@ void main() {
 
       expect(find.text('boom'), findsOne);
       expect(find.text(S.current.payFailureGeneric), findsNothing);
+      expect(find.text(S.current.payConfirmButton), findsNothing);
     });
 
     testWidgets('error state without API text falls back to the generic copy', (tester) async {

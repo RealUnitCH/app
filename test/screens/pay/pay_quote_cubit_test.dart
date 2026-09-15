@@ -1,6 +1,8 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/lnurlp_payment_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_swap_dto.dart';
@@ -42,6 +44,8 @@ SwapPaymentInfo _swap({
   double amount = 5,
   double estimatedAmount = 1.98,
   double? feesTotal = 0.02,
+  bool isValid = true,
+  String? error,
 }) {
   return SwapPaymentInfo(
     id: 99,
@@ -50,7 +54,8 @@ SwapPaymentInfo _swap({
     targetAsset: 'ZCHF',
     ethBalance: 1.0,
     requiredGasEth: 0.001,
-    isValid: true,
+    isValid: isValid,
+    error: error,
     feesTotal: feesTotal,
   );
 }
@@ -58,8 +63,9 @@ SwapPaymentInfo _swap({
 void main() {
   late _MockPayService payService;
 
-  setUpAll(() {
+  setUpAll(() async {
     registerFallbackValue(const RealUnitSwapDto.fromTargetAmount(1));
+    await S.delegate.load(const Locale('de'));
   });
 
   setUp(() {
@@ -139,6 +145,53 @@ void main() {
     },
     act: (cubit) => cubit.load(),
     expect: () => [isA<PayQuoteLoading>(), isA<PayQuoteUnavailable>()],
+  );
+
+  blocTest<PayQuoteCubit, PayQuoteState>(
+    'an invalid swap quote with AmountTooLow emits PayQuoteError and not Ready',
+    build: build,
+    setUp: () {
+      when(() => payService.getPaymentDetails('pl_realunit_ocp_sepolia')).thenAnswer(
+        (_) async => _details(expiration: DateTime.now().add(const Duration(minutes: 5))),
+      );
+      when(() => payService.getSwapPaymentInfo(any())).thenAnswer(
+        (_) async => _swap(isValid: false, error: 'AmountTooLow', amount: 0),
+      );
+    },
+    act: (cubit) => cubit.load(),
+    expect: () => [
+      isA<PayQuoteLoading>(),
+      PayQuoteError(S.current.payFailureInsufficientZchf),
+    ],
+    verify: (cubit) {
+      expect(cubit.state, isA<PayQuoteError>());
+      expect(cubit.state, isNot(isA<PayQuoteReady>()));
+      expect(
+        (cubit.state as PayQuoteError).message,
+        S.current.payFailureInsufficientZchf,
+      );
+    },
+  );
+
+  blocTest<PayQuoteCubit, PayQuoteState>(
+    'an invalid swap quote with KycRequired emits that API error 1:1',
+    build: build,
+    setUp: () {
+      when(() => payService.getPaymentDetails('pl_realunit_ocp_sepolia')).thenAnswer(
+        (_) async => _details(expiration: DateTime.now().add(const Duration(minutes: 5))),
+      );
+      when(() => payService.getSwapPaymentInfo(any())).thenAnswer(
+        (_) async => _swap(isValid: false, error: 'KycRequired'),
+      );
+    },
+    act: (cubit) => cubit.load(),
+    expect: () => [
+      isA<PayQuoteLoading>(),
+      const PayQuoteError('KycRequired'),
+    ],
+    verify: (cubit) {
+      expect(cubit.state, isNot(isA<PayQuoteReady>()));
+    },
   );
 
   blocTest<PayQuoteCubit, PayQuoteState>(

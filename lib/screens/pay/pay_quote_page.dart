@@ -121,15 +121,22 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
               value: '${state.realuFeesTotal!.toStringAsFixed(2)} ${realUnitAsset.symbol}',
             ),
           ],
+          Text(
+            S.of(context).payQuoteRoundingNotice,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: RealUnitColors.neutral500,
+            ),
+          ),
         ],
       ),
       actions: [
         FilledButton(
           onPressed: _navigating
               ? null
-              : () {
+              : () async {
                   setState(() => _navigating = true);
-                  Navigator.of(context).push(
+                  await Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => PayProcessPage(
                         paymentLinkId: state.paymentLinkId,
@@ -137,6 +144,7 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
                       ),
                     ),
                   );
+                  if (mounted) setState(() => _navigating = false);
                 },
           child: Text(S.of(context).payConfirmButton),
         ),

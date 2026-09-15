@@ -148,7 +148,7 @@ row.
   `243`–`245`. `SetupPinPage` also backs the `settingsChangePin` route
   (`/settings/security/changePin`) via a second constructor; that reuse has no
   separate Golden and is not given its own row.
-- **Handbook numbering.** Each of the 308 handbook slots is a Visual-Regression
+- **Handbook numbering.** Each of the 311 handbook slots is a Visual-Regression
   Golden under `test/goldens/`, mapped to its handbook position by
   `scripts/assemble-handbook-screenshots.sh`. A parallel Tier-3 Maestro flow
   (`.maestro/handbook/NN-*.yaml`) covers navigation/tap-routing smoke for the
