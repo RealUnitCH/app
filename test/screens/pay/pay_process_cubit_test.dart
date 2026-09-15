@@ -984,6 +984,22 @@ void main() {
     await cubit.close();
   });
 
+  test('broadcast throw after sign still marks swapCompleted so Pay cannot re-run', () async {
+    wireHappyPath();
+    when(
+      () => payService.broadcastSwapTransaction(any(), any()),
+    ).thenThrow(Exception('timeout'));
+
+    final cubit = build();
+    final failed = cubit.stream.firstWhere((s) => s is PayProcessFailure);
+    await cubit.start();
+    final state = await failed as PayProcessFailure;
+
+    expect(state.reason, PayProcessFailureReason.generic);
+    expect(cubit.swapCompleted, isTrue);
+    await cubit.close();
+  });
+
   test('transient quote re-fetch failure after swap → retry (not re-scan)', () async {
     wireHappyPath();
     when(() => payService.getPaymentDetails('pl_abc')).thenThrow(Exception('lnurlp 500'));
