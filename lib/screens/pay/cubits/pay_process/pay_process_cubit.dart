@@ -175,7 +175,13 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       // The API is the authority on whether the swap is fundable; render its
       // signal rather than recomputing limits locally.
       if (!swap.isValid) {
-        emit(const PayProcessFailure(PayProcessFailureReason.insufficientZchf));
+        final error = swap.error;
+        emit(
+          PayProcessFailure(
+            PayProcessFailureReason.generic,
+            message: (error != null && error.isNotEmpty) ? error : null,
+          ),
+        );
         return;
       }
 
