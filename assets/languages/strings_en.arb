@@ -432,6 +432,7 @@
   "settingsCurrencyLoadFailed": "Failed to load currencies",
   "settingsCurrencyLoadFailedDescription": "Please check your internet connection and try again.",
   "settingsDeleteWallet": "Reset wallet",
+  "settingsInsiderFeatures": "Insider features",
   "settingsInsiderFeaturesUnlocked": "Insider features unlocked",
   "settingsLanguageLoadFailed": "Failed to load languages",
   "settingsLanguageLoadFailedDescription": "Please check your internet connection and try again.",

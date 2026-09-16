@@ -150,6 +150,32 @@ void main() {
       });
     });
 
+    group('insiderPayEnabled', () {
+      test('defaults to false when not stored', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.insiderPayEnabled, isFalse);
+      });
+
+      test('returns the stored value when set', () async {
+        SharedPreferences.setMockInitialValues({'insiderPayEnabled': true});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.insiderPayEnabled, isTrue);
+      });
+
+      test('setter persists', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        repo.insiderPayEnabled = true;
+        await Future<void>.delayed(Duration.zero);
+
+        expect(repo.insiderPayEnabled, isTrue);
+      });
+    });
+
     group('networkMode', () {
       test('defaults to mainnet when no value is stored', () async {
         SharedPreferences.setMockInitialValues({});

@@ -8111,10 +8111,15 @@
             </div>
           </summary>
           <p class="spec-intro">
-            Die Funktion <b>Bezahlen</b> (OpenCryptoPay) ist bewusst versteckt (Soft-Launch)
-            und erscheint erst nach einer einmaligen Freischaltung auf dem Gerät.
-            <b>Senden</b> (REALU-Transfer an eine andere Wallet) ist davon unabhängig über
-            Einstellungen → Wallet-Adresse und über Empfangen erreichbar.
+            Die Funktion <b>Bezahlen</b> (OpenCryptoPay) ist bewusst versteckt (Soft-Launch).
+            Siebenmaliges Tippen auf die Versionsnummer schaltet auf dem Gerät Insider-Funktionen
+            frei; in den Einstellungen erscheint danach die Sektion <b>Insider Funktionen</b>
+            (nach Wallet-Adresse, vor Wallet-Sicherung). Jede Funktion dort ist
+            standardmässig aus — die Freischaltung schaltet Bezahlen nicht ein. Bezahlen
+            erscheint auf dem Dashboard erst, wenn der Schalter in dieser Sektion
+            eingeschaltet wird. <b>Senden</b> (REALU-Transfer an eine andere Wallet) ist
+            davon unabhängig über Einstellungen → Wallet-Adresse und über Empfangen
+            erreichbar.
           </p>
 
           <!-- Single column on purpose: the explainer block below carries a
@@ -8135,8 +8140,13 @@
                   <li>Siebenmal kurz hintereinander auf die Versionsnummer tippen.</li>
                   <li>Es erscheint die Bestätigung «Insider-Funktionen freigeschaltet».</li>
                   <li>
-                    Zurück im Dashboard steht neben <b>Kaufen</b> und <b>Verkaufen</b> neu
-                    <b>Bezahlen</b>.
+                    In den Einstellungen erscheint nach Wallet-Adresse und vor
+                    Wallet-Sicherung die Sektion «Insider Funktionen». Jede Funktion dort
+                    ist standardmässig aus — die Freischaltung schaltet Bezahlen nicht ein.
+                  </li>
+                  <li>
+                    <b>Bezahlen</b> erscheint auf dem Dashboard erst, nachdem der Schalter
+                    Bezahlen in dieser Sektion eingeschaltet wurde.
                   </li>
                 </ol>
                 <p>
@@ -8144,8 +8154,9 @@
                   App-Neustart) — sie wird lokal per <code>SharedPreferences</code>
                   gespeichert. Eine Neuinstallation der App setzt sie zurück.
                   OpenCryptoPay-Zahlungslinks funktionieren unabhängig von der
-                  Freischaltung — der Deeplink bleibt bewusst immer offen. Tippen auf die
-                  Versionsnummer nach erfolgter Freischaltung hat keine Wirkung mehr.
+                  Freischaltung und unabhängig vom Schalter — der Deeplink bleibt bewusst
+                  immer offen. Tippen auf die Versionsnummer nach erfolgter Freischaltung
+                  hat keine Wirkung mehr.
                 </p>
               </div>
               <div class="img img-multi">
@@ -8166,9 +8177,9 @@
                 <div>
                   <img
                     src="../screenshots/269-dashboard-insider-unlocked.png"
-                    alt="Dashboard nach der Freischaltung — drei Aktionen"
+                    alt="Dashboard nach eingeschaltetem Bezahlen — drei Aktionen"
                   />
-                  <p><em>Nachher: drei Aktionen.</em></p>
+                  <p><em>Nachher: Dashboard, nachdem Bezahlen in der Sektion «Insider Funktionen» eingeschaltet wurde — drei Aktionen.</em></p>
                 </div>
               </div>
             </div>
@@ -8185,8 +8196,8 @@
                 />
               </div>
               <div class="desc">
-                Dashboard mit freigeschalteter Insider-Ansicht: neben <b>Kaufen</b> und
-                <b>Verkaufen</b> erscheint zusätzlich <b>Bezahlen</b>.
+                Dashboard nach eingeschaltetem Bezahlen in der Sektion «Insider Funktionen»:
+                neben <b>Kaufen</b> und <b>Verkaufen</b> erscheint zusätzlich <b>Bezahlen</b>.
                 Golden-Quelle: <code>dashboard_insider_unlocked.png</code> aus
                 <code>dashboard_golden_test.dart</code>.
               </div>

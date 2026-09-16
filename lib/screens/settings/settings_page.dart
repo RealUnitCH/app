@@ -136,6 +136,30 @@ class SettingsPage extends StatelessWidget {
                             trailing: _forwardIcon,
                             onTap: () => context.pushNamed(SettingsRoutes.walletAddress),
                           ),
+                          if (state.insiderFeaturesUnlocked) ...[
+                            SettingOption(
+                              title: S.of(context).settingsInsiderFeatures,
+                              isSectionHeader: true,
+                            ),
+                            SettingOption(
+                              title: S.of(context).pay,
+                              leading: const Icon(
+                                Icons.qr_code_scanner_rounded,
+                                size: 24,
+                                color: RealUnitColors.realUnitBlue,
+                              ),
+                              trailing: IgnorePointer(
+                                child: Switch(
+                                  value: state.insiderPayEnabled,
+                                  onChanged: (_) {},
+                                  activeTrackColor: RealUnitColors.realUnitBlue,
+                                ),
+                              ),
+                              onTap: () => getIt<SettingsBloc>().add(
+                                SetInsiderPayEnabledEvent(!state.insiderPayEnabled),
+                              ),
+                            ),
+                          ],
                           if (context.read<HomeBloc>().state.openWallet?.walletType ==
                               WalletType.software)
                             SettingOption(

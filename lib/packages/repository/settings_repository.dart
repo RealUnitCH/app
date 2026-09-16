@@ -56,4 +56,9 @@ class SettingsRepository {
       _sharedPreferences.getBool('insiderFeaturesUnlocked') ?? false;
   set insiderFeaturesUnlocked(bool unlocked) =>
       _sharedPreferences.setBool('insiderFeaturesUnlocked', unlocked);
+
+  bool get insiderPayEnabled =>
+      _sharedPreferences.getBool('insiderPayEnabled') ?? false;
+  set insiderPayEnabled(bool enabled) =>
+      _sharedPreferences.setBool('insiderPayEnabled', enabled);
 }

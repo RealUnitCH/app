@@ -22,6 +22,7 @@ void main() {
     when(() => repo.hasStoredCurrency).thenReturn(false);
     when(() => repo.networkMode).thenReturn(NetworkMode.mainnet);
     when(() => repo.insiderFeaturesUnlocked).thenReturn(false);
+    when(() => repo.insiderPayEnabled).thenReturn(false);
   });
 
   SettingsBloc build() => SettingsBloc(
@@ -37,6 +38,7 @@ void main() {
       when(() => repo.currency).thenReturn('EUR');
       when(() => repo.networkMode).thenReturn(NetworkMode.testnet);
       when(() => repo.insiderFeaturesUnlocked).thenReturn(true);
+      when(() => repo.insiderPayEnabled).thenReturn(true);
 
       final bloc = build();
 
@@ -45,6 +47,7 @@ void main() {
       expect(bloc.state.networkMode, NetworkMode.testnet);
       expect(bloc.state.hideAmounts, isFalse);
       expect(bloc.state.insiderFeaturesUnlocked, isTrue);
+      expect(bloc.state.insiderPayEnabled, isTrue);
     });
 
     blocTest<SettingsBloc, SettingsState>(
@@ -176,7 +179,30 @@ void main() {
       act: (bloc) => bloc.add(const UnlockInsiderFeaturesEvent()),
       verify: (bloc) {
         expect(bloc.state.insiderFeaturesUnlocked, isTrue);
+        expect(bloc.state.insiderPayEnabled, isFalse);
         verify(() => repo.insiderFeaturesUnlocked = true).called(1);
+        verifyNever(() => repo.insiderPayEnabled = true);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderPayEnabledEvent(true) persists and emits',
+      build: build,
+      act: (bloc) => bloc.add(const SetInsiderPayEnabledEvent(true)),
+      verify: (bloc) {
+        expect(bloc.state.insiderPayEnabled, isTrue);
+        verify(() => repo.insiderPayEnabled = true).called(1);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderPayEnabledEvent(false) persists and emits',
+      build: build,
+      seed: () => const SettingsState(insiderPayEnabled: true),
+      act: (bloc) => bloc.add(const SetInsiderPayEnabledEvent(false)),
+      verify: (bloc) {
+        expect(bloc.state.insiderPayEnabled, isFalse);
+        verify(() => repo.insiderPayEnabled = false).called(1);
       },
     );
   });

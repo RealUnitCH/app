@@ -57,3 +57,12 @@ final class ToggleHideAmountEvent extends SettingsEvent {
 final class UnlockInsiderFeaturesEvent extends SettingsEvent {
   const UnlockInsiderFeaturesEvent();
 }
+
+final class SetInsiderPayEnabledEvent extends SettingsEvent {
+  const SetInsiderPayEnabledEvent(this.enabled);
+
+  final bool enabled;
+
+  @override
+  List<Object> get props => [enabled];
+}

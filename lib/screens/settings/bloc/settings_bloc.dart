@@ -19,6 +19,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
            currency: Currency.fromCode(_settingsRepository.currency),
            networkMode: _settingsRepository.networkMode,
            insiderFeaturesUnlocked: _settingsRepository.insiderFeaturesUnlocked,
+           insiderPayEnabled: _settingsRepository.insiderPayEnabled,
          ),
        ) {
     on<SetCurrencyEvent>(_onSetCurrencyEvent);
@@ -28,6 +29,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<SetNetworkModeEvent>(_onSetNetworkModeEvent);
     on<ToggleHideAmountEvent>(_onToggleHideAmountEvent);
     on<UnlockInsiderFeaturesEvent>(_onUnlockInsiderFeaturesEvent);
+    on<SetInsiderPayEnabledEvent>(_onSetInsiderPayEnabledEvent);
   }
 
   final SettingsRepository _settingsRepository;
@@ -84,5 +86,13 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) {
     _settingsRepository.insiderFeaturesUnlocked = true;
     emit(state.copyWith(insiderFeaturesUnlocked: true));
+  }
+
+  void _onSetInsiderPayEnabledEvent(
+    SetInsiderPayEnabledEvent event,
+    Emitter<SettingsState> emit,
+  ) {
+    _settingsRepository.insiderPayEnabled = event.enabled;
+    emit(state.copyWith(insiderPayEnabled: event.enabled));
   }
 }

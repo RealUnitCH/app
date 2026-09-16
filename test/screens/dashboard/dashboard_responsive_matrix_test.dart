@@ -241,8 +241,12 @@ void main() {
       for (final cell in kFullResponsiveMatrix) {
         testWidgets(cell.id, (tester) async {
           await withTargetPlatform(cell.device.platform, () async {
-            when(() => settingsBloc.state)
-                .thenReturn(const SettingsState(insiderFeaturesUnlocked: true));
+            when(() => settingsBloc.state).thenReturn(
+              const SettingsState(
+                insiderFeaturesUnlocked: true,
+                insiderPayEnabled: true,
+              ),
+            );
 
             await expectNoLayoutOverflow(
               tester,

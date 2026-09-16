@@ -76,6 +76,17 @@ void main() {
     );
 
     goldenTest(
+      'insider unlocked, pay toggle off',
+      fileName: 'settings_page_insider_unlocked',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        when(() => settingsBloc.state)
+            .thenReturn(const SettingsState(insiderFeaturesUnlocked: true));
+        return buildSubject();
+      },
+    );
+
+    goldenTest(
       'shows Empfehlungen when eligible',
       fileName: 'settings_page_referral_eligible',
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),

@@ -27,6 +27,7 @@ void main() {
     when(() => settingsRepo.currency).thenReturn('CHF');
     when(() => settingsRepo.networkMode).thenReturn(NetworkMode.mainnet);
     when(() => settingsRepo.insiderFeaturesUnlocked).thenReturn(false);
+    when(() => settingsRepo.insiderPayEnabled).thenReturn(false);
     settingsBloc = SettingsBloc(settingsRepo, () async {});
 
     final getIt = GetIt.instance;
