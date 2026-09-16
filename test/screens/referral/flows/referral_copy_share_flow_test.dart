@@ -95,7 +95,7 @@ void main() {
 
     expect(
       copied,
-      'Hey Alice, RealUnit lädt dich ein zu RealUnit: https://realunit.app/invite/AB12CD',
+      'Hallo Alice, mit der Schweizer RealUnit-App investiere ich ganz einfach in verschiedene Sachwerte mittels REALU-Aktientoken. Vielleicht ist das auch etwas für dich: https://realunit.app/invite/AB12CD',
     );
     expect(find.text('Kopiert'), findsOneWidget);
   });

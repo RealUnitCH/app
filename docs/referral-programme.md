@@ -107,15 +107,16 @@ Response:
   "code": "AB12CD",
   "url": "https://realunit.app/invite/AB12CD",
   "guestName": "Alice",
-  "copyText": "Hey Alice, Björn lädt dich ein zu RealUnit: https://realunit.app/invite/AB12CD",
-  "copyTextEn": "Hey Alice, Björn invites you to RealUnit: https://realunit.app/invite/AB12CD",
+  "copyText": "Hallo Alice, mit der Schweizer RealUnit-App investiere ich ganz einfach in verschiedene Sachwerte mittels REALU-Aktientoken. Vielleicht ist das auch etwas für dich: https://realunit.app/invite/AB12CD",
+  "copyTextEn": "Hi Alice, with the Swiss RealUnit app I invest in various real assets simply via REALU share tokens. This might be something for you too: https://realunit.app/invite/AB12CD",
   "inviterName": "Björn"
 }
 ```
 
 The server generates code, URL, and share text. `inviterName` is the
-Empfehler display name so a missing `copyText` still shares
-«Hey Alice, Björn …» instead of «Hey Alice, RealUnit …». A later
+Empfehler display name. A missing `copyText` falls back to the
+first-person recommendation (guest name plus invite URL), not a
+host-named «lädt dich ein» sentence. A later
 `GET /v2/user/profile` firstName (or Kontozusammenführung) rewrites
 open-invite `copyText` / `inviterName` so a first invite created
 while the name was still the wallet address is not stuck as
