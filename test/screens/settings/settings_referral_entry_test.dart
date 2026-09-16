@@ -100,6 +100,52 @@ void main() {
     expect(find.text('Empfehlungen'), findsNothing);
   });
 
+  testWidgets('unlocked=false AND referral=true: Empfehlungen absent', (
+    tester,
+  ) async {
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(insiderReferralEnabled: true),
+    );
+    when(() => referral.getSummary()).thenAnswer(
+      (_) async => const ReferralSummaryDto(
+        eligible: true,
+        termsAccepted: true,
+        openCount: 0,
+        creditedCount: 0,
+        realuSum: 0,
+        chfSum: 0,
+      ),
+    );
+
+    await pumpSettings(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Empfehlungen'), findsNothing);
+  });
+
+  testWidgets('unlocked=true AND referral=false: Empfehlungen absent', (
+    tester,
+  ) async {
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(insiderFeaturesUnlocked: true),
+    );
+    when(() => referral.getSummary()).thenAnswer(
+      (_) async => const ReferralSummaryDto(
+        eligible: true,
+        termsAccepted: true,
+        openCount: 0,
+        creditedCount: 0,
+        realuSum: 0,
+        chfSum: 0,
+      ),
+    );
+
+    await pumpSettings(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Empfehlungen'), findsNothing);
+  });
+
   testWidgets('hides Empfehlungen when the API gate is closed', (tester) async {
     when(() => referral.getSummary()).thenAnswer(
       (_) async => const ReferralSummaryDto(
@@ -117,6 +163,33 @@ void main() {
 
     expect(find.text('Empfehlungen'), findsNothing);
   });
+
+  testWidgets(
+    'hides Empfehlungen when ineligible even if referral toggle is on',
+    (tester) async {
+      when(() => settingsBloc.state).thenReturn(
+        const SettingsState(
+          insiderFeaturesUnlocked: true,
+          insiderReferralEnabled: true,
+        ),
+      );
+      when(() => referral.getSummary()).thenAnswer(
+        (_) async => const ReferralSummaryDto(
+          eligible: false,
+          termsAccepted: false,
+          openCount: 0,
+          creditedCount: 0,
+          realuSum: 0,
+          chfSum: 0,
+        ),
+      );
+
+      await pumpSettings(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Empfehlungen'), findsNothing);
+    },
+  );
 
   testWidgets('hides Empfehlungen when summary is unmounted', (tester) async {
     when(() => referral.getSummary()).thenThrow(

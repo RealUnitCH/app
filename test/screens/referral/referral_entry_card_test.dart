@@ -455,6 +455,52 @@ void main() {
     expect(find.text('Empfehlungen'), findsNothing);
   });
 
+  testWidgets('unlocked=false AND referral=true: Empfehlungen absent', (
+    tester,
+  ) async {
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(insiderReferralEnabled: true),
+    );
+    when(() => service.getSummary()).thenAnswer(
+      (_) async => const ReferralSummaryDto(
+        eligible: true,
+        termsAccepted: true,
+        openCount: 0,
+        creditedCount: 0,
+        realuSum: 0,
+        chfSum: 0,
+      ),
+    );
+
+    await pumpCard(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Empfehlungen'), findsNothing);
+  });
+
+  testWidgets('unlocked=true AND referral=false: Empfehlungen absent', (
+    tester,
+  ) async {
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(insiderFeaturesUnlocked: true),
+    );
+    when(() => service.getSummary()).thenAnswer(
+      (_) async => const ReferralSummaryDto(
+        eligible: true,
+        termsAccepted: true,
+        openCount: 0,
+        creditedCount: 0,
+        realuSum: 0,
+        chfSum: 0,
+      ),
+    );
+
+    await pumpCard(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Empfehlungen'), findsNothing);
+  });
+
   testWidgets(
     'hides the dashboard card when ineligible even if referral toggle is on',
     (tester) async {

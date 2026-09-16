@@ -58,6 +58,30 @@ void main() {
       expect(sendButton(), findsNothing);
     });
 
+    testWidgets('unlocked=false AND send=true: Send absent', (tester) async {
+      when(() => settingsBloc.state).thenReturn(
+        const SettingsState(insiderSendEnabled: true),
+      );
+      await tester.pumpApp(const SettingsWalletAddressPage());
+
+      expect(find.byType(SvgPicture), findsOneWidget);
+      expect(find.byType(QRAddressWidget), findsOneWidget);
+      expect(find.text(S.current.walletAddressDisclaimer), findsOneWidget);
+      expect(sendButton(), findsNothing);
+    });
+
+    testWidgets('unlocked=true AND send=false: Send absent', (tester) async {
+      when(() => settingsBloc.state).thenReturn(
+        const SettingsState(insiderFeaturesUnlocked: true),
+      );
+      await tester.pumpApp(const SettingsWalletAddressPage());
+
+      expect(find.byType(SvgPicture), findsOneWidget);
+      expect(find.byType(QRAddressWidget), findsOneWidget);
+      expect(find.text(S.current.walletAddressDisclaimer), findsOneWidget);
+      expect(sendButton(), findsNothing);
+    });
+
     testWidgets('renders logo, QR, disclaimer and Send', (tester) async {
       enableSend();
       await tester.pumpApp(const SettingsWalletAddressPage());

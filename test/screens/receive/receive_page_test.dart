@@ -53,6 +53,26 @@ void main() {
       expect(sendButton(), findsNothing);
     });
 
+    testWidgets('unlocked=false AND send=true: Send absent', (tester) async {
+      when(() => settingsBloc.state).thenReturn(
+        const SettingsState(insiderSendEnabled: true),
+      );
+      await tester.pumpApp(const ReceivePage());
+
+      expect(find.byType(QRAddressWidget), findsOneWidget);
+      expect(sendButton(), findsNothing);
+    });
+
+    testWidgets('unlocked=true AND send=false: Send absent', (tester) async {
+      when(() => settingsBloc.state).thenReturn(
+        const SettingsState(insiderFeaturesUnlocked: true),
+      );
+      await tester.pumpApp(const ReceivePage());
+
+      expect(find.byType(QRAddressWidget), findsOneWidget);
+      expect(sendButton(), findsNothing);
+    });
+
     testWidgets('bottom-sheet variant renders QR and Send', (tester) async {
       enableSend();
       await tester.pumpApp(const ReceivePage());
