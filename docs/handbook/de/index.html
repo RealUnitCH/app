@@ -1754,8 +1754,8 @@
               </div>
               <div class="desc">
                 Seite <b>RealUnit Wallet Adresse</b>: EVM-Adresse der Wallet
-                (<code>0x…</code>) mit QR-Code, Copy-Button, Hinweistext und dem CTA
-                <b>Senden</b>. Der QR-Code enthält die Adresse als EIP-681-URI
+                (<code>0x…</code>) mit QR-Code, Copy-Button und Hinweistext. Der CTA
+                <b>Senden</b> erscheint erst nach zentraler Freischaltung (Spec 79). Der QR-Code enthält die Adresse als EIP-681-URI
                 (<code>ethereum:0x…</code>). Die eigentliche Empfangen-Seite mit QR-Code
                 ist in Spec 35 beschrieben.
               </div>
@@ -4227,7 +4227,7 @@
                 />
               </div>
               <div class="desc">
-                Die <b>Bottom-Sheet-Variante</b> der Empfangen-Seite: oben der horizontale Ziehbalken (Handlebar), darunter der QR-Code der eigenen Wallet-Adresse und die zweizeilig formatierte Adresse mit <b>fett</b> hervorgehobenem Anfang und Ende, dem Kopieren-Symbol und unten dem CTA <b>Senden</b>. Der Nutzer sieht diese Variante, wenn die Seite als aufgezogenes Blatt von unten geöffnet wird; ein Tippen auf die Adresse kopiert sie in die Zwischenablage.
+                Die <b>Bottom-Sheet-Variante</b> der Empfangen-Seite: oben der horizontale Ziehbalken (Handlebar), darunter der QR-Code der eigenen Wallet-Adresse und die zweizeilig formatierte Adresse mit <b>fett</b> hervorgehobenem Anfang und Ende und dem Kopieren-Symbol. Der CTA <b>Senden</b> erscheint erst nach zentraler Freischaltung (Spec 79). Der Nutzer sieht diese Variante, wenn die Seite als aufgezogenes Blatt von unten geöffnet wird; ein Tippen auf die Adresse kopiert sie in die Zwischenablage.
               </div>
             </div>
             <div class="test" id="102-receive-page-full-page">
@@ -4243,7 +4243,7 @@
                 />
               </div>
               <div class="desc">
-                Die <b>vollflächige Variante</b> derselben Empfangen-Seite: oben eine AppBar mit <b>Zurück-Pfeil</b> statt Ziehbalken, darunter identisch der QR-Code, die zweizeilige Adresse, das Kopieren-Symbol und der CTA <b>Senden</b>. Diese Variante erscheint, wenn die Seite über die Navigation als eigene Route geöffnet wird; über den Pfeil gelangt der Nutzer zurück.
+                Die <b>vollflächige Variante</b> derselben Empfangen-Seite: oben eine AppBar mit <b>Zurück-Pfeil</b> statt Ziehbalken, darunter identisch der QR-Code, die zweizeilige Adresse und das Kopieren-Symbol. Der CTA <b>Senden</b> erscheint erst nach zentraler Freischaltung (Spec 79). Diese Variante erscheint, wenn die Seite über die Navigation als eigene Route geöffnet wird; über den Pfeil gelangt der Nutzer zurück.
               </div>
             </div>
           </div>
@@ -11125,9 +11125,9 @@
             Verifizierte Aktionäre mit mindestens 70 REALU im Wallet (geprüft bei
             der Einladung und bei der Qualifikation) sehen auf dem Dashboard
             die Karte <b>Empfehlungen</b> («Erhalten Sie 20 REALU pro Weiterempfehlung»)
-            und denselben Einstieg in den Einstellungen. Sichtbarkeit, Mindestbestand
-            und Auszahlung entscheidet die DFX API; die App rendert
-            <code>eligible</code> 1:1. Die Prämie von 20 REALU wird dem Empfehler
+            und denselben Einstieg in den Einstellungen, sobald die Funktion zentral
+            freigeschaltet ist (Spec 79) und die API <code>eligible</code> setzt.
+            Mindestbestand und Auszahlung entscheidet die DFX API. Die Prämie von 20 REALU wird dem Empfehler
             gutgeschrieben, sobald die eingeladene Person verifiziert ist und
             ihren ersten abgeschlossenen REALU-Kauf von mindestens 200 REALU
             getätigt hat (serverseitig geprüft; Teilnahmebedingungen vom
@@ -11343,7 +11343,8 @@
             </div>
             <div class="desc">
               Karte <b>Empfehlungen</b> mit «Erhalten Sie 20 REALU pro Weiterempfehlung»,
-              nur wenn die API <code>eligible</code> setzt.
+              nur nach zentraler Freischaltung (Spec 79) und wenn die API
+              <code>eligible</code> setzt.
             </div>
           </div>
           <div class="test" id="279-referral-not-eligible">
@@ -11462,9 +11463,9 @@
               />
             </div>
             <div class="desc">
-              Einstieg «Empfehlungen» in den Einstellungen, nur wenn die API
-              <code>eligible</code> setzt. Kartentext «Erhalten Sie 20 REALU pro
-              Weiterempfehlung».
+              Einstieg «Empfehlungen» in den Einstellungen, nur nach zentraler
+              Freischaltung (Spec 79) und wenn die API <code>eligible</code> setzt.
+              Kartentext «Erhalten Sie 20 REALU pro Weiterempfehlung».
             </div>
           </div>
           <div class="test" id="286-settings-legal-referral-terms">
