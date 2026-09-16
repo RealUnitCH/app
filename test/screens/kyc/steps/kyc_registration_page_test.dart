@@ -39,6 +39,7 @@ import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registr
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_personal_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_referral_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_tax_step.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/routing/referral_pending_code.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
@@ -163,6 +164,9 @@ void main() {
     when(() => bitboxService.getAllUsbDevices()).thenAnswer((_) async => <sdk.BitboxDevice>[]);
     getIt.registerSingleton<BitboxService>(bitboxService);
     getIt.registerSingleton<WalletService>(MockWalletService());
+    final settingsBloc = MockSettingsBloc();
+    when(() => settingsBloc.state).thenReturn(const SettingsState());
+    getIt.registerSingleton<SettingsBloc>(settingsBloc);
   }
 
   setUpAll(() {
@@ -641,11 +645,10 @@ void main() {
         await tester.pumpApp(const KycRegistrationPage(initialUserData: _fixtureUserData));
         // Scalars seed synchronously in initState; the two country lookups
         // resolve through the fixture-backed DfxCountryService and setState on
-        // completion. The live pager starts on the optional referral step.
+        // completion. The live pager starts on personal because referral is
+        // omitted when walletFeaturePromoCode is false.
         await tester.pumpAndSettle();
-        // Live cubit order: referral, personal, address, tax.
-        (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(1);
-        await tester.pumpAndSettle();
+        // Live cubit order: personal, address, taxResidence.
 
         expect(find.text('Ada'), findsOneWidget);
         expect(find.text('Lovelace'), findsOneWidget);
@@ -673,7 +676,7 @@ void main() {
 
         // Reveal the address step and confirm its residence field resolved the
         // address country too.
-        (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(2);
+        (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(1);
         await tester.pumpAndSettle();
         final resField = tester.widget<DropdownButtonFormField<Country>>(
           find.descendant(
@@ -700,8 +703,6 @@ void main() {
       });
 
       await tester.pumpApp(const KycRegistrationPage(initialUserData: _fixtureUserData));
-      await tester.pumpAndSettle();
-      (tester.widget(find.byType(PageView)) as PageView).controller?.jumpToPage(1);
       await tester.pumpAndSettle();
 
       // The scalar prefill still applies. The lookup failure is swallowed by

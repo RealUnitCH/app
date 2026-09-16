@@ -27,10 +27,10 @@ void main() {
     when(() => settingsRepo.currency).thenReturn('CHF');
     when(() => settingsRepo.networkMode).thenReturn(NetworkMode.mainnet);
     when(() => settingsRepo.insiderFeaturesUnlocked).thenReturn(false);
-    when(() => settingsRepo.insiderPayEnabled).thenReturn(false);
-    when(() => settingsRepo.insiderSendEnabled).thenReturn(false);
-    when(() => settingsRepo.insiderReferralEnabled).thenReturn(false);
-    when(() => settingsRepo.insiderBonusEnabled).thenReturn(false);
+    when(() => settingsRepo.walletFeaturePay).thenReturn(false);
+    when(() => settingsRepo.walletFeatureSend).thenReturn(false);
+    when(() => settingsRepo.walletFeaturePromoCode).thenReturn(false);
+    when(() => settingsRepo.walletFeatureReferral).thenReturn(false);
     settingsBloc = SettingsBloc(settingsRepo, () async {});
 
     final getIt = GetIt.instance;

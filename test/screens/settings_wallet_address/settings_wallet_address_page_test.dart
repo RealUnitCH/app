@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,36 +22,30 @@ void main() {
 
   setUpAll(() {
     GetIt.instance.registerSingleton<AppStore>(appStore);
-    settingsBloc = MockSettingsBloc();
-    GetIt.instance.registerSingleton<SettingsBloc>(settingsBloc);
   });
 
   setUp(() {
+    settingsBloc = MockSettingsBloc();
+    when(() => settingsBloc.state).thenReturn(const SettingsState());
     when(() => appStore.primaryAddress)
         .thenReturn('0x938115b533a0b746428361760a6972dfd06d984a');
-    when(() => settingsBloc.state).thenReturn(const SettingsState());
   });
 
   tearDownAll(() async {
     await GetIt.instance.reset();
   });
 
+  Widget wrapPage(Widget page) => BlocProvider<SettingsBloc>.value(
+        value: settingsBloc,
+        child: page,
+      );
+
   Finder sendButton() => find.widgetWithText(AppFilledButton, S.current.send);
 
-  void enableSend() {
-    when(() => settingsBloc.state).thenReturn(
-      const SettingsState(
-        insiderFeaturesUnlocked: true,
-        insiderSendEnabled: true,
-      ),
-    );
-  }
-
   group('$SettingsWalletAddressPage', () {
-    testWidgets('default state renders logo, QR, disclaimer and hides Send', (
-      tester,
-    ) async {
-      await tester.pumpApp(const SettingsWalletAddressPage());
+    testWidgets('renders logo, QR, disclaimer and hides Send by default',
+        (tester) async {
+      await tester.pumpApp(wrapPage(const SettingsWalletAddressPage()));
 
       expect(find.byType(SvgPicture), findsOneWidget);
       expect(find.byType(QRAddressWidget), findsOneWidget);
@@ -58,42 +53,18 @@ void main() {
       expect(sendButton(), findsNothing);
     });
 
-    testWidgets('unlocked=false AND send=true: Send absent', (tester) async {
-      when(() => settingsBloc.state).thenReturn(
-        const SettingsState(insiderSendEnabled: true),
-      );
-      await tester.pumpApp(const SettingsWalletAddressPage());
+    testWidgets('shows Send when walletFeatureSend is true', (tester) async {
+      when(() => settingsBloc.state)
+          .thenReturn(const SettingsState(walletFeatureSend: true));
 
-      expect(find.byType(SvgPicture), findsOneWidget);
+      await tester.pumpApp(wrapPage(const SettingsWalletAddressPage()));
+
       expect(find.byType(QRAddressWidget), findsOneWidget);
-      expect(find.text(S.current.walletAddressDisclaimer), findsOneWidget);
-      expect(sendButton(), findsNothing);
-    });
-
-    testWidgets('unlocked=true AND send=false: Send absent', (tester) async {
-      when(() => settingsBloc.state).thenReturn(
-        const SettingsState(insiderFeaturesUnlocked: true),
-      );
-      await tester.pumpApp(const SettingsWalletAddressPage());
-
-      expect(find.byType(SvgPicture), findsOneWidget);
-      expect(find.byType(QRAddressWidget), findsOneWidget);
-      expect(find.text(S.current.walletAddressDisclaimer), findsOneWidget);
-      expect(sendButton(), findsNothing);
-    });
-
-    testWidgets('renders logo, QR, disclaimer and Send', (tester) async {
-      enableSend();
-      await tester.pumpApp(const SettingsWalletAddressPage());
-
-      expect(find.byType(SvgPicture), findsOneWidget);
-      expect(find.byType(QRAddressWidget), findsOneWidget);
-      expect(find.text(S.current.walletAddressDisclaimer), findsOneWidget);
       expect(sendButton(), findsOneWidget);
     });
 
     testWidgets('QR uses EIP-55 checksummed address', (tester) async {
-      await tester.pumpApp(const SettingsWalletAddressPage());
+      await tester.pumpApp(wrapPage(const SettingsWalletAddressPage()));
 
       final qr = tester.widget<QRAddressWidget>(find.byType(QRAddressWidget));
       expect(qr.subtitle, '0x938115B533a0b746428361760A6972dfd06D984a');
@@ -101,14 +72,16 @@ void main() {
     });
 
     testWidgets('tapping Send pushes the send route', (tester) async {
-      enableSend();
+      when(() => settingsBloc.state)
+          .thenReturn(const SettingsState(walletFeatureSend: true));
+
       final pushedRoutes = <String>[];
       final router = GoRouter(
         initialLocation: '/',
         routes: [
           GoRoute(
             path: '/',
-            builder: (_, _) => const SettingsWalletAddressPage(),
+            builder: (_, _) => wrapPage(const SettingsWalletAddressPage()),
           ),
           GoRoute(
             name: AppRoutes.send,

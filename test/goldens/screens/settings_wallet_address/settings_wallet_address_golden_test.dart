@@ -1,3 +1,4 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
@@ -32,7 +33,16 @@ void main() {
       'default state with primary address',
       fileName: 'settings_wallet_address_page_default',
       constraints: phoneConstraints,
-      builder: () => wrapForGolden(const SettingsWalletAddressPage()),
+      builder: () {
+        final settingsBloc = MockSettingsBloc();
+        when(() => settingsBloc.state).thenReturn(const SettingsState());
+        return wrapForGolden(
+          BlocProvider<SettingsBloc>.value(
+            value: settingsBloc,
+            child: const SettingsWalletAddressPage(),
+          ),
+        );
+      },
     );
 
     goldenTest(

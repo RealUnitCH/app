@@ -83,7 +83,7 @@ class SettingsPage extends StatelessWidget {
                           ),
                           if (eligibility is ReferralEligibilityLoaded &&
                               eligibility.eligible &&
-                              state.insiderReferralOn)
+                              state.walletFeatureReferral)
                             SettingOption(
                               title: S.of(context).referrals,
                               subtitle: S.of(context).referralsSubtitle,

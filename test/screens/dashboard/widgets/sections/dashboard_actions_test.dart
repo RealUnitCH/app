@@ -100,77 +100,12 @@ void main() {
       });
     });
 
-    group('locked, pay on (unlocked=false AND pay=true)', () {
-      setUp(() {
-        when(() => settingsBloc.state).thenReturn(
-          const SettingsState(insiderPayEnabled: true),
-        );
-      });
-
-      testWidgets(
-        'unlocked=false AND pay=true: renders only buy and sell; pay and send absent',
-        (tester) async {
-          await pumpActions(tester);
-
-          expect(actionButtonByLabel(S.current.buy), findsOneWidget);
-          expect(actionButtonByLabel(S.current.sell), findsOneWidget);
-          expect(actionButtonByLabel(S.current.pay), findsNothing);
-          expect(actionButtonByLabel(S.current.send), findsNothing);
-        },
-      );
-    });
-
-    group('unlocked, pay off', () {
+    group('unlocked', () {
       setUp(() {
         when(() => settingsBloc.state).thenReturn(
           const SettingsState(
             insiderFeaturesUnlocked: true,
-            insiderPayEnabled: false,
-          ),
-        );
-      });
-
-      testWidgets('renders only the buy and sell action buttons', (tester) async {
-        await pumpActions(tester);
-
-        expect(actionButtonByLabel(S.current.buy), findsOneWidget);
-        expect(actionButtonByLabel(S.current.sell), findsOneWidget);
-        expect(actionButtonByLabel(S.current.pay), findsNothing);
-        expect(actionButtonByLabel(S.current.send), findsNothing);
-        expect(find.byType(Expanded), findsNWidgets(2));
-      });
-    });
-
-    group('unlocked, send on', () {
-      setUp(() {
-        when(() => settingsBloc.state).thenReturn(
-          const SettingsState(
-            insiderFeaturesUnlocked: true,
-            insiderSendEnabled: true,
-          ),
-        );
-      });
-
-      testWidgets(
-        'renders only buy and sell; send remains absent and pay stays off',
-        (tester) async {
-          await pumpActions(tester);
-
-          expect(actionButtonByLabel(S.current.buy), findsOneWidget);
-          expect(actionButtonByLabel(S.current.sell), findsOneWidget);
-          expect(actionButtonByLabel(S.current.pay), findsNothing);
-          expect(actionButtonByLabel(S.current.send), findsNothing);
-          expect(find.byType(Expanded), findsNWidgets(2));
-        },
-      );
-    });
-
-    group('unlocked, pay on', () {
-      setUp(() {
-        when(() => settingsBloc.state).thenReturn(
-          const SettingsState(
-            insiderFeaturesUnlocked: true,
-            insiderPayEnabled: true,
+            walletFeaturePay: true,
           ),
         );
       });
@@ -237,7 +172,7 @@ void main() {
           controller.add(
             const SettingsState(
               insiderFeaturesUnlocked: true,
-              insiderPayEnabled: true,
+              walletFeaturePay: true,
             ),
           );
           // Two pumps: the first delivers the stream event (async broadcast

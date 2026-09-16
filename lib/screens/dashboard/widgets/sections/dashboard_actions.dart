@@ -12,7 +12,7 @@ class DashboardActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final settingsState = context.watch<SettingsBloc>().state;
+    final walletFeaturePay = context.watch<SettingsBloc>().state.walletFeaturePay;
 
     return Row(
       spacing: 10,
@@ -39,7 +39,7 @@ class DashboardActions extends StatelessWidget {
             onPressed: () => context.pushNamed(AppRoutes.sell),
           ),
         ),
-        if (settingsState.insiderPayOn)
+        if (walletFeaturePay)
           Expanded(
             child: ActionButton(
               icon: Icon(

@@ -7,26 +7,33 @@ final class SettingsState {
     this.networkMode = NetworkMode.mainnet,
     this.hideAmounts = false,
     this.insiderFeaturesUnlocked = false,
-    this.insiderPayEnabled = false,
-    this.insiderSendEnabled = false,
-    this.insiderReferralEnabled = false,
-    this.insiderBonusEnabled = false,
-  });
+    bool walletFeaturePay = false,
+    bool walletFeatureSend = false,
+    bool walletFeaturePromoCode = false,
+    bool walletFeatureReferral = false,
+    bool insiderPayEnabled = false,
+    bool insiderSendEnabled = false,
+    bool insiderReferralEnabled = false,
+    bool insiderBonusEnabled = false,
+  }) : walletFeaturePay = walletFeaturePay || insiderPayEnabled,
+       walletFeatureSend = walletFeatureSend || insiderSendEnabled,
+       walletFeaturePromoCode = walletFeaturePromoCode || insiderBonusEnabled,
+       walletFeatureReferral = walletFeatureReferral || insiderReferralEnabled;
 
   final Language language;
   final Currency currency;
   final NetworkMode networkMode;
   final bool hideAmounts;
   final bool insiderFeaturesUnlocked;
-  final bool insiderPayEnabled;
-  final bool insiderSendEnabled;
-  final bool insiderReferralEnabled;
-  final bool insiderBonusEnabled;
+  final bool walletFeaturePay;
+  final bool walletFeatureSend;
+  final bool walletFeaturePromoCode;
+  final bool walletFeatureReferral;
 
-  bool get insiderPayOn => insiderFeaturesUnlocked && insiderPayEnabled;
-  bool get insiderSendOn => insiderFeaturesUnlocked && insiderSendEnabled;
-  bool get insiderReferralOn => insiderFeaturesUnlocked && insiderReferralEnabled;
-  bool get insiderBonusOn => insiderFeaturesUnlocked && insiderBonusEnabled;
+  bool get insiderPayEnabled => walletFeaturePay;
+  bool get insiderSendEnabled => walletFeatureSend;
+  bool get insiderReferralEnabled => walletFeatureReferral;
+  bool get insiderBonusEnabled => walletFeaturePromoCode;
 
   SettingsState copyWith({
     Language? language,
@@ -34,10 +41,10 @@ final class SettingsState {
     NetworkMode? networkMode,
     bool? hideAmounts,
     bool? insiderFeaturesUnlocked,
-    bool? insiderPayEnabled,
-    bool? insiderSendEnabled,
-    bool? insiderReferralEnabled,
-    bool? insiderBonusEnabled,
+    bool? walletFeaturePay,
+    bool? walletFeatureSend,
+    bool? walletFeaturePromoCode,
+    bool? walletFeatureReferral,
   }) =>
       SettingsState(
         language: language ?? this.language,
@@ -45,9 +52,9 @@ final class SettingsState {
         networkMode: networkMode ?? this.networkMode,
         hideAmounts: hideAmounts ?? this.hideAmounts,
         insiderFeaturesUnlocked: insiderFeaturesUnlocked ?? this.insiderFeaturesUnlocked,
-        insiderPayEnabled: insiderPayEnabled ?? this.insiderPayEnabled,
-        insiderSendEnabled: insiderSendEnabled ?? this.insiderSendEnabled,
-        insiderReferralEnabled: insiderReferralEnabled ?? this.insiderReferralEnabled,
-        insiderBonusEnabled: insiderBonusEnabled ?? this.insiderBonusEnabled,
+        walletFeaturePay: walletFeaturePay ?? this.walletFeaturePay,
+        walletFeatureSend: walletFeatureSend ?? this.walletFeatureSend,
+        walletFeaturePromoCode: walletFeaturePromoCode ?? this.walletFeaturePromoCode,
+        walletFeatureReferral: walletFeatureReferral ?? this.walletFeatureReferral,
       );
 }

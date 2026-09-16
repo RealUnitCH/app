@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet_features/dto/real_unit_wallet_features_dto.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 import 'package:realunit_wallet/styles/language.dart';
 
@@ -13,16 +14,17 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     this._settingsRepository,
     this.getNewAuthToken, {
     this.onNetworkModeChanged,
+    this.fetchWalletFeatures,
   }) : super(
          SettingsState(
            language: Language.fromCode(_settingsRepository.language),
            currency: Currency.fromCode(_settingsRepository.currency),
            networkMode: _settingsRepository.networkMode,
            insiderFeaturesUnlocked: _settingsRepository.insiderFeaturesUnlocked,
-           insiderPayEnabled: _settingsRepository.insiderPayEnabled,
-           insiderSendEnabled: _settingsRepository.insiderSendEnabled,
-           insiderReferralEnabled: _settingsRepository.insiderReferralEnabled,
-           insiderBonusEnabled: _settingsRepository.insiderBonusEnabled,
+           walletFeaturePay: _settingsRepository.walletFeaturePay,
+           walletFeatureSend: _settingsRepository.walletFeatureSend,
+           walletFeaturePromoCode: _settingsRepository.walletFeaturePromoCode,
+           walletFeatureReferral: _settingsRepository.walletFeatureReferral,
          ),
        ) {
     on<SetCurrencyEvent>(_onSetCurrencyEvent);
@@ -33,6 +35,10 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<ToggleHideAmountEvent>(_onToggleHideAmountEvent);
     on<UnlockInsiderFeaturesEvent>(_onUnlockInsiderFeaturesEvent);
     on<SetInsiderFeatureEnabledEvent>(_onSetInsiderFeatureEnabledEvent);
+    on<RefreshWalletFeaturesEvent>(_onRefreshWalletFeaturesEvent);
+    if (fetchWalletFeatures != null) {
+      add(const RefreshWalletFeaturesEvent());
+    }
   }
 
   final SettingsRepository _settingsRepository;
@@ -42,6 +48,8 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   /// has been fetched, but before the new state is emitted. Used to invalidate
   /// reference-data caches (fiats, languages) that are scoped per backend.
   final void Function()? onNetworkModeChanged;
+
+  final Future<RealUnitWalletFeaturesDto> Function()? fetchWalletFeatures;
 
   void _onSetLanguageEvent(SetLanguageEvent event, Emitter<SettingsState> emit) {
     _settingsRepository.language = event.language.code;
@@ -88,7 +96,42 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     Emitter<SettingsState> emit,
   ) {
     _settingsRepository.insiderFeaturesUnlocked = true;
-    emit(state.copyWith(insiderFeaturesUnlocked: true));
+    _settingsRepository.walletFeaturePay = true;
+    _settingsRepository.walletFeatureSend = true;
+    _settingsRepository.walletFeaturePromoCode = true;
+    _settingsRepository.walletFeatureReferral = true;
+    emit(
+      state.copyWith(
+        insiderFeaturesUnlocked: true,
+        walletFeaturePay: true,
+        walletFeatureSend: true,
+        walletFeaturePromoCode: true,
+        walletFeatureReferral: true,
+      ),
+    );
+  }
+
+  Future<void> _onRefreshWalletFeaturesEvent(
+    RefreshWalletFeaturesEvent event,
+    Emitter<SettingsState> emit,
+  ) async {
+    final fetch = fetchWalletFeatures;
+    if (fetch == null) return;
+    try {
+      final features = await fetch();
+      _settingsRepository.walletFeaturePay = features.pay;
+      _settingsRepository.walletFeatureSend = features.send;
+      _settingsRepository.walletFeaturePromoCode = features.promoCode;
+      _settingsRepository.walletFeatureReferral = features.referral;
+      emit(
+        state.copyWith(
+          walletFeaturePay: _settingsRepository.walletFeaturePay,
+          walletFeatureSend: _settingsRepository.walletFeatureSend,
+          walletFeaturePromoCode: _settingsRepository.walletFeaturePromoCode,
+          walletFeatureReferral: _settingsRepository.walletFeatureReferral,
+        ),
+      );
+    } catch (_) {}
   }
 
   void _onSetInsiderFeatureEnabledEvent(
@@ -97,17 +140,19 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) {
     switch (event.feature) {
       case InsiderFeature.pay:
-        _settingsRepository.insiderPayEnabled = event.enabled;
-        emit(state.copyWith(insiderPayEnabled: event.enabled));
+        _settingsRepository.walletFeaturePay = event.enabled;
+        emit(state.copyWith(walletFeaturePay: _settingsRepository.walletFeaturePay));
       case InsiderFeature.send:
-        _settingsRepository.insiderSendEnabled = event.enabled;
-        emit(state.copyWith(insiderSendEnabled: event.enabled));
+        _settingsRepository.walletFeatureSend = event.enabled;
+        emit(state.copyWith(walletFeatureSend: _settingsRepository.walletFeatureSend));
       case InsiderFeature.referral:
-        _settingsRepository.insiderReferralEnabled = event.enabled;
-        emit(state.copyWith(insiderReferralEnabled: event.enabled));
+        _settingsRepository.walletFeatureReferral = event.enabled;
+        emit(state.copyWith(walletFeatureReferral: _settingsRepository.walletFeatureReferral));
       case InsiderFeature.bonus:
-        _settingsRepository.insiderBonusEnabled = event.enabled;
-        emit(state.copyWith(insiderBonusEnabled: event.enabled));
+        _settingsRepository.walletFeaturePromoCode = event.enabled;
+        emit(
+          state.copyWith(walletFeaturePromoCode: _settingsRepository.walletFeaturePromoCode),
+        );
     }
   }
 }

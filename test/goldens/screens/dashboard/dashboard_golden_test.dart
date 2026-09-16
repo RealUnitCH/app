@@ -137,7 +137,7 @@ void main() {
         when(() => settingsBloc.state).thenReturn(
           const SettingsState(
             insiderFeaturesUnlocked: true,
-            insiderPayEnabled: true,
+            walletFeaturePay: true,
           ),
         );
         when(() => balanceCubit.state).thenReturn(

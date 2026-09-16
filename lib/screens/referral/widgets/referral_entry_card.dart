@@ -40,15 +40,15 @@ class _ReferralEntryCardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ReferralEligibilityCubit, ReferralEligibilityState>(
-      builder: (context, state) {
-        final eligible = state is ReferralEligibilityLoaded && state.eligible;
-        if (!eligible) return const SizedBox.shrink();
-
-        return BlocBuilder<SettingsBloc, SettingsState>(
-          bloc: getIt<SettingsBloc>(),
-          builder: (context, settingsState) {
-            if (!settingsState.insiderReferralOn) return const SizedBox.shrink();
+    return BlocBuilder<SettingsBloc, SettingsState>(
+      bloc: getIt<SettingsBloc>(),
+      builder: (context, settings) {
+        return BlocBuilder<ReferralEligibilityCubit, ReferralEligibilityState>(
+          builder: (context, state) {
+            final eligible = state is ReferralEligibilityLoaded && state.eligible;
+            if (!settings.walletFeatureReferral || !eligible) {
+              return const SizedBox.shrink();
+            }
 
             final s = S.of(context);
             return OutlinedTile(

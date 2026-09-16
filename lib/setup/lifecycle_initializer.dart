@@ -6,6 +6,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
@@ -60,6 +61,7 @@ class _LifecycleInitializerState extends State<LifecycleInitializer> {
     getIt<PinAuthCubit>().onAppResumed();
     unawaited(getIt<ClientPolicyCubit>().refresh());
     getIt<BalanceService>().updateBalance(getIt<AppStore>().primaryAddress);
+    getIt<SettingsBloc>().add(const RefreshWalletFeaturesEvent());
   }
 
   // `inactive` is deliberately NOT a lock trigger. On iOS it fires for
