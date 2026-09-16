@@ -10,13 +10,6 @@ class SettingsInsiderPage extends StatelessWidget {
   const SettingsInsiderPage({super.key});
 
   @override
-  Widget build(BuildContext context) => const SettingsInsiderView();
-}
-
-class SettingsInsiderView extends StatelessWidget {
-  const SettingsInsiderView({super.key});
-
-  @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: Text(S.of(context).settingsInsiderFeatures),

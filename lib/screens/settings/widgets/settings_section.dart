@@ -8,7 +8,6 @@ class SettingOption {
   final Widget? trailing;
   final String? selectedOption;
   final GestureTapCallback? onTap;
-  final bool isSectionHeader;
 
   const SettingOption({
     required this.title,
@@ -17,7 +16,6 @@ class SettingOption {
     this.trailing,
     this.selectedOption,
     this.onTap,
-    this.isSectionHeader = false,
   });
 }
 
@@ -39,18 +37,6 @@ class SettingsSections extends StatelessWidget {
         itemCount: settings.length,
         itemBuilder: (context, index) {
           final setting = settings.elementAt(index);
-          if (setting.isSectionHeader) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-              child: Text(
-                setting.title,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: RealUnitColors.neutral500,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            );
-          }
           final disabled = setting.onTap == null;
           final titleColor = disabled
               ? RealUnitColors.realUnitBlack.withValues(alpha: 0.5)

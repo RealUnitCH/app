@@ -71,23 +71,5 @@ void main() {
       final opacity = tester.widget<Opacity>(find.byType(Opacity));
       expect(opacity.opacity, 1.0);
     });
-
-    testWidgets('section header renders the title, is not an InkWell, and a tap does not throw',
-        (tester) async {
-      await tester.pumpWidget(_host(
-        const SettingsSections(
-          settings: [
-            SettingOption(title: 'Insider Funktionen', isSectionHeader: true),
-          ],
-        ),
-      ));
-
-      expect(find.text('Insider Funktionen'), findsOneWidget);
-      expect(find.byType(InkWell), findsNothing);
-      expect(find.byType(Opacity), findsNothing);
-
-      await tester.tap(find.text('Insider Funktionen'));
-      await tester.pump();
-    });
   });
 }
