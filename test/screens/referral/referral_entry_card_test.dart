@@ -178,8 +178,11 @@ void main() {
       routes: [
         GoRoute(
           path: '/',
-          builder: (_, _) => const Scaffold(
-            body: ReferralEntryCard(unavailablePollInterval: Duration.zero),
+          builder: (_, _) => Scaffold(
+            body: BlocProvider<SettingsBloc>.value(
+              value: settingsBloc,
+              child: const ReferralEntryCard(unavailablePollInterval: Duration.zero),
+            ),
           ),
         ),
         GoRoute(
@@ -291,9 +294,12 @@ void main() {
       routes: [
         GoRoute(
           path: '/',
-          builder: (_, _) => const Scaffold(
-            body: ReferralEntryCard(
-              unavailablePollInterval: Duration(milliseconds: 20),
+          builder: (_, _) => Scaffold(
+            body: BlocProvider<SettingsBloc>.value(
+              value: settingsBloc,
+              child: const ReferralEntryCard(
+                unavailablePollInterval: Duration(milliseconds: 20),
+              ),
             ),
           ),
         ),
@@ -403,8 +409,11 @@ void main() {
       routes: [
         GoRoute(
           path: '/',
-          builder: (_, _) => const Scaffold(
-            body: ReferralEntryCard(unavailablePollInterval: Duration.zero),
+          builder: (_, _) => Scaffold(
+            body: BlocProvider<SettingsBloc>.value(
+              value: settingsBloc,
+              child: const ReferralEntryCard(unavailablePollInterval: Duration.zero),
+            ),
           ),
         ),
         GoRoute(
