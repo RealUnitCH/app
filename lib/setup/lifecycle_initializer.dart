@@ -60,8 +60,11 @@ class _LifecycleInitializerState extends State<LifecycleInitializer> {
     _armedForBackground = false;
     getIt<PinAuthCubit>().onAppResumed();
     unawaited(getIt<ClientPolicyCubit>().refresh());
-    getIt<BalanceService>().updateBalance(getIt<AppStore>().primaryAddress);
     getIt<SettingsBloc>().add(const RefreshWalletFeaturesEvent());
+    final appStore = getIt<AppStore>();
+    if (appStore.isWalletLoaded) {
+      getIt<BalanceService>().updateBalance(appStore.primaryAddress);
+    }
   }
 
   // `inactive` is deliberately NOT a lock trigger. On iOS it fires for

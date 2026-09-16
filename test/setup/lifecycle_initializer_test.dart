@@ -53,6 +53,7 @@ void main() {
     when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
     when(() => clientPolicyCubit.refresh()).thenAnswer((_) => Future.value());
     when(() => settingsBloc.add(any())).thenReturn(null);
+    when(() => appStore.isWalletLoaded).thenReturn(false);
   });
 
   tearDown(() => GetIt.instance.reset());
@@ -148,6 +149,7 @@ void main() {
   testWidgets(
     'AppLifecycleState.resumed does NOT lock and re-arms for the next background',
     (tester) async {
+      when(() => appStore.isWalletLoaded).thenReturn(true);
       when(() => appStore.primaryAddress).thenReturn('0xabc');
       when(() => balanceService.updateBalance(any())).thenAnswer((_) async {});
       when(() => pinAuthCubit.onAppResumed()).thenAnswer((_) {});
@@ -208,10 +210,6 @@ void main() {
 
       await pumpLifecycle(tester);
 
-      // The lifecycle machine only permits single-step moves along
-      // detached ↔ paused ↔ hidden ↔ inactive ↔ resumed, and the binding's
-      // state carries across tests in this file. Step along the chain from the
-      // current state so every transition is valid.
       const chain = <AppLifecycleState>[
         AppLifecycleState.detached,
         AppLifecycleState.paused,
@@ -239,6 +237,21 @@ void main() {
       await tester.pump();
 
       verify(() => clientPolicyCubit.refresh()).called(1);
+    },
+  );
+
+  testWidgets(
+    'resume without a loaded wallet still refreshes wallet features',
+    (tester) async {
+      when(() => appStore.isWalletLoaded).thenReturn(false);
+      when(() => pinAuthCubit.onAppResumed()).thenAnswer((_) {});
+
+      await pumpLifecycle(tester);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+
+      verify(() => settingsBloc.add(const RefreshWalletFeaturesEvent())).called(greaterThan(0));
+      verifyNever(() => balanceService.updateBalance(any()));
     },
   );
 }
