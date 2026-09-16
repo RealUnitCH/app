@@ -188,8 +188,9 @@ Reference implementations: `test/screens/send/send_recipient_scanner_navigation_
 | [`holding_amount_catalog_test.dart`](../test/helper/holding_amount_catalog_test.dart) | Existence; production contains `extends Cubit<Balance>`; regression constructs the real cubit and pushes a second amount; discovery walks `lib/` |
 | Cubit specs (`balance_cubit_test.dart`, `sell_balance_cubit_test.dart`) | Real cubit + StreamController; Kauf 77994→85194, Verkauf, transferIn, transferOut |
 | Widget specs (`dashboard_portfolio_holding_update_test.dart`, `send_amount_holding_update_test.dart`, `sell_holding_update_test.dart`) | Real cubit in the tree; first amount visible; second amount replaces it |
+| Goldens (`kHoldingAmountGoldenFileNames`) | Pixel baselines for Empfangen, Kauf, Verkauf, transferIn, transferOut, hide-amounts, EUR/CHF, EN, sell Max, send available. PNGs from `golden-regenerate.yaml` only. |
 
-Mocking the cubit / `whenListen` of a single state **cannot** catch this bug class — the gate is the real cubit plus a second stream amount.
+Mocking the cubit / `whenListen` of a single state **cannot** catch this bug class — the gate is the real cubit plus a second stream amount. Goldens pin the rendered amount; they do not replace the real-cubit tests.
 
 Rules for PRs:
 

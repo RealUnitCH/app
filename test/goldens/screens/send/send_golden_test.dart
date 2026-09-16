@@ -101,6 +101,63 @@ void main() {
     );
 
     goldenTest(
+      'available after Kauf — 85194',
+      fileName: 'send_holding_kauf',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(_balance(85194));
+        when(() => amountCubit.availableShares).thenReturn(BigInt.from(85194));
+        return wrapForGolden(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<SellBalanceCubit>.value(value: balanceCubit),
+              BlocProvider<SendAmountCubit>.value(value: amountCubit),
+            ],
+            child: const SendAmountView(recipient: '0xRecipient'),
+          ),
+        );
+      },
+    );
+
+    goldenTest(
+      'available after on-chain transferOut — 85094',
+      fileName: 'send_holding_transfer_out',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(_balance(85094));
+        when(() => amountCubit.availableShares).thenReturn(BigInt.from(85094));
+        return wrapForGolden(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<SellBalanceCubit>.value(value: balanceCubit),
+              BlocProvider<SendAmountCubit>.value(value: amountCubit),
+            ],
+            child: const SendAmountView(recipient: '0xRecipient'),
+          ),
+        );
+      },
+    );
+
+    goldenTest(
+      'available after on-chain transferIn — 78094',
+      fileName: 'send_holding_transfer_in',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(_balance(78094));
+        when(() => amountCubit.availableShares).thenReturn(BigInt.from(78094));
+        return wrapForGolden(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<SellBalanceCubit>.value(value: balanceCubit),
+              BlocProvider<SendAmountCubit>.value(value: amountCubit),
+            ],
+            child: const SendAmountView(recipient: '0xRecipient'),
+          ),
+        );
+      },
+    );
+
+    goldenTest(
       'over-balance amount shows the insufficient error',
       fileName: 'send_amount_page_insufficient',
       constraints: phoneConstraints,

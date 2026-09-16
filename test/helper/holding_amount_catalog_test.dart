@@ -226,4 +226,30 @@ void main() {
       }
     },
   );
+
+  test(
+    'every holding-amount golden fileName is declared under test/goldens/',
+    () {
+      final declared = <String>{};
+      for (final entity in Directory('test/goldens').listSync(recursive: true)) {
+        if (entity is! File || !entity.path.endsWith('.dart')) {
+          continue;
+        }
+        final contents = entity.readAsStringSync();
+        for (final name in kHoldingAmountGoldenFileNames) {
+          if (contents.contains("fileName: '$name'") ||
+              contents.contains('fileName: "$name"')) {
+            declared.add(name);
+          }
+        }
+      }
+      expect(
+        declared,
+        unorderedEquals(kHoldingAmountGoldenFileNames),
+        reason:
+            'Holding-amount golden fileNames missing from test/goldens:\n'
+            '${kHoldingAmountGoldenFileNames.where((n) => !declared.contains(n)).join('\n')}',
+      );
+    },
+  );
 }

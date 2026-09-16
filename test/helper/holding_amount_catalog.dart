@@ -27,6 +27,24 @@ class HoldingAmountSurface {
   final String regressionTestPath;
 }
 
+/// Pixel baselines that must exist as `fileName:` in a `test/goldens/` spec.
+/// PNGs are produced by `golden-regenerate.yaml`, not committed by hand.
+const kHoldingAmountGoldenFileNames = <String>[
+  'holding_empfangen',
+  'holding_kauf',
+  'holding_verkauf',
+  'holding_transfer_in',
+  'holding_transfer_out',
+  'holding_kauf_hidden',
+  'holding_kauf_chf',
+  'holding_kauf_en',
+  'sell_holding_kauf',
+  'sell_holding_verkauf',
+  'send_holding_kauf',
+  'send_holding_transfer_out',
+  'send_holding_transfer_in',
+];
+
 /// Living catalog — extend when adding a new `Cubit<Balance>`.
 const kHoldingAmountCatalog = <HoldingAmountSurface>[
   HoldingAmountSurface(

@@ -153,6 +153,42 @@ void main() {
     );
 
     goldenTest(
+      'holding after Kauf — Max uses 85194',
+      fileName: 'sell_holding_kauf',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(
+          Balance(
+            chainId: 1,
+            contractAddress: '0x0',
+            walletAddress: '0x0',
+            balance: BigInt.from(85194),
+            asset: realUnitAsset,
+          ),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
+      'holding after Verkauf — Max uses 77994',
+      fileName: 'sell_holding_verkauf',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(
+          Balance(
+            chainId: 1,
+            contractAddress: '0x0',
+            walletAddress: '0x0',
+            balance: BigInt.from(77994),
+            asset: realUnitAsset,
+          ),
+        );
+        return wrapForGolden(buildSubject());
+      },
+    );
+
+    goldenTest(
       'payment info loading',
       fileName: 'sell_payment_info_loading',
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
