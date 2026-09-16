@@ -46,6 +46,7 @@ void main() {
 
     when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
     when(() => settingsBloc.add(any())).thenReturn(null);
+    when(() => appStore.isWalletLoaded).thenReturn(false);
   });
 
   tearDown(() => GetIt.instance.reset());
@@ -141,6 +142,7 @@ void main() {
   testWidgets(
     'AppLifecycleState.resumed does NOT lock and re-arms for the next background',
     (tester) async {
+      when(() => appStore.isWalletLoaded).thenReturn(true);
       when(() => appStore.primaryAddress).thenReturn('0xabc');
       when(() => balanceService.updateBalance(any())).thenAnswer((_) async {});
       when(() => pinAuthCubit.onAppResumed()).thenAnswer((_) {});
@@ -189,6 +191,21 @@ void main() {
       driveTo(AppLifecycleState.hidden);
       await tester.pump();
       verify(() => walletService.lockCurrentWallet()).called(1);
+    },
+  );
+
+  testWidgets(
+    'resume without a loaded wallet still refreshes wallet features',
+    (tester) async {
+      when(() => appStore.isWalletLoaded).thenReturn(false);
+      when(() => pinAuthCubit.onAppResumed()).thenAnswer((_) {});
+
+      await pumpLifecycle(tester);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+
+      verify(() => settingsBloc.add(const RefreshWalletFeaturesEvent())).called(greaterThan(0));
+      verifyNever(() => balanceService.updateBalance(any()));
     },
   );
 }
