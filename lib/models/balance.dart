@@ -19,12 +19,13 @@ class Balance {
   });
 
   @override
-  int get hashCode => Object.hash(chainId, contractAddress, walletAddress);
+  int get hashCode => Object.hash(chainId, contractAddress, walletAddress, balance);
 
   @override
   bool operator ==(Object other) =>
       other is Balance &&
       chainId == other.chainId &&
       contractAddress == other.contractAddress &&
-      walletAddress == other.walletAddress;
+      walletAddress == other.walletAddress &&
+      balance == other.balance;
 }

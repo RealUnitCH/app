@@ -44,7 +44,7 @@ Test layout mirrors `lib/`. Stack: [`flutter_test`](https://pub.dev/packages/flu
 | `test/screens/<feature>/cubit(s)/**` and `test/screens/<feature>/bloc/**` | Cubit/Bloc state-transition specs (in the activated surface for line-coverage) |
 | `test/screens/<feature>/**/*_page_test.dart` | `testWidgets` view specs (cover the page, not the cubit logic) |
 | `test/integration/` | Cross-layer Tier-1 specs using `FakeBitboxCredentials` (e.g. `kyc_sign_flow_test.dart`) |
-| `test/helper/` | Shared test infra: [`pump_app.dart`](../test/helper/pump_app.dart), [`fake_bitbox_credentials.dart`](../test/helper/fake_bitbox_credentials.dart), [`responsive_matrix.dart`](../test/helper/responsive_matrix.dart), [`layout_assertions.dart`](../test/helper/layout_assertions.dart), [`responsive_surface_catalog.dart`](../test/helper/responsive_surface_catalog.dart), [`scanner_navigation_catalog.dart`](../test/helper/scanner_navigation_catalog.dart) |
+| `test/helper/` | Shared test infra: [`pump_app.dart`](../test/helper/pump_app.dart), [`fake_bitbox_credentials.dart`](../test/helper/fake_bitbox_credentials.dart), [`responsive_matrix.dart`](../test/helper/responsive_matrix.dart), [`layout_assertions.dart`](../test/helper/layout_assertions.dart), [`responsive_surface_catalog.dart`](../test/helper/responsive_surface_catalog.dart), [`scanner_navigation_catalog.dart`](../test/helper/scanner_navigation_catalog.dart), [`holding_amount_catalog.dart`](../test/helper/holding_amount_catalog.dart) |
 | `test/models/` | DTO / marshalling specs (`asset_test.dart`, `balance_test.dart`, `transaction_test.dart`, …) |
 | `test/setup/` | App lifecycle / bootstrap specs (`lifecycle_initializer_test.dart`) |
 | `test/styles/` | Currency / language fixtures (`currency_test.dart`, `language_test.dart`) |
@@ -169,6 +169,34 @@ Rules for PRs:
 - Do not weaken cubit Valid/Decoded guards; do not make `QrScannerView` one-shot.
 
 Reference implementations: `test/screens/send/send_recipient_scanner_navigation_test.dart`, `test/screens/pay/pay_scan_scanner_navigation_test.dart`.
+
+### Holding amount updates (required)
+
+**Bug class this gates:** `Balance.==` / `hashCode` used to ignore `balance`, so `Cubit.emit` / `BlocBuilder` / `BlocListener` skipped after the first emit (`previous == current`). Bestand stayed at the first dashboard amount (77994) after a later Kauf (85194). Chart and tx list already showed the new total.
+
+**Production contract**
+
+1. [`Balance`](../lib/models/balance.dart) value equality includes `balance` (`==` and `hashCode`). Slot identity remains `id` = `fastHash('$walletAddress:$chainId:$contractAddress')` — do not weaken `id`.
+2. Do **not** switch `Cubit<Balance>` to a new state type just to force rebuilds.
+3. Every `extends Cubit<Balance>` under `lib/` is catalogued and has a real-cubit two-amount regression test.
+
+**Test contract (gates every catalogued `Cubit<Balance>` against this bug class)**
+
+| Piece | Role |
+|---|---|
+| [`holding_amount_catalog.dart`](../test/helper/holding_amount_catalog.dart) | Living list of every `extends Cubit<Balance>` production file + its real-cubit two-amount regression test |
+| [`holding_amount_catalog_test.dart`](../test/helper/holding_amount_catalog_test.dart) | Existence; production contains `extends Cubit<Balance>`; regression constructs the real cubit and pushes a second amount; discovery walks `lib/` |
+| Cubit specs (`balance_cubit_test.dart`, `sell_balance_cubit_test.dart`) | Real cubit + StreamController; Kauf 77994→85194, Verkauf, transferIn, transferOut |
+| Widget specs (`dashboard_portfolio_holding_update_test.dart`, `send_amount_holding_update_test.dart`, `sell_holding_update_test.dart`) | Real cubit in the tree; first amount visible; second amount replaces it |
+
+Mocking the cubit / `whenListen` of a single state **cannot** catch this bug class — the gate is the real cubit plus a second stream amount.
+
+Rules for PRs:
+
+- Any new `extends Cubit<Balance>` must be catalogued in the same PR with a real-cubit two-amount test.
+- Do not weaken `Balance.id`. Do not drop `balance` from `==` / `hashCode`.
+
+Reference implementations: `test/screens/dashboard/balance_cubit_test.dart`, `test/screens/sell/cubits/sell_balance_cubit_test.dart`, `test/screens/dashboard/dashboard_portfolio_holding_update_test.dart`.
 
 ### Service + HTTP
 
