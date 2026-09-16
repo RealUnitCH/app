@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -49,7 +50,10 @@ void main() {
         ],
         supportedLocales: S.delegate.supportedLocales,
         home: Scaffold(
-          body: ReferralEntryCard(unavailablePollInterval: poll),
+          body: BlocProvider<SettingsBloc>.value(
+            value: settingsBloc,
+            child: ReferralEntryCard(unavailablePollInterval: poll),
+          ),
         ),
       ),
     );

@@ -41,7 +41,6 @@ class _ReferralEntryCardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<SettingsBloc, SettingsState>(
-      bloc: getIt<SettingsBloc>(),
       builder: (context, settings) {
         return BlocBuilder<ReferralEligibilityCubit, ReferralEligibilityState>(
           builder: (context, state) {
