@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_summary_dto.dart';
@@ -11,6 +13,7 @@ import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings/settings_page.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_section.dart';
+import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 
 import '../../helper/helper.dart';
 
@@ -64,7 +67,7 @@ void main() {
     return section.settings.map((option) => option.title).toList();
   }
 
-  testWidgets('locked: no insider section title and no Pay switch', (tester) async {
+  testWidgets('locked: no insider features title and no Switch', (tester) async {
     await pumpSettings(tester);
     await tester.pumpAndSettle();
 
@@ -73,7 +76,7 @@ void main() {
   });
 
   testWidgets(
-    'unlocked software wallet: header and Pay row appear before Wallet-Sicherung',
+    'unlocked software wallet: Insider Funktionen row before Wallet-Sicherung, no Switch, no Pay',
     (tester) async {
       when(() => settingsBloc.state)
           .thenReturn(const SettingsState(insiderFeaturesUnlocked: true));
@@ -82,54 +85,69 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text(S.current.settingsInsiderFeatures), findsOneWidget);
-      expect(find.byType(Switch), findsOneWidget);
+      expect(find.byType(Switch), findsNothing);
+      expect(find.text(S.current.pay), findsNothing);
       expect(
         firstSectionTitles(tester),
         containsAllInOrder([
           S.current.walletAddress,
           S.current.settingsInsiderFeatures,
-          S.current.pay,
           S.current.settingsWalletBackup,
         ]),
       );
     },
   );
 
-  testWidgets('tapping the Pay row dispatches SetInsiderPayEnabledEvent(true) once', (
-    tester,
-  ) async {
+  testWidgets('tapping Insider Funktionen pushes SettingsRoutes.insider', (tester) async {
     when(() => settingsBloc.state)
         .thenReturn(const SettingsState(insiderFeaturesUnlocked: true));
 
-    await pumpSettings(tester);
+    final pushedRoutes = <String>[];
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => BlocProvider<HomeBloc>.value(
+            value: homeBloc,
+            child: const SettingsPage(unavailablePollInterval: Duration.zero),
+          ),
+        ),
+        GoRoute(
+          name: SettingsRoutes.insider,
+          path: '/settings/insider',
+          builder: (_, _) {
+            pushedRoutes.add(SettingsRoutes.insider);
+            return const Scaffold(body: Text('ROUTE:insider'));
+          },
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp.router(
+        locale: const Locale('de'),
+        routerConfig: router,
+        localizationsDelegates: const [
+          S.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: S.delegate.supportedLocales,
+      ),
+    );
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text(S.current.pay));
-    await tester.tap(find.text(S.current.pay));
-    await tester.pump();
-
-    verify(() => settingsBloc.add(const SetInsiderPayEnabledEvent(true))).called(1);
-  });
-
-  testWidgets('tapping the Pay Switch dispatches SetInsiderPayEnabledEvent(true) once', (
-    tester,
-  ) async {
-    when(() => settingsBloc.state)
-        .thenReturn(const SettingsState(insiderFeaturesUnlocked: true));
-
-    await pumpSettings(tester);
+    await tester.ensureVisible(find.text(S.current.settingsInsiderFeatures));
+    await tester.tap(find.text(S.current.settingsInsiderFeatures));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.byType(Switch));
-    // Switch is IgnorePointer (row owns the tap); the hit must pass through.
-    await tester.tap(find.byType(Switch), warnIfMissed: false);
-    await tester.pump();
-
-    verify(() => settingsBloc.add(const SetInsiderPayEnabledEvent(true))).called(1);
+    expect(pushedRoutes, [SettingsRoutes.insider]);
   });
 
   testWidgets(
-    'bitbox wallet + unlocked: header and Pay appear; Wallet-Sicherung stays hidden',
+    'bitbox wallet + unlocked: Insider Funktionen row present; Wallet-Sicherung stays hidden',
     (tester) async {
       final bitbox = MockBitboxWallet();
       when(() => bitbox.walletType).thenReturn(WalletType.bitbox);
@@ -141,14 +159,14 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text(S.current.settingsInsiderFeatures), findsOneWidget);
-      expect(find.byType(Switch), findsOneWidget);
+      expect(find.byType(Switch), findsNothing);
+      expect(find.text(S.current.pay), findsNothing);
       expect(find.text(S.current.settingsWalletBackup), findsNothing);
       expect(
         firstSectionTitles(tester),
         containsAllInOrder([
           S.current.walletAddress,
           S.current.settingsInsiderFeatures,
-          S.current.pay,
         ]),
       );
       expect(

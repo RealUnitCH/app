@@ -28,6 +28,7 @@ import 'package:realunit_wallet/screens/send/send_info_page.dart';
 import 'package:realunit_wallet/screens/settings/settings_page.dart';
 import 'package:realunit_wallet/screens/settings_contact/settings_contact_page.dart';
 import 'package:realunit_wallet/screens/settings_currencies/settings_currencies_page.dart';
+import 'package:realunit_wallet/screens/settings_insider/settings_insider_page.dart';
 import 'package:realunit_wallet/screens/settings_languages/settings_languages_page.dart';
 import 'package:realunit_wallet/screens/settings_legal_documents/settings_legal_documents_page.dart';
 import 'package:realunit_wallet/screens/settings_legal_documents/subpages/settings_aktionariat_documents_page.dart';
@@ -321,6 +322,11 @@ final GoRouter routerConfig = GoRouter(
           name: SettingsRoutes.walletAddress,
           path: 'walletAddress',
           builder: (_, _) => const SettingsWalletAddressPage(),
+        ),
+        GoRoute(
+          name: SettingsRoutes.insider,
+          path: 'insider',
+          builder: (_, _) => const SettingsInsiderPage(),
         ),
         GoRoute(
           name: SettingsRoutes.userData,
