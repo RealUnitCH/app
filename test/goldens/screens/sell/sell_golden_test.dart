@@ -109,7 +109,7 @@ void main() {
     balanceCubit = _MockSellBalanceCubit();
 
     when(() => converterCubit.state).thenReturn(const SellConverterState());
-    when(() => converterCubit.onSharesChanged(any())).thenReturn(null);
+    when(() => converterCubit.onSharesChanged(any())).thenAnswer((_) async {});
     when(() => paymentInfoCubit.state).thenReturn(const SellPaymentInfoInitial());
     when(() => selectedBankAccountCubit.state).thenReturn(null);
     when(() => balanceCubit.state).thenReturn(zeroBalance());
