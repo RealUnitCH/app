@@ -41,6 +41,22 @@ void main() {
     await controller.close();
   });
 
+  Balance balanceOf(BigInt amount) => Balance(
+        chainId: realUnitAsset.chainId,
+        contractAddress: realUnitAsset.address,
+        walletAddress: _wallet,
+        balance: amount,
+        asset: realUnitAsset,
+      );
+
+  Future<void> pushAndAwait(SellBalanceCubit cubit, BigInt amount) async {
+    final ready = cubit.stream
+        .firstWhere((b) => b.balance == amount)
+        .timeout(const Duration(seconds: 1));
+    controller.add(balanceOf(amount));
+    await ready;
+  }
+
   group('$SellBalanceCubit', () {
     test('initial state is a zero balance derived from appStore', () {
       final cubit = SellBalanceCubit(repo, appStore);
@@ -81,6 +97,61 @@ void main() {
       await cubit.close();
 
       expect(cubit.isClosed, isTrue);
+    });
+
+    test('emits a later Kauf amount (77994 then 85194)', () async {
+      final cubit = SellBalanceCubit(repo, appStore);
+
+      await pushAndAwait(cubit, BigInt.from(77994));
+      expect(cubit.state.balance, BigInt.from(77994));
+
+      await pushAndAwait(cubit, BigInt.from(85194));
+      expect(cubit.state.balance, BigInt.from(85194));
+    });
+
+    test('emits a later Verkauf amount (85194 then 77994)', () async {
+      final cubit = SellBalanceCubit(repo, appStore);
+
+      await pushAndAwait(cubit, BigInt.from(85194));
+      expect(cubit.state.balance, BigInt.from(85194));
+
+      await pushAndAwait(cubit, BigInt.from(77994));
+      expect(cubit.state.balance, BigInt.from(77994));
+    });
+
+    test('emits a later on-chain transferIn amount (77994 then 78094)', () async {
+      final cubit = SellBalanceCubit(repo, appStore);
+
+      await pushAndAwait(cubit, BigInt.from(77994));
+      expect(cubit.state.balance, BigInt.from(77994));
+
+      await pushAndAwait(cubit, BigInt.from(78094));
+      expect(cubit.state.balance, BigInt.from(78094));
+    });
+
+    test('emits a later on-chain transferOut amount (85194 then 85094)', () async {
+      final cubit = SellBalanceCubit(repo, appStore);
+
+      await pushAndAwait(cubit, BigInt.from(85194));
+      expect(cubit.state.balance, BigInt.from(85194));
+
+      await pushAndAwait(cubit, BigInt.from(85094));
+      expect(cubit.state.balance, BigInt.from(85094));
+    });
+
+    test('pushing the same amount twice does not throw', () async {
+      final cubit = SellBalanceCubit(repo, appStore);
+      final first = balanceOf(BigInt.from(77994));
+      final second = balanceOf(BigInt.from(77994));
+
+      final ready = cubit.stream
+          .firstWhere((b) => b.balance == BigInt.from(77994))
+          .timeout(const Duration(seconds: 1));
+      controller.add(first);
+      await ready;
+      controller.add(second);
+
+      expect(cubit.state.balance, BigInt.from(77994));
     });
   });
 }

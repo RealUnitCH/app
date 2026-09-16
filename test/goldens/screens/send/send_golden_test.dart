@@ -10,6 +10,7 @@ import 'package:realunit_wallet/screens/send/cubits/send_process/send_process_cu
 import 'package:realunit_wallet/screens/send/cubits/send_recipient/send_recipient_cubit.dart';
 import 'package:realunit_wallet/screens/send/send_amount_page.dart';
 import 'package:realunit_wallet/screens/send/send_confirm_page.dart';
+import 'package:realunit_wallet/screens/send/send_info_page.dart';
 import 'package:realunit_wallet/screens/send/send_process_page.dart';
 import 'package:realunit_wallet/screens/send/send_recipient_page.dart';
 
@@ -35,6 +36,15 @@ void main() {
   setUpAll(() {
     registerFallbackValue(BigInt.zero);
     stubMobileScannerChannel();
+  });
+
+  group('$SendInfoPage', () {
+    goldenTest(
+      'shareholder transfer disclosure',
+      fileName: 'send_info_page',
+      constraints: phoneConstraints,
+      builder: () => wrapForGolden(const SendInfoPage()),
+    );
   });
 
   group('$SendRecipientView', () {
@@ -88,6 +98,63 @@ void main() {
           child: const SendAmountView(recipient: '0xRecipient'),
         ),
       ),
+    );
+
+    goldenTest(
+      'available after Kauf — 85194',
+      fileName: 'send_holding_kauf',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(_balance(85194));
+        when(() => amountCubit.availableShares).thenReturn(BigInt.from(85194));
+        return wrapForGolden(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<SellBalanceCubit>.value(value: balanceCubit),
+              BlocProvider<SendAmountCubit>.value(value: amountCubit),
+            ],
+            child: const SendAmountView(recipient: '0xRecipient'),
+          ),
+        );
+      },
+    );
+
+    goldenTest(
+      'available after on-chain transferOut — 85094',
+      fileName: 'send_holding_transfer_out',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(_balance(85094));
+        when(() => amountCubit.availableShares).thenReturn(BigInt.from(85094));
+        return wrapForGolden(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<SellBalanceCubit>.value(value: balanceCubit),
+              BlocProvider<SendAmountCubit>.value(value: amountCubit),
+            ],
+            child: const SendAmountView(recipient: '0xRecipient'),
+          ),
+        );
+      },
+    );
+
+    goldenTest(
+      'available after on-chain transferIn — 78094',
+      fileName: 'send_holding_transfer_in',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => balanceCubit.state).thenReturn(_balance(78094));
+        when(() => amountCubit.availableShares).thenReturn(BigInt.from(78094));
+        return wrapForGolden(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<SellBalanceCubit>.value(value: balanceCubit),
+              BlocProvider<SendAmountCubit>.value(value: amountCubit),
+            ],
+            child: const SendAmountView(recipient: '0xRecipient'),
+          ),
+        );
+      },
     );
 
     goldenTest(

@@ -1,14 +1,15 @@
 # syntax=docker/dockerfile:1
 #
 # Static nginx host for docs/handbook/ — served at handbook.realunit.app (PRD)
-# and dev-handbook.realunit.app (DEV) via Cloudflare Tunnel.
+# via Cloudflare Tunnel; the former DEV instance is retired.
 #
 # Built independently of the Flutter app: no Flutter toolchain, no app code.
-# Build context is the repo root; only docs/handbook/, scripts/, and
-# test/goldens/ are copied in.
+# Build context is the repo root; docs/handbook/, scripts/, test/goldens/,
+# ios/fastlane/{metadata,screenshots}, android/fastlane/metadata, assets/legal,
+# assets/languages, handbook.nginx.conf and handbook.htpasswd are copied in.
 #
 # The handbook screenshots (`screenshots/NN-name.png`) are assembled from the
-# visual-regression Golden baselines under `test/goldens/screens/` via
+# visual-regression Golden baselines under `test/goldens/screens/` and `test/goldens/widgets/` via
 # scripts/assemble-handbook-screenshots.sh — one Golden per handbook
 # entry, see the mapping in that script. `docs/handbook/screenshots/` is
 # git-ignored (the directory holds the assembly output for local previews
@@ -57,7 +58,7 @@ COPY docs/handbook/de/index.html ./docs/handbook/de/index.html
 RUN python3 ./scripts/assemble-handbook-store-listing.py /out && cp ./docs/handbook/de/index.html /out/index.html
 
 # Legal-downloads section: derived export of the in-app legal Markdown
-# (assets/legal/*.md). Two separate concerns, by design:
+# (assets/legal/*.md, including referral_terms). Two separate concerns, by design:
 #   - assemble-handbook-legal.py rewrites the deterministic <!-- BEGIN/END:
 #     legal-downloads --> block in index.html (committed + sync-gated upstream).
 #   - build-legal-downloads.sh renders the NON-deterministic PDF/DOCX via pandoc
