@@ -277,7 +277,7 @@ void main() {
       fileName: 'holding_transfer_in',
       constraints: phoneConstraints,
       builder: () {
-        seed(shares: transferIn, txs: [extraInTx, kaufTx, empfangenTx]);
+        seed(shares: transferIn, txs: [extraInTx, empfangenTx, seedTx]);
         return wrapForGolden(subject());
       },
     );
