@@ -109,6 +109,7 @@ void main() {
     balanceCubit = _MockSellBalanceCubit();
 
     when(() => converterCubit.state).thenReturn(const SellConverterState());
+    when(() => converterCubit.onSharesChanged(any())).thenReturn(null);
     when(() => paymentInfoCubit.state).thenReturn(const SellPaymentInfoInitial());
     when(() => selectedBankAccountCubit.state).thenReturn(null);
     when(() => balanceCubit.state).thenReturn(zeroBalance());
@@ -153,9 +154,14 @@ void main() {
     );
 
     goldenTest(
-      'holding after Kauf — Max uses 85194',
+      'holding after Kauf — Max fills 85194',
       fileName: 'sell_holding_kauf',
       constraints: phoneConstraints,
+      whilePerforming: (tester) async {
+        await tester.tap(find.text('MAX'));
+        await tester.pump();
+        return null;
+      },
       builder: () {
         when(() => balanceCubit.state).thenReturn(
           Balance(
@@ -171,9 +177,14 @@ void main() {
     );
 
     goldenTest(
-      'holding after Verkauf — Max uses 77994',
+      'holding after Verkauf — Max fills 77994',
       fileName: 'sell_holding_verkauf',
       constraints: phoneConstraints,
+      whilePerforming: (tester) async {
+        await tester.tap(find.text('MAX'));
+        await tester.pump();
+        return null;
+      },
       builder: () {
         when(() => balanceCubit.state).thenReturn(
           Balance(
