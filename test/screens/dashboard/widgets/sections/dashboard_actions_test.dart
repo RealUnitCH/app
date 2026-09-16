@@ -103,10 +103,7 @@ void main() {
     group('unlocked', () {
       setUp(() {
         when(() => settingsBloc.state).thenReturn(
-          const SettingsState(
-            insiderFeaturesUnlocked: true,
-            walletFeaturePay: true,
-          ),
+          const SettingsState(walletFeaturePay: true),
         );
       });
 
@@ -170,10 +167,7 @@ void main() {
           expect(actionButtonByLabel(S.current.send), findsNothing);
 
           controller.add(
-            const SettingsState(
-              insiderFeaturesUnlocked: true,
-              walletFeaturePay: true,
-            ),
+            const SettingsState(walletFeaturePay: true),
           );
           // Two pumps: the first delivers the stream event (async broadcast
           // delivery updates the mock's state and marks the element dirty),

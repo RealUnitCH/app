@@ -13,10 +13,10 @@ class RealUnitWalletFeaturesDto {
 
   factory RealUnitWalletFeaturesDto.fromJson(Map<String, dynamic> json) {
     return RealUnitWalletFeaturesDto(
-      pay: json['pay'] == true,
-      send: json['send'] == true,
-      promoCode: json['promoCode'] == true,
-      referral: json['referral'] == true,
+      pay: json['pay'] as bool? ?? false,
+      send: json['send'] as bool? ?? false,
+      promoCode: json['promoCode'] as bool? ?? false,
+      referral: json['referral'] as bool? ?? false,
     );
   }
 }
