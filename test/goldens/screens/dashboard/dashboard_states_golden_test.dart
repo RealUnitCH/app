@@ -233,10 +233,6 @@ void main() {
     // Default: no recent transactions. Overridden per-builder where needed.
     when(() => transactionRepository.watchTransactionsOfAssets(any(), any(), any()))
         .thenAnswer((_) => const Stream<List<Transaction>>.empty());
-    if (GetIt.instance.isRegistered<SettingsBloc>()) {
-      GetIt.instance.unregister<SettingsBloc>();
-    }
-    GetIt.instance.registerSingleton<SettingsBloc>(settingsBloc);
   });
 
   Widget buildSubject() => MultiBlocProvider(
@@ -427,14 +423,9 @@ void main() {
         when(() => settingsBloc.state).thenReturn(
           const SettingsState(
             language: Language.de,
-            insiderFeaturesUnlocked: true,
-            insiderReferralEnabled: true,
+            walletFeatureReferral: true,
           ),
         );
-        if (GetIt.instance.isRegistered<SettingsBloc>()) {
-          GetIt.instance.unregister<SettingsBloc>();
-        }
-        GetIt.instance.registerSingleton<SettingsBloc>(settingsBloc);
         when(() => balanceCubit.state).thenReturn(heldBalance());
         final referral = MockRealUnitReferralService();
         when(() => referral.getSummary()).thenAnswer(
