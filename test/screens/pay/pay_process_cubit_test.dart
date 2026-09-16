@@ -1001,6 +1001,7 @@ void main() {
     final state = await retry as PayProcessPayRetry;
 
     expect(state.reason, PayRetryReason.transient);
+    expect(state.message, isNull);
     expect(cubit.swapCompleted, isTrue);
     await cubit.close();
   });

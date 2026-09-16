@@ -284,7 +284,14 @@ class PayProcessCubit extends Cubit<PayProcessState> {
     } catch (e) {
       if (isClosed) return;
       if (_swapCompleted) {
-        emit(PayProcessPayRetry(PayRetryReason.transient, message: ApiException.userFacingMessage(e)));
+        // API errors 1:1; transport/timeout has no user copy — the retry sheet
+        // falls back to payRetryTransient (ZCHF stays until pay succeeds).
+        emit(
+          PayProcessPayRetry(
+            PayRetryReason.transient,
+            message: e is ApiException ? e.message : null,
+          ),
+        );
         return;
       }
       emit(PayProcessFailure(PayProcessFailureReason.generic, message: ApiException.userFacingMessage(e)));
