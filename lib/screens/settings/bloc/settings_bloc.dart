@@ -20,6 +20,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
            networkMode: _settingsRepository.networkMode,
            insiderFeaturesUnlocked: _settingsRepository.insiderFeaturesUnlocked,
            insiderPayEnabled: _settingsRepository.insiderPayEnabled,
+           insiderSendEnabled: _settingsRepository.insiderSendEnabled,
+           insiderReferralEnabled: _settingsRepository.insiderReferralEnabled,
+           insiderBonusEnabled: _settingsRepository.insiderBonusEnabled,
          ),
        ) {
     on<SetCurrencyEvent>(_onSetCurrencyEvent);
@@ -29,7 +32,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<SetNetworkModeEvent>(_onSetNetworkModeEvent);
     on<ToggleHideAmountEvent>(_onToggleHideAmountEvent);
     on<UnlockInsiderFeaturesEvent>(_onUnlockInsiderFeaturesEvent);
-    on<SetInsiderPayEnabledEvent>(_onSetInsiderPayEnabledEvent);
+    on<SetInsiderFeatureEnabledEvent>(_onSetInsiderFeatureEnabledEvent);
   }
 
   final SettingsRepository _settingsRepository;
@@ -88,11 +91,23 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     emit(state.copyWith(insiderFeaturesUnlocked: true));
   }
 
-  void _onSetInsiderPayEnabledEvent(
-    SetInsiderPayEnabledEvent event,
+  void _onSetInsiderFeatureEnabledEvent(
+    SetInsiderFeatureEnabledEvent event,
     Emitter<SettingsState> emit,
   ) {
-    _settingsRepository.insiderPayEnabled = event.enabled;
-    emit(state.copyWith(insiderPayEnabled: event.enabled));
+    switch (event.feature) {
+      case InsiderFeature.pay:
+        _settingsRepository.insiderPayEnabled = event.enabled;
+        emit(state.copyWith(insiderPayEnabled: event.enabled));
+      case InsiderFeature.send:
+        _settingsRepository.insiderSendEnabled = event.enabled;
+        emit(state.copyWith(insiderSendEnabled: event.enabled));
+      case InsiderFeature.referral:
+        _settingsRepository.insiderReferralEnabled = event.enabled;
+        emit(state.copyWith(insiderReferralEnabled: event.enabled));
+      case InsiderFeature.bonus:
+        _settingsRepository.insiderBonusEnabled = event.enabled;
+        emit(state.copyWith(insiderBonusEnabled: event.enabled));
+    }
   }
 }

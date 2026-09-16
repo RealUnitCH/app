@@ -13,8 +13,6 @@ class DashboardActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settingsState = context.watch<SettingsBloc>().state;
-    final insiderFeaturesUnlocked = settingsState.insiderFeaturesUnlocked;
-    final insiderPayEnabled = settingsState.insiderPayEnabled;
 
     return Row(
       spacing: 10,
@@ -41,7 +39,7 @@ class DashboardActions extends StatelessWidget {
             onPressed: () => context.pushNamed(AppRoutes.sell),
           ),
         ),
-        if (insiderFeaturesUnlocked && insiderPayEnabled)
+        if (settingsState.insiderPayOn)
           Expanded(
             child: ActionButton(
               icon: Icon(

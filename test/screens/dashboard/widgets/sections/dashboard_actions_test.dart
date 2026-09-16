@@ -141,6 +141,30 @@ void main() {
       });
     });
 
+    group('unlocked, send on', () {
+      setUp(() {
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(
+            insiderFeaturesUnlocked: true,
+            insiderSendEnabled: true,
+          ),
+        );
+      });
+
+      testWidgets(
+        'renders only buy and sell; send remains absent and pay stays off',
+        (tester) async {
+          await pumpActions(tester);
+
+          expect(actionButtonByLabel(S.current.buy), findsOneWidget);
+          expect(actionButtonByLabel(S.current.sell), findsOneWidget);
+          expect(actionButtonByLabel(S.current.pay), findsNothing);
+          expect(actionButtonByLabel(S.current.send), findsNothing);
+          expect(find.byType(Expanded), findsNWidgets(2));
+        },
+      );
+    });
+
     group('unlocked, pay on', () {
       setUp(() {
         when(() => settingsBloc.state).thenReturn(

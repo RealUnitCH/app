@@ -110,6 +110,12 @@ void main() {
           GetIt.instance.unregister<RealUnitReferralService>();
         }
         GetIt.instance.registerSingleton<RealUnitReferralService>(referral);
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(
+            insiderFeaturesUnlocked: true,
+            insiderReferralEnabled: true,
+          ),
+        );
         return buildSubject();
       },
     );

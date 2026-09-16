@@ -49,6 +49,12 @@ void main() {
   }
 
   testWidgets('shows Empfehlungen when the API gate is open', (tester) async {
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(
+        insiderFeaturesUnlocked: true,
+        insiderReferralEnabled: true,
+      ),
+    );
     when(() => referral.getSummary()).thenAnswer(
       (_) async => const ReferralSummaryDto(
         eligible: true,
@@ -72,6 +78,26 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('hides Empfehlungen when eligible but referral toggle is off', (
+    tester,
+  ) async {
+    when(() => referral.getSummary()).thenAnswer(
+      (_) async => const ReferralSummaryDto(
+        eligible: true,
+        termsAccepted: true,
+        openCount: 0,
+        creditedCount: 0,
+        realuSum: 0,
+        chfSum: 0,
+      ),
+    );
+
+    await pumpSettings(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Empfehlungen'), findsNothing);
   });
 
   testWidgets('hides Empfehlungen when the API gate is closed', (tester) async {

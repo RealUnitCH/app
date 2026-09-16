@@ -176,6 +176,84 @@ void main() {
       });
     });
 
+    group('insiderSendEnabled', () {
+      test('defaults to false when not stored', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.insiderSendEnabled, isFalse);
+      });
+
+      test('returns the stored value when set', () async {
+        SharedPreferences.setMockInitialValues({'insiderSendEnabled': true});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.insiderSendEnabled, isTrue);
+      });
+
+      test('setter persists', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        repo.insiderSendEnabled = true;
+        await Future<void>.delayed(Duration.zero);
+
+        expect(repo.insiderSendEnabled, isTrue);
+      });
+    });
+
+    group('insiderReferralEnabled', () {
+      test('defaults to false when not stored', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.insiderReferralEnabled, isFalse);
+      });
+
+      test('returns the stored value when set', () async {
+        SharedPreferences.setMockInitialValues({'insiderReferralEnabled': true});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.insiderReferralEnabled, isTrue);
+      });
+
+      test('setter persists', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        repo.insiderReferralEnabled = true;
+        await Future<void>.delayed(Duration.zero);
+
+        expect(repo.insiderReferralEnabled, isTrue);
+      });
+    });
+
+    group('insiderBonusEnabled', () {
+      test('defaults to false when not stored', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.insiderBonusEnabled, isFalse);
+      });
+
+      test('returns the stored value when set', () async {
+        SharedPreferences.setMockInitialValues({'insiderBonusEnabled': true});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.insiderBonusEnabled, isTrue);
+      });
+
+      test('setter persists', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        repo.insiderBonusEnabled = true;
+        await Future<void>.delayed(Duration.zero);
+
+        expect(repo.insiderBonusEnabled, isTrue);
+      });
+    });
+
     group('networkMode', () {
       test('defaults to mainnet when no value is stored', () async {
         SharedPreferences.setMockInitialValues({});

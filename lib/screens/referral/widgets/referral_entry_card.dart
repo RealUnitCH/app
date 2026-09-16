@@ -5,6 +5,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/screens/referral/cubit/referral_eligibility_cubit.dart';
 import 'package:realunit_wallet/screens/referral/widgets/referral_eligibility_resume.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -44,19 +45,26 @@ class _ReferralEntryCardView extends StatelessWidget {
         final eligible = state is ReferralEligibilityLoaded && state.eligible;
         if (!eligible) return const SizedBox.shrink();
 
-        final s = S.of(context);
-        return OutlinedTile(
-          leading: const ExcludeSemantics(
-            child: Icon(
-              Icons.card_giftcard_outlined,
-              color: RealUnitColors.realUnitBlue,
-              size: 24,
-            ),
-          ),
-          title: s.referrals,
-          subtitle: s.referralsSubtitle,
-          trailingIcon: Icons.chevron_right_rounded,
-          onTap: () => context.pushNamed(SettingsRoutes.referral),
+        return BlocBuilder<SettingsBloc, SettingsState>(
+          bloc: getIt<SettingsBloc>(),
+          builder: (context, settingsState) {
+            if (!settingsState.insiderReferralOn) return const SizedBox.shrink();
+
+            final s = S.of(context);
+            return OutlinedTile(
+              leading: const ExcludeSemantics(
+                child: Icon(
+                  Icons.card_giftcard_outlined,
+                  color: RealUnitColors.realUnitBlue,
+                  size: 24,
+                ),
+              ),
+              title: s.referrals,
+              subtitle: s.referralsSubtitle,
+              trailingIcon: Icons.chevron_right_rounded,
+              onTap: () => context.pushNamed(SettingsRoutes.referral),
+            );
+          },
         );
       },
     );

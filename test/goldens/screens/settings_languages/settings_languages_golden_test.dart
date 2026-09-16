@@ -29,6 +29,9 @@ void main() {
     when(() => settingsRepo.networkMode).thenReturn(NetworkMode.mainnet);
     when(() => settingsRepo.insiderFeaturesUnlocked).thenReturn(false);
     when(() => settingsRepo.insiderPayEnabled).thenReturn(false);
+    when(() => settingsRepo.insiderSendEnabled).thenReturn(false);
+    when(() => settingsRepo.insiderReferralEnabled).thenReturn(false);
+    when(() => settingsRepo.insiderBonusEnabled).thenReturn(false);
     when(() => langRepo.getEnabled())
         .thenAnswer((_) async => const [Language.en, Language.de]);
     settingsBloc = SettingsBloc(settingsRepo, () async {});

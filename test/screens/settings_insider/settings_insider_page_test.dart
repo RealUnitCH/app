@@ -39,46 +39,169 @@ void main() {
     );
   });
 
-  testWidgets('Pay row and Switch are present', (tester) async {
+  testWidgets('four feature rows and Switches are present and default off', (
+    tester,
+  ) async {
     await pumpPage(tester);
     await tester.pumpAndSettle();
 
     expect(find.text(S.current.pay), findsOneWidget);
-    expect(find.byType(Switch), findsOneWidget);
+    expect(find.text(S.current.send), findsOneWidget);
+    expect(find.text(S.current.settingsInsiderReferral), findsOneWidget);
+    expect(find.text(S.current.settingsInsiderBonus), findsOneWidget);
+    expect(find.byType(Switch), findsNWidgets(4));
+    expect(tester.widget<Switch>(find.byType(Switch).at(0)).value, isFalse);
+    expect(tester.widget<Switch>(find.byType(Switch).at(1)).value, isFalse);
+    expect(tester.widget<Switch>(find.byType(Switch).at(2)).value, isFalse);
+    expect(tester.widget<Switch>(find.byType(Switch).at(3)).value, isFalse);
   });
 
-  testWidgets('tapping Pay text dispatches SetInsiderPayEnabledEvent(true) once', (
+  testWidgets(
+    'tapping Pay text dispatches SetInsiderFeatureEnabledEvent(pay, true) once',
+    (tester) async {
+      await pumpPage(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(S.current.pay));
+      await tester.pump();
+
+      verify(
+        () => settingsBloc.add(
+          const SetInsiderFeatureEnabledEvent(InsiderFeature.pay, true),
+        ),
+      ).called(1);
+    },
+  );
+
+  testWidgets(
+    'tapping Send text dispatches SetInsiderFeatureEnabledEvent(send, true) once',
+    (tester) async {
+      await pumpPage(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(S.current.send));
+      await tester.pump();
+
+      verify(
+        () => settingsBloc.add(
+          const SetInsiderFeatureEnabledEvent(InsiderFeature.send, true),
+        ),
+      ).called(1);
+    },
+  );
+
+  testWidgets(
+    'tapping Referral text dispatches SetInsiderFeatureEnabledEvent(referral, true) once',
+    (tester) async {
+      await pumpPage(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(S.current.settingsInsiderReferral));
+      await tester.pump();
+
+      verify(
+        () => settingsBloc.add(
+          const SetInsiderFeatureEnabledEvent(InsiderFeature.referral, true),
+        ),
+      ).called(1);
+    },
+  );
+
+  testWidgets(
+    'tapping Bonus text dispatches SetInsiderFeatureEnabledEvent(bonus, true) once',
+    (tester) async {
+      await pumpPage(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(S.current.settingsInsiderBonus));
+      await tester.pump();
+
+      verify(
+        () => settingsBloc.add(
+          const SetInsiderFeatureEnabledEvent(InsiderFeature.bonus, true),
+        ),
+      ).called(1);
+    },
+  );
+
+  testWidgets(
+    'tapping the Pay Switch dispatches SetInsiderFeatureEnabledEvent(pay, true) once',
+    (tester) async {
+      await pumpPage(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(Switch).at(0), warnIfMissed: false);
+      await tester.pump();
+
+      verify(
+        () => settingsBloc.add(
+          const SetInsiderFeatureEnabledEvent(InsiderFeature.pay, true),
+        ),
+      ).called(1);
+    },
+  );
+
+  testWidgets('when insiderPayEnabled is true, Switch.value is true', (
     tester,
   ) async {
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(insiderPayEnabled: true),
+    );
+
     await pumpPage(tester);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text(S.current.pay));
-    await tester.pump();
-
-    verify(() => settingsBloc.add(const SetInsiderPayEnabledEvent(true))).called(1);
+    expect(tester.widget<Switch>(find.byType(Switch).at(0)).value, isTrue);
+    expect(tester.widget<Switch>(find.byType(Switch).at(1)).value, isFalse);
+    expect(tester.widget<Switch>(find.byType(Switch).at(2)).value, isFalse);
+    expect(tester.widget<Switch>(find.byType(Switch).at(3)).value, isFalse);
   });
 
-  testWidgets('tapping the Pay Switch dispatches SetInsiderPayEnabledEvent(true) once', (
+  testWidgets('when insiderSendEnabled is true, Switch.value is true', (
     tester,
   ) async {
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(insiderSendEnabled: true),
+    );
+
     await pumpPage(tester);
     await tester.pumpAndSettle();
 
-    // Switch is IgnorePointer (row owns the tap); the hit must pass through.
-    await tester.tap(find.byType(Switch), warnIfMissed: false);
-    await tester.pump();
-
-    verify(() => settingsBloc.add(const SetInsiderPayEnabledEvent(true))).called(1);
+    expect(tester.widget<Switch>(find.byType(Switch).at(0)).value, isFalse);
+    expect(tester.widget<Switch>(find.byType(Switch).at(1)).value, isTrue);
+    expect(tester.widget<Switch>(find.byType(Switch).at(2)).value, isFalse);
+    expect(tester.widget<Switch>(find.byType(Switch).at(3)).value, isFalse);
   });
 
-  testWidgets('when insiderPayEnabled is true, Switch.value is true', (tester) async {
-    when(() => settingsBloc.state)
-        .thenReturn(const SettingsState(insiderPayEnabled: true));
+  testWidgets('when insiderReferralEnabled is true, Switch.value is true', (
+    tester,
+  ) async {
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(insiderReferralEnabled: true),
+    );
 
     await pumpPage(tester);
     await tester.pumpAndSettle();
 
-    expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
+    expect(tester.widget<Switch>(find.byType(Switch).at(0)).value, isFalse);
+    expect(tester.widget<Switch>(find.byType(Switch).at(1)).value, isFalse);
+    expect(tester.widget<Switch>(find.byType(Switch).at(2)).value, isTrue);
+    expect(tester.widget<Switch>(find.byType(Switch).at(3)).value, isFalse);
+  });
+
+  testWidgets('when insiderBonusEnabled is true, Switch.value is true', (
+    tester,
+  ) async {
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(insiderBonusEnabled: true),
+    );
+
+    await pumpPage(tester);
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<Switch>(find.byType(Switch).at(0)).value, isFalse);
+    expect(tester.widget<Switch>(find.byType(Switch).at(1)).value, isFalse);
+    expect(tester.widget<Switch>(find.byType(Switch).at(2)).value, isFalse);
+    expect(tester.widget<Switch>(find.byType(Switch).at(3)).value, isTrue);
   });
 }

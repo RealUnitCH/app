@@ -23,6 +23,9 @@ void main() {
     when(() => repo.networkMode).thenReturn(NetworkMode.mainnet);
     when(() => repo.insiderFeaturesUnlocked).thenReturn(false);
     when(() => repo.insiderPayEnabled).thenReturn(false);
+    when(() => repo.insiderSendEnabled).thenReturn(false);
+    when(() => repo.insiderReferralEnabled).thenReturn(false);
+    when(() => repo.insiderBonusEnabled).thenReturn(false);
   });
 
   SettingsBloc build() => SettingsBloc(
@@ -39,6 +42,9 @@ void main() {
       when(() => repo.networkMode).thenReturn(NetworkMode.testnet);
       when(() => repo.insiderFeaturesUnlocked).thenReturn(true);
       when(() => repo.insiderPayEnabled).thenReturn(true);
+      when(() => repo.insiderSendEnabled).thenReturn(false);
+      when(() => repo.insiderReferralEnabled).thenReturn(false);
+      when(() => repo.insiderBonusEnabled).thenReturn(false);
 
       final bloc = build();
 
@@ -48,6 +54,9 @@ void main() {
       expect(bloc.state.hideAmounts, isFalse);
       expect(bloc.state.insiderFeaturesUnlocked, isTrue);
       expect(bloc.state.insiderPayEnabled, isTrue);
+      expect(bloc.state.insiderSendEnabled, isFalse);
+      expect(bloc.state.insiderReferralEnabled, isFalse);
+      expect(bloc.state.insiderBonusEnabled, isFalse);
     });
 
     blocTest<SettingsBloc, SettingsState>(
@@ -180,15 +189,23 @@ void main() {
       verify: (bloc) {
         expect(bloc.state.insiderFeaturesUnlocked, isTrue);
         expect(bloc.state.insiderPayEnabled, isFalse);
+        expect(bloc.state.insiderSendEnabled, isFalse);
+        expect(bloc.state.insiderReferralEnabled, isFalse);
+        expect(bloc.state.insiderBonusEnabled, isFalse);
         verify(() => repo.insiderFeaturesUnlocked = true).called(1);
         verifyNever(() => repo.insiderPayEnabled = any());
+        verifyNever(() => repo.insiderSendEnabled = any());
+        verifyNever(() => repo.insiderReferralEnabled = any());
+        verifyNever(() => repo.insiderBonusEnabled = any());
       },
     );
 
     blocTest<SettingsBloc, SettingsState>(
-      'SetInsiderPayEnabledEvent(true) persists and emits',
+      'SetInsiderFeatureEnabledEvent(pay, true) persists and emits',
       build: build,
-      act: (bloc) => bloc.add(const SetInsiderPayEnabledEvent(true)),
+      act: (bloc) => bloc.add(
+        const SetInsiderFeatureEnabledEvent(InsiderFeature.pay, true),
+      ),
       verify: (bloc) {
         expect(bloc.state.insiderPayEnabled, isTrue);
         verify(() => repo.insiderPayEnabled = true).called(1);
@@ -196,13 +213,90 @@ void main() {
     );
 
     blocTest<SettingsBloc, SettingsState>(
-      'SetInsiderPayEnabledEvent(false) persists and emits',
+      'SetInsiderFeatureEnabledEvent(pay, false) persists and emits',
       build: build,
       seed: () => const SettingsState(insiderPayEnabled: true),
-      act: (bloc) => bloc.add(const SetInsiderPayEnabledEvent(false)),
+      act: (bloc) => bloc.add(
+        const SetInsiderFeatureEnabledEvent(InsiderFeature.pay, false),
+      ),
       verify: (bloc) {
         expect(bloc.state.insiderPayEnabled, isFalse);
         verify(() => repo.insiderPayEnabled = false).called(1);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent(send, true) persists and emits',
+      build: build,
+      act: (bloc) => bloc.add(
+        const SetInsiderFeatureEnabledEvent(InsiderFeature.send, true),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.insiderSendEnabled, isTrue);
+        verify(() => repo.insiderSendEnabled = true).called(1);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent(send, false) persists and emits',
+      build: build,
+      seed: () => const SettingsState(insiderSendEnabled: true),
+      act: (bloc) => bloc.add(
+        const SetInsiderFeatureEnabledEvent(InsiderFeature.send, false),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.insiderSendEnabled, isFalse);
+        verify(() => repo.insiderSendEnabled = false).called(1);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent(referral, true) persists and emits',
+      build: build,
+      act: (bloc) => bloc.add(
+        const SetInsiderFeatureEnabledEvent(InsiderFeature.referral, true),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.insiderReferralEnabled, isTrue);
+        verify(() => repo.insiderReferralEnabled = true).called(1);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent(referral, false) persists and emits',
+      build: build,
+      seed: () => const SettingsState(insiderReferralEnabled: true),
+      act: (bloc) => bloc.add(
+        const SetInsiderFeatureEnabledEvent(InsiderFeature.referral, false),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.insiderReferralEnabled, isFalse);
+        verify(() => repo.insiderReferralEnabled = false).called(1);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent(bonus, true) persists and emits',
+      build: build,
+      act: (bloc) => bloc.add(
+        const SetInsiderFeatureEnabledEvent(InsiderFeature.bonus, true),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.insiderBonusEnabled, isTrue);
+        verify(() => repo.insiderBonusEnabled = true).called(1);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent(bonus, false) persists and emits',
+      build: build,
+      seed: () => const SettingsState(insiderBonusEnabled: true),
+      act: (bloc) => bloc.add(
+        const SetInsiderFeatureEnabledEvent(InsiderFeature.bonus, false),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.insiderBonusEnabled, isFalse);
+        verify(() => repo.insiderBonusEnabled = false).called(1);
       },
     );
   });

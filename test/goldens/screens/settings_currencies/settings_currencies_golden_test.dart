@@ -28,6 +28,9 @@ void main() {
     when(() => settingsRepo.networkMode).thenReturn(NetworkMode.mainnet);
     when(() => settingsRepo.insiderFeaturesUnlocked).thenReturn(false);
     when(() => settingsRepo.insiderPayEnabled).thenReturn(false);
+    when(() => settingsRepo.insiderSendEnabled).thenReturn(false);
+    when(() => settingsRepo.insiderReferralEnabled).thenReturn(false);
+    when(() => settingsRepo.insiderBonusEnabled).thenReturn(false);
     when(() => fiatRepo.getAll())
         .thenAnswer((_) async => const [Currency.chf, Currency.eur]);
     settingsBloc = SettingsBloc(settingsRepo, () async {});

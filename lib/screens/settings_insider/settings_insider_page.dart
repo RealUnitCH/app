@@ -19,27 +19,58 @@ class SettingsInsiderPage extends StatelessWidget {
         bloc: getIt<SettingsBloc>(),
         builder: (context, state) => SettingsSections(
           settings: [
-            SettingOption(
+            _featureRow(
               title: S.of(context).pay,
-              leading: const Icon(
-                Icons.qr_code_scanner_rounded,
-                size: 24,
-                color: RealUnitColors.realUnitBlue,
-              ),
-              trailing: IgnorePointer(
-                child: Switch(
-                  value: state.insiderPayEnabled,
-                  onChanged: (_) {},
-                  activeTrackColor: RealUnitColors.realUnitBlue,
-                ),
-              ),
-              onTap: () => getIt<SettingsBloc>().add(
-                SetInsiderPayEnabledEvent(!state.insiderPayEnabled),
-              ),
+              icon: Icons.qr_code_scanner_rounded,
+              feature: InsiderFeature.pay,
+              enabled: state.insiderPayEnabled,
+            ),
+            _featureRow(
+              title: S.of(context).send,
+              icon: Icons.send_rounded,
+              feature: InsiderFeature.send,
+              enabled: state.insiderSendEnabled,
+            ),
+            _featureRow(
+              title: S.of(context).settingsInsiderReferral,
+              icon: Icons.card_giftcard_outlined,
+              feature: InsiderFeature.referral,
+              enabled: state.insiderReferralEnabled,
+            ),
+            _featureRow(
+              title: S.of(context).settingsInsiderBonus,
+              icon: Icons.stars_outlined,
+              feature: InsiderFeature.bonus,
+              enabled: state.insiderBonusEnabled,
             ),
           ],
         ),
       ),
     ),
   );
+
+  SettingOption _featureRow({
+    required String title,
+    required IconData icon,
+    required InsiderFeature feature,
+    required bool enabled,
+  }) =>
+      SettingOption(
+        title: title,
+        leading: Icon(
+          icon,
+          size: 24,
+          color: RealUnitColors.realUnitBlue,
+        ),
+        trailing: IgnorePointer(
+          child: Switch(
+            value: enabled,
+            onChanged: (_) {},
+            activeTrackColor: RealUnitColors.realUnitBlue,
+          ),
+        ),
+        onTap: () => getIt<SettingsBloc>().add(
+          SetInsiderFeatureEnabledEvent(feature, !enabled),
+        ),
+      );
 }

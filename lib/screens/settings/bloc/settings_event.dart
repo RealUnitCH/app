@@ -58,11 +58,14 @@ final class UnlockInsiderFeaturesEvent extends SettingsEvent {
   const UnlockInsiderFeaturesEvent();
 }
 
-final class SetInsiderPayEnabledEvent extends SettingsEvent {
-  const SetInsiderPayEnabledEvent(this.enabled);
+enum InsiderFeature { pay, send, referral, bonus }
 
+final class SetInsiderFeatureEnabledEvent extends SettingsEvent {
+  const SetInsiderFeatureEnabledEvent(this.feature, this.enabled);
+
+  final InsiderFeature feature;
   final bool enabled;
 
   @override
-  List<Object> get props => [enabled];
+  List<Object> get props => [feature, enabled];
 }

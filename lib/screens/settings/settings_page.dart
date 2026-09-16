@@ -81,7 +81,9 @@ class SettingsPage extends StatelessWidget {
                             trailing: _forwardIcon,
                             onTap: () => context.pushNamed(SettingsRoutes.taxReport),
                           ),
-                          if (eligibility is ReferralEligibilityLoaded && eligibility.eligible)
+                          if (eligibility is ReferralEligibilityLoaded &&
+                              eligibility.eligible &&
+                              state.insiderReferralOn)
                             SettingOption(
                               title: S.of(context).referrals,
                               subtitle: S.of(context).referralsSubtitle,
