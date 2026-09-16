@@ -44,6 +44,22 @@ void main() {
       expect(dto.referral, isFalse);
     });
 
+    test('treats non-boolean values as false without throwing', () {
+      const json = {
+        'pay': 'true',
+        'send': 1,
+        'promoCode': '1',
+        'referral': true,
+      };
+
+      final dto = RealUnitWalletFeaturesDto.fromJson(json);
+
+      expect(dto.pay, isFalse);
+      expect(dto.send, isFalse);
+      expect(dto.promoCode, isFalse);
+      expect(dto.referral, isTrue);
+    });
+
     test('treats null values as false', () {
       const json = {
         'pay': null,
