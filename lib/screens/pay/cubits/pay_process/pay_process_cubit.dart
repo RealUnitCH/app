@@ -110,7 +110,8 @@ class PayProcessCubit extends Cubit<PayProcessState> {
   /// the common case (a few minutes of drift + the OCP/swap fees), so any
   /// adverse move stranded the user in ZCHF that could not cover settlement.
   /// 3% is a pragmatic headroom that absorbs ordinary drift while keeping the
-  /// over-swap small (leftover ZCHF simply stays in the wallet); a larger move
+  /// over-swap small (leftover from the 3% swap buffer is swept to DFX on the
+  /// pay transfer, not left on the user address); a larger move
   /// is caught explicitly and surfaced as a retryable
   /// [PayRetryReason.insufficientZchf] rather than a server-side failure.
   static const _slippageBuffer = 1.03;
