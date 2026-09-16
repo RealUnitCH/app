@@ -90,13 +90,28 @@ void main() {
     expect(find.text('Erhalten Sie 20 REALU pro Weiterempfehlung'), findsNothing);
   });
 
-  testWidgets('resume reloads the gate and can open the card', (tester) async {
-    when(() => settingsBloc.state).thenReturn(
-      const SettingsState(
-        insiderFeaturesUnlocked: true,
-        insiderReferralEnabled: true,
+  testWidgets('hides the dashboard card when eligible but the feature flag is off',
+      (tester) async {
+    when(() => service.getSummary()).thenAnswer(
+      (_) async => const ReferralSummaryDto(
+        eligible: true,
+        termsAccepted: true,
+        openCount: 0,
+        creditedCount: 0,
+        realuSum: 0,
+        chfSum: 0,
       ),
     );
+
+    await pumpCard(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Empfehlungen'), findsNothing);
+  });
+
+  testWidgets('resume reloads the gate and can open the card', (tester) async {
+    when(() => settingsBloc.state)
+        .thenReturn(const SettingsState(walletFeatureReferral: true));
     var calls = 0;
     when(() => service.getSummary()).thenAnswer((_) async {
       calls++;
@@ -132,12 +147,8 @@ void main() {
   });
 
   testWidgets('popping back to this route reloads the gate', (tester) async {
-    when(() => settingsBloc.state).thenReturn(
-      const SettingsState(
-        insiderFeaturesUnlocked: true,
-        insiderReferralEnabled: true,
-      ),
-    );
+    when(() => settingsBloc.state)
+        .thenReturn(const SettingsState(walletFeatureReferral: true));
     var calls = 0;
     when(() => service.getSummary()).thenAnswer((_) async {
       calls++;
@@ -207,12 +218,8 @@ void main() {
   testWidgets('polls while summary is unmounted and can open the card', (
     tester,
   ) async {
-    when(() => settingsBloc.state).thenReturn(
-      const SettingsState(
-        insiderFeaturesUnlocked: true,
-        insiderReferralEnabled: true,
-      ),
-    );
+    when(() => settingsBloc.state)
+        .thenReturn(const SettingsState(walletFeatureReferral: true));
     var calls = 0;
     when(() => service.getSummary()).thenAnswer((_) async {
       calls++;
@@ -346,12 +353,8 @@ void main() {
   });
 
   testWidgets('shows the dashboard card when the API says eligible', (tester) async {
-    when(() => settingsBloc.state).thenReturn(
-      const SettingsState(
-        insiderFeaturesUnlocked: true,
-        insiderReferralEnabled: true,
-      ),
-    );
+    when(() => settingsBloc.state)
+        .thenReturn(const SettingsState(walletFeatureReferral: true));
     when(() => service.getSummary()).thenAnswer(
       (_) async => const ReferralSummaryDto(
         eligible: true,
@@ -378,12 +381,8 @@ void main() {
   });
 
   testWidgets('taps through to the referral route when eligible', (tester) async {
-    when(() => settingsBloc.state).thenReturn(
-      const SettingsState(
-        insiderFeaturesUnlocked: true,
-        insiderReferralEnabled: true,
-      ),
-    );
+    when(() => settingsBloc.state)
+        .thenReturn(const SettingsState(walletFeatureReferral: true));
     when(() => service.getSummary()).thenAnswer(
       (_) async => const ReferralSummaryDto(
         eligible: true,
@@ -434,99 +433,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('referral-page'), findsOneWidget);
   });
-
-  testWidgets('hides the dashboard card when eligible but referral toggle is off', (
-    tester,
-  ) async {
-    when(() => service.getSummary()).thenAnswer(
-      (_) async => const ReferralSummaryDto(
-        eligible: true,
-        termsAccepted: true,
-        openCount: 0,
-        creditedCount: 0,
-        realuSum: 0,
-        chfSum: 0,
-      ),
-    );
-
-    await pumpCard(tester);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Empfehlungen'), findsNothing);
-  });
-
-  testWidgets('unlocked=false AND referral=true: Empfehlungen absent', (
-    tester,
-  ) async {
-    when(() => settingsBloc.state).thenReturn(
-      const SettingsState(insiderReferralEnabled: true),
-    );
-    when(() => service.getSummary()).thenAnswer(
-      (_) async => const ReferralSummaryDto(
-        eligible: true,
-        termsAccepted: true,
-        openCount: 0,
-        creditedCount: 0,
-        realuSum: 0,
-        chfSum: 0,
-      ),
-    );
-
-    await pumpCard(tester);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Empfehlungen'), findsNothing);
-  });
-
-  testWidgets('unlocked=true AND referral=false: Empfehlungen absent', (
-    tester,
-  ) async {
-    when(() => settingsBloc.state).thenReturn(
-      const SettingsState(insiderFeaturesUnlocked: true),
-    );
-    when(() => service.getSummary()).thenAnswer(
-      (_) async => const ReferralSummaryDto(
-        eligible: true,
-        termsAccepted: true,
-        openCount: 0,
-        creditedCount: 0,
-        realuSum: 0,
-        chfSum: 0,
-      ),
-    );
-
-    await pumpCard(tester);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Empfehlungen'), findsNothing);
-  });
-
-  testWidgets(
-    'hides the dashboard card when ineligible even if referral toggle is on',
-    (tester) async {
-      when(() => settingsBloc.state).thenReturn(
-        const SettingsState(
-          insiderFeaturesUnlocked: true,
-          insiderReferralEnabled: true,
-        ),
-      );
-      when(() => service.getSummary()).thenAnswer(
-        (_) async => const ReferralSummaryDto(
-          eligible: false,
-          termsAccepted: false,
-          openCount: 0,
-          creditedCount: 0,
-          realuSum: 0,
-          chfSum: 0,
-        ),
-      );
-
-      await pumpCard(tester);
-      await tester.pumpAndSettle();
-
-      expect(find.text('Empfehlungen'), findsNothing);
-    },
-  );
 
   testWidgets(
     'hides the dashboard card when the referral service is unregistered',

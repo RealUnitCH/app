@@ -33,53 +33,50 @@ class SettingsWalletAddressPage extends StatelessWidget {
             horizontal: 20.0,
             vertical: 12.0,
           ),
-          child: BlocBuilder<SettingsBloc, SettingsState>(
-            bloc: getIt<SettingsBloc>(),
-            builder: (context, settingsState) => ScrollableActionsLayout(
-              // QR + disclaimer is taller than a small phone at large text
-              // scale; do not pin the body to the leftover viewport height
-              // (centerBody) or the Column overflows instead of scrolling.
-              body: Column(
-                spacing: 40.0,
-                children: [
-                  Column(
-                    spacing: 16.0,
-                    children: [
-                      SvgPicture.asset(
-                        'assets/images/coins/REALU.svg',
-                        width: 70,
-                        height: 70,
-                      ),
-                      Text(
-                        '${S.of(context).realunitWallet} ${S.of(context).address}',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                    ],
-                  ),
-                  QRAddressWidget(
-                    uri: EthereumURI(address: walletAddress, amount: '').toString(),
-                    subtitle: walletAddress,
-                  ),
-                  Padding(
-                    padding: const .all(20.0),
-                    child: Text(
-                      S.of(context).walletAddressDisclaimer,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: RealUnitColors.neutral500,
-                      ),
-                      textAlign: .center,
+          child: ScrollableActionsLayout(
+            // QR + disclaimer is taller than a small phone at large text
+            // scale; do not pin the body to the leftover viewport height
+            // (centerBody) or the Column overflows instead of scrolling.
+            body: Column(
+              spacing: 40.0,
+              children: [
+                Column(
+                  spacing: 16.0,
+                  children: [
+                    SvgPicture.asset(
+                      'assets/images/coins/REALU.svg',
+                      width: 70,
+                      height: 70,
                     ),
+                    Text(
+                      '${S.of(context).realunitWallet} ${S.of(context).address}',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ],
+                ),
+                QRAddressWidget(
+                  uri: EthereumURI(address: walletAddress, amount: '').toString(),
+                  subtitle: walletAddress,
+                ),
+                Padding(
+                  padding: const .all(20.0),
+                  child: Text(
+                    S.of(context).walletAddressDisclaimer,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: RealUnitColors.neutral500,
+                    ),
+                    textAlign: .center,
                   ),
-                ],
-              ),
-              actions: [
-                if (settingsState.insiderSendOn)
-                  AppFilledButton(
-                    label: S.of(context).send,
-                    onPressed: () => context.pushNamed(AppRoutes.send),
-                  ),
+                ),
               ],
             ),
+            actions: [
+              if (context.watch<SettingsBloc>().state.walletFeatureSend)
+                AppFilledButton(
+                  label: S.of(context).send,
+                  onPressed: () => context.pushNamed(AppRoutes.send),
+                ),
+            ],
           ),
         ),
       ),
