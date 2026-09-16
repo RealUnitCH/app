@@ -181,7 +181,7 @@ void main() {
         expect(bloc.state.insiderFeaturesUnlocked, isTrue);
         expect(bloc.state.insiderPayEnabled, isFalse);
         verify(() => repo.insiderFeaturesUnlocked = true).called(1);
-        verifyNever(() => repo.insiderPayEnabled = true);
+        verifyNever(() => repo.insiderPayEnabled = any());
       },
     );
 

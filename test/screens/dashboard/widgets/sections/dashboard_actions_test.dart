@@ -100,6 +100,26 @@ void main() {
       });
     });
 
+    group('locked, pay on (unlocked=false AND pay=true)', () {
+      setUp(() {
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(insiderPayEnabled: true),
+        );
+      });
+
+      testWidgets(
+        'unlocked=false AND pay=true: renders only buy and sell; pay and send absent',
+        (tester) async {
+          await pumpActions(tester);
+
+          expect(actionButtonByLabel(S.current.buy), findsOneWidget);
+          expect(actionButtonByLabel(S.current.sell), findsOneWidget);
+          expect(actionButtonByLabel(S.current.pay), findsNothing);
+          expect(actionButtonByLabel(S.current.send), findsNothing);
+        },
+      );
+    });
+
     group('unlocked, pay off', () {
       setUp(() {
         when(() => settingsBloc.state).thenReturn(

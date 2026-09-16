@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -106,6 +106,23 @@ void main() {
 
     await tester.ensureVisible(find.text(S.current.pay));
     await tester.tap(find.text(S.current.pay));
+    await tester.pump();
+
+    verify(() => settingsBloc.add(const SetInsiderPayEnabledEvent(true))).called(1);
+  });
+
+  testWidgets('tapping the Pay Switch dispatches SetInsiderPayEnabledEvent(true) once', (
+    tester,
+  ) async {
+    when(() => settingsBloc.state)
+        .thenReturn(const SettingsState(insiderFeaturesUnlocked: true));
+
+    await pumpSettings(tester);
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.byType(Switch));
+    // Switch is IgnorePointer (row owns the tap); the hit must pass through.
+    await tester.tap(find.byType(Switch), warnIfMissed: false);
     await tester.pump();
 
     verify(() => settingsBloc.add(const SetInsiderPayEnabledEvent(true))).called(1);
