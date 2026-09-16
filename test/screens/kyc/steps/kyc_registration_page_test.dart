@@ -201,6 +201,30 @@ void main() {
 
       expect(find.byType(KycRegistrationView), findsOne);
     });
+
+    testWidgets('starts on the promo step when walletFeaturePromoCode is on', (
+      tester,
+    ) async {
+      final settingsBloc = MockSettingsBloc();
+      when(() => settingsBloc.state).thenReturn(
+        const SettingsState(walletFeaturePromoCode: true),
+      );
+      final getIt = GetIt.instance;
+      await getIt.unregister<SettingsBloc>();
+      getIt.registerSingleton<SettingsBloc>(settingsBloc);
+      addTearDown(() async {
+        await getIt.unregister<SettingsBloc>();
+        final restored = MockSettingsBloc();
+        when(() => restored.state).thenReturn(const SettingsState());
+        getIt.registerSingleton<SettingsBloc>(restored);
+      });
+
+      // ignore: prefer_const_constructors
+      await tester.pumpApp(KycRegistrationPage());
+      await tester.pump();
+
+      expect(find.byType(KycRegistrationReferralStep).hitTestable(), findsOne);
+    });
   });
 
   group('$KycRegistrationView', () {
