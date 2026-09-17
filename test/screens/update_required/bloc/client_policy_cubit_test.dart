@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
@@ -56,10 +55,10 @@ void main() {
     await db.close();
   });
 
-  Future<void> _waitLoaded() =>
+  Future<void> waitLoaded() =>
       cubit.stream.firstWhere((state) => state is ClientPolicyLoaded);
 
-  Future<Map<String, dynamic>> _readCache() async {
+  Future<Map<String, dynamic>> readCache() async {
     final raw = await cache.read(ClientPolicyCubit.cacheKey);
     expect(raw, isNotNull);
     return jsonDecode(raw!) as Map<String, dynamic>;
@@ -69,11 +68,11 @@ void main() {
     test(
       'empty reportUpgradeRequired caches forcedHard and does not fetch',
       () async {
-        final loaded = _waitLoaded();
+        final loaded = waitLoaded();
         cubit.reportUpgradeRequired(const UpgradeRequiredException());
         await loaded;
 
-        final stored = await _readCache();
+        final stored = await readCache();
         expect(stored['forcedHard'], isTrue);
         expect(stored['minSupportedVersion'], isNull);
         expect(service.fetchCount, 0);
@@ -84,13 +83,13 @@ void main() {
     test(
       'reportUpgradeRequired with min stores it and does not force-hard',
       () async {
-        final loaded = _waitLoaded();
+        final loaded = waitLoaded();
         cubit.reportUpgradeRequired(
           const UpgradeRequiredException(minSupportedVersion: '1.3.0'),
         );
         await loaded;
 
-        final stored = await _readCache();
+        final stored = await readCache();
         expect(stored['forcedHard'], isFalse);
         expect(stored['minSupportedVersion'], '1.3.0');
         expect(service.fetchCount, 0);
@@ -99,7 +98,7 @@ void main() {
     );
 
     test('refresh after forcedHard with none clears forcedHard', () async {
-      final loaded = _waitLoaded();
+      final loaded = waitLoaded();
       cubit.reportUpgradeRequired(const UpgradeRequiredException());
       await loaded;
       expect(cubit.severity, ClientPolicySeverity.hard);
@@ -205,11 +204,11 @@ void main() {
         installedVersion: () => '0.0.0',
       );
 
-      final loaded = _waitLoaded();
+      final loaded = waitLoaded();
       cubit.reportUpgradeRequired(const UpgradeRequiredException());
       await loaded;
 
-      final stored = await _readCache();
+      final stored = await readCache();
       expect(stored['forcedHard'], isFalse);
       expect(cubit.severity, isNot(ClientPolicySeverity.hard));
       expect(service.fetchCount, 0);
