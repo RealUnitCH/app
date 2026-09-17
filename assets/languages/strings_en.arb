@@ -182,7 +182,6 @@
   "payFailureBitboxRequired": "Please connect your BitBox to continue.",
   "payFailureGeneric": "Something went wrong with the payment. Please try again.",
   "payFailureInsufficientEth": "Could not provision enough ETH for network fees. Please try again later.",
-  "payFailureInsufficientZchf": "Your REALU holdings are not enough for this amount.",
   "payFailureQuoteExpired": "The payment quote expired. Please scan the code again.",
   "payFailureSignatureUnsupported": "This wallet cannot sign transactions. Switch to a software or BitBox wallet.",
   "payFailureTitle": "Payment failed",

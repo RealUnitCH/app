@@ -294,19 +294,6 @@ void main() {
       expect(find.byIcon(Icons.check_circle_rounded), findsNothing);
     });
 
-    testWidgets('insufficient-zchf failure emits a failure sheet', (tester) async {
-      await pumpWithState(
-        tester,
-        const PayProcessFailure(PayProcessFailureReason.insufficientZchf),
-      );
-
-      // payFailureTitle also renders as the progress-label behind the sheet,
-      // so it appears twice; the reason message is the sheet-unique assertion.
-      expect(find.text(S.current.payFailureTitle), findsWidgets);
-      expect(find.text(S.current.payFailureInsufficientZchf), findsOne);
-      expect(find.byIcon(Icons.error_rounded), findsOne);
-    });
-
     testWidgets('insufficient-eth failure message', (tester) async {
       await pumpWithState(
         tester,

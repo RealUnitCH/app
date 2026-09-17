@@ -117,7 +117,6 @@ class PayProcessView extends StatelessWidget {
       return apiText;
     }
     return switch (state.reason) {
-      PayProcessFailureReason.insufficientZchf => S.of(context).payFailureInsufficientZchf,
       PayProcessFailureReason.insufficientEth => S.of(context).payFailureInsufficientEth,
       PayProcessFailureReason.signatureUnsupported => S.of(context).payFailureSignatureUnsupported,
       PayProcessFailureReason.bitboxRequired => S.of(context).payFailureBitboxRequired,

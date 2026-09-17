@@ -3,10 +3,6 @@ part of 'pay_process_cubit.dart';
 /// Why the pay flow failed. Each reason maps to a localized, user-facing
 /// message in the view — the cubit carries the reason, not the copy.
 enum PayProcessFailureReason {
-  /// The swap quote came back invalid (e.g. not fundable for the requested
-  /// ZCHF amount after the slippage buffer).
-  insufficientZchf,
-
   /// Not enough ETH to cover gas and the faucet top-up did not arrive.
   insufficientEth,
 
