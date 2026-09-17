@@ -31,9 +31,10 @@ Column meaning:
   default plus its state variants), so most cells now carry a range rather
   than a single anchor. One Golden is a shared form widget rather than a
   screen: slot `268` is `PhoneNumberField` under `test/goldens/widgets/form/`.
-  Only `WebViewPage` (no active Golden) and `KycPageManager` (the orchestrator
-  has no Golden of its own — its states are the individual KYC pages) still
-  carry `—`. Slot ↔ Golden mapping in
+  `WebViewPage` (no active Golden) and `KycPageManager` (the orchestrator
+  has no Golden of its own — its states are the individual KYC pages) carry
+  `—`, as do `PayScanPage` and `PayProcessPage` (Visual-Regression goldens
+  exist, no handbook slot). Slot ↔ Golden mapping in
   `scripts/assemble-handbook-screenshots.sh`, slot ↔ HTML block in
   `docs/handbook/de/index.html`. See `docs/handbook/README.md`.
 
