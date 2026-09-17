@@ -75,6 +75,7 @@ class ClientPolicyCubit extends Cubit<ClientPolicyState> {
         fetchedAt: clock.now(),
       );
       await _writeCache(stored);
+      if (_policyEpoch != epoch) return;
       if (!isClosed) emit(ClientPolicyLoaded(stored));
       return;
     }
@@ -87,6 +88,7 @@ class ClientPolicyCubit extends Cubit<ClientPolicyState> {
     }
 
     final cached = await _readCache();
+    if (_policyEpoch != epoch) return;
     if (cached != null &&
         (cached.forcedHard || cached.severity == ClientPolicySeverity.hard)) {
       if (!isClosed) emit(ClientPolicyLoaded(cached));
