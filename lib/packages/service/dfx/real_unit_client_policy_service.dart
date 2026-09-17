@@ -4,6 +4,7 @@ import 'package:http/http.dart';
 import 'package:realunit_wallet/generated/release_info.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/client_policy/dto/real_unit_client_policy_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/client_policy/real_unit_client_policy.dart';
 
 /// Unauthenticated `GET /v1/realunit/client-policy`. Fail-open: any non-200,
@@ -32,10 +33,8 @@ class RealUnitClientPolicyService {
       if (response.statusCode != 200) return null;
       final map = _decodeObject(response.body);
       if (map == null) return null;
-      return RealUnitClientPolicy.fromJson(
-        map,
-        installed: _installedVersion(),
-      );
+      return RealUnitClientPolicyDto.fromJson(map)
+          .toDomain(installed: _installedVersion());
     } catch (_) {
       return null;
     }

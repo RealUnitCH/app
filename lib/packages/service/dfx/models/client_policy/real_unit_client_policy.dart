@@ -1,14 +1,15 @@
 import 'package:clock/clock.dart';
 import 'package:equatable/equatable.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/client_policy/dto/real_unit_client_policy_dto.dart';
 import 'package:realunit_wallet/packages/utils/marketing_version.dart';
 import 'package:realunit_wallet/packages/utils/store_url_allowlist.dart';
 
 /// Snapshot of `GET /v1/realunit/client-policy`.
 ///
-/// Live JSON is parsed by [fromJson] (API severity, with a 0.0.0 hard-skip).
-/// The Drift cache round-trips through [toCacheJson] / [fromCacheJson] and
-/// never persists live severity: offline either honours [forcedHard] or
-/// recomputes from the stored thresholds.
+/// Live JSON is parsed by [RealUnitClientPolicyDto.fromJson] (API severity,
+/// with a 0.0.0 hard-skip). The Drift cache round-trips through
+/// [toCacheJson] / [fromCacheJson] and never persists live severity: offline
+/// either honours [forcedHard] or recomputes from the stored thresholds.
 class RealUnitClientPolicy extends Equatable {
   final String? minSupportedVersion;
   final String? latestVersion;
@@ -29,34 +30,6 @@ class RealUnitClientPolicy extends Equatable {
     this.forcedHard = false,
     this.fetchedAt,
   });
-
-  factory RealUnitClientPolicy.fromJson(
-    Map<String, dynamic> json, {
-    required String installed,
-  }) {
-    final minSupportedVersion = _optionalString(json['minSupportedVersion']);
-    final latestVersion = _optionalString(json['latestVersion']);
-    final urls = _stringKeyedMap(json['storeUrls']) ?? const <String, dynamic>{};
-
-    return RealUnitClientPolicy(
-      minSupportedVersion: minSupportedVersion,
-      latestVersion: latestVersion,
-      severity: _liveSeverity(
-        json['severity'],
-        installed: installed,
-        minSupportedVersion: minSupportedVersion,
-        latestVersion: latestVersion,
-      ),
-      appStoreUrl: _storeUrl(urls['appStore'], StoreUrlChannel.appStore),
-      playStoreUrl: _storeUrl(urls['playStore'], StoreUrlChannel.playStore),
-      githubReleasesUrl: _storeUrl(
-        urls['githubReleases'],
-        StoreUrlChannel.githubReleases,
-      ),
-      forcedHard: false,
-      fetchedAt: clock.now(),
-    );
-  }
 
   factory RealUnitClientPolicy.fromCacheJson(
     Map<String, dynamic> json, {
@@ -142,6 +115,29 @@ class RealUnitClientPolicy extends Equatable {
       ];
 }
 
+extension RealUnitClientPolicyDtoMapper on RealUnitClientPolicyDto {
+  RealUnitClientPolicy toDomain({required String installed}) {
+    return RealUnitClientPolicy(
+      minSupportedVersion: minSupportedVersion,
+      latestVersion: latestVersion,
+      severity: _liveSeverity(
+        severity,
+        installed: installed,
+        minSupportedVersion: minSupportedVersion,
+        latestVersion: latestVersion,
+      ),
+      appStoreUrl: _storeUrl(appStore, StoreUrlChannel.appStore),
+      playStoreUrl: _storeUrl(playStore, StoreUrlChannel.playStore),
+      githubReleasesUrl: _storeUrl(
+        githubReleases,
+        StoreUrlChannel.githubReleases,
+      ),
+      forcedHard: false,
+      fetchedAt: clock.now(),
+    );
+  }
+}
+
 String? _optionalString(Object? value) {
   if (value is String && value.isNotEmpty) return value;
   return null;
@@ -150,14 +146,6 @@ String? _optionalString(Object? value) {
 String? _storeUrl(Object? raw, StoreUrlChannel channel) {
   if (raw is! String) return null;
   return parseAllowlistedStoreUrl(raw, channel);
-}
-
-Map<String, dynamic>? _stringKeyedMap(Object? value) {
-  if (value is Map<String, dynamic>) return value;
-  if (value is Map) {
-    return value.map((key, val) => MapEntry(key.toString(), val));
-  }
-  return null;
 }
 
 bool isZeroInstalled(String installed) {
