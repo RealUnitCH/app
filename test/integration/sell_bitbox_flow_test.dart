@@ -32,6 +32,7 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
@@ -154,7 +155,7 @@ void main() {
   // talks to this service object — there is no service-level stub between the
   // cubit and the HTTP boundary.
   RealUnitSellPaymentInfoService buildSellService(http.Client client) {
-    when(() => appStore.httpClient).thenReturn(client);
+    when(() => appStore.httpClient).thenReturn(RealUnitApiClient(client));
     return RealUnitSellPaymentInfoService(appStore, walletService);
   }
 
@@ -492,7 +493,7 @@ void main() {
             fail('unexpected request: ${request.url}');
           });
 
-          when(() => appStore.httpClient).thenReturn(client);
+          when(() => appStore.httpClient).thenReturn(RealUnitApiClient(client));
           final sellService = RealUnitSellPaymentInfoService(appStore, walletService);
           final realFaucet = DfxFaucetService(appStore, walletService);
           final realBlockchain = DfxBlockchainApiService(appStore, walletService);

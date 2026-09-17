@@ -1,6 +1,6 @@
 enum StoreUrlChannel { appStore, playStore, githubReleases }
 
-const _githubReleaseTagPattern = RegExp(r'^v\d+\.\d+\.\d+$');
+final _githubReleaseTagPattern = RegExp(r'^v\d+\.\d+\.\d+$');
 
 /// Returns the original URL if it is an allowlisted HTTPS store URL for [channel], else null.
 String? parseAllowlistedStoreUrl(String? raw, StoreUrlChannel channel) {

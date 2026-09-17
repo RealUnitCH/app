@@ -6,7 +6,7 @@ class MarketingVersion {
   const MarketingVersion(this.major, this.minor, this.patch);
 }
 
-const _marketingVersionPattern = RegExp(r'^(\d+)\.(\d+)\.(\d+)$');
+final _marketingVersionPattern = RegExp(r'^(\d+)\.(\d+)\.(\d+)$');
 
 /// Match `/^(\d+)\.(\d+)\.(\d+)$/` exactly. Null if missing or unparseable.
 /// `0.0.0` is a valid sentinel. Rejects `1.2`, `1.2.0-beta`, `1.2.24+42`.
