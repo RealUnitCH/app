@@ -137,9 +137,10 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
               : () async {
                   if (_navigating) return;
                   setState(() => _navigating = true);
+                  final navigator = Navigator.of(context);
                   bool? swapCompleted = false;
                   try {
-                    swapCompleted = await Navigator.of(context).push<bool>(
+                    swapCompleted = await navigator.push<bool>(
                       MaterialPageRoute<bool>(
                         builder: (_) => PayProcessPage(
                           paymentLinkId: state.paymentLinkId,
@@ -156,7 +157,7 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
                     }
                   }
                   if (mounted && swapCompleted != false) {
-                    Navigator.of(context).pop();
+                    navigator.pop();
                   }
                 },
           child: Text(S.of(context).payConfirmButton),
