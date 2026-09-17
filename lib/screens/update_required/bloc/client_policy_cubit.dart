@@ -73,6 +73,13 @@ class ClientPolicyCubit extends Cubit<ClientPolicyState> {
       return;
     }
 
+    final current = state;
+    if (current is ClientPolicyLoaded &&
+        (current.policy.severity == ClientPolicySeverity.hard ||
+            current.policy.forcedHard)) {
+      return;
+    }
+
     final cached = await _readCache();
     if (cached != null &&
         (cached.forcedHard || cached.severity == ClientPolicySeverity.hard)) {
@@ -80,7 +87,6 @@ class ClientPolicyCubit extends Cubit<ClientPolicyState> {
       return;
     }
 
-    final current = state;
     if (current is ClientPolicyLoaded &&
         current.policy.severity != ClientPolicySeverity.hard) {
       return;
@@ -106,7 +112,20 @@ class ClientPolicyCubit extends Cubit<ClientPolicyState> {
   Future<void> _persistUpgrade(UpgradeRequiredException e) async {
     final min = _nonEmpty(e.minSupportedVersion);
     final latest = _nonEmpty(e.latestVersion);
-    final forcedHard = min == null && latest == null;
+    var forcedHard = min == null && latest == null;
+    var severity = ClientPolicySeverity.hard;
+    final installed = _installedVersion();
+    if (isZeroInstalled(installed)) {
+      final recomputed = computeClientPolicySeverity(
+        installed: installed,
+        minSupportedVersion: min,
+        latestVersion: latest,
+      );
+      severity = recomputed == ClientPolicySeverity.hard
+          ? ClientPolicySeverity.none
+          : recomputed;
+      forcedHard = false;
+    }
     String? appStoreUrl;
     String? playStoreUrl;
     String? githubReleasesUrl;
@@ -127,7 +146,7 @@ class ClientPolicyCubit extends Cubit<ClientPolicyState> {
     final policy = RealUnitClientPolicy(
       minSupportedVersion: min,
       latestVersion: latest,
-      severity: ClientPolicySeverity.hard,
+      severity: severity,
       appStoreUrl: appStoreUrl,
       playStoreUrl: playStoreUrl,
       githubReleasesUrl: githubReleasesUrl,

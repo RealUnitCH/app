@@ -281,7 +281,7 @@ Future<void> setupBlocs() async {
   getIt.registerSingleton(clientPolicyCubit);
   getIt<AppStore>().httpClient.onUpgradeRequired =
       clientPolicyCubit.reportUpgradeRequired;
-  unawaited(clientPolicyCubit.initialize());
+  await clientPolicyCubit.initialize();
 }
 
 Future<bool> _existsDatabaseFile() async => File(await AppDatabase.getDatabasePath()).exists();

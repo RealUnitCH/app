@@ -8,6 +8,8 @@ import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 
+import 'package:realunit_wallet/setup/routing/effective_location.dart';
+
 export 'package:realunit_wallet/setup/routing/effective_location.dart';
 
 /// The outcome of the boot/lock navigation decision (see
@@ -289,14 +291,20 @@ void applyBootNavAction(
       return;
     case BootNavStay():
       // Already on a valid non-gate route — discard any stale resume capture.
-      // This is a post-unlock terminal landing: if a payment deeplink was
-      // stashed while locked, replay it as an imperative /pay push on top of
-      // the current location (the only navigation this branch performs when
-      // a stash exists).
+      // Hard-allowed locations must not replay /pay on top of receive / seed /
+      // pinGate / updateRequired; drop the stash instead. Elsewhere this is a
+      // post-unlock terminal landing and replays like today.
       onClearResume();
-      final payload = takePendingPaymentDeeplink();
-      if (payload != null) {
-        unawaited(router.pushNamed(AppRoutes.pay, extra: payload));
+      final path = Uri.parse(
+        effectiveLocation(router.routerDelegate.currentConfiguration),
+      ).path;
+      if (hardAllowedLocations.contains(path)) {
+        clearPendingPaymentDeeplink();
+      } else {
+        final payload = takePendingPaymentDeeplink();
+        if (payload != null) {
+          unawaited(router.pushNamed(AppRoutes.pay, extra: payload));
+        }
       }
       unawaited(bindPendingReferralCode(router));
       return;

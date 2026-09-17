@@ -67,13 +67,18 @@ class RealUnitClientPolicy extends Equatable {
     final forcedHard = json['forcedHard'] == true;
     final fetchedAtRaw = _optionalString(json['fetchedAt']);
 
-    final severity = forcedHard
-        ? ClientPolicySeverity.hard
-        : computeClientPolicySeverity(
-            installed: installed,
-            minSupportedVersion: minSupportedVersion,
-            latestVersion: latestVersion,
-          );
+    final severity = _skipHardOnZeroInstalled(
+      severity: forcedHard
+          ? ClientPolicySeverity.hard
+          : computeClientPolicySeverity(
+              installed: installed,
+              minSupportedVersion: minSupportedVersion,
+              latestVersion: latestVersion,
+            ),
+      installed: installed,
+      minSupportedVersion: minSupportedVersion,
+      latestVersion: latestVersion,
+    );
 
     return RealUnitClientPolicy(
       minSupportedVersion: minSupportedVersion,
@@ -155,7 +160,7 @@ Map<String, dynamic>? _stringKeyedMap(Object? value) {
   return null;
 }
 
-bool _isZeroInstalled(String installed) {
+bool isZeroInstalled(String installed) {
   if (installed == '0.0.0') return true;
   final parsed = parseMarketingVersion(installed);
   return parsed != null &&
@@ -164,36 +169,43 @@ bool _isZeroInstalled(String installed) {
       parsed.patch == 0;
 }
 
+ClientPolicySeverity _skipHardOnZeroInstalled({
+  required ClientPolicySeverity severity,
+  required String installed,
+  String? minSupportedVersion,
+  String? latestVersion,
+}) {
+  if (severity != ClientPolicySeverity.hard || !isZeroInstalled(installed)) {
+    return severity;
+  }
+  final recomputed = computeClientPolicySeverity(
+    installed: installed,
+    minSupportedVersion: minSupportedVersion,
+    latestVersion: latestVersion,
+  );
+  return recomputed == ClientPolicySeverity.hard
+      ? ClientPolicySeverity.none
+      : recomputed;
+}
+
 ClientPolicySeverity _liveSeverity(
   Object? raw, {
   required String installed,
   String? minSupportedVersion,
   String? latestVersion,
 }) {
-  ClientPolicySeverity severity;
-  if (raw == 'none') {
-    severity = ClientPolicySeverity.none;
-  } else if (raw == 'soft') {
-    severity = ClientPolicySeverity.soft;
-  } else if (raw == 'hard') {
-    severity = ClientPolicySeverity.hard;
-  } else {
-    severity = computeClientPolicySeverity(
-      installed: installed,
-      minSupportedVersion: minSupportedVersion,
-      latestVersion: latestVersion,
-    );
-  }
+  final token = raw is String ? raw.toLowerCase() : null;
+  final severity = switch (token) {
+    'none' => ClientPolicySeverity.none,
+    'soft' => ClientPolicySeverity.soft,
+    'hard' => ClientPolicySeverity.hard,
+    _ => ClientPolicySeverity.none,
+  };
 
-  if (severity == ClientPolicySeverity.hard && _isZeroInstalled(installed)) {
-    final recomputed = computeClientPolicySeverity(
-      installed: installed,
-      minSupportedVersion: minSupportedVersion,
-      latestVersion: latestVersion,
-    );
-    return recomputed == ClientPolicySeverity.hard
-        ? ClientPolicySeverity.none
-        : recomputed;
-  }
-  return severity;
+  return _skipHardOnZeroInstalled(
+    severity: severity,
+    installed: installed,
+    minSupportedVersion: minSupportedVersion,
+    latestVersion: latestVersion,
+  );
 }

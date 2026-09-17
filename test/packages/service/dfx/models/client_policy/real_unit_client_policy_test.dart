@@ -46,6 +46,63 @@ void main() {
         expect(policy.severity, isNot(ClientPolicySeverity.hard));
       },
     );
+
+    test('PascalCase None Soft Hard map to the enum', () {
+      expect(
+        RealUnitClientPolicy.fromJson({'severity': 'None'}, installed: '1.2.0')
+            .severity,
+        ClientPolicySeverity.none,
+      );
+      expect(
+        RealUnitClientPolicy.fromJson({'severity': 'Soft'}, installed: '1.2.0')
+            .severity,
+        ClientPolicySeverity.soft,
+      );
+      expect(
+        RealUnitClientPolicy.fromJson({'severity': 'Hard'}, installed: '1.2.0')
+            .severity,
+        ClientPolicySeverity.hard,
+      );
+    });
+
+    test('lowercase none soft hard map to the enum', () {
+      expect(
+        RealUnitClientPolicy.fromJson({'severity': 'none'}, installed: '1.2.0')
+            .severity,
+        ClientPolicySeverity.none,
+      );
+      expect(
+        RealUnitClientPolicy.fromJson({'severity': 'soft'}, installed: '1.2.0')
+            .severity,
+        ClientPolicySeverity.soft,
+      );
+      expect(
+        RealUnitClientPolicy.fromJson({'severity': 'hard'}, installed: '1.2.0')
+            .severity,
+        ClientPolicySeverity.hard,
+      );
+    });
+
+    test('missing severity does not become hard from a high min', () {
+      final policy = RealUnitClientPolicy.fromJson(
+        {'minSupportedVersion': '9.0.0'},
+        installed: '1.2.0',
+      );
+
+      expect(policy.severity, ClientPolicySeverity.none);
+    });
+
+    test('unknown severity does not become hard from a high min', () {
+      final policy = RealUnitClientPolicy.fromJson(
+        {
+          'severity': 'Unknown',
+          'minSupportedVersion': '9.0.0',
+        },
+        installed: '1.2.0',
+      );
+
+      expect(policy.severity, ClientPolicySeverity.none);
+    });
   });
 
   group('$RealUnitClientPolicy.fromCacheJson', () {
@@ -58,6 +115,25 @@ void main() {
       expect(policy.forcedHard, isTrue);
       expect(policy.minSupportedVersion, isNull);
       expect(policy.severity, ClientPolicySeverity.hard);
+    });
+
+    test('0.0.0 is never hard even with forcedHard true', () {
+      final withLatest = RealUnitClientPolicy.fromCacheJson(
+        {
+          'forcedHard': true,
+          'latestVersion': '1.4.0',
+        },
+        installed: '0.0.0',
+      );
+      expect(withLatest.severity, isNot(ClientPolicySeverity.hard));
+      expect(withLatest.severity, ClientPolicySeverity.soft);
+
+      final withoutLatest = RealUnitClientPolicy.fromCacheJson(
+        {'forcedHard': true},
+        installed: '0.0.0',
+      );
+      expect(withoutLatest.severity, isNot(ClientPolicySeverity.hard));
+      expect(withoutLatest.severity, ClientPolicySeverity.none);
     });
   });
 }

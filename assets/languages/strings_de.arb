@@ -513,7 +513,6 @@
   "twoFaSendCodeFailed": "Es ist ein Problem beim Senden der Mail aufgetreten",
   "twoFaWrongCode": "Der Code ist falsch",
   "updateAvailableBannerBody": "Eine neuere Version der App ist verfügbar",
-  "updateAvailableBannerCta": "Aktualisieren",
   "updateAvailableBannerTitle": "Update verfügbar",
   "updateRequiredBackup": "Wiederherstellungsphrase sichern",
   "updateRequiredBody": "Diese Version der App kann nicht mehr verwendet werden. Bitte aktualisieren Sie, um fortzufahren",

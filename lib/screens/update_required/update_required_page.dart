@@ -16,6 +16,7 @@ import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
+import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class UpdateRequiredPage extends StatefulWidget {
@@ -67,48 +68,50 @@ class _UpdateRequiredPageState extends State<UpdateRequiredPage> {
                     policy: policy,
                   );
 
-            return SingleChildScrollView(
+            return ScrollableActionsLayout(
               padding: const .all(20),
-              child: Column(
+              body: Column(
                 spacing: 16.0,
                 crossAxisAlignment: .stretch,
                 children: [
                   Text(S.of(context).updateRequiredBody),
-                  if (target.primaryUrl != null)
-                    AppFilledButton(
-                      label: S.of(context).updateRequiredCta,
-                      onPressed: () => _open(target.primaryUrl!),
-                    )
-                  else
+                  if (target.primaryUrl == null)
                     Text(S.of(context).updateRequiredUnavailable),
-                  if (target.githubSecondaryUrl != null &&
-                      target.githubSecondaryUrl != target.primaryUrl)
-                    AppFilledButton(
-                      variant: .secondary,
-                      label: S.of(context).updateRequiredGithubSecondary,
-                      onPressed: () => _open(target.githubSecondaryUrl!),
-                    ),
-                  if (hasWallet && walletType == WalletType.software)
-                    AppFilledButton(
-                      variant: .secondary,
-                      label: S.of(context).updateRequiredBackup,
-                      onPressed: () => context.pushNamed(
-                        PinRoutes.gate,
-                        extra: VerifyPinParams(
-                          onAuthenticated: () =>
-                              context.pushReplacementNamed(SettingsRoutes.seed),
-                          description: S.of(context).pinVerifySeedDescription,
-                        ),
-                      ),
-                    ),
-                  if (hasWallet && !bitboxAddressRecoveryNeeded)
-                    AppFilledButton(
-                      variant: .secondary,
-                      label: S.of(context).updateRequiredReceive,
-                      onPressed: () => context.pushNamed(AppRoutes.receive),
-                    ),
                 ],
               ),
+              actions: [
+                if (target.primaryUrl != null)
+                  AppFilledButton(
+                    label: S.of(context).updateRequiredCta,
+                    onPressed: () => _open(target.primaryUrl!),
+                  ),
+                if (target.githubSecondaryUrl != null &&
+                    target.githubSecondaryUrl != target.primaryUrl)
+                  AppFilledButton(
+                    variant: .secondary,
+                    label: S.of(context).updateRequiredGithubSecondary,
+                    onPressed: () => _open(target.githubSecondaryUrl!),
+                  ),
+                if (hasWallet && walletType == WalletType.software)
+                  AppFilledButton(
+                    variant: .secondary,
+                    label: S.of(context).updateRequiredBackup,
+                    onPressed: () => context.pushNamed(
+                      PinRoutes.gate,
+                      extra: VerifyPinParams(
+                        onAuthenticated: () =>
+                            context.pushReplacementNamed(SettingsRoutes.seed),
+                        description: S.of(context).pinVerifySeedDescription,
+                      ),
+                    ),
+                  ),
+                if (hasWallet && !bitboxAddressRecoveryNeeded)
+                  AppFilledButton(
+                    variant: .secondary,
+                    label: S.of(context).updateRequiredReceive,
+                    onPressed: () => context.pushNamed(AppRoutes.receive),
+                  ),
+              ],
             );
           },
         ),

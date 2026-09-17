@@ -513,7 +513,6 @@
   "twoFaSendCodeFailed": "There was a problem sending the email",
   "twoFaWrongCode": "The Code is wrong",
   "updateAvailableBannerBody": "A newer version of the app is available",
-  "updateAvailableBannerCta": "Update",
   "updateAvailableBannerTitle": "Update available",
   "updateRequiredBackup": "Backup recovery phrase",
   "updateRequiredBody": "This version of the app can no longer be used. Please update to continue",

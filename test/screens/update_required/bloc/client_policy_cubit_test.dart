@@ -130,5 +130,40 @@ void main() {
 
       expect(cubit.state, const ClientPolicyFailOpen());
     });
+
+    test('null fetch keeps a live Loaded hard instead of FailOpen', () async {
+      service.nextFetch = const RealUnitClientPolicy(
+        severity: ClientPolicySeverity.hard,
+      );
+      await cubit.refresh();
+      expect(cubit.severity, ClientPolicySeverity.hard);
+      expect((cubit.state as ClientPolicyLoaded).policy.forcedHard, isFalse);
+
+      service.nextFetch = null;
+      await cubit.refresh();
+
+      expect(cubit.state, isA<ClientPolicyLoaded>());
+      expect(cubit.severity, ClientPolicySeverity.hard);
+      expect(cubit.state, isNot(const ClientPolicyFailOpen()));
+    });
+
+    test('426 on 0.0.0 does not emit or store hard', () async {
+      await cubit.close();
+      cubit = ClientPolicyCubit(
+        service,
+        cache,
+        settings,
+        installedVersion: () => '0.0.0',
+      );
+
+      final loaded = _waitLoaded();
+      cubit.reportUpgradeRequired(const UpgradeRequiredException());
+      await loaded;
+
+      final stored = await _readCache();
+      expect(stored['forcedHard'], isFalse);
+      expect(cubit.severity, isNot(ClientPolicySeverity.hard));
+      expect(service.fetchCount, 0);
+    });
   });
 }

@@ -316,7 +316,13 @@ const kResponsiveSurfaceCatalog = <ResponsiveSurface>[
     matrixTestPath: 'test/screens/referral/referral_responsive_matrix_test.dart',
     productionPath: 'lib/screens/kyc/steps/registration/steps/kyc_registration_referral_step.dart',
   ),
-  // Migration covers 44 surfaces total (bitbox_connect_sheet + 43 above). No
+  ResponsiveSurface(
+    id: 'update_required_page',
+    description: 'hard-update gate (sticky Update / GitHub / Backup / Receive CTAs)',
+    matrixTestPath: 'test/screens/update_required/update_required_responsive_matrix_test.dart',
+    productionPath: 'lib/screens/update_required/update_required_page.dart',
+  ),
+  // Migration covers 45 surfaces total (bitbox_connect_sheet + 44 above). No
   // further known candidates remain from the prior sweep. welcome_page was
   // reviewed and found safe (scrolls end-to-end, no separate sticky CTA) — not
   // a migration candidate. Not exhaustive — review responsibility for every
