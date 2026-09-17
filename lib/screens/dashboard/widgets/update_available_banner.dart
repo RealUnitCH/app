@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/io/installer_package_adapter.dart';
+import 'package:realunit_wallet/packages/io/installer_package_port.dart';
 import 'package:realunit_wallet/packages/utils/store_update_target.dart';
 import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -11,7 +12,12 @@ import 'package:realunit_wallet/widgets/outlined_tile.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class UpdateAvailableBanner extends StatefulWidget {
-  const UpdateAvailableBanner({super.key});
+  const UpdateAvailableBanner({
+    super.key,
+    this.installerPackage = const InstallerPackageAdapter(),
+  });
+
+  final InstallerPackagePort installerPackage;
 
   @override
   State<UpdateAvailableBanner> createState() => _UpdateAvailableBannerState();
@@ -23,7 +29,7 @@ class _UpdateAvailableBannerState extends State<UpdateAvailableBanner> {
   @override
   void initState() {
     super.initState();
-    const InstallerPackageAdapter().readInstallerPackage().then((value) {
+    widget.installerPackage.readInstallerPackage().then((value) {
       if (!mounted) return;
       setState(() => _installer = value);
     });

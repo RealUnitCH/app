@@ -3,12 +3,11 @@ import 'dart:async';
 import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/packages/utils/marketing_version.dart';
+import 'package:realunit_wallet/setup/routing/effective_location.dart';
 import 'package:realunit_wallet/setup/routing/referral_bind.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
-
-import 'package:realunit_wallet/setup/routing/effective_location.dart';
 
 export 'package:realunit_wallet/setup/routing/effective_location.dart';
 

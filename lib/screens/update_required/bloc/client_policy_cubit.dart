@@ -97,7 +97,48 @@ class ClientPolicyCubit extends Cubit<ClientPolicyState> {
 
   /// Persist a 426 immediately. Must not re-GET. Tear-off compatible with
   /// `void Function(UpgradeRequiredException)`.
+  ///
+  /// Emits hard *synchronously* so a concurrent [refresh] cannot FailOpen
+  /// before cache I/O completes.
   void reportUpgradeRequired(UpgradeRequiredException e) {
+    final min = _nonEmpty(e.minSupportedVersion);
+    final latest = _nonEmpty(e.latestVersion);
+    var forcedHard = min == null && latest == null;
+    var severity = ClientPolicySeverity.hard;
+    final installed = _installedVersion();
+    if (isZeroInstalled(installed)) {
+      final recomputed = computeClientPolicySeverity(
+        installed: installed,
+        minSupportedVersion: min,
+        latestVersion: latest,
+      );
+      severity = recomputed == ClientPolicySeverity.hard
+          ? ClientPolicySeverity.none
+          : recomputed;
+      forcedHard = false;
+    }
+
+    String? appStoreUrl;
+    String? playStoreUrl;
+    String? githubReleasesUrl;
+    final current = state;
+    if (current is ClientPolicyLoaded) {
+      appStoreUrl = current.policy.appStoreUrl;
+      playStoreUrl = current.policy.playStoreUrl;
+      githubReleasesUrl = current.policy.githubReleasesUrl;
+    }
+
+    final policy = RealUnitClientPolicy(
+      minSupportedVersion: min,
+      latestVersion: latest,
+      severity: severity,
+      appStoreUrl: appStoreUrl,
+      playStoreUrl: playStoreUrl,
+      githubReleasesUrl: githubReleasesUrl,
+      forcedHard: forcedHard,
+      fetchedAt: clock.now(),
+    );
+    if (!isClosed) emit(ClientPolicyLoaded(policy));
     unawaited(_persistUpgrade(e));
   }
 

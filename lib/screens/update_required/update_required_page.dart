@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/io/installer_package_adapter.dart';
+import 'package:realunit_wallet/packages/io/installer_package_port.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/utils/store_update_target.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
@@ -20,7 +21,12 @@ import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class UpdateRequiredPage extends StatefulWidget {
-  const UpdateRequiredPage({super.key});
+  const UpdateRequiredPage({
+    super.key,
+    this.installerPackage = const InstallerPackageAdapter(),
+  });
+
+  final InstallerPackagePort installerPackage;
 
   @override
   State<UpdateRequiredPage> createState() => _UpdateRequiredPageState();
@@ -32,7 +38,7 @@ class _UpdateRequiredPageState extends State<UpdateRequiredPage> {
   @override
   void initState() {
     super.initState();
-    const InstallerPackageAdapter().readInstallerPackage().then((value) {
+    widget.installerPackage.readInstallerPackage().then((value) {
       if (!mounted) return;
       setState(() => _installer = value);
     });

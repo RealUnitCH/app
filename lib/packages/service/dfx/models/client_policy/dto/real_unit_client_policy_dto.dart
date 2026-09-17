@@ -17,27 +17,19 @@ class RealUnitClientPolicyDto {
   });
 
   factory RealUnitClientPolicyDto.fromJson(Map<String, dynamic> json) {
-    final urls = _stringKeyedMap(json['storeUrls']) ?? const <String, dynamic>{};
+    final urls = json['storeUrls'] as Map<String, dynamic>?;
     return RealUnitClientPolicyDto(
-      minSupportedVersion: _optionalString(json['minSupportedVersion']),
-      latestVersion: _optionalString(json['latestVersion']),
-      severity: _optionalString(json['severity']),
-      appStore: _optionalString(urls['appStore']),
-      playStore: _optionalString(urls['playStore']),
-      githubReleases: _optionalString(urls['githubReleases']),
+      minSupportedVersion: _emptyToNull(json['minSupportedVersion'] as String?),
+      latestVersion: _emptyToNull(json['latestVersion'] as String?),
+      severity: _emptyToNull(json['severity'] as String?),
+      appStore: _emptyToNull(urls?['appStore'] as String?),
+      playStore: _emptyToNull(urls?['playStore'] as String?),
+      githubReleases: _emptyToNull(urls?['githubReleases'] as String?),
     );
   }
 }
 
-String? _optionalString(Object? value) {
-  if (value is String && value.isNotEmpty) return value;
-  return null;
-}
-
-Map<String, dynamic>? _stringKeyedMap(Object? value) {
-  if (value is Map<String, dynamic>) return value;
-  if (value is Map) {
-    return value.map((key, val) => MapEntry(key.toString(), val));
-  }
-  return null;
+String? _emptyToNull(String? value) {
+  if (value == null || value.isEmpty) return null;
+  return value;
 }
