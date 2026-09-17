@@ -29,5 +29,25 @@ void main() {
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
       builder: () => wrapForGolden(const ReceivePage()),
     );
+
+    goldenTest(
+      'default bottom sheet with Send CTA',
+      fileName: 'receive_page_default_send',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        final settingsBloc = MockSettingsBloc();
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(
+            insiderFeaturesUnlocked: true,
+            insiderSendEnabled: true,
+          ),
+        );
+        if (GetIt.instance.isRegistered<SettingsBloc>()) {
+          GetIt.instance.unregister<SettingsBloc>();
+        }
+        GetIt.instance.registerSingleton<SettingsBloc>(settingsBloc);
+        return wrapForGolden(const ReceivePage());
+      },
+    );
   });
 }

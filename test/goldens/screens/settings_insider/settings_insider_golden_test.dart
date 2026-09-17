@@ -41,5 +41,23 @@ void main() {
       constraints: phoneConstraints,
       builder: buildSubject,
     );
+
+    goldenTest(
+      'all four switches on',
+      fileName: 'settings_insider_page_enabled',
+      constraints: phoneConstraints,
+      builder: () {
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(
+            insiderFeaturesUnlocked: true,
+            insiderPayEnabled: true,
+            insiderSendEnabled: true,
+            insiderReferralEnabled: true,
+            insiderBonusEnabled: true,
+          ),
+        );
+        return buildSubject();
+      },
+    );
   });
 }

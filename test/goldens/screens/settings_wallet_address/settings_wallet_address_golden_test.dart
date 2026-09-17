@@ -34,5 +34,25 @@ void main() {
       constraints: phoneConstraints,
       builder: () => wrapForGolden(const SettingsWalletAddressPage()),
     );
+
+    goldenTest(
+      'primary address with Send CTA',
+      fileName: 'settings_wallet_address_page_send',
+      constraints: phoneConstraints,
+      builder: () {
+        final settingsBloc = MockSettingsBloc();
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(
+            insiderFeaturesUnlocked: true,
+            insiderSendEnabled: true,
+          ),
+        );
+        if (GetIt.instance.isRegistered<SettingsBloc>()) {
+          GetIt.instance.unregister<SettingsBloc>();
+        }
+        GetIt.instance.registerSingleton<SettingsBloc>(settingsBloc);
+        return wrapForGolden(const SettingsWalletAddressPage());
+      },
+    );
   });
 }

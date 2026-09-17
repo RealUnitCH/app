@@ -113,5 +113,39 @@ void main() {
         return buildSubject();
       },
     );
+
+    goldenTest(
+      'eligible with insider referral toggle shows Empfehlungen',
+      fileName: 'settings_page_referral_eligible_on',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      pumpBeforeTest: (tester) async {
+        await alchemist.precacheImages(tester);
+        await tester.pumpAndSettle();
+      },
+      builder: () {
+        final referral = MockRealUnitReferralService();
+        when(() => referral.getSummary()).thenAnswer(
+          (_) async => const ReferralSummaryDto(
+            eligible: true,
+            termsAccepted: true,
+            openCount: 0,
+            creditedCount: 0,
+            realuSum: 0,
+            chfSum: 0,
+          ),
+        );
+        if (GetIt.instance.isRegistered<RealUnitReferralService>()) {
+          GetIt.instance.unregister<RealUnitReferralService>();
+        }
+        GetIt.instance.registerSingleton<RealUnitReferralService>(referral);
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(
+            insiderFeaturesUnlocked: true,
+            insiderReferralEnabled: true,
+          ),
+        );
+        return buildSubject();
+      },
+    );
   });
 }

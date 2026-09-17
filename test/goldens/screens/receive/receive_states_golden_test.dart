@@ -32,5 +32,25 @@ void main() {
       constraints: phoneConstraints,
       builder: () => wrapForGolden(const ReceivePage(isBottomSheet: false)),
     );
+
+    goldenTest(
+      'full page with Send CTA',
+      fileName: 'receive_page_full_page_send',
+      constraints: phoneConstraints,
+      builder: () {
+        final settingsBloc = MockSettingsBloc();
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(
+            insiderFeaturesUnlocked: true,
+            insiderSendEnabled: true,
+          ),
+        );
+        if (GetIt.instance.isRegistered<SettingsBloc>()) {
+          GetIt.instance.unregister<SettingsBloc>();
+        }
+        GetIt.instance.registerSingleton<SettingsBloc>(settingsBloc);
+        return wrapForGolden(const ReceivePage(isBottomSheet: false));
+      },
+    );
   });
 }
