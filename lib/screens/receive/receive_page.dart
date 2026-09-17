@@ -23,7 +23,9 @@ class ReceivePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final address = getIt<AppStore>().primaryAddress;
     // Receive goldens pump this page without ClientPolicyCubit.
-    if (BlocProvider.maybeOf<ClientPolicyCubit>(context) == null) {
+    try {
+      context.read<ClientPolicyCubit>();
+    } on ProviderNotFoundException {
       return _scaffold(context, address: address, hideSend: false);
     }
 

@@ -38,7 +38,13 @@ class _UpdateAvailableBannerState extends State<UpdateAvailableBanner> {
   @override
   Widget build(BuildContext context) {
     // Dashboard goldens host DashboardView without this cubit.
-    if (BlocProvider.maybeOf<ClientPolicyCubit>(context) == null) {
+    ClientPolicyCubit? policyCubit;
+    try {
+      policyCubit = context.read<ClientPolicyCubit>();
+    } on ProviderNotFoundException {
+      policyCubit = null;
+    }
+    if (policyCubit == null) {
       return const SizedBox.shrink();
     }
 
