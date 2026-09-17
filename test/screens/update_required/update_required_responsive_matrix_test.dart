@@ -10,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
@@ -20,6 +21,9 @@ import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit.dart';
 import 'package:realunit_wallet/screens/update_required/update_required_page.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
+import 'package:realunit_wallet/setup/routing/routes/pin_routes.dart';
+import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/themes.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:url_launcher_platform_interface/link.dart';
@@ -80,10 +84,37 @@ Future<void> _pumpScreen(
 ) async {
   await tester.binding.setSurfaceSize(mediaQuery.size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
+  final router = GoRouter(
+    initialLocation: '/updateRequired',
+    routes: [
+      GoRoute(
+        name: AppRoutes.updateRequired,
+        path: '/updateRequired',
+        builder: (_, _) => widget,
+      ),
+      GoRoute(
+        name: PinRoutes.gate,
+        path: '/pinGate',
+        // Empty builder must not cast extra; Backup passes VerifyPinParams.
+        builder: (_, _) => const Scaffold(),
+      ),
+      GoRoute(
+        name: SettingsRoutes.seed,
+        path: '/settings/seed',
+        builder: (_, _) => const Scaffold(),
+      ),
+      GoRoute(
+        name: AppRoutes.receive,
+        path: '/receive',
+        builder: (_, _) => const Scaffold(),
+      ),
+    ],
+  );
+  addTearDown(router.dispose);
   await tester.pumpWidget(
     MediaQuery(
       data: mediaQuery,
-      child: MaterialApp(
+      child: MaterialApp.router(
         theme: realUnitTheme,
         locale: const Locale('de'),
         localizationsDelegates: const [
@@ -93,7 +124,7 @@ Future<void> _pumpScreen(
           GlobalWidgetsLocalizations.delegate,
         ],
         supportedLocales: S.delegate.supportedLocales,
-        home: widget,
+        routerConfig: router,
       ),
     ),
   );
