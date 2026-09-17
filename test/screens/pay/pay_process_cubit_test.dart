@@ -11,6 +11,7 @@ import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/faucet/faucet_response_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/lnurlp_payment_dto.dart';
@@ -425,8 +426,26 @@ void main() {
     final state = await retry as PayProcessPayRetry;
 
     // The swap is done; a failed pay must NOT force a re-swap.
+    // Transport errors must not dump Exception.toString onto the retry sheet.
     expect(state.reason, PayRetryReason.transient);
+    expect(state.message, isNull);
     expect(cubit.state, isNot(isA<PayProcessFailure>()));
+    await cubit.close();
+  });
+
+  test('pay submit API error after swap surfaces the message 1:1', () async {
+    wireHappyPath();
+    when(() => payService.submitPay(any())).thenThrow(
+      const ApiException(code: 'QUOTE_EXPIRED', message: 'Quote is no longer valid'),
+    );
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    final state = await retry as PayProcessPayRetry;
+
+    expect(state.reason, PayRetryReason.transient);
+    expect(state.message, 'Quote is no longer valid');
     await cubit.close();
   });
 
