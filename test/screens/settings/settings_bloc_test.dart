@@ -300,4 +300,25 @@ void main() {
       },
     );
   });
+
+  group('$SettingsState', () {
+    test('insiderBonusOn is true only when unlocked AND bonus enabled', () {
+      expect(const SettingsState().insiderBonusOn, isFalse);
+      expect(
+        const SettingsState(insiderBonusEnabled: true).insiderBonusOn,
+        isFalse,
+      );
+      expect(
+        const SettingsState(insiderFeaturesUnlocked: true).insiderBonusOn,
+        isFalse,
+      );
+      expect(
+        const SettingsState(
+          insiderFeaturesUnlocked: true,
+          insiderBonusEnabled: true,
+        ).insiderBonusOn,
+        isTrue,
+      );
+    });
+  });
 }
