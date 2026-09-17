@@ -64,13 +64,6 @@ class _BitboxAuthService extends DFXAuthService {
 }
 
 void main() {
-  setUpAll(() {
-    // Required by mocktail for the `appStore.httpClient` stub when the test
-    // overrides it with a fresh MockClient mid-flow.
-    registerFallbackValue(MockClient((_) async => http.Response('', 200)));
-    registerFallbackValue(RealUnitApiClient());
-  });
-
   group('DFXAuthService.getAuthToken × BitboxCredentials sign ceremony', () {
     late _MockAppStore appStore;
     late _MockWalletService walletService;
