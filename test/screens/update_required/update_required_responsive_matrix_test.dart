@@ -1,7 +1,8 @@
 // Responsive matrix gate for UpdateRequiredPage sticky CTAs.
 //
-// Proves the primary Update button stays fully tappable across the full
-// device × text-scale matrix. Catalog self-test requires a direct import of
+// Proves every visible sticky action stays fully tappable across the full
+// device × text-scale matrix under the worst-case set (Update, GitHub
+// secondary, Backup, Receive). Catalog self-test requires a direct import of
 // the production page (≤1 hop).
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/client_policy/real_unit_client_policy.dart';
 import 'package:realunit_wallet/packages/utils/marketing_version.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit.dart';
 import 'package:realunit_wallet/screens/update_required/update_required_page.dart';
@@ -63,9 +65,12 @@ class _FakeUrlLauncher extends Fake
 const _playStoreUrl =
     'https://play.google.com/store/apps/details?id=swiss.realunit.app';
 
+const _githubReleasesUrl = 'https://github.com/RealUnitCH/app/releases';
+
 const _policy = RealUnitClientPolicy(
   severity: ClientPolicySeverity.hard,
   playStoreUrl: _playStoreUrl,
+  githubReleasesUrl: _githubReleasesUrl,
 );
 
 Future<void> _pumpScreen(
@@ -114,14 +119,18 @@ void main() {
   });
 
   setUp(() {
-    when(() => appStore.isWalletLoaded).thenReturn(false);
+    final wallet = MockSoftwareWallet();
+    when(() => appStore.isWalletLoaded).thenReturn(true);
+    when(() => appStore.wallet).thenReturn(wallet);
+    when(() => wallet.walletType).thenReturn(WalletType.software);
 
     homeBloc = MockHomeBloc();
-    when(() => homeBloc.state).thenReturn(const HomeState());
+    const homeState = HomeState(hasWallet: true);
+    when(() => homeBloc.state).thenReturn(homeState);
     whenListen(
       homeBloc,
       const Stream<HomeState>.empty(),
-      initialState: const HomeState(),
+      initialState: homeState,
     );
 
     clientPolicyCubit = _MockClientPolicyCubit();
@@ -159,6 +168,33 @@ void main() {
             find.widgetWithText(AppFilledButton, S.current.updateRequiredCta),
             within: find.byType(UpdateRequiredPage),
             reason: '${cell.label}: Update CTA not tappable',
+          );
+          await expectFullyTappable(
+            tester,
+            find.widgetWithText(
+              AppFilledButton,
+              S.current.updateRequiredGithubSecondary,
+            ),
+            within: find.byType(UpdateRequiredPage),
+            reason: '${cell.label}: GitHub secondary not tappable',
+          );
+          await expectFullyTappable(
+            tester,
+            find.widgetWithText(
+              AppFilledButton,
+              S.current.updateRequiredBackup,
+            ),
+            within: find.byType(UpdateRequiredPage),
+            reason: '${cell.label}: Backup not tappable',
+          );
+          await expectFullyTappable(
+            tester,
+            find.widgetWithText(
+              AppFilledButton,
+              S.current.updateRequiredReceive,
+            ),
+            within: find.byType(UpdateRequiredPage),
+            reason: '${cell.label}: Receive not tappable',
           );
         });
       });
