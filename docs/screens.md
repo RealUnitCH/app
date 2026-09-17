@@ -13,7 +13,8 @@ Column meaning:
   **not a route**: it is shown inside a parent route (KYC steps, status
   sub-pages, disclaimer steps).
 - **Handbook** — the handbook screenshot slot number(s) that document the
-  screen, or `—` if the screen has no Golden baseline. Each slot is a
+  screen, or `—` if the screen has no handbook slot (it may still have a
+  Visual-Regression Golden). Each slot is a
   Visual-Regression Golden under `test/goldens/`, mapped to its handbook
   position by `scripts/assemble-handbook-screenshots.sh`. The handbook now
   covers a **curated subset of Golden baselines** — screens **plus selected
@@ -57,7 +58,9 @@ Column meaning:
 | Dashboard & trading | `SellBankAccountSelectionPage` | — | — | `121`, `122` |
 | Dashboard & trading | `ReceivePage` | `receive` | `/receive` | `101`, `102`, `296`, `297` |
 | Dashboard & trading | `PayInfoPage` | `pay` | `/pay` | `300` |
+| Dashboard & trading | `PayScanPage` | — | — | — |
 | Dashboard & trading | `PayQuotePage` | — | — | `301`, `302` |
+| Dashboard & trading | `PayProcessPage` | — | — | — |
 | Dashboard & trading | `ConnectBitboxPage` | — | — | `137`, `138`, `139`, `140`, `141`, `142`, `143`, `144`, `145`, `146` |
 | Dashboard & trading | `BitboxAddressRecoveryPage` | `bitboxAddressRecovery` | `/bitboxAddressRecovery` | `147` |
 | Dashboard & trading | `WebViewPage` | `webView` | `/webView` | — |
@@ -125,14 +128,15 @@ Column meaning:
 | Shared widgets | `PhoneNumberField` | — | — | `268` |
 | Shared widgets | `ReferralPayoutTransactionRow` | — | — | `282` |
 
-84 screens — 49 routed (`GoRoute`) + 35 non-routed. The table also carries
+86 screens — 49 routed (`GoRoute`) + 37 non-routed. The table also carries
 two shared-widget baselines (`PhoneNumberField`, `ReferralPayoutTransactionRow`),
 which are not screens.
 Referral surfaces have Golden baselines (`276`–`292`); the handbook
 documents the programme in `#spec-referral`. Overlay slots `291` and `292`
 are listed on `DashboardPage` (the host screen), not as a second shared-widget
 row. OpenCryptoPay pay rounding cards `300`–`302` are documented in
-`#spec-81`.
+`#spec-81`. `PayScanPage` and `PayProcessPage` have Visual-Regression goldens
+under `test/goldens/screens/pay/` and no handbook slot.
 
 ## Notes
 
