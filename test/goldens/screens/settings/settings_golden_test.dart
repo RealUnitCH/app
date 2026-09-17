@@ -87,7 +87,7 @@ void main() {
     );
 
     goldenTest(
-      'shows Empfehlungen when eligible',
+      'eligible without insider referral toggle hides Empfehlungen',
       fileName: 'settings_page_referral_eligible',
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
       pumpBeforeTest: (tester) async {
@@ -110,12 +110,6 @@ void main() {
           GetIt.instance.unregister<RealUnitReferralService>();
         }
         GetIt.instance.registerSingleton<RealUnitReferralService>(referral);
-        when(() => settingsBloc.state).thenReturn(
-          const SettingsState(
-            insiderFeaturesUnlocked: true,
-            insiderReferralEnabled: true,
-          ),
-        );
         return buildSubject();
       },
     );
