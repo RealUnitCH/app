@@ -37,23 +37,27 @@ void main() {
     when(() => repo.walletFeatureReferral).thenAnswer((_) => storedReferral);
     when(() => repo.walletFeaturePay = any()).thenAnswer((inv) {
       final value = inv.positionalArguments.first as bool;
-      if (!value && storedPay) return;
+      if (!value && storedPay) return value;
       storedPay = value;
+      return value;
     });
     when(() => repo.walletFeatureSend = any()).thenAnswer((inv) {
       final value = inv.positionalArguments.first as bool;
-      if (!value && storedSend) return;
+      if (!value && storedSend) return value;
       storedSend = value;
+      return value;
     });
     when(() => repo.walletFeaturePromoCode = any()).thenAnswer((inv) {
       final value = inv.positionalArguments.first as bool;
-      if (!value && storedPromo) return;
+      if (!value && storedPromo) return value;
       storedPromo = value;
+      return value;
     });
     when(() => repo.walletFeatureReferral = any()).thenAnswer((inv) {
       final value = inv.positionalArguments.first as bool;
-      if (!value && storedReferral) return;
+      if (!value && storedReferral) return value;
       storedReferral = value;
+      return value;
     });
   });
 
