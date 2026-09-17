@@ -323,7 +323,12 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       // Transient/network error fetching the quote — NOT a genuine expiry.
       // Retry the pay leg; the swapped ZCHF stays in the wallet.
       if (isClosed) return;
-      emit(PayProcessPayRetry(PayRetryReason.transient, message: ApiException.userFacingMessage(e)));
+      emit(
+        PayProcessPayRetry(
+          PayRetryReason.transient,
+          message: e is ApiException ? e.message : null,
+        ),
+      );
       return;
     }
 
@@ -396,7 +401,12 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       // by retrying the pay leg — never by re-swapping. Surface the retryable state rather than a
       // terminal failure.
       if (isClosed) return;
-      emit(PayProcessPayRetry(PayRetryReason.transient, message: ApiException.userFacingMessage(e)));
+      emit(
+        PayProcessPayRetry(
+          PayRetryReason.transient,
+          message: e is ApiException ? e.message : null,
+        ),
+      );
     }
   }
 

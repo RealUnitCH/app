@@ -1018,6 +1018,7 @@ void main() {
     // A transient fetch error is NOT a genuine expiry — it routes to the
     // pay-only retry, never to a re-scan → re-swap.
     expect(state.reason, PayRetryReason.transient);
+    expect(state.message, isNull);
     await cubit.close();
   });
 
