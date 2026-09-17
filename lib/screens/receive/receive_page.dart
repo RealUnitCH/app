@@ -22,9 +22,25 @@ class ReceivePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final address = getIt<AppStore>().primaryAddress;
-    final hideSend = getIt.isRegistered<ClientPolicyCubit>() &&
-        getIt<ClientPolicyCubit>().severity == ClientPolicySeverity.hard;
+    // Receive goldens pump this page without ClientPolicyCubit.
+    if (BlocProvider.maybeOf<ClientPolicyCubit>(context) == null) {
+      return _scaffold(context, address: address, hideSend: false);
+    }
 
+    return BlocBuilder<ClientPolicyCubit, ClientPolicyState>(
+      builder: (context, _) {
+        final hideSend = context.read<ClientPolicyCubit>().severity ==
+            ClientPolicySeverity.hard;
+        return _scaffold(context, address: address, hideSend: hideSend);
+      },
+    );
+  }
+
+  Widget _scaffold(
+    BuildContext context, {
+    required String address,
+    required bool hideSend,
+  }) {
     return Scaffold(
       appBar: isBottomSheet
           ? null

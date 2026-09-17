@@ -160,6 +160,70 @@ void main() {
         expect(exception.code, 'UNKNOWN');
         expect(exception.message, '');
       });
+
+      test('426 malformed JSON returns UpgradeRequiredException and does not throw', () {
+        expect(
+          () => ApiException.fromBody('{', httpStatusCode: 426),
+          returnsNormally,
+        );
+        final exception = ApiException.fromBody('{', httpStatusCode: 426);
+        expect(exception, isA<UpgradeRequiredException>());
+        expect(
+          (exception as UpgradeRequiredException).minSupportedVersion,
+          isNull,
+        );
+        expect(exception.latestVersion, isNull);
+        expect(exception.statusCode, 426);
+      });
+
+      test(
+        '426 JSON with non-string minSupportedVersion returns UpgradeRequiredException',
+        () {
+          expect(
+            () => ApiException.fromBody(
+              '{"minSupportedVersion":1}',
+              httpStatusCode: 426,
+            ),
+            returnsNormally,
+          );
+          final exception = ApiException.fromBody(
+            '{"minSupportedVersion":1}',
+            httpStatusCode: 426,
+          );
+          expect(exception, isA<UpgradeRequiredException>());
+          expect(
+            (exception as UpgradeRequiredException).minSupportedVersion,
+            isNull,
+          );
+        },
+      );
+
+      test('well-formed 426 JSON parses minSupportedVersion', () {
+        final exception = ApiException.fromBody(
+          '{"code":"UPGRADE_REQUIRED","minSupportedVersion":"1.3.0","latestVersion":"1.4.0"}',
+          httpStatusCode: 426,
+        );
+
+        expect(exception, isA<UpgradeRequiredException>());
+        final upgrade = exception as UpgradeRequiredException;
+        expect(upgrade.minSupportedVersion, '1.3.0');
+        expect(upgrade.latestVersion, '1.4.0');
+        expect(upgrade.statusCode, 426);
+      });
+
+      test('empty-body 426 returns UpgradeRequiredException', () {
+        final exception = ApiException.fromBody('', httpStatusCode: 426);
+        expect(exception, isA<UpgradeRequiredException>());
+        expect(
+          (exception as UpgradeRequiredException).minSupportedVersion,
+          isNull,
+        );
+      });
+
+      test('non-object JSON 426 returns UpgradeRequiredException', () {
+        final exception = ApiException.fromBody('[1]', httpStatusCode: 426);
+        expect(exception, isA<UpgradeRequiredException>());
+      });
     });
 
     group('userFacingMessage', () {

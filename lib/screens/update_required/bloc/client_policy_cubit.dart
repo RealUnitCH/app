@@ -23,6 +23,7 @@ class ClientPolicyCubit extends Cubit<ClientPolicyState> {
   final CacheRepository _cache;
   final SettingsRepository _settings;
   final String Function() _installedVersion;
+  int _policyEpoch = 0;
 
   ClientPolicyCubit(
     this._service,
@@ -42,6 +43,7 @@ class ClientPolicyCubit extends Cubit<ClientPolicyState> {
     final current = state;
     if (current is! ClientPolicyLoaded) return false;
     if (current.policy.severity != ClientPolicySeverity.soft) return false;
+    if (_nonEmpty(current.policy.latestVersion) == null) return false;
     final dismissed = _settings.dismissedClientPolicyLatest;
     if (dismissed == null) return true;
     return dismissed != current.policy.latestVersion;
@@ -56,12 +58,16 @@ class ClientPolicyCubit extends Cubit<ClientPolicyState> {
   }
 
   Future<void> refresh() async {
+    final epoch = _policyEpoch;
     RealUnitClientPolicy? fetched;
     try {
       fetched = await _service.fetch();
     } catch (_) {
       fetched = null;
     }
+
+    // A 426 during this await already emitted hard; do not overwrite it.
+    if (_policyEpoch != epoch) return;
 
     if (fetched != null) {
       final stored = fetched.copyWith(
@@ -101,6 +107,7 @@ class ClientPolicyCubit extends Cubit<ClientPolicyState> {
   /// Emits hard *synchronously* so a concurrent [refresh] cannot FailOpen
   /// before cache I/O completes.
   void reportUpgradeRequired(UpgradeRequiredException e) {
+    _policyEpoch++;
     final min = _nonEmpty(e.minSupportedVersion);
     final latest = _nonEmpty(e.latestVersion);
     var forcedHard = min == null && latest == null;

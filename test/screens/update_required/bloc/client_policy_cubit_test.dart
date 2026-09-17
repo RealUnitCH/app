@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:drift/native.dart';
@@ -16,11 +17,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 class _FakeService extends Fake implements RealUnitClientPolicyService {
   RealUnitClientPolicy? nextFetch;
   int fetchCount = 0;
+  Completer<RealUnitClientPolicy?>? fetchCompleter;
 
   @override
-  Future<RealUnitClientPolicy?> fetch() async {
+  Future<RealUnitClientPolicy?> fetch() {
     fetchCount++;
-    return nextFetch;
+    final pending = fetchCompleter;
+    if (pending != null) return pending.future;
+    return Future.value(nextFetch);
   }
 }
 
@@ -110,6 +114,34 @@ void main() {
       expect(current.policy.severity, ClientPolicySeverity.none);
     });
 
+    test('in-flight refresh does not overwrite a 426 hard', () async {
+      final pending = Completer<RealUnitClientPolicy?>();
+      service.fetchCompleter = pending;
+
+      final states = <ClientPolicyState>[];
+      final sub = cubit.stream.listen(states.add);
+
+      final refreshFuture = cubit.refresh();
+      expect(service.fetchCount, 1);
+
+      cubit.reportUpgradeRequired(const UpgradeRequiredException());
+      expect(cubit.severity, ClientPolicySeverity.hard);
+
+      pending.complete(
+        const RealUnitClientPolicy(severity: ClientPolicySeverity.none),
+      );
+      await refreshFuture;
+      await Future<void>.delayed(Duration.zero);
+      await sub.cancel();
+
+      expect(cubit.severity, ClientPolicySeverity.hard);
+      expect(
+        states.whereType<ClientPolicyLoaded>().map((s) => s.policy.severity),
+        everyElement(ClientPolicySeverity.hard),
+      );
+      expect(states, isNot(contains(const ClientPolicyFailOpen())));
+    });
+
     test('dismissSoft hides the banner for that latest', () async {
       service.nextFetch = const RealUnitClientPolicy(
         latestVersion: '1.4.0',
@@ -121,6 +153,23 @@ void main() {
       cubit.dismissSoft('1.4.0');
       await Future<void>.delayed(Duration.zero);
 
+      expect(cubit.showSoftBanner, isFalse);
+    });
+
+    test('showSoftBanner is false when latestVersion is null', () async {
+      service.nextFetch = const RealUnitClientPolicy(
+        severity: ClientPolicySeverity.soft,
+      );
+      await cubit.refresh();
+      expect(cubit.showSoftBanner, isFalse);
+    });
+
+    test('showSoftBanner is false when latestVersion is empty', () async {
+      service.nextFetch = const RealUnitClientPolicy(
+        latestVersion: '',
+        severity: ClientPolicySeverity.soft,
+      );
+      await cubit.refresh();
       expect(cubit.showSoftBanner, isFalse);
     });
 

@@ -43,6 +43,17 @@ class ApiException implements Exception {
   /// HTTP 426 is always [UpgradeRequiredException], even when the body is empty
   /// or not JSON.
   factory ApiException.fromBody(String body, {required int httpStatusCode}) {
+    if (httpStatusCode == 426) {
+      try {
+        final decoded = jsonDecode(body);
+        if (decoded is Map<String, dynamic>) {
+          return ApiException.fromJson(decoded, httpStatusCode: httpStatusCode);
+        }
+      } on Object {
+        // Malformed JSON or fromJson TypeError: 426 is still upgrade-required.
+      }
+      return const UpgradeRequiredException();
+    }
     try {
       final decoded = jsonDecode(body);
       if (decoded is Map<String, dynamic>) {
@@ -50,9 +61,6 @@ class ApiException implements Exception {
       }
     } on FormatException {
       // Non-JSON body (plain text, HTML, empty). No API user-facing text.
-    }
-    if (httpStatusCode == 426) {
-      return const UpgradeRequiredException();
     }
     return ApiException(
       statusCode: httpStatusCode,

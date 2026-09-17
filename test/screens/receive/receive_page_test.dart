@@ -1,4 +1,8 @@
+import 'dart:async';
+
+import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -6,13 +10,19 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/client_policy/real_unit_client_policy.dart';
+import 'package:realunit_wallet/packages/utils/marketing_version.dart';
 import 'package:realunit_wallet/screens/receive/receive_page.dart';
 import 'package:realunit_wallet/screens/receive/widgets/qr_address_widget.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 
 import '../../helper/helper.dart';
+
+class MockClientPolicyCubit extends MockCubit<ClientPolicyState>
+    implements ClientPolicyCubit {}
 
 void main() {
   final AppStore appStore = MockAppStore();
@@ -131,6 +141,38 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(pushedRoutes, [AppRoutes.send]);
+    });
+
+    testWidgets('hides Send when policy becomes hard while mounted',
+        (tester) async {
+      enableSend();
+      final cubit = MockClientPolicyCubit();
+      const noneState = ClientPolicyLoaded(
+        RealUnitClientPolicy(severity: ClientPolicySeverity.none),
+      );
+      const hardState = ClientPolicyLoaded(
+        RealUnitClientPolicy(severity: ClientPolicySeverity.hard),
+      );
+      final controller = StreamController<ClientPolicyState>.broadcast();
+      addTearDown(controller.close);
+
+      when(() => cubit.severity).thenReturn(ClientPolicySeverity.none);
+      whenListen(cubit, controller.stream, initialState: noneState);
+
+      await tester.pumpApp(
+        BlocProvider<ClientPolicyCubit>.value(
+          value: cubit,
+          child: const ReceivePage(),
+        ),
+      );
+
+      expect(sendButton(), findsOneWidget);
+
+      when(() => cubit.severity).thenReturn(ClientPolicySeverity.hard);
+      controller.add(hardState);
+      await tester.pump();
+
+      expect(sendButton(), findsNothing);
     });
   });
 }
