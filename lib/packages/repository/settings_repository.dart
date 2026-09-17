@@ -76,4 +76,18 @@ class SettingsRepository {
       _sharedPreferences.getBool('insiderBonusEnabled') ?? false;
   set insiderBonusEnabled(bool enabled) =>
       _sharedPreferences.setBool('insiderBonusEnabled', enabled);
+
+String? get dismissedClientPolicyLatest {
+    final value = _sharedPreferences.getString('dismissedClientPolicyLatest');
+    if (value == null || value.isEmpty) return null;
+    return value;
+  }
+
+  set dismissedClientPolicyLatest(String? value) {
+    if (value == null || value.isEmpty) {
+      _sharedPreferences.remove('dismissedClientPolicyLatest');
+    } else {
+      _sharedPreferences.setString('dismissedClientPolicyLatest', value);
+    }
+  }
 }

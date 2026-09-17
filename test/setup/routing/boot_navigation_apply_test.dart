@@ -75,6 +75,11 @@ void main() {
           path: '/pay',
           builder: (_, state) => Text('pay ${state.extra}'),
         ),
+        GoRoute(
+          name: AppRoutes.updateRequired,
+          path: '/updateRequired',
+          builder: (_, _) => const Text('updateRequired'),
+        ),
       ],
     );
     addTearDown(router.dispose);
@@ -494,6 +499,28 @@ void main() {
         router.pop();
         await tester.pumpAndSettle();
         expect(find.text('dashboard'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'updateRequired landing clears the stash and never replays /pay',
+      (tester) async {
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        stashPendingPaymentDeeplink('pay-me');
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.updateRequired),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        expect(peekPendingPaymentDeeplink(), isNull);
+        expect(find.text('updateRequired'), findsOneWidget);
+        expect(find.textContaining(RegExp(r'^pay ')), findsNothing);
       },
     );
   });

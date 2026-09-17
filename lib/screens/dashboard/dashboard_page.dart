@@ -17,6 +17,7 @@ import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_por
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_portfolio_chart_widget.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_price_widget.dart';
 import 'package:realunit_wallet/screens/dashboard/widgets/sections/dashboard_transaction_history.dart';
+import 'package:realunit_wallet/screens/dashboard/widgets/update_available_banner.dart';
 import 'package:realunit_wallet/screens/referral/widgets/referral_entry_card.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/di.dart';
@@ -137,6 +138,7 @@ class DashboardView extends StatelessWidget {
                           child: Column(
                             spacing: 20.0,
                             children: [
+                              const UpdateAvailableBanner(),
                               const DashboardActions(),
                               const ReferralEntryCard(),
                               DashboardPortfolio(
@@ -161,6 +163,7 @@ class DashboardView extends StatelessWidget {
                               ? 0.0
                               : 24.0,
                           children: [
+                            const UpdateAvailableBanner(),
                             const DashboardPendingTransactionsView(),
                             SvgPicture.asset(
                               'assets/images/illustrations/realu_token.svg',

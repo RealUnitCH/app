@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
+import 'package:realunit_wallet/packages/utils/marketing_version.dart';
 import 'package:realunit_wallet/setup/routing/referral_bind.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/setup/routing/routes/onboarding_routes.dart';
@@ -64,6 +65,7 @@ const Set<String> gateLocations = {
   '/verifyPin',
   '/bitboxAddressRecovery',
   '/debugAuth',
+  '/updateRequired',
 };
 
 /// Whether [loc] resolves to one of the [gateLocations] gates. Compares the
@@ -96,6 +98,15 @@ const Set<String> restorableLocations = {
 /// string ignored).
 bool isRestorableLocation(String loc) => restorableLocations.contains(Uri.parse(loc).path);
 
+/// After PIN, the hard client-policy gate may leave the user on these paths.
+/// Soft is not hard — it falls through the ladder like [ClientPolicySeverity.none].
+const Set<String> hardAllowedLocations = {
+  '/updateRequired',
+  '/receive',
+  '/settings/seed',
+  '/pinGate',
+};
+
 /// Pure boot/lock routing decision, evaluated on every HomeBloc / PinAuthCubit
 /// emission.
 ///
@@ -115,15 +126,19 @@ BootNavAction resolveBootNavigation({
   required bool walletLoaded,
   required String currentLocation,
   required String? resumeLocation,
+  ClientPolicySeverity clientPolicySeverity = ClientPolicySeverity.none,
 }) {
   if (isLoadingWallet) return const BootNavWaitForLoad();
   if (!softwareTermsAccepted) return const BootNavGoNamed(AppRoutes.home);
+  final hard = clientPolicySeverity == ClientPolicySeverity.hard;
+  if (hard && !hasWallet) return const BootNavGoNamed(AppRoutes.updateRequired);
   if (!hasWallet) return const BootNavGoNamed(OnboardingRoutes.welcome);
-  if (!onboardingCompleted) {
-    return const BootNavGoNamed(OnboardingRoutes.completed);
-  }
+  if (!onboardingCompleted) return const BootNavGoNamed(OnboardingRoutes.completed);
   if (!isPinSetup) return const BootNavGoNamed(PinRoutes.setup);
   if (!isPinVerified) return const BootNavGoNamed(PinRoutes.verify);
+  if (hard && bitboxAddressRecoveryNeeded) {
+    return const BootNavGoNamed(AppRoutes.updateRequired);
+  }
   if (bitboxAddressRecoveryNeeded) {
     // A BitBox wallet was persisted with an empty/invalid address — divert to
     // the re-pairing recovery flow instead of loading it into the dashboard
@@ -131,6 +146,11 @@ BootNavAction resolveBootNavigation({
     return const BootNavGoNamed(AppRoutes.bitboxAddressRecovery);
   }
   if (!walletLoaded) return const BootNavLoadWallet();
+  if (hard) {
+    final path = Uri.parse(currentLocation).path;
+    if (hardAllowedLocations.contains(path)) return const BootNavStay();
+    return const BootNavGoNamed(AppRoutes.updateRequired);
+  }
 
   // All gates passed.
   if (!isGateLocation(currentLocation)) return const BootNavStay();
@@ -200,6 +220,13 @@ void applyBootNavAction(
       onLoadWallet();
       return;
     case BootNavGoNamed(:final routeName):
+      // Hard-gate landing: drop a stashed /pay so it cannot replay on top of
+      // /updateRequired. Do not take/replay the payload here.
+      if (routeName == AppRoutes.updateRequired) {
+        clearPendingPaymentDeeplink();
+        router.goNamed(routeName);
+        return;
+      }
       // Reaching the dashboard is the final landing — drop any stale resume
       // capture so a later benign emission can't bounce the user around, and
       // replay a cold-start / locked-warm-resume payment deeplink now that the

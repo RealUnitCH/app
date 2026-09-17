@@ -17,11 +17,16 @@ class ApiException implements Exception {
     final code = json['code'] as String?;
 
     switch (code) {
+      case 'UPGRADE_REQUIRED':
+        return UpgradeRequiredException.fromJson(json, httpStatusCode: httpStatusCode);
       case 'KYC_LEVEL_REQUIRED':
         return KycLevelRequiredException.fromJson(json, httpStatusCode: httpStatusCode);
       case 'REGISTRATION_REQUIRED':
         return RegistrationRequiredException.fromJson(json, httpStatusCode: httpStatusCode);
       default:
+        if (httpStatusCode == 426) {
+          return UpgradeRequiredException.fromJson(json, httpStatusCode: httpStatusCode);
+        }
         final message = json['message'];
         return ApiException(
           statusCode: json['statusCode'] as int? ?? httpStatusCode,
@@ -35,6 +40,8 @@ class ApiException implements Exception {
   ///
   /// JSON objects go through [fromJson] (KYC/registration subclasses preserved).
   /// Non-JSON or non-object bodies yield an empty [message] — never the raw body.
+  /// HTTP 426 is always [UpgradeRequiredException], even when the body is empty
+  /// or not JSON.
   factory ApiException.fromBody(String body, {required int httpStatusCode}) {
     try {
       final decoded = jsonDecode(body);
@@ -43,6 +50,9 @@ class ApiException implements Exception {
       }
     } on FormatException {
       // Non-JSON body (plain text, HTML, empty). No API user-facing text.
+    }
+    if (httpStatusCode == 426) {
+      return const UpgradeRequiredException();
     }
     return ApiException(
       statusCode: httpStatusCode,
@@ -56,12 +66,12 @@ class ApiException implements Exception {
 
   /// User-visible text for an error thrown from a DFX API call.
   ///
-  /// [ApiException] is shown 1:1 as [message]. Any other object has no API
+  /// [UpgradeRequiredException] is never shown as API English. Other
+  /// [ApiException]s are shown 1:1 as [message]. Any other object has no API
   /// text; [Object.toString] is the remainder (transport, parse, local).
   static String userFacingMessage(Object error) {
-    if (error is ApiException) {
-      return error.message;
-    }
+    if (error is UpgradeRequiredException) return '';
+    if (error is ApiException) return error.message;
     return error.toString();
   }
 
@@ -78,4 +88,29 @@ class ApiException implements Exception {
     final text = message.toString();
     return text.isEmpty ? null : text;
   }
+}
+
+class UpgradeRequiredException extends ApiException {
+  final String? minSupportedVersion;
+  final String? latestVersion;
+
+  const UpgradeRequiredException({
+    this.minSupportedVersion,
+    this.latestVersion,
+    super.statusCode = 426,
+  }) : super(code: 'UPGRADE_REQUIRED', message: '');
+
+  factory UpgradeRequiredException.fromJson(
+    Map<String, dynamic> json, {
+    int? httpStatusCode,
+  }) {
+    return UpgradeRequiredException(
+      minSupportedVersion: json['minSupportedVersion'] as String?,
+      latestVersion: json['latestVersion'] as String?,
+      statusCode: json['statusCode'] as int? ?? httpStatusCode ?? 426,
+    );
+  }
+
+  @override
+  String toString() => 'UpgradeRequiredException (min: $minSupportedVersion)';
 }

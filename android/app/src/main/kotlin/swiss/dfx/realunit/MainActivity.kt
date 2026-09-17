@@ -15,11 +15,11 @@ class MainActivity : FlutterFragmentActivity() {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, installReferrerChannel)
             .setMethodCallHandler { call, result ->
-                if (call.method != "readInstallReferrer") {
-                    result.notImplemented()
-                    return@setMethodCallHandler
+                when (call.method) {
+                    "readInstallReferrer" -> readInstallReferrer(result)
+                    "readInstallerPackage" -> readInstallerPackage(result)
+                    else -> result.notImplemented()
                 }
-                readInstallReferrer(result)
             }
     }
 
@@ -59,6 +59,21 @@ class MainActivity : FlutterFragmentActivity() {
             )
         } catch (_: Exception) {
             reply(null)
+        }
+    }
+
+    private fun readInstallerPackage(result: MethodChannel.Result) {
+        try {
+            val pm = packageManager
+            val name = if (android.os.Build.VERSION.SDK_INT >= 30) {
+                pm.getInstallSourceInfo(packageName).installingPackageName
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getInstallerPackageName(packageName)
+            }
+            result.success(name)
+        } catch (_: Exception) {
+            result.success(null)
         }
     }
 }

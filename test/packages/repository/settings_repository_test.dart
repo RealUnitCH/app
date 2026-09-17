@@ -254,6 +254,45 @@ void main() {
       });
     });
 
+    group('dismissedClientPolicyLatest', () {
+      test('returns null when no value is stored', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.dismissedClientPolicyLatest, isNull);
+      });
+
+      test('setter persists', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        repo.dismissedClientPolicyLatest = '1.4.0';
+        await Future<void>.delayed(Duration.zero);
+
+        expect(repo.dismissedClientPolicyLatest, '1.4.0');
+      });
+
+      test('empty or null setter removes', () async {
+        SharedPreferences.setMockInitialValues({
+          'dismissedClientPolicyLatest': '1.4.0',
+        });
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+        expect(repo.dismissedClientPolicyLatest, '1.4.0');
+
+        repo.dismissedClientPolicyLatest = '';
+        await Future<void>.delayed(Duration.zero);
+        expect(repo.dismissedClientPolicyLatest, isNull);
+
+        repo.dismissedClientPolicyLatest = '1.4.0';
+        await Future<void>.delayed(Duration.zero);
+        expect(repo.dismissedClientPolicyLatest, '1.4.0');
+
+        repo.dismissedClientPolicyLatest = null;
+        await Future<void>.delayed(Duration.zero);
+        expect(repo.dismissedClientPolicyLatest, isNull);
+      });
+    });
+
     group('networkMode', () {
       test('defaults to mainnet when no value is stored', () async {
         SharedPreferences.setMockInitialValues({});
