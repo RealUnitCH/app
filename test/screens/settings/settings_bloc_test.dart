@@ -308,5 +308,39 @@ void main() {
         expect(bloc.state.insiderReferralEnabled, isFalse);
       },
     );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent.pay false does not clear a latch',
+      setUp: () => storedPay = true,
+      build: build,
+      act: (bloc) => bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.pay, false)),
+      verify: (bloc) => expect(bloc.state.walletFeaturePay, isTrue),
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent.send false does not clear a latch',
+      setUp: () => storedSend = true,
+      build: build,
+      act: (bloc) => bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.send, false)),
+      verify: (bloc) => expect(bloc.state.walletFeatureSend, isTrue),
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent.referral false does not clear a latch',
+      setUp: () => storedReferral = true,
+      build: build,
+      act: (bloc) =>
+          bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.referral, false)),
+      verify: (bloc) => expect(bloc.state.walletFeatureReferral, isTrue),
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent.bonus false does not clear a latch',
+      setUp: () => storedPromo = true,
+      build: build,
+      act: (bloc) =>
+          bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.bonus, false)),
+      verify: (bloc) => expect(bloc.state.walletFeaturePromoCode, isTrue),
+    );
   });
 }
