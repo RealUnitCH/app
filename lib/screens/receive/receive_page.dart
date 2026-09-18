@@ -33,30 +33,33 @@ class ReceivePage extends StatelessWidget {
               ),
             ),
       body: SafeArea(
-        child: ScrollableActionsLayout(
-          body: Column(
-            children: [
-              if (isBottomSheet) Handlebars.horizontal(context),
-              SizedBox(
-                width: double.infinity,
-                height: isBottomSheet ? 20 : 0,
-              ),
-              QRAddressWidget(
-                uri: EthereumURI(address: address, amount: '').toString(),
-                subtitle: address,
-              ),
+        child: BlocBuilder<SettingsBloc, SettingsState>(
+          bloc: getIt<SettingsBloc>(),
+          builder: (context, settingsState) => ScrollableActionsLayout(
+            body: Column(
+              children: [
+                if (isBottomSheet) Handlebars.horizontal(context),
+                SizedBox(
+                  width: double.infinity,
+                  height: isBottomSheet ? 20 : 0,
+                ),
+                QRAddressWidget(
+                  uri: EthereumURI(address: address, amount: '').toString(),
+                  subtitle: address,
+                ),
+              ],
+            ),
+            actions: [
+              if (settingsState.walletFeatureSend)
+                Padding(
+                  padding: const .symmetric(horizontal: 20, vertical: 12),
+                  child: AppFilledButton(
+                    label: S.of(context).send,
+                    onPressed: () => context.pushNamed(AppRoutes.send),
+                  ),
+                ),
             ],
           ),
-          actions: [
-            if (context.watch<SettingsBloc>().state.walletFeatureSend)
-              Padding(
-                padding: const .symmetric(horizontal: 20, vertical: 12),
-                child: AppFilledButton(
-                  label: S.of(context).send,
-                  onPressed: () => context.pushNamed(AppRoutes.send),
-                ),
-              ),
-          ],
         ),
       ),
     );
