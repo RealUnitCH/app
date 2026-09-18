@@ -28,6 +28,11 @@ void main() {
     when(() => settingsBloc.state).thenReturn(const SettingsState());
     when(() => appStore.primaryAddress)
         .thenReturn('0x938115b533a0b746428361760a6972dfd06d984a');
+    final getIt = GetIt.instance;
+    if (getIt.isRegistered<SettingsBloc>()) {
+      getIt.unregister<SettingsBloc>();
+    }
+    getIt.registerSingleton<SettingsBloc>(settingsBloc);
   });
 
   tearDownAll(() async {
