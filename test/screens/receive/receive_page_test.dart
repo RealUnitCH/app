@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -39,10 +38,7 @@ void main() {
     await GetIt.instance.reset();
   });
 
-  Widget wrapPage(Widget page) => BlocProvider<SettingsBloc>.value(
-        value: settingsBloc,
-        child: page,
-      );
+  Widget wrapPage(Widget page) => page;
 
   Finder sendButton() => find.widgetWithText(AppFilledButton, S.current.send);
 

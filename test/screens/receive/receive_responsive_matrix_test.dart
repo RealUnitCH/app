@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -20,9 +19,6 @@ Future<void> _pumpScreen(
   MatrixCell cell,
   Widget child,
 ) async {
-  final settingsBloc = MockSettingsBloc();
-  when(() => settingsBloc.state)
-      .thenReturn(const SettingsState(walletFeatureSend: true));
   await tester.binding.setSurfaceSize(cell.mediaQuery.size);
   addTearDown(() async => tester.binding.setSurfaceSize(null));
   final router = GoRouter(
@@ -30,10 +26,7 @@ Future<void> _pumpScreen(
     routes: [
       GoRoute(
         path: '/',
-        builder: (_, _) => BlocProvider<SettingsBloc>.value(
-          value: settingsBloc,
-          child: child,
-        ),
+        builder: (_, _) => child,
       ),
       GoRoute(
         name: AppRoutes.send,
@@ -78,10 +71,7 @@ void main() {
     when(() => appStore.primaryAddress)
         .thenReturn('0x938115b533a0b746428361760a6972dfd06d984a');
     when(() => settingsBloc.state).thenReturn(
-      const SettingsState(
-        insiderFeaturesUnlocked: true,
-        insiderSendEnabled: true,
-      ),
+      const SettingsState(walletFeatureSend: true),
     );
   });
 
