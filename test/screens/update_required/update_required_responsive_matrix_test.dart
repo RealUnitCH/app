@@ -218,6 +218,10 @@ void main() {
             within: find.byType(UpdateRequiredPage),
             reason: '${cell.label}: Backup not tappable',
           );
+          // Backup tap pushes PIN gate; pop so Receive stays hittable.
+          await tester.pumpAndSettle();
+          await tester.pageBack();
+          await tester.pumpAndSettle();
           await expectFullyTappable(
             tester,
             find.widgetWithText(
