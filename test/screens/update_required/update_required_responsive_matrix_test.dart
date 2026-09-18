@@ -194,42 +194,46 @@ void main() {
             reason: 'overflow on ${cell.label}',
           );
 
-          await expectFullyTappable(
-            tester,
+          // Inner actions scroll at textScale 3; ensureVisible before containment check.
+          Future<void> expectCta(Finder finder, String reason) async {
+            await tester.ensureVisible(finder);
+            await tester.pump();
+            await expectFullyTappable(
+              tester,
+              finder,
+              within: find.byType(UpdateRequiredPage),
+              reason: reason,
+            );
+          }
+
+          await expectCta(
             find.widgetWithText(AppFilledButton, S.current.updateRequiredCta),
-            within: find.byType(UpdateRequiredPage),
-            reason: '${cell.label}: Update CTA not tappable',
+            '${cell.label}: Update CTA not tappable',
           );
-          await expectFullyTappable(
-            tester,
+          await expectCta(
             find.widgetWithText(
               AppFilledButton,
               S.current.updateRequiredGithubSecondary,
             ),
-            within: find.byType(UpdateRequiredPage),
-            reason: '${cell.label}: GitHub secondary not tappable',
+            '${cell.label}: GitHub secondary not tappable',
           );
-          await expectFullyTappable(
-            tester,
+          await expectCta(
             find.widgetWithText(
               AppFilledButton,
               S.current.updateRequiredBackup,
             ),
-            within: find.byType(UpdateRequiredPage),
-            reason: '${cell.label}: Backup not tappable',
+            '${cell.label}: Backup not tappable',
           );
           // Backup tap pushes PIN gate; handlePopRoute (PIN host has no Back tooltip).
           await tester.pumpAndSettle();
           await tester.binding.handlePopRoute();
           await tester.pumpAndSettle();
-          await expectFullyTappable(
-            tester,
+          await expectCta(
             find.widgetWithText(
               AppFilledButton,
               S.current.updateRequiredReceive,
             ),
-            within: find.byType(UpdateRequiredPage),
-            reason: '${cell.label}: Receive not tappable',
+            '${cell.label}: Receive not tappable',
           );
         });
       });
