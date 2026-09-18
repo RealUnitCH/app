@@ -117,6 +117,9 @@ void main() {
   });
 
   testWidgets('hides Empfehlungen when summary is unmounted', (tester) async {
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(walletFeatureReferral: true),
+    );
     when(() => referral.getSummary()).thenThrow(
       const ApiException(
         statusCode: 404,
