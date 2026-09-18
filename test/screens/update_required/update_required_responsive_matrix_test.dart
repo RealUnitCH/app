@@ -218,9 +218,9 @@ void main() {
             within: find.byType(UpdateRequiredPage),
             reason: '${cell.label}: Backup not tappable',
           );
-          // Backup tap pushes PIN gate; pop so Receive stays hittable.
+          // Backup tap pushes PIN gate; handlePopRoute (PIN host has no Back tooltip).
           await tester.pumpAndSettle();
-          await tester.pageBack();
+          await tester.binding.handlePopRoute();
           await tester.pumpAndSettle();
           await expectFullyTappable(
             tester,
