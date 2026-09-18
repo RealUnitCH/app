@@ -137,5 +137,56 @@ void main() {
       expect(withoutLatest.severity, isNot(ClientPolicySeverity.hard));
       expect(withoutLatest.severity, ClientPolicySeverity.none);
     });
+
+    test(
+      'round-trip none with high min stays none at the same installed',
+      () {
+        const policy = RealUnitClientPolicy(
+          severity: ClientPolicySeverity.none,
+          minSupportedVersion: '9.0.0',
+        );
+        final cached = policy.toCacheJson(installed: '1.2.0');
+
+        expect(cached['severity'], ClientPolicySeverity.none.name);
+        expect(cached['installed'], '1.2.0');
+        expect(
+          cached.keys,
+          containsAll([
+            'fetchedAt',
+            'minSupportedVersion',
+            'latestVersion',
+            'appStoreUrl',
+            'playStoreUrl',
+            'githubReleasesUrl',
+            'forcedHard',
+            'severity',
+            'installed',
+          ]),
+        );
+
+        final restored = RealUnitClientPolicy.fromCacheJson(
+          cached,
+          installed: '1.2.0',
+        );
+        expect(restored.severity, ClientPolicySeverity.none);
+        expect(restored.minSupportedVersion, '9.0.0');
+      },
+    );
+
+    test(
+      'installed mismatch without forcedHard fail-opens even if stored hard',
+      () {
+        final policy = RealUnitClientPolicy.fromCacheJson(
+          {
+            'severity': 'hard',
+            'installed': '1.2.0',
+            'minSupportedVersion': '9.0.0',
+          },
+          installed: '1.3.0',
+        );
+
+        expect(policy.severity, ClientPolicySeverity.none);
+      },
+    );
   });
 }

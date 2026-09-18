@@ -8,8 +8,9 @@ import 'package:realunit_wallet/packages/utils/store_url_allowlist.dart';
 ///
 /// Live JSON is parsed by [RealUnitClientPolicyDto.fromJson] (API severity,
 /// with a 0.0.0 hard-skip). The Drift cache round-trips through
-/// [toCacheJson] / [fromCacheJson] and never persists live severity: offline
-/// either honours [forcedHard] or recomputes from the stored thresholds.
+/// [toCacheJson] / [fromCacheJson] and persists live severity plus the
+/// installed version; a mismatch fail-opens. [forcedHard] remains a 426
+/// signal.
 class RealUnitClientPolicy extends Equatable {
   final String? minSupportedVersion;
   final String? latestVersion;
@@ -39,19 +40,28 @@ class RealUnitClientPolicy extends Equatable {
     final latestVersion = _optionalString(json['latestVersion']);
     final forcedHard = json['forcedHard'] == true;
     final fetchedAtRaw = _optionalString(json['fetchedAt']);
+    final cachedInstalled = json['installed'];
 
-    final severity = _skipHardOnZeroInstalled(
-      severity: forcedHard
-          ? ClientPolicySeverity.hard
-          : computeClientPolicySeverity(
-              installed: installed,
-              minSupportedVersion: minSupportedVersion,
-              latestVersion: latestVersion,
-            ),
-      installed: installed,
-      minSupportedVersion: minSupportedVersion,
-      latestVersion: latestVersion,
-    );
+    final ClientPolicySeverity severity;
+    if (forcedHard) {
+      severity = _skipHardOnZeroInstalled(
+        severity: ClientPolicySeverity.hard,
+        installed: installed,
+        minSupportedVersion: minSupportedVersion,
+        latestVersion: latestVersion,
+      );
+    } else if (cachedInstalled is! String ||
+        cachedInstalled.isEmpty ||
+        cachedInstalled != installed) {
+      severity = ClientPolicySeverity.none;
+    } else {
+      severity = _liveSeverity(
+        json['severity'],
+        installed: installed,
+        minSupportedVersion: minSupportedVersion,
+        latestVersion: latestVersion,
+      );
+    }
 
     return RealUnitClientPolicy(
       minSupportedVersion: minSupportedVersion,
@@ -68,7 +78,7 @@ class RealUnitClientPolicy extends Equatable {
     );
   }
 
-  Map<String, dynamic> toCacheJson() {
+  Map<String, dynamic> toCacheJson({required String installed}) {
     return {
       'fetchedAt': (fetchedAt ?? clock.now()).toIso8601String(),
       'minSupportedVersion': minSupportedVersion,
@@ -77,6 +87,8 @@ class RealUnitClientPolicy extends Equatable {
       'playStoreUrl': playStoreUrl,
       'githubReleasesUrl': githubReleasesUrl,
       'forcedHard': forcedHard,
+      'severity': severity.name,
+      'installed': installed,
     };
   }
 

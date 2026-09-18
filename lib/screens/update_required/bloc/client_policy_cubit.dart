@@ -228,7 +228,10 @@ class ClientPolicyCubit extends Cubit<ClientPolicyState> {
   }
 
   Future<void> _writeCache(RealUnitClientPolicy policy) {
-    return _cache.write(cacheKey, jsonEncode(policy.toCacheJson()));
+    return _cache.write(
+      cacheKey,
+      jsonEncode(policy.toCacheJson(installed: _installedVersion())),
+    );
   }
 }
 

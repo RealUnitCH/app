@@ -75,6 +75,8 @@ void main() {
         final stored = await readCache();
         expect(stored['forcedHard'], isTrue);
         expect(stored['minSupportedVersion'], isNull);
+        expect(stored['installed'], '1.2.0');
+        expect(stored['severity'], 'hard');
         expect(service.fetchCount, 0);
         expect(cubit.severity, ClientPolicySeverity.hard);
       },
