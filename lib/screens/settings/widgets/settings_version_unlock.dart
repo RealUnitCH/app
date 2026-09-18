@@ -20,7 +20,8 @@ class _SettingsVersionUnlockState extends State<SettingsVersionUnlock> {
   void _onTap() {
     final settingsBloc = getIt<SettingsBloc>();
     final flags = settingsBloc.state;
-    if (flags.walletFeaturePay &&
+    if (flags.insiderFeaturesUnlocked &&
+        flags.walletFeaturePay &&
         flags.walletFeatureSend &&
         flags.walletFeaturePromoCode &&
         flags.walletFeatureReferral) {
