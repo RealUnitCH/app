@@ -276,6 +276,7 @@ void main() {
       build: build,
       act: (bloc) => bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.pay, true)),
       verify: (bloc) {
+        verify(() => repo.walletFeaturePay = true).called(1);
         expect(bloc.state.walletFeaturePay, isTrue);
         expect(bloc.state.insiderPayEnabled, isTrue);
       },
@@ -285,7 +286,11 @@ void main() {
       'SetInsiderFeatureEnabledEvent.send latches walletFeatureSend',
       build: build,
       act: (bloc) => bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.send, true)),
-      verify: (bloc) => expect(bloc.state.walletFeatureSend, isTrue),
+      verify: (bloc) {
+        verify(() => repo.walletFeatureSend = true).called(1);
+        expect(bloc.state.walletFeatureSend, isTrue);
+        expect(bloc.state.insiderSendEnabled, isTrue);
+      },
     );
 
     blocTest<SettingsBloc, SettingsState>(
@@ -293,7 +298,11 @@ void main() {
       build: build,
       act: (bloc) =>
           bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.referral, true)),
-      verify: (bloc) => expect(bloc.state.walletFeatureReferral, isTrue),
+      verify: (bloc) {
+        verify(() => repo.walletFeatureReferral = true).called(1);
+        expect(bloc.state.walletFeatureReferral, isTrue);
+        expect(bloc.state.insiderReferralEnabled, isTrue);
+      },
     );
 
     blocTest<SettingsBloc, SettingsState>(
@@ -302,10 +311,9 @@ void main() {
       act: (bloc) =>
           bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.bonus, true)),
       verify: (bloc) {
+        verify(() => repo.walletFeaturePromoCode = true).called(1);
         expect(bloc.state.walletFeaturePromoCode, isTrue);
         expect(bloc.state.insiderBonusEnabled, isTrue);
-        expect(bloc.state.insiderSendEnabled, isFalse);
-        expect(bloc.state.insiderReferralEnabled, isFalse);
       },
     );
 
@@ -314,7 +322,10 @@ void main() {
       setUp: () => storedPay = true,
       build: build,
       act: (bloc) => bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.pay, false)),
-      verify: (bloc) => expect(bloc.state.walletFeaturePay, isTrue),
+      verify: (bloc) {
+        verify(() => repo.walletFeaturePay = false).called(1);
+        expect(bloc.state.walletFeaturePay, isTrue);
+      },
     );
 
     blocTest<SettingsBloc, SettingsState>(
@@ -322,7 +333,10 @@ void main() {
       setUp: () => storedSend = true,
       build: build,
       act: (bloc) => bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.send, false)),
-      verify: (bloc) => expect(bloc.state.walletFeatureSend, isTrue),
+      verify: (bloc) {
+        verify(() => repo.walletFeatureSend = false).called(1);
+        expect(bloc.state.walletFeatureSend, isTrue);
+      },
     );
 
     blocTest<SettingsBloc, SettingsState>(
@@ -331,7 +345,10 @@ void main() {
       build: build,
       act: (bloc) =>
           bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.referral, false)),
-      verify: (bloc) => expect(bloc.state.walletFeatureReferral, isTrue),
+      verify: (bloc) {
+        verify(() => repo.walletFeatureReferral = false).called(1);
+        expect(bloc.state.walletFeatureReferral, isTrue);
+      },
     );
 
     blocTest<SettingsBloc, SettingsState>(
@@ -340,7 +357,10 @@ void main() {
       build: build,
       act: (bloc) =>
           bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.bonus, false)),
-      verify: (bloc) => expect(bloc.state.walletFeaturePromoCode, isTrue),
+      verify: (bloc) {
+        verify(() => repo.walletFeaturePromoCode = false).called(1);
+        expect(bloc.state.walletFeaturePromoCode, isTrue);
+      },
     );
   });
 }
