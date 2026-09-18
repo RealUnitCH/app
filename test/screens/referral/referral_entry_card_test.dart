@@ -60,6 +60,9 @@ void main() {
   }
 
   testWidgets('hides the dashboard card when the API gate is closed', (tester) async {
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(walletFeatureReferral: true),
+    );
     when(() => service.getSummary()).thenAnswer(
       (_) async => const ReferralSummaryDto(
         eligible: false,
