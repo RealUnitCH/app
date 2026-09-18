@@ -11,7 +11,8 @@ import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/outlined_tile.dart';
 
-/// Full-width dashboard card gated by `summary.eligible` from the API.
+/// Full-width dashboard card gated by the local referral latch and
+/// `summary.eligible` from the API.
 class ReferralEntryCard extends StatelessWidget {
   final Duration unavailablePollInterval;
 
@@ -40,15 +41,14 @@ class _ReferralEntryCardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ReferralEligibilityCubit, ReferralEligibilityState>(
-      builder: (context, state) {
-        final eligible = state is ReferralEligibilityLoaded && state.eligible;
-        if (!eligible) return const SizedBox.shrink();
-
-        return BlocBuilder<SettingsBloc, SettingsState>(
-          bloc: getIt<SettingsBloc>(),
-          builder: (context, settingsState) {
-            if (!settingsState.insiderReferralOn) return const SizedBox.shrink();
+    return BlocBuilder<SettingsBloc, SettingsState>(
+      builder: (context, settings) {
+        return BlocBuilder<ReferralEligibilityCubit, ReferralEligibilityState>(
+          builder: (context, state) {
+            final eligible = state is ReferralEligibilityLoaded && state.eligible;
+            if (!settings.walletFeatureReferral || !eligible) {
+              return const SizedBox.shrink();
+            }
 
             final s = S.of(context);
             return OutlinedTile(

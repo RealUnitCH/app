@@ -38,6 +38,7 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_transfer_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_features_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/settings_service.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
@@ -229,6 +230,7 @@ void setupServices() {
   getIt.registerFactory(
     () => RealUnitTransferService(getIt<AppStore>(), getIt<WalletService>()),
   );
+  getIt.registerFactory(() => RealUnitWalletFeaturesService(getIt<AppStore>()));
   getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
   getIt.registerFactory(
     () => DebugAuthService(getIt<AppStore>(), getIt<SharedPreferences>()),
@@ -246,6 +248,7 @@ Future<void> setupBlocs() async {
         getIt<DfxFiatService>().invalidateCache();
         getIt<DfxLanguageService>().invalidateCache();
       },
+      fetchWalletFeatures: () => getIt<RealUnitWalletFeaturesService>().get(),
     ),
   );
   getIt.registerSingleton(

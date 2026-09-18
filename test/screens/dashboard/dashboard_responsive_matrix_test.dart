@@ -242,10 +242,7 @@ void main() {
         testWidgets(cell.id, (tester) async {
           await withTargetPlatform(cell.device.platform, () async {
             when(() => settingsBloc.state).thenReturn(
-              const SettingsState(
-                insiderFeaturesUnlocked: true,
-                insiderPayEnabled: true,
-              ),
+              const SettingsState(walletFeaturePay: true),
             );
 
             await expectNoLayoutOverflow(

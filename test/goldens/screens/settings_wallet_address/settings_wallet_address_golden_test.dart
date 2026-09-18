@@ -32,7 +32,9 @@ void main() {
       'default state with primary address',
       fileName: 'settings_wallet_address_page_default',
       constraints: phoneConstraints,
-      builder: () => wrapForGolden(const SettingsWalletAddressPage()),
+      builder: () {
+        return wrapForGolden(const SettingsWalletAddressPage());
+      },
     );
 
     goldenTest(

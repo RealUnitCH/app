@@ -135,10 +135,7 @@ void main() {
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
       builder: () {
         when(() => settingsBloc.state).thenReturn(
-          const SettingsState(
-            insiderFeaturesUnlocked: true,
-            insiderPayEnabled: true,
-          ),
+          const SettingsState(walletFeaturePay: true),
         );
         when(() => balanceCubit.state).thenReturn(
           Balance(

@@ -27,7 +27,9 @@ void main() {
       'default bottom sheet',
       fileName: 'receive_page_default',
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
-      builder: () => wrapForGolden(const ReceivePage()),
+      builder: () {
+        return wrapForGolden(const ReceivePage());
+      },
     );
 
     goldenTest(

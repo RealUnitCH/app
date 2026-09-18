@@ -30,7 +30,9 @@ void main() {
       'full page — AppBar with back arrow, no handlebar',
       fileName: 'receive_page_full_page',
       constraints: phoneConstraints,
-      builder: () => wrapForGolden(const ReceivePage(isBottomSheet: false)),
+      builder: () {
+        return wrapForGolden(const ReceivePage(isBottomSheet: false));
+      },
     );
 
     goldenTest(

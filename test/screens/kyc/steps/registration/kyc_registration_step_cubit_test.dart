@@ -90,4 +90,51 @@ void main() {
       expect(address.canGoBack, isTrue);
     });
   });
+
+  group('$KycRegistrationStepCubit includeReferralStep: false', () {
+    test('starts at personal with 3 steps', () {
+      final cubit = KycRegistrationStepCubit(includeReferralStep: false);
+
+      expect(cubit.state.step, KycRegistrationStep.personal);
+      expect(cubit.state.steps, [
+        KycRegistrationStep.personal,
+        KycRegistrationStep.address,
+        KycRegistrationStep.taxResidence,
+      ]);
+      expect(cubit.state.index, 0);
+      expect(cubit.state.totalSteps, 3);
+      expect(cubit.state.progress, closeTo(1 / 3, 1e-9));
+      expect(cubit.state.canGoBack, isFalse);
+    });
+
+    blocTest<KycRegistrationStepCubit, KycRegistrationStepState>(
+      'next advances from personal to address',
+      build: () => KycRegistrationStepCubit(includeReferralStep: false),
+      act: (c) => c.next(),
+      verify: (c) {
+        expect(c.state.step, KycRegistrationStep.address);
+        expect(c.state.index, 1);
+        expect(c.state.progress, closeTo(2 / 3, 1e-9));
+        expect(c.state.canGoBack, isTrue);
+      },
+    );
+
+    test('next/previous still work; next at last step is a no-op', () {
+      final cubit = KycRegistrationStepCubit(includeReferralStep: false)
+        ..next()
+        ..next();
+      expect(cubit.state.step, KycRegistrationStep.taxResidence);
+      final before = cubit.state;
+      cubit.next();
+      expect(cubit.state, same(before));
+
+      cubit.previous();
+      expect(cubit.state.step, KycRegistrationStep.address);
+      cubit.previous();
+      expect(cubit.state.step, KycRegistrationStep.personal);
+      final first = cubit.state;
+      cubit.previous();
+      expect(cubit.state, same(first));
+    });
+  });
 }

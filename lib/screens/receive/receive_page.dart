@@ -50,7 +50,7 @@ class ReceivePage extends StatelessWidget {
               ],
             ),
             actions: [
-              if (settingsState.insiderSendOn)
+              if (settingsState.walletFeatureSend)
                 Padding(
                   padding: const .symmetric(horizontal: 20, vertical: 12),
                   child: AppFilledButton(

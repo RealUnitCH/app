@@ -71,10 +71,7 @@ void main() {
     when(() => appStore.primaryAddress)
         .thenReturn('0x938115b533a0b746428361760a6972dfd06d984a');
     when(() => settingsBloc.state).thenReturn(
-      const SettingsState(
-        insiderFeaturesUnlocked: true,
-        insiderSendEnabled: true,
-      ),
+      const SettingsState(walletFeatureSend: true),
     );
   });
 

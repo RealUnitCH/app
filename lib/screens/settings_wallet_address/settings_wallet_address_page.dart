@@ -73,7 +73,7 @@ class SettingsWalletAddressPage extends StatelessWidget {
                 ],
               ),
               actions: [
-                if (settingsState.insiderSendOn)
+                if (settingsState.walletFeatureSend)
                   AppFilledButton(
                     label: S.of(context).send,
                     onPressed: () => context.pushNamed(AppRoutes.send),

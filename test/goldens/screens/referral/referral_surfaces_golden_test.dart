@@ -60,19 +60,16 @@ void main() {
         }
         GetIt.instance.registerSingleton<RealUnitReferralService>(service);
         when(() => service.getSummary()).thenAnswer((_) async => _summary);
-        final settings = MockSettingsBloc();
-        when(() => settings.state).thenReturn(
-          const SettingsState(
-            insiderFeaturesUnlocked: true,
-            insiderReferralEnabled: true,
-          ),
-        );
-        if (GetIt.instance.isRegistered<SettingsBloc>()) {
-          GetIt.instance.unregister<SettingsBloc>();
-        }
-        GetIt.instance.registerSingleton<SettingsBloc>(settings);
+        final settings = _MockSettingsBloc();
+        when(() => settings.state)
+            .thenReturn(const SettingsState(walletFeatureReferral: true));
         return wrapForGolden(
-          const Scaffold(body: ReferralEntryCard()),
+          Scaffold(
+            body: BlocProvider<SettingsBloc>.value(
+              value: settings,
+              child: const ReferralEntryCard(),
+            ),
+          ),
         );
       },
     );
