@@ -11,7 +11,8 @@ import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/outlined_tile.dart';
 
-/// Full-width dashboard card gated by `summary.eligible` from the API.
+/// Full-width dashboard card gated by the local referral latch and
+/// `summary.eligible` from the API.
 class ReferralEntryCard extends StatelessWidget {
   final Duration unavailablePollInterval;
 
