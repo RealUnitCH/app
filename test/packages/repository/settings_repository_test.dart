@@ -209,6 +209,38 @@ void main() {
         expect(repo.walletFeaturePromoCode, isFalse);
         expect(repo.walletFeatureReferral, isFalse);
       });
+
+      test('migrates old insiderPayEnabled to walletFeaturePay', () async {
+        SharedPreferences.setMockInitialValues({'insiderPayEnabled': true});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.walletFeaturePay, isTrue);
+        expect(repo.walletFeatureSend, isFalse);
+      });
+
+      test('migrates old insiderSendEnabled to walletFeatureSend', () async {
+        SharedPreferences.setMockInitialValues({'insiderSendEnabled': true});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.walletFeatureSend, isTrue);
+        expect(repo.walletFeaturePay, isFalse);
+      });
+
+      test('migrates old insiderReferralEnabled to walletFeatureReferral', () async {
+        SharedPreferences.setMockInitialValues({'insiderReferralEnabled': true});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.walletFeatureReferral, isTrue);
+        expect(repo.walletFeaturePromoCode, isFalse);
+      });
+
+      test('migrates old insiderBonusEnabled to walletFeaturePromoCode', () async {
+        SharedPreferences.setMockInitialValues({'insiderBonusEnabled': true});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.walletFeaturePromoCode, isTrue);
+        expect(repo.walletFeatureReferral, isFalse);
+      });
     });
 
     group('dismissedClientPolicyLatest', () {

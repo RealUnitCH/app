@@ -75,6 +75,7 @@ void main() {
     testWidgets('already unlocked: taps trigger neither event nor SnackBar', (tester) async {
       when(() => settingsBloc.state).thenReturn(
         const SettingsState(
+          insiderFeaturesUnlocked: true,
           walletFeaturePay: true,
           walletFeatureSend: true,
           walletFeaturePromoCode: true,
@@ -92,6 +93,29 @@ void main() {
       verifyNever(() => settingsBloc.add(const UnlockInsiderFeaturesEvent()));
       expect(find.byType(SnackBar), findsNothing);
     });
+
+    testWidgets(
+      'central flags without insider unlock still dispatch on 7 taps',
+      (tester) async {
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(
+            walletFeaturePay: true,
+            walletFeatureSend: true,
+            walletFeaturePromoCode: true,
+            walletFeatureReferral: true,
+          ),
+        );
+
+        await tester.pumpApp(host());
+
+        for (var i = 0; i < 7; i++) {
+          await tester.tap(find.byType(SettingsVersionUnlock));
+          await tester.pump();
+        }
+
+        verify(() => settingsBloc.add(const UnlockInsiderFeaturesEvent())).called(1);
+      },
+    );
 
     testWidgets(
       'pay-only legacy unlock still dispatches UnlockInsiderFeaturesEvent on 7 taps',
