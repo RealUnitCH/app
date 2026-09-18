@@ -43,9 +43,8 @@ class RealUnitClientPolicyService {
 
 Map<String, dynamic>? _decodeObject(String body) {
   final decoded = jsonDecode(body);
-  if (decoded is Map<String, dynamic>) return decoded;
   if (decoded is Map) {
-    return decoded.map((key, value) => MapEntry(key.toString(), value));
+    return decoded.map((k, v) => MapEntry(k.toString(), v));
   }
   return null;
 }

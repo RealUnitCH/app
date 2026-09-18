@@ -77,5 +77,63 @@ void main() {
 
       expect(await build(client).fetch(), isNull);
     });
+
+    test('500 returns null', () async {
+      final client = MockClient((_) async => http.Response('', 500));
+
+      expect(await build(client).fetch(), isNull);
+    });
+
+    test('invalid JSON returns null', () async {
+      final client = MockClient((_) async => http.Response('{', 200));
+
+      expect(await build(client).fetch(), isNull);
+    });
+
+    test('JSON array returns null', () async {
+      final client = MockClient((_) async => http.Response('[1]', 200));
+
+      expect(await build(client).fetch(), isNull);
+    });
+
+    test('empty JSON array returns null', () async {
+      final client = MockClient((_) async => http.Response('[]', 200));
+
+      expect(await build(client).fetch(), isNull);
+    });
+
+    test('defaults httpClient and installedVersion from AppStore', () {
+      expect(
+        RealUnitClientPolicyService(appStore),
+        isA<RealUnitClientPolicyService>(),
+      );
+    });
+
+    test(
+      '200 without installedVersion uses the default release version',
+      () async {
+        final client = MockClient((_) async {
+          return http.Response(
+            jsonEncode({
+              'minSupportedVersion': '1.0.0',
+              'latestVersion': '1.4.0',
+              'severity': 'soft',
+            }),
+            200,
+          );
+        });
+
+        final policy = await RealUnitClientPolicyService(
+          appStore,
+          httpClient: client,
+        ).fetch();
+
+        expect(policy, isNotNull);
+        expect(policy!.minSupportedVersion, '1.0.0');
+        expect(policy.latestVersion, '1.4.0');
+        expect(policy.severity, ClientPolicySeverity.soft);
+        expect(policy.forcedHard, isFalse);
+      },
+    );
   });
 }

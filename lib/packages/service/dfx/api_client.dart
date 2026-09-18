@@ -31,13 +31,10 @@ class RealUnitApiClient extends BaseClient {
     }
 
     final buffered = await Response.fromStream(response);
-    final parsed = ApiException.fromBody(
+    final error = ApiException.fromBody(
       buffered.body,
       httpStatusCode: buffered.statusCode,
-    );
-    final error = parsed is UpgradeRequiredException
-        ? parsed
-        : UpgradeRequiredException(statusCode: buffered.statusCode);
+    ) as UpgradeRequiredException;
     onUpgradeRequired?.call(error);
 
     return StreamedResponse(

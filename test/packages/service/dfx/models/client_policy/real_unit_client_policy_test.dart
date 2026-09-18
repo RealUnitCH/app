@@ -189,4 +189,39 @@ void main() {
       },
     );
   });
+
+  group('$RealUnitClientPolicy.copyWith', () {
+    test('updates forcedHard and fetchedAt and keeps omitted fields', () {
+      final fetchedAt = DateTime.utc(2026, 1, 2, 3, 4, 5);
+      const original = RealUnitClientPolicy(
+        minSupportedVersion: '1.0.0',
+        latestVersion: '1.4.0',
+        severity: ClientPolicySeverity.soft,
+        appStoreUrl: 'https://apps.apple.com/app/id123',
+        forcedHard: false,
+      );
+
+      final copied = original.copyWith(
+        forcedHard: true,
+        fetchedAt: fetchedAt,
+      );
+
+      expect(copied.forcedHard, isTrue);
+      expect(copied.fetchedAt, fetchedAt);
+      expect(copied.minSupportedVersion, original.minSupportedVersion);
+      expect(copied.latestVersion, original.latestVersion);
+      expect(copied.severity, original.severity);
+      expect(copied.appStoreUrl, original.appStoreUrl);
+      expect(copied.playStoreUrl, original.playStoreUrl);
+      expect(copied.githubReleasesUrl, original.githubReleasesUrl);
+    });
+  });
+
+  group('isZeroInstalled', () {
+    test('parsed 0.0.0 that is not the string 0.0.0 is still zero', () {
+      expect(isZeroInstalled('00.0.0'), isTrue);
+      expect(isZeroInstalled('0.0.0'), isTrue);
+      expect(isZeroInstalled('1.2.0'), isFalse);
+    });
+  });
 }

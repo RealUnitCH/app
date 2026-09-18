@@ -212,11 +212,9 @@ class ClientPolicyCubit extends Cubit<ClientPolicyState> {
       final raw = await _cache.read(cacheKey);
       if (raw == null || raw.isEmpty) return null;
       final decoded = jsonDecode(raw);
-      final map = decoded is Map<String, dynamic>
-          ? decoded
-          : decoded is Map
-              ? decoded.map((key, value) => MapEntry(key.toString(), value))
-              : null;
+      final map = decoded is Map
+          ? decoded.map((key, value) => MapEntry(key.toString(), value))
+          : null;
       if (map == null) return null;
       return RealUnitClientPolicy.fromCacheJson(
         map,
