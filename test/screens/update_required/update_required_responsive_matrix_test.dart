@@ -194,46 +194,50 @@ void main() {
             reason: 'overflow on ${cell.label}',
           );
 
-          // Inner actions scroll at textScale 3; ensureVisible before containment check.
-          Future<void> expectCta(Finder finder, String reason) async {
-            await tester.ensureVisible(finder);
-            await tester.pump();
-            await expectFullyTappable(
-              tester,
-              finder,
-              within: find.byType(UpdateRequiredPage),
-              reason: reason,
-            );
-          }
-
-          await expectCta(
+          await expectFullyTappable(
+            tester,
             find.widgetWithText(AppFilledButton, S.current.updateRequiredCta),
-            '${cell.label}: Update CTA not tappable',
+            within: find.byType(UpdateRequiredPage),
+            reason: '${cell.label}: Update CTA not tappable',
           );
-          await expectCta(
+          await expectFullyTappable(
+            tester,
             find.widgetWithText(
               AppFilledButton,
               S.current.updateRequiredGithubSecondary,
             ),
-            '${cell.label}: GitHub secondary not tappable',
+            within: find.byType(UpdateRequiredPage),
+            reason: '${cell.label}: GitHub secondary not tappable',
           );
-          await expectCta(
-            find.widgetWithText(
-              AppFilledButton,
-              S.current.updateRequiredBackup,
-            ),
-            '${cell.label}: Backup not tappable',
+          // Inner actions_scroll_view at textScale 3; Backup/Receive sit below
+          // the clip until scrolled (Update/GitHub stay in the sticky band).
+          final backup = find.widgetWithText(
+            AppFilledButton,
+            S.current.updateRequiredBackup,
+          );
+          await tester.ensureVisible(backup);
+          await tester.pump();
+          await expectFullyTappable(
+            tester,
+            backup,
+            within: find.byType(UpdateRequiredPage),
+            reason: '${cell.label}: Backup not tappable',
           );
           // Backup tap pushes PIN gate; handlePopRoute (PIN host has no Back tooltip).
           await tester.pumpAndSettle();
           await tester.binding.handlePopRoute();
           await tester.pumpAndSettle();
-          await expectCta(
-            find.widgetWithText(
-              AppFilledButton,
-              S.current.updateRequiredReceive,
-            ),
-            '${cell.label}: Receive not tappable',
+          final receive = find.widgetWithText(
+            AppFilledButton,
+            S.current.updateRequiredReceive,
+          );
+          await tester.ensureVisible(receive);
+          await tester.pump();
+          await expectFullyTappable(
+            tester,
+            receive,
+            within: find.byType(UpdateRequiredPage),
+            reason: '${cell.label}: Receive not tappable',
           );
         });
       });
