@@ -81,6 +81,9 @@ void main() {
   });
 
   testWidgets('hides the dashboard card when summary is unmounted', (tester) async {
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(walletFeatureReferral: true),
+    );
     when(() => service.getSummary()).thenThrow(
       const ApiException(
         statusCode: 404,
@@ -262,6 +265,9 @@ void main() {
   });
 
   testWidgets('does not poll when the API gate is closed', (tester) async {
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(walletFeatureReferral: true),
+    );
     when(() => service.getSummary()).thenAnswer(
       (_) async => const ReferralSummaryDto(
         eligible: false,
