@@ -389,8 +389,19 @@ void main() {
         expect(current.policy.playStoreUrl, playStoreUrl);
         expect(current.policy.githubReleasesUrl, githubReleasesUrl);
 
-        final stored = await readCache();
-        expect(stored['appStoreUrl'], appStoreUrl);
+        Map<String, dynamic>? stored;
+        for (var i = 0; i < 50; i++) {
+          final raw = await cache.read(ClientPolicyCubit.cacheKey);
+          if (raw != null) {
+            final decoded = jsonDecode(raw) as Map<String, dynamic>;
+            if (decoded['minSupportedVersion'] == '1.3.0') {
+              stored = decoded;
+              break;
+            }
+          }
+        }
+        expect(stored, isNotNull);
+        expect(stored!['appStoreUrl'], appStoreUrl);
         expect(stored['playStoreUrl'], playStoreUrl);
         expect(stored['githubReleasesUrl'], githubReleasesUrl);
       },

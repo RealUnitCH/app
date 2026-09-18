@@ -108,6 +108,20 @@ void main() {
         final reg = exception as RegistrationRequiredException;
         expect(reg.context, 'RealunitSell');
       });
+
+      test('HTTP 426 is UpgradeRequired even when JSON code is KYC', () {
+        final exception = ApiException.fromJson(
+          {
+            'code': 'KYC_LEVEL_REQUIRED',
+            'message': 'KYC level too low',
+            'requiredLevel': 30,
+            'currentLevel': 20,
+          },
+          httpStatusCode: 426,
+        );
+
+        expect(exception, isA<UpgradeRequiredException>());
+      });
     });
 
     group('fromBody', () {

@@ -14,6 +14,10 @@ class ApiException implements Exception {
   });
 
   factory ApiException.fromJson(Map<String, dynamic> json, {int? httpStatusCode}) {
+    if (httpStatusCode == 426) {
+      return UpgradeRequiredException.fromJson(json, httpStatusCode: httpStatusCode);
+    }
+
     final code = json['code'] as String?;
 
     switch (code) {
@@ -24,9 +28,6 @@ class ApiException implements Exception {
       case 'REGISTRATION_REQUIRED':
         return RegistrationRequiredException.fromJson(json, httpStatusCode: httpStatusCode);
       default:
-        if (httpStatusCode == 426) {
-          return UpgradeRequiredException.fromJson(json, httpStatusCode: httpStatusCode);
-        }
         final message = json['message'];
         return ApiException(
           statusCode: json['statusCode'] as int? ?? httpStatusCode,
