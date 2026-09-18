@@ -48,14 +48,14 @@ Column meaning:
 | PIN & lock | `VerifyPinPage` | `pinGate` | `/pinGate` | `17`, `76`, `77`, `78`, `79`, `80`, `81`, `82`, `83`, `84`, `85`, `88` |
 | PIN & lock | `SetupPinPage` | `setupPin` | `/setupPin` | `08`, `09`, `10`, `73`, `74`, `75` |
 | PIN & lock | `VerifyPinPage` | `verifyPin` | `/verifyPin` | `86`, `87` |
-| Dashboard & trading | `DashboardPage` | `dashboard` | `/dashboard` | `35`, `89`, `90`, `91`, `92`, `93`, `94`, `289`, `291`, `292` |
+| Dashboard & trading | `DashboardPage` | `dashboard` | `/dashboard` | `35`, `89`, `90`, `91`, `92`, `93`, `94`, `269`, `289`, `291`, `292` |
 | Dashboard & trading | `TransactionHistoryPage` | `transactionHistory` | `/dashboard/transactionHistory` | `36`, `95`, `96`, `97`, `98`, `99`, `100`, `288` |
 | Dashboard & trading | `BuyPage` | `buy` | `/buy` | `44`, `45`, `46`, `47`, `48`, `103`, `104`, `105`, `106`, `107`, `108`, `109`, `110`, `111`, `112`, `113` |
 | Dashboard & trading | `BuyPaymentDetailsPage` | `buyPaymentDetails` | `/buyPaymentDetails` | `53`, `114`, `115`, `116`, `117` |
 | Dashboard & trading | `SellPage` | `sell` | `/sell` | `49`, `50`, `51`, `52`, `118`, `119`, `120`, `123`, `124`, `125` |
 | Dashboard & trading | `SellBitboxPage` | `sellBitbox` | `/sellBitbox` | `126`, `127`, `128`, `129`, `130`, `131`, `132`, `133`, `134`, `135`, `136` |
 | Dashboard & trading | `SellBankAccountSelectionPage` | — | — | `121`, `122` |
-| Dashboard & trading | `ReceivePage` | `receive` | `/receive` | `101`, `102` |
+| Dashboard & trading | `ReceivePage` | `receive` | `/receive` | `101`, `102`, `296`, `297` |
 | Dashboard & trading | `ConnectBitboxPage` | — | — | `137`, `138`, `139`, `140`, `141`, `142`, `143`, `144`, `145`, `146` |
 | Dashboard & trading | `BitboxAddressRecoveryPage` | `bitboxAddressRecovery` | `/bitboxAddressRecovery` | `147` |
 | Dashboard & trading | `WebViewPage` | `webView` | `/webView` | — |
@@ -66,7 +66,7 @@ Column meaning:
 | Legal | `LegalDfxStep` | — | — | `31` |
 | Legal | `LegalAktionariatStep` | — | — | `30` |
 | Legal | `LegalDocumentsStep` | — | — | `29` |
-| Settings | `SettingsPage` | `settings` | `/settings` | `12`, `24`, `211`, `212`, `285` |
+| Settings | `SettingsPage` | `settings` | `/settings` | `12`, `24`, `211`, `212`, `285`, `293`, `299` |
 | Settings | `SettingsAktionariatDocumentsPage` | `settingsAktionariatDocuments` | `/settings/aktionariatDocuments` | `21` |
 | Settings | `SettingsContactPage` | `settingsContact` | `/settings/contact` | `23` |
 | Settings | `SettingsCurrenciesPage` | `settingsCurrencies` | `/settings/currencies` | `14`, `215`, `216` |
@@ -77,7 +77,8 @@ Column meaning:
 | Settings | `SettingsSecurityPage` | `settingsSecurity` | `/settings/security` | `219`, `220`, `221`, `222`, `223` |
 | Settings | `SettingsTaxReportPage` | `settingsTaxReport` | `/settings/taxReport` | `42`, `43`, `224`, `225`, `226` |
 | Settings | `SettingsSeedPage` | `settingsSeed` | `/settings/seed` | `18`, `19`, `218` |
-| Settings | `SettingsWalletAddressPage` | `settingsWalletAddress` | `/settings/walletAddress` | `16` |
+| Settings | `SettingsWalletAddressPage` | `settingsWalletAddress` | `/settings/walletAddress` | `16`, `298` |
+| Settings | `SettingsInsiderPage` | `settingsInsider` | `/settings/insider` | `294`, `295` |
 | Settings | `ReferralPage` | `settingsReferral` | `/settings/referral` | `279` |
 | Settings | `ReferralCreatePage` | `settingsReferralCreate` | `/settings/referral/create` | `280`, `284` |
 | Settings | `ReferralOverviewPage` | — | — | `276` |
@@ -122,7 +123,7 @@ Column meaning:
 | Shared widgets | `PhoneNumberField` | — | — | `268` |
 | Shared widgets | `ReferralPayoutTransactionRow` | — | — | `282` |
 
-81 screens — 47 routed (`GoRoute`) + 34 non-routed. The table also carries
+82 screens — 48 routed (`GoRoute`) + 34 non-routed. The table also carries
 two shared-widget baselines (`PhoneNumberField`, `ReferralPayoutTransactionRow`),
 which are not screens.
 Referral surfaces have Golden baselines (`276`–`292`); the handbook
@@ -147,7 +148,7 @@ row.
   `243`–`245`. `SetupPinPage` also backs the `settingsChangePin` route
   (`/settings/security/changePin`) via a second constructor; that reuse has no
   separate Golden and is not given its own row.
-- **Handbook numbering.** Each of the 301 handbook slots is a Visual-Regression
+- **Handbook numbering.** Each of the 308 handbook slots is a Visual-Regression
   Golden under `test/goldens/`, mapped to its handbook position by
   `scripts/assemble-handbook-screenshots.sh`. A parallel Tier-3 Maestro flow
   (`.maestro/handbook/NN-*.yaml`) covers navigation/tap-routing smoke for the

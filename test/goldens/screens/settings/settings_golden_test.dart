@@ -76,7 +76,18 @@ void main() {
     );
 
     goldenTest(
-      'shows Empfehlungen when eligible',
+      'insider unlocked, pay toggle off',
+      fileName: 'settings_page_insider_unlocked',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      builder: () {
+        when(() => settingsBloc.state)
+            .thenReturn(const SettingsState(insiderFeaturesUnlocked: true));
+        return buildSubject();
+      },
+    );
+
+    goldenTest(
+      'eligible without insider referral toggle hides Empfehlungen',
       fileName: 'settings_page_referral_eligible',
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
       pumpBeforeTest: (tester) async {
@@ -99,6 +110,40 @@ void main() {
           GetIt.instance.unregister<RealUnitReferralService>();
         }
         GetIt.instance.registerSingleton<RealUnitReferralService>(referral);
+        return buildSubject();
+      },
+    );
+
+    goldenTest(
+      'eligible with insider referral toggle shows Empfehlungen',
+      fileName: 'settings_page_referral_eligible_on',
+      constraints: const BoxConstraints.tightFor(width: 390, height: 844),
+      pumpBeforeTest: (tester) async {
+        await alchemist.precacheImages(tester);
+        await tester.pumpAndSettle();
+      },
+      builder: () {
+        final referral = MockRealUnitReferralService();
+        when(() => referral.getSummary()).thenAnswer(
+          (_) async => const ReferralSummaryDto(
+            eligible: true,
+            termsAccepted: true,
+            openCount: 0,
+            creditedCount: 0,
+            realuSum: 0,
+            chfSum: 0,
+          ),
+        );
+        if (GetIt.instance.isRegistered<RealUnitReferralService>()) {
+          GetIt.instance.unregister<RealUnitReferralService>();
+        }
+        GetIt.instance.registerSingleton<RealUnitReferralService>(referral);
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(
+            insiderFeaturesUnlocked: true,
+            insiderReferralEnabled: true,
+          ),
+        );
         return buildSubject();
       },
     );

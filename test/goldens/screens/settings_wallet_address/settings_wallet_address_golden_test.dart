@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings_wallet_address/settings_wallet_address_page.dart';
 
 import '../../../helper/helper.dart';
@@ -17,6 +18,9 @@ void main() {
   setUpAll(() {
     final getIt = GetIt.instance;
     getIt.registerSingleton<AppStore>(appStore);
+    final settingsBloc = MockSettingsBloc();
+    when(() => settingsBloc.state).thenReturn(const SettingsState());
+    getIt.registerSingleton<SettingsBloc>(settingsBloc);
   });
 
   tearDownAll(() async {
@@ -29,6 +33,26 @@ void main() {
       fileName: 'settings_wallet_address_page_default',
       constraints: phoneConstraints,
       builder: () => wrapForGolden(const SettingsWalletAddressPage()),
+    );
+
+    goldenTest(
+      'primary address with Send CTA',
+      fileName: 'settings_wallet_address_page_send',
+      constraints: phoneConstraints,
+      builder: () {
+        final settingsBloc = MockSettingsBloc();
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(
+            insiderFeaturesUnlocked: true,
+            insiderSendEnabled: true,
+          ),
+        );
+        if (GetIt.instance.isRegistered<SettingsBloc>()) {
+          GetIt.instance.unregister<SettingsBloc>();
+        }
+        GetIt.instance.registerSingleton<SettingsBloc>(settingsBloc);
+        return wrapForGolden(const SettingsWalletAddressPage());
+      },
     );
   });
 }

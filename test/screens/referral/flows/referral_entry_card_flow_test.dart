@@ -8,19 +8,25 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_summary_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/screens/referral/widgets/referral_entry_card.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/themes.dart';
 
+import '../../../helper/helper.dart';
 import 'support/test_view.dart';
 
 class _MockService extends Mock implements RealUnitReferralService {}
 
 void main() {
   late _MockService service;
+  late MockSettingsBloc settingsBloc;
 
   setUp(() {
     service = _MockService();
+    settingsBloc = MockSettingsBloc();
+    when(() => settingsBloc.state).thenReturn(const SettingsState());
     GetIt.instance.registerSingleton<RealUnitReferralService>(service);
+    GetIt.instance.registerSingleton<SettingsBloc>(settingsBloc);
   });
 
   tearDown(() async {
@@ -65,6 +71,12 @@ void main() {
   });
 
   testWidgets('shows the Einstiegskarte when the API says eligible', (tester) async {
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(
+        insiderFeaturesUnlocked: true,
+        insiderReferralEnabled: true,
+      ),
+    );
     when(() => service.getSummary()).thenAnswer(
       (_) async => const ReferralSummaryDto(
         eligible: true,
@@ -86,6 +98,12 @@ void main() {
   testWidgets('taps the Einstiegskarte through to the referral route', (tester) async {
     configureHeadlessDesktopView(tester);
 
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(
+        insiderFeaturesUnlocked: true,
+        insiderReferralEnabled: true,
+      ),
+    );
     when(() => service.getSummary()).thenAnswer(
       (_) async => const ReferralSummaryDto(
         eligible: true,
@@ -135,4 +153,51 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('referral-page'), findsOneWidget);
   });
+
+  testWidgets('hides the Einstiegskarte when eligible but referral toggle is off', (
+    tester,
+  ) async {
+    when(() => service.getSummary()).thenAnswer(
+      (_) async => const ReferralSummaryDto(
+        eligible: true,
+        termsAccepted: true,
+        openCount: 0,
+        creditedCount: 0,
+        realuSum: 0,
+        chfSum: 0,
+      ),
+    );
+
+    await pumpCard(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Empfehlungen'), findsNothing);
+  });
+
+  testWidgets(
+    'hides the Einstiegskarte when ineligible even if referral toggle is on',
+    (tester) async {
+      when(() => settingsBloc.state).thenReturn(
+        const SettingsState(
+          insiderFeaturesUnlocked: true,
+          insiderReferralEnabled: true,
+        ),
+      );
+      when(() => service.getSummary()).thenAnswer(
+        (_) async => const ReferralSummaryDto(
+          eligible: false,
+          termsAccepted: false,
+          openCount: 0,
+          creditedCount: 0,
+          realuSum: 0,
+          chfSum: 0,
+        ),
+      );
+
+      await pumpCard(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Empfehlungen'), findsNothing);
+    },
+  );
 }

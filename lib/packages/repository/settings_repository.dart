@@ -56,4 +56,24 @@ class SettingsRepository {
       _sharedPreferences.getBool('insiderFeaturesUnlocked') ?? false;
   set insiderFeaturesUnlocked(bool unlocked) =>
       _sharedPreferences.setBool('insiderFeaturesUnlocked', unlocked);
+
+  bool get insiderPayEnabled =>
+      _sharedPreferences.getBool('insiderPayEnabled') ?? false;
+  set insiderPayEnabled(bool enabled) =>
+      _sharedPreferences.setBool('insiderPayEnabled', enabled);
+
+  bool get insiderSendEnabled =>
+      _sharedPreferences.getBool('insiderSendEnabled') ?? false;
+  set insiderSendEnabled(bool enabled) =>
+      _sharedPreferences.setBool('insiderSendEnabled', enabled);
+
+  bool get insiderReferralEnabled =>
+      _sharedPreferences.getBool('insiderReferralEnabled') ?? false;
+  set insiderReferralEnabled(bool enabled) =>
+      _sharedPreferences.setBool('insiderReferralEnabled', enabled);
+
+  bool get insiderBonusEnabled =>
+      _sharedPreferences.getBool('insiderBonusEnabled') ?? false;
+  set insiderBonusEnabled(bool enabled) =>
+      _sharedPreferences.setBool('insiderBonusEnabled', enabled);
 }

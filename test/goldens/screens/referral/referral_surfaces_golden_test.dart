@@ -60,6 +60,17 @@ void main() {
         }
         GetIt.instance.registerSingleton<RealUnitReferralService>(service);
         when(() => service.getSummary()).thenAnswer((_) async => _summary);
+        final settings = MockSettingsBloc();
+        when(() => settings.state).thenReturn(
+          const SettingsState(
+            insiderFeaturesUnlocked: true,
+            insiderReferralEnabled: true,
+          ),
+        );
+        if (GetIt.instance.isRegistered<SettingsBloc>()) {
+          GetIt.instance.unregister<SettingsBloc>();
+        }
+        GetIt.instance.registerSingleton<SettingsBloc>(settings);
         return wrapForGolden(
           const Scaffold(body: ReferralEntryCard()),
         );

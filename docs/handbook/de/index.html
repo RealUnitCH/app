@@ -1186,14 +1186,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 355 Visual-Regression Goldens (301 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 375 Visual-Regression Goldens (308 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 301 App-Screenshots dieser Seite sind Goldens aus
+            Die 308 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1233,7 +1233,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 301 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 308 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -1640,7 +1640,7 @@
                 <div class="file">.maestro/handbook/12..16,20..24-*.yaml</div>
               </div>
               <div class="rhs">
-                <b>10 Screens</b>
+                <b>11 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/.maestro/handbook"
@@ -1746,15 +1746,32 @@
               <div class="img">
                 <img
                   src="../screenshots/16-settings-wallet-address.png"
-                  alt="Wallet-Adresse mit QR"
+                  alt="Wallet-Adresse mit QR ohne den CTA Senden"
                 />
               </div>
               <div class="desc">
                 Seite <b>RealUnit Wallet Adresse</b>: EVM-Adresse der Wallet
-                (<code>0x…</code>) mit QR-Code, Copy-Button, Hinweistext und dem CTA
-                <b>Senden</b>. Der QR-Code enthält die Adresse als EIP-681-URI
-                (<code>ethereum:0x…</code>). Die eigentliche Empfangen-Seite mit QR-Code
-                ist in Spec 35 beschrieben.
+                (<code>0x…</code>) mit QR-Code, Copy-Button und Hinweistext, ohne den
+                Insider-Schalter Senden — der CTA «Senden» fehlt. Der QR-Code enthält
+                die Adresse als EIP-681-URI (<code>ethereum:0x…</code>). Die eigentliche
+                Empfangen-Seite mit QR-Code ist in Spec 35 beschrieben.
+              </div>
+            </div>
+            <div class="test" id="298-settings-wallet-address-send">
+              <div class="head">
+                <a class="name permalink" href="#298-settings-wallet-address-send">298-settings-wallet-address-send</a>
+                <button class="copy-link" type="button" data-target="298-settings-wallet-address-send" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/settings_wallet_address/goldens/macos/settings_wallet_address_page_send.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/298-settings-wallet-address-send.png"
+                  alt="Wallet-Adresse mit QR und dem CTA Senden"
+                />
+              </div>
+              <div class="desc">
+                Dieselbe Seite wie 16, aber mit eingeschaltetem Insider-Schalter Senden —
+                der CTA «Senden» ist sichtbar.
               </div>
             </div>
             <div class="test" id="20-settings-legal-documents">
@@ -4196,7 +4213,7 @@
                 <div class="file">test/goldens/screens/receive/</div>
               </div>
               <div class="rhs">
-                <b>2 Screens</b>
+                <b>4 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/receive"
@@ -4220,11 +4237,11 @@
               <div class="img">
                 <img
                   src="../screenshots/101-receive-page-default.png"
-                  alt="Empfangen als Bottom-Sheet mit QR-Code"
+                  alt="Empfangen als Bottom-Sheet mit QR-Code ohne den CTA Senden"
                 />
               </div>
               <div class="desc">
-                Die <b>Bottom-Sheet-Variante</b> der Empfangen-Seite: oben der horizontale Ziehbalken (Handlebar), darunter der QR-Code der eigenen Wallet-Adresse und die zweizeilig formatierte Adresse mit <b>fett</b> hervorgehobenem Anfang und Ende, dem Kopieren-Symbol und unten dem CTA <b>Senden</b>. Der Nutzer sieht diese Variante, wenn die Seite als aufgezogenes Blatt von unten geöffnet wird; ein Tippen auf die Adresse kopiert sie in die Zwischenablage.
+                Die <b>Bottom-Sheet-Variante</b> der Empfangen-Seite: oben der horizontale Ziehbalken (Handlebar), darunter der QR-Code der eigenen Wallet-Adresse und die zweizeilig formatierte Adresse mit <b>fett</b> hervorgehobenem Anfang und Ende und dem Kopieren-Symbol, ohne den Insider-Schalter Senden — der CTA «Senden» fehlt. Der Nutzer sieht diese Variante, wenn die Seite als aufgezogenes Blatt von unten geöffnet wird; ein Tippen auf die Adresse kopiert sie in die Zwischenablage.
               </div>
             </div>
             <div class="test" id="102-receive-page-full-page">
@@ -4236,11 +4253,43 @@
               <div class="img">
                 <img
                   src="../screenshots/102-receive-page-full-page.png"
-                  alt="Empfangen als Vollseite mit Zurück-Pfeil"
+                  alt="Empfangen als Vollseite mit Zurück-Pfeil ohne den CTA Senden"
                 />
               </div>
               <div class="desc">
-                Die <b>vollflächige Variante</b> derselben Empfangen-Seite: oben eine AppBar mit <b>Zurück-Pfeil</b> statt Ziehbalken, darunter identisch der QR-Code, die zweizeilige Adresse, das Kopieren-Symbol und der CTA <b>Senden</b>. Diese Variante erscheint, wenn die Seite über die Navigation als eigene Route geöffnet wird; über den Pfeil gelangt der Nutzer zurück.
+                Die <b>vollflächige Variante</b> derselben Empfangen-Seite: oben eine AppBar mit <b>Zurück-Pfeil</b> statt Ziehbalken, darunter identisch der QR-Code, die zweizeilige Adresse und das Kopieren-Symbol, ohne den Insider-Schalter Senden — der CTA «Senden» fehlt. Diese Variante erscheint, wenn die Seite über die Navigation als eigene Route geöffnet wird; über den Pfeil gelangt der Nutzer zurück.
+              </div>
+            </div>
+            <div class="test" id="296-receive-page-default-send">
+              <div class="head">
+                <a class="name permalink" href="#296-receive-page-default-send">296-receive-page-default-send</a>
+                <button class="copy-link" type="button" data-target="296-receive-page-default-send" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/receive/goldens/macos/receive_page_default_send.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/296-receive-page-default-send.png"
+                  alt="Empfangen als Bottom-Sheet mit QR-Code und dem CTA Senden"
+                />
+              </div>
+              <div class="desc">
+                Die <b>Bottom-Sheet-Variante</b> wie 101, mit eingeschaltetem Insider-Schalter Senden — der CTA «Senden» ist sichtbar.
+              </div>
+            </div>
+            <div class="test" id="297-receive-page-full-page-send">
+              <div class="head">
+                <a class="name permalink" href="#297-receive-page-full-page-send">297-receive-page-full-page-send</a>
+                <button class="copy-link" type="button" data-target="297-receive-page-full-page-send" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/receive/goldens/macos/receive_page_full_page_send.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/297-receive-page-full-page-send.png"
+                  alt="Empfangen als Vollseite mit Zurück-Pfeil und dem CTA Senden"
+                />
+              </div>
+              <div class="desc">
+                Die <b>vollflächige Variante</b> wie 102, mit eingeschaltetem Insider-Schalter Senden — der CTA «Senden» ist sichtbar.
               </div>
             </div>
           </div>
@@ -8100,7 +8149,7 @@
                 <div class="file">test/goldens/screens/dashboard/</div>
               </div>
               <div class="rhs">
-                <b>2 Screens</b>
+                <b>5 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/dashboard"
@@ -8111,10 +8160,17 @@
             </div>
           </summary>
           <p class="spec-intro">
-            Die Funktion <b>Bezahlen</b> (OpenCryptoPay) ist bewusst versteckt (Soft-Launch)
-            und erscheint erst nach einer einmaligen Freischaltung auf dem Gerät.
-            <b>Senden</b> (REALU-Transfer an eine andere Wallet) ist davon unabhängig über
-            Einstellungen → Wallet-Adresse und über Empfangen erreichbar.
+            Die Insider-Funktionen sind bewusst versteckt (Soft-Launch).
+            Siebenmaliges Tippen auf die Versionsnummer schaltet auf dem Gerät Insider-Funktionen
+            frei; in den Einstellungen erscheint danach der Menüpunkt <b>Insider Funktionen</b>
+            (nach Wallet-Adresse, vor Wallet-Sicherung). Tippen darauf öffnet die Seite mit
+            genau vier Schaltern, alle standardmässig aus — die Freischaltung schaltet keinen
+            von ihnen ein: <b>Bezahlen</b>, <b>Senden</b>, <b>Referral-Programm</b>,
+            <b>Bonus-Programm</b>. Bezahlen erscheint auf dem Dashboard erst, wenn der Schalter
+            Bezahlen eingeschaltet ist. Senden erscheint auf Empfangen und Wallet-Adresse erst,
+            wenn der Schalter Senden eingeschaltet ist. Empfehlungen (Einstellungen und
+            Dashboard-Karte) erscheinen nur bei API-Berechtigung und eingeschaltetem
+            Referral-Programm. Bonus-Programm hat in dieser App noch keine weitere Oberfläche.
           </p>
 
           <!-- Single column on purpose: the explainer block below carries a
@@ -8135,8 +8191,15 @@
                   <li>Siebenmal kurz hintereinander auf die Versionsnummer tippen.</li>
                   <li>Es erscheint die Bestätigung «Insider-Funktionen freigeschaltet».</li>
                   <li>
-                    Zurück im Dashboard steht neben <b>Kaufen</b> und <b>Verkaufen</b> neu
-                    <b>Bezahlen</b>.
+                    In den Einstellungen erscheint nach Wallet-Adresse und vor
+                    Wallet-Sicherung der Menüpunkt «Insider Funktionen». Öffnen zeigt
+                    die vier Schalter Bezahlen, Senden, Referral-Programm und
+                    Bonus-Programm, alle standardmässig aus — die Freischaltung
+                    schaltet keinen von ihnen ein.
+                  </li>
+                  <li>
+                    <b>Bezahlen</b> erscheint auf dem Dashboard erst, nachdem der Schalter
+                    Bezahlen auf der Insider-Funktionen-Seite eingeschaltet wurde.
                   </li>
                 </ol>
                 <p>
@@ -8144,8 +8207,9 @@
                   App-Neustart) — sie wird lokal per <code>SharedPreferences</code>
                   gespeichert. Eine Neuinstallation der App setzt sie zurück.
                   OpenCryptoPay-Zahlungslinks funktionieren unabhängig von der
-                  Freischaltung — der Deeplink bleibt bewusst immer offen. Tippen auf die
-                  Versionsnummer nach erfolgter Freischaltung hat keine Wirkung mehr.
+                  Freischaltung und unabhängig vom Schalter — der Deeplink bleibt bewusst
+                  immer offen. Tippen auf die Versionsnummer nach erfolgter Freischaltung
+                  hat keine Wirkung mehr.
                 </p>
               </div>
               <div class="img img-multi">
@@ -8166,9 +8230,9 @@
                 <div>
                   <img
                     src="../screenshots/269-dashboard-insider-unlocked.png"
-                    alt="Dashboard nach der Freischaltung — drei Aktionen"
+                    alt="Dashboard nach eingeschaltetem Bezahlen — drei Aktionen"
                   />
-                  <p><em>Nachher: drei Aktionen.</em></p>
+                  <p><em>Nachher: Dashboard, nachdem Bezahlen auf der Insider-Funktionen-Seite eingeschaltet wurde — drei Aktionen.</em></p>
                 </div>
               </div>
             </div>
@@ -8185,10 +8249,60 @@
                 />
               </div>
               <div class="desc">
-                Dashboard mit freigeschalteter Insider-Ansicht: neben <b>Kaufen</b> und
-                <b>Verkaufen</b> erscheint zusätzlich <b>Bezahlen</b>.
+                Dashboard nach eingeschaltetem Bezahlen auf der Insider-Funktionen-Seite:
+                neben <b>Kaufen</b> und <b>Verkaufen</b> erscheint zusätzlich <b>Bezahlen</b>.
                 Golden-Quelle: <code>dashboard_insider_unlocked.png</code> aus
                 <code>dashboard_golden_test.dart</code>.
+              </div>
+            </div>
+            <div class="test" id="293-settings-insider-unlocked">
+              <div class="head">
+                <a class="name permalink" href="#293-settings-insider-unlocked">293-settings-insider-unlocked</a>
+                <button class="copy-link" type="button" data-target="293-settings-insider-unlocked" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/settings/goldens/macos/settings_page_insider_unlocked.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/293-settings-insider-unlocked.png"
+                  alt="Einstellungen mit Menüpunkt Insider Funktionen, ohne Empfehlungen"
+                />
+              </div>
+              <div class="desc">
+                Nach Unlock, alle Schalter aus: Menüpunkt «Insider Funktionen» nach
+                Wallet-Adresse / vor Wallet-Sicherung; Zeile «Empfehlungen» fehlt.
+              </div>
+            </div>
+            <div class="test" id="294-settings-insider-page-default">
+              <div class="head">
+                <a class="name permalink" href="#294-settings-insider-page-default">294-settings-insider-page-default</a>
+                <button class="copy-link" type="button" data-target="294-settings-insider-page-default" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/settings_insider/goldens/macos/settings_insider_page_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/294-settings-insider-page-default.png"
+                  alt="Insider Funktionen mit vier Schaltern alle aus"
+                />
+              </div>
+              <div class="desc">
+                Seite Insider Funktionen: Bezahlen, Senden, Referral-Programm,
+                Bonus-Programm, alle aus.
+              </div>
+            </div>
+            <div class="test" id="295-settings-insider-page-enabled">
+              <div class="head">
+                <a class="name permalink" href="#295-settings-insider-page-enabled">295-settings-insider-page-enabled</a>
+                <button class="copy-link" type="button" data-target="295-settings-insider-page-enabled" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/settings_insider/goldens/macos/settings_insider_page_enabled.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/295-settings-insider-page-enabled.png"
+                  alt="Insider Funktionen mit vier Schaltern alle ein"
+                />
+              </div>
+              <div class="desc">
+                Dieselbe Seite, alle vier Schalter eingeschaltet.
               </div>
             </div>
           </div>
@@ -11192,7 +11306,8 @@
             (`285`), Rechtliche Dokumente letzter Eintrag (`286`), Einladung
             erkannt (`287`), Historie mit Prämie (`288`), Dashboard-Einstieg
             (`289`), Promo-Aktionstext (`290`), Bind-Overlay ungültig (`291`),
-            Bind-Overlay nur für neue Kundinnen (`292`).
+            Bind-Overlay nur für neue Kundinnen (`292`),
+            eligible-on Einstellungen (`299`).
           </p>
           <div class="test" id="276-referral-overview">
             <div class="head">
@@ -11359,13 +11474,29 @@
             <div class="img">
               <img
                 src="../screenshots/285-settings-referral-eligible.png"
-                alt="Einstellungen-Karte Empfehlungen für berechtigte Aktionäre"
+                alt="Einstellungen bei API-eligible ohne die Zeile Empfehlungen"
               />
             </div>
             <div class="desc">
-              Einstieg «Empfehlungen» in den Einstellungen, nur wenn die API
-              <code>eligible</code> setzt. Kartentext «Erhalten Sie 20 REALU pro
-              Weiterempfehlung».
+              Einstellungen bei API-<code>eligible</code>, ohne den Insider-Schalter
+              Referral-Programm — die Zeile «Empfehlungen» fehlt.
+            </div>
+          </div>
+          <div class="test" id="299-settings-referral-eligible-on">
+            <div class="head">
+              <a class="name permalink" href="#299-settings-referral-eligible-on">299-settings-referral-eligible-on</a>
+              <button class="copy-link" type="button" data-target="299-settings-referral-eligible-on" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+              <span class="src">settings_golden_test.dart</span>
+            </div>
+            <div class="img">
+              <img
+                src="../screenshots/299-settings-referral-eligible-on.png"
+                alt="Einstellungen bei API-eligible mit der Zeile Empfehlungen"
+              />
+            </div>
+            <div class="desc">
+              Einstellungen bei API-<code>eligible</code> und eingeschaltetem Insider-Schalter
+              Referral-Programm — die Zeile «Empfehlungen» ist sichtbar.
             </div>
           </div>
           <div class="test" id="286-settings-legal-referral-terms">

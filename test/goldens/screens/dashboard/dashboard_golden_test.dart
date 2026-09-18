@@ -134,8 +134,12 @@ void main() {
       fileName: 'dashboard_insider_unlocked',
       constraints: const BoxConstraints.tightFor(width: 390, height: 844),
       builder: () {
-        when(() => settingsBloc.state)
-            .thenReturn(const SettingsState(insiderFeaturesUnlocked: true));
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(
+            insiderFeaturesUnlocked: true,
+            insiderPayEnabled: true,
+          ),
+        );
         when(() => balanceCubit.state).thenReturn(
           Balance(
             chainId: realUnitAsset.chainId,
