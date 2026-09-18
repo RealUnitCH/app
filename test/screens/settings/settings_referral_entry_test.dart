@@ -96,6 +96,9 @@ void main() {
   });
 
   testWidgets('hides Empfehlungen when the API gate is closed', (tester) async {
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(walletFeatureReferral: true),
+    );
     when(() => referral.getSummary()).thenAnswer(
       (_) async => const ReferralSummaryDto(
         eligible: false,
