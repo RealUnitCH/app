@@ -50,10 +50,12 @@ class PayProcessCubit extends Cubit<PayProcessState> {
 
   SwapPaymentInfo? _swap;
 
-  /// Set once the REALU→ZCHF swap has been broadcast successfully. From this
-  /// point the user holds ZCHF and recovery must NEVER re-swap — the pay leg is
-  /// retried on its own via [retryPay].
+  /// Set after the swap is signed, before broadcast. A timeout can still have
+  /// sent the tx; recovery must NEVER re-swap — the pay leg is retried via
+  /// [retryPay].
   bool _swapCompleted = false;
+
+  bool get swapCompleted => _swapCompleted;
 
   /// Guards overlapping ETH-poll ticks from each calling [_executeSwap]. Set
   /// synchronously before the first await in a tick; released in `finally` on
@@ -108,7 +110,8 @@ class PayProcessCubit extends Cubit<PayProcessState> {
   /// the common case (a few minutes of drift + the OCP/swap fees), so any
   /// adverse move stranded the user in ZCHF that could not cover settlement.
   /// 3% is a pragmatic headroom that absorbs ordinary drift while keeping the
-  /// over-swap small (leftover ZCHF simply stays in the wallet); a larger move
+  /// over-swap small (leftover from the 3% swap buffer is swept to DFX on the
+  /// pay transfer, not left on the user address); a larger move
   /// is caught explicitly and surfaced as a retryable
   /// [PayRetryReason.insufficientZchf] rather than a server-side failure.
   static const _slippageBuffer = 1.03;
@@ -173,7 +176,13 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       // The API is the authority on whether the swap is fundable; render its
       // signal rather than recomputing limits locally.
       if (!swap.isValid) {
-        emit(const PayProcessFailure(PayProcessFailureReason.insufficientZchf));
+        final error = swap.error;
+        emit(
+          PayProcessFailure(
+            PayProcessFailureReason.generic,
+            message: (error != null && error.isNotEmpty) ? error : null,
+          ),
+        );
         return;
       }
 
@@ -259,12 +268,12 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       if (isClosed) return;
       final signed = await _signTransaction(unsigned.swap);
       if (isClosed) return;
-      await _payService.broadcastSwapTransaction(swap.id, signed);
-      if (isClosed) return;
-      // The swap is now irreversible — the user holds ZCHF. From here every
-      // recovery path retries the PAY leg only; the swap is never redone.
+      // Mark completed before the HTTP round-trip. A timeout or dropped 2xx
+      // can still have broadcast the tx; the quote must not re-enable Pay.
       _swapCompleted = true;
       _acquiredZchf = swap.estimatedAmount;
+      await _payService.broadcastSwapTransaction(swap.id, signed);
+      if (isClosed) return;
       await _refreshQuoteAndPay();
     } on PaySignatureUnsupportedException {
       if (isClosed) return;
@@ -274,6 +283,17 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       emit(const PayProcessFailure(PayProcessFailureReason.bitboxRequired));
     } catch (e) {
       if (isClosed) return;
+      if (_swapCompleted) {
+        // API errors 1:1; transport/timeout has no user copy — the retry sheet
+        // falls back to payRetryTransient (ZCHF stays until pay succeeds).
+        emit(
+          PayProcessPayRetry(
+            PayRetryReason.transient,
+            message: e is ApiException ? e.message : null,
+          ),
+        );
+        return;
+      }
       emit(PayProcessFailure(PayProcessFailureReason.generic, message: ApiException.userFacingMessage(e)));
     }
   }
@@ -303,7 +323,12 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       // Transient/network error fetching the quote — NOT a genuine expiry.
       // Retry the pay leg; the swapped ZCHF stays in the wallet.
       if (isClosed) return;
-      emit(PayProcessPayRetry(PayRetryReason.transient, message: ApiException.userFacingMessage(e)));
+      emit(
+        PayProcessPayRetry(
+          PayRetryReason.transient,
+          message: e is ApiException ? e.message : null,
+        ),
+      );
       return;
     }
 
@@ -376,7 +401,12 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       // by retrying the pay leg — never by re-swapping. Surface the retryable state rather than a
       // terminal failure.
       if (isClosed) return;
-      emit(PayProcessPayRetry(PayRetryReason.transient, message: ApiException.userFacingMessage(e)));
+      emit(
+        PayProcessPayRetry(
+          PayRetryReason.transient,
+          message: e is ApiException ? e.message : null,
+        ),
+      );
     }
   }
 

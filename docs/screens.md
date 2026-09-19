@@ -13,7 +13,8 @@ Column meaning:
   **not a route**: it is shown inside a parent route (KYC steps, status
   sub-pages, disclaimer steps).
 - **Handbook** — the handbook screenshot slot number(s) that document the
-  screen, or `—` if the screen has no Golden baseline. Each slot is a
+  screen, or `—` if the screen has no handbook slot (it may still have a
+  Visual-Regression Golden). Each slot is a
   Visual-Regression Golden under `test/goldens/`, mapped to its handbook
   position by `scripts/assemble-handbook-screenshots.sh`. The handbook now
   covers a **curated subset of Golden baselines** — screens **plus selected
@@ -30,9 +31,10 @@ Column meaning:
   default plus its state variants), so most cells now carry a range rather
   than a single anchor. One Golden is a shared form widget rather than a
   screen: slot `268` is `PhoneNumberField` under `test/goldens/widgets/form/`.
-  Only `WebViewPage` (no active Golden) and `KycPageManager` (the orchestrator
-  has no Golden of its own — its states are the individual KYC pages) still
-  carry `—`. Slot ↔ Golden mapping in
+  `WebViewPage` (no active Golden) and `KycPageManager` (the orchestrator
+  has no Golden of its own — its states are the individual KYC pages) carry
+  `—`, as do `PayScanPage` and `PayProcessPage` (Visual-Regression goldens
+  exist, no handbook slot). Slot ↔ Golden mapping in
   `scripts/assemble-handbook-screenshots.sh`, slot ↔ HTML block in
   `docs/handbook/de/index.html`. See `docs/handbook/README.md`.
 
@@ -56,6 +58,10 @@ Column meaning:
 | Dashboard & trading | `SellBitboxPage` | `sellBitbox` | `/sellBitbox` | `126`, `127`, `128`, `129`, `130`, `131`, `132`, `133`, `134`, `135`, `136` |
 | Dashboard & trading | `SellBankAccountSelectionPage` | — | — | `121`, `122` |
 | Dashboard & trading | `ReceivePage` | `receive` | `/receive` | `101`, `102`, `296`, `297` |
+| Dashboard & trading | `PayInfoPage` | `pay` | `/pay` | `300` |
+| Dashboard & trading | `PayScanPage` | — | — | — |
+| Dashboard & trading | `PayQuotePage` | — | — | `301`, `302` |
+| Dashboard & trading | `PayProcessPage` | — | — | — |
 | Dashboard & trading | `ConnectBitboxPage` | — | — | `137`, `138`, `139`, `140`, `141`, `142`, `143`, `144`, `145`, `146` |
 | Dashboard & trading | `BitboxAddressRecoveryPage` | `bitboxAddressRecovery` | `/bitboxAddressRecovery` | `147` |
 | Dashboard & trading | `WebViewPage` | `webView` | `/webView` | — |
@@ -123,13 +129,15 @@ Column meaning:
 | Shared widgets | `PhoneNumberField` | — | — | `268` |
 | Shared widgets | `ReferralPayoutTransactionRow` | — | — | `282` |
 
-82 screens — 48 routed (`GoRoute`) + 34 non-routed. The table also carries
+86 screens — 49 routed (`GoRoute`) + 37 non-routed. The table also carries
 two shared-widget baselines (`PhoneNumberField`, `ReferralPayoutTransactionRow`),
 which are not screens.
 Referral surfaces have Golden baselines (`276`–`292`); the handbook
 documents the programme in `#spec-referral`. Overlay slots `291` and `292`
 are listed on `DashboardPage` (the host screen), not as a second shared-widget
-row.
+row. OpenCryptoPay pay rounding cards `300`–`302` are documented in
+`#spec-81`. `PayScanPage` and `PayProcessPage` have Visual-Regression goldens
+under `test/goldens/screens/pay/` and no handbook slot.
 
 ## Notes
 
@@ -148,7 +156,7 @@ row.
   `243`–`245`. `SetupPinPage` also backs the `settingsChangePin` route
   (`/settings/security/changePin`) via a second constructor; that reuse has no
   separate Golden and is not given its own row.
-- **Handbook numbering.** Each of the 308 handbook slots is a Visual-Regression
+- **Handbook numbering.** Each of the 311 handbook slots is a Visual-Regression
   Golden under `test/goldens/`, mapped to its handbook position by
   `scripts/assemble-handbook-screenshots.sh`. A parallel Tier-3 Maestro flow
   (`.maestro/handbook/NN-*.yaml`) covers navigation/tap-routing smoke for the

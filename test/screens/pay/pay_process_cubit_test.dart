@@ -11,6 +11,7 @@ import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/faucet/faucet_response_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/lnurlp_payment_dto.dart';
@@ -57,6 +58,7 @@ SwapPaymentInfo _swap({
   double ethBalance = 1.0,
   double requiredGasEth = 0.001,
   bool isValid = true,
+  String? error,
 }) {
   return SwapPaymentInfo.fromDto(
     RealUnitSwapPaymentInfoDto(
@@ -74,6 +76,7 @@ SwapPaymentInfo _swap({
       ethBalance: ethBalance,
       requiredGasEth: requiredGasEth,
       isValid: isValid,
+      error: error,
     ),
   );
 }
@@ -313,14 +316,17 @@ void main() {
     await cubit.close();
   });
 
-  test('invalid swap quote → insufficientZchf', () async {
-    when(() => payService.getSwapPaymentInfo(any())).thenAnswer((_) async => _swap(isValid: false));
+  test('invalid swap quote surfaces the API error 1:1', () async {
+    when(() => payService.getSwapPaymentInfo(any())).thenAnswer(
+      (_) async => _swap(isValid: false, error: 'AmountTooLow'),
+    );
 
     final cubit = build();
     await cubit.start();
 
     final state = cubit.state as PayProcessFailure;
-    expect(state.reason, PayProcessFailureReason.insufficientZchf);
+    expect(state.reason, PayProcessFailureReason.generic);
+    expect(state.message, 'AmountTooLow');
     await cubit.close();
   });
 
@@ -420,8 +426,26 @@ void main() {
     final state = await retry as PayProcessPayRetry;
 
     // The swap is done; a failed pay must NOT force a re-swap.
+    // Transport errors must not dump Exception.toString onto the retry sheet.
     expect(state.reason, PayRetryReason.transient);
+    expect(state.message, isNull);
     expect(cubit.state, isNot(isA<PayProcessFailure>()));
+    await cubit.close();
+  });
+
+  test('pay submit API error after swap surfaces the message 1:1', () async {
+    wireHappyPath();
+    when(() => payService.submitPay(any())).thenThrow(
+      const ApiException(code: 'QUOTE_EXPIRED', message: 'Quote is no longer valid'),
+    );
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    final state = await retry as PayProcessPayRetry;
+
+    expect(state.reason, PayRetryReason.transient);
+    expect(state.message, 'Quote is no longer valid');
     await cubit.close();
   });
 
@@ -984,6 +1008,23 @@ void main() {
     await cubit.close();
   });
 
+  test('broadcast throw after sign is a pay-only retry, not a re-scan', () async {
+    wireHappyPath();
+    when(
+      () => payService.broadcastSwapTransaction(any(), any()),
+    ).thenThrow(Exception('timeout'));
+
+    final cubit = build();
+    final retry = cubit.stream.firstWhere((s) => s is PayProcessPayRetry);
+    await cubit.start();
+    final state = await retry as PayProcessPayRetry;
+
+    expect(state.reason, PayRetryReason.transient);
+    expect(state.message, isNull);
+    expect(cubit.swapCompleted, isTrue);
+    await cubit.close();
+  });
+
   test('transient quote re-fetch failure after swap → retry (not re-scan)', () async {
     wireHappyPath();
     when(() => payService.getPaymentDetails('pl_abc')).thenThrow(Exception('lnurlp 500'));
@@ -996,6 +1037,7 @@ void main() {
     // A transient fetch error is NOT a genuine expiry — it routes to the
     // pay-only retry, never to a re-scan → re-swap.
     expect(state.reason, PayRetryReason.transient);
+    expect(state.message, isNull);
     await cubit.close();
   });
 
