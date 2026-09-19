@@ -220,9 +220,11 @@ void main() {
     });
 
     test('ClientPolicyInitial and FailOpen equal themselves', () {
+      expect(const ClientPolicyInitial(), isNot(const ClientPolicyFailOpen()));
+      // ignore: prefer_const_constructors
       expect(ClientPolicyInitial(), ClientPolicyInitial());
+      // ignore: prefer_const_constructors
       expect(ClientPolicyFailOpen(), ClientPolicyFailOpen());
-      expect(ClientPolicyInitial(), isNot(ClientPolicyFailOpen()));
     });
 
     test(

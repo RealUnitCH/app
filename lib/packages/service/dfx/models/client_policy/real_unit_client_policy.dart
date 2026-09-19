@@ -102,8 +102,6 @@ class RealUnitClientPolicy extends Equatable {
     bool? forcedHard,
     DateTime? fetchedAt,
   }) {
-    final nextForcedHard = forcedHard ?? this.forcedHard;
-    final nextFetchedAt = fetchedAt ?? this.fetchedAt;
     return RealUnitClientPolicy(
       minSupportedVersion: minSupportedVersion ?? this.minSupportedVersion,
       latestVersion: latestVersion ?? this.latestVersion,
@@ -111,8 +109,8 @@ class RealUnitClientPolicy extends Equatable {
       appStoreUrl: appStoreUrl ?? this.appStoreUrl,
       playStoreUrl: playStoreUrl ?? this.playStoreUrl,
       githubReleasesUrl: githubReleasesUrl ?? this.githubReleasesUrl,
-      forcedHard: nextForcedHard,
-      fetchedAt: nextFetchedAt,
+      forcedHard: forcedHard ?? this.forcedHard,
+      fetchedAt: fetchedAt ?? this.fetchedAt,
     );
   }
 
