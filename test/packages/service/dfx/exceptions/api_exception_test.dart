@@ -122,6 +122,23 @@ void main() {
 
         expect(exception, isA<UpgradeRequiredException>());
       });
+
+      test('UPGRADE_REQUIRED code is UpgradeRequired when status is not 426', () {
+        final exception = ApiException.fromJson(
+          {
+            'code': 'UPGRADE_REQUIRED',
+            'message': 'Please update the RealUnit app to continue.',
+            'minSupportedVersion': '1.3.0',
+          },
+          httpStatusCode: 400,
+        );
+
+        expect(exception, isA<UpgradeRequiredException>());
+        expect(
+          (exception as UpgradeRequiredException).minSupportedVersion,
+          '1.3.0',
+        );
+      });
     });
 
     group('fromBody', () {

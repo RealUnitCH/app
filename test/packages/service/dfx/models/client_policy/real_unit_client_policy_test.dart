@@ -205,6 +205,7 @@ void main() {
         forcedHard: true,
         fetchedAt: fetchedAt,
       );
+      final omitted = original.copyWith(minSupportedVersion: '1.1.0');
 
       expect(copied.forcedHard, isTrue);
       expect(copied.fetchedAt, fetchedAt);
@@ -214,6 +215,9 @@ void main() {
       expect(copied.appStoreUrl, original.appStoreUrl);
       expect(copied.playStoreUrl, original.playStoreUrl);
       expect(copied.githubReleasesUrl, original.githubReleasesUrl);
+      expect(omitted.minSupportedVersion, '1.1.0');
+      expect(omitted.forcedHard, original.forcedHard);
+      expect(omitted.fetchedAt, original.fetchedAt);
     });
   });
 
