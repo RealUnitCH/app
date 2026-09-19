@@ -84,6 +84,7 @@ Network access is one half of the gateway rule. **Business decisions are the oth
 - **The app does not interpret status strings into business meaning.** It renders what the API returns as `currentStep` / `nextAction` / `state`.
 - **The app does not duplicate backend sets/enums as gating logic.** DTO mirroring for type safety is fine; local `_requiredStepNames`, `actionableStatuses`, `_minLevelForActions`, `_minAmountChf` constants are not.
 - **Prompts to the user fire only when the API requests them.** "Please verify yourself" appears only when the API signals a pending KYC step — never because the app inferred something from a level number or expired timestamp.
+- **The app must not invent a hard update from a local major-version bump.** min, latest and severity come from `GET /v1/realunit/client-policy`.
 
 ### The test (Wer entscheidet?)
 

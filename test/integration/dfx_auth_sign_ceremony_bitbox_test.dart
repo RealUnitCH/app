@@ -33,6 +33,7 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
@@ -63,12 +64,6 @@ class _BitboxAuthService extends DFXAuthService {
 }
 
 void main() {
-  setUpAll(() {
-    // Required by mocktail for the `appStore.httpClient` stub when the test
-    // overrides it with a fresh MockClient mid-flow.
-    registerFallbackValue(MockClient((_) async => http.Response('', 200)));
-  });
-
   group('DFXAuthService.getAuthToken × BitboxCredentials sign ceremony', () {
     late _MockAppStore appStore;
     late _MockWalletService walletService;
@@ -105,7 +100,7 @@ void main() {
     });
 
     _BitboxAuthService buildService(http.Client client) {
-      when(() => appStore.httpClient).thenReturn(client);
+      when(() => appStore.httpClient).thenReturn(RealUnitApiClient(client));
       return _BitboxAuthService(appStore, walletService, account);
     }
 

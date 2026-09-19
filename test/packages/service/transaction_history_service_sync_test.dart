@@ -11,6 +11,7 @@ import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/repository/transaction_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
@@ -111,7 +112,7 @@ void main() {
   });
 
   TransactionHistoryService build(http.Client client) {
-    when(() => appStore.httpClient).thenReturn(client);
+    when(() => appStore.httpClient).thenReturn(RealUnitApiClient(client));
     return TransactionHistoryService(appStore, walletService, txRepo);
   }
 

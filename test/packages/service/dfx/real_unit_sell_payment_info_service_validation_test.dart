@@ -6,6 +6,7 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_payment_info_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
@@ -121,8 +122,9 @@ void main() {
   });
 
   RealUnitSellPaymentInfoService build({http.Client? client}) {
-    when(() => appStore.httpClient)
-        .thenReturn(client ?? MockClient((_) async => http.Response('{}', 200)));
+    when(() => appStore.httpClient).thenReturn(
+      RealUnitApiClient(client ?? MockClient((_) async => http.Response('{}', 200))),
+    );
     return RealUnitSellPaymentInfoService(appStore, walletService);
   }
 

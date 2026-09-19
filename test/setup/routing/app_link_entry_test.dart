@@ -6,12 +6,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/utils/marketing_version.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
+import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit.dart';
 import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_link_entry.dart';
 import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 
 class _MockPinAuthCubit extends Mock implements PinAuthCubit {}
+
+class _MockClientPolicyCubit extends Mock implements ClientPolicyCubit {}
 
 void main() {
   late _MockPinAuthCubit pinAuthCubit;
@@ -204,6 +208,28 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('dashboard')), findsOneWidget);
   });
+
+  testWidgets(
+    'warm resume unlocked with registered ClientPolicyCubit hard never pushes /pay',
+    (tester) async {
+      addTearDown(clearPendingPaymentDeeplink);
+      final policyCubit = _MockClientPolicyCubit();
+      when(() => policyCubit.severity).thenReturn(ClientPolicySeverity.hard);
+      GetIt.instance.registerSingleton<ClientPolicyCubit>(policyCubit);
+
+      const sampleLnurl = 'LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD9E3K7MF0V9CXJTMKXP6XCEF';
+      final router = await pump(tester);
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+
+      router.go('realunit-wallet:lightning:$sampleLnurl');
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('pay')), findsNothing);
+      expect(find.byKey(const Key('dashboard')), findsOneWidget);
+      expect(peekPendingPaymentDeeplink(), 'lightning:$sampleLnurl');
+    },
+  );
 
   testWidgets(
     'warm resume: a payment deeplink pushes /pay with the payload as extra '

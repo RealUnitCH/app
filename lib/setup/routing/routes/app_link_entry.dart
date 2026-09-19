@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/packages/io/normalize_referral_code.dart';
+import 'package:realunit_wallet/packages/utils/marketing_version.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
+import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 import 'package:realunit_wallet/setup/routing/referral_bind.dart';
@@ -365,6 +367,13 @@ String? appLinkSchemeRedirect(
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final pinState = getIt<PinAuthCubit>().state;
           if (!(pinState.isPinVerified && pinState.isPinSetup)) {
+            stashPendingPaymentDeeplink(paymentPayload);
+            return;
+          }
+          // Re-check hard policy at execution time (same TOCTOU window as the
+          // PIN pair): never push /pay while the live gate is hard.
+          if (getIt.isRegistered<ClientPolicyCubit>() &&
+              getIt<ClientPolicyCubit>().severity == ClientPolicySeverity.hard) {
             stashPendingPaymentDeeplink(paymentPayload);
             return;
           }

@@ -6,6 +6,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
+import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 import 'package:realunit_wallet/setup/routing/router_config.dart';
@@ -57,6 +58,7 @@ class _LifecycleInitializerState extends State<LifecycleInitializer> {
   void _onResumed() {
     _armedForBackground = false;
     getIt<PinAuthCubit>().onAppResumed();
+    unawaited(getIt<ClientPolicyCubit>().refresh());
     getIt<BalanceService>().updateBalance(getIt<AppStore>().primaryAddress);
   }
 
