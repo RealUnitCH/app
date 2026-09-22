@@ -15,6 +15,7 @@ import 'package:realunit_wallet/screens/referral/widgets/referral_share_invite_b
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
+import 'package:realunit_wallet/widgets/buttons/app_text_button.dart';
 import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 
 class ReferralOverviewPage extends StatelessWidget {
@@ -196,6 +197,19 @@ class ReferralOverviewPage extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: RealUnitColors.neutral500,
                       ),
+                    ),
+                    if (summary.minHolding != null)
+                      Text(
+                        s.referralMinHoldingHint(
+                          '${summary.minHolding!.truncate()}',
+                        ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: RealUnitColors.neutral500,
+                        ),
+                      ),
+                    AppTextButton(
+                      label: s.referralTermsTitle,
+                      onPressed: () => openReferralTerms(context),
                     ),
                   ],
                 ),

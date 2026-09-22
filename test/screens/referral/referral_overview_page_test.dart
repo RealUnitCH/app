@@ -773,6 +773,154 @@ void main() {
     expect(find.text('tb'), findsOneWidget);
   });
 
+  testWidgets(
+    'min holding hint shows the API value and the terms link opens the Teilnahmebedingungen',
+    (tester) async {
+      const summary = ReferralSummaryDto(
+        eligible: true,
+        termsAccepted: true,
+        minHolding: 70,
+        openCount: 0,
+        creditedCount: 0,
+        realuSum: 0,
+        chfSum: 0,
+      );
+      when(() => cubit.state).thenReturn(
+        const ReferralOverviewLoaded(summary: summary, invites: []),
+      );
+      whenListen(
+        cubit,
+        const Stream<ReferralState>.empty(),
+        initialState: const ReferralOverviewLoaded(
+          summary: summary,
+          invites: [],
+        ),
+      );
+
+      final router = GoRouter(
+        initialLocation: '/',
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, _) => MultiBlocProvider(
+              providers: [
+                BlocProvider<ReferralCubit>.value(value: cubit),
+                BlocProvider<SettingsBloc>.value(value: settings),
+              ],
+              child: const ReferralOverviewPage(),
+            ),
+            routes: [
+              GoRoute(
+                name: SettingsRoutes.referralCreate,
+                path: 'create',
+                builder: (_, _) => const SizedBox.shrink(),
+              ),
+            ],
+          ),
+          GoRoute(
+            name: LegalRoutes.referralTerms,
+            path: '/referralTerms',
+            builder: (_, _) => const Text('tb'),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: realUnitTheme,
+          locale: const Locale('de'),
+          localizationsDelegates: const [
+            S.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          supportedLocales: S.delegate.supportedLocales,
+          routerConfig: router,
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.text(
+          '20 REALU pro erfolgreicher Weiterempfehlung, sobald die eingeladene Person ihren ersten Kauf über den Mindestkauf gemäss Teilnahmebedingungen erfolgreich abgewickelt hat.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.text(
+          'Voraussetzung: mindestens 70 REALU im eigenen Wallet, bei der Einladung und bei der Gutschrift.',
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Teilnahmebedingungen Referral-Programm'));
+      await tester.pumpAndSettle();
+      expect(find.text('tb'), findsOneWidget);
+    },
+  );
+
+  testWidgets('min holding hint is omitted when the API sends no minHolding', (
+    tester,
+  ) async {
+    const summary = ReferralSummaryDto(
+      eligible: true,
+      termsAccepted: true,
+      openCount: 0,
+      creditedCount: 0,
+      realuSum: 0,
+      chfSum: 0,
+    );
+    when(() => cubit.state).thenReturn(
+      const ReferralOverviewLoaded(summary: summary, invites: []),
+    );
+    whenListen(
+      cubit,
+      const Stream<ReferralState>.empty(),
+      initialState: const ReferralOverviewLoaded(
+        summary: summary,
+        invites: [],
+      ),
+    );
+
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => MultiBlocProvider(
+            providers: [
+              BlocProvider<ReferralCubit>.value(value: cubit),
+              BlocProvider<SettingsBloc>.value(value: settings),
+            ],
+            child: const ReferralOverviewPage(),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: realUnitTheme,
+        locale: const Locale('de'),
+        localizationsDelegates: const [
+          S.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+        ],
+        supportedLocales: S.delegate.supportedLocales,
+        routerConfig: router,
+      ),
+    );
+    await tester.pump();
+
+    expect(find.textContaining('Voraussetzung: mindestens'), findsNothing);
+    expect(find.text('Teilnahmebedingungen Referral-Programm'), findsOneWidget);
+  });
+
   testWidgets('share uses the API copyText 1:1', (tester) async {
     String? shared;
     String? subject;
