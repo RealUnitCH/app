@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -50,6 +51,12 @@ void main() {
   Widget wrapPage(Widget page) => page;
 
   Finder sendButton() => find.widgetWithText(AppFilledButton, S.current.send);
+
+  void enableSend() {
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(walletFeatureSend: true),
+    );
+  }
 
   group('$ReceivePage', () {
     testWidgets('bottom-sheet variant renders QR and hides Send by default',

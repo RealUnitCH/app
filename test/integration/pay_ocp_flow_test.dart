@@ -33,6 +33,7 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
@@ -160,7 +161,7 @@ void main() {
   // this service object — there is no service-level stub between the cubit
   // and the HTTP boundary.
   RealUnitPayService buildPayService(http.Client client) {
-    when(() => appStore.httpClient).thenReturn(client);
+    when(() => appStore.httpClient).thenReturn(RealUnitApiClient(client));
     return RealUnitPayService(appStore, walletService);
   }
 

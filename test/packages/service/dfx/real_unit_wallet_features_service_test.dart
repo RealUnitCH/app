@@ -7,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_features_service.dart';
 
 class _MockAppStore extends Mock implements AppStore {}
@@ -21,7 +22,7 @@ void main() {
   });
 
   RealUnitWalletFeaturesService build(http.Client client) {
-    when(() => appStore.httpClient).thenReturn(client);
+    when(() => appStore.httpClient).thenReturn(RealUnitApiClient(client));
     return RealUnitWalletFeaturesService(appStore);
   }
 
