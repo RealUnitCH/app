@@ -8727,7 +8727,7 @@
             wird zuerst der Visual-Regression-Test im web-Repo rot, bevor die
             Baseline sich ändert. Bei jedem Handbook-Build werden die aktuell
             akzeptierten Baselines aus <code>develop</code> automatisch ins Image
-            gezogen — Single Source of Truth ist das web-Repo, dieses Handbook spiegelt nur den aktuellen Stand. Mehrere Baselines der Invite- und Promo-Landings (z.B. web-invite-ok-mobile-ios, web-promo-ok-desktop-de, web-invite-unavailable-mobile) sind oben beschnitten: Das Layout im web-Repo zentriert die Karte per Flexbox, und ist sie höher als der Viewport, liegt ihr oberer Teil ausserhalb des Screenshots. Diese Baselines beginnen deshalb unterhalb der Kartenoberkante.
+            gezogen — Single Source of Truth ist das web-Repo, dieses Handbook spiegelt nur den aktuellen Stand (der Werbe- und Prospekthinweis auf den Invite-Landings erscheint in den Bildern erst nach dem nächsten Baseline-Lauf im Container). Mehrere Baselines der Invite- und Promo-Landings (z.B. web-invite-ok-mobile-ios, web-promo-ok-desktop-de, web-invite-unavailable-mobile) sind oben beschnitten: Das Layout im web-Repo zentriert die Karte per Flexbox, und ist sie höher als der Viewport, liegt ihr oberer Teil ausserhalb des Screenshots. Diese Baselines beginnen deshalb unterhalb der Kartenoberkante.
           </p>
 
           <h3>Startseite <a class="src" href="https://github.com/RealUnitCH/web/tree/develop/tests/__screenshots__" title="Quelle: tests/__screenshots__/">↗</a></h3>
@@ -9322,6 +9322,10 @@
               <div class="desc">
                 Erfolgs-Zustand der Empfehlungs-Landing unter
                 <code>/invite/{code}</code> nach gültigem Code. Desktop, Deutsch. Desktop und Tablet zeigen den Hinweis «Öffne diesen Link auf deinem Smartphone, um die App zu starten.» und «Link kopieren»; Mobile zeigt stattdessen nach Ende der Prüfung den CTA «In der App öffnen», auf iOS zusätzlich den Hinweis für eine bereits installierte App.
+                Unter den Store-Badges steht in jedem Zustand der Werbe- und Prospekthinweis
+                («Dieser Inhalt dient Werbezwecken. Die genehmigten Prospekte …», Wortlaut wie im
+                Store-Listing, englisch bei <code>?lang=en</code>); die Landing nennt keine Prämie
+                für die eingeladene Person (RealUnit-Legal, 21.09.2026).
               </div>
             </div>
             <div class="test" id="web-invite-ok-desktop-en">
@@ -9437,7 +9441,7 @@
                 />
               </div>
               <div class="desc">
-                Gültiger Code, aber die API liefert keine Namen: statt «Hey Alice» und «Björn lädt dich ein zu RealUnit.» erscheinen die Fallback-Texte «Du bist eingeladen» und «Du bist zu RealUnit eingeladen.». Layout, Buttons und Badges wie im gültigen Zustand. Desktop, Deutsch.
+                Gültiger Code, aber die API liefert keine Namen: statt «Hey Alice» und «Björn lädt dich ein zu RealUnit.» erscheinen die Fallback-Texte «Du bist eingeladen» und «Du bist zu RealUnit eingeladen.». Layout, Buttons, Badges und Werbe- und Prospekthinweis wie im gültigen Zustand. Desktop, Deutsch.
               </div>
             </div>
             <div class="test" id="web-invite-ok-fallback-desktop-en">
@@ -9553,7 +9557,7 @@
                 />
               </div>
               <div class="desc">
-                Lade-Zustand von <code>/invite/{code}</code>, während der Code
+                Lade-Zustand von <code>/invite/{code}</code> (Werbe- und Prospekthinweis unter den Badges bereits sichtbar), während der Code
                 aufgelöst wird. Desktop, Deutsch.
               </div>
             </div>
@@ -9687,7 +9691,7 @@
               </div>
               <div class="desc">
                 Fehler-Zustand bei ungültigem oder unbekanntem Empfehlungs-Code
-                unter <code>/invite/{code}</code>. Desktop, Deutsch.
+                unter <code>/invite/{code}</code>; der Werbe- und Prospekthinweis unter den Badges bleibt stehen. Desktop, Deutsch.
               </div>
             </div>
             <div class="test" id="web-invite-invalid-desktop-en">
@@ -9819,7 +9823,7 @@
                 />
               </div>
               <div class="desc">
-                Landing <code>/invite/</code> ohne Code in der URL. Desktop,
+                Landing <code>/invite/</code> ohne Code in der URL, mit Werbe- und Prospekthinweis unter den Badges. Desktop,
                 Deutsch.
               </div>
             </div>
@@ -9936,7 +9940,7 @@
                 />
               </div>
               <div class="desc">
-                Zustand, wenn der Empfehlungs-Code bereits eingelöst ist. Desktop,
+                Zustand, wenn der Empfehlungs-Code bereits eingelöst ist; der Werbe- und Prospekthinweis unter den Badges bleibt stehen. Desktop,
                 Deutsch.
               </div>
             </div>
@@ -10053,7 +10057,7 @@
                 />
               </div>
               <div class="desc">
-                Fehler-Zustand, wenn die Empfehlungs-Landing den Dienst nicht
+                Fehler-Zustand (Werbe- und Prospekthinweis unter den Badges bleibt stehen), wenn die Empfehlungs-Landing den Dienst nicht
                 erreichen kann. Desktop, Deutsch.
               </div>
             </div>
@@ -10186,7 +10190,7 @@
                 />
               </div>
               <div class="desc">
-                Empfehlungs-Landing ohne JavaScript: Karte «JavaScript ist deaktiviert» mit deutschem und englischem Text sowie den Store-Badges (immer zweisprachig, da ohne JavaScript keine Sprachwahl). Desktop.
+                Empfehlungs-Landing ohne JavaScript: Karte «JavaScript ist deaktiviert» mit deutschem und englischem Text sowie den Store-Badges (immer zweisprachig, da ohne JavaScript keine Sprachwahl); der Werbe- und Prospekthinweis steht darunter auf Deutsch, weil er ohne JavaScript nicht umgeschaltet wird. Desktop.
               </div>
             </div>
             <div class="test" id="web-invite-noscript-tablet">
@@ -11337,6 +11341,10 @@
             den Code prüft; ein ungültiger Lookup entfernt den Referrer.
             Auf iOS führt der App-Store-Badge, auf Android Play. Die
             In-App-CTA bleibt bis zum Lookup-Ende verborgen und gilt nur mobil.
+            Die Einladungs-Landing trägt unter den Store-Badges in jedem Zustand
+            den Werbe- und Prospekthinweis (Wortlaut wie im Store-Listing, DE/EN)
+            und nennt keine Prämie für die eingeladene Person; der erklärende
+            Teil der Einladung steht damit auf der Landing, nicht im Share-Text.
             Landing und Registrierung zeigen den Code in Grossbuchstaben
             und höchstens 32 Zeichen (Limit von App und Landing; die API nimmt
             benannte Promo-Codes bis 256 Zeichen an, Serien-Codes haben die Form
