@@ -5,6 +5,7 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/screens/pay/cubits/pay_process/pay_process_cubit.dart';
@@ -14,12 +15,12 @@ import 'package:realunit_wallet/widgets/route_animation_gate.dart';
 
 class PayProcessPage extends StatelessWidget {
   final String paymentLinkId;
-  final double zchfNeeded;
+  final SwapPaymentInfo swap;
 
   const PayProcessPage({
     super.key,
     required this.paymentLinkId,
-    required this.zchfNeeded,
+    required this.swap,
   });
 
   @override
@@ -32,7 +33,7 @@ class PayProcessPage extends StatelessWidget {
         walletService: getIt<WalletService>(),
         appStore: getIt<AppStore>(),
         paymentLinkId: paymentLinkId,
-        zchfNeeded: zchfNeeded,
+        swap: swap,
       ),
       child: RouteAnimationGate(
         onSettled: (c) => c.read<PayProcessCubit>().start(),

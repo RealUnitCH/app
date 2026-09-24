@@ -10,6 +10,7 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
@@ -34,6 +35,18 @@ class _MockAppStore extends Mock implements AppStore {}
 class _MockApiConfig extends Mock implements ApiConfig {}
 
 class _MockWallet extends Mock implements SoftwareWallet {}
+
+const _swap = SwapPaymentInfo(
+  id: 99,
+  amount: 1,
+  estimatedAmount: 1.05,
+  targetAsset: 'ZCHF',
+  ethBalance: 1,
+  requiredGasEth: 0.001,
+  isValid: true,
+  ethereumTransactionFeeChf: 0.05,
+  ethereumTransactionFeeRealu: 0.01234567,
+);
 
 void main() {
   late _MockPayProcessCubit processCubit;
@@ -76,7 +89,7 @@ void main() {
 
   group('$PayProcessPage', () {
     testWidgets('builds its own cubit and renders $PayProcessView', (tester) async {
-      await tester.pumpApp(const PayProcessPage(paymentLinkId: 'pl_abc', zchfNeeded: 42.7));
+      await tester.pumpApp(const PayProcessPage(paymentLinkId: 'pl_abc', swap: _swap));
       // The route gate starts the cubit after the home route is settled; pump
       // a frame so start() can emit (the sheet animation is not awaited here).
       await tester.pump();
@@ -97,7 +110,7 @@ void main() {
                     TimedMaterialPageRoute<void>(
                       transitionDuration: const Duration(milliseconds: 300),
                       builder: (_) =>
-                          const PayProcessPage(paymentLinkId: 'pl_abc', zchfNeeded: 42.7),
+                          const PayProcessPage(paymentLinkId: 'pl_abc', swap: _swap),
                     ),
                   );
                 },
