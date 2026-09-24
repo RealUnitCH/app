@@ -6,7 +6,23 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SettingsRepository {
   final SharedPreferences _sharedPreferences;
 
-  SettingsRepository(this._sharedPreferences);
+  SettingsRepository(this._sharedPreferences) {
+    if (insiderFeaturesUnlocked && !walletFeaturePay) {
+      walletFeaturePay = true;
+    }
+    if (_sharedPreferences.getBool('insiderPayEnabled') == true) {
+      walletFeaturePay = true;
+    }
+    if (_sharedPreferences.getBool('insiderSendEnabled') == true) {
+      walletFeatureSend = true;
+    }
+    if (_sharedPreferences.getBool('insiderReferralEnabled') == true) {
+      walletFeatureReferral = true;
+    }
+    if (_sharedPreferences.getBool('insiderBonusEnabled') == true) {
+      walletFeaturePromoCode = true;
+    }
+  }
 
   Future<bool> saveCurrentWalletId(int walletId) =>
       _sharedPreferences.setInt('currentWalletId', walletId);
@@ -56,4 +72,45 @@ class SettingsRepository {
       _sharedPreferences.getBool('insiderFeaturesUnlocked') ?? false;
   set insiderFeaturesUnlocked(bool unlocked) =>
       _sharedPreferences.setBool('insiderFeaturesUnlocked', unlocked);
+
+  // One-way: a stored true is never overwritten with false.
+  bool get walletFeaturePay => _sharedPreferences.getBool('walletFeaturePay') ?? false;
+  set walletFeaturePay(bool value) {
+    if (!value && walletFeaturePay) return;
+    _sharedPreferences.setBool('walletFeaturePay', value);
+  }
+
+  bool get walletFeatureSend => _sharedPreferences.getBool('walletFeatureSend') ?? false;
+  set walletFeatureSend(bool value) {
+    if (!value && walletFeatureSend) return;
+    _sharedPreferences.setBool('walletFeatureSend', value);
+  }
+
+  bool get walletFeaturePromoCode =>
+      _sharedPreferences.getBool('walletFeaturePromoCode') ?? false;
+  set walletFeaturePromoCode(bool value) {
+    if (!value && walletFeaturePromoCode) return;
+    _sharedPreferences.setBool('walletFeaturePromoCode', value);
+  }
+
+  bool get walletFeatureReferral =>
+      _sharedPreferences.getBool('walletFeatureReferral') ?? false;
+  set walletFeatureReferral(bool value) {
+    if (!value && walletFeatureReferral) return;
+    _sharedPreferences.setBool('walletFeatureReferral', value);
+  }
+
+  String? get dismissedClientPolicyLatest {
+    final value = _sharedPreferences.getString('dismissedClientPolicyLatest');
+    if (value == null || value.isEmpty) return null;
+    return value;
+  }
+
+  set dismissedClientPolicyLatest(String? value) {
+    if (value == null || value.isEmpty) {
+      _sharedPreferences.remove('dismissedClientPolicyLatest');
+    } else {
+      _sharedPreferences.setString('dismissedClientPolicyLatest', value);
+    }
+  }
 }

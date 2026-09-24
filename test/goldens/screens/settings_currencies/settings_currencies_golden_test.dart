@@ -27,6 +27,10 @@ void main() {
     when(() => settingsRepo.currency).thenReturn('CHF');
     when(() => settingsRepo.networkMode).thenReturn(NetworkMode.mainnet);
     when(() => settingsRepo.insiderFeaturesUnlocked).thenReturn(false);
+    when(() => settingsRepo.walletFeaturePay).thenReturn(false);
+    when(() => settingsRepo.walletFeatureSend).thenReturn(false);
+    when(() => settingsRepo.walletFeaturePromoCode).thenReturn(false);
+    when(() => settingsRepo.walletFeatureReferral).thenReturn(false);
     when(() => fiatRepo.getAll())
         .thenAnswer((_) async => const [Currency.chf, Currency.eur]);
     settingsBloc = SettingsBloc(settingsRepo, () async {});

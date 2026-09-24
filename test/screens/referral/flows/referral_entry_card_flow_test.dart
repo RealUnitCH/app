@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -8,24 +9,35 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/referral/dto/referral_summary_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/screens/referral/widgets/referral_entry_card.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/themes.dart';
 
+import '../../../helper/helper.dart';
 import 'support/test_view.dart';
 
 class _MockService extends Mock implements RealUnitReferralService {}
 
 void main() {
   late _MockService service;
+  late MockSettingsBloc settingsBloc;
 
   setUp(() {
     service = _MockService();
+    settingsBloc = MockSettingsBloc();
+    when(() => settingsBloc.state)
+        .thenReturn(const SettingsState(walletFeatureReferral: true));
     GetIt.instance.registerSingleton<RealUnitReferralService>(service);
   });
 
   tearDown(() async {
     await GetIt.instance.reset();
   });
+
+  Widget hostedCard() => BlocProvider<SettingsBloc>.value(
+        value: settingsBloc,
+        child: const ReferralEntryCard(unavailablePollInterval: Duration.zero),
+      );
 
   Future<void> pumpCard(WidgetTester tester) {
     return tester.pumpWidget(
@@ -39,9 +51,7 @@ void main() {
           GlobalWidgetsLocalizations.delegate,
         ],
         supportedLocales: S.delegate.supportedLocales,
-        home: const Scaffold(
-          body: ReferralEntryCard(unavailablePollInterval: Duration.zero),
-        ),
+        home: Scaffold(body: hostedCard()),
       ),
     );
   }
@@ -102,9 +112,7 @@ void main() {
       routes: [
         GoRoute(
           path: '/',
-          builder: (_, _) => const Scaffold(
-            body: ReferralEntryCard(unavailablePollInterval: Duration.zero),
-          ),
+          builder: (_, _) => Scaffold(body: hostedCard()),
         ),
         GoRoute(
           path: '/settings/referral',

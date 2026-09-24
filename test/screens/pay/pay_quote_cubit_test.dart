@@ -42,6 +42,8 @@ SwapPaymentInfo _swap({
   double amount = 5,
   double estimatedAmount = 1.98,
   double? feesTotal = 0.02,
+  bool isValid = true,
+  String? error,
 }) {
   return SwapPaymentInfo(
     id: 99,
@@ -50,7 +52,8 @@ SwapPaymentInfo _swap({
     targetAsset: 'ZCHF',
     ethBalance: 1.0,
     requiredGasEth: 0.001,
-    isValid: true,
+    isValid: isValid,
+    error: error,
     feesTotal: feesTotal,
   );
 }
@@ -139,6 +142,50 @@ void main() {
     },
     act: (cubit) => cubit.load(),
     expect: () => [isA<PayQuoteLoading>(), isA<PayQuoteUnavailable>()],
+  );
+
+  blocTest<PayQuoteCubit, PayQuoteState>(
+    'an invalid swap quote with AmountTooLow emits PayQuoteError and not Ready',
+    build: build,
+    setUp: () {
+      when(() => payService.getPaymentDetails('pl_realunit_ocp_sepolia')).thenAnswer(
+        (_) async => _details(expiration: DateTime.now().add(const Duration(minutes: 5))),
+      );
+      when(() => payService.getSwapPaymentInfo(any())).thenAnswer(
+        (_) async => _swap(isValid: false, error: 'AmountTooLow', amount: 0),
+      );
+    },
+    act: (cubit) => cubit.load(),
+    expect: () => [
+      isA<PayQuoteLoading>(),
+      const PayQuoteError('AmountTooLow'),
+    ],
+    verify: (cubit) {
+      expect(cubit.state, isA<PayQuoteError>());
+      expect(cubit.state, isNot(isA<PayQuoteReady>()));
+      expect((cubit.state as PayQuoteError).message, 'AmountTooLow');
+    },
+  );
+
+  blocTest<PayQuoteCubit, PayQuoteState>(
+    'an invalid swap quote with KycRequired emits that API error 1:1',
+    build: build,
+    setUp: () {
+      when(() => payService.getPaymentDetails('pl_realunit_ocp_sepolia')).thenAnswer(
+        (_) async => _details(expiration: DateTime.now().add(const Duration(minutes: 5))),
+      );
+      when(() => payService.getSwapPaymentInfo(any())).thenAnswer(
+        (_) async => _swap(isValid: false, error: 'KycRequired'),
+      );
+    },
+    act: (cubit) => cubit.load(),
+    expect: () => [
+      isA<PayQuoteLoading>(),
+      const PayQuoteError('KycRequired'),
+    ],
+    verify: (cubit) {
+      expect(cubit.state, isNot(isA<PayQuoteReady>()));
+    },
   );
 
   blocTest<PayQuoteCubit, PayQuoteState>(

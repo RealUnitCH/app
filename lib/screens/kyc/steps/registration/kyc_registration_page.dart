@@ -27,6 +27,7 @@ import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registr
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_personal_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_referral_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_tax_step.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/referral_pending_code.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -52,7 +53,9 @@ class KycRegistrationPage extends StatelessWidget {
           ),
         ),
         BlocProvider(
-          create: (_) => KycRegistrationStepCubit(),
+          create: (_) => KycRegistrationStepCubit(
+            includeReferralStep: getIt<SettingsBloc>().state.walletFeaturePromoCode,
+          ),
         ),
       ],
       child: KycRegistrationView(initialUserData: initialUserData),

@@ -28,6 +28,7 @@ import 'package:realunit_wallet/screens/send/send_info_page.dart';
 import 'package:realunit_wallet/screens/settings/settings_page.dart';
 import 'package:realunit_wallet/screens/settings_contact/settings_contact_page.dart';
 import 'package:realunit_wallet/screens/settings_currencies/settings_currencies_page.dart';
+import 'package:realunit_wallet/screens/settings_insider/settings_insider_page.dart';
 import 'package:realunit_wallet/screens/settings_languages/settings_languages_page.dart';
 import 'package:realunit_wallet/screens/settings_legal_documents/settings_legal_documents_page.dart';
 import 'package:realunit_wallet/screens/settings_legal_documents/subpages/settings_aktionariat_documents_page.dart';
@@ -47,6 +48,7 @@ import 'package:realunit_wallet/screens/support/subpages/support_email_capture_p
 import 'package:realunit_wallet/screens/support/subpages/support_tickets_page.dart';
 import 'package:realunit_wallet/screens/support/support_page.dart';
 import 'package:realunit_wallet/screens/transaction_history/transaction_history_page.dart';
+import 'package:realunit_wallet/screens/update_required/update_required_page.dart';
 import 'package:realunit_wallet/screens/verify_seed/verify_seed_page.dart';
 import 'package:realunit_wallet/screens/web_view/web_view_page.dart';
 import 'package:realunit_wallet/screens/welcome/welcome_page.dart';
@@ -246,6 +248,12 @@ final GoRouter routerConfig = GoRouter(
     ),
 
     GoRoute(
+      name: AppRoutes.updateRequired,
+      path: '/updateRequired',
+      builder: (_, _) => const UpdateRequiredPage(),
+    ),
+
+    GoRoute(
       name: AppRoutes.bitboxAddressRecovery,
       path: '/bitboxAddressRecovery',
       builder: (_, _) => const BitboxAddressRecoveryPage(),
@@ -321,6 +329,11 @@ final GoRouter routerConfig = GoRouter(
           name: SettingsRoutes.walletAddress,
           path: 'walletAddress',
           builder: (_, _) => const SettingsWalletAddressPage(),
+        ),
+        GoRoute(
+          name: SettingsRoutes.insider,
+          path: 'insider',
+          builder: (_, _) => const SettingsInsiderPage(),
         ),
         GoRoute(
           name: SettingsRoutes.userData,

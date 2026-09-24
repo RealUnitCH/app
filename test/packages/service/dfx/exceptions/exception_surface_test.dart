@@ -24,6 +24,7 @@ void main() {
       const BitboxAddressUnavailableException(),
       const SigningCancelledException(),
       const ApiException(code: 'TEST', message: 'test'),
+      const UpgradeRequiredException(minSupportedVersion: '1.3.0'),
       const RegistrationRejectedException(code: 'TEST', message: 'test'),
       const RegistrationRequiredException(code: 'TEST', message: 'test'),
       const KycLevelRequiredException(
@@ -62,5 +63,12 @@ void main() {
         expect(rendered, isNotEmpty);
       });
     }
+  });
+
+  group('ApiException.userFacingMessage', () {
+    test('UpgradeRequiredException is empty', () {
+      const error = UpgradeRequiredException(minSupportedVersion: '1.3.0');
+      expect(ApiException.userFacingMessage(error), '');
+    });
   });
 }

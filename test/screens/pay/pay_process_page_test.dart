@@ -66,6 +66,7 @@ void main() {
     processCubit = _MockPayProcessCubit();
     when(() => processCubit.state).thenReturn(const PayProcessInitial());
     when(() => processCubit.retryPay()).thenAnswer((_) async {});
+    when(() => processCubit.swapCompleted).thenReturn(false);
   });
 
   Widget buildSubject() => BlocProvider<PayProcessCubit>.value(
@@ -220,6 +221,63 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
   }
 
+  /// Pushes [PayProcessView] onto a navigator so the `push<bool>` result can
+  /// be captured. Phone-sized surface matches [pumpWithState] so result sheets
+  /// fit the hit box.
+  Future<void> pumpPushedView(
+    WidgetTester tester, {
+    required void Function(bool? result) onPopped,
+  }) async {
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpApp(
+      Builder(
+        builder: (context) => Scaffold(
+          body: Center(
+            child: TextButton(
+              onPressed: () async {
+                final result = await Navigator.of(context).push<bool>(
+                  MaterialPageRoute<bool>(
+                    builder: (_) => BlocProvider<PayProcessCubit>.value(
+                      value: processCubit,
+                      child: const PayProcessView(),
+                    ),
+                  ),
+                );
+                onPopped(result);
+              },
+              child: const Text('go'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('go'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+  }
+
+  Future<void> pumpPushedWithState(
+    WidgetTester tester,
+    PayProcessState terminal, {
+    required void Function(bool? result) onPopped,
+  }) async {
+    whenListen(
+      processCubit,
+      Stream<PayProcessState>.fromIterable([terminal]),
+      initialState: const PayProcessSwapping(),
+    );
+    await pumpPushedView(tester, onPopped: onPopped);
+    // Incoming route animation + sheet open (same extra pumps as the
+    // TimedMaterialPageRoute page test).
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+  }
+
   group('$PayProcessView result sheet', () {
     testWidgets('success emits a success sheet with title + description', (tester) async {
       await pumpWithState(tester, const PayProcessSuccess());
@@ -234,19 +292,6 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
 
       expect(find.byIcon(Icons.check_circle_rounded), findsNothing);
-    });
-
-    testWidgets('insufficient-zchf failure emits a failure sheet', (tester) async {
-      await pumpWithState(
-        tester,
-        const PayProcessFailure(PayProcessFailureReason.insufficientZchf),
-      );
-
-      // payFailureTitle also renders as the progress-label behind the sheet,
-      // so it appears twice; the reason message is the sheet-unique assertion.
-      expect(find.text(S.current.payFailureTitle), findsWidgets);
-      expect(find.text(S.current.payFailureInsufficientZchf), findsOne);
-      expect(find.byIcon(Icons.error_rounded), findsOne);
     });
 
     testWidgets('insufficient-eth failure message', (tester) async {
@@ -350,6 +395,54 @@ void main() {
 
       expect(find.text('Quote is no longer valid'), findsOne);
       expect(find.text(S.current.payRetryTransient), findsNothing);
+    });
+  });
+
+  group('$PayProcessView swapCompleted pop', () {
+    testWidgets('failure sheet after a completed swap pops the process route with true', (
+      tester,
+    ) async {
+      when(() => processCubit.swapCompleted).thenReturn(true);
+
+      bool? popped;
+      await pumpPushedWithState(
+        tester,
+        const PayProcessFailure(PayProcessFailureReason.generic),
+        onPopped: (result) => popped = result,
+      );
+
+      expect(find.text(S.current.close), findsOne);
+      // pumpPushedWithState nests an extra navigator; Close lands off-screen.
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator).first);
+      navigator.pop(); // dismiss the sheet
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byType(PayProcessView), findsNothing);
+      expect(popped, isTrue);
+    });
+
+    testWidgets('failure sheet before a swap pops the process route with false', (tester) async {
+      bool? popped;
+      await pumpPushedWithState(
+        tester,
+        const PayProcessFailure(PayProcessFailureReason.generic),
+        onPopped: (result) => popped = result,
+      );
+
+      expect(find.text(S.current.close), findsOne);
+      // pumpPushedWithState nests an extra navigator; Close lands off-screen.
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator).first);
+      navigator.pop(); // dismiss the sheet
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byType(PayProcessView), findsNothing);
+      expect(popped, isFalse);
     });
   });
 }

@@ -8,6 +8,7 @@ import 'package:realunit_wallet/packages/utils/fuck_firebase.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit.dart';
 import 'package:realunit_wallet/setup/account_currency_sync.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/error_handling/crash_reporting.dart';
@@ -75,6 +76,7 @@ class _WalletAppState extends State<WalletApp> {
       BlocProvider.value(value: getIt<HomeBloc>()),
       BlocProvider.value(value: getIt<SettingsBloc>()),
       BlocProvider.value(value: getIt<PinAuthCubit>()),
+      BlocProvider.value(value: getIt<ClientPolicyCubit>()),
     ],
     child: BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, settingsState) => MaterialApp.router(
@@ -138,6 +140,9 @@ class _WalletAppState extends State<WalletApp> {
                 _navigate();
               },
             ),
+            BlocListener<ClientPolicyCubit, ClientPolicyState>(
+              listener: (_, _) => _navigate(),
+            ),
           ],
           child: child ?? const SizedBox.shrink(),
         ),
@@ -169,6 +174,7 @@ class _WalletAppState extends State<WalletApp> {
       walletLoaded: homeState.openWallet != null,
       currentLocation: current,
       resumeLocation: pin.peekResumeLocation(),
+      clientPolicySeverity: getIt<ClientPolicyCubit>().severity,
     );
 
     applyBootNavAction(

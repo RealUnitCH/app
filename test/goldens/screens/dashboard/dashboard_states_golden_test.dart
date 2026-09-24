@@ -421,7 +421,10 @@ void main() {
       },
       builder: () {
         when(() => settingsBloc.state).thenReturn(
-          const SettingsState(language: Language.de),
+          const SettingsState(
+            language: Language.de,
+            walletFeatureReferral: true,
+          ),
         );
         when(() => balanceCubit.state).thenReturn(heldBalance());
         final referral = MockRealUnitReferralService();

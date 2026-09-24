@@ -84,6 +84,7 @@ Network access is one half of the gateway rule. **Business decisions are the oth
 - **The app does not interpret status strings into business meaning.** It renders what the API returns as `currentStep` / `nextAction` / `state`.
 - **The app does not duplicate backend sets/enums as gating logic.** DTO mirroring for type safety is fine; local `_requiredStepNames`, `actionableStatuses`, `_minLevelForActions`, `_minAmountChf` constants are not.
 - **Prompts to the user fire only when the API requests them.** "Please verify yourself" appears only when the API signals a pending KYC step — never because the app inferred something from a level number or expired timestamp.
+- **The app must not invent a hard update from a local major-version bump.** min, latest and severity come from `GET /v1/realunit/client-policy`.
 
 ### The test (Wer entscheidet?)
 
@@ -248,7 +249,7 @@ The app supports three wallet modes (`software`, `bitbox`, `debug`) with differe
     ```bash
     rg "^//\s*@no-integration-test:" lib/
     ```
-- Visual-regression Goldens under `test/goldens/screens/` and `test/goldens/widgets/` are also the source of the 301 screenshots served at `handbook.realunit.app`. When you add a handbook page, you MUST add a matching Golden test AND a row in the mapping table at `scripts/assemble-handbook-screenshots.sh` — the handbook will not pick up a Maestro-captured PNG anymore. The `Handbook Build Check` workflow on every PR runs the assembly script and fails loudly if a mapped Golden is missing.
+- Visual-regression Goldens under `test/goldens/screens/` and `test/goldens/widgets/` are also the source of the 311 screenshots served at `handbook.realunit.app`. When you add a handbook page, you MUST add a matching Golden test AND a row in the mapping table at `scripts/assemble-handbook-screenshots.sh` — the handbook will not pick up a Maestro-captured PNG anymore. The `Handbook Build Check` workflow on every PR runs the assembly script and fails loudly if a mapped Golden is missing.
   - Why: single source of truth — a UI regression that breaks a Golden also breaks the handbook image before either ships; eliminates the previous "two pipelines, two truths" problem.
   - See: [`docs/visual-regression-tests.md`](docs/visual-regression-tests.md) section "Handbook screenshots are sourced from Goldens".
 

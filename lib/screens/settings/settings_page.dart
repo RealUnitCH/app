@@ -81,7 +81,9 @@ class SettingsPage extends StatelessWidget {
                             trailing: _forwardIcon,
                             onTap: () => context.pushNamed(SettingsRoutes.taxReport),
                           ),
-                          if (eligibility is ReferralEligibilityLoaded && eligibility.eligible)
+                          if (eligibility is ReferralEligibilityLoaded &&
+                              eligibility.eligible &&
+                              state.walletFeatureReferral)
                             SettingOption(
                               title: S.of(context).referrals,
                               subtitle: S.of(context).referralsSubtitle,
@@ -136,6 +138,17 @@ class SettingsPage extends StatelessWidget {
                             trailing: _forwardIcon,
                             onTap: () => context.pushNamed(SettingsRoutes.walletAddress),
                           ),
+                          if (state.insiderFeaturesUnlocked)
+                            SettingOption(
+                              title: S.of(context).settingsInsiderFeatures,
+                              leading: const Icon(
+                                Icons.science_outlined,
+                                size: 24,
+                                color: RealUnitColors.realUnitBlue,
+                              ),
+                              trailing: _forwardIcon,
+                              onTap: () => context.pushNamed(SettingsRoutes.insider),
+                            ),
                           if (context.read<HomeBloc>().state.openWallet?.walletType ==
                               WalletType.software)
                             SettingOption(

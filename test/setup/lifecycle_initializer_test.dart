@@ -6,35 +6,54 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/balance_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit.dart';
 import 'package:realunit_wallet/setup/lifecycle_initializer.dart';
+
+import '../helper/helper.dart';
 
 class _MockAppStore extends Mock implements AppStore {}
 
 class _MockBalanceService extends Mock implements BalanceService {}
+
+class _MockClientPolicyCubit extends Mock implements ClientPolicyCubit {}
 
 class _MockPinAuthCubit extends Mock implements PinAuthCubit {}
 
 class _MockWalletService extends Mock implements WalletService {}
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(const RefreshWalletFeaturesEvent());
+  });
+
   late _MockAppStore appStore;
   late _MockBalanceService balanceService;
+  late _MockClientPolicyCubit clientPolicyCubit;
   late _MockPinAuthCubit pinAuthCubit;
   late _MockWalletService walletService;
+  late MockSettingsBloc settingsBloc;
 
   setUp(() {
     appStore = _MockAppStore();
     balanceService = _MockBalanceService();
+    clientPolicyCubit = _MockClientPolicyCubit();
     pinAuthCubit = _MockPinAuthCubit();
     walletService = _MockWalletService();
+    settingsBloc = MockSettingsBloc();
 
     final getIt = GetIt.instance;
     getIt.registerSingleton<AppStore>(appStore);
     getIt.registerSingleton<BalanceService>(balanceService);
+    getIt.registerSingleton<ClientPolicyCubit>(clientPolicyCubit);
     getIt.registerSingleton<PinAuthCubit>(pinAuthCubit);
     getIt.registerSingleton<WalletService>(walletService);
+    getIt.registerSingleton<SettingsBloc>(settingsBloc);
 
     when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
+    when(() => clientPolicyCubit.refresh()).thenAnswer((_) => Future.value());
+    when(() => settingsBloc.add(any())).thenReturn(null);
+    when(() => appStore.isWalletLoaded).thenReturn(false);
   });
 
   tearDown(() => GetIt.instance.reset());
@@ -54,6 +73,7 @@ void main() {
       await tester.pump();
 
       verify(() => walletService.lockCurrentWallet()).called(1);
+      verifyNever(() => settingsBloc.add(any()));
     },
   );
 
@@ -129,6 +149,7 @@ void main() {
   testWidgets(
     'AppLifecycleState.resumed does NOT lock and re-arms for the next background',
     (tester) async {
+      when(() => appStore.isWalletLoaded).thenReturn(true);
       when(() => appStore.primaryAddress).thenReturn('0xabc');
       when(() => balanceService.updateBalance(any())).thenAnswer((_) async {});
       when(() => pinAuthCubit.onAppResumed()).thenAnswer((_) {});
@@ -170,12 +191,67 @@ void main() {
       // Resume clears the arm guard and must not itself lock.
       driveTo(AppLifecycleState.resumed);
       await tester.pump();
+      verify(() => settingsBloc.add(const RefreshWalletFeaturesEvent())).called(greaterThan(0));
 
       // Second background episode locks again — only possible because resume
       // reset the guard; without the reset the handler would be a no-op.
       driveTo(AppLifecycleState.hidden);
       await tester.pump();
       verify(() => walletService.lockCurrentWallet()).called(1);
+    },
+  );
+
+  testWidgets(
+    'AppLifecycleState.resumed refreshes client policy',
+    (tester) async {
+      when(() => appStore.primaryAddress).thenReturn('0xabc');
+      when(() => balanceService.updateBalance(any())).thenAnswer((_) async {});
+      when(() => pinAuthCubit.onAppResumed()).thenAnswer((_) {});
+
+      await pumpLifecycle(tester);
+
+      const chain = <AppLifecycleState>[
+        AppLifecycleState.detached,
+        AppLifecycleState.paused,
+        AppLifecycleState.hidden,
+        AppLifecycleState.inactive,
+        AppLifecycleState.resumed,
+      ];
+      void driveTo(AppLifecycleState target) {
+        if (tester.binding.lifecycleState == null) {
+          tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+        }
+        var index = chain.indexOf(tester.binding.lifecycleState!);
+        final targetIndex = chain.indexOf(target);
+        while (index != targetIndex) {
+          index += index < targetIndex ? 1 : -1;
+          tester.binding.handleAppLifecycleStateChanged(chain[index]);
+        }
+      }
+
+      driveTo(AppLifecycleState.inactive);
+      await tester.pump();
+      clearInteractions(clientPolicyCubit);
+
+      driveTo(AppLifecycleState.resumed);
+      await tester.pump();
+
+      verify(() => clientPolicyCubit.refresh()).called(1);
+    },
+  );
+
+  testWidgets(
+    'resume without a loaded wallet still refreshes wallet features',
+    (tester) async {
+      when(() => appStore.isWalletLoaded).thenReturn(false);
+      when(() => pinAuthCubit.onAppResumed()).thenAnswer((_) {});
+
+      await pumpLifecycle(tester);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+
+      verify(() => settingsBloc.add(const RefreshWalletFeaturesEvent())).called(greaterThan(0));
+      verifyNever(() => balanceService.updateBalance(any()));
     },
   );
 }

@@ -1138,6 +1138,9 @@
               <a href="#spec-80"><span class="spec-num">80</span>Testkunden — Bestandsentwicklung</a>
             </li>
             <li>
+              <a href="#spec-81"><span class="spec-num">81</span>Bezahlen — ganze REALU</a>
+            </li>
+            <li>
               <a href="#spec-geo"><span class="spec-num">G</span>Aktientoken — Geo-Filter</a>
             </li>
             <li>
@@ -1186,14 +1189,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 355 Visual-Regression Goldens (301 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 375 Visual-Regression Goldens (311 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 301 App-Screenshots dieser Seite sind Goldens aus
+            Die 311 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1233,7 +1236,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 301 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 311 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -1640,7 +1643,7 @@
                 <div class="file">.maestro/handbook/12..16,20..24-*.yaml</div>
               </div>
               <div class="rhs">
-                <b>10 Screens</b>
+                <b>11 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/.maestro/handbook"
@@ -1751,10 +1754,27 @@
               </div>
               <div class="desc">
                 Seite <b>RealUnit Wallet Adresse</b>: EVM-Adresse der Wallet
-                (<code>0x…</code>) mit QR-Code, Copy-Button, Hinweistext und dem CTA
-                <b>Senden</b>. Der QR-Code enthält die Adresse als EIP-681-URI
+                (<code>0x…</code>) mit QR-Code, Copy-Button und Hinweistext. Der CTA
+                <b>Senden</b> erscheint erst nach zentraler Freischaltung (Spec 79). Der QR-Code enthält die Adresse als EIP-681-URI
                 (<code>ethereum:0x…</code>). Die eigentliche Empfangen-Seite mit QR-Code
                 ist in Spec 35 beschrieben.
+              </div>
+            </div>
+            <div class="test" id="298-settings-wallet-address-send">
+              <div class="head">
+                <a class="name permalink" href="#298-settings-wallet-address-send">298-settings-wallet-address-send</a>
+                <button class="copy-link" type="button" data-target="298-settings-wallet-address-send" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/settings_wallet_address/goldens/macos/settings_wallet_address_page_send.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/298-settings-wallet-address-send.png"
+                  alt="Wallet-Adresse mit QR und dem CTA Senden"
+                />
+              </div>
+              <div class="desc">
+                Dieselbe Seite wie 16, aber mit zentral freigeschaltetem Senden —
+                der CTA «Senden» ist sichtbar.
               </div>
             </div>
             <div class="test" id="20-settings-legal-documents">
@@ -4196,7 +4216,7 @@
                 <div class="file">test/goldens/screens/receive/</div>
               </div>
               <div class="rhs">
-                <b>2 Screens</b>
+                <b>4 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/receive"
@@ -4224,7 +4244,7 @@
                 />
               </div>
               <div class="desc">
-                Die <b>Bottom-Sheet-Variante</b> der Empfangen-Seite: oben der horizontale Ziehbalken (Handlebar), darunter der QR-Code der eigenen Wallet-Adresse und die zweizeilig formatierte Adresse mit <b>fett</b> hervorgehobenem Anfang und Ende, dem Kopieren-Symbol und unten dem CTA <b>Senden</b>. Der Nutzer sieht diese Variante, wenn die Seite als aufgezogenes Blatt von unten geöffnet wird; ein Tippen auf die Adresse kopiert sie in die Zwischenablage.
+                Die <b>Bottom-Sheet-Variante</b> der Empfangen-Seite: oben der horizontale Ziehbalken (Handlebar), darunter der QR-Code der eigenen Wallet-Adresse und die zweizeilig formatierte Adresse mit <b>fett</b> hervorgehobenem Anfang und Ende und dem Kopieren-Symbol. Der CTA <b>Senden</b> erscheint erst nach zentraler Freischaltung (Spec 79). Der Nutzer sieht diese Variante, wenn die Seite als aufgezogenes Blatt von unten geöffnet wird; ein Tippen auf die Adresse kopiert sie in die Zwischenablage.
               </div>
             </div>
             <div class="test" id="102-receive-page-full-page">
@@ -4240,7 +4260,39 @@
                 />
               </div>
               <div class="desc">
-                Die <b>vollflächige Variante</b> derselben Empfangen-Seite: oben eine AppBar mit <b>Zurück-Pfeil</b> statt Ziehbalken, darunter identisch der QR-Code, die zweizeilige Adresse, das Kopieren-Symbol und der CTA <b>Senden</b>. Diese Variante erscheint, wenn die Seite über die Navigation als eigene Route geöffnet wird; über den Pfeil gelangt der Nutzer zurück.
+                Die <b>vollflächige Variante</b> derselben Empfangen-Seite: oben eine AppBar mit <b>Zurück-Pfeil</b> statt Ziehbalken, darunter identisch der QR-Code, die zweizeilige Adresse und das Kopieren-Symbol. Der CTA <b>Senden</b> erscheint erst nach zentraler Freischaltung (Spec 79). Diese Variante erscheint, wenn die Seite über die Navigation als eigene Route geöffnet wird; über den Pfeil gelangt der Nutzer zurück.
+              </div>
+            </div>
+            <div class="test" id="296-receive-page-default-send">
+              <div class="head">
+                <a class="name permalink" href="#296-receive-page-default-send">296-receive-page-default-send</a>
+                <button class="copy-link" type="button" data-target="296-receive-page-default-send" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/receive/goldens/macos/receive_page_default_send.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/296-receive-page-default-send.png"
+                  alt="Empfangen als Bottom-Sheet mit QR-Code und dem CTA Senden"
+                />
+              </div>
+              <div class="desc">
+                Die <b>Bottom-Sheet-Variante</b> wie 101, mit zentral freigeschaltetem Senden — der CTA «Senden» ist sichtbar.
+              </div>
+            </div>
+            <div class="test" id="297-receive-page-full-page-send">
+              <div class="head">
+                <a class="name permalink" href="#297-receive-page-full-page-send">297-receive-page-full-page-send</a>
+                <button class="copy-link" type="button" data-target="297-receive-page-full-page-send" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/receive/goldens/macos/receive_page_full_page_send.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/297-receive-page-full-page-send.png"
+                  alt="Empfangen als Vollseite mit Zurück-Pfeil und dem CTA Senden"
+                />
+              </div>
+              <div class="desc">
+                Die <b>vollflächige Variante</b> wie 102, mit zentral freigeschaltetem Senden — der CTA «Senden» ist sichtbar.
               </div>
             </div>
           </div>
@@ -8100,7 +8152,7 @@
                 <div class="file">test/goldens/screens/dashboard/</div>
               </div>
               <div class="rhs">
-                <b>2 Screens</b>
+                <b>5 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/dashboard"
@@ -8111,10 +8163,12 @@
             </div>
           </summary>
           <p class="spec-intro">
-            Die Funktion <b>Bezahlen</b> (OpenCryptoPay) ist bewusst versteckt (Soft-Launch)
-            und erscheint erst nach einer einmaligen Freischaltung auf dem Gerät.
-            <b>Senden</b> (REALU-Transfer an eine andere Wallet) ist davon unabhängig über
-            Einstellungen → Wallet-Adresse und über Empfangen erreichbar.
+            <b>Bezahlen</b>, <b>Senden</b>, <b>Promo-Code</b> und <b>Empfehlungen</b>
+            bleiben ausgeblendet, bis sie zentral freigeschaltet werden. Hat ein Gerät
+            die Freischaltung einmal gesehen, bleiben die betroffenen Funktionen auf
+            diesem Gerät an. Siebenmal auf die Versionsnummer zu tippen ist ein
+            lokaler Tester-Schalter für alle vier. OpenCryptoPay-Zahlungslinks
+            funktionieren ohne den Bezahlen-Button.
           </p>
 
           <!-- Single column on purpose: the explainer block below carries a
@@ -8130,22 +8184,30 @@
               <div class="desc">
                 <p>Anleitung:</p>
                 <ol>
-                  <li>Einstellungen öffnen (Hamburger-Icon rechts oben im Dashboard).</li>
+                  <li>
+                    Tester-Pfad: Einstellungen öffnen (Hamburger-Icon rechts oben im
+                    Dashboard).
+                  </li>
                   <li>Ganz nach unten scrollen bis zur Versionsnummer.</li>
                   <li>Siebenmal kurz hintereinander auf die Versionsnummer tippen.</li>
                   <li>Es erscheint die Bestätigung «Insider-Funktionen freigeschaltet».</li>
                   <li>
-                    Zurück im Dashboard steht neben <b>Kaufen</b> und <b>Verkaufen</b> neu
-                    <b>Bezahlen</b>.
+                    Normaler Pfad nach zentraler Freischaltung: <b>Bezahlen</b> erscheint
+                    im Dashboard; <b>Senden</b> auf Empfangen und Wallet-Adresse; der
+                    <b>Promo-Code</b>-Schritt in der Registrierung; <b>Empfehlungen</b>,
+                    wenn die Person berechtigt ist.
                   </li>
                 </ol>
                 <p>
                   Die Freischaltung bleibt dauerhaft auf dem Gerät erhalten (auch nach
                   App-Neustart) — sie wird lokal per <code>SharedPreferences</code>
                   gespeichert. Eine Neuinstallation der App setzt sie zurück.
-                  OpenCryptoPay-Zahlungslinks funktionieren unabhängig von der
-                  Freischaltung — der Deeplink bleibt bewusst immer offen. Tippen auf die
-                  Versionsnummer nach erfolgter Freischaltung hat keine Wirkung mehr.
+                  OpenCryptoPay-Zahlungslinks funktionieren unabhängig vom
+                  Bezahlen-Button — der Deeplink bleibt bewusst immer offen. Tippen auf
+                  die Versionsnummer hat keine Wirkung mehr, wenn die
+                  Insider-Einstellungen schon sichtbar sind und alle vier Funktionen
+                  bereits an sind. Sind nur die zentralen Flags gesetzt, bleibt der
+                  siebenmalige Tap der Tester-Override.
                 </p>
               </div>
               <div class="img img-multi">
@@ -8189,6 +8251,56 @@
                 <b>Verkaufen</b> erscheint zusätzlich <b>Bezahlen</b>.
                 Golden-Quelle: <code>dashboard_insider_unlocked.png</code> aus
                 <code>dashboard_golden_test.dart</code>.
+              </div>
+            </div>
+            <div class="test" id="293-settings-insider-unlocked">
+              <div class="head">
+                <a class="name permalink" href="#293-settings-insider-unlocked">293-settings-insider-unlocked</a>
+                <button class="copy-link" type="button" data-target="293-settings-insider-unlocked" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/settings/goldens/macos/settings_page_insider_unlocked.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/293-settings-insider-unlocked.png"
+                  alt="Einstellungen mit Menüpunkt Insider Funktionen, ohne Empfehlungen"
+                />
+              </div>
+              <div class="desc">
+                Nach Unlock, alle Schalter aus: Menüpunkt «Insider Funktionen» nach
+                Wallet-Adresse / vor Wallet-Sicherung; Zeile «Empfehlungen» fehlt.
+              </div>
+            </div>
+            <div class="test" id="294-settings-insider-page-default">
+              <div class="head">
+                <a class="name permalink" href="#294-settings-insider-page-default">294-settings-insider-page-default</a>
+                <button class="copy-link" type="button" data-target="294-settings-insider-page-default" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/settings_insider/goldens/macos/settings_insider_page_default.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/294-settings-insider-page-default.png"
+                  alt="Insider Funktionen mit vier Schaltern alle aus"
+                />
+              </div>
+              <div class="desc">
+                Seite Insider Funktionen: Bezahlen, Senden, Referral-Programm,
+                Bonus-Programm, alle aus.
+              </div>
+            </div>
+            <div class="test" id="295-settings-insider-page-enabled">
+              <div class="head">
+                <a class="name permalink" href="#295-settings-insider-page-enabled">295-settings-insider-page-enabled</a>
+                <button class="copy-link" type="button" data-target="295-settings-insider-page-enabled" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/settings_insider/goldens/macos/settings_insider_page_enabled.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/295-settings-insider-page-enabled.png"
+                  alt="Insider Funktionen mit vier Schaltern alle ein"
+                />
+              </div>
+              <div class="desc">
+                Dieselbe Seite, alle vier Schalter eingeschaltet.
               </div>
             </div>
           </div>
@@ -8412,6 +8524,95 @@
                     <tr><td>2026-08-23</td><td>Kauf</td><td class="num">+260</td><td class="num">1800</td></tr>
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <hr class="sep" />
+
+        <details id="spec-81" class="spec" open>
+          <summary>
+            <div class="spec-head">
+              <div class="lhs">
+                <h2><span class="num">81</span>Bezahlen — ganze REALU</h2>
+                <div class="file">test/goldens/screens/pay/</div>
+              </div>
+              <div class="rhs">
+                <b>3 Screens</b>
+                <div class="links">
+                  <a
+                    href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/pay"
+                    >Goldens ↗</a
+                  >
+                </div>
+              </div>
+            </div>
+          </summary>
+          <p class="spec-intro">
+            OpenCryptoPay-Zahlungen verkaufen immer <b>ganze REALU-Anteile</b> —
+            halbe Anteile gibt es nicht. Die Bestätigungsseite («Zahlung bestätigen»)
+            sagt das ausdrücklich.
+            Die Zahlungs-API rundet den Tausch auf ganze Anteile auf; die App rechnet
+            die Stückzahl nicht selbst.
+          </p>
+
+          <div class="tests cols-3">
+            <div class="test" id="300-pay-info">
+              <div class="head">
+                <a class="name permalink" href="#300-pay-info">300-pay-info</a>
+                <button class="copy-link" type="button" data-target="300-pay-info" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_info_page.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/300-pay-info.png"
+                  alt="Bevor Sie bezahlen — Hinweis auf ganze REALU-Anteile"
+                />
+              </div>
+              <div class="desc">
+                Intro-Seite <b>Bevor Sie bezahlen</b> mit dem zusätzlichen Absatz:
+                bei jeder Zahlung wird auf ganze REALU-Anteile aufgerundet, weil es
+                keine halben REALU gibt.
+                Golden-Quelle: <code>pay_info_page.png</code>.
+              </div>
+            </div>
+            <div class="test" id="301-pay-quote-ready">
+              <div class="head">
+                <a class="name permalink" href="#301-pay-quote-ready">301-pay-quote-ready</a>
+                <button class="copy-link" type="button" data-target="301-pay-quote-ready" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_quote_page_ready.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/301-pay-quote-ready.png"
+                  alt="Zahlung bestätigen — Aufrundungshinweis"
+                />
+              </div>
+              <div class="desc">
+                Bestätigungsseite mit Betrag, benötigten ZCHF und dem sichtbaren
+                Hinweis, dass jede Zahlung auf ganze REALU-Anteile aufgerundet wird.
+                Button <b>Bezahlen</b> bleibt
+                die sticky CTA.
+                Golden-Quelle: <code>pay_quote_page_ready.png</code>.
+              </div>
+            </div>
+            <div class="test" id="302-pay-quote-ready-merchant">
+              <div class="head">
+                <a class="name permalink" href="#302-pay-quote-ready-merchant">302-pay-quote-ready-merchant</a>
+                <button class="copy-link" type="button" data-target="302-pay-quote-ready-merchant" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+                <span class="src">screens/pay/goldens/macos/pay_quote_page_ready_with_merchant.png</span>
+              </div>
+              <div class="img">
+                <img
+                  src="../screenshots/302-pay-quote-ready-merchant.png"
+                  alt="Zahlung bestätigen — Empfänger, REALU-Zeilen und Aufrundungshinweis"
+                />
+              </div>
+              <div class="desc">
+                Dieselbe Bestätigungsseite mit Empfänger, REALU-Anteilzeilen und
+                dem Aufrundungshinweis unter den Beträgen.
+                Golden-Quelle: <code>pay_quote_page_ready_with_merchant.png</code>.
               </div>
             </div>
           </div>
@@ -11026,9 +11227,9 @@
             Verifizierte Aktionäre mit mindestens 70 REALU im Wallet (geprüft bei
             der Einladung und bei der Qualifikation) sehen auf dem Dashboard
             die Karte <b>Empfehlungen</b> («Erhalten Sie 20 REALU pro Weiterempfehlung»)
-            und denselben Einstieg in den Einstellungen. Sichtbarkeit, Mindestbestand
-            und Auszahlung entscheidet die DFX API; die App rendert
-            <code>eligible</code> 1:1. Die Prämie von 20 REALU wird dem Empfehler
+            und denselben Einstieg in den Einstellungen, sobald die Funktion zentral
+            freigeschaltet ist (Spec 79) und die API <code>eligible</code> setzt.
+            Mindestbestand und Auszahlung entscheidet die DFX API. Die Prämie von 20 REALU wird dem Empfehler
             gutgeschrieben, sobald die eingeladene Person verifiziert ist und
             ihren ersten abgeschlossenen REALU-Kauf von mindestens 200 REALU
             getätigt hat (serverseitig geprüft; Teilnahmebedingungen vom
@@ -11189,7 +11390,7 @@
             Nicht-berechtigt (`279`), Einladung erstellt (`280`),
             Teilnahmebedingungen (`281`), Prämie in der Historie (`282`),
             TB nach Annahme (`283`), Namenseingabe (`284`), Einstellungen-Karte
-            (`285`), Rechtliche Dokumente letzter Eintrag (`286`), Einladung
+            (`285`), Einstellungen mit Empfehlungen (`299`), Rechtliche Dokumente letzter Eintrag (`286`), Einladung
             erkannt (`287`), Historie mit Prämie (`288`), Dashboard-Einstieg
             (`289`), Promo-Aktionstext (`290`), Bind-Overlay ungültig (`291`),
             Bind-Overlay nur für neue Kundinnen (`292`).
@@ -11244,7 +11445,8 @@
             </div>
             <div class="desc">
               Karte <b>Empfehlungen</b> mit «Erhalten Sie 20 REALU pro Weiterempfehlung»,
-              nur wenn die API <code>eligible</code> setzt.
+              nur nach zentraler Freischaltung (Spec 79) und wenn die API
+              <code>eligible</code> setzt.
             </div>
           </div>
           <div class="test" id="279-referral-not-eligible">
@@ -11359,13 +11561,28 @@
             <div class="img">
               <img
                 src="../screenshots/285-settings-referral-eligible.png"
-                alt="Einstellungen-Karte Empfehlungen für berechtigte Aktionäre"
+                alt="Einstellungen bei API-eligible ohne die Zeile Empfehlungen"
               />
             </div>
             <div class="desc">
-              Einstieg «Empfehlungen» in den Einstellungen, nur wenn die API
-              <code>eligible</code> setzt. Kartentext «Erhalten Sie 20 REALU pro
-              Weiterempfehlung».
+              Einstellungen bei API-<code>eligible</code>, ohne zentrale Freischaltung
+              der Empfehlungen — die Zeile «Empfehlungen» fehlt.
+            </div>
+          </div>
+          <div class="test" id="299-settings-referral-eligible-on">
+            <div class="head">
+              <a class="name permalink" href="#299-settings-referral-eligible-on">299-settings-referral-eligible-on</a>
+              <button class="copy-link" type="button" data-target="299-settings-referral-eligible-on" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+              <span class="src">settings_golden_test.dart</span>
+            </div>
+            <div class="img">
+              <img
+                src="../screenshots/299-settings-referral-eligible-on.png"
+                alt="Einstellungen bei API-eligible mit der Zeile Empfehlungen"
+              />
+            </div>
+            <div class="desc">
+              Einstellungen bei API-<code>eligible</code> und zentral freigeschalteten Empfehlungen — die Zeile «Empfehlungen» ist sichtbar.
             </div>
           </div>
           <div class="test" id="286-settings-legal-referral-terms">

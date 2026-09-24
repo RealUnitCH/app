@@ -5,12 +5,14 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/screens/referral/cubit/referral_eligibility_cubit.dart';
 import 'package:realunit_wallet/screens/referral/widgets/referral_eligibility_resume.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/outlined_tile.dart';
 
-/// Full-width dashboard card gated by `summary.eligible` from the API.
+/// Full-width dashboard card gated by the local referral latch and
+/// `summary.eligible` from the API.
 class ReferralEntryCard extends StatelessWidget {
   final Duration unavailablePollInterval;
 
@@ -39,24 +41,30 @@ class _ReferralEntryCardView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ReferralEligibilityCubit, ReferralEligibilityState>(
-      builder: (context, state) {
-        final eligible = state is ReferralEligibilityLoaded && state.eligible;
-        if (!eligible) return const SizedBox.shrink();
+    return BlocBuilder<SettingsBloc, SettingsState>(
+      builder: (context, settings) {
+        return BlocBuilder<ReferralEligibilityCubit, ReferralEligibilityState>(
+          builder: (context, state) {
+            final eligible = state is ReferralEligibilityLoaded && state.eligible;
+            if (!settings.walletFeatureReferral || !eligible) {
+              return const SizedBox.shrink();
+            }
 
-        final s = S.of(context);
-        return OutlinedTile(
-          leading: const ExcludeSemantics(
-            child: Icon(
-              Icons.card_giftcard_outlined,
-              color: RealUnitColors.realUnitBlue,
-              size: 24,
-            ),
-          ),
-          title: s.referrals,
-          subtitle: s.referralsSubtitle,
-          trailingIcon: Icons.chevron_right_rounded,
-          onTap: () => context.pushNamed(SettingsRoutes.referral),
+            final s = S.of(context);
+            return OutlinedTile(
+              leading: const ExcludeSemantics(
+                child: Icon(
+                  Icons.card_giftcard_outlined,
+                  color: RealUnitColors.realUnitBlue,
+                  size: 24,
+                ),
+              ),
+              title: s.referrals,
+              subtitle: s.referralsSubtitle,
+              trailingIcon: Icons.chevron_right_rounded,
+              onTap: () => context.pushNamed(SettingsRoutes.referral),
+            );
+          },
         );
       },
     );

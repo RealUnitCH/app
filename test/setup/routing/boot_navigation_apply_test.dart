@@ -75,6 +75,16 @@ void main() {
           path: '/pay',
           builder: (_, state) => Text('pay ${state.extra}'),
         ),
+        GoRoute(
+          name: AppRoutes.updateRequired,
+          path: '/updateRequired',
+          builder: (_, _) => const Text('updateRequired'),
+        ),
+        GoRoute(
+          name: AppRoutes.receive,
+          path: '/receive',
+          builder: (_, _) => const Text('receive'),
+        ),
       ],
     );
     addTearDown(router.dispose);
@@ -494,6 +504,55 @@ void main() {
         router.pop();
         await tester.pumpAndSettle();
         expect(find.text('dashboard'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'BootNavStay on /receive with a stash clears it and never pushes /pay',
+      (tester) async {
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        router.go('/receive');
+        await tester.pumpAndSettle();
+
+        stashPendingPaymentDeeplink('lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD');
+        var cleared = false;
+        applyBootNavAction(
+          const BootNavStay(),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () => cleared = true,
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('receive'), findsOneWidget);
+        expect(find.textContaining(RegExp(r'^pay ')), findsNothing);
+        expect(peekPendingPaymentDeeplink(), isNull);
+        expect(cleared, isTrue);
+      },
+    );
+
+    testWidgets(
+      'updateRequired landing clears the stash and never replays /pay',
+      (tester) async {
+        final router = buildRouter();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpAndSettle();
+
+        stashPendingPaymentDeeplink('pay-me');
+        applyBootNavAction(
+          const BootNavGoNamed(AppRoutes.updateRequired),
+          router,
+          onLoadWallet: () {},
+          onClearResume: () {},
+        );
+        await tester.pumpAndSettle();
+
+        expect(peekPendingPaymentDeeplink(), isNull);
+        expect(find.text('updateRequired'), findsOneWidget);
+        expect(find.textContaining(RegExp(r'^pay ')), findsNothing);
       },
     );
   });

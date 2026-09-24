@@ -102,8 +102,9 @@ void main() {
 
     group('unlocked', () {
       setUp(() {
-        when(() => settingsBloc.state)
-            .thenReturn(const SettingsState(insiderFeaturesUnlocked: true));
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(walletFeaturePay: true),
+        );
       });
 
       testWidgets('renders the buy, sell and pay action buttons', (tester) async {
@@ -165,7 +166,9 @@ void main() {
           expect(actionButtonByLabel(S.current.pay), findsNothing);
           expect(actionButtonByLabel(S.current.send), findsNothing);
 
-          controller.add(const SettingsState(insiderFeaturesUnlocked: true));
+          controller.add(
+            const SettingsState(walletFeaturePay: true),
+          );
           // Two pumps: the first delivers the stream event (async broadcast
           // delivery updates the mock's state and marks the element dirty),
           // the second builds the frame that shows the unlocked buttons.

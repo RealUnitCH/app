@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Assemble the 301 handbook screenshots from the visual-regression Golden
+# Assemble the 311 handbook screenshots from the visual-regression Golden
 # baselines. The flat `NN-name.png` output layout matches what
 # docs/handbook/de/index.html links to (`<img src="../screenshots/NN-name.png">`
 # — the relative path resolves to `docs/handbook/screenshots/NN-name.png`).
@@ -341,6 +341,18 @@ MAPPING=(
   "290-kyc-registration-referral-promo=screens/kyc/goldens/macos/kyc_registration_referral_step_promo.png"
   "291-referral-bind-error-invalid=screens/referral/goldens/macos/referral_bind_error_invalid.png"
   "292-referral-bind-error-already-registered=screens/referral/goldens/macos/referral_bind_error_already_registered.png"
+  "293-settings-insider-unlocked=screens/settings/goldens/macos/settings_page_insider_unlocked.png"
+  "294-settings-insider-page-default=screens/settings_insider/goldens/macos/settings_insider_page_default.png"
+  "295-settings-insider-page-enabled=screens/settings_insider/goldens/macos/settings_insider_page_enabled.png"
+  "296-receive-page-default-send=screens/receive/goldens/macos/receive_page_default_send.png"
+  "297-receive-page-full-page-send=screens/receive/goldens/macos/receive_page_full_page_send.png"
+  "298-settings-wallet-address-send=screens/settings_wallet_address/goldens/macos/settings_wallet_address_page_send.png"
+  "299-settings-referral-eligible-on=screens/settings/goldens/macos/settings_page_referral_eligible_on.png"
+  # 300–302: OpenCryptoPay pay whole-share rounding disclosure. No matching
+  # .maestro/handbook flow — pay is behind the insider unlock in the 01–26 chain.
+  "300-pay-info=screens/pay/goldens/macos/pay_info_page.png"
+  "301-pay-quote-ready=screens/pay/goldens/macos/pay_quote_page_ready.png"
+  "302-pay-quote-ready-merchant=screens/pay/goldens/macos/pay_quote_page_ready_with_merchant.png"
 )
 
 missing=()

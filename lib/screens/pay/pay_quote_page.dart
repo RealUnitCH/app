@@ -121,22 +121,44 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
               value: '${state.realuFeesTotal!.toStringAsFixed(2)} ${realUnitAsset.symbol}',
             ),
           ],
+          Text(
+            S.of(context).payQuoteRoundingNotice,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: RealUnitColors.neutral500,
+            ),
+          ),
         ],
       ),
       actions: [
         FilledButton(
           onPressed: _navigating
               ? null
-              : () {
+              : () async {
+                  if (_navigating) return;
                   setState(() => _navigating = true);
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => PayProcessPage(
-                        paymentLinkId: state.paymentLinkId,
-                        zchfNeeded: state.zchfAmount,
+                  final navigator = Navigator.of(context);
+                  bool? swapCompleted = false;
+                  try {
+                    swapCompleted = await navigator.push<bool>(
+                      MaterialPageRoute<bool>(
+                        builder: (_) => PayProcessPage(
+                          paymentLinkId: state.paymentLinkId,
+                          zchfNeeded: state.zchfAmount,
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  } finally {
+                    // Only a typed pre-swap failure pops `false` and re-enables
+                    // Pay. `true` (swap ran) and `null` (AppBar / system back)
+                    // both leave this quote so REALU cannot be sold twice.
+                    if (mounted && swapCompleted == false) {
+                      setState(() => _navigating = false);
+                    }
+                  }
+                  if (mounted && swapCompleted != false) {
+                    navigator.pop();
+                  }
                 },
           child: Text(S.of(context).payConfirmButton),
         ),

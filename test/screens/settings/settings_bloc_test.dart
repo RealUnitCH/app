@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/wallet_features/dto/real_unit_wallet_features_dto.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 import 'package:realunit_wallet/styles/language.dart';
@@ -12,16 +13,52 @@ class _MockSettingsRepository extends Mock implements SettingsRepository {}
 void main() {
   late _MockSettingsRepository repo;
   late int authRefreshCount;
+  late bool storedPay;
+  late bool storedSend;
+  late bool storedPromo;
+  late bool storedReferral;
 
   setUp(() {
     repo = _MockSettingsRepository();
     authRefreshCount = 0;
+    storedPay = false;
+    storedSend = false;
+    storedPromo = false;
+    storedReferral = false;
     // Defaults — sane values for the initial state.
     when(() => repo.language).thenReturn('en');
     when(() => repo.currency).thenReturn('EUR');
     when(() => repo.hasStoredCurrency).thenReturn(false);
     when(() => repo.networkMode).thenReturn(NetworkMode.mainnet);
     when(() => repo.insiderFeaturesUnlocked).thenReturn(false);
+    when(() => repo.walletFeaturePay).thenAnswer((_) => storedPay);
+    when(() => repo.walletFeatureSend).thenAnswer((_) => storedSend);
+    when(() => repo.walletFeaturePromoCode).thenAnswer((_) => storedPromo);
+    when(() => repo.walletFeatureReferral).thenAnswer((_) => storedReferral);
+    when(() => repo.walletFeaturePay = any()).thenAnswer((inv) {
+      final value = inv.positionalArguments.first as bool;
+      if (!value && storedPay) return value;
+      storedPay = value;
+      return value;
+    });
+    when(() => repo.walletFeatureSend = any()).thenAnswer((inv) {
+      final value = inv.positionalArguments.first as bool;
+      if (!value && storedSend) return value;
+      storedSend = value;
+      return value;
+    });
+    when(() => repo.walletFeaturePromoCode = any()).thenAnswer((inv) {
+      final value = inv.positionalArguments.first as bool;
+      if (!value && storedPromo) return value;
+      storedPromo = value;
+      return value;
+    });
+    when(() => repo.walletFeatureReferral = any()).thenAnswer((inv) {
+      final value = inv.positionalArguments.first as bool;
+      if (!value && storedReferral) return value;
+      storedReferral = value;
+      return value;
+    });
   });
 
   SettingsBloc build() => SettingsBloc(
@@ -45,6 +82,10 @@ void main() {
       expect(bloc.state.networkMode, NetworkMode.testnet);
       expect(bloc.state.hideAmounts, isFalse);
       expect(bloc.state.insiderFeaturesUnlocked, isTrue);
+      expect(bloc.state.walletFeaturePay, isFalse);
+      expect(bloc.state.walletFeatureSend, isFalse);
+      expect(bloc.state.walletFeaturePromoCode, isFalse);
+      expect(bloc.state.walletFeatureReferral, isFalse);
     });
 
     blocTest<SettingsBloc, SettingsState>(
@@ -171,12 +212,154 @@ void main() {
     });
 
     blocTest<SettingsBloc, SettingsState>(
-      'UnlockInsiderFeaturesEvent persists to the repo and emits insiderFeaturesUnlocked=true',
+      'UnlockInsiderFeaturesEvent persists insider unlock and all four feature flags',
       build: build,
       act: (bloc) => bloc.add(const UnlockInsiderFeaturesEvent()),
       verify: (bloc) {
         expect(bloc.state.insiderFeaturesUnlocked, isTrue);
+        expect(bloc.state.walletFeaturePay, isTrue);
+        expect(bloc.state.walletFeatureSend, isTrue);
+        expect(bloc.state.walletFeaturePromoCode, isTrue);
+        expect(bloc.state.walletFeatureReferral, isTrue);
         verify(() => repo.insiderFeaturesUnlocked = true).called(1);
+        verify(() => repo.walletFeaturePay = true).called(1);
+        verify(() => repo.walletFeatureSend = true).called(1);
+        verify(() => repo.walletFeaturePromoCode = true).called(1);
+        verify(() => repo.walletFeatureReferral = true).called(1);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'RefreshWalletFeaturesEvent OR-latches true flags from fetch',
+      build: () {
+        var calls = 0;
+        return SettingsBloc(
+          repo,
+          () async {},
+          fetchWalletFeatures: () async {
+            calls++;
+            if (calls == 1) {
+              return const RealUnitWalletFeaturesDto(pay: true);
+            }
+            return const RealUnitWalletFeaturesDto(pay: false, send: true);
+          },
+        );
+      },
+      act: (bloc) => bloc.add(const RefreshWalletFeaturesEvent()),
+      verify: (bloc) {
+        expect(bloc.state.walletFeaturePay, isTrue);
+        expect(bloc.state.walletFeatureSend, isTrue);
+        expect(bloc.state.walletFeaturePromoCode, isFalse);
+        expect(bloc.state.walletFeatureReferral, isFalse);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'RefreshWalletFeaturesEvent catch keeps existing latch and does not emit an error',
+      setUp: () => storedPay = true,
+      build: () => SettingsBloc(
+        repo,
+        () async {},
+        fetchWalletFeatures: () async {
+          throw Exception('unavailable');
+        },
+      ),
+      expect: () => <SettingsState>[],
+      verify: (bloc) {
+        expect(bloc.state.walletFeaturePay, isTrue);
+        expect(bloc.state.walletFeatureSend, isFalse);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent.pay latches walletFeaturePay',
+      build: build,
+      act: (bloc) => bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.pay, true)),
+      verify: (bloc) {
+        verify(() => repo.walletFeaturePay = true).called(1);
+        expect(bloc.state.walletFeaturePay, isTrue);
+        expect(bloc.state.insiderPayEnabled, isTrue);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent.send latches walletFeatureSend',
+      build: build,
+      act: (bloc) => bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.send, true)),
+      verify: (bloc) {
+        verify(() => repo.walletFeatureSend = true).called(1);
+        expect(bloc.state.walletFeatureSend, isTrue);
+        expect(bloc.state.insiderSendEnabled, isTrue);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent.referral latches walletFeatureReferral',
+      build: build,
+      act: (bloc) =>
+          bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.referral, true)),
+      verify: (bloc) {
+        verify(() => repo.walletFeatureReferral = true).called(1);
+        expect(bloc.state.walletFeatureReferral, isTrue);
+        expect(bloc.state.insiderReferralEnabled, isTrue);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent.bonus latches walletFeaturePromoCode',
+      build: build,
+      act: (bloc) =>
+          bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.bonus, true)),
+      verify: (bloc) {
+        verify(() => repo.walletFeaturePromoCode = true).called(1);
+        expect(bloc.state.walletFeaturePromoCode, isTrue);
+        expect(bloc.state.insiderBonusEnabled, isTrue);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent.pay false does not clear a latch',
+      setUp: () => storedPay = true,
+      build: build,
+      act: (bloc) => bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.pay, false)),
+      verify: (bloc) {
+        verify(() => repo.walletFeaturePay = false).called(1);
+        expect(bloc.state.walletFeaturePay, isTrue);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent.send false does not clear a latch',
+      setUp: () => storedSend = true,
+      build: build,
+      act: (bloc) => bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.send, false)),
+      verify: (bloc) {
+        verify(() => repo.walletFeatureSend = false).called(1);
+        expect(bloc.state.walletFeatureSend, isTrue);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent.referral false does not clear a latch',
+      setUp: () => storedReferral = true,
+      build: build,
+      act: (bloc) =>
+          bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.referral, false)),
+      verify: (bloc) {
+        verify(() => repo.walletFeatureReferral = false).called(1);
+        expect(bloc.state.walletFeatureReferral, isTrue);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent.bonus false does not clear a latch',
+      setUp: () => storedPromo = true,
+      build: build,
+      act: (bloc) =>
+          bloc.add(const SetInsiderFeatureEnabledEvent(InsiderFeature.bonus, false)),
+      verify: (bloc) {
+        verify(() => repo.walletFeaturePromoCode = false).called(1);
+        expect(bloc.state.walletFeaturePromoCode, isTrue);
       },
     );
   });

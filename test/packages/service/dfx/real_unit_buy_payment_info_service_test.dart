@@ -8,6 +8,7 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/buy_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
@@ -28,7 +29,7 @@ class TestAppStore extends AppStore {
     : super(apiConfig, SessionCache(MockCacheRepository()));
 
   @override
-  http.Client get httpClient => client;
+  RealUnitApiClient get httpClient => RealUnitApiClient(client);
 }
 
 Map<String, dynamic> _buyPaymentInfoJson({

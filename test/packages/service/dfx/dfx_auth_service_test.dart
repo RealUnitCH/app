@@ -11,6 +11,7 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
@@ -149,7 +150,7 @@ class _RetryTestAppStore extends AppStore {
   final http.Client _client;
 
   @override
-  http.Client get httpClient => _client;
+  RealUnitApiClient get httpClient => RealUnitApiClient(_client);
 }
 
 class _RetryTestAuthService extends DFXAuthService {
@@ -424,7 +425,9 @@ void main() {
 
       when(() => appStore.sessionCache).thenReturn(sessionCache);
       when(() => appStore.httpClient).thenReturn(
-        MockClient((_) async => http.Response('{"message":"unused"}', 200)),
+        RealUnitApiClient(
+          MockClient((_) async => http.Response('{"message":"unused"}', 200)),
+        ),
       );
       when(() => sessionCache.loadSignature()).thenAnswer((_) async {});
       when(() => sessionCache.signature).thenReturn(null);
@@ -461,7 +464,7 @@ void main() {
         httpCalled = true;
         return http.Response('unexpected', 500);
       });
-      when(() => appStore.httpClient).thenReturn(client);
+      when(() => appStore.httpClient).thenReturn(RealUnitApiClient(client));
 
       await buildService().ensureSignatureFor(account);
 
@@ -479,8 +482,10 @@ void main() {
         EthereumAddress.fromHex('0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb').hexEip55,
       );
       when(() => appStore.httpClient).thenReturn(
-        MockClient(
-          (_) async => http.Response(jsonEncode({'message': 'm'}), 200),
+        RealUnitApiClient(
+          MockClient(
+            (_) async => http.Response(jsonEncode({'message': 'm'}), 200),
+          ),
         ),
       );
 
@@ -494,8 +499,10 @@ void main() {
       test('throws SigningCancelledException when the device returns "$empty"', () async {
         account = _StubWalletAccount(empty, address: accountAddress);
         when(() => appStore.httpClient).thenReturn(
-          MockClient(
-            (_) async => http.Response(jsonEncode({'message': 'm'}), 200),
+          RealUnitApiClient(
+            MockClient(
+              (_) async => http.Response(jsonEncode({'message': 'm'}), 200),
+            ),
           ),
         );
 
@@ -574,7 +581,7 @@ void main() {
     });
 
     _SignatureTestAuthService buildService(http.Client client) {
-      when(() => appStore.httpClient).thenReturn(client);
+      when(() => appStore.httpClient).thenReturn(RealUnitApiClient(client));
       return _SignatureTestAuthService(appStore, walletService, account, walletAddress);
     }
 
@@ -756,7 +763,9 @@ void main() {
       when(() => appStore.apiConfig).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
       when(() => appStore.sessionCache).thenReturn(SessionCache(_MockCacheRepository()));
       when(() => appStore.httpClient).thenReturn(
-        MockClient((_) async => http.Response('', 200)),
+        RealUnitApiClient(
+          MockClient((_) async => http.Response('', 200)),
+        ),
       );
 
       final service = _BaseGetterAuthService(appStore, _MockWalletService());
