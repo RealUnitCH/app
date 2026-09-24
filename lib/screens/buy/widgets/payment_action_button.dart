@@ -104,7 +104,10 @@ class PaymentActionButton extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   child: AppFilledButton(
                     onPressed: () async {
-                      await context.pushNamed(AppRoutes.kyc, extra: paymentState.context);
+                      await context.pushNamed(
+                        AppRoutes.kyc,
+                        queryParameters: kycRouteQuery(paymentState.context),
+                      );
                       if (context.mounted) _refetchQuote(context);
                     },
                     label: S.of(context).next,
@@ -116,7 +119,10 @@ class PaymentActionButton extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   child: AppFilledButton(
                     onPressed: () async {
-                      await context.pushNamed(AppRoutes.kyc, extra: paymentState.context);
+                      await context.pushNamed(
+                        AppRoutes.kyc,
+                        queryParameters: kycRouteQuery(paymentState.context),
+                      );
                       if (context.mounted) _refetchQuote(context);
                     },
                     label: S.of(context).next,
@@ -151,7 +157,10 @@ class PaymentActionButton extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   child: AppFilledButton(
                     onPressed: () async {
-                      await context.pushNamed(AppRoutes.kyc, extra: paymentState.context);
+                      await context.pushNamed(
+                        AppRoutes.kyc,
+                        queryParameters: kycRouteQuery(paymentState.context),
+                      );
                       if (context.mounted) _refetchQuote(context);
                     },
                     label: S.of(context).next,

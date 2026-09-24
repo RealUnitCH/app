@@ -237,7 +237,7 @@ final GoRouter routerConfig = GoRouter(
       name: AppRoutes.kyc,
       path: '/kyc',
       builder: (_, state) => BindReferralOnKycExit(
-        child: KycPageManager(kycContext: state.extra as String?),
+        child: KycPageManager(kycContext: state.uri.queryParameters['context']),
       ),
     ),
 

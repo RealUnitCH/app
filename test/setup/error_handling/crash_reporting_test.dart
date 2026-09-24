@@ -54,4 +54,23 @@ void main() {
       );
     });
   });
+
+  group('reportNonFatal', () {
+    // Same contract as the init above: reporting infrastructure must never be
+    // able to take the app down. Without an injected DSN the reporter never
+    // started, so the call has to fall through to the log line and return.
+    test('is inert and non-throwing when the reporter never started', () {
+      expect(crashReportingDsn, isEmpty);
+      expect(() => reportNonFatal(StateError('nothing is listening')), returnsNormally);
+    });
+
+    test('does not throw when the reported error cannot render itself', () {
+      expect(() => reportNonFatal(_UnprintableError()), returnsNormally);
+    });
+  });
+}
+
+class _UnprintableError implements Exception {
+  @override
+  String toString() => throw StateError('toString failed');
 }

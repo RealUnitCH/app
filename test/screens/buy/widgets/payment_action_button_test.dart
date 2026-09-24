@@ -29,7 +29,7 @@ void main() {
   // value (mirrors the registration / KYC gates), so the re-fetch is
   // asserted on both paths.
   bool? emailCaptureResult;
-  String? kycExtra;
+  String? kycContext;
 
   setUpAll(() {
     registerFallbackValue(Currency.chf);
@@ -40,7 +40,7 @@ void main() {
     paymentInfoCubit = _MockBuyPaymentInfoCubit();
     pushedRoutes = <String>[];
     emailCaptureResult = true;
-    kycExtra = null;
+    kycContext = null;
 
     // fiatText models the typed amount; with no live payable the re-fetch
     // falls back to it (quoteAmountText), so '250' is what the gates send.
@@ -90,7 +90,7 @@ void main() {
           path: '/kyc',
           builder: (_, state) {
             pushedRoutes.add(AppRoutes.kyc);
-            kycExtra = state.extra as String?;
+            kycContext = state.uri.queryParameters['context'];
             return _EmailCaptureStub(
               onReady: (popContext) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -212,7 +212,7 @@ void main() {
 
         // Routed to KYC confirm-email, not to email capture.
         expect(pushedRoutes, [AppRoutes.kyc]);
-        expect(kycExtra, 'RealunitBuy');
+        expect(kycContext, 'RealunitBuy');
         // After the KYC flow returns, the quote is re-fetched with the
         // live payable (not the typed fiatText) so a confirmed email surfaces.
         verify(
@@ -223,6 +223,42 @@ void main() {
         ).called(1);
       },
     );
+  });
+
+  group('$PaymentActionButton registration and KYC gates', () {
+    for (final error in [PaymentInfoError.registrationRequired, PaymentInfoError.kycRequired]) {
+      testWidgets(
+        '${error.name}: tap delivers the API context to the KYC route URL',
+        (tester) async {
+          when(() => paymentInfoCubit.state).thenReturn(
+            BuyPaymentInfoFailure(error, context: 'RealunitBuy'),
+          );
+
+          await pumpButton(tester);
+
+          await tester.tap(find.text(S.current.next));
+          await tester.pumpAndSettle();
+
+          expect(pushedRoutes, [AppRoutes.kyc]);
+          expect(kycContext, 'RealunitBuy');
+        },
+      );
+
+      testWidgets(
+        '${error.name}: tap enters the KYC route unscoped when the API attached no context',
+        (tester) async {
+          when(() => paymentInfoCubit.state).thenReturn(BuyPaymentInfoFailure(error));
+
+          await pumpButton(tester);
+
+          await tester.tap(find.text(S.current.next));
+          await tester.pumpAndSettle();
+
+          expect(pushedRoutes, [AppRoutes.kyc]);
+          expect(kycContext, isNull);
+        },
+      );
+    }
   });
 
   group('$PaymentActionButton maxAmountExceeded gate', () {
