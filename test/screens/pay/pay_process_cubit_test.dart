@@ -77,6 +77,8 @@ SwapPaymentInfo _swap({
       requiredGasEth: requiredGasEth,
       isValid: isValid,
       error: error,
+      ethereumTransactionFeeChf: isValid ? 0.05 : null,
+      ethereumTransactionFeeRealu: isValid ? 0.01234567 : null,
     ),
   );
 }
@@ -229,7 +231,9 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(const RealUnitSwapDto.fromTargetAmount(1));
-    registerFallbackValue(const RealUnitOcpPayDto(paymentLinkId: 'pl_abc', quoteId: 'q'));
+    registerFallbackValue(
+      const RealUnitOcpPayDto(paymentLinkId: 'pl_abc', quoteId: 'q', swapRequestId: 99),
+    );
     registerFallbackValue(
       const BroadcastTransactionRequestDto(unsignedTx: '', r: '', s: '', v: 0),
     );
@@ -241,6 +245,7 @@ void main() {
         v: 0,
         paymentLinkId: 'pl_abc',
         quoteId: 'q',
+        swapRequestId: 99,
       ),
     );
   });
@@ -265,18 +270,17 @@ void main() {
     when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
   });
 
-  PayProcessCubit build({double zchfNeeded = 42.7}) => PayProcessCubit(
+  PayProcessCubit build({SwapPaymentInfo? swap}) => PayProcessCubit(
     payService: payService,
     faucetService: faucet,
     blockchainService: blockchain,
     walletService: walletService,
     appStore: appStore,
     paymentLinkId: 'pl_abc',
-    zchfNeeded: zchfNeeded,
+    swap: swap ?? _swap(),
   );
 
   void wireHappyPath() {
-    when(() => payService.getSwapPaymentInfo(any())).thenAnswer((_) async => _swap());
     when(() => payService.createSwapUnsignedTransaction(any())).thenAnswer(
       (_) async => const RealUnitSwapUnsignedTransactionDto(swap: '0x02f8aa'),
     );
@@ -317,11 +321,7 @@ void main() {
   });
 
   test('invalid swap quote surfaces the API error 1:1', () async {
-    when(() => payService.getSwapPaymentInfo(any())).thenAnswer(
-      (_) async => _swap(isValid: false, error: 'AmountTooLow'),
-    );
-
-    final cubit = build();
+    final cubit = build(swap: _swap(isValid: false, error: 'AmountTooLow'));
     await cubit.start();
 
     final state = cubit.state as PayProcessFailure;
@@ -330,26 +330,18 @@ void main() {
     await cubit.close();
   });
 
-  test('swap sizes the target with a slippage buffer over the ZCHF needed', () async {
+  test('signs the confirmed swap quote and does not request a second quote', () async {
     wireHappyPath();
     when(() => payService.getPayStatus('pl_abc')).thenAnswer(
       (_) async => const RealUnitOcpPayStatusDto(status: OcpPaymentStatus.completed),
     );
-    RealUnitSwapDto? sentDto;
-    when(() => payService.getSwapPaymentInfo(any())).thenAnswer((invocation) async {
-      sentDto = invocation.positionalArguments.first as RealUnitSwapDto;
-      return _swap();
-    });
 
-    final cubit = build(zchfNeeded: 100);
+    final cubit = build(swap: _swap());
     await cubit.start();
 
-    // After start() resolves the chain the pay tx has been submitted.
     expect(cubit.state, isA<PayProcessAwaitingSettlement>());
-    // 100 * 1.03 swap headroom buffer (covers ordinary CHF→ZCHF / swap-rate
-    // drift between scan and settle).
-    expect(sentDto!.targetAmount, closeTo(103, 0.0001));
-    expect(sentDto!.amount, isNull);
+    verifyNever(() => payService.getSwapPaymentInfo(any()));
+    verify(() => payService.createSwapUnsignedTransaction(99)).called(1);
     await cubit.close();
   });
 
@@ -395,6 +387,7 @@ void main() {
     await settled;
 
     expect(payDto!.quoteId, 'q_fresh2');
+    expect(payDto!.swapRequestId, 99);
     await cubit.close();
   });
 
@@ -740,9 +733,6 @@ void main() {
     fakeAsync((async) {
       wireHappyPath();
       when(
-        () => payService.getSwapPaymentInfo(any()),
-      ).thenAnswer((_) async => _swap(ethBalance: 0, requiredGasEth: 0.001));
-      when(
         () => faucet.requestFaucet(),
       ).thenAnswer((_) async => const FaucetResponseDto(txId: '0xf', amount: 0.01));
       var balanceCall = 0;
@@ -754,7 +744,7 @@ void main() {
         (_) async => const RealUnitOcpPayStatusDto(status: OcpPaymentStatus.completed),
       );
 
-      final cubit = build();
+      final cubit = build(swap: _swap(ethBalance: 0, requiredGasEth: 0.001));
       cubit.start();
       drain(async);
       expect(cubit.state, isA<PayProcessWaitingForEth>());
@@ -783,9 +773,6 @@ void main() {
     fakeAsync((async) {
       wireHappyPath();
       when(
-        () => payService.getSwapPaymentInfo(any()),
-      ).thenAnswer((_) async => _swap(ethBalance: 0, requiredGasEth: 0.001));
-      when(
         () => faucet.requestFaucet(),
       ).thenAnswer((_) async => const FaucetResponseDto(txId: '0xf', amount: 0.01));
       var balanceCall = 0;
@@ -798,7 +785,7 @@ void main() {
         (_) async => const RealUnitOcpPayStatusDto(status: OcpPaymentStatus.completed),
       );
 
-      final cubit = build();
+      final cubit = build(swap: _swap(ethBalance: 0, requiredGasEth: 0.001));
       cubit.start();
       drain(async);
       expect(cubit.state, isA<PayProcessWaitingForEth>());
@@ -822,9 +809,6 @@ void main() {
     fakeAsync((async) {
       wireHappyPath();
       when(
-        () => payService.getSwapPaymentInfo(any()),
-      ).thenAnswer((_) async => _swap(ethBalance: 0, requiredGasEth: 0.001));
-      when(
         () => faucet.requestFaucet(),
       ).thenAnswer((_) async => const FaucetResponseDto(txId: '0xf', amount: 0.01));
       var balanceCalls = 0;
@@ -833,7 +817,7 @@ void main() {
         return 0.0; // never crosses requiredGasEth
       });
 
-      final cubit = build();
+      final cubit = build(swap: _swap(ethBalance: 0, requiredGasEth: 0.001));
       cubit.start();
       drain(async);
       expect(cubit.state, isA<PayProcessWaitingForEth>());
@@ -866,15 +850,12 @@ void main() {
     fakeAsync((async) {
       wireHappyPath();
       when(
-        () => payService.getSwapPaymentInfo(any()),
-      ).thenAnswer((_) async => _swap(ethBalance: 0, requiredGasEth: 0.001));
-      when(
         () => faucet.requestFaucet(),
       ).thenAnswer((_) async => const FaucetResponseDto(txId: '0xf', amount: 0.01));
       final balanceCompleter = Completer<double>();
       when(() => blockchain.getEthBalance(any())).thenAnswer((_) => balanceCompleter.future);
 
-      final cubit = build();
+      final cubit = build(swap: _swap(ethBalance: 0, requiredGasEth: 0.001));
       cubit.start();
       drain(async);
       expect(cubit.state, isA<PayProcessWaitingForEth>());
@@ -900,9 +881,6 @@ void main() {
     fakeAsync((async) {
       wireHappyPath();
       when(
-        () => payService.getSwapPaymentInfo(any()),
-      ).thenAnswer((_) async => _swap(ethBalance: 0, requiredGasEth: 0.001));
-      when(
         () => faucet.requestFaucet(),
       ).thenAnswer((_) async => const FaucetResponseDto(txId: '0xf', amount: 0.01));
       var balanceCalls = 0;
@@ -912,7 +890,7 @@ void main() {
         return Completer<double>().future;
       });
 
-      final cubit = build();
+      final cubit = build(swap: _swap(ethBalance: 0, requiredGasEth: 0.001));
       cubit.start();
       drain(async);
       expect(cubit.state, isA<PayProcessWaitingForEth>());
@@ -937,12 +915,9 @@ void main() {
   });
 
   test('faucet request failure → insufficientEth', () async {
-    when(
-      () => payService.getSwapPaymentInfo(any()),
-    ).thenAnswer((_) async => _swap(ethBalance: 0, requiredGasEth: 0.001));
     when(() => faucet.requestFaucet()).thenThrow(Exception('faucet down'));
 
-    final cubit = build();
+    final cubit = build(swap: _swap(ethBalance: 0, requiredGasEth: 0.001));
     final failed = cubit.stream.firstWhere((s) => s is PayProcessFailure);
     await cubit.start();
     final state = await failed as PayProcessFailure;
@@ -968,13 +943,14 @@ void main() {
 
   test('swap quote fetch failure → generic', () async {
     when(() => payService.getSwapPaymentInfo(any())).thenThrow(Exception('api 500'));
+    wireHappyPath();
 
     final cubit = build();
-    final failed = cubit.stream.firstWhere((s) => s is PayProcessFailure);
     await cubit.start();
-    final state = await failed as PayProcessFailure;
 
-    expect(state.reason, PayProcessFailureReason.generic);
+    expect(cubit.state, isA<PayProcessAwaitingSettlement>());
+    verifyNever(() => payService.getSwapPaymentInfo(any()));
+    verify(() => payService.createSwapUnsignedTransaction(99)).called(1);
     await cubit.close();
   });
 

@@ -2,12 +2,25 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/screens/pay/cubits/pay_quote/pay_quote_cubit.dart';
 import 'package:realunit_wallet/screens/pay/pay_quote_page.dart';
 
 import '../../../helper/helper.dart';
 
 class _MockPayQuoteCubit extends MockCubit<PayQuoteState> implements PayQuoteCubit {}
+
+const _swap = SwapPaymentInfo(
+  id: 99,
+  amount: 5,
+  estimatedAmount: 1.98,
+  targetAsset: 'ZCHF',
+  ethBalance: 1,
+  requiredGasEth: 0.001,
+  isValid: true,
+  ethereumTransactionFeeChf: 0.05,
+  ethereumTransactionFeeRealu: 0.01234567,
+);
 
 void main() {
   late _MockPayQuoteCubit quoteCubit;
@@ -51,6 +64,7 @@ void main() {
             fiatAsset: 'CHF',
             fiatAmount: 2,
             zchfAmount: 2.0,
+            swap: _swap,
           ),
         );
         return wrapForGolden(
@@ -76,9 +90,7 @@ void main() {
             zchfAmount: 2.0,
             merchantName: 'Café Zürich',
             merchantCity: 'Zürich',
-            realuAmount: 5,
-            realuEstimatedZchf: 1.98,
-            realuFeesTotal: 0.02,
+            swap: _swap,
           ),
         );
         return wrapForGolden(

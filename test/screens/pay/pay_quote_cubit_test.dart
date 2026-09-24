@@ -44,6 +44,8 @@ SwapPaymentInfo _swap({
   double? feesTotal = 0.02,
   bool isValid = true,
   String? error,
+  double? ethereumTransactionFeeChf = 0.05,
+  double? ethereumTransactionFeeRealu = 0.01234567,
 }) {
   return SwapPaymentInfo(
     id: 99,
@@ -55,6 +57,8 @@ SwapPaymentInfo _swap({
     isValid: isValid,
     error: error,
     feesTotal: feesTotal,
+    ethereumTransactionFeeChf: isValid ? ethereumTransactionFeeChf : null,
+    ethereumTransactionFeeRealu: isValid ? ethereumTransactionFeeRealu : null,
   );
 }
 
@@ -88,9 +92,10 @@ void main() {
       expect(state.fiatAsset, 'CHF');
       expect(state.fiatAmount, 2);
       expect(state.zchfAmount, 2.0);
-      expect(state.realuAmount, 5);
-      expect(state.realuEstimatedZchf, 1.98);
-      expect(state.realuFeesTotal, 0.02);
+      expect(state.swap.amount, 5);
+      expect(state.swap.estimatedAmount, 1.98);
+      expect(state.swap.ethereumTransactionFeeChf, 0.05);
+      expect(state.swap.ethereumTransactionFeeRealu, 0.01234567);
       expect(state.merchantName, isNull);
       expect(state.merchantCity, isNull);
     },

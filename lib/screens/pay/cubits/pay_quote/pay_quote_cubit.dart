@@ -15,6 +15,8 @@ part 'pay_quote_state.dart';
 /// typed state so the view can prompt a re-scan. An invalid swap preview
 /// (`isValid: false`) is [PayQuoteError], never Ready — the app does not
 /// locally ceil share counts; `swap.amount` is displayed only when valid.
+/// The swap quote shown here is the quote later signed; the process step does
+/// not request a second, larger quote.
 class PayQuoteCubit extends Cubit<PayQuoteState> {
   final RealUnitPayService _payService;
   final String _paymentLinkId;
@@ -39,12 +41,11 @@ class PayQuoteCubit extends Cubit<PayQuoteState> {
         return;
       }
 
-      // Preview-only swap quote using the plain bill ZCHF amount (no slippage
+      // Confirmed swap quote using the plain bill ZCHF amount (no slippage
       // buffer). Shown on the pay-quote screen so the user sees expected REALU
-      // sold, ZCHF proceeds and fees for this bill before confirming. The
-      // actual swap executed later in PayProcessCubit re-requests its own quote
-      // independently with its own slippage buffer and remains the sole source
-      // of truth for what is actually swapped.
+      // sold, CHF proceeds and the API Ethereum transaction fee before
+      // confirming. PayProcessCubit signs this same quote — it does not
+      // re-request a larger one.
       final swap = await _payService.getSwapPaymentInfo(
         RealUnitSwapDto.fromTargetAmount(zchfAmount),
       );
@@ -64,9 +65,7 @@ class PayQuoteCubit extends Cubit<PayQuoteState> {
           zchfAmount: zchfAmount,
           merchantName: details.recipient?.name,
           merchantCity: details.recipient?.city,
-          realuAmount: swap.amount,
-          realuEstimatedZchf: swap.estimatedAmount,
-          realuFeesTotal: swap.feesTotal,
+          swap: swap,
         ),
       );
     } catch (e) {
