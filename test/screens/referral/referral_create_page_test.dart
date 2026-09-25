@@ -78,7 +78,7 @@ void main() {
     expect(find.text('Persönlicher Einladungslink'), findsOneWidget);
     expect(
       find.text(
-        'Hallo Alice, mit der Schweizer RealUnit-App investiere ich ganz einfach in verschiedene Sachwerte mittels REALU-Aktientoken. Vielleicht ist das auch etwas für dich: https://realunit.app/invite/AB12CD',
+        'Hey Alice, ich nutze die RealUnit App — schau\'s dir mal an: https://realunit.app/invite/AB12CD',
       ),
       findsOneWidget,
     );
@@ -119,7 +119,7 @@ void main() {
     expect(find.text('Hey ,'), findsNothing);
     expect(
       find.text(
-        'Mit der Schweizer RealUnit-App investiere ich ganz einfach in verschiedene Sachwerte mittels REALU-Aktientoken. Vielleicht ist das auch etwas für dich: https://realunit.app/invite/AB12CD',
+        'Ich nutze die RealUnit App — schau\'s dir mal an: https://realunit.app/invite/AB12CD',
       ),
       findsOneWidget,
     );
@@ -159,7 +159,7 @@ void main() {
 
     expect(
       copied,
-      'Hallo Alice, mit der Schweizer RealUnit-App investiere ich ganz einfach in verschiedene Sachwerte mittels REALU-Aktientoken. Vielleicht ist das auch etwas für dich: https://realunit.app/invite/AB12CD',
+      'Hey Alice, ich nutze die RealUnit App — schau\'s dir mal an: https://realunit.app/invite/AB12CD',
     );
     expect(find.text('Kopiert'), findsOneWidget);
     expect(find.text('In die Zwischenablage kopiert'), findsNothing);
@@ -204,7 +204,7 @@ void main() {
 
     expect(
       copied,
-      'Hallo Alice, mit der Schweizer RealUnit-App investiere ich ganz einfach in verschiedene Sachwerte mittels REALU-Aktientoken. Vielleicht ist das auch etwas für dich: https://realunit.app/invite/AB12CD',
+      'Hey Alice, ich nutze die RealUnit App — schau\'s dir mal an: https://realunit.app/invite/AB12CD',
     );
   });
 

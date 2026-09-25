@@ -107,8 +107,8 @@ Response:
   "code": "AB12CD",
   "url": "https://realunit.app/invite/AB12CD",
   "guestName": "Alice",
-  "copyText": "Hallo Alice, mit der Schweizer RealUnit-App investiere ich ganz einfach in verschiedene Sachwerte mittels REALU-Aktientoken. Vielleicht ist das auch etwas für dich: https://realunit.app/invite/AB12CD",
-  "copyTextEn": "Hi Alice, with the Swiss RealUnit app I invest in various real assets simply via REALU share tokens. This might be something for you too: https://realunit.app/invite/AB12CD",
+  "copyText": "Hey Alice, ich nutze die RealUnit App — schau's dir mal an: https://realunit.app/invite/AB12CD",
+  "copyTextEn": "Hey Alice, I use the RealUnit app — have a look: https://realunit.app/invite/AB12CD",
   "inviterName": "Björn"
 }
 ```
