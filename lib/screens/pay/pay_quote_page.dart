@@ -71,6 +71,13 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
   @override
   Widget build(BuildContext context) {
     final state = widget.state;
+    final swap = state.swap;
+    final feeChf = swap.ethereumTransactionFeeChf;
+    final feeRealu = swap.ethereumTransactionFeeRealu;
+    // The payment link is the bill. The disclosed fee is on top, so "CHF
+    // needed" is the bill plus that fee. The share count and proceeds stay
+    // the API quote; they are not recomputed here.
+    final neededChf = state.zchfAmount + (feeChf ?? 0);
     return ScrollableActionsLayout(
       centerBody: true,
       body: Column(
@@ -101,24 +108,21 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
           ),
           _AmountRow(
             label: S.of(context).payQuoteZchfNeeded,
-            value: '${state.zchfAmount.toStringAsFixed(2)} ZCHF',
+            value: '${neededChf.toStringAsFixed(2)} CHF',
           ),
-          if (state.realuAmount != null) ...[
-            _AmountRow(
-              label: S.of(context).payQuoteRealuAmount,
-              value: '${state.realuAmount!.toStringAsFixed(0)} ${realUnitAsset.symbol}',
-            ),
-          ],
-          if (state.realuEstimatedZchf != null) ...[
-            _AmountRow(
-              label: S.of(context).payQuoteRealuEstimated,
-              value: '${state.realuEstimatedZchf!.toStringAsFixed(2)} ZCHF',
-            ),
-          ],
-          if (state.realuFeesTotal != null) ...[
+          _AmountRow(
+            label: S.of(context).payQuoteRealuAmount,
+            value: '${swap.amount.toStringAsFixed(0)} ${realUnitAsset.symbol}',
+          ),
+          _AmountRow(
+            label: S.of(context).payQuoteRealuEstimated,
+            value: '${swap.estimatedAmount.toStringAsFixed(2)} CHF',
+          ),
+          if (feeChf != null && feeRealu != null) ...[
             _AmountRow(
               label: S.of(context).payQuoteRealuFees,
-              value: '${state.realuFeesTotal!.toStringAsFixed(2)} ${realUnitAsset.symbol}',
+              value: '${feeChf.toStringAsFixed(2)} CHF',
+              secondValue: '${feeRealu.toStringAsFixed(8)} ${realUnitAsset.symbol}',
             ),
           ],
           Text(
@@ -144,7 +148,7 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
                       MaterialPageRoute<bool>(
                         builder: (_) => PayProcessPage(
                           paymentLinkId: state.paymentLinkId,
-                          zchfNeeded: state.zchfAmount,
+                          swap: state.swap,
                         ),
                       ),
                     );
@@ -170,8 +174,9 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
 class _AmountRow extends StatelessWidget {
   final String label;
   final String value;
+  final String? secondValue;
 
-  const _AmountRow({required this.label, required this.value});
+  const _AmountRow({required this.label, required this.value, this.secondValue});
 
   @override
   Widget build(BuildContext context) {
@@ -190,11 +195,23 @@ class _AmountRow extends StatelessWidget {
           ),
         ),
         Flexible(
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            softWrap: true,
-            style: Theme.of(context).textTheme.bodyLarge,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                value,
+                textAlign: TextAlign.end,
+                softWrap: true,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              if (secondValue != null)
+                Text(
+                  secondValue!,
+                  textAlign: TextAlign.end,
+                  softWrap: true,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+            ],
           ),
         ),
       ],

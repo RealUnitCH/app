@@ -17,7 +17,8 @@
 // AND the wire-format the service produces. The MockClient plays the fixed
 // API: PUT /v1/realunit/swap with targetAmount 0.95 returns amount: 1,
 // isValid: true. The app does not ceil shares locally; Ready displays the
-// JSON `amount`.
+// JSON `amount`. PayProcessCubit signs that confirmed quote (id 99) and
+// does not request a second swap.
 //
 // They run headless (no device, no simulator, no live merchant QR), so they
 // live under `test/integration/` and run as part of `flutter test`.
@@ -36,6 +37,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
@@ -111,6 +113,8 @@ Map<String, dynamic> _swapInfoJson({
   'requiredGasEth': 0.001,
   'isValid': isValid,
   if (error != null) 'error': error,
+  if (isValid) 'ethereumTransactionFeeChf': 0.05,
+  if (isValid) 'ethereumTransactionFeeRealu': 0.01234567,
 };
 
 Map<String, dynamic> _unsignedPayJson() => {
@@ -195,8 +199,11 @@ void main() {
         expect(state.fiatAsset, 'EUR');
         expect(state.fiatAmount, 1);
         expect(state.zchfAmount, 0.95);
-        expect(state.realuAmount, 1);
-        expect(state.realuEstimatedZchf, 1.05);
+        expect(state.swap.amount, 1);
+        expect(state.swap.estimatedAmount, 1.05);
+        expect(state.swap.id, 99);
+        expect(state.swap.ethereumTransactionFeeChf, 0.05);
+        expect(state.swap.ethereumTransactionFeeRealu, 0.01234567);
 
         expect(swapBody, isNotNull);
         expect(swapBody!['targetAmount'], 0.95);
@@ -248,7 +255,7 @@ void main() {
           }
         }
 
-        Map<String, dynamic>? swapBody;
+        Map<String, dynamic>? unsignedPayBody;
         Map<String, dynamic>? submitBody;
 
         final client = MockClient((request) async {
@@ -257,11 +264,7 @@ void main() {
             return http.Response(jsonEncode(_lnurlpJson()), 200);
           }
           if (request.method == 'PUT' && path == _swapPath) {
-            swapBody = jsonDecode(request.body) as Map<String, dynamic>;
-            return http.Response(
-              jsonEncode(_swapInfoJson(amount: 1, isValid: true)),
-              200,
-            );
+            fail('unexpected ${request.method} ${request.url.path}');
           }
           if (request.method == 'PUT' && path == _swapUnsignedPath) {
             return http.Response(jsonEncode({'swap': '0x02f8aa'}), 200);
@@ -270,6 +273,7 @@ void main() {
             return http.Response(jsonEncode({'txHash': '0xswaptx'}), 200);
           }
           if (request.method == 'PUT' && path == _payUnsignedPath) {
+            unsignedPayBody = jsonDecode(request.body) as Map<String, dynamic>;
             return http.Response(jsonEncode(_unsignedPayJson()), 200);
           }
           if (request.method == 'PUT' && path == _paySubmitPath) {
@@ -297,7 +301,17 @@ void main() {
           walletService: walletService,
           appStore: appStore,
           paymentLinkId: _paymentLinkId,
-          zchfNeeded: 0.95,
+          swap: const SwapPaymentInfo(
+            id: 99,
+            amount: 1,
+            estimatedAmount: 1.05,
+            targetAsset: 'ZCHF',
+            ethBalance: 1,
+            requiredGasEth: 0.001,
+            isValid: true,
+            ethereumTransactionFeeChf: 0.05,
+            ethereumTransactionFeeRealu: 0.01234567,
+          ),
         );
         cubit.start();
         drain();
@@ -307,11 +321,11 @@ void main() {
           anyOf(isA<PayProcessAwaitingSettlement>(), isA<PayProcessSuccess>()),
         );
 
-        expect(swapBody, isNotNull);
-        expect(swapBody!['targetAmount'], closeTo(0.95 * 1.03, 0.0001));
-        expect(swapBody!.containsKey('amount'), isFalse);
+        expect(unsignedPayBody, isNotNull);
+        expect(unsignedPayBody!['swapRequestId'], 99);
 
         expect(submitBody, isNotNull);
+        expect(submitBody!['swapRequestId'], 99);
         expect(submitBody!['unsignedTx'], _unsignedPayHex);
         expect(submitBody!['r'], isNotNull);
         expect(submitBody!['s'], isNotNull);
