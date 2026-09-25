@@ -123,15 +123,21 @@ void main() {
       expect(find.byType(CupertinoActivityIndicator), findsOne);
     });
 
-    testWidgets('ready state shows the CHF amount, CHF needed and confirm button', (tester) async {
+    testWidgets('ready state shows the REALU total and the three-line breakdown', (tester) async {
       when(() => quoteCubit.state).thenReturn(ready);
       await tester.pumpApp(buildSubject());
 
-      expect(find.text(S.current.payQuoteSummary('2.00', 'CHF')), findsOne);
+      expect(find.text(S.current.payQuoteYouPay), findsOne);
+      expect(find.text('3 REALU'), findsOne);
+      expect(find.text(S.current.payQuoteRequested), findsOne);
       expect(find.text('2.00 CHF'), findsOne);
-      expect(find.text('2.05 CHF'), findsOne);
-      expect(find.text(S.current.payQuoteZchfNeeded), findsOne);
-      expect(find.text(S.current.payQuoteRoundingNotice), findsOne);
+      expect(find.text('2.00 REALU'), findsOne);
+      expect(find.text(S.current.payQuoteRealuFees), findsOne);
+      expect(find.text('0.05 CHF'), findsOne);
+      expect(find.text('0.05 REALU'), findsOne);
+      expect(find.text(S.current.payQuoteRounding), findsOne);
+      expect(find.text('0.95 CHF'), findsOne);
+      expect(find.text('0.95 REALU'), findsOne);
       expect(find.text(S.current.payConfirmButton), findsOne);
     });
 
@@ -153,11 +159,8 @@ void main() {
       expect(find.text('Café Zürich'), findsOne);
       expect(find.text('Zürich'), findsOne);
       expect(find.text('3 REALU'), findsOne);
-      expect(find.text('3.00 CHF'), findsOne);
-      expect(find.text(S.current.payQuoteRealuFees), findsOne);
-      expect(find.text('0.05 CHF'), findsOne);
-      expect(find.text('0.05 REALU'), findsOne);
-      expect(find.text(S.current.payQuoteRoundingNotice), findsOne);
+      expect(find.text('2.00 REALU'), findsOne);
+      expect(find.text('0.95 REALU'), findsOne);
     });
 
     testWidgets('confirm button navigates to the process step', (tester) async {

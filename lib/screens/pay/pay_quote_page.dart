@@ -75,10 +75,16 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
     final swap = state.swap;
     final feeChf = swap.ethereumTransactionFeeChf;
     final feeRealu = swap.ethereumTransactionFeeRealu;
-    // The payment link is the bill. The disclosed fee is on top, so "CHF
-    // needed" is the bill plus that fee. The share count and proceeds stay
-    // the API quote; they are not recomputed here.
-    final neededChf = state.zchfAmount + (feeChf ?? 0);
+    // The customer pays the sold shares. The three lines split that total
+    // into the bill, the fee, and the whole-share round-up. The signed
+    // quote itself is not changed.
+    final parts = _quoteParts(
+      billChf: state.fiatAmount,
+      shares: swap.amount,
+      proceedsChf: swap.estimatedAmount,
+      feeChf: feeChf ?? 0,
+      feeRealu: feeRealu ?? 0,
+    );
     final merchant = state.merchantName;
     return ScrollableActionsLayout(
       body: Column(
@@ -103,12 +109,17 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
             const SizedBox(height: 20),
           ],
           Text(
-            S.of(context).payQuoteSummary(
-              state.fiatAmount.toStringAsFixed(2),
-              state.fiatAsset,
-            ),
+            S.of(context).payQuoteYouPay,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: RealUnitColors.neutral500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _wholeRealu(swap.amount),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -117,42 +128,20 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
             children: [
               _AmountRow(
                 label: S.of(context).payQuoteRequested,
-                value: _chf(state.fiatAmount, state.fiatAsset),
+                value: _chf(parts.billChf, state.fiatAsset),
+                secondValue: _realu(parts.billRealu),
               ),
-              if (feeChf != null && feeRealu != null)
-                _AmountRow(
-                  label: S.of(context).payQuoteRealuFees,
-                  value: _chf(feeChf, 'CHF'),
-                  secondValue: _realu(feeRealu),
-                ),
               _AmountRow(
-                label: S.of(context).payQuoteZchfNeeded,
-                value: _chf(neededChf, 'CHF'),
-                emphasize: true,
+                label: S.of(context).payQuoteRealuFees,
+                value: _chf(parts.feeChf, 'CHF'),
+                secondValue: _realu(parts.feeRealu),
+              ),
+              _AmountRow(
+                label: S.of(context).payQuoteRounding,
+                value: _chf(parts.roundingChf, 'CHF'),
+                secondValue: _realu(parts.roundingRealu),
               ),
             ],
-          ),
-          const SizedBox(height: 16),
-          _ReceiptCard(
-            children: [
-              _AmountRow(
-                label: S.of(context).payQuoteRealuAmount,
-                value: '${swap.amount.toStringAsFixed(0)} ${realUnitAsset.symbol}',
-              ),
-              _AmountRow(
-                label: S.of(context).payQuoteRealuEstimated,
-                value: _chf(swap.estimatedAmount, 'CHF'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            S.of(context).payQuoteRoundingNotice,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: RealUnitColors.neutral500,
-              height: 1.35,
-            ),
           ),
         ],
       ),
@@ -196,13 +185,59 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
 
 String _chf(double amount, String asset) => '${amount.toStringAsFixed(2)} $asset';
 
-/// Up to 8 decimals, without a tail of zeros. 0.05 stays 0.05, not 0.05000000.
+String _wholeRealu(double shares) =>
+    '${shares.toStringAsFixed(0)} ${realUnitAsset.symbol}';
+
+/// At least two decimals, up to eight, without a tail of zeros.
 String _realu(double amount) {
-  final fixed = amount.toStringAsFixed(8);
-  final trimmed = fixed.contains('.')
-      ? fixed.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '')
-      : fixed;
-  return '$trimmed ${realUnitAsset.symbol}';
+  final rounded = (amount * 1e8).round() / 1e8;
+  var text = rounded.toStringAsFixed(8);
+  text = text.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
+  if (!text.contains('.')) {
+    text = '$text.00';
+  } else if (text.split('.').last.length == 1) {
+    text = '${text}0';
+  }
+  return '$text ${realUnitAsset.symbol}';
+}
+
+class _QuoteParts {
+  final double billChf;
+  final double billRealu;
+  final double feeChf;
+  final double feeRealu;
+  final double roundingChf;
+  final double roundingRealu;
+
+  const _QuoteParts({
+    required this.billChf,
+    required this.billRealu,
+    required this.feeChf,
+    required this.feeRealu,
+    required this.roundingChf,
+    required this.roundingRealu,
+  });
+}
+
+/// Splits the sold shares into the bill, the fee, and the whole-share round-up.
+/// The round-up is the remainder, so the three REALU lines add up to [shares].
+_QuoteParts _quoteParts({
+  required double billChf,
+  required double shares,
+  required double proceedsChf,
+  required double feeChf,
+  required double feeRealu,
+}) {
+  final price = shares == 0 ? 0.0 : proceedsChf / shares;
+  final billRealu = price == 0 ? 0.0 : billChf / price;
+  return _QuoteParts(
+    billChf: billChf,
+    billRealu: billRealu,
+    feeChf: feeChf,
+    feeRealu: feeRealu,
+    roundingChf: proceedsChf - billChf - feeChf,
+    roundingRealu: shares - billRealu - feeRealu,
+  );
 }
 
 class _ReceiptCard extends StatelessWidget {
@@ -232,23 +267,19 @@ class _ReceiptCard extends StatelessWidget {
 class _AmountRow extends StatelessWidget {
   final String label;
   final String value;
-  final String? secondValue;
-  final bool emphasize;
+  final String secondValue;
 
   const _AmountRow({
     required this.label,
     required this.value,
-    this.secondValue,
-    this.emphasize = false,
+    required this.secondValue,
   });
 
   @override
   Widget build(BuildContext context) {
-    final valueStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
-      fontWeight: emphasize ? FontWeight.w700 : FontWeight.w600,
-    );
+    final small = Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.3);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -256,11 +287,7 @@ class _AmountRow extends StatelessWidget {
             child: Text(
               label,
               softWrap: true,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: emphasize ? RealUnitColors.realUnitBlack : RealUnitColors.neutral500,
-                fontWeight: emphasize ? FontWeight.w600 : FontWeight.w400,
-                height: 1.3,
-              ),
+              style: small?.copyWith(color: RealUnitColors.neutral500),
             ),
           ),
           const SizedBox(width: 12),
@@ -268,22 +295,13 @@ class _AmountRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                Text(value, textAlign: TextAlign.end, softWrap: true, style: small),
                 Text(
-                  value,
+                  secondValue,
                   textAlign: TextAlign.end,
                   softWrap: true,
-                  style: valueStyle,
+                  style: small?.copyWith(color: RealUnitColors.neutral500),
                 ),
-                if (secondValue != null)
-                  Text(
-                    secondValue!,
-                    textAlign: TextAlign.end,
-                    softWrap: true,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: RealUnitColors.neutral500,
-                      height: 1.3,
-                    ),
-                  ),
               ],
             ),
           ),
