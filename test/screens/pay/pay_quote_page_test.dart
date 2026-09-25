@@ -150,12 +150,13 @@ void main() {
       );
       await tester.pumpApp(buildSubject());
 
-      expect(find.text('Café Zürich, Zürich'), findsOne);
+      expect(find.text('Café Zürich'), findsOne);
+      expect(find.text('Zürich'), findsOne);
       expect(find.text('3 REALU'), findsOne);
       expect(find.text('3.00 CHF'), findsOne);
       expect(find.text(S.current.payQuoteRealuFees), findsOne);
       expect(find.text('0.05 CHF'), findsOne);
-      expect(find.text('0.05000000 REALU'), findsOne);
+      expect(find.text('0.05 REALU'), findsOne);
       expect(find.text(S.current.payQuoteRoundingNotice), findsOne);
     });
 
