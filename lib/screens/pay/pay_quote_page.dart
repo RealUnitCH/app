@@ -87,6 +87,7 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
     );
     final merchant = state.merchantName;
     return ScrollableActionsLayout(
+      centerBody: true,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -128,18 +129,18 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
             children: [
               _AmountRow(
                 label: S.of(context).payQuoteRequested,
-                value: _chf(parts.billChf, state.fiatAsset),
-                secondValue: _realu(parts.billRealu),
+                realu: _realu(parts.billRealu),
+                chf: _chf(parts.billChf, state.fiatAsset),
               ),
               _AmountRow(
                 label: S.of(context).payQuoteRealuFees,
-                value: _chf(parts.feeChf, 'CHF'),
-                secondValue: _realu(parts.feeRealu),
+                realu: _realu(parts.feeRealu),
+                chf: _chf(parts.feeChf, 'CHF'),
               ),
               _AmountRow(
                 label: S.of(context).payQuoteRounding,
-                value: _chf(parts.roundingChf, 'CHF'),
-                secondValue: _realu(parts.roundingRealu),
+                realu: _realu(parts.roundingRealu),
+                chf: _chf(parts.roundingChf, 'CHF'),
               ),
             ],
           ),
@@ -251,13 +252,20 @@ class _ReceiptCard extends StatelessWidget {
     for (var i = 0; i < children.length; i++) {
       rows.add(children[i]);
       if (i < children.length - 1) {
-        rows.add(const Divider(height: 1, color: RealUnitColors.neutral200));
+        rows.add(
+          const Divider(
+            height: 1,
+            indent: 16,
+            endIndent: 16,
+            color: RealUnitColors.neutral200,
+          ),
+        );
       }
     }
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: RealUnitColors.neutral200),
-        borderRadius: BorderRadius.circular(16),
+        color: RealUnitColors.neutral50,
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(children: rows),
     );
@@ -266,44 +274,51 @@ class _ReceiptCard extends StatelessWidget {
 
 class _AmountRow extends StatelessWidget {
   final String label;
-  final String value;
-  final String secondValue;
+  final String realu;
+  final String chf;
 
   const _AmountRow({
     required this.label,
-    required this.value,
-    required this.secondValue,
+    required this.realu,
+    required this.chf,
   });
 
   @override
   Widget build(BuildContext context) {
-    final small = Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.3);
+    final small = Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.35);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Flexible(
-            child: Text(
-              label,
-              softWrap: true,
-              style: small?.copyWith(color: RealUnitColors.neutral500),
-            ),
+          Text(
+            label,
+            softWrap: true,
+            style: small?.copyWith(color: RealUnitColors.neutral500),
           ),
-          const SizedBox(width: 12),
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(value, textAlign: TextAlign.end, softWrap: true, style: small),
-                Text(
-                  secondValue,
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Flexible(
+                child: Text(
+                  realu,
+                  softWrap: true,
+                  style: small?.copyWith(
+                    color: RealUnitColors.realUnitBlack,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  chf,
                   textAlign: TextAlign.end,
                   softWrap: true,
-                  style: small?.copyWith(color: RealUnitColors.neutral500),
+                  style: small?.copyWith(color: RealUnitColors.neutral600),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
