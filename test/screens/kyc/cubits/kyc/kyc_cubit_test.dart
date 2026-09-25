@@ -107,11 +107,13 @@ RealUnitRegistrationInfoDto _walletStatus(
   RealUnitUserDataDto? userData,
   bool? emailConfirmed,
   bool? manualReview,
+  String? rejectionMessage,
 }) => RealUnitRegistrationInfoDto(
   state: state,
   realUnitUserDataDto: userData,
   emailConfirmed: emailConfirmed,
   manualReview: manualReview,
+  rejectionMessage: rejectionMessage,
 );
 
 // Single-agreement legal info. `allAccepted:false` leaves the one agreement
@@ -710,6 +712,36 @@ void main() {
       expect: () => [
         const KycLoading(),
         const KycManualReview(),
+      ],
+    );
+
+    blocTest<KycCubit, KycState>(
+      'emits KycManualReview with the company sentence when info carries rejectionMessage',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(
+            RealUnitRegistrationState.alreadyRegistered,
+            manualReview: true,
+            rejectionMessage:
+                'Please enter your full name (first and last name).',
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycManualReview(
+          rejectionMessage:
+              'Please enter your full name (first and last name).',
+        ),
       ],
     );
 

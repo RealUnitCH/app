@@ -13,11 +13,12 @@ class KycRegistrationSubmitLoading extends KycRegistrationSubmitState {}
 
 class KycRegistrationSubmitSuccess extends KycRegistrationSubmitState {
   final RegistrationStatus status;
+  final String? rejectionMessage;
 
-  const KycRegistrationSubmitSuccess(this.status);
+  const KycRegistrationSubmitSuccess(this.status, {this.rejectionMessage});
 
   @override
-  List<Object?> get props => [status];
+  List<Object?> get props => [status, rejectionMessage];
 }
 
 class KycRegistrationSubmitFailure extends KycRegistrationSubmitState {

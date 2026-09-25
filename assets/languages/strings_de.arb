@@ -125,6 +125,7 @@
   "kycLinkWalletSubmit": "Wallet hinzufügen",
   "kycLinkWalletTitle": "Wallet hinzufügen",
   "kycManualReviewDescription": "Ihre RealUnit-Registrierung wird von unserem Team manuell geprüft, bevor sie abgeschlossen werden kann. Sie müssen nichts weiter tun — wir kümmern uns darum. Ihr Status wird automatisch aktualisiert, sobald die Prüfung abgeschlossen ist.",
+  "kycManualReviewRejectionLabel": "Begründung der Ablehnung",
   "kycManualReviewTitle": "Registrierung wird geprüft",
   "kycMergeProcessingDescription": "Wir schließen die Zusammenführung Ihres Kontos ab. Das dauert in der Regel nur einen Moment — Ihr Verifizierungsstatus wird automatisch aktualisiert.",
   "kycMergeProcessingTitle": "Konten werden zusammengeführt",

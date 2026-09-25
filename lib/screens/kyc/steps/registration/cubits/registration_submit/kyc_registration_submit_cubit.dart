@@ -87,14 +87,19 @@ class KycRegistrationSubmitCubit extends Cubit<KycRegistrationSubmitState> {
   Future<void> _doCompleteRegistration(Registration registration) async {
     if (isClosed) return;
     try {
-      final status = await _registrationService.completeRegistration(registration);
+      final response = await _registrationService.completeRegistration(registration);
       if (isClosed) return;
       // The API returns a structured `RegistrationStatus` in every
       // success case — including `alreadyRegistered`
       // (DFXswiss/api#3733). We forward whatever the backend says and
       // let `KycCubit.checkKyc()` resolve the next step on the listener
       // side; no more swallowing of generic ApiExceptions as success.
-      _emitIfOpen(KycRegistrationSubmitSuccess(status));
+      _emitIfOpen(
+        KycRegistrationSubmitSuccess(
+          response.status,
+          rejectionMessage: response.rejectionMessage,
+        ),
+      );
     } on BitboxNotConnectedException {
       _emitIfOpen(
         KycRegistrationSubmitBitboxRequired(registration: registration),

@@ -82,8 +82,14 @@ class KycMergeProcessing extends KycState {
 /// Aktionariat forward failed and staff must re-forward it before onboarding can
 /// complete. A terminal waiting state: the user cannot act, so the app renders a
 /// "registration under review" screen with a refresh instead of routing further.
+/// [rejectionMessage] is the company sentence when the API sent one.
 class KycManualReview extends KycState {
-  const KycManualReview();
+  final String? rejectionMessage;
+
+  const KycManualReview({this.rejectionMessage});
+
+  @override
+  List<Object?> get props => [rejectionMessage];
 }
 
 class KycUnsupportedStepFailure extends KycState {

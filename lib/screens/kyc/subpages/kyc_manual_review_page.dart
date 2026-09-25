@@ -7,10 +7,17 @@ import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 
 class KycManualReviewPage extends StatelessWidget {
-  const KycManualReviewPage({super.key});
+  final String? rejectionMessage;
+
+  const KycManualReviewPage({super.key, this.rejectionMessage});
 
   @override
   Widget build(BuildContext context) {
+    final titleStyle = Theme.of(context).textTheme.headlineMedium;
+    final labelStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+      color: RealUnitColors.neutral500,
+    );
+    final sentence = rejectionMessage;
     return Scaffold(
       appBar: AppBar(
         title: Text(S.of(context).kyc),
@@ -25,15 +32,25 @@ class KycManualReviewPage extends StatelessWidget {
               children: [
                 Text(
                   S.of(context).kycManualReviewTitle,
-                  style: Theme.of(context).textTheme.headlineMedium,
+                  style: titleStyle,
                   textAlign: TextAlign.center,
                 ),
+                if (sentence != null && sentence.isNotEmpty) ...[
+                  Text(
+                    S.of(context).kycManualReviewRejectionLabel,
+                    textAlign: TextAlign.center,
+                    style: labelStyle,
+                  ),
+                  Text(
+                    sentence,
+                    style: titleStyle,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
                 Text(
                   S.of(context).kycManualReviewDescription,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: RealUnitColors.neutral500,
-                  ),
+                  style: labelStyle,
                 ),
               ],
             ),
