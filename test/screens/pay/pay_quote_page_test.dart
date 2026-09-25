@@ -147,7 +147,7 @@ void main() {
       expect(find.text('Café Zürich'), findsOne);
       expect(find.text(S.current.payQuoteYouPay), findsOne);
       expect(find.text('2 REALU'), findsOne);
-      expect(find.text(S.current.payQuoteConfirmCountdown('05:00')), findsOne);
+      expect(find.text('05:00'), findsOne);
       expect(find.text(S.current.payQuoteRequested), findsOne);
       expect(find.text('2.00 CHF'), findsOne);
       expect(find.text('1.66666667 REALU'), findsOne);
@@ -180,7 +180,7 @@ void main() {
       await tester.pumpApp(buildSubject());
 
       expect(find.text('Café Zürich'), findsOne);
-      expect(find.text('Zürich'), findsOne);
+      expect(find.text('Zürich'), findsNothing);
       expect(find.text('2 REALU'), findsOne);
       expect(find.text('1.66666667 REALU'), findsOne);
       expect(find.text('0.29166667 REALU'), findsOne);

@@ -147,14 +147,6 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            if (state.merchantCity != null)
-              Text(
-                state.merchantCity!,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: RealUnitColors.neutral500,
-                ),
-              ),
             const SizedBox(height: 20),
           ],
           Text(
@@ -199,7 +191,7 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
           ),
           const SizedBox(height: 16),
           Text(
-            S.of(context).payQuoteConfirmCountdown(_clock(_remaining)),
+            _clock(_remaining),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
