@@ -5,6 +5,7 @@ PODS:
   - flutter_idensic_mobile_sdk_plugin (1.42.0):
     - Flutter
     - IdensicMobileSDK (= 1.42.0)
+    - IdensicMobileSDK/VideoIdent (= 1.42.0)
   - flutter_inappwebview_ios (0.0.1):
     - Flutter
     - flutter_inappwebview_ios/Core (= 0.0.1)
@@ -19,9 +20,15 @@ PODS:
   - IdensicMobileSDK/Core (1.42.0)
   - IdensicMobileSDK/Default (1.42.0):
     - IdensicMobileSDK/Core
+  - IdensicMobileSDK/VideoIdent (1.42.0):
+    - IdensicMobileSDK/VideoIdent-latest
+  - IdensicMobileSDK/VideoIdent-latest (1.42.0):
+    - IdensicMobileSDK/Core
+    - TwilioVideo (>= 5.8.2)
   - open_file_ios (1.0.3):
     - Flutter
   - OrderedSet (6.0.3)
+  - TwilioVideo (5.11.3)
 
 DEPENDENCIES:
   - bitbox_flutter (from `.symlinks/plugins/bitbox_flutter/ios`)
@@ -36,6 +43,7 @@ SPEC REPOS:
     - IdensicMobileSDK
   trunk:
     - OrderedSet
+    - TwilioVideo
 
 EXTERNAL SOURCES:
   bitbox_flutter:
@@ -60,7 +68,8 @@ SPEC CHECKSUMS:
   IdensicMobileSDK: a8ec2cf5c216ae138b00e2ff32e0e31c5e366cec
   open_file_ios: 46184d802ee7959203f6392abcfa0dd49fdb5be0
   OrderedSet: e539b66b644ff081c73a262d24ad552a69be3a94
+  TwilioVideo: 446b82f75575e0ee1e15a24afcea47f626bf8b50
 
-PODFILE CHECKSUM: 55e9da7f5c3e910c15c7cf840ae7c6a785e95b52
+PODFILE CHECKSUM: e810dd56933965bea296d52f7a1ab62ff99c7fdb
 
 COCOAPODS: 1.17.0
