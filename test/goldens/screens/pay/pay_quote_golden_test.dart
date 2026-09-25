@@ -10,16 +10,19 @@ import '../../../helper/helper.dart';
 
 class _MockPayQuoteCubit extends MockCubit<PayQuoteState> implements PayQuoteCubit {}
 
+// Bill 2.00 CHF plus a 0.05 CHF fee. One share pays 1.00 CHF, so the fee is
+// 0.05 REALU. Two shares pay 2.00 and do not cover 2.05, so the quote sells
+// 3 shares for 3.00 CHF.
 const _swap = SwapPaymentInfo(
   id: 99,
-  amount: 5,
-  estimatedAmount: 1.98,
+  amount: 3,
+  estimatedAmount: 3,
   targetAsset: 'ZCHF',
   ethBalance: 1,
   requiredGasEth: 0.001,
   isValid: true,
   ethereumTransactionFeeChf: 0.05,
-  ethereumTransactionFeeRealu: 0.01234567,
+  ethereumTransactionFeeRealu: 0.05,
 );
 
 void main() {
@@ -49,11 +52,9 @@ void main() {
       ),
     );
 
-    // Real Sepolia OCP capture (DFXswiss/api #3819): a CHF 2.00 payment link
-    // whose Ethereum method settles 2.0 ZCHF. The screen renders the amounts
-    // straight from the quote — the app never computes them.
+    // Bill 2.00 CHF. CHF needed on screen is that bill plus the 0.05 fee.
     goldenTest(
-      'ready quote with CHF amount and ZCHF needed',
+      'ready quote with CHF amount and CHF needed',
       fileName: 'pay_quote_page_ready',
       constraints: phoneConstraints,
       builder: () {
