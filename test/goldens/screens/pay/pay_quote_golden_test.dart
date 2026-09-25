@@ -17,6 +17,13 @@ class _MockPayQuoteCubit extends MockCubit<PayQuoteState> implements PayQuoteCub
 final _now = DateTime.utc(2026, 1, 1);
 final _expiresAt = DateTime.utc(2026, 1, 1, 0, 5);
 
+/// The countdown reads `clock.now()` when the view mounts, which is during
+/// pump, not while the golden builder runs. Pin the clock around that pump
+/// or the January expiry is already in the past and the shot shows "expired".
+Future<void> _pumpPinned(WidgetTester tester, Widget widget) {
+  return withClock(Clock.fixed(_now), () => tester.pumpWidget(widget));
+}
+
 const _swap = SwapPaymentInfo(
   id: 99,
   amount: 2,
@@ -62,6 +69,7 @@ void main() {
       fileName: 'pay_quote_page_ready',
       constraints: phoneConstraints,
       pumpBeforeTest: pumpOnce,
+      pumpWidget: _pumpPinned,
       builder: () {
         when(() => quoteCubit.state).thenReturn(
           PayQuoteReady(
@@ -76,13 +84,10 @@ void main() {
             swap: _swap,
           ),
         );
-        return withClock(
-          Clock.fixed(_now),
-          () => wrapForGolden(
-            BlocProvider<PayQuoteCubit>.value(
-              value: quoteCubit,
-              child: const PayQuoteView(),
-            ),
+        return wrapForGolden(
+          BlocProvider<PayQuoteCubit>.value(
+            value: quoteCubit,
+            child: const PayQuoteView(),
           ),
         );
       },
@@ -93,6 +98,7 @@ void main() {
       fileName: 'pay_quote_page_ready_with_merchant',
       constraints: phoneConstraints,
       pumpBeforeTest: pumpOnce,
+      pumpWidget: _pumpPinned,
       builder: () {
         when(() => quoteCubit.state).thenReturn(
           PayQuoteReady(
@@ -107,13 +113,10 @@ void main() {
             swap: _swap,
           ),
         );
-        return withClock(
-          Clock.fixed(_now),
-          () => wrapForGolden(
-            BlocProvider<PayQuoteCubit>.value(
-              value: quoteCubit,
-              child: const PayQuoteView(),
-            ),
+        return wrapForGolden(
+          BlocProvider<PayQuoteCubit>.value(
+            value: quoteCubit,
+            child: const PayQuoteView(),
           ),
         );
       },
