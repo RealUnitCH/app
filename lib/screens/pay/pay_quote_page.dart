@@ -74,6 +74,10 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
     final swap = state.swap;
     final feeChf = swap.ethereumTransactionFeeChf;
     final feeRealu = swap.ethereumTransactionFeeRealu;
+    // The payment link is the bill. The disclosed fee is on top, so "CHF
+    // needed" is the bill plus that fee. The share count and proceeds stay
+    // the API quote; they are not recomputed here.
+    final neededChf = state.zchfAmount + (feeChf ?? 0);
     return ScrollableActionsLayout(
       centerBody: true,
       body: Column(
@@ -104,7 +108,7 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
           ),
           _AmountRow(
             label: S.of(context).payQuoteZchfNeeded,
-            value: '${state.zchfAmount.toStringAsFixed(2)} CHF',
+            value: '${neededChf.toStringAsFixed(2)} CHF',
           ),
           _AmountRow(
             label: S.of(context).payQuoteRealuAmount,

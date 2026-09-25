@@ -41,18 +41,18 @@ class _MockWallet extends Mock implements SoftwareWallet {}
 void main() {
   late _MockPayQuoteCubit quoteCubit;
 
-  // Real Sepolia OCP capture (DFXswiss/api #3819): CHF 2.00 → 2.0 ZCHF on the
-  // Ethereum method. Customer-facing amounts on this screen are CHF / REALU.
+  // Bill 2.00 plus a 0.05 fee. One share pays 1.00, so 3 shares pay 3.00
+  // and the fee is 0.05 REALU. Two shares would not cover 2.05.
   const readySwap = SwapPaymentInfo(
     id: 99,
-    amount: 5,
-    estimatedAmount: 1.98,
+    amount: 3,
+    estimatedAmount: 3,
     targetAsset: 'ZCHF',
     ethBalance: 1.0,
     requiredGasEth: 0.001,
     isValid: true,
     ethereumTransactionFeeChf: 0.05,
-    ethereumTransactionFeeRealu: 0.01234567,
+    ethereumTransactionFeeRealu: 0.05,
   );
 
   const ready = PayQuoteReady(
@@ -128,7 +128,8 @@ void main() {
       await tester.pumpApp(buildSubject());
 
       expect(find.text(S.current.payQuoteSummary('2.00', 'CHF')), findsOne);
-      expect(find.text('2.00 CHF'), findsNWidgets(2));
+      expect(find.text('2.00 CHF'), findsOne);
+      expect(find.text('2.05 CHF'), findsOne);
       expect(find.text(S.current.payQuoteZchfNeeded), findsOne);
       expect(find.text(S.current.payQuoteRoundingNotice), findsOne);
       expect(find.text(S.current.payConfirmButton), findsOne);
@@ -150,11 +151,11 @@ void main() {
       await tester.pumpApp(buildSubject());
 
       expect(find.text('Café Zürich, Zürich'), findsOne);
-      expect(find.text('5 REALU'), findsOne);
-      expect(find.text('1.98 CHF'), findsOne);
+      expect(find.text('3 REALU'), findsOne);
+      expect(find.text('3.00 CHF'), findsOne);
       expect(find.text(S.current.payQuoteRealuFees), findsOne);
       expect(find.text('0.05 CHF'), findsOne);
-      expect(find.text('0.01234567 REALU'), findsOne);
+      expect(find.text('0.05000000 REALU'), findsOne);
       expect(find.text(S.current.payQuoteRoundingNotice), findsOne);
     });
 

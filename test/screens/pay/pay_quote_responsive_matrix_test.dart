@@ -65,14 +65,14 @@ Future<void> _pumpScreen(WidgetTester tester, MatrixCell cell, Widget child) asy
 void main() {
   const swap = SwapPaymentInfo(
     id: 99,
-    amount: 1,
-    estimatedAmount: 1.05,
+    amount: 3,
+    estimatedAmount: 3,
     targetAsset: 'ZCHF',
     ethBalance: 1,
     requiredGasEth: 0.001,
     isValid: true,
     ethereumTransactionFeeChf: 0.05,
-    ethereumTransactionFeeRealu: 0.01234567,
+    ethereumTransactionFeeRealu: 0.05,
   );
   const ready = PayQuoteReady(
     paymentLinkId: 'pl_realunit_ocp_sepolia',
