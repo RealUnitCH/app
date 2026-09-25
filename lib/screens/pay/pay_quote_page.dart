@@ -190,6 +190,11 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
                 realu: _realu(parts.roundingRealu),
                 chf: _chf(parts.roundingChf, 'CHF'),
               ),
+              _AmountRow(
+                label: S.of(context).payQuoteTotal,
+                realu: _realu(parts.totalRealu),
+                chf: _chf(parts.totalChf, 'CHF'),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -265,6 +270,8 @@ class _QuoteParts {
   final double feeRealu;
   final double roundingChf;
   final double roundingRealu;
+  final double totalChf;
+  final double totalRealu;
 
   const _QuoteParts({
     required this.billChf,
@@ -273,6 +280,8 @@ class _QuoteParts {
     required this.feeRealu,
     required this.roundingChf,
     required this.roundingRealu,
+    required this.totalChf,
+    required this.totalRealu,
   });
 }
 
@@ -287,13 +296,17 @@ _QuoteParts _quoteParts({
 }) {
   final price = shares == 0 ? 0.0 : proceedsChf / shares;
   final billRealu = price == 0 ? 0.0 : billChf / price;
+  final roundingChf = proceedsChf - billChf - feeChf;
+  final roundingRealu = shares - billRealu - feeRealu;
   return _QuoteParts(
     billChf: billChf,
     billRealu: billRealu,
     feeChf: feeChf,
     feeRealu: feeRealu,
-    roundingChf: proceedsChf - billChf - feeChf,
-    roundingRealu: shares - billRealu - feeRealu,
+    roundingChf: roundingChf,
+    roundingRealu: roundingRealu,
+    totalChf: billChf + feeChf + roundingChf,
+    totalRealu: billRealu + feeRealu + roundingRealu,
   );
 }
 

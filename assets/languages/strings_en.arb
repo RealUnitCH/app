@@ -203,6 +203,7 @@
   "payQuoteRoundingNotice": "Every payment is rounded up to whole REALU shares, because there are no fractional REALU.",
   "payQuoteSummary": "You pay ${amount} ${asset}",
   "payQuoteTitle": "Confirm payment",
+  "payQuoteTotal": "Total",
   "payQuoteUnavailable": "No CHF payment is available for this payment code.",
   "payQuoteYouPay": "You pay",
   "payQuoteZchfNeeded": "CHF needed",

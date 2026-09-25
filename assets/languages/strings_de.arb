@@ -203,6 +203,7 @@
   "payQuoteRoundingNotice": "Bei jeder Zahlung wird auf ganze REALU-Anteile aufgerundet, weil es keine halben REALU gibt.",
   "payQuoteSummary": "Sie bezahlen ${amount} ${asset}",
   "payQuoteTitle": "Zahlung bestätigen",
+  "payQuoteTotal": "Total",
   "payQuoteUnavailable": "Für diesen Zahlungscode ist keine CHF-Zahlung verfügbar.",
   "payQuoteYouPay": "Sie bezahlen",
   "payQuoteZchfNeeded": "Benötigte CHF",

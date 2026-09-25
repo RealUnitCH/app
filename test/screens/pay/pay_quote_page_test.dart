@@ -126,7 +126,7 @@ void main() {
       expect(find.byType(CupertinoActivityIndicator), findsOne);
     });
 
-    testWidgets('ready state shows the REALU total and the three-line breakdown', (tester) async {
+    testWidgets('ready state shows the REALU total and the four-line breakdown', (tester) async {
       when(() => quoteCubit.state).thenReturn(
         PayQuoteReady(
           paymentLinkId: ready.paymentLinkId,
@@ -157,6 +157,9 @@ void main() {
       expect(find.text(S.current.payQuoteRounding), findsOne);
       expect(find.text('0.95 CHF'), findsOne);
       expect(find.text('0.95 REALU'), findsOne);
+      expect(find.text(S.current.payQuoteTotal), findsOne);
+      expect(find.text('3.00 CHF'), findsOne);
+      expect(find.text('3.00 REALU'), findsOne);
       expect(find.text(S.current.payConfirmButton), findsOne);
     });
 
