@@ -162,5 +162,24 @@ void main() {
         expect(find.byType(SnackBar), findsOneWidget);
       },
     );
+
+    testWidgets(
+      'a second sequence of 7 taps dispatches UnlockInsiderFeaturesEvent again',
+      (tester) async {
+        await tester.pumpApp(host());
+
+        for (var i = 0; i < 7; i++) {
+          await tester.tap(find.byType(SettingsVersionUnlock));
+          await tester.pump();
+        }
+
+        for (var i = 0; i < 7; i++) {
+          await tester.tap(find.byType(SettingsVersionUnlock));
+          await tester.pump();
+        }
+
+        verify(() => settingsBloc.add(const UnlockInsiderFeaturesEvent())).called(2);
+      },
+    );
   });
 }
