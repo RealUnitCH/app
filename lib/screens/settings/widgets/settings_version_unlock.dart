@@ -28,9 +28,6 @@ class _SettingsVersionUnlockState extends State<SettingsVersionUnlock> {
       return;
     }
 
-    if (_tapCount >= 7) {
-      _tapCount = 0;
-    }
     _tapCount++;
     if (_tapCount == 7) {
       settingsBloc.add(const UnlockInsiderFeaturesEvent());
