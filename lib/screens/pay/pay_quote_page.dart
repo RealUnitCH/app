@@ -130,41 +130,47 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
       centerBody: true,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 20,
         children: [
-          if (merchant != null) ...[
-            Text(
-              S.of(context).payQuoteMerchant,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: RealUnitColors.neutral500,
+          if (merchant != null)
+            Column(
+              spacing: 2,
+              children: [
+                Text(
+                  S.of(context).payQuoteMerchant,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: RealUnitColors.neutral500,
+                  ),
+                ),
+                Text(
+                  merchant,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          Column(
+            spacing: 4,
+            children: [
+              Text(
+                S.of(context).youPay,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: RealUnitColors.neutral500,
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              merchant,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
+              Text(
+                _wholeRealu(swap.amount),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-          ],
-          Text(
-            S.of(context).payQuoteYouPay,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: RealUnitColors.neutral500,
-            ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            _wholeRealu(swap.amount),
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 28),
           _ReceiptCard(
             children: [
               _AmountRow(
@@ -189,7 +195,6 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
           Text(
             _clock(_remaining),
             textAlign: TextAlign.center,
@@ -351,14 +356,15 @@ class _AmountRow extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 4,
         children: [
           Text(
             label,
             softWrap: true,
             style: small?.copyWith(color: RealUnitColors.neutral500),
           ),
-          const SizedBox(height: 4),
           Row(
+            spacing: 12,
             children: [
               Flexible(
                 child: Text(
@@ -370,7 +376,6 @@ class _AmountRow extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
               Flexible(
                 child: Text(
                   chf,
