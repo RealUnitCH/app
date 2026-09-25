@@ -51,7 +51,7 @@ class RealUnitSwapPaymentInfoDto {
         ? null
         : (json['ethereumTransactionFeeRealu'] as num).toDouble();
     if (isValid && (ethereumTransactionFeeChf == null || ethereumTransactionFeeRealu == null)) {
-      throw FormatException(
+      throw const FormatException(
         'ethereumTransactionFeeChf and ethereumTransactionFeeRealu are required when isValid is true',
       );
     }
