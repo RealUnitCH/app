@@ -443,10 +443,9 @@ packages:
   flutter_idensic_mobile_sdk_plugin:
     dependency: "direct main"
     description:
-      name: flutter_idensic_mobile_sdk_plugin
-      sha256: a52348b563ac2bce2dde4f5e1549e7de8eea67b335b520ea10ecb95a52ce8afd
-      url: "https://pub.dev"
-    source: hosted
+      path: "third_party/flutter_idensic_mobile_sdk_plugin"
+      relative: true
+    source: path
     version: "1.42.0"
   flutter_inappwebview:
     dependency: "direct main"

@@ -13,6 +13,7 @@ import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/buttons/app_text_button.dart';
 import 'package:realunit_wallet/widgets/form/country_field.dart';
 import 'package:realunit_wallet/widgets/form/labeled_text_field.dart';
+import 'package:realunit_wallet/widgets/text_link_span.dart';
 
 /// Result of a completed tax-residence form. Mirrors the API contract:
 /// - [swissTaxResidence] is true when any declared tax country is CH
@@ -37,6 +38,21 @@ class KycTaxResidenceSeed {
   final String tin;
 
   const KycTaxResidenceSeed({required this.country, required this.tin});
+}
+
+/// FAQ for the automatic exchange of information.
+/// Swiss residence, and a null residence, use realunit.ch.
+/// Any other residence country uses realunit.de.
+/// Both locales use these German pages until an English FAQ exists.
+Uri kycTaxResidenceAiaFaqUri(Country? residenceCountry) {
+  if (residenceCountry == null || residenceCountry.symbol == 'CH') {
+    return Uri.parse(
+      'https://realunit.ch/wissen/faq-haeufige-fragen-zum-realunit/#faqaia',
+    );
+  }
+  return Uri.parse(
+    'https://realunit.de/wissen/faq-haeufige-fragen-zum-realunit/#faqaia',
+  );
 }
 
 /// Mirrors the API bounds so the user hits a clean UI limit instead of a server-side 400:
@@ -262,6 +278,32 @@ class _KycRegistrationTaxStepState extends State<KycRegistrationTaxStep> {
             child: Column(
               spacing: 16,
               children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 4,
+                    children: [
+                      Text(
+                        s.taxResidenceAiaNotice,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: RealUnitColors.neutral600,
+                            ),
+                      ),
+                      Text.rich(
+                        TextLinkSpan.link(
+                          context,
+                          text: s.taxResidenceAiaLink,
+                          uri: kycTaxResidenceAiaFaqUri(widget.residenceCountry),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: RealUnitColors.realUnitBlue,
+                                decoration: TextDecoration.underline,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 // The residence (address) country is hard-wired as a tax residence:
                 // it is always the first entry and, when known, cannot be removed or
                 // changed. Additional tax countries may be added; each non-CH entry

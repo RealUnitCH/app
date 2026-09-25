@@ -16,3 +16,4 @@ analyzer:
     - android/**
     - ios/**
     - macos/**
+    - third_party/**

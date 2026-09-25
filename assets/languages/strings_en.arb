@@ -489,6 +489,8 @@
   "taxReport": "Tax report",
   "taxReportDescription": "Here you can generate your tax report for a specific date.",
   "taxResidence": "Tax residence",
+  "taxResidenceAiaLink": "More on the automatic exchange of information",
+  "taxResidenceAiaNotice": "RealUnit Schweiz AG is registered as a reporting Swiss financial institution and participates in the automatic exchange of information. If you are tax resident in a partner jurisdiction, we report your shareholding annually to the Swiss Federal Tax Administration, which forwards the information to your jurisdiction of residence. Which information is reported, to which jurisdictions, for what purposes it may be used and what rights you have is explained in our FAQ.",
   "taxResidenceCountry": "Country of tax residence",
   "termsOfUse": "Terms of use",
   "timePeriodOneMonthAbr": "1M",
