@@ -960,6 +960,36 @@ void main() {
       },
     );
   });
+
+  // ---------------------------------------------------------------------------
+  // AIA notice — always visible under the tax-residence title, with a FAQ link
+  // whose host follows the address-step residence country.
+  // ---------------------------------------------------------------------------
+  group('$KycRegistrationTaxStep AIA notice', () {
+    testWidgets('shows notice and link for Swiss residence', (tester) async {
+      await pump(tester, residenceCountry: _switzerland);
+
+      expect(find.text(sOf(tester).taxResidenceAiaNotice), findsOneWidget);
+      expect(find.text(sOf(tester).taxResidenceAiaLink), findsOneWidget);
+    });
+
+    testWidgets('shows notice and link for German residence', (tester) async {
+      await pump(tester, residenceCountry: _germany);
+
+      expect(find.text(sOf(tester).taxResidenceAiaNotice), findsOneWidget);
+      expect(find.text(sOf(tester).taxResidenceAiaLink), findsOneWidget);
+    });
+
+    test('FAQ URI is .ch for Switzerland and null, .de otherwise', () {
+      const chFaq = 'https://realunit.ch/wissen/faq-haeufige-fragen-zum-realunit/#faqaia';
+      const deFaq = 'https://realunit.de/wissen/faq-haeufige-fragen-zum-realunit/#faqaia';
+
+      expect(kycTaxResidenceAiaFaqUri(_switzerland), Uri.parse(chFaq));
+      expect(kycTaxResidenceAiaFaqUri(null), Uri.parse(chFaq));
+      expect(kycTaxResidenceAiaFaqUri(_germany), Uri.parse(deFaq));
+      expect(kycTaxResidenceAiaFaqUri(_france), Uri.parse(deFaq));
+    });
+  });
 }
 
 class _Harness {
