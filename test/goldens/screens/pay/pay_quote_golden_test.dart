@@ -1,4 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:clock/clock.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -13,6 +14,9 @@ class _MockPayQuoteCubit extends MockCubit<PayQuoteState> implements PayQuoteCub
 // Bill 2.00 CHF plus a 0.05 CHF fee. One share pays 1.00 CHF, so the fee is
 // 0.05 REALU. Two shares pay 2.00 and do not cover 2.05, so the quote sells
 // 3 shares for 3.00 CHF.
+final _now = DateTime.utc(2026, 1, 1);
+final _expiresAt = DateTime.utc(2026, 1, 1, 0, 5);
+
 const _swap = SwapPaymentInfo(
   id: 99,
   amount: 3,
@@ -54,24 +58,31 @@ void main() {
 
     // Bill 2.00 CHF. CHF needed on screen is that bill plus the 0.05 fee.
     goldenTest(
-      'ready quote with CHF amount and CHF needed',
+      'ready quote with recipient, countdown and REALU total',
       fileName: 'pay_quote_page_ready',
       constraints: phoneConstraints,
+      pumpBeforeTest: pumpOnce,
       builder: () {
         when(() => quoteCubit.state).thenReturn(
-          const PayQuoteReady(
+          PayQuoteReady(
             paymentLinkId: 'pl_realunit_ocp_sepolia',
             quoteId: 'plq_realunit_ocp_sepolia',
             fiatAsset: 'CHF',
             fiatAmount: 2,
             zchfAmount: 2.0,
+            merchantName: 'Café Zürich',
+            merchantCity: 'Zürich',
+            expiresAt: _expiresAt,
             swap: _swap,
           ),
         );
-        return wrapForGolden(
-          BlocProvider<PayQuoteCubit>.value(
-            value: quoteCubit,
-            child: const PayQuoteView(),
+        return withClock(
+          Clock.fixed(_now),
+          () => wrapForGolden(
+            BlocProvider<PayQuoteCubit>.value(
+              value: quoteCubit,
+              child: const PayQuoteView(),
+            ),
           ),
         );
       },
@@ -81,9 +92,10 @@ void main() {
       'ready quote with merchant and REALU swap details',
       fileName: 'pay_quote_page_ready_with_merchant',
       constraints: phoneConstraints,
+      pumpBeforeTest: pumpOnce,
       builder: () {
         when(() => quoteCubit.state).thenReturn(
-          const PayQuoteReady(
+          PayQuoteReady(
             paymentLinkId: 'pl_realunit_ocp_sepolia',
             quoteId: 'plq_realunit_ocp_sepolia',
             fiatAsset: 'CHF',
@@ -91,13 +103,17 @@ void main() {
             zchfAmount: 2.0,
             merchantName: 'Café Zürich',
             merchantCity: 'Zürich',
+            expiresAt: _expiresAt,
             swap: _swap,
           ),
         );
-        return wrapForGolden(
-          BlocProvider<PayQuoteCubit>.value(
-            value: quoteCubit,
-            child: const PayQuoteView(),
+        return withClock(
+          Clock.fixed(_now),
+          () => wrapForGolden(
+            BlocProvider<PayQuoteCubit>.value(
+              value: quoteCubit,
+              child: const PayQuoteView(),
+            ),
           ),
         );
       },

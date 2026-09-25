@@ -193,6 +193,7 @@
   "payoutAccountSelect": "Auszahlungskonto auswählen",
   "payPaying": "Zahlung wird gesendet",
   "payPreparingSwap": "Tausch wird vorbereitet",
+  "payQuoteConfirmCountdown": "Noch ${time} zum Bestätigen",
   "payQuoteMerchant": "Empfänger",
   "payQuoteRealuAmount": "Zu verkaufende REALU-Anteile",
   "payQuoteRealuEstimated": "Erwarteter Erlös",

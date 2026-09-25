@@ -514,6 +514,7 @@ void main() {
       // String; reading the quote must not throw on it. Only name+city are
       // mapped; other nested address fields are intentionally left unmapped.
       final dto = LnurlpPaymentDto.fromJson({
+        'displayName': 'Acme Kasse',
         'recipient': {
           'name': 'Acme GmbH',
           'address': {'street': 'Bahnhofstrasse', 'houseNumber': '1', 'city': 'Zürich'},
@@ -534,6 +535,7 @@ void main() {
       expect(dto.transferAmounts.first.assets.first.amount, 42.7);
       expect(dto.recipient?.name, 'Acme GmbH');
       expect(dto.recipient?.city, 'Zürich');
+      expect(dto.displayName, 'Acme Kasse');
     });
   });
 }

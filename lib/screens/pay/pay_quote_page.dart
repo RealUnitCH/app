@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:clock/clock.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -68,9 +71,46 @@ class _PayQuoteReadyView extends StatefulWidget {
 
 class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
   bool _navigating = false;
+  Timer? _countdown;
+  late Duration _remaining;
+
+  @override
+  void initState() {
+    super.initState();
+    _remaining = _left(widget.state.expiresAt);
+    if (_remaining > Duration.zero) {
+      _countdown = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        final left = _left(widget.state.expiresAt);
+        setState(() => _remaining = left);
+        if (left <= Duration.zero) _countdown?.cancel();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _countdown?.cancel();
+    super.dispose();
+  }
+
+  static Duration _left(DateTime expiresAt) {
+    final left = expiresAt.difference(clock.now());
+    return left.isNegative ? Duration.zero : left;
+  }
+
+  static String _clock(Duration remaining) {
+    final total = remaining.inSeconds;
+    final minutes = (total ~/ 60).toString().padLeft(2, '0');
+    final seconds = (total % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_remaining <= Duration.zero) {
+      return _PayQuoteMessage(message: S.of(context).payFailureQuoteExpired);
+    }
     final state = widget.state;
     final swap = state.swap;
     final feeChf = swap.ethereumTransactionFeeChf;
@@ -92,6 +132,14 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (merchant != null) ...[
+            Text(
+              S.of(context).payQuoteMerchant,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: RealUnitColors.neutral500,
+              ),
+            ),
+            const SizedBox(height: 2),
             Text(
               merchant,
               textAlign: TextAlign.center,
@@ -143,6 +191,14 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
                 chf: _chf(parts.roundingChf, 'CHF'),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            S.of(context).payQuoteConfirmCountdown(_clock(_remaining)),
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),

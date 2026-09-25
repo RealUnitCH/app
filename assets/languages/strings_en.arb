@@ -193,6 +193,7 @@
   "payoutAccountSelect": "Select payout account",
   "payPaying": "Sending payment",
   "payPreparingSwap": "Preparing swap",
+  "payQuoteConfirmCountdown": "Confirm within ${time}",
   "payQuoteMerchant": "Paying to",
   "payQuoteRealuAmount": "REALU shares to sell",
   "payQuoteRealuEstimated": "Estimated proceeds",

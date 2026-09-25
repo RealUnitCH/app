@@ -1,4 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:clock/clock.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -55,12 +56,14 @@ void main() {
     ethereumTransactionFeeRealu: 0.05,
   );
 
-  const ready = PayQuoteReady(
+  final ready = PayQuoteReady(
     paymentLinkId: 'pl_realunit_ocp_sepolia',
     quoteId: 'plq_realunit_ocp_sepolia',
     fiatAsset: 'CHF',
     fiatAmount: 2,
     zchfAmount: 2.0,
+    expiresAt: DateTime.utc(2099),
+    merchantName: 'Café Zürich',
     swap: readySwap,
   );
 
@@ -124,11 +127,27 @@ void main() {
     });
 
     testWidgets('ready state shows the REALU total and the three-line breakdown', (tester) async {
-      when(() => quoteCubit.state).thenReturn(ready);
-      await tester.pumpApp(buildSubject());
+      when(() => quoteCubit.state).thenReturn(
+        PayQuoteReady(
+          paymentLinkId: ready.paymentLinkId,
+          quoteId: ready.quoteId,
+          fiatAsset: ready.fiatAsset,
+          fiatAmount: ready.fiatAmount,
+          zchfAmount: ready.zchfAmount,
+          merchantName: ready.merchantName,
+          expiresAt: DateTime.utc(2026, 1, 1, 0, 5),
+          swap: ready.swap,
+        ),
+      );
+      await withClock(Clock.fixed(DateTime.utc(2026, 1, 1)), () async {
+        await tester.pumpApp(buildSubject());
+      });
 
+      expect(find.text(S.current.payQuoteMerchant), findsOne);
+      expect(find.text('Café Zürich'), findsOne);
       expect(find.text(S.current.payQuoteYouPay), findsOne);
       expect(find.text('3 REALU'), findsOne);
+      expect(find.text(S.current.payQuoteConfirmCountdown('05:00')), findsOne);
       expect(find.text(S.current.payQuoteRequested), findsOne);
       expect(find.text('2.00 CHF'), findsOne);
       expect(find.text('2.00 REALU'), findsOne);
@@ -143,7 +162,7 @@ void main() {
 
     testWidgets('ready state shows merchant and REALU swap details when present', (tester) async {
       when(() => quoteCubit.state).thenReturn(
-        const PayQuoteReady(
+        PayQuoteReady(
           paymentLinkId: 'pl_realunit_ocp_sepolia',
           quoteId: 'plq_realunit_ocp_sepolia',
           fiatAsset: 'CHF',
@@ -151,6 +170,7 @@ void main() {
           zchfAmount: 2.0,
           merchantName: 'Café Zürich',
           merchantCity: 'Zürich',
+          expiresAt: DateTime.utc(2099),
           swap: readySwap,
         ),
       );

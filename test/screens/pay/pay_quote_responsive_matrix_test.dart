@@ -74,12 +74,13 @@ void main() {
     ethereumTransactionFeeChf: 0.05,
     ethereumTransactionFeeRealu: 0.05,
   );
-  const ready = PayQuoteReady(
+  final ready = PayQuoteReady(
     paymentLinkId: 'pl_realunit_ocp_sepolia',
     quoteId: 'plq_realunit_ocp_sepolia',
     fiatAsset: 'CHF',
     fiatAmount: 2,
     zchfAmount: 2.0,
+    expiresAt: DateTime.utc(2099),
     swap: swap,
   );
 
