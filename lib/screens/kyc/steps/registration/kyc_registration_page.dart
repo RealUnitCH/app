@@ -232,7 +232,8 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
             // account was missing — see BalanceService).
             context.read<HomeBloc>().add(SyncWalletServicesEvent(getIt<AppStore>().wallet));
 
-            if (state.status == RegistrationStatus.forwardingFailed) {
+            if (state.status == RegistrationStatus.forwardingFailed &&
+                state.rejectionMessage == null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(S.of(context).registrationForwardingFailed),
