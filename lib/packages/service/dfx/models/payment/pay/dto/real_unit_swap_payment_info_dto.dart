@@ -18,6 +18,8 @@ class RealUnitSwapPaymentInfoDto {
   final bool isValid;
   final String? error;
   final RealUnitSwapFeeDto? fees;
+  final double? ethereumTransactionFeeChf;
+  final double? ethereumTransactionFeeRealu;
 
   const RealUnitSwapPaymentInfoDto({
     required this.id,
@@ -36,9 +38,23 @@ class RealUnitSwapPaymentInfoDto {
     required this.isValid,
     this.error,
     this.fees,
+    this.ethereumTransactionFeeChf,
+    this.ethereumTransactionFeeRealu,
   });
 
   factory RealUnitSwapPaymentInfoDto.fromJson(Map<String, dynamic> json) {
+    final isValid = json['isValid'] as bool;
+    final ethereumTransactionFeeChf = json['ethereumTransactionFeeChf'] == null
+        ? null
+        : (json['ethereumTransactionFeeChf'] as num).toDouble();
+    final ethereumTransactionFeeRealu = json['ethereumTransactionFeeRealu'] == null
+        ? null
+        : (json['ethereumTransactionFeeRealu'] as num).toDouble();
+    if (isValid && (ethereumTransactionFeeChf == null || ethereumTransactionFeeRealu == null)) {
+      throw const FormatException(
+        'ethereumTransactionFeeChf and ethereumTransactionFeeRealu are required when isValid is true',
+      );
+    }
     return RealUnitSwapPaymentInfoDto(
       id: json['id'] as int,
       uid: json['uid'] as String,
@@ -53,11 +69,13 @@ class RealUnitSwapPaymentInfoDto {
       maxVolumeTarget: (json['maxVolumeTarget'] as num).toDouble(),
       ethBalance: (json['ethBalance'] as num).toDouble(),
       requiredGasEth: (json['requiredGasEth'] as num).toDouble(),
-      isValid: json['isValid'] as bool,
+      isValid: isValid,
       error: json['error'] as String?,
       fees: json['fees'] == null
           ? null
           : RealUnitSwapFeeDto.fromJson(json['fees'] as Map<String, dynamic>),
+      ethereumTransactionFeeChf: ethereumTransactionFeeChf,
+      ethereumTransactionFeeRealu: ethereumTransactionFeeRealu,
     );
   }
 }

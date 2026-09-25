@@ -11,6 +11,7 @@ import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
@@ -40,14 +41,27 @@ class _MockWallet extends Mock implements SoftwareWallet {}
 void main() {
   late _MockPayQuoteCubit quoteCubit;
 
-  // Real Sepolia OCP capture (DFXswiss/api #3819): CHF 2.00 → 2.0 ZCHF on the
-  // Ethereum method.
+  // Bill 2.00 plus a 0.05 fee. One share pays 1.00, so 3 shares pay 3.00
+  // and the fee is 0.05 REALU. Two shares would not cover 2.05.
+  const readySwap = SwapPaymentInfo(
+    id: 99,
+    amount: 3,
+    estimatedAmount: 3,
+    targetAsset: 'ZCHF',
+    ethBalance: 1.0,
+    requiredGasEth: 0.001,
+    isValid: true,
+    ethereumTransactionFeeChf: 0.05,
+    ethereumTransactionFeeRealu: 0.05,
+  );
+
   const ready = PayQuoteReady(
     paymentLinkId: 'pl_realunit_ocp_sepolia',
     quoteId: 'plq_realunit_ocp_sepolia',
     fiatAsset: 'CHF',
     fiatAmount: 2,
     zchfAmount: 2.0,
+    swap: readySwap,
   );
 
   setUpAll(() {
@@ -109,13 +123,14 @@ void main() {
       expect(find.byType(CupertinoActivityIndicator), findsOne);
     });
 
-    testWidgets('ready state shows the CHF amount, ZCHF needed and confirm button', (tester) async {
+    testWidgets('ready state shows the CHF amount, CHF needed and confirm button', (tester) async {
       when(() => quoteCubit.state).thenReturn(ready);
       await tester.pumpApp(buildSubject());
 
       expect(find.text(S.current.payQuoteSummary('2.00', 'CHF')), findsOne);
       expect(find.text('2.00 CHF'), findsOne);
-      expect(find.text('2.00 ZCHF'), findsOne);
+      expect(find.text('2.05 CHF'), findsOne);
+      expect(find.text(S.current.payQuoteZchfNeeded), findsOne);
       expect(find.text(S.current.payQuoteRoundingNotice), findsOne);
       expect(find.text(S.current.payConfirmButton), findsOne);
     });
@@ -130,17 +145,17 @@ void main() {
           zchfAmount: 2.0,
           merchantName: 'Café Zürich',
           merchantCity: 'Zürich',
-          realuAmount: 5,
-          realuEstimatedZchf: 1.98,
-          realuFeesTotal: 0.02,
+          swap: readySwap,
         ),
       );
       await tester.pumpApp(buildSubject());
 
       expect(find.text('Café Zürich, Zürich'), findsOne);
-      expect(find.text('5 REALU'), findsOne);
-      expect(find.text('1.98 ZCHF'), findsOne);
-      expect(find.text('0.02 REALU'), findsOne);
+      expect(find.text('3 REALU'), findsOne);
+      expect(find.text('3.00 CHF'), findsOne);
+      expect(find.text(S.current.payQuoteRealuFees), findsOne);
+      expect(find.text('0.05 CHF'), findsOne);
+      expect(find.text('0.05000000 REALU'), findsOne);
       expect(find.text(S.current.payQuoteRoundingNotice), findsOne);
     });
 

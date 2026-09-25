@@ -19,9 +19,7 @@ class PayQuoteReady extends PayQuoteState {
   final double zchfAmount;
   final String? merchantName;
   final String? merchantCity;
-  final double? realuAmount;
-  final double? realuEstimatedZchf;
-  final double? realuFeesTotal;
+  final SwapPaymentInfo swap;
 
   const PayQuoteReady({
     required this.paymentLinkId,
@@ -29,11 +27,9 @@ class PayQuoteReady extends PayQuoteState {
     required this.fiatAsset,
     required this.fiatAmount,
     required this.zchfAmount,
+    required this.swap,
     this.merchantName,
     this.merchantCity,
-    this.realuAmount,
-    this.realuEstimatedZchf,
-    this.realuFeesTotal,
   });
 
   @override
@@ -45,9 +41,7 @@ class PayQuoteReady extends PayQuoteState {
     zchfAmount,
     merchantName,
     merchantCity,
-    realuAmount,
-    realuEstimatedZchf,
-    realuFeesTotal,
+    swap,
   ];
 }
 
