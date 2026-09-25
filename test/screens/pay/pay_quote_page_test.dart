@@ -42,18 +42,18 @@ class _MockWallet extends Mock implements SoftwareWallet {}
 void main() {
   late _MockPayQuoteCubit quoteCubit;
 
-  // Bill 2.00 plus a 0.05 fee. One share pays 1.00, so 3 shares pay 3.00
-  // and the fee is 0.05 REALU. Two shares would not cover 2.05.
+  // One REALU pays 1.20 CHF. Bill 2.00 CHF, fee 0.05 CHF, so 2 shares
+  // pay 2.40 CHF. One share would not cover 2.05 CHF.
   const readySwap = SwapPaymentInfo(
     id: 99,
-    amount: 3,
-    estimatedAmount: 3,
+    amount: 2,
+    estimatedAmount: 2.4,
     targetAsset: 'ZCHF',
     ethBalance: 1.0,
     requiredGasEth: 0.001,
     isValid: true,
     ethereumTransactionFeeChf: 0.05,
-    ethereumTransactionFeeRealu: 0.05,
+    ethereumTransactionFeeRealu: 0.05 / 1.2,
   );
 
   final ready = PayQuoteReady(
@@ -146,20 +146,20 @@ void main() {
       expect(find.text(S.current.payQuoteMerchant), findsOne);
       expect(find.text('Café Zürich'), findsOne);
       expect(find.text(S.current.payQuoteYouPay), findsOne);
-      expect(find.text('3 REALU'), findsOne);
+      expect(find.text('2 REALU'), findsOne);
       expect(find.text(S.current.payQuoteConfirmCountdown('05:00')), findsOne);
       expect(find.text(S.current.payQuoteRequested), findsOne);
       expect(find.text('2.00 CHF'), findsOne);
-      expect(find.text('2.00 REALU'), findsOne);
+      expect(find.text('1.66666667 REALU'), findsOne);
       expect(find.text(S.current.payQuoteRealuFees), findsOne);
       expect(find.text('0.05 CHF'), findsOne);
-      expect(find.text('0.05 REALU'), findsOne);
+      expect(find.text('0.04166667 REALU'), findsOne);
       expect(find.text(S.current.payQuoteRounding), findsOne);
-      expect(find.text('0.95 CHF'), findsOne);
-      expect(find.text('0.95 REALU'), findsOne);
+      expect(find.text('0.35 CHF'), findsOne);
+      expect(find.text('0.29166667 REALU'), findsOne);
       expect(find.text(S.current.payQuoteTotal), findsOne);
-      expect(find.text('3.00 CHF'), findsOne);
-      expect(find.text('3.00 REALU'), findsOne);
+      expect(find.text('2.40 CHF'), findsOne);
+      expect(find.text('2.00 REALU'), findsOne);
       expect(find.text(S.current.payConfirmButton), findsOne);
     });
 
@@ -181,9 +181,9 @@ void main() {
 
       expect(find.text('Café Zürich'), findsOne);
       expect(find.text('Zürich'), findsOne);
-      expect(find.text('3 REALU'), findsOne);
-      expect(find.text('2.00 REALU'), findsOne);
-      expect(find.text('0.95 REALU'), findsOne);
+      expect(find.text('2 REALU'), findsOne);
+      expect(find.text('1.66666667 REALU'), findsOne);
+      expect(find.text('0.29166667 REALU'), findsOne);
     });
 
     testWidgets('confirm button navigates to the process step', (tester) async {

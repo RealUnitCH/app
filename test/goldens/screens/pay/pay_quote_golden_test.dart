@@ -11,22 +11,22 @@ import '../../../helper/helper.dart';
 
 class _MockPayQuoteCubit extends MockCubit<PayQuoteState> implements PayQuoteCubit {}
 
-// Bill 2.00 CHF plus a 0.05 CHF fee. One share pays 1.00 CHF, so the fee is
-// 0.05 REALU. Two shares pay 2.00 and do not cover 2.05, so the quote sells
-// 3 shares for 3.00 CHF.
+// One REALU pays 1.20 CHF. The bill is 2.00 CHF (1.66666667 REALU) and the
+// fee is 0.05 CHF (0.04166667 REALU). One share does not cover 2.05 CHF, so
+// the quote sells 2 shares for 2.40 CHF.
 final _now = DateTime.utc(2026, 1, 1);
 final _expiresAt = DateTime.utc(2026, 1, 1, 0, 5);
 
 const _swap = SwapPaymentInfo(
   id: 99,
-  amount: 3,
-  estimatedAmount: 3,
+  amount: 2,
+  estimatedAmount: 2.4,
   targetAsset: 'ZCHF',
   ethBalance: 1,
   requiredGasEth: 0.001,
   isValid: true,
   ethereumTransactionFeeChf: 0.05,
-  ethereumTransactionFeeRealu: 0.05,
+  ethereumTransactionFeeRealu: 0.05 / 1.2,
 );
 
 void main() {
