@@ -96,17 +96,17 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     Emitter<SettingsState> emit,
   ) {
     _settingsRepository.insiderFeaturesUnlocked = true;
-    _settingsRepository.setWalletFeaturePayFromUser(true);
-    _settingsRepository.setWalletFeatureSendFromUser(true);
-    _settingsRepository.setWalletFeaturePromoCodeFromUser(true);
-    _settingsRepository.setWalletFeatureReferralFromUser(true);
+    _settingsRepository.walletFeaturePay = true;
+    _settingsRepository.walletFeatureSend = true;
+    _settingsRepository.walletFeaturePromoCode = true;
+    _settingsRepository.walletFeatureReferral = true;
     emit(
       state.copyWith(
         insiderFeaturesUnlocked: true,
-        walletFeaturePay: _settingsRepository.walletFeaturePay,
-        walletFeatureSend: _settingsRepository.walletFeatureSend,
-        walletFeaturePromoCode: _settingsRepository.walletFeaturePromoCode,
-        walletFeatureReferral: _settingsRepository.walletFeatureReferral,
+        walletFeaturePay: true,
+        walletFeatureSend: true,
+        walletFeaturePromoCode: true,
+        walletFeatureReferral: true,
       ),
     );
   }
@@ -140,16 +140,16 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) {
     switch (event.feature) {
       case InsiderFeature.pay:
-        _settingsRepository.setWalletFeaturePayFromUser(event.enabled);
+        _settingsRepository.walletFeaturePay = event.enabled;
         emit(state.copyWith(walletFeaturePay: _settingsRepository.walletFeaturePay));
       case InsiderFeature.send:
-        _settingsRepository.setWalletFeatureSendFromUser(event.enabled);
+        _settingsRepository.walletFeatureSend = event.enabled;
         emit(state.copyWith(walletFeatureSend: _settingsRepository.walletFeatureSend));
       case InsiderFeature.referral:
-        _settingsRepository.setWalletFeatureReferralFromUser(event.enabled);
+        _settingsRepository.walletFeatureReferral = event.enabled;
         emit(state.copyWith(walletFeatureReferral: _settingsRepository.walletFeatureReferral));
       case InsiderFeature.bonus:
-        _settingsRepository.setWalletFeaturePromoCodeFromUser(event.enabled);
+        _settingsRepository.walletFeaturePromoCode = event.enabled;
         emit(
           state.copyWith(walletFeaturePromoCode: _settingsRepository.walletFeaturePromoCode),
         );

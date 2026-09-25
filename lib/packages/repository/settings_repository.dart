@@ -7,40 +7,21 @@ class SettingsRepository {
   final SharedPreferences _sharedPreferences;
 
   SettingsRepository(this._sharedPreferences) {
-    _migrateInsiderFeature(
-      featureKey: 'walletFeaturePay',
-      legacyKey: 'insiderPayEnabled',
-      includeUnlock: true,
-    );
-    _migrateInsiderFeature(
-      featureKey: 'walletFeatureSend',
-      legacyKey: 'insiderSendEnabled',
-    );
-    _migrateInsiderFeature(
-      featureKey: 'walletFeaturePromoCode',
-      legacyKey: 'insiderBonusEnabled',
-    );
-    _migrateInsiderFeature(
-      featureKey: 'walletFeatureReferral',
-      legacyKey: 'insiderReferralEnabled',
-    );
-  }
-
-  void _migrateInsiderFeature({
-    required String featureKey,
-    required String legacyKey,
-    bool includeUnlock = false,
-  }) {
-    if (_sharedPreferences.containsKey(featureKey)) {
-      if (_sharedPreferences.containsKey(legacyKey)) {
-        _sharedPreferences.remove(legacyKey);
-      }
-      return;
+    if (insiderFeaturesUnlocked && !walletFeaturePay) {
+      walletFeaturePay = true;
     }
-    final legacyOn = _sharedPreferences.getBool(legacyKey) == true;
-    if (!legacyOn && !(includeUnlock && insiderFeaturesUnlocked)) return;
-    _sharedPreferences.setBool(featureKey, true);
-    _sharedPreferences.remove(legacyKey);
+    if (_sharedPreferences.getBool('insiderPayEnabled') == true) {
+      walletFeaturePay = true;
+    }
+    if (_sharedPreferences.getBool('insiderSendEnabled') == true) {
+      walletFeatureSend = true;
+    }
+    if (_sharedPreferences.getBool('insiderReferralEnabled') == true) {
+      walletFeatureReferral = true;
+    }
+    if (_sharedPreferences.getBool('insiderBonusEnabled') == true) {
+      walletFeaturePromoCode = true;
+    }
   }
 
   Future<bool> saveCurrentWalletId(int walletId) =>
@@ -92,18 +73,15 @@ class SettingsRepository {
   set insiderFeaturesUnlocked(bool unlocked) =>
       _sharedPreferences.setBool('insiderFeaturesUnlocked', unlocked);
 
-  // Does not clear a stored true, and does not override an explicit user-off.
-  // User switches use the methods below.
+  // One-way: a stored true is never overwritten with false.
   bool get walletFeaturePay => _sharedPreferences.getBool('walletFeaturePay') ?? false;
   set walletFeaturePay(bool value) {
-    if (value && _sharedPreferences.getBool('walletFeaturePayUserOff') == true) return;
     if (!value && walletFeaturePay) return;
     _sharedPreferences.setBool('walletFeaturePay', value);
   }
 
   bool get walletFeatureSend => _sharedPreferences.getBool('walletFeatureSend') ?? false;
   set walletFeatureSend(bool value) {
-    if (value && _sharedPreferences.getBool('walletFeatureSendUserOff') == true) return;
     if (!value && walletFeatureSend) return;
     _sharedPreferences.setBool('walletFeatureSend', value);
   }
@@ -111,9 +89,6 @@ class SettingsRepository {
   bool get walletFeaturePromoCode =>
       _sharedPreferences.getBool('walletFeaturePromoCode') ?? false;
   set walletFeaturePromoCode(bool value) {
-    if (value && _sharedPreferences.getBool('walletFeaturePromoCodeUserOff') == true) {
-      return;
-    }
     if (!value && walletFeaturePromoCode) return;
     _sharedPreferences.setBool('walletFeaturePromoCode', value);
   }
@@ -121,51 +96,8 @@ class SettingsRepository {
   bool get walletFeatureReferral =>
       _sharedPreferences.getBool('walletFeatureReferral') ?? false;
   set walletFeatureReferral(bool value) {
-    if (value && _sharedPreferences.getBool('walletFeatureReferralUserOff') == true) {
-      return;
-    }
     if (!value && walletFeatureReferral) return;
     _sharedPreferences.setBool('walletFeatureReferral', value);
-  }
-
-  void setWalletFeaturePayFromUser(bool enabled) {
-    if (enabled) {
-      _sharedPreferences.remove('walletFeaturePayUserOff');
-      _sharedPreferences.setBool('walletFeaturePay', true);
-    } else {
-      _sharedPreferences.setBool('walletFeaturePay', false);
-      _sharedPreferences.setBool('walletFeaturePayUserOff', true);
-    }
-  }
-
-  void setWalletFeatureSendFromUser(bool enabled) {
-    if (enabled) {
-      _sharedPreferences.remove('walletFeatureSendUserOff');
-      _sharedPreferences.setBool('walletFeatureSend', true);
-    } else {
-      _sharedPreferences.setBool('walletFeatureSend', false);
-      _sharedPreferences.setBool('walletFeatureSendUserOff', true);
-    }
-  }
-
-  void setWalletFeaturePromoCodeFromUser(bool enabled) {
-    if (enabled) {
-      _sharedPreferences.remove('walletFeaturePromoCodeUserOff');
-      _sharedPreferences.setBool('walletFeaturePromoCode', true);
-    } else {
-      _sharedPreferences.setBool('walletFeaturePromoCode', false);
-      _sharedPreferences.setBool('walletFeaturePromoCodeUserOff', true);
-    }
-  }
-
-  void setWalletFeatureReferralFromUser(bool enabled) {
-    if (enabled) {
-      _sharedPreferences.remove('walletFeatureReferralUserOff');
-      _sharedPreferences.setBool('walletFeatureReferral', true);
-    } else {
-      _sharedPreferences.setBool('walletFeatureReferral', false);
-      _sharedPreferences.setBool('walletFeatureReferralUserOff', true);
-    }
   }
 
   String? get dismissedClientPolicyLatest {
