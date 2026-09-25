@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/kyc_unsupported_step_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/legal/real_unit_legal_agreement.dart';
@@ -17,6 +18,7 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_serv
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/setup/account_currency_sync.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/error_handling/crash_reporting.dart';
 
 part 'kyc_state.dart';
 
@@ -27,6 +29,10 @@ class KycCubit extends Cubit<KycState> {
   final RealUnitRegistrationService _registrationService;
   final RealUnitLegalService _legalService;
   final AppStore _appStore;
+
+  /// Sink for the unmapped-step report — see [_emitUnsupportedStep]. Injectable
+  /// so tests can observe the report without the crash reporter running.
+  final NonFatalReporter _report;
 
   /// Offline fallback ONLY. The legal disclaimer gate is server-driven via
   /// `_legalService.getLegalInfo()`; this per-session flag is used solely when
@@ -60,15 +66,17 @@ class KycCubit extends Cubit<KycState> {
     DfxKycService kycService,
     RealUnitRegistrationService registrationService,
     RealUnitLegalService legalService,
-    AppStore appStore,
-  ) : _kycService = kycService,
-      _registrationService = registrationService,
-      _legalService = legalService,
-      _appStore = appStore,
-      super(const KycInitial());
+    AppStore appStore, {
+    NonFatalReporter report = reportNonFatal,
+  }) : _kycService = kycService,
+       _registrationService = registrationService,
+       _legalService = legalService,
+       _appStore = appStore,
+       _report = report,
+       super(const KycInitial());
 
   Future<void> checkKyc({String? context}) async {
-    _kycContext = context ?? _kycContext;
+    _kycContext = (context == null || context.isEmpty) ? _kycContext : context;
     _walletAtCheckStart = getIt.isRegistered<AccountCurrencySync>()
         ? getIt<AccountCurrencySync>().currentWallet
         : null;
@@ -266,12 +274,12 @@ class KycCubit extends Cubit<KycState> {
             (s) => s.isRequired && s.status != KycStepStatus.completed,
           );
           if (pending == null) {
-            emit(const KycUnsupportedStepFailure(null));
+            _emitUnsupportedStep(null);
             return;
           }
           final step = _mapStepName(pending.name);
           if (step == null) {
-            emit(KycUnsupportedStepFailure(pending.name));
+            _emitUnsupportedStep(pending.name);
             return;
           }
           emit(KycPending(step));
@@ -345,13 +353,13 @@ class KycCubit extends Cubit<KycState> {
     // in the i18n message).
     final currentStep = kycStatus.currentStep;
     if (currentStep == null) {
-      emit(const KycUnsupportedStepFailure(null));
+      _emitUnsupportedStep(null);
       return;
     }
 
     final kycStep = _mapStepName(currentStep.name);
     if (kycStep == null) {
-      emit(KycUnsupportedStepFailure(currentStep.name));
+      _emitUnsupportedStep(currentStep.name);
       return;
     }
 
@@ -362,6 +370,19 @@ class KycCubit extends Cubit<KycState> {
         realUnitUserData: realUnitUserData,
       ),
     );
+  }
+
+  /// Routes an unmapped step to the generic handoff page and reports the
+  /// occurrence.
+  ///
+  /// The report is the only trace this leaves: every call in the flow returned
+  /// 200 and the user sees a handoff screen, so a step name missing from
+  /// [_mapStepName] is otherwise invisible until someone writes in. Reporting
+  /// before the emit keeps the event even when the user leaves the flow on this
+  /// screen.
+  void _emitUnsupportedStep(KycStepName? stepName) {
+    _report(KycUnsupportedStepException(stepName));
+    emit(KycUnsupportedStepFailure(stepName));
   }
 
   KycStep? _mapStepName(KycStepName name) => switch (name) {

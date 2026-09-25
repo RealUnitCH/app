@@ -145,7 +145,7 @@ void main() {
       expect(find.text('Persönlicher Einladungslink'), findsOneWidget);
       expect(
         find.text(
-          'Hey AliceShouldNotAppear, RealUnit lädt dich ein zu RealUnit: https://realunit.app/invite/AAAA',
+          'Hey AliceShouldNotAppear, ich nutze die RealUnit App — schau\'s dir mal an: https://realunit.app/invite/AAAA',
         ),
         findsOneWidget,
       );
@@ -415,7 +415,9 @@ void main() {
     expect(find.text('Einladungslink kopieren'), findsOneWidget);
     expect(find.text('Hey ,'), findsNothing);
     expect(
-      find.text('RealUnit lädt dich ein zu RealUnit: https://realunit.app/invite/AAAA'),
+      find.text(
+        'Ich nutze die RealUnit App — schau\'s dir mal an: https://realunit.app/invite/AAAA',
+      ),
       findsOneWidget,
     );
     expect(find.text('Wiederholen'), findsNothing);
@@ -579,7 +581,7 @@ void main() {
 
     expect(
       copied,
-      'Hey Alice, RealUnit lädt dich ein zu RealUnit: https://realunit.app/invite/AAAA',
+      'Hey Alice, ich nutze die RealUnit App — schau\'s dir mal an: https://realunit.app/invite/AAAA',
     );
     expect(find.text('Kopiert'), findsOneWidget);
     expect(find.text('In die Zwischenablage kopiert'), findsNothing);
@@ -610,7 +612,7 @@ void main() {
     );
   });
 
-  testWidgets('copy fallback names the Empfehler from inviterName', (
+  testWidgets('copy fallback uses the first-person share sentence', (
     tester,
   ) async {
     String? copied;
@@ -697,7 +699,7 @@ void main() {
 
     expect(
       copied,
-      'Hey Alice, Björn lädt dich ein zu RealUnit: https://realunit.app/invite/AAAA',
+      'Hey Alice, ich nutze die RealUnit App — schau\'s dir mal an: https://realunit.app/invite/AAAA',
     );
   });
 

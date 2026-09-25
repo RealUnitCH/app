@@ -107,15 +107,16 @@ Response:
   "code": "AB12CD",
   "url": "https://realunit.app/invite/AB12CD",
   "guestName": "Alice",
-  "copyText": "Hey Alice, Björn lädt dich ein zu RealUnit: https://realunit.app/invite/AB12CD",
-  "copyTextEn": "Hey Alice, Björn invites you to RealUnit: https://realunit.app/invite/AB12CD",
+  "copyText": "Hey Alice, ich nutze die RealUnit App — schau's dir mal an: https://realunit.app/invite/AB12CD",
+  "copyTextEn": "Hey Alice, I use the RealUnit app — have a look: https://realunit.app/invite/AB12CD",
   "inviterName": "Björn"
 }
 ```
 
 The server generates code, URL, and share text. `inviterName` is the
-Empfehler display name so a missing `copyText` still shares
-«Hey Alice, Björn …» instead of «Hey Alice, RealUnit …». A later
+Empfehler display name. A missing `copyText` falls back to the
+first-person recommendation (guest name plus invite URL), not a
+host-named «lädt dich ein» sentence. A later
 `GET /v2/user/profile` firstName (or Kontozusammenführung) rewrites
 open-invite `copyText` / `inviterName` so a first invite created
 while the name was still the wallet address is not stuck as
@@ -137,8 +138,9 @@ accepts given-name autofill.
 ### `GET /v1/realunit/referral/invites`
 
 List of the current user's invites (bare array or `{ "invites": [...] }`).
-Each row includes `copyText` / `copyTextEn` / `inviterName` so copy/share
-on overview can name the Empfehler when the server omits share text.
+Each row includes `copyText` / `copyTextEn` / `inviterName`. When the
+server omits share text, overview copy/share uses the first-person
+fallback (guest name plus invite URL), not a host-named sentence.
 The Empfehler list is **Open** or **Credited** only. Bound and Review
 are folded to Open server-side so the Empfehler cannot see the invitee’s
 registration or purchase progress (TB Ziff. 7). Admin relationships keep
