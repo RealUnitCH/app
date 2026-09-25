@@ -83,7 +83,7 @@ dependencies:
   bitbox_flutter:
     git:
       url: https://github.com/DFXswiss/bitbox_flutter.git
-      ref: v0.0.10
+      ref: 09cb2afc8502b2ac75383a81e6b025b40f3ee6e8
 
 dev_dependencies:
   flutter_test:
