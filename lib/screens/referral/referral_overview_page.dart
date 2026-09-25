@@ -323,8 +323,10 @@ class _OpenInviteTile extends StatelessWidget {
       guestName: invite.guestName,
       url: invite.url,
       hostName: invite.inviterName,
-      fallback: S.of(context).referralShareText,
-      fallbackNoName: S.of(context).referralShareTextNoName,
+      fallback: (guestName, hostName, url) =>
+          S.of(context).referralShareText(guestName, url),
+      fallbackNoName: (hostName, url) =>
+          S.of(context).referralShareTextNoName(url),
     );
   }
 

@@ -95,7 +95,7 @@ void main() {
 
     expect(
       copied,
-      'Hey Alice, RealUnit lädt dich ein zu RealUnit: https://realunit.app/invite/AB12CD',
+      'Hey Alice, ich nutze die RealUnit App — schau\'s dir mal an: https://realunit.app/invite/AB12CD',
     );
     expect(find.text('Kopiert'), findsOneWidget);
   });
