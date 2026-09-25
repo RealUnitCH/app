@@ -151,28 +151,23 @@ class PayProcessCubit extends Cubit<PayProcessState> {
   /// Uses the swap quote the user already confirmed. Does not request a second,
   /// larger quote — that confirmed `id` is what is signed.
   Future<void> _prepareConfirmedSwap() async {
-    try {
-      emit(const PayProcessPreparingSwap());
-      final swap = _swap;
+    emit(const PayProcessPreparingSwap());
+    final swap = _swap;
 
-      // The API is the authority on whether the swap is fundable; render its
-      // signal rather than recomputing limits locally.
-      if (!swap.isValid) {
-        final error = swap.error;
-        emit(
-          PayProcessFailure(
-            PayProcessFailureReason.generic,
-            message: (error != null && error.isNotEmpty) ? error : null,
-          ),
-        );
-        return;
-      }
-
-      await _checkEthBalance(swap);
-    } catch (e) {
-      if (isClosed) return;
-      emit(PayProcessFailure(PayProcessFailureReason.generic, message: ApiException.userFacingMessage(e)));
+    // The API is the authority on whether the swap is fundable; render its
+    // signal rather than recomputing limits locally.
+    if (!swap.isValid) {
+      final error = swap.error;
+      emit(
+        PayProcessFailure(
+          PayProcessFailureReason.generic,
+          message: (error != null && error.isNotEmpty) ? error : null,
+        ),
+      );
+      return;
     }
+
+    await _checkEthBalance(swap);
   }
 
   Future<void> _checkEthBalance(SwapPaymentInfo swap) async {
