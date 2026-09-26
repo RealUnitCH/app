@@ -19,7 +19,7 @@ class RealUnitPayConfirmResultDto {
 
   factory RealUnitPayConfirmResultDto.fromJson(Map<String, dynamic> json) {
     final raw = json['txHash'];
-    if (raw is! String || raw.isEmpty) {
+    if (raw is! String || raw.trim().isEmpty) {
       return const RealUnitPayConfirmResultDto(txHash: null);
     }
     return RealUnitPayConfirmResultDto(txHash: raw);

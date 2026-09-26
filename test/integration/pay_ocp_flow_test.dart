@@ -64,7 +64,8 @@ const _swapPath = '/v1/realunit/swap';
 const _payConfirmPath = '/v1/realunit/pay/99/confirm';
 const _payStatusPath = '/v1/realunit/pay/pl_realunit_ocp_1eur/status';
 
-const _testPrivateKeyHex = 'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
+const _testPrivateKeyHex =
+    'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
 final _softwareKey = EthPrivateKey.fromHex(_testPrivateKeyHex);
 
 Map<String, dynamic> _delegationJson() => {
@@ -85,7 +86,8 @@ Map<String, dynamic> _delegationJson() => {
   'message': {
     'delegate': '0x1111111111111111111111111111111111111111',
     'delegator': _softwareKey.address.hexEip55.toLowerCase(),
-    'authority': '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+    'authority':
+        '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
     'caveats': <dynamic>[],
     'salt': 1,
   },
@@ -98,7 +100,9 @@ Map<String, dynamic> _lnurlpJson() => {
   'requestedAmount': {'asset': 'EUR', 'amount': 1},
   'quote': {
     'id': 'plq_1eur',
-    'expiration': DateTime.now().add(const Duration(minutes: 5)).toIso8601String(),
+    'expiration': DateTime.now()
+        .add(const Duration(minutes: 5))
+        .toIso8601String(),
   },
   'transferAmounts': [
     {
@@ -162,7 +166,9 @@ void main() {
     when(() => wallet.walletType).thenReturn(WalletType.bitbox);
     when(() => wallet.currentAccount).thenReturn(account);
     when(() => account.primaryAddress).thenReturn(creds);
-    when(() => walletService.ensureCurrentWalletUnlocked()).thenAnswer((_) async {});
+    when(
+      () => walletService.ensureCurrentWalletUnlocked(),
+    ).thenAnswer((_) async {});
     when(() => walletService.lockCurrentWallet()).thenAnswer((_) async {});
   });
 
@@ -174,22 +180,64 @@ void main() {
     return RealUnitPayService(appStore, walletService);
   }
 
-  group('pay OCP flow cross-layer: cubit → BitBox boundary → service → MockClient', () {
-    test(
-      '1 EUR / 0.95 ZCHF quote with a 1-share swap preview becomes PayQuoteReady',
-      () async {
-        // Original screenshot bug: 0 REALU sold / grey Pay. The MockClient
-        // plays the fixed API (targetAmount 0.95 → amount: 1, isValid: true).
-        // Ready with 1 share is the fix — the harness does not ceil locally.
-        Map<String, dynamic>? swapBody;
+  group(
+    'pay OCP flow cross-layer: cubit → BitBox boundary → service → MockClient',
+    () {
+      test(
+        '1 EUR / 0.95 ZCHF quote with a 1-share swap preview becomes PayQuoteReady',
+        () async {
+          // Original screenshot bug: 0 REALU sold / grey Pay. The MockClient
+          // plays the fixed API (targetAmount 0.95 → amount: 1, isValid: true).
+          // Ready with 1 share is the fix — the harness does not ceil locally.
+          Map<String, dynamic>? swapBody;
+          final client = MockClient((request) async {
+            if (request.method == 'GET' && request.url.path == _lnurlpPath) {
+              return http.Response(jsonEncode(_lnurlpJson()), 200);
+            }
+            if (request.method == 'PUT' && request.url.path == _swapPath) {
+              swapBody = jsonDecode(request.body) as Map<String, dynamic>;
+              return http.Response(
+                jsonEncode(_swapInfoJson(amount: 1, isValid: true)),
+                200,
+              );
+            }
+            fail('unexpected ${request.method} ${request.url.path}');
+          });
+
+          final cubit = PayQuoteCubit(buildPayService(client), _paymentLinkId);
+          await cubit.load();
+
+          expect(cubit.state, isA<PayQuoteReady>());
+          final state = cubit.state as PayQuoteReady;
+          expect(state.fiatAsset, 'EUR');
+          expect(state.fiatAmount, 1);
+          expect(state.zchfAmount, 0.95);
+          expect(state.swap.amount, 1);
+          expect(state.swap.estimatedAmount, 1.05);
+          expect(state.swap.id, 99);
+          expect(state.swap.ethereumTransactionFeeChf, 0.05);
+          expect(state.swap.ethereumTransactionFeeRealu, 0.01234567);
+
+          expect(swapBody, isNotNull);
+          expect(swapBody!['targetAmount'], 0.95);
+          expect(swapBody!.containsKey('amount'), isFalse);
+
+          await cubit.close();
+        },
+      );
+
+      test('invalid 0-share swap preview is PayQuoteError, never Ready', () async {
+        // Same lnurlp bill; the API returns amount: 0 / isValid: false. The app
+        // surfaces AmountTooLow 1:1 and does not invent a 1-share Ready state.
         final client = MockClient((request) async {
           if (request.method == 'GET' && request.url.path == _lnurlpPath) {
             return http.Response(jsonEncode(_lnurlpJson()), 200);
           }
           if (request.method == 'PUT' && request.url.path == _swapPath) {
-            swapBody = jsonDecode(request.body) as Map<String, dynamic>;
             return http.Response(
-              jsonEncode(_swapInfoJson(amount: 1, isValid: true)),
+              jsonEncode(
+                _swapInfoJson(amount: 0, isValid: false, error: 'AmountTooLow'),
+              ),
               200,
             );
           }
@@ -199,113 +247,20 @@ void main() {
         final cubit = PayQuoteCubit(buildPayService(client), _paymentLinkId);
         await cubit.load();
 
-        expect(cubit.state, isA<PayQuoteReady>());
-        final state = cubit.state as PayQuoteReady;
-        expect(state.fiatAsset, 'EUR');
-        expect(state.fiatAmount, 1);
-        expect(state.zchfAmount, 0.95);
-        expect(state.swap.amount, 1);
-        expect(state.swap.estimatedAmount, 1.05);
-        expect(state.swap.id, 99);
-        expect(state.swap.ethereumTransactionFeeChf, 0.05);
-        expect(state.swap.ethereumTransactionFeeRealu, 0.01234567);
-
-        expect(swapBody, isNotNull);
-        expect(swapBody!['targetAmount'], 0.95);
-        expect(swapBody!.containsKey('amount'), isFalse);
+        expect(cubit.state, isA<PayQuoteError>());
+        expect(cubit.state, isNot(isA<PayQuoteReady>()));
+        expect((cubit.state as PayQuoteError).message, 'AmountTooLow');
 
         await cubit.close();
-      },
-    );
-
-    test('invalid 0-share swap preview is PayQuoteError, never Ready', () async {
-      // Same lnurlp bill; the API returns amount: 0 / isValid: false. The app
-      // surfaces AmountTooLow 1:1 and does not invent a 1-share Ready state.
-      final client = MockClient((request) async {
-        if (request.method == 'GET' && request.url.path == _lnurlpPath) {
-          return http.Response(jsonEncode(_lnurlpJson()), 200);
-        }
-        if (request.method == 'PUT' && request.url.path == _swapPath) {
-          return http.Response(
-            jsonEncode(
-              _swapInfoJson(amount: 0, isValid: false, error: 'AmountTooLow'),
-            ),
-            200,
-          );
-        }
-        fail('unexpected ${request.method} ${request.url.path}');
       });
 
-      final cubit = PayQuoteCubit(buildPayService(client), _paymentLinkId);
-      await cubit.load();
-
-      expect(cubit.state, isA<PayQuoteError>());
-      expect(cubit.state, isNot(isA<PayQuoteReady>()));
-      expect((cubit.state as PayQuoteError).message, 'AmountTooLow');
-
-      await cubit.close();
-    });
-
-    test('BitBox pay never calls the API', () async {
-      when(() => wallet.walletType).thenReturn(WalletType.bitbox);
-      final client = MockClient((request) async {
-        fail('unexpected ${request.method} ${request.url.path}');
-      });
-      final cubit = PayProcessCubit(
-        payService: buildPayService(client),
-        walletService: walletService,
-        appStore: appStore,
-        paymentLinkId: _paymentLinkId,
-        quoteId: 'plq_1eur',
-        swap: SwapPaymentInfo(
-          id: 99,
-          amount: 1,
-          estimatedAmount: 1.05,
-          targetAsset: 'ZCHF',
-          ethBalance: 0,
-          requiredGasEth: 0.01,
-          isValid: true,
-          eip7702: Eip7702Data.fromJson(_delegationJson()),
-        ),
-      );
-
-      await cubit.start();
-
-      expect((cubit.state as PayProcessFailure).reason, PayProcessFailureReason.payUnavailable);
-      expect(cubit.swapCompleted, isFalse);
-      await cubit.close();
-    });
-
-    test('software wallet confirms through the sell relayer and never funds ETH', () {
-      fakeAsync((async) {
-        void drain() {
-          for (var i = 0; i < 40; i++) {
-            async.flushMicrotasks();
-            async.elapse(Duration.zero);
-          }
-        }
-
-        Map<String, dynamic>? confirmBody;
+      test('BitBox pay never calls the API', () async {
+        when(() => wallet.walletType).thenReturn(WalletType.bitbox);
         final client = MockClient((request) async {
-          final path = request.url.path;
-          if (request.method == 'PUT' && path == _payConfirmPath) {
-            confirmBody = jsonDecode(request.body) as Map<String, dynamic>;
-            return http.Response(jsonEncode({'txHash': '0xrelayed'}), 200);
-          }
-          if (request.method == 'GET' && path == _payStatusPath) {
-            return http.Response(jsonEncode({'status': 'Completed'}), 200);
-          }
           fail('unexpected ${request.method} ${request.url.path}');
         });
-
-        when(() => wallet.walletType).thenReturn(WalletType.software);
-        when(() => account.primaryAddress).thenReturn(_softwareKey);
-        when(
-          () => appStore.apiConfig,
-        ).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
         final cubit = PayProcessCubit(
           payService: buildPayService(client),
-          walletService: walletService,
           appStore: appStore,
           paymentLinkId: _paymentLinkId,
           quoteId: 'plq_1eur',
@@ -320,29 +275,94 @@ void main() {
             eip7702: Eip7702Data.fromJson(_delegationJson()),
           ),
         );
-        cubit.start();
-        drain();
 
-        expect(cubit.state, isA<PayProcessAwaitingSettlement>());
-        expect(confirmBody, isNotNull);
-        expect(confirmBody!['paymentLinkId'], _paymentLinkId);
-        expect(confirmBody!['quoteId'], 'plq_1eur');
-        expect(confirmBody!.containsKey('txHash'), isFalse);
-        final delegation =
-            (confirmBody!['eip7702'] as Map<String, dynamic>)['delegation'] as Map<String, dynamic>;
-        expect(delegation['delegate'], '0x1111111111111111111111111111111111111111');
-        expect(delegation['signature'], isNotEmpty);
+        await cubit.start();
 
-        async.elapse(const Duration(seconds: 3));
-        drain();
         expect(
-          cubit.state,
-          anyOf(isA<PayProcessSuccess>(), isA<PayProcessAwaitingSettlement>()),
+          (cubit.state as PayProcessFailure).reason,
+          PayProcessFailureReason.payUnavailable,
         );
-
-        cubit.close();
-        async.flushTimers();
+        expect(cubit.swapCompleted, isFalse);
+        await cubit.close();
       });
-    });
-  });
+
+      test(
+        'software wallet confirms through the sell relayer and never funds ETH',
+        () {
+          fakeAsync((async) {
+            void drain() {
+              for (var i = 0; i < 40; i++) {
+                async.flushMicrotasks();
+                async.elapse(Duration.zero);
+              }
+            }
+
+            Map<String, dynamic>? confirmBody;
+            final client = MockClient((request) async {
+              final path = request.url.path;
+              if (request.method == 'PUT' && path == _payConfirmPath) {
+                confirmBody = jsonDecode(request.body) as Map<String, dynamic>;
+                return http.Response(jsonEncode({'txHash': '0xrelayed'}), 200);
+              }
+              if (request.method == 'GET' && path == _payStatusPath) {
+                return http.Response(jsonEncode({'status': 'Completed'}), 200);
+              }
+              fail('unexpected ${request.method} ${request.url.path}');
+            });
+
+            when(() => wallet.walletType).thenReturn(WalletType.software);
+            when(() => account.primaryAddress).thenReturn(_softwareKey);
+            when(
+              () => appStore.apiConfig,
+            ).thenReturn(const ApiConfig(networkMode: NetworkMode.mainnet));
+            final cubit = PayProcessCubit(
+              payService: buildPayService(client),
+              appStore: appStore,
+              paymentLinkId: _paymentLinkId,
+              quoteId: 'plq_1eur',
+              swap: SwapPaymentInfo(
+                id: 99,
+                amount: 1,
+                estimatedAmount: 1.05,
+                targetAsset: 'ZCHF',
+                ethBalance: 0,
+                requiredGasEth: 0.01,
+                isValid: true,
+                eip7702: Eip7702Data.fromJson(_delegationJson()),
+              ),
+            );
+            cubit.start();
+            drain();
+
+            expect(cubit.state, isA<PayProcessAwaitingSettlement>());
+            expect(confirmBody, isNotNull);
+            expect(confirmBody!['paymentLinkId'], _paymentLinkId);
+            expect(confirmBody!['quoteId'], 'plq_1eur');
+            expect(confirmBody!.containsKey('txHash'), isFalse);
+            final delegation =
+                (confirmBody!['eip7702'] as Map<String, dynamic>)['delegation']
+                    as Map<String, dynamic>;
+            expect(
+              delegation['delegate'],
+              '0x1111111111111111111111111111111111111111',
+            );
+            expect(delegation['signature'], isNotEmpty);
+
+            async.elapse(const Duration(seconds: 3));
+            drain();
+            expect(
+              cubit.state,
+              anyOf(
+                isA<PayProcessSuccess>(),
+                isA<PayProcessAwaitingSettlement>(),
+              ),
+            );
+
+            cubit.close();
+            async.flushTimers();
+          });
+        },
+      );
+    },
+  );
 }

@@ -5,7 +5,6 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
-import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/screens/pay/cubits/pay_process/pay_process_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
@@ -28,7 +27,6 @@ class PayProcessPage extends StatelessWidget {
     return BlocProvider(
       create: (_) => PayProcessCubit(
         payService: getIt<RealUnitPayService>(),
-        walletService: getIt<WalletService>(),
         appStore: getIt<AppStore>(),
         paymentLinkId: paymentLinkId,
         quoteId: quoteId,
@@ -99,17 +97,19 @@ class PayProcessView extends StatelessWidget {
     );
   }
 
-  String _progressLabel(BuildContext context, PayProcessState state) => switch (state) {
-    PayProcessInitial() || PayProcessPreparingSwap() => S.of(context).payPreparingSwap,
-    PayProcessWaitingForEth() => S.of(context).payWaitingForEth,
-    PayProcessSwapping() => S.of(context).paySwapping,
-    PayProcessRefreshingQuote() => S.of(context).payRefreshingQuote,
-    PayProcessPaying() => S.of(context).payPaying,
-    PayProcessAwaitingSettlement() => S.of(context).payAwaitingSettlement,
-    PayProcessSuccess() => S.of(context).paySuccess,
-    PayProcessPayRetry() => S.of(context).payRetryTitle,
-    PayProcessFailure() => S.of(context).payFailureTitle,
-  };
+  String _progressLabel(BuildContext context, PayProcessState state) =>
+      switch (state) {
+        PayProcessInitial() ||
+        PayProcessPreparingSwap() => S.of(context).payPreparingSwap,
+        PayProcessWaitingForEth() => S.of(context).payWaitingForEth,
+        PayProcessSwapping() => S.of(context).paySwapping,
+        PayProcessRefreshingQuote() => S.of(context).payRefreshingQuote,
+        PayProcessPaying() => S.of(context).payPaying,
+        PayProcessAwaitingSettlement() => S.of(context).payAwaitingSettlement,
+        PayProcessSuccess() => S.of(context).paySuccess,
+        PayProcessPayRetry() => S.of(context).payRetryTitle,
+        PayProcessFailure() => S.of(context).payFailureTitle,
+      };
 
   String _failureMessage(BuildContext context, PayProcessFailure state) {
     final apiText = state.message;
@@ -117,10 +117,14 @@ class PayProcessView extends StatelessWidget {
       return apiText;
     }
     return switch (state.reason) {
-      PayProcessFailureReason.insufficientEth => S.of(context).payFailureInsufficientEth,
-      PayProcessFailureReason.signatureUnsupported => S.of(context).payFailureSignatureUnsupported,
-      PayProcessFailureReason.payUnavailable => S.of(context).payFailurePayUnavailable,
-      PayProcessFailureReason.bitboxRequired => S.of(context).payFailureBitboxRequired,
+      PayProcessFailureReason.insufficientEth =>
+        S.of(context).payFailureInsufficientEth,
+      PayProcessFailureReason.signatureUnsupported =>
+        S.of(context).payFailureSignatureUnsupported,
+      PayProcessFailureReason.payUnavailable =>
+        S.of(context).payFailurePayUnavailable,
+      PayProcessFailureReason.bitboxRequired =>
+        S.of(context).payFailureBitboxRequired,
       PayProcessFailureReason.generic => S.of(context).payFailureGeneric,
     };
   }
@@ -134,7 +138,8 @@ class PayProcessView extends StatelessWidget {
       PayRetryReason.quoteExpired => S.of(context).payRetryQuoteExpired,
       PayRetryReason.transient => S.of(context).payRetryTransient,
       PayRetryReason.insufficientZchf => S.of(context).payRetryInsufficientZchf,
-      PayRetryReason.unsignedTxMismatch => S.of(context).payRetryUnsignedTxMismatch,
+      PayRetryReason.unsignedTxMismatch =>
+        S.of(context).payRetryUnsignedTxMismatch,
     };
   }
 
@@ -185,7 +190,10 @@ class PayProcessView extends StatelessWidget {
   /// primary action retries the PAY leg only ([PayProcessCubit.retryPay]) — the
   /// swap is never redone, so the ZCHF already held is reused. Dismissing leaves
   /// that ZCHF safely in the wallet.
-  Future<void> _showRetrySheet(BuildContext context, PayProcessPayRetry state) async {
+  Future<void> _showRetrySheet(
+    BuildContext context,
+    PayProcessPayRetry state,
+  ) async {
     await waitForIncomingRouteAnimation(context);
     if (!context.mounted) {
       return;
@@ -204,7 +212,11 @@ class PayProcessView extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             spacing: 24,
             children: [
-              const Icon(Icons.replay_rounded, color: RealUnitColors.realUnitBlue, size: 64),
+              const Icon(
+                Icons.replay_rounded,
+                color: RealUnitColors.realUnitBlue,
+                size: 64,
+              ),
               Text(
                 S.of(sheetContext).payRetryTitle,
                 style: Theme.of(sheetContext).textTheme.headlineMedium,

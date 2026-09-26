@@ -237,7 +237,10 @@ class RealUnitPayService extends DFXAuthService {
         jsonDecode(response.body) as Map<String, dynamic>,
         httpStatusCode: response.statusCode,
       );
-      throw PayConfirmNotSubmittedException(error.message);
+      throw PayConfirmNotSubmittedException(
+        error.message,
+        apiMessage: error.message,
+      );
     }
     if (response.statusCode != 200 && response.statusCode != 201) {
       _throwApi(response.body, response.statusCode);

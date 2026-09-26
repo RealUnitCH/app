@@ -13,20 +13,22 @@ class InvalidPaymentLinkException implements Exception {
   String toString() => 'InvalidPaymentLinkException: $reason';
 }
 
-/// The loaded wallet cannot produce EIP-1559 signatures (today: the debug
-/// wallet). The pay flow needs to sign the swap and pay transactions locally,
-/// so it cannot proceed in this wallet mode.
 /// Confirm never left the device, or the server rejected it before relaying.
 /// The REALU sale did not start, so the quote may be confirmed again.
+/// [apiMessage] is set only when the DFX API returned the text. A local
+/// failure leaves it null so the screen uses its own copy.
 class PayConfirmNotSubmittedException implements Exception {
   final String message;
+  final String? apiMessage;
 
-  const PayConfirmNotSubmittedException(this.message);
+  const PayConfirmNotSubmittedException(this.message, {this.apiMessage});
 
   @override
   String toString() => 'PayConfirmNotSubmittedException: $message';
 }
 
+/// The debug wallet cannot sign the EIP-7702 delegation, so Pay stops
+/// before any request leaves the device.
 class PaySignatureUnsupportedException implements Exception {
   // Only ever thrown / constructed as a const expression, so the zero-arg
   // body never registers a runtime line hit; toString() below is exercised.

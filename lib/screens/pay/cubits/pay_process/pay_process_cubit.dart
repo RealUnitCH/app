@@ -8,7 +8,6 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/pay_exce
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/sell_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
-import 'package:realunit_wallet/packages/service/wallet_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 
 part 'pay_process_state.dart';
@@ -23,7 +22,6 @@ part 'pay_process_state.dart';
 /// sold twice.
 class PayProcessCubit extends Cubit<PayProcessState> {
   final RealUnitPayService _payService;
-  final WalletService _walletService;
   final AppStore _appStore;
 
   final String _paymentLinkId;
@@ -45,13 +43,11 @@ class PayProcessCubit extends Cubit<PayProcessState> {
 
   PayProcessCubit({
     required RealUnitPayService payService,
-    required WalletService walletService,
     required AppStore appStore,
     required String paymentLinkId,
     required String quoteId,
     required SwapPaymentInfo swap,
   }) : _payService = payService,
-       _walletService = walletService,
        _appStore = appStore,
        _paymentLinkId = paymentLinkId,
        _quoteId = quoteId,
@@ -115,11 +111,16 @@ class PayProcessCubit extends Cubit<PayProcessState> {
     } on PayConfirmNotSubmittedException catch (e) {
       if (isClosed) return;
       if (_confirmSent) {
-        emit(PayProcessPayRetry(PayRetryReason.transient, message: e.message));
+        emit(
+          PayProcessPayRetry(PayRetryReason.transient, message: e.apiMessage),
+        );
         return;
       }
       emit(
-        PayProcessFailure(PayProcessFailureReason.generic, message: e.message),
+        PayProcessFailure(
+          PayProcessFailureReason.generic,
+          message: e.apiMessage,
+        ),
       );
     } catch (e) {
       if (isClosed) return;
