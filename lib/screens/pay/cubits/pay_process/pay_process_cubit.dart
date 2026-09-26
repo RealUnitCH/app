@@ -17,9 +17,9 @@ part 'pay_process_state.dart';
 /// the same way as sell. There is no faucet and no user-signed transfer.
 ///
 /// BitBox and the debug wallet have no Pay option. A confirm that never left
-/// the device leaves [swapCompleted] false so the quote can be tried again. A
-/// confirm that may already have been relayed leaves it true so REALU is not
-/// sold twice.
+/// the device leaves the quote reusable. A confirm that may already have been
+/// relayed can be sent again: this payment does not leave CHF in the wallet,
+/// and REALU is sold only when the first attempt did not arrive.
 class PayProcessCubit extends Cubit<PayProcessState> {
   final RealUnitPayService _payService;
   final AppStore _appStore;

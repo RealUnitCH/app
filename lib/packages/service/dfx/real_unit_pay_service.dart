@@ -5,10 +5,6 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_auth_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/pay_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/sell_exceptions.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_confirm_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
-import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
-import 'package:realunit_wallet/packages/wallet/eip7702_signer.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/lnurlp_payment_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_ocp_pay_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_ocp_pay_result_dto.dart';
@@ -21,6 +17,10 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_response_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_confirm_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
+import 'package:realunit_wallet/packages/wallet/eip712_signer.dart';
+import 'package:realunit_wallet/packages/wallet/eip7702_signer.dart';
 
 /// Backend client for the Open CryptoPay pay flow (DFXswiss/api #3819, all under
 /// `/v1/realunit/...`). Subclasses [DFXAuthService] for the JWT handshake +
@@ -29,8 +29,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/bro
 class RealUnitPayService extends DFXAuthService {
   static const _lnurlpPath = '/v1/lnurlp';
   static const _swapPath = '/v1/realunit/swap';
-  static String _swapUnsignedTxPath(int id) =>
-      '/v1/realunit/swap/$id/unsigned-transaction';
+  static String _swapUnsignedTxPath(int id) => '/v1/realunit/swap/$id/unsigned-transaction';
   static String _swapBroadcastPath(int id) => '/v1/realunit/swap/$id/broadcast';
   static const _payUnsignedTxPath = '/v1/realunit/pay/unsigned-transaction';
   static const _paySubmitPath = '/v1/realunit/pay/submit';
@@ -38,10 +37,8 @@ class RealUnitPayService extends DFXAuthService {
   static String _payStatusPath(String id) => '/v1/realunit/pay/$id/status';
 
   // MetaMask Delegation Framework v1.3.0, CREATE2 — identical on all EVM chains.
-  static const _metaMaskDelegatorAddress =
-      '0x63c0c19a282a1b52b07dd5a65b58948a07dae32b';
-  static const _delegationManagerAddress =
-      '0xdb9b1e94b5b69df7e401ddbede43491141047db3';
+  static const _metaMaskDelegatorAddress = '0x63c0c19a282a1b52b07dd5a65b58948a07dae32b';
+  static const _delegationManagerAddress = '0xdb9b1e94b5b69df7e401ddbede43491141047db3';
 
   static const _httpTimeout = Duration(seconds: 20);
 
@@ -268,14 +265,12 @@ class RealUnitPayService extends DFXAuthService {
         'EIP-7702 delegator address does not match expected MetaMask Delegator contract',
       );
     }
-    if (data.delegationManagerAddress.toLowerCase() !=
-        _delegationManagerAddress) {
+    if (data.delegationManagerAddress.toLowerCase() != _delegationManagerAddress) {
       throw const PayConfirmNotSubmittedException(
         'EIP-7702 delegation manager address does not match expected contract',
       );
     }
-    if (data.domain.verifyingContract.toLowerCase() !=
-        _delegationManagerAddress) {
+    if (data.domain.verifyingContract.toLowerCase() != _delegationManagerAddress) {
       throw const PayConfirmNotSubmittedException(
         'EIP-7702 verifying contract does not match expected DelegationManager',
       );
@@ -290,8 +285,7 @@ class RealUnitPayService extends DFXAuthService {
         'EIP-7702 chain ID mismatch: expected ${asset.chainId}, got ${data.domain.chainId}',
       );
     }
-    if (data.message.delegate.toLowerCase() !=
-        data.relayerAddress.toLowerCase()) {
+    if (data.message.delegate.toLowerCase() != data.relayerAddress.toLowerCase()) {
       throw const PayConfirmNotSubmittedException(
         'EIP-7702 message delegate does not match relayer address',
       );
@@ -306,8 +300,7 @@ class RealUnitPayService extends DFXAuthService {
         'Pay sells whole REALU shares only',
       );
     }
-    final expectedWei =
-        BigInt.from(shares.round()) * BigInt.from(10).pow(asset.decimals);
+    final expectedWei = BigInt.from(shares.round()) * BigInt.from(10).pow(asset.decimals);
     final actualWei = BigInt.tryParse(data.amountWei);
     if (actualWei == null || actualWei != expectedWei) {
       throw PayConfirmNotSubmittedException(

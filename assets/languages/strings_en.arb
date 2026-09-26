@@ -206,7 +206,7 @@
   "payRetryInsufficientZchf": "The price moved and the proceeds no longer cover this payment. Your CHF stays in your wallet — retry to fetch a new quote.",
   "payRetryQuoteExpired": "The payment quote expired before settling. Your CHF stays in your wallet — retry to fetch a new quote and pay.",
   "payRetryTitle": "Finish your payment",
-  "payRetryTransient": "The payment could not be completed, but your CHF stays in your wallet. Retry to pay without selling REALU again.",
+  "payRetryTransient": "The payment could not be completed, and this payment did not leave CHF in your wallet. Retry sends the same authorization again and can sell REALU if the first attempt did not go through.",
   "payRetryUnsignedTxMismatch": "The payment details returned by the server did not match what was requested. Your CHF stays in your wallet — please try again.",
   "payScanCameraPermissionDenied": "Camera access is required to scan a payment code. Please enable camera access for this app in your device settings.",
   "payScanCameraUnavailable": "The camera could not be started. Please try again.",

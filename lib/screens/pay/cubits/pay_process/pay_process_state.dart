@@ -19,16 +19,16 @@ enum PayProcessFailureReason {
   generic,
 }
 
-/// Why the pay leg failed AFTER the REALU→ZCHF swap already succeeded. The user
-/// holds ZCHF, so recovery must retry the pay leg ONLY (re-quote + sign +
-/// submit) — never the swap. Each reason maps to a localized message.
+/// Why a pay confirm is offered again. This payment does not leave CHF in the
+/// wallet. Retry sends the same delegation again and can sell REALU when the
+/// first confirm did not arrive. Each reason maps to a localized message.
 enum PayRetryReason {
   /// The OCP quote expired between the swap and the pay step. Re-quoting is
   /// safe — the swapped ZCHF stays in the wallet.
   quoteExpired,
 
-  /// A transient/network error while re-fetching the quote or settling. Not a
-  /// genuine expiry; retrying the pay leg is the correct recovery.
+  /// The confirm or the settlement status did not finish. No CHF from this
+  /// payment is in the wallet. Retry sends the same delegation again.
   transient,
 
   /// The freshly re-fetched settlement amount exceeds the ZCHF acquired by the
