@@ -51,12 +51,20 @@ class RealUnitSwapPaymentInfoDto {
     final ethereumTransactionFeeChf = json['ethereumTransactionFeeChf'] == null
         ? null
         : (json['ethereumTransactionFeeChf'] as num).toDouble();
-    final ethereumTransactionFeeRealu = json['ethereumTransactionFeeRealu'] == null
+    final ethereumTransactionFeeRealu =
+        json['ethereumTransactionFeeRealu'] == null
         ? null
         : (json['ethereumTransactionFeeRealu'] as num).toDouble();
     final eip7702 = json['eip7702'] == null
         ? null
         : Eip7702Data.fromJson(json['eip7702'] as Map<String, dynamic>);
+    if (isValid &&
+        (ethereumTransactionFeeChf == null ||
+            ethereumTransactionFeeRealu == null)) {
+      throw const FormatException(
+        'ethereumTransactionFeeChf and ethereumTransactionFeeRealu are required when isValid is true',
+      );
+    }
     return RealUnitSwapPaymentInfoDto(
       id: json['id'] as int,
       uid: json['uid'] as String,

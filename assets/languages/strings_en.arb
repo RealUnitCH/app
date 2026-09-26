@@ -186,7 +186,7 @@
   "payFailureQuoteExpired": "The payment quote expired. Please scan the code again.",
   "payFailureSignatureUnsupported": "This wallet cannot sign the payment. Switch to a software wallet.",
   "payFailureTitle": "Payment failed",
-  "payInfoBody": "You can use the payment function at all OpenCryptoPay locations.\n\nPayment is a single transaction. REALU is sold and the CHF proceeds are sent to the recipient together. You do not pay a separate network fee.\n\nREALU is a security and is not used for the payment itself.\n\nEvery payment is rounded up to whole REALU shares, because there are no fractional REALU.",
+  "payInfoBody": "You can use the payment function at all OpenCryptoPay locations.\n\nPayment is a single transaction. REALU is sold and the CHF proceeds pay the recipient. The network fee is included in the REALU you pay.\n\nREALU is a security and is not used for the payment itself.\n\nEvery payment is rounded up to whole REALU shares, because there are no fractional REALU.",
   "payInfoTitle": "Before you pay",
   "paymentInformationFailed": "An error occurred while getting the payment information.",
   "paymentInformationFailedDescription": "Please try again later. If the error persists, contact our support team.",

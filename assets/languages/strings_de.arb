@@ -186,7 +186,7 @@
   "payFailureQuoteExpired": "Das Zahlungsangebot ist abgelaufen. Bitte scannen Sie den Code erneut.",
   "payFailureSignatureUnsupported": "Diese Wallet kann die Zahlung nicht signieren. Wechseln Sie zu einer Software-Wallet.",
   "payFailureTitle": "Zahlung fehlgeschlagen",
-  "payInfoBody": "Die Bezahlfunktion kann an allen OpenCryptoPay-Standorten genutzt werden.\n\nDie Zahlung ist eine einzige Transaktion. REALU wird verkauft und der Erlös in CHF geht in derselben Transaktion an den Empfänger. Eine separate Netzwerkgebühr zahlen Sie nicht.\n\nREALU ist ein Wertpapier und wird nicht für die Bezahlung selbst verwendet.\n\nBei jeder Zahlung wird auf ganze REALU-Anteile aufgerundet, weil es keine halben REALU gibt.",
+  "payInfoBody": "Die Bezahlfunktion kann an allen OpenCryptoPay-Standorten genutzt werden.\n\nDie Zahlung ist eine einzige Transaktion. REALU wird verkauft und der Erlös in CHF geht an den Empfänger. Die Netzwerkgebühr ist in den REALU enthalten, die Sie bezahlen.\n\nREALU ist ein Wertpapier und wird nicht für die Bezahlung selbst verwendet.\n\nBei jeder Zahlung wird auf ganze REALU-Anteile aufgerundet, weil es keine halben REALU gibt.",
   "payInfoTitle": "Bevor Sie bezahlen",
   "paymentInformationFailed": "Beim Abrufen der Zahlungsinformationen ist ein Fehler aufgetreten.",
   "paymentInformationFailedDescription": "Bitte versuchen Sie es später erneut. Wenn der Fehler weiterhin besteht, wenden Sie sich an unseren Support.",
