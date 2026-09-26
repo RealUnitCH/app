@@ -39,17 +39,9 @@ class PaySignatureUnsupportedException implements Exception {
       'PaySignatureUnsupportedException: this wallet mode cannot sign transactions';
 }
 
-/// The unsigned pay-leg (ZCHF ERC20-transfer) transaction the backend returned for signing does
-/// not match its accompanying security metadata (`tokenAddress`, `recipient`, `amountWei`,
-/// `chainId`), exceeds local gas/fee caps, mismatches the app's locally configured chainId, or
-/// could not be parsed as the expected EIP-1559 ERC20-transfer shape. Thrown by
-/// Eip1559UnsignedTxDecoder / Erc20TransferCalldataDecoder and
-/// PayProcessCubit._validatePayUnsignedTx BEFORE any pay-leg signing happens, so a
-/// malformed/compromised backend pay response can never be blindly signed.
-///
-/// Scope is the pay leg only. The earlier REALU→ZCHF swap leg
-/// (`RealUnitSwapUnsignedTransactionDto`) is signed without this validation today (that DTO
-/// has no comparable metadata); closing that gap needs a backend DTO extension.
+/// A pay response did not match the request. The software-wallet pay signs only
+/// the EIP-7702 delegation; the relayer broadcasts and pays gas. There is no
+/// separate ZCHF transfer for the customer to sign.
 class PayUnsignedTxMismatchException implements Exception {
   final String reason;
 
