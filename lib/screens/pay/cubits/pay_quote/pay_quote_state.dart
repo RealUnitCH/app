@@ -19,6 +19,7 @@ class PayQuoteReady extends PayQuoteState {
   final double zchfAmount;
   final String? merchantName;
   final String? merchantCity;
+  final DateTime expiresAt;
   final SwapPaymentInfo swap;
 
   const PayQuoteReady({
@@ -28,6 +29,7 @@ class PayQuoteReady extends PayQuoteState {
     required this.fiatAmount,
     required this.zchfAmount,
     required this.swap,
+    required this.expiresAt,
     this.merchantName,
     this.merchantCity,
   });
@@ -41,6 +43,7 @@ class PayQuoteReady extends PayQuoteState {
     zchfAmount,
     merchantName,
     merchantCity,
+    expiresAt,
     swap,
   ];
 }

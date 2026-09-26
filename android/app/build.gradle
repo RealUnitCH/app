@@ -67,4 +67,6 @@ flutter {
 
 dependencies {
     implementation "com.android.installreferrer:installreferrer:2.2"
+    // Same artifact version as flutter_idensic_mobile_sdk_plugin 1.42.0.
+    implementation "com.sumsub.sns:idensic-mobile-sdk-videoident:1.42.0"
 }

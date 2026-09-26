@@ -11231,7 +11231,7 @@
           <p class="spec-intro">
             Verifizierte Aktionäre mit mindestens 70 REALU im Wallet (geprüft bei
             der Einladung und bei der Qualifikation) sehen auf dem Dashboard
-            die Karte <b>Empfehlungen</b> («Erhalten Sie 20 REALU pro Weiterempfehlung»)
+            die Karte <b>Empfehlungen</b> («Erhalten Sie 20 REALU pro erfolgreicher Weiterempfehlung»)
             und denselben Einstieg in den Einstellungen, sobald die Funktion zentral
             freigeschaltet ist (Spec 79) und die API <code>eligible</code> setzt.
             Mindestbestand und Auszahlung entscheidet die DFX API. Die Prämie von 20 REALU wird dem Empfehler
@@ -11277,6 +11277,14 @@
             Code und Zuordnung sind danach nicht mehr nutzbar). Pro Empfehler werden höchstens 100 Empfehlungen je
             Quartal prämiert; danach zeigt die Übersicht <b>In diesem Quartal sind
             keine weiteren Prämien möglich.</b>
+            Unter der Liste stehen die Hinweise <b>20 REALU pro erfolgreicher
+            Weiterempfehlung, sobald die eingeladene Person ihren ersten Kauf über
+            den Mindestkauf gemäss Teilnahmebedingungen erfolgreich abgewickelt
+            hat.</b> und <b>Voraussetzung: mindestens 70 REALU im eigenen Wallet,
+            bei der Einladung und bei der Gutschrift.</b> (Wert aus der API,
+            <code>minHolding</code>; ohne Wert entfällt der Satz), gefolgt vom
+            Textlink <b>Teilnahmebedingungen Referral-Programm</b>, der dieselben
+            Bedingungen öffnet wie der Seitentitel.
             Die Kachel <b>Insgesamt erhalten</b> zeigt die Summe der erhaltenen REALU
             und den laufenden Gegenwert zum aktuellen Aktienkurs, Beschriftung
             <b>Aktienkurs</b>. Jede Gutschrift in der Historie zeigt ganze REALU,
@@ -11449,7 +11457,7 @@
               />
             </div>
             <div class="desc">
-              Karte <b>Empfehlungen</b> mit «Erhalten Sie 20 REALU pro Weiterempfehlung»,
+              Karte <b>Empfehlungen</b> mit «Erhalten Sie 20 REALU pro erfolgreicher Weiterempfehlung»,
               nur nach zentraler Freischaltung (Spec 79) und wenn die API
               <code>eligible</code> setzt.
             </div>
@@ -11655,7 +11663,7 @@
             </div>
             <div class="desc">
               Einstieg «Empfehlungen» («Erhalten Sie 20 REALU pro
-              Weiterempfehlung») und Prämie in den letzten Transaktionen.
+              erfolgreicher Weiterempfehlung») und Prämie in den letzten Transaktionen.
             </div>
           </div>
           <div class="test" id="290-kyc-registration-referral-promo">

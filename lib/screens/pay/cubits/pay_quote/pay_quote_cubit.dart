@@ -63,8 +63,9 @@ class PayQuoteCubit extends Cubit<PayQuoteState> {
           fiatAsset: details.requestedAmount.asset,
           fiatAmount: details.requestedAmount.amount,
           zchfAmount: zchfAmount,
-          merchantName: details.recipient?.name,
+          merchantName: _recipientName(details),
           merchantCity: details.recipient?.city,
+          expiresAt: details.quote.expiration,
           swap: swap,
         ),
       );
@@ -83,6 +84,16 @@ class PayQuoteCubit extends Cubit<PayQuoteState> {
       return PayQuoteError(error);
     }
     return const PayQuoteError('');
+  }
+
+  /// OCP recipient name, or the payment link's display name when the
+  /// recipient has none.
+  static String? _recipientName(LnurlpPaymentDto details) {
+    final name = details.recipient?.name?.trim();
+    if (name != null && name.isNotEmpty) return name;
+    final displayName = details.displayName?.trim();
+    if (displayName != null && displayName.isNotEmpty) return displayName;
+    return null;
   }
 
   /// The ZCHF amount listed for the Ethereum transfer method, or null if the
