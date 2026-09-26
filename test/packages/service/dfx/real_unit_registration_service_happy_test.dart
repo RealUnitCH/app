@@ -145,9 +145,10 @@ void main() {
           return http.Response(jsonEncode({'status': 'completed'}), 201);
         });
 
-        final status = await build(client).completeRegistration(buildRegistration());
+        final response = await build(client).completeRegistration(buildRegistration());
 
-        expect(status, RegistrationStatus.completed);
+        expect(response.status, RegistrationStatus.completed);
+        expect(response.rejectionMessage, isNull);
         expect(sentUri!.path, '/v1/realunit/register/complete');
         expect(headers!['authorization'], 'Bearer jwt-1');
 
@@ -199,7 +200,7 @@ void main() {
           return http.Response(jsonEncode({'status': 'completed'}), 201);
         });
 
-        final status = await build(client).completeRegistration(
+        final response = await build(client).completeRegistration(
           buildRegistration(
             swissTaxResidence: false,
             countryAndTINs: const [
@@ -208,7 +209,8 @@ void main() {
           ),
         );
 
-        expect(status, RegistrationStatus.completed);
+        expect(response.status, RegistrationStatus.completed);
+        expect(response.rejectionMessage, isNull);
         expect(sentUri!.path, '/v1/realunit/register/complete');
         expect(body!['swissTaxResidence'], isFalse);
         expect(

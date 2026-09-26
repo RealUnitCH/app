@@ -102,7 +102,7 @@ class RealUnitRegistrationService extends DFXAuthService {
   }
 
   /// registers a wallet and and adds the wallet to the new user
-  Future<RegistrationStatus> completeRegistration(Registration registration) async {
+  Future<RealUnitRegistrationResponseDto> completeRegistration(Registration registration) async {
     // Fetch the server-provided signing date BEFORE unlocking the wallet: it
     // only needs the JWT, not the private key, so a slow or failing fetch must
     // not hold the decrypted key resident (and a failure aborts before unlock).
@@ -119,7 +119,7 @@ class RealUnitRegistrationService extends DFXAuthService {
     }
   }
 
-  Future<RegistrationStatus> _completeRegistration(Registration registration, String registrationDate) async {
+  Future<RealUnitRegistrationResponseDto> _completeRegistration(Registration registration, String registrationDate) async {
     final credentials = appStore.wallet.primaryAccount.primaryAddress;
     // BitBox firmware rejects non-ASCII bytes in EIP-712 string fields.
     // Transliterate everything that goes into the signed envelope AND the
@@ -220,8 +220,7 @@ class RealUnitRegistrationService extends DFXAuthService {
       throw error;
     }
 
-    final responseDto = RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
-    return responseDto.status;
+    return RealUnitRegistrationResponseDto.fromJson(jsonDecode(response.body));
   }
 
   /// registers a wallet and adds the wallet to an existing user
