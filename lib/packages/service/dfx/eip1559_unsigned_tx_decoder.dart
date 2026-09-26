@@ -102,9 +102,8 @@ abstract final class Eip1559UnsignedTxDecoder {
     if (data is! Uint8List) {
       throw const PayUnsignedTxMismatchException('unsigned tx "data" is not a byte string');
     }
-    // This narrow decoder only ever handles the plain ERC20-transfer shape the backend
-    // produces for the pay leg, which never carries an access list. Reject non-empty lists
-    // fail-closed rather than signing payload bytes we have not inspected.
+    // This decoder only understands the plain ERC20 transfer, which has an
+    // empty access list. Anything else is rejected.
     final accessList = root[_accessListFieldIndex];
     if (accessList is! List<Object> || accessList.isNotEmpty) {
       throw const PayUnsignedTxMismatchException(
