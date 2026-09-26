@@ -109,7 +109,11 @@ class SellConfirmSheetView extends StatelessWidget {
                                   _infoRow(
                                     label: S.of(context).payQuoteRealuFees,
                                     value:
-                                        '${paymentInfo.ethereumTransactionFeeChf} ${paymentInfo.currency.code}',
+                                        paymentInfo
+                                                .ethereumTransactionFeeRealu !=
+                                            null
+                                        ? '${_money(paymentInfo.ethereumTransactionFeeChf!)} CHF (${paymentInfo.ethereumTransactionFeeRealu} REALU)'
+                                        : '${_money(paymentInfo.ethereumTransactionFeeChf!)} CHF',
                                   ),
                                 _infoRow(
                                   label:

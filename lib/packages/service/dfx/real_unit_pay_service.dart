@@ -29,7 +29,8 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/bro
 class RealUnitPayService extends DFXAuthService {
   static const _lnurlpPath = '/v1/lnurlp';
   static const _swapPath = '/v1/realunit/swap';
-  static String _swapUnsignedTxPath(int id) => '/v1/realunit/swap/$id/unsigned-transaction';
+  static String _swapUnsignedTxPath(int id) =>
+      '/v1/realunit/swap/$id/unsigned-transaction';
   static String _swapBroadcastPath(int id) => '/v1/realunit/swap/$id/broadcast';
   static const _payUnsignedTxPath = '/v1/realunit/pay/unsigned-transaction';
   static const _paySubmitPath = '/v1/realunit/pay/submit';
@@ -37,8 +38,10 @@ class RealUnitPayService extends DFXAuthService {
   static String _payStatusPath(String id) => '/v1/realunit/pay/$id/status';
 
   // MetaMask Delegation Framework v1.3.0, CREATE2 — identical on all EVM chains.
-  static const _metaMaskDelegatorAddress = '0x63c0c19a282a1b52b07dd5a65b58948a07dae32b';
-  static const _delegationManagerAddress = '0xdb9b1e94b5b69df7e401ddbede43491141047db3';
+  static const _metaMaskDelegatorAddress =
+      '0x63c0c19a282a1b52b07dd5a65b58948a07dae32b';
+  static const _delegationManagerAddress =
+      '0xdb9b1e94b5b69df7e401ddbede43491141047db3';
 
   static const _httpTimeout = Duration(seconds: 20);
 
@@ -55,7 +58,9 @@ class RealUnitPayService extends DFXAuthService {
     if (response.statusCode != 200) {
       _throwApi(response.body, response.statusCode);
     }
-    return LnurlpPaymentDto.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
+    return LnurlpPaymentDto.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
   }
 
   // --- Swap (REALU → ZCHF, proceeds stay in the user wallet) ---
@@ -77,7 +82,9 @@ class RealUnitPayService extends DFXAuthService {
     return SwapPaymentInfo.fromDto(responseDto);
   }
 
-  Future<RealUnitSwapUnsignedTransactionDto> createSwapUnsignedTransaction(int id) async {
+  Future<RealUnitSwapUnsignedTransactionDto> createSwapUnsignedTransaction(
+    int id,
+  ) async {
     final uri = buildUri(host, _swapUnsignedTxPath(id));
     final response = await authenticatedPut(
       uri,
@@ -92,7 +99,10 @@ class RealUnitPayService extends DFXAuthService {
     );
   }
 
-  Future<String> broadcastSwapTransaction(int id, BroadcastTransactionRequestDto dto) async {
+  Future<String> broadcastSwapTransaction(
+    int id,
+    BroadcastTransactionRequestDto dto,
+  ) async {
     final uri = buildUri(host, _swapBroadcastPath(id));
     final response = await authenticatedPut(
       uri,
@@ -155,7 +165,9 @@ class RealUnitPayService extends DFXAuthService {
   }) async {
     final data = swap.eip7702;
     if (data == null) {
-      throw const PayConfirmNotSubmittedException('Payment quote is missing the sell delegation');
+      throw const PayConfirmNotSubmittedException(
+        'Payment quote is missing the sell delegation',
+      );
     }
     await walletService.ensureCurrentWalletUnlocked();
     final Eip7702ConfirmDto signed;
@@ -230,27 +242,37 @@ class RealUnitPayService extends DFXAuthService {
     if (response.statusCode != 200 && response.statusCode != 201) {
       _throwApi(response.body, response.statusCode);
     }
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    final txHash = json['txHash'] as String?;
-    if (txHash == null || txHash.isEmpty) {
-      throw const PayConfirmNotSubmittedException('Confirm did not return a transaction hash');
+    final confirmed = RealUnitPayConfirmResultDto.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+    final txHash = confirmed.txHash;
+    if (txHash == null) {
+      throw const PayConfirmNotSubmittedException(
+        'Confirm did not return a transaction hash',
+      );
     }
     return txHash;
   }
 
-  void _validateEip7702Data(Eip7702Data data, String walletAddress, double shares) {
+  void _validateEip7702Data(
+    Eip7702Data data,
+    String walletAddress,
+    double shares,
+  ) {
     final asset = appStore.apiConfig.asset;
     if (data.delegatorAddress.toLowerCase() != _metaMaskDelegatorAddress) {
       throw const PayConfirmNotSubmittedException(
         'EIP-7702 delegator address does not match expected MetaMask Delegator contract',
       );
     }
-    if (data.delegationManagerAddress.toLowerCase() != _delegationManagerAddress) {
+    if (data.delegationManagerAddress.toLowerCase() !=
+        _delegationManagerAddress) {
       throw const PayConfirmNotSubmittedException(
         'EIP-7702 delegation manager address does not match expected contract',
       );
     }
-    if (data.domain.verifyingContract.toLowerCase() != _delegationManagerAddress) {
+    if (data.domain.verifyingContract.toLowerCase() !=
+        _delegationManagerAddress) {
       throw const PayConfirmNotSubmittedException(
         'EIP-7702 verifying contract does not match expected DelegationManager',
       );
@@ -265,7 +287,8 @@ class RealUnitPayService extends DFXAuthService {
         'EIP-7702 chain ID mismatch: expected ${asset.chainId}, got ${data.domain.chainId}',
       );
     }
-    if (data.message.delegate.toLowerCase() != data.relayerAddress.toLowerCase()) {
+    if (data.message.delegate.toLowerCase() !=
+        data.relayerAddress.toLowerCase()) {
       throw const PayConfirmNotSubmittedException(
         'EIP-7702 message delegate does not match relayer address',
       );
@@ -276,9 +299,12 @@ class RealUnitPayService extends DFXAuthService {
       );
     }
     if (shares != shares.roundToDouble()) {
-      throw const PayConfirmNotSubmittedException('Pay sells whole REALU shares only');
+      throw const PayConfirmNotSubmittedException(
+        'Pay sells whole REALU shares only',
+      );
     }
-    final expectedWei = BigInt.from(shares.round()) * BigInt.from(10).pow(asset.decimals);
+    final expectedWei =
+        BigInt.from(shares.round()) * BigInt.from(10).pow(asset.decimals);
     final actualWei = BigInt.tryParse(data.amountWei);
     if (actualWei == null || actualWei != expectedWei) {
       throw PayConfirmNotSubmittedException(
