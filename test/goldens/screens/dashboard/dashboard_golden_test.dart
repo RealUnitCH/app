@@ -13,10 +13,10 @@ import 'package:realunit_wallet/packages/service/dfx/models/transactions/dto/tra
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
+import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/balance_cubit.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/dashboard_bloc.dart';
 import 'package:realunit_wallet/screens/dashboard/bloc/pending_transactions_cubit.dart';
-import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/dashboard/dashboard_page.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
