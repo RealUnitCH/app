@@ -545,6 +545,30 @@ void main() {
       },
     );
 
+    testWidgets(
+      'does not show the generic SnackBar on Success(forwardingFailed) with a rejection sentence, still checkKyc',
+      (tester) async {
+        whenListen(
+          registrationSubmitCubit,
+          Stream.fromIterable([
+            const KycRegistrationSubmitSuccess(
+              RegistrationStatus.forwardingFailed,
+              rejectionMessage:
+                  'Please enter your full name (first and last name).',
+            ),
+          ]),
+          initialState: KycRegistrationSubmitInitial(),
+        );
+
+        await tester.pumpApp(buildSubject(const KycRegistrationView()));
+        await tester.pump();
+
+        verify(() => kycCubit.checkKyc()).called(1);
+        expect(find.byType(SnackBar), findsNothing);
+        verify(() => homeBloc.add(any(that: isA<SyncWalletServicesEvent>()))).called(1);
+      },
+    );
+
     testWidgets('shows SnackBar if submitting fails', (tester) async {
       whenListen(
         registrationSubmitCubit,

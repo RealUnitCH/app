@@ -191,7 +191,12 @@ class KycCubit extends Cubit<KycState> {
           // exactly as before. Purely additive, API-driven; see CONTRIBUTING.md
           // "API as Decision Authority" (legacy tolerance).
           if (registrationInfo.manualReview == true) {
-            emit(const KycManualReview());
+            final rejectionMessage = registrationInfo.rejectionMessage;
+            emit(
+              rejectionMessage == null
+                  ? const KycManualReview()
+                  : KycManualReview(rejectionMessage: rejectionMessage),
+            );
             return;
           }
           // The API owns the confirmation gate. When it reports the account

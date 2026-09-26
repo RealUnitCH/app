@@ -9,6 +9,7 @@ import 'package:realunit_wallet/packages/service/dfx/exceptions/bitbox_exception
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/kyc_level.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_response_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_status.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/registration_user_type.dart';
@@ -46,6 +47,14 @@ Registration _registration() => const Registration(
 UserDto _user({String? mail = 'test@example.com'}) => UserDto(
   mail: mail,
   kyc: const UserKycDto(hash: 'h', level: KycLevel.level0, dataComplete: false),
+);
+
+RealUnitRegistrationResponseDto _completeResponse(
+  RegistrationStatus status, {
+  String? rejectionMessage,
+}) => RealUnitRegistrationResponseDto(
+  status: status,
+  rejectionMessage: rejectionMessage,
 );
 
 Future<void> _submitFromRegistration(
@@ -89,7 +98,7 @@ void main() {
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
         when(
           () => registrationService.completeRegistration(any()),
-        ).thenAnswer((_) async => RegistrationStatus.completed);
+        ).thenAnswer((_) async => _completeResponse(RegistrationStatus.completed));
       },
       build: buildCubit,
       act: (cubit) => _submitFromRegistration(cubit, _registration()),
@@ -105,7 +114,7 @@ void main() {
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
         when(
           () => registrationService.completeRegistration(any()),
-        ).thenAnswer((_) async => RegistrationStatus.completed);
+        ).thenAnswer((_) async => _completeResponse(RegistrationStatus.completed));
 
         await buildCubit().submit(
           type: RegistrationUserType.human,
@@ -157,7 +166,7 @@ void main() {
       setUp: () {
         when(() => kycService.getUser()).thenAnswer((_) async => _user());
         when(() => registrationService.completeRegistration(any())).thenAnswer(
-          (_) async => RegistrationStatus.alreadyRegistered,
+          (_) async => _completeResponse(RegistrationStatus.alreadyRegistered),
         );
       },
       build: buildCubit,
@@ -165,6 +174,30 @@ void main() {
       expect: () => [
         KycRegistrationSubmitLoading(),
         const KycRegistrationSubmitSuccess(RegistrationStatus.alreadyRegistered),
+      ],
+    );
+
+    blocTest<KycRegistrationSubmitCubit, KycRegistrationSubmitState>(
+      'copies completeRegistration.rejectionMessage onto Success',
+      setUp: () {
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.completeRegistration(any())).thenAnswer(
+          (_) async => _completeResponse(
+            RegistrationStatus.forwardingFailed,
+            rejectionMessage:
+                'Please enter your full name (first and last name).',
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => _submitFromRegistration(cubit, _registration()),
+      expect: () => [
+        KycRegistrationSubmitLoading(),
+        const KycRegistrationSubmitSuccess(
+          RegistrationStatus.forwardingFailed,
+          rejectionMessage:
+              'Please enter your full name (first and last name).',
+        ),
       ],
     );
 
@@ -241,7 +274,7 @@ void main() {
       when(() => kycService.getUser()).thenAnswer((_) => gate.future);
       when(
         () => registrationService.completeRegistration(any()),
-      ).thenAnswer((_) async => RegistrationStatus.completed);
+      ).thenAnswer((_) async => _completeResponse(RegistrationStatus.completed));
 
       final cubit = buildCubit();
       final first = _submitFromRegistration(cubit, _registration());
@@ -276,7 +309,7 @@ void main() {
       setUp: () {
         when(
           () => registrationService.completeRegistration(any()),
-        ).thenAnswer((_) async => RegistrationStatus.completed);
+        ).thenAnswer((_) async => _completeResponse(RegistrationStatus.completed));
       },
       build: buildCubit,
       act: (cubit) => cubit.retrySubmit(_registration()),
