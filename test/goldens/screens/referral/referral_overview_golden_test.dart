@@ -55,6 +55,7 @@ void main() {
         const summary = ReferralSummaryDto(
           eligible: true,
           termsAccepted: true,
+          minHolding: 70,
           openCount: 1,
           creditedCount: 2,
           realuSum: 40,
@@ -88,6 +89,7 @@ void main() {
         const summary = ReferralSummaryDto(
           eligible: true,
           termsAccepted: true,
+          minHolding: 70,
           openCount: 0,
           creditedCount: 0,
           realuSum: 0,

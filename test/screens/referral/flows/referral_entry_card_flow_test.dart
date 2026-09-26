@@ -90,7 +90,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Empfehlungen'), findsOneWidget);
-    expect(find.text('Erhalten Sie 20 REALU pro Weiterempfehlung'), findsOneWidget);
+    expect(find.text('Erhalten Sie 20 REALU pro erfolgreicher Weiterempfehlung'), findsOneWidget);
   });
 
   testWidgets('taps the Einstiegskarte through to the referral route', (tester) async {
