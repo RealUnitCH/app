@@ -18,6 +18,7 @@ LnurlpPaymentDto _details({
   bool withEthZchf = true,
   double zchf = 2.0,
   LnurlpRecipientDto? recipient,
+  String? displayName,
 }) {
   return LnurlpPaymentDto(
     requestedAmount: const LnurlpRequestedAmountDto(asset: 'CHF', amount: 2),
@@ -35,6 +36,7 @@ LnurlpPaymentDto _details({
         ),
     ],
     recipient: recipient,
+    displayName: displayName,
   );
 }
 
@@ -119,6 +121,27 @@ void main() {
       final state = cubit.state as PayQuoteReady;
       expect(state.merchantName, 'Café Zürich');
       expect(state.merchantCity, 'Zürich');
+      expect(state.expiresAt, isA<DateTime>());
+    },
+  );
+
+  blocTest<PayQuoteCubit, PayQuoteState>(
+    'a quote without a recipient name uses the payment link display name',
+    build: build,
+    setUp: () {
+      when(() => payService.getPaymentDetails('pl_realunit_ocp_sepolia')).thenAnswer(
+        (_) async => _details(
+          expiration: DateTime.now().add(const Duration(minutes: 5)),
+          displayName: 'Bäckerei Müller',
+        ),
+      );
+      when(() => payService.getSwapPaymentInfo(any())).thenAnswer((_) async => _swap());
+    },
+    act: (cubit) => cubit.load(),
+    expect: () => [isA<PayQuoteLoading>(), isA<PayQuoteReady>()],
+    verify: (cubit) {
+      final state = cubit.state as PayQuoteReady;
+      expect(state.merchantName, 'Bäckerei Müller');
     },
   );
 
