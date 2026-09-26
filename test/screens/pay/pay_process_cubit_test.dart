@@ -42,8 +42,7 @@ Eip7702Data _delegation() => Eip7702Data.fromJson({
   'message': {
     'delegate': '0xrelay',
     'delegator': '0x1111111111111111111111111111111111111111',
-    'authority':
-        '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+    'authority': '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
     'caveats': <dynamic>[],
     'salt': 1,
   },
@@ -95,8 +94,7 @@ void main() {
       ),
     ).thenAnswer((_) async => '0xpay');
     when(() => payService.getPayStatus(any())).thenAnswer(
-      (_) async =>
-          const RealUnitOcpPayStatusDto(status: OcpPaymentStatus.completed),
+      (_) async => const RealUnitOcpPayStatusDto(status: OcpPaymentStatus.completed),
     );
   });
 
@@ -306,8 +304,9 @@ void main() {
         ),
       ).thenAnswer((_) async {
         calls++;
-        if (calls == 1)
+        if (calls == 1) {
           throw const ApiException(code: 'NETWORK', message: 'timeout');
+        }
         return '0xpay';
       });
 
@@ -342,8 +341,7 @@ void main() {
   test('a terminal unpaid status offers retry and does not confirm again', () {
     fakeAsync((async) {
       when(() => payService.getPayStatus(any())).thenAnswer(
-        (_) async =>
-            const RealUnitOcpPayStatusDto(status: OcpPaymentStatus.expired),
+        (_) async => const RealUnitOcpPayStatusDto(status: OcpPaymentStatus.expired),
       );
 
       final cubit = build();

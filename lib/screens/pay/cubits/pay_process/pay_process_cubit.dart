@@ -77,7 +77,7 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       return;
     }
     if (_swap.eip7702 == null) {
-      emit(PayProcessFailure(PayProcessFailureReason.generic));
+      emit(const PayProcessFailure(PayProcessFailureReason.generic));
       return;
     }
     await _relay();
