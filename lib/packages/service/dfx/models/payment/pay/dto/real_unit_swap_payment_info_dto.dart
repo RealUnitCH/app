@@ -1,3 +1,5 @@
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
+
 /// Response of `PUT /v1/realunit/swap` — the REALU → ZCHF swap quote. The
 /// backend is the authority on validity, limits, fees and the ZCHF estimate;
 /// the app renders these fields and never recomputes them.
@@ -22,6 +24,7 @@ class RealUnitSwapPaymentInfoDto {
   final double? ethereumTransactionFeeRealu;
   final double? valueChf;
   final double? valueEur;
+  final Eip7702Data? eip7702;
 
   const RealUnitSwapPaymentInfoDto({
     required this.id,
@@ -44,6 +47,7 @@ class RealUnitSwapPaymentInfoDto {
     this.ethereumTransactionFeeRealu,
     this.valueChf,
     this.valueEur,
+    this.eip7702,
   });
 
   factory RealUnitSwapPaymentInfoDto.fromJson(Map<String, dynamic> json) {
@@ -54,11 +58,9 @@ class RealUnitSwapPaymentInfoDto {
     final ethereumTransactionFeeRealu = json['ethereumTransactionFeeRealu'] == null
         ? null
         : (json['ethereumTransactionFeeRealu'] as num).toDouble();
-    if (isValid && (ethereumTransactionFeeChf == null || ethereumTransactionFeeRealu == null)) {
-      throw const FormatException(
-        'ethereumTransactionFeeChf and ethereumTransactionFeeRealu are required when isValid is true',
-      );
-    }
+    final eip7702 = json['eip7702'] == null
+        ? null
+        : Eip7702Data.fromJson(json['eip7702'] as Map<String, dynamic>);
     return RealUnitSwapPaymentInfoDto(
       id: json['id'] as int,
       uid: json['uid'] as String,
@@ -82,6 +84,7 @@ class RealUnitSwapPaymentInfoDto {
       ethereumTransactionFeeRealu: ethereumTransactionFeeRealu,
       valueChf: (json['valueChf'] as num?)?.toDouble(),
       valueEur: (json['valueEur'] as num?)?.toDouble(),
+      eip7702: eip7702,
     );
   }
 }

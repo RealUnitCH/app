@@ -55,26 +55,28 @@ void main() {
       expect(dto.ethereumTransactionFeeRealu, 0.01234567);
     });
 
-    test('requires ethereum transaction fees when isValid is true', () {
-      expect(
-        () => RealUnitSwapPaymentInfoDto.fromJson({
-          'id': 99,
-          'uid': 'MOCK-UID',
-          'routeId': 7,
-          'timestamp': '2026-06-03T00:00:00.000Z',
-          'amount': 10,
-          'estimatedAmount': 960,
-          'targetAsset': 'ZCHF',
-          'minVolume': 1,
-          'maxVolume': 1000,
-          'minVolumeTarget': 95,
-          'maxVolumeTarget': 95000,
-          'ethBalance': 1.0,
-          'requiredGasEth': 0.001,
-          'isValid': true,
-        }),
-        throwsA(isA<FormatException>()),
-      );
+    test('a valid quote does not require a customer gas fee', () {
+      final dto = RealUnitSwapPaymentInfoDto.fromJson({
+        'id': 99,
+        'uid': 'MOCK-UID',
+        'routeId': 7,
+        'timestamp': '2026-06-03T00:00:00.000Z',
+        'amount': 10,
+        'estimatedAmount': 960,
+        'targetAsset': 'ZCHF',
+        'minVolume': 1,
+        'maxVolume': 1000,
+        'minVolumeTarget': 95,
+        'maxVolumeTarget': 95000,
+        'ethBalance': 1.0,
+        'requiredGasEth': 0.001,
+        'isValid': true,
+      });
+
+      expect(dto.isValid, isTrue);
+      expect(dto.ethereumTransactionFeeChf, isNull);
+      expect(dto.ethereumTransactionFeeRealu, isNull);
+      expect(dto.eip7702, isNull);
     });
 
     test('maps the error code when isValid is false', () {

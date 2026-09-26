@@ -117,9 +117,10 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
     final swap = state.swap;
     final feeChf = swap.ethereumTransactionFeeChf;
     final feeRealu = swap.ethereumTransactionFeeRealu;
-    // The customer pays the sold shares. The three lines split that total
-    // into the bill, the fee, and the whole-share round-up. The signed
-    // quote itself is not changed.
+    // DFX pays the network fee the same way as sell, so a quote without a
+    // customer fee does not invent one. A fee is shown only when the quote
+    // actually carries one. The signed quote itself is not changed.
+    final showFee = feeChf != null || feeRealu != null;
     final parts = _quoteParts(
       billChf: state.fiatAmount,
       shares: swap.amount,
@@ -189,11 +190,12 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
                 chf: requestedChf,
                 also: useEur ? _chf(state.billEur!, 'EUR') : null,
               ),
-              _AmountRow(
-                label: S.of(context).payQuoteRealuFees,
-                realu: _realu(parts.feeRealu),
-                chf: feeFiat,
-              ),
+              if (showFee)
+                _AmountRow(
+                  label: S.of(context).payQuoteRealuFees,
+                  realu: _realu(parts.feeRealu),
+                  chf: feeFiat,
+                ),
               _AmountRow(
                 label: S.of(context).payQuoteRounding,
                 realu: _realu(parts.roundingRealu),
@@ -231,6 +233,7 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
                       MaterialPageRoute<bool>(
                         builder: (_) => PayProcessPage(
                           paymentLinkId: state.paymentLinkId,
+                          quoteId: state.quoteId,
                           swap: state.swap,
                         ),
                       ),
@@ -255,8 +258,7 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
 
 String _chf(double amount, String asset) => '${amount.toStringAsFixed(2)} $asset';
 
-String _wholeRealu(double shares) =>
-    '${shares.toStringAsFixed(0)} ${realUnitAsset.symbol}';
+String _wholeRealu(double shares) => '${shares.toStringAsFixed(0)} ${realUnitAsset.symbol}';
 
 /// At least two decimals, up to eight, without a tail of zeros.
 String _realu(double amount) {

@@ -89,7 +89,9 @@ void main() {
 
   group('$PayProcessPage', () {
     testWidgets('builds its own cubit and renders $PayProcessView', (tester) async {
-      await tester.pumpApp(const PayProcessPage(paymentLinkId: 'pl_abc', swap: _swap));
+      await tester.pumpApp(
+        const PayProcessPage(paymentLinkId: 'pl_abc', quoteId: 'quote_xyz', swap: _swap),
+      );
       // The route gate starts the cubit after the home route is settled; pump
       // a frame so start() can emit (the sheet animation is not awaited here).
       await tester.pump();
@@ -109,8 +111,11 @@ void main() {
                   Navigator.of(context).push(
                     TimedMaterialPageRoute<void>(
                       transitionDuration: const Duration(milliseconds: 300),
-                      builder: (_) =>
-                          const PayProcessPage(paymentLinkId: 'pl_abc', swap: _swap),
+                      builder: (_) => const PayProcessPage(
+                        paymentLinkId: 'pl_abc',
+                        quoteId: 'quote_xyz',
+                        swap: _swap,
+                      ),
                     ),
                   );
                 },
