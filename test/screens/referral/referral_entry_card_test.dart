@@ -97,7 +97,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Empfehlungen'), findsNothing);
-    expect(find.text('Erhalten Sie 20 REALU pro Weiterempfehlung'), findsNothing);
+    expect(find.text('Erhalten Sie 20 REALU pro erfolgreicher Weiterempfehlung'), findsNothing);
   });
 
   testWidgets('hides the dashboard card when eligible but the feature flag is off',
@@ -153,7 +153,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Empfehlungen'), findsOneWidget);
-    expect(find.text('Erhalten Sie 20 REALU pro Weiterempfehlung'), findsOneWidget);
+    expect(find.text('Erhalten Sie 20 REALU pro erfolgreicher Weiterempfehlung'), findsOneWidget);
   });
 
   testWidgets('popping back to this route reloads the gate', (tester) async {
@@ -261,7 +261,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 25));
     await tester.pump();
     expect(find.text('Empfehlungen'), findsOneWidget);
-    expect(find.text('Erhalten Sie 20 REALU pro Weiterempfehlung'), findsOneWidget);
+    expect(find.text('Erhalten Sie 20 REALU pro erfolgreicher Weiterempfehlung'), findsOneWidget);
   });
 
   testWidgets('does not poll when the API gate is closed', (tester) async {
@@ -389,7 +389,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Empfehlungen'), findsOneWidget);
-    expect(find.text('Erhalten Sie 20 REALU pro Weiterempfehlung'), findsOneWidget);
+    expect(find.text('Erhalten Sie 20 REALU pro erfolgreicher Weiterempfehlung'), findsOneWidget);
     expect(
       find.descendant(
         of: find.byType(ReferralEntryCard),
