@@ -13,10 +13,9 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_pay
 void main() {
   group('RealUnitSwapDto', () {
     test('fromTargetAmount serialises only targetAmount (no amount key)', () {
-      expect(
-        const RealUnitSwapDto.fromTargetAmount(95.5).toJson(),
-        {'targetAmount': 95.5},
-      );
+      expect(const RealUnitSwapDto.fromTargetAmount(95.5).toJson(), {
+        'targetAmount': 95.5,
+      });
     });
   });
 
@@ -55,28 +54,26 @@ void main() {
       expect(dto.ethereumTransactionFeeRealu, 0.01234567);
     });
 
-    test('a valid quote does not require a customer gas fee', () {
-      final dto = RealUnitSwapPaymentInfoDto.fromJson({
-        'id': 99,
-        'uid': 'MOCK-UID',
-        'routeId': 7,
-        'timestamp': '2026-06-03T00:00:00.000Z',
-        'amount': 10,
-        'estimatedAmount': 960,
-        'targetAsset': 'ZCHF',
-        'minVolume': 1,
-        'maxVolume': 1000,
-        'minVolumeTarget': 95,
-        'maxVolumeTarget': 95000,
-        'ethBalance': 1.0,
-        'requiredGasEth': 0.001,
-        'isValid': true,
-      });
-
-      expect(dto.isValid, isTrue);
-      expect(dto.ethereumTransactionFeeChf, isNull);
-      expect(dto.ethereumTransactionFeeRealu, isNull);
-      expect(dto.eip7702, isNull);
+    test('requires the network fee in CHF and REALU when isValid is true', () {
+      expect(
+        () => RealUnitSwapPaymentInfoDto.fromJson({
+          'id': 99,
+          'uid': 'MOCK-UID',
+          'routeId': 7,
+          'timestamp': '2026-06-03T00:00:00.000Z',
+          'amount': 10,
+          'estimatedAmount': 960,
+          'targetAsset': 'ZCHF',
+          'minVolume': 1,
+          'maxVolume': 1000,
+          'minVolumeTarget': 95,
+          'maxVolumeTarget': 95000,
+          'ethBalance': 1.0,
+          'requiredGasEth': 0.001,
+          'isValid': true,
+        }),
+        throwsA(isA<FormatException>()),
+      );
     });
 
     test('maps the error code when isValid is false', () {
@@ -287,18 +284,21 @@ void main() {
       );
     });
 
-    test('falls back to unknown for an empty status without matching the unknown sentinel', () {
-      // Regression test: `unknown` is internally represented as `unknown('')`. Before the fix,
-      // an empty backend value matched that sentinel directly in the known-value loop and bypassed
-      // the developer.log(...) drift-visibility call. The observable return value is `unknown`
-      // either way; this pins the mapping so a future regression that makes '' match something
-      // else (or crash) is caught. The developer.log call itself has no mockable surface in Dart
-      // (same limitation documented in test/screens/sell/widgets/sell_bank_account_field_test.dart).
-      expect(
-        RealUnitOcpPayStatusDto.fromJson({'status': ''}).status,
-        OcpPaymentStatus.unknown,
-      );
-    });
+    test(
+      'falls back to unknown for an empty status without matching the unknown sentinel',
+      () {
+        // Regression test: `unknown` is internally represented as `unknown('')`. Before the fix,
+        // an empty backend value matched that sentinel directly in the known-value loop and bypassed
+        // the developer.log(...) drift-visibility call. The observable return value is `unknown`
+        // either way; this pins the mapping so a future regression that makes '' match something
+        // else (or crash) is caught. The developer.log call itself has no mockable surface in Dart
+        // (same limitation documented in test/screens/sell/widgets/sell_bank_account_field_test.dart).
+        expect(
+          RealUnitOcpPayStatusDto.fromJson({'status': ''}).status,
+          OcpPaymentStatus.unknown,
+        );
+      },
+    );
 
     test('isTerminal / isCompleted predicates', () {
       expect(OcpPaymentStatus.completed.isTerminal, isTrue);
@@ -366,25 +366,28 @@ void main() {
       );
     });
 
-    test('parses amount-less asset entries (non-priced display path) as null', () {
-      final dto = LnurlpPaymentDto.fromJson({
-        'requestedAmount': {'asset': 'CHF', 'amount': 1.0},
-        'quote': {'id': 'q', 'expiration': '2026-06-03T12:00:00.000Z'},
-        'transferAmounts': [
-          {
-            'method': 'Ethereum',
-            'assets': [
-              // Optional `amount?` omitted by the backend.
-              {'asset': 'ZCHF'},
-            ],
-          },
-        ],
-      });
+    test(
+      'parses amount-less asset entries (non-priced display path) as null',
+      () {
+        final dto = LnurlpPaymentDto.fromJson({
+          'requestedAmount': {'asset': 'CHF', 'amount': 1.0},
+          'quote': {'id': 'q', 'expiration': '2026-06-03T12:00:00.000Z'},
+          'transferAmounts': [
+            {
+              'method': 'Ethereum',
+              'assets': [
+                // Optional `amount?` omitted by the backend.
+                {'asset': 'ZCHF'},
+              ],
+            },
+          ],
+        });
 
-      expect(dto.transferAmounts.first.assets.first.asset, 'ZCHF');
-      expect(dto.transferAmounts.first.assets.first.amount, isNull);
-      expect(dto.transferAmounts.first.assets.first.rawAmount, isNull);
-    });
+        expect(dto.transferAmounts.first.assets.first.asset, 'ZCHF');
+        expect(dto.transferAmounts.first.assets.first.amount, isNull);
+        expect(dto.transferAmounts.first.assets.first.rawAmount, isNull);
+      },
+    );
 
     test('preserves a string amount as rawAmount without double drift', () {
       final dto = LnurlpPaymentDto.fromJson({
@@ -401,7 +404,10 @@ void main() {
       });
 
       expect(dto.requestedAmount.amount, 10.10);
-      expect(dto.transferAmounts.first.assets.first.rawAmount, '42.70000000000001');
+      expect(
+        dto.transferAmounts.first.assets.first.rawAmount,
+        '42.70000000000001',
+      );
       expect(dto.transferAmounts.first.assets.first.amount, isNotNull);
     });
 
@@ -511,33 +517,43 @@ void main() {
       );
     });
 
-    test('ignores the structured recipient object instead of throwing on it', () {
-      // The backend `recipient` is a PaymentLinkRecipientDto object, not a
-      // String; reading the quote must not throw on it. Only name+city are
-      // mapped; other nested address fields are intentionally left unmapped.
-      final dto = LnurlpPaymentDto.fromJson({
-        'displayName': 'Acme Kasse',
-        'recipient': {
-          'name': 'Acme GmbH',
-          'address': {'street': 'Bahnhofstrasse', 'houseNumber': '1', 'city': 'Zürich'},
-        },
-        'requestedAmount': {'asset': 'CHF', 'amount': 42.5},
-        'quote': {'id': 'quote_xyz', 'expiration': '2026-06-03T12:00:00.000Z'},
-        'transferAmounts': [
-          {
-            'method': 'Ethereum',
-            'assets': [
-              {'asset': 'ZCHF', 'amount': 42.7},
-            ],
+    test(
+      'ignores the structured recipient object instead of throwing on it',
+      () {
+        // The backend `recipient` is a PaymentLinkRecipientDto object, not a
+        // String; reading the quote must not throw on it. Only name+city are
+        // mapped; other nested address fields are intentionally left unmapped.
+        final dto = LnurlpPaymentDto.fromJson({
+          'displayName': 'Acme Kasse',
+          'recipient': {
+            'name': 'Acme GmbH',
+            'address': {
+              'street': 'Bahnhofstrasse',
+              'houseNumber': '1',
+              'city': 'Zürich',
+            },
           },
-        ],
-      });
+          'requestedAmount': {'asset': 'CHF', 'amount': 42.5},
+          'quote': {
+            'id': 'quote_xyz',
+            'expiration': '2026-06-03T12:00:00.000Z',
+          },
+          'transferAmounts': [
+            {
+              'method': 'Ethereum',
+              'assets': [
+                {'asset': 'ZCHF', 'amount': 42.7},
+              ],
+            },
+          ],
+        });
 
-      expect(dto.quote.id, 'quote_xyz');
-      expect(dto.transferAmounts.first.assets.first.amount, 42.7);
-      expect(dto.recipient?.name, 'Acme GmbH');
-      expect(dto.recipient?.city, 'Zürich');
-      expect(dto.displayName, 'Acme Kasse');
-    });
+        expect(dto.quote.id, 'quote_xyz');
+        expect(dto.transferAmounts.first.assets.first.amount, 42.7);
+        expect(dto.recipient?.name, 'Acme GmbH');
+        expect(dto.recipient?.city, 'Zürich');
+        expect(dto.displayName, 'Acme Kasse');
+      },
+    );
   });
 }
