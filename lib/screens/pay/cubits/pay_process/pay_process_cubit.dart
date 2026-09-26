@@ -61,7 +61,9 @@ class PayProcessCubit extends Cubit<PayProcessState> {
   Future<void> start() async {
     final walletType = _appStore.wallet.walletType;
     if (walletType == WalletType.debug) {
-      emit(const PayProcessFailure(PayProcessFailureReason.signatureUnsupported));
+      emit(
+        const PayProcessFailure(PayProcessFailureReason.signatureUnsupported),
+      );
       return;
     }
     if (walletType != WalletType.software) {
@@ -79,12 +81,7 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       return;
     }
     if (_swap.eip7702 == null) {
-      emit(
-        const PayProcessFailure(
-          PayProcessFailureReason.generic,
-          message: 'Payment quote is missing the sell delegation',
-        ),
-      );
+      emit(PayProcessFailure(PayProcessFailureReason.generic));
       return;
     }
     await _relay();
@@ -121,7 +118,9 @@ class PayProcessCubit extends Cubit<PayProcessState> {
         emit(PayProcessPayRetry(PayRetryReason.transient, message: e.message));
         return;
       }
-      emit(PayProcessFailure(PayProcessFailureReason.generic, message: e.message));
+      emit(
+        PayProcessFailure(PayProcessFailureReason.generic, message: e.message),
+      );
     } catch (e) {
       if (isClosed) return;
       _confirmSent = true;

@@ -8,17 +8,23 @@ import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_confirm/sell_confirm_cubit.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/styles/currency.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/handlebars.dart';
 import 'package:realunit_wallet/widgets/iban_text_formatter.dart';
 import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 
-/// CHF that lands on the customer's payout. The relay fee is kept by DFX.
-double _payoutChf(SellPaymentInfo paymentInfo) {
+/// CHF payout after the relay fee. The fee is always CHF. Subtract it only
+/// when the quote itself is CHF, never from an EUR amount.
+double _payoutAmount(SellPaymentInfo paymentInfo) {
   final fee = paymentInfo.ethereumTransactionFeeChf;
-  if (fee == null || fee <= 0) return paymentInfo.estimatedAmount;
+  if (fee == null || fee <= 0 || paymentInfo.currency != Currency.chf) {
+    return paymentInfo.estimatedAmount;
+  }
   return paymentInfo.estimatedAmount - fee;
 }
+
+String _money(double amount) => amount.toStringAsFixed(2);
 
 class SellConfirmSheet extends StatelessWidget {
   final SellPaymentInfo paymentInfo;
@@ -112,12 +118,16 @@ class SellConfirmSheetView extends StatelessWidget {
                                   _infoRow(
                                     label: S.of(context).payQuoteRealuFees,
                                     value:
-                                        '${paymentInfo.ethereumTransactionFeeChf} ${paymentInfo.currency.code}',
+                                        paymentInfo
+                                                .ethereumTransactionFeeRealu !=
+                                            null
+                                        ? '${_money(paymentInfo.ethereumTransactionFeeChf!)} CHF (${paymentInfo.ethereumTransactionFeeRealu} REALU)'
+                                        : '${_money(paymentInfo.ethereumTransactionFeeChf!)} CHF',
                                   ),
                                 _infoRow(
                                   label:
                                       '${S.of(context).amountIn} ${paymentInfo.currency.code}',
-                                  value: '${_payoutChf(paymentInfo)}',
+                                  value: _money(_payoutAmount(paymentInfo)),
                                 ),
                                 _infoRow(
                                   label: S.of(context).receiver,
