@@ -3,11 +3,14 @@ part of 'pay_process_cubit.dart';
 /// Why the pay flow failed. Each reason maps to a localized, user-facing
 /// message in the view — the cubit carries the reason, not the copy.
 enum PayProcessFailureReason {
-  /// Not enough ETH to cover gas and the faucet top-up did not arrive.
+  /// Not used. The relayer pays gas. There is no faucet.
   insufficientEth,
 
   /// The active wallet mode cannot sign transactions (debug wallet).
   signatureUnsupported,
+
+  /// Pay is not offered for this wallet. BitBox has no Pay option.
+  payUnavailable,
 
   /// A BitBox is required but not connected.
   bitboxRequired,
@@ -16,26 +19,24 @@ enum PayProcessFailureReason {
   generic,
 }
 
-/// Why the pay leg failed AFTER the REALU→ZCHF swap already succeeded. The user
-/// holds ZCHF, so recovery must retry the pay leg ONLY (re-quote + sign +
-/// submit) — never the swap. Each reason maps to a localized message.
+/// Why a pay confirm is offered again. This payment does not leave CHF in the
+/// wallet. Retry sends the same delegation again and can sell REALU when the
+/// first confirm did not arrive. Each reason maps to a localized message.
 enum PayRetryReason {
-  /// The OCP quote expired between the swap and the pay step. Re-quoting is
-  /// safe — the swapped ZCHF stays in the wallet.
+  /// The quote expired before it settled. This payment leaves no CHF. Retry
+  /// sends the same delegation again.
   quoteExpired,
 
-  /// A transient/network error while re-fetching the quote or settling. Not a
-  /// genuine expiry; retrying the pay leg is the correct recovery.
+  /// The confirm or the settlement status did not finish. No CHF from this
+  /// payment is in the wallet. Retry sends the same delegation again.
   transient,
 
-  /// The freshly re-fetched settlement amount exceeds the ZCHF acquired by the
-  /// swap (price moved more than the swap headroom buffer). Re-quoting may land
-  /// within the held ZCHF; the leftover ZCHF stays in the wallet meanwhile.
+  /// The proceeds no longer cover the payment. This payment leaves no CHF.
+  /// Retry sends the same delegation again.
   insufficientZchf,
 
-  /// The unsigned tx the backend returned for signing did not match its own security metadata
-  /// (token/recipient/amount/chain) — see [PayUnsignedTxMismatchException]. Never signed. Retrying
-  /// re-fetches AND re-validates a fresh unsigned tx from scratch.
+  /// The signed details did not match the request. Nothing was signed.
+  /// Retry sends the same delegation again.
   unsignedTxMismatch,
 }
 
@@ -84,11 +85,9 @@ class PayProcessSuccess extends PayProcessState {
   const PayProcessSuccess();
 }
 
-/// The swap succeeded (ZCHF is in the wallet) but the pay leg failed. Recoverable
-/// by retrying the pay leg ONLY — the view calls [PayProcessCubit.retryPay],
-/// which re-quotes + signs + submits without ever re-swapping. This is the key
-/// fund-safety state: a failed pay no longer forces a re-scan → re-swap (which
-/// would double-convert REALU).
+/// A pay confirm did not finish. This payment leaves no CHF in the wallet.
+/// [PayProcessCubit.retryPay] sends the same delegation again and can sell
+/// REALU when the first confirm did not arrive.
 class PayProcessPayRetry extends PayProcessState {
   final PayRetryReason reason;
 
