@@ -54,6 +54,55 @@ void main() {
       expect(dto.ethereumTransactionFeeRealu, 0.01234567);
     });
 
+    test('parses an embedded delegation', () {
+      final dto = RealUnitSwapPaymentInfoDto.fromJson({
+        'id': 99,
+        'uid': 'MOCK-UID',
+        'routeId': 7,
+        'timestamp': '2026-06-03T00:00:00.000Z',
+        'amount': 10,
+        'estimatedAmount': 960,
+        'targetAsset': 'ZCHF',
+        'minVolume': 1,
+        'maxVolume': 1000,
+        'minVolumeTarget': 95,
+        'maxVolumeTarget': 95000,
+        'ethBalance': 1.0,
+        'requiredGasEth': 0.001,
+        'isValid': true,
+        'ethereumTransactionFeeChf': 1,
+        'ethereumTransactionFeeRealu': 1,
+        'eip7702': {
+          'relayerAddress': '0xrelay',
+          'delegationManagerAddress': '0xmgr',
+          'delegatorAddress': '0xdr',
+          'userNonce': 7,
+          'domain': {
+            'name': 'RealUnit',
+            'version': '1',
+            'chainId': 1,
+            'verifyingContract': '0xverify',
+          },
+          'types': {
+            'Delegation': <Map<String, dynamic>>[],
+            'Caveat': <Map<String, dynamic>>[],
+          },
+          'message': {
+            'delegate': '0xd',
+            'delegator': '0xdr',
+            'authority': '0xauth',
+            'caveats': <Map<String, dynamic>>[],
+            'salt': 0,
+          },
+          'tokenAddress': '0xtoken',
+          'amountWei': '12345',
+          'depositAddress': '0xdeposit',
+        },
+      });
+
+      expect(dto.eip7702?.relayerAddress, '0xrelay');
+    });
+
     test('requires the network fee in CHF and REALU when isValid is true', () {
       expect(
         () => RealUnitSwapPaymentInfoDto.fromJson({
@@ -203,7 +252,7 @@ void main() {
   });
 
   test('RealUnitOcpPayDto.toJson', () {
-    const dto = RealUnitOcpPayDto(
+    final dto = RealUnitOcpPayDto(
       paymentLinkId: 'pl_abc',
       quoteId: 'q1',
       swapRequestId: 99,
@@ -232,7 +281,7 @@ void main() {
   });
 
   test('RealUnitOcpPaySubmitDto.toJson carries the signed envelope + refs', () {
-    const dto = RealUnitOcpPaySubmitDto(
+    final dto = RealUnitOcpPaySubmitDto(
       unsignedTx: '0xtx',
       r: '0xr',
       s: '0xs',

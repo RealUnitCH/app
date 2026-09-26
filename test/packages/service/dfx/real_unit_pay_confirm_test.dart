@@ -31,8 +31,7 @@ class _MockCacheRepository extends Mock implements CacheRepository {}
 
 class _MockWalletService extends Mock implements WalletService {}
 
-const _testPrivateKeyHex =
-    'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
+const _testPrivateKeyHex = 'fb1ace12f9801e85f3db1b3935dd47d9f064f98152466f47c701b5e12680e612';
 final _privKey = EthPrivateKey.fromHex(_testPrivateKeyHex);
 
 Map<String, dynamic> _delegationJson({
@@ -57,8 +56,7 @@ Map<String, dynamic> _delegationJson({
   'message': {
     'delegate': '0x1111111111111111111111111111111111111111',
     'delegator': delegator ?? _privKey.address.hexEip55.toLowerCase(),
-    'authority':
-        '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+    'authority': '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
     'caveats': <dynamic>[],
     'salt': 1,
   },
@@ -67,17 +65,16 @@ Map<String, dynamic> _delegationJson({
   'depositAddress': '',
 };
 
-SwapPaymentInfo _swap({Eip7702Data? eip7702, double amount = 2}) =>
-    SwapPaymentInfo(
-      id: 99,
-      amount: amount,
-      estimatedAmount: 2.4,
-      targetAsset: 'ZCHF',
-      ethBalance: 0,
-      requiredGasEth: 0.01,
-      isValid: true,
-      eip7702: eip7702,
-    );
+SwapPaymentInfo _swap({Eip7702Data? eip7702, double amount = 2}) => SwapPaymentInfo(
+  id: 99,
+  amount: amount,
+  estimatedAmount: 2.4,
+  targetAsset: 'ZCHF',
+  ethBalance: 0,
+  requiredGasEth: 0.01,
+  isValid: true,
+  eip7702: eip7702,
+);
 
 void main() {
   late _MockAppStore appStore;
@@ -135,11 +132,9 @@ void main() {
     expect(body!['quoteId'], 'quote_xyz');
     expect(body!.containsKey('txHash'), isFalse);
     final delegation =
-        (body!['eip7702'] as Map<String, dynamic>)['delegation']
-            as Map<String, dynamic>;
+        (body!['eip7702'] as Map<String, dynamic>)['delegation'] as Map<String, dynamic>;
     final authorization =
-        (body!['eip7702'] as Map<String, dynamic>)['authorization']
-            as Map<String, dynamic>;
+        (body!['eip7702'] as Map<String, dynamic>)['authorization'] as Map<String, dynamic>;
     expect(delegation['signature'], startsWith('0x'));
     expect(authorization['yParity'], isA<int>());
     verify(() => walletService.lockCurrentWallet()).called(1);
@@ -201,6 +196,44 @@ void main() {
               contains('does not cover'),
             ),
       ),
+    );
+  });
+
+  test('a signing failure is not a submitted sale', () async {
+    when(() => wallet.currentAccount).thenThrow(Exception('locked'));
+    final client = MockClient((_) async => fail('network'));
+
+    await expectLater(
+      confirm(build(client)),
+      throwsA(isA<PayConfirmNotSubmittedException>()),
+    );
+  });
+
+  test('a chain id that is not the RealUnit chain is rejected', () async {
+    final client = MockClient((_) async => fail('network'));
+
+    await expectLater(
+      build(client).confirmOcpPay(
+        swap: _swap(eip7702: Eip7702Data.fromJson(_delegationJson(chainId: 2))),
+        paymentLinkId: 'pl_abc',
+        quoteId: 'quote_xyz',
+      ),
+      throwsA(isA<PayConfirmNotSubmittedException>()),
+    );
+  });
+
+  test('an amount that is not the quoted shares is rejected', () async {
+    final client = MockClient((_) async => fail('network'));
+
+    await expectLater(
+      build(client).confirmOcpPay(
+        swap: _swap(
+          eip7702: Eip7702Data.fromJson(_delegationJson(amountWei: '1')),
+        ),
+        paymentLinkId: 'pl_abc',
+        quoteId: 'quote_xyz',
+      ),
+      throwsA(isA<PayConfirmNotSubmittedException>()),
     );
   });
 

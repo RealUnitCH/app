@@ -363,4 +363,72 @@ void main() {
       async.flushTimers();
     });
   });
+
+  test('a confirm that already left keeps the API message on retry', () async {
+    var calls = 0;
+    when(
+      () => payService.confirmOcpPay(
+        swap: any(named: 'swap'),
+        paymentLinkId: any(named: 'paymentLinkId'),
+        quoteId: any(named: 'quoteId'),
+      ),
+    ).thenAnswer((_) async {
+      calls++;
+      if (calls == 1) {
+        throw const ApiException(code: 'NETWORK', message: 'timeout');
+      }
+      throw const PayConfirmNotSubmittedException(
+        'payout short',
+        apiMessage: 'payout short',
+      );
+    });
+
+    final cubit = build();
+    await cubit.start();
+    await cubit.retryPay();
+
+    final state = cubit.state as PayProcessPayRetry;
+    expect(state.message, 'payout short');
+    await cubit.close();
+  });
+
+  test('polling gives up while the payment stays pending', () {
+    fakeAsync((async) {
+      when(() => payService.getPayStatus(any())).thenAnswer(
+        (_) async => const RealUnitOcpPayStatusDto(status: OcpPaymentStatus.pending),
+      );
+
+      final cubit = build();
+      cubit.start();
+      async.flushMicrotasks();
+      for (var i = 0; i < 40; i++) {
+        async.elapse(const Duration(seconds: 3));
+        async.flushMicrotasks();
+      }
+
+      expect(cubit.state, isA<PayProcessPayRetry>());
+      cubit.close();
+      async.flushTimers();
+    });
+  });
+
+  test('polling gives up when status keeps failing', () {
+    fakeAsync((async) {
+      when(
+        () => payService.getPayStatus(any()),
+      ).thenThrow(Exception('status down'));
+
+      final cubit = build();
+      cubit.start();
+      async.flushMicrotasks();
+      for (var i = 0; i < 40; i++) {
+        async.elapse(const Duration(seconds: 3));
+        async.flushMicrotasks();
+      }
+
+      expect(cubit.state, isA<PayProcessPayRetry>());
+      cubit.close();
+      async.flushTimers();
+    });
+  });
 }

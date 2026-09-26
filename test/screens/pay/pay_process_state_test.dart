@@ -6,6 +6,10 @@ void main() {
     test('progress states with no fields expose empty props and compare by type', () {
       // Reading `.props` directly evaluates the inherited base getter (const
       // canonicalization would otherwise make `==` short-circuit via identical).
+      expect(PayProcessPreparingSwap().props, isEmpty);
+      expect(PayProcessWaitingForEth().props, isEmpty);
+      expect(PayProcessSwapping().props, isEmpty);
+      expect(PayProcessRefreshingQuote().props, isEmpty);
       expect(const PayProcessPreparingSwap().props, isEmpty);
       expect(const PayProcessWaitingForEth().props, isEmpty);
       expect(const PayProcessInitial().props, isEmpty);
