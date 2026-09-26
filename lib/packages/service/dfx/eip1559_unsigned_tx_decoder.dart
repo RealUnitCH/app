@@ -4,7 +4,8 @@
 /// BEFORE signing the pay leg — that the raw ERC20-transfer bytes match the DTO's
 /// accompanying metadata (`tokenAddress`, `recipient`, `amountWei`, `chainId`) and
 /// that gas/fee fields stay within local caps, rather than blindly signing whatever
-/// bytes come back. See `PayProcessCubit._validatePayUnsignedTx`.
+/// bytes come back. The software-wallet pay no longer asks the customer to sign
+/// this transfer; the relayer does.
 ///
 /// Scope is the pay leg only. The earlier REALU→ZCHF swap leg
 /// (`RealUnitSwapUnsignedTransactionDto`) is signed blind today: that DTO carries only
@@ -75,9 +76,7 @@ abstract final class Eip1559UnsignedTxDecoder {
   static const _accessListFieldIndex = 8;
 
   static DecodedEip1559Transaction decode(String rawTransaction) {
-    final hex = rawTransaction.startsWith('0x')
-        ? rawTransaction.substring(2)
-        : rawTransaction;
+    final hex = rawTransaction.startsWith('0x') ? rawTransaction.substring(2) : rawTransaction;
     final Uint8List bytes;
     try {
       bytes = Uint8List.fromList(convert.hex.decode(hex));
