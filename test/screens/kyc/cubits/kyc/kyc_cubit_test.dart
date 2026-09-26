@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_kyc_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
+import 'package:realunit_wallet/packages/service/dfx/exceptions/kyc_unsupported_step_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_level_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_session_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/kyc/dto/kyc_step_dto.dart';
@@ -24,6 +26,9 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_legal_service.dar
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/setup/account_currency_sync.dart';
+import 'package:realunit_wallet/styles/currency.dart';
 
 class _MockDfxKycService extends Mock implements DfxKycService {}
 
@@ -35,15 +40,19 @@ class _MockAppStore extends Mock implements AppStore {}
 
 class _MockAWallet extends Mock implements AWallet {}
 
+class _MockSettingsBloc extends MockBloc<SettingsEvent, SettingsState> implements SettingsBloc {}
+
 UserKycDto _kycHeader({KycLevel level = KycLevel.level0}) =>
     UserKycDto(hash: 'h', level: level, dataComplete: false);
 
 UserDto _user({
   String? mail = 'test@example.com',
   KycLevel headerLevel = KycLevel.level0,
+  Currency? currency,
 }) => UserDto(
   mail: mail,
   kyc: _kycHeader(level: headerLevel),
+  currency: currency,
 );
 
 KycStepDto _step(
@@ -99,11 +108,13 @@ RealUnitRegistrationInfoDto _walletStatus(
   RealUnitUserDataDto? userData,
   bool? emailConfirmed,
   bool? manualReview,
+  String? rejectionMessage,
 }) => RealUnitRegistrationInfoDto(
   state: state,
   realUnitUserDataDto: userData,
   emailConfirmed: emailConfirmed,
   manualReview: manualReview,
+  rejectionMessage: rejectionMessage,
 );
 
 // Single-agreement legal info. `allAccepted:false` leaves the one agreement
@@ -150,9 +161,13 @@ void main() {
   late RealUnitLegalService legalService;
   late AppStore appStore;
   late AWallet wallet;
+  // Everything the cubit hands to the non-fatal reporter. Injected in
+  // `buildCubit` so no test reaches the real crash-reporting sink.
+  late List<Object> reported;
 
   setUpAll(() {
     registerFallbackValue(<RealUnitLegalAgreement>[]);
+    registerFallbackValue(const ApplyAccountCurrencyEvent(Currency.chf));
   });
 
   setUp(() {
@@ -161,6 +176,7 @@ void main() {
     legalService = _MockRealUnitLegalService();
     appStore = _MockAppStore();
     wallet = _MockAWallet();
+    reported = <Object>[];
     when(() => appStore.wallet).thenReturn(wallet);
     // Default: software wallet — most tests don't care about the signing
     // capability gate.
@@ -176,7 +192,13 @@ void main() {
     when(() => legalService.getLegalInfo()).thenAnswer((_) async => _legalInfo());
   });
 
-  KycCubit buildCubit() => KycCubit(kycService, registrationService, legalService, appStore);
+  KycCubit buildCubit() => KycCubit(
+    kycService,
+    registrationService,
+    legalService,
+    appStore,
+    report: reported.add,
+  );
 
   group('$KycCubit checkKyc', () {
     blocTest<KycCubit, KycState>(
@@ -193,6 +215,143 @@ void main() {
         const KycLoading(),
         const KycSuccess(currentStep: KycStep.email),
       ],
+    );
+
+    blocTest<KycCubit, KycState>(
+      'applies account currency from GET /v2/user when a wallet is open',
+      setUp: () {
+        final settings = _MockSettingsBloc();
+        GetIt.instance.registerSingleton<SettingsBloc>(settings);
+        GetIt.instance.registerSingleton(
+          AccountCurrencySync(
+            settings: settings,
+            kyc: kycService,
+            currentWallet: () => wallet,
+          ),
+        );
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(level: KycLevel.level0),
+        );
+        when(() => kycService.getUser()).thenAnswer(
+          (_) async => _user(mail: null, currency: Currency.chf),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycSuccess(currentStep: KycStep.email),
+      ],
+      verify: (_) {
+        verify(
+          () => GetIt.instance<SettingsBloc>().add(const ApplyAccountCurrencyEvent(Currency.chf)),
+        ).called(1);
+      },
+      tearDown: () async => GetIt.instance.reset(),
+    );
+
+    blocTest<KycCubit, KycState>(
+      'does not dispatch ApplyAccountCurrencyEvent when GET /v2/user has no currency',
+      setUp: () {
+        GetIt.instance.registerSingleton<SettingsBloc>(_MockSettingsBloc());
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(level: KycLevel.level0),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user(mail: null));
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycSuccess(currentStep: KycStep.email),
+      ],
+      verify: (_) {
+        verifyNever(() => GetIt.instance<SettingsBloc>().add(any()));
+      },
+      tearDown: () async => GetIt.instance.reset(),
+    );
+
+    blocTest<KycCubit, KycState>(
+      'does not dispatch ApplyAccountCurrencyEvent when the wallet is closed',
+      setUp: () {
+        final settings = _MockSettingsBloc();
+        GetIt.instance.registerSingleton<SettingsBloc>(settings);
+        GetIt.instance.registerSingleton(
+          AccountCurrencySync(
+            settings: settings,
+            kyc: kycService,
+            currentWallet: () => null,
+          ),
+        );
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(level: KycLevel.level0),
+        );
+        when(() => kycService.getUser()).thenAnswer(
+          (_) async => _user(mail: null, currency: Currency.chf),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycSuccess(currentStep: KycStep.email),
+      ],
+      verify: (_) {
+        verifyNever(() => GetIt.instance<SettingsBloc>().add(any()));
+      },
+      tearDown: () async => GetIt.instance.reset(),
+    );
+
+    test('does not dispatch ApplyAccountCurrencyEvent after a different wallet opens', () async {
+      final settings = _MockSettingsBloc();
+      GetIt.instance.registerSingleton<SettingsBloc>(settings);
+      AWallet? current = wallet;
+      GetIt.instance.registerSingleton(
+        AccountCurrencySync(
+          settings: settings,
+          kyc: kycService,
+          currentWallet: () => current,
+        ),
+      );
+      when(() => kycService.getKycStatus()).thenAnswer(
+        (_) async => _kycStatus(level: KycLevel.level0),
+      );
+      final held = Completer<UserDto>();
+      when(() => kycService.getUser()).thenAnswer((_) => held.future);
+
+      final cubit = buildCubit();
+      final pending = cubit.checkKyc();
+
+      current = _MockAWallet();
+      held.complete(_user(mail: null, currency: Currency.chf));
+      await pending;
+
+      verifyNever(() => settings.add(any()));
+      await cubit.close();
+      await GetIt.instance.reset();
+    });
+
+    blocTest<KycCubit, KycState>(
+      'does not dispatch ApplyAccountCurrencyEvent when AccountCurrencySync is unregistered',
+      setUp: () {
+        GetIt.instance.registerSingleton<SettingsBloc>(_MockSettingsBloc());
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(level: KycLevel.level0),
+        );
+        when(() => kycService.getUser()).thenAnswer(
+          (_) async => _user(mail: null, currency: Currency.chf),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycSuccess(currentStep: KycStep.email),
+      ],
+      verify: (_) {
+        verifyNever(() => GetIt.instance<SettingsBloc>().add(any()));
+      },
+      tearDown: () async => GetIt.instance.reset(),
     );
 
     blocTest<KycCubit, KycState>(
@@ -567,6 +726,36 @@ void main() {
       ],
     );
 
+    blocTest<KycCubit, KycState>(
+      'emits KycManualReview with the company sentence when info carries rejectionMessage',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => registrationService.getRegistrationInfo()).thenAnswer(
+          (_) async => _walletStatus(
+            RealUnitRegistrationState.alreadyRegistered,
+            manualReview: true,
+            rejectionMessage:
+                'Please enter your full name (first and last name).',
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycManualReview(
+          rejectionMessage:
+              'Please enter your full name (first and last name).',
+        ),
+      ],
+    );
+
     // Manual review takes precedence over the e-mail gate: even with
     // `emailConfirmed == false`, an explicit `manualReview == true` parks the
     // user on the review screen rather than routing to the confirm step.
@@ -836,6 +1025,10 @@ void main() {
         const KycLoading(),
         const KycUnsupportedStepFailure(KycStepName.additionalDocuments),
       ],
+      verify: (_) => expect(
+        reported.map((e) => (e as KycUnsupportedStepException).stepName),
+        [KycStepName.additionalDocuments],
+      ),
     );
 
     // Registration normally satisfies PersonalData without the user seeing it. It re-opens when
@@ -973,6 +1166,10 @@ void main() {
         const KycLoading(),
         const KycUnsupportedStepFailure(null),
       ],
+      verify: (_) => expect(
+        reported.map((e) => (e as KycUnsupportedStepException).stepName),
+        [null],
+      ),
     );
 
     blocTest<KycCubit, KycState>(
@@ -1180,7 +1377,7 @@ void main() {
 
         // Server reports all agreements accepted (default stub), so the
         // disclaimer gate passes and both runs reach the completed state.
-        final cubit = KycCubit(kycService, registrationService, legalService, appStore);
+        final cubit = buildCubit();
 
         final states = <KycState>[];
         final sub = cubit.stream.listen(states.add);
@@ -1313,6 +1510,115 @@ void main() {
         const KycLoading(),
         const KycCompleted(),
       ],
+    );
+
+    blocTest<KycCubit, KycState>(
+      'an empty context is treated as absent — the stored context is kept',
+      setUp: () {
+        when(() => kycService.getKycStatus(context: 'RealunitBuy')).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.completed,
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+      },
+      build: buildCubit,
+      act: (cubit) async {
+        await cubit.checkKyc(context: 'RealunitBuy');
+        // An API-supplied empty string must not overwrite a real context.
+        await cubit.checkKyc(context: '');
+      },
+      verify: (_) {
+        verify(() => kycService.getKycStatus(context: 'RealunitBuy')).called(2);
+      },
+      expect: () => [
+        const KycLoading(),
+        const KycCompleted(),
+        const KycLoading(),
+        const KycCompleted(),
+      ],
+    );
+  });
+
+  // The handoff screen alone leaves the gap silent: every call in the flow
+  // returned 200, so nothing tells us which step name `_mapStepName` is missing
+  // until a user writes in. Each route into the handoff must therefore also
+  // report the step it could not render.
+  group('$KycCubit unsupported-step reporting', () {
+    blocTest<KycCubit, KycState>(
+      'reports the step name when the continued session asks for an unmapped step',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(level: KycLevel.level30),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => kycService.continueKyc()).thenAnswer(
+          (_) async => _session(
+            level: KycLevel.level30,
+            steps: const [],
+            currentStep: _currentStep(KycStepName.residencePermit),
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycUnsupportedStepFailure(KycStepName.residencePermit),
+      ],
+      verify: (_) {
+        expect(reported, hasLength(1));
+        final error = reported.single as KycUnsupportedStepException;
+        expect(error.stepName, KycStepName.residencePermit);
+        // The wire identifier has to be in the rendered event, otherwise the
+        // report cannot say which mapping entry is missing.
+        expect(error.toString(), contains(KycStepName.residencePermit.value));
+      },
+    );
+
+    blocTest<KycCubit, KycState>(
+      'reports a null step when PendingReview names no required step',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(
+            level: KycLevel.level50,
+            processStatus: KycProcessStatus.pendingReview,
+            steps: [_step(KycStepName.ident, status: KycStepStatus.completed)],
+          ),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      expect: () => [
+        const KycLoading(),
+        const KycUnsupportedStepFailure(null),
+      ],
+      verify: (_) {
+        expect(reported, hasLength(1));
+        expect((reported.single as KycUnsupportedStepException).stepName, isNull);
+      },
+    );
+
+    blocTest<KycCubit, KycState>(
+      'reports nothing when every step the API asks for is mapped',
+      setUp: () {
+        when(() => kycService.getKycStatus()).thenAnswer(
+          (_) async => _kycStatus(level: KycLevel.level30),
+        );
+        when(() => kycService.getUser()).thenAnswer((_) async => _user());
+        when(() => kycService.continueKyc()).thenAnswer(
+          (_) async => _session(
+            level: KycLevel.level30,
+            steps: const [],
+            currentStep: _currentStep(KycStepName.ident),
+          ),
+        );
+      },
+      build: buildCubit,
+      act: (cubit) => cubit.checkKyc(),
+      verify: (_) => expect(reported, isEmpty),
     );
   });
 

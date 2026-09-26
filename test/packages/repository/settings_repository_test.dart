@@ -66,11 +66,12 @@ void main() {
     });
 
     group('currency', () {
-      test('defaults to CHF when no value is stored', () async {
+      test('defaults to EUR when nothing is stored', () async {
         SharedPreferences.setMockInitialValues({});
         final repo = SettingsRepository(await SharedPreferences.getInstance());
 
-        expect(repo.currency, 'CHF');
+        expect(repo.currency, 'EUR');
+        expect(repo.hasStoredCurrency, isFalse);
       });
 
       test('returns the stored currency when set', () async {
@@ -78,6 +79,7 @@ void main() {
         final repo = SettingsRepository(await SharedPreferences.getInstance());
 
         expect(repo.currency, 'EUR');
+        expect(repo.hasStoredCurrency, isTrue);
       });
 
       test('currency setter persists', () async {
@@ -145,6 +147,216 @@ void main() {
         await Future<void>.delayed(Duration.zero);
 
         expect(repo.insiderFeaturesUnlocked, isTrue);
+      });
+    });
+
+    group('wallet feature flags', () {
+      test('default to false', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.walletFeaturePay, isFalse);
+        expect(repo.walletFeatureSend, isFalse);
+        expect(repo.walletFeaturePromoCode, isFalse);
+        expect(repo.walletFeatureReferral, isFalse);
+      });
+
+      test('persist true', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        repo.walletFeaturePay = true;
+        repo.walletFeatureSend = true;
+        repo.walletFeaturePromoCode = true;
+        repo.walletFeatureReferral = true;
+        await Future<void>.delayed(Duration.zero);
+
+        expect(repo.walletFeaturePay, isTrue);
+        expect(repo.walletFeatureSend, isTrue);
+        expect(repo.walletFeaturePromoCode, isTrue);
+        expect(repo.walletFeatureReferral, isTrue);
+      });
+
+      test('ignore false over true', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        repo.walletFeaturePay = true;
+        repo.walletFeatureSend = true;
+        repo.walletFeaturePromoCode = true;
+        repo.walletFeatureReferral = true;
+        await Future<void>.delayed(Duration.zero);
+
+        repo.walletFeaturePay = false;
+        repo.walletFeatureSend = false;
+        repo.walletFeaturePromoCode = false;
+        repo.walletFeatureReferral = false;
+        await Future<void>.delayed(Duration.zero);
+
+        expect(repo.walletFeaturePay, isTrue);
+        expect(repo.walletFeatureSend, isTrue);
+        expect(repo.walletFeaturePromoCode, isTrue);
+        expect(repo.walletFeatureReferral, isTrue);
+      });
+
+      test('migrates old insider unlock to pay only', () async {
+        SharedPreferences.setMockInitialValues({'insiderFeaturesUnlocked': true});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.insiderFeaturesUnlocked, isTrue);
+        expect(repo.walletFeaturePay, isTrue);
+        expect(repo.walletFeatureSend, isFalse);
+        expect(repo.walletFeaturePromoCode, isFalse);
+        expect(repo.walletFeatureReferral, isFalse);
+      });
+
+      test('migrates old insiderPayEnabled to walletFeaturePay', () async {
+        SharedPreferences.setMockInitialValues({'insiderPayEnabled': true});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.walletFeaturePay, isTrue);
+        expect(repo.walletFeatureSend, isFalse);
+      });
+
+      test('migrates old insiderSendEnabled to walletFeatureSend', () async {
+        SharedPreferences.setMockInitialValues({'insiderSendEnabled': true});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.walletFeatureSend, isTrue);
+        expect(repo.walletFeaturePay, isFalse);
+      });
+
+      test('migrates old insiderReferralEnabled to walletFeatureReferral', () async {
+        SharedPreferences.setMockInitialValues({'insiderReferralEnabled': true});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.walletFeatureReferral, isTrue);
+        expect(repo.walletFeaturePromoCode, isFalse);
+      });
+
+      test('migrates old insiderBonusEnabled to walletFeaturePromoCode', () async {
+        SharedPreferences.setMockInitialValues({'insiderBonusEnabled': true});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.walletFeaturePromoCode, isTrue);
+        expect(repo.walletFeatureReferral, isFalse);
+      });
+
+      test('user off persists across a new repository', () async {
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        final repo = SettingsRepository(prefs);
+
+        repo.walletFeaturePay = true;
+        repo.walletFeatureSend = true;
+        repo.walletFeaturePromoCode = true;
+        repo.walletFeatureReferral = true;
+        await Future<void>.delayed(Duration.zero);
+
+        repo.setWalletFeaturePayFromUser(false);
+        repo.setWalletFeatureSendFromUser(false);
+        repo.setWalletFeaturePromoCodeFromUser(false);
+        repo.setWalletFeatureReferralFromUser(false);
+        await Future<void>.delayed(Duration.zero);
+
+        final reloaded = SettingsRepository(prefs);
+        expect(reloaded.walletFeaturePay, isFalse);
+        expect(reloaded.walletFeatureSend, isFalse);
+        expect(reloaded.walletFeaturePromoCode, isFalse);
+        expect(reloaded.walletFeatureReferral, isFalse);
+
+        reloaded.walletFeaturePay = true;
+        reloaded.walletFeatureSend = true;
+        reloaded.walletFeaturePromoCode = true;
+        reloaded.walletFeatureReferral = true;
+        await Future<void>.delayed(Duration.zero);
+
+        expect(reloaded.walletFeaturePay, isFalse);
+        expect(reloaded.walletFeatureSend, isFalse);
+        expect(reloaded.walletFeaturePromoCode, isFalse);
+        expect(reloaded.walletFeatureReferral, isFalse);
+      });
+
+      test('user on clears the user-off so the latch works again', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        repo.setWalletFeaturePayFromUser(false);
+        repo.setWalletFeatureSendFromUser(false);
+        repo.setWalletFeaturePromoCodeFromUser(false);
+        repo.setWalletFeatureReferralFromUser(false);
+        repo.setWalletFeaturePayFromUser(true);
+        repo.setWalletFeatureSendFromUser(true);
+        repo.setWalletFeaturePromoCodeFromUser(true);
+        repo.setWalletFeatureReferralFromUser(true);
+        await Future<void>.delayed(Duration.zero);
+
+        repo.walletFeaturePay = false;
+        repo.walletFeatureSend = false;
+        repo.walletFeaturePromoCode = false;
+        repo.walletFeatureReferral = false;
+        await Future<void>.delayed(Duration.zero);
+
+        expect(repo.walletFeaturePay, isTrue);
+        expect(repo.walletFeatureSend, isTrue);
+        expect(repo.walletFeaturePromoCode, isTrue);
+        expect(repo.walletFeatureReferral, isTrue);
+      });
+
+      test('stored false is not revived by an old insider key or by unlock', () async {
+        SharedPreferences.setMockInitialValues({
+          'walletFeaturePay': false,
+          'insiderFeaturesUnlocked': true,
+          'insiderPayEnabled': true,
+          'walletFeatureSend': false,
+          'insiderSendEnabled': true,
+        });
+        final prefs = await SharedPreferences.getInstance();
+        final repo = SettingsRepository(prefs);
+
+        expect(repo.walletFeaturePay, isFalse);
+        expect(prefs.getBool('insiderPayEnabled'), isNull);
+        expect(repo.walletFeatureSend, isFalse);
+        expect(prefs.getBool('insiderSendEnabled'), isNull);
+      });
+    });
+
+    group('dismissedClientPolicyLatest', () {
+      test('returns null when no value is stored', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.dismissedClientPolicyLatest, isNull);
+      });
+
+      test('setter persists', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        repo.dismissedClientPolicyLatest = '1.4.0';
+        await Future<void>.delayed(Duration.zero);
+
+        expect(repo.dismissedClientPolicyLatest, '1.4.0');
+      });
+
+      test('empty or null setter removes', () async {
+        SharedPreferences.setMockInitialValues({
+          'dismissedClientPolicyLatest': '1.4.0',
+        });
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+        expect(repo.dismissedClientPolicyLatest, '1.4.0');
+
+        repo.dismissedClientPolicyLatest = '';
+        await Future<void>.delayed(Duration.zero);
+        expect(repo.dismissedClientPolicyLatest, isNull);
+
+        repo.dismissedClientPolicyLatest = '1.4.0';
+        await Future<void>.delayed(Duration.zero);
+        expect(repo.dismissedClientPolicyLatest, '1.4.0');
+
+        repo.dismissedClientPolicyLatest = null;
+        await Future<void>.delayed(Duration.zero);
+        expect(repo.dismissedClientPolicyLatest, isNull);
       });
     });
 

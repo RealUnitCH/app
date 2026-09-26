@@ -18,6 +18,7 @@ LnurlpPaymentDto _details({
   bool withEthZchf = true,
   double zchf = 2.0,
   LnurlpRecipientDto? recipient,
+  String? displayName,
 }) {
   return LnurlpPaymentDto(
     requestedAmount: const LnurlpRequestedAmountDto(asset: 'CHF', amount: 2),
@@ -35,6 +36,7 @@ LnurlpPaymentDto _details({
         ),
     ],
     recipient: recipient,
+    displayName: displayName,
   );
 }
 
@@ -42,6 +44,10 @@ SwapPaymentInfo _swap({
   double amount = 5,
   double estimatedAmount = 1.98,
   double? feesTotal = 0.02,
+  bool isValid = true,
+  String? error,
+  double? ethereumTransactionFeeChf = 0.05,
+  double? ethereumTransactionFeeRealu = 0.01234567,
 }) {
   return SwapPaymentInfo(
     id: 99,
@@ -50,8 +56,11 @@ SwapPaymentInfo _swap({
     targetAsset: 'ZCHF',
     ethBalance: 1.0,
     requiredGasEth: 0.001,
-    isValid: true,
+    isValid: isValid,
+    error: error,
     feesTotal: feesTotal,
+    ethereumTransactionFeeChf: isValid ? ethereumTransactionFeeChf : null,
+    ethereumTransactionFeeRealu: isValid ? ethereumTransactionFeeRealu : null,
   );
 }
 
@@ -85,9 +94,10 @@ void main() {
       expect(state.fiatAsset, 'CHF');
       expect(state.fiatAmount, 2);
       expect(state.zchfAmount, 2.0);
-      expect(state.realuAmount, 5);
-      expect(state.realuEstimatedZchf, 1.98);
-      expect(state.realuFeesTotal, 0.02);
+      expect(state.swap.amount, 5);
+      expect(state.swap.estimatedAmount, 1.98);
+      expect(state.swap.ethereumTransactionFeeChf, 0.05);
+      expect(state.swap.ethereumTransactionFeeRealu, 0.01234567);
       expect(state.merchantName, isNull);
       expect(state.merchantCity, isNull);
     },
@@ -111,6 +121,27 @@ void main() {
       final state = cubit.state as PayQuoteReady;
       expect(state.merchantName, 'Café Zürich');
       expect(state.merchantCity, 'Zürich');
+      expect(state.expiresAt, isA<DateTime>());
+    },
+  );
+
+  blocTest<PayQuoteCubit, PayQuoteState>(
+    'a quote without a recipient name uses the payment link display name',
+    build: build,
+    setUp: () {
+      when(() => payService.getPaymentDetails('pl_realunit_ocp_sepolia')).thenAnswer(
+        (_) async => _details(
+          expiration: DateTime.now().add(const Duration(minutes: 5)),
+          displayName: 'Bäckerei Müller',
+        ),
+      );
+      when(() => payService.getSwapPaymentInfo(any())).thenAnswer((_) async => _swap());
+    },
+    act: (cubit) => cubit.load(),
+    expect: () => [isA<PayQuoteLoading>(), isA<PayQuoteReady>()],
+    verify: (cubit) {
+      final state = cubit.state as PayQuoteReady;
+      expect(state.merchantName, 'Bäckerei Müller');
     },
   );
 
@@ -139,6 +170,50 @@ void main() {
     },
     act: (cubit) => cubit.load(),
     expect: () => [isA<PayQuoteLoading>(), isA<PayQuoteUnavailable>()],
+  );
+
+  blocTest<PayQuoteCubit, PayQuoteState>(
+    'an invalid swap quote with AmountTooLow emits PayQuoteError and not Ready',
+    build: build,
+    setUp: () {
+      when(() => payService.getPaymentDetails('pl_realunit_ocp_sepolia')).thenAnswer(
+        (_) async => _details(expiration: DateTime.now().add(const Duration(minutes: 5))),
+      );
+      when(() => payService.getSwapPaymentInfo(any())).thenAnswer(
+        (_) async => _swap(isValid: false, error: 'AmountTooLow', amount: 0),
+      );
+    },
+    act: (cubit) => cubit.load(),
+    expect: () => [
+      isA<PayQuoteLoading>(),
+      const PayQuoteError('AmountTooLow'),
+    ],
+    verify: (cubit) {
+      expect(cubit.state, isA<PayQuoteError>());
+      expect(cubit.state, isNot(isA<PayQuoteReady>()));
+      expect((cubit.state as PayQuoteError).message, 'AmountTooLow');
+    },
+  );
+
+  blocTest<PayQuoteCubit, PayQuoteState>(
+    'an invalid swap quote with KycRequired emits that API error 1:1',
+    build: build,
+    setUp: () {
+      when(() => payService.getPaymentDetails('pl_realunit_ocp_sepolia')).thenAnswer(
+        (_) async => _details(expiration: DateTime.now().add(const Duration(minutes: 5))),
+      );
+      when(() => payService.getSwapPaymentInfo(any())).thenAnswer(
+        (_) async => _swap(isValid: false, error: 'KycRequired'),
+      );
+    },
+    act: (cubit) => cubit.load(),
+    expect: () => [
+      isA<PayQuoteLoading>(),
+      const PayQuoteError('KycRequired'),
+    ],
+    verify: (cubit) {
+      expect(cubit.state, isNot(isA<PayQuoteReady>()));
+    },
   );
 
   blocTest<PayQuoteCubit, PayQuoteState>(

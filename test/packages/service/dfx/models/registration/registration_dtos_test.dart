@@ -165,6 +165,53 @@ void main() {
       final dto = RealUnitRegistrationResponseDto.fromJson({'status': 'completed'});
 
       expect(dto.status, RegistrationStatus.completed);
+      expect(dto.rejectionMessage, isNull);
+    });
+
+    test('parses rejectionMessage when present', () {
+      final dto = RealUnitRegistrationResponseDto.fromJson({
+        'status': 'forwarding_failed',
+        'rejectionMessage':
+            'Please enter your full name (first and last name).',
+      });
+
+      expect(dto.status, RegistrationStatus.forwardingFailed);
+      expect(
+        dto.rejectionMessage,
+        'Please enter your full name (first and last name).',
+      );
+    });
+
+    test('rejectionMessage absent → null', () {
+      final dto = RealUnitRegistrationResponseDto.fromJson({
+        'status': 'forwarding_failed',
+      });
+
+      expect(dto.rejectionMessage, isNull);
+    });
+
+    test('rejectionMessage JSON null or blank → null', () {
+      expect(
+        RealUnitRegistrationResponseDto.fromJson({
+          'status': 'forwarding_failed',
+          'rejectionMessage': null,
+        }).rejectionMessage,
+        isNull,
+      );
+      expect(
+        RealUnitRegistrationResponseDto.fromJson({
+          'status': 'forwarding_failed',
+          'rejectionMessage': '',
+        }).rejectionMessage,
+        isNull,
+      );
+      expect(
+        RealUnitRegistrationResponseDto.fromJson({
+          'status': 'forwarding_failed',
+          'rejectionMessage': '   ',
+        }).rejectionMessage,
+        isNull,
+      );
     });
 
     test('propagates the exception on an unknown status', () {

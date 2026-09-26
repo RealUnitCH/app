@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/hardware_wallet/bitbox.dart';
+import 'package:realunit_wallet/packages/io/install_referrer_adapter.dart';
 import 'package:realunit_wallet/packages/repository/asset_repository.dart';
 import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
@@ -30,12 +31,15 @@ import 'package:realunit_wallet/packages/service/dfx/dfx_support_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/dfx_widget_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_account_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_buy_payment_info_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_client_policy_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_legal_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pdf_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_referral_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_registration_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_transfer_service.dart';
+import 'package:realunit_wallet/packages/service/dfx/real_unit_wallet_features_service.dart';
 import 'package:realunit_wallet/packages/service/session_cache.dart';
 import 'package:realunit_wallet/packages/service/settings_service.dart';
 import 'package:realunit_wallet/packages/service/transaction_history_service.dart';
@@ -45,7 +49,10 @@ import 'package:realunit_wallet/packages/storage/secure_storage.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit.dart';
+import 'package:realunit_wallet/setup/account_currency_sync.dart';
 import 'package:realunit_wallet/setup/database.dart';
+import 'package:realunit_wallet/setup/routing/capture_install_referrer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
@@ -94,6 +101,11 @@ Future<String> setupEssentials({
 }
 
 Future<void> finishSetup(String encryptionKey) async {
+  await captureInstallReferrer(
+    prefs: getIt<SharedPreferences>(),
+    port: const InstallReferrerAdapter(),
+  );
+
   getIt.registerSingleton(AppDatabase(encryptionKey));
   setupRepositories();
 
@@ -203,6 +215,9 @@ void setupServices() {
     () => RealUnitLegalService(getIt<AppStore>(), getIt<WalletService>()),
   );
   getIt.registerFactory(
+    () => RealUnitReferralService(getIt<AppStore>(), getIt<WalletService>()),
+  );
+  getIt.registerFactory(
     () => RealUnitPayService(getIt<AppStore>(), getIt<WalletService>()),
   );
   getIt.registerFactory(
@@ -217,10 +232,12 @@ void setupServices() {
   getIt.registerFactory(
     () => RealUnitTransferService(getIt<AppStore>(), getIt<WalletService>()),
   );
+  getIt.registerFactory(() => RealUnitWalletFeaturesService(getIt<AppStore>()));
   getIt.registerFactory(() => SettingsService(getIt<SettingsRepository>()));
   getIt.registerFactory(
     () => DebugAuthService(getIt<AppStore>(), getIt<SharedPreferences>()),
   );
+  getIt.registerSingleton(RealUnitClientPolicyService(getIt<AppStore>()));
 }
 
 Future<void> setupBlocs() async {
@@ -234,6 +251,7 @@ Future<void> setupBlocs() async {
         getIt<DfxFiatService>().invalidateCache();
         getIt<DfxLanguageService>().invalidateCache();
       },
+      fetchWalletFeatures: () => getIt<RealUnitWalletFeaturesService>().get(),
     ),
   );
   getIt.registerSingleton(
@@ -246,10 +264,27 @@ Future<void> setupBlocs() async {
       getIt<BitboxService>(),
     ),
   );
+  getIt.registerSingleton(
+    AccountCurrencySync(
+      settings: getIt<SettingsBloc>(),
+      kyc: getIt<DfxKycService>(),
+      currentWallet: () => getIt<HomeBloc>().state.openWallet,
+    ),
+  );
 
   final pinAuthCubit = PinAuthCubit(getIt<SecureStorage>());
   await pinAuthCubit.initialize();
   getIt.registerSingleton(pinAuthCubit);
+
+  final clientPolicyCubit = ClientPolicyCubit(
+    getIt<RealUnitClientPolicyService>(),
+    getIt<CacheRepository>(),
+    getIt<SettingsRepository>(),
+  );
+  getIt.registerSingleton(clientPolicyCubit);
+  getIt<AppStore>().httpClient.onUpgradeRequired =
+      clientPolicyCubit.reportUpgradeRequired;
+  await clientPolicyCubit.initialize();
 }
 
 Future<bool> _existsDatabaseFile() async => File(await AppDatabase.getDatabasePath()).exists();

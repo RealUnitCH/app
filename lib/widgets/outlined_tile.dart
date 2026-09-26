@@ -7,6 +7,7 @@ class OutlinedTile extends StatelessWidget {
   final String? subtitle;
   final VoidCallback? onTap;
   final IconData? trailingIcon;
+  final Widget? trailing;
 
   const OutlinedTile({
     super.key,
@@ -15,10 +16,70 @@ class OutlinedTile extends StatelessWidget {
     this.subtitle,
     this.onTap,
     this.trailingIcon,
+    this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
+    final titleColumn = Expanded(
+      child: Column(
+        spacing: 4.0,
+        crossAxisAlignment: .start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w500,
+              color: RealUnitColors.neutral900,
+            ),
+          ),
+          if (subtitle != null)
+            Text(
+              subtitle!,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: RealUnitColors.neutral500,
+              ),
+            ),
+        ],
+      ),
+    );
+
+    if (trailing != null) {
+      return Container(
+        width: .infinity,
+        padding: const .all(16),
+        decoration: BoxDecoration(
+          border: .all(color: RealUnitColors.neutral200),
+          borderRadius: .circular(12),
+        ),
+        child: Row(
+          crossAxisAlignment: subtitle != null
+              ? CrossAxisAlignment.start
+              : CrossAxisAlignment.center,
+          spacing: 12.0,
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: .circular(12),
+                child: Row(
+                  crossAxisAlignment: subtitle != null
+                      ? CrossAxisAlignment.start
+                      : CrossAxisAlignment.center,
+                  spacing: 12.0,
+                  children: [
+                    leading,
+                    titleColumn,
+                  ],
+                ),
+              ),
+            ),
+            trailing!,
+          ],
+        ),
+      );
+    }
+
     return InkWell(
       onTap: onTap,
       borderRadius: .circular(12),
@@ -36,28 +97,7 @@ class OutlinedTile extends StatelessWidget {
           spacing: 12.0,
           children: [
             leading,
-            Expanded(
-              child: Column(
-                spacing: 4.0,
-                crossAxisAlignment: .start,
-                children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: RealUnitColors.neutral900,
-                    ),
-                  ),
-                  if (subtitle != null)
-                    Text(
-                      subtitle!,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: RealUnitColors.neutral500,
-                      ),
-                    ),
-                ],
-              ),
-            ),
+            titleColumn,
             if (onTap != null) Icon(trailingIcon, color: RealUnitColors.neutral400),
           ],
         ),

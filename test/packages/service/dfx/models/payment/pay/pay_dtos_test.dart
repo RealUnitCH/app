@@ -38,6 +38,8 @@ void main() {
         'ethBalance': 1.0,
         'requiredGasEth': 0.001,
         'isValid': true,
+        'ethereumTransactionFeeChf': 0.05,
+        'ethereumTransactionFeeRealu': 0.01234567,
       });
 
       expect(dto.id, 99);
@@ -49,6 +51,30 @@ void main() {
       expect(dto.isValid, isTrue);
       expect(dto.error, isNull);
       expect(dto.fees?.total, 1.5);
+      expect(dto.ethereumTransactionFeeChf, 0.05);
+      expect(dto.ethereumTransactionFeeRealu, 0.01234567);
+    });
+
+    test('requires ethereum transaction fees when isValid is true', () {
+      expect(
+        () => RealUnitSwapPaymentInfoDto.fromJson({
+          'id': 99,
+          'uid': 'MOCK-UID',
+          'routeId': 7,
+          'timestamp': '2026-06-03T00:00:00.000Z',
+          'amount': 10,
+          'estimatedAmount': 960,
+          'targetAsset': 'ZCHF',
+          'minVolume': 1,
+          'maxVolume': 1000,
+          'minVolumeTarget': 95,
+          'maxVolumeTarget': 95000,
+          'ethBalance': 1.0,
+          'requiredGasEth': 0.001,
+          'isValid': true,
+        }),
+        throwsA(isA<FormatException>()),
+      );
     });
 
     test('maps the error code when isValid is false', () {
@@ -73,6 +99,8 @@ void main() {
       expect(dto.isValid, isFalse);
       expect(dto.error, 'LIMIT_EXCEEDED');
       expect(dto.fees, isNull);
+      expect(dto.ethereumTransactionFeeChf, isNull);
+      expect(dto.ethereumTransactionFeeRealu, isNull);
     });
   });
 
@@ -92,6 +120,8 @@ void main() {
       'ethBalance': 0.4,
       'requiredGasEth': 0.002,
       'isValid': true,
+      'ethereumTransactionFeeChf': 0.05,
+      'ethereumTransactionFeeRealu': 0.01234567,
     });
 
     final info = SwapPaymentInfo.fromDto(dto);
@@ -102,6 +132,8 @@ void main() {
     expect(info.requiredGasEth, 0.002);
     expect(info.isValid, isTrue);
     expect(info.feesTotal, isNull);
+    expect(info.ethereumTransactionFeeChf, 0.05);
+    expect(info.ethereumTransactionFeeRealu, 0.01234567);
   });
 
   test('SwapPaymentInfo.fromDto carries fees.total as feesTotal', () {
@@ -121,11 +153,15 @@ void main() {
       'ethBalance': 1.0,
       'requiredGasEth': 0.001,
       'isValid': true,
+      'ethereumTransactionFeeChf': 0.05,
+      'ethereumTransactionFeeRealu': 0.01234567,
     });
 
     final info = SwapPaymentInfo.fromDto(dto);
 
     expect(info.feesTotal, 3.25);
+    expect(info.ethereumTransactionFeeChf, 0.05);
+    expect(info.ethereumTransactionFeeRealu, 0.01234567);
   });
 
   test('SwapPaymentInfo equality is value-based (Equatable props)', () {
@@ -168,8 +204,16 @@ void main() {
   });
 
   test('RealUnitOcpPayDto.toJson', () {
-    const dto = RealUnitOcpPayDto(paymentLinkId: 'pl_abc', quoteId: 'q1');
-    expect(dto.toJson(), {'paymentLinkId': 'pl_abc', 'quoteId': 'q1'});
+    const dto = RealUnitOcpPayDto(
+      paymentLinkId: 'pl_abc',
+      quoteId: 'q1',
+      swapRequestId: 99,
+    );
+    expect(dto.toJson(), {
+      'paymentLinkId': 'pl_abc',
+      'quoteId': 'q1',
+      'swapRequestId': 99,
+    });
   });
 
   test('RealUnitOcpPayUnsignedTransactionDto.fromJson', () {
@@ -196,6 +240,7 @@ void main() {
       v: 27,
       paymentLinkId: 'pl_abc',
       quoteId: 'q1',
+      swapRequestId: 99,
     );
 
     expect(dto.toJson(), {
@@ -205,6 +250,7 @@ void main() {
       'v': 27,
       'paymentLinkId': 'pl_abc',
       'quoteId': 'q1',
+      'swapRequestId': 99,
     });
   });
 
@@ -468,6 +514,7 @@ void main() {
       // String; reading the quote must not throw on it. Only name+city are
       // mapped; other nested address fields are intentionally left unmapped.
       final dto = LnurlpPaymentDto.fromJson({
+        'displayName': 'Acme Kasse',
         'recipient': {
           'name': 'Acme GmbH',
           'address': {'street': 'Bahnhofstrasse', 'houseNumber': '1', 'city': 'Zürich'},
@@ -488,6 +535,7 @@ void main() {
       expect(dto.transferAmounts.first.assets.first.amount, 42.7);
       expect(dto.recipient?.name, 'Acme GmbH');
       expect(dto.recipient?.city, 'Zürich');
+      expect(dto.displayName, 'Acme Kasse');
     });
   });
 }

@@ -18,6 +18,7 @@ void main() {
     0,
     '',
     '',
+    '',
     DateTime.utc(2025, 1, 1),
   );
 
@@ -64,6 +65,15 @@ void main() {
 
     test('getDfxTransactionDetails returns null for an unknown txId', () async {
       expect(await db.getDfxTransactionDetails('nope'), isNull);
+    });
+
+    test('deleteDfxTransactionDetailsIgnoreCase drops mixed-case hashes', () async {
+      await seedTx('0xAbC');
+      await db.insertDfxTransactionDetails(txId: '0xAbC', dfxId: 7, rate: '1.38');
+
+      expect(await db.deleteDfxTransactionDetailsIgnoreCase('0xabc'), 1);
+      expect(await db.getDfxTransactionDetails('0xAbC'), isNull);
+      expect(await db.deleteDfxTransactionDetailsIgnoreCase('0xabc'), 0);
     });
 
     test('getDfxTransactionDetailsByDfxId looks up by the DFX id', () async {

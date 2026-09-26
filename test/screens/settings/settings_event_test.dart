@@ -94,6 +94,33 @@ void main() {
     });
   });
 
+  group('SetInsiderFeatureEnabledEvent', () {
+    test('same feature and enabled are equal and share hashCode', () {
+      const a = SetInsiderFeatureEnabledEvent(InsiderFeature.pay, true);
+      const b = SetInsiderFeatureEnabledEvent(InsiderFeature.pay, true);
+
+      expect(a, equals(b));
+      expect(a.hashCode, b.hashCode);
+      expect(a.props, [InsiderFeature.pay, true]);
+    });
+
+    test('different enabled values are not equal', () {
+      const a = SetInsiderFeatureEnabledEvent(InsiderFeature.pay, true);
+      const b = SetInsiderFeatureEnabledEvent(InsiderFeature.pay, false);
+
+      expect(a, isNot(equals(b)));
+      expect(a.props, isNot(equals(b.props)));
+    });
+
+    test('different features are not equal', () {
+      const a = SetInsiderFeatureEnabledEvent(InsiderFeature.pay, true);
+      const b = SetInsiderFeatureEnabledEvent(InsiderFeature.send, true);
+
+      expect(a, isNot(equals(b)));
+      expect(a.props, isNot(equals(b.props)));
+    });
+  });
+
   group('SettingsEvent (cross-subclass identity)', () {
     test('different subclasses are not equal even when props happen to match', () {
       // Two payload-less events from different subclasses must still compare
@@ -118,18 +145,24 @@ void main() {
       final net = SetNetworkModeEvent(NetworkMode.mainnet);
       final toggle = ToggleHideAmountEvent();
       final unlock = UnlockInsiderFeaturesEvent();
+      final feature = SetInsiderFeatureEnabledEvent(InsiderFeature.pay, true);
 
       expect(lang, equals(const SetLanguageEvent(Language.de)));
       expect(cur, equals(const SetCurrencyEvent(Currency.eur)));
       expect(net, equals(const SetNetworkModeEvent(NetworkMode.mainnet)));
       expect(toggle, equals(const ToggleHideAmountEvent()));
       expect(unlock, equals(const UnlockInsiderFeaturesEvent()));
+      expect(
+        feature,
+        equals(const SetInsiderFeatureEnabledEvent(InsiderFeature.pay, true)),
+      );
 
       expect(lang.props, [Language.de]);
       expect(cur.props, [Currency.eur]);
       expect(net.props, [NetworkMode.mainnet]);
       expect(toggle.props, isEmpty);
       expect(unlock.props, isEmpty);
+      expect(feature.props, [InsiderFeature.pay, true]);
     });
   });
 }

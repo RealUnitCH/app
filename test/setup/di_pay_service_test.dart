@@ -4,6 +4,7 @@ import 'package:realunit_wallet/packages/repository/balance_repository.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
 import 'package:realunit_wallet/packages/repository/wallet_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 import 'package:realunit_wallet/setup/di.dart';
 
@@ -29,7 +30,9 @@ void main() {
   // of the mocked collaborators perform I/O on construction.
   setUp(() {
     getIt.reset();
-    getIt.registerSingleton<AppStore>(_MockAppStore());
+    final appStore = _MockAppStore();
+    when(() => appStore.httpClient).thenReturn(RealUnitApiClient());
+    getIt.registerSingleton<AppStore>(appStore);
     getIt.registerSingleton<BalanceRepository>(_MockBalanceRepository());
     getIt.registerSingleton<SettingsRepository>(_MockSettingsRepository());
     getIt.registerSingleton<WalletRepository>(_MockWalletRepository());

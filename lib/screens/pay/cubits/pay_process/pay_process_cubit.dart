@@ -17,7 +17,6 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/lnur
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_ocp_pay_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_ocp_pay_submit_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_ocp_pay_unsigned_transaction_dto.dart';
-import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_swap_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/broadcast_transaction_request_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
@@ -28,9 +27,9 @@ import 'package:realunit_wallet/packages/wallet/wallet.dart';
 part 'pay_process_state.dart';
 
 /// Orchestrates the on-chain half of the OCP pay flow after the user confirms a
-/// quote: check ETH gas → swap REALU→ZCHF (sign + broadcast) → re-fetch the OCP
-/// quote (fresh quoteId, guards expiry between swap and pay) → pay (sign +
-/// submit) → poll status until terminal.
+/// quote: check ETH gas → swap REALU→ZCHF (sign + broadcast the confirmed quote)
+/// → re-fetch the OCP quote (fresh quoteId, guards expiry between swap and pay)
+/// → pay (sign + submit) → poll status until terminal.
 ///
 /// Signing uses the unified raw-payload path (`signToSignature` → r/s/v) for
 /// BOTH software and BitBox wallets — the backend returns the unsigned txs, the
@@ -46,14 +45,14 @@ class PayProcessCubit extends Cubit<PayProcessState> {
   final AppStore _appStore;
 
   final String _paymentLinkId;
-  final double _zchfNeeded;
+  final SwapPaymentInfo _swap;
 
-  SwapPaymentInfo? _swap;
-
-  /// Set once the REALU→ZCHF swap has been broadcast successfully. From this
-  /// point the user holds ZCHF and recovery must NEVER re-swap — the pay leg is
-  /// retried on its own via [retryPay].
+  /// Set after the swap is signed, before broadcast. A timeout can still have
+  /// sent the tx; recovery must NEVER re-swap — the pay leg is retried via
+  /// [retryPay].
   bool _swapCompleted = false;
+
+  bool get swapCompleted => _swapCompleted;
 
   /// Guards overlapping ETH-poll ticks from each calling [_executeSwap]. Set
   /// synchronously before the first await in a tick; released in `finally` on
@@ -101,18 +100,6 @@ class PayProcessCubit extends Cubit<PayProcessState> {
   int _statusPollAttempts = 0;
   bool _statusPollInFlight = false;
 
-  /// Headroom over the OCP ZCHF amount when sizing the swap target. The swap is
-  /// quoted/broadcast against the ORIGINAL OCP quote, but the pay step settles
-  /// the EXACT amount of a FRESHLY re-fetched quote; in between, the OCP price
-  /// (CHF→ZCHF) and the swap rate can both move. A 1% buffer left no margin for
-  /// the common case (a few minutes of drift + the OCP/swap fees), so any
-  /// adverse move stranded the user in ZCHF that could not cover settlement.
-  /// 3% is a pragmatic headroom that absorbs ordinary drift while keeping the
-  /// over-swap small (leftover ZCHF simply stays in the wallet); a larger move
-  /// is caught explicitly and surfaced as a retryable
-  /// [PayRetryReason.insufficientZchf] rather than a server-side failure.
-  static const _slippageBuffer = 1.03;
-
   /// Local cap on the pay-leg tx's gasLimit. An ERC20 `transfer` costs roughly
   /// 60–80k gas; 200k gives >2× headroom so a legitimate tx is never rejected
   /// while still bounding a compromised backend that would set an absurd limit.
@@ -136,14 +123,14 @@ class PayProcessCubit extends Cubit<PayProcessState> {
     required WalletService walletService,
     required AppStore appStore,
     required String paymentLinkId,
-    required double zchfNeeded,
+    required SwapPaymentInfo swap,
   }) : _payService = payService,
        _faucetService = faucetService,
        _blockchainService = blockchainService,
        _walletService = walletService,
        _appStore = appStore,
        _paymentLinkId = paymentLinkId,
-       _zchfNeeded = zchfNeeded,
+       _swap = swap,
        super(const PayProcessInitial());
 
   /// Entry point — called by the view once the user confirms the quote.
@@ -152,36 +139,35 @@ class PayProcessCubit extends Cubit<PayProcessState> {
     // cannot produce EIP-1559 signatures, so the irreversible REALU→ZCHF swap
     // must never run on it. The backend settles OCP on every environment
     // (Sepolia off-PRD, mainnet+L2 on PRD), so there is no environment gate
-    // here — the flow requests the real quote and surfaces a typed backend
+    // here — the flow signs the confirmed quote and surfaces a typed backend
     // error if one ever comes back.
     if (_appStore.wallet.walletType == WalletType.debug) {
       emit(const PayProcessFailure(PayProcessFailureReason.signatureUnsupported));
       return;
     }
-    await _requestSwapQuote();
+    await _prepareConfirmedSwap();
   }
 
-  Future<void> _requestSwapQuote() async {
-    try {
-      emit(const PayProcessPreparingSwap());
-      final swap = await _payService.getSwapPaymentInfo(
-        RealUnitSwapDto.fromTargetAmount(_zchfNeeded * _slippageBuffer),
+  /// Uses the swap quote the user already confirmed. Does not request a second,
+  /// larger quote — that confirmed `id` is what is signed.
+  Future<void> _prepareConfirmedSwap() async {
+    emit(const PayProcessPreparingSwap());
+    final swap = _swap;
+
+    // The API is the authority on whether the swap is fundable; render its
+    // signal rather than recomputing limits locally.
+    if (!swap.isValid) {
+      final error = swap.error;
+      emit(
+        PayProcessFailure(
+          PayProcessFailureReason.generic,
+          message: (error != null && error.isNotEmpty) ? error : null,
+        ),
       );
-      if (isClosed) return;
-      _swap = swap;
-
-      // The API is the authority on whether the swap is fundable; render its
-      // signal rather than recomputing limits locally.
-      if (!swap.isValid) {
-        emit(const PayProcessFailure(PayProcessFailureReason.insufficientZchf));
-        return;
-      }
-
-      await _checkEthBalance(swap);
-    } catch (e) {
-      if (isClosed) return;
-      emit(PayProcessFailure(PayProcessFailureReason.generic, message: ApiException.userFacingMessage(e)));
+      return;
     }
+
+    await _checkEthBalance(swap);
   }
 
   Future<void> _checkEthBalance(SwapPaymentInfo swap) async {
@@ -252,19 +238,18 @@ class PayProcessCubit extends Cubit<PayProcessState> {
 
   Future<void> _executeSwap() async {
     final swap = _swap;
-    if (swap == null) return;
     try {
       emit(const PayProcessSwapping());
       final unsigned = await _payService.createSwapUnsignedTransaction(swap.id);
       if (isClosed) return;
       final signed = await _signTransaction(unsigned.swap);
       if (isClosed) return;
-      await _payService.broadcastSwapTransaction(swap.id, signed);
-      if (isClosed) return;
-      // The swap is now irreversible — the user holds ZCHF. From here every
-      // recovery path retries the PAY leg only; the swap is never redone.
+      // Mark completed before the HTTP round-trip. A timeout or dropped 2xx
+      // can still have broadcast the tx; the quote must not re-enable Pay.
       _swapCompleted = true;
       _acquiredZchf = swap.estimatedAmount;
+      await _payService.broadcastSwapTransaction(swap.id, signed);
+      if (isClosed) return;
       await _refreshQuoteAndPay();
     } on PaySignatureUnsupportedException {
       if (isClosed) return;
@@ -274,6 +259,17 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       emit(const PayProcessFailure(PayProcessFailureReason.bitboxRequired));
     } catch (e) {
       if (isClosed) return;
+      if (_swapCompleted) {
+        // API errors 1:1; transport/timeout has no user copy — the retry sheet
+        // falls back to payRetryTransient (ZCHF stays until pay succeeds).
+        emit(
+          PayProcessPayRetry(
+            PayRetryReason.transient,
+            message: e is ApiException ? e.message : null,
+          ),
+        );
+        return;
+      }
       emit(PayProcessFailure(PayProcessFailureReason.generic, message: ApiException.userFacingMessage(e)));
     }
   }
@@ -303,7 +299,12 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       // Transient/network error fetching the quote — NOT a genuine expiry.
       // Retry the pay leg; the swapped ZCHF stays in the wallet.
       if (isClosed) return;
-      emit(PayProcessPayRetry(PayRetryReason.transient, message: ApiException.userFacingMessage(e)));
+      emit(
+        PayProcessPayRetry(
+          PayRetryReason.transient,
+          message: e is ApiException ? e.message : null,
+        ),
+      );
       return;
     }
 
@@ -345,7 +346,11 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       emit(const PayProcessPaying());
       final RealUnitOcpPayUnsignedTransactionDto unsigned = await _payService
           .createPayUnsignedTransaction(
-            RealUnitOcpPayDto(paymentLinkId: _paymentLinkId, quoteId: quoteId),
+            RealUnitOcpPayDto(
+              paymentLinkId: _paymentLinkId,
+              quoteId: quoteId,
+              swapRequestId: _swap.id,
+            ),
           );
       if (isClosed) return;
       _validatePayUnsignedTx(unsigned);
@@ -359,6 +364,7 @@ class PayProcessCubit extends Cubit<PayProcessState> {
           v: signed.v,
           paymentLinkId: _paymentLinkId,
           quoteId: quoteId,
+          swapRequestId: _swap.id,
         ),
       );
       if (isClosed) return;
@@ -376,7 +382,12 @@ class PayProcessCubit extends Cubit<PayProcessState> {
       // by retrying the pay leg — never by re-swapping. Surface the retryable state rather than a
       // terminal failure.
       if (isClosed) return;
-      emit(PayProcessPayRetry(PayRetryReason.transient, message: ApiException.userFacingMessage(e)));
+      emit(
+        PayProcessPayRetry(
+          PayRetryReason.transient,
+          message: e is ApiException ? e.message : null,
+        ),
+      );
     }
   }
 

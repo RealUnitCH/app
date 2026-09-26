@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
+import 'package:web3dart/web3dart.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
 import 'package:realunit_wallet/packages/wallet/payment_uri.dart';
 import 'package:realunit_wallet/screens/receive/widgets/qr_address_widget.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/routes/app_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
-import 'package:web3dart/web3dart.dart';
+import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
+import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
 
 class SettingsWalletAddressPage extends StatelessWidget {
   const SettingsWalletAddressPage({super.key});
@@ -21,17 +27,20 @@ class SettingsWalletAddressPage extends StatelessWidget {
       appBar: AppBar(
         title: Text(S.of(context).walletAddress),
       ),
-      body: Center(
+      body: SafeArea(
         child: Padding(
           padding: const .symmetric(
             horizontal: 20.0,
             vertical: 12.0,
           ),
-          child: SingleChildScrollView(
-            child: SafeArea(
-              child: Column(
+          child: BlocBuilder<SettingsBloc, SettingsState>(
+            bloc: getIt<SettingsBloc>(),
+            builder: (context, settingsState) => ScrollableActionsLayout(
+              // QR + disclaimer is taller than a small phone at large text
+              // scale; do not pin the body to the leftover viewport height
+              // (centerBody) or the Column overflows instead of scrolling.
+              body: Column(
                 spacing: 40.0,
-                mainAxisAlignment: .center,
                 children: [
                   Column(
                     spacing: 16.0,
@@ -63,6 +72,13 @@ class SettingsWalletAddressPage extends StatelessWidget {
                   ),
                 ],
               ),
+              actions: [
+                if (settingsState.walletFeatureSend)
+                  AppFilledButton(
+                    label: S.of(context).send,
+                    onPressed: () => context.pushNamed(AppRoutes.send),
+                  ),
+              ],
             ),
           ),
         ),

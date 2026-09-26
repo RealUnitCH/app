@@ -1,0 +1,68 @@
+group 'com.sumsub.idensic.mobile.sdk.plugin'
+version '1.42.0'
+
+buildscript {
+    ext.kotlin_version = "1.8.22"
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.3.2")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
+    }
+}
+
+rootProject.allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        mavenLocal()
+        maven { url "https://maven.sumsub.com/repository/maven-releases/" }
+        maven { url "https://maven.sumsub.com/repository/maven-public/" }
+    }
+}
+
+apply plugin: "com.android.library"
+apply plugin: "kotlin-android"
+
+android {
+    if (project.android.hasProperty("namespace")) {
+        namespace = "com.sumsub.idensic.mobile.sdk.plugin"
+    }
+
+    compileSdkVersion 35
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        minSdk = 23
+    }
+
+    lintOptions {
+        disable 'InvalidPackage'
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+        freeCompilerArgs += [
+                '-Xjvm-default=all'
+        ]
+    }
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "com.sumsub.sns:idensic-mobile-sdk:1.42.0"
+    // remove comment to enable Device Intelligence
+    // implementation "com.sumsub.sns:idensic-mobile-sdk-fisherman:1.42.0"
+    // remove comment if you need VideoIdent support
+    // implementation "com.sumsub.sns:idensic-mobile-sdk-videoident:1.42.0"
+    // remove comment if you need EID support
+    // implementation "com.sumsub.sns:idensic-mobile-sdk-eid:1.42.0"
+    // remove comment if you need NFC support
+    // implementation "com.sumsub.sns:idensic-mobile-sdk-nfc:1.42.0"
+}

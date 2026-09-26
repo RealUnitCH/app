@@ -12,8 +12,11 @@ abstract final class SettingsRoutes {
   static const taxReport = 'settingsTaxReport';
   static const seed = 'settingsSeed';
   static const walletAddress = 'settingsWalletAddress';
+  static const insider = 'settingsInsider';
   static const userData = 'settingsUserData';
   static const editName = 'settingsEditName';
   static const editAddress = 'settingsEditAddress';
   static const editPhone = 'settingsEditPhone';
+  static const referral = 'settingsReferral';
+  static const referralCreate = 'settingsReferralCreate';
 }

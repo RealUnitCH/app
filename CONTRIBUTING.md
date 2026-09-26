@@ -33,6 +33,25 @@ The app must stay fully usable on every **standard phone** we support (smallest 
 
 New sticky-CTA UI without `ScrollableActionsLayout` + matrix entry is a **blocking** review finding.
 
+## Scanner navigation — CRITICAL
+
+[`QrScannerView`](lib/widgets/scanner/qr_scanner_view.dart) / `MobileScanner` forwards **every camera frame** while a barcode is in view — it is not a one-shot capture.
+
+**Navigation rule**
+
+- Navigating from a scan result in the same turn as `cubit.reset()` is **forbidden**: it drops the cubit's "already decoded" / Valid guard, so the next frame pushes a second copy of the next route. The user ends up on two stacked amount (or quote) screens and cannot leave cleanly.
+- Production contract: every `QrScannerView` consumer uses [`pushThenRearm`](lib/widgets/scanner/push_then_rearm.dart) to push the next route. Rearm / `reset` runs after `Route.completed` (the outgoing animation is gone) or immediately if the push throws — **never** in the same listener turn. In this app a scanner that does not push a route is not a valid consumer — add it to the catalog with `pushThenRearm` or do not construct `QrScannerView`.
+- Cubit `onCodeDetected` must ignore further detections while the decoded/valid state is held. That guard is **necessary and not sufficient** — without `pushThenRearm`, an early `reset()` makes it a no-op.
+
+**Test rule (gate for this bug class)**
+
+- Catalog: [`test/helper/scanner_navigation_catalog.dart`](test/helper/scanner_navigation_catalog.dart).
+- Self-test: [`scanner_navigation_catalog_test.dart`](test/helper/scanner_navigation_catalog_test.dart) — every catalogued production + regression path exists; production files contain `QrScannerView(` **and** `pushThenRearm(`; regression files fire `BarcodeCapture` and assert the destination `findsOne`; **discovery** walks `lib/` and fails if any `QrScannerView(` consumer is missing from the catalog (skipping the widget definition file itself).
+- Each surface has a real-cubit widget test that fires **two** `BarcodeCapture`s and expects the destination `findsOne`, then pop, then a third capture is accepted again. Mocking the cubit / `whenListen` of a single Valid/Decoded state cannot catch this bug class.
+- Details and PR checklist: [`docs/testing.md`](docs/testing.md) § *Scanner navigation*.
+
+New `QrScannerView` consumer without catalog entry + `pushThenRearm` + double-capture test is a **blocking** review finding.
+
 ## Branch Flow
 
 Three branches participate in the release lane:
@@ -65,6 +84,7 @@ Network access is one half of the gateway rule. **Business decisions are the oth
 - **The app does not interpret status strings into business meaning.** It renders what the API returns as `currentStep` / `nextAction` / `state`.
 - **The app does not duplicate backend sets/enums as gating logic.** DTO mirroring for type safety is fine; local `_requiredStepNames`, `actionableStatuses`, `_minLevelForActions`, `_minAmountChf` constants are not.
 - **Prompts to the user fire only when the API requests them.** "Please verify yourself" appears only when the API signals a pending KYC step — never because the app inferred something from a level number or expired timestamp.
+- **The app must not invent a hard update from a local major-version bump.** min, latest and severity come from `GET /v1/realunit/client-policy`.
 
 ### The test (Wer entscheidet?)
 
@@ -229,7 +249,7 @@ The app supports three wallet modes (`software`, `bitbox`, `debug`) with differe
     ```bash
     rg "^//\s*@no-integration-test:" lib/
     ```
-- Visual-regression Goldens under `test/goldens/screens/` are also the source of the 26 screenshots served at `handbook.realunit.app`. When you add a handbook page, you MUST add a matching Golden test AND a row in the mapping table at `scripts/assemble-handbook-screenshots.sh` — the handbook will not pick up a Maestro-captured PNG anymore. The `Handbook Build Check` workflow on every PR runs the assembly script and fails loudly if a mapped Golden is missing.
+- Visual-regression Goldens under `test/goldens/screens/` and `test/goldens/widgets/` are also the source of the 311 screenshots served at `handbook.realunit.app`. When you add a handbook page, you MUST add a matching Golden test AND a row in the mapping table at `scripts/assemble-handbook-screenshots.sh` — the handbook will not pick up a Maestro-captured PNG anymore. The `Handbook Build Check` workflow on every PR runs the assembly script and fails loudly if a mapped Golden is missing.
   - Why: single source of truth — a UI regression that breaks a Golden also breaks the handbook image before either ships; eliminates the previous "two pipelines, two truths" problem.
   - See: [`docs/visual-regression-tests.md`](docs/visual-regression-tests.md) section "Handbook screenshots are sourced from Goldens".
 

@@ -22,10 +22,14 @@ import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/kyc/cubits/kyc/kyc_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_step/kyc_registration_step_cubit.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/cubits/registration_submit/kyc_registration_submit_cubit.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/stash_resolved_referral_code.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_address_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_personal_step.dart';
+import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_referral_step.dart';
 import 'package:realunit_wallet/screens/kyc/steps/registration/steps/kyc_registration_tax_step.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/referral_pending_code.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class KycRegistrationPage extends StatelessWidget {
@@ -49,7 +53,9 @@ class KycRegistrationPage extends StatelessWidget {
           ),
         ),
         BlocProvider(
-          create: (_) => KycRegistrationStepCubit(),
+          create: (_) => KycRegistrationStepCubit(
+            includeReferralStep: getIt<SettingsBloc>().state.walletFeaturePromoCode,
+          ),
         ),
       ],
       child: KycRegistrationView(initialUserData: initialUserData),
@@ -76,6 +82,9 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   final phoneCtrl = ValueNotifier<String?>(null);
   final nationalityCtrl = ValueNotifier<Country?>(null);
   final birthdayCtrl = ValueNotifier<String?>(null);
+  final referralCodeCtrl = TextEditingController();
+  final _typedReferral = TypedReferralStash();
+  bool _submitInFlight = false;
 
   final addressStreetCtrl = TextEditingController();
   final addressStreetNumberCtrl = TextEditingController();
@@ -187,7 +196,9 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
           builder: (context, state) {
             return AppBar(
               leading: IconButton(
-                onPressed: state.canGoBack
+                onPressed: _submitInFlight
+                    ? null
+                    : state.canGoBack
                     ? context.read<KycRegistrationStepCubit>().previous
                     : context.pop,
                 icon: const Icon(Icons.arrow_back_rounded),
@@ -202,6 +213,12 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
       body: BlocListener<KycRegistrationSubmitCubit, KycRegistrationSubmitState>(
         listener: (context, state) async {
           if (state is KycRegistrationSubmitSuccess) {
+            // Persist a looked-up invite/promo code for post-auth bind.
+            // Skip / invalid lookup leaves any prior deeplink stash untouched.
+            // Stash I/O must not block checkKyc after a successful submit.
+            await _typedReferral.persistIfStillCurrent();
+            if (!context.mounted) return;
+
             // The submit cubit only emits Success after a successful EIP-712
             // sign through `_signEip712`, regardless of the resulting backend
             // status (completed, pendingReview, forwardingFailed,
@@ -215,7 +232,8 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
             // account was missing — see BalanceService).
             context.read<HomeBloc>().add(SyncWalletServicesEvent(getIt<AppStore>().wallet));
 
-            if (state.status == RegistrationStatus.forwardingFailed) {
+            if (state.status == RegistrationStatus.forwardingFailed &&
+                state.rejectionMessage == null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(S.of(context).registrationForwardingFailed),
@@ -275,11 +293,17 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
                   PageView(
                     controller: _pageController,
                     physics: const NeverScrollableScrollPhysics(),
-                    children: KycRegistrationStep.values.map(_buildStep).toList(),
+                    children: context
+                        .read<KycRegistrationStepCubit>()
+                        .state
+                        .steps
+                        .map(_buildStep)
+                        .toList(),
                   ),
                   BlocBuilder<KycRegistrationSubmitCubit, KycRegistrationSubmitState>(
                     builder: (context, state) {
-                      if (state is KycRegistrationSubmitLoading) {
+                      if (state is KycRegistrationSubmitLoading ||
+                          _submitInFlight) {
                         return Container(
                           color: RealUnitColors.basic.white,
                           child: const Center(
@@ -301,6 +325,28 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
 
   Widget _buildStep(KycRegistrationStep step) {
     switch (step) {
+      case KycRegistrationStep.referral:
+        {
+          // Hand the deeplink stash to the field only while the referral step
+          // is the one the user is on. This mirrors the old initState guard so
+          // a skipped-past step is not silently prefilled (the stash still
+          // binds post-auth); when active, the field owns the deeplink-stash-
+          // over-clipboard precedence instead of racing a prefill in initState.
+          // The PageView builds its children once, so the active step at mount
+          // is the right gate. Clipboard auto-paste stays unconditional.
+          final isReferralActive =
+              context.read<KycRegistrationStepCubit>().state.step ==
+              KycRegistrationStep.referral;
+          return KycRegistrationReferralStep(
+            referralCodeCtrl: referralCodeCtrl,
+            onResolved: (code) {
+              unawaited(_typedReferral.onResolved(code));
+            },
+            pendingCode: isReferralActive ? peekPendingReferralCode : null,
+            autoPasteOnEmpty: true,
+          );
+        }
+
       case KycRegistrationStep.personal:
         return KycRegistrationPersonalStep(
           typeCtrl: typeCtrl,
@@ -344,24 +390,46 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
   }
 
   Future<void> _onSubmitTax(KycTaxResidenceSubmit tax) async {
-    // `swissTaxResidence` + `countryAndTINs` are derived inside the tax step so
-    // multi-residence and the locked address-country entry stay consistent with
-    // the backend contract (tax residences must include addressCountry).
-    await context.read<KycRegistrationSubmitCubit>().submit(
-      type: typeCtrl.value,
-      firstName: firstnameCtrl.text.trim(),
-      lastName: lastnameCtrl.text.trim(),
-      phoneNumber: phoneCtrl.value?.trim() ?? '',
-      birthday: birthdayCtrl.value ?? '',
-      nationality: nationalityCtrl.value!,
-      addressStreet: addressStreetCtrl.text.trim(),
-      addressStreetNumber: addressStreetNumberCtrl.text.trim(),
-      addressPostalCode: postalCodeCtrl.text.trim(),
-      addressCity: cityCtrl.text.trim(),
-      addressCountry: countryCtrl.value!,
-      swissTaxResidence: tax.swissTaxResidence,
-      countryAndTINs: tax.countryAndTINs,
-    );
+    if (_submitInFlight) return;
+    setState(() => _submitInFlight = true);
+    final cubit = context.read<KycRegistrationSubmitCubit>();
+    var releaseGuard = true;
+    try {
+      // Persist the typed code before POST so a crash after the backend
+      // accepts still binds. Skip/invalid already discarded via onResolved(null).
+      // Do not overwrite a newer distinct deeplink that landed during submit.
+      await _typedReferral.persistIfStillCurrent();
+      if (!mounted) return;
+      // `swissTaxResidence` + `countryAndTINs` are derived inside the tax step so
+      // multi-residence and the locked address-country entry stay consistent with
+      // the backend contract (tax residences must include addressCountry).
+      await cubit.submit(
+        type: typeCtrl.value,
+        firstName: firstnameCtrl.text.trim(),
+        lastName: lastnameCtrl.text.trim(),
+        phoneNumber: phoneCtrl.value?.trim() ?? '',
+        birthday: birthdayCtrl.value ?? '',
+        nationality: nationalityCtrl.value!,
+        addressStreet: addressStreetCtrl.text.trim(),
+        addressStreetNumber: addressStreetNumberCtrl.text.trim(),
+        addressPostalCode: postalCodeCtrl.text.trim(),
+        addressCity: cityCtrl.text.trim(),
+        addressCountry: countryCtrl.value!,
+        swissTaxResidence: tax.swissTaxResidence,
+        countryAndTINs: tax.countryAndTINs,
+      );
+      // Success: keep the guard until this route is disposed so a second
+      // tap during checkKyc cannot POST again. Failure/BitBox re-enable.
+      if (cubit.state is KycRegistrationSubmitSuccess) {
+        releaseGuard = false;
+      }
+    } finally {
+      if (releaseGuard && mounted) {
+        setState(() => _submitInFlight = false);
+      } else if (releaseGuard) {
+        _submitInFlight = false;
+      }
+    }
   }
 
   @override
@@ -373,6 +441,7 @@ class _KycRegistrationViewState extends State<KycRegistrationView> {
     lastnameCtrl.dispose();
     phoneCtrl.dispose();
     nationalityCtrl.dispose();
+    referralCodeCtrl.dispose();
     addressStreetCtrl.dispose();
     addressStreetNumberCtrl.dispose();
     postalCodeCtrl.dispose();

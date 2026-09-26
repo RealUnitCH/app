@@ -9,6 +9,7 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/payment/transfer_exceptions.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/transfer/dto/real_unit_transfer_dto.dart';
@@ -132,7 +133,7 @@ void main() {
   });
 
   RealUnitTransferService build(http.Client client) {
-    when(() => appStore.httpClient).thenReturn(client);
+    when(() => appStore.httpClient).thenReturn(RealUnitApiClient(client));
     return RealUnitTransferService(appStore, walletService);
   }
 
@@ -471,6 +472,90 @@ void main() {
                 'message mentions already confirmed',
                 isTrue,
               ),
+        ),
+      );
+    });
+
+    test('400 with timeout-like message stays a plain ApiException', () async {
+      const hash = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'statusCode': 400,
+            'message': 'Timed out while waiting for transaction with hash "$hash"',
+            'error': 'Bad Request',
+          }),
+          400,
+        ),
+      );
+
+      await expectLater(
+        _confirm(build(client), _info()),
+        throwsA(
+          predicate((e) => e is ApiException && e is! TransferReceiptTimeoutException),
+        ),
+      );
+    });
+
+    test('500 viem receipt-timeout with hash → TransferReceiptTimeoutException', () async {
+      const hash = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'statusCode': 500,
+            'message': 'Timed out while waiting for transaction with hash "$hash"\nVersion: viem@2.21.0',
+            'error': 'Internal Server Error',
+          }),
+          500,
+        ),
+      );
+
+      await expectLater(
+        _confirm(build(client), _info()),
+        throwsA(
+          isA<TransferReceiptTimeoutException>().having((e) => e.txHash, 'txHash', hash),
+        ),
+      );
+    });
+
+    test('HTTP 400 with body statusCode 500 and timeout phrase stays a plain ApiException', () async {
+      const hash = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'statusCode': 500,
+            'message': 'Timed out while waiting for transaction with hash "$hash"',
+            'error': 'Internal Server Error',
+          }),
+          400,
+        ),
+      );
+
+      await expectLater(
+        _confirm(build(client), _info()),
+        throwsA(
+          predicate((e) => e is ApiException && e is! TransferReceiptTimeoutException),
+        ),
+      );
+    });
+
+    test('HTTP 500 with hash but no timeout phrase stays a plain ApiException', () async {
+      const hash = '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'statusCode': 500,
+            'message': 'relay failed for $hash',
+            'error': 'Internal Server Error',
+          }),
+          500,
+        ),
+      );
+
+      await expectLater(
+        _confirm(build(client), _info()),
+        throwsA(
+          predicate((e) => e is ApiException && e is! TransferReceiptTimeoutException),
         ),
       );
     });

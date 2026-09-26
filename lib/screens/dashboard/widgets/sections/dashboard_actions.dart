@@ -12,8 +12,7 @@ class DashboardActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final insiderFeaturesUnlocked =
-        context.watch<SettingsBloc>().state.insiderFeaturesUnlocked;
+    final walletFeaturePay = context.watch<SettingsBloc>().state.walletFeaturePay;
 
     return Row(
       spacing: 10,
@@ -40,7 +39,7 @@ class DashboardActions extends StatelessWidget {
             onPressed: () => context.pushNamed(AppRoutes.sell),
           ),
         ),
-        if (insiderFeaturesUnlocked)
+        if (walletFeaturePay)
           Expanded(
             child: ActionButton(
               icon: Icon(
@@ -50,18 +49,6 @@ class DashboardActions extends StatelessWidget {
               ),
               label: S.of(context).pay,
               onPressed: () => context.pushNamed(AppRoutes.pay),
-            ),
-          ),
-        if (insiderFeaturesUnlocked)
-          Expanded(
-            child: ActionButton(
-              icon: Icon(
-                Icons.send_rounded,
-                color: RealUnitColors.basic.white,
-                size: 20,
-              ),
-              label: S.of(context).send,
-              onPressed: () => context.pushNamed(AppRoutes.send),
             ),
           ),
       ],

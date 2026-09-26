@@ -257,6 +257,62 @@ void main() {
       });
 
       expect(dto.manualReview, isTrue);
+      expect(dto.rejectionMessage, isNull);
+    });
+
+    test('parses rejectionMessage when present', () {
+      final dto = RealUnitRegistrationInfoDto.fromJson({
+        'state': 'AlreadyRegistered',
+        'userData': null,
+        'manualReview': true,
+        'rejectionMessage':
+            'Please enter your full name (first and last name).',
+      });
+
+      expect(
+        dto.rejectionMessage,
+        'Please enter your full name (first and last name).',
+      );
+    });
+
+    test('legacy fallback: rejectionMessage absent → null', () {
+      final dto = RealUnitRegistrationInfoDto.fromJson({
+        'state': 'AlreadyRegistered',
+        'userData': null,
+        'manualReview': true,
+      });
+
+      expect(dto.rejectionMessage, isNull);
+    });
+
+    test('rejectionMessage JSON null or blank → null', () {
+      expect(
+        RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'manualReview': true,
+          'rejectionMessage': null,
+        }).rejectionMessage,
+        isNull,
+      );
+      expect(
+        RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'manualReview': true,
+          'rejectionMessage': '',
+        }).rejectionMessage,
+        isNull,
+      );
+      expect(
+        RealUnitRegistrationInfoDto.fromJson({
+          'state': 'AlreadyRegistered',
+          'userData': null,
+          'manualReview': true,
+          'rejectionMessage': '   ',
+        }).rejectionMessage,
+        isNull,
+      );
     });
 
     test('parses manualReview=false', () {

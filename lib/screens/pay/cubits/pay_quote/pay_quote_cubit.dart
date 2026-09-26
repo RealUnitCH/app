@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/lnurlp_payment_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_swap_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 
 part 'pay_quote_state.dart';
@@ -11,7 +12,11 @@ part 'pay_quote_state.dart';
 /// the requested fiat amount + the exact ZCHF amount the Ethereum method
 /// requires. The amount comes from the API `transferAmounts` (ZCHF on the
 /// Ethereum entry) — the app never computes it. An expired quote surfaces as a
-/// typed state so the view can prompt a re-scan.
+/// typed state so the view can prompt a re-scan. An invalid swap preview
+/// (`isValid: false`) is [PayQuoteError], never Ready — the app does not
+/// locally ceil share counts; `swap.amount` is displayed only when valid.
+/// The swap quote shown here is the quote later signed; the process step does
+/// not request a second, larger quote.
 class PayQuoteCubit extends Cubit<PayQuoteState> {
   final RealUnitPayService _payService;
   final String _paymentLinkId;
@@ -36,16 +41,20 @@ class PayQuoteCubit extends Cubit<PayQuoteState> {
         return;
       }
 
-      // Preview-only swap quote using the plain bill ZCHF amount (no slippage
+      // Confirmed swap quote using the plain bill ZCHF amount (no slippage
       // buffer). Shown on the pay-quote screen so the user sees expected REALU
-      // sold, ZCHF proceeds and fees for this bill before confirming. The
-      // actual swap executed later in PayProcessCubit re-requests its own quote
-      // independently with its own slippage buffer and remains the sole source
-      // of truth for what is actually swapped.
+      // sold, CHF proceeds and the API Ethereum transaction fee before
+      // confirming. PayProcessCubit signs this same quote — it does not
+      // re-request a larger one.
       final swap = await _payService.getSwapPaymentInfo(
         RealUnitSwapDto.fromTargetAmount(zchfAmount),
       );
       if (isClosed) return;
+
+      if (!swap.isValid) {
+        emit(_invalidSwapState(swap));
+        return;
+      }
 
       emit(
         PayQuoteReady(
@@ -54,17 +63,37 @@ class PayQuoteCubit extends Cubit<PayQuoteState> {
           fiatAsset: details.requestedAmount.asset,
           fiatAmount: details.requestedAmount.amount,
           zchfAmount: zchfAmount,
-          merchantName: details.recipient?.name,
+          merchantName: _recipientName(details),
           merchantCity: details.recipient?.city,
-          realuAmount: swap.amount,
-          realuEstimatedZchf: swap.estimatedAmount,
-          realuFeesTotal: swap.feesTotal,
+          expiresAt: details.quote.expiration,
+          swap: swap,
         ),
       );
     } catch (e) {
       if (isClosed) return;
       emit(PayQuoteError(ApiException.userFacingMessage(e)));
     }
+  }
+
+  /// Invalid preview swaps are not payable. Non-empty API errors are shown 1:1;
+  /// a missing/empty error uses the view's generic copy. The app does not map
+  /// `AmountTooLow` onto holdings — that string is the API's volume signal.
+  static PayQuoteError _invalidSwapState(SwapPaymentInfo swap) {
+    final error = swap.error;
+    if (error != null && error.isNotEmpty) {
+      return PayQuoteError(error);
+    }
+    return const PayQuoteError('');
+  }
+
+  /// OCP recipient name, or the payment link's display name when the
+  /// recipient has none.
+  static String? _recipientName(LnurlpPaymentDto details) {
+    final name = details.recipient?.name?.trim();
+    if (name != null && name.isNotEmpty) return name;
+    final displayName = details.displayName?.trim();
+    if (displayName != null && displayName.isNotEmpty) return displayName;
+    return null;
   }
 
   /// The ZCHF amount listed for the Ethereum transfer method, or null if the

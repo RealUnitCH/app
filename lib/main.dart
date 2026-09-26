@@ -8,6 +8,8 @@ import 'package:realunit_wallet/packages/utils/fuck_firebase.dart';
 import 'package:realunit_wallet/screens/home/bloc/home_bloc.dart';
 import 'package:realunit_wallet/screens/pin/bloc/auth/pin_auth_cubit.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit.dart';
+import 'package:realunit_wallet/setup/account_currency_sync.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/error_handling/crash_reporting.dart';
 import 'package:realunit_wallet/setup/error_handling/error_handlers.dart';
@@ -60,6 +62,8 @@ class WalletApp extends StatefulWidget {
 }
 
 class _WalletAppState extends State<WalletApp> {
+  late final AccountCurrencySync _accountCurrency = getIt<AccountCurrencySync>();
+
   @override
   void initState() {
     super.initState();
@@ -72,6 +76,7 @@ class _WalletAppState extends State<WalletApp> {
       BlocProvider.value(value: getIt<HomeBloc>()),
       BlocProvider.value(value: getIt<SettingsBloc>()),
       BlocProvider.value(value: getIt<PinAuthCubit>()),
+      BlocProvider.value(value: getIt<ClientPolicyCubit>()),
     ],
     child: BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, settingsState) => MaterialApp.router(
@@ -89,10 +94,42 @@ class _WalletAppState extends State<WalletApp> {
         builder: (context, child) => MultiBlocListener(
           listeners: [
             BlocListener<HomeBloc, HomeState>(
+              listenWhen: (previous, current) =>
+                  previous.openWallet == null && current.openWallet != null,
+              listener: (context, homeState) {
+                _accountCurrency.onOpened(homeState.openWallet);
+              },
+            ),
+            BlocListener<HomeBloc, HomeState>(
+              listenWhen: (previous, current) =>
+                  previous.openWallet != null &&
+                  current.openWallet != null &&
+                  !identical(previous.openWallet, current.openWallet),
+              listener: (context, homeState) {
+                _accountCurrency.onSwitched(homeState.openWallet);
+              },
+            ),
+            BlocListener<HomeBloc, HomeState>(
+              listenWhen: (previous, current) =>
+                  previous.openWallet != null && current.openWallet == null,
+              listener: (context, homeState) {
+                _accountCurrency.onClosed();
+              },
+            ),
+            BlocListener<HomeBloc, HomeState>(
               listener: (context, homeState) {
                 if (!homeState.isLoadingWallet) {
                   _navigate();
                 }
+              },
+            ),
+            BlocListener<HomeBloc, HomeState>(
+              listenWhen: (previous, current) =>
+                  !previous.historySyncFailed && current.historySyncFailed,
+              listener: (context, _) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(S.of(context).historySyncFailed)),
+                );
               },
             ),
             BlocListener<PinAuthCubit, PinAuthState>(
@@ -102,6 +139,9 @@ class _WalletAppState extends State<WalletApp> {
                 }
                 _navigate();
               },
+            ),
+            BlocListener<ClientPolicyCubit, ClientPolicyState>(
+              listener: (_, _) => _navigate(),
             ),
           ],
           child: child ?? const SizedBox.shrink(),
@@ -134,6 +174,7 @@ class _WalletAppState extends State<WalletApp> {
       walletLoaded: homeState.openWallet != null,
       currentLocation: current,
       resumeLocation: pin.peekResumeLocation(),
+      clientPolicySeverity: getIt<ClientPolicyCubit>().severity,
     );
 
     applyBootNavAction(

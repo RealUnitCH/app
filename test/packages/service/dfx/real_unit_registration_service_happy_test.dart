@@ -8,6 +8,7 @@ import 'package:realunit_wallet/packages/config/api_config.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/cache_repository.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
+import 'package:realunit_wallet/packages/service/dfx/api_client.dart';
 import 'package:realunit_wallet/packages/service/dfx/exceptions/api_exception.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/country/country.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/registration/dto/real_unit_registration_request_dto.dart';
@@ -62,7 +63,7 @@ void main() {
   });
 
   RealUnitRegistrationService build(http.Client client) {
-    when(() => appStore.httpClient).thenReturn(client);
+    when(() => appStore.httpClient).thenReturn(RealUnitApiClient(client));
     return RealUnitRegistrationService(appStore, walletService);
   }
 
@@ -144,9 +145,10 @@ void main() {
           return http.Response(jsonEncode({'status': 'completed'}), 201);
         });
 
-        final status = await build(client).completeRegistration(buildRegistration());
+        final response = await build(client).completeRegistration(buildRegistration());
 
-        expect(status, RegistrationStatus.completed);
+        expect(response.status, RegistrationStatus.completed);
+        expect(response.rejectionMessage, isNull);
         expect(sentUri!.path, '/v1/realunit/register/complete');
         expect(headers!['authorization'], 'Bearer jwt-1');
 
@@ -198,7 +200,7 @@ void main() {
           return http.Response(jsonEncode({'status': 'completed'}), 201);
         });
 
-        final status = await build(client).completeRegistration(
+        final response = await build(client).completeRegistration(
           buildRegistration(
             swissTaxResidence: false,
             countryAndTINs: const [
@@ -207,7 +209,8 @@ void main() {
           ),
         );
 
-        expect(status, RegistrationStatus.completed);
+        expect(response.status, RegistrationStatus.completed);
+        expect(response.rejectionMessage, isNull);
         expect(sentUri!.path, '/v1/realunit/register/complete');
         expect(body!['swissTaxResidence'], isFalse);
         expect(

@@ -108,6 +108,8 @@ jobs:
           java-version: "17"
 
       - uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -177,8 +179,8 @@ jobs:
       # Build & Deploy
       # -------------------
 
-      - name: Upload to Play Store
-        run: bundle exec fastlane beta
+      - name: Build Android release packages
+        run: bundle exec fastlane build_release
         working-directory: android
         env:
           NEW_VERSION: ${{ github.ref_name }}
@@ -186,11 +188,31 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           SENTRY_ENVIRONMENT: ${{ needs.guard.outputs.sentry_environment }}
 
+      # Archive before Play is contacted. A rejected upload must leave
+      # the bundle on the run. The APK name stays android-apk because
+      # the GitHub release job downloads that artifact.
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
           path: build/app/outputs/flutter-apk/realunit-*.apk
+          if-no-files-found: error
+
+      - name: Upload Android App Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
+      - name: Upload to Play Store
+        run: bundle exec fastlane upload_release
+        working-directory: android
+        env:
+          NEW_VERSION: ${{ github.ref_name }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_ENVIRONMENT: ${{ needs.guard.outputs.sentry_environment }}
 
   ios-deploy:
     needs: [guard, store-metadata-preflight]

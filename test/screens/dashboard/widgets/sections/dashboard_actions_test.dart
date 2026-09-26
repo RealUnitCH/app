@@ -49,7 +49,6 @@ void main() {
         target(AppRoutes.buy, '/buy'),
         target(AppRoutes.sell, '/sell'),
         target(AppRoutes.pay, '/pay'),
-        target(AppRoutes.send, '/send'),
       ],
     );
   }
@@ -103,18 +102,19 @@ void main() {
 
     group('unlocked', () {
       setUp(() {
-        when(() => settingsBloc.state)
-            .thenReturn(const SettingsState(insiderFeaturesUnlocked: true));
+        when(() => settingsBloc.state).thenReturn(
+          const SettingsState(walletFeaturePay: true),
+        );
       });
 
-      testWidgets('renders the buy, sell, pay and send action buttons', (tester) async {
+      testWidgets('renders the buy, sell and pay action buttons', (tester) async {
         await pumpActions(tester);
 
         expect(actionButtonByLabel(S.current.buy), findsOneWidget);
         expect(actionButtonByLabel(S.current.sell), findsOneWidget);
         expect(actionButtonByLabel(S.current.pay), findsOneWidget);
-        expect(actionButtonByLabel(S.current.send), findsOneWidget);
-        expect(find.byType(Expanded), findsNWidgets(4));
+        expect(actionButtonByLabel(S.current.send), findsNothing);
+        expect(find.byType(Expanded), findsNWidgets(3));
       });
 
       testWidgets('renders the expected icons for each action', (tester) async {
@@ -123,7 +123,6 @@ void main() {
         expect(find.byIcon(Icons.add_circle_rounded), findsOneWidget);
         expect(find.byIcon(Icons.do_not_disturb_on_rounded), findsOneWidget);
         expect(find.byIcon(Icons.qr_code_scanner_rounded), findsOneWidget);
-        expect(find.byIcon(Icons.send_rounded), findsOneWidget);
       });
 
       testWidgets('buy button pushes the buy route', (tester) async {
@@ -147,12 +146,6 @@ void main() {
         expect(pushedRoutes, [AppRoutes.pay]);
       });
 
-      testWidgets('send button pushes the send route', (tester) async {
-        await pumpActions(tester);
-        await tester.tap(actionButtonByLabel(S.current.send));
-        await tester.pumpAndSettle();
-        expect(pushedRoutes, [AppRoutes.send]);
-      });
     });
 
     group('transitions', () {
@@ -173,7 +166,9 @@ void main() {
           expect(actionButtonByLabel(S.current.pay), findsNothing);
           expect(actionButtonByLabel(S.current.send), findsNothing);
 
-          controller.add(const SettingsState(insiderFeaturesUnlocked: true));
+          controller.add(
+            const SettingsState(walletFeaturePay: true),
+          );
           // Two pumps: the first delivers the stream event (async broadcast
           // delivery updates the mock's state and marks the element dirty),
           // the second builds the frame that shows the unlocked buttons.
@@ -181,7 +176,7 @@ void main() {
           await tester.pump();
 
           expect(actionButtonByLabel(S.current.pay), findsOneWidget);
-          expect(actionButtonByLabel(S.current.send), findsOneWidget);
+          expect(actionButtonByLabel(S.current.send), findsNothing);
         },
       );
     });
