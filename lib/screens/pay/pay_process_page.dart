@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/app_store.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_blockchain_api_service.dart';
-import 'package:realunit_wallet/packages/service/dfx/dfx_faucet_service.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart';
 import 'package:realunit_wallet/packages/service/wallet_service.dart';
@@ -15,11 +13,13 @@ import 'package:realunit_wallet/widgets/route_animation_gate.dart';
 
 class PayProcessPage extends StatelessWidget {
   final String paymentLinkId;
+  final String quoteId;
   final SwapPaymentInfo swap;
 
   const PayProcessPage({
     super.key,
     required this.paymentLinkId,
+    required this.quoteId,
     required this.swap,
   });
 
@@ -28,11 +28,10 @@ class PayProcessPage extends StatelessWidget {
     return BlocProvider(
       create: (_) => PayProcessCubit(
         payService: getIt<RealUnitPayService>(),
-        faucetService: getIt<DfxFaucetService>(),
-        blockchainService: getIt<DfxBlockchainApiService>(),
         walletService: getIt<WalletService>(),
         appStore: getIt<AppStore>(),
         paymentLinkId: paymentLinkId,
+        quoteId: quoteId,
         swap: swap,
       ),
       child: RouteAnimationGate(
@@ -120,6 +119,7 @@ class PayProcessView extends StatelessWidget {
     return switch (state.reason) {
       PayProcessFailureReason.insufficientEth => S.of(context).payFailureInsufficientEth,
       PayProcessFailureReason.signatureUnsupported => S.of(context).payFailureSignatureUnsupported,
+      PayProcessFailureReason.payUnavailable => S.of(context).payFailurePayUnavailable,
       PayProcessFailureReason.bitboxRequired => S.of(context).payFailureBitboxRequired,
       PayProcessFailureReason.generic => S.of(context).payFailureGeneric,
     };

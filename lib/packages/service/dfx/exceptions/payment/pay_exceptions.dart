@@ -16,6 +16,17 @@ class InvalidPaymentLinkException implements Exception {
 /// The loaded wallet cannot produce EIP-1559 signatures (today: the debug
 /// wallet). The pay flow needs to sign the swap and pay transactions locally,
 /// so it cannot proceed in this wallet mode.
+/// Confirm never left the device, or the server rejected it before relaying.
+/// The REALU sale did not start, so the quote may be confirmed again.
+class PayConfirmNotSubmittedException implements Exception {
+  final String message;
+
+  const PayConfirmNotSubmittedException(this.message);
+
+  @override
+  String toString() => 'PayConfirmNotSubmittedException: $message';
+}
+
 class PaySignatureUnsupportedException implements Exception {
   // Only ever thrown / constructed as a const expression, so the zero-arg
   // body never registers a runtime line hit; toString() below is exercised.

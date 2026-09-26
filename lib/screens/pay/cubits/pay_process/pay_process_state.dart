@@ -9,6 +9,9 @@ enum PayProcessFailureReason {
   /// The active wallet mode cannot sign transactions (debug wallet).
   signatureUnsupported,
 
+  /// Pay is not offered for this wallet. BitBox has no Pay option.
+  payUnavailable,
+
   /// A BitBox is required but not connected.
   bitboxRequired,
 
