@@ -6,9 +6,14 @@ void main() {
     test('progress states with no fields expose empty props and compare by type', () {
       // Reading `.props` directly evaluates the inherited base getter (const
       // canonicalization would otherwise make `==` short-circuit via identical).
+      // Non-const so the constructor declaration is counted by coverage.
+      // ignore: prefer_const_constructors
       expect(PayProcessPreparingSwap().props, isEmpty);
+      // ignore: prefer_const_constructors
       expect(PayProcessWaitingForEth().props, isEmpty);
+      // ignore: prefer_const_constructors
       expect(PayProcessSwapping().props, isEmpty);
+      // ignore: prefer_const_constructors
       expect(PayProcessRefreshingQuote().props, isEmpty);
       expect(const PayProcessPreparingSwap().props, isEmpty);
       expect(const PayProcessWaitingForEth().props, isEmpty);

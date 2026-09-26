@@ -252,6 +252,8 @@ void main() {
   });
 
   test('RealUnitOcpPayDto.toJson', () {
+    // Non-const so the constructor declaration is counted by coverage.
+    // ignore: prefer_const_constructors
     final dto = RealUnitOcpPayDto(
       paymentLinkId: 'pl_abc',
       quoteId: 'q1',
@@ -281,6 +283,8 @@ void main() {
   });
 
   test('RealUnitOcpPaySubmitDto.toJson carries the signed envelope + refs', () {
+    // Non-const so the constructor declaration is counted by coverage.
+    // ignore: prefer_const_constructors
     final dto = RealUnitOcpPaySubmitDto(
       unsignedTx: '0xtx',
       r: '0xr',
