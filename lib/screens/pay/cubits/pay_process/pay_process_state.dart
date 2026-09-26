@@ -3,7 +3,7 @@ part of 'pay_process_cubit.dart';
 /// Why the pay flow failed. Each reason maps to a localized, user-facing
 /// message in the view — the cubit carries the reason, not the copy.
 enum PayProcessFailureReason {
-  /// Not enough ETH to cover gas and the faucet top-up did not arrive.
+  /// Not used. The relayer pays gas. There is no faucet.
   insufficientEth,
 
   /// The active wallet mode cannot sign transactions (debug wallet).
@@ -35,9 +35,8 @@ enum PayRetryReason {
   /// Retry sends the same delegation again.
   insufficientZchf,
 
-  /// The unsigned tx the backend returned for signing did not match its own security metadata
-  /// (token/recipient/amount/chain) — see [PayUnsignedTxMismatchException]. Never signed. Retrying
-  /// re-fetches AND re-validates a fresh unsigned tx from scratch.
+  /// The signed details did not match the request. Nothing was signed.
+  /// Retry sends the same delegation again.
   unsignedTxMismatch,
 }
 
