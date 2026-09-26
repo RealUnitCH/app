@@ -23,17 +23,16 @@ enum PayProcessFailureReason {
 /// wallet. Retry sends the same delegation again and can sell REALU when the
 /// first confirm did not arrive. Each reason maps to a localized message.
 enum PayRetryReason {
-  /// The OCP quote expired between the swap and the pay step. Re-quoting is
-  /// safe — the swapped ZCHF stays in the wallet.
+  /// The quote expired before it settled. This payment leaves no CHF. Retry
+  /// sends the same delegation again.
   quoteExpired,
 
   /// The confirm or the settlement status did not finish. No CHF from this
   /// payment is in the wallet. Retry sends the same delegation again.
   transient,
 
-  /// The freshly re-fetched settlement amount exceeds the ZCHF acquired by the
-  /// swap (price moved more than the swap headroom buffer). Re-quoting may land
-  /// within the held ZCHF; the leftover ZCHF stays in the wallet meanwhile.
+  /// The proceeds no longer cover the payment. This payment leaves no CHF.
+  /// Retry sends the same delegation again.
   insufficientZchf,
 
   /// The unsigned tx the backend returned for signing did not match its own security metadata
@@ -87,11 +86,9 @@ class PayProcessSuccess extends PayProcessState {
   const PayProcessSuccess();
 }
 
-/// The swap succeeded (ZCHF is in the wallet) but the pay leg failed. Recoverable
-/// by retrying the pay leg ONLY — the view calls [PayProcessCubit.retryPay],
-/// which re-quotes + signs + submits without ever re-swapping. This is the key
-/// fund-safety state: a failed pay no longer forces a re-scan → re-swap (which
-/// would double-convert REALU).
+/// A pay confirm did not finish. This payment leaves no CHF in the wallet.
+/// [PayProcessCubit.retryPay] sends the same delegation again and can sell
+/// REALU when the first confirm did not arrive.
 class PayProcessPayRetry extends PayProcessState {
   final PayRetryReason reason;
 

@@ -60,8 +60,8 @@ class PayProcessView extends StatelessWidget {
             swapCompleted: true,
           );
         } else if (state is PayProcessPayRetry) {
-          // The swap already succeeded — offer to retry the PAY leg only. The
-          // ZCHF stays in the wallet; this never re-swaps.
+          // The confirm may already have been sent. This payment leaves no CHF.
+          // Retry sends the same delegation again.
           await _showRetrySheet(context, state);
         } else if (state is PayProcessFailure) {
           await _showResultSheet(
@@ -97,19 +97,17 @@ class PayProcessView extends StatelessWidget {
     );
   }
 
-  String _progressLabel(BuildContext context, PayProcessState state) =>
-      switch (state) {
-        PayProcessInitial() ||
-        PayProcessPreparingSwap() => S.of(context).payPreparingSwap,
-        PayProcessWaitingForEth() => S.of(context).payWaitingForEth,
-        PayProcessSwapping() => S.of(context).paySwapping,
-        PayProcessRefreshingQuote() => S.of(context).payRefreshingQuote,
-        PayProcessPaying() => S.of(context).payPaying,
-        PayProcessAwaitingSettlement() => S.of(context).payAwaitingSettlement,
-        PayProcessSuccess() => S.of(context).paySuccess,
-        PayProcessPayRetry() => S.of(context).payRetryTitle,
-        PayProcessFailure() => S.of(context).payFailureTitle,
-      };
+  String _progressLabel(BuildContext context, PayProcessState state) => switch (state) {
+    PayProcessInitial() || PayProcessPreparingSwap() => S.of(context).payPreparingSwap,
+    PayProcessWaitingForEth() => S.of(context).payWaitingForEth,
+    PayProcessSwapping() => S.of(context).paySwapping,
+    PayProcessRefreshingQuote() => S.of(context).payRefreshingQuote,
+    PayProcessPaying() => S.of(context).payPaying,
+    PayProcessAwaitingSettlement() => S.of(context).payAwaitingSettlement,
+    PayProcessSuccess() => S.of(context).paySuccess,
+    PayProcessPayRetry() => S.of(context).payRetryTitle,
+    PayProcessFailure() => S.of(context).payFailureTitle,
+  };
 
   String _failureMessage(BuildContext context, PayProcessFailure state) {
     final apiText = state.message;
@@ -117,14 +115,10 @@ class PayProcessView extends StatelessWidget {
       return apiText;
     }
     return switch (state.reason) {
-      PayProcessFailureReason.insufficientEth =>
-        S.of(context).payFailureInsufficientEth,
-      PayProcessFailureReason.signatureUnsupported =>
-        S.of(context).payFailureSignatureUnsupported,
-      PayProcessFailureReason.payUnavailable =>
-        S.of(context).payFailurePayUnavailable,
-      PayProcessFailureReason.bitboxRequired =>
-        S.of(context).payFailureBitboxRequired,
+      PayProcessFailureReason.insufficientEth => S.of(context).payFailureInsufficientEth,
+      PayProcessFailureReason.signatureUnsupported => S.of(context).payFailureSignatureUnsupported,
+      PayProcessFailureReason.payUnavailable => S.of(context).payFailurePayUnavailable,
+      PayProcessFailureReason.bitboxRequired => S.of(context).payFailureBitboxRequired,
       PayProcessFailureReason.generic => S.of(context).payFailureGeneric,
     };
   }
@@ -138,8 +132,7 @@ class PayProcessView extends StatelessWidget {
       PayRetryReason.quoteExpired => S.of(context).payRetryQuoteExpired,
       PayRetryReason.transient => S.of(context).payRetryTransient,
       PayRetryReason.insufficientZchf => S.of(context).payRetryInsufficientZchf,
-      PayRetryReason.unsignedTxMismatch =>
-        S.of(context).payRetryUnsignedTxMismatch,
+      PayRetryReason.unsignedTxMismatch => S.of(context).payRetryUnsignedTxMismatch,
     };
   }
 
@@ -186,10 +179,10 @@ class PayProcessView extends StatelessWidget {
     if (context.mounted) Navigator.of(context).pop(swapCompleted);
   }
 
-  /// Recovery sheet shown after a successful swap when the pay leg failed. The
-  /// primary action retries the PAY leg only ([PayProcessCubit.retryPay]) — the
-  /// swap is never redone, so the ZCHF already held is reused. Dismissing leaves
-  /// that ZCHF safely in the wallet.
+  /// Recovery sheet when a pay confirm did not finish. This payment leaves no
+  /// CHF in the wallet. The primary action ([PayProcessCubit.retryPay]) sends
+  /// the same delegation again and can sell REALU if the first confirm did not
+  /// arrive.
   Future<void> _showRetrySheet(
     BuildContext context,
     PayProcessPayRetry state,
@@ -243,11 +236,11 @@ class PayProcessView extends StatelessWidget {
     );
 
     if (retry == true) {
-      // Retry the PAY leg only — never re-swaps. Keep the page so the next
-      // attempt surfaces its own result.
+      // Send the same delegation again. Keep the page so the next attempt
+      // surfaces its own result.
       await cubit.retryPay();
     } else if (context.mounted) {
-      // Closed: leave the flow. The swapped ZCHF stays safely in the wallet.
+      // Closed: leave the flow. This payment did not leave CHF in the wallet.
       // true tells the quote page not to offer Pay again on the same quote.
       Navigator.of(context).pop(true);
     }
