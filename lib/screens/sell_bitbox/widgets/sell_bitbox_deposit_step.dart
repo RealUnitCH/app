@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_payment_info.dart';
 import 'package:realunit_wallet/screens/sell_bitbox/cubit/sell_bitbox_cubit.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 
 class SellBitboxDepositStep extends StatelessWidget {
@@ -45,6 +46,7 @@ class SellBitboxDepositStep extends StatelessWidget {
                       label: S.of(context).sellBitboxDepositTo,
                       value: _truncateAddress(paymentInfo.depositAddress),
                     ),
+                    ..._storedFiatRows(context, paymentInfo),
                   ],
                 ),
               ),
@@ -114,6 +116,20 @@ class SellBitboxDepositStep extends StatelessWidget {
         return const SizedBox.shrink();
       },
     );
+  }
+
+  List<Widget> _storedFiatRows(BuildContext context, SellPaymentInfo paymentInfo) {
+    final settings = BlocProvider.maybeOf<SettingsBloc>(context, listen: true)?.state;
+    final stored = paymentInfo.storedFiatFor(settings?.currency);
+    if (stored == null || settings == null) return const [];
+    return [
+      const Divider(color: RealUnitColors.neutral200, height: 1),
+      _row(
+        context,
+        label: settings.currency.code,
+        value: stored.toStringAsFixed(2),
+      ),
+    ];
   }
 
   Widget _row(BuildContext context, {required String label, required String value}) {

@@ -23,6 +23,9 @@ class SellPaymentInfo {
   final double minVolume;
   final double maxVolume;
   final String? error;
+  final double? valueChf;
+  final double? valueEur;
+  final double? zchfAmount;
 
   const SellPaymentInfo({
     required this.id,
@@ -42,5 +45,14 @@ class SellPaymentInfo {
     this.minVolume = 0,
     this.maxVolume = double.infinity,
     this.error,
+    this.valueChf,
+    this.valueEur,
+    this.zchfAmount,
   });
+
+  double? storedFiatFor(Currency? settingsCurrency) {
+    if (settingsCurrency == Currency.eur) return valueEur;
+    if (settingsCurrency == Currency.chf) return valueChf;
+    return null;
+  }
 }

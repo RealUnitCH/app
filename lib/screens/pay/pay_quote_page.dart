@@ -9,8 +9,10 @@ import 'package:realunit_wallet/packages/service/dfx/real_unit_pay_service.dart'
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/pay/cubits/pay_quote/pay_quote_cubit.dart';
 import 'package:realunit_wallet/screens/pay/pay_process_page.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/styles/currency.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/route_animation_gate.dart';
 import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
@@ -126,6 +128,12 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
       feeRealu: feeRealu ?? 0,
     );
     final merchant = state.merchantName;
+    final settings = BlocProvider.maybeOf<SettingsBloc>(context, listen: true)?.state;
+    final useEur = settings?.currency == Currency.eur && state.hasEurReceipt;
+    final billFiat = useEur ? _chf(state.billEur!, 'EUR') : _chf(parts.billChf, 'CHF');
+    final feeFiat = useEur ? _chf(state.feeEur!, 'EUR') : _chf(parts.feeChf, 'CHF');
+    final roundingFiat = useEur ? _chf(state.roundingEur!, 'EUR') : _chf(parts.roundingChf, 'CHF');
+    final totalFiat = useEur ? _chf(state.totalEur!, 'EUR') : _chf(parts.totalChf, 'CHF');
     return ScrollableActionsLayout(
       centerBody: true,
       body: Column(
@@ -176,22 +184,22 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
               _AmountRow(
                 label: S.of(context).payQuoteRequested,
                 realu: _realu(parts.billRealu),
-                chf: _chf(parts.billChf, state.fiatAsset),
+                chf: billFiat,
               ),
               _AmountRow(
                 label: S.of(context).payQuoteRealuFees,
                 realu: _realu(parts.feeRealu),
-                chf: _chf(parts.feeChf, 'CHF'),
+                chf: feeFiat,
               ),
               _AmountRow(
                 label: S.of(context).payQuoteRounding,
                 realu: _realu(parts.roundingRealu),
-                chf: _chf(parts.roundingChf, 'CHF'),
+                chf: roundingFiat,
               ),
               _AmountRow(
                 label: S.of(context).payQuoteTotal,
                 realu: _realu(parts.totalRealu),
-                chf: _chf(parts.totalChf, 'CHF'),
+                chf: totalFiat,
               ),
             ],
           ),

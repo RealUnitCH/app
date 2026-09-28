@@ -6,6 +6,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_pa
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_confirm/sell_confirm_cubit.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
@@ -98,8 +99,8 @@ class SellConfirmSheetView extends StatelessWidget {
                                 ),
                                 _infoRow(
                                   label:
-                                      '${S.of(context).amountIn} ${paymentInfo.currency.code}',
-                                  value: '${paymentInfo.estimatedAmount}',
+                                      '${S.of(context).amountIn} ${_confirmCurrencyCode(context, paymentInfo)}',
+                                  value: '${_confirmAmount(context, paymentInfo)}',
                                 ),
                                 _infoRow(
                                   label: S.of(context).receiver,
@@ -176,6 +177,19 @@ class SellConfirmSheetView extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  double _confirmAmount(BuildContext context, SellPaymentInfo paymentInfo) {
+    final settings = BlocProvider.maybeOf<SettingsBloc>(context, listen: true)?.state;
+    return paymentInfo.storedFiatFor(settings?.currency) ?? paymentInfo.estimatedAmount;
+  }
+
+  String _confirmCurrencyCode(BuildContext context, SellPaymentInfo paymentInfo) {
+    final settings = BlocProvider.maybeOf<SettingsBloc>(context, listen: true)?.state;
+    if (paymentInfo.storedFiatFor(settings?.currency) != null) {
+      return settings!.currency.code;
+    }
+    return paymentInfo.currency.code;
   }
 
   List<Widget> _withDividers({required List<Widget> children}) {

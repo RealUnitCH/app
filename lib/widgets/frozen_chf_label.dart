@@ -4,6 +4,23 @@ import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/packages/io/format_frozen_chf.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/styles/currency.dart';
+
+String referralPayoutFrozenLine({
+  required S s,
+  required String raw,
+  required Currency currency,
+  required bool hideAmounts,
+}) {
+  final parts = splitFrozenFiatData(raw);
+  if (currency == Currency.eur && parts.eur != null) {
+    return s.referralPayoutAmount(
+      Currency.eur.code,
+      hideAmounts ? '***.**' : parts.eur!,
+    );
+  }
+  return s.referralPayoutChf(hideAmounts ? '***.**' : parts.chf);
+}
 
 /// Frozen CHF line for referral prizes. Honors [SettingsState.hideAmounts].
 class FrozenChfLabel extends StatelessWidget {
@@ -15,9 +32,13 @@ class FrozenChfLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, state) {
-        final value = state.hideAmounts ? '***.**' : formatFrozenChfAmount(raw);
         return Text(
-          S.of(context).referralPayoutChf(value),
+          referralPayoutFrozenLine(
+            s: S.of(context),
+            raw: raw,
+            currency: state.currency,
+            hideAmounts: state.hideAmounts,
+          ),
           style: Theme.of(
             context,
           ).textTheme.bodySmall?.copyWith(color: RealUnitColors.neutral500),
