@@ -106,7 +106,7 @@ void main() {
       expect(state.merchantCity, isNull);
       expect(state.hasEurReceipt, isFalse);
     },
-  });
+  );
 
   blocTest<PayQuoteCubit, PayQuoteState>(
     'a quote with stored franc and euro values keeps the euro receipt lines',
@@ -129,7 +129,7 @@ void main() {
       expect(state.roundingEur, closeTo(0, 0.000001));
       expect(state.totalEur, closeTo(1.845, 0.000001));
     },
-  });
+  );
 
   blocTest<PayQuoteCubit, PayQuoteState>(
     'a fresh quote with a recipient surfaces merchant name and city',
