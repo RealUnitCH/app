@@ -53,7 +53,7 @@ void main() {
 
       expect(stored?.amount, 11.4);
       expect(stored?.currency, Currency.eur);
-      expect(stored?.currency?.code, 'EUR');
+      expect(stored?.currency.code, 'EUR');
     });
 
     test('EUR settings with missing valueEur use valueChf and CHF', () {
@@ -61,7 +61,7 @@ void main() {
 
       expect(stored?.amount, 12.5);
       expect(stored?.currency, Currency.chf);
-      expect(stored?.currency?.code, 'CHF');
+      expect(stored?.currency.code, 'CHF');
     });
 
     test('EUR settings with zero valueEur keep EUR and do not fall through', () {
@@ -69,7 +69,7 @@ void main() {
 
       expect(stored?.amount, 0);
       expect(stored?.currency, Currency.eur);
-      expect(stored?.currency?.code, 'EUR');
+      expect(stored?.currency.code, 'EUR');
     });
 
     test('CHF settings with both amounts use valueChf and CHF', () {
@@ -77,7 +77,7 @@ void main() {
 
       expect(stored?.amount, 12.5);
       expect(stored?.currency, Currency.chf);
-      expect(stored?.currency?.code, 'CHF');
+      expect(stored?.currency.code, 'CHF');
     });
 
     test('CHF settings with missing valueChf use valueEur and EUR', () {
@@ -85,7 +85,7 @@ void main() {
 
       expect(stored?.amount, 11.4);
       expect(stored?.currency, Currency.eur);
-      expect(stored?.currency?.code, 'EUR');
+      expect(stored?.currency.code, 'EUR');
     });
 
     test('both amounts missing returns null', () {
