@@ -62,6 +62,11 @@ jobs:
         env:
           ASC_JSON: ${{ runner.temp }}/asc.json
         run: |
+          # The live name stays. "RealUnit Wallet" is already taken on
+          # another account, and sending it aborts the upload.
+          meta="$RUNNER_TEMP/metadata"
+          cp -R ./fastlane/metadata "$meta"
+          rm -f "$meta/de-DE/name.txt"
           bundle exec fastlane deliver \
             --api_key_path "$ASC_JSON" \
             --app_version "1.2.35" \
@@ -70,7 +75,7 @@ jobs:
             --automatic_release \
             --force \
             --skip_binary_upload \
-            --metadata_path "./fastlane/metadata" \
+            --metadata_path "$meta" \
             --screenshots_path "./fastlane/screenshots" \
             --overwrite_screenshots \
             --precheck_include_in_app_purchases false
