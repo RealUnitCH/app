@@ -4,6 +4,8 @@ name: Submit App Store 1.2.35
 # Does not build a new binary.
 on:
   workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
 
 permissions:
   contents: read
@@ -11,6 +13,7 @@ permissions:
 jobs:
   submit:
     name: Submit 1.2.35 for App Store review
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'ops/submit-app-store-1.2.35'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
