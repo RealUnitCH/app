@@ -123,6 +123,77 @@ def copy_review_detail(versions_data, dest_id):
     return None
 
 
+def localization_fields(released):
+    fields = {
+        "description": read_meta("description.txt"),
+        "keywords": read_meta("keywords.txt"),
+        "supportUrl": read_meta("support_url.txt"),
+        "marketingUrl": read_meta("marketing_url.txt") or None,
+        "promotionalText": read_meta("promotional_text.txt") or None,
+    }
+    if released:
+        fields["whatsNew"] = read_meta("release_notes.txt")
+    return {key: value for key, value in fields.items() if value}
+
+
+def upsert_localization(version_id, released):
+    fields = localization_fields(released)
+    existing = api(
+        "GET",
+        f"/v1/appStoreVersions/{version_id}/appStoreVersionLocalizations",
+    )
+    match = next(
+        (
+            item
+            for item in existing.get("data", [])
+            if item["attributes"].get("locale") == "de-DE"
+        ),
+        None,
+    )
+    if match is None:
+        api(
+            "POST",
+            "/v1/appStoreVersionLocalizations",
+            {
+                "data": {
+                    "type": "appStoreVersionLocalizations",
+                    "attributes": {"locale": "de-DE", **fields},
+                    "relationships": {
+                        "appStoreVersion": {
+                            "data": {"type": "appStoreVersions", "id": version_id}
+                        }
+                    },
+                }
+            },
+        )
+        print("added de-DE localization")
+        return
+    api(
+        "PATCH",
+        f"/v1/appStoreVersionLocalizations/{match['id']}",
+        {
+            "data": {
+                "type": "appStoreVersionLocalizations",
+                "id": match["id"],
+                "attributes": fields,
+            }
+        },
+    )
+    print("updated de-DE localization")
+
+
+def ensure_review_detail(versions_data, dest_id):
+    current = api(
+        "GET",
+        f"/v1/appStoreVersions/{dest_id}/appStoreReviewDetail",
+        tolerate=(404,),
+    )
+    if (current.get("data") or {}).get("id"):
+        print("review details already present")
+        return None
+    return copy_review_detail(versions_data, dest_id)
+
+
 def main():
     apps = api("GET", "/v1/apps?" + urllib.parse.urlencode({"filter[bundleId]": BUNDLE_ID}))
     if not apps.get("data"):
@@ -245,40 +316,15 @@ def main():
         )
         version = created["data"]
         print("created version", version["id"])
-        attributes = {
-            "locale": "de-DE",
-            "description": read_meta("description.txt"),
-            "keywords": read_meta("keywords.txt"),
-            "supportUrl": read_meta("support_url.txt"),
-            "marketingUrl": read_meta("marketing_url.txt") or None,
-            "promotionalText": read_meta("promotional_text.txt") or None,
-        }
-        if released:
-            attributes["whatsNew"] = read_meta("release_notes.txt")
-        attributes = {key: value for key, value in attributes.items() if value}
-        api(
-            "POST",
-            "/v1/appStoreVersionLocalizations",
-            {
-                "data": {
-                    "type": "appStoreVersionLocalizations",
-                    "attributes": attributes,
-                    "relationships": {
-                        "appStoreVersion": {
-                            "data": {"type": "appStoreVersions", "id": version["id"]}
-                        }
-                    },
-                }
-            },
-        )
-        print("added de-DE localization")
-        copyright_text = copy_review_detail(versions.get("data", []), version["id"])
     else:
         state = version["attributes"].get("appStoreState")
         print("existing version", version["id"], state)
         if state not in ("PREPARE_FOR_SUBMISSION", "DEVELOPER_REJECTED", "REJECTED", "METADATA_REJECTED"):
             print("version is not editable; nothing to prepare")
             return
+
+    upsert_localization(version["id"], released)
+    copyright_text = ensure_review_detail(versions.get("data", []), version["id"])
 
     api(
         "PATCH",
