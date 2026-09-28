@@ -2,6 +2,13 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_payment_info_dto.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
+class StoredSellFiat {
+  final double amount;
+  final Currency currency;
+
+  const StoredSellFiat({required this.amount, required this.currency});
+}
+
 class SellPaymentInfo {
   final int id;
   final Eip7702Data eip7702;
@@ -50,9 +57,19 @@ class SellPaymentInfo {
     this.zchfAmount,
   });
 
-  double? storedFiatFor(Currency? settingsCurrency) {
-    if (settingsCurrency == Currency.eur) return valueEur;
-    if (settingsCurrency == Currency.chf) return valueChf;
+  StoredSellFiat? storedFiat(Currency? settingsCurrency) {
+    if (settingsCurrency == Currency.eur && valueEur != null) {
+      return StoredSellFiat(amount: valueEur!, currency: Currency.eur);
+    }
+    if (settingsCurrency == Currency.chf && valueChf != null) {
+      return StoredSellFiat(amount: valueChf!, currency: Currency.chf);
+    }
+    if (settingsCurrency == Currency.eur && valueChf != null) {
+      return StoredSellFiat(amount: valueChf!, currency: Currency.chf);
+    }
+    if (settingsCurrency == Currency.chf && valueEur != null) {
+      return StoredSellFiat(amount: valueEur!, currency: Currency.eur);
+    }
     return null;
   }
 }

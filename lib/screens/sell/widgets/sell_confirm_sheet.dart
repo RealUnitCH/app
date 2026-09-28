@@ -181,13 +181,18 @@ class SellConfirmSheetView extends StatelessWidget {
 
   double _confirmAmount(BuildContext context, SellPaymentInfo paymentInfo) {
     final settings = watchSettingsState(context);
-    return paymentInfo.storedFiatFor(settings?.currency) ?? paymentInfo.estimatedAmount;
+    final stored = paymentInfo.storedFiat(settings?.currency);
+    if (stored != null) {
+      return stored.amount;
+    }
+    return paymentInfo.estimatedAmount;
   }
 
   String _confirmCurrencyCode(BuildContext context, SellPaymentInfo paymentInfo) {
     final settings = watchSettingsState(context);
-    if (paymentInfo.storedFiatFor(settings?.currency) != null) {
-      return settings!.currency.code;
+    final stored = paymentInfo.storedFiat(settings?.currency);
+    if (stored != null) {
+      return stored.currency.code;
     }
     return paymentInfo.currency.code;
   }

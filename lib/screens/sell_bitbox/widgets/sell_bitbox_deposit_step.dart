@@ -17,6 +17,7 @@ class SellBitboxDepositStep extends StatelessWidget {
     return BlocBuilder<SellBitboxCubit, SellBitboxState>(
       builder: (context, state) {
         if (state is SellBitboxAwaitingDepositConfirm) {
+          final onChainZchf = paymentInfo.zchfAmount ?? paymentInfo.estimatedAmount;
           return Column(
             mainAxisAlignment: .center,
             spacing: 24,
@@ -38,7 +39,7 @@ class SellBitboxDepositStep extends StatelessWidget {
                     _row(
                       context,
                       label: S.of(context).sellBitboxDepositFrom,
-                      value: '${paymentInfo.estimatedAmount.toStringAsFixed(2)} ZCHF',
+                      value: '${onChainZchf.toStringAsFixed(2)} ZCHF',
                     ),
                     const Divider(color: RealUnitColors.neutral200, height: 1),
                     _row(
@@ -120,14 +121,14 @@ class SellBitboxDepositStep extends StatelessWidget {
 
   List<Widget> _storedFiatRows(BuildContext context, SellPaymentInfo paymentInfo) {
     final settings = watchSettingsState(context);
-    final stored = paymentInfo.storedFiatFor(settings?.currency);
+    final stored = paymentInfo.storedFiat(settings?.currency);
     if (stored == null || settings == null) return const [];
     return [
       const Divider(color: RealUnitColors.neutral200, height: 1),
       _row(
         context,
-        label: settings.currency.code,
-        value: stored.toStringAsFixed(2),
+        label: stored.currency.code,
+        value: stored.amount.toStringAsFixed(2),
       ),
     ];
   }
