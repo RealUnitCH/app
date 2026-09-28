@@ -3,6 +3,7 @@
 
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -34,7 +35,15 @@ def token():
 TOK = None
 
 
-def api(method, path, body=None):
+def redact(text):
+    return re.sub(
+        r'("demoAccountPassword"\s*:\s*")[^"]*"',
+        r'\1[redacted]"',
+        text,
+    )
+
+
+def api(method, path, body=None, tolerate=()):
     global TOK
     if TOK is None:
         TOK = token()
@@ -47,7 +56,10 @@ def api(method, path, body=None):
             raw = response.read().decode()
             return json.loads(raw) if raw else {}
     except urllib.error.HTTPError as error:
-        detail = error.read().decode("utf-8", "replace")
+        detail = redact(error.read().decode("utf-8", "replace"))
+        if error.code in tolerate:
+            print(f"HTTP {error.code} {method} {path} tolerated")
+            return {}
         raise SystemExit(f"HTTP {error.code} {method} {path}\n{detail[:5000]}")
 
 
@@ -56,6 +68,59 @@ def read_meta(name):
     if not os.path.exists(path):
         return ""
     return open(path).read().strip()
+
+
+REVIEW_KEYS = (
+    "contactFirstName",
+    "contactLastName",
+    "contactPhone",
+    "contactEmail",
+    "demoAccountName",
+    "demoAccountPassword",
+    "demoAccountRequired",
+    "notes",
+)
+
+
+def copy_review_detail(versions_data, dest_id):
+    """Reuse the last approved version's review contact. Never print it."""
+    for item in versions_data:
+        if item["attributes"].get("versionString") == VERSION:
+            continue
+        detail = api(
+            "GET",
+            f"/v1/appStoreVersions/{item['id']}/appStoreReviewDetail",
+            tolerate=(404,),
+        )
+        attrs = (detail.get("data") or {}).get("attributes") or {}
+        keep = {}
+        for key in REVIEW_KEYS:
+            value = attrs.get(key)
+            if value is None or value == "":
+                continue
+            keep[key] = value
+        if not keep:
+            continue
+        api(
+            "POST",
+            "/v1/appStoreReviewDetails",
+            {
+                "data": {
+                    "type": "appStoreReviewDetails",
+                    "attributes": keep,
+                    "relationships": {
+                        "appStoreVersion": {
+                            "data": {"type": "appStoreVersions", "id": dest_id}
+                        }
+                    },
+                }
+            },
+            tolerate=(409,),
+        )
+        print("copied review details from", item["attributes"].get("versionString"))
+        return item["attributes"].get("copyright") or None
+    print("no previous review details to copy")
+    return None
 
 
 def main():
@@ -73,8 +138,49 @@ def main():
     by_string = {}
     for item in versions.get("data", []):
         attrs = item["attributes"]
-        print(" -", attrs.get("versionString"), attrs.get("appStoreState"), attrs.get("releaseType"))
+        print(" -", item["id"], attrs.get("versionString"), attrs.get("appStoreState"), attrs.get("releaseType"))
         by_string[attrs.get("versionString")] = item
+
+    # Apple refuses a new version while an approved one is waiting for a
+    # manual release. Release that version, then 1.2.35 can be created.
+    held = [
+        item
+        for item in versions.get("data", [])
+        if item["attributes"].get("appStoreState") == "PENDING_DEVELOPER_RELEASE"
+    ]
+    for item in held:
+        print("releasing held version", item["attributes"].get("versionString"))
+        api(
+            "POST",
+            "/v1/appStoreVersionReleaseRequests",
+            {
+                "data": {
+                    "type": "appStoreVersionReleaseRequests",
+                    "relationships": {
+                        "appStoreVersion": {
+                            "data": {"type": "appStoreVersions", "id": item["id"]}
+                        }
+                    },
+                }
+            },
+            tolerate=(409,),
+        )
+    if held:
+        cleared = False
+        for _ in range(18):
+            time.sleep(10)
+            versions = api(
+                "GET",
+                f"/v1/apps/{app_id}/appStoreVersions?filter[platform]=IOS&limit=20",
+            )
+            by_string = {item["attributes"].get("versionString"): item for item in versions.get("data", [])}
+            states = [item["attributes"].get("appStoreState") for item in versions.get("data", [])]
+            print("states after release", states)
+            if "PENDING_DEVELOPER_RELEASE" not in states:
+                cleared = True
+                break
+        if not cleared:
+            raise SystemExit("A version is still pending developer release")
 
     builds = api(
         "GET",
@@ -114,6 +220,7 @@ def main():
         print("set usesNonExemptEncryption false")
 
     version = by_string.get(VERSION)
+    copyright_text = None
     released = any(
         item["attributes"].get("appStoreState") == "READY_FOR_SALE"
         for item in versions.get("data", [])
@@ -165,6 +272,7 @@ def main():
             },
         )
         print("added de-DE localization")
+        copyright_text = copy_review_detail(versions.get("data", []), version["id"])
     else:
         state = version["attributes"].get("appStoreState")
         print("existing version", version["id"], state)
@@ -179,7 +287,10 @@ def main():
             "data": {
                 "type": "appStoreVersions",
                 "id": version["id"],
-                "attributes": {"releaseType": "AFTER_APPROVAL"},
+                "attributes": {
+                    "releaseType": "AFTER_APPROVAL",
+                    **({"copyright": copyright_text} if copyright_text else {}),
+                },
                 "relationships": {
                     "build": {"data": {"type": "builds", "id": build["id"]}}
                 },
