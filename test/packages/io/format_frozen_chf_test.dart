@@ -23,6 +23,7 @@ void main() {
 
   test('keeps a missing euro amount out of the stored pair', () {
     expect(encodeFrozenFiatData(chfValue: 246.5), '246.50');
+    expect(encodeFrozenFiatData(chfValue: 246.5, eurValue: 12.3), '246.50|12.30');
     expect(splitFrozenFiatData('246.50'), (chf: '246.50', eur: null));
     expect(splitFrozenFiatData('246.50|12.30'), (chf: '246.50', eur: '12.30'));
     expect(splitFrozenFiatData('246.50|'), (chf: '246.50', eur: null));
