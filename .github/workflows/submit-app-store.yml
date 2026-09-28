@@ -1,0 +1,73 @@
+name: Submit App Store 1.2.35
+
+# One run for the already uploaded TestFlight build of 1.2.35.
+# Does not build a new binary.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    name: Submit 1.2.35 for App Store review
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install API client
+        run: pip install PyJWT cryptography
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+          working-directory: ios
+
+      - name: Write App Store Connect key
+        env:
+          APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          umask 077
+          printf '%s\n' "$APP_STORE_CONNECT_KEY" > "$RUNNER_TEMP/AuthKey.p8"
+          python3 - <<'PY'
+          import json, os
+          key = open(os.environ["RUNNER_TEMP"] + "/AuthKey.p8").read()
+          json.dump({
+              "key_id": os.environ["APP_STORE_CONNECT_KEY_ID"],
+              "issuer_id": os.environ["APP_STORE_CONNECT_ISSUER_ID"],
+              "key": key,
+          }, open(os.environ["RUNNER_TEMP"] + "/asc.json", "w"))
+          PY
+
+      - name: Prepare version and build
+        env:
+          KEY_PATH: ${{ runner.temp }}/AuthKey.p8
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: python3 .github/scripts/submit_app_store_1_2_35.py
+
+      - name: Upload listing and submit for review
+        working-directory: ios
+        env:
+          ASC_JSON: ${{ runner.temp }}/asc.json
+        run: |
+          bundle exec fastlane deliver \
+            --api_key_path "$ASC_JSON" \
+            --app_version "1.2.35" \
+            --build_number "10235999" \
+            --submit_for_review \
+            --automatic_release \
+            --force \
+            --skip_binary_upload \
+            --metadata_path "./fastlane/metadata" \
+            --screenshots_path "./fastlane/screenshots" \
+            --overwrite_screenshots \
+            --precheck_include_in_app_purchases false
