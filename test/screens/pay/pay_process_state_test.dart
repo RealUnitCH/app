@@ -62,11 +62,11 @@ void main() {
       );
       expect(
         const PayProcessPayRetry(PayRetryReason.transient),
-        isNot(equals(const PayProcessPayRetry(PayRetryReason.quoteExpired))),
+        isNot(equals(const PayProcessPayRetry(PayRetryReason.transient, message: 'short'))),
       );
       expect(
-        const PayProcessPayRetry(PayRetryReason.insufficientZchf, message: 'short').props,
-        [PayRetryReason.insufficientZchf, 'short'],
+        const PayProcessPayRetry(PayRetryReason.transient, message: 'short').props,
+        [PayRetryReason.transient, 'short'],
       );
     });
   });

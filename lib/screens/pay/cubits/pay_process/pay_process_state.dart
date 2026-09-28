@@ -23,21 +23,9 @@ enum PayProcessFailureReason {
 /// wallet. Retry sends the same delegation again and can sell REALU when the
 /// first confirm did not arrive. Each reason maps to a localized message.
 enum PayRetryReason {
-  /// The quote expired before it settled. This payment leaves no CHF. Retry
-  /// sends the same delegation again.
-  quoteExpired,
-
   /// The confirm or the settlement status did not finish. No CHF from this
   /// payment is in the wallet. Retry sends the same delegation again.
   transient,
-
-  /// The proceeds no longer cover the payment. This payment leaves no CHF.
-  /// Retry sends the same delegation again.
-  insufficientZchf,
-
-  /// The signed details did not match the request. Nothing was signed.
-  /// Retry sends the same delegation again.
-  unsignedTxMismatch,
 }
 
 sealed class PayProcessState extends Equatable {
