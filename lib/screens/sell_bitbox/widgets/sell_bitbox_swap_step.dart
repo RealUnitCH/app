@@ -91,7 +91,7 @@ class SellBitboxSwapStep extends StatelessWidget {
   }
 
   List<Widget> _storedFiatRows(BuildContext context, SellPaymentInfo paymentInfo) {
-    final settings = BlocProvider.maybeOf<SettingsBloc>(context, listen: true)?.state;
+    final settings = watchSettingsState(context);
     final stored = paymentInfo.storedFiatFor(settings?.currency);
     if (stored == null || settings == null) return const [];
     return [

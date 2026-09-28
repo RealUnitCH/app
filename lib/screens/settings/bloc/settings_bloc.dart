@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:realunit_wallet/packages/config/network_mode.dart';
 import 'package:realunit_wallet/packages/repository/settings_repository.dart';
@@ -154,5 +155,14 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
           state.copyWith(walletFeaturePromoCode: _settingsRepository.walletFeaturePromoCode),
         );
     }
+  }
+}
+
+/// Screens that also render in tests without a mounted [SettingsBloc].
+SettingsState? watchSettingsState(BuildContext context) {
+  try {
+    return context.watch<SettingsBloc>().state;
+  } on ProviderNotFoundException {
+    return null;
   }
 }

@@ -128,7 +128,7 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
       feeRealu: feeRealu ?? 0,
     );
     final merchant = state.merchantName;
-    final settings = BlocProvider.maybeOf<SettingsBloc>(context, listen: true)?.state;
+    final settings = watchSettingsState(context);
     final useEur = settings?.currency == Currency.eur && state.hasEurReceipt;
     final billFiat = useEur ? _chf(state.billEur!, 'EUR') : _chf(parts.billChf, 'CHF');
     final feeFiat = useEur ? _chf(state.feeEur!, 'EUR') : _chf(parts.feeChf, 'CHF');

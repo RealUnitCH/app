@@ -180,12 +180,12 @@ class SellConfirmSheetView extends StatelessWidget {
   }
 
   double _confirmAmount(BuildContext context, SellPaymentInfo paymentInfo) {
-    final settings = BlocProvider.maybeOf<SettingsBloc>(context, listen: true)?.state;
+    final settings = watchSettingsState(context);
     return paymentInfo.storedFiatFor(settings?.currency) ?? paymentInfo.estimatedAmount;
   }
 
   String _confirmCurrencyCode(BuildContext context, SellPaymentInfo paymentInfo) {
-    final settings = BlocProvider.maybeOf<SettingsBloc>(context, listen: true)?.state;
+    final settings = watchSettingsState(context);
     if (paymentInfo.storedFiatFor(settings?.currency) != null) {
       return settings!.currency.code;
     }
