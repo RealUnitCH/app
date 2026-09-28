@@ -7,11 +7,12 @@ import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
 String referralPayoutFrozenLine({
-  required S s,
+  required BuildContext context,
   required String raw,
   required Currency currency,
   required bool hideAmounts,
 }) {
+  final s = S.of(context);
   final parts = splitFrozenFiatData(raw);
   if (currency == Currency.eur && parts.eur != null) {
     return s.referralPayoutAmount(
@@ -34,7 +35,7 @@ class FrozenChfLabel extends StatelessWidget {
       builder: (context, state) {
         return Text(
           referralPayoutFrozenLine(
-            s: S.of(context),
+            context: context,
             raw: raw,
             currency: state.currency,
             hideAmounts: state.hideAmounts,

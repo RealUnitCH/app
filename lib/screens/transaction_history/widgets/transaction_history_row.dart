@@ -210,7 +210,7 @@ class TransactionHistoryRowView extends StatelessWidget {
             ),
             chfLine: chf != null && chf.isNotEmpty
                 ? referralPayoutFrozenLine(
-                    s: s,
+                    context: context,
                     raw: chf,
                     currency: settings.currency,
                     hideAmounts: settings.hideAmounts,
