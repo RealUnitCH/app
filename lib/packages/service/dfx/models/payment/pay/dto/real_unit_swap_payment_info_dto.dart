@@ -22,6 +22,8 @@ class RealUnitSwapPaymentInfoDto {
   final RealUnitSwapFeeDto? fees;
   final double? ethereumTransactionFeeChf;
   final double? ethereumTransactionFeeRealu;
+  final double? valueChf;
+  final double? valueEur;
   final Eip7702Data? eip7702;
 
   const RealUnitSwapPaymentInfoDto({
@@ -43,6 +45,8 @@ class RealUnitSwapPaymentInfoDto {
     this.fees,
     this.ethereumTransactionFeeChf,
     this.ethereumTransactionFeeRealu,
+    this.valueChf,
+    this.valueEur,
     this.eip7702,
   });
 
@@ -86,6 +90,8 @@ class RealUnitSwapPaymentInfoDto {
           : RealUnitSwapFeeDto.fromJson(json['fees'] as Map<String, dynamic>),
       ethereumTransactionFeeChf: ethereumTransactionFeeChf,
       ethereumTransactionFeeRealu: ethereumTransactionFeeRealu,
+      valueChf: (json['valueChf'] as num?)?.toDouble(),
+      valueEur: (json['valueEur'] as num?)?.toDouble(),
       eip7702: eip7702,
     );
   }
