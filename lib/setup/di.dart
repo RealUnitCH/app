@@ -140,6 +140,7 @@ Future<void> finishSetup(String encryptionKey) async {
       () => ApiConfig(networkMode: getIt<SettingsRepository>().networkMode),
       SessionCache(getIt<CacheRepository>()),
     ),
+    dispose: (store) => store.httpClient.close(),
   );
 
   setupServices();
