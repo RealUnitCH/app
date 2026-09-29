@@ -66,6 +66,21 @@ class SecureStorage {
   Future<void> setEncryptionKey(String key) =>
       _secureStorage.write(key: _databaseEncryptionKey, value: key);
 
+  Future<bool?> isProtectedDataAvailable() => _secureStorage.isCupertinoProtectedDataAvailable();
+
+  /// Whether the database encryption key is verifiably absent from secure storage.
+  ///
+  /// A `null` read is not enough: on Apple platforms the plugin can return
+  /// `null` both when the item is missing and when a keychain query failed
+  /// (for example while the device is locked). This method therefore also
+  /// consults protected-data availability and `containsKey`; an exception from
+  /// `containsKey` propagates so the caller can treat it as unreadable.
+  Future<bool> isEncryptionKeyAbsent() async {
+    if (await getEncryptionKey() != null) return false;
+    if (await isProtectedDataAvailable() == false) return false;
+    return !await _secureStorage.containsKey(key: _databaseEncryptionKey);
+  }
+
   // Pin
 
   static Uint8List generatePinSalt() {

@@ -53,6 +53,7 @@ import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit
 import 'package:realunit_wallet/setup/account_currency_sync.dart';
 import 'package:realunit_wallet/setup/database.dart';
 import 'package:realunit_wallet/setup/routing/capture_install_referrer.dart';
+import 'package:realunit_wallet/setup/startup/startup_exceptions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
@@ -64,8 +65,12 @@ final getIt = GetIt.instance;
 /// legacy security flags, then resolves the key lifecycle: return the stored
 /// key if one exists; on a clean first boot (no key AND no database) mint,
 /// persist and return a fresh key while dropping any stale current-wallet id;
-/// and fail loud if a database is present WITHOUT its key rather than silently
-/// minting a new one (which would strand the encrypted data permanently).
+/// and fail loud if a database is present WITHOUT a usable key rather than
+/// silently minting a new one (which would strand the encrypted data
+/// permanently). Distinguishes [DatabaseKeyMissingException] (key verifiably
+/// absent — only a wallet reset helps) from
+/// [DatabaseKeyUnreadableException] (key could not be read right now — retry,
+/// never reset).
 ///
 /// [secureStorage] and [databaseFileExists] are injection seams with production
 /// defaults (`const SecureStorage()` and the real path_provider-backed check),
@@ -88,7 +93,14 @@ Future<String> setupEssentials({
 
   if (encryptionKey == null) {
     if (await databaseFileExists()) {
-      throw Exception('Database found, but key is missing!');
+      if (await secureStorage.isEncryptionKeyAbsent()) {
+        throw DatabaseKeyMissingException(
+          walletConfigured: getIt<SettingsRepository>().currentWalletId != null,
+        );
+      }
+      throw DatabaseKeyUnreadableException(
+        protectedDataAvailable: await secureStorage.isProtectedDataAvailable(),
+      );
     }
     final freshEncryptionKey = SecureStorage.getNewEncryptionKey();
     await secureStorage.setEncryptionKey(freshEncryptionKey);
@@ -106,7 +118,7 @@ Future<void> finishSetup(String encryptionKey) async {
     port: const InstallReferrerAdapter(),
   );
 
-  getIt.registerSingleton(AppDatabase(encryptionKey));
+  getIt.registerSingleton(AppDatabase(encryptionKey), dispose: (db) => db.close());
   setupRepositories();
 
   getIt.registerSingleton(
@@ -253,6 +265,7 @@ Future<void> setupBlocs() async {
       },
       fetchWalletFeatures: () => getIt<RealUnitWalletFeaturesService>().get(),
     ),
+    dispose: (bloc) => bloc.close(),
   );
   getIt.registerSingleton(
     HomeBloc(
@@ -263,6 +276,7 @@ Future<void> setupBlocs() async {
       getIt<AppStore>(),
       getIt<BitboxService>(),
     ),
+    dispose: (bloc) => bloc.close(),
   );
   getIt.registerSingleton(
     AccountCurrencySync(
@@ -274,14 +288,14 @@ Future<void> setupBlocs() async {
 
   final pinAuthCubit = PinAuthCubit(getIt<SecureStorage>());
   await pinAuthCubit.initialize();
-  getIt.registerSingleton(pinAuthCubit);
+  getIt.registerSingleton(pinAuthCubit, dispose: (cubit) => cubit.close());
 
   final clientPolicyCubit = ClientPolicyCubit(
     getIt<RealUnitClientPolicyService>(),
     getIt<CacheRepository>(),
     getIt<SettingsRepository>(),
   );
-  getIt.registerSingleton(clientPolicyCubit);
+  getIt.registerSingleton(clientPolicyCubit, dispose: (cubit) => cubit.close());
   getIt<AppStore>().httpClient.onUpgradeRequired =
       clientPolicyCubit.reportUpgradeRequired;
   await clientPolicyCubit.initialize();
