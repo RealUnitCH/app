@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/dto/real_unit_swap_payment_info_dto.dart';
+import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 
 /// Domain model for an IBAN-free REALU → ZCHF swap quote. The backend decides
 /// validity, limits and the ZCHF estimate; this model only carries those fields
@@ -16,6 +17,7 @@ class SwapPaymentInfo extends Equatable {
   final double? feesTotal;
   final double? ethereumTransactionFeeChf;
   final double? ethereumTransactionFeeRealu;
+  final Eip7702Data? eip7702;
 
   const SwapPaymentInfo({
     required this.id,
@@ -29,6 +31,7 @@ class SwapPaymentInfo extends Equatable {
     this.feesTotal,
     this.ethereumTransactionFeeChf,
     this.ethereumTransactionFeeRealu,
+    this.eip7702,
   });
 
   factory SwapPaymentInfo.fromDto(RealUnitSwapPaymentInfoDto dto) => SwapPaymentInfo(
@@ -43,6 +46,7 @@ class SwapPaymentInfo extends Equatable {
     feesTotal: dto.fees?.total,
     ethereumTransactionFeeChf: dto.ethereumTransactionFeeChf,
     ethereumTransactionFeeRealu: dto.ethereumTransactionFeeRealu,
+    eip7702: dto.eip7702,
   );
 
   @override
@@ -58,5 +62,6 @@ class SwapPaymentInfo extends Equatable {
     feesTotal,
     ethereumTransactionFeeChf,
     ethereumTransactionFeeRealu,
+    eip7702,
   ];
 }

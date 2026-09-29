@@ -25,6 +25,8 @@ class RealUnitSellPaymentInfoDto {
   final BeneficiaryDto beneficiary;
   final double ethBalance;
   final double requiredGasEth;
+  final double? ethereumTransactionFeeChf;
+  final double? ethereumTransactionFeeRealu;
   final bool isValid;
   final String? error;
 
@@ -50,6 +52,8 @@ class RealUnitSellPaymentInfoDto {
     required this.beneficiary,
     required this.ethBalance,
     required this.requiredGasEth,
+    this.ethereumTransactionFeeChf,
+    this.ethereumTransactionFeeRealu,
     required this.isValid,
     this.error,
   });
@@ -76,9 +80,17 @@ class RealUnitSellPaymentInfoDto {
           .toList(),
       estimatedAmount: (json['estimatedAmount'] as num).toDouble(),
       currency: Currency.fromCode(json['currency'] as String),
-      beneficiary: BeneficiaryDto.fromJson(json['beneficiary'] as Map<String, dynamic>),
+      beneficiary: BeneficiaryDto.fromJson(
+        json['beneficiary'] as Map<String, dynamic>,
+      ),
       ethBalance: (json['ethBalance'] as num).toDouble(),
       requiredGasEth: (json['requiredGasEth'] as num).toDouble(),
+      ethereumTransactionFeeChf: json['ethereumTransactionFeeChf'] == null
+          ? null
+          : (json['ethereumTransactionFeeChf'] as num).toDouble(),
+      ethereumTransactionFeeRealu: json['ethereumTransactionFeeRealu'] == null
+          ? null
+          : (json['ethereumTransactionFeeRealu'] as num).toDouble(),
       isValid: json['isValid'] as bool,
       error: json['error'] as String?,
     );
@@ -89,10 +101,7 @@ class BeneficiaryDto {
   final String? name;
   final String iban;
 
-  const BeneficiaryDto({
-    this.name,
-    required this.iban,
-  });
+  const BeneficiaryDto({this.name, required this.iban});
 
   factory BeneficiaryDto.fromJson(Map<String, dynamic> json) {
     return BeneficiaryDto(
