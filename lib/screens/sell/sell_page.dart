@@ -40,11 +40,10 @@ class SellPage extends StatelessWidget {
           ),
         ),
         BlocProvider(
-          create: (context) {
-            final service = getIt<DfxBrokerbotService>();
-            final cubit = SellConverterCubit(service, currency: settings.currency);
-            return cubit..onSharesChanged('100');
-          },
+          create: (context) => SellConverterCubit(
+            getIt<DfxBrokerbotService>(),
+            currency: settings.currency,
+          )..onSharesChanged('100'),
         ),
         BlocProvider(
           create: (context) => SellPaymentInfoCubit(
