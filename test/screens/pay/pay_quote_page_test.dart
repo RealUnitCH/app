@@ -20,6 +20,9 @@ import 'package:realunit_wallet/packages/wallet/wallet.dart';
 import 'package:realunit_wallet/screens/pay/cubits/pay_quote/pay_quote_cubit.dart';
 import 'package:realunit_wallet/screens/pay/pay_process_page.dart';
 import 'package:realunit_wallet/screens/pay/pay_quote_page.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/styles/currency.dart';
+import 'package:realunit_wallet/styles/language.dart';
 
 import '../../helper/helper.dart';
 
@@ -161,6 +164,46 @@ void main() {
       expect(find.text('2.40 CHF'), findsOne);
       expect(find.text('2.00 REALU'), findsOne);
       expect(find.text(S.current.payConfirmButton), findsOne);
+    });
+
+    testWidgets('euro receipt keeps the franc amount the till requested', (tester) async {
+      when(() => quoteCubit.state).thenReturn(
+        PayQuoteReady(
+          paymentLinkId: ready.paymentLinkId,
+          quoteId: ready.quoteId,
+          fiatAsset: ready.fiatAsset,
+          fiatAmount: ready.fiatAmount,
+          zchfAmount: ready.zchfAmount,
+          merchantName: ready.merchantName,
+          expiresAt: DateTime.utc(2026, 1, 1, 0, 5),
+          swap: ready.swap,
+          billEur: 1.84,
+          feeEur: 0.04,
+          roundingEur: 0.28,
+          totalEur: 2.16,
+        ),
+      );
+      final settingsBloc = MockSettingsBloc();
+      when(() => settingsBloc.state).thenReturn(
+        const SettingsState(language: Language.de, currency: Currency.eur),
+      );
+      await withClock(Clock.fixed(DateTime.utc(2026, 1, 1)), () async {
+        await tester.pumpApp(
+          BlocProvider<SettingsBloc>.value(
+            value: settingsBloc,
+            child: buildSubject(),
+          ),
+        );
+      });
+
+      expect(find.text('2.00 CHF'), findsOne);
+      expect(find.text('1.84 EUR'), findsOne);
+      expect(find.text('0.04 EUR'), findsOne);
+      expect(find.text('0.28 EUR'), findsOne);
+      expect(find.text('2.16 EUR'), findsOne);
+      expect(find.text('0.05 CHF'), findsNothing);
+      expect(find.text('0.35 CHF'), findsNothing);
+      expect(find.text('2.40 CHF'), findsNothing);
     });
 
     testWidgets('ready state shows merchant and REALU swap details when present', (tester) async {

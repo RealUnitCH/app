@@ -126,8 +126,9 @@ void main() {
       },
     );
 
-    // EUR selected and the quote stored a EUR receipt: the four fiat lines
-    // show that receipt, not the CHF split.
+    // EUR selected and the quote stored a EUR receipt: fee, rounding, and
+    // total show that receipt. The requested row keeps the CHF amount the
+    // till asked for and adds the stored EUR amount beside it.
     goldenTest(
       'ready quote shows the stored EUR receipt when EUR is selected',
       fileName: 'pay_quote_page_ready_eur',

@@ -130,7 +130,9 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
     final merchant = state.merchantName;
     final settings = watchSettingsState(context);
     final useEur = settings?.currency == Currency.eur && state.hasEurReceipt;
-    final billFiat = useEur ? _chf(state.billEur!, 'EUR') : _chf(parts.billChf, 'CHF');
+    // The till asked for this franc amount. It stays on the requested row
+    // even when the receipt shows the stored euro figures.
+    final requestedChf = _chf(parts.billChf, 'CHF');
     final feeFiat = useEur ? _chf(state.feeEur!, 'EUR') : _chf(parts.feeChf, 'CHF');
     final roundingFiat = useEur ? _chf(state.roundingEur!, 'EUR') : _chf(parts.roundingChf, 'CHF');
     final totalFiat = useEur ? _chf(state.totalEur!, 'EUR') : _chf(parts.totalChf, 'CHF');
@@ -184,7 +186,8 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
               _AmountRow(
                 label: S.of(context).payQuoteRequested,
                 realu: _realu(parts.billRealu),
-                chf: billFiat,
+                chf: requestedChf,
+                also: useEur ? _chf(state.billEur!, 'EUR') : null,
               ),
               _AmountRow(
                 label: S.of(context).payQuoteRealuFees,
@@ -350,16 +353,29 @@ class _AmountRow extends StatelessWidget {
   final String label;
   final String realu;
   final String chf;
+  final String? also;
 
   const _AmountRow({
     required this.label,
     required this.realu,
     required this.chf,
+    this.also,
   });
 
   @override
   Widget build(BuildContext context) {
     final small = Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.35);
+    final fiatStyle = small?.copyWith(color: RealUnitColors.neutral600);
+    final Widget fiat = also == null
+        ? Text(chf, textAlign: TextAlign.end, softWrap: true, style: fiatStyle)
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(chf, textAlign: TextAlign.end, softWrap: true, style: fiatStyle),
+              Text(also!, textAlign: TextAlign.end, softWrap: true, style: fiatStyle),
+            ],
+          );
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       child: Column(
@@ -384,14 +400,7 @@ class _AmountRow extends StatelessWidget {
                   ),
                 ),
               ),
-              Flexible(
-                child: Text(
-                  chf,
-                  textAlign: TextAlign.end,
-                  softWrap: true,
-                  style: small?.copyWith(color: RealUnitColors.neutral600),
-                ),
-              ),
+              Flexible(child: fiat),
             ],
           ),
         ],
