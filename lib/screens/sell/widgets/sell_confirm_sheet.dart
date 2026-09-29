@@ -6,6 +6,7 @@ import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/sell_pa
 import 'package:realunit_wallet/packages/service/dfx/real_unit_sell_payment_info_service.dart';
 import 'package:realunit_wallet/packages/utils/default_assets.dart';
 import 'package:realunit_wallet/screens/sell/cubits/sell_confirm/sell_confirm_cubit.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/currency.dart';
@@ -13,16 +14,6 @@ import 'package:realunit_wallet/widgets/buttons/app_filled_button.dart';
 import 'package:realunit_wallet/widgets/handlebars.dart';
 import 'package:realunit_wallet/widgets/iban_text_formatter.dart';
 import 'package:realunit_wallet/widgets/scrollable_actions_layout.dart';
-
-/// CHF payout after the relay fee. The fee is always CHF. Subtract it only
-/// when the quote itself is CHF, never from an EUR amount.
-double _payoutAmount(SellPaymentInfo paymentInfo) {
-  final fee = paymentInfo.ethereumTransactionFeeChf;
-  if (fee == null || fee <= 0 || paymentInfo.currency != Currency.chf) {
-    return paymentInfo.estimatedAmount;
-  }
-  return paymentInfo.estimatedAmount - fee;
-}
 
 String _money(double amount) => amount.toStringAsFixed(2);
 
@@ -126,8 +117,11 @@ class SellConfirmSheetView extends StatelessWidget {
                                   ),
                                 _infoRow(
                                   label:
-                                      '${S.of(context).amountIn} ${paymentInfo.currency.code}',
-                                  value: _money(_payoutAmount(paymentInfo)),
+                                      '${S.of(context).amountIn} '
+                                      '${_confirmCurrencyCode(context, paymentInfo)}',
+                                  value: _money(
+                                    _confirmAmount(context, paymentInfo),
+                                  ),
                                 ),
                                 _infoRow(
                                   label: S.of(context).receiver,
@@ -204,6 +198,29 @@ class SellConfirmSheetView extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  double _confirmAmount(BuildContext context, SellPaymentInfo paymentInfo) {
+    final settings = context.watch<SettingsBloc>().state;
+    final stored = paymentInfo.storedFiat(settings.currency);
+    final amount = stored?.amount ?? paymentInfo.estimatedAmount;
+    final currency = stored?.currency ?? paymentInfo.currency;
+    // The relay fee is CHF. Take it off a franc figure only. A stored euro
+    // amount stays as stored.
+    final fee = paymentInfo.ethereumTransactionFeeChf;
+    if (fee == null || fee <= 0 || currency != Currency.chf) {
+      return amount;
+    }
+    return amount - fee;
+  }
+
+  String _confirmCurrencyCode(BuildContext context, SellPaymentInfo paymentInfo) {
+    final settings = context.watch<SettingsBloc>().state;
+    final stored = paymentInfo.storedFiat(settings.currency);
+    if (stored != null) {
+      return stored.currency.code;
+    }
+    return paymentInfo.currency.code;
   }
 
   List<Widget> _withDividers({required List<Widget> children}) {

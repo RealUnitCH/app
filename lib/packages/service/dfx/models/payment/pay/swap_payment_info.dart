@@ -17,6 +17,8 @@ class SwapPaymentInfo extends Equatable {
   final double? feesTotal;
   final double? ethereumTransactionFeeChf;
   final double? ethereumTransactionFeeRealu;
+  final double? valueChf;
+  final double? valueEur;
   final Eip7702Data? eip7702;
 
   const SwapPaymentInfo({
@@ -31,6 +33,8 @@ class SwapPaymentInfo extends Equatable {
     this.feesTotal,
     this.ethereumTransactionFeeChf,
     this.ethereumTransactionFeeRealu,
+    this.valueChf,
+    this.valueEur,
     this.eip7702,
   });
 
@@ -46,6 +50,8 @@ class SwapPaymentInfo extends Equatable {
     feesTotal: dto.fees?.total,
     ethereumTransactionFeeChf: dto.ethereumTransactionFeeChf,
     ethereumTransactionFeeRealu: dto.ethereumTransactionFeeRealu,
+    valueChf: dto.valueChf,
+    valueEur: dto.valueEur,
     eip7702: dto.eip7702,
   );
 
@@ -62,6 +68,8 @@ class SwapPaymentInfo extends Equatable {
     feesTotal,
     ethereumTransactionFeeChf,
     ethereumTransactionFeeRealu,
+    valueChf,
+    valueEur,
     eip7702,
   ];
 }
