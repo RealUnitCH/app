@@ -221,7 +221,7 @@ void main() {
     );
 
     blocTest<StartupFailureCubit, StartupFailureState>(
-      'reset step throw does not restart and reports the error',
+      'reset step throw keeps canResetWallet, does not restart, and reports',
       build: () => StartupFailureCubit(
         error: missingKey,
         restart: () async {
@@ -238,7 +238,8 @@ void main() {
       expect: () => [
         const StartupFailureState(canResetWallet: true, isBusy: true),
         const StartupFailureState(
-          canResetWallet: false,
+          canResetWallet: true,
+          isBusy: false,
           actionFailed: true,
         ),
       ],
@@ -246,8 +247,82 @@ void main() {
         expect(restartCalls, 0);
         expect(reports, hasLength(1));
         expect(reports.single.error, isA<Exception>());
+        expect(reports.single.stackTrace, isNotNull);
       },
     );
+
+    test('after a failed reset step a second resetWallet runs reset again', () async {
+      var resetCalls = 0;
+      final cubit = StartupFailureCubit(
+        error: missingKey,
+        restart: () async {
+          restartCalls++;
+        },
+        resetWallet: () async {
+          resetCalls++;
+          throw Exception('reset failed');
+        },
+        report: (error, {stackTrace}) {
+          reports.add((error: error, stackTrace: stackTrace));
+        },
+      );
+
+      await cubit.resetWallet();
+      await cubit.resetWallet();
+
+      expect(resetCalls, 2);
+      expect(restartCalls, 0);
+      expect(cubit.state.canResetWallet, isTrue);
+      await cubit.close();
+    });
+
+    test('reset step failures are always reported, even for the same type', () async {
+      final cubit = StartupFailureCubit(
+        error: missingKey,
+        restart: () async {},
+        resetWallet: () async {
+          throw Exception('reset failed');
+        },
+        report: (error, {stackTrace}) {
+          reports.add((error: error, stackTrace: stackTrace));
+        },
+      );
+
+      await cubit.resetWallet();
+      await cubit.resetWallet();
+
+      expect(reports, hasLength(2));
+      expect(reports[0].error, isA<Exception>());
+      expect(reports[1].error, isA<Exception>());
+      expect(reports[0].stackTrace, isNotNull);
+      expect(reports[1].stackTrace, isNotNull);
+      await cubit.close();
+    });
+
+    test('resetWallet while a retry is busy is ignored', () async {
+      final gate = Completer<void>();
+      var resetCalls = 0;
+      final cubit = StartupFailureCubit(
+        error: missingKey,
+        restart: () async {
+          restartCalls++;
+          await gate.future;
+        },
+        resetWallet: () async {
+          resetCalls++;
+        },
+        report: (_, {stackTrace}) => fail('should not report'),
+      );
+
+      final pending = cubit.retry();
+      await cubit.resetWallet();
+      gate.complete();
+      await pending;
+
+      expect(restartCalls, 1);
+      expect(resetCalls, 0);
+      await cubit.close();
+    });
 
     blocTest<StartupFailureCubit, StartupFailureState>(
       'restart throw after reset emits actionFailed',
@@ -282,6 +357,24 @@ void main() {
       );
 
       final pending = cubit.retry();
+      await cubit.close();
+      gate.complete();
+      await expectLater(pending, completes);
+    });
+
+    test('closing while reset is pending then failing does not throw', () async {
+      final gate = Completer<void>();
+      final cubit = StartupFailureCubit(
+        error: missingKey,
+        restart: () async => fail('restart should not be called'),
+        resetWallet: () async {
+          await gate.future;
+          throw Exception('late reset failure');
+        },
+        report: (_, {stackTrace}) {},
+      );
+
+      final pending = cubit.resetWallet();
       await cubit.close();
       gate.complete();
       await expectLater(pending, completes);

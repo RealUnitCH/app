@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:realunit_wallet/packages/storage/secure_storage.dart';
+import 'package:realunit_wallet/setup/routing/boot_navigation.dart';
 import 'package:realunit_wallet/setup/routing/referral_pending_code.dart';
 import 'package:realunit_wallet/setup/startup/wallet_reset.dart';
 
@@ -33,6 +34,8 @@ void main() {
   }
 
   group('resetWalletData', () {
+    tearDown(clearPendingPaymentDeeplink);
+
     test('key absent wipes prefs, secure entries and database files', () async {
       stubKeyAbsent();
       SharedPreferences.setMockInitialValues({
@@ -64,6 +67,19 @@ void main() {
       verify(() => mockStorage.delete(key: 'pin.lockedUntil')).called(1);
       verify(() => mockStorage.delete(key: 'wallet.mnemonic.encryption.key')).called(1);
       expect(databaseDeleted, isTrue);
+    });
+
+    test('clears a stashed payment deeplink', () async {
+      stubKeyAbsent();
+      SharedPreferences.setMockInitialValues(const <String, Object>{});
+      stashPendingPaymentDeeplink('lightning:LNURL1DP68GURN8GHJ7VF3XGENJVE5UMD');
+
+      await resetWalletData(
+        secureStorage: secureStorage,
+        deleteDatabaseFiles: () async {},
+      );
+
+      expect(peekPendingPaymentDeeplink(), isNull);
     });
 
     test('deletes database files only after every secure-storage deletion', () async {

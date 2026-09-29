@@ -7,8 +7,6 @@ import 'package:realunit_wallet/setup/di.dart';
 import 'package:realunit_wallet/setup/error_handling/crash_reporting.dart';
 import 'package:realunit_wallet/setup/startup/wallet_reset.dart';
 
-Future<void> _resetDependencies() => getIt.reset();
-
 /// Runs [initialize] (optionally in parallel with a minimum splash delay).
 /// On success, does nothing further beyond [removeSplash]. On failure, reports
 /// the error and shows [StartupFailureApp] so the user can retry or reset.
@@ -18,7 +16,7 @@ Future<void> startApp({
   void Function()? removeSplash,
   void Function(Widget app) show = runApp,
   TracedNonFatalReporter report = reportNonFatal,
-  Future<void> Function() resetDependencies = _resetDependencies,
+  Future<void> Function() resetDependencies = resetServiceLocator,
   Future<void> Function() resetWallet = resetWalletData,
 }) async {
   try {

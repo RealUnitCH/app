@@ -9,6 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class _MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
 
+class _DisposableService {}
+
 // The SecureStorage keys migrateSecurityFlags moves the flags into. These mirror
 // the private constants in SecureStorage; asserting the literal keys pins the
 // migration contract — a rename here is a storage-migration event, not a
@@ -318,5 +320,65 @@ void main() {
         );
       },
     );
+
+    test(
+      'throws DatabaseKeyMissingException when protected data availability is '
+      'null and the key is absent',
+      () async {
+        when(() => mockStorage.read(key: _databaseEncryptionKey)).thenAnswer((_) async => null);
+        when(() => mockStorage.isCupertinoProtectedDataAvailable()).thenAnswer((_) async => null);
+        when(() => mockStorage.containsKey(key: _databaseEncryptionKey))
+            .thenAnswer((_) async => false);
+
+        await expectLater(
+          setupEssentials(
+            secureStorage: secureStorage,
+            databaseFileExists: () async => true,
+          ),
+          throwsA(isA<DatabaseKeyMissingException>()),
+        );
+
+        verifyNever(
+          () => mockStorage.write(key: _databaseEncryptionKey, value: any(named: 'value')),
+        );
+      },
+    );
+  });
+
+  group('resetServiceLocator', () {
+    setUp(() => getIt.reset(dispose: false));
+    tearDown(() => getIt.reset(dispose: false));
+
+    test('clears registrations when a disposer throws', () async {
+      getIt.registerSingleton(
+        _DisposableService(),
+        dispose: (_) async {
+          throw StateError('dispose failed');
+        },
+      );
+
+      await resetServiceLocator();
+
+      expect(getIt.isRegistered<_DisposableService>(), isFalse);
+      expect(
+        () => getIt.registerSingleton(_DisposableService()),
+        returnsNormally,
+      );
+    });
+
+    test('runs a normal disposer once and clears the registration', () async {
+      var disposeCalls = 0;
+      getIt.registerSingleton(
+        _DisposableService(),
+        dispose: (_) async {
+          disposeCalls++;
+        },
+      );
+
+      await resetServiceLocator();
+
+      expect(disposeCalls, 1);
+      expect(getIt.isRegistered<_DisposableService>(), isFalse);
+    });
   });
 }

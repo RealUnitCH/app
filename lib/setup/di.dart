@@ -52,12 +52,26 @@ import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/update_required/bloc/client_policy_cubit.dart';
 import 'package:realunit_wallet/setup/account_currency_sync.dart';
 import 'package:realunit_wallet/setup/database.dart';
+import 'package:realunit_wallet/setup/error_handling/crash_reporting.dart';
 import 'package:realunit_wallet/setup/routing/capture_install_referrer.dart';
 import 'package:realunit_wallet/setup/startup/startup_exceptions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 final getIt = GetIt.instance;
+
+/// Clears all [getIt] registrations so initialization can run again.
+///
+/// A disposer that throws must not leave registrations behind: the next
+/// registration of the same type would then fail.
+Future<void> resetServiceLocator() async {
+  try {
+    await getIt.reset();
+  } catch (error, stackTrace) {
+    reportNonFatal(error, stackTrace: stackTrace);
+    await getIt.reset(dispose: false);
+  }
+}
 
 /// Boots the essentials the rest of `main()` depends on and returns the
 /// SQLCipher database encryption key. It registers [SharedPreferences], the

@@ -41,6 +41,12 @@ class StartupFailureCubit extends Cubit<StartupFailureState> {
     emit(state.copyWith(isBusy: true, actionFailed: false));
     try {
       await _resetWallet();
+    } catch (error, stackTrace) {
+      _report(error, stackTrace: stackTrace);
+      if (!isClosed) emit(state.copyWith(isBusy: false, actionFailed: true));
+      return;
+    }
+    try {
       await _restart();
     } catch (error, stackTrace) {
       _handleFailure(error, stackTrace);
