@@ -128,8 +128,8 @@ class _PayQuoteReadyViewState extends State<_PayQuoteReadyView> {
       feeRealu: feeRealu ?? 0,
     );
     final merchant = state.merchantName;
-    final settings = watchSettingsState(context);
-    final useEur = settings?.currency == Currency.eur && state.hasEurReceipt;
+    final settings = context.watch<SettingsBloc>().state;
+    final useEur = settings.currency == Currency.eur && state.hasEurReceipt;
     // The till asked for this franc amount. It stays on the requested row
     // even when the receipt shows the stored euro figures.
     final requestedChf = _chf(parts.billChf, 'CHF');

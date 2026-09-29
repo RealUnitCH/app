@@ -265,14 +265,12 @@ void main() {
       Widget sheet = SellConfirmSheetView(
         paymentInfo: paymentInfo ?? _paymentInfo(),
       );
-      if (settings != null) {
-        final settingsBloc = MockSettingsBloc();
-        when(() => settingsBloc.state).thenReturn(settings);
-        sheet = BlocProvider<SettingsBloc>.value(
-          value: settingsBloc,
-          child: sheet,
-        );
-      }
+      final settingsBloc = MockSettingsBloc();
+      when(() => settingsBloc.state).thenReturn(settings ?? const SettingsState());
+      sheet = BlocProvider<SettingsBloc>.value(
+        value: settingsBloc,
+        child: sheet,
+      );
       return wrapForGolden(
         Scaffold(
           backgroundColor: Colors.black54,

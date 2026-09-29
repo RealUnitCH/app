@@ -94,10 +94,17 @@ void main() {
     cubit = _MockSellBitboxCubit();
   });
 
-  Widget buildSubject() => BlocProvider<SellBitboxCubit>.value(
-        value: cubit,
-        child: SellBitboxView(paymentInfo: _paymentInfo()),
-      );
+  Widget buildSubject() {
+    final settingsBloc = MockSettingsBloc();
+    when(() => settingsBloc.state).thenReturn(const SettingsState());
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<SellBitboxCubit>.value(value: cubit),
+        BlocProvider<SettingsBloc>.value(value: settingsBloc),
+      ],
+      child: SellBitboxView(paymentInfo: _paymentInfo()),
+    );
+  }
 
   Widget forState(SellBitboxState state) {
     when(() => cubit.state).thenReturn(state);

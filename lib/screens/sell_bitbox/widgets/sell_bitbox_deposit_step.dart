@@ -120,9 +120,9 @@ class SellBitboxDepositStep extends StatelessWidget {
   }
 
   List<Widget> _storedFiatRows(BuildContext context, SellPaymentInfo paymentInfo) {
-    final settings = watchSettingsState(context);
-    final stored = paymentInfo.storedFiat(settings?.currency);
-    if (stored == null || settings == null) return const [];
+    final settings = context.watch<SettingsBloc>().state;
+    final stored = paymentInfo.storedFiat(settings.currency);
+    if (stored == null) return const [];
     return [
       const Divider(color: RealUnitColors.neutral200, height: 1),
       _row(

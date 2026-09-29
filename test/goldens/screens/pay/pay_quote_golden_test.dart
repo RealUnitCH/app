@@ -88,9 +88,14 @@ void main() {
             swap: _swap,
           ),
         );
+        final settingsBloc = MockSettingsBloc();
+        when(() => settingsBloc.state).thenReturn(const SettingsState());
         return wrapForGolden(
-          BlocProvider<PayQuoteCubit>.value(
-            value: quoteCubit,
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<SettingsBloc>.value(value: settingsBloc),
+              BlocProvider<PayQuoteCubit>.value(value: quoteCubit),
+            ],
             child: const PayQuoteView(),
           ),
         );
@@ -117,9 +122,14 @@ void main() {
             swap: _swap,
           ),
         );
+        final settingsBloc = MockSettingsBloc();
+        when(() => settingsBloc.state).thenReturn(const SettingsState());
         return wrapForGolden(
-          BlocProvider<PayQuoteCubit>.value(
-            value: quoteCubit,
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<SettingsBloc>.value(value: settingsBloc),
+              BlocProvider<PayQuoteCubit>.value(value: quoteCubit),
+            ],
             child: const PayQuoteView(),
           ),
         );

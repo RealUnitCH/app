@@ -21,18 +21,16 @@ class SellPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final settings = watchSettingsState(context);
-    final view = settings == null
-        ? const SellView()
-        : BlocListener<SettingsBloc, SettingsState>(
-            listenWhen: (previous, current) => previous.currency != current.currency,
-            listener: (context, settingsState) {
-              final cubit = context.read<SellConverterCubit>();
-              if (cubit.state.currency == settingsState.currency) return;
-              cubit.onCurrencyChanged(settingsState.currency);
-            },
-            child: const SellView(),
-          );
+    final settings = context.watch<SettingsBloc>().state;
+    final view = BlocListener<SettingsBloc, SettingsState>(
+      listenWhen: (previous, current) => previous.currency != current.currency,
+      listener: (context, settingsState) {
+        final cubit = context.read<SellConverterCubit>();
+        if (cubit.state.currency == settingsState.currency) return;
+        cubit.onCurrencyChanged(settingsState.currency);
+      },
+      child: const SellView(),
+    );
     return MultiBlocProvider(
       providers: [
         BlocProvider(
@@ -44,9 +42,7 @@ class SellPage extends StatelessWidget {
         BlocProvider(
           create: (context) {
             final service = getIt<DfxBrokerbotService>();
-            final cubit = settings == null
-                ? SellConverterCubit(service)
-                : SellConverterCubit(service, currency: settings.currency);
+            final cubit = SellConverterCubit(service, currency: settings.currency);
             return cubit..onSharesChanged('100');
           },
         ),

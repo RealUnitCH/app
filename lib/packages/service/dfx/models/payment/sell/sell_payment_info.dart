@@ -1,12 +1,16 @@
+import 'package:equatable/equatable.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/eip7702/eip7702_data_dto.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/sell/dto/real_unit_sell_payment_info_dto.dart';
 import 'package:realunit_wallet/styles/currency.dart';
 
-class StoredSellFiat {
+class StoredSellFiat extends Equatable {
   final double amount;
   final Currency currency;
 
   const StoredSellFiat({required this.amount, required this.currency});
+
+  @override
+  List<Object?> get props => [amount, currency];
 }
 
 class SellPaymentInfo {

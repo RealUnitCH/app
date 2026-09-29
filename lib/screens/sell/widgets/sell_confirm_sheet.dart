@@ -180,8 +180,8 @@ class SellConfirmSheetView extends StatelessWidget {
   }
 
   double _confirmAmount(BuildContext context, SellPaymentInfo paymentInfo) {
-    final settings = watchSettingsState(context);
-    final stored = paymentInfo.storedFiat(settings?.currency);
+    final settings = context.watch<SettingsBloc>().state;
+    final stored = paymentInfo.storedFiat(settings.currency);
     if (stored != null) {
       return stored.amount;
     }
@@ -189,8 +189,8 @@ class SellConfirmSheetView extends StatelessWidget {
   }
 
   String _confirmCurrencyCode(BuildContext context, SellPaymentInfo paymentInfo) {
-    final settings = watchSettingsState(context);
-    final stored = paymentInfo.storedFiat(settings?.currency);
+    final settings = context.watch<SettingsBloc>().state;
+    final stored = paymentInfo.storedFiat(settings.currency);
     if (stored != null) {
       return stored.currency.code;
     }

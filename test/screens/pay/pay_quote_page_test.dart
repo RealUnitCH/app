@@ -108,14 +108,30 @@ void main() {
     when(() => quoteCubit.state).thenReturn(const PayQuoteLoading());
   });
 
-  Widget buildSubject() => BlocProvider<PayQuoteCubit>.value(
-    value: quoteCubit,
-    child: const PayQuoteView(),
-  );
+  Widget buildSubject({SettingsBloc? settings}) {
+    final settingsBloc = settings ?? MockSettingsBloc();
+    if (settings == null) {
+      when(() => settingsBloc.state).thenReturn(const SettingsState());
+    }
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<SettingsBloc>.value(value: settingsBloc),
+        BlocProvider<PayQuoteCubit>.value(value: quoteCubit),
+      ],
+      child: const PayQuoteView(),
+    );
+  }
 
   group('$PayQuotePage', () {
     testWidgets('builds its own cubit and renders $PayQuoteView', (tester) async {
-      await tester.pumpApp(const PayQuotePage(paymentLinkId: 'pl_abc'));
+      final settingsBloc = MockSettingsBloc();
+      when(() => settingsBloc.state).thenReturn(const SettingsState());
+      await tester.pumpApp(
+        BlocProvider<SettingsBloc>.value(
+          value: settingsBloc,
+          child: const PayQuotePage(paymentLinkId: 'pl_abc'),
+        ),
+      );
 
       expect(find.byType(PayQuoteView), findsOne);
     });
@@ -188,12 +204,7 @@ void main() {
         const SettingsState(language: Language.de, currency: Currency.eur),
       );
       await withClock(Clock.fixed(DateTime.utc(2026, 1, 1)), () async {
-        await tester.pumpApp(
-          BlocProvider<SettingsBloc>.value(
-            value: settingsBloc,
-            child: buildSubject(),
-          ),
-        );
+        await tester.pumpApp(buildSubject(settings: settingsBloc));
       });
 
       expect(find.text('2.00 CHF'), findsOne);
