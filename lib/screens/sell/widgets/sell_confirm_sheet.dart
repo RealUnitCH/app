@@ -99,7 +99,8 @@ class SellConfirmSheetView extends StatelessWidget {
                                 ),
                                 _infoRow(
                                   label:
-                                      '${S.of(context).amountIn} ${_confirmCurrencyCode(context, paymentInfo)}',
+                                      '${S.of(context).amountIn} '
+                                      '${_confirmCurrencyCode(context, paymentInfo)}',
                                   value: '${_confirmAmount(context, paymentInfo)}',
                                 ),
                                 _infoRow(
