@@ -96,4 +96,16 @@ void main() {
       expect(_info(valueEur: 11.4, valueChf: 12.5).storedFiat(null), isNull);
     });
   });
+
+  group('$StoredSellFiat', () {
+    test('props are the amount and the currency', () {
+      const stored = StoredSellFiat(amount: 1.84, currency: Currency.eur);
+      const same = StoredSellFiat(amount: 1.84, currency: Currency.eur);
+      const other = StoredSellFiat(amount: 2, currency: Currency.chf);
+
+      expect(stored.props, <Object?>[1.84, Currency.eur]);
+      expect(stored, same);
+      expect(stored, isNot(other));
+    });
+  });
 }
