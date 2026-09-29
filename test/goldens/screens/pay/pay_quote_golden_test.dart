@@ -7,6 +7,9 @@ import 'package:mocktail/mocktail.dart';
 import 'package:realunit_wallet/packages/service/dfx/models/payment/pay/swap_payment_info.dart';
 import 'package:realunit_wallet/screens/pay/cubits/pay_quote/pay_quote_cubit.dart';
 import 'package:realunit_wallet/screens/pay/pay_quote_page.dart';
+import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
+import 'package:realunit_wallet/styles/currency.dart';
+import 'package:realunit_wallet/styles/language.dart';
 
 import '../../../helper/helper.dart';
 
@@ -117,6 +120,50 @@ void main() {
         return wrapForGolden(
           BlocProvider<PayQuoteCubit>.value(
             value: quoteCubit,
+            child: const PayQuoteView(),
+          ),
+        );
+      },
+    );
+
+    // EUR selected and the quote stored a EUR receipt: the four fiat lines
+    // show that receipt, not the CHF split.
+    goldenTest(
+      'ready quote shows the stored EUR receipt when EUR is selected',
+      fileName: 'pay_quote_page_ready_eur',
+      constraints: phoneConstraints,
+      pumpBeforeTest: pumpOnce,
+      pumpWidget: _pumpPinned,
+      builder: () {
+        when(() => quoteCubit.state).thenReturn(
+          PayQuoteReady(
+            paymentLinkId: 'pl_realunit_ocp_sepolia',
+            quoteId: 'plq_realunit_ocp_sepolia',
+            fiatAsset: 'CHF',
+            fiatAmount: 2,
+            zchfAmount: 2.0,
+            merchantName: 'Café Zürich',
+            merchantCity: 'Zürich',
+            expiresAt: _expiresAt,
+            swap: _swap,
+            billEur: 1.84,
+            feeEur: 0.04,
+            roundingEur: 0.28,
+            totalEur: 2.16,
+          ),
+        );
+        final settingsBloc = MockSettingsBloc();
+        const settingsState = SettingsState(
+          language: Language.de,
+          currency: Currency.eur,
+        );
+        when(() => settingsBloc.state).thenReturn(settingsState);
+        return wrapForGolden(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<SettingsBloc>.value(value: settingsBloc),
+              BlocProvider<PayQuoteCubit>.value(value: quoteCubit),
+            ],
             child: const PayQuoteView(),
           ),
         );
