@@ -105,6 +105,32 @@ void main() {
   }
 
   // The coin line is the stored ZCHF amount (100), not the 108 estimate.
+  // EUR is selected, but only CHF was stored. The extra row stays CHF.
+  Widget forStoredChfWhenEur(SellBitboxState state) {
+    when(() => cubit.state).thenReturn(state);
+    final settingsBloc = MockSettingsBloc();
+    const settingsState = SettingsState(
+      language: Language.de,
+      currency: Currency.eur,
+    );
+    when(() => settingsBloc.state).thenReturn(settingsState);
+    return wrapForGolden(
+      MultiBlocProvider(
+        providers: [
+          BlocProvider<SellBitboxCubit>.value(value: cubit),
+          BlocProvider<SettingsBloc>.value(value: settingsBloc),
+        ],
+        child: SellBitboxView(
+          paymentInfo: _paymentInfo(
+            estimatedAmount: 108,
+            zchfAmount: 100,
+            valueChf: 88.5,
+          ),
+        ),
+      ),
+    );
+  }
+
   // EUR is selected and 92.50 EUR was stored, so that row is shown beside it.
   Widget forStoredEur(SellBitboxState state) {
     when(() => cubit.state).thenReturn(state);
@@ -180,6 +206,15 @@ void main() {
       ),
     );
 
+    goldenTest(
+      'awaiting swap confirm — ZCHF line plus stored CHF when EUR is selected',
+      fileName: 'sell_bitbox_awaiting_swap_confirm_stored_chf',
+      constraints: phoneConstraints,
+      builder: () => forStoredChfWhenEur(
+        SellBitboxAwaitingSwapConfirm('0xrawswap', '0xrawdeposit'),
+      ),
+    );
+
     // Step 2 (Swap) — signing/broadcasting in flight: spinner + "Swapping".
     goldenTest(
       'swapping — spinner',
@@ -204,6 +239,15 @@ void main() {
       fileName: 'sell_bitbox_awaiting_deposit_confirm_stored_eur',
       constraints: phoneConstraints,
       builder: () => forStoredEur(
+        SellBitboxAwaitingDepositConfirm(_signedTx(), '0xrawdeposit'),
+      ),
+    );
+
+    goldenTest(
+      'awaiting deposit confirm — ZCHF line plus stored CHF when EUR is selected',
+      fileName: 'sell_bitbox_awaiting_deposit_confirm_stored_chf',
+      constraints: phoneConstraints,
+      builder: () => forStoredChfWhenEur(
         SellBitboxAwaitingDepositConfirm(_signedTx(), '0xrawdeposit'),
       ),
     );
