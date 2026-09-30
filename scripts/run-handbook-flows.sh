@@ -434,7 +434,12 @@ log.close()
 if timed_out["v"]:
     sys.stdout.write("\nmaestro attempt timed out after %ss\n" % timeout)
     sys.exit(124)
-sys.exit(p.returncode or 0)
+# Only the budget timer may exit 124. A child that finishes with that
+# status is not a hang, and a missing status is not a success.
+rc = p.returncode
+if rc is None or rc == 124:
+    sys.exit(1)
+sys.exit(rc)
 PY
 }
 
@@ -474,19 +479,24 @@ for flow in "${flows[@]}"; do
     # Assertion failures without these patterns are real
     # regressions and must surface red — never retry them.
     elapsed=$(( $(date +%s) - attempt_start ))
+    driver_dead=false
+    if is_driver_hang_or_death "$flow_log" || \
+       is_driver_hang_or_death "$debug_dir/maestro.log"; then
+      driver_dead=true
+    fi
     # A timeout reported well under the budget is the wrapper giving up,
     # not a hung driver. Rebooting here wipes the chain, and the retried
     # flow then fails a real assertion (the network screen never shows
-    # Mainnet because onboarding is gone).
+    # Mainnet because onboarding is gone). A dead driver still reboots:
+    # the next flow cannot talk to it.
     if [ "$maestro_rc" -eq 124 ] && \
        [ "$elapsed" -lt "$MAESTRO_ATTEMPT_TIMEOUT_SEC" ] && \
-       [ "$attempt" -lt "$MAESTRO_MAX_ATTEMPTS" ]; then
+       [ "$attempt" -lt "$MAESTRO_MAX_ATTEMPTS" ] && \
+       [ "$driver_dead" = false ]; then
       echo "  wrapper reported a timeout after $(fmt_duration "$elapsed"), under the $(fmt_duration "$MAESTRO_ATTEMPT_TIMEOUT_SEC") budget; retrying without rebooting the simulator"
       continue
     fi
-    if { [ "$maestro_rc" -eq 124 ] || \
-         is_driver_hang_or_death "$flow_log" || \
-         is_driver_hang_or_death "$debug_dir/maestro.log"; } && \
+    if { [ "$maestro_rc" -eq 124 ] || [ "$driver_dead" = true ]; } && \
        [ "$attempt" -lt "$MAESTRO_MAX_ATTEMPTS" ]; then
       echo "  driver hang/death on attempt $attempt of $MAESTRO_MAX_ATTEMPTS after $(fmt_duration "$elapsed"); restarting simulator and retrying"
       xcrun simctl shutdown "$UDID" || true
