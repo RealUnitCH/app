@@ -114,8 +114,8 @@ void main() {
 
       expect(cubit.state.isAuthenticated, isFalse);
       expect(cubit.state.isLoading, isFalse);
-      expect(cubit.state.errorMessage, isNotNull);
-      expect(cubit.state.errorMessage, isNotEmpty);
+      expect(cubit.state.missingSignMessage, isTrue);
+      expect(cubit.state.errorMessage, isNull);
       verifyNever(
         () => service.authenticate(any(), any(), message: any(named: 'message')),
       );

@@ -85,6 +85,7 @@
   "currencyEur": "Euro",
   "day": "Day",
   "deactivated": "Deactivated",
+  "debugAuthMissingSignMessage": "Missing sign message",
   "debugWalletDescription": "Debug only: for testing with a specific wallet address with signed message authentication.",
   "debugWalletTitle": "Debug Authentication",
   "details": "Details",

@@ -85,6 +85,7 @@
   "currencyEur": "Euro",
   "day": "Tag",
   "deactivated": "Deaktiviert",
+  "debugAuthMissingSignMessage": "Signaturnachricht fehlt",
   "debugWalletDescription": "Nur für Debugging: Zum Testen mit einer bestimmten Wallet-Adresse und signierter Nachrichtenauthentifizierung.",
   "debugWalletTitle": "Debug Authentifizierung",
   "details": "Details",

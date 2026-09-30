@@ -28,7 +28,7 @@ class DebugAuthCubit extends Cubit<DebugAuthState> {
 
   Future<void> authenticate(String signature) async {
     if (state.signMessage == null) {
-      emit(state.copyWith(errorMessage: 'Missing sign message', isLoading: false));
+      emit(state.copyWith(missingSignMessage: true, isLoading: false));
       return;
     }
     emit(state.copyWith(isLoading: true));
