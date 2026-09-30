@@ -213,6 +213,7 @@ void main() {
         storedSend = true;
         storedPromo = false;
         storedReferral = true;
+        return NetworkMode.testnet;
       });
 
       final bloc = build();
