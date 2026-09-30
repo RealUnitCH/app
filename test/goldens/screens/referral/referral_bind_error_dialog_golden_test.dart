@@ -255,6 +255,9 @@ void main() {
 
   goldenTest(
     'unavailable code check while retrying',
+    // The loading button hosts a CupertinoActivityIndicator; freeze it on the
+    // first frame instead of letting pumpAndSettle time out.
+    pumpBeforeTest: pumpOnce,
     fileName: 'referral_bind_unavailable_retrying',
     constraints: phoneConstraints,
     builder: () => wrapForGolden(
