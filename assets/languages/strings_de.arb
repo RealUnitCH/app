@@ -442,6 +442,7 @@
   "settingsLanguageLoadFailedDescription": "Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
   "settingsLanguages": "Sprachen",
   "settingsNetwork": "Netzwerk",
+  "settingsNetworkOptions": "Netzwerkoptionen",
   "settingsSecurity": "Sicherheit",
   "settingsTaxReport": "Steuerbericht",
   "settingsWalletBackup": "Wallet-Sicherung",

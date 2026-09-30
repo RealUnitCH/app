@@ -21,6 +21,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
            currency: Currency.fromCode(_settingsRepository.currency),
            networkMode: _settingsRepository.networkMode,
            insiderFeaturesUnlocked: _settingsRepository.insiderFeaturesUnlocked,
+           networkOptionsEnabled: _settingsRepository.networkOptionsEnabled,
            walletFeaturePay: _settingsRepository.walletFeaturePay,
            walletFeatureSend: _settingsRepository.walletFeatureSend,
            walletFeaturePromoCode: _settingsRepository.walletFeaturePromoCode,
@@ -172,6 +173,9 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     Emitter<SettingsState> emit,
   ) {
     switch (event.feature) {
+      case InsiderFeature.networkOptions:
+        _settingsRepository.networkOptionsEnabled = event.enabled;
+        emit(state.copyWith(networkOptionsEnabled: _settingsRepository.networkOptionsEnabled));
       case InsiderFeature.pay:
         _settingsRepository.setWalletFeaturePayFromUser(event.enabled);
         emit(

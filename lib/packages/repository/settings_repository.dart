@@ -217,6 +217,11 @@ class SettingsRepository {
   set insiderFeaturesUnlocked(bool unlocked) =>
       _sharedPreferences.setBool('insiderFeaturesUnlocked', unlocked);
 
+  bool get networkOptionsEnabled =>
+      _sharedPreferences.getBool('networkOptionsEnabled') ?? false;
+  set networkOptionsEnabled(bool enabled) =>
+      _sharedPreferences.setBool('networkOptionsEnabled', enabled);
+
   // Effective flag is central OR insider, for the selected network. The setter
   // is the server path and only latches central. User switches use the methods
   // below and do nothing once central is latched.

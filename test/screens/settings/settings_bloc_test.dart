@@ -39,6 +39,7 @@ void main() {
     when(() => repo.hasStoredCurrency).thenReturn(false);
     when(() => repo.networkMode).thenReturn(NetworkMode.mainnet);
     when(() => repo.insiderFeaturesUnlocked).thenReturn(false);
+    when(() => repo.networkOptionsEnabled).thenReturn(false);
     when(() => repo.walletFeaturePay).thenAnswer((_) => payCentral || storedPay);
     when(() => repo.walletFeatureSend).thenAnswer((_) => sendCentral || storedSend);
     when(() => repo.walletFeaturePromoCode).thenAnswer((_) => promoCentral || storedPromo);
@@ -110,6 +111,7 @@ void main() {
       expect(bloc.state.networkMode, NetworkMode.testnet);
       expect(bloc.state.hideAmounts, isFalse);
       expect(bloc.state.insiderFeaturesUnlocked, isTrue);
+      expect(bloc.state.networkOptionsEnabled, isFalse);
       expect(bloc.state.walletFeaturePay, isFalse);
       expect(bloc.state.walletFeatureSend, isFalse);
       expect(bloc.state.walletFeaturePromoCode, isFalse);
@@ -187,6 +189,16 @@ void main() {
       expect(bloc.state.networkMode, NetworkMode.testnet);
       expect(authRefreshCount, 1);
       verify(() => repo.networkMode = NetworkMode.testnet).called(1);
+    });
+
+    test('SetNetworkModeEvent leaves networkOptionsEnabled true', () async {
+      when(() => repo.networkOptionsEnabled).thenReturn(true);
+      final bloc = build();
+
+      bloc.add(const SetNetworkModeEvent(NetworkMode.testnet));
+      await bloc.stream.firstWhere((s) => s.networkMode == NetworkMode.testnet);
+
+      expect(bloc.state.networkOptionsEnabled, isTrue);
     });
 
     test('SetNetworkModeEvent invokes onNetworkModeChanged after auth refresh', () async {
@@ -328,6 +340,7 @@ void main() {
       act: (bloc) => bloc.add(const UnlockInsiderFeaturesEvent()),
       verify: (bloc) {
         expect(bloc.state.insiderFeaturesUnlocked, isTrue);
+        expect(bloc.state.networkOptionsEnabled, isFalse);
         expect(bloc.state.walletFeaturePay, isTrue);
         expect(bloc.state.walletFeatureSend, isTrue);
         expect(bloc.state.walletFeaturePromoCode, isTrue);
@@ -337,6 +350,7 @@ void main() {
         verify(() => repo.setWalletFeatureSendFromUser(true)).called(1);
         verify(() => repo.setWalletFeaturePromoCodeFromUser(true)).called(1);
         verify(() => repo.setWalletFeatureReferralFromUser(true)).called(1);
+        verifyNever(() => repo.networkOptionsEnabled = any());
       },
     );
 
@@ -412,6 +426,45 @@ void main() {
         verify(() => repo.setWalletFeaturePayFromUser(false)).called(1);
         expect(bloc.state.walletFeaturePay, isTrue);
         expect(bloc.state.walletFeaturePayCentral, isTrue);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent.networkOptions true persists via the setter and shows on state',
+      setUp: () {
+        when(() => repo.networkOptionsEnabled = any()).thenAnswer((inv) {
+          final value = inv.positionalArguments.first as bool;
+          when(() => repo.networkOptionsEnabled).thenReturn(value);
+          return value;
+        });
+      },
+      build: build,
+      act: (bloc) => bloc.add(
+        const SetInsiderFeatureEnabledEvent(InsiderFeature.networkOptions, true),
+      ),
+      verify: (bloc) {
+        verify(() => repo.networkOptionsEnabled = true).called(1);
+        expect(bloc.state.networkOptionsEnabled, isTrue);
+      },
+    );
+
+    blocTest<SettingsBloc, SettingsState>(
+      'SetInsiderFeatureEnabledEvent.networkOptions false persists via the setter and shows on state',
+      setUp: () {
+        when(() => repo.networkOptionsEnabled).thenReturn(true);
+        when(() => repo.networkOptionsEnabled = any()).thenAnswer((inv) {
+          final value = inv.positionalArguments.first as bool;
+          when(() => repo.networkOptionsEnabled).thenReturn(value);
+          return value;
+        });
+      },
+      build: build,
+      act: (bloc) => bloc.add(
+        const SetInsiderFeatureEnabledEvent(InsiderFeature.networkOptions, false),
+      ),
+      verify: (bloc) {
+        verify(() => repo.networkOptionsEnabled = false).called(1);
+        expect(bloc.state.networkOptionsEnabled, isFalse);
       },
     );
 

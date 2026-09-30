@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -21,12 +20,9 @@ import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
 import 'package:realunit_wallet/styles/icons.dart';
 
-// Store builds show this row only after the insider unlock. Debug always shows it.
-bool showSettingsNetworkRow({
-  required bool debugMode,
-  required bool insiderUnlocked,
-}) =>
-    debugMode || insiderUnlocked;
+// The Settings Network row exists only while insider network options are on.
+bool showSettingsNetworkRow({required bool networkOptionsEnabled}) =>
+    networkOptionsEnabled;
 
 class SettingsPage extends StatelessWidget {
   final Duration unavailablePollInterval;
@@ -73,8 +69,7 @@ class SettingsPage extends StatelessWidget {
                             onTap: () => context.pushNamed(SettingsRoutes.currencies),
                           ),
                           if (showSettingsNetworkRow(
-                            debugMode: kDebugMode,
-                            insiderUnlocked: state.insiderFeaturesUnlocked,
+                            networkOptionsEnabled: state.networkOptionsEnabled,
                           ))
                             SettingOption(
                               title: S.of(context).settingsNetwork,

@@ -150,6 +150,43 @@ void main() {
       });
     });
 
+    group('networkOptionsEnabled', () {
+      test('defaults to false when not stored', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        expect(repo.networkOptionsEnabled, isFalse);
+      });
+
+      test('setting true stores key networkOptionsEnabled', () async {
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        final repo = SettingsRepository(prefs);
+
+        repo.networkOptionsEnabled = true;
+        await Future<void>.delayed(Duration.zero);
+
+        expect(repo.networkOptionsEnabled, isTrue);
+        expect(prefs.getBool('networkOptionsEnabled'), isTrue);
+      });
+
+      test('stays true after networkMode is testnet and is not scoped per network', () async {
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        final repo = SettingsRepository(prefs);
+
+        repo.networkOptionsEnabled = true;
+        await Future<void>.delayed(Duration.zero);
+
+        repo.networkMode = NetworkMode.testnet;
+        await Future<void>.delayed(Duration.zero);
+
+        expect(repo.networkOptionsEnabled, isTrue);
+        expect(prefs.containsKey('networkOptionsEnabled.mainnet'), isFalse);
+        expect(prefs.containsKey('networkOptionsEnabled.testnet'), isFalse);
+      });
+    });
+
     group('wallet feature flags', () {
       test('default to false', () async {
         SharedPreferences.setMockInitialValues({});

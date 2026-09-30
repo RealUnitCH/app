@@ -95,6 +95,23 @@ void main() {
           S.current.settingsWalletBackup,
         ]),
       );
+      expect(find.text(S.current.settingsNetwork), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'unlocked with networkOptionsEnabled: currency, network, tax report',
+    (tester) async {
+      when(() => settingsBloc.state).thenReturn(
+        const SettingsState(
+          insiderFeaturesUnlocked: true,
+          networkOptionsEnabled: true,
+        ),
+      );
+
+      await pumpSettings(tester);
+      await tester.pumpAndSettle();
+
       expect(
         firstSectionTitles(tester),
         containsAllInOrder([
@@ -155,8 +172,12 @@ void main() {
   });
 
   testWidgets('tapping Netzwerk pushes SettingsRoutes.network', (tester) async {
-    when(() => settingsBloc.state)
-        .thenReturn(const SettingsState(insiderFeaturesUnlocked: true));
+    when(() => settingsBloc.state).thenReturn(
+      const SettingsState(
+        insiderFeaturesUnlocked: true,
+        networkOptionsEnabled: true,
+      ),
+    );
 
     final pushedRoutes = <String>[];
     final router = GoRouter(

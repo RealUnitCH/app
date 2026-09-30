@@ -9,10 +9,9 @@ void main() {
   // `settings_confirm_logout_wallet_sheet_default` live in
   // `settings_golden_test.dart` / `settings_confirm_logout_wallet_sheet_golden_test.dart`.
   //
-  // Documented skip — release-build Settings variant (Network tile hidden):
-  // the Network tile uses `showSettingsNetworkRow`. `flutter test` always runs
-  // in debug, so the tile is always present in goldens. The release-and-locked
-  // case is the pure function with `debugMode: false`, not a golden.
+  // Documented skip — Settings Network tile:
+  // the Settings Network tile appears only when `networkOptionsEnabled` is true,
+  // and the settings-page goldens leave that flag off.
   //
   // Covered here: the confirm-logout sheet with the checkbox ticked, which
   // enables the Reset button (`isChecked ? … : null`,
