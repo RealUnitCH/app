@@ -388,6 +388,8 @@ timer.start()
 try:
     fd = p.stdout.fileno()
     while True:
+        if timed_out["v"]:
+            break
         if p.poll() is not None:
             rest = os.read(fd, 65536) if p.stdout is not None else b""
             while rest:
@@ -418,7 +420,12 @@ try:
         log.write(chunk)
 finally:
     timer.cancel()
-    if timed_out["v"] and p.poll() is None:
+    if p.poll() is None:
+        # The budget timer already stopped the driver and set the hang
+        # flag. Any other way out must stop it too, without looking
+        # like a hang, or the session keeps running into the next flow.
+        if not timed_out["v"]:
+            stop_process()
         try:
             p.wait(timeout=5)
         except subprocess.TimeoutExpired:
