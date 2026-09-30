@@ -11,7 +11,8 @@ void main() {
   //
   // Documented skip — Settings Network tile:
   // the Settings Network tile appears only when `networkOptionsEnabled` is true,
-  // and the settings-page goldens leave that flag off.
+  // the remaining settings-page goldens leave that flag off, and
+  // `settings_page_network_options_on` is the baseline that shows the row.
   //
   // Covered here: the confirm-logout sheet with the checkbox ticked, which
   // enables the Reset button (`isChecked ? … : null`,
