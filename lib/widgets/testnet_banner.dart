@@ -29,10 +29,9 @@ class TestnetBanner extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 3,
                     softWrap: true,
-                    style: const TextStyle(
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: RealUnitColors.realUnitBlack,
                       fontWeight: FontWeight.w600,
-                      fontSize: 14,
                     ),
                   ),
                 ),

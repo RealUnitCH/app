@@ -86,8 +86,15 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     Emitter<SettingsState> emit,
   ) async {
     if (event.networkMode == state.networkMode) return;
+    final previous = state.networkMode;
     _settingsRepository.networkMode = event.networkMode;
-    await getNewAuthToken();
+    try {
+      await getNewAuthToken();
+    } catch (_) {
+      _settingsRepository.networkMode = previous;
+      emit(state.copyWith(networkMode: previous));
+      return;
+    }
     onNetworkModeChanged?.call();
     emit(
       state.copyWith(

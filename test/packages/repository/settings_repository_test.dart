@@ -543,6 +543,68 @@ void main() {
         await Future<void>.delayed(Duration.zero);
         expect(repo.walletFeaturePay, isTrue);
       });
+
+      test('a later repository construction does not copy unlock pay onto testnet', () async {
+        SharedPreferences.setMockInitialValues({'insiderFeaturesUnlocked': true});
+        final prefs = await SharedPreferences.getInstance();
+        final first = SettingsRepository(prefs);
+
+        expect(first.walletFeaturePay, isTrue);
+        expect(prefs.getBool('walletFeaturePay.mainnet'), isTrue);
+        expect(prefs.containsKey('walletFeaturePay'), isFalse);
+
+        await prefs.setString('networkMode', 'Testnet');
+
+        final second = SettingsRepository(prefs);
+        expect(second.walletFeaturePay, isFalse);
+        expect(prefs.containsKey('walletFeaturePay.testnet'), isFalse);
+        expect(prefs.getBool('walletFeaturePay.mainnet'), isTrue);
+        expect(prefs.containsKey('walletFeaturePay'), isFalse);
+      });
+
+      test('unlock does not write pay when a scoped mainnet key already exists', () async {
+        SharedPreferences.setMockInitialValues({
+          'insiderFeaturesUnlocked': true,
+          'networkMode': 'Testnet',
+          'walletFeaturePay.mainnet': true,
+          'insiderPayEnabled': true,
+        });
+        final prefsTrue = await SharedPreferences.getInstance();
+        final repoTrue = SettingsRepository(prefsTrue);
+
+        expect(repoTrue.walletFeaturePay, isFalse);
+        expect(prefsTrue.getBool('walletFeaturePay.mainnet'), isTrue);
+        expect(prefsTrue.containsKey('walletFeaturePay.testnet'), isFalse);
+        expect(prefsTrue.containsKey('walletFeaturePay'), isFalse);
+        expect(prefsTrue.containsKey('insiderPayEnabled'), isFalse);
+
+        SharedPreferences.setMockInitialValues({
+          'insiderFeaturesUnlocked': true,
+          'networkMode': 'Testnet',
+          'walletFeaturePay.mainnet': false,
+        });
+        final prefsFalse = await SharedPreferences.getInstance();
+        final repoFalse = SettingsRepository(prefsFalse);
+
+        expect(repoFalse.walletFeaturePay, isFalse);
+        expect(prefsFalse.getBool('walletFeaturePay.mainnet'), isFalse);
+        expect(prefsFalse.containsKey('walletFeaturePay.testnet'), isFalse);
+        expect(prefsFalse.containsKey('walletFeaturePay'), isFalse);
+      });
+
+      test('unlock does not copy a scoped testnet pay key onto mainnet', () async {
+        SharedPreferences.setMockInitialValues({
+          'insiderFeaturesUnlocked': true,
+          'walletFeaturePay.testnet': true,
+        });
+        final prefs = await SharedPreferences.getInstance();
+        final repo = SettingsRepository(prefs);
+
+        expect(repo.walletFeaturePay, isFalse);
+        expect(prefs.getBool('walletFeaturePay.testnet'), isTrue);
+        expect(prefs.containsKey('walletFeaturePay.mainnet'), isFalse);
+        expect(prefs.containsKey('walletFeaturePay'), isFalse);
+      });
     });
 
     group('dismissedClientPolicyLatest', () {

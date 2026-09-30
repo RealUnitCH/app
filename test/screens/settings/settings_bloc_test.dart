@@ -267,6 +267,29 @@ void main() {
       verifyNever(() => repo.networkMode = NetworkMode.testnet);
     });
 
+    test('SetNetworkModeEvent rolls the mode back when auth refresh fails', () async {
+      var invalidated = false;
+      final bloc = SettingsBloc(
+        repo,
+        () async {
+          throw StateError('cancelled');
+        },
+        onNetworkModeChanged: () => invalidated = true,
+      );
+
+      final pending = bloc.stream.first;
+      bloc.add(const SetNetworkModeEvent(NetworkMode.testnet));
+      final emitted = await pending;
+
+      expect(bloc.state.networkMode, NetworkMode.mainnet);
+      expect(emitted.networkMode, NetworkMode.mainnet);
+      expect(invalidated, isFalse);
+      verifyInOrder([
+        () => repo.networkMode = NetworkMode.testnet,
+        () => repo.networkMode = NetworkMode.mainnet,
+      ]);
+    });
+
     blocTest<SettingsBloc, SettingsState>(
       'ToggleHideAmountEvent flips hideAmounts each time',
       build: build,
