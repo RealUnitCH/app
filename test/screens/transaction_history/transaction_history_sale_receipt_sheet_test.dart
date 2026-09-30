@@ -70,7 +70,11 @@ void main() {
     );
   });
 
-  Future<void> pumpRow(WidgetTester tester, Transaction tx) {
+  Future<void> pumpRow(
+    WidgetTester tester,
+    Transaction tx, {
+    required bool isOutbound,
+  }) {
     return tester.pumpWidget(
       MaterialApp(
         theme: realUnitTheme,
@@ -92,7 +96,7 @@ void main() {
             ],
             child: TransactionHistoryRowView(
               transaction: tx,
-              isOutbound: tx.category == TransferCategory.sale,
+              isOutbound: isOutbound,
             ),
           ),
         ),
@@ -103,7 +107,11 @@ void main() {
   testWidgets(
     'sale download icon opens a chooser and each tile starts its own receipt',
     (tester) async {
-      await pumpRow(tester, _tx(category: TransferCategory.sale));
+      await pumpRow(
+        tester,
+        _tx(category: TransferCategory.sale),
+        isOutbound: true,
+      );
 
       await tester.tap(find.byIcon(Icons.file_download_outlined));
       await tester.pumpAndSettle();
@@ -138,12 +146,41 @@ void main() {
   testWidgets(
     'purchase download icon generates the RealUnit receipt without a chooser',
     (tester) async {
-      await pumpRow(tester, _tx(category: TransferCategory.purchase));
+      await pumpRow(
+        tester,
+        _tx(category: TransferCategory.purchase),
+        isOutbound: false,
+      );
 
       await tester.tap(find.byIcon(Icons.file_download_outlined));
       await tester.pumpAndSettle();
 
       expect(find.text('Tausch ZCHF in CHF/EUR'), findsNothing);
+      verify(
+        () => receiptCubit.generateReceipt(
+          'tx-42',
+          currency: Currency.chf,
+          language: Language.de,
+        ),
+      ).called(1);
+      verifyNever(() => receiptCubit.generateExchangeReceipt(any()));
+    },
+  );
+
+  testWidgets(
+    'outbound transfer download generates the RealUnit receipt without a chooser',
+    (tester) async {
+      await pumpRow(
+        tester,
+        _tx(category: TransferCategory.transferOut),
+        isOutbound: true,
+      );
+
+      await tester.tap(find.byIcon(Icons.file_download_outlined));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Tausch ZCHF in CHF/EUR'), findsNothing);
+      expect(find.text('RealUnit-Verkauf'), findsNothing);
       verify(
         () => receiptCubit.generateReceipt(
           'tx-42',
