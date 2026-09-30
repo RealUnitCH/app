@@ -241,10 +241,11 @@ jobs:
           set -euo pipefail
 
           # Unlike the mail previews, these PDFs are already committed in the api
-          # repo (rendered from SwissQRService by the api-side spec
-          # realunit-receipt-example.spec.ts), so no generator / npm run is needed
-          # here — we only copy them into the build context. Reuses the same
-          # _api-checkout/ from the mail step above.
+          # repo (rendered from SwissQRService: the eight transaction-*.pdf files
+          # by the api-side spec realunit-receipt-example.spec.ts, and the four
+          # exchange-zchf-*.pdf files by realunit-exchange-receipt-example.spec.ts),
+          # so no generator / npm run is needed here — we only copy them into the
+          # build context. Reuses the same _api-checkout/ from the mail step above.
           SRC_DIR="${API_DIR}/docs/examples/realunit-receipt"
           if [ ! -d "${SRC_DIR}" ]; then
             echo "::error::${SRC_DIR} not found in the api checkout — the committed example receipts are missing upstream (DFXswiss/api docs/examples/realunit-receipt/)."
