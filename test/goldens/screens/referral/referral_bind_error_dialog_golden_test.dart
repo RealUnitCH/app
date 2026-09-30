@@ -252,4 +252,26 @@ void main() {
       ),
     ),
   );
+
+  goldenTest(
+    'unavailable code check while retrying',
+    fileName: 'referral_bind_unavailable_retrying',
+    constraints: phoneConstraints,
+    builder: () => wrapForGolden(
+      Stack(
+        fit: StackFit.expand,
+        children: [
+          dashboard(),
+          const ModalBarrier(dismissible: false, color: Colors.black54),
+          Center(
+            child: ReferralBindUnavailableDialog(
+              retrying: true,
+              onRetry: () {},
+              onClose: () {},
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

@@ -1198,14 +1198,14 @@
             <span>📱 <b>App:</b> RealUnit Wallet (Flutter)</span>
             <span>📂 <b>Code:</b>
               <a href="https://github.com/RealUnitCH/app">RealUnitCH/app</a></span>
-            <span>🧪 <b>Tests:</b> 404 Visual-Regression Goldens (404 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
+            <span>🧪 <b>Tests:</b> 405 Visual-Regression Goldens (405 davon im Handbook) · 26 Tier-3 Smoke-Flows</span>
           </div>
         </section>
 
         <section id="architecture" style="margin-top: 40px">
           <h3 style="margin-top: 0">Single Source of Truth</h3>
           <p>
-            Die 404 App-Screenshots dieser Seite sind Goldens aus
+            Die 405 App-Screenshots dieser Seite sind Goldens aus
             <code>test/goldens/{screens,widgets}/&lt;feature&gt;/goldens/macos/&lt;file&gt;.png</code>.
             Welcher Golden welcher Handbook-Slot ist, definiert die Mapping-Tabelle in
             <code>scripts/assemble-handbook-screenshots.sh</code>. Der Docker-Build
@@ -1245,7 +1245,7 @@
               <b>Pipeline:</b> Page-Edit → <code>flutter test --update-goldens test/goldens/</code>
               auf dem self-hosted Runner (Hardware-Determinismus) → neue Baseline committen →
               <code>handbook-deploy.yaml</code> baut das Docker-Image aus dem gepushten Branch
-              und assembliert die 404 Slots aus <code>test/goldens/</code> → Push auf
+              und assembliert die 405 Slots aus <code>test/goldens/</code> → Push auf
               <code>staging</code> deployt das Handbook-Image nach Produktion, via
               Cloudflare Tunnel.
             </p>
@@ -3942,7 +3942,7 @@
                 <div class="file">test/goldens/screens/dashboard/</div>
               </div>
               <div class="rhs">
-                <b>1 Screen</b>
+                <b>7 Screens</b>
                 <div class="links">
                   <a
                     href="https://github.com/RealUnitCH/app/tree/develop/test/goldens/screens/dashboard"
@@ -4395,12 +4395,11 @@
               <div class="img">
                 <img
                   src="../screenshots/386-transaction-history-transfer-labels.png"
-                  alt="Historie mit API-Kategoriebeschriftungen"
+                  alt="Verlauf mit Kauf, Empfangen, Gesendet, Verkauf"
                 />
               </div>
               <div class="desc">
-                Verlauf mit den API-Kategoriebeschriftungen purchase, received,
-                sent, sale.
+                Verlauf mit den sichtbaren Labels <b>Kauf</b>, <b>Empfangen</b>, <b>Gesendet</b> und <b>Verkauf</b>.
               </div>
             </div>
           </div>
@@ -13382,6 +13381,22 @@
             </div>
             <div class="desc">
               Der Code kann gerade nicht geprüft werden. Kein roter Fehlerstil. Body <b>Wir konnten den Code gerade nicht prüfen. Bitte versuchen Sie es später erneut.</b> <b>Wiederholen</b> (sekundär, nicht im Ladezustand) und <b>Schließen</b>.
+            </div>
+          </div>
+          <div class="test" id="396-referral-bind-unavailable-retrying">
+            <div class="head">
+              <a class="name permalink" href="#396-referral-bind-unavailable-retrying">396-referral-bind-unavailable-retrying</a>
+              <button class="copy-link" type="button" data-target="396-referral-bind-unavailable-retrying" title="Direkt-Link kopieren" aria-label="Direkt-Link kopieren">🔗 Link</button>
+              <span class="src">referral_bind_error_dialog_golden_test.dart</span>
+            </div>
+            <div class="img">
+              <img
+                src="../screenshots/396-referral-bind-unavailable-retrying.png"
+                alt="Dashboard-Overlay: Code nicht prüfbar, Wiederholen lädt"
+              />
+            </div>
+            <div class="desc">
+              Dieselbe Meldung wie 388. Neben <b>Wiederholen</b> läuft eine Ladeanzeige, der Knopf ist nicht tippbar. <b>Schließen</b> ist ebenfalls nicht tippbar.
             </div>
           </div>
         </details>
