@@ -587,15 +587,17 @@ void main() {
         final first = SettingsRepository(prefs);
 
         expect(first.walletFeaturePay, isTrue);
-        expect(prefs.getBool('walletFeaturePay.mainnet'), isTrue);
+        expect(prefs.getBool('walletFeaturePayInsider.mainnet'), isTrue);
+        expect(prefs.containsKey('walletFeaturePay.mainnet'), isFalse);
         expect(prefs.containsKey('walletFeaturePay'), isFalse);
 
         await prefs.setString('networkMode', 'Testnet');
 
         final second = SettingsRepository(prefs);
         expect(second.walletFeaturePay, isFalse);
+        expect(prefs.containsKey('walletFeaturePayInsider.testnet'), isFalse);
         expect(prefs.containsKey('walletFeaturePay.testnet'), isFalse);
-        expect(prefs.getBool('walletFeaturePay.mainnet'), isTrue);
+        expect(prefs.getBool('walletFeaturePayInsider.mainnet'), isTrue);
         expect(prefs.containsKey('walletFeaturePay'), isFalse);
       });
 
@@ -610,7 +612,9 @@ void main() {
         final repoTrue = SettingsRepository(prefsTrue);
 
         expect(repoTrue.walletFeaturePay, isFalse);
-        expect(prefsTrue.getBool('walletFeaturePay.mainnet'), isTrue);
+        expect(prefsTrue.getBool('walletFeaturePayInsider.mainnet'), isTrue);
+        expect(prefsTrue.containsKey('walletFeaturePay.mainnet'), isFalse);
+        expect(prefsTrue.containsKey('walletFeaturePayInsider.testnet'), isFalse);
         expect(prefsTrue.containsKey('walletFeaturePay.testnet'), isFalse);
         expect(prefsTrue.containsKey('walletFeaturePay'), isFalse);
         expect(prefsTrue.containsKey('insiderPayEnabled'), isFalse);
@@ -624,7 +628,9 @@ void main() {
         final repoFalse = SettingsRepository(prefsFalse);
 
         expect(repoFalse.walletFeaturePay, isFalse);
-        expect(prefsFalse.getBool('walletFeaturePay.mainnet'), isFalse);
+        expect(prefsFalse.getBool('walletFeaturePayInsider.mainnet'), isFalse);
+        expect(prefsFalse.containsKey('walletFeaturePay.mainnet'), isFalse);
+        expect(prefsFalse.containsKey('walletFeaturePayInsider.testnet'), isFalse);
         expect(prefsFalse.containsKey('walletFeaturePay.testnet'), isFalse);
         expect(prefsFalse.containsKey('walletFeaturePay'), isFalse);
       });
@@ -638,7 +644,9 @@ void main() {
         final repo = SettingsRepository(prefs);
 
         expect(repo.walletFeaturePay, isFalse);
-        expect(prefs.getBool('walletFeaturePay.testnet'), isTrue);
+        expect(prefs.getBool('walletFeaturePayInsider.testnet'), isTrue);
+        expect(prefs.containsKey('walletFeaturePay.testnet'), isFalse);
+        expect(prefs.containsKey('walletFeaturePayInsider.mainnet'), isFalse);
         expect(prefs.containsKey('walletFeaturePay.mainnet'), isFalse);
         expect(prefs.containsKey('walletFeaturePay'), isFalse);
       });
