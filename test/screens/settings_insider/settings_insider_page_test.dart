@@ -45,6 +45,7 @@ void main() {
     await pumpPage(tester);
     await tester.pumpAndSettle();
 
+    expect(find.text(S.current.settingsNetwork), findsOneWidget);
     expect(find.text(S.current.pay), findsOneWidget);
     expect(find.text(S.current.send), findsOneWidget);
     expect(find.text(S.current.settingsInsiderReferral), findsOneWidget);

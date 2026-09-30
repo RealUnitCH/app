@@ -207,6 +207,65 @@ void main() {
       expect(callOrder, ['auth', 'invalidate']);
     });
 
+    test('SetNetworkModeEvent emits feature flags re-read after the mode is persisted', () async {
+      when(() => repo.networkMode = NetworkMode.testnet).thenAnswer((_) {
+        storedPay = true;
+        storedSend = true;
+        storedPromo = false;
+        storedReferral = true;
+      });
+
+      final bloc = build();
+      bloc.add(const SetNetworkModeEvent(NetworkMode.testnet));
+      await bloc.stream.firstWhere((s) => s.networkMode == NetworkMode.testnet);
+
+      expect(bloc.state.walletFeaturePay, isTrue);
+      expect(bloc.state.walletFeatureSend, isTrue);
+      expect(bloc.state.walletFeaturePromoCode, isFalse);
+      expect(bloc.state.walletFeatureReferral, isTrue);
+    });
+
+    test('SetNetworkModeEvent refreshes wallet features from the new host', () async {
+      var fetchCount = 0;
+      final bloc = SettingsBloc(
+        repo,
+        () async {
+          authRefreshCount++;
+        },
+        fetchWalletFeatures: () async {
+          fetchCount++;
+          return const RealUnitWalletFeaturesDto();
+        },
+      );
+
+      await bloc.stream.first;
+      expect(fetchCount, 1);
+
+      bloc.add(const SetNetworkModeEvent(NetworkMode.testnet));
+      await bloc.stream.firstWhere((s) => s.networkMode == NetworkMode.testnet);
+      await bloc.stream.first;
+      expect(fetchCount, 2);
+    });
+
+    test('SetNetworkModeEvent of the current mode is a no-op', () async {
+      var invalidated = false;
+      final bloc = SettingsBloc(
+        repo,
+        () async {
+          authRefreshCount++;
+        },
+        onNetworkModeChanged: () => invalidated = true,
+      );
+
+      bloc.add(const SetNetworkModeEvent(NetworkMode.mainnet));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(authRefreshCount, 0);
+      expect(invalidated, isFalse);
+      verifyNever(() => repo.networkMode = NetworkMode.mainnet);
+      verifyNever(() => repo.networkMode = NetworkMode.testnet);
+    });
+
     blocTest<SettingsBloc, SettingsState>(
       'ToggleHideAmountEvent flips hideAmounts each time',
       build: build,

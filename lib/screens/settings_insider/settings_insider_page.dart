@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:realunit_wallet/generated/i18n.dart';
 import 'package:realunit_wallet/screens/settings/bloc/settings_bloc.dart';
 import 'package:realunit_wallet/screens/settings/widgets/settings_section.dart';
 import 'package:realunit_wallet/setup/di.dart';
+import 'package:realunit_wallet/setup/routing/routes/settings_routes.dart';
 import 'package:realunit_wallet/styles/colors.dart';
+import 'package:realunit_wallet/styles/icons.dart';
 
 class SettingsInsiderPage extends StatelessWidget {
   const SettingsInsiderPage({super.key});
@@ -19,6 +22,18 @@ class SettingsInsiderPage extends StatelessWidget {
         bloc: getIt<SettingsBloc>(),
         builder: (context, state) => SettingsSections(
           settings: [
+            SettingOption(
+              title: S.of(context).settingsNetwork,
+              subtitle: S.of(context).settingsNetworkHint,
+              leading: const NodesIcon(size: 24),
+              trailing: const Icon(
+                Icons.arrow_forward_ios,
+                size: 20,
+                color: RealUnitColors.realUnitBlack,
+              ),
+              selectedOption: state.networkMode.localizedName(context),
+              onTap: () => context.pushNamed(SettingsRoutes.network),
+            ),
             _featureRow(
               context: context,
               title: S.of(context).pay,

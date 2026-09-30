@@ -85,10 +85,24 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     SetNetworkModeEvent event,
     Emitter<SettingsState> emit,
   ) async {
+    if (event.networkMode == state.networkMode) return;
     _settingsRepository.networkMode = event.networkMode;
     await getNewAuthToken();
     onNetworkModeChanged?.call();
-    emit(state.copyWith(networkMode: event.networkMode));
+    emit(
+      state.copyWith(
+        networkMode: event.networkMode,
+        walletFeaturePay: _settingsRepository.walletFeaturePay,
+        walletFeatureSend: _settingsRepository.walletFeatureSend,
+        walletFeaturePromoCode: _settingsRepository.walletFeaturePromoCode,
+        walletFeatureReferral: _settingsRepository.walletFeatureReferral,
+        walletFeaturePayCentral: _settingsRepository.walletFeaturePayCentral,
+        walletFeatureSendCentral: _settingsRepository.walletFeatureSendCentral,
+        walletFeaturePromoCodeCentral: _settingsRepository.walletFeaturePromoCodeCentral,
+        walletFeatureReferralCentral: _settingsRepository.walletFeatureReferralCentral,
+      ),
+    );
+    add(const RefreshWalletFeaturesEvent());
   }
 
   void _onToggleHideAmountEvent(ToggleHideAmountEvent event, Emitter<SettingsState> emit) {

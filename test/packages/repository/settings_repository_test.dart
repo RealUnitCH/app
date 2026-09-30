@@ -469,6 +469,80 @@ void main() {
         expect(repo.walletFeatureSend, isFalse);
         expect(prefs.getBool('insiderSendEnabled'), isNull);
       });
+
+      test('a true stored on mainnet is false while networkMode is testnet, and the reverse', () async {
+        SharedPreferences.setMockInitialValues({});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        repo.walletFeaturePay = true;
+        await Future<void>.delayed(Duration.zero);
+        expect(repo.walletFeaturePay, isTrue);
+
+        repo.networkMode = NetworkMode.testnet;
+        await Future<void>.delayed(Duration.zero);
+        expect(repo.walletFeaturePay, isFalse);
+
+        repo.walletFeaturePay = true;
+        await Future<void>.delayed(Duration.zero);
+        expect(repo.walletFeaturePay, isTrue);
+
+        repo.networkMode = NetworkMode.mainnet;
+        await Future<void>.delayed(Duration.zero);
+        expect(repo.walletFeaturePay, isTrue);
+
+        SharedPreferences.setMockInitialValues({'networkMode': 'Testnet'});
+        final testnetRepo = SettingsRepository(await SharedPreferences.getInstance());
+        testnetRepo.walletFeaturePay = true;
+        await Future<void>.delayed(Duration.zero);
+        testnetRepo.networkMode = NetworkMode.mainnet;
+        await Future<void>.delayed(Duration.zero);
+        expect(testnetRepo.walletFeaturePay, isFalse);
+      });
+
+      test('unscoped true with Testnet migrates onto testnet only', () async {
+        SharedPreferences.setMockInitialValues({
+          'walletFeaturePay': true,
+          'networkMode': 'Testnet',
+        });
+        final prefs = await SharedPreferences.getInstance();
+        final repo = SettingsRepository(prefs);
+
+        expect(repo.walletFeaturePay, isTrue);
+        expect(prefs.getBool('walletFeaturePayInsider.testnet'), isTrue);
+        expect(prefs.getBool('walletFeaturePayInsider.mainnet'), isNull);
+        expect(prefs.containsKey('walletFeaturePay'), isFalse);
+
+        repo.networkMode = NetworkMode.mainnet;
+        await Future<void>.delayed(Duration.zero);
+        expect(repo.walletFeaturePay, isFalse);
+      });
+
+      test('unscoped true migrates onto mainnet when networkMode is unset', () async {
+        SharedPreferences.setMockInitialValues({
+          'walletFeaturePay': true,
+        });
+        final prefs = await SharedPreferences.getInstance();
+        final repo = SettingsRepository(prefs);
+
+        expect(repo.walletFeaturePay, isTrue);
+        expect(prefs.getBool('walletFeaturePayInsider.mainnet'), isTrue);
+        expect(prefs.containsKey('walletFeaturePay'), isFalse);
+      });
+
+      test('user-off on testnet does not block pay on mainnet', () async {
+        SharedPreferences.setMockInitialValues({'networkMode': 'Testnet'});
+        final repo = SettingsRepository(await SharedPreferences.getInstance());
+
+        repo.setWalletFeaturePayFromUser(false);
+        await Future<void>.delayed(Duration.zero);
+
+        repo.networkMode = NetworkMode.mainnet;
+        await Future<void>.delayed(Duration.zero);
+
+        repo.walletFeaturePay = true;
+        await Future<void>.delayed(Duration.zero);
+        expect(repo.walletFeaturePay, isTrue);
+      });
     });
 
     group('dismissedClientPolicyLatest', () {
